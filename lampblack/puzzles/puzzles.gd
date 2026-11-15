@@ -3,7 +3,7 @@ extends RefCounted
 
 const Rules = preload("res://rules/rules.gd")
 
-## Two wings of the closed museum. Each solution is a list of actions the rules
+## Three wings of the closed museum. Each solution is a list of actions the rules
 ## accept. Tokens are R L U D, W for wait, and T0 / T1 for lamps.
 
 
@@ -42,8 +42,8 @@ static func parse_solution(spec: String) -> Array:
 	return out
 
 
-static func _lamp(x: int, y: int, facing: String, radius: int) -> Dictionary:
-	return {"x": x, "y": y, "facing": facing, "radius": radius, "lit": true}
+static func _lamp(x: int, y: int, facing: String, radius: int, lit: bool = true) -> Dictionary:
+	return {"x": x, "y": y, "facing": facing, "radius": radius, "lit": lit}
 
 
 static func _guard(x: int, y: int, rail: Array, vision: int = 2, rail_index: int = 0, rail_dir: int = 1) -> Dictionary:
@@ -61,6 +61,8 @@ static func _puzzle(number: int, title: String, lesson: String, rows: PackedStri
 	var wing_number := number
 	if wing == "West Wing":
 		wing_number = number - 8
+	elif wing == "North Wing":
+		wing_number = number - 14
 	return {
 		"number": number,
 		"wing": wing,
@@ -92,6 +94,7 @@ static func _all() -> Array:
 	var puzzles: Array = []
 	puzzles.append_array(_east_wing())
 	puzzles.append_array(_west_wing())
+	puzzles.append_array(_north_wing())
 	return puzzles
 
 
@@ -324,5 +327,117 @@ static func _west_wing() -> Array:
 			[_guard(4, 3, [Vector2i(4, 3)], 2)],
 			"D D T0 D D T1 R R R U U R R",
 			"West Wing"
+		),
+	]
+
+
+static func _north_wing() -> Array:
+	return [
+		_puzzle(
+			15,
+			"The Dark Behind",
+			"The flame faces the hall, so the tiles in front of it and beside it are lit floor. The single tile behind the lamp stays dark. Snuff it from there. The north gallery is walled off from the door.",
+			PackedStringArray([
+				"#########",
+				"#S......#",
+				"#.#######",
+				"#......X#",
+				"#.#######",
+				"#.......#",
+				"#########",
+			]),
+			[_lamp(3, 3, "e", 4)],
+			[],
+			"D D R T0 R R R R R",
+			"North Wing"
+		),
+		_puzzle(
+			16,
+			"The Cut Beam",
+			"A wall cuts the beam, so the door in front of the lamp is dark even though it sits inside the diamond. He is watching the lit hall. Walk the north gallery and come through the opening the light never reaches.",
+			PackedStringArray([
+				"############",
+				"#S.........#",
+				"#..........#",
+				"######.#####",
+				"#..X.......#",
+				"############",
+			]),
+			[_lamp(2, 2, "s", 3)],
+			[_guard(4, 2, [Vector2i(4, 2)])],
+			"R R R R R D D D L L L",
+			"North Wing"
+		),
+		_puzzle(
+			17,
+			"The Cold Wick",
+			"This lamp starts cold, and the gap stays shut until you light it. Lighting calls no one. Light it from the tile behind the flame — the square in front of the wick becomes lit under his eyes. The lower walk goes around that light to the gap.",
+			PackedStringArray([
+				"##########",
+				"#S....G.X#",
+				"#......#.#",
+				"#......#.#",
+				"#......#.#",
+				"##########",
+			]),
+			[_lamp(4, 1, "e", 2, false)],
+			[_guard(5, 2, [Vector2i(5, 2)], 1)],
+			"R R T0 D D D R R R U U U R R",
+			"North Wing"
+		),
+		_puzzle(
+			18,
+			"The Nearer Keeper",
+			"The two keepers are not the same distance from the lamp. The nearer one answers and climbs to it. The keeper under the door is farther, so he never moves. Snuff the lamp and walk on before the near one holds that tile.",
+			PackedStringArray([
+				"############",
+				"#S........X#",
+				"#..........#",
+				"####..######",
+				"#..........#",
+				"#..........#",
+				"############",
+			]),
+			[_lamp(4, 2, "e", 2)],
+			[
+				_guard(4, 4, [Vector2i(4, 4)]),
+				_guard(10, 4, [Vector2i(10, 4)]),
+			],
+			"R R D T0 R R R R R R R U",
+			"North Wing"
+		),
+		_puzzle(
+			19,
+			"The Far Watch",
+			"The gap is lit, and he is watching it. Leave the lamp above the gap burning. Snuff the west wick to call him — his next step is your tile, so step aside. When he holds on that wick, cross the gap.",
+			PackedStringArray([
+				"###########",
+				"#S...#....#",
+				"#...#.....#",
+				"#....G...X#",
+				"#....#....#",
+				"#....#....#",
+				"###########",
+			]),
+			[_lamp(2, 3, "w", 1), _lamp(5, 2, "s", 1)],
+			[_guard(4, 3, [Vector2i(4, 3)])],
+			"R R D D T0 D R U R R R R R",
+			"North Wing"
+		),
+		_puzzle(
+			20,
+			"The Closing Door",
+			"The lamp stands on the door, so the door is lit and he is watching it. Snuff it from the dark tile behind the flame. His next step is onto that door. Take it before he does. If you wait, he holds the exit.",
+			PackedStringArray([
+				"#######",
+				"#S....#",
+				"#...X.#",
+				"#.....#",
+				"#######",
+			]),
+			[_lamp(4, 2, "e", 1)],
+			[_guard(4, 3, [Vector2i(4, 3)])],
+			"D R R T0 R",
+			"North Wing"
 		),
 	]

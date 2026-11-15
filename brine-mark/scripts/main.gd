@@ -105,10 +105,12 @@ func _draw() -> void:
 	_draw_hill_tag()
 	_draw_cursor()
 	var ticks_left := int(sim.get_ticks_until_rain()) if sim != null else 0
+	var beat := int(sim.get_beat()) if sim != null else Sim.WET
 	var opening := false
-	if sim != null and sim.get_season() == Sim.DRY and not sim.is_over():
+	if sim != null and beat == Sim.DRY and not sim.is_over():
 		opening = ticks_left > Sim.DRY_TICK - Sim.TICK_HZ * 3
-	if sim != null and (sim.is_over() or ticks_left < Sim.TICK_HZ * 3 or opening):
+	# The cart beat is clear weather. Rain shows for the season changes and the end.
+	if sim != null and beat != Sim.CART and (sim.is_over() or ticks_left < Sim.TICK_HZ * 3 or opening):
 		_draw_rain(sim.is_over() or opening)
 
 
@@ -116,10 +118,20 @@ func _draw_bars() -> void:
 	if sim == null:
 		return
 	var width := Sim.GRID_W * CELL - 2.0
-	var span := Sim.DRY_TICK if sim.get_season() == Sim.DRY else Sim.RAIN_TICK
+	var beat := int(sim.get_beat())
+	var span := Sim.RAIN_TICK
+	var rain_color := Color("2f7590")
+	if beat == Sim.CART:
+		span = Sim.CART_TICK
+		rain_color = Color("8a5a2b")
+	elif beat == Sim.DRY:
+		span = Sim.DRY_TICK
+		rain_color = Color("c47a3a")
 	var rain_frac := clampf(float(sim.get_ticks_until_rain()) / float(maxi(span, 1)), 0.0, 1.0)
 	var quota_frac := clampf(float(sim.get_stored_salt()) / float(Sim.QUOTA), 0.0, 1.0)
-	var rain_color := Color("c47a3a") if sim.get_season() == Sim.DRY else Color("2f7590")
+	if beat == Sim.CART:
+		var whole := int(sim.get_carted()) + int(sim.get_bank_left())
+		quota_frac = 0.0 if whole <= 0 else clampf(float(sim.get_carted()) / float(whole), 0.0, 1.0)
 	var bar_y := MAP_ORIGIN.y - 16.0
 	draw_rect(Rect2(Vector2(MAP_ORIGIN.x, bar_y), Vector2(width, 6)), Color("c8b894"))
 	draw_rect(Rect2(Vector2(MAP_ORIGIN.x, bar_y), Vector2(width * rain_frac, 6)), rain_color)
@@ -149,10 +161,12 @@ func _draw_cell(x: int, y: int) -> void:
 			_draw_trail(rect)
 		Sim.PAN:
 			_draw_pan(rect)
+		Sim.CRIB:
+			_draw_crib(rect, sim.get_beat() == Sim.CART)
 	if Vector2i(x, y) == Sim.ANTHILL:
 		_draw_anthill(rect)
 	var salt: Dictionary = sim.get_cell_salt(x, y)
-	_draw_salt(rect, int(salt["loose"]), int(salt["stacked"]), int(salt["covered"]))
+	_draw_salt(rect, int(salt["loose"]), int(salt["stacked"]), int(salt["covered"]), int(salt["crib"]))
 
 
 func _draw_coast(rect: Rect2, dry: bool) -> void:
@@ -177,6 +191,19 @@ func _draw_rake(rect: Rect2, idle: bool) -> void:
 	for i in 4:
 		var y_line := rect.position.y + 8.0 + float(i) * 8.0
 		draw_line(Vector2(rect.position.x + 5, y_line), Vector2(rect.end.x - 5, y_line), line, 1.5)
+
+
+func _draw_crib(rect: Rect2, open: bool) -> void:
+	var wall := Color("a56b3c") if open else Color("b7a48a")
+	var slat := Color("6b3e24") if open else Color("8d7764")
+	draw_rect(rect, Color(0.72, 0.55, 0.32, 0.28 if open else 0.16))
+	var bin := Rect2(rect.position + Vector2(8, 14), rect.size - Vector2(16, 20))
+	draw_rect(bin, wall)
+	for i in 3:
+		var y_line := bin.position.y + 4.0 + float(i) * (bin.size.y / 3.0)
+		draw_line(Vector2(bin.position.x + 2, y_line), Vector2(bin.end.x - 2, y_line), slat, 2.0)
+	draw_rect(Rect2(bin.position, Vector2(3, bin.size.y)), slat)
+	draw_rect(Rect2(Vector2(bin.end.x - 3, bin.position.y), Vector2(3, bin.size.y)), slat)
 
 
 func _draw_pan(rect: Rect2) -> void:
@@ -218,18 +245,18 @@ func _draw_anthill(rect: Rect2) -> void:
 	draw_circle(center + Vector2(1, 5), 3.0, Color("1a100c"))
 
 
-func _draw_salt(rect: Rect2, loose: int, stacked: int, covered: int) -> void:
-	var shown := 0
+func _draw_salt(rect: Rect2, loose: int, stacked: int, covered: int, crib: int) -> void:
 	for i in mini(loose, 4):
 		var col := i % 2
 		var row := int(i / 2)
 		_diamond(rect.position + Vector2(14 + col * 12, 24 + row * 10), 3.0, Color("f7f8f4"))
-		shown += 1
 	for i in mini(stacked, 3):
 		_diamond(rect.position + Vector2(12 + i * 10, rect.size.y - 12), 4.5, Color("f4f7fb"))
 	for i in mini(covered, 3):
 		_diamond(rect.position + Vector2(12 + i * 10, rect.size.y - 12), 4.2, Color("f4f7fb"))
-	var total := loose + stacked + covered
+	for i in mini(crib, 3):
+		_diamond(rect.position + Vector2(12 + i * 10, rect.size.y - 12), 4.2, Color("fff8e8"))
+	var total := loose + stacked + covered + crib
 	if total > 0:
 		var digits := str(total)
 		var badge := Rect2(rect.position + Vector2(2, 2), Vector2(6.0 + 7.0 * digits.length(), 13))
@@ -332,7 +359,7 @@ func _build_hud() -> void:
 	hint_a.position = Vector2(20, 628)
 	hint_a.size = Vector2(740, 20)
 	hud.add_child(hint_a)
-	var hint_b := _make_label("1 rake, 2 stack, 3 cover, 4 trail, 5 pan, 0 erase. Space paints. R restarts.", 14, INK)
+	var hint_b := _make_label("1 rake, 2 stack, 3 cover, 4 trail, 5 pan, 6 crib, 0 erase. Space paints. R restarts.", 14, INK)
 	hint_b.position = Vector2(20, 650)
 	hint_b.size = Vector2(740, 20)
 	hud.add_child(hint_b)
@@ -360,9 +387,10 @@ func _build_hud() -> void:
 
 	box.add_child(_make_label("BRINE MARK", 26, PAPER))
 	box.add_child(_make_label("Salt Coast", 16, GOLD))
-	var rules := _make_label("Paint the flats. Workers follow the mark under their feet and are not selectable.\nWet season: rake the shore, stack the loose salt, cover the stacks. The first rain banks covered salt and pulls the brine back. Dry season: shore rakes go idle. Paint pans and workers crystallize salt until the second rain. Trail is how they cross.", 14, PAPER)
+	var rules := _make_label("Paint the flats. Workers follow the mark under their feet and are not selectable.\nWet season: rake the shore, stack the loose salt, cover the stacks. The first rain banks covered salt and pulls the brine back. Dry season: shore rakes go idle. Paint pans and workers crystallize salt until the second rain. Then paint a crib. Workers move the banked salt into it. Trail is how they cross.", 14, PAPER)
 	rules.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	rules.custom_minimum_size = Vector2(430, 132)
+	rules.custom_minimum_size = Vector2(430, 156)
+	rules.name = "RulesNote"
 	box.add_child(rules)
 
 	covered_label = _make_label("", 18, PAPER)
@@ -387,6 +415,7 @@ func _build_hud() -> void:
 	box.add_child(_button_row([
 		["4  Trail", Sim.TRAIL, Color("c4844a")],
 		["5  Pan", Sim.PAN, Color("b7d4d2")],
+		["6  Crib", Sim.CRIB, Color("e0c08a")],
 		["0  Erase", Sim.EMPTY, Color("c8c2b6")],
 	]))
 
@@ -396,7 +425,7 @@ func _build_hud() -> void:
 	status_label.custom_minimum_size = Vector2(430, 36)
 	summary_label = _make_label("", 18, PAPER)
 	summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	summary_label.custom_minimum_size = Vector2(430, 78)
+	summary_label.custom_minimum_size = Vector2(430, 64)
 	box.add_child(cursor_label)
 	box.add_child(status_label)
 	box.add_child(summary_label)
@@ -470,14 +499,21 @@ func _refresh() -> void:
 		return
 	var seconds := 0.0
 	if sim.is_over():
-		rain_label.text = "Rain has fallen"
-		rain_label.add_theme_color_override("font_color", Color("8fb4c4"))
+		if int(sim.get_carted()) > 0:
+			rain_label.text = "The bank is in the crib"
+			rain_label.add_theme_color_override("font_color", Color("6b3e24"))
+		else:
+			rain_label.text = "Rain has fallen"
+			rain_label.add_theme_color_override("font_color", Color("8fb4c4"))
 	else:
 		seconds = float(sim.get_ticks_until_rain()) / float(Sim.TICK_HZ) - accum
 		if seconds < 0.0:
 			seconds = 0.0
 		var urgent := seconds < 10.0
-		if sim.get_season() == Sim.DRY:
+		if sim.get_beat() == Sim.CART:
+			rain_label.text = "Cart the bank. %.1fs" % seconds
+			rain_label.add_theme_color_override("font_color", Color("a33b2b") if urgent else Color("6b3e24"))
+		elif sim.get_season() == Sim.DRY:
 			rain_label.text = "Dry season. Rain in %.1fs" % seconds
 			rain_label.add_theme_color_override("font_color", Color("a33b2b") if urgent else Color("8a4b12"))
 		else:
@@ -486,18 +522,33 @@ func _refresh() -> void:
 	var season_name := "wet"
 	if sim.is_over():
 		season_name = "settled"
+	elif sim.get_beat() == Sim.CART:
+		season_name = "cart"
 	elif sim.get_season() == Sim.DRY:
 		season_name = "dry"
 	detail_label.text = "Salt Coast    %s    covered %d/%d    ants %d/%d" % [
 		season_name, sim.get_stored_salt(), Sim.QUOTA, sim.get_population(), Sim.POP_CAP,
 	]
 	covered_label.text = "Covered salt  %d / %d" % [sim.get_stored_salt(), Sim.QUOTA]
-	salt_label.text = "Loose %d    stacked %d    hauled %d" % [
-		sim.get_loose_salt(), sim.get_stacked_salt(), sim.get_wet_haul(),
-	]
+	if sim.get_beat() == Sim.CART or sim.is_over():
+		salt_label.text = "Loose %d    stacked %d    bank %d    carted %d" % [
+			sim.get_loose_salt(), sim.get_stacked_salt(), sim.get_bank_left(), sim.get_carted(),
+		]
+	else:
+		salt_label.text = "Loose %d    stacked %d    hauled %d" % [
+			sim.get_loose_salt(), sim.get_stacked_salt(), sim.get_wet_haul(),
+		]
 	ants_label.text = "Ants %d / %d" % [sim.get_population(), Sim.POP_CAP]
 	mode_label.text = "Mark: %s" % _mode_name(current_mode)
-	if sim.get_season() == Sim.DRY or sim.is_over():
+	if sim.get_beat() == Sim.CART and not sim.is_over():
+		season_label.text = "Bank %d. Carted %d. Paint a crib and workers move the bank." % [
+			sim.get_bank_left(), sim.get_carted(),
+		]
+	elif sim.is_over() and int(sim.get_carted()) > 0:
+		season_label.text = "Carted %d into the crib." % sim.get_carted()
+	elif sim.is_over() and int(sim.get_stored_salt()) >= Sim.QUOTA and int(sim.get_carted()) == 0:
+		season_label.text = "The bank was not carted. A crib is where workers move it."
+	elif sim.get_season() == Sim.DRY or sim.is_over():
 		var dry_held := int(sim.get_stored_salt()) - int(sim.get_wet_haul())
 		season_label.text = "Hauled %d. Dry covers %d. Shore rakes are idle; pans crystallize." % [
 			sim.get_wet_haul(), dry_held,
@@ -510,6 +561,9 @@ func _refresh() -> void:
 		var won: bool = sim.get_stored_salt() >= Sim.QUOTA
 		summary_label.add_theme_color_override("font_color", Color("b7e2c2") if won else Color("ffb4a8"))
 		status_label.text = "Restart scenario to mark the flats again."
+	elif sim.get_beat() == Sim.CART:
+		summary_label.text = "The second rain has fallen. Paint a crib. Workers move the banked salt into it."
+		summary_label.add_theme_color_override("font_color", Color("f0d7b0"))
 	elif sim.get_season() == Sim.DRY:
 		summary_label.text = "The brine has pulled back and the first haul is banked. Paint pans before the second rain."
 		summary_label.add_theme_color_override("font_color", Color("f0d7b0"))
@@ -571,6 +625,8 @@ func _on_key(keycode: Key) -> void:
 			_set_mode(Sim.TRAIL)
 		KEY_5, KEY_KP_5:
 			_set_mode(Sim.PAN)
+		KEY_6, KEY_KP_6:
+			_set_mode(Sim.CRIB)
 		KEY_0, KEY_KP_0:
 			_set_mode(Sim.EMPTY)
 		KEY_SPACE, KEY_ENTER, KEY_KP_ENTER:
@@ -604,6 +660,8 @@ func _mode_color(mode: int) -> Color:
 			return Color("8a4e22")
 		Sim.PAN:
 			return Color("3f7f88")
+		Sim.CRIB:
+			return Color("a56b3c")
 		_:
 			return Color("f4efe6")
 
@@ -620,5 +678,7 @@ func _mode_name(mode: int) -> String:
 			return "Trail"
 		Sim.PAN:
 			return "Pan"
+		Sim.CRIB:
+			return "Crib"
 		_:
 			return "Erase"
