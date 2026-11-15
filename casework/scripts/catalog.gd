@@ -23,8 +23,10 @@ const CorkPress = preload("res://scripts/cork_press.gd")
 const NetLoft = preload("res://scripts/net_loft.gd")
 const CaskHoop = preload("res://scripts/cask_hoop.gd")
 const LinenFold = preload("res://scripts/linen_fold.gd")
+const Dovetail = preload("res://scripts/dovetail.gd")
+const Mortise = preload("res://scripts/mortise.gd")
 
-const CASES: Array = [SpareKey, RehearsalScore, GiltStamp, FerryBell, WeatherSlate, LoomShuttle, HiveSmoker, GlassPontil, PressProof, AssayCup, KilnChalk, TideLedger, NightBell, SaltMark, WickTrim, GlassAnneal, OrchardGraft, DyeVat, TarKettle, CorkPress, NetLoft, CaskHoop, LinenFold]
+const CASES: Array = [SpareKey, RehearsalScore, GiltStamp, FerryBell, WeatherSlate, LoomShuttle, HiveSmoker, GlassPontil, PressProof, AssayCup, KilnChalk, TideLedger, NightBell, SaltMark, WickTrim, GlassAnneal, OrchardGraft, DyeVat, TarKettle, CorkPress, NetLoft, CaskHoop, LinenFold, Dovetail, Mortise]
 
 
 static func all() -> Array:

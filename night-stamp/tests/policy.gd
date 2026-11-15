@@ -927,6 +927,87 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 		if earlier_match:
 			guess += shared_number
 		guess += row
+	if rule == "drop_if_odd_count":
+		var odd_filled = 0
+		for odd_row in 3:
+			for odd_col in 3:
+				if state.form[odd_row][odd_col] != null:
+					odd_filled += 1
+		if odd_filled % 2 == 0:
+			guess -= 2
+		else:
+			guess += 2
+	if rule == "double_next_empty":
+		var blank_next_row = row
+		var blank_next_col = col + 1
+		if blank_next_col > 2:
+			blank_next_row = row + 1
+			blank_next_col = 0
+		if blank_next_row > 2:
+			guess -= 6
+		elif state.form[blank_next_row][blank_next_col] == null:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+		var blank_prev_row = row
+		var blank_prev_col = col - 1
+		if blank_prev_col < 0:
+			blank_prev_row = row - 1
+			blank_prev_col = 2
+		if blank_prev_row >= 0 and state.form[blank_prev_row][blank_prev_col] != null:
+			var blank_prev = state.form[blank_prev_row][blank_prev_col]
+			guess -= _stamp_number(state, String(blank_prev["card_id"]), blank_prev_row, blank_prev_col)
+	if rule == "double_corner_cell":
+		if (row == 0 or row == 2) and (col == 0 or col == 2):
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 3
+	if rule == "yield_middle_pay":
+		if row == 1:
+			guess += 6
+		else:
+			guess -= 1
+	if rule == "drop_if_even_count":
+		var even_filled = 0
+		for even_row in 3:
+			for even_col in 3:
+				if state.form[even_row][even_col] != null:
+					even_filled += 1
+		if even_filled % 2 == 0:
+			guess += 2
+		else:
+			guess -= 2
+	if rule == "double_prior_empty":
+		var blank_prior_row = row
+		var blank_prior_col = col - 1
+		if blank_prior_col < 0:
+			blank_prior_row = row - 1
+			blank_prior_col = 2
+		if blank_prior_row < 0:
+			guess -= 6
+		elif state.form[blank_prior_row][blank_prior_col] == null:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+		var blank_next_row = row
+		var blank_next_col = col + 1
+		if blank_next_col > 2:
+			blank_next_row = row + 1
+			blank_next_col = 0
+		if blank_next_row <= 2 and state.form[blank_next_row][blank_next_col] != null:
+			var blank_next = state.form[blank_next_row][blank_next_col]
+			guess -= _stamp_number(state, String(blank_next["card_id"]), blank_next_row, blank_next_col)
+	if rule == "double_edge_middle":
+		var edge_middle = (row == 1 and col != 1) or (col == 1 and row != 1)
+		if edge_middle:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 3
+	if rule == "yield_top_pay":
+		if row == 0:
+			guess += 6
+		else:
+			guess -= 1
 	if rule == "ignore_isolated":
 		var neighbors = 0
 		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:

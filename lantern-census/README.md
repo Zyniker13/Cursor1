@@ -1,6 +1,6 @@
 # Lantern Census
 
-A sixteen-floor Godot 4 slice. The guild pays for the map you carry out. Oil is the turn budget. The cellar is the first floor. The cistern is the next one. The cloister is the third. The crypt is the fourth. The ossuary is the fifth. The reliquary is the sixth. The undercroft is the seventh. The well house is the eighth. The scriptorium is the ninth. The binding is the tenth. The chart room is the eleventh. The bell loft is the twelfth. The clock room is the thirteenth. The font is the fourteenth. The apse is the fifteenth. The choir is the sixteenth, with its own layout and its own census.
+An eighteen-floor Godot 4 slice. The guild pays for the map you carry out. Oil is the turn budget. The cellar is the first floor. The cistern is the next one. The cloister is the third. The crypt is the fourth. The ossuary is the fifth. The reliquary is the sixth. The undercroft is the seventh. The well house is the eighth. The scriptorium is the ninth. The binding is the tenth. The chart room is the eleventh. The bell loft is the twelfth. The clock room is the thirteenth. The font is the fourteenth. The apse is the fifteenth. The choir is the sixteenth. The rood is the seventeenth. The crossing is the eighteenth, with its own layout and its own census.
 
 ## Play
 
@@ -35,7 +35,7 @@ Town opens the floor select. It does not drop you straight down a shaft.
 
 ## Floor select
 
-The Cellar, the Cistern, the Cloister, the Crypt, the Ossuary, the Reliquary, the Undercroft, the Well House, the Scriptorium, the Binding, the Chart Room, the Bell Loft, the Clock Room, the Font, the Apse, and the Choir are listed separately. Each card says what that floor asks you to record, and whether its census is still open.
+The Cellar, the Cistern, the Cloister, the Crypt, the Ossuary, the Reliquary, the Undercroft, the Well House, the Scriptorium, the Binding, the Chart Room, the Bell Loft, the Clock Room, the Font, the Apse, the Choir, the Rood, and the Crossing are listed separately. Each card says what that floor asks you to record, and whether its census is still open.
 
 The small flask can reach every lift. A finished census on any floor needs the large flask.
 
@@ -70,7 +70,7 @@ The warden stands on one tile and never moves. It telegraphs the tile it will hi
 
 A hit burns 3 oil on top of the action's 1 oil. The hit does not end the descent while any oil remains. Oil at 0 puts the lamp out, ends the descent, and the sheet pays nothing. Stepping onto the lift extracts you even when that step spends your last oil.
 
-Hazards do not burn extra oil. They are census tiles. Stepping on a blank one inks it. On the cistern those cracks are called seeps, on the cloister they are called cinders, on the crypt they are called ash cracks, on the ossuary they are called chalk cracks, on the reliquary they are called nail cracks, on the undercroft they are called salt cracks, on the well house they are called well cracks, on the scriptorium they are called ink cracks, on the binding they are called glue cracks, on the chart room they are called chart cracks, on the bell loft they are called bell cracks, on the clock room they are called clock cracks, on the font they are called font cracks, on the apse they are called apse cracks, and on the choir they are called choir cracks; they use the same hazard rule.
+Hazards do not burn extra oil. They are census tiles. Stepping on a blank one inks it. On the cistern those cracks are called seeps, on the cloister they are called cinders, on the crypt they are called ash cracks, on the ossuary they are called chalk cracks, on the reliquary they are called nail cracks, on the undercroft they are called salt cracks, on the well house they are called well cracks, on the scriptorium they are called ink cracks, on the binding they are called glue cracks, on the chart room they are called chart cracks, on the bell loft they are called bell cracks, on the clock room they are called clock cracks, on the font they are called font cracks, on the apse they are called apse cracks, on the choir they are called choir cracks, on the rood they are called rood cracks, and on the crossing they are called crossing cracks; they use the same hazard rule.
 
 ## Payout
 
@@ -473,14 +473,79 @@ Record every corridor, the seventeen choir cracks, and the ring around the choir
 
 The full sheet is `81 × 3 + 17 × 8 + 15 = 394` coin. The shortest path to the lift is 19 steps, so the small flask has a margin of 5. A checked route that steps on every payable tile without taking a swing, then reaches the lift, costs 120 oil. The large flask holds 120, so a careful survey fits and a wandering one can still run the lamp out.
 
+## The Rood
+
+Hand-authored, 20 by 19. `S` start, `L` lift, `H` rood crack, `E` warden, `R` the rood. The rood is wall for the sheet and is drawn as a dark timber screen, distinct from the choir's pale stalls, the apse's cut stone, and the font's dark basin. Bumping it inks a wall. Walls are soot stone. Rood cracks read as iron seams. The west aisle and the north landing are open floor. The piers are ordinary walls.
+
+The landing east of the lift was open through column 17. Those three floor tiles, `(15,11)`, `(16,11)`, and `(17,11)`, are closed into the east pier so a swing-free survey fits in the large flask. The rood, the ring, the eighteen cracks, the warden, the lift, the start, and the 19-step path are unchanged.
+
+```
+####################
+#S.................#
+#.################.#
+#H####.........###H#
+#.####.RRRRRRR.###.#
+#H####.RRRRRRR.###H#
+#.####.RRRRRRR.###H#
+#H####.RRRRRRR.###H#
+#.####.RRRRRRR.###H#
+#H####.RRRRRRR.###H#
+#.####.........###.#
+#H........L....###H#
+#..H.H.H.E......H.H#
+#H##################
+#.##################
+####################
+####################
+####################
+####################
+```
+
+Record every corridor, the eighteen rood cracks, and the ring around the rood. The rood cracks are `(1,3)`, `(18,3)`, `(1,5)`, `(18,5)`, `(18,6)`, `(1,7)`, `(18,7)`, `(18,8)`, `(1,9)`, `(18,9)`, `(1,11)`, `(18,11)`, `(3,12)`, `(5,12)`, `(7,12)`, `(16,12)`, `(18,12)`, and `(1,13)`. The warden stands at `(9,12)`, with open corridor immediately west at `(8,12)` and east at `(10,12)`. The lift is at `(10,11)`. The start is at `(1,1)`. The rood is one solid 7×6 rectangle at columns 7–13 and rows 4–9. The ring is the 30-tile corridor cycle around that rood: `(6,3)` through `(14,3)`, the sides `(6,4)` `(14,4)` `(6,5)` `(14,5)` `(6,6)` `(14,6)` `(6,7)` `(14,7)` `(6,8)` `(14,8)` `(6,9)` `(14,9)`, and `(6,10)` through `(14,10)`. Every ring tile is ordinary floor.
+
+The full sheet is `82 × 3 + 18 × 8 + 15 = 405` coin. The shortest path to the lift is 19 steps, so the small flask has a margin of 5. A checked route that steps on every payable tile without taking a swing, then reaches the lift, costs 120 oil. The large flask holds 120, so a careful survey fits and a wandering one can still run the lamp out.
+
+## The Crossing
+
+Hand-authored, 21 by 20. `S` start, `L` lift, `H` crossing crack, `E` warden, `X` the crossing. The crossing is wall for the sheet and is drawn as a dark stone crossing, distinct from the rood's timber screen, the choir's pale stalls, and the apse's cut stone. Bumping it inks a wall. Walls are soot limestone. Crossing cracks read as iron seams. The west aisle and the north landing are open floor. The piers are ordinary walls.
+
+The landing east of the lift was open through column 18. Those eight floor tiles, `(11,11)`, `(12,11)`, `(13,11)`, `(14,11)`, `(15,11)`, `(16,11)`, `(17,11)`, and `(18,11)`, are closed into the east pier so a swing-free survey fits in the large flask. Left open, that landing surveyed at 130 oil. The crossing, the ring, the nineteen cracks, the warden, the lift, the start, and the 19-step path are unchanged.
+
+```
+#####################
+#S..................#
+#.#################.#
+#H####..........###H#
+#.####.XXXXXXXX.###H#
+#H####.XXXXXXXX.###H#
+#.####.XXXXXXXX.###H#
+#H####.XXXXXXXX.###H#
+#.####.XXXXXXXX.###H#
+#H####.XXXXXXXX.###H#
+#.####..........###.#
+#H........L########H#
+#..H.H.H.E.......H.H#
+#H###################
+#.###################
+#####################
+#####################
+#####################
+#####################
+#####################
+```
+
+Record every corridor, the nineteen crossing cracks, and the ring around the crossing. The crossing cracks are `(1,3)`, `(19,3)`, `(19,4)`, `(1,5)`, `(19,5)`, `(19,6)`, `(1,7)`, `(19,7)`, `(19,8)`, `(1,9)`, `(19,9)`, `(1,11)`, `(19,11)`, `(3,12)`, `(5,12)`, `(7,12)`, `(17,12)`, `(19,12)`, and `(1,13)`. The warden stands at `(9,12)`, with open corridor immediately west at `(8,12)` and east at `(10,12)`. The lift is at `(10,11)`. The start is at `(1,1)`. The crossing is one solid 8×6 rectangle at columns 7–14 and rows 4–9. The ring is the 32-tile corridor cycle around that crossing: `(6,3)` through `(15,3)`, the sides `(6,4)` `(15,4)` `(6,5)` `(15,5)` `(6,6)` `(15,6)` `(6,7)` `(15,7)` `(6,8)` `(15,8)` `(6,9)` `(15,9)`, and `(6,10)` through `(15,10)`. Every ring tile is ordinary floor.
+
+The full sheet is `81 × 3 + 19 × 8 + 15 = 410` coin. The shortest path to the lift is 19 steps, so the small flask has a margin of 5. A checked route that steps on every payable tile without taking a swing, then reaches the lift, costs 120 oil. The large flask holds 120, so a careful survey fits and a wandering one can still run the lamp out.
+
 ## Presentation
 
-All sixteen floors use the same code-drawn raycaster, with billboards for the warden, the swing, the hazards, and the lift. There are no imported textures. Cistern walls are cooler, the pit is teal, and the seeps read as green cracks. Cloister walls are warm limestone, the garth is a dark garden, and the cinders read as ember cracks. Crypt walls are violet stone, the tomb is a pale slab, and the ash reads as gray cracks. Ossuary walls are dry bone-stone, the stack is aged ivory, and the chalk reads as pale cracks. Reliquary walls are lacquered timber, the case is gilt wood, and the nails read as copper cracks. Undercroft walls are damp stone, the trough is dark brine, and the salt reads as pale crystals. Well house walls are dry yard stone, the shaft is dark water, and the well cracks read as wet blue seams. Scriptorium walls are lamp-lit oak, the desk is pale vellum, and the ink cracks read as blue-black seams. Binding walls are laid paper, the press is dark iron, and the glue cracks read as amber seams. Chart room walls are ink blue, the table is pale chart paper, and the chart cracks read as rust-red seams. Bell loft walls are soot, the bell is bronze, and the bell cracks read as amber seams. Clock room walls are dark timber, the clock is a pale clock face, and the clock cracks read as brass seams. Font walls are damp plaster, the font is a dark stone basin, and the font cracks read as pale lime seams. Apse walls are cut limestone, the apse is pale cut stone, and the apse cracks read as gilt seams. Choir walls are dark oak, the choir is pale timber stalls, and the choir cracks read as wax seams. The sheet, the town, and the floor select are drawn in code.
+All eighteen floors use the same code-drawn raycaster, with billboards for the warden, the swing, the hazards, and the lift. There are no imported textures. Cistern walls are cooler, the pit is teal, and the seeps read as green cracks. Cloister walls are warm limestone, the garth is a dark garden, and the cinders read as ember cracks. Crypt walls are violet stone, the tomb is a pale slab, and the ash reads as gray cracks. Ossuary walls are dry bone-stone, the stack is aged ivory, and the chalk reads as pale cracks. Reliquary walls are lacquered timber, the case is gilt wood, and the nails read as copper cracks. Undercroft walls are damp stone, the trough is dark brine, and the salt reads as pale crystals. Well house walls are dry yard stone, the shaft is dark water, and the well cracks read as wet blue seams. Scriptorium walls are lamp-lit oak, the desk is pale vellum, and the ink cracks read as blue-black seams. Binding walls are laid paper, the press is dark iron, and the glue cracks read as amber seams. Chart room walls are ink blue, the table is pale chart paper, and the chart cracks read as rust-red seams. Bell loft walls are soot, the bell is bronze, and the bell cracks read as amber seams. Clock room walls are dark timber, the clock is a pale clock face, and the clock cracks read as brass seams. Font walls are damp plaster, the font is a dark stone basin, and the font cracks read as pale lime seams. Apse walls are cut limestone, the apse is pale cut stone, and the apse cracks read as gilt seams. Choir walls are dark oak, the choir is pale timber stalls, and the choir cracks read as wax seams. Rood walls are soot stone, the rood is a dark timber screen, and the rood cracks read as iron seams. Crossing walls are soot limestone, the crossing is dark stone, and the crossing cracks read as iron seams. The sheet, the town, and the floor select are drawn in code.
 
 ## Limitations
 
-- Sixteen floors, one warden on each. The warden does not patrol or chase.
+- Eighteen floors, one warden on each. The warden does not patrol or chase.
 - The same floor can be turned in again on a later extract. A finished census stays finished.
 - Mouse look is optional and snaps by quarter turns. There is no sound.
 - Walls are for the sheet, not for the payout.
-- The automated checks cover the rules and all sixteen floors, including that the choir's true census is accepted and a wrong, short, or swapped sheet is rejected. They do not play the window, and this slice was not given a human playtest here.
+- The automated checks cover the rules and all eighteen floors, including that the crossing's true census is accepted and a wrong, short, or swapped sheet is rejected. They do not play the window, and this slice was not given a human playtest here.

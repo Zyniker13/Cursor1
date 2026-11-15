@@ -27,7 +27,8 @@ extends RefCounted
 ## tile has a negative dot product with the lamp's facing (north, east, south, or west).
 ## Sideways tiles count. The tile directly behind the lamp stays dark, so the player
 ## can stand there and snuff it. Walls block the flood; they are never lit. A grate does
-## not stop the flood and is never marked lit, so tiles past it still light.
+## not stop the flood and is never marked lit, so tiles past it still light. A sill stops
+## the flood. The sill itself is lit, and tiles past it stay dark.
 ##
 ## Movement
 ## Dark floor and a dark exit may be entered. A gap may be entered only while it is lit.
@@ -39,6 +40,9 @@ extends RefCounted
 ## as other lit floor, until the lamp covering it is snuffed.
 ## A grate is floor you may enter. It stays dark even when a lamp's diamond covers its
 ## tile, so standing on it is not a loss. A lit floor tile beside a grate is still refused.
+## A sill is floor. It may be entered while it is dark. A lamp lights it. A lit sill is
+## refused, the same as other lit floor, until the lamp covering it is snuffed. Stepping
+## onto a lit sill a guard is watching is a loss, the same as any lit floor.
 ##
 ## Plates
 ## The turn the player steps onto a plate calls the nearest guard, by the same rule as a
@@ -56,7 +60,7 @@ extends RefCounted
 ## still calls only the nearest guard. A plate still calls only the nearest guard.
 ## Lighting a lamp still calls nobody. A bell pulls a guard off an existing hold. A guard
 ## with no floor path to the bell is not called and keeps the rail. A grate is not a
-## floor path.
+## floor path. A sill is not a floor path.
 ##
 ## Grates
 ## A grate is floor you may enter. It is never lit, even when a lamp's diamond covers
@@ -67,18 +71,31 @@ extends RefCounted
 ## A plate still calls only the nearest guard. A bell still calls every guard who can
 ## reach it, and a grate is not a path. A lit floor tile beside a grate is still refused.
 ##
+## Sills
+## A sill is floor you may enter while it is dark. A lamp lights it. Standing on a lit
+## sill is a loss, the same as any lit floor: a lit sill no guard is watching is refused,
+## and stepping onto a lit sill a guard is watching loses. Light stops at the sill. The
+## sill itself is lit, and tiles past it stay dark even when the lamp's diamond would
+## have reached them. That is the difference from a grate, which stays dark and lets
+## light through. A guard cannot see through a sill. A lit sill can still be watched.
+## A guard cannot enter a sill. Pathing treats it as closed, the same as a wall, so a
+## called guard walks around it. A sill calls nobody. It is never a hold. A plate still
+## calls only the nearest guard. A bell still calls every guard who can reach it, and a
+## sill is not a path.
+##
 ## Vision
 ## Each guard watches a Manhattan diamond of their vision radius, and only on tiles that
 ## are currently lit. Walls and dark tiles block vision. A grate stays dark, so it blocks
-## vision the same way any dark floor does. A guard standing in the dark can still look
-## into an adjacent lit tile. The guard's own tile is not marked watched; standing on
-## the guard is a separate loss.
+## vision the same way any dark floor does. A sill blocks vision even when it is lit, so
+## a guard cannot see through it; the lit sill itself can still be watched. A guard
+## standing in the dark can still look into an adjacent lit tile. The guard's own tile
+## is not marked watched; standing on the guard is a separate loss.
 ##
 ## Guards
 ## Alerted guards take one step along a shortest 4-neighbor path to the tile they were
 ## called to, a lamp, a plate, or a bell. Neighbors are expanded north, east, south,
 ## then west, and that order breaks ties. They may walk on floor, plate, bell, and exit
-## tiles, lit or dark, but not through walls, gaps, or grates. When they step onto that tile
+## tiles, lit or dark, but not through walls, gaps, grates, or sills. When they step onto that tile
 ## they hold there. They do not resume the rail unless a later snuff, plate, or bell calls them.
 ## A guard who is not alert and not holding patrols their rail. The rail is a list of
 ## waypoints. rail_index is the waypoint they are walking toward, and rail_dir is +1 or -1.
@@ -90,7 +107,7 @@ extends RefCounted
 ## every lamp's lit flag, and every guard's position, rail index, rail direction, alert
 ## target, and hold flag.
 
-enum Tile { WALL, FLOOR, GAP, EXIT, PLATE, BELL, GRATE }
+enum Tile { WALL, FLOOR, GAP, EXIT, PLATE, BELL, GRATE, SILL }
 enum Result { OK, WIN, LOSS, ILLEGAL }
 
 const DIRS := [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]
@@ -133,6 +150,8 @@ static func build(rows: PackedStringArray, lamps: Array, guards: Array) -> Dicti
 					kind = Tile.BELL
 				"R":
 					kind = Tile.GRATE
+				"I":
+					kind = Tile.SILL
 				_:
 					push_error("bad tile '%s'" % ch)
 			tiles[y * width + x] = kind
@@ -236,32 +255,40 @@ static func lamp_lights(state: Dictionary, lamp: Dictionary) -> Array:
 	var seen := {}
 	var queue: Array = []
 	var origin := Vector2i(lamp["x"], lamp["y"])
-	if tile_at(state, origin.x, origin.y) != Tile.WALL and tile_at(state, origin.x, origin.y) != -1 and in_diamond(lamp, origin.x, origin.y):
+	var origin_kind := tile_at(state, origin.x, origin.y)
+	if origin_kind != Tile.WALL and origin_kind != -1 and in_diamond(lamp, origin.x, origin.y):
 		seen[origin] = true
 		queue.append(origin)
-	for dir in DIRS:
-		var nxt: Vector2i = origin + dir
-		var kind := tile_at(state, nxt.x, nxt.y)
-		if kind == -1 or kind == Tile.WALL:
-			continue
-		if not in_diamond(lamp, nxt.x, nxt.y):
-			continue
-		if seen.has(nxt):
-			continue
-		seen[nxt] = true
-		queue.append(nxt)
+	# A lamp standing on a sill does not shine past that sill. Every other lamp
+	# still seeds its neighbors, including a grate, which lets the flood through.
+	if origin_kind != Tile.SILL:
+		for dir in DIRS:
+			var nxt: Vector2i = origin + dir
+			var seed_kind := tile_at(state, nxt.x, nxt.y)
+			if seed_kind == -1 or seed_kind == Tile.WALL:
+				continue
+			if not in_diamond(lamp, nxt.x, nxt.y):
+				continue
+			if seen.has(nxt):
+				continue
+			seen[nxt] = true
+			queue.append(nxt)
 	var head := 0
 	while head < queue.size():
 		var cell: Vector2i = queue[head]
 		head += 1
-		if tile_at(state, cell.x, cell.y) != Tile.GRATE:
+		var cell_kind := tile_at(state, cell.x, cell.y)
+		if cell_kind != Tile.GRATE:
 			lit.append(cell)
+		# Light stops at a sill. The sill itself is lit; tiles past it stay dark.
+		if cell_kind == Tile.SILL:
+			continue
 		for dir in DIRS:
 			var nxt: Vector2i = cell + dir
 			if seen.has(nxt):
 				continue
-			var kind := tile_at(state, nxt.x, nxt.y)
-			if kind == -1 or kind == Tile.WALL:
+			var flood_kind := tile_at(state, nxt.x, nxt.y)
+			if flood_kind == -1 or flood_kind == Tile.WALL:
 				continue
 			if not in_diamond(lamp, nxt.x, nxt.y):
 				continue
@@ -295,6 +322,9 @@ static func watched_tiles(state: Dictionary, lit: Dictionary = {}) -> Dictionary
 			var dist: int = item["dist"]
 			if dist > 0 and lights.has(cell):
 				watched[cell] = true
+			# A sill can be watched, but vision does not pass through it.
+			if tile_at(state, cell.x, cell.y) == Tile.SILL:
+				continue
 			if dist >= int(guard["vision"]):
 				continue
 			var source_lit := dist == 0 or lights.has(cell)
@@ -499,7 +529,7 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 				return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "darkgap")
 		elif dest == Tile.GRATE:
 			pass
-		elif dest == Tile.FLOOR or dest == Tile.EXIT or dest == Tile.PLATE or dest == Tile.BELL:
+		elif dest == Tile.FLOOR or dest == Tile.EXIT or dest == Tile.PLATE or dest == Tile.BELL or dest == Tile.SILL:
 			if lit.has(Vector2i(nx, ny)):
 				return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "lit")
 		else:
@@ -534,7 +564,7 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 		if absi(int(lamp["x"]) - int(player["x"])) + absi(int(lamp["y"]) - int(player["y"])) != 1:
 			return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "range")
 		var here := tile_at(st, player["x"], player["y"])
-		if here != Tile.FLOOR and here != Tile.EXIT and here != Tile.PLATE and here != Tile.BELL and here != Tile.GRATE:
+		if here != Tile.FLOOR and here != Tile.EXIT and here != Tile.PLATE and here != Tile.BELL and here != Tile.GRATE and here != Tile.SILL:
 			return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "range")
 		var was_lit: bool = lamp["lit"]
 		lamp["lit"] = not was_lit
