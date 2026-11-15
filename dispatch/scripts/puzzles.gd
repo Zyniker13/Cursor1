@@ -1,9 +1,9 @@
 extends RefCounted
 
-## Buildings 1 through 8. Directions: 0 east, 1 south, 2 west, 3 north.
+## Buildings 1 through 9. Directions: 0 east, 1 south, 2 west, 3 north.
 ## `unlocks` is the single new block this puzzle introduces, or "".
 
-const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook"]
+const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook", "return"]
 
 
 static func all() -> Array:
@@ -1040,6 +1040,138 @@ static func all() -> Array:
 				_block("conveyor", 3, 3, 3),
 			]
 		),
+		_puzzle(
+			65, "About Face", "return",
+			"The dock is behind the parcel. Send it back.",
+			"",
+			"The parcel slides over the dock facing east. A return reverses that facing and steps west onto the dock on the next tick. A hook sends it north. A turn sends it south.",
+			4, 3,
+			[_cell(0, 0), _cell(1, 0), _cell(2, 0), _cell(3, 0), _cell(0, 2), _cell(1, 2), _cell(2, 2), _cell(3, 2)],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 2, "y": 1},
+			[{"color": "gray"}],
+			[
+				_block("slide", 1, 1, 0),
+				_block("return", 3, 1, 0),
+			]
+		),
+		_puzzle(
+			66, "Cut Back", "",
+			"Deliver three blues, then red, then the last blue.",
+			"",
+			"Slide red over the belt. The return puts red back on that belt ahead of the last blue. A hook sends red north, off the belt. A turn sends red south.",
+			4, 3,
+			[_cell(0, 0), _cell(1, 0), _cell(3, 0), _cell(0, 2), _cell(1, 2), _cell(3, 2)],
+			[_source(0, 1, 0, ["red"]), _source(2, 2, 3, ["blue", "blue", "blue", "blue"])],
+			{"x": 2, "y": 0},
+			[{"color": "blue"}, {"color": "blue"}, {"color": "blue"}, {"color": "red"}, {"color": "blue"}],
+			[
+				_block("slide", 1, 1, 0),
+				_block("conveyor", 2, 1, 3),
+				_block("return", 3, 1, 0),
+			]
+		),
+		_puzzle(
+			67, "Back Count", "",
+			"Stamp the parcel 1. The counter is behind the return.",
+			"",
+			"Slide over the counter and land on the return. It sends the parcel back onto the counter, which stamps 1 on the next tick. A hook and a turn miss the counter.",
+			4, 3,
+			[_cell(0, 0), _cell(1, 0), _cell(3, 0), _cell(0, 2), _cell(1, 2), _cell(2, 2), _cell(3, 2)],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 2, "y": 0},
+			[{"count": 1}],
+			[
+				_block("slide", 1, 1, 0),
+				_block("counter", 2, 1, 3),
+				_block("return", 3, 1, 0),
+			]
+		),
+		_puzzle(
+			68, "Clear Behind", "",
+			"Deliver red, then blue.",
+			"",
+			"The bridge hops the dock. The return sends red back onto it. The latch holds blue so they do not claim that dock on the same tick. A hook leaves red on the belt. A turn sends red south.",
+			4, 3,
+			[_cell(0, 0), _cell(1, 2), _cell(2, 2), _cell(3, 2)],
+			[_source(0, 2, 3, ["red"]), _source(3, 1, 3, ["blue"])],
+			{"x": 1, "y": 1},
+			[{"color": "red"}, {"color": "blue"}],
+			[
+				_block("bridge", 0, 1, 0),
+				_block("return", 2, 1, 0),
+				_block("conveyor", 1, 0, 1),
+				_block("conveyor", 2, 0, 2),
+				_block("latch", 3, 0, 2),
+			]
+		),
+		_puzzle(
+			69, "Two Returns", "",
+			"Deliver red, then blue. One return has to send them back the way they came.",
+			"",
+			"Red arrives facing east and goes back west. Blue arrives facing west and goes back east. A hook turns both a quarter counterclockwise. A turn turns both a quarter clockwise.",
+			6, 4,
+			[_cell(0, 0), _cell(1, 0), _cell(4, 0), _cell(5, 0), _cell(0, 2), _cell(1, 2), _cell(4, 3)],
+			[_source(0, 1, 0, ["red"]), _source(5, 3, 3, ["blue"])],
+			{"x": 2, "y": 0},
+			[{"color": "red"}, {"color": "blue"}],
+			[
+				_block("slide", 1, 1, 0),
+				_block("conveyor", 2, 1, 3),
+				_block("return", 3, 1, 0),
+				_block("conveyor", 4, 1, 1),
+				_block("bridge", 5, 1, 2),
+				_block("conveyor", 5, 2, 3),
+				_block("bridge", 4, 2, 2),
+				_block("conveyor", 2, 2, 3),
+				_block("conveyor", 3, 0, 3),
+				_block("conveyor", 3, 2, 1),
+			]
+		),
+		_puzzle(
+			70, "Second Return", "",
+			"Deliver the parcel yellow, stamped 2.",
+			"",
+			"Loop it through the counter. Paint it yellow on the way back. The bridge hops the dock, and the return steps back onto it.",
+			6, 3,
+			[
+				_cell(0, 0), _cell(3, 0), _cell(4, 0), _cell(5, 0),
+				_cell(0, 2), _cell(1, 2), _cell(2, 2), _cell(3, 2), _cell(4, 2), _cell(5, 2),
+			],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 4, "y": 1},
+			[{"color": "yellow", "count": 2}],
+			[
+				_block("counter", 1, 1, 0), _block("splitter", 2, 1, 3),
+				_block("painter", 2, 0, 2, "yellow"), _block("conveyor", 1, 0, 1),
+				_block("bridge", 3, 1, 0),
+				_block("return", 5, 1, 0),
+			]
+		),
+		_puzzle(
+			71, "Night Return", "",
+			"Deliver red 1, yellow 2, and blue 3.",
+			"",
+			"Red takes the filter, bridges over the counter, and the return puts it back on the counter for stamp 1. Gray takes the long belt and is primed yellow. Blue keeps its color and follows.",
+			5, 4,
+			[_cell(0, 0), _cell(1, 0), _cell(3, 0), _cell(4, 0), _cell(1, 2), _cell(4, 1), _cell(4, 3)],
+			[_source(2, 0, 1, ["gray", "blue", "red"])],
+			{"x": 3, "y": 1},
+			[{"color": "red", "count": 1}, {"color": "yellow", "count": 2}, {"color": "blue", "count": 3}],
+			[
+				_block("filter", 2, 1, 1, "red"),
+				_block("bridge", 2, 2, 0),
+				_block("return", 4, 2, 0),
+				_block("counter", 3, 2, 3),
+				_block("conveyor", 1, 1, 2),
+				_block("conveyor", 0, 1, 1),
+				_block("conveyor", 0, 2, 1),
+				_block("conveyor", 0, 3, 0),
+				_block("primer", 1, 3, 0, "yellow"),
+				_block("conveyor", 2, 3, 0),
+				_block("conveyor", 3, 3, 3),
+			]
+		),
 	]
 
 
@@ -1069,7 +1201,7 @@ static func _puzzle(id: int, title: String, unlocks: String, brief: String, how_
 		"dock": dock,
 		"order": order,
 		"reference": reference,
-		"building": 8 if id >= 58 else 7 if id >= 51 else 6 if id >= 44 else 5 if id >= 37 else 4 if id >= 30 else 3 if id >= 23 else 2 if id >= 16 else 1,
+		"building": 9 if id >= 65 else 8 if id >= 58 else 7 if id >= 51 else 6 if id >= 44 else 5 if id >= 37 else 4 if id >= 30 else 3 if id >= 23 else 2 if id >= 16 else 1,
 	}
 
 
