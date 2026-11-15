@@ -1,6 +1,6 @@
 # Casework
 
-A deduction game with three cases, **The spare key**, **The rehearsal score**, and **The gilt stamp**.
+A deduction game with four cases, **The spare key**, **The rehearsal score**, **The gilt stamp**, and **The ferry bell**.
 
 Pick a file. That file keeps a single timeline. You read the exhibits and pin who, the room, and the hour. A theory is accepted only when it fits every exhibit. A theory that does not fit comes back naming the exhibits it contradicts. An empty pin is refused by the name of the missing slot.
 
@@ -13,6 +13,8 @@ There is no voice. The papers and the board are the whole case.
 **The rehearsal score.** The rehearsal score left its shelf at the hall. Name who took it, the room they took it to, and the hour.
 
 **The gilt stamp.** The gilt stamp left its hook at the bindery. Name who took it, the room they took it to, and the hour.
+
+**The ferry bell.** The ferry bell left the ticket window at the landing. Name who took it, the room they took it to, and the hour.
 
 ## Play
 
