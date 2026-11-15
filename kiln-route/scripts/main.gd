@@ -201,6 +201,7 @@ func _kind_for_key(code: int) -> int:
 		KEY_COMMA: Rules.Kind.TWIN,
 		KEY_APOSTROPHE: Rules.Kind.PASS,
 		KEY_KP_DIVIDE: Rules.Kind.PASS,
+		KEY_PERIOD: Rules.Kind.SLIP,
 	}
 	if not map.has(code):
 		return -1
@@ -361,6 +362,7 @@ func _kind_order() -> Array:
 		Rules.Kind.DWELL,
 		Rules.Kind.TWIN,
 		Rules.Kind.PASS,
+		Rules.Kind.SLIP,
 	]
 
 
@@ -487,7 +489,7 @@ func _draw() -> void:
 	var size: Vector2 = lay.size
 	draw_rect(Rect2(Vector2.ZERO, size), COL_BG)
 	_text(Vector2(24, 14), "KILN ROUTE", 28, COL_TEXT)
-	_text(Vector2(236, 26), "ten wings", 15, COL_DIM)
+	_text(Vector2(236, 26), "twelve wings", 15, COL_DIM)
 	var minute := "minute  %d / %d" % [_shown_tick(), Rules.SIM_TICKS]
 	var minute_w := font.get_string_size(minute, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
 	_text(Vector2(size.x - 24 - minute_w, 26), minute, 15, COL_DIM)
@@ -497,7 +499,7 @@ func _draw() -> void:
 	_draw_grid(lay)
 	_draw_side(lay)
 	_draw_tray(lay)
-	_text(Vector2(24, size.y - 28), "1-9 0 - = \\ ; , select   R rotate   LMB place or pick up   RMB rotate   Space run   F skip   Bksp restart", 13, COL_DIM)
+	_text(Vector2(24, size.y - 28), "1-9 0 - = \\ ; , ' . select   R rotate   LMB place or pick up   RMB rotate   Space run   F skip   Bksp restart", 13, COL_DIM)
 
 
 func _draw_tabs(lay: Dictionary) -> void:
@@ -729,6 +731,17 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 		var gate := center - along * body.size.x * 0.16
 		draw_line(gate - across * body.size.x * 0.28, gate - across * body.size.x * 0.08, ink, thick)
 		draw_line(gate + across * body.size.x * 0.08, gate + across * body.size.x * 0.28, ink, thick)
+	elif kind == Rules.Kind.SLIP:
+		var along := Vector2(Rules.vec(dir))
+		var across := Vector2(Rules.vec(Rules.right(dir)))
+		var ink := Color(1, 1, 1, 0.88 * alpha)
+		var thick := maxf(2.0, body.size.x * 0.07)
+		var seat := center - along * body.size.x * 0.2
+		var half := body.size.x * 0.1
+		draw_rect(Rect2(seat - Vector2(half, half), Vector2(half * 2.0, half * 2.0)), ink)
+		var tail := center + across * body.size.x * 0.22 - along * body.size.x * 0.02
+		var tip := center - across * body.size.x * 0.16 + along * body.size.x * 0.28
+		draw_line(tail, tip, ink, thick)
 	elif kind == Rules.Kind.GRATE:
 		var along := Vector2(Rules.vec(dir))
 		var across := Vector2(Rules.vec(Rules.right(dir)))
@@ -912,6 +925,8 @@ func _key_label(kind: int) -> String:
 		return ","
 	if kind == Rules.Kind.PASS:
 		return "'"
+	if kind == Rules.Kind.SLIP:
+		return "."
 	return str(kind + 1)
 
 
@@ -948,6 +963,8 @@ func _kind_color(kind: int) -> Color:
 		return Color("7d6bbd")
 	if kind == Rules.Kind.PASS:
 		return Color("d07a8c")
+	if kind == Rules.Kind.SLIP:
+		return Color("3f6f78")
 	return Color("c792ef")
 
 
