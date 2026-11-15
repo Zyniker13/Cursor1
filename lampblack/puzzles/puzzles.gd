@@ -3,7 +3,7 @@ extends RefCounted
 
 const Rules = preload("res://rules/rules.gd")
 
-## Seven wings of the closed museum. Each solution is a list of actions the rules
+## Eight wings of the closed museum. Each solution is a list of actions the rules
 ## accept. Tokens are R L U D, W for wait, and T0 / T1 for lamps.
 
 
@@ -71,6 +71,8 @@ static func _puzzle(number: int, title: String, lesson: String, rows: PackedStri
 		wing_number = number - 32
 	elif wing == "Gallery Wing":
 		wing_number = number - 38
+	elif wing == "Court Wing":
+		wing_number = number - 44
 	return {
 		"number": number,
 		"wing": wing,
@@ -107,6 +109,7 @@ static func _all() -> Array:
 	puzzles.append_array(_attic_wing())
 	puzzles.append_array(_cellar_wing())
 	puzzles.append_array(_gallery_wing())
+	puzzles.append_array(_court_wing())
 	return puzzles
 
 
@@ -893,5 +896,112 @@ static func _gallery_wing() -> Array:
 			[_guard(5, 3, [Vector2i(5, 3)], 1)],
 			"D R R R T0 U R R R D",
 			"Gallery Wing"
+		),
+	]
+
+
+static func _court_wing() -> Array:
+	return [
+		_puzzle(
+			45,
+			"The First Plate",
+			"This room is about the rule that the turn you step onto a plate calls the nearest guard. He takes that step on the next turn, then walks to the plate and holds, and the arrow shows the tile beforehand. A plate is floor you may enter while it is dark; a lit plate stays closed. Step on the plate and leave the square he is about to take. Stay, and he steps onto you.",
+			PackedStringArray([
+				"######",
+				"#S####",
+				"#.PX.#",
+				"#....#",
+				"#....#",
+				"######",
+			]),
+			[_lamp(1, 4, "e", 1)],
+			[_guard(2, 3, [Vector2i(2, 3)], 2)],
+			"D R R",
+			"Court Wing"
+		),
+		_puzzle(
+			46,
+			"The Quiet Wait",
+			"This room is about the rule that waiting on a plate does not call the guard a second time. Step on the plate, wait once, then leave for the door. Step off and back on, and that second call catches the square you return through.",
+			PackedStringArray([
+				"##########",
+				"#X..P...S#",
+				"###......#",
+				"#........#",
+				"##########",
+			]),
+			[_lamp(8, 3, "s", 1)],
+			[_guard(6, 3, [Vector2i(6, 3)], 2)],
+			"L L L L W L L L",
+			"Court Wing"
+		),
+		_puzzle(
+			47,
+			"The Far Keeper",
+			"This room is about the rule that a plate calls the nearer guard. Distance is Manhattan, and the lowest number would win a tie. The far keeper does not move. The lit square in the lower room is in the near keeper's eyes.",
+			PackedStringArray([
+				"##############",
+				"#S.P........X#",
+				"#............#",
+				"#............#",
+				"##############",
+			]),
+			[_lamp(2, 3, "s", 1)],
+			[
+				_guard(12, 2, [Vector2i(12, 2)], 2),
+				_guard(2, 2, [Vector2i(2, 2)], 2),
+			],
+			"R R R R R R R R R R R",
+			"Court Wing"
+		),
+		_puzzle(
+			48,
+			"The Lit Plate",
+			"This room is about the rule that a lit plate is refused until the lamp covering it is snuffed. The snuff calls the keeper. The later step onto the dark plate calls him again. Crossing while the plate is still lit is refused. The lit square in the lower east is in his eyes.",
+			PackedStringArray([
+				"############",
+				"#S.P....X###",
+				"#.#.######.#",
+				"#..........#",
+				"############",
+			]),
+			[_lamp(3, 2, "n", 1), _lamp(10, 3, "e", 0)],
+			[_guard(10, 2, [Vector2i(10, 2)], 2)],
+			"D D R R T0 U U R R R R R",
+			"Court Wing"
+		),
+		_puzzle(
+			49,
+			"The Plate Gap",
+			"This room is about the rule that stepping on a plate calls the nearest guard toward that plate. The gap beyond stays lit. Step on the plate and he leaves the gap, then cross while its lamp is still burning. Cross while he is still watching and you lose.",
+			PackedStringArray([
+				"##########",
+				"#S....G.X#",
+				"#..P.....#",
+				"#........#",
+				"##########",
+			]),
+			[_lamp(6, 2, "n", 1)],
+			[_guard(6, 2, [Vector2i(6, 2)], 1)],
+			"R R D U R R R R R",
+			"Court Wing"
+		),
+		_puzzle(
+			50,
+			"The Last Hold",
+			"This room is about the rule that a called guard walks to the plate and holds. He does not resume his rail. Step off the plate and wait until he holds, then cross the lit gap to the exit his rail used to cover. If he resumed the rail, that gap would be watched.",
+			PackedStringArray([
+				"#############",
+				"#S........###",
+				"#........G.X#",
+				"#.........###",
+				"#.P.........#",
+				"#...........#",
+				"#############",
+			]),
+			[_lamp(9, 3, "n", 1)],
+			[_guard(8, 3, [Vector2i(8, 3), Vector2i(8, 4)], 3)],
+			"D D D R L W W W W W W U U R R R R R R R R R R",
+			"Court Wing"
 		),
 	]

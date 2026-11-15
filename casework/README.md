@@ -1,6 +1,6 @@
 # Casework
 
-A deduction game with sixteen cases, **The spare key**, **The rehearsal score**, **The gilt stamp**, **The ferry bell**, **The weather slate**, **The loom shuttle**, **The hive smoker**, **The glass pontil**, **The press proof**, **The assay cup**, **The kiln chalk**, **The tide ledger**, **The night bell**, **The salt mark**, **The wick trim**, and **The glass anneal**.
+A deduction game with eighteen cases, **The spare key**, **The rehearsal score**, **The gilt stamp**, **The ferry bell**, **The weather slate**, **The loom shuttle**, **The hive smoker**, **The glass pontil**, **The press proof**, **The assay cup**, **The kiln chalk**, **The tide ledger**, **The night bell**, **The salt mark**, **The wick trim**, **The glass anneal**, **The orchard graft**, and **The dye vat**.
 
 Pick a file. That file keeps a single timeline. You read the exhibits and pin who, the room, and the hour. A theory is accepted only when it fits every exhibit. A theory that does not fit comes back naming the exhibits it contradicts. An empty pin is refused by the name of the missing slot.
 
@@ -39,6 +39,10 @@ There is no voice. The papers and the board are the whole case.
 **The wick trim.** The wick trim left its peg at the lamp house. Name who trimmed it, the room they trimmed it in, and the hour.
 
 **The glass anneal.** The glass anneal left its peg at the glasshouse. Name who annealed the gather, the room they annealed it in, and the hour.
+
+**The orchard graft.** The orchard graft left its peg at the nursery. Name who grafted the scion, the room they grafted it in, and the hour.
+
+**The dye vat.** The dye vat left its peg at the dye house. Name who dipped the skein, the room they dipped it in, and the hour.
 
 ## Play
 
