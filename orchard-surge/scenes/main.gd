@@ -24,6 +24,7 @@ const KIND_COLOR := [
 	Color(0.45, 0.78, 0.86, 1),
 	Color(0.72, 0.64, 0.86, 1),
 	Color(0.55, 0.84, 0.78, 1),
+	Color(0.71, 0.48, 0.30, 1),
 ]
 
 var sim = null
@@ -101,6 +102,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			selected = 8
 		elif event.is_action_pressed("plant_0"):
 			selected = 9
+		elif event.is_action_pressed("plant_b"):
+			selected = 10
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if sim != null and sim.outcome == Sim.OUTCOME_RUNNING and sim.phase == Sim.PHASE_PLANT:
 			var cell := _mouse_cell()
@@ -165,6 +168,7 @@ func _bind_keys() -> void:
 	_bind("plant_8", [KEY_8, KEY_KP_8])
 	_bind("plant_9", [KEY_9, KEY_KP_9])
 	_bind("plant_0", [KEY_0, KEY_KP_0])
+	_bind("plant_b", [KEY_B])
 	_bind("restart", [KEY_R])
 
 
@@ -275,7 +279,7 @@ func _build_hud() -> void:
 	hp_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(hp_fill)
 
-	seeds_label = _label("Seeds 8", 15, Color("e7d7a4"))
+	seeds_label = _label("Seeds 9", 15, Color("e7d7a4"))
 	seeds_label.position = Vector2(704, 40)
 	seeds_label.size = Vector2(110, 24)
 	layer.add_child(seeds_label)
@@ -299,7 +303,7 @@ func _build_hud() -> void:
 	hint_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hint_box.clip_contents = true
 	layer.add_child(hint_box)
-	hint_label = _label("Move: WASD or arrows, paused while planting. Plant with 1-9 or 0, then click a tile. Only a wick burns shroud. Only a briar cracks rind. Only a flare melts pitch. Only a hearth thaws frost. Only a shear cuts web. Only a chime cracks glass.", 13, Color("aeb8a4"))
+	hint_label = _label("Move: WASD or arrows, paused while planting. Plant with 1-9, 0, or B, then click a tile. Only a wick burns shroud. Only a briar cracks rind. Only a flare melts pitch. Only a hearth thaws frost. Only a shear cuts web. Only a chime cracks glass. Only a rasp strips scale.", 13, Color("aeb8a4"))
 	hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	hint_label.clip_text = true
@@ -397,7 +401,7 @@ func _refresh_hud() -> void:
 		return
 	overlay.visible = true
 	if sim.outcome == Sim.OUTCOME_WON:
-		outcome_label.text = "The surge breaks.\nFifteen nights passed, and the orchard still stands."
+		outcome_label.text = "The surge breaks.\nSeventeen nights passed, and the orchard still stands."
 	else:
 		outcome_label.text = "The lights went out.\nHealth reached zero before the orchard was clear."
 
@@ -405,6 +409,8 @@ func _refresh_hud() -> void:
 func _hotkey_text(kind: int) -> String:
 	if kind == Catalog.CHIME:
 		return "0"
+	if kind == Catalog.RASP:
+		return "B"
 	return str(kind + 1)
 
 
@@ -505,6 +511,8 @@ func _draw_fog() -> void:
 				draw_rect(rect, Color(0.78, 0.7, 0.95, 0.1), true)
 			if sim.tile_cracks_glass(tx, ty):
 				draw_rect(rect, Color(0.7, 0.95, 0.88, 0.1), true)
+			if sim.tile_strips_scale(tx, ty):
+				draw_rect(rect, Color(0.86, 0.62, 0.32, 0.1), true)
 
 
 func _draw_hover() -> void:
@@ -611,6 +619,20 @@ func _draw_plant(plant) -> void:
 			draw_circle(at + Vector2(7, 9), 2.4, Color("e9fffb"))
 			var chime_pulse := 0.55 + 0.45 * sin(float(sim.tick) * 0.19)
 			draw_circle(at + Vector2(0, 2), 12.0, Color(0.7, 0.95, 0.9, 0.12 + 0.1 * chime_pulse))
+		Catalog.RASP:
+			draw_rect(Rect2(at + Vector2(-4, 6), Vector2(8, 12)), Color("5a3e2c"), true)
+			draw_colored_polygon(PackedVector2Array([
+				at + Vector2(-5, 8),
+				at + Vector2(5, 8),
+				at + Vector2(3, -16),
+				at + Vector2(-3, -16),
+			]), Color("c4895a"))
+			draw_line(at + Vector2(-4, 2), at + Vector2(4, -1), Color("8a5a34"), 1.2)
+			draw_line(at + Vector2(-4, -2), at + Vector2(4, -5), Color("8a5a34"), 1.2)
+			draw_line(at + Vector2(-3, -6), at + Vector2(3, -9), Color("f0d2b0"), 1.2)
+			draw_line(at + Vector2(-3, -10), at + Vector2(3, -13), Color("f0d2b0"), 1.2)
+			var rasp_pulse := 0.55 + 0.45 * sin(float(sim.tick) * 0.17)
+			draw_circle(at + Vector2(0, -4), 12.0, Color(0.86, 0.58, 0.32, 0.12 + 0.1 * rasp_pulse))
 		_:
 			draw_circle(at, 6.0, Color.WHITE)
 
@@ -646,6 +668,9 @@ func _draw_shot(shot) -> void:
 			draw_line(at + Vector2(-4, 0), at + Vector2(4, 0), Color("d8fff6"), 1.4)
 			draw_line(at + Vector2(0, -4), at + Vector2(0, 4), Color("d8fff6"), 1.4)
 			draw_circle(at, 1.6, Color("f4fffd"))
+		Catalog.RASP:
+			draw_line(at - shot.dir * 6.0, at, Color("e0b07a"), 2.2)
+			draw_circle(at, 1.7, Color("f6e2c8"))
 		_:
 			draw_circle(at, 6.0, Color("ffb15a"))
 			draw_circle(at, 2.5, Color("fff0d2"))
@@ -677,10 +702,13 @@ func _draw_pest(pest) -> void:
 	elif pest.glassed:
 		wing = Color("7eaaa4")
 		body = Color("d7f3ee")
+	elif pest.scaled:
+		wing = Color("8a7058")
+		body = Color("e6d2b4")
 	if pest.slow_ticks > 0:
 		wing = Color("2f6b58")
 		body = Color("21483c")
-		if pest.shrouded or pest.rinded or pest.pitched or pest.frosted or pest.webbed or pest.glassed:
+		if pest.shrouded or pest.rinded or pest.pitched or pest.frosted or pest.webbed or pest.glassed or pest.scaled:
 			wing = Color("2a4038")
 			body = Color("1c2c28")
 	draw_colored_polygon(PackedVector2Array([
@@ -708,6 +736,8 @@ func _draw_pest(pest) -> void:
 		eye = Color("f6e9ff")
 	elif pest.glassed:
 		eye = Color("e8fff8")
+	elif pest.scaled:
+		eye = Color("f0d8b0")
 	elif pest.pitched:
 		eye = Color("e6c56a")
 	draw_circle(at + Vector2(-2, -1), 1.3, eye)
@@ -724,6 +754,8 @@ func _draw_pest(pest) -> void:
 		draw_arc(at, 25.0, 0.35, TAU - 0.55, 18, Color(0.86, 0.78, 0.98, 0.9), 1.3, true)
 	if pest.glassed:
 		draw_arc(at, 28.0, 0.2, TAU - 0.45, 20, Color(0.72, 0.95, 0.9, 0.9), 1.3, true)
+	if pest.scaled:
+		draw_arc(at, 31.0, 0.25, TAU - 0.4, 20, Color(0.86, 0.64, 0.36, 0.9), 1.3, true)
 	if pest.hp < Sim.PEST_HP:
 		var width := 16.0 * clampf(float(pest.hp) / float(Sim.PEST_HP), 0.0, 1.0)
 		draw_rect(Rect2(at + Vector2(-8, -14), Vector2(16, 3)), Color(0, 0, 0, 0.45), true)
