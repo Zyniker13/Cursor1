@@ -3,7 +3,7 @@ extends RefCounted
 
 const Rules = preload("res://rules/rules.gd")
 
-## Nine wings of the closed museum. Each solution is a list of actions the rules
+## Ten wings of the closed museum. Each solution is a list of actions the rules
 ## accept. Tokens are R L U D, W for wait, and T0 / T1 for lamps.
 
 
@@ -75,6 +75,8 @@ static func _puzzle(number: int, title: String, lesson: String, rows: PackedStri
 		wing_number = number - 44
 	elif wing == "Nave Wing":
 		wing_number = number - 50
+	elif wing == "Cloister Wing":
+		wing_number = number - 56
 	return {
 		"number": number,
 		"wing": wing,
@@ -113,6 +115,7 @@ static func _all() -> Array:
 	puzzles.append_array(_gallery_wing())
 	puzzles.append_array(_court_wing())
 	puzzles.append_array(_nave_wing())
+	puzzles.append_array(_cloister_wing())
 	return puzzles
 
 
@@ -1126,5 +1129,109 @@ static func _nave_wing() -> Array:
 			],
 			"D D D R L W W W W W W W U U R R R R R R R R R R",
 			"Nave Wing"
+		),
+	]
+
+
+static func _cloister_wing() -> Array:
+	return [
+		_puzzle(
+			57,
+			"The First Grate",
+			"This room is about the rule that a grate is floor you may enter and it stays dark even when a lamp covers its tile, so you cross the lit hall on the grate and leave the square the keeper is about to take.",
+			PackedStringArray([
+				"#########",
+				"#.SRRR.X#",
+				"#.......#",
+				"#.......#",
+				"#########",
+			]),
+			[_lamp(4, 2, "n", 2)],
+			[_guard(2, 2, [Vector2i(2, 2), Vector2i(2, 1)], 2)],
+			"R R R R R",
+			"Cloister Wing"
+		),
+		_puzzle(
+			58,
+			"The Passed Light",
+			"This room is about the rule that light does not stop at a grate and still lights the door beyond it. The grate itself stays dark. That door stays closed until you snuff it.",
+			PackedStringArray([
+				"############",
+				"#...########",
+				"#S.R......X#",
+				"############",
+			]),
+			[_lamp(2, 2, "e", 8)],
+			[_guard(3, 1, [Vector2i(3, 1)], 2)],
+			"T0 R R R R R R R R R",
+			"Cloister Wing"
+		),
+		_puzzle(
+			59,
+			"The Dark Cut",
+			"This room is about the rule that a dark grate blocks a guard's sight the same way dark floor does. The lit gap beyond the grate is not in his eyes, so you cross it without snuffing, but the gap still has to be lit to enter.",
+			PackedStringArray([
+				"###########",
+				"#S..RRG.X.#",
+				"#.###.#####",
+				"#.........#",
+				"###########",
+			]),
+			[_lamp(5, 3, "n", 3)],
+			[_guard(5, 2, [Vector2i(5, 2)], 4)],
+			"R R R R R R R",
+			"Cloister Wing"
+		),
+		_puzzle(
+			60,
+			"The Long Road",
+			"This room is about the rule that a called guard cannot enter a grate, so he takes the longer floor road. You cross the grate before he arrives.",
+			PackedStringArray([
+				"#############",
+				"#S....R....X#",
+				"##.###.#.##.#",
+				"#...........#",
+				"#...........#",
+				"#...........#",
+				"#############",
+			]),
+			[_lamp(4, 1, "e", 1), _lamp(9, 4, "w", 1)],
+			[_guard(10, 4, [Vector2i(10, 4)], 2)],
+			"R R T0 R R R R R R R R",
+			"Cloister Wing"
+		),
+		_puzzle(
+			61,
+			"The Lit Edge",
+			"This room is about the rule that a lit floor tile beside a grate is still refused. The grate itself is enterable. Snuff the edge, then leave.",
+			PackedStringArray([
+				"##########",
+				"#S..R...X#",
+				"##.#######",
+				"#........#",
+				"##########",
+			]),
+			[_lamp(5, 1, "w", 1), _lamp(5, 3, "w", 1)],
+			[_guard(6, 3, [Vector2i(6, 3)], 3)],
+			"R R R T0 R R R R",
+			"Cloister Wing"
+		),
+		_puzzle(
+			62,
+			"The Last Grate",
+			"This room is about the rule that a called guard's road treats a grate as closed. Cross the grates, then the lit gap, once his road around the grate has taken him off the door.",
+			PackedStringArray([
+				"#############",
+				"#S...RR...GX#",
+				"##.###.#.##.#",
+				"#...........#",
+				"#...........#",
+				"#...........#",
+				"#############",
+			]),
+			[_lamp(4, 1, "e", 1), _lamp(10, 2, "e", 1)],
+			[_guard(10, 2, [Vector2i(10, 2)], 1)],
+			"R R T0 R R R R R R R R",
+			"Cloister Wing"
 		),
 	]

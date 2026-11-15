@@ -25,6 +25,7 @@ func _initialize() -> void:
 	_test_watch(errors)
 	_test_lamp(errors)
 	_test_bell(errors)
+	_test_horn(errors)
 	_test_determinism(errors)
 	_test_population(errors)
 	_test_no_select_ant(errors)
@@ -98,7 +99,7 @@ func _test_determinism(errors: Array) -> void:
 	var plans := _plans(errors)
 	if plans.is_empty():
 		return
-	for plan_name in ["winning", "all_rake", "dry_pans", "continued", "late_pans", "no_crib", "carted", "late_crib", "dry_crib", "no_ship", "shipped", "late_ship", "dry_ship", "no_stall", "sold", "late_sold", "dry_sold", "no_yard", "banked", "late_banked", "dry_banked", "no_bunk", "hired", "late_hired", "dry_hired", "no_loft", "lofted", "late_lofted", "dry_lofted", "no_gate", "gated", "late_gated", "dry_gated", "no_wage", "paid", "late_paid", "dry_paid", "no_relief", "posted", "late_posted", "dry_posted", "no_watch", "stood", "late_stood", "dry_stood", "watch_only", "no_lamp", "lit", "late_lit", "dry_lit", "lamp_only", "no_bell", "rung", "late_rung", "dry_rung", "bell_only"]:
+	for plan_name in ["winning", "all_rake", "dry_pans", "continued", "late_pans", "no_crib", "carted", "late_crib", "dry_crib", "no_ship", "shipped", "late_ship", "dry_ship", "no_stall", "sold", "late_sold", "dry_sold", "no_yard", "banked", "late_banked", "dry_banked", "no_bunk", "hired", "late_hired", "dry_hired", "no_loft", "lofted", "late_lofted", "dry_lofted", "no_gate", "gated", "late_gated", "dry_gated", "no_wage", "paid", "late_paid", "dry_paid", "no_relief", "posted", "late_posted", "dry_posted", "no_watch", "stood", "late_stood", "dry_stood", "watch_only", "no_lamp", "lit", "late_lit", "dry_lit", "lamp_only", "no_bell", "rung", "late_rung", "dry_rung", "bell_only", "no_horn", "sounded", "late_sounded", "dry_sounded", "horn_only"]:
 		var before := errors.size()
 		var first = _run_plan(plans, plan_name, errors)
 		var second = _run_plan(plans, plan_name, errors)
@@ -150,6 +151,10 @@ func _test_determinism(errors: Array) -> void:
 		if int(first.get_rung()) != int(second.get_rung()) or int(first.get_lamp_left()) != int(second.get_lamp_left()):
 			_fail(errors, "%s bell runs differed (%d unrung %d, and %d unrung %d)" % [
 				plan_name, first.get_rung(), first.get_lamp_left(), second.get_rung(), second.get_lamp_left(),
+			])
+		if int(first.get_sounded()) != int(second.get_sounded()) or int(first.get_bell_left()) != int(second.get_bell_left()):
+			_fail(errors, "%s horn runs differed (%d unsounded %d, and %d unsounded %d)" % [
+				plan_name, first.get_sounded(), first.get_bell_left(), second.get_sounded(), second.get_bell_left(),
 			])
 		if String(first.get_summary()) != String(second.get_summary()):
 			_fail(errors, "%s summaries differed" % plan_name)
@@ -310,6 +315,13 @@ func _test_scene_boots(errors: Array) -> void:
 	node._on_key(KEY_SPACE)
 	if int(node.sim.get_paint(7, -4)) != Sim.BELL:
 		_fail(errors, "keyboard cursor did not paint a bell")
+	node._on_key(KEY_J)
+	if not String(node.mode_label.text).contains("Horn"):
+		_fail(errors, "horn mark was not named")
+	node._on_key(KEY_UP)
+	node._on_key(KEY_SPACE)
+	if int(node.sim.get_paint(7, -5)) != Sim.HORN:
+		_fail(errors, "keyboard cursor did not paint a horn")
 	var season = node.find_child("SeasonNote", true, false)
 	if season == null or not String(season.text).to_lower().contains("pan"):
 		_fail(errors, "season note does not mention pans")
@@ -364,6 +376,10 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "rules text does not mention the bell")
 	if rules == null or not String(rules.text).to_lower().contains("two"):
 		_fail(errors, "rules text does not name the bell cap of two")
+	if rules == null or not String(rules.text).to_lower().contains("horn"):
+		_fail(errors, "rules text does not mention the horn")
+	if rules == null or not String(rules.text).to_lower().contains("sound one"):
+		_fail(errors, "rules text does not name the horn cap of one")
 	var hint = node.find_child("HintLine", true, false)
 	if hint == null or not String(hint.text).to_lower().contains("watch"):
 		_fail(errors, "hint line does not name the watch")
@@ -371,6 +387,8 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "hint line does not name the lamp")
 	if hint == null or not String(hint.text).to_lower().contains("bell"):
 		_fail(errors, "hint line does not name the bell")
+	if hint == null or not String(hint.text).to_lower().contains("horn"):
+		_fail(errors, "hint line does not name the horn")
 	var spun_ship := 0
 	while int(node.sim.get_beat()) != Sim.SHIPPING and not node.sim.is_over() and spun_ship < int(Sim.CART_TICK) + 2:
 		node.sim.tick()
@@ -512,10 +530,23 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "bell countdown started at %d, expected %d" % [node.sim.get_ticks_until_rain(), Sim.BELL_TICK])
 	elif not String(node.season_label.text).to_lower().contains("bell"):
 		_fail(errors, "bell note does not mention the bell: %s" % node.season_label.text)
+	var spun_horn := 0
+	while int(node.sim.get_beat()) != Sim.HORNING and not node.sim.is_over() and spun_horn < int(Sim.BELL_TICK) + 2:
+		node.sim.tick()
+		spun_horn += 1
+	node._refresh()
+	if int(node.sim.get_beat()) != Sim.HORNING or node.sim.is_over():
+		_fail(errors, "the scene did not open the horn beat")
+	elif not String(node.rain_label.text).to_lower().contains("horn"):
+		_fail(errors, "horn countdown was not named: %s" % node.rain_label.text)
+	elif int(node.sim.get_ticks_until_rain()) != int(Sim.HORN_TICK):
+		_fail(errors, "horn countdown started at %d, expected %d" % [node.sim.get_ticks_until_rain(), Sim.HORN_TICK])
+	elif not String(node.season_label.text).to_lower().contains("horn"):
+		_fail(errors, "horn note does not mention the horn: %s" % node.season_label.text)
 	node._on_key(KEY_R)
-	if int(node.sim.get_paint(9, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 5)) != Sim.EMPTY or int(node.sim.get_paint(7, 4)) != Sim.EMPTY or int(node.sim.get_paint(7, 3)) != Sim.EMPTY or int(node.sim.get_paint(7, 2)) != Sim.EMPTY or int(node.sim.get_paint(7, 1)) != Sim.EMPTY or int(node.sim.get_paint(7, 0)) != Sim.EMPTY or int(node.sim.get_paint(7, -1)) != Sim.EMPTY or int(node.sim.get_paint(7, -2)) != Sim.EMPTY or int(node.sim.get_paint(7, -3)) != Sim.EMPTY or int(node.sim.get_paint(7, -4)) != Sim.EMPTY:
+	if int(node.sim.get_paint(9, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 5)) != Sim.EMPTY or int(node.sim.get_paint(7, 4)) != Sim.EMPTY or int(node.sim.get_paint(7, 3)) != Sim.EMPTY or int(node.sim.get_paint(7, 2)) != Sim.EMPTY or int(node.sim.get_paint(7, 1)) != Sim.EMPTY or int(node.sim.get_paint(7, 0)) != Sim.EMPTY or int(node.sim.get_paint(7, -1)) != Sim.EMPTY or int(node.sim.get_paint(7, -2)) != Sim.EMPTY or int(node.sim.get_paint(7, -3)) != Sim.EMPTY or int(node.sim.get_paint(7, -4)) != Sim.EMPTY or int(node.sim.get_paint(7, -5)) != Sim.EMPTY:
 		_fail(errors, "restart scenario did not clear the marks")
-	if int(node.sim.get_season()) != Sim.WET or int(node.sim.get_wet_haul()) != 0 or int(node.sim.get_beat()) != Sim.WET or int(node.sim.get_carted()) != 0 or int(node.sim.get_shipped()) != 0 or int(node.sim.get_coins()) != 0 or int(node.sim.get_banked()) != 0 or int(node.sim.get_hired()) != 0 or int(node.sim.get_lofted()) != 0 or int(node.sim.get_gated()) != 0 or int(node.sim.get_paid()) != 0 or int(node.sim.get_posted()) != 0 or int(node.sim.get_stood()) != 0 or int(node.sim.get_lit()) != 0 or int(node.sim.get_rung()) != 0:
+	if int(node.sim.get_season()) != Sim.WET or int(node.sim.get_wet_haul()) != 0 or int(node.sim.get_beat()) != Sim.WET or int(node.sim.get_carted()) != 0 or int(node.sim.get_shipped()) != 0 or int(node.sim.get_coins()) != 0 or int(node.sim.get_banked()) != 0 or int(node.sim.get_hired()) != 0 or int(node.sim.get_lofted()) != 0 or int(node.sim.get_gated()) != 0 or int(node.sim.get_paid()) != 0 or int(node.sim.get_posted()) != 0 or int(node.sim.get_stood()) != 0 or int(node.sim.get_lit()) != 0 or int(node.sim.get_rung()) != 0 or int(node.sim.get_sounded()) != 0:
 		_fail(errors, "restart scenario did not return to the wet season")
 	if int(node.sim.get_population()) > Sim.POP_CAP:
 		_fail(errors, "restart left the population over the cap")
@@ -1599,8 +1630,8 @@ func _test_gate(errors: Array) -> void:
 	var fresh = Sim.new()
 	if fresh.paint_cell(14, -2, Sim.GATE) == false or int(fresh.get_paint(14, -2)) != Sim.GATE:
 		_fail(errors, "a flat rejected the gate mark")
-	if fresh.paint_cell(14, -8, Sim.GATE):
-		_fail(errors, "the row north of the bell accepted a mark")
+	if fresh.paint_cell(14, -9, Sim.GATE):
+		_fail(errors, "the row north of the horn accepted a mark")
 	if fresh.paint_cell(Sim.COAST_X, -2, Sim.GATE):
 		_fail(errors, "the brine accepted a gate")
 	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.GATE):
@@ -1828,8 +1859,8 @@ func _test_wage(errors: Array) -> void:
 	var fresh = Sim.new()
 	if fresh.paint_cell(14, -3, Sim.WAGE) == false or int(fresh.get_paint(14, -3)) != Sim.WAGE:
 		_fail(errors, "the cell north of the gate rejected the wage mark")
-	if fresh.paint_cell(14, -8, Sim.WAGE):
-		_fail(errors, "the row north of the bell accepted a mark")
+	if fresh.paint_cell(14, -9, Sim.WAGE):
+		_fail(errors, "the row north of the horn accepted a mark")
 	if fresh.paint_cell(Sim.COAST_X, -3, Sim.WAGE):
 		_fail(errors, "the brine accepted a wage")
 	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.WAGE):
@@ -2038,8 +2069,8 @@ func _test_relief(errors: Array) -> void:
 	var fresh = Sim.new()
 	if fresh.paint_cell(14, -4, Sim.RELIEF) == false or int(fresh.get_paint(14, -4)) != Sim.RELIEF:
 		_fail(errors, "the cell north of the wage rejected the relief mark")
-	if fresh.paint_cell(14, -8, Sim.RELIEF):
-		_fail(errors, "the row north of the bell accepted a mark")
+	if fresh.paint_cell(14, -9, Sim.RELIEF):
+		_fail(errors, "the row north of the horn accepted a mark")
 	if fresh.paint_cell(Sim.COAST_X, -4, Sim.RELIEF):
 		_fail(errors, "the brine accepted a relief")
 	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.RELIEF):
@@ -2264,8 +2295,8 @@ func _test_watch(errors: Array) -> void:
 	var fresh = Sim.new()
 	if fresh.paint_cell(14, -5, Sim.WATCH) == false or int(fresh.get_paint(14, -5)) != Sim.WATCH:
 		_fail(errors, "the cell north of the relief rejected the watch mark")
-	if fresh.paint_cell(14, -8, Sim.WATCH):
-		_fail(errors, "the row north of the bell accepted a mark")
+	if fresh.paint_cell(14, -9, Sim.WATCH):
+		_fail(errors, "the row north of the horn accepted a mark")
 	if fresh.paint_cell(Sim.COAST_X, -5, Sim.WATCH):
 		_fail(errors, "the brine accepted a watch")
 	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.WATCH):
@@ -2530,8 +2561,8 @@ func _test_lamp(errors: Array) -> void:
 	var fresh = Sim.new()
 	if fresh.paint_cell(14, -6, Sim.LAMP) == false or int(fresh.get_paint(14, -6)) != Sim.LAMP:
 		_fail(errors, "the cell north of the watch rejected the lamp mark")
-	if fresh.paint_cell(14, -8, Sim.LAMP):
-		_fail(errors, "the row north of the bell accepted a mark")
+	if fresh.paint_cell(14, -9, Sim.LAMP):
+		_fail(errors, "the row north of the horn accepted a mark")
 	if fresh.paint_cell(Sim.COAST_X, -6, Sim.LAMP):
 		_fail(errors, "the brine accepted a lamp")
 	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.LAMP):
@@ -2811,12 +2842,12 @@ func _test_lamp(errors: Array) -> void:
 	])
 
 
-func _assert_chain(sim, errors: Array, label: String, wet: int, stored: int, carted: int, shipped: int, coins: int, hired: int, yard: int, paid: int, posted: int, stood: int, lit: int, rung: int) -> void:
+func _assert_chain(sim, errors: Array, label: String, wet: int, stored: int, carted: int, shipped: int, coins: int, hired: int, yard: int, paid: int, posted: int, stood: int, lit: int, rung: int, sounded: int = 0) -> void:
 	if sim == null:
 		_fail(errors, "%s did not run" % label)
 		return
-	if int(sim.get_wet_haul()) != wet or int(sim.get_stored_salt()) != stored or int(sim.get_carted()) != carted or int(sim.get_shipped()) != shipped or int(sim.get_coins()) != coins or int(sim.get_hired()) != hired or int(sim.get_yard_left()) != yard or int(sim.get_paid()) != paid or int(sim.get_posted()) != posted or int(sim.get_stood()) != stood or int(sim.get_lit()) != lit or int(sim.get_rung()) != rung:
-		_fail(errors, "%s changed (wet %d stored %d carted %d shipped %d coins %d hired %d yard %d paid %d posted %d stood %d lit %d rung %d)" % [label, sim.get_wet_haul(), sim.get_stored_salt(), sim.get_carted(), sim.get_shipped(), sim.get_coins(), sim.get_hired(), sim.get_yard_left(), sim.get_paid(), sim.get_posted(), sim.get_stood(), sim.get_lit(), sim.get_rung()])
+	if int(sim.get_wet_haul()) != wet or int(sim.get_stored_salt()) != stored or int(sim.get_carted()) != carted or int(sim.get_shipped()) != shipped or int(sim.get_coins()) != coins or int(sim.get_hired()) != hired or int(sim.get_yard_left()) != yard or int(sim.get_paid()) != paid or int(sim.get_posted()) != posted or int(sim.get_stood()) != stood or int(sim.get_lit()) != lit or int(sim.get_rung()) != rung or int(sim.get_sounded()) != sounded:
+		_fail(errors, "%s changed (wet %d stored %d carted %d shipped %d coins %d hired %d yard %d paid %d posted %d stood %d lit %d rung %d sounded %d)" % [label, sim.get_wet_haul(), sim.get_stored_salt(), sim.get_carted(), sim.get_shipped(), sim.get_coins(), sim.get_hired(), sim.get_yard_left(), sim.get_paid(), sim.get_posted(), sim.get_stood(), sim.get_lit(), sim.get_rung(), sim.get_sounded()])
 
 
 func _test_bell(errors: Array) -> void:
@@ -2827,8 +2858,8 @@ func _test_bell(errors: Array) -> void:
 	var fresh = Sim.new()
 	if fresh.paint_cell(14, -7, Sim.BELL) == false or int(fresh.get_paint(14, -7)) != Sim.BELL:
 		_fail(errors, "the cell north of the lamp rejected the bell mark")
-	if fresh.paint_cell(14, -8, Sim.BELL):
-		_fail(errors, "the row north of the bell accepted a mark")
+	if fresh.paint_cell(14, -9, Sim.BELL):
+		_fail(errors, "the row north of the horn accepted a mark")
 	if fresh.paint_cell(Sim.COAST_X, -7, Sim.BELL):
 		_fail(errors, "the brine accepted a bell")
 	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.BELL):
@@ -3047,6 +3078,252 @@ func _test_bell(errors: Array) -> void:
 	if not saw_short:
 		_fail(errors, "dry bell did not stop at 2 with unlit hires left (rung %d lamp %d watch %d relief %d wage %d gate %d yard %d lit %d stood %d posted %d paid %d ticks %d)" % [short.get_rung(), short.get_lamp_left(), short.get_watch_left(), short.get_relief_left(), short.get_wage_left(), short.get_gate_left(), short.get_yard_left(), short.get_lit(), short.get_stood(), short.get_posted(), short.get_paid(), short.get_ticks_until_rain()])
 	print("rung %d left lamp %d unlit %d unstood %d unposted %d unpaid %d; dry rung %d left lamp %d unlit %d unstood %d unposted %d unpaid %d; no bell rang %d left lamp %d; bell without lamp rang %d" % [rung.get_rung(), rung.get_lamp_left(), rung_unlit, rung_unstood, rung_unposted, rung_unpaid, dry_rung.get_rung(), dry_rung.get_lamp_left(), dry_unlit, dry_unstood, dry_unposted, dry_unpaid, ignored.get_rung(), ignored.get_lamp_left(), bare.get_rung()])
+
+
+func _test_horn(errors: Array) -> void:
+	if int(Sim.HORN_TICK) != 100 or int(Sim.HORN_TICK) != int(Sim.TICK_HZ) * 10:
+		_fail(errors, "horn beat length %s is not 100 ticks (10 seconds)" % Sim.HORN_TICK)
+	if int(Sim.HORN_CAP) != 1:
+		_fail(errors, "horn cap is %s, expected 1" % Sim.HORN_CAP)
+	var fresh = Sim.new()
+	if fresh.paint_cell(14, -8, Sim.HORN) == false or int(fresh.get_paint(14, -8)) != Sim.HORN:
+		_fail(errors, "the cell north of the bell rejected the horn mark")
+	if fresh.paint_cell(14, -9, Sim.HORN):
+		_fail(errors, "the row north of the horn accepted a mark")
+	if fresh.paint_cell(Sim.COAST_X, -8, Sim.HORN):
+		_fail(errors, "the brine accepted a horn")
+	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.HORN):
+		_fail(errors, "the anthill accepted a horn")
+	var plans := _plans(errors)
+	if plans.is_empty():
+		return
+	var won = _run_plan(plans, "winning", errors)
+	var dry = _run_plan(plans, "dry_pans", errors)
+	var parked = _run_plan(plans, "carted", errors)
+	var loaded = _run_plan(plans, "shipped", errors)
+	var sold = _run_plan(plans, "sold", errors)
+	var hired = _run_plan(plans, "hired", errors)
+	var lofted = _run_plan(plans, "lofted", errors)
+	var passed = _run_plan(plans, "gated", errors)
+	var paid = _run_plan(plans, "paid", errors)
+	var dry_paid = _run_plan(plans, "dry_paid", errors)
+	var posted = _run_plan(plans, "posted", errors)
+	var dry_posted = _run_plan(plans, "dry_posted", errors)
+	var stood = _run_plan(plans, "stood", errors)
+	var dry_stood = _run_plan(plans, "dry_stood", errors)
+	var lit = _run_plan(plans, "lit", errors)
+	var dry_lit = _run_plan(plans, "dry_lit", errors)
+	var rung = _run_plan(plans, "rung", errors)
+	var dry_rung = _run_plan(plans, "dry_rung", errors)
+	var ignored = _run_plan(plans, "no_horn", errors)
+	var bare = _run_plan(plans, "horn_only", errors)
+	var sounded = _run_plan(plans, "sounded", errors)
+	var sounded_again = _run_plan(plans, "sounded", errors)
+	var late = _run_plan(plans, "late_sounded", errors)
+	var dry_sounded = _run_plan(plans, "dry_sounded", errors)
+	if won == null or dry == null or parked == null or loaded == null or sold == null or hired == null or lofted == null or passed == null or paid == null or dry_paid == null or posted == null or dry_posted == null or stood == null or dry_stood == null or lit == null or dry_lit == null or rung == null or dry_rung == null or ignored == null or bare == null or sounded == null or sounded_again == null or late == null or dry_sounded == null:
+		return
+	# Earlier plans keep the numbers they had before the horn existed.
+	_assert_chain(won, errors, "winning shore", 2997, 2997, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+	_assert_chain(dry, errors, "dry pans", 0, 1032, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+	_assert_chain(parked, errors, "carted plan", 2997, 2997, 2997, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+	_assert_chain(loaded, errors, "shipped plan", 2997, 2997, 2997, 2997, 0, 0, 0, 0, 0, 0, 0, 0)
+	_assert_chain(sold, errors, "sold plan", 2997, 2997, 2997, 2997, 2997, 0, 0, 0, 0, 0, 0, 0)
+	_assert_chain(hired, errors, "hired plan", 2997, 2997, 2997, 2997, 2997, 29, 97, 0, 0, 0, 0, 0)
+	_assert_chain(lofted, errors, "lofted plan", 2997, 2997, 2997, 2997, 2997, 29, 97, 0, 0, 0, 0, 0)
+	_assert_chain(passed, errors, "gated plan", 2997, 2997, 2997, 2997, 2997, 29, 97, 0, 0, 0, 0, 0)
+	_assert_chain(paid, errors, "paid plan", 2997, 2997, 2997, 2997, 2997, 29, 57, 10, 0, 0, 0, 0)
+	_assert_chain(dry_paid, errors, "dry wage", 0, 1032, 1032, 1032, 1032, 10, 0, 8, 0, 0, 0, 0)
+	_assert_chain(posted, errors, "posted plan", 2997, 2997, 2997, 2997, 2997, 29, 57, 10, 6, 0, 0, 0)
+	_assert_chain(dry_posted, errors, "dry relief", 0, 1032, 1032, 1032, 1032, 10, 0, 8, 6, 0, 0, 0)
+	_assert_chain(stood, errors, "stood plan", 2997, 2997, 2997, 2997, 2997, 29, 57, 10, 6, 4, 0, 0)
+	_assert_chain(dry_stood, errors, "dry watch", 0, 1032, 1032, 1032, 1032, 10, 0, 8, 6, 4, 0, 0)
+	_assert_chain(lit, errors, "lit plan", 2997, 2997, 2997, 2997, 2997, 29, 57, 10, 6, 4, 3, 0)
+	_assert_chain(dry_lit, errors, "dry lamp", 0, 1032, 1032, 1032, 1032, 10, 0, 8, 6, 4, 3, 0)
+	_assert_chain(rung, errors, "rung plan", 2997, 2997, 2997, 2997, 2997, 29, 57, 10, 6, 4, 3, 2)
+	_assert_chain(dry_rung, errors, "dry bell", 0, 1032, 1032, 1032, 1032, 10, 0, 8, 6, 4, 3, 2)
+	# Rung, no horn: the 2 who were rung stay on the bell. The 1 lit but not
+	# rung stays on the lamp. The 1 stood but not lit stays on the watch. The
+	# 2 posted but not stood stay on the relief. The 4 paid but not posted stay
+	# on the wage. The 19 in the loft stay unpaid.
+	var ignored_unpaid := int(ignored.get_hired()) - int(ignored.get_paid())
+	var ignored_unposted := int(ignored.get_paid()) - int(ignored.get_posted())
+	var ignored_unstood := int(ignored.get_posted()) - int(ignored.get_stood())
+	var ignored_unlit := int(ignored.get_stood()) - int(ignored.get_lit())
+	var ignored_unrung := int(ignored.get_lit()) - int(ignored.get_rung())
+	if int(ignored.get_sounded()) != 0 or int(ignored.get_bell_left()) != 2 or int(ignored.get_rung()) != 2 or ignored_unrung != 1 or int(ignored.get_lamp_left()) != 1 or int(ignored.get_lit()) != 3 or ignored_unlit != 1 or int(ignored.get_watch_left()) != 1 or ignored_unstood != 2 or ignored_unposted != 4 or ignored_unpaid != 19 or int(ignored.get_relief_left()) != 2 or int(ignored.get_wage_left()) != 4 or int(ignored.get_loft_left()) != 19 or int(ignored.get_gate_left()) != 0 or int(ignored.get_yard_left()) != 57 or int(ignored.get_stood()) != 4 or int(ignored.get_posted()) != 6 or int(ignored.get_paid()) != 10 or int(ignored.get_hired()) != 29 or int(ignored.get_coins()) != 2997 or int(ignored.get_stored_salt()) != 2997 or int(ignored.get_carted()) != 2997 or int(ignored.get_shipped()) != 2997:
+		_fail(errors, "no_horn sounded someone (stored %d carted %d shipped %d coins %d hired %d yard %d paid %d posted %d stood %d lit %d rung %d bell %d sounded %d unpaid %d unposted %d unstood %d loft %d wage %d)" % [ignored.get_stored_salt(), ignored.get_carted(), ignored.get_shipped(), ignored.get_coins(), ignored.get_hired(), ignored.get_yard_left(), ignored.get_paid(), ignored.get_posted(), ignored.get_stood(), ignored.get_lit(), ignored.get_rung(), ignored.get_bell_left(), ignored.get_sounded(), ignored_unpaid, ignored_unposted, ignored_unstood, ignored.get_loft_left(), ignored.get_wage_left()])
+	if String(ignored.get_summary()) != String(rung.get_summary()):
+		_fail(errors, "no_horn summary changed: %s" % ignored.get_summary())
+	if String(ignored.get_summary()).to_lower().contains("sounded") or String(ignored.get_summary()).to_lower().contains("horn"):
+		_fail(errors, "no_horn summary names a horn: %s" % ignored.get_summary())
+	var ignored_bell = plans["no_horn"]["bell"][0]
+	var ignored_salt: Dictionary = ignored.get_cell_salt(int(ignored_bell[0]), int(ignored_bell[1]))
+	var ignored_north: Dictionary = ignored.get_cell_salt(int(ignored_bell[0]), int(ignored_bell[1]) - 1)
+	if int(ignored_salt.get("bell", 0)) != 2 or int(ignored_north.get("horn", 0)) != 0 or int(ignored_salt.get("horn", 0)) != 0:
+		_fail(errors, "no_horn left %s at the bell and %s at a horn" % [ignored_salt.get("bell", 0), ignored_north.get("horn", 0)])
+	# A horn with nobody rung sounds nobody. Lit hires stay on the lamp.
+	var bare_unpaid := int(bare.get_hired()) - int(bare.get_paid())
+	var bare_unstood := int(bare.get_posted()) - int(bare.get_stood())
+	if int(bare.get_sounded()) != 0 or int(bare.get_rung()) != 0 or int(bare.get_bell_left()) != 0 or int(bare.get_lit()) != 3 or int(bare.get_lamp_left()) != 3 or int(bare.get_stood()) != 4 or int(bare.get_watch_left()) != 1 or int(bare.get_posted()) != 6 or int(bare.get_relief_left()) != 2 or bare_unstood != 2 or int(bare.get_paid()) != 10 or int(bare.get_wage_left()) != 4 or bare_unpaid != 19 or int(bare.get_loft_left()) != 19 or int(bare.get_gate_left()) != 0 or int(bare.get_yard_left()) != 57 or int(bare.get_hired()) != 29 or int(bare.get_coins()) != 2997 or int(bare.get_stored_salt()) != 2997 or int(bare.get_carted()) != 2997 or int(bare.get_shipped()) != 2997:
+		_fail(errors, "horn without a bell sounded someone (stored %d carted %d shipped %d coins %d hired %d yard %d paid %d wage %d posted %d relief %d stood %d watch %d lit %d lamp %d rung %d sounded %d unpaid %d loft %d)" % [bare.get_stored_salt(), bare.get_carted(), bare.get_shipped(), bare.get_coins(), bare.get_hired(), bare.get_yard_left(), bare.get_paid(), bare.get_wage_left(), bare.get_posted(), bare.get_relief_left(), bare.get_stood(), bare.get_watch_left(), bare.get_lit(), bare.get_lamp_left(), bare.get_rung(), bare.get_sounded(), bare_unpaid, bare.get_loft_left()])
+	if String(bare.get_summary()) != String(lit.get_summary()):
+		_fail(errors, "horn without a bell changed the summary: %s" % bare.get_summary())
+	if String(bare.get_summary()).to_lower().contains("sounded") or String(bare.get_summary()).to_lower().contains("horn") or String(bare.get_summary()).to_lower().contains("rung") or String(bare.get_summary()).to_lower().contains("bell"):
+		_fail(errors, "horn without a bell names a horn: %s" % bare.get_summary())
+	var bare_horn = plans["horn_only"]["horn"][0]
+	var bare_lamp = plans["horn_only"]["lamp"][0]
+	var bare_horn_salt: Dictionary = bare.get_cell_salt(int(bare_horn[0]), int(bare_horn[1]))
+	var bare_lamp_salt: Dictionary = bare.get_cell_salt(int(bare_lamp[0]), int(bare_lamp[1]))
+	if int(bare_horn_salt.get("horn", 0)) != 0 or int(bare_lamp_salt.get("lamp", 0)) != 3 or int(bare_horn_salt.get("bell", 0)) != 0:
+		_fail(errors, "horn without a bell holds %s, lamp holds %s" % [bare_horn_salt.get("horn", 0), bare_lamp_salt.get("lamp", 0)])
+	var horn_cell = plans["sounded"]["horn"][0]
+	var bell_cell = plans["sounded"]["bell"][0]
+	var lamp_cell = plans["sounded"]["lamp"][0]
+	var watch_cell = plans["sounded"]["watch"][0]
+	var relief_cell = plans["sounded"]["relief"][0]
+	var wage_cell = plans["sounded"]["wage"][0]
+	var gate_cell = plans["sounded"]["gate"][0]
+	var loft_cell = plans["sounded"]["loft"][0]
+	var yard_cell = plans["sounded"]["yard"][0]
+	if int(horn_cell[0]) != int(bell_cell[0]) or int(horn_cell[1]) != int(bell_cell[1]) - 1:
+		_fail(errors, "sounded plan's horn is not one cell north of the bell")
+	if int(bell_cell[0]) != 14 or int(bell_cell[1]) != -7 or int(horn_cell[0]) != 14 or int(horn_cell[1]) != -8:
+		_fail(errors, "sounded plan's horn is not at 14,-8 north of the bell at 14,-7")
+	if int(bell_cell[0]) != int(lamp_cell[0]) or int(bell_cell[1]) != int(lamp_cell[1]) - 1:
+		_fail(errors, "sounded plan's bell is not one cell north of the lamp")
+	_assert_chain(sounded, errors, "sounded plan", 2997, 2997, 2997, 2997, 2997, 29, 57, 10, 6, 4, 3, 2, 1)
+	var sounded_unpaid := int(sounded.get_hired()) - int(sounded.get_paid())
+	var sounded_unposted := int(sounded.get_paid()) - int(sounded.get_posted())
+	var sounded_unstood := int(sounded.get_posted()) - int(sounded.get_stood())
+	var sounded_unlit := int(sounded.get_stood()) - int(sounded.get_lit())
+	var sounded_unrung := int(sounded.get_lit()) - int(sounded.get_rung())
+	if int(sounded.get_sounded()) != 1 or int(sounded.get_bell_left()) != 1 or sounded_unrung != 1 or sounded_unlit != 1 or sounded_unstood != 2 or sounded_unposted != 4 or sounded_unpaid != 19 or int(sounded.get_lamp_left()) != 1 or int(sounded.get_watch_left()) != 1 or int(sounded.get_relief_left()) != 2 or int(sounded.get_wage_left()) != 4 or int(sounded.get_loft_left()) != 19 or int(sounded.get_gate_left()) != 0 or int(sounded.get_yard_left()) != 57 or int(sounded.get_rung()) != 2 or int(sounded.get_lit()) != 3 or int(sounded.get_stood()) != 4 or int(sounded.get_posted()) != 6:
+		_fail(errors, "sounded %d, left %d rung unsounded, lit unrung %d, stood unlit %d, posted unstood %d, paid unposted %d, unpaid %d, bell %d, lamp %d, watch %d, relief %d, wage %d, loft %d, gate %d, yard %d, rung %d, lit %d, stood %d, posted %d; expected 1, 1, 1, 1, 2, 4, 19, 1, 1, 1, 2, 4, 19, 0, 57, 2, 3, 4, 6" % [sounded.get_sounded(), sounded.get_bell_left(), sounded_unrung, sounded_unlit, sounded_unstood, sounded_unposted, sounded_unpaid, sounded.get_bell_left(), sounded.get_lamp_left(), sounded.get_watch_left(), sounded.get_relief_left(), sounded.get_wage_left(), sounded.get_loft_left(), sounded.get_gate_left(), sounded.get_yard_left(), sounded.get_rung(), sounded.get_lit(), sounded.get_stood(), sounded.get_posted()])
+	if int(sounded.get_sounded()) > int(Sim.HORN_CAP):
+		_fail(errors, "horn sounded %d, over the cap of %d" % [sounded.get_sounded(), Sim.HORN_CAP])
+	var horn_salt: Dictionary = sounded.get_cell_salt(int(horn_cell[0]), int(horn_cell[1]))
+	var bell_salt: Dictionary = sounded.get_cell_salt(int(bell_cell[0]), int(bell_cell[1]))
+	var lamp_salt: Dictionary = sounded.get_cell_salt(int(lamp_cell[0]), int(lamp_cell[1]))
+	var watch_salt: Dictionary = sounded.get_cell_salt(int(watch_cell[0]), int(watch_cell[1]))
+	var relief_salt: Dictionary = sounded.get_cell_salt(int(relief_cell[0]), int(relief_cell[1]))
+	var wage_salt: Dictionary = sounded.get_cell_salt(int(wage_cell[0]), int(wage_cell[1]))
+	var gate_salt: Dictionary = sounded.get_cell_salt(int(gate_cell[0]), int(gate_cell[1]))
+	var loft_salt: Dictionary = sounded.get_cell_salt(int(loft_cell[0]), int(loft_cell[1]))
+	var yard_salt: Dictionary = sounded.get_cell_salt(int(yard_cell[0]), int(yard_cell[1]))
+	if int(horn_salt.get("horn", 0)) != 1 or int(bell_salt.get("bell", 0)) != 1 or int(lamp_salt.get("lamp", 0)) != 1 or int(watch_salt.get("watch", 0)) != 1 or int(relief_salt.get("relief", 0)) != 2 or int(wage_salt.get("wage", 0)) != 4 or int(gate_salt.get("gate", 0)) != 0 or int(loft_salt.get("loft", 0)) != 19 or int(yard_salt.get("yard", 0)) != 57:
+		_fail(errors, "horn cell holds %s, bell holds %s, lamp holds %s, watch holds %s, relief holds %s, wage holds %s, gate holds %s, loft holds %s, yard holds %s" % [horn_salt.get("horn", 0), bell_salt.get("bell", 0), lamp_salt.get("lamp", 0), watch_salt.get("watch", 0), relief_salt.get("relief", 0), wage_salt.get("wage", 0), gate_salt.get("gate", 0), loft_salt.get("loft", 0), yard_salt.get("yard", 0)])
+	var sounded_summary := String(sounded.get_summary())
+	if not sounded_summary.contains("Sounded 1 on the horn") or not sounded_summary.contains("Left 1 at the bell") or not sounded_summary.contains("Rung 2 on the bell") or not sounded_summary.contains("Left 1 at the lamp") or not sounded_summary.contains("Lit 3 on the lamp") or not sounded_summary.contains("Left 1 at the watch") or not sounded_summary.contains("Stood 4 on the watch") or not sounded_summary.contains("Left 2 at the relief") or not sounded_summary.contains("Posted 6") or not sounded_summary.contains("Left 4 at the wage") or not sounded_summary.contains("Paid 10") or not sounded_summary.contains("Left 19") or not sounded_summary.contains("Left 57"):
+		_fail(errors, "sounded summary does not name the horn: %s" % sounded_summary)
+	if not sounded_summary.contains("Coins 2997") or not sounded_summary.contains("Hired 29"):
+		_fail(errors, "sounded summary dropped the earlier totals: %s" % sounded_summary)
+	if int(sounded_again.get_sounded()) != int(sounded.get_sounded()) or int(sounded_again.get_bell_left()) != int(sounded.get_bell_left()) or int(sounded_again.get_rung()) != int(sounded.get_rung()) or int(sounded_again.get_lit()) != int(sounded.get_lit()) or int(sounded_again.get_stood()) != int(sounded.get_stood()) or int(sounded_again.get_posted()) != int(sounded.get_posted()) or int(sounded_again.get_yard_left()) != int(sounded.get_yard_left()) or int(sounded_again.get_stored_salt()) != int(sounded.get_stored_salt()) or String(sounded_again.get_summary()) != String(sounded.get_summary()):
+		_fail(errors, "repeated horn paint sounded %d and left bell %d, then sounded %d and left bell %d" % [sounded.get_sounded(), sounded.get_bell_left(), sounded_again.get_sounded(), sounded_again.get_bell_left()])
+	if int(late.get_sounded()) != 1 or int(late.get_bell_left()) != 1 or int(late.get_rung()) != 2 or int(late.get_lamp_left()) != 1 or int(late.get_lit()) != 3 or int(late.get_stood()) != 4 or int(late.get_posted()) != 6 or int(late.get_watch_left()) != 1 or int(late.get_relief_left()) != 2 or int(late.get_wage_left()) != 4 or int(late.get_paid()) != 10 or int(late.get_loft_left()) != 19 or int(late.get_yard_left()) != 57 or int(late.get_hired()) != 29 or int(late.get_coins()) != int(sounded.get_coins()) or int(late.get_stored_salt()) != int(sounded.get_stored_salt()) or int(late.get_carted()) != int(sounded.get_carted()) or int(late.get_shipped()) != int(sounded.get_shipped()):
+		_fail(errors, "painting the horn at the horn beat (sounded %d bell %d rung %d lamp %d lit %d stood %d posted %d watch %d relief %d wage %d paid %d loft %d yard %d hired %d coins %d stored %d) did not match painting it early (sounded %d bell %d rung %d lamp %d lit %d stood %d posted %d watch %d relief %d wage %d paid %d loft %d yard %d hired %d coins %d stored %d)" % [late.get_sounded(), late.get_bell_left(), late.get_rung(), late.get_lamp_left(), late.get_lit(), late.get_stood(), late.get_posted(), late.get_watch_left(), late.get_relief_left(), late.get_wage_left(), late.get_paid(), late.get_loft_left(), late.get_yard_left(), late.get_hired(), late.get_coins(), late.get_stored_salt(), sounded.get_sounded(), sounded.get_bell_left(), sounded.get_rung(), sounded.get_lamp_left(), sounded.get_lit(), sounded.get_stood(), sounded.get_posted(), sounded.get_watch_left(), sounded.get_relief_left(), sounded.get_wage_left(), sounded.get_paid(), sounded.get_loft_left(), sounded.get_yard_left(), sounded.get_hired(), sounded.get_coins(), sounded.get_stored_salt()])
+	_assert_chain(dry_sounded, errors, "dry horn", 0, 1032, 1032, 1032, 1032, 10, 0, 8, 6, 4, 3, 2, 1)
+	var dry_unpaid := int(dry_sounded.get_hired()) - int(dry_sounded.get_paid())
+	var dry_unposted := int(dry_sounded.get_paid()) - int(dry_sounded.get_posted())
+	var dry_unstood := int(dry_sounded.get_posted()) - int(dry_sounded.get_stood())
+	var dry_unlit := int(dry_sounded.get_stood()) - int(dry_sounded.get_lit())
+	var dry_unrung := int(dry_sounded.get_lit()) - int(dry_sounded.get_rung())
+	if int(dry_sounded.get_sounded()) != 1 or int(dry_sounded.get_bell_left()) != 1 or dry_unrung != 1 or dry_unlit != 1 or dry_unstood != 2 or dry_unposted != 2 or dry_unpaid != 2 or int(dry_sounded.get_lamp_left()) != 1 or int(dry_sounded.get_watch_left()) != 1 or int(dry_sounded.get_relief_left()) != 2 or int(dry_sounded.get_wage_left()) != 2 or int(dry_sounded.get_gate_left()) != 2 or int(dry_sounded.get_loft_left()) != 0 or int(dry_sounded.get_yard_left()) != 0 or int(dry_sounded.get_rung()) != 2 or int(dry_sounded.get_lit()) != 3 or int(dry_sounded.get_stood()) != 4 or int(dry_sounded.get_posted()) != 6 or int(dry_sounded.get_wet_haul()) != 0:
+		_fail(errors, "dry horn changed the short crew (wet %d stored %d carted %d shipped %d coins %d hired %d paid %d posted %d stood %d lit %d rung %d sounded %d bell %d unrung %d unlit %d unstood %d unposted %d unpaid %d lamp %d watch %d relief %d wage %d gate %d loft %d yard %d)" % [dry_sounded.get_wet_haul(), dry_sounded.get_stored_salt(), dry_sounded.get_carted(), dry_sounded.get_shipped(), dry_sounded.get_coins(), dry_sounded.get_hired(), dry_sounded.get_paid(), dry_sounded.get_posted(), dry_sounded.get_stood(), dry_sounded.get_lit(), dry_sounded.get_rung(), dry_sounded.get_sounded(), dry_sounded.get_bell_left(), dry_unrung, dry_unlit, dry_unstood, dry_unposted, dry_unpaid, dry_sounded.get_lamp_left(), dry_sounded.get_watch_left(), dry_sounded.get_relief_left(), dry_sounded.get_wage_left(), dry_sounded.get_gate_left(), dry_sounded.get_loft_left(), dry_sounded.get_yard_left()])
+	var dry_horn_cell = plans["dry_sounded"]["horn"][0]
+	var dry_bell_cell = plans["dry_sounded"]["bell"][0]
+	var dry_lamp_cell = plans["dry_sounded"]["lamp"][0]
+	var dry_watch_cell = plans["dry_sounded"]["watch"][0]
+	var dry_relief_cell = plans["dry_sounded"]["relief"][0]
+	var dry_wage_cell = plans["dry_sounded"]["wage"][0]
+	var dry_gate_cell = plans["dry_sounded"]["gate"][0]
+	var dry_horn_salt: Dictionary = dry_sounded.get_cell_salt(int(dry_horn_cell[0]), int(dry_horn_cell[1]))
+	var dry_bell_salt: Dictionary = dry_sounded.get_cell_salt(int(dry_bell_cell[0]), int(dry_bell_cell[1]))
+	var dry_lamp_salt: Dictionary = dry_sounded.get_cell_salt(int(dry_lamp_cell[0]), int(dry_lamp_cell[1]))
+	var dry_watch_salt: Dictionary = dry_sounded.get_cell_salt(int(dry_watch_cell[0]), int(dry_watch_cell[1]))
+	var dry_relief_salt: Dictionary = dry_sounded.get_cell_salt(int(dry_relief_cell[0]), int(dry_relief_cell[1]))
+	var dry_wage_salt: Dictionary = dry_sounded.get_cell_salt(int(dry_wage_cell[0]), int(dry_wage_cell[1]))
+	var dry_gate_salt: Dictionary = dry_sounded.get_cell_salt(int(dry_gate_cell[0]), int(dry_gate_cell[1]))
+	if int(dry_horn_salt.get("horn", 0)) != 1 or int(dry_bell_salt.get("bell", 0)) != 1 or int(dry_lamp_salt.get("lamp", 0)) != 1 or int(dry_watch_salt.get("watch", 0)) != 1 or int(dry_relief_salt.get("relief", 0)) != 2 or int(dry_wage_salt.get("wage", 0)) != 2 or int(dry_gate_salt.get("gate", 0)) != 2:
+		_fail(errors, "dry horn cell holds %s, bell holds %s, lamp holds %s, watch holds %s, relief holds %s, wage holds %s, gate holds %s" % [dry_horn_salt.get("horn", 0), dry_bell_salt.get("bell", 0), dry_lamp_salt.get("lamp", 0), dry_watch_salt.get("watch", 0), dry_relief_salt.get("relief", 0), dry_wage_salt.get("wage", 0), dry_gate_salt.get("gate", 0)])
+	if not String(dry_sounded.get_summary()).contains("Sounded 1 on the horn") or not String(dry_sounded.get_summary()).contains("Left 1 at the bell") or not String(dry_sounded.get_summary()).contains("Rung 2 on the bell") or not String(dry_sounded.get_summary()).contains("Left 1 at the lamp") or not String(dry_sounded.get_summary()).contains("Lit 3 on the lamp") or not String(dry_sounded.get_summary()).contains("Left 1 at the watch") or not String(dry_sounded.get_summary()).contains("Stood 4 on the watch") or not String(dry_sounded.get_summary()).contains("Left 2 at the relief") or not String(dry_sounded.get_summary()).contains("Posted 6") or not String(dry_sounded.get_summary()).contains("Left 2 at the wage") or not String(dry_sounded.get_summary()).contains("Paid 8") or not String(dry_sounded.get_summary()).contains("Left 2 unpaid") or not String(dry_sounded.get_summary()).contains("Left 0 in the yard"):
+		_fail(errors, "dry horn summary does not name the cap: %s" % dry_sounded.get_summary())
+	_assert_pop(sounded, errors, "sounded plan")
+	_assert_pop(sounded_again, errors, "sounded plan again")
+	_assert_pop(late, errors, "late_sounded")
+	_assert_pop(dry_sounded, errors, "dry_sounded")
+	_assert_pop(ignored, errors, "no_horn")
+	_assert_pop(bare, errors, "horn_only")
+	# The cap stops the horn while ticks remain and rung hires remain.
+	# Hires still in the loft, hires who passed and were not paid, hires who
+	# were paid but not posted, hires who were posted but not stood, hires
+	# who were stood but not lit, and hires who were lit but not rung, stay put.
+	var shore = _prepare_plan(plans, "sounded", errors)
+	if shore == null:
+		return
+	var shore_guard := 0
+	var shore_limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + int(Sim.SHIP_TICK) + int(Sim.MARKET_TICK) + int(Sim.YARD_TICK) + int(Sim.BUNK_TICK) + int(Sim.LOFT_TICK) + int(Sim.GATE_TICK) + int(Sim.WAGE_TICK) + int(Sim.RELIEF_TICK) + int(Sim.WATCH_TICK) + int(Sim.LAMP_TICK) + int(Sim.BELL_TICK) + 2
+	while int(shore.get_beat()) != Sim.HORNING and not shore.is_over() and shore_guard < shore_limit:
+		shore.tick()
+		shore_guard += 1
+	if int(shore.get_beat()) != Sim.HORNING or shore.is_over():
+		_fail(errors, "the bell beat did not open a horn beat for the cap check")
+		return
+	if int(shore.get_ticks_until_rain()) != int(Sim.HORN_TICK):
+		_fail(errors, "horn countdown started at %d, expected %d" % [shore.get_ticks_until_rain(), Sim.HORN_TICK])
+	if int(shore.get_sounded()) != 0 or int(shore.get_rung()) != 2 or int(shore.get_bell_left()) != 2 or int(shore.get_lit()) != 3 or int(shore.get_lamp_left()) != 1 or int(shore.get_stood()) != 4 or int(shore.get_watch_left()) != 1 or int(shore.get_posted()) != 6 or int(shore.get_yard_left()) != 57:
+		_fail(errors, "horn opened early (sounded %d rung %d bell %d lit %d lamp %d stood %d watch %d posted %d yard %d)" % [shore.get_sounded(), shore.get_rung(), shore.get_bell_left(), shore.get_lit(), shore.get_lamp_left(), shore.get_stood(), shore.get_watch_left(), shore.get_posted(), shore.get_yard_left()])
+	var saw_cap := false
+	var sound_guard := 0
+	while not shore.is_over() and sound_guard < int(Sim.HORN_TICK) + 2:
+		shore.tick()
+		sound_guard += 1
+		if int(shore.get_sounded()) == int(Sim.HORN_CAP) and int(shore.get_bell_left()) == 1 and int(shore.get_rung()) == 2 and int(shore.get_lamp_left()) == 1 and int(shore.get_lit()) == 3 and int(shore.get_watch_left()) == 1 and int(shore.get_stood()) == 4 and int(shore.get_relief_left()) == 2 and int(shore.get_posted()) == 6 and int(shore.get_wage_left()) == 4 and int(shore.get_paid()) == 10 and int(shore.get_loft_left()) == 19 and int(shore.get_gate_left()) == 0 and int(shore.get_yard_left()) == 57 and int(shore.get_ticks_until_rain()) > 0:
+			saw_cap = true
+			var ticks_left := int(shore.get_ticks_until_rain())
+			shore.tick()
+			if int(shore.get_sounded()) != int(Sim.HORN_CAP) or int(shore.get_bell_left()) != 1 or int(shore.get_rung()) != 2 or int(shore.get_lamp_left()) != 1 or int(shore.get_lit()) != 3 or int(shore.get_watch_left()) != 1 or int(shore.get_stood()) != 4 or int(shore.get_relief_left()) != 2 or int(shore.get_posted()) != 6 or int(shore.get_wage_left()) != 4 or int(shore.get_loft_left()) != 19 or int(shore.get_gate_left()) != 0 or int(shore.get_yard_left()) != 57 or int(shore.get_paid()) != 10 or int(shore.get_stored_salt()) != 2997 or int(shore.get_coins()) != 2997 or int(shore.get_hired()) != 29:
+				_fail(errors, "the horn kept sounding after the cap (sounded %d bell %d rung %d lamp %d lit %d watch %d stood %d relief %d posted %d wage %d loft %d gate %d yard %d paid %d)" % [shore.get_sounded(), shore.get_bell_left(), shore.get_rung(), shore.get_lamp_left(), shore.get_lit(), shore.get_watch_left(), shore.get_stood(), shore.get_relief_left(), shore.get_posted(), shore.get_wage_left(), shore.get_loft_left(), shore.get_gate_left(), shore.get_yard_left(), shore.get_paid()])
+			elif not shore.is_over() and int(shore.get_ticks_until_rain()) >= ticks_left:
+				_fail(errors, "the horn beat did not spend a tick after the cap")
+			break
+	if not saw_cap:
+		_fail(errors, "the horn did not stop at %d while ticks remained (sounded %d bell %d rung %d lamp %d lit %d watch %d stood %d relief %d posted %d wage %d loft %d yard %d ticks %d)" % [Sim.HORN_CAP, shore.get_sounded(), shore.get_bell_left(), shore.get_rung(), shore.get_lamp_left(), shore.get_lit(), shore.get_watch_left(), shore.get_stood(), shore.get_relief_left(), shore.get_posted(), shore.get_wage_left(), shore.get_loft_left(), shore.get_yard_left(), shore.get_ticks_until_rain()])
+	# Dry pans ring 2 and the cap still sounds only 1. The 1 who was rung and
+	# not sounded stays on the bell. The 1 who was lit and not rung stays on
+	# the lamp. The 1 who was stood and not lit stays on the watch. The 2 who
+	# were posted and not stood stay on the relief. The 2 who were paid and not
+	# posted stay on the wage. The 2 who passed and were not paid stay on the
+	# gate. The yard stays empty.
+	var short = _prepare_plan(plans, "dry_sounded", errors)
+	if short == null:
+		return
+	var short_guard := 0
+	while int(short.get_beat()) != Sim.HORNING and not short.is_over() and short_guard < shore_limit:
+		short.tick()
+		short_guard += 1
+	if int(short.get_beat()) != Sim.HORNING or short.is_over():
+		_fail(errors, "the bell beat did not open a horn beat for the dry cap")
+		return
+	var saw_short := false
+	var short_steps := 0
+	while not short.is_over() and short_steps < int(Sim.HORN_TICK) + 2:
+		short.tick()
+		short_steps += 1
+		if int(short.get_sounded()) == int(Sim.HORN_CAP) and int(short.get_bell_left()) == 1 and int(short.get_rung()) == 2 and int(short.get_lamp_left()) == 1 and int(short.get_lit()) == 3 and int(short.get_watch_left()) == 1 and int(short.get_stood()) == 4 and int(short.get_relief_left()) == 2 and int(short.get_posted()) == 6 and int(short.get_wage_left()) == 2 and int(short.get_gate_left()) == 2 and int(short.get_paid()) == 8 and int(short.get_yard_left()) == 0 and int(short.get_loft_left()) == 0 and int(short.get_ticks_until_rain()) > 0:
+			saw_short = true
+			var short_ticks := int(short.get_ticks_until_rain())
+			short.tick()
+			if int(short.get_sounded()) != 1 or int(short.get_bell_left()) != 1 or int(short.get_lamp_left()) != 1 or int(short.get_watch_left()) != 1 or int(short.get_relief_left()) != 2 or int(short.get_wage_left()) != 2 or int(short.get_gate_left()) != 2 or int(short.get_yard_left()) != 0 or int(short.get_rung()) != 2 or int(short.get_lit()) != 3 or int(short.get_stood()) != 4 or int(short.get_posted()) != 6 or int(short.get_paid()) != 8:
+				_fail(errors, "the horn sounded an unrung hire or passed the cap (sounded %d bell %d lamp %d watch %d relief %d wage %d gate %d yard %d rung %d lit %d stood %d posted %d paid %d)" % [short.get_sounded(), short.get_bell_left(), short.get_lamp_left(), short.get_watch_left(), short.get_relief_left(), short.get_wage_left(), short.get_gate_left(), short.get_yard_left(), short.get_rung(), short.get_lit(), short.get_stood(), short.get_posted(), short.get_paid()])
+			elif not short.is_over() and int(short.get_ticks_until_rain()) >= short_ticks:
+				_fail(errors, "the horn beat did not spend a tick after the dry cap")
+			break
+	if not saw_short:
+		_fail(errors, "dry horn did not stop at 1 with unrung hires left (sounded %d bell %d lamp %d watch %d relief %d wage %d gate %d yard %d rung %d lit %d stood %d posted %d paid %d ticks %d)" % [short.get_sounded(), short.get_bell_left(), short.get_lamp_left(), short.get_watch_left(), short.get_relief_left(), short.get_wage_left(), short.get_gate_left(), short.get_yard_left(), short.get_rung(), short.get_lit(), short.get_stood(), short.get_posted(), short.get_paid(), short.get_ticks_until_rain()])
+	print("sounded %d left bell %d unrung %d unlit %d unstood %d unposted %d unpaid %d; dry sounded %d left bell %d unrung %d unlit %d unstood %d unposted %d unpaid %d; no horn sounded %d left bell %d; horn without bell sounded %d" % [sounded.get_sounded(), sounded.get_bell_left(), sounded_unrung, sounded_unlit, sounded_unstood, sounded_unposted, sounded_unpaid, dry_sounded.get_sounded(), dry_sounded.get_bell_left(), dry_unrung, dry_unlit, dry_unstood, dry_unposted, dry_unpaid, ignored.get_sounded(), ignored.get_bell_left(), bare.get_sounded()])
+
+
 func _expect_yard(sim, errors: Array) -> void:
 	if sim == null:
 		_fail(errors, "yard plan did not run")
@@ -3348,6 +3625,24 @@ func _run_plan(plans: Dictionary, plan_name: String, errors: Array):
 		_apply_marks(sim, plan["after_lamp"], errors)
 		if errors.size() > bell_before:
 			return null
+	if plan.has("after_bell"):
+		var horn_guard := 0
+		var horn_limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + int(Sim.SHIP_TICK) + int(Sim.MARKET_TICK) + int(Sim.YARD_TICK) + int(Sim.BUNK_TICK) + int(Sim.LOFT_TICK) + int(Sim.GATE_TICK) + int(Sim.WAGE_TICK) + int(Sim.RELIEF_TICK) + int(Sim.WATCH_TICK) + int(Sim.LAMP_TICK) + int(Sim.BELL_TICK) + 2
+		while int(sim.get_beat()) != Sim.HORNING and not sim.is_over() and horn_guard < horn_limit:
+			sim.tick()
+			horn_guard += 1
+		if int(sim.get_beat()) != Sim.HORNING or sim.is_over():
+			_fail(errors, "%s did not open the horn beat after the bell" % plan_name)
+			return null
+		if int(sim.get_ticks_until_rain()) != int(Sim.HORN_TICK):
+			_fail(errors, "%s horn countdown started at %d, expected %d" % [
+				plan_name, sim.get_ticks_until_rain(), Sim.HORN_TICK,
+			])
+			return null
+		var horn_before := errors.size()
+		_apply_marks(sim, plan["after_bell"], errors)
+		if errors.size() > horn_before:
+			return null
 	sim.run_until_rain()
 	return sim
 
@@ -3387,6 +3682,8 @@ func _apply_marks(sim, plan: Dictionary, errors: Array) -> void:
 		_apply_cells(sim, plan["lamp"], Sim.LAMP, errors)
 	if plan.has("bell"):
 		_apply_cells(sim, plan["bell"], Sim.BELL, errors)
+	if plan.has("horn"):
+		_apply_cells(sim, plan["horn"], Sim.HORN, errors)
 	if plan.has("rake_rect"):
 		_apply_rect(sim, plan["rake_rect"], Sim.RAKE, errors)
 
