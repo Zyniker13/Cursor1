@@ -482,6 +482,10 @@ func _building_mark_name(building: int) -> String:
 			return "BuildingTwelveMark"
 		13:
 			return "BuildingThirteenMark"
+		14:
+			return "BuildingFourteenMark"
+		15:
+			return "BuildingFifteenMark"
 		_:
 			return "Building%dMark" % building
 
@@ -634,7 +638,7 @@ func _sync_facing() -> void:
 			_facing.text = "Facing   counterclockwise"
 		elif _selected == "slide":
 			_facing.text = "Facing   with the parcel"
-		elif _selected == "bin" or _selected == "return" or _selected == "pause" or _selected == "shunt" or _selected == "bias":
+		elif _selected == "bin" or _selected == "return" or _selected == "pause" or _selected == "shunt" or _selected == "bias" or _selected == "vault" or _selected == "sling":
 			_facing.text = "Facing   none"
 		else:
 			_facing.text = "Facing   %s" % Sim.DIR_NAMES[_ghost_dir]
@@ -921,6 +925,10 @@ func _draw_block(block: Dictionary, alpha: float) -> void:
 		_shunt_mark(rect, ink)
 	elif typ == "bias":
 		_bias_mark(rect, ink)
+	elif typ == "vault":
+		_vault_mark(rect, ink)
+	elif typ == "sling":
+		_sling_mark(rect, ink)
 	elif typ == "slide":
 		_slide_mark(rect, ink)
 	elif typ == "bin":
@@ -1143,6 +1151,25 @@ func _bias_mark(rect: Rect2, color: Color) -> void:
 	_tri(foot, Vector2(0, -1), span * 0.12, span * 0.075, color)
 
 
+func _vault_mark(rect: Rect2, color: Color) -> void:
+	var center := rect.get_center()
+	var span := rect.size.x
+	var left := center.x - span * 0.28
+	var right := center.x + span * 0.28
+	draw_line(Vector2(left, center.y - span * 0.10), Vector2(right, center.y - span * 0.10), color, 2.5)
+	draw_line(Vector2(left, center.y + span * 0.10), Vector2(right, center.y + span * 0.10), color, 2.5)
+
+
+func _sling_mark(rect: Rect2, color: Color) -> void:
+	var center := rect.get_center()
+	var span := rect.size.x
+	var tip := center + Vector2(0.0, span * 0.26)
+	var left := tip + Vector2(-span * 0.30, -span * 0.42)
+	var right := tip + Vector2(span * 0.30, -span * 0.42)
+	draw_line(left, tip, color, 2.5)
+	draw_line(right, tip, color, 2.5)
+
+
 func _pause_mark(rect: Rect2, color: Color) -> void:
 	var center := rect.get_center()
 	var bar_w := maxf(rect.size.x * 0.12, 3.0)
@@ -1254,6 +1281,10 @@ func _tool_color(tool: String) -> Color:
 			return Color("#2f8f78")
 		"bias":
 			return Color("#9a7424")
+		"vault":
+			return Color("#7c5cbf")
+		"sling":
+			return Color("#6b8f3a")
 		"slide":
 			return Color("#d06b86")
 		"bin":
@@ -1312,6 +1343,10 @@ func _tool_tip(tool: String) -> String:
 			return "Waits one tick, then steps a parcel one cell to its right. The parcel keeps the facing it arrived with."
 		"bias":
 			return "Waits one tick, then steps a parcel one cell to its left. The parcel keeps the facing it arrived with."
+		"vault":
+			return "Waits one tick, then jumps a parcel two cells in the facing it already had. The cell in front is not entered, and the parcel keeps that facing."
+		"sling":
+			return "Waits one tick, then jumps a parcel two cells to its right. The cell beside it is not entered, and the parcel keeps the facing it arrived with."
 		"slide":
 			return "Moves a parcel two cells in its facing and does not rotate it. The cell between can be a brick, a belt, or another parcel."
 		"bin":
