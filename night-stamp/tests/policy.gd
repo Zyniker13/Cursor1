@@ -1107,6 +1107,55 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 			guess += 6
 		else:
 			guess -= 1
+	if rule == "drop_if_high_count":
+		var high_filled = 0
+		for high_row in 3:
+			for high_col in 3:
+				if state.form[high_row][high_col] != null:
+					high_filled += 1
+		var high_next = high_filled + 1
+		if high_next >= 7:
+			guess -= 6
+		elif high_filled >= 7:
+			guess += 4
+	if rule == "double_skip_fill":
+		var fill_back_row = row
+		var fill_back_col = col - 2
+		if fill_back_col < 0:
+			fill_back_row = row - 1
+			fill_back_col += 3
+		if fill_back_row < 0:
+			guess -= 4
+		elif state.form[fill_back_row][fill_back_col] != null:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+		var fill_ahead_row = row
+		var fill_ahead_col = col + 2
+		if fill_ahead_col > 2:
+			fill_ahead_row = row + 1
+			fill_ahead_col -= 3
+		if fill_ahead_row <= 2 and state.form[fill_ahead_row][fill_ahead_col] != null:
+			var fill_helped = state.form[fill_ahead_row][fill_ahead_col]
+			guess += _stamp_number(state, String(fill_helped["card_id"]), fill_ahead_row, fill_ahead_col)
+	if rule == "yield_post_pay":
+		if col == 2:
+			guess += 6
+		else:
+			guess -= 1
+	if rule == "yield_seam_pay":
+		var seam_pay = 0
+		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var seam_row = row + delta.x
+			var seam_col = col + delta.y
+			if seam_row < 0 or seam_col < 0 or seam_row > 2 or seam_col > 2:
+				continue
+			if state.form[seam_row][seam_col] != null:
+				seam_pay += 1
+		if seam_pay > 0:
+			guess += 4
+		else:
+			guess -= 1
 	if rule == "ignore_isolated":
 		var neighbors = 0
 		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:

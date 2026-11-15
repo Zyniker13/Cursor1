@@ -3,12 +3,13 @@ extends RefCounted
 # Lowball — sport model
 #
 # Lowball is an invented three-inning bat-and-ball sport. It is not baseball,
-# cricket, or any real league. This slice has sixteen fictional clubs in the
+# cricket, or any real league. This slice has eighteen fictional clubs in the
 # town of Lumen Quay: Lumen Reedmice, Southspur Glass, Pellwick Cinders,
 # Marrowgate Herons, Saltmere Kites, Ashfen Moths, Reedfen Larks, Cinderwharf
 # Pikes, Saltwharf Gulls, Marrowfen Owls, Ashwharf Swifts, Pellfen Terns,
-# Southfen Coots, Tidefen Grebes, Brinefen Curlews, and Quayfen Knots. Players
-# are generated. Nothing here is a real club, crest, or athlete.
+# Southfen Coots, Tidefen Grebes, Brinefen Curlews, Quayfen Knots, Millfen
+# Ruffs, and Wickfen Dunlins. Players are generated. Nothing here is a real
+# club, crest, or athlete.
 #
 # A match
 #   * 3 innings. Each inning has a top half and a bottom half.
@@ -37,54 +38,57 @@ extends RefCounted
 #   * Before a week the club picks one stat as the focus.
 #   * After the week, every player on the roster gains TRAINING_GAIN (+1) in
 #     that stat. The result is clamped to STAT_CAP. Stats never fall below
-#     STAT_FLOOR. Thirty weeks means thirty drills. Nobody sits out.
+#     STAT_FLOOR. Thirty-four weeks means thirty-four drills. Nobody sits out.
 #     The same focus each week takes a generated stat to the cap of 20, and a
 #     stat already at 20 stays at 20.
 #   * Each final game, when Lumen Reedmice reach the final, is one more drill.
-#     Every club drills after that game, including the fourteen clubs left out.
+#     Every club drills after that game, including the sixteen clubs left out.
 #     A missed final adds no further drill. Training still stops at 20.
 #
 # Series
-#   * Thirty weeks, eight matches a week, sixteen clubs. There is no bye.
-#     Every club plays every week. SERIES_WEEKS is 30, MATCHES_PER_WEEK is 8,
-#     BYES_EACH is 0, and GAMES_EACH is 30.
-#   * Weeks 1-15 are one circle. Quayfen Knots stay fixed. Appending Quayfen
-#     Knots to the fifteen-club ring and keeping that club fixed produces
-#     week 1, so the rotating ring stays
-#     [0, 1, 2, 3, 4, 5, 12, 13, 6, 7, 8, 9, 10, 11, 14]. Pair the first
-#     fourteen seats from the outside in: for i in 0..6, home is ring[i] and
-#     away is ring[13 - i]. The last seat is home to Quayfen Knots. Home is
-#     the first index and bats in the bottom half. Then rotate the whole ring
-#     one place left, including the first seat, and repeat. That is 15 weeks.
-#   * Weeks 16-30 repeat those pairings with home and away reversed.
+#   * Thirty-four weeks, nine matches a week, eighteen clubs. There is no bye.
+#     Every club plays every week. SERIES_WEEKS is 34, MATCHES_PER_WEEK is 9,
+#     BYES_EACH is 0, and GAMES_EACH is 34.
+#   * Weeks 1-17 are one circle. Wickfen Dunlins stay fixed. Appending Wickfen
+#     Dunlins to the seventeen-club ring and pairing all eighteen from the
+#     outside in does not produce week 1. Keeping that club fixed does, so
+#     the rotating ring stays
+#     [0, 1, 2, 3, 4, 5, 12, 14, 15, 13, 6, 7, 8, 9, 10, 11, 16]. Pair the
+#     first sixteen seats from the outside in: for i in 0..7, home is ring[i]
+#     and away is ring[15 - i]. The last seat is home to Wickfen Dunlins.
+#     There is no bye seat. Home is the first index and bats in the bottom
+#     half. Then rotate the whole ring one place left, including the first
+#     seat, and repeat. That is 17 weeks.
+#   * Weeks 18-34 repeat those pairings with home and away reversed.
 #   * Week 1 is Lumen Reedmice vs Pellfen Terns, Southspur Glass vs Ashwharf
 #     Swifts, Pellwick Cinders vs Marrowfen Owls, Marrowgate Herons vs
 #     Saltwharf Gulls, Saltmere Kites vs Cinderwharf Pikes, Ashfen Moths vs
-#     Reedfen Larks, Southfen Coots vs Tidefen Grebes, and Brinefen Curlews
-#     vs Quayfen Knots.
-#   * Week 2 is not a bye. Lumen Reedmice are home to Quayfen Knots. Week 17
-#     reverses that pairing, so Lumen Reedmice play again. Nobody sits out.
-#   * Every club plays every other club once at home and once away (30 games)
-#     and has zero byes. ROUND_ROBIN lists the eight matches for each week.
+#     Reedfen Larks, Southfen Coots vs Tidefen Grebes, Brinefen Curlews vs
+#     Quayfen Knots, and Millfen Ruffs vs Wickfen Dunlins.
+#   * Lumen Reedmice play in week 1. They also play week 2, at home to
+#     Wickfen Dunlins, and week 19 reverses that match. Nobody sits out.
+#   * Every club plays every other club once at home and once away (34 games)
+#     and has zero byes. ROUND_ROBIN lists the nine matches for each week.
 #     There is no bye club and no bye card.
-#   * The office shows the whole schedule from week 1, so all eight matches
+#   * The office shows the whole schedule from week 1, so all nine matches
 #     can be followed before any of them is played.
-#   * You watch or skip your own match. The other seven matches that week are
+#   * You watch or skip your own match. The other eight matches that week are
 #     recorded with it. Watch and Skip follow Lumen Reedmice's own match
 #     every week.
 #   * A win is WIN_POINTS (2) and a tie is TIE_POINTS (1).
 #   * Table order is points per game, then run difference, then the series
 #     seed. Run difference is runs scored minus runs allowed. Rates are
 #     compared as fractions. An equal rate is not ahead on its own. Divide the
-#     series seed by 16 and keep the remainder: 0 starts with Lumen Reedmice,
+#     series seed by 18 and keep the remainder: 0 starts with Lumen Reedmice,
 #     1 with Southspur Glass, 2 with Pellwick Cinders, 3 with Marrowgate
 #     Herons, 4 with Saltmere Kites, 5 with Ashfen Moths, 6 with Reedfen Larks,
 #     7 with Cinderwharf Pikes, 8 with Saltwharf Gulls, 9 with Marrowfen Owls,
 #     10 with Ashwharf Swifts, 11 with Pellfen Terns, 12 with Southfen Coots,
-#     13 with Tidefen Grebes, 14 with Brinefen Curlews, and 15 with Quayfen
-#     Knots. The order walks CLUB_NAMES from there and wraps. The earlier club
-#     is ahead. TIE_RULE and SEED_RULE state that on screen.
-#   * After week 30 the top two clubs play a best-of-three final. The first
+#     13 with Tidefen Grebes, 14 with Brinefen Curlews, 15 with Quayfen Knots,
+#     16 with Millfen Ruffs, and 17 with Wickfen Dunlins. The order walks
+#     CLUB_NAMES from there and wraps. The earlier club is ahead. TIE_RULE
+#     and SEED_RULE state that on screen.
+#   * After week 34 the top two clubs play a best-of-three final. The first
 #     club to reach two wins takes the series. Home alternates.
 #     The club that led after the league is home, listed first, and bats second
 #     in game 1 and, if needed, game 3, and in every later odd-numbered game.
@@ -92,7 +96,7 @@ extends RefCounted
 #   * A tie in a final game is not a win for either side. FINAL_TIE_TEXT says
 #     so, and says that the series continues with another game until one club
 #     has two wins. The final does not change the table.
-#   * If Lumen Reedmice finish 3rd through 16th, the season ends with no final.
+#   * If Lumen Reedmice finish 3rd through 18th, the season ends with no final.
 #   * The board goal is to reach that final and win the series. GOAL_TEXT
 #     states it on the office from the start and again on the board. Missing
 #     the final, or losing the series, misses the goal. A tie in one final
@@ -149,7 +153,7 @@ extends RefCounted
 #   "c", and the closed joins were checked against a blocklist (see tests).
 
 const TOWN := "Lumen Quay"
-const CLUB_NAMES: Array = ["Lumen Reedmice", "Southspur Glass", "Pellwick Cinders", "Marrowgate Herons", "Saltmere Kites", "Ashfen Moths", "Reedfen Larks", "Cinderwharf Pikes", "Saltwharf Gulls", "Marrowfen Owls", "Ashwharf Swifts", "Pellfen Terns", "Southfen Coots", "Tidefen Grebes", "Brinefen Curlews", "Quayfen Knots"]
+const CLUB_NAMES: Array = ["Lumen Reedmice", "Southspur Glass", "Pellwick Cinders", "Marrowgate Herons", "Saltmere Kites", "Ashfen Moths", "Reedfen Larks", "Cinderwharf Pikes", "Saltwharf Gulls", "Marrowfen Owls", "Ashwharf Swifts", "Pellfen Terns", "Southfen Coots", "Tidefen Grebes", "Brinefen Curlews", "Quayfen Knots", "Millfen Ruffs", "Wickfen Dunlins"]
 const PLAYER_CLUB := "Lumen Reedmice"
 const OPPONENT_CLUB := "Southspur Glass"
 const THIRD_CLUB := "Pellwick Cinders"
@@ -166,58 +170,65 @@ const THIRTEENTH_CLUB := "Southfen Coots"
 const FOURTEENTH_CLUB := "Tidefen Grebes"
 const FIFTEENTH_CLUB := "Brinefen Curlews"
 const SIXTEENTH_CLUB := "Quayfen Knots"
+const SEVENTEENTH_CLUB := "Millfen Ruffs"
+const EIGHTEENTH_CLUB := "Wickfen Dunlins"
 const PLAYER_INDEX := 0
-const CLUB_COUNT := 16
+const CLUB_COUNT := 18
 
-# The rotating ring. Quayfen Knots stay fixed and are not in this list.
-# Appending Quayfen Knots to the fifteen-club ring, then keeping that club
-# fixed, produces week 1. Pair the first fourteen seats from the outside in,
-# and the last seat is home to Quayfen Knots. Then the ring rotates one place
-# left.
-const RING: Array = [0, 1, 2, 3, 4, 5, 12, 13, 6, 7, 8, 9, 10, 11, 14]
-const FIXED_INDEX := 15
+# The rotating ring. Wickfen Dunlins stay fixed and are not in this list.
+# Appending Wickfen Dunlins to the seventeen-club ring and pairing all
+# eighteen from the outside in does not produce week 1. Keeping Wickfen
+# Dunlins fixed, with the last seat home to that club, does. Pair the first
+# sixteen seats from the outside in, and the last seat plays Wickfen Dunlins.
+# Then the ring rotates one place left. There is no bye seat.
+const RING: Array = [0, 1, 2, 3, 4, 5, 12, 14, 15, 13, 6, 7, 8, 9, 10, 11, 16]
+const FIXED_INDEX := 17
 
-# Each week is eight [home, away] pairs. Home bats in the bottom half.
-# There is no bye. Quayfen Knots stay fixed. Weeks 1-15 are one circle. The
-# ring starts as RING. Pair the first fourteen seats from the outside in: for
-# i in 0..6, home is ring[i] and away is ring[13 - i]. The last seat is home
-# to Quayfen Knots. Then the whole ring rotates one place left, including the
-# first seat. Weeks 16-30 repeat those pairs with home and away reversed.
-# Every club plays every other club once at home and once away, and every
-# club has zero byes. Week 1 is the fifteen-club opening plus Brinefen
-# Curlews vs Quayfen Knots. Week 2 sends Lumen Reedmice home to Quayfen Knots,
-# and week 17 reverses that match.
+# Each week is nine [home, away] pairs. Home bats in the bottom half.
+# There is no bye. Wickfen Dunlins stay fixed. Weeks 1-17 are one circle.
+# The ring starts as RING. Pair the first sixteen seats from the outside in:
+# for i in 0..7, home is ring[i] and away is ring[15 - i]. The last seat is
+# home to Wickfen Dunlins. Then the whole ring rotates one place left,
+# including the first seat. Weeks 18-34 repeat those pairs with home and away
+# reversed. Every club plays every other club once at home and once away, and
+# every club has zero byes. Week 1 keeps the eight Millfen matches and adds
+# Millfen Ruffs vs Wickfen Dunlins. Week 2 sends Lumen Reedmice home to
+# Wickfen Dunlins, and week 19 reverses that match.
 const ROUND_ROBIN: Array = [
-	[[0, 11], [1, 10], [2, 9], [3, 8], [4, 7], [5, 6], [12, 13], [14, 15]],
-	[[1, 14], [2, 11], [3, 10], [4, 9], [5, 8], [12, 7], [13, 6], [0, 15]],
-	[[2, 0], [3, 14], [4, 11], [5, 10], [12, 9], [13, 8], [6, 7], [1, 15]],
-	[[3, 1], [4, 0], [5, 14], [12, 11], [13, 10], [6, 9], [7, 8], [2, 15]],
-	[[4, 2], [5, 1], [12, 0], [13, 14], [6, 11], [7, 10], [8, 9], [3, 15]],
-	[[5, 3], [12, 2], [13, 1], [6, 0], [7, 14], [8, 11], [9, 10], [4, 15]],
-	[[12, 4], [13, 3], [6, 2], [7, 1], [8, 0], [9, 14], [10, 11], [5, 15]],
-	[[13, 5], [6, 4], [7, 3], [8, 2], [9, 1], [10, 0], [11, 14], [12, 15]],
-	[[6, 12], [7, 5], [8, 4], [9, 3], [10, 2], [11, 1], [14, 0], [13, 15]],
-	[[7, 13], [8, 12], [9, 5], [10, 4], [11, 3], [14, 2], [0, 1], [6, 15]],
-	[[8, 6], [9, 13], [10, 12], [11, 5], [14, 4], [0, 3], [1, 2], [7, 15]],
-	[[9, 7], [10, 6], [11, 13], [14, 12], [0, 5], [1, 4], [2, 3], [8, 15]],
-	[[10, 8], [11, 7], [14, 6], [0, 13], [1, 12], [2, 5], [3, 4], [9, 15]],
-	[[11, 9], [14, 8], [0, 7], [1, 6], [2, 13], [3, 12], [4, 5], [10, 15]],
-	[[14, 10], [0, 9], [1, 8], [2, 7], [3, 6], [4, 13], [5, 12], [11, 15]],
-	[[11, 0], [10, 1], [9, 2], [8, 3], [7, 4], [6, 5], [13, 12], [15, 14]],
-	[[14, 1], [11, 2], [10, 3], [9, 4], [8, 5], [7, 12], [6, 13], [15, 0]],
-	[[0, 2], [14, 3], [11, 4], [10, 5], [9, 12], [8, 13], [7, 6], [15, 1]],
-	[[1, 3], [0, 4], [14, 5], [11, 12], [10, 13], [9, 6], [8, 7], [15, 2]],
-	[[2, 4], [1, 5], [0, 12], [14, 13], [11, 6], [10, 7], [9, 8], [15, 3]],
-	[[3, 5], [2, 12], [1, 13], [0, 6], [14, 7], [11, 8], [10, 9], [15, 4]],
-	[[4, 12], [3, 13], [2, 6], [1, 7], [0, 8], [14, 9], [11, 10], [15, 5]],
-	[[5, 13], [4, 6], [3, 7], [2, 8], [1, 9], [0, 10], [14, 11], [15, 12]],
-	[[12, 6], [5, 7], [4, 8], [3, 9], [2, 10], [1, 11], [0, 14], [15, 13]],
-	[[13, 7], [12, 8], [5, 9], [4, 10], [3, 11], [2, 14], [1, 0], [15, 6]],
-	[[6, 8], [13, 9], [12, 10], [5, 11], [4, 14], [3, 0], [2, 1], [15, 7]],
-	[[7, 9], [6, 10], [13, 11], [12, 14], [5, 0], [4, 1], [3, 2], [15, 8]],
-	[[8, 10], [7, 11], [6, 14], [13, 0], [12, 1], [5, 2], [4, 3], [15, 9]],
-	[[9, 11], [8, 14], [7, 0], [6, 1], [13, 2], [12, 3], [5, 4], [15, 10]],
-	[[10, 14], [9, 0], [8, 1], [7, 2], [6, 3], [13, 4], [12, 5], [15, 11]],
+	[[0, 11], [1, 10], [2, 9], [3, 8], [4, 7], [5, 6], [12, 13], [14, 15], [16, 17]],
+	[[1, 16], [2, 11], [3, 10], [4, 9], [5, 8], [12, 7], [14, 6], [15, 13], [0, 17]],
+	[[2, 0], [3, 16], [4, 11], [5, 10], [12, 9], [14, 8], [15, 7], [13, 6], [1, 17]],
+	[[3, 1], [4, 0], [5, 16], [12, 11], [14, 10], [15, 9], [13, 8], [6, 7], [2, 17]],
+	[[4, 2], [5, 1], [12, 0], [14, 16], [15, 11], [13, 10], [6, 9], [7, 8], [3, 17]],
+	[[5, 3], [12, 2], [14, 1], [15, 0], [13, 16], [6, 11], [7, 10], [8, 9], [4, 17]],
+	[[12, 4], [14, 3], [15, 2], [13, 1], [6, 0], [7, 16], [8, 11], [9, 10], [5, 17]],
+	[[14, 5], [15, 4], [13, 3], [6, 2], [7, 1], [8, 0], [9, 16], [10, 11], [12, 17]],
+	[[15, 12], [13, 5], [6, 4], [7, 3], [8, 2], [9, 1], [10, 0], [11, 16], [14, 17]],
+	[[13, 14], [6, 12], [7, 5], [8, 4], [9, 3], [10, 2], [11, 1], [16, 0], [15, 17]],
+	[[6, 15], [7, 14], [8, 12], [9, 5], [10, 4], [11, 3], [16, 2], [0, 1], [13, 17]],
+	[[7, 13], [8, 15], [9, 14], [10, 12], [11, 5], [16, 4], [0, 3], [1, 2], [6, 17]],
+	[[8, 6], [9, 13], [10, 15], [11, 14], [16, 12], [0, 5], [1, 4], [2, 3], [7, 17]],
+	[[9, 7], [10, 6], [11, 13], [16, 15], [0, 14], [1, 12], [2, 5], [3, 4], [8, 17]],
+	[[10, 8], [11, 7], [16, 6], [0, 13], [1, 15], [2, 14], [3, 12], [4, 5], [9, 17]],
+	[[11, 9], [16, 8], [0, 7], [1, 6], [2, 13], [3, 15], [4, 14], [5, 12], [10, 17]],
+	[[16, 10], [0, 9], [1, 8], [2, 7], [3, 6], [4, 13], [5, 15], [12, 14], [11, 17]],
+	[[11, 0], [10, 1], [9, 2], [8, 3], [7, 4], [6, 5], [13, 12], [15, 14], [17, 16]],
+	[[16, 1], [11, 2], [10, 3], [9, 4], [8, 5], [7, 12], [6, 14], [13, 15], [17, 0]],
+	[[0, 2], [16, 3], [11, 4], [10, 5], [9, 12], [8, 14], [7, 15], [6, 13], [17, 1]],
+	[[1, 3], [0, 4], [16, 5], [11, 12], [10, 14], [9, 15], [8, 13], [7, 6], [17, 2]],
+	[[2, 4], [1, 5], [0, 12], [16, 14], [11, 15], [10, 13], [9, 6], [8, 7], [17, 3]],
+	[[3, 5], [2, 12], [1, 14], [0, 15], [16, 13], [11, 6], [10, 7], [9, 8], [17, 4]],
+	[[4, 12], [3, 14], [2, 15], [1, 13], [0, 6], [16, 7], [11, 8], [10, 9], [17, 5]],
+	[[5, 14], [4, 15], [3, 13], [2, 6], [1, 7], [0, 8], [16, 9], [11, 10], [17, 12]],
+	[[12, 15], [5, 13], [4, 6], [3, 7], [2, 8], [1, 9], [0, 10], [16, 11], [17, 14]],
+	[[14, 13], [12, 6], [5, 7], [4, 8], [3, 9], [2, 10], [1, 11], [0, 16], [17, 15]],
+	[[15, 6], [14, 7], [12, 8], [5, 9], [4, 10], [3, 11], [2, 16], [1, 0], [17, 13]],
+	[[13, 7], [15, 8], [14, 9], [12, 10], [5, 11], [4, 16], [3, 0], [2, 1], [17, 6]],
+	[[6, 8], [13, 9], [15, 10], [14, 11], [12, 16], [5, 0], [4, 1], [3, 2], [17, 7]],
+	[[7, 9], [6, 10], [13, 11], [15, 16], [14, 0], [12, 1], [5, 2], [4, 3], [17, 8]],
+	[[8, 10], [7, 11], [6, 16], [13, 0], [15, 1], [14, 2], [12, 3], [5, 4], [17, 9]],
+	[[9, 11], [8, 16], [7, 0], [6, 1], [13, 2], [15, 3], [14, 4], [12, 5], [17, 10]],
+	[[10, 16], [9, 0], [8, 1], [7, 2], [6, 3], [13, 4], [15, 5], [14, 12], [17, 11]]
 ]
 
 const STAT_FLOOR := 1
@@ -228,8 +239,8 @@ const TRAINING_GAIN := 1
 const ROSTER_SIZE := 6
 const LINEUP_SIZE := 4
 const INNINGS := 3
-const SERIES_WEEKS := 30
-const MATCHES_PER_WEEK := 8
+const SERIES_WEEKS := 34
+const MATCHES_PER_WEEK := 9
 const BYES_EACH := 0
 const GAMES_EACH := SERIES_WEEKS - BYES_EACH
 const FINAL_WINS_NEEDED := 2
@@ -238,11 +249,11 @@ const WIN_POINTS := 2
 const TIE_POINTS := 1
 
 const GOAL_TEXT := "Board goal: reach the final and win the series."
-const FINAL_TEXT := "After week 30 the top two clubs play a best-of-three final. The first club to two wins takes the series. The club that led after the league is home for game 1 and, if needed, game 3. Home alternates. A win is 2 points and a tie is 1. An equal rate is not ahead. If Lumen Reedmice finish 3rd through 16th, the season ends with no final. The final does not change the table."
+const FINAL_TEXT := "After week 34 the top two clubs play a best-of-three final. The first club to two wins takes the series. The club that led after the league is home for game 1 and, if needed, game 3. Home alternates. A win is 2 points and a tie is 1. An equal rate is not ahead. If Lumen Reedmice finish 3rd through 18th, the season ends with no final. The final does not change the table."
 const FINAL_TIE_TEXT := "A tie in a final game is not a win for either side. The series continues with another game until one club has two wins. The club that led after the league is home for game 1, game 3, and every later odd-numbered game. The other finalist is home for game 2 and every later even-numbered game."
 const TIE_RULE := "Ties in the table break by run difference, then by the existing series seed."
-const SEED_RULE := "Run difference is runs scored minus runs allowed. Divide the series seed by 16 and keep the remainder. Remainder 0 starts with Lumen Reedmice, remainder 1 with Southspur Glass, remainder 2 with Pellwick Cinders, remainder 3 with Marrowgate Herons, remainder 4 with Saltmere Kites, remainder 5 with Ashfen Moths, remainder 6 with Reedfen Larks, remainder 7 with Cinderwharf Pikes, remainder 8 with Saltwharf Gulls, remainder 9 with Marrowfen Owls, remainder 10 with Ashwharf Swifts, remainder 11 with Pellfen Terns, remainder 12 with Southfen Coots, remainder 13 with Tidefen Grebes, remainder 14 with Brinefen Curlews, and remainder 15 with Quayfen Knots. The order then walks that club list and wraps, and the earlier club is ahead."
-const SCHEDULE_TEXT := "Thirty weeks. Each week has eight matches and no bye. A double round-robin: every club plays every other club once at home and once away, and every club has zero byes. Home is listed first and bats second."
+const SEED_RULE := "Run difference is runs scored minus runs allowed. Divide the series seed by 18 and keep the remainder. Remainder 0 starts with Lumen Reedmice, remainder 1 with Southspur Glass, remainder 2 with Pellwick Cinders, remainder 3 with Marrowgate Herons, remainder 4 with Saltmere Kites, remainder 5 with Ashfen Moths, remainder 6 with Reedfen Larks, remainder 7 with Cinderwharf Pikes, remainder 8 with Saltwharf Gulls, remainder 9 with Marrowfen Owls, remainder 10 with Ashwharf Swifts, remainder 11 with Pellfen Terns, remainder 12 with Southfen Coots, remainder 13 with Tidefen Grebes, remainder 14 with Brinefen Curlews, remainder 15 with Quayfen Knots, remainder 16 with Millfen Ruffs, and remainder 17 with Wickfen Dunlins. The order then walks that club list and wraps, and the earlier club is ahead."
+const SCHEDULE_TEXT := "Thirty-four weeks. Each week has nine matches and no bye. A double round-robin: every club plays every other club once at home and once away, and every club has zero byes. Home is listed first and bats second."
 
 const STATS: Array = ["lash", "eye", "legs", "glove", "arm", "read"]
 const TACTICS: Array = ["aggressive", "patient", "field"]
@@ -380,8 +391,8 @@ static func create_clubs(series_seed: int) -> Dictionary:
 		lines.append(stats)
 	# Every club is dealt the same stat lines. Later clubs are shuffled copies
 	# so no club is generated stronger than another, and none share objects.
-	# Quayfen Knots are one more shuffle after Brinefen Curlews. The earlier
-	# sheets stay in the order they already had.
+	# Wickfen Dunlins are one more shuffle after Millfen Ruffs. The earlier
+	# seventeen sheets stay in the order they already had.
 	var sheets: Array = [lines]
 	for _club in CLUB_COUNT - 1:
 		var copy_lines: Array = []
@@ -419,6 +430,8 @@ static func create_clubs(series_seed: int) -> Dictionary:
 		"fourteenth_club": FOURTEENTH_CLUB,
 		"fifteenth_club": FIFTEENTH_CLUB,
 		"sixteenth_club": SIXTEENTH_CLUB,
+		"seventeenth_club": SEVENTEENTH_CLUB,
+		"eighteenth_club": EIGHTEENTH_CLUB,
 		"player_roster": rosters[0],
 		"opponent_roster": rosters[1],
 		"third_roster": rosters[2],
@@ -435,6 +448,8 @@ static func create_clubs(series_seed: int) -> Dictionary:
 		"fourteenth_roster": rosters[13],
 		"fifteenth_roster": rosters[14],
 		"sixteenth_roster": rosters[15],
+		"seventeenth_roster": rosters[16],
+		"eighteenth_roster": rosters[17],
 	}
 
 
@@ -725,7 +740,7 @@ static func goal_reached(rows: Array) -> bool:
 	return true
 
 
-# Regular matches use week 0-29 and slot 0-7. Final game N (0-based) uses week
+# Regular matches use week 0-33 and slot 0-8. Final game N (0-based) uses week
 # SERIES_WEEKS + N and slot 0. The formula stays fixed so the same series seed
 # still repeats every at-bat, including every final game.
 static func match_seed_for(series_seed: int, week: int, slot: int = 0) -> int:

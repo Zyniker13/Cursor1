@@ -35,6 +35,7 @@ const KIND_COLOR := [
 	Color(0.62, 0.36, 0.52, 1),
 	Color(0.86, 0.82, 0.70, 1),
 	Color(0.72, 0.82, 0.76, 1),
+	Color(0.84, 0.80, 0.68, 1),
 ]
 
 var sim = null
@@ -134,6 +135,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			selected = Catalog.STOLE
 		elif event.is_action_pressed("plant_m"):
 			selected = Catalog.MANTLE
+		elif event.is_action_pressed("plant_n"):
+			selected = Catalog.TIPPET
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if sim != null and sim.outcome == Sim.OUTCOME_RUNNING and sim.phase == Sim.PHASE_PLANT:
 			var cell := _mouse_cell()
@@ -209,6 +212,7 @@ func _bind_keys() -> void:
 	_bind("plant_k", [KEY_K])
 	_bind("plant_l", [KEY_L])
 	_bind("plant_m", [KEY_M])
+	_bind("plant_n", [KEY_N])
 	_bind("restart", [KEY_R])
 
 
@@ -319,7 +323,7 @@ func _build_hud() -> void:
 	hp_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(hp_fill)
 
-	seeds_label = _label("Seeds 18", 15, Color("e7d7a4"))
+	seeds_label = _label("Seeds 19", 15, Color("e7d7a4"))
 	seeds_label.position = Vector2(704, 40)
 	seeds_label.size = Vector2(110, 24)
 	layer.add_child(seeds_label)
@@ -343,7 +347,7 @@ func _build_hud() -> void:
 	hint_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hint_box.clip_contents = true
 	layer.add_child(hint_box)
-	hint_label = _label("Move: WASD or arrows, paused while planting. Plant with 1-9, 0, B, C, E, F, G, H, I, J, K, L, or M, then click a tile. Only a wick burns shroud. Only a briar cracks rind. Only a flare melts pitch. Only a hearth thaws frost. Only a shear cuts web. Only a chime cracks glass. Only a rasp strips scale. Only a maul cracks mail. Only a bill splits hide. Only a shade shades dusk. Only a cowl cowls veil. Only a hood hoods pall. Only a cloak cloaks gloom. Only a cape capes murk. Only a shawl shawls dread. Only a stole stoles woe. Only a mantle mantles blight.", 13, Color("aeb8a4"))
+	hint_label = _label("Move: WASD or arrows, paused while planting. Plant with 1-9, 0, B, C, E, F, G, H, I, J, K, L, M, or N, then click a tile. Only a wick burns shroud. Only a briar cracks rind. Only a flare melts pitch. Only a hearth thaws frost. Only a shear cuts web. Only a chime cracks glass. Only a rasp strips scale. Only a maul cracks mail. Only a bill splits hide. Only a shade shades dusk. Only a cowl cowls veil. Only a hood hoods pall. Only a cloak cloaks gloom. Only a cape capes murk. Only a shawl shawls dread. Only a stole stoles woe. Only a mantle mantles blight. Only a tippet tippets rot.", 12, Color("aeb8a4"))
 	hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	hint_label.clip_text = true
@@ -444,7 +448,7 @@ func _refresh_hud() -> void:
 		return
 	overlay.visible = true
 	if sim.outcome == Sim.OUTCOME_WON:
-		outcome_label.text = "The surge breaks.\nThirty-seven nights passed, and the orchard still stands."
+		outcome_label.text = "The surge breaks.\nThirty-nine nights passed, and the orchard still stands."
 	else:
 		outcome_label.text = "The lights went out.\nHealth reached zero before the orchard was clear."
 
@@ -474,13 +478,18 @@ func _hotkey_text(kind: int) -> String:
 		return "L"
 	if kind == Catalog.MANTLE:
 		return "M"
+	if kind == Catalog.TIPPET:
+		return "N"
 	return str(kind + 1)
 
 
 func _card_top_for(kind: int) -> float:
 	var y := CARD_TOP + float(kind) * (CARD_H + CARD_GAP)
-	# Shawl stays y 6294–6634. Stole stays y 6634–6974. The mantle card starts on that bottom, y 6974–7314, so the 7380 window keeps the same 66px spare.
-	if kind >= Catalog.MANTLE:
+	# Shawl stays y 6294–6634. Stole stays y 6634–6974. Mantle stays y 6974–7314.
+	# The tippet card starts on the mantle's bottom, y 7314–7654, so the 7720 window keeps the same 66px spare.
+	if kind >= Catalog.TIPPET:
+		y -= CARD_GAP * 4.0
+	elif kind >= Catalog.MANTLE:
 		y -= CARD_GAP * 3.0
 	elif kind >= Catalog.STOLE:
 		y -= CARD_GAP * 2.0
@@ -606,6 +615,8 @@ func _draw_fog() -> void:
 				draw_rect(rect, Color(0.86, 0.84, 0.74, 0.16), true)
 			if sim.tile_mantles_blight(tx, ty):
 				draw_rect(rect, Color(0.74, 0.86, 0.76, 0.16), true)
+			if sim.tile_tippets_rot(tx, ty):
+				draw_rect(rect, Color(0.62, 0.5, 0.34, 0.16), true)
 			if sim.tile_splits_hide(tx, ty):
 				draw_rect(rect, Color(0.86, 0.7, 0.42, 0.1), true)
 
@@ -872,6 +883,17 @@ func _draw_plant(plant) -> void:
 			draw_line(at + Vector2(15, 10), at + Vector2(17, 16), Color("b7c2b8"), 1.4)
 			var mantle_pulse := 0.55 + 0.45 * sin(float(sim.tick) * 0.05)
 			draw_arc(at + Vector2(0, 2), 17.0, 0.15, PI - 0.15, 16, Color(0.72, 0.82, 0.76, 0.35 + 0.3 * mantle_pulse), 1.5, true)
+		Catalog.TIPPET:
+			# A narrow pale band. Not the mantle's hem and not the stole's long strip.
+			draw_colored_polygon(PackedVector2Array([
+				at + Vector2(-11, -1.5),
+				at + Vector2(11, -1.5),
+				at + Vector2(11, 1.5),
+				at + Vector2(-11, 1.5),
+			]), Color("d8d2c4"))
+			draw_line(at + Vector2(-11, 0), at + Vector2(11, 0), Color("f6f3ea"), 0.8)
+			var tippet_pulse := 0.55 + 0.45 * sin(float(sim.tick) * 0.045)
+			draw_arc(at + Vector2(0, 1), 13.0, 0.9, PI - 0.9, 10, Color(0.72, 0.66, 0.5, 0.35 + 0.3 * tippet_pulse), 1.2, true)
 		_:
 			draw_circle(at, 6.0, Color.WHITE)
 
@@ -944,6 +966,8 @@ func _draw_shot(shot) -> void:
 			draw_line(at - shot.dir * 3.0, at, Color("8a8478"), 1.1)
 		Catalog.MANTLE:
 			draw_arc(at, 4.4, 0.3, PI - 0.3, 8, Color("e4eee6"), 1.7, true)
+		Catalog.TIPPET:
+			draw_line(at - shot.dir * 3.5, at + shot.dir * 3.5, Color("e8e2d4"), 1.2)
 		_:
 			draw_circle(at, 6.0, Color("ffb15a"))
 			draw_circle(at, 2.5, Color("fff0d2"))
@@ -952,6 +976,9 @@ func _draw_shot(shot) -> void:
 func _draw_pest(pest) -> void:
 	var at := _screen(pest.pos)
 	var flutter := sin(float(sim.tick) * 0.45 + float(pest.id)) * 3.0
+	if _rot_only(pest):
+		_draw_rot_moth(at, pest, flutter)
+		return
 	if _blight_only(pest):
 		_draw_blight_moth(at, pest, flutter)
 		return
@@ -1011,7 +1038,7 @@ func _draw_pest(pest) -> void:
 	if pest.slow_ticks > 0:
 		wing = Color("2f6b58")
 		body = Color("21483c")
-		if pest.shrouded or pest.rinded or pest.pitched or pest.frosted or pest.webbed or pest.glassed or pest.scaled or pest.mailed or pest.hided or pest.dusked or pest.veiled or pest.palled or pest.gloomed or pest.murked or pest.dreaded or pest.woed or pest.blighted:
+		if pest.shrouded or pest.rinded or pest.pitched or pest.frosted or pest.webbed or pest.glassed or pest.scaled or pest.mailed or pest.hided or pest.dusked or pest.veiled or pest.palled or pest.gloomed or pest.murked or pest.dreaded or pest.woed or pest.blighted or pest.rotted:
 			wing = Color("2a4038")
 			body = Color("1c2c28")
 	draw_colored_polygon(PackedVector2Array([
@@ -1093,6 +1120,8 @@ func _draw_pest(pest) -> void:
 		draw_arc(at, 58.0, 2.2, TAU - 0.45, 14, Color(0.22, 0.2, 0.18, 0.95), 2.0, true)
 	if pest.blighted:
 		draw_arc(at, 61.0, 0.55, TAU - 0.7, 16, Color(0.42, 0.58, 0.28, 0.95), 1.6, true)
+	if pest.rotted:
+		draw_arc(at, 64.0, 0.35, TAU - 0.9, 14, Color(0.55, 0.36, 0.18, 0.95), 1.6, true)
 	if pest.hp < Sim.PEST_HP:
 		var width := 16.0 * clampf(float(pest.hp) / float(Sim.PEST_HP), 0.0, 1.0)
 		draw_rect(Rect2(at + Vector2(-8, -14), Vector2(16, 3)), Color(0, 0, 0, 0.45), true)
@@ -1100,15 +1129,54 @@ func _draw_pest(pest) -> void:
 
 
 func _dread_only(pest) -> bool:
-	return pest.dreaded and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.woed and not pest.blighted
+	return pest.dreaded and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.woed and not pest.blighted and not pest.rotted
 
 
 func _woe_only(pest) -> bool:
-	return pest.woed and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.blighted
+	return pest.woed and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.blighted and not pest.rotted
 
 
 func _blight_only(pest) -> bool:
-	return pest.blighted and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.woed
+	return pest.blighted and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.woed and not pest.rotted
+
+
+func _rot_only(pest) -> bool:
+	return pest.rotted and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.woed and not pest.blighted
+
+
+func _draw_rot_moth(at: Vector2, pest, flutter: float) -> void:
+	# A speckled body and a broken rust ring. Not the blight moth's stained olive ring.
+	var speck := Color("8a6238")
+	var husk := Color("c4a882")
+	if pest.slow_ticks > 0:
+		husk = Color("8a8474")
+	draw_colored_polygon(PackedVector2Array([
+		at + Vector2(-12, flutter * 0.3),
+		at + Vector2(-3, 1),
+		at + Vector2(-10, 6),
+	]), Color("6a5038"))
+	draw_colored_polygon(PackedVector2Array([
+		at + Vector2(12, -flutter * 0.3),
+		at + Vector2(3, 1),
+		at + Vector2(10, 6),
+	]), Color("6a5038"))
+	draw_colored_polygon(PackedVector2Array([
+		at + Vector2(0, -8),
+		at + Vector2(5, 0),
+		at + Vector2(3, 9),
+		at + Vector2(-3, 9),
+		at + Vector2(-5, 0),
+	]), husk)
+	draw_circle(at + Vector2(-2, 1), 1.4, speck)
+	draw_circle(at + Vector2(2, 4), 1.2, speck)
+	draw_circle(at + Vector2(0, 6), 1.0, speck)
+	draw_circle(at + Vector2(-2, -1), 1.0, Color("3a2818"))
+	draw_circle(at + Vector2(2, -1), 1.0, Color("3a2818"))
+	draw_arc(at, 15.0, 0.25, TAU - 1.05, 12, Color(0.55, 0.36, 0.18, 0.95), 2.0, true)
+	if pest.hp < Sim.PEST_HP:
+		var width := 16.0 * clampf(float(pest.hp) / float(Sim.PEST_HP), 0.0, 1.0)
+		draw_rect(Rect2(at + Vector2(-8, -16), Vector2(16, 3)), Color(0, 0, 0, 0.45), true)
+		draw_rect(Rect2(at + Vector2(-8, -16), Vector2(width, 3)), Color("e0c48a"), true)
 
 
 func _draw_blight_moth(at: Vector2, pest, flutter: float) -> void:
