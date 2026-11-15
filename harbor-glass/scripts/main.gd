@@ -1,8 +1,9 @@
 extends Control
 
-# South Lantern Quay, then North Glass Reach. Pieces turn in place; a loose
-# piece may also move between the sockets authored for that chart. Lock Chart
-# asks the beam tracer whether every dock has its color and every hull is dark.
+# South Lantern Quay, then North Glass Reach, then the Turning Basin. Pieces
+# turn in place; a loose piece may also move between the sockets authored for
+# that chart. Lock Chart asks the beam tracer whether every dock has its color
+# and every hull is dark.
 
 const Charts := preload("res://scripts/charts.gd")
 const Tracer := preload("res://scripts/beam_tracer.gd")
@@ -44,10 +45,12 @@ var win_next: Button
 var chart_buttons: Array[Button] = []
 var quay_grid: GridContainer
 var reach_grid: GridContainer
+var basin_grid: GridContainer
 var quay_book_button: Button
 var reach_book_button: Button
+var basin_book_button: Button
 var harbor_label: Label
-var _book_place: Array[int] = [0, 0]
+var _book_place: Array[int] = [0, 0, 0]
 var tide_clock: TideClock
 var _side: Panel
 
@@ -107,30 +110,40 @@ func _build_ui() -> void:
 	box.add_child(book_row)
 	quay_book_button = _button("Quay")
 	quay_book_button.tooltip_text = Charts.HARBOR
-	quay_book_button.custom_minimum_size = Vector2(120, 26)
+	quay_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	quay_book_button.pressed.connect(_on_book_pressed.bind(0))
 	reach_book_button = _button("Reach")
 	reach_book_button.tooltip_text = Charts.REACH
-	reach_book_button.custom_minimum_size = Vector2(120, 26)
+	reach_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	reach_book_button.pressed.connect(_on_book_pressed.bind(1))
+	basin_book_button = _button("Basin")
+	basin_book_button.tooltip_text = Charts.BASIN
+	basin_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	basin_book_button.pressed.connect(_on_book_pressed.bind(2))
 	book_row.add_child(quay_book_button)
 	book_row.add_child(reach_book_button)
+	book_row.add_child(basin_book_button)
 
 	quay_grid = _chart_grid()
 	reach_grid = _chart_grid()
+	basin_grid = _chart_grid()
 	reach_grid.visible = false
+	basin_grid.visible = false
 	box.add_child(quay_grid)
 	box.add_child(reach_grid)
-	var quay_n := Charts.quay().size()
+	box.add_child(basin_grid)
+	var bounds: Array = _book_bounds()
 	for i in charts.size():
 		var button := _button("Chart %d" % (i + 1))
 		button.custom_minimum_size = Vector2(0, 26)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.pressed.connect(_on_chart_pressed.bind(i))
-		if i < quay_n:
+		if i < int(bounds[1]):
 			quay_grid.add_child(button)
-		else:
+		elif i < int(bounds[2]):
 			reach_grid.add_child(button)
+		else:
+			basin_grid.add_child(button)
 		chart_buttons.append(button)
 
 	title_label = _label("", 20, Palette.TEXT)
@@ -264,8 +277,7 @@ func select_chart(index: int) -> bool:
 			status_label.text = "That chart is still locked."
 		return false
 	chart_index = index
-	var quay_n := Charts.quay().size()
-	var book := 0 if chart_index < quay_n else 1
+	var book := _book_of(chart_index)
 	_book_place[book] = chart_index
 	chart = charts[index]
 	state = Charts.make_state(chart, false)
@@ -459,13 +471,16 @@ func _refresh_chrome() -> void:
 			button.disabled = false
 			button.text = "Held %d" % (i + 1) if solved[i] else "Chart %d" % (i + 1)
 		_paint_button(button, i == chart_index)
-	var quay_n := Charts.quay().size()
-	var on_reach := chart_index >= quay_n
-	quay_grid.visible = not on_reach
-	reach_grid.visible = on_reach
-	reach_book_button.disabled = not unlocked[quay_n]
-	_paint_button(quay_book_button, not on_reach)
-	_paint_button(reach_book_button, on_reach)
+	var book := _book_of(chart_index)
+	var bounds: Array = _book_bounds()
+	quay_grid.visible = book == 0
+	reach_grid.visible = book == 1
+	basin_grid.visible = book == 2
+	reach_book_button.disabled = not unlocked[int(bounds[1])]
+	basin_book_button.disabled = not unlocked[int(bounds[2])]
+	_paint_button(quay_book_button, book == 0)
+	_paint_button(reach_book_button, book == 1)
+	_paint_button(basin_book_button, book == 2)
 
 func _show_win() -> void:
 	win_body.text = str(chart["win"])
@@ -496,17 +511,34 @@ func _on_chart_pressed(index: int) -> void:
 	select_chart(index)
 
 
+func _book_bounds() -> Array:
+	var q := Charts.quay().size()
+	return [0, q, q + Charts.reach().size(), charts.size()]
+
+
+func _book_of(index: int) -> int:
+	var bounds: Array = _book_bounds()
+	if index >= int(bounds[2]):
+		return 2
+	if index >= int(bounds[1]):
+		return 1
+	return 0
+
+
 func _on_book_pressed(book: int) -> void:
-	var quay_n := Charts.quay().size()
-	var here := 0 if chart_index < quay_n else 1
+	var bounds: Array = _book_bounds()
+	var here := _book_of(chart_index)
 	if book == here:
 		return
-	if book == 1 and not unlocked[quay_n]:
-		status_label.text = "The reach is still locked."
+	var first := int(bounds[book])
+	if book > 0 and not unlocked[first]:
+		if book == 1:
+			status_label.text = "The reach is still locked."
+		else:
+			status_label.text = "The basin is still locked."
 		return
 	_book_place[here] = chart_index
-	var first := 0 if book == 0 else quay_n
-	var last := quay_n if book == 0 else charts.size()
+	var last := int(bounds[book + 1])
 	var target := _book_place[book]
 	if target < first or target >= last or not unlocked[target]:
 		target = first

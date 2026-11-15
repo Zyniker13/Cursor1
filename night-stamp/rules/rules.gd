@@ -123,6 +123,35 @@
 # progress. They do not cancel the retrigger, and they do not remove Hold
 # or Exemption.
 #
+# ASH WATCH, in desk order
+# A fourth night. The stamps, the ink, and the 3x3 form are unchanged. The
+# ash watch deals the starting deck again. Drafts and the relic from an
+# earlier night do not carry. Open it from the desk, or from a victory desk.
+# Restart act replays whichever night is on the desk.
+# - Orla Fen, lane column 2, exemption row bottom, Sealed Foot:
+#   "Refuses stamps on the bottom row."
+#   Exemption on the bottom row lets the bottom row count.
+# - Joss Mire, lane column 1, exemption row top, Pair Chit:
+#   "Yields if the form holds exactly two stamps." Exactly two filled cells
+#   add 4 progress after the queue. One stamp is not enough. Three stamps
+#   are not enough. Filling one column, or one row, is not the condition.
+#   Exemption on the top row cancels the yield.
+# - Vetch Rowan, lane column 3, exemption row middle, Row Seal:
+#   "Patience does not fall when every row is stamped."
+#   Each of the three rows must hold a stamp. Two rows leave the drop at 1.
+#   Exemption on the middle row keeps the drop at 1.
+#   Hold is applied before the row seal.
+# - Nim Harth, lane column 1, exemption row bottom, Tail Slip:
+#   "The last stamp in the queue scores twice."
+#   The queue is read from the top row downward, left to right inside a row.
+#   The last filled cell in that order scores twice. An earlier stamp scores
+#   its own number, even on the bottom row. A lone stamp is last, so it
+#   scores twice. A retrigger of that last cell scores twice again. A
+#   retrigger of an earlier cell does not.
+#   Exemption on the bottom row cancels the doubling.
+# A refused bottom row zeros that stamp's own progress. It does not cancel
+# the retrigger, and it does not remove Hold or Exemption.
+#
 # RUN
 # - A run is seeded. The shuffle and the draft offer are a pure function of the
 #   seed, the night, the traveler, and the cards owned, so restarting an
@@ -149,6 +178,7 @@ const RELIC_DEEP_WELL := "deep_well"
 const SHIFT_FIRST := 0
 const SHIFT_LATE := 1
 const SHIFT_CLOSING := 2
+const SHIFT_ASH := 3
 
 const ROW_NAMES := ["top row", "middle row", "bottom row"]
 const COL_NAMES := ["column 1", "column 2", "column 3"]
@@ -356,6 +386,54 @@ const CLOSING_BELL := [
 ]
 
 
+const ASH_WATCH := [
+	{
+		"id": "orla",
+		"name": "Orla Fen",
+		"form_name": "Sealed Foot",
+		"rule_text": "Refuses stamps on the bottom row.",
+		"rule": "refuse_bottom",
+		"lane": 1,
+		"exemption_row": 2,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "joss",
+		"name": "Joss Mire",
+		"form_name": "Pair Chit",
+		"rule_text": "Yields if the form holds exactly two stamps.",
+		"rule": "yield_exact_two",
+		"lane": 0,
+		"exemption_row": 0,
+		"goal": 22,
+		"patience": 5,
+	},
+	{
+		"id": "vetch",
+		"name": "Vetch Rowan",
+		"form_name": "Row Seal",
+		"rule_text": "Patience does not fall when every row is stamped.",
+		"rule": "no_drop_if_every_row",
+		"lane": 2,
+		"exemption_row": 1,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "nim",
+		"name": "Nim Harth",
+		"form_name": "Tail Slip",
+		"rule_text": "The last stamp in the queue scores twice.",
+		"rule": "double_last",
+		"lane": 0,
+		"exemption_row": 2,
+		"goal": 22,
+		"patience": 5,
+	},
+]
+
+
 class NightState:
 	extends RefCounted
 	var seed: int = 1
@@ -403,6 +481,8 @@ static func _canonical_shift(shift_index: int) -> int:
 		return SHIFT_LATE
 	if shift_index == SHIFT_CLOSING:
 		return SHIFT_CLOSING
+	if shift_index == SHIFT_ASH:
+		return SHIFT_ASH
 	return SHIFT_FIRST
 
 
@@ -418,7 +498,9 @@ static func new_run(seed_value: int, shift_index: int = SHIFT_FIRST) -> NightSta
 	state.next_iid = 0
 	for card_id in STARTING_DECK:
 		_add_library_card(state, String(card_id))
-	if state.shift == SHIFT_CLOSING:
+	if state.shift == SHIFT_ASH:
+		_log(state, "The ash watch begins. Seed %d." % state.seed)
+	elif state.shift == SHIFT_CLOSING:
 		_log(state, "The closing bell begins. Seed %d." % state.seed)
 	elif state.shift == SHIFT_LATE:
 		_log(state, "The late shift begins. Seed %d." % state.seed)
@@ -464,6 +546,8 @@ static func restart_encounter(state: NightState) -> void:
 
 
 static func shift_label(state: NightState) -> String:
+	if state.shift == SHIFT_ASH:
+		return "Ash watch"
 	if state.shift == SHIFT_CLOSING:
 		return "Closing bell"
 	if state.shift == SHIFT_LATE:
@@ -486,6 +570,8 @@ static func traveler(state: NightState) -> Dictionary:
 
 
 static func _roster(state: NightState) -> Array:
+	if state.shift == SHIFT_ASH:
+		return ASH_WATCH
 	if state.shift == SHIFT_CLOSING:
 		return CLOSING_BELL
 	if state.shift == SHIFT_LATE:
@@ -622,8 +708,10 @@ static func resolve_turn(state: NightState, quiet: bool = false) -> Dictionary:
 		loss = patience_loss(state)
 		state.patience -= loss
 		if not hush:
-			if loss == 0:
+			if loss == 0 and hold_active(state):
 				_log(state, "Hold delays %s. Patience stays %d." % [traveler(state)["name"], state.patience])
+			elif loss == 0:
+				_log(state, "Every row is stamped. %s waits. Patience stays %d." % [traveler(state)["name"], state.patience])
 			else:
 				_log(state, "Patience falls by %d to %d." % [loss, state.patience])
 	elif not hush:
@@ -662,12 +750,16 @@ static func stamp_progress(state: NightState, card_id: String, row: int, col: in
 		return 0
 	if rule == "refuse_middle" and row == 1:
 		return 0
+	if rule == "refuse_bottom" and row == 2:
+		return 0
 	if rule == "ignore_isolated" and orthogonal_count(state, row, col) == 0:
 		return 0
 	if rule == "ignore_corners" and _is_corner(row, col):
 		return 0
 	if rule == "ignore_covered" and _is_covered(state, row, col):
 		return 0
+	if rule == "double_last" and _is_queue_tail(state, row, col):
+		return amount * 2
 	return amount
 
 
@@ -748,6 +840,8 @@ static func patience_loss(state: NightState) -> int:
 			loss = 2
 		elif rule == "double_patience_if_center_empty" and not _center_filled(state):
 			loss = 2
+		elif rule == "no_drop_if_every_row" and _every_row_stamped(state):
+			loss = 0
 	return loss
 
 
@@ -895,6 +989,8 @@ static func _resolve_stamp(state: NightState, row: int, col: int, hush: bool) ->
 				_log(state, "%s refuses %s in column 1." % [traveler(state)["name"], CARDS[card_id]["name"]])
 			elif rule == "refuse_middle" and row == 1:
 				_log(state, "%s refuses %s on the middle row." % [traveler(state)["name"], CARDS[card_id]["name"]])
+			elif rule == "refuse_bottom" and row == 2:
+				_log(state, "%s refuses %s on the bottom row." % [traveler(state)["name"], CARDS[card_id]["name"]])
 			elif rule == "ignore_corners" and _is_corner(row, col):
 				_log(state, "%s ignores %s in a corner box." % [traveler(state)["name"], CARDS[card_id]["name"]])
 			elif rule == "ignore_covered" and _is_covered(state, row, col):
@@ -904,7 +1000,11 @@ static func _resolve_stamp(state: NightState, row: int, col: int, hush: bool) ->
 			else:
 				_log(state, "%s grants 0." % CARDS[card_id]["name"])
 		else:
-			_log(state, "%s on the %s, %s grants %d." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			var tail_rule = String(traveler(state)["rule"])
+			if tail_rule == "double_last" and _is_queue_tail(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The queue tail doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			else:
+				_log(state, "%s on the %s, %s grants %d." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 	state.turn_progress += amount
 	for cell in _retrigger_cells(card_id, row, col):
 		_try_retrigger(state, cell.x, cell.y, hush)
@@ -956,6 +1056,10 @@ static func _apply_post_rule(state: NightState, hush: bool) -> void:
 		state.turn_progress += 4
 		if not hush:
 			_log(state, "%s yields (+4)." % traveler(state)["name"])
+	elif rule == "yield_exact_two" and _stamp_count(state) == 2:
+		state.turn_progress += 4
+		if not hush:
+			_log(state, "%s yields (+4)." % traveler(state)["name"])
 
 
 static func _is_corner(row: int, col: int) -> bool:
@@ -968,6 +1072,32 @@ static func _is_covered(state: NightState, row: int, col: int) -> bool:
 
 static func _center_filled(state: NightState) -> bool:
 	return state.form[1][1] != null
+
+
+static func _is_queue_tail(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	for later_row in range(row, 3):
+		var start_col = 0
+		if later_row == row:
+			start_col = col + 1
+		for later_col in range(start_col, 3):
+			if state.form[later_row][later_col] != null:
+				return false
+	return true
+
+
+static func _stamp_count(state: NightState) -> int:
+	var count = 0
+	for row in 3:
+		count += row_fill_count(state, row)
+	return count
+
+
+static func _every_row_stamped(state: NightState) -> bool:
+	return row_has_stamp(state, 0) and row_has_stamp(state, 1) and row_has_stamp(state, 2)
 
 
 static func orthogonal_count(state: NightState, row: int, col: int) -> int:
@@ -1011,7 +1141,9 @@ static func _apply_result(state: NightState, result: Dictionary) -> void:
 		state.encounters_cleared += 1
 		if state.traveler_index >= _roster(state).size() - 1:
 			state.phase = "victory"
-			if state.shift == SHIFT_CLOSING:
+			if state.shift == SHIFT_ASH:
+				_log(state, "The queue is empty. The ash watch is clear.")
+			elif state.shift == SHIFT_CLOSING:
 				_log(state, "The queue is empty. The closing bell is clear.")
 			elif state.shift == SHIFT_LATE:
 				_log(state, "The queue is empty. The late shift is clear.")
