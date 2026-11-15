@@ -13,6 +13,7 @@ const PANEL := Color(0.15, 0.12, 0.11, 0.94)
 const CELLAR_AWNING := Color(0.50, 0.18, 0.16)
 const CISTERN_AWNING := Color(0.12, 0.36, 0.40)
 const CLOISTER_AWNING := Color(0.42, 0.30, 0.14)
+const CRYPT_AWNING := Color(0.36, 0.26, 0.46)
 
 var notice_label: Label
 var purse_label: Label
@@ -106,7 +107,9 @@ func _awning_for(floor_id: String) -> Color:
 		return CELLAR_AWNING
 	if floor_id == "cistern":
 		return CISTERN_AWNING
-	return CLOISTER_AWNING
+	if floor_id == "cloister":
+		return CLOISTER_AWNING
+	return CRYPT_AWNING
 
 
 func _bind_descend(button: Button, floor_id: String) -> void:
