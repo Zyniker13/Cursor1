@@ -37,6 +37,9 @@ extends RefCounted
 #     STAT_CAP. Stats never fall below STAT_FLOOR. Eight weeks means eight
 #     drills. The same focus each week takes a generated 15 to the cap of 20,
 #     and a stat already at 20 stays at 20.
+#   * The final, when Lumen Reedmice reach it, is one more drill. Every club
+#     drills after that match, including the club left out. A missed final
+#     adds no ninth drill.
 #
 # Series
 #   * Eight weeks, one match a week, three clubs. The two clubs in the fixture
@@ -46,12 +49,23 @@ extends RefCounted
 #     list. Home is the first index and bats in the bottom half.
 #   * The office shows the whole schedule from week 1, including the bye, so
 #     the round-robin can be followed before any match is played.
-#   * The board goal is a better points-per-game than both other clubs. A win
-#     is WIN_POINTS (2) and a tie is TIE_POINTS (1). An equal rate is not
-#     ahead. GOAL_TEXT states that on the office from the start and on the board.
+#   * A win is WIN_POINTS (2) and a tie is TIE_POINTS (1).
+#   * Table order is points per game, then run difference, then the series
+#     seed. Run difference is runs scored minus runs allowed. An equal rate
+#     is not ahead on its own. Divide the series seed by 3 and keep the
+#     remainder: 0 starts with Lumen Reedmice, 1 with Southspur Glass, and 2
+#     with Pellwick Cinders. The order walks CLUB_NAMES from there and wraps.
+#     The earlier club is ahead. TIE_RULE and SEED_RULE state that on screen.
+#   * After week 8 the two clubs ahead play one final. The club ahead is
+#     home, listed first, and bats second. The final uses match week index 8
+#     and does not change the table. If Lumen Reedmice are third, the season
+#     ends with no final.
+#   * The board goal is to reach that final and win it. GOAL_TEXT states it
+#     on the office from the start and again on the board. A tie or a loss
+#     in the final misses the goal.
 #   * An AI club's tactic is TACTICS[(week + club index) % 3]. Two AI clubs
-#     in the same match therefore post different tactics. Training is still
-#     the stat with the lowest roster total.
+#     in the same match therefore post different tactics. The final uses week
+#     index 8. Training is still the stat with the lowest roster total.
 #
 # Tactics (one per club per match, used on offense and on defense)
 #   * Aggressive: Lash +3 and Eye -2 for the zone weights. The drive contests
@@ -134,7 +148,10 @@ const PAS_PER_MATCH := INNINGS * 2 * LINEUP_SIZE
 const WIN_POINTS := 2
 const TIE_POINTS := 1
 
-const GOAL_TEXT := "Board goal: finish with a better points-per-game than both other clubs. A win is 2 points and a tie is 1."
+const GOAL_TEXT := "Board goal: reach the final and win it."
+const FINAL_TEXT := "The final is one match between the two clubs with the best points-per-game. A win is 2 points and a tie is 1. An equal rate is not ahead. The club ahead in the table is home, listed first, and bats second. If Lumen Reedmice miss the final, the season ends without one."
+const TIE_RULE := "Ties in the table break by run difference, then by the existing series seed."
+const SEED_RULE := "Run difference is runs scored minus runs allowed. Divide the series seed by 3 and keep the remainder. Remainder 0 starts with Lumen Reedmice, remainder 1 with Southspur Glass, and remainder 2 with Pellwick Cinders. The order then walks that club list and wraps, and the earlier club is ahead."
 const SCHEDULE_TEXT := "Eight weeks, one match a week. Two full round-robins, then the first two weeks of a third. The club left out has the bye. Home is listed first and bats second."
 
 const STATS: Array = ["lash", "eye", "legs", "glove", "arm", "read"]
@@ -442,8 +459,18 @@ static func empty_table() -> Array:
 			"ties": 0,
 			"points": 0,
 			"played": 0,
+			"runs_for": 0,
+			"runs_against": 0,
+			"run_diff": 0,
+			"seed_rank": club_index,
 		})
 	return rows
+
+
+static func _add_runs(row: Dictionary, scored: int, allowed: int) -> void:
+	row["runs_for"] = int(row.get("runs_for", 0)) + scored
+	row["runs_against"] = int(row.get("runs_against", 0)) + allowed
+	row["run_diff"] = int(row["runs_for"]) - int(row["runs_against"])
 
 
 static func apply_result_to_table(rows: Array, home_index: int, away_index: int, home_score: int, away_score: int) -> void:
@@ -464,11 +491,15 @@ static func apply_result_to_table(rows: Array, home_index: int, away_index: int,
 		away["ties"] = int(away["ties"]) + 1
 		home["points"] = int(home["points"]) + TIE_POINTS
 		away["points"] = int(away["points"]) + TIE_POINTS
+	_add_runs(home, home_score, away_score)
+	_add_runs(away, away_score, home_score)
 
 
 static func table_from_results(results: Array) -> Array:
 	var rows := empty_table()
 	for result in results:
+		if bool(result.get("is_final", false)):
+			continue
 		apply_result_to_table(
 			rows,
 			int(result["home_index"]),
@@ -479,9 +510,39 @@ static func table_from_results(results: Array) -> Array:
 	return rows
 
 
+static func seed_start(series_seed: int) -> int:
+	var start := series_seed % CLUB_COUNT
+	if start < 0:
+		start += CLUB_COUNT
+	return start
+
+
+# Club indexes, best seed tie-break first. This uses only the series seed.
+static func seed_order(series_seed: int) -> Array:
+	var start := seed_start(series_seed)
+	var order: Array = []
+	for step in CLUB_COUNT:
+		order.append((start + step) % CLUB_COUNT)
+	return order
+
+
+static func seed_order_names(series_seed: int) -> String:
+	var names: Array = []
+	for club_index in seed_order(series_seed):
+		names.append(str(CLUB_NAMES[int(club_index)]))
+	return ", ".join(names)
+
+
+static func apply_seed_ranks(rows: Array, series_seed: int) -> void:
+	var order := seed_order(series_seed)
+	for place in order.size():
+		rows[int(order[place])]["seed_rank"] = place
+
+
 # Positive when the first row has the better points-per-game.
 # Clubs that have not played rank below clubs that have.
-static func compare_rows(a: Dictionary, b: Dictionary) -> int:
+# An equal rate returns 0. It does not put either club ahead.
+static func rate_compare(a: Dictionary, b: Dictionary) -> int:
 	var a_played := int(a["played"])
 	var b_played := int(b["played"])
 	var a_points := int(a["points"])
@@ -493,6 +554,22 @@ static func compare_rows(a: Dictionary, b: Dictionary) -> int:
 	if b_played == 0:
 		return 1
 	return a_points * b_played - b_points * a_played
+
+
+# Full table order: points per game, then run difference, then series seed.
+# Positive when the first row is ahead.
+static func compare_rows(a: Dictionary, b: Dictionary) -> int:
+	var rate := rate_compare(a, b)
+	if rate != 0:
+		return rate
+	var run_gap := int(a.get("run_diff", 0)) - int(b.get("run_diff", 0))
+	if run_gap != 0:
+		return run_gap
+	var a_rank := int(a.get("seed_rank", a["index"]))
+	var b_rank := int(b.get("seed_rank", b["index"]))
+	if a_rank != b_rank:
+		return b_rank - a_rank
+	return int(b["index"]) - int(a["index"])
 
 
 static func ranks_ahead(a: Dictionary, b: Dictionary) -> bool:
@@ -514,16 +591,26 @@ static func sorted_table(rows: Array) -> Array:
 	return copy
 
 
+# Home index, then away index. Home is the club ahead in the table.
+static func finalist_pair(rows: Array) -> Array:
+	var ordered := sorted_table(rows)
+	return [int(ordered[0]["index"]), int(ordered[1]["index"])]
+
+
+# Strict points-per-game. An equal rate is not ahead. The board goal itself
+# is reaching the final and winning it; this helper is only the rate rule.
 static func goal_reached(rows: Array) -> bool:
 	var player: Dictionary = rows[PLAYER_INDEX]
 	for club_index in CLUB_COUNT:
 		if club_index == PLAYER_INDEX:
 			continue
-		if not ranks_ahead(player, rows[club_index]):
+		if rate_compare(player, rows[club_index]) <= 0:
 			return false
 	return true
 
 
+# Week indexes 0 through 7 are the round-robin. Week index 8 is the final.
+# The formula stays fixed so the same series seed still repeats every at-bat.
 static func match_seed_for(series_seed: int, week: int) -> int:
 	return series_seed * 1009 + week * 17 + 3
 
