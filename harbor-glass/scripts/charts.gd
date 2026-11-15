@@ -5,11 +5,13 @@ class_name ChartBook
 # The Turning Basin holds the next eight. The Painted Lock holds eight more.
 # The West Return holds eight more. The Meeting Glass holds eight more.
 # The Tide Mirror holds eight more. The Shutter holds eight more.
-# The Stain holds eight more. The Vane holds the last eight.
+# The Stain holds eight more. The Vane holds eight more.
+# The Well holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
-# 180, and 270 for north, east, south, and west. See BeamTracer.
+# 180, and 270 for north, east, south, and west. A well has no facing.
+# See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
 # or both. Tide index picks an entry of tide_phases, which is the count of
@@ -25,6 +27,7 @@ const TIDE := "The Tide Mirror"
 const SHUTTER := "The Shutter"
 const STAIN := "The Stain"
 const VANE := "The Vane"
+const WELL := "The Well"
 
 static func all() -> Array:
 	var book: Array = []
@@ -38,6 +41,7 @@ static func all() -> Array:
 	book.append_array(shutter())
 	book.append_array(stain())
 	book.append_array(vane())
+	book.append_array(well())
 	return book
 
 
@@ -79,6 +83,10 @@ static func stain() -> Array:
 
 static func vane() -> Array:
 	return [chart_71(), chart_72(), chart_73(), chart_74(), chart_75(), chart_76(), chart_77(), chart_78()]
+
+
+static func well() -> Array:
+	return [chart_79(), chart_80(), chart_81(), chart_82(), chart_83(), chart_84(), chart_85(), chart_86()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -2880,6 +2888,278 @@ static func chart_78() -> Dictionary:
 		],
 	}
 
+static func chart_79() -> Dictionary:
+	# Flood 2 covers the bottom two rows. The mirror drops the beam onto the
+	# tide mirror, which turns it west through the shutter into the well.
+	# The well leaves north onto the dock. Dry, the tide mirror lets the
+	# main beam fall into the hull, and the lower lamp stops in the well.
+	return {
+		"id": "79",
+		"harbor": WELL,
+		"title": "The North Well",
+		"teach": "A flooded well sends the beam north onto the dock. It keeps the beam's color, and it does not split. While that row is dry, a beam that hits the well stops and does not pass. A shutter in that cell passes in the arrival direction and misses the dock. A vane is shut by the flood: the beam stops at the waterline and does not enter the cell. Turn the mirror and raise the tide.",
+		"win": "The north well lands the beam.",
+		"cols": 6,
+		"rows": 6,
+		"tide_phases": [0, 2],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 5, 3, "W", "white"),
+			_lantern("S", 0, 4, "E", "white"),
+		],
+		"docks": [_dock("D", 2, 0, "white")],
+		"boats": [
+			_boat("Hn", 4, 0),
+			_boat("Hs", 4, 5),
+		],
+		"fixtures": [
+			_fixture("T", "tide_mirror", 4, 4, 0),
+			_fixture("G", "shutter", 3, 4, 0),
+		],
+		"pieces": [
+			_mirror("M", "Feed mirror", 4, 3, 90, 0),
+			_well("W", "Well", 2, 4),
+		],
+	}
+
+static func chart_80() -> Dictionary:
+	# The flood is fixed over the bottom two rows. The beam arrives from the
+	# east, traveling west, and the well still leaves north. A shutter keeps
+	# going west into the trap, which lifts that miss onto a hull.
+	return {
+		"id": "80",
+		"harbor": WELL,
+		"title": "Side Entry",
+		"teach": "The beam arrives from the east and still leaves north. The arrival direction does not pick the exit. The well keeps the color, and it does not split. A shutter keeps going west. A stain keeps going west. A vane is shut by the flood and the beam stops at the waterline.",
+		"win": "The beam leaves north.",
+		"cols": 6,
+		"rows": 6,
+		"tide_phases": [2],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [_lantern("L", 5, 3, "W", "white")],
+		"docks": [_dock("D", 2, 0, "white")],
+		"boats": [
+			_boat("Hn", 4, 0),
+			_boat("Ht", 1, 0),
+		],
+		"fixtures": [
+			_fixture("T", "tide_mirror", 4, 4, 0),
+			_fixture("G", "shutter", 3, 4, 0),
+			_fixture("R", "tide_mirror", 1, 4, 90),
+		],
+		"pieces": [
+			_mirror("M", "Feed mirror", 4, 3, 90, 0),
+			_well("W", "Well", 2, 4),
+		],
+	}
+
+static func chart_81() -> Dictionary:
+	# White falls through the fixed glass onto the stain. The stain paints
+	# the beam, and the flooded well carries that color north. The well
+	# does not paint it again.
+	return {
+		"id": "81",
+		"harbor": WELL,
+		"title": "After the Color",
+		"teach": "A stain recolors the white beam, then the flooded well carries that color north onto the matching dock. The well does not recolor, and it does not split. Blue does not satisfy the red dock. A shutter would keep the arrival direction. A vane is shut by the flood.",
+		"win": "The color climbs north.",
+		"cols": 6,
+		"rows": 6,
+		"tide_phases": [2],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [_lantern("L", 5, 3, "W", "white")],
+		"docks": [_dock("Rd", 2, 0, "red")],
+		"boats": [],
+		"fixtures": [
+			_fixture("M", "mirror", 4, 3, 0),
+			_fixture("T", "tide_mirror", 4, 4, 0),
+		],
+		"pieces": [
+			_stain("K", "Stain", 3, 4, 90, 0),
+			_well("W", "Well", 2, 4),
+		],
+	}
+
+static func chart_82() -> Dictionary:
+	# Dry is the solution. The lower lamp runs east into the well and stops,
+	# short of the eastern hull. Flood turns the southbound feed west into
+	# the well, and the well lifts that beam onto the northern hull.
+	return {
+		"id": "82",
+		"harbor": WELL,
+		"title": "Dry Stop",
+		"teach": "The solution is the dry phase. The well stops a beam that would reach the hull. It does not pass. The flood phase lifts that beam north onto the hull and fails. A stain would let the dry beam pass. Water shuts a vane, so a vane cannot make the flood lift.",
+		"win": "The dry well holds the hull dark.",
+		"cols": 7,
+		"rows": 6,
+		"tide_phases": [0, 2],
+		"start_tide_index": 1,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ld", 0, 1, "E", "white"),
+			_lantern("Lf", 4, 2, "S", "white"),
+			_lantern("Lw", 0, 4, "E", "white"),
+		],
+		"docks": [_dock("D", 6, 0, "white")],
+		"boats": [
+			_boat("Hn", 2, 0),
+			_boat("Ht", 1, 0),
+			_boat("He", 5, 4),
+			_boat("Hs", 2, 5),
+			_boat("Hm", 6, 5),
+		],
+		"fixtures": [
+			_fixture("T", "tide_mirror", 4, 4, 0),
+			_fixture("K", "stain", 3, 4, 0),
+			_fixture("R", "tide_mirror", 1, 4, 90),
+		],
+		"pieces": [
+			_mirror("M", "Dock mirror", 6, 1, 90, 0),
+			_well("W", "Well", 2, 4),
+		],
+	}
+
+static func chart_83() -> Dictionary:
+	# The flood is fixed. The beam enters the southern well from the side and
+	# leaves north. A tide mirror turns that climb east into the northern
+	# well, which leaves north onto the dock. A shutter in either cell keeps
+	# the arrival direction and misses.
+	return {
+		"id": "83",
+		"harbor": WELL,
+		"title": "Two Wells",
+		"teach": "Two flooded wells, one a row north of the other, climb the beam two rows onto the dock. The arrival direction does not pick the exit. Replacing either well with a shutter keeps the beam on its old direction. A vane is shut by the flood. A stain does not turn the beam north.",
+		"win": "Two wells climb to the dock.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [3],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [_lantern("L", 6, 3, "W", "white")],
+		"docks": [_dock("D", 4, 3, "white")],
+		"boats": [_boat("Hn", 5, 0)],
+		"fixtures": [
+			_fixture("G54", "shutter", 5, 4, 0),
+			_fixture("T55", "tide_mirror", 5, 5, 0),
+			_fixture("G45", "shutter", 4, 5, 0),
+			_fixture("G35", "shutter", 3, 5, 0),
+			_fixture("T24", "tide_mirror", 2, 4, 0),
+			_fixture("G34", "shutter", 3, 4, 0),
+		],
+		"pieces": [
+			_mirror("M", "Feed mirror", 5, 3, 90, 0),
+			_well("W1", "South well", 2, 5),
+			_well("W2", "North well", 4, 4),
+		],
+	}
+
+static func chart_84() -> Dictionary:
+	# Flood 2 covers the well and leaves the dock's row dry. The well lifts
+	# the beam out of the water onto that dry row. Low water stops the lower
+	# lamp in the well and drops the feed into the hull.
+	return {
+		"id": "84",
+		"harbor": WELL,
+		"title": "Above the Gate",
+		"teach": "The well lifts the beam out of the flood onto the dry row. Low water stops: a dry well does not pass, and the falling beam wakes the hull. The solution flood reaches the well and does not cover the dock. A shutter passes in the arrival direction. A vane stops at the waterline.",
+		"win": "The beam climbs out of the flood.",
+		"cols": 6,
+		"rows": 6,
+		"tide_phases": [0, 2],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 3, "E", "white"),
+			_lantern("S", 5, 4, "W", "white"),
+		],
+		"docks": [_dock("D", 3, 2, "white")],
+		"boats": [
+			_boat("Hn", 2, 0),
+			_boat("Hs", 2, 5),
+		],
+		"fixtures": [
+			_fixture("T", "tide_mirror", 2, 4, 90),
+		],
+		"pieces": [
+			_mirror("M", "Feed mirror", 2, 3, 0, 90),
+			_well("W", "Well", 3, 4),
+		],
+	}
+
+static func chart_85() -> Dictionary:
+	# Phases flood 0, 2, and 3 rows. Flood 2 covers the well and leaves the
+	# dock dry. Flood 3 covers the dock. Low water stops on the dry well.
+	return {
+		"id": "85",
+		"harbor": WELL,
+		"title": "The Held Well",
+		"teach": "Three tide phases. Only the middle flood clears. Low water stops on the dry well, and the falling beam wakes the hull. High water covers the dock. The wrong tide fails. A shutter does not lift the beam. A vane is shut when the well's row is flooded.",
+		"win": "The middle mark holds the well.",
+		"cols": 6,
+		"rows": 7,
+		"tide_phases": [0, 2, 3],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 3, "E", "white"),
+			_lantern("S", 5, 5, "W", "white"),
+		],
+		"docks": [_dock("D", 3, 4, "white")],
+		"boats": [
+			_boat("Hn", 2, 0),
+			_boat("Hs", 2, 6),
+		],
+		"fixtures": [
+			_fixture("T", "tide_mirror", 2, 5, 90),
+		],
+		"pieces": [
+			_mirror("M", "Feed mirror", 2, 3, 0, 90),
+			_well("W", "Well", 3, 5),
+		],
+	}
+
+static func chart_86() -> Dictionary:
+	# The prism must sit on the white beam. Red leaves north and misses the
+	# dock. Blue falls through the gate into the well and climbs north onto
+	# the blue dock. Low water lets that blue fall into the hull.
+	return {
+		"id": "86",
+		"harbor": WELL,
+		"title": "The Well Mark",
+		"teach": "Move the prism onto the white beam. One color climbs north through the well onto the dock. The other color does not satisfy that dock. The well does not recolor, and it does not split. Low water is the wrong tide. The other socket lets white wake the hull. A shutter keeps the arrival direction. A vane stops at the waterline.",
+		"win": "One color climbs. The other does not.",
+		"cols": 7,
+		"rows": 6,
+		"tide_phases": [0, 2],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [_lantern("L", 0, 2, "E", "white")],
+		"docks": [_dock("Bd", 4, 0, "blue")],
+		"boats": [
+			_boat("Hw", 6, 2),
+			_boat("Hs", 2, 5),
+		],
+		"fixtures": [
+			_fixture("T", "tide_mirror", 2, 4, 90),
+			_fixture("G", "shutter", 3, 4, 0),
+		],
+		"pieces": [
+			_prism("P", "Prism", [["side", 5, 0], ["line", 2, 2]], "side", 0, "line", 90),
+			_well("W", "Well", 4, 4),
+		],
+	}
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -3021,6 +3301,20 @@ static func _stain(id: String, name: String, x: int, y: int, start_rot: int, sol
 		"start_rot": start_rot,
 		"solution_socket": "a",
 		"solution_rot": sol_rot,
+	}
+
+
+static func _well(id: String, name: String, x: int, y: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "well",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": 0,
+		"solution_socket": "a",
+		"solution_rot": 0,
 	}
 
 
