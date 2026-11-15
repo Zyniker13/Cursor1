@@ -305,6 +305,70 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 					earlier = true
 		if not earlier:
 			guess += (2 - row) * 2 + (2 - col)
+	if rule == "drop_if_shared_number":
+		if _form_has_number(state, _stamp_number(state, card_id, row, col)):
+			guess -= 2
+	if rule == "yield_frame" and not (row == 1 and col == 1):
+		guess += 3
+	if rule == "zero_first":
+		var head = true
+		for head_row in range(0, row + 1):
+			var head_end = 2
+			if head_row == row:
+				head_end = col - 1
+			for head_col in range(0, head_end + 1):
+				if state.form[head_row][head_col] != null:
+					head = false
+		if head and not (card_id == "exemption" and row == 0):
+			guess = 2 - int(CARD_POWER.get(card_id, 40))
+		elif not head:
+			guess += 3
+	if rule == "double_patience_if_center_filled" and row == 1 and col == 1:
+		guess -= 12
+	if rule == "yield_corner" and _is_corner(row, col):
+		guess += 3
+	if rule == "zero_last":
+		var later_filled = false
+		for later_row in range(row, 3):
+			var start_col = 0
+			if later_row == row:
+				start_col = col + 1
+			for later_col in range(start_col, 3):
+				if state.form[later_row][later_col] != null:
+					later_filled = true
+		if later_filled:
+			guess += 6
+		else:
+			guess -= 10
+			if card_id == "exemption" and row == 2:
+				guess += 12
+	if rule == "double_center" and row == 1 and col == 1:
+		guess += 4
+	if rule == "refuse_stacked_col1" and col == 0 and card_id != "exemption" and card_id != "hold":
+		var stacked = false
+		for stacked_row in 3:
+			if state.form[stacked_row][0] != null:
+				stacked = true
+		if stacked:
+			guess -= 8
+	if rule == "drop_if_queue_gap" and _placement_opens_gap(state, row, col):
+		guess -= 6
+	if rule == "double_shared_later":
+		var shared_number = _stamp_number(state, card_id, row, col)
+		var earlier_match = false
+		for slip_row in range(0, row + 1):
+			var slip_end = 2
+			if slip_row == row:
+				slip_end = col - 1
+			for slip_col in range(0, slip_end + 1):
+				var slip_stamp = state.form[slip_row][slip_col]
+				if slip_stamp == null:
+					continue
+				if _stamp_number(state, String(slip_stamp["card_id"]), slip_row, slip_col) == shared_number:
+					earlier_match = true
+		if earlier_match:
+			guess += shared_number
+		guess += row
 	if rule == "ignore_isolated":
 		var neighbors = 0
 		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
@@ -324,3 +388,67 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 
 static func _is_corner(row: int, col: int) -> bool:
 	return (row == 0 or row == 2) and (col == 0 or col == 2)
+
+
+static func _stamp_number(state, card_id: String, row: int, col: int) -> int:
+	match card_id:
+		"duty":
+			var duty_amount = 4 if row == 2 else 2
+			if state.relic_id == Rules.RELIC_IRON_PAD:
+				duty_amount += 1
+			return duty_amount
+		"exemption", "hold", "echo", "reply":
+			return 1
+		"surcharge":
+			var surcharge_amount = 2
+			if row > 0 and state.form[row - 1][col] != null:
+				surcharge_amount += 3
+			return surcharge_amount
+		"entry_mark", "ripple":
+			return 2
+		"visa_dot":
+			return 3
+		"wax_seal":
+			return 6
+		"heavy_chop":
+			return 6 if row == 2 else 3
+		"queue_push":
+			return 4 if row == 0 else 2
+		"night_fee":
+			return 1 + int(state.ink_spent)
+		"final_notice":
+			var notice = 3
+			if row == 2 and state.form[row - 1][col] != null:
+				notice += 3
+			return notice
+		_:
+			return 2
+
+
+static func _placement_opens_gap(state, row: int, col: int) -> bool:
+	var first = -1
+	var last = -1
+	var count = 0
+	var index = 0
+	for scan_row in 3:
+		for scan_col in 3:
+			if state.form[scan_row][scan_col] != null or (scan_row == row and scan_col == col):
+				if first < 0:
+					first = index
+				last = index
+				count += 1
+			index += 1
+	if count < 2:
+		return false
+	return last - first + 1 > count
+
+
+static func _form_has_number(state, number: int) -> bool:
+	for row in 3:
+		for col in 3:
+			var stamp = state.form[row][col]
+			if stamp == null:
+				continue
+			if _stamp_number(state, String(stamp["card_id"]), row, col) == number:
+				return true
+	return false

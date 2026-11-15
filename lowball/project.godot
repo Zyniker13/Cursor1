@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Lowball"
-config/description="A six-week four-club round-robin in an invented three-inning bat-and-ball sport, then one final."
+config/description="A ten-week double round-robin, with one bye a week, and a best-of-three final of an invented three-inning bat-and-ball sport."
 run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 boot_splash/show_image=false

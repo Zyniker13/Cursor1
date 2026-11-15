@@ -105,5 +105,91 @@
     "trail": [[7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]],
     "crib": [[14, 4]],
     "ship": [[14, 3]]
+  },
+  "no_stall": {
+    "note": "The shipped shore with a full ship and no stall. The market beat has nowhere to sell the cargo, so this plan fails the market check. The salt stays on the ship and the coin total stays 0.",
+    "rake": [[1, 4], [1, 5], [1, 6]],
+    "stack": [[2, 4], [2, 5], [2, 6]],
+    "cover": [[3, 4], [3, 5], [3, 6]],
+    "trail": [[4, 5], [5, 5], [6, 5], [7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]],
+    "crib": [[14, 4]],
+    "ship": [[14, 3]]
+  },
+  "sold": {
+    "note": "The shipped shore plus one stall one cell north of the ship. The stall stays shut until the market beat, so the wet haul, the cart, and the shipment match the shipped plan. Workers then sell the whole cargo at one coin per unit.",
+    "rake": [[1, 4], [1, 5], [1, 6]],
+    "stack": [[2, 4], [2, 5], [2, 6]],
+    "cover": [[3, 4], [3, 5], [3, 6]],
+    "trail": [[4, 5], [5, 5], [6, 5], [7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]],
+    "crib": [[14, 4]],
+    "ship": [[14, 3]],
+    "stall": [[14, 2]]
+  },
+  "late_sold": {
+    "note": "The shipped shore until the ship beat ends. The stall is painted when the market beat opens, the way a player answers a loaded ship.",
+    "rake": [[1, 4], [1, 5], [1, 6]],
+    "stack": [[2, 4], [2, 5], [2, 6]],
+    "cover": [[3, 4], [3, 5], [3, 6]],
+    "trail": [[4, 5], [5, 5], [6, 5], [7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]],
+    "crib": [[14, 4]],
+    "ship": [[14, 3]],
+    "after_ship": {
+      "stall": [[14, 2]]
+    }
+  },
+  "dry_sold": {
+    "note": "The dry-pan line, the crib, the ship, and a stall north of the ship. Wet haul stays 0. The market sells the dry-season cargo for one coin per unit.",
+    "pan": [[4, 4], [4, 5], [4, 6]],
+    "stack": [[5, 4], [5, 5], [5, 6]],
+    "cover": [[6, 4], [6, 5], [6, 6]],
+    "trail": [[7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]],
+    "crib": [[14, 4]],
+    "ship": [[14, 3]],
+    "stall": [[14, 2]]
+  },
+  "no_yard": {
+    "note": "The sold shore with a full purse and no yard. The yard beat has nowhere to bank the coins, so this plan fails the yard check. The yard total stays 0 and the earned coins are still reported.",
+    "rake": [[1, 4], [1, 5], [1, 6]],
+    "stack": [[2, 4], [2, 5], [2, 6]],
+    "cover": [[3, 4], [3, 5], [3, 6]],
+    "trail": [[4, 5], [5, 5], [6, 5], [7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]],
+    "crib": [[14, 4]],
+    "ship": [[14, 3]],
+    "stall": [[14, 2]]
+  },
+  "banked": {
+    "note": "The sold shore plus one yard one cell north of the stall. The yard stays shut until the yard beat, so the wet haul, the cart, the shipment, and the earned coins match the sold plan. Workers then bank the whole purse, one coin at a time.",
+    "rake": [[1, 4], [1, 5], [1, 6]],
+    "stack": [[2, 4], [2, 5], [2, 6]],
+    "cover": [[3, 4], [3, 5], [3, 6]],
+    "trail": [[4, 5], [5, 5], [6, 5], [7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]],
+    "crib": [[14, 4]],
+    "ship": [[14, 3]],
+    "stall": [[14, 2]],
+    "yard": [[14, 1]]
+  },
+  "late_banked": {
+    "note": "The sold shore until the market beat ends. The yard is painted when the yard beat opens, the way a player answers a full purse.",
+    "rake": [[1, 4], [1, 5], [1, 6]],
+    "stack": [[2, 4], [2, 5], [2, 6]],
+    "cover": [[3, 4], [3, 5], [3, 6]],
+    "trail": [[4, 5], [5, 5], [6, 5], [7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]],
+    "crib": [[14, 4]],
+    "ship": [[14, 3]],
+    "stall": [[14, 2]],
+    "after_market": {
+      "yard": [[14, 1]]
+    }
+  },
+  "dry_banked": {
+    "note": "The dry-pan line, the crib, the ship, the stall, and a yard north of the stall. Wet haul stays 0. The yard banks the dry-season purse.",
+    "pan": [[4, 4], [4, 5], [4, 6]],
+    "stack": [[5, 4], [5, 5], [5, 6]],
+    "cover": [[6, 4], [6, 5], [6, 6]],
+    "trail": [[7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]],
+    "crib": [[14, 4]],
+    "ship": [[14, 3]],
+    "stall": [[14, 2]],
+    "yard": [[14, 1]]
   }
 }

@@ -11,6 +11,9 @@ const COL_MUTED := Color("C5BEB2")
 const COL_ACCENT := Color("E2A23A")
 const COL_HOME := Color("D4652F")
 const COL_AWAY := Color("2A9D8F")
+const COL_THIRD := Color("7E8CC4")
+const COL_FOURTH := Color("C46B8A")
+const COL_FIFTH := Color("9A7B4F")
 const COL_BAD := Color("E07A6A")
 const COL_GOOD := Color("8FCB7A")
 
@@ -61,10 +64,11 @@ var stat_strip: Label
 var week_label: Label
 var record_label: Label
 var goal_label: Label
+var rule_label: Label
+var shape_label: Label
 var schedule_label: Label
-var tie_label: Label
-var table_label: Label
-var opponent_heading: Label
+var standings_label: Label
+var fixture_title: Label
 var opponent_label: Label
 var tactic_help: Label
 var training_help: Label
@@ -297,15 +301,33 @@ func _build_ui() -> void:
 	goal_label = _label(Sport.GOAL_TEXT, 16, COL_ACCENT)
 	goal_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	office.add_child(goal_label)
+	rule_label = _label("%s %s %s %s" % [Sport.FINAL_TEXT, Sport.FINAL_TIE_TEXT, Sport.TIE_RULE, Sport.SEED_RULE], 14, COL_TEXT)
+	rule_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	office.add_child(rule_label)
+
+	var round_row := HBoxContainer.new()
+	round_row.add_theme_constant_override("separation", 16)
+	round_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	office.add_child(round_row)
+	var schedule_box := VBoxContainer.new()
+	schedule_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	schedule_box.size_flags_stretch_ratio = 1.45
+	round_row.add_child(schedule_box)
+	shape_label = _label(Sport.SCHEDULE_TEXT, 13, COL_MUTED)
+	shape_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	schedule_box.add_child(shape_label)
 	schedule_label = _label("", 14, COL_TEXT)
 	schedule_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	office.add_child(schedule_label)
-	tie_label = _label("", 14, COL_MUTED)
-	tie_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	office.add_child(tie_label)
-	table_label = _label("", 14, COL_TEXT)
-	table_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	office.add_child(table_label)
+	schedule_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	schedule_box.add_child(schedule_label)
+	var standings_box := VBoxContainer.new()
+	standings_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	round_row.add_child(standings_box)
+	standings_box.add_child(_label("Table", 16, COL_TEXT))
+	standings_label = _label("", 14, COL_TEXT)
+	standings_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	standings_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	standings_box.add_child(standings_label)
 
 	var columns := HBoxContainer.new()
 	columns.add_theme_constant_override("separation", 12)
@@ -338,8 +360,8 @@ func _build_ui() -> void:
 	var opponent_box := VBoxContainer.new()
 	opponent_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	opponent_panel.add_child(opponent_box)
-	opponent_heading = _label(Sport.GLASS_CLUB, 18, COL_AWAY)
-	opponent_box.add_child(opponent_heading)
+	fixture_title = _label("This week", 18, COL_AWAY)
+	opponent_box.add_child(fixture_title)
 	opponent_label = _label("", 14, COL_TEXT)
 	opponent_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	opponent_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -419,7 +441,7 @@ func _build_ui() -> void:
 	restart_button.pressed.connect(press_restart)
 	action_row.add_child(restart_button)
 
-	var help := _label("Keyboard: Tab then Enter. Keys 1-4 pick a slot, Left/Right change that batter, T tactic, Y training, W watch, S skip, N continue, R restart on the office or the board.", 13, COL_MUTED)
+	var help := _label("The schedule lists both matches and the bye every week. Watch and Skip play your match, and the other match is recorded with it. On a bye, Watch and Skip follow one of that week's matches, and the other is recorded with it. A bye records no match for that club. Lineup and tactic wait on a bye. Training still drills. The final is a series, and the same lineup, tactic, training, Watch, and Skip work for every final game. A tie in a final game is not a win for either side, and the series continues until one club has two wins. If Lumen Reedmice finish 3rd, 4th, or 5th, the season ends on the board. Keyboard: Tab then Enter. Keys 1-4 pick a slot, Left/Right change that batter, T tactic, Y training, W watch, S skip, N continue, R restart on the office or the board.", 13, COL_MUTED)
 	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	office.add_child(help)
 
@@ -486,7 +508,7 @@ func _build_ui() -> void:
 	board_box.add_theme_constant_override("separation", 10)
 	board_scroll.add_child(board_box)
 	board_box.add_child(_label("Board meeting", 32, COL_ACCENT))
-	board_box.add_child(_label("Four clubs in %s." % Sport.TOWN, 18, COL_TEXT))
+	board_box.add_child(_label("Ten-week double round-robin in %s, then a best-of-three final." % Sport.TOWN, 18, COL_TEXT))
 	board_label = _label("", 16, COL_TEXT)
 	board_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	board_box.add_child(board_label)
@@ -594,29 +616,70 @@ func _show_board() -> void:
 func _refresh_office() -> void:
 	if series == null or week_label == null:
 		return
-	if int(series.week) >= Sport.SERIES_WEEKS:
-		week_label.text = "Final"
-	else:
-		week_label.text = "Week %d of %d" % [int(series.week) + 1, Sport.SERIES_WEEKS]
-	seed_label.text = "Series seed %d" % int(series.seed)
+	if series.is_over():
+		return
 	var rec: Dictionary = series.record()
-	goal_label.text = Sport.GOAL_TEXT
-	var place := ""
-	if series.regular_complete():
-		place = " Finished %s." % _ordinal(Sport.rank_of(series.standings(), Sport.PLAYER_INDEX))
-	record_label.text = "Record %d-%d-%d.%s %s" % [
-		int(rec["wins"]),
-		int(rec["losses"]),
-		int(rec["ties"]),
-		place,
-		"You bat second." if series.player_bats_second() else "You bat first.",
-	]
-	schedule_label.text = Sport.schedule_text(series.matches)
-	tie_label.text = Sport.tie_break_text(int(series.seed))
-	table_label.text = Sport.table_text(series.standings())
-	if series.opponent_index() >= 0:
-		opponent_heading.text = str(Sport.CLUBS[series.opponent_index()])
-		opponent_heading.add_theme_color_override("font_color", _club_color(opponent_heading.text))
+	var series_counts: Array = series.series_win_counts()
+	var final_opponent := Sport.PLAYER_INDEX
+	if series.in_final():
+		final_opponent = _final_opponent_index()
+		var game_no := int(series.final_game_index()) + 1
+		week_label.text = "Final game %d" % game_no
+		var note := "You reached the final."
+		if series.final_games.size() > 0:
+			var last: Dictionary = series.final_games[series.final_games.size() - 1]
+			if str(last.get("winner", "")) == "tie":
+				note = "Game %d was a tie, so it was not a win for either side. The series continues." % series.final_games.size()
+		goal_label.text = "%s  %s Series wins: %s %d, %s %d." % [
+			Sport.GOAL_TEXT,
+			note,
+			Sport.PLAYER_CLUB,
+			int(series_counts[Sport.PLAYER_INDEX]),
+			str(Sport.CLUB_NAMES[final_opponent]),
+			int(series_counts[final_opponent]),
+		]
+	else:
+		var shown_week: int = mini(int(series.week) + 1, Sport.SERIES_WEEKS)
+		week_label.text = "Week %d of %d" % [shown_week, Sport.SERIES_WEEKS]
+		goal_label.text = "%s  Points so far: %d from %d." % [Sport.GOAL_TEXT, int(rec["points"]), int(rec["played"])]
+	seed_label.text = "Series seed %d" % int(series.seed)
+	var on_bye: bool = not series.in_final() and not series.player_plays()
+	var bat_note := "You bat second." if series.player_bats_second() else "You bat first."
+	if series.in_final():
+		record_label.text = "Record %d-%d-%d. Series %d-%d. %s" % [
+			int(rec["wins"]),
+			int(rec["losses"]),
+			int(rec["ties"]),
+			int(series_counts[Sport.PLAYER_INDEX]),
+			int(series_counts[final_opponent]),
+			bat_note,
+		]
+	elif on_bye:
+		record_label.text = "Record %d-%d-%d. Bye week." % [
+			int(rec["wins"]),
+			int(rec["losses"]),
+			int(rec["ties"]),
+		]
+	else:
+		record_label.text = "Record %d-%d-%d. %s" % [
+			int(rec["wins"]),
+			int(rec["losses"]),
+			int(rec["ties"]),
+			bat_note,
+		]
+	schedule_label.text = _schedule_text()
+	standings_label.text = _standings_text()
+	var card: Dictionary = series.fixture()
+	if on_bye:
+		fixture_title.text = "Bye week"
+		fixture_title.add_theme_color_override("font_color", COL_ACCENT)
+	else:
+		var opponent_name := str(card["away_club"]) if int(card["home"]) == Sport.PLAYER_INDEX else str(card["home_club"])
+		if series.in_final():
+			fixture_title.text = "Final game %d: %s" % [int(card.get("final_game", series.final_game_index() + 1)), opponent_name]
+		else:
+			fixture_title.text = opponent_name
+		fixture_title.add_theme_color_override("font_color", _club_color(opponent_name))
 	for i in roster_buttons.size():
 		var player: Dictionary = series.player_roster[i]
 		var slot_of := -1
@@ -645,38 +708,208 @@ func _refresh_office() -> void:
 		var on := stat_name == training
 		training_buttons[i].text = Sport.STAT_LABEL[stat_name] + (" [on]" if on else "")
 		_paint_button(training_buttons[i], on)
-	tactic_help.text = str(TACTIC_HELP[tactic])
-	training_help.text = "After the match, every %s player gains +1 %s, capped at %d." % [
-		Sport.PLAYER_CLUB, Sport.STAT_LABEL[training], Sport.STAT_CAP,
-	]
+	var tactic_line := str(TACTIC_HELP[tactic])
+	if series.in_final():
+		tactic_help.text = "%s %s" % [tactic_line, Sport.FINAL_TIE_TEXT]
+		training_help.text = "After this final game, every %s player gains +1 %s, capped at %d. All %d clubs drill after every final game, including the clubs left out. The table does not change." % [
+			Sport.PLAYER_CLUB, Sport.STAT_LABEL[training], Sport.STAT_CAP, Sport.CLUB_COUNT,
+		]
+	elif on_bye:
+		tactic_help.text = tactic_line + " This week is a bye, so the tactic is not used."
+		training_help.text = "After the week, every %s player gains +1 %s, capped at %d. All %d clubs drill every week, including the club on a bye. A bye records no match for that club." % [
+			Sport.PLAYER_CLUB, Sport.STAT_LABEL[training], Sport.STAT_CAP, Sport.CLUB_COUNT,
+		]
+	else:
+		tactic_help.text = tactic_line
+		training_help.text = "After the week, every %s player gains +1 %s, capped at %d. All %d clubs drill every week, including the club on a bye. The other match is recorded with yours." % [
+			Sport.PLAYER_CLUB, Sport.STAT_LABEL[training], Sport.STAT_CAP, Sport.CLUB_COUNT,
+		]
 	opponent_label.text = _opponent_blurb()
 
 
-func _opponent_blurb() -> String:
-	if series == null or series.opponent_roster.is_empty() or series.opponent_index() < 0:
-		return ""
-	var week_index := int(series.week)
-	var plan_week := week_index if week_index < Sport.SERIES_WEEKS else Sport.SERIES_WEEKS
-	var plan: Dictionary = Sport.opponent_plan(series.opponent_roster, plan_week, series.opponent_index())
+func _lineup_bits(roster: Array, indices: Array) -> String:
 	var bits: Array = []
-	var indices: Array = plan["lineup"]
 	for n in indices.size():
-		var player: Dictionary = series.opponent_roster[int(indices[n])]
+		var player: Dictionary = roster[int(indices[n])]
 		bits.append("%d %s (%s)" % [n + 1, str(player["player_name"]), str(Sport.SLOT_ROLE[n])])
-	var where := "You bat second, at home." if series.player_bats_second() else "You bat first, away."
-	var extra := ""
-	if week_index < Sport.SERIES_WEEKS:
-		var pair: Array = Sport.other_fixture(week_index)
-		extra = "Also this week: %s at %s." % [str(Sport.CLUBS[int(pair[0])]), str(Sport.CLUBS[int(pair[1])])]
-	else:
-		extra = "Final. The club ahead is home and bats second. This match does not change the table."
-	return "Posted tactic: %s.\nLineup: %s.\nThey drill %s after the match.\n%s\n%s\nBatting second gives no stat bonus. The side that bats second is only the bottom of each inning." % [
-		Sport.TACTIC_LABEL[str(plan["tactic"])],
-		", ".join(bits),
-		Sport.STAT_LABEL[str(plan["training"])],
-		where,
-		extra,
+	return ", ".join(bits)
+
+
+func _final_opponent_index() -> int:
+	var pair: Array = series.finalist_indices()
+	if int(pair[0]) == Sport.PLAYER_INDEX:
+		return int(pair[1])
+	return int(pair[0])
+
+
+func _place_word(place: int) -> String:
+	if place == 1:
+		return "1st"
+	if place == 2:
+		return "2nd"
+	if place == 3:
+		return "3rd"
+	return "%dth" % place
+
+
+func _bye_blurb() -> String:
+	var cards: Array = Sport.week_fixtures(int(series.week))
+	var lines: Array = [
+		"Bye. No match is recorded for %s. Lineup and tactic wait for your next match. You still drill." % Sport.PLAYER_CLUB,
 	]
+	for card in cards:
+		var home_i := int(card["home"])
+		var away_i := int(card["away"])
+		var home_plan: Dictionary = Sport.opponent_plan(series.rosters[home_i], int(series.week), home_i)
+		var away_plan: Dictionary = Sport.opponent_plan(series.rosters[away_i], int(series.week), away_i)
+		lines.append("%s host %s. %s posted %s. Lineup: %s. %s posted %s. Lineup: %s." % [
+			str(card["home_club"]),
+			str(card["away_club"]),
+			str(card["home_club"]),
+			Sport.TACTIC_LABEL[str(home_plan["tactic"])],
+			_lineup_bits(series.rosters[home_i], home_plan["lineup"]),
+			str(card["away_club"]),
+			Sport.TACTIC_LABEL[str(away_plan["tactic"])],
+			_lineup_bits(series.rosters[away_i], away_plan["lineup"]),
+		])
+	return "\n".join(lines)
+
+
+func _opponent_blurb() -> String:
+	if not series.in_final() and not series.player_plays():
+		return _bye_blurb()
+	var card: Dictionary = series.fixture()
+	var opponent_i := int(card["away"]) if int(card["home"]) == Sport.PLAYER_INDEX else int(card["home"])
+	var plan_week := int(series.week)
+	if series.in_final():
+		plan_week = Sport.SERIES_WEEKS + series.final_game_index()
+	var plan: Dictionary = Sport.opponent_plan(series.rosters[opponent_i], plan_week, opponent_i)
+	var where := "You are home and bat second." if series.player_bats_second() else "You are away and bat first."
+	var drill_when := "the week"
+	if series.in_final():
+		var ahead := str(Sport.CLUB_NAMES[int(series.finalist_indices()[0])])
+		where = "Final game %d. %s The club that led after the league was %s. That club is home for game 1 and game 3. %s" % [
+			int(card.get("final_game", 1)), where, ahead, Sport.FINAL_TIE_TEXT,
+		]
+		drill_when = "this game"
+	var lines := "%s\nPosted tactic: %s.\nLineup: %s.\nThey drill %s after %s.\nBatting second gives no stat bonus. The side that bats second is only the bottom of each inning." % [
+		where,
+		Sport.TACTIC_LABEL[str(plan["tactic"])],
+		_lineup_bits(series.rosters[opponent_i], plan["lineup"]),
+		Sport.STAT_LABEL[str(plan["training"])],
+		drill_when,
+	]
+	if series.in_final():
+		return lines
+	var other: Dictionary = series.other_fixture()
+	if other.is_empty():
+		return lines
+	var other_home := int(other["home"])
+	var other_away := int(other["away"])
+	var home_plan: Dictionary = Sport.opponent_plan(series.rosters[other_home], plan_week, other_home)
+	var away_plan: Dictionary = Sport.opponent_plan(series.rosters[other_away], plan_week, other_away)
+	return "%s\nOther match: %s host %s. %s posted %s. Lineup: %s. %s posted %s. Lineup: %s." % [
+		lines,
+		str(other["home_club"]),
+		str(other["away_club"]),
+		str(other["home_club"]),
+		Sport.TACTIC_LABEL[str(home_plan["tactic"])],
+		_lineup_bits(series.rosters[other_home], home_plan["lineup"]),
+		str(other["away_club"]),
+		Sport.TACTIC_LABEL[str(away_plan["tactic"])],
+		_lineup_bits(series.rosters[other_away], away_plan["lineup"]),
+	]
+
+
+func _schedule_text() -> String:
+	var lines: Array = []
+	for w in Sport.SERIES_WEEKS:
+		var cards: Array = Sport.week_fixtures(w)
+		var current := w == int(series.week) and int(series.week) < Sport.SERIES_WEEKS
+		var prefix := "> " if current else "  "
+		for slot in cards.size():
+			var card: Dictionary = cards[slot]
+			var result_index := w * Sport.MATCHES_PER_WEEK + slot
+			var match_bit := "%s vs %s" % [str(card["home_club"]), str(card["away_club"])]
+			if result_index < series.results.size():
+				var result: Dictionary = series.results[result_index]
+				match_bit = "%s %d, %s %d" % [
+					str(result["home_club"]),
+					int(result["home_score"]),
+					str(result["away_club"]),
+					int(result["away_score"]),
+				]
+			if slot == 0:
+				lines.append("%sWeek %d   %s" % [prefix, w + 1, match_bit])
+			else:
+				lines.append("           %s" % match_bit)
+		lines.append("           %s bye" % str(cards[0]["bye_club"]))
+	if int(series.week) >= Sport.SERIES_WEEKS and series.reached_final():
+		for game in series.final_games:
+			lines.append("  Final game %d   %s %d, %s %d" % [
+				int(game["final_game"]),
+				str(game["home_club"]),
+				int(game["home_score"]),
+				str(game["away_club"]),
+				int(game["away_score"]),
+			])
+		if series.in_final():
+			var final_card: Dictionary = series.fixture()
+			lines.append("> Final game %d   %s vs %s" % [
+				int(final_card["final_game"]),
+				str(final_card["home_club"]),
+				str(final_card["away_club"]),
+			])
+	elif int(series.week) >= Sport.SERIES_WEEKS:
+		var ordered: Array = Sport.sorted_table(series.table())
+		lines.append("  Final   not played. %s finished %s." % [Sport.PLAYER_CLUB, _place_word(series.place())])
+		lines.append("  The clubs ahead were %s and %s." % [str(ordered[0]["club"]), str(ordered[1]["club"])])
+	return "\n".join(lines)
+
+
+func _ppg_text(points: int, played: int) -> String:
+	if played <= 0:
+		return "-"
+	var milli := int((float(points) * 1000.0) / float(played))
+	return "%d.%03d per game" % [int(milli / 1000.0), milli % 1000]
+
+
+func _run_diff_text(value: int) -> String:
+	if value > 0:
+		return "run diff +%d" % value
+	return "run diff %d" % value
+
+
+func _standings_text() -> String:
+	var rows: Array = Sport.sorted_table(series.table())
+	var lines: Array = [
+		Sport.TIE_RULE,
+		"Series seed order: %s." % Sport.seed_order_names(int(series.seed)),
+	]
+	if int(series.week) >= Sport.SERIES_WEEKS:
+		lines.append("The final does not change the table.")
+	if series.reached_final():
+		var counts: Array = series.series_win_counts()
+		var pair: Array = series.finalist_indices()
+		lines.append("Final series wins: %s %d, %s %d. First club to %d wins takes the series." % [
+			str(Sport.CLUB_NAMES[int(pair[0])]),
+			int(counts[int(pair[0])]),
+			str(Sport.CLUB_NAMES[int(pair[1])]),
+			int(counts[int(pair[1])]),
+			Sport.FINAL_WINS_NEEDED,
+		])
+	for row in rows:
+		lines.append("%s   %d-%d-%d   %d pts from %d   %s   %s" % [
+			str(row["club"]),
+			int(row["wins"]),
+			int(row["losses"]),
+			int(row["ties"]),
+			int(row["points"]),
+			int(row["played"]),
+			_ppg_text(int(row["points"]), int(row["played"])),
+			_run_diff_text(int(row["run_diff"])),
+		])
+	return "\n".join(lines)
 
 
 func _select_slot(slot: int) -> void:
@@ -817,45 +1050,99 @@ func _enter_result() -> void:
 	_focus_control(continue_button)
 
 
+func _watched_match_line(other: Dictionary) -> String:
+	return "Watched match: %s" % _score_sentence(other)
+
+
+func _other_match_line(other: Dictionary) -> String:
+	return "Other match: %s" % _score_sentence(other)
+
+
+func _score_sentence(other: Dictionary) -> String:
+	var home_club := str(other["home_club"])
+	var away_club := str(other["away_club"])
+	var verdict := "Tie"
+	if int(other["home_score"]) > int(other["away_score"]):
+		verdict = "%s won" % home_club
+	elif int(other["away_score"]) > int(other["home_score"]):
+		verdict = "%s won" % away_club
+	return "%s %d, %s %d. %s." % [
+		home_club, int(other["home_score"]), away_club, int(other["away_score"]), verdict,
+	]
+
+
+func _wins_including(played: Dictionary) -> Array:
+	var counts: Array = series.series_win_counts()
+	var winner := str(played.get("winner", "tie"))
+	if winner == "home":
+		var home_index := int(played["home_index"])
+		counts[home_index] = int(counts[home_index]) + 1
+	elif winner == "away":
+		var away_index := int(played["away_index"])
+		counts[away_index] = int(counts[away_index]) + 1
+	return counts
+
+
+func _series_follow(played: Dictionary) -> String:
+	var counts := _wins_including(played)
+	var player_wins := int(counts[Sport.PLAYER_INDEX])
+	var opponent_index := int(played["opponent_index"])
+	var opponent_wins := int(counts[opponent_index])
+	var game_no := int(played["final_game"])
+	if player_wins >= Sport.FINAL_WINS_NEEDED:
+		return "%s won the series, %s to %s." % [Sport.PLAYER_CLUB, _wins_word(player_wins), _wins_word(opponent_wins)]
+	if opponent_wins >= Sport.FINAL_WINS_NEEDED:
+		return "%s lost the series, %s to %s." % [Sport.PLAYER_CLUB, _wins_word(player_wins), _wins_word(opponent_wins)]
+	var next_home: int = series.final_home_index(game_no)
+	var next_name := str(Sport.CLUB_NAMES[next_home])
+	if str(played.get("winner", "")) == "tie":
+		return "A tie is not a win for either side. The series continues to game %d. %s will be home and bat second." % [game_no + 1, next_name]
+	return "The series continues to game %d. Neither club has two wins. %s will be home and bat second." % [game_no + 1, next_name]
+
+
 func _result_text(played: Dictionary) -> String:
-	var word := _result_word(str(played["player_result"]))
-	var order := "second" if bool(played["player_bats_second"]) else "first"
-	var opponent_name := str(played["opponent_club"])
-	var player_notes: Array = Sport.preview_training(series.player_roster, str(played["player_focus"]))
-	var opponent_notes: Array = Sport.preview_training(series.opponent_roster, str(played["opponent_focus"]))
 	var lines: Array = []
-	var heading := "Final" if bool(played.get("final", false)) else "Week %d" % (int(played["week"]) + 1)
-	lines.append("%s: %s %d, %s %d. %s. You batted %s. %s against %s." % [
-		heading,
-		Sport.PLAYER_CLUB,
-		int(played["player_score"]),
-		opponent_name,
-		int(played["opponent_score"]),
-		word,
-		order,
-		Sport.TACTIC_LABEL[str(played["player_tactic"])],
-		Sport.TACTIC_LABEL[str(played["opponent_tactic"])],
-	])
-	lines.append(_drill_sentence(player_notes, Sport.PLAYER_CLUB))
-	lines.append(_drill_sentence(opponent_notes, opponent_name))
-	var other: Dictionary = played.get("other", {})
-	if not other.is_empty():
-		var away_i := int(other["away"])
-		var home_i := int(other["home"])
-		var side := "tie"
-		if int(other["away_score"]) > int(other["home_score"]):
-			side = "away win"
-		elif int(other["home_score"]) > int(other["away_score"]):
-			side = "home win"
-		lines.append("Also this week: %s %d at %s %d (%s)." % [
-			str(Sport.CLUBS[away_i]), int(other["away_score"]), str(Sport.CLUBS[home_i]), int(other["home_score"]), side,
+	if bool(played.get("is_final", false)):
+		var word := _result_word(str(played["player_result"]))
+		var order := "second" if bool(played["player_bats_second"]) else "first"
+		lines.append("Final game %d: %s %d, %s %d. %s. You batted %s. %s against %s." % [
+			int(played["final_game"]),
+			Sport.PLAYER_CLUB,
+			int(played["player_score"]),
+			str(played["opponent_club"]),
+			int(played["opponent_score"]),
+			word,
+			order,
+			Sport.TACTIC_LABEL[str(played["player_tactic"])],
+			Sport.TACTIC_LABEL[str(played["opponent_tactic"])],
 		])
-		var away_notes: Array = Sport.preview_training(series.rosters[away_i], str(other["away_focus"]))
-		var home_notes: Array = Sport.preview_training(series.rosters[home_i], str(other["home_focus"]))
-		lines.append(_drill_sentence(away_notes, str(Sport.CLUBS[away_i])))
-		lines.append(_drill_sentence(home_notes, str(Sport.CLUBS[home_i])))
-	if bool(played.get("final", false)):
-		lines.append("The final does not change the table.")
+		lines.append(_series_follow(played))
+	elif bool(played["player_played"]):
+		var word := _result_word(str(played["player_result"]))
+		var order := "second" if bool(played["player_bats_second"]) else "first"
+		lines.append("Score: %s %d, %s %d. %s. You batted %s. %s against %s." % [
+			Sport.PLAYER_CLUB,
+			int(played["player_score"]),
+			str(played["opponent_club"]),
+			int(played["opponent_score"]),
+			word,
+			order,
+			Sport.TACTIC_LABEL[str(played["player_tactic"])],
+			Sport.TACTIC_LABEL[str(played["opponent_tactic"])],
+		])
+		if played.has("other_match"):
+			lines.append(_other_match_line(played["other_match"]))
+	else:
+		lines.append("Bye. No match is recorded for %s." % Sport.PLAYER_CLUB)
+		lines.append(_watched_match_line(played))
+		if played.has("other_match"):
+			lines.append(_other_match_line(played["other_match"]))
+	var focuses: Array = played["focuses"]
+	for club_index in Sport.CLUB_COUNT:
+		var notes: Array = Sport.preview_training(series.rosters[club_index], str(focuses[club_index]))
+		var sentence := _drill_sentence(notes, str(Sport.CLUB_NAMES[club_index]))
+		if sentence != "":
+			lines.append(sentence)
 	return "\n".join(lines)
 
 
@@ -874,34 +1161,100 @@ func _drill_sentence(notes: Array, club: String) -> String:
 	]
 
 
+func _board_match_line(result: Dictionary, lead: String) -> String:
+	if bool(result["player_played"]):
+		var order := "Batted second" if bool(result["player_bats_second"]) else "Batted first"
+		return "%s: %s %d, %s %d. %s. %s. %s against %s." % [
+			lead,
+			Sport.PLAYER_CLUB,
+			int(result["player_score"]),
+			str(result["opponent_club"]),
+			int(result["opponent_score"]),
+			_result_word(str(result["player_result"])),
+			order,
+			Sport.TACTIC_LABEL[str(result["player_tactic"])],
+			Sport.TACTIC_LABEL[str(result["opponent_tactic"])],
+		]
+	var home_club := str(result["home_club"])
+	var away_club := str(result["away_club"])
+	var verdict := "Tie"
+	if int(result["home_score"]) > int(result["away_score"]):
+		verdict = "%s won" % home_club
+	elif int(result["away_score"]) > int(result["home_score"]):
+		verdict = "%s won" % away_club
+	return "%s: %s %d, %s %d. %s." % [
+		lead,
+		home_club,
+		int(result["home_score"]),
+		away_club,
+		int(result["away_score"]),
+		verdict,
+	]
+
+
+func _final_board_lines() -> Array:
+	var ordered: Array = Sport.sorted_table(series.table())
+	var home_name := str(ordered[0]["club"])
+	var away_name := str(ordered[1]["club"])
+	var lines: Array = []
+	if not series.reached_final():
+		lines.append("The final: not played. %s finished %s and missed it, so the season ends without a final." % [
+			Sport.PLAYER_CLUB, _place_word(series.place()),
+		])
+		lines.append("The clubs ahead were %s at home and %s away." % [home_name, away_name])
+		return lines
+	for game in series.final_games:
+		lines.append(_board_match_line(game, "Final game %d" % int(game["final_game"])))
+		if str(game.get("winner", "")) == "tie":
+			lines.append("Game %d was a tie. A tie is not a win for either side, so the series continued." % int(game["final_game"]))
+	var counts: Array = series.series_win_counts()
+	var opponent_index := _final_opponent_index()
+	var player_wins := int(counts[Sport.PLAYER_INDEX])
+	var opponent_wins := int(counts[opponent_index])
+	if series.series_winner_index() == Sport.PLAYER_INDEX:
+		lines.append("%s reached the final and won the series, %s to %s." % [Sport.PLAYER_CLUB, _wins_word(player_wins), _wins_word(opponent_wins)])
+	elif series.series_winner_index() >= 0:
+		lines.append("%s reached the final and lost the series, %s to %s." % [Sport.PLAYER_CLUB, _wins_word(player_wins), _wins_word(opponent_wins)])
+	else:
+		lines.append("The series is unfinished.")
+	return lines
+
+
 func _board_text() -> String:
 	var rec: Dictionary = series.record()
 	var verdict := "MET" if series.goal_met() else "MISSED"
-	var table: Array = series.standings()
-	var rank := Sport.rank_of(table, Sport.PLAYER_INDEX)
 	var lines: Array = []
 	lines.append(Sport.GOAL_TEXT)
+	lines.append(Sport.FINAL_TEXT)
+	lines.append(Sport.FINAL_TIE_TEXT)
+	lines.append(Sport.TIE_RULE)
+	lines.append(Sport.SEED_RULE)
+	lines.append("Series seed order: %s." % Sport.seed_order_names(int(series.seed)))
+	lines.append(Sport.SCHEDULE_TEXT)
 	lines.append("Result: %s" % verdict)
-	lines.append("Regular-season record: %d wins, %d losses, %d ties." % [
-		int(rec["wins"]), int(rec["losses"]), int(rec["ties"]),
+	lines.append("Your points: %d from %d. Record %d-%d-%d." % [
+		int(rec["points"]), int(rec["played"]), int(rec["wins"]), int(rec["losses"]), int(rec["ties"]),
 	])
-	lines.append(Sport.table_text(table))
-	lines.append(Sport.tie_break_text(int(series.seed)))
-	if series.final_match.is_empty():
-		lines.append("No final. %s finished %s, so the season ends on the board." % [
-			Sport.PLAYER_CLUB, _ordinal(rank),
-		])
-	else:
-		var final_match: Dictionary = series.final_match
-		lines.append("Final: %s %d, %s %d. %s. The final does not change the table." % [
-			Sport.PLAYER_CLUB,
-			int(final_match["player_score"]),
-			str(final_match["opponent_club"]),
-			int(final_match["opponent_score"]),
-			_result_word(str(final_match["player_result"])),
-		])
 	lines.append("")
-	lines.append(Sport.schedule_text(series.matches))
+	lines.append(_standings_text())
+	lines.append("")
+	for line in _final_board_lines():
+		lines.append(line)
+	lines.append("")
+	for w in Sport.SERIES_WEEKS:
+		for slot in Sport.MATCHES_PER_WEEK:
+			var index := w * Sport.MATCHES_PER_WEEK + slot
+			if index >= series.results.size():
+				continue
+			var result: Dictionary = series.results[index]
+			var player_bye := int(result.get("bye_index", -1)) == Sport.PLAYER_INDEX
+			var lead := "Week %d" % (w + 1)
+			if not bool(result["player_played"]) and not player_bye:
+				lead = "Week %d other match" % (w + 1)
+			var line := _board_match_line(result, lead)
+			if player_bye:
+				line += " You had the bye."
+			lines.append(line)
 	lines.append("")
 	lines.append("Roster after drilling (cap %d):" % Sport.STAT_CAP)
 	for player in series.player_roster:
@@ -912,14 +1265,10 @@ func _board_text() -> String:
 	return "\n".join(lines)
 
 
-func _ordinal(rank: int) -> String:
-	if rank == 1:
-		return "1st"
-	if rank == 2:
-		return "2nd"
-	if rank == 3:
-		return "3rd"
-	return "%dth" % rank
+func _wins_word(count: int) -> String:
+	if count == 1:
+		return "1 win"
+	return "%d wins" % count
 
 
 func _result_word(kind: String) -> String:
@@ -931,15 +1280,17 @@ func _result_word(kind: String) -> String:
 
 
 func _club_color(club: String) -> Color:
-	if club == Sport.PLAYER_CLUB:
+	if club == str(Sport.CLUB_NAMES[0]):
 		return COL_HOME
-	if club == Sport.GLASS_CLUB:
+	if club == str(Sport.CLUB_NAMES[1]):
 		return COL_AWAY
-	if club == Sport.CINDERS_CLUB:
-		return Color("C4513C")
-	if club == Sport.HERONS_CLUB:
-		return Color("7EA0C4")
-	return COL_AWAY
+	if club == str(Sport.CLUB_NAMES[2]):
+		return COL_THIRD
+	if club == str(Sport.CLUB_NAMES[3]):
+		return COL_FOURTH
+	if club == str(Sport.CLUB_NAMES[4]):
+		return COL_FIFTH
+	return COL_MUTED
 
 
 func _focus_control(control: Control) -> void:

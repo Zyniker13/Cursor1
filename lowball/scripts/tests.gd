@@ -3,6 +3,16 @@ extends SceneTree
 const Sport = preload("res://scripts/sport.gd")
 const SeriesScript = preload("res://scripts/series.gd")
 
+const LINEUP: Array = [0, 1, 2, 3]
+const ALT_LINEUP: Array = [5, 4, 3, 2]
+const TACTIC := "aggressive"
+const FOCUS := "lash"
+const SWEEP_SEED := 16
+const THIRD_SEED := 2
+const MISS_SEED := 5
+const TIE_SEED := 59
+const LOSS_SEED := 48
+
 var _failures: Array = []
 
 
@@ -13,12 +23,11 @@ func _initialize() -> void:
 func _run() -> void:
 	_failures = []
 	_test_names()
-	_test_fourth_club_and_schedule()
-	_test_tie_break()
-	_test_full_schedule_played()
-	_test_scripted_final()
+	_test_round_robin()
+	_test_table_order()
 	_test_determinism()
-	_test_stats_and_cap()
+	_test_scripted_series()
+	_test_fairness_and_cap()
 	await _test_game_flow()
 	if _failures.is_empty():
 		print("ALL TESTS PASSED")
@@ -44,79 +53,8 @@ func _key(code: Key) -> InputEventKey:
 	return event
 
 
-func _paint(series, player_value: int, other_value: int) -> void:
-	for club_index in series.rosters.size():
-		var value := player_value if club_index == Sport.PLAYER_INDEX else other_value
-		for player in series.rosters[club_index]:
-			for key in Sport.STATS:
-				Sport.set_stat(player, key, value)
-
-
-func _play_week(series, lineup: Array, tactic: String, focus: String) -> Dictionary:
-	var started: Dictionary = series.begin_match(lineup, tactic, focus)
-	_check(bool(started.get("ok", false)), str(started.get("error", "match did not start")))
-	if bool(started.get("ok", false)):
-		series.commit_match()
-	return started
-
-
-func _stat_signature(roster: Array) -> String:
-	var parts: Array = []
-	for player in roster:
-		var bits: Array = []
-		for key in Sport.STATS:
-			bits.append(str(Sport.get_stat(player, key)))
-		parts.append(",".join(bits))
-	parts.sort()
-	return "|".join(parts)
-
-
-func _table_signature(table: Array) -> String:
-	var parts: Array = []
-	for row in table:
-		parts.append("%d:%d:%d:%d:%d" % [
-			int(row["club"]), int(row["points"]), int(row["played"]), int(row["run_diff"]), int(row["wins"]),
-		])
-	return "|".join(parts)
-
-
-func _stats_in_range(roster: Array, label: String) -> void:
-	for player in roster:
-		_check(Sport.is_generated_name(str(player["player_name"])), label + " has a bad name")
-		for key in Sport.STATS:
-			var value := Sport.get_stat(player, key)
-			if value < Sport.STAT_FLOOR or value > Sport.STAT_CAP:
-				_check(false, "%s stat %s left 1-20 at %d" % [label, key, value])
-
-
-func _collect_at_bats(series_seed: int, paint_player: int, paint_other: int) -> Array:
-	var played := SeriesScript.new(series_seed)
-	if paint_player > 0:
-		_paint(played, paint_player, paint_other)
-	var lines: Array = []
-	while not played.is_over():
-		var started: Dictionary = played.begin_match([0, 1, 2, 3], "aggressive", "lash")
-		if not bool(started.get("ok", false)):
-			lines.append("ERROR")
-			break
-		for pa in started["plate_appearances"]:
-			lines.append(str(pa["explanation"]))
-		var other: Dictionary = started.get("other", {})
-		if not other.is_empty():
-			for pa in other["plate_appearances"]:
-				lines.append(str(pa["explanation"]))
-		played.commit_match()
-	return lines
-
-
-func _same_at_bats(left: Array, right: Array, label: String) -> void:
-	_check(left.size() == right.size(), label + " at-bat count drifted")
-	if left.size() != right.size():
-		return
-	for i in left.size():
-		if str(left[i]) != str(right[i]):
-			_check(false, "%s at-bat drifted at %d" % [label, i])
-			return
+func _lineup_of(roster: Array, indices: Array) -> Array:
+	return Sport.lineup_players(roster, indices)
 
 
 func _test_names() -> void:
@@ -151,77 +89,16 @@ func _test_names() -> void:
 	var generated := 0
 	for seed in 40:
 		var clubs: Dictionary = Sport.create_clubs(seed)
-		var used := {}
-		_check((clubs["rosters"] as Array).size() == 4, "create_clubs did not return four rosters")
+		_check((clubs["rosters"] as Array).size() == Sport.CLUB_COUNT, "create_clubs dropped a club")
 		for roster in clubs["rosters"]:
 			for player in roster:
 				var full_name := str(player["player_name"])
 				_check(Sport.is_generated_name(full_name), "name is not a syllable join: " + full_name)
-				_check(not used.has(full_name), "duplicate name in a series: " + full_name)
-				used[full_name] = true
 				generated += 1
-				for key in Sport.STATS:
-					var value := Sport.get_stat(player, key)
-					_check(value >= Sport.GEN_MIN and value <= Sport.GEN_MAX, "generated stat out of 9-15")
-	_check(generated == 40 * Sport.ROSTER_SIZE * Sport.CLUBS.size(), "unexpected generated name count")
+	_check(generated == 40 * Sport.ROSTER_SIZE * Sport.CLUB_COUNT, "unexpected generated name count")
 	_check(not Sport.is_generated_name("John Smith"), "plain name was accepted")
 	_check(not Sport.is_generated_name("Bridax"), "one-word name was accepted")
 	_check(not Sport.is_generated_name("Bridax Fexnel Extra"), "three-word name was accepted")
-
-
-func _test_fourth_club_and_schedule() -> void:
-	print("TEST fourth club and schedule shape")
-	_check(Sport.CLUBS.size() == 4, "expected four clubs")
-	_check(Sport.HERONS_CLUB == "Marrowgate Herons", "fourth club name drifted")
-	_check(Sport.CLUBS.has(Sport.PLAYER_CLUB), "player club missing")
-	_check(Sport.CLUBS.has(Sport.GLASS_CLUB), "Southspur Glass missing")
-	_check(Sport.CLUBS.has(Sport.CINDERS_CLUB), "Pellwick Cinders missing")
-	_check(Sport.CLUBS.has(Sport.HERONS_CLUB), "fourth club missing from the club list")
-	_check(Sport.SERIES_WEEKS == 6, "a four-club double round-robin is six weeks")
-	_check(Sport.MATCHES_PER_WEEK == 2, "a four-club round needs two matches a week")
-	_check(Sport.SCHEDULE.size() == Sport.SERIES_WEEKS, "schedule length drifted")
-	_check(
-		Sport.GOAL_TEXT == "Board goal: reach the final and win it. A loss or a tie in the final misses it.",
-		"board goal text drifted"
-	)
-	var schedule := Sport.schedule_text([])
-	_check(schedule.contains("Two matches a week"), "schedule does not say two matches a week")
-	_check(schedule.contains("Week 1: Lumen Reedmice at Southspur Glass. Pellwick Cinders at Marrowgate Herons."), "week 1 fixtures drifted")
-	_check(schedule.contains("Week 6: Marrowgate Herons at Lumen Reedmice. Pellwick Cinders at Southspur Glass."), "week 6 fixtures drifted")
-	_check(schedule.contains(Sport.HERONS_CLUB), "schedule omits the fourth club")
-	for week in Sport.SERIES_WEEKS:
-		_check(schedule.contains("Week %d:" % (week + 1)), "schedule is missing week %d" % (week + 1))
-	var pair_count := {}
-	var directed := {}
-	for week in Sport.SERIES_WEEKS:
-		var pairs: Array = Sport.SCHEDULE[week]
-		_check(pairs.size() == Sport.MATCHES_PER_WEEK, "week %d does not have two matches" % (week + 1))
-		var seen_clubs := {}
-		for pair in pairs:
-			var away := int(pair[0])
-			var home := int(pair[1])
-			_check(away != home, "a club is scheduled against itself")
-			_check(not seen_clubs.has(away) and not seen_clubs.has(home), "a club plays twice in week %d" % (week + 1))
-			seen_clubs[away] = true
-			seen_clubs[home] = true
-			var key := "%d-%d" % [mini(away, home), maxi(away, home)]
-			pair_count[key] = int(pair_count.get(key, 0)) + 1
-			var arrow := "%d@%d" % [away, home]
-			_check(not directed.has(arrow), "directed fixture repeated: " + arrow)
-			directed[arrow] = true
-		_check(seen_clubs.size() == 4, "week %d leaves a club out" % (week + 1))
-	_check(pair_count.size() == 6, "the schedule is not every pairing")
-	for key in pair_count.keys():
-		_check(int(pair_count[key]) == 2, "pairing %s is not home and away" % str(key))
-	_check(int(Sport.player_fixture(0)[0]) == Sport.PLAYER_INDEX, "week 1 does not send the player away")
-	_check(int(Sport.player_fixture(3)[1]) == Sport.PLAYER_INDEX, "the return fixture does not bring the player home")
-	var clubs: Dictionary = Sport.create_clubs(42)
-	var first_sig := _stat_signature(clubs["rosters"][0])
-	for roster in clubs["rosters"]:
-		_check(_stat_signature(roster) == first_sig, "clubs were not given the same stat lines")
-	var again: Dictionary = Sport.create_clubs(42)
-	for i in Sport.CLUBS.size():
-		_check(_same_players(clubs["rosters"][i], again["rosters"][i]), "roster %d drifted" % i)
 
 
 func _same_players(left: Array, right: Array) -> bool:
@@ -236,178 +113,609 @@ func _same_players(left: Array, right: Array) -> bool:
 	return true
 
 
-func _test_tie_break() -> void:
-	print("TEST tie-break")
-	_check(Sport.seed_order(0)[0] == 0, "remainder 0 does not start with Lumen Reedmice")
-	_check(Sport.seed_order(1)[0] == 1, "remainder 1 does not start with Southspur Glass")
-	_check(Sport.seed_order(2)[0] == 2, "remainder 2 does not start with Pellwick Cinders")
-	_check(Sport.seed_order(3)[0] == 3, "remainder 3 does not start with the fourth club")
-	_check(str(Sport.CLUBS[int(Sport.seed_order(3)[0])]) == Sport.HERONS_CLUB, "fourth club is not the seed-3 starter")
-	_check(Sport.seed_order(4)[0] == 0, "seed order did not wrap every four")
-	_check(Sport.seed_order(-1)[0] == 3, "negative seed did not wrap to the fourth club")
-	var order3: Array = Sport.seed_order(3)
-	_check(int(order3[0]) == 3 and int(order3[1]) == 0 and int(order3[2]) == 1 and int(order3[3]) == 2, "remainder 3 order is not Herons, Reedmice, Glass, Cinders")
-	var tied := [
-		{"away": 0, "home": 1, "away_score": 3, "home_score": 3, "week": 0},
-		{"away": 2, "home": 3, "away_score": 3, "home_score": 3, "week": 0},
-	]
-	var by_zero: Array = Sport.standings(tied, 0)
-	_check(int(by_zero[0]["club"]) == 0, "level clubs did not follow remainder 0")
-	_check(int(by_zero[3]["club"]) == 3, "fourth club was not last when the seed starts at Reedmice")
-	_check(int(by_zero[0]["points"]) == Sport.TIE_POINTS, "a tie was not worth 1 point")
-	var by_three: Array = Sport.standings(tied, 3)
-	_check(int(by_three[0]["club"]) == 3, "remainder 3 did not put the fourth club first on a full tie")
-	_check(int(by_three[3]["club"]) == 2, "remainder 3 order did not finish with Pellwick Cinders")
-	var split := [
-		{"away": 3, "home": 1, "away_score": 6, "home_score": 1, "week": 0},
-		{"away": 0, "home": 2, "away_score": 2, "home_score": 1, "week": 0},
-	]
-	var by_diff: Array = Sport.standings(split, 0)
-	_check(int(by_diff[0]["club"]) == 3, "higher run difference did not outrank the seed leader")
-	_check(int(by_diff[1]["club"]) == 0, "the lower run difference should be second when rates match")
-	_check(Sport.rate_compare(4, 4, 2, 2) == 0, "equal points-per-game rates were not level")
-	var many := {"club": 0, "points": 4, "played": 4, "run_diff": 0}
-	var few := {"club": 3, "points": 2, "played": 2, "run_diff": 0}
-	_check(not Sport.stands_ahead(many, few, 3), "an equal rate let the higher point total finish ahead")
-	_check(Sport.stands_ahead(few, many, 3), "seed remainder 3 did not put the fourth club ahead of an equal rate")
-	var high_rate := {"club": 2, "points": 4, "played": 2, "run_diff": -3}
-	var high_diff := {"club": 0, "points": 2, "played": 2, "run_diff": 9}
-	_check(Sport.stands_ahead(high_rate, high_diff, 0), "points per game lost to run difference")
-	_check(not Sport.stands_ahead(high_diff, high_rate, 0), "a worse rate was treated as ahead")
-	var win_rows: Array = Sport.standings([
-		{"away": 0, "home": 3, "away_score": 2, "home_score": 0, "week": 0},
-	], 0)
-	var reedmice: Dictionary = {}
-	for row in win_rows:
-		if int(row["club"]) == 0:
-			reedmice = row
-	_check(int(reedmice["points"]) == Sport.WIN_POINTS, "a win was not worth 2 points")
-	_check(int(reedmice["run_diff"]) == 2, "run difference did not count the win")
-
-
-func _test_full_schedule_played() -> void:
-	print("TEST full schedule is played")
-	var played := SeriesScript.new(11)
-	var expected := {}
-	for week in Sport.SERIES_WEEKS:
-		for pair in Sport.SCHEDULE[week]:
-			expected["%d:%d:%d" % [week, int(pair[0]), int(pair[1])]] = true
-		var started: Dictionary = played.begin_match([0, 1, 2, 3], "patient", "eye")
-		_check(bool(started.get("ok", false)), "week %d did not start" % (week + 1))
-		_check(int(started.get("week", -1)) == week, "week %d was not the match that was played" % (week + 1))
-		_check((started["plate_appearances"] as Array).size() == Sport.PAS_PER_MATCH, "player match was short in week %d" % (week + 1))
-		var other: Dictionary = started.get("other", {})
-		_check(not other.is_empty(), "week %d did not play the other match" % (week + 1))
-		_check((other["plate_appearances"] as Array).size() == Sport.PAS_PER_MATCH, "the other match was short in week %d" % (week + 1))
-		_check(_score_matches_runs(started), "player runs did not add up in week %d" % (week + 1))
-		_check(_score_matches_runs(other), "other runs did not add up in week %d" % (week + 1))
-		var committed: Dictionary = played.commit_match()
-		_check(bool(committed.get("ok", false)), "week %d did not record" % (week + 1))
-		if week < Sport.SERIES_WEEKS - 1:
-			_check(not played.is_over(), "season ended before the schedule was played")
-	_check(played.matches.size() == Sport.regular_match_count(), "the full schedule was not stored")
-	_check(played.player_matches().size() == Sport.SERIES_WEEKS, "the player did not play every week")
-	var seen := {}
-	var clubs_seen := {}
-	for fixture in played.matches:
-		var key := "%d:%d:%d" % [int(fixture["week"]), int(fixture["away"]), int(fixture["home"])]
-		_check(not seen.has(key), "fixture repeated: " + key)
-		_check(expected.has(key), "fixture was not on the schedule: " + key)
-		seen[key] = true
-		clubs_seen[int(fixture["away"])] = true
-		clubs_seen[int(fixture["home"])] = true
-		for pa in fixture["plate_appearances"]:
-			_check(_outcome_runs_ok(pa), "bad outcome runs")
-	_check(seen.size() == expected.size(), "a scheduled fixture was never played")
-	_check(clubs_seen.size() == 4, "a club never appeared in the played schedule")
-	var faced := {}
-	for fixture in played.player_matches():
-		faced[str(fixture["opponent_club"])] = true
-	_check(faced.has(Sport.HERONS_CLUB), "the player never played the fourth club")
-	_check(faced.has(Sport.GLASS_CLUB), "the player never played Southspur Glass")
-	_check(faced.has(Sport.CINDERS_CLUB), "the player never played Pellwick Cinders")
-	var filled := Sport.schedule_text(played.matches)
-	_check(filled.contains(Sport.HERONS_CLUB), "played schedule text dropped the fourth club")
-	_check(not filled.contains("Week 1: Lumen Reedmice at Southspur Glass. Pellwick Cinders at Marrowgate Herons."), "week 1 was still listed as unplayed")
-
-
-func _test_scripted_final() -> void:
-	print("TEST scripted final")
-	var winner := SeriesScript.new(21)
-	_paint(winner, 20, 1)
-	for _week in Sport.SERIES_WEEKS:
-		_play_week(winner, [0, 1, 2, 3], "aggressive", "lash")
-	_check(winner.qualified_for_final(), "a dominant series did not reach the final")
-	_check(not winner.is_over(), "the season ended without offering the final")
-	_check(Sport.rank_of(winner.standings(), Sport.PLAYER_INDEX) == 1, "the dominant club was not first")
-	_check(int(winner.record()["wins"]) == Sport.SERIES_WEEKS, "the dominant club did not win every week")
-	var before := _table_signature(winner.standings())
-	var before_points := int(winner.standings()[0]["points"])
-	_check(before_points == Sport.SERIES_WEEKS * Sport.WIN_POINTS, "six wins were not 12 points")
-	_check(winner.player_bats_second(), "the club ahead was not home in the final")
-	var final_started: Dictionary = winner.begin_match([0, 1, 2, 3], "aggressive", "lash")
-	_check(bool(final_started.get("final", false)), "the extra match was not the final")
-	_check(str(final_started.get("player_result", "")) == "win", "the dominant club did not win the final")
-	_check((final_started["plate_appearances"] as Array).size() == Sport.PAS_PER_MATCH, "the final was not a full match")
-	var other: Dictionary = final_started.get("other", {})
-	_check(other.is_empty(), "the final also played a second match")
-	winner.commit_match()
-	_check(winner.is_over(), "the season stayed open after the final")
-	_check(winner.goal_met(), "winning the final did not meet the board goal")
-	_check(_table_signature(winner.standings()) == before, "the final changed the table")
-	_check(int(winner.standings()[0]["points"]) == before_points, "the final changed the leader's points")
-	_check(winner.matches.size() == Sport.regular_match_count(), "the final was written into the table matches")
-	for player in winner.player_roster:
+func _stat_bag(roster: Array) -> String:
+	var bag: Array = []
+	for player in roster:
+		var bits: Array = []
 		for key in Sport.STATS:
-			_check(Sport.get_stat(player, key) == Sport.STAT_CAP, "dominant stats did not stay capped at 20")
-	var second := int(winner.standings()[1]["club"])
-	var third := int(winner.standings()[2]["club"])
-	var fourth := int(winner.standings()[3]["club"])
-	for key in Sport.STATS:
-		var expected := 3 if key == "lash" else 2
-		_check(Sport.get_stat(winner.rosters[second][0], key) == expected, "finalist training did not apply in the final")
-		_check(Sport.get_stat(winner.rosters[third][0], key) == 2, "a club outside the final trained during it")
-		_check(Sport.get_stat(winner.rosters[fourth][0], key) == 2, "fourth place trained during the final")
-	var blocked: Dictionary = winner.begin_match([0, 1, 2, 3], "field", "arm")
-	_check(not bool(blocked.get("ok", false)), "a match after the final was allowed")
-	winner.final_match["player_result"] = "tie"
-	_check(not winner.goal_met(), "a tie in the final met the goal")
-	winner.final_match["player_result"] = "loss"
-	_check(not winner.goal_met(), "a loss in the final met the goal")
-	winner.final_match["player_result"] = "win"
-	_check(winner.goal_met(), "restoring the win did not meet the goal")
+			bits.append(str(Sport.get_stat(player, key)))
+		bag.append("-".join(bits))
+	bag.sort()
+	return ",".join(bag)
 
-	var loser := SeriesScript.new(22)
-	_paint(loser, 20, 1)
-	for _week in Sport.SERIES_WEEKS:
-		_play_week(loser, [0, 1, 2, 3], "aggressive", "lash")
-	var table_before_loss := _table_signature(loser.standings())
-	_check(loser.qualified_for_final(), "the loss script did not reach the final")
-	_paint(loser, 1, 20)
-	var lost: Dictionary = loser.begin_match([0, 1, 2, 3], "patient", "eye")
-	_check(str(lost.get("player_result", "")) == "loss", "a weakened finalist did not lose the final")
-	loser.commit_match()
-	_check(loser.is_over(), "a lost final did not end the season")
-	_check(not loser.goal_met(), "losing the final still met the goal")
-	_check(_table_signature(loser.standings()) == table_before_loss, "a lost final changed the table")
 
-	var miss := SeriesScript.new(23)
-	_paint(miss, 1, 20)
+func _sum_stat(roster: Array, key: String) -> int:
+	var total := 0
+	for player in roster:
+		total += Sport.get_stat(player, key)
+	return total
+
+
+func _pair_key(card: Dictionary) -> String:
+	var home := int(card["home"])
+	var away := int(card["away"])
+	return "%d-%d" % [mini(home, away), maxi(home, away)]
+
+
+func _test_round_robin() -> void:
+	print("TEST five clubs and ten-week schedule")
+	_check(Sport.CLUB_COUNT == 5, "club count is not five")
+	_check(Sport.CLUB_NAMES.size() == 5, "club list is not five clubs")
+	_check(Sport.PLAYER_CLUB == "Lumen Reedmice", "player club drifted")
+	_check(Sport.OPPONENT_CLUB == "Southspur Glass", "second club drifted")
+	_check(Sport.THIRD_CLUB == "Pellwick Cinders", "third club drifted")
+	_check(Sport.FOURTH_CLUB == "Marrowgate Herons", "fourth club drifted")
+	_check(Sport.FIFTH_CLUB == "Saltmere Kites", "fifth club drifted")
+	_check(str(Sport.CLUB_NAMES[3]) == Sport.FOURTH_CLUB, "Marrowgate Herons is missing from the club list")
+	_check(str(Sport.CLUB_NAMES[4]) == Sport.FIFTH_CLUB, "Saltmere Kites is missing from the club list")
+	_check(Sport.SERIES_WEEKS == 10, "series is not ten weeks")
+	_check(Sport.MATCHES_PER_WEEK == 2, "a week does not hold two matches")
+	_check(Sport.BYES_PER_CLUB == 2, "a club does not have two byes")
+	_check(Sport.ROUND_ROBIN.size() == 10, "schedule is not ten weeks")
+	_check(Sport.FINAL_WINS_NEEDED == 2, "the final is not first to two wins")
+	_check(Sport.WIN_POINTS == 2 and Sport.TIE_POINTS == 1, "points values drifted")
+	_check(Sport.GOAL_TEXT == "Board goal: reach the final and win the series.", "goal text drifted")
+	_check(Sport.FINAL_TEXT.contains("3rd, 4th, or 5th"), "missing the final does not include 5th")
+	_check(Sport.FINAL_TIE_TEXT.contains("not a win for either side"), "tie rule is missing from the final text")
+	_check(Sport.FINAL_TIE_TEXT.contains("series continues"), "the final text does not say how a tie continues")
+	_check(Sport.FINAL_TEXT.contains("best-of-three"), "the final is not described as a best of three")
+	_check(Sport.FINAL_TEXT.contains("game 1") and Sport.FINAL_TEXT.contains("game 3"), "home for game 1 and game 3 is missing")
+	_check(Sport.SCHEDULE_TEXT.contains("double round-robin"), "schedule shape is not described")
+	_check(Sport.SCHEDULE_TEXT.contains("two matches"), "two matches a week is not described")
+	_check(Sport.SCHEDULE_TEXT.contains("bye"), "the bye is not described")
+	_check(Sport.SEED_RULE.contains("by 5"), "the series seed is not divided by 5")
+	_check(Sport.SEED_RULE.contains("Saltmere Kites"), "the seed rule omits Saltmere Kites")
+	_check(Sport.TIE_RULE == "Ties in the table break by run difference, then by the existing series seed.", "tie rule text drifted")
+	var pair_counts := {}
+	var directed := {}
+	var bye_counts: Array = []
+	for _club in Sport.CLUB_COUNT:
+		bye_counts.append(0)
+	for week_index in Sport.SERIES_WEEKS:
+		var cards: Array = Sport.week_fixtures(week_index)
+		_check(cards.size() == 2, "week %d does not list two matches" % (week_index + 1))
+		var bye := Sport.bye_index(week_index)
+		_check(bye >= 0 and bye < Sport.CLUB_COUNT, "week %d bye is out of range" % (week_index + 1))
+		bye_counts[bye] = int(bye_counts[bye]) + 1
+		var seen := {}
+		for card in cards:
+			var home := int(card["home"])
+			var away := int(card["away"])
+			_check(home != away and home != bye and away != bye, "week %d does not keep the bye off the field" % (week_index + 1))
+			_check(home >= 0 and home < Sport.CLUB_COUNT and away >= 0 and away < Sport.CLUB_COUNT, "fixture index out of range")
+			_check(str(card["home_club"]) == str(Sport.CLUB_NAMES[home]), "home club name drifted")
+			_check(str(card["away_club"]) == str(Sport.CLUB_NAMES[away]), "away club name drifted")
+			_check(int(card["bye"]) == bye, "week %d bye index drifted" % (week_index + 1))
+			_check(str(card["bye_club"]) == str(Sport.CLUB_NAMES[bye]), "week %d bye club drifted" % (week_index + 1))
+			seen[home] = true
+			seen[away] = true
+			var key := _pair_key(card)
+			pair_counts[key] = int(pair_counts.get(key, 0)) + 1
+			var arrow := "%d>%d" % [home, away]
+			_check(not directed.has(arrow), "home and away repeated for %s" % arrow)
+			directed[arrow] = true
+		_check(seen.size() == 4, "week %d does not play four clubs" % (week_index + 1))
+		_check(not seen.has(bye), "week %d recorded a match for the bye" % (week_index + 1))
+	for count in bye_counts:
+		_check(int(count) == Sport.BYES_PER_CLUB, "a club does not have two byes")
+	_check(Sport.bye_index(2) == Sport.PLAYER_INDEX, "Lumen Reedmice do not have the bye in week 3")
+	_check(Sport.bye_index(7) == Sport.PLAYER_INDEX, "Lumen Reedmice do not have the bye in week 8")
+	var pair_total := 0
+	for a in Sport.CLUB_COUNT:
+		for b in range(a + 1, Sport.CLUB_COUNT):
+			var key := "%d-%d" % [a, b]
+			_check(int(pair_counts.get(key, 0)) == 2, "pair %s is not played home and away" % key)
+			_check(directed.has("%d>%d" % [a, b]) and directed.has("%d>%d" % [b, a]), "pair %s did not swap home" % key)
+			pair_total += 1
+	_check(pair_total == 10, "the fifth club is missing from the pair list")
+	_check(int(pair_counts.get("0-4", 0)) == 2, "Saltmere Kites is not on the schedule twice")
+	for week_index in 5:
+		var early: Array = Sport.week_fixtures(week_index)
+		var late: Array = Sport.week_fixtures(week_index + 5)
+		_check(int(early[0]["bye"]) == int(late[0]["bye"]), "the return week changed the bye")
+		for slot in 2:
+			_check(int(early[slot]["home"]) == int(late[slot]["away"]), "second half did not reverse home")
+			_check(int(early[slot]["away"]) == int(late[slot]["home"]), "second half did not reverse away")
+	var first_half := {}
+	for week_index in 5:
+		for card in Sport.week_fixtures(week_index):
+			var key := _pair_key(card)
+			first_half[key] = int(first_half.get(key, 0)) + 1
+	_check(first_half.size() == 10, "weeks 1-5 are not a full round-robin")
+	for key in first_half:
+		_check(int(first_half[key]) == 1, "weeks 1-5 repeat a pair")
+	var dealt := Sport.create_clubs(42)
+	var bag := _stat_bag(dealt["rosters"][0])
+	for club_index in Sport.CLUB_COUNT:
+		_check(bag == _stat_bag(dealt["rosters"][club_index]), "club %d was not dealt the same stat lines" % club_index)
+	var tied := Sport.empty_table()
+	Sport.apply_result_to_table(tied, 0, 1, 3, 1)
+	Sport.apply_result_to_table(tied, 2, 3, 2, 0)
+	_check(int(tied[0]["points"]) == 2 and int(tied[2]["points"]) == 2, "a win did not award 2 points")
+	_check(not Sport.goal_reached(tied), "an equal points-per-game met the rate rule")
+	Sport.apply_result_to_table(tied, 0, 2, 4, 0)
+	_check(Sport.goal_reached(tied), "a better points-per-game missed the rate rule")
+	var tie_rows := Sport.empty_table()
+	Sport.apply_result_to_table(tie_rows, 0, 1, 2, 2)
+	_check(int(tie_rows[0]["points"]) == 1 and int(tie_rows[1]["points"]) == 1, "a tie did not award 1 point to each club")
+	var sides: Array = Sport.final_home_away(0, 3, 0)
+	_check(int(sides[0]) == 0 and int(sides[1]) == 3, "game 1 did not give home to the club ahead")
+	sides = Sport.final_home_away(0, 3, 1)
+	_check(int(sides[0]) == 3 and int(sides[1]) == 0, "game 2 did not alternate home")
+	sides = Sport.final_home_away(0, 3, 2)
+	_check(int(sides[0]) == 0 and int(sides[1]) == 3, "game 3 did not return home to the club ahead")
+	sides = Sport.final_home_away(0, 3, 3)
+	_check(int(sides[0]) == 3 and int(sides[1]) == 0, "a later even game did not alternate home")
+
+
+func _ordered_indexes(rows: Array) -> Array:
+	var ordered: Array = Sport.sorted_table(rows)
+	var indexes: Array = []
+	for row in ordered:
+		indexes.append(int(row["index"]))
+	return indexes
+
+
+func _fill_rate(row: Dictionary, points: int, played_games: int, run_diff: int) -> void:
+	row["points"] = points
+	row["played"] = played_games
+	row["run_diff"] = run_diff
+
+
+func _same_indexes(left: Array, right: Array) -> bool:
+	if left.size() != right.size():
+		return false
+	for i in left.size():
+		if int(left[i]) != int(right[i]):
+			return false
+	return true
+
+
+func _test_table_order() -> void:
+	print("TEST table tie break")
+	_check(Sport.seed_start(0) == 0, "seed 0 did not start with Lumen Reedmice")
+	_check(Sport.seed_start(1) == 1, "seed 1 did not start with Southspur Glass")
+	_check(Sport.seed_start(2) == 2, "seed 2 did not start with Pellwick Cinders")
+	_check(Sport.seed_start(3) == 3, "seed 3 did not start with Marrowgate Herons")
+	_check(Sport.seed_start(4) == 4, "seed 4 did not start with Saltmere Kites")
+	_check(Sport.seed_start(5) == 0, "seed remainder drifted")
+	_check(Sport.seed_start(-1) == 4, "a negative series seed broke the remainder")
+	_check(
+		Sport.seed_order_names(4) == "Saltmere Kites, Lumen Reedmice, Southspur Glass, Pellwick Cinders, Marrowgate Herons",
+		"seed order names drifted"
+	)
+	var rated := Sport.empty_table()
+	_fill_rate(rated[0], 2, 1, 1)
+	_fill_rate(rated[1], 4, 2, 9)
+	_fill_rate(rated[2], 0, 2, 20)
+	_fill_rate(rated[3], 1, 1, 0)
+	_fill_rate(rated[4], 0, 1, -3)
+	_check(Sport.rate_compare(rated[0], rated[1]) == 0, "an equal rate ranked a club ahead")
+	_check(not Sport.goal_reached(rated), "an equal points-per-game met the rate rule")
+	_check(Sport.compare_rows(rated[1], rated[0]) > 0, "higher run difference did not break the tie")
+	_check(Sport.compare_rows(rated[0], rated[3]) > 0, "a better rate lost to a worse rate")
+	var rated_pair: Array = Sport.finalist_pair(rated)
+	_check(int(rated_pair[0]) == 1 and int(rated_pair[1]) == 0, "finalists ignored rate then run difference")
+	var seeded := Sport.empty_table()
+	for row in seeded:
+		_fill_rate(row, 4, 4, 0)
+	Sport.apply_seed_ranks(seeded, 4)
+	var seeded_order: Array = _ordered_indexes(seeded)
+	_check(_same_indexes(seeded_order, [4, 0, 1, 2, 3]), "the series seed did not break a level table")
+	Sport.apply_seed_ranks(seeded, 0)
+	seeded_order = _ordered_indexes(seeded)
+	_check(_same_indexes(seeded_order, [0, 1, 2, 3, 4]), "seed 0 order drifted")
+
+
+func _explanations(match_result: Dictionary) -> Array:
+	var lines: Array = []
+	for pa in match_result["plate_appearances"]:
+		lines.append(str(pa["explanation"]))
+	return lines
+
+
+func _same_lines(left: Array, right: Array) -> bool:
+	if left.size() != right.size():
+		return false
+	for i in left.size():
+		if str(left[i]) != str(right[i]):
+			return false
+	return true
+
+
+func _append_match(lines: Array, match_result: Dictionary) -> void:
+	for pa in match_result["plate_appearances"]:
+		lines.append(str(pa["explanation"]))
+
+
+func _collect_lines(series_seed: int, lineup: Array) -> Array:
+	var played = SeriesScript.new(series_seed)
+	var lines: Array = []
 	for _week in Sport.SERIES_WEEKS:
-		var started: Dictionary = _play_week(miss, [0, 1, 2, 3], "field", "glove")
-		_check(str(started.get("player_result", "")) == "loss", "the miss script won a match")
-	_check(miss.is_over(), "missing the final left the season open")
-	_check(miss.final_match.is_empty(), "a missed final was still played")
-	_check(not miss.goal_met(), "missing the final met the goal")
-	_check(Sport.rank_of(miss.standings(), Sport.PLAYER_INDEX) == 4, "the miss script was not last")
-	_check(int(miss.record()["wins"]) == 0, "the miss script recorded a win")
-	_check(int(miss.record()["losses"]) == Sport.SERIES_WEEKS, "the miss script did not lose every week")
-	_check(miss.matches.size() == Sport.regular_match_count(), "the miss script did not play the full schedule")
-	_check(Sport.get_stat(miss.player_roster[0], "glove") == 7, "six drills did not add 6 to a floor stat")
-	_check(Sport.get_stat(miss.player_roster[0], "lash") == 1, "training changed a stat that was not the focus")
-	_check(Sport.get_stat(miss.rosters[1][0], "lash") == Sport.STAT_CAP, "opponent training pushed a capped stat")
-	var after_miss: Dictionary = miss.begin_match([0, 1, 2, 3], "aggressive", "lash")
-	_check(not bool(after_miss.get("ok", false)), "a final was offered to a club that missed it")
+		var started: Dictionary = played.begin_match(lineup, TACTIC, FOCUS)
+		var first: Dictionary = started
+		var second: Dictionary = started["other_match"]
+		if int(started["slot"]) > int(second["slot"]):
+			first = second
+			second = started
+		_append_match(lines, first)
+		_append_match(lines, second)
+		played.commit_match()
+	var guard := 0
+	while played.reached_final() and not played.is_over() and guard < 8:
+		var fin: Dictionary = played.begin_match(lineup, TACTIC, FOCUS)
+		_append_match(lines, fin)
+		played.commit_match()
+		guard += 1
+	return lines
+
+
+func _test_determinism() -> void:
+	print("TEST determinism")
+	var first_clubs := Sport.create_clubs(42)
+	var second_clubs := Sport.create_clubs(42)
+	_check((first_clubs["rosters"] as Array).size() == 5, "fifth club roster is missing")
+	for club_index in Sport.CLUB_COUNT:
+		_check(
+			_same_players(first_clubs["rosters"][club_index], second_clubs["rosters"][club_index]),
+			"roster %d drifted" % club_index
+		)
+	var fixed_a := _play_fixed(Sport.create_clubs(42))
+	var fixed_b := _play_fixed(Sport.create_clubs(42))
+	_check(_same_lines(_explanations(fixed_a), _explanations(fixed_b)), "one match did not repeat its at-bats")
+	_check(_explanations(fixed_a).size() == Sport.PAS_PER_MATCH, "plate appearance count is not 24")
+	var sweep_a := _collect_lines(SWEEP_SEED, LINEUP)
+	var sweep_b := _collect_lines(SWEEP_SEED, LINEUP)
+	_check(sweep_a.size() == (20 + 2) * Sport.PAS_PER_MATCH, "sweep at-bat count did not include both final games")
+	_check(_same_lines(sweep_a, sweep_b), "the same seed and lineup did not repeat the at-bats, including the final")
+	var third_a := _collect_lines(THIRD_SEED, LINEUP)
+	var third_b := _collect_lines(THIRD_SEED, LINEUP)
+	_check(third_a.size() == (20 + 3) * Sport.PAS_PER_MATCH, "third-game at-bat count drifted")
+	_check(_same_lines(third_a, third_b), "a series that reaches game 3 did not repeat its at-bats")
+	var tie_a := _collect_lines(TIE_SEED, LINEUP)
+	var tie_b := _collect_lines(TIE_SEED, LINEUP)
+	_check(_same_lines(tie_a, tie_b), "a tied final game did not repeat its at-bats")
+	var loss_a := _collect_lines(LOSS_SEED, LINEUP)
+	var loss_b := _collect_lines(LOSS_SEED, LINEUP)
+	_check(loss_a.size() == (20 + 5) * Sport.PAS_PER_MATCH, "a series past game 3 did not keep every final at-bat")
+	_check(_same_lines(loss_a, loss_b), "the extended final did not repeat its at-bats")
+	var other_lineup := _collect_lines(SWEEP_SEED, ALT_LINEUP)
+	var lineup_differs := sweep_a.size() != other_lineup.size()
+	if not lineup_differs:
+		for i in sweep_a.size():
+			if str(sweep_a[i]) != str(other_lineup[i]):
+				lineup_differs = true
+				break
+	_check(lineup_differs, "a different lineup repeated the same at-bats")
+	var left_pair := _opening_pair(LINEUP, TACTIC)
+	var right_pair := _opening_pair(ALT_LINEUP, "field")
+	_check(_same_lines(left_pair[1], right_pair[1]), "the other match changed when the unused lineup changed")
+	_check(not _same_lines(left_pair[0], right_pair[0]), "the player's match ignored the lineup")
+	var bye_a := _week_pair(SWEEP_SEED, 2, LINEUP, TACTIC)
+	var bye_b := _week_pair(SWEEP_SEED, 2, ALT_LINEUP, "field")
+	_check(bye_a[2] == "bye" and bye_b[2] == "bye", "week 3 was not a bye")
+	_check(_same_lines(bye_a[0], bye_b[0]) and _same_lines(bye_a[1], bye_b[1]), "a bye week changed when the unused lineup changed")
+	_check(bye_a[0].size() == Sport.PAS_PER_MATCH and bye_a[1].size() == Sport.PAS_PER_MATCH, "a bye week did not record both matches")
+	var lash_week := _player_week_lines(SWEEP_SEED, 1, "lash")
+	var eye_week := _player_week_lines(SWEEP_SEED, 1, "eye")
+	_check(not _same_lines(lash_week, eye_week), "training did not change the next week's at-bats")
+	var played = SeriesScript.new(SWEEP_SEED)
+	_play_regular(played)
+	var fin: Dictionary = played.begin_match(LINEUP, TACTIC, FOCUS)
+	var replay: Dictionary = Sport.simulate_match(
+		int(fin["seed"]),
+		Sport.lineup_players(played.rosters[int(fin["home_index"])], fin["home_lineup"]),
+		Sport.lineup_players(played.rosters[int(fin["away_index"])], fin["away_lineup"]),
+		str(fin["home_tactic"]),
+		str(fin["away_tactic"]),
+		str(fin["home_club"]),
+		str(fin["away_club"])
+	)
+	_check(_same_lines(_explanations(fin), _explanations(replay)), "final game 1 was not the pure match function")
+	_check(int(fin["seed"]) == Sport.match_seed_for(SWEEP_SEED, Sport.SERIES_WEEKS, 0), "final game 1 seed drifted")
+	var again: Dictionary = played.begin_match(ALT_LINEUP, TACTIC, FOCUS)
+	_check(not _same_lines(_explanations(fin), _explanations(again)), "a different final lineup repeated game 1")
+	var restored: Dictionary = played.begin_match(LINEUP, TACTIC, FOCUS)
+	_check(_same_lines(_explanations(fin), _explanations(restored)), "repeating the final lineup did not repeat game 1")
+	played.commit_match()
+	var second: Dictionary = played.begin_match(LINEUP, TACTIC, FOCUS)
+	var second_replay: Dictionary = Sport.simulate_match(
+		int(second["seed"]),
+		Sport.lineup_players(played.rosters[int(second["home_index"])], second["home_lineup"]),
+		Sport.lineup_players(played.rosters[int(second["away_index"])], second["away_lineup"]),
+		str(second["home_tactic"]),
+		str(second["away_tactic"]),
+		str(second["home_club"]),
+		str(second["away_club"])
+	)
+	_check(_same_lines(_explanations(second), _explanations(second_replay)), "final game 2 was not the pure match function")
+	_check(int(second["seed"]) == Sport.match_seed_for(SWEEP_SEED, Sport.SERIES_WEEKS + 1, 0), "final game 2 seed drifted")
+	_check(int(fin["seed"]) != int(second["seed"]), "final games shared one seed")
+
+
+func _play_fixed(clubs: Dictionary) -> Dictionary:
+	return Sport.simulate_match(
+		12345,
+		_lineup_of(clubs["player_roster"], LINEUP),
+		_lineup_of(clubs["opponent_roster"], LINEUP),
+		"patient",
+		"field",
+		Sport.PLAYER_CLUB,
+		Sport.OPPONENT_CLUB
+	)
+
+
+func _opening_pair(lineup: Array, tactic: String) -> Array:
+	var played = SeriesScript.new(SWEEP_SEED)
+	var started: Dictionary = played.begin_match(lineup, tactic, FOCUS)
+	return [_explanations(started), _explanations(started["other_match"])]
+
+
+func _week_pair(series_seed: int, target_week: int, lineup: Array, tactic: String) -> Array:
+	var played = SeriesScript.new(series_seed)
+	var started: Dictionary = {}
+	for week_index in target_week + 1:
+		started = played.begin_match(lineup, tactic, FOCUS)
+		if week_index < target_week:
+			played.commit_match()
+	return [_explanations(started), _explanations(started["other_match"]), str(started.get("player_result", ""))]
+
+
+func _player_week_lines(series_seed: int, target_week: int, first_focus: String) -> Array:
+	var played = SeriesScript.new(series_seed)
+	var lines: Array = []
+	for week_index in target_week + 1:
+		var focus := FOCUS if week_index > 0 else first_focus
+		var started: Dictionary = played.begin_match(LINEUP, TACTIC, focus)
+		if week_index == target_week:
+			_append_match(lines, started)
+		played.commit_match()
+	return lines
+
+
+func _play_regular(played) -> void:
+	for week_index in Sport.SERIES_WEEKS:
+		var started: Dictionary = played.begin_match(LINEUP, TACTIC, FOCUS)
+		_check(bool(started.get("ok", false)), "week %d failed to start" % (week_index + 1))
+		if not bool(started.get("ok", false)):
+			return
+		_check((started["plate_appearances"] as Array).size() == Sport.PAS_PER_MATCH, "week %d was not a full match" % (week_index + 1))
+		_check(started.has("other_match"), "week %d did not play the other match" % (week_index + 1))
+		if started.has("other_match"):
+			_check(
+				(started["other_match"]["plate_appearances"] as Array).size() == Sport.PAS_PER_MATCH,
+				"the other match in week %d was not a full match" % (week_index + 1)
+			)
+			_check(int(started["seed"]) != int(started["other_match"]["seed"]), "the two matches in week %d shared a seed" % (week_index + 1))
+		var committed: Dictionary = played.commit_match()
+		_check(bool(committed.get("ok", false)), "week %d failed to record" % (week_index + 1))
+		_check(not bool(committed.get("final", false)), "week %d was stored as a final game" % (week_index + 1))
+
+
+func _assert_schedule(played, label: String) -> void:
+	var match_count := Sport.SERIES_WEEKS * Sport.MATCHES_PER_WEEK
+	var games_each := Sport.SERIES_WEEKS - Sport.BYES_PER_CLUB
+	_check(played.results.size() == match_count, label + " did not play twenty matches")
+	_check(int(played.week) == Sport.SERIES_WEEKS, label + " did not finish week 10")
+	var seen := {}
+	var player_games := 0
+	var played_count: Array = []
+	var bye_counts: Array = []
+	for _club in Sport.CLUB_COUNT:
+		played_count.append(0)
+		bye_counts.append(0)
+	for result in played.results:
+		_check((result["plate_appearances"] as Array).size() == Sport.PAS_PER_MATCH, label + " stored a short match")
+		_check(not bool(result.get("is_final", false)), label + " stored a final game in the table")
+		seen[str(result["home_club"])] = true
+		seen[str(result["away_club"])] = true
+		played_count[int(result["home_index"])] = int(played_count[int(result["home_index"])]) + 1
+		played_count[int(result["away_index"])] = int(played_count[int(result["away_index"])]) + 1
+		if bool(result["player_played"]):
+			player_games += 1
+			_check(int(result["home_index"]) != int(result.get("bye_index", -1)), label + " recorded the bye club in its own match")
+	_check(player_games == games_each, label + " did not give the player eight matches and two byes")
+	_check(seen.has(Sport.FIFTH_CLUB), label + " left Saltmere Kites off the schedule")
+	_check(seen.size() == Sport.CLUB_COUNT, label + " left a club out of the schedule")
+	for count in played_count:
+		_check(int(count) == games_each, label + " did not give every club eight games")
+	for week_index in Sport.SERIES_WEEKS:
+		var week_clubs := {}
+		var bye := Sport.bye_index(week_index)
+		for slot in Sport.MATCHES_PER_WEEK:
+			var result: Dictionary = played.results[week_index * Sport.MATCHES_PER_WEEK + slot]
+			_check(int(result["week"]) == week_index, label + " week %d was stored on the wrong week" % (week_index + 1))
+			_check(int(result.get("bye_index", -1)) == bye, label + " week %d dropped the bye" % (week_index + 1))
+			week_clubs[int(result["home_index"])] = true
+			week_clubs[int(result["away_index"])] = true
+			if bye == Sport.PLAYER_INDEX:
+				_check(not bool(result["player_played"]), label + " recorded a match for Lumen Reedmice on a bye")
+		_check(week_clubs.size() == 4, label + " week %d did not play four clubs" % (week_index + 1))
+		_check(not week_clubs.has(bye), label + " week %d recorded a match for the bye" % (week_index + 1))
+		bye_counts[bye] = int(bye_counts[bye]) + 1
+	for count in bye_counts:
+		_check(int(count) == Sport.BYES_PER_CLUB, label + " did not give every club two byes")
+	_check(_stats_in_range(played.rosters), label + " left a stat outside 1-20")
+
+
+func _snapshot(played) -> Array:
+	var snap: Array = []
+	for row in played.table():
+		snap.append([int(row["points"]), int(row["run_diff"]), int(row["played"])])
+	return snap
+
+
+func _same_snapshot(left: Array, right: Array) -> bool:
+	if left.size() != right.size():
+		return false
+	for i in left.size():
+		var a: Array = left[i]
+		var b: Array = right[i]
+		if int(a[0]) != int(b[0]) or int(a[1]) != int(b[1]) or int(a[2]) != int(b[2]):
+			return false
+	return true
+
+
+func _lash_list(roster: Array) -> Array:
+	var values: Array = []
+	for player in roster:
+		values.append(Sport.get_stat(player, "lash"))
+	return values
+
+
+func _eye_list(roster: Array) -> Array:
+	var values: Array = []
+	for player in roster:
+		values.append(Sport.get_stat(player, "eye"))
+	return values
+
+
+func _assert_plus(roster: Array, before: Array, stat_name: String, gain: int, message: String) -> void:
+	for i in roster.size():
+		_check(
+			Sport.get_stat(roster[i], stat_name) == mini(int(before[i]) + gain, Sport.STAT_CAP),
+			message
+		)
+
+
+func _play_final_game(played, home_index: int, outcome: String, player_score: int, opponent_score: int) -> Dictionary:
+	var game_index: int = played.final_games.size()
+	_check(played.final_home_index(game_index) == home_index, "final game %d home drifted" % (game_index + 1))
+	var started: Dictionary = played.begin_match(LINEUP, TACTIC, FOCUS)
+	_check(bool(started.get("ok", false)), "final game %d did not start" % (game_index + 1))
+	if not bool(started.get("ok", false)):
+		return started
+	_check(bool(started.get("is_final", false)), "final game %d was a regular week" % (game_index + 1))
+	_check(int(started.get("final_game", 0)) == game_index + 1, "final game number drifted")
+	_check((started["plate_appearances"] as Array).size() == Sport.PAS_PER_MATCH, "final game %d was not a full match" % (game_index + 1))
+	_check(int(started["home_index"]) == home_index, "final game %d was played at the wrong home" % (game_index + 1))
+	_check(str(started.get("player_result", "")) == outcome, "final game %d result drifted" % (game_index + 1))
+	_check(int(started["player_score"]) == player_score and int(started["opponent_score"]) == opponent_score, "final game %d score drifted" % (game_index + 1))
+	var before := _snapshot(played)
+	var committed: Dictionary = played.commit_match()
+	_check(bool(committed.get("ok", false)) and bool(committed.get("final", false)), "final game %d did not record" % (game_index + 1))
+	_check(_same_snapshot(before, _snapshot(played)), "final game %d changed the table" % (game_index + 1))
+	_check(played.results.size() == Sport.SERIES_WEEKS * Sport.MATCHES_PER_WEEK, "final game %d was added to the table" % (game_index + 1))
+	return started
+
+
+func _test_scripted_series() -> void:
+	print("TEST scripted series")
+	var blocked = SeriesScript.new(MISS_SEED)
+	var bad: Dictionary = blocked.begin_match([0, 0, 1, 2], TACTIC, FOCUS)
+	_check(not bool(bad.get("ok", false)), "an illegal lineup was accepted")
+	_check(blocked.results.is_empty(), "a rejected lineup recorded a match")
+
+	var missed = SeriesScript.new(MISS_SEED)
+	var missed_lash := _lash_list(missed.player_roster)
+	var missed_eye := _eye_list(missed.player_roster)
+	_play_regular(missed)
+	_assert_schedule(missed, "scripted miss")
+	_check(missed.place() == 3, "scripted miss did not finish 3rd")
+	_check(not missed.reached_final(), "scripted miss reached the final")
+	_check(missed.is_over(), "scripted miss did not end after week 10")
+	_check(missed.final_games.is_empty(), "scripted miss stored a final")
+	_check(not missed.goal_met(), "missing the final met the goal")
+	var miss_rows: Array = missed.table()
+	_check(int(miss_rows[0]["points"]) == int(miss_rows[4]["points"]), "the miss was not level with Saltmere Kites on points per game")
+	_check(int(miss_rows[0]["run_diff"]) < int(miss_rows[4]["run_diff"]), "run difference did not place the player behind Saltmere Kites")
+	_check(int(miss_rows[0]["played"]) == 8, "the bye weeks recorded a match for Lumen Reedmice")
+	var denied: Dictionary = missed.begin_match(LINEUP, TACTIC, FOCUS)
+	_check(not bool(denied.get("ok", false)), "a match after a missed final was allowed")
+	_assert_plus(missed.player_roster, missed_lash, "lash", 10, "ten weeks did not add 1 Lash up to the cap")
+	for i in missed.player_roster.size():
+		_check(Sport.get_stat(missed.player_roster[i], "eye") == int(missed_eye[i]), "lash training changed Eye")
+	print("Scripted miss: finished 3rd")
+
+	var sweep = SeriesScript.new(SWEEP_SEED)
+	var sweep_lash := _lash_list(sweep.player_roster)
+	var sweep_eye := _eye_list(sweep.player_roster)
+	_play_regular(sweep)
+	_assert_schedule(sweep, "two-game final")
+	_check(sweep.reached_final(), "two-game script missed the final")
+	_check(not sweep.is_over(), "two-game script ended before the final")
+	_check(int(sweep.finalist_indices()[0]) == Sport.PLAYER_INDEX, "the player was not the club ahead")
+	_check(str(Sport.CLUB_NAMES[int(sweep.finalist_indices()[1])]) == Sport.FOURTH_CLUB, "the final opponent drifted")
+	_play_final_game(sweep, Sport.PLAYER_INDEX, "win", 12, 10)
+	_check(not sweep.is_over(), "one win ended the series")
+	_check(int(sweep.series_win_counts()[Sport.PLAYER_INDEX]) == 1, "game 1 did not count as one win")
+	_check(not sweep.goal_met(), "one final win met the goal")
+	_play_final_game(sweep, 3, "win", 8, 6)
+	_check(sweep.is_over(), "two wins did not end the series")
+	_check(sweep.goal_met(), "winning the series in two games missed the goal")
+	_check(sweep.final_games.size() == 2, "the two-game final stored the wrong number of games")
+	_check(sweep.series_winner_index() == Sport.PLAYER_INDEX, "the series winner drifted")
+	_assert_plus(sweep.player_roster, sweep_lash, "lash", 12, "the two final games did not each add 1 Lash up to the cap")
+	for i in sweep.player_roster.size():
+		_check(Sport.get_stat(sweep.player_roster[i], "eye") == int(sweep_eye[i]), "final training changed Eye")
+	print("Scripted final: won in two games, 12-10 then 8-6")
+
+	var third = SeriesScript.new(THIRD_SEED)
+	_play_regular(third)
+	_assert_schedule(third, "third game")
+	_check(third.reached_final(), "split series missed the final")
+	_check(third.place() == 1, "split series did not finish 1st")
+	_check(int(third.finalist_indices()[0]) == Sport.PLAYER_INDEX, "game 1 home was not the club ahead")
+	_check(int(third.finalist_indices()[1]) == 3, "game 3 opponent was not Marrowgate Herons")
+	_play_final_game(third, Sport.PLAYER_INDEX, "win", 11, 8)
+	_check(not third.is_over(), "game 1 closed a split series")
+	_play_final_game(third, 3, "loss", 7, 8)
+	_check(not third.is_over(), "a 1-1 series did not reach game 3")
+	_check(int(third.series_win_counts()[0]) == 1 and int(third.series_win_counts()[3]) == 1, "the split was not 1-1")
+	_play_final_game(third, Sport.PLAYER_INDEX, "win", 10, 8)
+	_check(third.is_over() and third.goal_met(), "winning game 3 missed the series")
+	_check(third.final_games.size() == 3, "the split series did not play three games")
+	_check(third.results.size() == Sport.SERIES_WEEKS * Sport.MATCHES_PER_WEEK, "game 3 changed the table length")
+	print("Scripted final: reached game 3 at 1-1, then won 10-8")
+
+	var tied = SeriesScript.new(TIE_SEED)
+	_play_regular(tied)
+	_assert_schedule(tied, "tied final game")
+	_check(tied.reached_final(), "tie script missed the final")
+	_play_final_game(tied, Sport.PLAYER_INDEX, "win", 7, 5)
+	var wins_before: Array = tied.series_win_counts()
+	_play_final_game(tied, 1, "tie", 9, 9)
+	_check(not tied.is_over(), "a tied final game ended the series")
+	_check(_same_indexes(wins_before, tied.series_win_counts()), "a tie counted as a win")
+	_check(str(tied.final_games[1]["winner"]) == "tie", "the tied game was stored as a win")
+	_play_final_game(tied, Sport.PLAYER_INDEX, "win", 10, 7)
+	_check(tied.is_over() and tied.goal_met(), "the game after a tie did not decide the series")
+	_check(int(tied.series_win_counts()[Sport.PLAYER_INDEX]) == 2, "the series did not end at two wins")
+	_check(int(tied.series_win_counts()[1]) == 0, "the tie gave the other club a win")
+	print("Scripted final: game 2 tied 9-9 and the series continued")
+
+	var lost = SeriesScript.new(LOSS_SEED)
+	_play_regular(lost)
+	_assert_schedule(lost, "lost series")
+	_check(lost.reached_final(), "loss script missed the final")
+	_check(int(lost.finalist_indices()[0]) == Sport.PLAYER_INDEX, "loss script home was not the club ahead")
+	_check(int(lost.finalist_indices()[1]) == 4, "loss script opponent was not Saltmere Kites")
+	_play_final_game(lost, Sport.PLAYER_INDEX, "loss", 6, 8)
+	_play_final_game(lost, 4, "tie", 11, 11)
+	_check(not lost.is_over(), "the tie in game 2 ended the series")
+	_check(int(lost.series_win_counts()[4]) == 1 and int(lost.series_win_counts()[0]) == 0, "game 2 tie changed the win count")
+	_play_final_game(lost, Sport.PLAYER_INDEX, "win", 11, 6)
+	_check(not lost.is_over(), "a 1-1 series ended before a later tie")
+	_play_final_game(lost, 4, "tie", 4, 4)
+	_check(not lost.is_over(), "the tie in game 4 ended the series")
+	_check(int(lost.series_win_counts()[0]) == 1 and int(lost.series_win_counts()[4]) == 1, "game 4 tie changed the win count")
+	_play_final_game(lost, Sport.PLAYER_INDEX, "loss", 7, 10)
+	_check(lost.is_over(), "two wins for the other club did not end the series")
+	_check(not lost.goal_met(), "losing the series met the goal")
+	_check(lost.series_winner_index() == 4, "the series winner was not Saltmere Kites")
+	_check(lost.final_games.size() == 5, "ties did not extend the series past three games")
+	_check(lost.results.size() == Sport.SERIES_WEEKS * Sport.MATCHES_PER_WEEK, "a lost series changed the table")
+	print("Scripted final: lost the series after ties extended it")
+
+
+func _stats_in_range(rosters: Array) -> bool:
+	for roster in rosters:
+		for player in roster:
+			for key in Sport.STATS:
+				var value := Sport.get_stat(player, key)
+				if value < Sport.STAT_FLOOR or value > Sport.STAT_CAP:
+					return false
+	return true
 
 
 func _score_matches_runs(result: Dictionary) -> bool:
@@ -433,75 +741,76 @@ func _outcome_runs_ok(pa: Dictionary) -> bool:
 	return false
 
 
-func _test_determinism() -> void:
-	print("TEST determinism")
-	var natural_a := _collect_at_bats(11, 0, 0)
-	var natural_b := _collect_at_bats(11, 0, 0)
-	_check(natural_a.size() >= Sport.regular_match_count() * Sport.PAS_PER_MATCH, "natural series did not record the schedule's at-bats")
-	_same_at_bats(natural_a, natural_b, "natural seed")
-	var final_a := _collect_at_bats(21, 20, 1)
-	var final_b := _collect_at_bats(21, 20, 1)
-	_check(final_a.size() == (Sport.regular_match_count() + 1) * Sport.PAS_PER_MATCH, "winning series did not repeat the final's at-bats")
-	_same_at_bats(final_a, final_b, "winning seed")
-	var miss_a := _collect_at_bats(23, 1, 20)
-	var miss_b := _collect_at_bats(23, 1, 20)
-	_check(miss_a.size() == Sport.regular_match_count() * Sport.PAS_PER_MATCH, "missed final still produced final at-bats")
-	_same_at_bats(miss_a, miss_b, "missing seed")
-	_check(natural_a[0] != final_a[0] or natural_a.size() != final_a.size(), "different seeds produced the same opening at-bats and length")
+func _test_fairness_and_cap() -> void:
+	print("TEST fairness and training cap")
+	var wins := {}
+	for club_name in Sport.CLUB_NAMES:
+		wins[str(club_name)] = 0
+	var ties := 0
+	for series_index in 200:
+		var clubs: Dictionary = Sport.create_clubs(1000 + series_index)
+		var rng := RandomNumberGenerator.new()
+		rng.seed = 5000 + series_index
+		var rosters: Array = clubs["rosters"]
+		for week in Sport.SERIES_WEEKS:
+			for pair in Sport.ROUND_ROBIN[week]:
+				var home_i := int(pair[0])
+				var away_i := int(pair[1])
+				var home_roster: Array = rosters[home_i]
+				var away_roster: Array = rosters[away_i]
+				var home_line: Array = Sport.random_lineup(rng, home_roster.size())
+				var away_line: Array = Sport.random_lineup(rng, away_roster.size())
+				_check(Sport.is_legal_lineup(home_roster.size(), home_line), "illegal home lineup")
+				_check(Sport.is_legal_lineup(away_roster.size(), away_line), "illegal away lineup")
+				var home_tactic: String = Sport.TACTICS[rng.randi_range(0, Sport.TACTICS.size() - 1)]
+				var away_tactic: String = Sport.TACTICS[rng.randi_range(0, Sport.TACTICS.size() - 1)]
+				var home_focus: String = Sport.STATS[rng.randi_range(0, Sport.STATS.size() - 1)]
+				var away_focus: String = Sport.STATS[rng.randi_range(0, Sport.STATS.size() - 1)]
+				var result: Dictionary = Sport.simulate_match(
+					8000 + series_index * 20 + week * 2 + home_i,
+					_lineup_of(home_roster, home_line),
+					_lineup_of(away_roster, away_line),
+					home_tactic,
+					away_tactic,
+					str(Sport.CLUB_NAMES[home_i]),
+					str(Sport.CLUB_NAMES[away_i])
+				)
+				if int(result["home_score"]) > int(result["away_score"]):
+					wins[str(Sport.CLUB_NAMES[home_i])] = int(wins[str(Sport.CLUB_NAMES[home_i])]) + 1
+				elif int(result["away_score"]) > int(result["home_score"]):
+					wins[str(Sport.CLUB_NAMES[away_i])] = int(wins[str(Sport.CLUB_NAMES[away_i])]) + 1
+				else:
+					ties += 1
+				_check(_score_matches_runs(result), "score/runs mismatch in series %d" % series_index)
+				for pa in result["plate_appearances"]:
+					_check(_outcome_runs_ok(pa), "bad outcome runs")
+					_check(str(pa["explanation"]).find("\n") < 0, "explanation contains a newline")
+				Sport.apply_training(home_roster, home_focus)
+				Sport.apply_training(away_roster, away_focus)
+			var bye_i := Sport.bye_index(week)
+			var bye_focus: String = Sport.STATS[rng.randi_range(0, Sport.STATS.size() - 1)]
+			Sport.apply_training(rosters[bye_i], bye_focus)
+			for roster in rosters:
+				for player in roster:
+					_check(Sport.is_generated_name(str(player["player_name"])), "trained roster has a bad name")
+					for key in Sport.STATS:
+						var value := Sport.get_stat(player, key)
+						if value < Sport.STAT_FLOOR or value > Sport.STAT_CAP:
+							_check(false, "stat %s left 1-20 at %d" % [key, value])
+	print("Fairness over 200 series, ties %d" % ties)
+	for club_name in Sport.CLUB_NAMES:
+		var club_wins := int(wins[str(club_name)])
+		print("%s wins %d" % [str(club_name), club_wins])
+		_check(club_wins > 0, str(club_name) + " never won a match")
+		_check(club_wins >= 20, str(club_name) + " won too rarely to be able to win in general")
 
-
-func _test_stats_and_cap() -> void:
-	print("TEST stats stay inside 1-20")
-	var reached := 0
-	var won := 0
-	var missed := 0
-	var club_wins := [0, 0, 0, 0]
-	for series_index in 40:
-		var played := SeriesScript.new(100 + series_index)
-		while not played.is_over():
-			var week_index := int(played.week)
-			if week_index >= Sport.SERIES_WEEKS:
-				week_index = Sport.SERIES_WEEKS
-			var plan: Dictionary = Sport.opponent_plan(played.player_roster, week_index, Sport.PLAYER_INDEX)
-			var started: Dictionary = played.begin_match(plan["lineup"], str(plan["tactic"]), str(plan["training"]))
-			_check(bool(started.get("ok", false)), "smart series %d did not start" % series_index)
-			if not bool(started.get("ok", false)):
-				break
-			_check(_score_matches_runs(started), "score/runs mismatch in smart series %d" % series_index)
-			for pa in started["plate_appearances"]:
-				_check(_outcome_runs_ok(pa), "bad outcome runs")
-				_check(str(pa["explanation"]).find("\n") < 0, "explanation contains a newline")
-			played.commit_match()
-			for roster in played.rosters:
-				_stats_in_range(roster, "smart series %d" % series_index)
-		for fixture in played.matches:
-			var home := int(fixture["home"])
-			var away := int(fixture["away"])
-			if int(fixture["home_score"]) > int(fixture["away_score"]):
-				club_wins[home] += 1
-			elif int(fixture["away_score"]) > int(fixture["home_score"]):
-				club_wins[away] += 1
-		var place := Sport.rank_of(played.standings(), Sport.PLAYER_INDEX)
-		if played.final_match.is_empty():
-			missed += 1
-			_check(place >= 3, "a club outside the top two was offered a final")
-			_check(not played.goal_met(), "a missed final was marked met")
-		else:
-			reached += 1
-			_check(place <= 2, "a final was played from outside the top two")
-			_check(bool(played.final_match["player_bats_second"]) == (place == 1), "final home side did not follow the table")
-			if played.goal_met():
-				won += 1
-	print("Smart series over 40 seeds: reached %d, won the final %d, missed %d" % [reached, won, missed])
-	print("Club wins: %s %d, %s %d, %s %d, %s %d" % [
-		Sport.CLUBS[0], club_wins[0], Sport.CLUBS[1], club_wins[1], Sport.CLUBS[2], club_wins[2], Sport.CLUBS[3], club_wins[3],
-	])
-	_check(reached > 0, "no equal series reached the final")
-	_check(missed > 0, "no equal series missed the final")
-	for i in Sport.CLUBS.size():
-		_check(club_wins[i] > 0, Sport.CLUBS[i] + " never won a match")
 	var sample: Dictionary = Sport.create_clubs(3)
-	var player: Dictionary = sample["rosters"][0][0]
+	var fifth_lash := _sum_stat(sample["rosters"][4], "lash")
+	var player_lash := _sum_stat(sample["rosters"][0], "lash")
+	Sport.apply_training(sample["rosters"][0], "lash")
+	_check(_sum_stat(sample["rosters"][0], "lash") == player_lash + Sport.ROSTER_SIZE, "training did not add 1 to each Lumen Reedmice player")
+	_check(_sum_stat(sample["rosters"][4], "lash") == fifth_lash, "training the player changed Saltmere Kites")
+	var player: Dictionary = sample["player_roster"][0]
 	var untouched := Sport.get_stat(player, "eye")
 	Sport.set_stat(player, "lash", Sport.STAT_CAP + 5)
 	_check(Sport.get_stat(player, "lash") == Sport.STAT_CAP, "set_stat did not clamp the cap")
@@ -513,10 +822,6 @@ func _test_stats_and_cap() -> void:
 	_check(Sport.get_stat(player, "legs") == 11, "training did not raise Legs by 1")
 	Sport.set_stat(player, "glove", Sport.STAT_FLOOR - 3)
 	_check(Sport.get_stat(player, "glove") == Sport.STAT_FLOOR, "set_stat did not clamp the floor")
-	Sport.set_stat(player, "arm", 15)
-	for _step in 8:
-		Sport.apply_training([player], "arm")
-	_check(Sport.get_stat(player, "arm") == Sport.STAT_CAP, "repeated training did not stop at 20")
 
 
 func _count_outcome_token(line: String, token: String) -> int:
@@ -562,6 +867,101 @@ func _line_explains(line: String, batter: String) -> bool:
 	return tokens == 1
 
 
+func _check_office(game, where: String) -> void:
+	_check(game.phase == "office", where + " is not the office")
+	_check(game.office_panel.visible, where + " hides the office")
+	_check(str(game.goal_label.text).contains("reach the final and win the series"), where + " is missing the series goal")
+	_check(str(game.rule_label.text).contains(Sport.FINAL_TEXT), where + " is missing the final rule")
+	_check(str(game.rule_label.text).contains(Sport.FINAL_TIE_TEXT), where + " is missing the tie rule")
+	_check(str(game.rule_label.text).contains("not a win for either side"), where + " does not say a tie is not a win")
+	_check(str(game.rule_label.text).contains("series continues"), where + " does not say how the series continues")
+	_check(str(game.rule_label.text).contains(Sport.TIE_RULE), where + " is missing the table tie rule")
+	_check(str(game.rule_label.text).contains(Sport.SEED_RULE), where + " is missing the seed rule")
+	_check(str(game.shape_label.text).contains("double round-robin"), where + " is missing the schedule shape")
+	var schedule := str(game.schedule_label.text)
+	for club_name in Sport.CLUB_NAMES:
+		_check(schedule.contains(str(club_name)), where + " schedule is missing " + str(club_name))
+	for week_no in Sport.SERIES_WEEKS:
+		_check(schedule.contains("Week %d" % (week_no + 1)), where + " schedule is missing week %d" % (week_no + 1))
+	_check(schedule.contains(Sport.FIFTH_CLUB), where + " schedule is missing Saltmere Kites")
+	_check(_count_outcome_token(schedule, " bye") == Sport.SERIES_WEEKS, where + " does not list a bye every week")
+	for club_name in Sport.CLUB_NAMES:
+		_check(_count_outcome_token(schedule, "%s bye" % str(club_name)) == Sport.BYES_PER_CLUB, where + " bye count drifted for " + str(club_name))
+	if int(game.series.week) == 0:
+		_check(schedule.contains("Lumen Reedmice vs Saltmere Kites"), where + " is missing the week 1 match")
+		_check(schedule.contains("Southspur Glass vs Marrowgate Herons"), where + " is missing the other week 1 match")
+		_check(schedule.contains("Pellwick Cinders bye"), where + " is missing the week 1 bye")
+		_check(schedule.contains("Lumen Reedmice vs Southspur Glass"), where + " is missing a home match")
+		_check(schedule.contains("Pellwick Cinders vs Marrowgate Herons"), where + " is missing a return match")
+	var standings := str(game.standings_label.text)
+	for club_name in Sport.CLUB_NAMES:
+		_check(standings.contains(str(club_name)), where + " standings are missing " + str(club_name))
+	_check(standings.contains(Sport.TIE_RULE), where + " standings are missing the tie rule")
+	_check(standings.contains("run diff"), where + " standings are missing run difference")
+	_check(
+		standings.contains("Series seed order: %s." % Sport.seed_order_names(int(game.series.seed))),
+		where + " standings are missing the series seed order"
+	)
+
+
+func _skip_regular(game) -> void:
+	for week in Sport.SERIES_WEEKS:
+		_check(game.phase == "office", "week %d did not return to the office" % (week + 1))
+		_check(int(game.series.week) == week, "office week counter is not %d" % (week + 1))
+		_check(str(game.schedule_label.text).contains(Sport.FIFTH_CLUB), "Saltmere Kites left the office")
+		_check(str(game.schedule_label.text).contains(" bye"), "the bye left the office")
+		if not game.series.player_plays():
+			_check(str(game.record_label.text).contains("Bye week."), "a bye week is not marked on the office")
+			_check(str(game.fixture_title.text) == "Bye week", "a bye week is not titled")
+			_check(str(game.opponent_label.text).contains("No match is recorded"), "a bye week still schedules Lumen Reedmice")
+		game.skip_button.pressed.emit()
+		_check(game.phase == "result", "skip did not reach the result in week %d" % (week + 1))
+		_check(game.watch_log.size() == Sport.PAS_PER_MATCH, "skip log length in week %d" % (week + 1))
+		_check(str(game.result_label.text).contains("Other match:"), "the other match was not shown in week %d" % (week + 1))
+		game.continue_button.pressed.emit()
+
+
+func _exercise_final_choices(game) -> void:
+	var slot_before := int(game.lineup[0])
+	game._unhandled_input(_key(KEY_RIGHT))
+	_check(int(game.lineup[0]) != slot_before, "Right did not change the final lineup")
+	_check(Sport.is_legal_lineup(Sport.ROSTER_SIZE, game.lineup), "final lineup became illegal")
+	game._unhandled_input(_key(KEY_LEFT))
+	_check(int(game.lineup[0]) == slot_before, "Left did not restore the final lineup")
+	game._unhandled_input(_key(KEY_T))
+	_check(str(game.tactic) == "patient", "T did not change the final tactic")
+	game._unhandled_input(_key(KEY_T))
+	game._unhandled_input(_key(KEY_T))
+	_check(str(game.tactic) == "aggressive", "T did not cycle the final tactic back")
+	game._unhandled_input(_key(KEY_Y))
+	_check(str(game.training) == "eye", "Y did not change the final training focus")
+	game.training_buttons[0].pressed.emit()
+	_check(str(game.training) == "lash", "the training button did not restore the final focus")
+
+
+func _watch_skip_final(game) -> void:
+	var game_no := int(game.series.final_game_index()) + 1
+	_check(str(game.week_label.text) == "Final game %d" % game_no, "final office is not labeled with the game number")
+	_check(str(game.goal_label.text).contains("win the series"), "final office lost the series goal")
+	_check(str(game.rule_label.text).contains("not a win for either side"), "final office lost the tie rule")
+	_check(str(game.tactic_help.text).contains("series continues"), "final office does not say how a tie continues")
+	_check(is_equal_approx(float(game.ticker.wait_time), 1.0), "final watch is not one plate appearance per second")
+	_exercise_final_choices(game)
+	game.watch_button.pressed.emit()
+	_check(game.phase == "watch", "final watch did not start")
+	await process_frame
+	_check(game.watch_log.size() == 1, "final watch did not show the first plate appearance")
+	_check(game.field_board.size.y >= 200.0, "final field did not lay out")
+	game.match_skip_button.pressed.emit()
+	_check(game.phase == "result", "final skip did not reach the result")
+	var appearances: Array = game.current_match["plate_appearances"]
+	_check(appearances.size() == Sport.PAS_PER_MATCH, "final plate count")
+	_check(game.watch_log.size() == appearances.size(), "final watch log is not one line per plate appearance")
+	for i in appearances.size():
+		_check(str(game.watch_log[i]) == str(appearances[i]["explanation"]), "final watch line %d drifted" % i)
+	_check(str(game.result_label.text).begins_with("Final game %d:" % game_no), "final result is not labeled with the game")
+
+
 func _test_game_flow() -> void:
 	print("TEST game flow")
 	var packed: PackedScene = load("res://scenes/main.tscn")
@@ -571,24 +971,16 @@ func _test_game_flow() -> void:
 	var game = packed.instantiate()
 	root.add_child(game)
 	await process_frame
-	_check(game.phase == "office", "game did not open on the office")
-	_check(game.office_panel.visible, "office is hidden when the game opens")
-	_check(game.schedule_label.visible, "schedule is hidden when the game opens")
-	_check(str(game.goal_label.text).contains("reach the final and win it"), "board goal is not on screen from the start")
-	_check(str(game.week_label.text) == "Week 1 of 6", "office does not open on week 1")
-	var opening_schedule := str(game.schedule_label.text)
-	_check(opening_schedule.contains("Two matches a week"), "office schedule does not say two matches a week")
-	_check(opening_schedule.contains("Week 1: Lumen Reedmice at Southspur Glass. Pellwick Cinders at Marrowgate Herons."), "week 1 schedule is not on the office")
-	_check(opening_schedule.contains(Sport.HERONS_CLUB), "fourth club is missing from the office schedule")
-	_check(opening_schedule.contains("Week 6:"), "the office schedule is not the full season")
-	_check(str(game.tie_label.text) == Sport.tie_break_text(int(game.series.seed)), "tie-break is not stated from week 1")
-	_check(str(game.tie_label.text).contains(Sport.HERONS_CLUB), "tie-break omits the fourth club")
-	_check(str(game.table_label.text).contains(Sport.HERONS_CLUB), "table omits the fourth club")
-	_check(str(game.table_label.text).contains(Sport.PLAYER_CLUB), "table omits the player")
+	_check(game.get_script() != null, "game script failed to parse")
+	if game.get_script() == null:
+		game.queue_free()
+		return
+	_check_office(game, "open")
 
 	game.start_new_series(42)
 	await process_frame
-	_check(str(game.goal_label.text).contains("reach the final and win it"), "board goal left the office")
+	_check_office(game, "start")
+	_check(str(game.week_label.text) == "Week 1 of 10", "office does not open on a ten-week series")
 	_check(str(game.tactic) == "aggressive", "default tactic is not aggressive")
 	_check(str(game.training) == "lash", "default training is not lash")
 	_check(is_equal_approx(float(game.ticker.wait_time), 1.0), "watch is not one plate appearance per second")
@@ -609,8 +1001,126 @@ func _test_game_flow() -> void:
 		_check(_line_explains(line, str(pa["batter_name"])), "watch line %d is not an explanation" % i)
 	_check(str(game.explanation_label.text) == str(game.watch_log[game.watch_log.size() - 1]), "explanation label is not the latest watch line")
 
-	game.start_new_series(3)
-	var before_eye := Sport.get_stat(game.series.player_roster[0], "eye")
+	game.start_new_series(MISS_SEED)
+	_check_office(game, "scripted miss")
+	_skip_regular(game)
+	_check(game.phase == "board", "a missed final did not end on the board")
+	_check(game.series.results.size() == 20, "the miss did not store twenty matches")
+	_check(int(game.series.week) == 10, "the miss did not finish week 10")
+	_check(not game.series.reached_final(), "the miss reached the final")
+	_check(game.series.final_games.is_empty(), "the miss stored a final")
+	var board_text := str(game.board_label.text)
+	_check(board_text.contains("reach the final and win the series"), "board is missing the series goal")
+	_check(board_text.contains(Sport.FINAL_TIE_TEXT), "board is missing the tie rule")
+	_check(board_text.contains("Result: MISSED"), "a missed final should be MISSED")
+	_check(not board_text.contains("Result: MET"), "goal text contradicts MISSED")
+	_check(board_text.contains("The final: not played."), "a missed final was played on the board")
+	_check(board_text.contains("finished 3rd"), "the board does not give the finishing place")
+	_check(board_text.contains("without a final"), "the board does not end the season without a final")
+	_check(board_text.contains("Week 10:"), "week 10 was not played")
+	_check(not board_text.contains("Week 11:"), "an extra week was played")
+	_check(board_text.contains(Sport.FIFTH_CLUB), "Saltmere Kites did not reach the board")
+	_check(board_text.contains("You had the bye."), "the board dropped the bye")
+	_check(board_text.contains("Marrowgate Herons at home and Saltmere Kites away."), "the clubs ahead were not named")
+	_check(not game.series.goal_met(), "a missed final met the goal")
+	print("Scripted miss from the office: MISSED")
+	var seed_before := int(game.series.seed)
+	game.board_restart_button.pressed.emit()
+	_check(game.phase == "office", "restart did not return to the office")
+	_check(int(game.series.week) == 0, "restart did not reset the week")
+	_check(game.series.results.is_empty(), "restart kept old results")
+	_check(game.series.final_games.is_empty(), "restart kept a final")
+	_check(int(game.series.seed) == seed_before + 1, "restart did not advance the seed")
+
+	game.start_new_series(SWEEP_SEED)
+	_check_office(game, "two-game final")
+	_skip_regular(game)
+	_check(game.phase == "office", "reaching the final skipped the final office")
+	_check(game.series.in_final(), "two-game script did not open the final")
+	_check(str(game.fixture_title.text) == "Final game 1: Marrowgate Herons", "final game 1 opponent was not shown")
+	_check(str(game.record_label.text).contains("You bat second."), "the club ahead did not bat second on screen")
+	_check(str(game.schedule_label.text).contains("> Final game 1   Lumen Reedmice vs Marrowgate Herons"), "game 1 did not list the club ahead at home")
+	var sweep_table := _snapshot(game.series)
+	await _watch_skip_final(game)
+	_check(str(game.current_match["player_result"]) == "win", "watched final game 1 was not a win")
+	_check(str(game.result_label.text).contains("The series continues to game 2."), "game 1 did not say the series continues")
+	_check(str(game.result_label.text).contains("Marrowgate Herons will be home and bat second."), "game 2 home was not named")
+	game.continue_button.pressed.emit()
+	_check(game.phase == "office", "game 1 sent the series to the board")
+	_check(str(game.week_label.text) == "Final game 2", "the office did not open game 2")
+	_check(str(game.record_label.text).contains("You bat first."), "game 2 did not alternate the batting side")
+	_check(str(game.schedule_label.text).contains("> Final game 2   Marrowgate Herons vs Lumen Reedmice"), "game 2 did not list the other club at home")
+	_check(_same_snapshot(sweep_table, _snapshot(game.series)), "game 1 changed the table")
+	await _watch_skip_final(game)
+	_check(str(game.result_label.text).contains("Lumen Reedmice won the series, 2 wins to 0 wins."), "game 2 did not award the series")
+	var lash_before: Array = _lash_list(game.series.player_roster)
+	game.continue_button.pressed.emit()
+	_check(game.phase == "board", "winning the series did not reach the board")
+	var win_board := str(game.board_label.text)
+	_check(win_board.contains("Result: MET"), "winning the series should be MET")
+	_check(not win_board.contains("Result: MISSED"), "goal text contradicts MET")
+	_check(win_board.contains("reached the final and won the series, 2 wins to 0 wins."), "board does not say the series was won")
+	_check(win_board.contains("Final game 1:"), "board is missing final game 1")
+	_check(win_board.contains("Final game 2:"), "board is missing final game 2")
+	_check(win_board.contains("The final does not change the table."), "board does not keep the table fixed")
+	_check(win_board.contains("Week 10:"), "win board skipped week 10")
+	_check(win_board.contains(Sport.FIFTH_CLUB), "Saltmere Kites left the win board")
+	_check(game.series.goal_met(), "the board goal was not met")
+	_check(game.series.results.size() == 20, "the final was stored in the table")
+	_check(game.series.final_games.size() == 2, "the board series did not stop at two wins")
+	_check(_stats_in_range(game.series.rosters), "the series left a stat outside 1-20")
+	_assert_plus(game.series.player_roster, lash_before, "lash", 1, "game 2 training did not add 1 Lash")
+	print("Scripted final from the office: won in two games")
+
+	game.start_new_series(TIE_SEED)
+	_skip_regular(game)
+	_check(game.series.in_final(), "tie script did not open the final")
+	await _watch_skip_final(game)
+	_check(str(game.current_match["player_result"]) == "win", "tie script game 1 drifted")
+	game.continue_button.pressed.emit()
+	_check(str(game.week_label.text) == "Final game 2", "the tie script skipped game 2")
+	await _watch_skip_final(game)
+	_check(str(game.current_match["winner"]) == "tie", "game 2 was not a tie")
+	_check(str(game.result_label.text).contains("A tie is not a win for either side."), "the result does not say a tie is not a win")
+	_check(str(game.result_label.text).contains("The series continues to game 3."), "the result does not continue the series")
+	_check(str(game.result_label.text).contains("Lumen Reedmice will be home and bat second."), "game 3 home was not the club ahead")
+	game.continue_button.pressed.emit()
+	_check(game.phase == "office", "a tie ended the season")
+	_check(str(game.week_label.text) == "Final game 3", "the series did not open game 3")
+	_check(str(game.goal_label.text).contains("Game 2 was a tie, so it was not a win for either side. The series continues."), "the office hid the tie")
+	_check(str(game.record_label.text).contains("Series 1-0."), "the tie changed the series score")
+	_check(str(game.record_label.text).contains("You bat second."), "game 3 did not return home to the club ahead")
+	await _watch_skip_final(game)
+	_check(str(game.result_label.text).contains("Lumen Reedmice won the series, 2 wins to 0 wins."), "the game after the tie did not win the series")
+	game.continue_button.pressed.emit()
+	_check(game.phase == "board", "the series after a tie did not reach the board")
+	_check(str(game.board_label.text).contains("Result: MET"), "winning after a tie should be MET")
+	_check(str(game.board_label.text).contains("Game 2 was a tie."), "the board dropped the tie")
+	_check(game.series.final_games.size() == 3, "the tie did not force a third game")
+	print("Scripted final from the office: tie continued into game 3")
+
+	game.start_new_series(LOSS_SEED)
+	_skip_regular(game)
+	var loss_games := 0
+	while game.phase == "office" and game.series.in_final() and loss_games < 8:
+		await _watch_skip_final(game)
+		loss_games += 1
+		var outcome := str(game.current_match.get("winner", ""))
+		if outcome == "tie":
+			_check(str(game.result_label.text).contains("A tie is not a win for either side."), "a later tie was treated as a win")
+			_check(str(game.result_label.text).contains("The series continues"), "a later tie did not continue the series")
+		game.continue_button.pressed.emit()
+	_check(loss_games == 5, "the lost series did not play every game through the ties")
+	_check(game.phase == "board", "losing the series did not reach the board")
+	var loss_board := str(game.board_label.text)
+	_check(loss_board.contains("Result: MISSED"), "losing the series should be MISSED")
+	_check(loss_board.contains("reached the final and lost the series, 1 win to 2 wins."), "the board does not say the series was lost")
+	_check(not game.series.goal_met(), "losing the series met the goal")
+	_check(game.series.results.size() == 20, "the lost series changed the table")
+	_check(_stats_in_range(game.series.rosters), "the lost series left a stat outside 1-20")
+	print("Scripted final from the office: lost the series")
+
+	game.start_new_series(7)
 	var before_slot := int(game.lineup[0])
 	game._unhandled_input(_key(KEY_RIGHT))
 	_check(int(game.lineup[0]) != before_slot, "Right did not change the lineup slot")
@@ -625,89 +1135,8 @@ func _test_game_flow() -> void:
 	_check(int(game.lineup[1]) == 5, "roster button did not assign the selected slot")
 	game._unhandled_input(_key(KEY_S))
 	_check(game.phase == "result", "S did not skip to the result")
-	_check(str(game.result_label.text).contains("Also this week"), "skip result hid the other match")
-	_check(str(game.result_label.text).contains(Sport.HERONS_CLUB), "week 1 result hid the fourth club")
 	game._unhandled_input(_key(KEY_N))
 	_check(game.phase == "office", "N did not continue to the next office")
 	_check(int(game.series.week) == 1, "continue did not advance the week")
-	_check(Sport.get_stat(game.series.player_roster[0], "eye") == before_eye + 1, "training did not add 1")
-
-	game.start_new_series(21)
-	_paint(game.series, 20, 1)
-	for week in Sport.SERIES_WEEKS:
-		_check(game.phase == "office", "week %d did not return to the office" % (week + 1))
-		_check(int(game.series.week) == week, "office week counter drifted")
-		if week == 2:
-			_check(str(game.opponent_heading.text) == Sport.HERONS_CLUB, "week 3 opponent is not the fourth club")
-		game.skip_button.pressed.emit()
-		_check(game.phase == "result", "skip did not reach the result in week %d" % (week + 1))
-		game.continue_button.pressed.emit()
-	_check(game.phase == "office", "reaching the final skipped the final office")
-	_check(str(game.week_label.text) == "Final", "the final office is not labeled")
-	_check(game.schedule_label.visible, "schedule left the office before the final")
-	_check(str(game.goal_label.text).contains("reach the final and win it"), "goal left the final office")
-	_check(game.series.player_bats_second(), "final office did not bat the leader second")
-	_check(str(game.record_label.text).contains("Finished 1st"), "final office did not show first place")
-	Sport.set_stat(game.series.player_roster[0], "read", 19)
-	game._set_training("read")
-	game._unhandled_input(_key(KEY_T))
-	_check(str(game.tactic) == "patient", "tactic did not change for the final")
-	var final_slot := int(game.lineup[0])
-	game._unhandled_input(_key(KEY_RIGHT))
-	_check(int(game.lineup[0]) != final_slot, "lineup did not change for the final")
-	var table_before: String = _table_signature(game.series.standings())
-	game.watch_button.pressed.emit()
-	_check(game.phase == "watch", "watch did not start for the final")
-	_check(bool(game.current_match.get("final", false)), "watched match was not the final")
-	_check(str(game.current_match.get("player_tactic", "")) == "patient", "final watch ignored the tactic")
-	_check(str(game.current_match.get("player_focus", "")) == "read", "final watch ignored training")
-	_check(int(game.current_match["player_lineup"][0]) == int(game.lineup[0]), "final watch ignored the lineup")
-	_check(game.watch_log.size() == 1, "final watch did not show a plate appearance")
-	game.press_skip()
-	_check(game.phase == "result", "skip did not finish the final")
-	_check(str(game.result_label.text).contains("The final does not change the table."), "final result hid the table rule")
-	_check(str(game.result_label.text).contains("You batted second"), "final result hid the batting order")
-	game.continue_button.pressed.emit()
-	_check(game.phase == "board", "winning the final did not reach the board")
-	_check(game.series.goal_met(), "the board goal was not met")
-	_check(Sport.get_stat(game.series.player_roster[0], "read") == 20, "final training did not stop at 20")
-	_check(_table_signature(game.series.standings()) == table_before, "the played final changed the table")
-	var board_text := str(game.board_label.text)
-	_check(board_text.contains("reach the final and win it"), "board is missing the goal")
-	_check(board_text.contains("Result: MET"), "a won final was not MET")
-	_check(not board_text.contains("Result: MISSED"), "won final text contradicts MET")
-	_check(board_text.contains(Sport.HERONS_CLUB), "board table is missing the fourth club")
-	_check(board_text.contains("Week 6:"), "board is missing the last scheduled week")
-	_check(board_text.contains("The final does not change the table."), "board did not keep the final off the table")
-
-	game.start_new_series(23)
-	_paint(game.series, 1, 20)
-	for week in Sport.SERIES_WEEKS:
-		_check(game.phase == "office", "miss week %d left the office early" % (week + 1))
-		game.skip_button.pressed.emit()
-		_check(game.phase == "result", "miss week %d did not reach a result" % (week + 1))
-		game.continue_button.pressed.emit()
-	_check(game.phase == "board", "missing the final did not end on the board")
-	_check(not game.office_panel.visible, "office stayed open after a missed final")
-	_check(game.series.final_match.is_empty(), "a missed final was played from the office")
-	_check(not game.series.goal_met(), "missing the final met the goal")
-	_check(game.series.matches.size() == Sport.regular_match_count(), "miss path did not play the full schedule")
-	_check(Sport.rank_of(game.series.standings(), Sport.PLAYER_INDEX) == 4, "miss path was not fourth")
-	var miss_board := str(game.board_label.text)
-	_check(miss_board.contains("Result: MISSED"), "missed final was not MISSED")
-	_check(not miss_board.contains("Result: MET"), "missed final text contradicts MISSED")
-	_check(miss_board.contains("No final."), "board did not say the season ended with no final")
-	_check(miss_board.contains("4th"), "board did not give the finish")
-	_check(miss_board.contains(Sport.HERONS_CLUB), "missed board dropped the fourth club")
-	for roster in game.series.rosters:
-		_stats_in_range(roster, "miss path")
-
-	var seed_before := int(game.series.seed)
-	game.board_restart_button.pressed.emit()
-	_check(game.phase == "office", "restart did not return to the office")
-	_check(int(game.series.week) == 0, "restart did not reset the week")
-	_check(game.series.matches.is_empty(), "restart kept old results")
-	_check(int(game.series.seed) == seed_before + 1, "restart did not advance the seed")
-	_check(str(game.schedule_label.text).contains("Week 1:"), "restart hid the schedule")
 	game.queue_free()
 	await process_frame

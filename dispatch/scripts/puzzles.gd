@@ -1,9 +1,9 @@
 extends RefCounted
 
-## Buildings 1, 2, 3, and 4. Directions: 0 east, 1 south, 2 west, 3 north.
+## Buildings 1 through 5. Directions: 0 east, 1 south, 2 west, 3 north.
 ## `unlocks` is the single new block this puzzle introduces, or "".
 
-const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge"]
+const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn"]
 
 
 static func all() -> Array:
@@ -554,6 +554,128 @@ static func all() -> Array:
 				_block("conveyor", 3, 2, 0), _block("conveyor", 4, 2, 3),
 			]
 		),
+		_puzzle(
+			37, "Quarter Turn", "turn",
+			"The dock is clockwise from the belt. Turn the parcel toward it.",
+			"",
+			"A turn rotates the parcel one quarter clockwise and does not move it on that tick. It steps off in the new facing on the next tick.",
+			3, 2,
+			[_cell(2, 0), _cell(0, 1), _cell(2, 1)],
+			[_source(0, 0, 0, ["gray"])],
+			{"x": 1, "y": 1},
+			[{"color": "gray"}],
+			[_block("turn", 1, 0, 0)]
+		),
+		_puzzle(
+			38, "Cut In", "",
+			"Deliver two blues, then red, then the last blue.",
+			"",
+			"Turn red clockwise onto the belt as a blue leaves. The chute refills that cell, so a latch never finds it empty.",
+			4, 3,
+			[
+				_cell(0, 0), _cell(3, 0), _cell(0, 1), _cell(1, 1),
+				_cell(0, 2), _cell(1, 2), _cell(3, 2),
+			],
+			[_source(1, 0, 0, ["red"]), _source(2, 2, 3, ["blue", "blue", "blue"])],
+			{"x": 3, "y": 1},
+			[{"color": "blue"}, {"color": "blue"}, {"color": "red"}, {"color": "blue"}],
+			[
+				_block("turn", 2, 0, 0),
+				_block("conveyor", 2, 1, 0),
+			]
+		),
+		_puzzle(
+			39, "Bend Stamp", "",
+			"Stamp the parcel 1. The counter is one quarter clockwise.",
+			"",
+			"Turn onto the counter. It stamps a parcel on the tick after the parcel lands.",
+			3, 3,
+			[_cell(0, 0), _cell(1, 0), _cell(2, 0), _cell(2, 1), _cell(0, 2)],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 2, "y": 2},
+			[{"count": 1}],
+			[
+				_block("turn", 1, 1, 0),
+				_block("counter", 1, 2, 0),
+			]
+		),
+		_puzzle(
+			40, "Clear the Dock", "",
+			"Deliver red, then blue.",
+			"",
+			"Turn red clockwise onto the dock. The latch holds blue so they do not claim that dock on the same tick.",
+			4, 2,
+			[_cell(2, 0), _cell(0, 1)],
+			[_source(0, 0, 0, ["red"]), _source(3, 0, 1, ["blue"])],
+			{"x": 1, "y": 1},
+			[{"color": "red"}, {"color": "blue"}],
+			[
+				_block("turn", 1, 0, 0),
+				_block("conveyor", 2, 1, 2),
+				_block("latch", 3, 1, 2),
+			]
+		),
+		_puzzle(
+			41, "Two Rights", "",
+			"Deliver blue, then red. One turn has to send them different ways.",
+			"",
+			"Blue is facing west, so the turn sends it north. Red is facing east, so the turn sends it south.",
+			6, 4,
+			[
+				_cell(0, 0), _cell(1, 0), _cell(2, 0), _cell(3, 0), _cell(4, 0), _cell(5, 0),
+				_cell(0, 1), _cell(1, 1), _cell(2, 1),
+				_cell(0, 3), _cell(1, 3), _cell(2, 3),
+			],
+			[_source(0, 2, 0, ["red"]), _source(4, 2, 2, ["blue"])],
+			{"x": 5, "y": 1},
+			[{"color": "blue"}, {"color": "red"}],
+			[
+				_block("conveyor", 1, 2, 0), _block("conveyor", 2, 2, 0), _block("turn", 3, 2, 0),
+				_block("conveyor", 3, 1, 0), _block("conveyor", 4, 1, 0),
+				_block("conveyor", 3, 3, 0), _block("conveyor", 4, 3, 0),
+				_block("conveyor", 5, 3, 3), _block("conveyor", 5, 2, 3),
+			]
+		),
+		_puzzle(
+			42, "Second Bend", "",
+			"Deliver the parcel yellow, stamped 2.",
+			"",
+			"Loop it through the counter. Paint it yellow on the way back. The second send faces the turn, which points it at the dock.",
+			5, 3,
+			[
+				_cell(0, 0), _cell(3, 0), _cell(4, 0),
+				_cell(4, 1),
+				_cell(0, 2), _cell(1, 2), _cell(2, 2), _cell(4, 2),
+			],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 3, "y": 2},
+			[{"color": "yellow", "count": 2}],
+			[
+				_block("counter", 1, 1, 0), _block("splitter", 2, 1, 3),
+				_block("painter", 2, 0, 2, "yellow"), _block("conveyor", 1, 0, 1),
+				_block("turn", 3, 1, 0),
+			]
+		),
+		_puzzle(
+			43, "Night Turn", "",
+			"Deliver red 1, yellow 2, and blue 3.",
+			"",
+			"Red takes the filter and turns south onto the counter. Gray takes the long belt and is primed yellow. Blue keeps its color and follows.",
+			4, 4,
+			[
+				_cell(0, 0), _cell(1, 0), _cell(2, 0), _cell(3, 0),
+				_cell(3, 1), _cell(3, 3),
+			],
+			[_source(0, 1, 0, ["gray", "blue", "red"])],
+			{"x": 3, "y": 2},
+			[{"color": "red", "count": 1}, {"color": "yellow", "count": 2}, {"color": "blue", "count": 3}],
+			[
+				_block("filter", 1, 1, 0, "red"), _block("turn", 2, 1, 0),
+				_block("conveyor", 1, 2, 2), _block("conveyor", 0, 2, 1), _block("conveyor", 0, 3, 0),
+				_block("primer", 1, 3, 0, "yellow"), _block("conveyor", 2, 3, 3),
+				_block("counter", 2, 2, 0),
+			]
+		),
 	]
 
 
@@ -583,7 +705,7 @@ static func _puzzle(id: int, title: String, unlocks: String, brief: String, how_
 		"dock": dock,
 		"order": order,
 		"reference": reference,
-		"building": 4 if id >= 30 else 3 if id >= 23 else 2 if id >= 16 else 1,
+		"building": 5 if id >= 37 else 4 if id >= 30 else 3 if id >= 23 else 2 if id >= 16 else 1,
 	}
 
 
