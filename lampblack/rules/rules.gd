@@ -5,14 +5,17 @@ extends RefCounted
 ##
 ## Turn order
 ## 1. The player takes one action: step to an adjacent tile, wait, or toggle an adjacent lamp.
-## 2. If that toggle snuffed a lamp (lit became dark), the nearest guard is called.
-##    Distance is Manhattan from the guard's tile to the lamp's tile. A tie goes to the
-##    lowest guard index. The call does not change the step taken in step 3.
+## 2. A call may come from that action. It does not change the step taken in step 3.
+##    Snuffing a lamp (lit became dark) calls the nearest guard. Stepping onto a plate
+##    calls the nearest guard. Stepping onto a bell calls every guard who has a floor
+##    path to that bell. Distance is Manhattan from the guard's tile to the target.
+##    A tie goes to the lowest guard index. A guard with no floor path to a bell is not
+##    called and keeps the rail. Waiting on a plate or a bell does not call again.
+##    Lighting a lamp calls nobody.
 ## 3. Every guard then moves one tile according to the alert that was already active
 ##    at the start of the turn, or along their rail if they are not alert and not holding.
-## 4. The call from step 2 becomes the active alert after that movement. The arrow shows
-##    the tile the called guard will step to on the next turn — "snuffing calls the
-##    nearest guard toward that lamp on the next turn."
+## 4. The call from step 2 becomes the active alert after that movement. Each called
+##    guard's arrow shows the tile he will step to on the next turn.
 ## 5. Stepping onto the exit wins immediately, before the guards move.
 ##    Sharing a tile with a guard, or standing on a watched tile, is a loss. That is
 ##    checked after the player's action and again after the guards move.
@@ -29,6 +32,27 @@ extends RefCounted
 ## Dark floor and a dark exit may be entered. A gap may be entered only while it is lit.
 ## Lit floor that no guard is watching is refused. Stepping onto a watched tile is a loss,
 ## not a refusal — watched means the tile is lit and lies in a guard's vision.
+## A plate is floor. It may be entered while it is dark. A lit plate is refused, the same
+## as other lit floor, until the lamp covering it is snuffed.
+## A bell is floor. It may be entered while it is dark. A lit bell is refused, the same
+## as other lit floor, until the lamp covering it is snuffed.
+##
+## Plates
+## The turn the player steps onto a plate calls the nearest guard, by the same rule as a
+## snuff: Manhattan distance to that plate, and the lowest guard index wins a tie. The
+## call does not change the step taken on that turn. The guard takes the arrow step on
+## the next turn, then walks toward the plate and holds there. Waiting while already on
+## the plate does not call again. Leaving and stepping back on does. Lighting a lamp
+## still calls nobody. Snuffing a lamp still does.
+##
+## Bells
+## The turn the player steps onto a bell calls every guard who has a floor path to that
+## bell. Each called guard takes the arrow step on the next turn, then walks to the bell
+## and holds there. The call does not change the step taken on that turn. Waiting while
+## already on the bell does not call again. Leaving and stepping back on does. A snuff
+## still calls only the nearest guard. A plate still calls only the nearest guard.
+## Lighting a lamp still calls nobody. A bell pulls a guard off an existing hold. A guard
+## with no floor path to the bell is not called and keeps the rail.
 ##
 ## Vision
 ## Each guard watches a Manhattan diamond of their vision radius, and only on tiles that
@@ -37,11 +61,11 @@ extends RefCounted
 ## standing on the guard is a separate loss.
 ##
 ## Guards
-## Alerted guards take one step along a shortest 4-neighbor path to the lamp they were
-## called to. Neighbors are expanded north, east, south, then west, and that order breaks
-## ties. They may walk on floor and exit tiles, lit or dark, but not through walls or gaps.
-## When they step onto the lamp they hold there. They do not resume the rail unless a
-## later snuff calls them.
+## Alerted guards take one step along a shortest 4-neighbor path to the tile they were
+## called to, a lamp, a plate, or a bell. Neighbors are expanded north, east, south,
+## then west, and that order breaks ties. They may walk on floor, plate, bell, and exit
+## tiles, lit or dark, but not through walls or gaps. When they step onto that tile they
+## hold there. They do not resume the rail unless a later snuff, plate, or bell calls them.
 ## A guard who is not alert and not holding patrols their rail. The rail is a list of
 ## waypoints. rail_index is the waypoint they are walking toward, and rail_dir is +1 or -1.
 ## On reaching that waypoint they advance the index, reversing at either end. A rail with
@@ -52,7 +76,7 @@ extends RefCounted
 ## every lamp's lit flag, and every guard's position, rail index, rail direction, alert
 ## target, and hold flag.
 
-enum Tile { WALL, FLOOR, GAP, EXIT }
+enum Tile { WALL, FLOOR, GAP, EXIT, PLATE, BELL }
 enum Result { OK, WIN, LOSS, ILLEGAL }
 
 const DIRS := [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]
@@ -89,6 +113,10 @@ static func build(rows: PackedStringArray, lamps: Array, guards: Array) -> Dicti
 				"S":
 					kind = Tile.FLOOR
 					player = {"x": x, "y": y, "fx": 1, "fy": 0}
+				"P":
+					kind = Tile.PLATE
+				"B":
+					kind = Tile.BELL
 				_:
 					push_error("bad tile '%s'" % ch)
 			tiles[y * width + x] = kind
@@ -295,7 +323,7 @@ static func loss_reason(state: Dictionary, lit: Dictionary = {}) -> String:
 
 static func guard_walkable(state: Dictionary, x: int, y: int) -> bool:
 	var kind := tile_at(state, x, y)
-	return kind == Tile.FLOOR or kind == Tile.EXIT
+	return kind == Tile.FLOOR or kind == Tile.EXIT or kind == Tile.PLATE or kind == Tile.BELL
 
 
 static func bfs_path(state: Dictionary, sx: int, sy: int, gx: int, gy: int) -> Dictionary:
@@ -383,14 +411,43 @@ static func planned_path(state: Dictionary, guard_index: int) -> Array:
 
 
 static func nearest_guard(state: Dictionary, lamp: Dictionary) -> int:
+	var ids: Array = []
+	for guard in state["guards"]:
+		ids.append(int(guard["id"]))
+	return nearest_guard_among(state, ids, int(lamp["x"]), int(lamp["y"]))
+
+
+static func nearest_guard_among(state: Dictionary, ids: Array, x: int, y: int) -> int:
 	var best := -1
 	var best_dist := 1 << 30
-	for guard in state["guards"]:
-		var dist := absi(int(guard["x"]) - int(lamp["x"])) + absi(int(guard["y"]) - int(lamp["y"]))
-		if dist < best_dist or (dist == best_dist and (best == -1 or int(guard["id"]) < best)):
-			best = int(guard["id"])
+	for id in ids:
+		var guard: Dictionary = state["guards"][int(id)]
+		var dist := absi(int(guard["x"]) - x) + absi(int(guard["y"]) - y)
+		if dist < best_dist or (dist == best_dist and (best == -1 or int(id) < best)):
+			best = int(id)
 			best_dist = dist
 	return best
+
+
+static func guard_can_reach(state: Dictionary, guard: Dictionary, tx: int, ty: int) -> bool:
+	var sx := int(guard["x"])
+	var sy := int(guard["y"])
+	if sx == tx and sy == ty:
+		return true
+	var found := bfs_path(state, sx, sy, tx, ty)
+	var path: Array = found["path"]
+	if path.size() < 2:
+		return false
+	var last: Vector2i = path[path.size() - 1]
+	return last.x == tx and last.y == ty
+
+
+static func bell_guards(state: Dictionary, x: int, y: int) -> Array:
+	var ids: Array = []
+	for guard in state["guards"]:
+		if guard_can_reach(state, guard, x, y):
+			ids.append(int(guard["id"]))
+	return ids
 
 
 static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = true) -> Dictionary:
@@ -399,8 +456,9 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 		return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "toggle")
 	var st := state.duplicate(true)
 	var player: Dictionary = st["player"]
-	var pending_guard := -1
-	var pending_lamp := Vector2i.ZERO
+	var pending_ids: Array = []
+	var pending_target := Vector2i.ZERO
+	var pending_report := -1
 	if kind == "wait":
 		pass
 	elif kind == "move":
@@ -422,7 +480,7 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 		if dest == Tile.GAP:
 			if not lit.has(Vector2i(nx, ny)):
 				return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "darkgap")
-		elif dest == Tile.FLOOR or dest == Tile.EXIT:
+		elif dest == Tile.FLOOR or dest == Tile.EXIT or dest == Tile.PLATE or dest == Tile.BELL:
 			if lit.has(Vector2i(nx, ny)):
 				return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "lit")
 		else:
@@ -438,6 +496,16 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 		player["y"] = ny
 		player["fx"] = dx
 		player["fy"] = dy
+		if dest == Tile.PLATE:
+			var plate_guard := nearest_guard(st, {"x": nx, "y": ny})
+			if plate_guard >= 0:
+				pending_ids = [plate_guard]
+				pending_target = Vector2i(nx, ny)
+				pending_report = plate_guard
+		elif dest == Tile.BELL:
+			pending_target = Vector2i(nx, ny)
+			pending_ids = bell_guards(st, nx, ny)
+			pending_report = nearest_guard_among(st, pending_ids, nx, ny)
 	elif kind == "toggle":
 		var index := int(action["lamp"])
 		var lamp_list: Array = st["lamps"]
@@ -447,15 +515,18 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 		if absi(int(lamp["x"]) - int(player["x"])) + absi(int(lamp["y"]) - int(player["y"])) != 1:
 			return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "range")
 		var here := tile_at(st, player["x"], player["y"])
-		if here != Tile.FLOOR and here != Tile.EXIT:
+		if here != Tile.FLOOR and here != Tile.EXIT and here != Tile.PLATE and here != Tile.BELL:
 			return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "range")
 		var was_lit: bool = lamp["lit"]
 		lamp["lit"] = not was_lit
 		player["fx"] = int(lamp["x"]) - int(player["x"])
 		player["fy"] = int(lamp["y"]) - int(player["y"])
 		if was_lit:
-			pending_guard = nearest_guard(st, lamp)
-			pending_lamp = Vector2i(lamp["x"], lamp["y"])
+			var snuff_guard := nearest_guard(st, lamp)
+			if snuff_guard >= 0:
+				pending_ids = [snuff_guard]
+				pending_target = Vector2i(lamp["x"], lamp["y"])
+				pending_report = snuff_guard
 	else:
 		return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "action")
 
@@ -469,20 +540,20 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 	for i in st["guards"].size():
 		var planned := plan_guard(st, st["guards"][i])
 		st["guards"][i] = planned["guard"]
-	if pending_guard >= 0:
-		var called: Dictionary = st["guards"][pending_guard]
+	for id in pending_ids:
+		var called: Dictionary = st["guards"][int(id)]
 		called["alert"] = true
-		called["ax"] = pending_lamp.x
-		called["ay"] = pending_lamp.y
+		called["ax"] = pending_target.x
+		called["ay"] = pending_target.y
 		called["holding"] = false
 	var step := Vector2i(-1, -1)
-	if pending_guard >= 0:
-		step = planned_step(st, pending_guard)
+	if pending_report >= 0:
+		step = planned_step(st, pending_report)
 	lit_now = light_map(st)
 	why = loss_reason(st, lit_now)
 	if why != "":
-		return _finish(st, Result.LOSS, pending_guard, step, why)
-	return _finish(st, Result.OK, pending_guard, step, "")
+		return _finish(st, Result.LOSS, pending_report, step, why)
+	return _finish(st, Result.OK, pending_report, step, "")
 
 
 static func _finish(state: Dictionary, result: int, called: int, step: Vector2i, reason: String) -> Dictionary:

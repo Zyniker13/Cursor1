@@ -40,8 +40,8 @@ class_name BeamTracer
 # tide_phases[tide_index] is how many rows, counting up from the bottom, are
 # under water. A cell is flooded when y >= rows - flood_count. Flooded cells
 # do not carry light: a beam that would enter one stops at the waterline.
-# Lanterns on a flooded cell do not emit. Mirrors, prisms, and panes there
-# are shut and do not act.
+# Lanterns on a flooded cell do not emit. Mirrors, prisms, panes, and vanes
+# there are shut and do not act.
 #
 # Tide mirror
 # -----------
@@ -52,7 +52,7 @@ class_name BeamTracer
 # It reflects only while its own row is flooded. The beam may enter that
 # flooded cell. The next flooded cell that is not itself a tide mirror, a
 # shutter, or a stain still stops the beam at the waterline, and a flooded
-# lantern, mirror, prism, pane, dock, or hull still follows the rules above.
+# lantern, mirror, prism, pane, vane, dock, or hull still follows the rules above.
 # While its row is dry, a beam that hits it keeps its direction and its color.
 #
 # Shutter
@@ -79,6 +79,20 @@ class_name BeamTracer
 # recolored. The next flooded cell that is not itself a stain, a shutter, or
 # a tide mirror still stops the beam.
 #
+# Vane
+# ----
+# A vane is not a stain, a mirror, or a shutter, and it does not replace one.
+# It has a facing and it never changes color. It does not split.
+#   rot 0: north, rot 90: east, rot 180: south, rot 270: west
+# Clicking turns that facing clockwise: north, east, south, west.
+# A beam already traveling in the facing passes straight and keeps its color.
+# A beam that arrives from either side leaves traveling in the facing and
+# keeps its color. The entry direction does not pick the exit. The facing does.
+# A beam traveling against the facing is head-on. It stops.
+# On a flooded row the vane is shut, the same way a mirror is shut. The beam
+# stops at the waterline and does not enter the cell. Flood does not let it
+# through: a vane is not a shutter, a tide mirror, or a stain.
+#
 # Docks and boats
 # ---------------
 # A dock records every color that enters its cell. It is satisfied only when
@@ -88,7 +102,7 @@ class_name BeamTracer
 #
 # Loops
 # -----
-# Each mirror, prism, and pane costs a bounce. Past MAX_BOUNCES the beam stops.
+# Each mirror, prism, pane, and vane costs a bounce. Past MAX_BOUNCES the beam stops.
 # A (cell, direction, color) triple is never entered twice, and each cast also
 # stops after MAX_STEPS cells. Those caps are what make a mirror loop return.
 
@@ -111,7 +125,9 @@ static func rotate_dir(dir: String, turns: int) -> String:
 	return DIRS[posmod(i + turns, 4)]
 
 static func norm_rot(kind: String, rot: int) -> int:
-	if kind == "prism":
+	# A prism has four faces. A vane has four facings: 0 north, 90 east,
+	# 180 south, 270 west. Opposite facings are not the same piece.
+	if kind == "prism" or kind == "vane":
 		return posmod(rot, 360)
 	# A shutter has no facing. Dry stops the beam; flooded water lets it pass.
 	if kind == "shutter":
@@ -168,6 +184,9 @@ static func pane_color(rot: int) -> String:
 
 static func stain_color(rot: int) -> String:
 	return "red" if norm_rot("stain", rot) == 0 else "blue"
+
+static func vane_facing(rot: int) -> String:
+	return rotate_dir("N", posmod(int(rot / 90.0), 4))
 
 static func flood_count(chart: Dictionary, state: Dictionary) -> int:
 	var phases: Array = chart["tide_phases"]
@@ -371,6 +390,16 @@ static func _cast(
 			prev = cell
 			cell = cell + VEC[dir]
 			continue
+		if kind == "vane":
+			# The facing picks the exit. A head-on beam stops. Color stays.
+			var facing := vane_facing(int(occ["rot"]))
+			if dir == rotate_dir(facing, 2):
+				return
+			dir = facing
+			bounces += 1
+			prev = cell
+			cell = cell + VEC[dir]
+			continue
 		if kind == "pane":
 			if color != pane_color(int(occ["rot"])):
 				return
@@ -391,7 +420,9 @@ static func _cast(
 
 static func _flood_carries(occupants: Dictionary, cell: Vector2i) -> bool:
 	# Tide mirrors reflect under water. Shutters pass straight through it.
-	# A stain recolors and lets the beam leave. Every other flooded cell stops.
+	# A stain recolors and lets the beam leave. A vane is shut under water,
+	# so the beam stops at the waterline and does not enter that cell.
+	# Every other flooded cell stops too.
 	if not occupants.has(cell):
 		return false
 	var occ: Dictionary = occupants[cell]

@@ -468,6 +468,10 @@ func _building_mark_name(building: int) -> String:
 			return "BuildingFiveMark"
 		6:
 			return "BuildingSixMark"
+		7:
+			return "BuildingSevenMark"
+		8:
+			return "BuildingEightMark"
 		_:
 			return "Building%dMark" % building
 
@@ -616,8 +620,12 @@ func _sync_facing() -> void:
 	if _facing:
 		if _selected == "turn":
 			_facing.text = "Facing   clockwise"
+		elif _selected == "hook":
+			_facing.text = "Facing   counterclockwise"
 		elif _selected == "slide":
 			_facing.text = "Facing   with the parcel"
+		elif _selected == "bin":
+			_facing.text = "Facing   none"
 		else:
 			_facing.text = "Facing   %s" % Sim.DIR_NAMES[_ghost_dir]
 
@@ -891,8 +899,12 @@ func _draw_block(block: Dictionary, alpha: float) -> void:
 		_edge_arrow(rect, dir, ink, 1.2)
 	elif typ == "turn":
 		_turn_mark(rect, ink)
+	elif typ == "hook":
+		_hook_mark(rect, ink)
 	elif typ == "slide":
 		_slide_mark(rect, ink)
+	elif typ == "bin":
+		_bin_mark(rect, ink, alpha)
 	else:
 		_arrow(rect, dir, ink, 0.78)
 
@@ -950,9 +962,12 @@ func _shown_parcels() -> Array:
 				count = int(ahead["count"])
 				facing = int(ahead.get("dir", facing))
 			else:
-				var dock: Dictionary = _puzzle["dock"]
-				dest = Vector2(int(dock["x"]), int(dock["y"]))
+				var cell := Vector2i(int(parcel["x"]), int(parcel["y"]))
+				var stood: Dictionary = _placed.get(cell, {})
 				alpha = 1.0 - blend
+				if str(stood.get("type", "")) != "bin":
+					var dock: Dictionary = _puzzle["dock"]
+					dest = Vector2(int(dock["x"]), int(dock["y"]))
 		var pos := origin.lerp(dest, blend)
 		out.append({"x": pos.x, "y": pos.y, "color": color, "count": count, "dir": facing, "alpha": alpha})
 	if anim:
@@ -1042,6 +1057,34 @@ func _slide_mark(rect: Rect2, color: Color) -> void:
 	_tri(center + vec * rect.size.x * 0.16, vec, rect.size.x * 0.14, rect.size.x * 0.085, color)
 
 
+func _bin_mark(rect: Rect2, color: Color, alpha: float) -> void:
+	var hole := rect.grow(-rect.size.x * 0.16)
+	draw_colored_polygon(_chamfer(hole, 5.0), Color(0.07, 0.06, 0.05, alpha))
+	var left := hole.position.x + hole.size.x * 0.28
+	var right := hole.position.x + hole.size.x * 0.72
+	var top := hole.position.y + hole.size.y * 0.28
+	var bottom := hole.position.y + hole.size.y * 0.72
+	draw_line(Vector2(left, top), Vector2(right, bottom), color, 3.0)
+	draw_line(Vector2(right, top), Vector2(left, bottom), color, 3.0)
+
+
+func _hook_mark(rect: Rect2, color: Color) -> void:
+	var center := rect.get_center()
+	var radius := rect.size.x * 0.2
+	var pts := PackedVector2Array()
+	var steps := 8
+	for i in steps + 1:
+		var angle := lerpf(0.0, -PI * 0.5, float(i) / float(steps))
+		pts.append(center + Vector2(cos(angle), sin(angle)) * radius)
+	draw_polyline(pts, color, 2.5, true)
+	var tip: Vector2 = pts[pts.size() - 1]
+	var prev: Vector2 = pts[pts.size() - 2]
+	var vec := tip - prev
+	if vec.length_squared() < 0.001:
+		vec = Vector2(0, -1)
+	_tri(tip, vec.normalized(), rect.size.x * 0.11, rect.size.x * 0.07, color)
+
+
 func _turn_mark(rect: Rect2, color: Color) -> void:
 	var center := rect.get_center()
 	var radius := rect.size.x * 0.2
@@ -1114,8 +1157,12 @@ func _tool_color(tool: String) -> Color:
 			return Color("#4f7d6a")
 		"turn":
 			return Color("#6e8bb8")
+		"hook":
+			return Color("#6d4c9a")
 		"slide":
 			return Color("#d06b86")
+		"bin":
+			return Color("#4d463f")
 		_:
 			return Color("#888888")
 
@@ -1158,8 +1205,12 @@ func _tool_tip(tool: String) -> String:
 			return "Sets a parcel down two steps along its arrow, over the cell in front."
 		"turn":
 			return "Rotates a parcel one quarter clockwise and waits that tick. It leaves in the new facing on the next tick."
+		"hook":
+			return "Rotates a parcel one quarter counterclockwise and waits that tick. It leaves in the new facing on the next tick."
 		"slide":
 			return "Moves a parcel two cells in its facing and does not rotate it. The cell between can be a brick, a belt, or another parcel."
+		"bin":
+			return "Removes a parcel that stands on it. A parcel that only hops over it is left alone."
 		_:
 			return ""
 

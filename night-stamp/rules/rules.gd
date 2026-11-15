@@ -752,6 +752,283 @@
 # The wing bonus, the low slip, and the after-gap doubling do not remove
 # Hold or Exemption, and they do not cancel a retrigger.
 #
+# SPINE BELL, in desk order
+# A fifteenth night. The stamps, the ink, and the 3x3 form are unchanged.
+# The spine bell deals the starting deck again. Drafts and the relic from
+# an earlier night do not carry. Open it from the desk, or from a victory
+# desk. Restart act replays whichever night is on the desk.
+# - Wynn Quill, lane column 2, exemption row top, High Slip:
+#   "When two or more stamps are filled, the earliest stamp among those
+#   showing the highest number scores twice. A lone stamp scores its own
+#   number."
+#   Ida Mire doubles the earliest stamp among those showing the lowest
+#   number. Ida Cress doubles the first stamp in the queue, including a
+#   lone stamp. Cress Hart doubles the first stamp only when a later stamp
+#   follows it. Wynn does none of those. A number is the progress that
+#   stamp already grants, before this doubling. Entry Mark is 2. Visa Dot
+#   is 3. Duty is 2, or 4 on the bottom row. Exemption and Hold are 1. A
+#   Surcharge is 2, or 5 when the cell above is filled. The highest number
+#   is the largest of those values. The earliest stamp among the stamps
+#   that show that number scores twice. If two stamps share that highest
+#   number, only the earlier one doubles. Every other filled stamp scores
+#   its own number, even when it is first in the queue and even when it
+#   shares a lower number with an earlier stamp. A lone stamp is the only
+#   number on the form, so it scores its own number. Later means later in
+#   the queue, not later in the order the stamps were pressed. The same
+#   card can fail to be the highest: a top-row Duty is 2 and a bottom-row
+#   Duty is 4, so only the bottom-row Duty is highest. A retrigger of that
+#   earliest highest stamp scores twice again. A retrigger of any other
+#   stamp does not. A retrigger of a lone stamp does not.
+#   Exemption on the top row cancels the doubling, so every stamp scores
+#   its own number. An Exemption off the top row does not.
+#   The slip does not change patience.
+# - Ada Hart, lane column 3, exemption row bottom, Four Toll:
+#   "Patience drops by 2 when exactly four cells are filled."
+#   Pell Dane drops patience by 2 when the form holds exactly three stamps.
+#   Joss Mire yields +4 after the queue when the form holds exactly two.
+#   Ada does neither. The drop is 2 instead of 1 when the form holds
+#   exactly four stamps. An empty form keeps the drop at 1. One stamp
+#   keeps the drop at 1. Two stamps keep the drop at 1. Three stamps keep
+#   the drop at 1. Five stamps keep the drop at 1. Any other count keeps
+#   the drop at 1. The toll does not change what a stamp scores. A full
+#   row is three stamps, so the drop stays at 1, and each stamp still
+#   scores its own number.
+#   Exemption on the bottom row keeps the drop at 1, even when exactly
+#   four cells are filled and even when the count is anything else. An
+#   Exemption off the bottom row does not.
+#   Hold is applied before the four toll.
+# - Bram Solt, lane column 1, exemption row top, Before Gap:
+#   "A stamp scores twice only when the queue cell immediately after it is
+#   empty and some later cell is filled."
+#   Sable Quern doubles the stamp that follows an empty cell when some
+#   earlier cell is filled. Sable Solt adds 2 to every filled stamp when
+#   any gap exists. Pell Sallow drops patience by 2 for that gap. Bram
+#   does none of those. The queue is read from the top row downward, left
+#   to right inside a row. A stamp scores twice only when the cell
+#   immediately after it in that order is empty and some cell after that
+#   empty cell is filled. The stamp after the empty cell scores its own
+#   number. It does not double because of that gap. A stamp at the end of
+#   the queue has no cell after it, so it does not double. Trailing empty
+#   cells do not double the last filled stamp. A contiguous block has no
+#   doubled stamp. A lone stamp scores its own number. Across a row
+#   break, the last cell of a row doubles only when the first cell of the
+#   next row is empty and some later cell is filled. If that first cell
+#   is filled, the last cell of the previous row scores its own number,
+#   even when a later gap is open. A stamp that is followed by a filled
+#   cell does not double. An earlier gap does not double the stamp after
+#   it. A retrigger of a stamp that precedes a gap scores twice again. A
+#   retrigger of a stamp that does not precede a gap does not. A
+#   retrigger of a stamp at the end of the queue does not.
+#   Exemption on the top row cancels the doubling, so every stamp scores
+#   its own number. An Exemption off the top row does not.
+#   The slip does not change patience. A gap still drops patience by 1
+#   unless a Hold delays the traveler.
+# - Sera Pell, lane column 2, exemption row bottom, Column Pair:
+#   "When two filled stamps in the same column have exactly one empty cell
+#   between them, those two stamps each score +3 once. A third stamp in
+#   that column does not get the bonus unless it is one of such a pair."
+#   Nell Voss adds 3 to column 1 and column 3 of the same row. Cal Mire
+#   adds 3 to every frame stamp. Sera does neither. The bonus is added to
+#   each stamp of one column pair, once, not once for the form. The only
+#   cells in a column with exactly one cell between them are the top and
+#   the bottom. They pair when the middle cell of that column is empty.
+#   Each of those two stamps adds 3 to its own progress. The middle stamp
+#   is never one of that pair. A third stamp in that column does not get
+#   the bonus unless it is one of such a pair. A full column has no empty
+#   cell, so no stamp in it gains the bonus, including the middle stamp
+#   and the two ends. Stamps in different columns do not pair. Contiguous
+#   stamps in a column, with no empty cell between them, get no bonus.
+#   Two columns can each hold a pair. Each pair bonuses its own two
+#   stamps. A stamp is in one column, so it gains the bonus once. A lone
+#   stamp scores its own number. A retrigger of a paired stamp adds 3
+#   again when that column still holds the pair. A retrigger of a stamp
+#   that is not in a pair does not. A retrigger of a contiguous stamp
+#   does not.
+#   Exemption on the bottom row cancels the bonus, so every stamp scores
+#   its own number. An Exemption off the bottom row does not. An Exemption
+#   that is itself one of the pair on the bottom row is on the exemption
+#   row, so the bonus is cancelled. An Exemption that is one of the pair
+#   off the bottom row still adds 3.
+#   The pair does not change patience.
+# The high slip, the before-gap doubling, and the column-pair bonus do not
+# remove Hold or Exemption, and they do not cancel a retrigger.
+#
+# HEADBAND BELL, in desk order
+# A sixteenth night. The stamps, the ink, and the 3x3 form are unchanged.
+# The headband bell deals the starting deck again. Drafts and the relic from
+# an earlier night do not carry. Open it from the desk, or from a victory
+# desk. Restart act replays whichever night is on the desk.
+# - Len Hart, lane column 1, exemption row top, Open Wing:
+#   "When column 1 and column 3 of the same row are both filled and column
+#   2 of that row is empty, those two stamps each score +3 once."
+#   Nell Voss adds 3 to column 1 and column 3 of the same row even when
+#   column 2 of that row is filled. Len does not. The bonus is added to
+#   each wing of one open row, once, not once for the form. Column 1 and
+#   column 3 of the same row pair only when column 2 of that row is empty.
+#   Each of those two stamps adds 3 to its own progress. If column 2 of
+#   that row is filled, that row gets no bonus, including the two wings
+#   and the stamp in column 2. A row with only one wing filled gets no
+#   bonus. Column 2 never receives this bonus, even when the wings of
+#   another row are open. Two rows can each hold an open pair. Each pair
+#   bonuses its own two stamps. A stamp is in one row, so it gains the
+#   bonus once. A lone stamp scores its own number. A stamp in another
+#   column of another row scores its own number. A retrigger of an open
+#   wing adds 3 again when that row still holds the pair. A retrigger of
+#   a stamp that is not an open wing does not.
+#   Exemption on the top row cancels the bonus, so every stamp scores its
+#   own number. An Exemption off the top row does not. An Exemption that
+#   is itself one wing on the top row is on the exemption row, so the
+#   bonus is cancelled. An Exemption that is one wing off the top row
+#   still adds 3.
+#   The wing does not change patience.
+# - Joss Pell, lane column 3, exemption row bottom, Five Toll:
+#   "Patience drops by 2 when exactly five cells are filled."
+#   Ada Hart drops patience by 2 when the form holds exactly four stamps.
+#   Pell Dane drops patience by 2 when the form holds exactly three.
+#   Joss does neither. The drop is 2 instead of 1 when the form holds
+#   exactly five stamps. An empty form keeps the drop at 1. One stamp
+#   keeps the drop at 1. Two stamps keep the drop at 1. Three stamps keep
+#   the drop at 1. Four stamps keep the drop at 1. Six stamps keep the
+#   drop at 1. Any other count keeps the drop at 1. The toll does not
+#   change what a stamp scores.
+#   Exemption on the bottom row keeps the drop at 1, even when exactly
+#   five cells are filled and even when the count is anything else. An
+#   Exemption off the bottom row does not.
+#   Hold is applied before the five toll.
+# - Ida Quill, lane column 2, exemption row top, Late High:
+#   "When two or more stamps are filled, the latest stamp among those
+#   showing the highest number scores twice. A lone stamp scores its own
+#   number."
+#   Wynn Quill doubles the earliest stamp among those showing the highest
+#   number. Ida Mire doubles the earliest of the lowest number. Ida does
+#   neither. A number is the progress that stamp already grants, before
+#   this doubling. Entry Mark is 2. Visa Dot is 3. Duty is 2, or 4 on the
+#   bottom row. Exemption and Hold are 1. A Surcharge is 2, or 5 when the
+#   cell above is filled. The highest number is the largest of those
+#   values. The latest stamp among the stamps that show that number
+#   scores twice. If two stamps share that highest number, only the later
+#   one doubles. Every other filled stamp scores its own number, even
+#   when it is first in the queue and even when it shows the highest
+#   number earlier. A lone stamp is the only number on the form, so it
+#   scores its own number. Later means later in the queue, not later in
+#   the order the stamps were pressed. The same card can fail to be the
+#   highest: a top-row Duty is 2 and a bottom-row Duty is 4, so only the
+#   bottom-row Duty is highest. A retrigger of that latest highest stamp
+#   scores twice again. A retrigger of any other stamp does not. A
+#   retrigger of a lone stamp does not.
+#   Exemption on the top row cancels the doubling, so every stamp scores
+#   its own number. An Exemption off the top row does not.
+#   The slip does not change patience.
+# - Cal Quern, lane column 2, exemption row middle, Diagonal Pair:
+#   "When two filled stamps on one three-cell diagonal have exactly one
+#   empty cell between them, those two each score +3 once."
+#   Sera Pell adds 3 to the top and bottom of one column when the middle
+#   of that column is empty. Nell Voss adds 3 to the wings of one row.
+#   Cal does neither. The two three-cell diagonals are top-left, center,
+#   bottom-right, and top-right, center, bottom-left. The only cells on
+#   a diagonal with exactly one cell between them are the two ends. They
+#   pair when the center cell is empty. Each of those two stamps adds 3
+#   to its own progress. A filled center means neither pair qualifies,
+#   including the two ends of both diagonals and the center stamp itself.
+#   A corner with no partner on its diagonal scores its own number. A
+#   stamp that is not one of such a pair scores its own number. The
+#   middles of the four sides are not on either diagonal. Two diagonals
+#   can each hold a pair when the center is empty. Each pair bonuses its
+#   own two stamps. A corner is on one diagonal, so it gains the bonus
+#   once. A lone stamp scores its own number. A retrigger of a paired
+#   stamp adds 3 again when that diagonal still holds the pair. A
+#   retrigger of a stamp that is not in a pair does not.
+#   Exemption on the middle row cancels the bonus, so every stamp scores
+#   its own number. An Exemption off the middle row does not. An
+#   Exemption in the center is on the middle row, and the center is
+#   filled, so the pair does not pay. An Exemption that is one end of a
+#   pair off the middle row still adds 3.
+#   The pair does not change patience.
+# The open wing, the late-high doubling, and the diagonal-pair bonus do
+# not remove Hold or Exemption, and they do not cancel a retrigger.
+#
+# CLASP BELL, in desk order
+# A seventeenth night. The stamps, the ink, and the 3x3 form are unchanged.
+# The clasp bell deals the starting deck again. Drafts and the relic from an
+# earlier night do not carry. Open it from the desk, or from a victory desk.
+# Restart act replays whichever night is on the desk.
+# - Noll Hart, lane column 1, exemption row bottom, Late Low:
+#   "When two or more stamps are filled, the latest stamp among those
+#   showing the lowest number scores twice. A lone stamp scores its own
+#   number."
+#   Ida Mire doubles the earliest stamp among those showing the lowest
+#   number. Ida Quill doubles the latest stamp among those showing the
+#   highest number. Noll does neither. A number is the progress that stamp
+#   already grants, before this doubling. Entry Mark is 2. Visa Dot is 3.
+#   Duty is 2, or 4 on the bottom row. Exemption and Hold are 1. A
+#   Surcharge is 2, or 5 when the cell above is filled. The lowest number
+#   is the smallest of those values. The latest stamp among the stamps
+#   that show that number scores twice. If two stamps share that lowest
+#   number, only the later one doubles. Every other filled stamp scores
+#   its own number, even when it is last in the queue and even when it
+#   shows the lowest number earlier. A lone stamp is the only number on
+#   the form, so it scores its own number. Later means later in the queue,
+#   not later in the order the stamps were pressed. The same card can fail
+#   to be the lowest: a top-row Duty is 2 and a bottom-row Duty is 4, so
+#   only the top-row Duty is lowest. A retrigger of that latest lowest
+#   stamp scores twice again. A retrigger of any other stamp does not. A
+#   retrigger of a lone stamp does not.
+#   Exemption on the bottom row cancels the doubling, so every stamp
+#   scores its own number. An Exemption off the bottom row does not.
+#   The slip does not change patience.
+# - Hugh Pell, lane column 2, exemption row top, Six Toll:
+#   "Patience drops by 2 when exactly six cells are filled."
+#   Joss Pell drops patience by 2 when the form holds exactly five stamps.
+#   Ada Hart drops patience by 2 when the form holds exactly four. Pell
+#   Dane drops patience by 2 when the form holds exactly three. Hugh does
+#   none of those. The drop is 2 instead of 1 when the form holds exactly
+#   six stamps. An empty form keeps the drop at 1. One stamp keeps the
+#   drop at 1. Two stamps keep the drop at 1. Three stamps keep the drop
+#   at 1. Four stamps keep the drop at 1. Five stamps keep the drop at 1.
+#   Seven stamps keep the drop at 1. Any other count keeps the drop at 1.
+#   The toll does not change what a stamp scores.
+#   Exemption on the top row keeps the drop at 1, even when exactly six
+#   cells are filled and even when the count is anything else. An
+#   Exemption off the top row does not.
+#   Hold is applied before the six toll.
+# - Fenn Hart, lane column 3, exemption row middle, Full Column:
+#   "A stamp scores twice only when its own column is full."
+#   A full column is all three cells filled. A stamp in that column scores
+#   twice. A stamp in a column that is not full scores its own number.
+#   Other columns do not matter. One full column does not double a stamp
+#   in an open column. An open column does not stop a full column from
+#   doubling. Wynn Hart doubles a stamp only when its own row is full.
+#   Fenn does not. A full row does not double a stamp unless that stamp's
+#   own column is also full. A lone stamp scores its own number. A pair in
+#   a column scores its own number. A retrigger of a stamp in a full
+#   column scores twice again. A retrigger of a stamp in a column that is
+#   not full does not.
+#   Exemption on the middle row cancels the doubling, so every stamp
+#   scores its own number. An Exemption off the middle row does not. An
+#   Exemption in the middle of a full column is on the exemption row, so
+#   that column scores its own number.
+#   The slip does not change patience.
+# - Rue Hart, lane column 1, exemption row bottom, Side Slip:
+#   "When a stamp shares a side with an earlier stamp, the later stamp
+#   scores twice. The earlier stamp scores its own number."
+#   Nim Voss already zeros that later stamp. Kit Yarrow zeros both stamps
+#   of a side-sharing pair. Rue does neither. A side is an orthogonal
+#   touch: the cell above, below, left, or right. A corner-only touch does
+#   not count. Two stamps that only meet at a corner both score their own
+#   number. A lone stamp scores its own number. Later means later in the
+#   queue, not later in the order the stamps were pressed. A stamp that
+#   shares a side only with a later stamp still scores its own number.
+#   Three stamps in a row double the second and the third. A longer
+#   diagonal does not double either stamp. A gap between two stamps in a
+#   row does not double the later stamp. A retrigger of a later
+#   side-sharing stamp scores twice again. A retrigger of the earlier
+#   stamp scores its own number again.
+#   Exemption on the bottom row cancels the doubling, so the later stamp
+#   scores its own number. An Exemption off the bottom row does not.
+#   The slip does not change patience.
+# The late-low doubling, the full-column doubling, and the side slip do
+# not remove Hold or Exemption, and they do not cancel a retrigger.
+#
 # RUN
 # - A run is seeded. The shuffle and the draft offer are a pure function of the
 #   seed, the night, the traveler, and the cards owned, so restarting an
@@ -789,6 +1066,9 @@ const SHIFT_WICK := 10
 const SHIFT_MARGIN := 11
 const SHIFT_INDEX := 12
 const SHIFT_LEDGER := 13
+const SHIFT_SPINE := 14
+const SHIFT_HEADBAND := 15
+const SHIFT_CLASP := 16
 
 const ROW_NAMES := ["top row", "middle row", "bottom row"]
 const COL_NAMES := ["column 1", "column 2", "column 3"]
@@ -1524,6 +1804,150 @@ const LEDGER_BELL := [
 ]
 
 
+const SPINE_BELL := [
+	{
+		"id": "wynn_quill",
+		"name": "Wynn Quill",
+		"form_name": "High Slip",
+		"rule_text": "When two or more stamps are filled, the earliest stamp among those showing the highest number scores twice. A lone stamp scores its own number.",
+		"rule": "double_highest_earliest",
+		"lane": 1,
+		"exemption_row": 0,
+		"goal": 22,
+		"patience": 5,
+	},
+	{
+		"id": "ada_hart",
+		"name": "Ada Hart",
+		"form_name": "Four Toll",
+		"rule_text": "Patience drops by 2 when exactly four cells are filled.",
+		"rule": "drop_if_exact_four",
+		"lane": 2,
+		"exemption_row": 2,
+		"goal": 16,
+		"patience": 5,
+	},
+	{
+		"id": "bram_solt",
+		"name": "Bram Solt",
+		"form_name": "Before Gap",
+		"rule_text": "A stamp scores twice only when the queue cell immediately after it is empty and some later cell is filled.",
+		"rule": "double_before_gap",
+		"lane": 0,
+		"exemption_row": 0,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "sera_pell",
+		"name": "Sera Pell",
+		"form_name": "Column Pair",
+		"rule_text": "When two filled stamps in the same column have exactly one empty cell between them, those two stamps each score +3 once. A third stamp in that column does not get the bonus unless it is one of such a pair.",
+		"rule": "yield_column_pair",
+		"lane": 1,
+		"exemption_row": 2,
+		"goal": 24,
+		"patience": 5,
+	},
+]
+
+
+const HEADBAND_BELL := [
+	{
+		"id": "len_hart",
+		"name": "Len Hart",
+		"form_name": "Open Wing",
+		"rule_text": "When column 1 and column 3 of the same row are both filled and column 2 of that row is empty, those two stamps each score +3 once. If column 2 of that row is filled, that row gets no bonus.",
+		"rule": "yield_open_wing",
+		"lane": 0,
+		"exemption_row": 0,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "joss_pell",
+		"name": "Joss Pell",
+		"form_name": "Five Toll",
+		"rule_text": "Patience drops by 2 when exactly five cells are filled.",
+		"rule": "drop_if_exact_five",
+		"lane": 2,
+		"exemption_row": 2,
+		"goal": 14,
+		"patience": 5,
+	},
+	{
+		"id": "ida_quill",
+		"name": "Ida Quill",
+		"form_name": "Late High",
+		"rule_text": "When two or more stamps are filled, the latest stamp among those showing the highest number scores twice. A lone stamp scores its own number.",
+		"rule": "double_highest_latest",
+		"lane": 1,
+		"exemption_row": 0,
+		"goal": 22,
+		"patience": 5,
+	},
+	{
+		"id": "cal_quern",
+		"name": "Cal Quern",
+		"form_name": "Diagonal Pair",
+		"rule_text": "When two filled stamps on one three-cell diagonal have exactly one empty cell between them, those two each score +3 once. A filled center means neither pair qualifies.",
+		"rule": "yield_diagonal_pair",
+		"lane": 1,
+		"exemption_row": 1,
+		"goal": 20,
+		"patience": 5,
+	},
+]
+
+
+const CLASP_BELL := [
+	{
+		"id": "noll_hart",
+		"name": "Noll Hart",
+		"form_name": "Late Low",
+		"rule_text": "When two or more stamps are filled, the latest stamp among those showing the lowest number scores twice. A lone stamp scores its own number.",
+		"rule": "double_lowest_latest",
+		"lane": 0,
+		"exemption_row": 2,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "hugh_pell",
+		"name": "Hugh Pell",
+		"form_name": "Six Toll",
+		"rule_text": "Patience drops by 2 when exactly six cells are filled.",
+		"rule": "drop_if_exact_six",
+		"lane": 1,
+		"exemption_row": 0,
+		"goal": 16,
+		"patience": 5,
+	},
+	{
+		"id": "fenn_hart",
+		"name": "Fenn Hart",
+		"form_name": "Full Column",
+		"rule_text": "A stamp scores twice only when its own column is full. A stamp in a column that is not full scores its own number.",
+		"rule": "double_full_column",
+		"lane": 2,
+		"exemption_row": 1,
+		"goal": 22,
+		"patience": 5,
+	},
+	{
+		"id": "rue_hart",
+		"name": "Rue Hart",
+		"form_name": "Side Slip",
+		"rule_text": "When a stamp shares a side with an earlier stamp, the later stamp scores twice. The earlier stamp scores its own number.",
+		"rule": "double_side_later",
+		"lane": 0,
+		"exemption_row": 2,
+		"goal": 18,
+		"patience": 5,
+	},
+]
+
+
 class NightState:
 	extends RefCounted
 	var seed: int = 1
@@ -1593,6 +2017,12 @@ static func _canonical_shift(shift_index: int) -> int:
 		return SHIFT_INDEX
 	if shift_index == SHIFT_LEDGER:
 		return SHIFT_LEDGER
+	if shift_index == SHIFT_SPINE:
+		return SHIFT_SPINE
+	if shift_index == SHIFT_HEADBAND:
+		return SHIFT_HEADBAND
+	if shift_index == SHIFT_CLASP:
+		return SHIFT_CLASP
 	return SHIFT_FIRST
 
 
@@ -1608,7 +2038,13 @@ static func new_run(seed_value: int, shift_index: int = SHIFT_FIRST) -> NightSta
 	state.next_iid = 0
 	for card_id in STARTING_DECK:
 		_add_library_card(state, String(card_id))
-	if state.shift == SHIFT_LEDGER:
+	if state.shift == SHIFT_CLASP:
+		_log(state, "The clasp bell begins. Seed %d." % state.seed)
+	elif state.shift == SHIFT_HEADBAND:
+		_log(state, "The headband bell begins. Seed %d." % state.seed)
+	elif state.shift == SHIFT_SPINE:
+		_log(state, "The spine bell begins. Seed %d." % state.seed)
+	elif state.shift == SHIFT_LEDGER:
 		_log(state, "The ledger bell begins. Seed %d." % state.seed)
 	elif state.shift == SHIFT_INDEX:
 		_log(state, "The index bell begins. Seed %d." % state.seed)
@@ -1676,6 +2112,12 @@ static func restart_encounter(state: NightState) -> void:
 
 
 static func shift_label(state: NightState) -> String:
+	if state.shift == SHIFT_CLASP:
+		return "Clasp bell"
+	if state.shift == SHIFT_HEADBAND:
+		return "Headband bell"
+	if state.shift == SHIFT_SPINE:
+		return "Spine bell"
 	if state.shift == SHIFT_LEDGER:
 		return "Ledger bell"
 	if state.shift == SHIFT_INDEX:
@@ -1720,6 +2162,12 @@ static func traveler(state: NightState) -> Dictionary:
 
 
 static func _roster(state: NightState) -> Array:
+	if state.shift == SHIFT_CLASP:
+		return CLASP_BELL
+	if state.shift == SHIFT_HEADBAND:
+		return HEADBAND_BELL
+	if state.shift == SHIFT_SPINE:
+		return SPINE_BELL
 	if state.shift == SHIFT_LEDGER:
 		return LEDGER_BELL
 	if state.shift == SHIFT_INDEX:
@@ -1982,6 +2430,24 @@ static func stamp_progress(state: NightState, card_id: String, row: int, col: in
 		return amount * 2
 	if rule == "double_after_gap" and _follows_filled_gap(state, row, col):
 		return amount * 2
+	if rule == "double_highest_earliest" and _is_earliest_highest(state, row, col):
+		return amount * 2
+	if rule == "double_before_gap" and _precedes_filled_gap(state, row, col):
+		return amount * 2
+	if rule == "yield_column_pair" and _is_column_pair_stamp(state, row, col):
+		return amount + 3
+	if rule == "yield_open_wing" and (col == 0 or col == 2) and _row_open_wings(state, row):
+		return amount + 3
+	if rule == "double_highest_latest" and _is_latest_highest(state, row, col):
+		return amount * 2
+	if rule == "yield_diagonal_pair" and _is_diagonal_pair_stamp(state, row, col):
+		return amount + 3
+	if rule == "double_lowest_latest" and _is_latest_lowest(state, row, col):
+		return amount * 2
+	if rule == "double_full_column" and col_fill_count(state, col) == 3:
+		return amount * 2
+	if rule == "double_side_later" and _shares_side_with_earlier(state, row, col):
+		return amount * 2
 	return amount
 
 
@@ -2081,6 +2547,12 @@ static func patience_loss(state: NightState) -> int:
 		elif rule == "double_patience_if_first_col1" and _first_filled_column(state) == 0:
 			loss = 2
 		elif rule == "drop_if_exact_three" and _stamp_count(state) == 3:
+			loss = 2
+		elif rule == "drop_if_exact_four" and _stamp_count(state) == 4:
+			loss = 2
+		elif rule == "drop_if_exact_five" and _stamp_count(state) == 5:
+			loss = 2
+		elif rule == "drop_if_exact_six" and _stamp_count(state) == 6:
 			loss = 2
 	return loss
 
@@ -2295,6 +2767,24 @@ static func _resolve_stamp(state: NightState, row: int, col: int, hush: bool) ->
 				_log(state, "%s on the %s, %s grants %d. The earliest lowest number doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			elif tail_rule == "double_after_gap" and _follows_filled_gap(state, row, col) and amount > raw:
 				_log(state, "%s on the %s, %s grants %d. The empty cell before it doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_highest_earliest" and _is_earliest_highest(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The earliest highest number doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_before_gap" and _precedes_filled_gap(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The empty cell after it doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_column_pair" and _is_column_pair_stamp(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The column pair yields +3." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_open_wing" and (col == 0 or col == 2) and _row_open_wings(state, row) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The open wing yields +3." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_highest_latest" and _is_latest_highest(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The latest highest number doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_diagonal_pair" and _is_diagonal_pair_stamp(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The diagonal pair yields +3." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_lowest_latest" and _is_latest_lowest(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The latest lowest number doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_full_column" and col_fill_count(state, col) == 3 and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The full column doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_side_later" and _shares_side_with_earlier(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The later shared side doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			else:
 				_log(state, "%s on the %s, %s grants %d." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 	state.turn_progress += amount
@@ -2560,6 +3050,139 @@ static func _is_earliest_lowest(state: NightState, row: int, col: int) -> bool:
 	return best_row == row and best_col == col
 
 
+static func _is_earliest_highest(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var highest := -1
+	var best_row := -1
+	var best_col := -1
+	var count := 0
+	for scan_row in 3:
+		for scan_col in 3:
+			var stamp = state.form[scan_row][scan_col]
+			if stamp == null:
+				continue
+			count += 1
+			var number = raw_stamp_progress(state, String(stamp["card_id"]), scan_row, scan_col)
+			if best_row < 0 or number > highest:
+				highest = number
+				best_row = scan_row
+				best_col = scan_col
+	if count < 2:
+		return false
+	return best_row == row and best_col == col
+
+
+static func _precedes_filled_gap(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var next_row := row
+	var next_col := col + 1
+	if next_col > 2:
+		next_row = row + 1
+		next_col = 0
+	if next_row > 2:
+		return false
+	if state.form[next_row][next_col] != null:
+		return false
+	for later_row in range(next_row, 3):
+		var start_col := 0
+		if later_row == next_row:
+			start_col = next_col + 1
+		for later_col in range(start_col, 3):
+			if state.form[later_row][later_col] != null:
+				return true
+	return false
+
+
+static func _is_column_pair_stamp(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	if row != 0 and row != 2:
+		return false
+	return state.form[0][col] != null and state.form[2][col] != null and state.form[1][col] == null
+
+
+static func _row_open_wings(state: NightState, row: int) -> bool:
+	if row < 0 or row > 2:
+		return false
+	return state.form[row][0] != null and state.form[row][2] != null and state.form[row][1] == null
+
+
+static func _is_latest_lowest(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var lowest := -1
+	var best_row := -1
+	var best_col := -1
+	var count := 0
+	for scan_row in 3:
+		for scan_col in 3:
+			var stamp = state.form[scan_row][scan_col]
+			if stamp == null:
+				continue
+			count += 1
+			var number = raw_stamp_progress(state, String(stamp["card_id"]), scan_row, scan_col)
+			if best_row < 0 or number <= lowest:
+				lowest = number
+				best_row = scan_row
+				best_col = scan_col
+	if count < 2:
+		return false
+	return best_row == row and best_col == col
+
+
+static func _is_latest_highest(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var highest := -1
+	var best_row := -1
+	var best_col := -1
+	var count := 0
+	for scan_row in 3:
+		for scan_col in 3:
+			var stamp = state.form[scan_row][scan_col]
+			if stamp == null:
+				continue
+			count += 1
+			var number = raw_stamp_progress(state, String(stamp["card_id"]), scan_row, scan_col)
+			if best_row < 0 or number >= highest:
+				highest = number
+				best_row = scan_row
+				best_col = scan_col
+	if count < 2:
+		return false
+	return best_row == row and best_col == col
+
+
+static func _is_diagonal_pair_stamp(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	if state.form[1][1] != null:
+		return false
+	if row == 0 and col == 0:
+		return state.form[2][2] != null
+	if row == 2 and col == 2:
+		return state.form[0][0] != null
+	if row == 0 and col == 2:
+		return state.form[2][0] != null
+	if row == 2 and col == 0:
+		return state.form[0][2] != null
+	return false
+
+
 static func _follows_filled_gap(state: NightState, row: int, col: int) -> bool:
 	if row < 0 or col < 0 or row > 2 or col > 2:
 		return false
@@ -2720,7 +3343,13 @@ static func _apply_result(state: NightState, result: Dictionary) -> void:
 		state.encounters_cleared += 1
 		if state.traveler_index >= _roster(state).size() - 1:
 			state.phase = "victory"
-			if state.shift == SHIFT_LEDGER:
+			if state.shift == SHIFT_CLASP:
+				_log(state, "The queue is empty. The clasp bell is clear.")
+			elif state.shift == SHIFT_HEADBAND:
+				_log(state, "The queue is empty. The headband bell is clear.")
+			elif state.shift == SHIFT_SPINE:
+				_log(state, "The queue is empty. The spine bell is clear.")
+			elif state.shift == SHIFT_LEDGER:
 				_log(state, "The queue is empty. The ledger bell is clear.")
 			elif state.shift == SHIFT_INDEX:
 				_log(state, "The queue is empty. The index bell is clear.")

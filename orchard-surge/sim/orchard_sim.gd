@@ -14,6 +14,10 @@ extends RefCounted
 ## Hide moths stay hidden until a bill splits their tile. A moth can carry more than one lock.
 ## Dusk moths stay sealed until a shade covers their tile. The shade is not a light.
 ## No other plant opens dusk. Outside the shade the dusk seals again.
+## Veil moths stay sealed until a cowl covers their tile. The cowl is not a light.
+## No other plant opens veil. Outside the cowl the veil seals again.
+## Pall moths stay sealed until a hood covers their tile. The hood is not a light.
+## No other plant opens pall. Outside the hood the pall seals again.
 
 const Catalog = preload("res://sim/plant_catalog.gd")
 
@@ -36,9 +40,9 @@ const HURT_TICKS := 12
 const PEST_HP := 12
 const PEST_SPEED := 42.0
 const PEST_RADIUS := 11.0
-const START_SEEDS := 11
+const START_SEEDS := 13
 const PLANT_TICKS := 240
-const WAVE_COUNT := 23
+const WAVE_COUNT := 27
 const START_CELL := Vector2i(7, 5)
 const PROJECTILE_RADIUS := 4.0
 const PROJECTILE_LIFE := 75
@@ -53,8 +57,12 @@ const PROJECTILE_LIFE := 75
 # Nights 18 and 19 bring mail moths. Night 19 sends mail, scale, glass, web, frost, pitch, rind, and shroud together.
 # Nights 20 and 21 bring hide moths. Night 21 sends hide, mail, scale, glass, web, frost, pitch, rind, and shroud together.
 # Nights 22 and 23 bring dusk moths. Night 23 sends dusk, hide, mail, scale, glass, web, frost, pitch, rind, and shroud together.
-# shroud_every / rind_every / pitch_every / frost_every / web_every / glass_every / scale_every / mail_every / hide_every / dusk_every 0: none. 1: every spawn. N: every Nth spawn, the Nth included.
+# Nights 24 and 25 bring veil moths. Night 25 sends veil, dusk, hide, mail, scale, glass, web, frost, pitch, rind, and shroud together.
+# Nights 26 and 27 bring pall moths. Night 27 sends pall, veil, dusk, hide, mail, scale, glass, web, frost, pitch, rind, and shroud together.
+# shroud_every / rind_every / pitch_every / frost_every / web_every / glass_every / scale_every / mail_every / hide_every / dusk_every / veil_every / pall_every 0: none. 1: every spawn. N: every Nth spawn, the Nth included.
 # Nights 1–21 omit dusk_every; a missing key spawns no dusk.
+# Nights 1–23 omit veil_every; a missing key spawns no veil.
+# Nights 1–25 omit pall_every; a missing key spawns no pall.
 const WAVES := [
 	{"count": 8, "interval": 72, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "hide_every": 0, "name": ""},
 	{"count": 12, "interval": 66, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "hide_every": 0, "name": ""},
@@ -79,6 +87,10 @@ const WAVES := [
 	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 1, "scale_every": 1, "mail_every": 1, "hide_every": 1, "name": "Coat"},
 	{"count": 10, "interval": 72, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "hide_every": 0, "dusk_every": 1, "name": "Dusk"},
 	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 1, "scale_every": 1, "mail_every": 1, "hide_every": 1, "dusk_every": 1, "name": "Dim"},
+	{"count": 10, "interval": 72, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "hide_every": 0, "dusk_every": 0, "veil_every": 1, "name": "Veil"},
+	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 1, "scale_every": 1, "mail_every": 1, "hide_every": 1, "dusk_every": 1, "veil_every": 1, "name": "Mask"},
+	{"count": 10, "interval": 72, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "hide_every": 0, "dusk_every": 0, "veil_every": 0, "pall_every": 1, "name": "Pall"},
+	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 1, "scale_every": 1, "mail_every": 1, "hide_every": 1, "dusk_every": 1, "veil_every": 1, "pall_every": 1, "name": "Mantle"},
 ]
 
 
@@ -113,6 +125,8 @@ class Plant:
 	var cracks_mail: bool = false
 	var splits_hide: bool = false
 	var shades_dusk: bool = false
+	var cowls_veil: bool = false
+	var hoods_pall: bool = false
 	var casts_light: bool = true
 
 
@@ -132,6 +146,8 @@ class Pest:
 	var mailed: bool = false
 	var hided: bool = false
 	var dusked: bool = false
+	var veiled: bool = false
+	var palled: bool = false
 	var speed: float = 0.0
 	var slow_factor: float = 1.0
 	var slow_ticks: int = 0
@@ -185,6 +201,10 @@ var hides_spawned: int = 0
 var hides_killed: int = 0
 var dusks_spawned: int = 0
 var dusks_killed: int = 0
+var veils_spawned: int = 0
+var veils_killed: int = 0
+var palls_spawned: int = 0
+var palls_killed: int = 0
 var plants: Array = []
 var pests: Array = []
 var projectiles: Array = []
@@ -283,7 +303,15 @@ func tile_shades_dusk(tx: int, ty: int) -> bool:
 	return _tile_in_light(tx, ty, false, false, false, false, false, false, false, false, false, true)
 
 
-func _tile_in_light(tx: int, ty: int, shroud_only: bool, rind_only: bool, pitch_only: bool, frost_only: bool, web_only: bool, glass_only: bool, scale_only: bool, mail_only: bool, hide_only: bool, dusk_only: bool) -> bool:
+func tile_cowls_veil(tx: int, ty: int) -> bool:
+	return _tile_in_light(tx, ty, false, false, false, false, false, false, false, false, false, false, true)
+
+
+func tile_hoods_pall(tx: int, ty: int) -> bool:
+	return _tile_in_light(tx, ty, false, false, false, false, false, false, false, false, false, false, false, true)
+
+
+func _tile_in_light(tx: int, ty: int, shroud_only: bool, rind_only: bool, pitch_only: bool, frost_only: bool, web_only: bool, glass_only: bool, scale_only: bool, mail_only: bool, hide_only: bool, dusk_only: bool, veil_only: bool = false, pall_only: bool = false) -> bool:
 	if tx < 0 or ty < 0 or tx >= MAP_W or ty >= MAP_H:
 		return false
 	var rect_min := Vector2(float(tx) * TILE, float(ty) * TILE)
@@ -312,7 +340,11 @@ func _tile_in_light(tx: int, ty: int, shroud_only: bool, rind_only: bool, pitch_
 			continue
 		if dusk_only and not grown.shades_dusk:
 			continue
-		var special := shroud_only or rind_only or pitch_only or frost_only or web_only or glass_only or scale_only or mail_only or hide_only or dusk_only
+		if veil_only and not grown.cowls_veil:
+			continue
+		if pall_only and not grown.hoods_pall:
+			continue
+		var special := shroud_only or rind_only or pitch_only or frost_only or web_only or glass_only or scale_only or mail_only or hide_only or dusk_only or veil_only or pall_only
 		if not special and not grown.casts_light:
 			continue
 		var source: Vector2 = grown.pos
@@ -390,7 +422,7 @@ func _night_suffix(index: int) -> String:
 
 
 ## Shared entry for wave spawns and the visibility test. Does not alter damage or health.
-func spawn_pest(pos: Vector2, shrouded: bool = false, rinded: bool = false, pitched: bool = false, frosted: bool = false, webbed: bool = false, glassed: bool = false, scaled: bool = false, mailed: bool = false, hided: bool = false, dusked: bool = false):
+func spawn_pest(pos: Vector2, shrouded: bool = false, rinded: bool = false, pitched: bool = false, frosted: bool = false, webbed: bool = false, glassed: bool = false, scaled: bool = false, mailed: bool = false, hided: bool = false, dusked: bool = false, veiled: bool = false, palled: bool = false):
 	var pest := Pest.new()
 	pest.id = _next_pest_id
 	_next_pest_id += 1
@@ -410,6 +442,8 @@ func spawn_pest(pos: Vector2, shrouded: bool = false, rinded: bool = false, pitc
 	pest.mailed = mailed
 	pest.hided = hided
 	pest.dusked = dusked
+	pest.veiled = veiled
+	pest.palled = palled
 	if shrouded:
 		shrouds_spawned += 1
 	if rinded:
@@ -430,6 +464,10 @@ func spawn_pest(pos: Vector2, shrouded: bool = false, rinded: bool = false, pitc
 		hides_spawned += 1
 	if dusked:
 		dusks_spawned += 1
+	if veiled:
+		veils_spawned += 1
+	if palled:
+		palls_spawned += 1
 	_apply_visibility(pest)
 	pests.append(pest)
 	return pest
@@ -491,6 +529,8 @@ func _try_plant(cmd: Command) -> void:
 	plant.cracks_mail = bool(stats["cracks_mail"])
 	plant.splits_hide = bool(stats["splits_hide"])
 	plant.shades_dusk = bool(stats["shades_dusk"])
+	plant.cowls_veil = bool(stats["cowls_veil"])
+	plant.hoods_pall = bool(stats["hoods_pall"])
 	plant.casts_light = bool(stats["casts_light"])
 	plants.append(plant)
 	seeds -= 1
@@ -536,6 +576,8 @@ func _wave_spawns() -> void:
 	var mail_every := int(spec.get("mail_every", 0))
 	var hide_every := int(spec.get("hide_every", 0))
 	var dusk_every := int(spec.get("dusk_every", 0))
+	var veil_every := int(spec.get("veil_every", 0))
+	var pall_every := int(spec.get("pall_every", 0))
 	var index := int(spec["count"]) - spawns_left
 	var shrouded := shroud_every > 0 and index % shroud_every == shroud_every - 1
 	var rinded := rind_every > 0 and index % rind_every == rind_every - 1
@@ -547,7 +589,9 @@ func _wave_spawns() -> void:
 	var mailed := mail_every > 0 and index % mail_every == mail_every - 1
 	var hided := hide_every > 0 and index % hide_every == hide_every - 1
 	var dusked := dusk_every > 0 and index % dusk_every == dusk_every - 1
-	spawn_pest(tile_center(cell.x, cell.y), shrouded, rinded, pitched, frosted, webbed, glassed, scaled, mailed, hided, dusked)
+	var veiled := veil_every > 0 and index % veil_every == veil_every - 1
+	var palled := pall_every > 0 and index % pall_every == pall_every - 1
+	spawn_pest(tile_center(cell.x, cell.y), shrouded, rinded, pitched, frosted, webbed, glassed, scaled, mailed, hided, dusked, veiled, palled)
 	spawns_left -= 1
 	spawn_wait = spawn_interval
 
@@ -582,7 +626,7 @@ func _apply_visibility(pest: Pest) -> void:
 		pest.hidden = true
 		return
 	var cell := cell_of(pest.pos)
-	if pest.shrouded or pest.rinded or pest.pitched or pest.frosted or pest.webbed or pest.glassed or pest.scaled or pest.mailed or pest.hided or pest.dusked:
+	if pest.shrouded or pest.rinded or pest.pitched or pest.frosted or pest.webbed or pest.glassed or pest.scaled or pest.mailed or pest.hided or pest.dusked or pest.veiled or pest.palled:
 		var open := true
 		if pest.shrouded:
 			open = open and tile_burns_shroud(cell.x, cell.y)
@@ -604,6 +648,10 @@ func _apply_visibility(pest: Pest) -> void:
 			open = open and tile_splits_hide(cell.x, cell.y)
 		if pest.dusked:
 			open = open and tile_shades_dusk(cell.x, cell.y)
+		if pest.veiled:
+			open = open and tile_cowls_veil(cell.x, cell.y)
+		if pest.palled:
+			open = open and tile_hoods_pall(cell.x, cell.y)
 		pest.hidden = not open
 	else:
 		pest.hidden = not tile_lit(cell.x, cell.y)
@@ -677,6 +725,20 @@ func _dusk_up(pest: Pest) -> bool:
 		return false
 	var cell := cell_of(pest.pos)
 	return not tile_shades_dusk(cell.x, cell.y)
+
+
+func _veil_up(pest: Pest) -> bool:
+	if not pest.veiled:
+		return false
+	var cell := cell_of(pest.pos)
+	return not tile_cowls_veil(cell.x, cell.y)
+
+
+func _pall_up(pest: Pest) -> bool:
+	if not pest.palled:
+		return false
+	var cell := cell_of(pest.pos)
+	return not tile_hoods_pall(cell.x, cell.y)
 
 
 func _plants_fire() -> void:
@@ -764,7 +826,7 @@ func _impact(shot: Projectile, target: Pest) -> void:
 
 
 func _damage_pest(pest: Pest, shot: Projectile) -> void:
-	if _shroud_up(pest) or _rind_up(pest) or _pitch_up(pest) or _frost_up(pest) or _web_up(pest) or _glass_up(pest) or _scale_up(pest) or _mail_up(pest) or _hide_up(pest) or _dusk_up(pest):
+	if _shroud_up(pest) or _rind_up(pest) or _pitch_up(pest) or _frost_up(pest) or _web_up(pest) or _glass_up(pest) or _scale_up(pest) or _mail_up(pest) or _hide_up(pest) or _dusk_up(pest) or _veil_up(pest) or _pall_up(pest):
 		return
 	pest.hp -= shot.damage
 	if shot.slow_ticks > 0:
@@ -801,6 +863,10 @@ func _damage_pest(pest: Pest, shot: Projectile) -> void:
 			hides_killed += 1
 		if pest.dusked:
 			dusks_killed += 1
+		if pest.veiled:
+			veils_killed += 1
+		if pest.palled:
+			palls_killed += 1
 		events.append({
 			"type": "died",
 			"x": pest.pos.x,
