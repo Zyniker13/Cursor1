@@ -24,7 +24,8 @@ extends RefCounted
 ## around the pit. The cloister's ring is the walk around the garth.
 ## The crypt's ring is the walk around the tomb. The ossuary's ring is
 ## the walk around the bone stack. The reliquary's ring is the walk
-## around the case.
+## around the case. The undercroft's ring is the walk around the trough.
+## The well house's ring is the walk around the shaft.
 ## A census is accepted only when every corridor and hazard is marked truly
 ## and no tile is marked as something it is not.
 
@@ -38,7 +39,7 @@ const HAZARD_VALUE := 8
 const LOOP_VALUE := 15
 
 const TOWN_LINE := "Arrows turn and step, Q and E strafe, M marks the tile you face, and Space waits out the warden's swing."
-const RATE_CARD := "A true corridor pays 3. A true hazard pays 8. The cellar's east square, the cistern ring, the cloister walk, the crypt ring, the ossuary ring, and the reliquary ring each pay 15 only when every tile of that ring is marked corridor. A false mark pays nothing."
+const RATE_CARD := "A true corridor pays 3. A true hazard pays 8. The cellar's east square, the cistern ring, the cloister walk, the crypt ring, the ossuary ring, the reliquary ring, the undercroft ring, and the well ring each pay 15 only when every tile of that ring is marked corridor. A false mark pays nothing."
 
 const CELLAR_RECORD := "Record every corridor, both hazard cracks, and the east square."
 const CISTERN_RECORD := "Record every corridor, the three seep cracks, and the cistern ring around the pit."
@@ -46,6 +47,8 @@ const CLOISTER_RECORD := "Record every corridor, the four cinder cracks, and the
 const CRYPT_RECORD := "Record every corridor, the five ash cracks, and the crypt ring around the tomb."
 const OSSUARY_RECORD := "Record every corridor, the six chalk cracks, and the ossuary ring around the stack."
 const RELIQUARY_RECORD := "Record every corridor, the seven nail cracks, and the reliquary ring around the case."
+const UNDERCROFT_RECORD := "Record every corridor, the eight salt cracks, and the undercroft ring around the trough."
+const WELL_RECORD := "Record every corridor, the nine well cracks, and the well ring around the shaft."
 
 const CELLAR_ROWS: PackedStringArray = [
 	"#############",
@@ -142,6 +145,43 @@ const RELIQUARY_ROWS: PackedStringArray = [
 	"################",
 ]
 
+# The trough is the 3x7 block of 'B' at columns 6-8, rows 3-9.
+# The paid ring is the 24-tile corridor cycle around that trough.
+# The ribs beside the trough and the south drain are ordinary walls.
+const UNDERCROFT_ROWS: PackedStringArray = [
+	"###############",
+	"#S............#",
+	"#####.....###.#",
+	"#####.BBB.###H#",
+	"#.H.#.BBB.###.#",
+	"#H....BBB.###H#",
+	"#.H.#.BBB.###.#",
+	"#####.BBB.###H#",
+	"#####.BBB....L#",
+	"#####.BBB.#####",
+	"#####.....#####",
+	"#####H.E.H#####",
+	"###############",
+]
+
+# The shaft is the 5x6 block of 'W' at columns 5-9, rows 3-8.
+# The paid ring is the 26-tile corridor cycle around that shaft.
+# The north gallery and the east stair are ordinary floors. The piers are walls.
+const WELL_ROWS: PackedStringArray = [
+	"#################",
+	"#S..............#",
+	"####.......####.#",
+	"####.WWWWW.H###.#",
+	"###H.WWWWW.####.#",
+	"####.WWWWW.H###.#",
+	"###H.WWWWW.####L#",
+	"####.WWWWW.H#####",
+	"###H.WWWWW.######",
+	"####.......H#####",
+	"######HEH########",
+	"#################",
+]
+
 enum Tile { WALL, FLOOR, HAZARD, LIFT }
 enum Mark { NONE, CORRIDOR, WALL, HAZARD }
 enum EndReason { NONE, EXTRACTED, LAMP_OUT, ABANDONED }
@@ -182,7 +222,7 @@ static var _floor_list: Array = []
 
 static func floors() -> Array:
 	if _floor_list.is_empty():
-		_floor_list = [_make_cellar(), _make_cistern(), _make_cloister(), _make_crypt(), _make_ossuary(), _make_reliquary()]
+		_floor_list = [_make_cellar(), _make_cistern(), _make_cloister(), _make_crypt(), _make_ossuary(), _make_reliquary(), _make_undercroft(), _make_wellhouse()]
 	return _floor_list
 
 
@@ -306,6 +346,44 @@ static func _make_reliquary() -> Floor:
 		ring.append(Vector2i(x, 8))
 	floor.loop = ring
 	floor.record = RELIQUARY_RECORD
+	return floor
+
+
+static func _make_undercroft() -> Floor:
+	var floor := Floor.new()
+	floor.id = "undercroft"
+	floor.title = "The Undercroft"
+	floor.rows = UNDERCROFT_ROWS
+	floor.loop_name = "Undercroft ring"
+	var ring: Array = []
+	for x in range(5, 10):
+		ring.append(Vector2i(x, 2))
+	for y in range(3, 10):
+		ring.append(Vector2i(5, y))
+		ring.append(Vector2i(9, y))
+	for x in range(5, 10):
+		ring.append(Vector2i(x, 10))
+	floor.loop = ring
+	floor.record = UNDERCROFT_RECORD
+	return floor
+
+
+static func _make_wellhouse() -> Floor:
+	var floor := Floor.new()
+	floor.id = "wellhouse"
+	floor.title = "The Well House"
+	floor.rows = WELL_ROWS
+	floor.loop_name = "Well ring"
+	var ring: Array = []
+	for x in range(4, 11):
+		ring.append(Vector2i(x, 2))
+	for y in range(3, 9):
+		ring.append(Vector2i(4, y))
+		ring.append(Vector2i(10, y))
+	for x in range(4, 11):
+		ring.append(Vector2i(x, 9))
+	floor.loop = ring
+	floor.record = WELL_RECORD
 	return floor
 
 
@@ -692,6 +770,10 @@ static func ahead_line(state: RunState) -> String:
 				return "Ahead: the bone stack. It inks as a wall."
 			if glyph_at(n, plan) == "R":
 				return "Ahead: the reliquary case. It inks as a wall."
+			if glyph_at(n, plan) == "B":
+				return "Ahead: the brine trough. It inks as a wall."
+			if glyph_at(n, plan) == "W":
+				return "Ahead: the well shaft. It inks as a wall."
 			return "Ahead: wall."
 		Tile.HAZARD:
 			if plan != null and plan.id == "cistern":
@@ -704,6 +786,10 @@ static func ahead_line(state: RunState) -> String:
 				return "Ahead: a chalk crack. Stepping inks it and costs no extra oil."
 			if plan != null and plan.id == "reliquary":
 				return "Ahead: a nail crack. Stepping inks it and costs no extra oil."
+			if plan != null and plan.id == "undercroft":
+				return "Ahead: a salt crack. Stepping inks it and costs no extra oil."
+			if plan != null and plan.id == "wellhouse":
+				return "Ahead: a well crack. Stepping inks it and costs no extra oil."
 			return "Ahead: a hazard crack. Stepping inks it and costs no extra oil."
 		Tile.LIFT:
 			return "Ahead: the lift. Stepping on carries the sheet out."
@@ -787,6 +873,10 @@ static func step(state: RunState, dir: Vector2i) -> Dictionary:
 				return _pack(state, false, false, false, 0, true, "You tap the bone stack and ink it if the square was blank.")
 			if glyph_at(target, plan) == "R":
 				return _pack(state, false, false, false, 0, true, "You tap the reliquary case and ink it if the square was blank.")
+			if glyph_at(target, plan) == "B":
+				return _pack(state, false, false, false, 0, true, "You tap the brine trough and ink it if the square was blank.")
+			if glyph_at(target, plan) == "W":
+				return _pack(state, false, false, false, 0, true, "You tap the well shaft and ink it if the square was blank.")
 			return _pack(state, false, false, false, 0, true, "You tap a wall and ink it if the square was blank.")
 		if target == enemy_pos(plan):
 			return _pack(state, false, false, false, 0, true, "The warden occupies that tile.")
@@ -818,6 +908,10 @@ static func step(state: RunState, dir: Vector2i) -> Dictionary:
 			message = "You cross a chalk crack. It is inked if the square was blank."
 		elif plan != null and plan.id == "reliquary":
 			message = "You cross a nail crack. It is inked if the square was blank."
+		elif plan != null and plan.id == "undercroft":
+			message = "You cross a salt crack. It is inked if the square was blank."
+		elif plan != null and plan.id == "wellhouse":
+			message = "You cross a well crack. It is inked if the square was blank."
 		else:
 			message = "You cross a hazard crack. It is inked if the square was blank."
 	return _pack(state, true, true, hit, MOVE_OIL + (HIT_OIL if hit else 0), false, message)
