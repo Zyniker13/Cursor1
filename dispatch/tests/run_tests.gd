@@ -30,6 +30,8 @@ func _run() -> void:
 	_building_four()
 	_turn_rules()
 	_building_five()
+	_slide_rules()
+	_building_six()
 	_ui_uses_simulated_par()
 	if _failures.is_empty():
 		print("ALL TESTS PASSED")
@@ -583,15 +585,17 @@ func _turn_rules() -> void:
 func _building_five() -> void:
 	print("building 5")
 	var puzzles := Puzzles.all()
-	_check(puzzles.size() == 43, "routes 37 through 43 follow building 4")
-	_check(Puzzles.INTRO.size() == 9 and Puzzles.INTRO[8] == "turn", "the turn is the block building 5 teaches")
+	_check(puzzles.size() >= 43, "routes 37 through 43 follow building 4")
+	_check(Puzzles.INTRO.size() >= 9 and Puzzles.INTRO[8] == "turn", "the turn is the block building 5 teaches")
 	_check(not Puzzles.unlocked_at(35).has("turn"), "the turn stays locked through route 36")
 	_check(Puzzles.unlocked_at(36).has("turn"), "route 37 unlocks the turn")
-	_check(Puzzles.unlocked_at(42).size() == 9, "building 5 ends with every block")
+	_check(Puzzles.unlocked_at(42).size() == 9, "building 5 ends with the turn")
 	for puzzle in puzzles:
 		var id := int(puzzle["id"])
 		if id < 37:
 			_check(int(puzzle.get("building", 1)) < 5, "route %d stays out of building 5" % id)
+			continue
+		if id > 43:
 			continue
 		_check(int(puzzle.get("building", 1)) == 5, "route %d is building 5" % id)
 		var result: Dictionary = Sim.run(puzzle, puzzle["reference"])
@@ -642,6 +646,184 @@ func _building_five() -> void:
 	_check(not bool(Sim.run(_by_id(43), _swap(_by_id(43), "counter", "conveyor"))["success"]), "route 43 fails without the counter")
 
 
+func _slide_rules() -> void:
+	print("slide")
+	var belt := {
+		"width": 4, "height": 1, "walls": [{"x": 2, "y": 0}],
+		"sources": [{"x": 0, "y": 0, "dir": 0, "parcels": [{"color": "gray"}]}],
+		"dock": {"x": 3, "y": 0},
+		"order": [{"color": "gray"}],
+	}
+	var hopped: Dictionary = Sim.run(belt, [{"type": "slide", "x": 1, "y": 0, "dir": 2}])
+	_check(bool(hopped["success"]), "a slide carries a parcel two cells in its facing")
+	_check(int(hopped["cycles"]) == 2, "the slide delivers on tick 2")
+	var born := _frame(hopped, 1)
+	_check(not born.is_empty() and _dir_at(born, 1, 0) == 0, "the parcel arrives on the slide facing east")
+	var stood_on_brick := false
+	for frame in hopped["frames"]:
+		if _at(frame, 2, 0):
+			stood_on_brick = true
+	_check(not stood_on_brick, "the parcel never stands on the cell a slide crosses")
+	var walked: Dictionary = Sim.run(belt, [{"type": "conveyor", "x": 1, "y": 0, "dir": 0}])
+	_check(not bool(walked["success"]) and str(walked["reason"]) == "stuck", "a conveyor stops at the brick a slide crosses")
+	var aimed: Dictionary = Sim.run(belt, [{"type": "bridge", "x": 1, "y": 0, "dir": 2}])
+	_check(not bool(aimed["success"]), "a bridge aimed against the facing does not copy the slide")
+	for dir in range(4):
+		var turned: Dictionary = Sim.run(belt, [{"type": "slide", "x": 1, "y": 0, "dir": dir, "color": "red"}])
+		_check(bool(turned["success"]) and str(turned["delivered"][0]["color"]) == "gray" and int(turned["delivered"][0]["count"]) == 0, "rotating or tinting a slide does not aim, paint, or stamp it")
+
+	var over_belt := {
+		"width": 4, "height": 2, "walls": [],
+		"sources": [{"x": 0, "y": 0, "dir": 0, "parcels": [{"color": "gray"}]}],
+		"dock": {"x": 3, "y": 0},
+		"order": [{"color": "gray"}],
+	}
+	var crossed_belt: Dictionary = Sim.run(over_belt, [
+		{"type": "slide", "x": 1, "y": 0, "dir": 0},
+		{"type": "conveyor", "x": 2, "y": 0, "dir": 1},
+	])
+	_check(bool(crossed_belt["success"]), "a slide crosses a belt without taking that belt")
+	var rode := false
+	for frame in crossed_belt["frames"]:
+		if _at(frame, 2, 0) or _at(frame, 2, 1):
+			rode = true
+	_check(not rode, "the parcel never stands on the belt it crosses")
+
+	var crowd := {
+		"width": 4, "height": 2, "walls": [],
+		"sources": [
+			{"x": 0, "y": 0, "dir": 0, "parcels": [{"color": "red"}]},
+			{"x": 2, "y": 1, "dir": 3, "parcels": [{"color": "blue"}]},
+		],
+		"dock": {"x": 3, "y": 0},
+		"order": [{"color": "red"}],
+	}
+	var over: Dictionary = Sim.run(crowd, [
+		{"type": "slide", "x": 1, "y": 0, "dir": 1},
+		{"type": "latch", "x": 2, "y": 0, "dir": 1},
+	])
+	_check(bool(over["success"]), "a slide can cross a cell that already holds a parcel")
+	var under := _frame(over, 2)
+	_check(not under.is_empty() and _color_at(under, 2, 0) == "blue", "the parcel under the slide stays put")
+	_check(under.get("delivered", []).size() == 1 and str(under["delivered"][0]["color"]) == "red", "the sliding parcel reaches the dock")
+
+	var held := {
+		"width": 5, "height": 2, "walls": [{"x": 2, "y": 0}],
+		"sources": [
+			{"x": 0, "y": 0, "dir": 0, "parcels": [{"color": "gray"}]},
+			{"x": 3, "y": 1, "dir": 3, "parcels": [{"color": "blue"}]},
+		],
+		"dock": {"x": 4, "y": 0},
+		"order": [{"color": "blue"}, {"color": "gray"}],
+	}
+	var waited: Dictionary = Sim.run(held, [
+		{"type": "slide", "x": 1, "y": 0, "dir": 1},
+		{"type": "latch", "x": 3, "y": 0, "dir": 0},
+	])
+	_check(bool(waited["success"]), "a slide waits when its landing is blocked and then finishes")
+	_check(int(waited["cycles"]) == 5, "the blocked slide delivers on tick 5")
+	var paused := _frame(waited, 2)
+	_check(not paused.is_empty() and _at(paused, 1, 0) and _dir_at(paused, 1, 0) == 0, "a blocked slide stays put and does not rotate")
+	_check(_color_at(paused, 3, 0) == "blue", "the parcel blocking the landing is still there")
+	var resumed := _frame(waited, 3)
+	_check(not resumed.is_empty() and _at(resumed, 3, 0) and _dir_at(resumed, 3, 0) == 0, "the slide continues east once the landing clears")
+
+	var corner := {
+		"width": 3, "height": 4,
+		"walls": [
+			{"x": 2, "y": 0}, {"x": 0, "y": 1}, {"x": 2, "y": 1},
+			{"x": 0, "y": 2}, {"x": 1, "y": 2}, {"x": 2, "y": 2},
+			{"x": 0, "y": 3}, {"x": 2, "y": 3},
+		],
+		"sources": [{"x": 0, "y": 0, "dir": 0, "parcels": [{"color": "gray"}]}],
+		"dock": {"x": 1, "y": 3},
+		"order": [{"color": "gray"}],
+	}
+	var bent: Dictionary = Sim.run(corner, [
+		{"type": "turn", "x": 1, "y": 0, "dir": 0},
+		{"type": "slide", "x": 1, "y": 1, "dir": 0},
+	])
+	_check(bool(bent["success"]), "a turn before a slide changes where the slide lands")
+	var aimed_south := _frame(bent, 3)
+	_check(not aimed_south.is_empty() and _dir_at(aimed_south, 1, 1) == 1, "the parcel reaches the slide facing south")
+	var bridged: Dictionary = Sim.run(corner, [
+		{"type": "turn", "x": 1, "y": 0, "dir": 0},
+		{"type": "bridge", "x": 1, "y": 1, "dir": 0},
+	])
+	_check(not bool(bridged["success"]), "a bridge aimed along the chute does not follow the turn")
+
+
+func _building_six() -> void:
+	print("building 6")
+	var puzzles := Puzzles.all()
+	_check(puzzles.size() == 50, "routes 44 through 50 follow building 5")
+	_check(Puzzles.INTRO.size() == 10 and Puzzles.INTRO[9] == "slide", "the slide is the block building 6 teaches")
+	_check(not Puzzles.unlocked_at(42).has("slide"), "the slide stays locked through route 43")
+	_check(Puzzles.unlocked_at(43).has("slide"), "route 44 unlocks the slide")
+	_check(Puzzles.unlocked_at(49).size() == 10, "building 6 ends with every block")
+	for puzzle in puzzles:
+		var id := int(puzzle["id"])
+		if id < 44:
+			_check(int(puzzle.get("building", 1)) < 6, "route %d stays out of building 6" % id)
+			continue
+		_check(int(puzzle.get("building", 1)) == 6, "route %d is building 6" % id)
+		var result: Dictionary = Sim.run(puzzle, puzzle["reference"])
+		var par: Dictionary = Scoring.compute_par(puzzle)
+		_check(bool(result["success"]), "route %d reference delivers" % id)
+		_check(int(result["cycles"]) == int(par["cycles"]), "route %d reference meets par cycles" % id)
+		_check(int(result["blocks"]) == int(par["blocks"]), "route %d reference meets par blocks" % id)
+		_check(int(result["blocks"]) == puzzle["reference"].size(), "route %d plays the reference block count" % id)
+		if id == 44:
+			_check(str(puzzle.get("unlocks", "")) == "slide", "route 44 teaches the slide")
+		else:
+			_check(str(puzzle.get("unlocks", "")) == "", "route %d adds no further block" % id)
+		var uses_slide := false
+		for block in puzzle["reference"]:
+			if str(block["type"]) == "slide":
+				uses_slide = true
+		_check(uses_slide, "route %d reference uses the slide" % id)
+		if not bool(result["success"]):
+			_dump(result)
+		print("    par route %d  cycles %d  blocks %d" % [id, int(par["cycles"]), int(par["blocks"])])
+
+	var lesson: Dictionary = Sim.run(_by_id(44), _by_id(44)["reference"])
+	var started := _frame(lesson, 1)
+	_check(not started.is_empty() and _dir_at(started, 1, 1) == 0, "route 44 starts the parcel facing east")
+	_check(not bool(Sim.run(_by_id(44), _swap(_by_id(44), "slide", "conveyor"))["success"]), "route 44 stops if the slide is a conveyor")
+	for dir in range(4):
+		var spun: Array = _by_id(44)["reference"].duplicate(true)
+		spun[0]["dir"] = dir
+		_check(bool(Sim.run(_by_id(44), spun)["success"]), "route 44 ignores which way the slide block is rotated")
+	_check(not bool(Sim.run(_by_id(45), _swap(_by_id(45), "slide", "conveyor"))["success"]), "route 45 stops if the slide is a conveyor")
+	_check(not bool(Sim.run(_by_id(45), _swap(_by_id(45), "slide", "bridge"))["success"]), "route 45 misses the dock if the slide is a bridge aimed along the chute")
+	_check(not bool(Sim.run(_by_id(45), _swap(_by_id(45), "turn", "conveyor"))["success"]), "route 45 stops if the parcel cannot turn before the slide")
+	_check(not bool(Sim.run(_by_id(46), _swap(_by_id(46), "slide", "conveyor"))["success"]), "route 46 stops if the parcels cannot cross the brick")
+	_check(not bool(Sim.run(_by_id(46), _swap(_by_id(46), "slide", "bridge"))["success"]), "route 46 misses the counter if the slide is a bridge aimed along the chute")
+	_check(not bool(Sim.run(_by_id(46), _swap(_by_id(46), "counter", "conveyor"))["success"]), "route 46 fails without the counter")
+	_check(not bool(Sim.run(_by_id(47), _swap(_by_id(47), "slide", "conveyor"))["success"]), "route 47 delivers blue first if red cannot slide over the latch")
+	_check(not bool(Sim.run(_by_id(47), _swap(_by_id(47), "slide", "bridge"))["success"]), "route 47 delivers blue first if the slide is a bridge aimed along the chute")
+	_check(not bool(Sim.run(_by_id(47), _swap(_by_id(47), "latch", "conveyor"))["success"]), "route 47 jams if blue is not held")
+	_check(not bool(Sim.run(_by_id(48), _swap(_by_id(48), "slide", "conveyor"))["success"]), "route 48 fails if both parcels are sent along a belt")
+	for dir in range(4):
+		var bridged: Array = _by_id(48)["reference"].duplicate(true)
+		for block in bridged:
+			if str(block["type"]) == "slide":
+				block["type"] = "bridge"
+				block["dir"] = dir
+		_check(not bool(Sim.run(_by_id(48), bridged)["success"]), "route 48 fails if the slide is a bridge aimed %s" % Sim.DIR_NAMES[dir])
+	_check(not bool(Sim.run(_by_id(49), _swap(_by_id(49), "slide", "conveyor"))["success"]), "route 49 stops if the exit is not a slide")
+	_check(not bool(Sim.run(_by_id(49), _swap(_by_id(49), "painter", "conveyor"))["success"]), "route 49 fails if the return is not painted")
+	_check(not bool(Sim.run(_by_id(49), _swap(_by_id(49), "counter", "conveyor"))["success"]), "route 49 fails without the second stamp")
+	_check(not bool(Sim.run(_by_id(49), _swap(_by_id(49), "splitter", "conveyor"))["success"]), "route 49 loops if the splitter cannot send the second pass east")
+	_check(not bool(Sim.run(_by_id(50), _swap(_by_id(50), "slide", "conveyor"))["success"]), "route 50 fails if red cannot cross the brick")
+	_check(not bool(Sim.run(_by_id(50), _swap(_by_id(50), "slide", "bridge"))["success"]), "route 50 fails if the slide is a bridge aimed along the chute")
+	_check(not bool(Sim.run(_by_id(50), _swap(_by_id(50), "turn", "conveyor"))["success"]), "route 50 fails if red cannot turn before the slide")
+	_check(not bool(Sim.run(_by_id(50), _swap(_by_id(50), "latch", "conveyor"))["success"]), "route 50 jams if the south belt is not held")
+	_check(not bool(Sim.run(_by_id(50), _swap(_by_id(50), "primer", "painter"))["success"]), "route 50 fails if blue is painted yellow")
+	_check(not bool(Sim.run(_by_id(50), _swap(_by_id(50), "filter", "conveyor"))["success"]), "route 50 fails if red is not pulled ahead")
+	_check(not bool(Sim.run(_by_id(50), _swap(_by_id(50), "counter", "conveyor"))["success"]), "route 50 fails without the counter")
+
+
 func _swap(puzzle: Dictionary, from_type: String, to_type: String) -> Array:
 	var graph: Array = puzzle["reference"].duplicate(true)
 	for block in graph:
@@ -681,7 +863,7 @@ func _ui_uses_simulated_par() -> void:
 				routes += 1
 		if row.get_child_count() > 1:
 			width += float(row.get_theme_constant("separation")) * float(row.get_child_count() - 1)
-	_check(routes == 43, "all 43 routes are on the board")
+	_check(routes == 50, "all 50 routes are on the board")
 	_check(width < 1240.0, "the route buttons fit the header (%s)" % width)
 	node.select_puzzle(15)
 	_check(building != null and building.text == "BUILDING 2", "route 16 opens building 2")
@@ -738,6 +920,20 @@ func _ui_uses_simulated_par() -> void:
 	_check(saw_turn, "route 37 offers the turn")
 	node.select_puzzle(42)
 	_check(building != null and building.text == "BUILDING 5", "route 43 stays in building 5")
+	node.select_puzzle(43)
+	_check(building != null and building.text == "BUILDING 6", "route 44 opens building 6")
+	_check(node.find_child("BuildingSixMark", true, false) != null, "the route row marks building 6")
+	tools = node.find_child("ToolBox", true, false)
+	var saw_slide := false
+	if tools != null:
+		for child in tools.get_children():
+			if child.is_queued_for_deletion():
+				continue
+			if str(child.text).begins_with("Slide"):
+				saw_slide = true
+	_check(saw_slide, "route 44 offers the slide")
+	node.select_puzzle(49)
+	_check(building != null and building.text == "BUILDING 6", "route 50 stays in building 6")
 	node.queue_free()
 
 
