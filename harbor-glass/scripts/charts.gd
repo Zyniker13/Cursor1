@@ -10,7 +10,8 @@ class_name ChartBook
 # The Sluice holds eight more. The Weir holds eight more.
 # The Lintel holds eight more. The Mullion holds eight more.
 # The Transom holds eight more. The Casement holds eight more.
-# The Jamb holds eight more. The Astragal holds the last eight.
+# The Jamb holds eight more. The Astragal holds eight more.
+# The Scotia holds eight more. The Torus holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
@@ -46,6 +47,26 @@ class_name ChartBook
 # direction pass straight through in the same direction and the same color,
 # and that pass costs no bounce. The other two directions stop and do not
 # enter. While that row is flooded, every beam stops at the waterline.
+# A scotia has a facing. Rotation changes it the same way: 0 north, 90 east,
+# 180 south, 270 west. While its row is dry, the facing and the next
+# counterclockwise direction pass straight through in the same direction and
+# the same color, and that pass costs no bounce. It does not turn, it does not
+# recolor, and it does not split. The other two directions stop and do not
+# enter. Facing north, the open directions are north and west. While that row
+# is flooded, every beam stops at the waterline, the same way a flooded
+# astragal stops. A north scotia is not a north astragal.
+# A torus has a facing. Rotation changes it the same way: 0 north, 90 east,
+# 180 south, 270 west. While its row is dry, the opposite of the facing and
+# the next clockwise direction pass straight through in the same direction and
+# the same color, and that pass costs no bounce. It does not turn, it does not
+# recolor, and it does not split. The other two directions stop and do not
+# enter. Facing north, the open directions are south and east, and the stopped
+# directions are north and west. That is the pair a north scotia stops. While
+# that row is flooded, every beam stops at the waterline, the same way a
+# flooded scotia stops. A north torus is not a north scotia and not a north
+# astragal. A casement passes only the facing. A jamb passes both directions
+# on its open axis. A mullion passes north and south. A transom passes east
+# and west. A lintel passes every dry direction.
 # See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
@@ -72,6 +93,8 @@ const TRANSOM := "The Transom"
 const CASEMENT := "The Casement"
 const JAMB := "The Jamb"
 const ASTRAGAL := "The Astragal"
+const SCOTIA := "The Scotia"
+const TORUS := "The Torus"
 
 static func all() -> Array:
 	var book: Array = []
@@ -95,6 +118,8 @@ static func all() -> Array:
 	book.append_array(casement())
 	book.append_array(jamb())
 	book.append_array(astragal())
+	book.append_array(scotia())
+	book.append_array(torus())
 	return book
 
 
@@ -176,6 +201,14 @@ static func jamb() -> Array:
 
 static func astragal() -> Array:
 	return [chart_151(), chart_152(), chart_153(), chart_154(), chart_155(), chart_156(), chart_157(), chart_158()]
+
+
+static func scotia() -> Array:
+	return [chart_159(), chart_160(), chart_161(), chart_162(), chart_163(), chart_164(), chart_165(), chart_166()]
+
+
+static func torus() -> Array:
+	return [chart_167(), chart_168(), chart_169(), chart_170(), chart_171(), chart_172(), chart_173(), chart_174()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -5827,6 +5860,560 @@ static func chart_158() -> Dictionary:
 	}
 
 
+static func chart_159() -> Dictionary:
+	# Tide index 0, flood 0. A north scotia passes north and west. The chart
+	# opens on the other pair, south and east, which refuses both.
+	return {
+		"id": "159",
+		"harbor": SCOTIA,
+		"title": "The Dry Scotia",
+		"teach": "Tide index 0, flood 0. A dry north scotia passes both the northbound beam and the westbound beam. White stays white and red stays red. A casement in that cell refuses the westbound beam. A jamb in that cell refuses the westbound beam and passes the southbound return. A lintel lets that return through. An astragal facing north refuses the westbound beam.",
+		"win": "The dry north scotia passes north and west, and the southbound return stops.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Wn", 3, 6, "N", "white"),
+			_lantern("Ww", 6, 3, "W", "red"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+		],
+		"docks": [
+			_dock("Nd", 3, 1, "white", true),
+			_dock("Wd", 0, 3, "red"),
+			_dock("Kd", 3, 5, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_scotia("S", "Scotia", 3, 3, 180, 0),
+		],
+	}
+
+
+static func chart_160() -> Dictionary:
+	# The chart opens under water. The beam from the dry row stops at the
+	# waterline. The solution lowers the tide, and north and west pass.
+	return {
+		"id": "160",
+		"harbor": SCOTIA,
+		"title": "The Wet Stop",
+		"teach": "The scotia opens under water, so every beam stops at the waterline and does not enter. Lower the tide. Dry, the northbound beam and the westbound beam pass. A shutter would pass while flooded. A well, a siphon, a sluice, or a weir would carry the beam. A casement refuses the westbound beam. A jamb refuses the westbound beam and passes the southbound return. A flooded astragal stops the same way.",
+		"win": "The tide is low. North and west pass, and the southbound beam stops.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0, 3],
+		"start_tide_index": 1,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ss", 3, 1, "S", "blue"),
+			_lantern("Nn", 3, 6, "N", "white"),
+			_lantern("Ww", 6, 4, "W", "red"),
+		],
+		"docks": [
+			_dock("Nd", 3, 2, "white", true),
+			_dock("Kd", 3, 5, "blue", true, true),
+			_dock("Wd", 0, 4, "red"),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_scotia("S", "Scotia", 3, 4, 180, 0),
+		],
+	}
+
+
+static func chart_161() -> Dictionary:
+	# Red goes north and stays red. Blue goes west and stays blue.
+	return {
+		"id": "161",
+		"harbor": SCOTIA,
+		"title": "Color Kept",
+		"teach": "The dry scotia keeps red, blue, and white. Red stays red and blue stays blue. White stays white. A stain or a weir would change the color. A casement refuses the westbound beam. A jamb refuses the westbound beam and passes the southbound return. An astragal facing north refuses the westbound beam.",
+		"win": "The color that enters the scotia is the color that leaves it.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Rs", 3, 6, "N", "red"),
+			_lantern("Bw", 6, 3, "W", "blue"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+		],
+		"docks": [
+			_dock("Rd", 3, 1, "red", true),
+			_dock("Bd", 0, 3, "blue"),
+			_dock("Kd", 3, 5, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_scotia("S", "Scotia", 3, 3, 180, 0),
+		],
+	}
+
+
+static func chart_162() -> Dictionary:
+	# White goes straight north. Red goes straight west. Neither beam turns.
+	return {
+		"id": "162",
+		"harbor": SCOTIA,
+		"title": "No Turn",
+		"teach": "The beam leaves on the same side it entered. It does not turn. A prism, a vane, a sluice, or a mirror would turn it. A casement refuses the westbound beam. A jamb passes the southbound return. An astragal facing north refuses the westbound beam.",
+		"win": "White goes straight north, and red goes straight west.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Wn", 3, 6, "N", "white"),
+			_lantern("Ww", 6, 3, "W", "red"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+		],
+		"docks": [
+			_dock("Nd", 3, 1, "white", true),
+			_dock("Wd", 0, 3, "red"),
+			_dock("Kd", 3, 5, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_scotia("S", "Scotia", 3, 3, 90, 0),
+		],
+	}
+
+
+static func chart_163() -> Dictionary:
+	# Flood 2 covers y >= 4. The scotia stays on the dry row and opens
+	# north and west. A separate beam stops at the flooded row's waterline.
+	return {
+		"id": "163",
+		"harbor": SCOTIA,
+		"title": "Beside the Flood",
+		"teach": "The scotia's own row is dry, so the northbound beam and the westbound beam pass. The next flooded cell that is not a flood carrier still stops the beam at the waterline. A mullion cannot be turned so that it passes west. A transom cannot be turned so that it passes north. A casement refuses the westbound beam. A lintel lets the eastbound beam through. An astragal facing north refuses the westbound beam.",
+		"win": "North and west pass on the dry row, and the beam into the flood stops.",
+		"cols": 8,
+		"rows": 6,
+		"tide_phases": [2],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ww", 7, 2, "W", "white"),
+			_lantern("Nn", 4, 3, "N", "blue"),
+			_lantern("Ee", 0, 2, "E", "red"),
+			_lantern("F", 1, 3, "S", "white"),
+		],
+		"docks": [
+			_dock("Wd", 2, 2, "white", true),
+			_dock("Nd", 4, 0, "blue"),
+			_dock("Kd", 6, 2, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_scotia("S", "Scotia", 4, 2, 180, 0),
+		],
+	}
+
+
+static func chart_164() -> Dictionary:
+	# One scotia opens north and west. The other opens south and east.
+	# Swapping those facings fails. A north jamb on the first seat also passes south.
+	return {
+		"id": "164",
+		"harbor": SCOTIA,
+		"title": "Two Scotias",
+		"teach": "One scotia is open on north and west. The other is open on south and east. Swapping their facings fails. A jamb cannot take the north-and-west seat, because a north jamb also passes south. A mullion cannot be turned so that it passes west. A transom cannot be turned so that it passes north. An astragal facing north cannot take the north-and-west seat.",
+		"win": "North and west stay on the first seat. South and east stay on the second.",
+		"cols": 11,
+		"rows": 9,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("An", 3, 5, "N", "white"),
+			_lantern("As", 3, 0, "S", "blue"),
+			_lantern("Aw", 6, 3, "W", "red"),
+			_lantern("Bs", 7, 2, "S", "white"),
+			_lantern("Bn", 7, 8, "N", "red"),
+			_lantern("Be", 4, 5, "E", "blue"),
+			_lantern("Bw", 10, 5, "W", "white"),
+		],
+		"docks": [
+			_dock("Adn", 3, 1, "white", true),
+			_dock("Ads", 3, 4, "blue", true, true),
+			_dock("Adw", 0, 3, "red"),
+			_dock("Bds", 7, 7, "white", true),
+			_dock("Bdn", 7, 4, "red", true, true),
+			_dock("Bde", 9, 5, "blue", true),
+			_dock("Bdw", 5, 5, "white", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_scotia("S", "North scotia", 3, 3, 180, 0),
+			_scotia("T", "South scotia", 7, 5, 0, 180),
+		],
+	}
+
+
+static func chart_165() -> Dictionary:
+	# Three tide marks. The middle mark leaves the scotia dry, facing north.
+	# The chart starts on the other pair. Low water wakes the hull. High water
+	# covers the scotia.
+	return {
+		"id": "165",
+		"harbor": SCOTIA,
+		"title": "The Held Scotia",
+		"teach": "The held facing is part of the solution. The chart starts on a facing whose open pair is the other two directions. Place the tide on the middle mark and face the scotia north. Low water wakes the south hull. High water covers the scotia and the beam stops at the waterline. A casement refuses the westbound beam. A jamb passes the southbound return. An astragal facing north refuses the westbound beam.",
+		"win": "The middle mark holds the north scotia. North and west pass, and the hull stays dark.",
+		"cols": 8,
+		"rows": 7,
+		"tide_phases": [0, 1, 4],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Wn", 3, 5, "N", "white"),
+			_lantern("Ww", 6, 3, "W", "blue"),
+			_lantern("Ss", 3, 0, "S", "red"),
+			_lantern("Hl", 7, 6, "W", "white"),
+		],
+		"docks": [
+			_dock("Nd", 3, 1, "white", true),
+			_dock("Wd", 0, 3, "blue"),
+			_dock("Kd", 3, 4, "red", true, true),
+		],
+		"boats": [
+			_boat("Hb", 4, 6),
+		],
+		"fixtures": [],
+		"pieces": [
+			_scotia("S", "Scotia", 3, 3, 180, 0),
+		],
+	}
+
+
+static func chart_166() -> Dictionary:
+	# The scotia and the shutter trade places. On the line the scotia faces
+	# north. North and west count. The southbound beam must not.
+	return {
+		"id": "166",
+		"harbor": SCOTIA,
+		"title": "The Scotia Mark",
+		"teach": "Move the scotia from the side socket onto the line and face it north. The mark is satisfied only by that open pair. The northbound beam and the westbound beam pass. The southbound beam must not count. A casement, a jamb, a mullion, a transom, a lintel, or an astragal in that cell fails.",
+		"win": "The scotia stands on the line, open north and west. Both docks are lit and the return stays dark.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Wn", 3, 6, "N", "white"),
+			_lantern("Ww", 6, 3, "W", "red"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+		],
+		"docks": [
+			_dock("Nd", 3, 1, "white", true),
+			_dock("Wd", 0, 3, "red"),
+			_dock("Kd", 3, 5, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_placed("S", "Scotia", "scotia", [["side", 5, 5], ["line", 3, 3]], "side", "line", 180, 0),
+			_placed("G", "Line shutter", "shutter", [["line", 3, 3], ["side", 5, 5]], "line", "side", 0, 0),
+		],
+	}
+
+
+static func chart_167() -> Dictionary:
+	# Tide index 0, flood 0. A north torus passes south and east. The chart
+	# opens on the other pair, north and west, which refuses both.
+	return {
+		"id": "167",
+		"harbor": TORUS,
+		"title": "The Dry Torus",
+		"teach": "Tide index 0, flood 0. A dry north torus passes both the southbound beam and the eastbound beam. White stays white and red stays red. A casement in that cell refuses the eastbound beam. A jamb in that cell refuses the eastbound beam and passes the northbound return. A lintel lets that return through. A scotia facing north refuses the southbound beam. An astragal facing north refuses the southbound beam.",
+		"win": "The dry north torus passes south and east, and the northbound return stops.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ss", 3, 0, "S", "white"),
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Nn", 3, 6, "N", "blue"),
+		],
+		"docks": [
+			_dock("Sd", 3, 5, "white", true),
+			_dock("Ed", 6, 3, "red"),
+			_dock("Kd", 3, 1, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_torus("T", "Torus", 3, 3, 180, 0),
+		],
+	}
+
+
+static func chart_168() -> Dictionary:
+	# The chart opens under water. The beam from the dry row stops at the
+	# waterline. The solution lowers the tide, and south and east pass.
+	return {
+		"id": "168",
+		"harbor": TORUS,
+		"title": "The Wet Stop",
+		"teach": "The torus opens under water, so every beam stops at the waterline and does not enter. Lower the tide. Dry, the southbound beam and the eastbound beam pass. A shutter would pass while flooded. A well, a siphon, a sluice, or a weir would carry the beam. A casement refuses the eastbound beam. A jamb refuses the eastbound beam and passes the northbound return. A flooded scotia stops the same way.",
+		"win": "The tide is low. South and east pass, and the northbound beam stops.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0, 3],
+		"start_tide_index": 1,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 6, "N", "blue"),
+			_lantern("Ss", 3, 0, "S", "white"),
+			_lantern("Ee", 0, 4, "E", "red"),
+		],
+		"docks": [
+			_dock("Sd", 3, 5, "white", true),
+			_dock("Kd", 3, 2, "blue", true, true),
+			_dock("Ed", 6, 4, "red"),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_torus("T", "Torus", 3, 4, 180, 0),
+		],
+	}
+
+
+static func chart_169() -> Dictionary:
+	# Red goes south and stays red. Blue goes east and stays blue.
+	return {
+		"id": "169",
+		"harbor": TORUS,
+		"title": "Color Kept",
+		"teach": "The dry torus keeps red, blue, and white. Red stays red and blue stays blue. White stays white. A stain or a weir would change the color. A casement refuses the eastbound beam. A jamb refuses the eastbound beam and passes the northbound return. A scotia facing north refuses the southbound beam. An astragal facing north refuses the southbound beam.",
+		"win": "The color that enters the torus is the color that leaves it.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Rs", 3, 0, "S", "red"),
+			_lantern("Be", 0, 3, "E", "blue"),
+			_lantern("Nn", 3, 6, "N", "blue"),
+		],
+		"docks": [
+			_dock("Rd", 3, 5, "red", true),
+			_dock("Bd", 6, 3, "blue"),
+			_dock("Kd", 3, 1, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_torus("T", "Torus", 3, 3, 180, 0),
+		],
+	}
+
+
+static func chart_170() -> Dictionary:
+	# White goes straight south. Red goes straight east. Neither beam turns.
+	return {
+		"id": "170",
+		"harbor": TORUS,
+		"title": "No Turn",
+		"teach": "The beam leaves on the same side it entered. It does not turn. A prism, a vane, a sluice, or a mirror would turn it. A casement refuses the eastbound beam. A jamb passes the northbound return. A scotia facing north refuses the southbound beam. An astragal facing north refuses the southbound beam.",
+		"win": "White goes straight south, and red goes straight east.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ss", 3, 0, "S", "white"),
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Nn", 3, 6, "N", "blue"),
+		],
+		"docks": [
+			_dock("Sd", 3, 5, "white", true),
+			_dock("Ed", 6, 3, "red"),
+			_dock("Kd", 3, 1, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_torus("T", "Torus", 3, 3, 90, 0),
+		],
+	}
+
+
+static func chart_171() -> Dictionary:
+	# Flood 2 covers y >= 4. The torus stays on the dry row and opens
+	# south and east. A separate beam stops at the flooded row's waterline.
+	return {
+		"id": "171",
+		"harbor": TORUS,
+		"title": "Beside the Flood",
+		"teach": "The torus's own row is dry, so the southbound beam and the eastbound beam pass. The next flooded cell that is not a flood carrier still stops the beam at the waterline. A mullion cannot be turned so that it passes east. A transom cannot be turned so that it passes south. A casement refuses the eastbound beam. A lintel lets the westbound beam through. A scotia facing north refuses the southbound beam. An astragal facing north refuses the southbound beam.",
+		"win": "South and east pass on the dry row, and the beam into the flood stops.",
+		"cols": 8,
+		"rows": 6,
+		"tide_phases": [2],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ee", 0, 2, "E", "white"),
+			_lantern("Ss", 4, 0, "S", "blue"),
+			_lantern("Ww", 7, 2, "W", "red"),
+			_lantern("F", 1, 3, "S", "white"),
+		],
+		"docks": [
+			_dock("Ed", 6, 2, "white", true),
+			_dock("Sd", 4, 3, "blue"),
+			_dock("Kd", 2, 2, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_torus("T", "Torus", 4, 2, 180, 0),
+		],
+	}
+
+
+static func chart_172() -> Dictionary:
+	# One torus opens north and west. The other opens south and east.
+	# Swapping those facings fails. A north jamb on the first seat also passes south.
+	return {
+		"id": "172",
+		"harbor": TORUS,
+		"title": "Two Tori",
+		"teach": "One torus is open on north and west. The other is open on south and east. Swapping their facings fails. A jamb cannot take the north-and-west seat, because a north jamb also passes south. A mullion cannot be turned so that it passes west. A transom cannot be turned so that it passes north. A scotia facing south cannot take the north-and-west seat. An astragal facing south cannot take it either.",
+		"win": "North and west stay on the first seat. South and east stay on the second.",
+		"cols": 11,
+		"rows": 9,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("An", 3, 5, "N", "white"),
+			_lantern("As", 3, 0, "S", "blue"),
+			_lantern("Aw", 6, 3, "W", "red"),
+			_lantern("Bs", 7, 2, "S", "white"),
+			_lantern("Bn", 7, 8, "N", "red"),
+			_lantern("Be", 4, 5, "E", "blue"),
+			_lantern("Bw", 10, 5, "W", "white"),
+		],
+		"docks": [
+			_dock("Adn", 3, 1, "white", true),
+			_dock("Ads", 3, 4, "blue", true, true),
+			_dock("Adw", 0, 3, "red"),
+			_dock("Bds", 7, 7, "white", true),
+			_dock("Bdn", 7, 4, "red", true, true),
+			_dock("Bde", 9, 5, "blue", true),
+			_dock("Bdw", 5, 5, "white", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_torus("T", "South torus", 3, 3, 0, 180),
+			_torus("U", "North torus", 7, 5, 180, 0),
+		],
+	}
+
+
+static func chart_173() -> Dictionary:
+	# Three tide marks. The middle mark leaves the torus dry, facing north.
+	# The chart starts on the other pair. Low water wakes the hull. High water
+	# covers the torus.
+	return {
+		"id": "173",
+		"harbor": TORUS,
+		"title": "The Held Torus",
+		"teach": "The held facing is part of the solution. The chart starts on a facing whose open pair is the other two directions. Place the tide on the middle mark and face the torus north. Low water wakes the south hull. High water covers the torus and the beam stops at the waterline. A casement refuses the eastbound beam. A jamb passes the northbound return. A scotia facing north refuses the southbound beam. An astragal facing north refuses the southbound beam.",
+		"win": "The middle mark holds the north torus. South and east pass, and the hull stays dark.",
+		"cols": 8,
+		"rows": 7,
+		"tide_phases": [0, 1, 4],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ss", 3, 0, "S", "white"),
+			_lantern("Ee", 0, 3, "E", "blue"),
+			_lantern("Nn", 3, 5, "N", "red"),
+			_lantern("Hl", 7, 6, "W", "white"),
+		],
+		"docks": [
+			_dock("Sd", 3, 4, "white", true),
+			_dock("Ed", 6, 3, "blue"),
+			_dock("Kd", 3, 1, "red", true, true),
+		],
+		"boats": [
+			_boat("Hb", 4, 6),
+		],
+		"fixtures": [],
+		"pieces": [
+			_torus("T", "Torus", 3, 3, 180, 0),
+		],
+	}
+
+
+static func chart_174() -> Dictionary:
+	# The torus and the shutter trade places. On the line the torus faces
+	# north. South and east count. The northbound beam must not.
+	return {
+		"id": "174",
+		"harbor": TORUS,
+		"title": "The Torus Mark",
+		"teach": "Move the torus from the side socket onto the line and face it north. The mark is satisfied only by that open pair. The southbound beam and the eastbound beam pass. The northbound beam must not count. A casement, a jamb, a mullion, a transom, a lintel, a scotia, or an astragal in that cell fails.",
+		"win": "The torus stands on the line, open south and east. Both docks are lit and the return stays dark.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ss", 3, 0, "S", "white"),
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Nn", 3, 6, "N", "blue"),
+		],
+		"docks": [
+			_dock("Sd", 3, 5, "white", true),
+			_dock("Ed", 6, 3, "red"),
+			_dock("Kd", 3, 1, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_placed("T", "Torus", "torus", [["side", 5, 5], ["line", 3, 3]], "side", "line", 180, 0),
+			_placed("G", "Line shutter", "shutter", [["line", 3, 3], ["side", 5, 5]], "line", "side", 0, 0),
+		],
+	}
+
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -6051,6 +6638,34 @@ static func _astragal(id: String, name: String, x: int, y: int, start_rot: int, 
 		"id": id,
 		"name": name,
 		"kind": "astragal",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _scotia(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "scotia",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _torus(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "torus",
 		"movable": false,
 		"sockets": [{"id": "a", "x": x, "y": y}],
 		"start_socket": "a",

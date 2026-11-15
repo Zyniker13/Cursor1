@@ -36,6 +36,8 @@ extends RefCounted
 ## No other plant opens rust. Outside the alb the rust seals again.
 ## Scab moths stay sealed until an amice covers their tile. The amice is not a light.
 ## No other plant opens scab. Outside the amice the scab seals again.
+## Spot moths stay sealed until an orphrey covers their tile. The orphrey is not a light.
+## No other plant opens spot. Outside the orphrey the spot seals again.
 
 const Catalog = preload("res://sim/plant_catalog.gd")
 
@@ -58,9 +60,9 @@ const HURT_TICKS := 12
 const PEST_HP := 12
 const PEST_SPEED := 42.0
 const PEST_RADIUS := 11.0
-const START_SEEDS := 22
+const START_SEEDS := 23
 const PLANT_TICKS := 240
-const WAVE_COUNT := 45
+const WAVE_COUNT := 47
 const START_CELL := Vector2i(7, 5)
 const PROJECTILE_RADIUS := 4.0
 const PROJECTILE_LIFE := 75
@@ -86,7 +88,8 @@ const PROJECTILE_LIFE := 75
 # Nights 40 and 41 bring mildew moths. Night 40 is mildew alone. Night 41 sends mildew, rot, blight, woe, dread, murk, gloom, pall, veil, dusk, hide, mail, scale, glass, web, frost, pitch, rind, and shroud together.
 # Nights 42 and 43 bring rust moths. Night 42 is rust alone. Night 43 sends rust, mildew, rot, blight, woe, dread, murk, gloom, pall, veil, dusk, hide, mail, scale, glass, web, frost, pitch, rind, and shroud together.
 # Nights 44 and 45 bring scab moths. Night 44 is scab alone. Night 45 sends scab, rust, mildew, rot, blight, woe, dread, murk, gloom, pall, veil, dusk, hide, mail, scale, glass, web, frost, pitch, rind, and shroud together.
-# shroud_every / rind_every / pitch_every / frost_every / web_every / glass_every / scale_every / mail_every / hide_every / dusk_every / veil_every / pall_every / gloom_every / murk_every / dread_every / woe_every / blight_every / rot_every / mildew_every / rust_every / scab_every 0: none. 1: every spawn. N: every Nth spawn, the Nth included.
+# Nights 46 and 47 bring spot moths. Night 46 is spot alone. Night 47 sends spot together with every Blotch lock. The moth count stays 16; spot is a lock on every one of those moths.
+# shroud_every / rind_every / pitch_every / frost_every / web_every / glass_every / scale_every / mail_every / hide_every / dusk_every / veil_every / pall_every / gloom_every / murk_every / dread_every / woe_every / blight_every / rot_every / mildew_every / rust_every / scab_every / spot_every 0: none. 1: every spawn. N: every Nth spawn, the Nth included.
 # Nights 1–21 omit dusk_every; a missing key spawns no dusk.
 # Nights 1–23 omit veil_every; a missing key spawns no veil.
 # Nights 1–25 omit pall_every; a missing key spawns no pall.
@@ -99,6 +102,7 @@ const PROJECTILE_LIFE := 75
 # Nights 1–39 omit mildew_every; a missing key spawns no mildew. Night 36 is still Gall and carries no mildew. Night 37 is still Canker and carries no mildew. Night 38 is still Rot and carries no mildew. Night 39 is still Smut and carries no mildew.
 # Nights 1–41 omit rust_every; a missing key spawns no rust. Night 40 is still Mildew and carries no rust. Night 41 is still Ergot and carries no rust.
 # Nights 1–43 omit scab_every; a missing key spawns no scab. Night 42 is still Rust and carries no scab. Night 43 is still Brand and carries no scab.
+# Nights 1–45 omit spot_every; a missing key spawns no spot. Night 44 is still Scab and carries no spot. Night 45 is still Blotch and carries no spot.
 const WAVES := [
 	{"count": 8, "interval": 72, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "hide_every": 0, "name": ""},
 	{"count": 12, "interval": 66, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "hide_every": 0, "name": ""},
@@ -145,6 +149,8 @@ const WAVES := [
 	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 1, "scale_every": 1, "mail_every": 1, "hide_every": 1, "dusk_every": 1, "veil_every": 1, "pall_every": 1, "gloom_every": 1, "murk_every": 1, "dread_every": 1, "woe_every": 1, "blight_every": 1, "rot_every": 1, "mildew_every": 1, "rust_every": 1, "name": "Brand"},
 	{"count": 10, "interval": 102, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "hide_every": 0, "dusk_every": 0, "veil_every": 0, "pall_every": 0, "gloom_every": 0, "murk_every": 0, "dread_every": 0, "woe_every": 0, "blight_every": 0, "rot_every": 0, "mildew_every": 0, "rust_every": 0, "scab_every": 1, "name": "Scab"},
 	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 1, "scale_every": 1, "mail_every": 1, "hide_every": 1, "dusk_every": 1, "veil_every": 1, "pall_every": 1, "gloom_every": 1, "murk_every": 1, "dread_every": 1, "woe_every": 1, "blight_every": 1, "rot_every": 1, "mildew_every": 1, "rust_every": 1, "scab_every": 1, "name": "Blotch"},
+	{"count": 10, "interval": 108, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "hide_every": 0, "dusk_every": 0, "veil_every": 0, "pall_every": 0, "gloom_every": 0, "murk_every": 0, "dread_every": 0, "woe_every": 0, "blight_every": 0, "rot_every": 0, "mildew_every": 0, "rust_every": 0, "scab_every": 0, "spot_every": 1, "name": "Spot"},
+	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 1, "scale_every": 1, "mail_every": 1, "hide_every": 1, "dusk_every": 1, "veil_every": 1, "pall_every": 1, "gloom_every": 1, "murk_every": 1, "dread_every": 1, "woe_every": 1, "blight_every": 1, "rot_every": 1, "mildew_every": 1, "rust_every": 1, "scab_every": 1, "spot_every": 1, "name": "Scorch"},
 ]
 
 
@@ -190,6 +196,7 @@ class Plant:
 	var wimples_mildew: bool = false
 	var albs_rust: bool = false
 	var amices_scab: bool = false
+	var orphreys_spot: bool = false
 	var casts_light: bool = true
 
 
@@ -220,6 +227,7 @@ class Pest:
 	var mildewed: bool = false
 	var rusted: bool = false
 	var scabbed: bool = false
+	var spotted: bool = false
 	var speed: float = 0.0
 	var slow_factor: float = 1.0
 	var slow_ticks: int = 0
@@ -295,6 +303,8 @@ var rusts_spawned: int = 0
 var rusts_killed: int = 0
 var scabs_spawned: int = 0
 var scabs_killed: int = 0
+var spots_spawned: int = 0
+var spots_killed: int = 0
 var plants: Array = []
 var pests: Array = []
 var projectiles: Array = []
@@ -437,7 +447,11 @@ func tile_amices_scab(tx: int, ty: int) -> bool:
 	return _tile_in_light(tx, ty, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true)
 
 
-func _tile_in_light(tx: int, ty: int, shroud_only: bool, rind_only: bool, pitch_only: bool, frost_only: bool, web_only: bool, glass_only: bool, scale_only: bool, mail_only: bool, hide_only: bool, dusk_only: bool, veil_only: bool = false, pall_only: bool = false, gloom_only: bool = false, murk_only: bool = false, dread_only: bool = false, woe_only: bool = false, blight_only: bool = false, rot_only: bool = false, mildew_only: bool = false, rust_only: bool = false, scab_only: bool = false) -> bool:
+func tile_orphreys_spot(tx: int, ty: int) -> bool:
+	return _tile_in_light(tx, ty, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true)
+
+
+func _tile_in_light(tx: int, ty: int, shroud_only: bool, rind_only: bool, pitch_only: bool, frost_only: bool, web_only: bool, glass_only: bool, scale_only: bool, mail_only: bool, hide_only: bool, dusk_only: bool, veil_only: bool = false, pall_only: bool = false, gloom_only: bool = false, murk_only: bool = false, dread_only: bool = false, woe_only: bool = false, blight_only: bool = false, rot_only: bool = false, mildew_only: bool = false, rust_only: bool = false, scab_only: bool = false, spot_only: bool = false) -> bool:
 	if tx < 0 or ty < 0 or tx >= MAP_W or ty >= MAP_H:
 		return false
 	var rect_min := Vector2(float(tx) * TILE, float(ty) * TILE)
@@ -488,7 +502,9 @@ func _tile_in_light(tx: int, ty: int, shroud_only: bool, rind_only: bool, pitch_
 			continue
 		if scab_only and not grown.amices_scab:
 			continue
-		var special := shroud_only or rind_only or pitch_only or frost_only or web_only or glass_only or scale_only or mail_only or hide_only or dusk_only or veil_only or pall_only or gloom_only or murk_only or dread_only or woe_only or blight_only or rot_only or mildew_only or rust_only or scab_only
+		if spot_only and not grown.orphreys_spot:
+			continue
+		var special := shroud_only or rind_only or pitch_only or frost_only or web_only or glass_only or scale_only or mail_only or hide_only or dusk_only or veil_only or pall_only or gloom_only or murk_only or dread_only or woe_only or blight_only or rot_only or mildew_only or rust_only or scab_only or spot_only
 		if not special and not grown.casts_light:
 			continue
 		var source: Vector2 = grown.pos
@@ -566,7 +582,7 @@ func _night_suffix(index: int) -> String:
 
 
 ## Shared entry for wave spawns and the visibility test. Does not alter damage or health.
-func spawn_pest(pos: Vector2, shrouded: bool = false, rinded: bool = false, pitched: bool = false, frosted: bool = false, webbed: bool = false, glassed: bool = false, scaled: bool = false, mailed: bool = false, hided: bool = false, dusked: bool = false, veiled: bool = false, palled: bool = false, gloomed: bool = false, murked: bool = false, dreaded: bool = false, woed: bool = false, blighted: bool = false, rotted: bool = false, mildewed: bool = false, rusted: bool = false, scabbed: bool = false):
+func spawn_pest(pos: Vector2, shrouded: bool = false, rinded: bool = false, pitched: bool = false, frosted: bool = false, webbed: bool = false, glassed: bool = false, scaled: bool = false, mailed: bool = false, hided: bool = false, dusked: bool = false, veiled: bool = false, palled: bool = false, gloomed: bool = false, murked: bool = false, dreaded: bool = false, woed: bool = false, blighted: bool = false, rotted: bool = false, mildewed: bool = false, rusted: bool = false, scabbed: bool = false, spotted: bool = false):
 	var pest := Pest.new()
 	pest.id = _next_pest_id
 	_next_pest_id += 1
@@ -597,6 +613,7 @@ func spawn_pest(pos: Vector2, shrouded: bool = false, rinded: bool = false, pitc
 	pest.mildewed = mildewed
 	pest.rusted = rusted
 	pest.scabbed = scabbed
+	pest.spotted = spotted
 	if shrouded:
 		shrouds_spawned += 1
 	if rinded:
@@ -639,6 +656,8 @@ func spawn_pest(pos: Vector2, shrouded: bool = false, rinded: bool = false, pitc
 		rusts_spawned += 1
 	if scabbed:
 		scabs_spawned += 1
+	if spotted:
+		spots_spawned += 1
 	_apply_visibility(pest)
 	pests.append(pest)
 	return pest
@@ -711,6 +730,7 @@ func _try_plant(cmd: Command) -> void:
 	plant.wimples_mildew = bool(stats["wimples_mildew"])
 	plant.albs_rust = bool(stats["albs_rust"])
 	plant.amices_scab = bool(stats["amices_scab"])
+	plant.orphreys_spot = bool(stats["orphreys_spot"])
 	plant.casts_light = bool(stats["casts_light"])
 	plants.append(plant)
 	seeds -= 1
@@ -767,6 +787,7 @@ func _wave_spawns() -> void:
 	var mildew_every := int(spec.get("mildew_every", 0))
 	var rust_every := int(spec.get("rust_every", 0))
 	var scab_every := int(spec.get("scab_every", 0))
+	var spot_every := int(spec.get("spot_every", 0))
 	var index := int(spec["count"]) - spawns_left
 	var shrouded := shroud_every > 0 and index % shroud_every == shroud_every - 1
 	var rinded := rind_every > 0 and index % rind_every == rind_every - 1
@@ -789,7 +810,8 @@ func _wave_spawns() -> void:
 	var mildewed := mildew_every > 0 and index % mildew_every == mildew_every - 1
 	var rusted := rust_every > 0 and index % rust_every == rust_every - 1
 	var scabbed := scab_every > 0 and index % scab_every == scab_every - 1
-	spawn_pest(tile_center(cell.x, cell.y), shrouded, rinded, pitched, frosted, webbed, glassed, scaled, mailed, hided, dusked, veiled, palled, gloomed, murked, dreaded, woed, blighted, rotted, mildewed, rusted, scabbed)
+	var spotted := spot_every > 0 and index % spot_every == spot_every - 1
+	spawn_pest(tile_center(cell.x, cell.y), shrouded, rinded, pitched, frosted, webbed, glassed, scaled, mailed, hided, dusked, veiled, palled, gloomed, murked, dreaded, woed, blighted, rotted, mildewed, rusted, scabbed, spotted)
 	spawns_left -= 1
 	spawn_wait = spawn_interval
 
@@ -824,7 +846,7 @@ func _apply_visibility(pest: Pest) -> void:
 		pest.hidden = true
 		return
 	var cell := cell_of(pest.pos)
-	if pest.shrouded or pest.rinded or pest.pitched or pest.frosted or pest.webbed or pest.glassed or pest.scaled or pest.mailed or pest.hided or pest.dusked or pest.veiled or pest.palled or pest.gloomed or pest.murked or pest.dreaded or pest.woed or pest.blighted or pest.rotted or pest.mildewed or pest.rusted or pest.scabbed:
+	if pest.shrouded or pest.rinded or pest.pitched or pest.frosted or pest.webbed or pest.glassed or pest.scaled or pest.mailed or pest.hided or pest.dusked or pest.veiled or pest.palled or pest.gloomed or pest.murked or pest.dreaded or pest.woed or pest.blighted or pest.rotted or pest.mildewed or pest.rusted or pest.scabbed or pest.spotted:
 		var open := true
 		if pest.shrouded:
 			open = open and tile_burns_shroud(cell.x, cell.y)
@@ -868,6 +890,8 @@ func _apply_visibility(pest: Pest) -> void:
 			open = open and tile_albs_rust(cell.x, cell.y)
 		if pest.scabbed:
 			open = open and tile_amices_scab(cell.x, cell.y)
+		if pest.spotted:
+			open = open and tile_orphreys_spot(cell.x, cell.y)
 		pest.hidden = not open
 	else:
 		pest.hidden = not tile_lit(cell.x, cell.y)
@@ -1020,6 +1044,13 @@ func _scab_up(pest: Pest) -> bool:
 	return not tile_amices_scab(cell.x, cell.y)
 
 
+func _spot_up(pest: Pest) -> bool:
+	if not pest.spotted:
+		return false
+	var cell := cell_of(pest.pos)
+	return not tile_orphreys_spot(cell.x, cell.y)
+
+
 func _plants_fire() -> void:
 	for entry in plants:
 		var plant := entry as Plant
@@ -1105,7 +1136,7 @@ func _impact(shot: Projectile, target: Pest) -> void:
 
 
 func _damage_pest(pest: Pest, shot: Projectile) -> void:
-	if _shroud_up(pest) or _rind_up(pest) or _pitch_up(pest) or _frost_up(pest) or _web_up(pest) or _glass_up(pest) or _scale_up(pest) or _mail_up(pest) or _hide_up(pest) or _dusk_up(pest) or _veil_up(pest) or _pall_up(pest) or _gloom_up(pest) or _murk_up(pest) or _dread_up(pest) or _woe_up(pest) or _blight_up(pest) or _rot_up(pest) or _mildew_up(pest) or _rust_up(pest) or _scab_up(pest):
+	if _shroud_up(pest) or _rind_up(pest) or _pitch_up(pest) or _frost_up(pest) or _web_up(pest) or _glass_up(pest) or _scale_up(pest) or _mail_up(pest) or _hide_up(pest) or _dusk_up(pest) or _veil_up(pest) or _pall_up(pest) or _gloom_up(pest) or _murk_up(pest) or _dread_up(pest) or _woe_up(pest) or _blight_up(pest) or _rot_up(pest) or _mildew_up(pest) or _rust_up(pest) or _scab_up(pest) or _spot_up(pest):
 		return
 	pest.hp -= shot.damage
 	if shot.slow_ticks > 0:
@@ -1164,6 +1195,8 @@ func _damage_pest(pest: Pest, shot: Projectile) -> void:
 			rusts_killed += 1
 		if pest.scabbed:
 			scabs_killed += 1
+		if pest.spotted:
+			spots_killed += 1
 		events.append({
 			"type": "died",
 			"x": pest.pos.x,
