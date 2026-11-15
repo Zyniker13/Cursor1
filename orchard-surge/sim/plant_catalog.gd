@@ -28,7 +28,8 @@ const STOLE := 19
 const MANTLE := 20
 const TIPPET := 21
 const WIMPLE := 22
-const COUNT := 23
+const ALB := 23
+const COUNT := 24
 
 # fire_ticks and slow_ticks are sim ticks of length DT.
 # light_radius, weapon_range, projectile_speed, and splash_radius are pixels.
@@ -52,7 +53,8 @@ const COUNT := 23
 # mantles_blight: this plant's radius marks tiles as mantled. It is not a light.
 # tippets_rot: this plant's radius marks tiles as rotted. It is not a light.
 # wimples_mildew: this plant's radius marks tiles as wimpled. It is not a light.
-# casts_light: false means the radius does not light tiles. The shade, the cowl, the hood, the cloak, the cape, the shawl, the stole, the mantle, the tippet, and the wimple use this.
+# albs_rust: this plant's radius marks tiles as albed. It is not a light.
+# casts_light: false means the radius does not light tiles. The shade, the cowl, the hood, the cloak, the cape, the shawl, the stole, the mantle, the tippet, the wimple, and the alb use this.
 const DEFS := [
 	{
 		"name": "Pea",
@@ -84,6 +86,7 @@ const DEFS := [
 		"mantles_blight": false,
 		"tippets_rot": false,
 		"wimples_mildew": false,
+		"albs_rust": false,
 		"casts_light": true,
 	},
 	{
@@ -116,6 +119,7 @@ const DEFS := [
 		"mantles_blight": false,
 		"tippets_rot": false,
 		"wimples_mildew": false,
+		"albs_rust": false,
 		"casts_light": true,
 	},
 	{
@@ -148,6 +152,7 @@ const DEFS := [
 		"mantles_blight": false,
 		"tippets_rot": false,
 		"wimples_mildew": false,
+		"albs_rust": false,
 		"casts_light": true,
 	},
 	{
@@ -180,6 +185,7 @@ const DEFS := [
 		"mantles_blight": false,
 		"tippets_rot": false,
 		"wimples_mildew": false,
+		"albs_rust": false,
 		"casts_light": true,
 	},
 	{
@@ -212,6 +218,7 @@ const DEFS := [
 		"mantles_blight": false,
 		"tippets_rot": false,
 		"wimples_mildew": false,
+		"albs_rust": false,
 		"casts_light": true,
 	},
 	{
@@ -244,6 +251,7 @@ const DEFS := [
 		"mantles_blight": false,
 		"tippets_rot": false,
 		"wimples_mildew": false,
+		"albs_rust": false,
 		"casts_light": true,
 	},
 	{
@@ -276,6 +284,7 @@ const DEFS := [
 		"mantles_blight": false,
 		"tippets_rot": false,
 		"wimples_mildew": false,
+		"albs_rust": false,
 		"casts_light": true,
 	},
 	{
@@ -308,6 +317,7 @@ const DEFS := [
 		"mantles_blight": false,
 		"tippets_rot": false,
 		"wimples_mildew": false,
+		"albs_rust": false,
 		"casts_light": true,
 	},
 	{
@@ -340,6 +350,7 @@ const DEFS := [
 		"mantles_blight": false,
 		"tippets_rot": false,
 		"wimples_mildew": false,
+		"albs_rust": false,
 		"casts_light": true,
 	},
 	{
@@ -372,6 +383,7 @@ const DEFS := [
 		"mantles_blight": false,
 		"tippets_rot": false,
 		"wimples_mildew": false,
+		"albs_rust": false,
 		"casts_light": true,
 	},
 	{
@@ -404,6 +416,7 @@ const DEFS := [
 		"mantles_blight": false,
 		"tippets_rot": false,
 		"wimples_mildew": false,
+		"albs_rust": false,
 		"casts_light": true,
 	},
 	{
@@ -436,6 +449,7 @@ const DEFS := [
 		"mantles_blight": false,
 		"tippets_rot": false,
 		"wimples_mildew": false,
+		"albs_rust": false,
 		"casts_light": true,
 	},
 	{
@@ -468,6 +482,7 @@ const DEFS := [
 		"mantles_blight": false,
 		"tippets_rot": false,
 		"wimples_mildew": false,
+		"albs_rust": false,
 		"casts_light": true,
 	},
 	{
@@ -500,6 +515,7 @@ const DEFS := [
 		"mantles_blight": false,
 		"tippets_rot": false,
 		"wimples_mildew": false,
+		"albs_rust": false,
 		"casts_light": false,
 	},
 	{
@@ -532,6 +548,7 @@ const DEFS := [
 		"mantles_blight": false,
 		"tippets_rot": false,
 		"wimples_mildew": false,
+		"albs_rust": false,
 		"casts_light": false,
 	},
 	{
@@ -564,6 +581,7 @@ const DEFS := [
 		"mantles_blight": false,
 		"tippets_rot": false,
 		"wimples_mildew": false,
+		"albs_rust": false,
 		"casts_light": false,
 	},
 	{
@@ -596,6 +614,7 @@ const DEFS := [
 		"mantles_blight": false,
 		"tippets_rot": false,
 		"wimples_mildew": false,
+		"albs_rust": false,
 		"casts_light": false,
 	},
 	{
@@ -628,6 +647,7 @@ const DEFS := [
 		"mantles_blight": false,
 		"tippets_rot": false,
 		"wimples_mildew": false,
+		"albs_rust": false,
 		"casts_light": false,
 	},
 	{
@@ -660,6 +680,7 @@ const DEFS := [
 		"mantles_blight": false,
 		"tippets_rot": false,
 		"wimples_mildew": false,
+		"albs_rust": false,
 		"casts_light": false,
 	},
 	{
@@ -692,6 +713,7 @@ const DEFS := [
 		"mantles_blight": false,
 		"tippets_rot": false,
 		"wimples_mildew": false,
+		"albs_rust": false,
 		"casts_light": false,
 	},
 	{
@@ -724,6 +746,7 @@ const DEFS := [
 		"mantles_blight": true,
 		"tippets_rot": false,
 		"wimples_mildew": false,
+		"albs_rust": false,
 		"casts_light": false,
 	},
 	{
@@ -756,6 +779,7 @@ const DEFS := [
 		"mantles_blight": false,
 		"tippets_rot": true,
 		"wimples_mildew": false,
+		"albs_rust": false,
 		"casts_light": false,
 	},
 	{
@@ -788,6 +812,40 @@ const DEFS := [
 		"mantles_blight": false,
 		"tippets_rot": false,
 		"wimples_mildew": true,
+		"albs_rust": false,
+		"casts_light": false,
+	},
+	{
+		"name": "Alb",
+		"role": "Albs rust, modest shots, no light.",
+		"damage": 2,
+		"fire_ticks": 96,
+		"light_radius": 384.0,
+		"weapon_range": 12.0,
+		"projectile_speed": 120.0,
+		"slow_factor": 1.0,
+		"slow_ticks": 0,
+		"splash_radius": 0.0,
+		"burns_shroud": false,
+		"cracks_rind": false,
+		"melts_pitch": false,
+		"thaws_frost": false,
+		"cuts_web": false,
+		"cracks_glass": false,
+		"strips_scale": false,
+		"cracks_mail": false,
+		"splits_hide": false,
+		"shades_dusk": false,
+		"cowls_veil": false,
+		"hoods_pall": false,
+		"cloaks_gloom": false,
+		"capes_murk": false,
+		"shawls_dread": false,
+		"stoles_woe": false,
+		"mantles_blight": false,
+		"tippets_rot": false,
+		"wimples_mildew": false,
+		"albs_rust": true,
 		"casts_light": false,
 	},
 ]
