@@ -19,7 +19,8 @@ const RASP := 10
 const MAUL := 11
 const BILL := 12
 const SHADE := 13
-const COUNT := 14
+const COWL := 14
+const COUNT := 15
 
 # fire_ticks and slow_ticks are sim ticks of length DT.
 # light_radius, weapon_range, projectile_speed, and splash_radius are pixels.
@@ -34,7 +35,8 @@ const COUNT := 14
 # cracks_mail: this plant's light reveals mail moths and lets shots hurt them.
 # splits_hide: this plant's light reveals hide moths and lets shots hurt them.
 # shades_dusk: this plant's radius marks tiles as shaded. It is not a light.
-# casts_light: false means the radius does not light tiles. The shade uses this.
+# cowls_veil: this plant's radius marks tiles as cowled. It is not a light.
+# casts_light: false means the radius does not light tiles. The shade and the cowl use this.
 const DEFS := [
 	{
 		"name": "Pea",
@@ -57,6 +59,7 @@ const DEFS := [
 		"cracks_mail": false,
 		"splits_hide": false,
 		"shades_dusk": false,
+		"cowls_veil": false,
 		"casts_light": true,
 	},
 	{
@@ -80,6 +83,7 @@ const DEFS := [
 		"cracks_mail": false,
 		"splits_hide": false,
 		"shades_dusk": false,
+		"cowls_veil": false,
 		"casts_light": true,
 	},
 	{
@@ -103,6 +107,7 @@ const DEFS := [
 		"cracks_mail": false,
 		"splits_hide": false,
 		"shades_dusk": false,
+		"cowls_veil": false,
 		"casts_light": true,
 	},
 	{
@@ -126,6 +131,7 @@ const DEFS := [
 		"cracks_mail": false,
 		"splits_hide": false,
 		"shades_dusk": false,
+		"cowls_veil": false,
 		"casts_light": true,
 	},
 	{
@@ -149,6 +155,7 @@ const DEFS := [
 		"cracks_mail": false,
 		"splits_hide": false,
 		"shades_dusk": false,
+		"cowls_veil": false,
 		"casts_light": true,
 	},
 	{
@@ -172,6 +179,7 @@ const DEFS := [
 		"cracks_mail": false,
 		"splits_hide": false,
 		"shades_dusk": false,
+		"cowls_veil": false,
 		"casts_light": true,
 	},
 	{
@@ -195,6 +203,7 @@ const DEFS := [
 		"cracks_mail": false,
 		"splits_hide": false,
 		"shades_dusk": false,
+		"cowls_veil": false,
 		"casts_light": true,
 	},
 	{
@@ -218,6 +227,7 @@ const DEFS := [
 		"cracks_mail": false,
 		"splits_hide": false,
 		"shades_dusk": false,
+		"cowls_veil": false,
 		"casts_light": true,
 	},
 	{
@@ -241,6 +251,7 @@ const DEFS := [
 		"cracks_mail": false,
 		"splits_hide": false,
 		"shades_dusk": false,
+		"cowls_veil": false,
 		"casts_light": true,
 	},
 	{
@@ -264,6 +275,7 @@ const DEFS := [
 		"cracks_mail": false,
 		"splits_hide": false,
 		"shades_dusk": false,
+		"cowls_veil": false,
 		"casts_light": true,
 	},
 	{
@@ -287,6 +299,7 @@ const DEFS := [
 		"cracks_mail": false,
 		"splits_hide": false,
 		"shades_dusk": false,
+		"cowls_veil": false,
 		"casts_light": true,
 	},
 	{
@@ -310,6 +323,7 @@ const DEFS := [
 		"cracks_mail": true,
 		"splits_hide": false,
 		"shades_dusk": false,
+		"cowls_veil": false,
 		"casts_light": true,
 	},
 	{
@@ -333,6 +347,7 @@ const DEFS := [
 		"cracks_mail": false,
 		"splits_hide": true,
 		"shades_dusk": false,
+		"cowls_veil": false,
 		"casts_light": true,
 	},
 	{
@@ -356,6 +371,31 @@ const DEFS := [
 		"cracks_mail": false,
 		"splits_hide": false,
 		"shades_dusk": true,
+		"cowls_veil": false,
+		"casts_light": false,
+	},
+	{
+		"name": "Cowl",
+		"role": "Cowls veil, modest shots, no light.",
+		"damage": 3,
+		"fire_ticks": 54,
+		"light_radius": 240.0,
+		"weapon_range": 40.0,
+		"projectile_speed": 260.0,
+		"slow_factor": 1.0,
+		"slow_ticks": 0,
+		"splash_radius": 0.0,
+		"burns_shroud": false,
+		"cracks_rind": false,
+		"melts_pitch": false,
+		"thaws_frost": false,
+		"cuts_web": false,
+		"cracks_glass": false,
+		"strips_scale": false,
+		"cracks_mail": false,
+		"splits_hide": false,
+		"shades_dusk": false,
+		"cowls_veil": true,
 		"casts_light": false,
 	},
 ]
