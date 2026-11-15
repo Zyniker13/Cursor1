@@ -52,6 +52,8 @@ func _run() -> void:
 	test_lintel_book()
 	test_mullion_rule()
 	test_mullion_book()
+	test_transom_rule()
+	test_transom_book()
 	test_chart_4_boat()
 	test_one_rotation_is_not_solved()
 	test_hint_points_at_one_piece()
@@ -213,7 +215,8 @@ func test_charts() -> void:
 	check(Charts.weir().size() == 8, "weir adds eight charts")
 	check(Charts.lintel().size() == 8, "lintel adds eight charts")
 	check(Charts.mullion().size() == 8, "mullion adds eight charts")
-	check(book.size() == 126, "one hundred twenty-six charts")
+	check(Charts.transom().size() == 8, "transom adds eight charts")
+	check(book.size() == 134, "one hundred thirty-four charts")
 	check(str(book[13]["id"]) == "14" and str(book[13]["title"]) == "The Holding Line", "chart 14 stays the reach capstone")
 	check(str(book[14]["title"]) == "North Light", "chart 15 opens the basin")
 	check(str(book[21]["id"]) == "22" and str(book[21]["title"]) == "The Basin Mark", "chart 22 stays the basin capstone")
@@ -242,6 +245,8 @@ func test_charts() -> void:
 	check(str(book[110]["title"]) == "The Dry Lintel", "chart 111 opens the lintel")
 	check(str(book[117]["id"]) == "118" and str(book[117]["title"]) == "The Lintel Mark", "chart 118 stays the lintel capstone")
 	check(str(book[118]["title"]) == "The Dry Mullion", "chart 119 opens the mullion")
+	check(str(book[125]["id"]) == "126" and str(book[125]["title"]) == "The Mullion Mark", "chart 126 stays the mullion capstone")
+	check(str(book[126]["title"]) == "The Dry Transom", "chart 127 opens the transom")
 	var seen_ids := {}
 	var seen_titles := {}
 	var quay_titles := ["First Glass", "Around the Pilings", "High Water", "Sleeping Hull", "Split the White", "The Night Mark"]
@@ -253,7 +258,7 @@ func test_charts() -> void:
 		var title := str(chart["title"])
 		check(not seen_ids.has(id), "chart id %s is unique" % id)
 		if seen_titles.has(title):
-			var echoed := (title == "After the Color" and id == "81") or (title == "Above the Gate" and (id == "84" or id == "92" or id == "100" or id == "108")) or (title == "Side Entry" and (id == "88" or id == "96" or id == "104")) or (title == "White Through" and (id == "97" or id == "105")) or (title == "Dry Stop" and (id == "90" or id == "98" or id == "106")) or (title == "The Wet Stop" and id == "120") or (title == "Color Kept" and id == "121") or (title == "No Turn" and id == "122")
+			var echoed := (title == "After the Color" and id == "81") or (title == "Above the Gate" and (id == "84" or id == "92" or id == "100" or id == "108")) or (title == "Side Entry" and (id == "88" or id == "96" or id == "104")) or (title == "White Through" and (id == "97" or id == "105")) or (title == "Dry Stop" and (id == "90" or id == "98" or id == "106")) or (title == "The Wet Stop" and (id == "120" or id == "128")) or (title == "Color Kept" and (id == "121" or id == "129")) or (title == "No Turn" and (id == "122" or id == "130")) or (title == "Beside the Flood" and id == "131")
 			check(echoed, "chart title %s is unique" % title)
 		else:
 			check(true, "chart title %s is unique" % title)
@@ -4398,6 +4403,383 @@ func _expect_lintel_miss(index: int, piece_id: String, kind: String, rot: int, l
 		check(true, "%s misses lintel chart %d" % [label, index + 111])
 
 
+func test_transom_rule() -> void:
+	check(Tracer.norm_rot("transom", 0) == 0 and Tracer.norm_rot("transom", 90) == 0, "a transom ignores a quarter turn")
+	check(Tracer.norm_rot("transom", 180) == 0 and Tracer.norm_rot("transom", 270) == 0, "a transom ignores a half turn")
+	check(Tracer.norm_rot("transom", 360) == 0 and Tracer.norm_rot("transom", 450) == 0, "a transom ignores a full turn")
+	check(Tracer.turn_rot("transom", 0) == 0 and Tracer.turn_rot("transom", 90) == 0, "clicking a transom does not walk a facing")
+	var hinted: Dictionary = Charts.transom()[0]
+	var solved_hint := Charts.make_state(hinted, true)
+	check(not Hints.wrong_pieces(hinted, solved_hint).has("O"), "a hint accepts the dry transom")
+	for spun in [90, 180, 270, 450]:
+		var turned := Charts.duplicate_state(solved_hint)
+		turned["pieces"]["O"]["rot"] = spun
+		check(not Hints.wrong_pieces(hinted, turned).has("O"), "a hint ignores transom rotation %d" % spun)
+	var carried := {}
+	carried[Vector2i(0, 0)] = {"kind": "transom"}
+	check(not Tracer._flood_carries(carried, Vector2i(0, 0)), "a flooded transom does not carry the beam")
+
+	for color in ["red", "blue", "white"]:
+		for dir in ["E", "W"]:
+			var pass_lane := _blank(5, 5)
+			var pass_at := Vector2i(2, 2)
+			var pass_step: Vector2i = Tracer.VEC[dir]
+			var pass_lamp := pass_at - pass_step
+			var pass_dock := pass_at + pass_step * 2
+			pass_lane["lanterns"] = [_lamp("L", pass_lamp.x, pass_lamp.y, dir, color)]
+			pass_lane["docks"] = [_need("D", pass_dock.x, pass_dock.y, color)]
+			pass_lane["pieces"] = [_fixed_transom("O", pass_at.x, pass_at.y)]
+			var pass_sigs: Array = []
+			for rot in [0, 90, 180, 270]:
+				pass_lane["pieces"][0]["start_rot"] = rot
+				pass_lane["pieces"][0]["solution_rot"] = rot
+				var pass_hit: Dictionary = Tracer.trace(pass_lane, Charts.make_state(pass_lane, true))
+				check(pass_hit["docks"]["D"].has(color) and pass_hit["docks"]["D"].size() == 1, "a dry transom keeps %s traveling %s" % [color, dir])
+				check(_arrives_from(pass_hit, pass_at.x, pass_at.y, dir, color) and _leaves(pass_hit, pass_at.x, pass_at.y, dir, color), "a dry transom passes %s straight %s" % [color, dir])
+				check(not _departs(pass_hit, pass_at.x, pass_at.y, "red" if color != "red" else "blue"), "a dry transom does not recolor %s" % color)
+				pass_sigs.append(_trace_sig(pass_hit))
+			check(pass_sigs[0] == pass_sigs[1] and pass_sigs[1] == pass_sigs[2] and pass_sigs[2] == pass_sigs[3], "rotation does not change a dry %s %s pass" % [color, dir])
+		for dir in ["N", "S"]:
+			var stop_lane := _blank(5, 5)
+			var stop_at := Vector2i(2, 2)
+			var stop_step: Vector2i = Tracer.VEC[dir]
+			var stop_lamp := stop_at - stop_step
+			var stop_dock := stop_at + stop_step * 2
+			stop_lane["lanterns"] = [_lamp("L", stop_lamp.x, stop_lamp.y, dir, color)]
+			stop_lane["docks"] = [_need("D", stop_dock.x, stop_dock.y, color)]
+			stop_lane["pieces"] = [_fixed_transom("O", stop_at.x, stop_at.y)]
+			var stop_sigs: Array = []
+			for rot in [0, 90, 180, 270]:
+				stop_lane["pieces"][0]["start_rot"] = rot
+				stop_lane["pieces"][0]["solution_rot"] = rot
+				var stop_hit: Dictionary = Tracer.trace(stop_lane, Charts.make_state(stop_lane, true))
+				check(not _center_hit(stop_hit, stop_at.x, stop_at.y) and not _leaves(stop_hit, stop_at.x, stop_at.y, dir, color) and stop_hit["docks"]["D"].is_empty(), "a dry transom stops %s traveling %s before the cell" % [color, dir])
+				stop_sigs.append(_trace_sig(stop_hit))
+			check(stop_sigs[0] == stop_sigs[1] and stop_sigs[1] == stop_sigs[2] and stop_sigs[2] == stop_sigs[3], "rotation does not change a dry %s %s stop" % [color, dir])
+
+	var row := _transom_row(20)
+	check(Tracer.trace(row, Charts.make_state(row, true))["docks"]["D"].has("white"), "twenty dry transoms still reach the dock")
+	var south := _blank(1, 4)
+	south["lanterns"] = [_lamp("L", 0, 0, "S", "white")]
+	south["docks"] = [_need("D", 0, 3, "white")]
+	south["pieces"] = [_fixed_transom("O", 0, 1)]
+	var south_hit: Dictionary = Tracer.trace(south, Charts.make_state(south, true))
+	check(not _center_hit(south_hit, 0, 1) and south_hit["docks"]["D"].is_empty(), "one dry transom stops a southbound beam")
+
+	var stopped := _blank(5, 6)
+	stopped["tide_phases"] = [2]
+	stopped["lanterns"] = [_lamp("L", 2, 2, "S", "white")]
+	stopped["docks"] = [_need("D", 2, 5, "white")]
+	var open_hit: Dictionary = Tracer.trace(stopped, Charts.make_state(stopped, true))
+	stopped["pieces"] = [_fixed_transom("O", 2, 4)]
+	var shut_state := Charts.make_state(stopped, true)
+	check(Tracer.is_flooded(stopped, shut_state, Vector2i(2, 4)) and not Tracer.is_flooded(stopped, shut_state, Vector2i(2, 2)), "the sample transom is under water and the lamp is dry")
+	var shut_hit: Dictionary = Tracer.trace(stopped, shut_state)
+	check(not _center_hit(shut_hit, 2, 4) and shut_hit["docks"]["D"].is_empty(), "a flooded transom stops the beam at the waterline")
+	check(_trace_sig(shut_hit) == _trace_sig(open_hit), "a flooded transom does not carry the beam")
+	stopped["pieces"] = [_fixed_vane("V", 2, 4, 90)]
+	check(_trace_sig(Tracer.trace(stopped, Charts.make_state(stopped, true))) == _trace_sig(shut_hit), "a flooded transom stops the way a flooded vane stops")
+	stopped["pieces"] = [_fixed_shutter("G", 2, 4)]
+	var opened: Dictionary = Tracer.trace(stopped, Charts.make_state(stopped, true))
+	check(_center_hit(opened, 2, 4) and _departs(opened, 2, 4, "white"), "a flooded shutter passes where the transom stops")
+	var east_flood := _blank(5, 4)
+	east_flood["tide_phases"] = [2]
+	east_flood["lanterns"] = [_lamp("L", 0, 1, "S", "white")]
+	east_flood["fixtures"] = [
+		{"id": "S0", "kind": "shutter", "x": 0, "y": 2, "rot": 0},
+		{"id": "T0", "kind": "tide_mirror", "x": 0, "y": 3, "rot": 90},
+		{"id": "S1", "kind": "shutter", "x": 1, "y": 3, "rot": 0},
+	]
+	east_flood["pieces"] = [_fixed_transom("O", 2, 3)]
+	var east_flood_hit: Dictionary = Tracer.trace(east_flood, Charts.make_state(east_flood, true))
+	check(Tracer.is_flooded(east_flood, Charts.make_state(east_flood, true), Vector2i(2, 3)) and not _center_hit(east_flood_hit, 2, 3) and not _arrives_from(east_flood_hit, 2, 3, "E", "white"), "a flooded transom stops an eastbound beam before the cell")
+	east_flood["pieces"] = [_fixed_shutter("G", 2, 3)]
+	var east_open: Dictionary = Tracer.trace(east_flood, Charts.make_state(east_flood, true))
+	check(_center_hit(east_open, 2, 3) and _departs(east_open, 2, 3, "white"), "a flooded shutter passes the eastbound beam a transom stops")
+	var dry := _blank(5, 3)
+	dry["lanterns"] = [_lamp("L", 0, 1, "E", "blue")]
+	dry["docks"] = [_need("D", 4, 1, "blue")]
+	dry["pieces"] = [_fixed_transom("O", 2, 1)]
+	var dry_hit: Dictionary = Tracer.trace(dry, Charts.make_state(dry, true))
+	check(_leaves(dry_hit, 2, 1, "E", "blue") and dry_hit["docks"]["D"].has("blue"), "a dry transom passes the beam a dry shutter would stop")
+	dry["pieces"] = [_fixed_shutter("G", 2, 1)]
+	var dry_gate: Dictionary = Tracer.trace(dry, Charts.make_state(dry, true))
+	check(_center_hit(dry_gate, 2, 1) and not _departs(dry_gate, 2, 1, "blue") and dry_gate["docks"]["D"].is_empty(), "a dry shutter stops where the transom passes")
+	dry["pieces"] = [_fixed_stain("K", 2, 1, 0)]
+	var painted: Dictionary = Tracer.trace(dry, Charts.make_state(dry, true))
+	check(_leaves(painted, 2, 1, "E", "red") and not _leaves(painted, 2, 1, "E", "blue") and painted["docks"]["D"].has("red"), "a stain recolors the pass a transom keeps")
+	var across := _blank(3, 5)
+	across["lanterns"] = [_lamp("L", 1, 0, "S", "white")]
+	across["docks"] = [_need("D", 1, 4, "white")]
+	across["pieces"] = [_fixed_transom("O", 1, 2)]
+	var across_hit: Dictionary = Tracer.trace(across, Charts.make_state(across, true))
+	check(not _center_hit(across_hit, 1, 2) and across_hit["docks"]["D"].is_empty(), "a dry transom stops the north-south beam a mullion would pass")
+	across["pieces"] = [_fixed_mullion("U", 1, 2)]
+	var across_open: Dictionary = Tracer.trace(across, Charts.make_state(across, true))
+	check(_leaves(across_open, 1, 2, "S", "white") and across_open["docks"]["D"].has("white"), "a dry mullion passes the north-south beam a transom stops")
+	across["pieces"] = [_fixed_lintel("N", 1, 2)]
+	var across_lintel: Dictionary = Tracer.trace(across, Charts.make_state(across, true))
+	check(_leaves(across_lintel, 1, 2, "S", "white") and across_lintel["docks"]["D"].has("white"), "a dry lintel passes the north-south beam a transom stops")
+	var along := _blank(5, 1)
+	along["lanterns"] = [_lamp("L", 0, 0, "E", "white")]
+	along["docks"] = [_need("D", 4, 0, "white")]
+	along["pieces"] = [_fixed_mullion("U", 2, 0)]
+	check(not _center_hit(Tracer.trace(along, Charts.make_state(along, true)), 2, 0), "a dry mullion stops the east-west beam a transom passes")
+	along["pieces"] = [_fixed_transom("O", 2, 0)]
+	check(_leaves(Tracer.trace(along, Charts.make_state(along, true)), 2, 0, "E", "white"), "a dry transom passes the east-west beam a mullion stops")
+	stopped["pieces"] = [_fixed_transom("O", 2, 4)]
+	stopped["lanterns"] = [_lamp("L", 2, 2, "S", "white")]
+	stopped["docks"] = [_need("D", 2, 5, "white")]
+	stopped["fixtures"] = []
+	check(not _center_hit(Tracer.trace(stopped, Charts.make_state(stopped, true)), 2, 4), "a flooded transom does not leave along a facing")
+
+
+func test_transom_book() -> void:
+	var book: Array = Charts.transom()
+	check(book.size() == 8, "transom book has eight charts")
+	var titles := ["The Dry Transom", "The Wet Stop", "Color Kept", "No Turn", "Beside the Flood", "Two Transoms", "The Held Transom", "The Transom Mark"]
+	for i in book.size():
+		var chart: Dictionary = book[i]
+		check(str(chart["id"]) == str(i + 127), "transom chart %d keeps its number" % (i + 127))
+		check(str(chart["title"]) == str(titles[i]), "transom chart %d keeps its title" % (i + 127))
+		check(str(chart["harbor"]) == Charts.TRANSOM, "chart %s belongs to the transom" % str(chart["id"]))
+		check(int(chart["tide_phases"].size()) >= 1, "chart %s has a tide" % str(chart["id"]))
+		var phases: Array = chart["tide_phases"]
+		check(phases.size() == 1 or int(chart["solution_tide_index"]) < phases.size(), "chart %s solution tide is one of its phases" % str(chart["id"]))
+		var transom_count := 0
+		for raw_piece in chart["pieces"]:
+			var piece: Dictionary = raw_piece
+			if str(piece["kind"]) == "transom":
+				transom_count += 1
+		check(transom_count >= 1, "chart %s needs the transom" % str(chart["id"]))
+	for older in Charts.all().slice(0, 126):
+		for raw_piece in older["pieces"]:
+			var older_piece: Dictionary = raw_piece
+			check(str(older_piece["kind"]) != "transom", "chart %s keeps its pieces" % str(older["id"]))
+		for raw_fix in older["fixtures"]:
+			var older_fix: Dictionary = raw_fix
+			check(str(older_fix["kind"]) != "transom", "chart %s keeps its fixed glass" % str(older["id"]))
+	for i in book.size():
+		var chart_id := str(i + 127)
+		var piece_ids: Array = []
+		for raw_piece in book[i]["pieces"]:
+			var piece: Dictionary = raw_piece
+			if str(piece["kind"]) == "transom":
+				piece_ids.append(str(piece["id"]))
+		for piece_id in piece_ids:
+			if chart_id == "128" or chart_id == "131" or chart_id == "133":
+				_expect_transom_miss(i, piece_id, "shutter", 0, "shutter")
+				_expect_transom_miss(i, piece_id, "stain", 0, "red stain")
+				_expect_transom_miss(i, piece_id, "stain", 90, "blue stain")
+				_expect_transom_clear(i, piece_id, "mullion", 0, "flooded mullion")
+				_expect_transom_clear(i, piece_id, "lintel", 0, "flooded lintel")
+				for facing in [0, 90, 180, 270]:
+					_expect_transom_clear(i, piece_id, "vane", facing, "flooded vane %d" % facing)
+				_expect_transom_clear(i, piece_id, "mirror", 0, "flooded mirror /")
+				_expect_transom_clear(i, piece_id, "mirror", 90, "flooded mirror \\")
+			else:
+				_expect_transom_miss(i, piece_id, "mullion", 0, "mullion")
+				_expect_transom_miss(i, piece_id, "lintel", 0, "lintel")
+				_expect_transom_miss(i, piece_id, "shutter", 0, "shutter")
+				_expect_transom_miss(i, piece_id, "well", 0, "well")
+				_expect_transom_miss(i, piece_id, "siphon", 0, "siphon")
+				_expect_transom_miss(i, piece_id, "stain", 0, "red stain")
+				_expect_transom_miss(i, piece_id, "stain", 90, "blue stain")
+				for facing in [0, 90, 180, 270]:
+					_expect_transom_miss(i, piece_id, "weir", facing, "weir %d" % facing)
+					_expect_transom_miss(i, piece_id, "sluice", facing, "sluice %d" % facing)
+					_expect_transom_miss(i, piece_id, "vane", facing, "vane %d" % facing)
+				_expect_transom_miss(i, piece_id, "mirror", 0, "mirror /")
+				_expect_transom_miss(i, piece_id, "mirror", 90, "mirror \\")
+	_expect_transom_clear(1, "O", "well", 0, "well")
+	_expect_transom_clear(1, "O", "siphon", 0, "siphon")
+	for facing in [0, 180, 270]:
+		_expect_transom_clear(1, "O", "weir", facing, "weir %d" % facing)
+		_expect_transom_clear(1, "O", "sluice", facing, "sluice %d" % facing)
+	_expect_transom_miss(1, "O", "weir", 90, "east weir")
+	_expect_transom_miss(1, "O", "sluice", 90, "east sluice")
+	_expect_transom_miss(4, "O", "well", 0, "well")
+	_expect_transom_miss(4, "O", "siphon", 0, "siphon")
+	for facing in [0, 90, 180]:
+		_expect_transom_miss(4, "O", "weir", facing, "weir %d" % facing)
+		_expect_transom_miss(4, "O", "sluice", facing, "sluice %d" % facing)
+	_expect_transom_clear(4, "O", "weir", 270, "west weir")
+	_expect_transom_clear(4, "O", "sluice", 270, "west sluice")
+	_expect_transom_clear(6, "O", "well", 0, "well")
+	_expect_transom_clear(6, "O", "siphon", 0, "siphon")
+	for facing in [0, 90, 270]:
+		_expect_transom_clear(6, "O", "weir", facing, "weir %d" % facing)
+		_expect_transom_clear(6, "O", "sluice", facing, "sluice %d" % facing)
+	_expect_transom_miss(6, "O", "weir", 180, "south weir")
+	_expect_transom_miss(6, "O", "sluice", 180, "south sluice")
+
+	var dry: Dictionary = book[0]
+	var dry_solved := Charts.make_state(dry, true)
+	check(int(dry_solved["tide_index"]) == 0 and Tracer.flood_count(dry, dry_solved) == 0, "chart 127 is tide index 0 and flood 0")
+	var dry_hit: Dictionary = Tracer.trace(dry, dry_solved)
+	check(_center_hit(dry_hit, 4, 3) and _leaves(dry_hit, 4, 3, "W", "white") and not _leaves(dry_hit, 4, 3, "S", "blue"), "chart 127 passes white west and stops blue")
+	check(not _arrives_from(dry_hit, 4, 3, "S", "blue"), "chart 127 south beam does not enter the transom")
+	check(dry_hit["docks"]["Wd"].has("white") and dry_hit["docks"]["Wd"].size() == 1 and not bool(dry_hit["boats"]["Hs"]) and not bool(dry_hit["boats"]["Ht"]) and not bool(dry_hit["boats"]["Hb"]), "chart 127 lights the white dock and leaves the hulls dark")
+	for kept_color in ["red", "blue"]:
+		var kept: Dictionary = Charts.transom()[0]
+		kept["lanterns"][0]["color"] = kept_color
+		kept["docks"][0]["color"] = kept_color
+		var kept_hit: Dictionary = Tracer.trace(kept, Charts.make_state(kept, true))
+		check(kept_hit["docks"]["Wd"].has(kept_color) and Tracer.is_cleared(kept, Charts.make_state(kept, true)), "chart 127 keeps %s on the east-west pass" % kept_color)
+	var dry_mullion: Dictionary = Charts.transom()[0]
+	_retarget(dry_mullion, "O", "mullion", 0)
+	var dry_mullion_hit: Dictionary = Tracer.trace(dry_mullion, Charts.make_state(dry_mullion, true))
+	check(bool(dry_mullion_hit["boats"]["Hs"]) and not Tracer.is_cleared(dry_mullion, Charts.make_state(dry_mullion, true)), "a mullion on chart 127 lets the north-south beam through")
+	var dry_lintel: Dictionary = Charts.transom()[0]
+	_retarget(dry_lintel, "O", "lintel", 0)
+	var dry_lintel_hit: Dictionary = Tracer.trace(dry_lintel, Charts.make_state(dry_lintel, true))
+	check(bool(dry_lintel_hit["boats"]["Hs"]) and not Tracer.is_cleared(dry_lintel, Charts.make_state(dry_lintel, true)), "a lintel on chart 127 lets the north-south beam through")
+
+	var wet: Dictionary = book[1]
+	var wet_solved := Charts.make_state(wet, true)
+	var wet_hit: Dictionary = Tracer.trace(wet, wet_solved)
+	check(Tracer.is_flooded(wet, wet_solved, Vector2i(3, 6)) and not Tracer.is_flooded(wet, wet_solved, Vector2i(4, 0)), "chart 128 floods the transom and leaves the dock dry")
+	check(not _center_hit(wet_hit, 3, 6) and not _arrives_from(wet_hit, 3, 6, "E", "white") and wet_hit["docks"]["W"].has("white"), "chart 128 lights the dock without entering the transom")
+	var saw_edge := false
+	for raw_edge in wet_hit["segments"]:
+		var edge: Dictionary = raw_edge
+		if str(edge["color"]) == "white" and is_equal_approx(float(edge["y0"]), 6.5) and is_equal_approx(float(edge["y1"]), 6.5) and float(edge["x1"]) > 2.6 and float(edge["x1"]) < 3.4:
+			saw_edge = true
+	check(saw_edge, "chart 128 eastbound beam stops on the transom edge")
+	check(not bool(wet_hit["boats"]["He"]), "chart 128 leaves the hull dark")
+	var wet_shut: Dictionary = Charts.transom()[1]
+	_retarget(wet_shut, "O", "shutter", 0)
+	var wet_shut_hit: Dictionary = Tracer.trace(wet_shut, Charts.make_state(wet_shut, true))
+	check(_center_hit(wet_shut_hit, 3, 6) and bool(wet_shut_hit["boats"]["He"]) and not Tracer.is_cleared(wet_shut, Charts.make_state(wet_shut, true)), "a shutter on chart 128 passes and the chart fails")
+
+	var colors: Dictionary = book[2]
+	var colors_hit: Dictionary = Tracer.trace(colors, Charts.make_state(colors, true))
+	check(_leaves(colors_hit, 3, 3, "W", "white") and _leaves(colors_hit, 3, 3, "E", "blue") and not _arrives_from(colors_hit, 3, 3, "S", "red"), "chart 129 passes white and blue and stops red")
+	check(colors_hit["docks"]["Wd"].has("white") and colors_hit["docks"]["Bd"].has("blue") and not bool(colors_hit["boats"]["Hs"]), "chart 129 lands both colors and leaves the south hull dark")
+	var red_pass: Dictionary = Charts.transom()[2]
+	red_pass["lanterns"][0]["color"] = "red"
+	red_pass["docks"][1]["color"] = "red"
+	check(Tracer.trace(red_pass, Charts.make_state(red_pass, true))["docks"]["Wd"].has("red") and Tracer.is_cleared(red_pass, Charts.make_state(red_pass, true)), "chart 129 keeps red on the east-west pass")
+	var stained: Dictionary = Charts.transom()[2]
+	_retarget(stained, "O", "stain", 0)
+	check(not Tracer.trace(stained, Charts.make_state(stained, true))["docks"]["Wd"].has("white") and not Tracer.is_cleared(stained, Charts.make_state(stained, true)), "a stain on chart 129 changes the color and misses")
+	var color_mullion: Dictionary = Charts.transom()[2]
+	_retarget(color_mullion, "O", "mullion", 0)
+	check(bool(Tracer.trace(color_mullion, Charts.make_state(color_mullion, true))["boats"]["Hs"]) and not Tracer.is_cleared(color_mullion, Charts.make_state(color_mullion, true)), "a mullion on chart 129 lets the north-south beam through")
+	var color_lintel: Dictionary = Charts.transom()[2]
+	_retarget(color_lintel, "O", "lintel", 0)
+	check(bool(Tracer.trace(color_lintel, Charts.make_state(color_lintel, true))["boats"]["Hs"]) and not Tracer.is_cleared(color_lintel, Charts.make_state(color_lintel, true)), "a lintel on chart 129 lets the north-south beam through")
+
+	var straight: Dictionary = book[3]
+	var straight_hit: Dictionary = Tracer.trace(straight, Charts.make_state(straight, true))
+	check(_leaves(straight_hit, 3, 3, "W", "white") and not _leaves(straight_hit, 3, 3, "S", "blue") and not _leaves(straight_hit, 3, 3, "N", "white"), "chart 130 goes straight and does not turn")
+	check(straight_hit["docks"]["Wd"].has("white") and straight_hit["docks"]["Kd"].is_empty(), "chart 130 lights one dock and holds the other dark")
+	var turned_vane: Dictionary = Charts.transom()[3]
+	_retarget(turned_vane, "O", "vane", 90)
+	check(not Tracer.is_cleared(turned_vane, Charts.make_state(turned_vane, true)), "a vane on chart 130 turns a beam and misses")
+	var turned_mirror: Dictionary = Charts.transom()[3]
+	_retarget(turned_mirror, "O", "mirror", 0)
+	check(straight_hit["docks"]["Wd"].has("white") and not Tracer.trace(turned_mirror, Charts.make_state(turned_mirror, true))["docks"]["Wd"].has("white"), "a mirror on chart 130 misses the dock that depends on the straight pass")
+	var stop_mullion: Dictionary = Charts.transom()[3]
+	_retarget(stop_mullion, "O", "mullion", 0)
+	check(not Tracer.trace(stop_mullion, Charts.make_state(stop_mullion, true))["docks"]["Kd"].is_empty() and not Tracer.is_cleared(stop_mullion, Charts.make_state(stop_mullion, true)), "a mullion on chart 130 lets the north-south beam through")
+	var stop_lintel: Dictionary = Charts.transom()[3]
+	_retarget(stop_lintel, "O", "lintel", 0)
+	check(not Tracer.trace(stop_lintel, Charts.make_state(stop_lintel, true))["docks"]["Kd"].is_empty() and not Tracer.is_cleared(stop_lintel, Charts.make_state(stop_lintel, true)), "a lintel on chart 130 lets the north-south beam through")
+
+	var beside: Dictionary = book[4]
+	var beside_solved := Charts.make_state(beside, true)
+	var beside_hit: Dictionary = Tracer.trace(beside, beside_solved)
+	check(Tracer.is_flooded(beside, beside_solved, Vector2i(3, 4)) and not Tracer.is_flooded(beside, beside_solved, Vector2i(5, 0)), "chart 131 covers the transom and leaves the dock row dry")
+	check(not _center_hit(beside_hit, 3, 4) and beside_hit["docks"]["W"].has("white") and not bool(beside_hit["boats"]["He"]), "chart 131 stops at the transom and lights the dry dock")
+	var beside_shut: Dictionary = Charts.transom()[4]
+	_retarget(beside_shut, "O", "shutter", 0)
+	var beside_shut_hit: Dictionary = Tracer.trace(beside_shut, Charts.make_state(beside_shut, true))
+	check(_center_hit(beside_shut_hit, 3, 4) and bool(beside_shut_hit["boats"]["He"]) and not Tracer.is_cleared(beside_shut, Charts.make_state(beside_shut, true)), "a shutter on chart 131 carries the beam onto a dry hull")
+
+	var pair: Dictionary = book[5]
+	var pair_hit: Dictionary = Tracer.trace(pair, Charts.make_state(pair, true))
+	check(_center_hit(pair_hit, 4, 3) and _center_hit(pair_hit, 2, 3) and _leaves(pair_hit, 2, 3, "W", "white") and pair_hit["docks"]["Wd"].has("white"), "chart 132 passes straight through both transoms")
+	check(not _arrives_from(pair_hit, 4, 3, "S", "blue") and not bool(pair_hit["boats"]["Hs"]) and not bool(pair_hit["boats"]["Hr"]), "chart 132 stops the north-south beam at the first transom")
+	var pair_mullion: Dictionary = Charts.transom()[5]
+	_retarget(pair_mullion, "O1", "mullion", 0)
+	check(bool(Tracer.trace(pair_mullion, Charts.make_state(pair_mullion, true))["boats"]["Hs"]) and not Tracer.is_cleared(pair_mullion, Charts.make_state(pair_mullion, true)), "a mullion in the first cell of chart 132 lets the north-south beam through")
+	var pair_lintel: Dictionary = Charts.transom()[5]
+	_retarget(pair_lintel, "O1", "lintel", 0)
+	check(bool(Tracer.trace(pair_lintel, Charts.make_state(pair_lintel, true))["boats"]["Hs"]) and not Tracer.is_cleared(pair_lintel, Charts.make_state(pair_lintel, true)), "a lintel in the first cell of chart 132 lets the north-south beam through")
+	var pair_weir: Dictionary = Charts.transom()[5]
+	_retarget(pair_weir, "O1", "weir", 90)
+	check(not Tracer.is_cleared(pair_weir, Charts.make_state(pair_weir, true)) and Tracer.trace(pair_weir, Charts.make_state(pair_weir, true))["docks"]["Wd"].is_empty(), "a weir in the first cell of chart 132 stops on the dry row")
+
+	var held: Dictionary = book[6]
+	var held_solved := Charts.make_state(held, true)
+	check(int(held_solved["tide_index"]) == 1 and Tracer.flood_count(held, held_solved) == 2, "chart 133 holds tide index 1 and flood 2")
+	check(Tracer.is_flooded(held, held_solved, Vector2i(3, 5)) and not Tracer.is_flooded(held, held_solved, Vector2i(4, 4)), "chart 133 flood line is y >= 5")
+	var held_hit: Dictionary = Tracer.trace(held, held_solved)
+	check(not _center_hit(held_hit, 3, 5) and held_hit["docks"]["W"].has("white") and held_hit["docks"]["Kd"].is_empty() and not bool(held_hit["boats"]["Hb"]) and not bool(held_hit["boats"]["Hm"]), "chart 133 lights the dry dock and holds the other dark")
+	var held_shut: Dictionary = Charts.transom()[6]
+	_retarget(held_shut, "O", "shutter", 0)
+	var held_shut_hit: Dictionary = Tracer.trace(held_shut, Charts.make_state(held_shut, true))
+	check(not held_shut_hit["docks"]["Kd"].is_empty() and not Tracer.is_cleared(held_shut, Charts.make_state(held_shut, true)), "a shutter on chart 133 lights the dock that must stay dark")
+	var held_low := Charts.duplicate_state(held_solved)
+	held_low["tide_index"] = 0
+	check(bool(Tracer.trace(held, held_low)["boats"]["Hb"]) and not Tracer.is_cleared(held, held_low), "chart 133 low water wakes the south hull")
+	var held_high := Charts.duplicate_state(held_solved)
+	held_high["tide_index"] = 2
+	check(Tracer.is_flooded(held, held_high, Vector2i(4, 4)) and not Tracer.trace(held, held_high)["docks"]["W"].has("white"), "chart 133 high water covers the dock")
+
+	var mark: Dictionary = book[7]
+	var mark_start := Charts.make_state(mark, false)
+	check(str(mark_start["pieces"]["O"]["socket"]) == "side" and str(mark_start["pieces"]["G"]["socket"]) == "line", "chart 134 transom starts in the side socket")
+	var mark_start_hit: Dictionary = Tracer.trace(mark, mark_start)
+	check(mark_start_hit["docks"]["Wd"].is_empty() and mark_start_hit["docks"]["Kd"].is_empty(), "chart 134 side socket misses both docks")
+	var mark_solved := Charts.make_state(mark, true)
+	check(str(mark_solved["pieces"]["O"]["socket"]) == "line" and str(mark_solved["pieces"]["G"]["socket"]) == "side", "chart 134 solution puts the transom on the line")
+	var mark_hit: Dictionary = Tracer.trace(mark, mark_solved)
+	check(_leaves(mark_hit, 3, 3, "W", "white") and not _arrives_from(mark_hit, 3, 3, "S", "blue") and mark_hit["docks"]["Wd"].has("white") and mark_hit["docks"]["Kd"].is_empty() and not bool(mark_hit["boats"]["Hb"]), "chart 134 passes one dock and holds the other dark")
+	var stacked := Charts.duplicate_state(mark_solved)
+	stacked["pieces"]["G"]["socket"] = "line"
+	check(not Tracer.is_cleared(mark, stacked), "chart 134 two pieces on the line do not clear")
+	var aside := Charts.duplicate_state(mark_solved)
+	aside["pieces"]["O"]["socket"] = "side"
+	aside["pieces"]["G"]["socket"] = "side"
+	check(not Tracer.is_cleared(mark, aside), "chart 134 two pieces on the side socket do not clear")
+	var mark_mullion: Dictionary = Charts.transom()[7]
+	_retarget(mark_mullion, "O", "mullion", 0)
+	check(not Tracer.trace(mark_mullion, Charts.make_state(mark_mullion, true))["docks"]["Kd"].is_empty() and not Tracer.is_cleared(mark_mullion, Charts.make_state(mark_mullion, true)), "a mullion on chart 134 lets the north-south beam through")
+	var mark_lintel: Dictionary = Charts.transom()[7]
+	_retarget(mark_lintel, "O", "lintel", 0)
+	check(not Tracer.trace(mark_lintel, Charts.make_state(mark_lintel, true))["docks"]["Kd"].is_empty() and not Tracer.is_cleared(mark_lintel, Charts.make_state(mark_lintel, true)), "a lintel on chart 134 lets the north-south beam through")
+	check(str(book[0]["teach"]).to_lower().contains("tide index 0") and str(book[0]["teach"]).to_lower().contains("mullion") and str(book[0]["teach"]).to_lower().contains("lintel"), "chart 127 teaches the dry transom")
+	check(str(book[1]["teach"]).to_lower().contains("shutter") and str(book[1]["teach"]).to_lower().contains("still clears") and str(book[1]["teach"]).to_lower().contains("mullion"), "chart 128 teaches the wet stop")
+	check(str(book[2]["teach"]).to_lower().contains("red") and str(book[2]["teach"]).to_lower().contains("stain") and str(book[2]["teach"]).to_lower().contains("mullion") and str(book[2]["teach"]).to_lower().contains("lintel"), "chart 129 teaches the kept colors")
+	check(str(book[3]["teach"]).to_lower().contains("mirror") and str(book[3]["teach"]).to_lower().contains("vane") and str(book[3]["teach"]).to_lower().contains("mullion") and str(book[3]["teach"]).to_lower().contains("lintel"), "chart 130 teaches the stop")
+	check(str(book[4]["teach"]).to_lower().contains("shutter") and str(book[4]["teach"]).to_lower().contains("still clears") and str(book[4]["teach"]).to_lower().contains("mullion"), "chart 131 teaches the flood")
+	check(str(book[5]["teach"]).to_lower().contains("first") and str(book[5]["teach"]).to_lower().contains("weir") and str(book[5]["teach"]).to_lower().contains("mullion"), "chart 132 teaches both transoms")
+	check(str(book[6]["teach"]).to_lower().contains("shutter") and str(book[6]["teach"]).to_lower().contains("still clears") and str(book[6]["teach"]).to_lower().contains("mullion"), "chart 133 teaches the held transom")
+	check(str(book[7]["teach"]).to_lower().contains("side socket") and str(book[7]["teach"]).to_lower().contains("mullion") and str(book[7]["teach"]).to_lower().contains("lintel"), "chart 134 teaches the transom mark")
+
+
+func _expect_transom_miss(index: int, piece_id: String, kind: String, rot: int, label: String) -> void:
+	var chart: Dictionary = Charts.transom()[index]
+	_retarget(chart, piece_id, kind, rot)
+	var state := Charts.make_state(chart, true)
+	if Tracer.is_cleared(chart, state):
+		check(false, "%s clears transom chart %d" % [label, index + 127])
+	else:
+		check(true, "%s misses transom chart %d" % [label, index + 127])
+
+
+func _expect_transom_clear(index: int, piece_id: String, kind: String, rot: int, label: String) -> void:
+	var chart: Dictionary = Charts.transom()[index]
+	_retarget(chart, piece_id, kind, rot)
+	var state := Charts.make_state(chart, true)
+	if Tracer.is_cleared(chart, state):
+		check(true, "%s still clears transom chart %d" % [label, index + 127])
+	else:
+		check(false, "%s still clears transom chart %d notes=%s" % [label, index + 127, str(Tracer.failure_notes(chart, state))])
+
+
 func test_smoke() -> void:
 	var main_script: Script = load("res://scripts/main.gd")
 	main_script.persist_progress = false
@@ -4890,10 +5272,11 @@ func test_smoke() -> void:
 	var weir_rect: Rect2 = main.weir_book_button.get_global_rect()
 	var lintel_rect: Rect2 = main.lintel_book_button.get_global_rect()
 	var mullion_rect: Rect2 = main.mullion_book_button.get_global_rect()
+	var transom_rect: Rect2 = main.transom_book_button.get_global_rect()
 	var side_rect: Rect2 = main._side.get_global_rect()
-	check(side_rect.grow(1.0).encloses(sluice_rect) and side_rect.grow(1.0).encloses(weir_rect) and side_rect.grow(1.0).encloses(lintel_rect) and side_rect.grow(1.0).encloses(mullion_rect), "the sluice, weir, lintel, and mullion book buttons sit inside the side panel")
-	check(not sluice_rect.intersects(weir_rect) and not weir_rect.intersects(lintel_rect) and not lintel_rect.intersects(mullion_rect) and not sluice_rect.intersects(lintel_rect), "the mullion button sits with the lintel button")
-	check(sluice_rect.size.x + 0.5 >= main.sluice_book_button.get_minimum_size().x and weir_rect.size.x + 0.5 >= main.weir_book_button.get_minimum_size().x and lintel_rect.size.x + 0.5 >= main.lintel_book_button.get_minimum_size().x and mullion_rect.size.x + 0.5 >= main.mullion_book_button.get_minimum_size().x, "the sluice, weir, lintel, and mullion labels have room in the chart row")
+	check(side_rect.grow(1.0).encloses(sluice_rect) and side_rect.grow(1.0).encloses(weir_rect) and side_rect.grow(1.0).encloses(lintel_rect) and side_rect.grow(1.0).encloses(mullion_rect) and side_rect.grow(1.0).encloses(transom_rect), "the sluice, weir, lintel, mullion, and transom book buttons sit inside the side panel")
+	check(not sluice_rect.intersects(weir_rect) and not weir_rect.intersects(lintel_rect) and not lintel_rect.intersects(mullion_rect) and not mullion_rect.intersects(transom_rect) and not sluice_rect.intersects(lintel_rect), "the transom button sits with the mullion button")
+	check(sluice_rect.size.x + 0.5 >= main.sluice_book_button.get_minimum_size().x and weir_rect.size.x + 0.5 >= main.weir_book_button.get_minimum_size().x and lintel_rect.size.x + 0.5 >= main.lintel_book_button.get_minimum_size().x and mullion_rect.size.x + 0.5 >= main.mullion_book_button.get_minimum_size().x and transom_rect.size.x + 0.5 >= main.transom_book_button.get_minimum_size().x, "the sluice, weir, lintel, mullion, and transom labels have room in the chart row")
 	var window_w := int(ProjectSettings.get_setting("display/window/size/viewport_width"))
 	var window_h := int(ProjectSettings.get_setting("display/window/size/viewport_height"))
 	check(window_w == 1280 and window_h == 720, "the window stays 1280 by 720")
@@ -4940,7 +5323,7 @@ func test_smoke() -> void:
 	check(main.board_locked and main.unlocked[118], "holding the lintel mark opens the mullion")
 	main._advance_from_win()
 	check(str(main.chart["id"]) == "119", "next chart from the lintel mark enters The Dry Mullion")
-	check(main.mullion_grid.visible and not main.lintel_grid.visible, "the mullion grid opens with The Dry Mullion")
+	check(main.mullion_grid.visible and not main.lintel_grid.visible and not main.transom_grid.visible, "the mullion grid opens with The Dry Mullion")
 	check(str(main.harbor_label.text) == Charts.MULLION, "the harbor name follows the mullion")
 	check(str(main.tide_readout.text).to_lower().contains("mullion"), "chart 119 names the mullion in the water readout")
 	var mullion_cell := Charts.piece_cell(main.chart, main.state, "U")
@@ -4953,8 +5336,33 @@ func test_smoke() -> void:
 	main._on_book_pressed(15)
 	await process_frame
 	check(_chart_row_fits(main.mullion_grid, main._side), "the mullion chart row fits in the window")
+	main.unlocked[126] = false
+	main._refresh_chrome()
+	check(main.transom_book_button.disabled, "the transom stays locked until the mullion mark is held")
+	main.unlocked[125] = true
+	check(main.select_chart(125), "chart 126 opens when unlocked")
+	check(main.transom_book_button.disabled, "opening the mullion mark does not unlock the transom")
+	main.state = Charts.duplicate_state(Charts.make_state(main.chart, true))
+	main._refresh()
+	main.try_lock()
+	check(main.board_locked and main.unlocked[126], "holding the mullion mark opens the transom")
+	main._advance_from_win()
+	check(str(main.chart["id"]) == "127", "next chart from the mullion mark enters The Dry Transom")
+	check(main.transom_grid.visible and not main.mullion_grid.visible, "the transom grid opens with The Dry Transom")
+	check(str(main.harbor_label.text) == Charts.TRANSOM, "the harbor name follows the transom")
+	check(str(main.tide_readout.text).to_lower().contains("transom"), "chart 127 names the transom in the water readout")
+	var transom_cell := Charts.piece_cell(main.chart, main.state, "O")
+	_click_cell(main, transom_cell.x, transom_cell.y, false)
+	check(str(main.selected_id) == "O", "a click selects the transom")
+	check(int(main.state["pieces"]["O"]["rot"]) == 0, "the first click does not turn the transom")
+	_click_cell(main, transom_cell.x, transom_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 0, "a second click does not turn the transom")
+	check(str(main.status_label.text).to_lower().contains("does not turn"), "the transom says it does not turn")
+	main._on_book_pressed(16)
+	await process_frame
+	check(_chart_row_fits(main.transom_grid, main._side), "the transom chart row fits in the window")
 	main._on_book_pressed(13)
-	check(main.weir_grid.visible and not main.lintel_grid.visible and not main.mullion_grid.visible, "the weir book still opens")
+	check(main.weir_grid.visible and not main.lintel_grid.visible and not main.mullion_grid.visible and not main.transom_grid.visible, "the weir book still opens")
 	main.select_chart(0)
 	main.restart_chart()
 	var before_rot := int(main.state["pieces"]["M"]["rot"])
@@ -5039,10 +5447,11 @@ func _walk(chart: Dictionary, state: Dictionary, index: int, found: Array) -> vo
 	# A weir has four facings too. The exit follows that facing and swaps color.
 	# A lintel has no facing. Rotation is ignored.
 	# A mullion has no facing. Rotation is ignored.
+	# A transom has no facing. Rotation is ignored.
 	var rots: Array = [0]
 	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir":
 		rots = [0, 90, 180, 270]
-	elif kind != "shutter" and kind != "well" and kind != "siphon" and kind != "lintel" and kind != "mullion":
+	elif kind != "shutter" and kind != "well" and kind != "siphon" and kind != "lintel" and kind != "mullion" and kind != "transom":
 		rots = [0, 90]
 	for sock_raw in piece["sockets"]:
 		var sock: Dictionary = sock_raw
@@ -5245,6 +5654,31 @@ func _fixed_siphon(id: String, x: int, y: int) -> Dictionary:
 		"solution_socket": "a",
 		"solution_rot": 0,
 	}
+
+
+func _fixed_transom(id: String, x: int, y: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": "Transom",
+		"kind": "transom",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": 0,
+		"solution_socket": "a",
+		"solution_rot": 0,
+	}
+
+
+func _transom_row(count: int) -> Dictionary:
+	var chart := _blank(count + 2, 1)
+	chart["lanterns"] = [_lamp("L", 0, 0, "E", "white")]
+	chart["docks"] = [_need("D", count + 1, 0, "white")]
+	var pieces: Array = []
+	for x in range(1, count + 1):
+		pieces.append(_fixed_transom("O%d" % x, x, 0))
+	chart["pieces"] = pieces
+	return chart
 
 
 func _fixed_mullion(id: String, x: int, y: int) -> Dictionary:
