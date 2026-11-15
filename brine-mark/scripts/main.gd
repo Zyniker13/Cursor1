@@ -29,6 +29,7 @@ var covered_label: Label
 var salt_label: Label
 var ants_label: Label
 var mode_label: Label
+var season_label: Label
 var cursor_label: Label
 var status_label: Label
 var summary_label: Label
@@ -104,49 +105,63 @@ func _draw() -> void:
 	_draw_hill_tag()
 	_draw_cursor()
 	var ticks_left := int(sim.get_ticks_until_rain()) if sim != null else 0
-	if sim != null and (sim.is_over() or ticks_left < Sim.TICK_HZ * 3):
-		_draw_rain(sim.is_over())
+	var opening := false
+	if sim != null and sim.get_season() == Sim.DRY and not sim.is_over():
+		opening = ticks_left > Sim.DRY_TICK - Sim.TICK_HZ * 3
+	if sim != null and (sim.is_over() or ticks_left < Sim.TICK_HZ * 3 or opening):
+		_draw_rain(sim.is_over() or opening)
 
 
 func _draw_bars() -> void:
 	if sim == null:
 		return
 	var width := Sim.GRID_W * CELL - 2.0
-	var rain_frac := clampf(float(sim.get_ticks_until_rain()) / float(Sim.RAIN_TICK), 0.0, 1.0)
+	var span := Sim.DRY_TICK if sim.get_season() == Sim.DRY else Sim.RAIN_TICK
+	var rain_frac := clampf(float(sim.get_ticks_until_rain()) / float(maxi(span, 1)), 0.0, 1.0)
 	var quota_frac := clampf(float(sim.get_stored_salt()) / float(Sim.QUOTA), 0.0, 1.0)
+	var rain_color := Color("c47a3a") if sim.get_season() == Sim.DRY else Color("2f7590")
 	var bar_y := MAP_ORIGIN.y - 16.0
 	draw_rect(Rect2(Vector2(MAP_ORIGIN.x, bar_y), Vector2(width, 6)), Color("c8b894"))
-	draw_rect(Rect2(Vector2(MAP_ORIGIN.x, bar_y), Vector2(width * rain_frac, 6)), Color("2f7590"))
+	draw_rect(Rect2(Vector2(MAP_ORIGIN.x, bar_y), Vector2(width * rain_frac, 6)), rain_color)
 	draw_rect(Rect2(Vector2(MAP_ORIGIN.x, bar_y + 8), Vector2(width, 4)), Color("d9cbb0"))
 	draw_rect(Rect2(Vector2(MAP_ORIGIN.x, bar_y + 8), Vector2(width * quota_frac, 4)), GOLD)
 
 
 func _draw_cell(x: int, y: int) -> void:
+	var dry: bool = sim.get_season() == Sim.DRY
 	var rect := _cell_rect(x, y)
 	if x == Sim.COAST_X:
-		_draw_coast(rect)
+		_draw_coast(rect, dry)
 		return
 	var base := SHORE if x == Sim.COAST_X + 1 else SAND
 	draw_rect(rect, base)
-	if x == Sim.COAST_X + 1:
+	if x == Sim.COAST_X + 1 and not dry:
 		draw_rect(Rect2(rect.position, Vector2(5, rect.size.y)), Color("7eb4c6"))
 	var paint := int(sim.get_paint(x, y))
 	match paint:
 		Sim.RAKE:
-			_draw_rake(rect)
+			_draw_rake(rect, dry)
 		Sim.STACK:
 			_draw_stack_mark(rect)
 		Sim.COVER:
 			_draw_cover_mark(rect)
 		Sim.TRAIL:
 			_draw_trail(rect)
+		Sim.PAN:
+			_draw_pan(rect)
 	if Vector2i(x, y) == Sim.ANTHILL:
 		_draw_anthill(rect)
 	var salt: Dictionary = sim.get_cell_salt(x, y)
 	_draw_salt(rect, int(salt["loose"]), int(salt["stacked"]), int(salt["covered"]))
 
 
-func _draw_coast(rect: Rect2) -> void:
+func _draw_coast(rect: Rect2, dry: bool) -> void:
+	if dry:
+		draw_rect(rect, Color("cbb892"))
+		draw_rect(Rect2(rect.position, Vector2(rect.size.x, 8)), Color("e7d7b4"))
+		var water_h := rect.size.y * 0.22
+		draw_rect(Rect2(Vector2(rect.position.x, rect.end.y - water_h), Vector2(rect.size.x, water_h)), Color("2c6f88"))
+		return
 	draw_rect(rect, Color("2c6f88"))
 	draw_rect(Rect2(rect.position, Vector2(6, rect.size.y)), Color("3e8eaa"))
 	var y_line := rect.position.y + 8.0
@@ -155,11 +170,21 @@ func _draw_coast(rect: Rect2) -> void:
 		y_line += 14.0
 
 
-func _draw_rake(rect: Rect2) -> void:
-	draw_rect(rect, Color(0.86, 0.58, 0.28, 0.38))
+func _draw_rake(rect: Rect2, idle: bool) -> void:
+	var wash := Color(0.55, 0.5, 0.42, 0.28) if idle else Color(0.86, 0.58, 0.28, 0.38)
+	var line := Color("8d8274") if idle else Color("8a4e22")
+	draw_rect(rect, wash)
 	for i in 4:
 		var y_line := rect.position.y + 8.0 + float(i) * 8.0
-		draw_line(Vector2(rect.position.x + 5, y_line), Vector2(rect.end.x - 5, y_line), Color("8a4e22"), 1.5)
+		draw_line(Vector2(rect.position.x + 5, y_line), Vector2(rect.end.x - 5, y_line), line, 1.5)
+
+
+func _draw_pan(rect: Rect2) -> void:
+	draw_rect(rect, Color(0.62, 0.74, 0.76, 0.42))
+	var basin := Rect2(rect.position + Vector2(7, 12), rect.size - Vector2(14, 18))
+	draw_rect(basin, Color("d5ecee"))
+	draw_rect(basin, Color("3f7f88"), false, 2.0)
+	draw_line(basin.position + Vector2(4, basin.size.y * 0.55), basin.end + Vector2(-4, -basin.size.y * 0.2), Color("f7f8f4"), 1.5)
 
 
 func _draw_stack_mark(rect: Rect2) -> void:
@@ -264,9 +289,11 @@ func _draw_rain(heavy: bool) -> void:
 
 
 func _draw_coast_label() -> void:
+	var dry: bool = sim != null and sim.get_season() == Sim.DRY
 	var letters := "BRINE"
+	var color := Color("2a2116") if dry else Color("e7f4f8")
 	for i in letters.length():
-		_draw_text(MAP_ORIGIN + Vector2(12, 20 + i * 16), letters.substr(i, 1), 14, Color("e7f4f8"))
+		_draw_text(MAP_ORIGIN + Vector2(12, 20 + i * 16), letters.substr(i, 1), 14, color)
 
 
 func _draw_text(at: Vector2, text: String, size: int, color: Color) -> void:
@@ -305,7 +332,7 @@ func _build_hud() -> void:
 	hint_a.position = Vector2(20, 628)
 	hint_a.size = Vector2(740, 20)
 	hud.add_child(hint_a)
-	var hint_b := _make_label("1 rake, 2 stack, 3 cover, 4 trail, 0 erase. Space paints. R restarts.", 14, INK)
+	var hint_b := _make_label("1 rake, 2 stack, 3 cover, 4 trail, 5 pan, 0 erase. Space paints. R restarts.", 14, INK)
 	hint_b.position = Vector2(20, 650)
 	hint_b.size = Vector2(740, 20)
 	hud.add_child(hint_b)
@@ -333,19 +360,24 @@ func _build_hud() -> void:
 
 	box.add_child(_make_label("BRINE MARK", 26, PAPER))
 	box.add_child(_make_label("Salt Coast", 16, GOLD))
-	var rules := _make_label("Paint the flats. Workers follow the mark under their feet and are not selectable.\nRake the shore beside the brine to pile loose salt. Stack moves loose salt into stacks. Cover keeps stacked salt through the rain; loose salt is destroyed. Trail is how workers cross.", 14, PAPER)
+	var rules := _make_label("Paint the flats. Workers follow the mark under their feet and are not selectable.\nWet season: rake the shore, stack the loose salt, cover the stacks. The first rain banks covered salt and pulls the brine back. Dry season: shore rakes go idle. Paint pans and workers crystallize salt until the second rain. Trail is how they cross.", 14, PAPER)
 	rules.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	rules.custom_minimum_size = Vector2(430, 108)
+	rules.custom_minimum_size = Vector2(430, 132)
 	box.add_child(rules)
 
 	covered_label = _make_label("", 18, PAPER)
 	salt_label = _make_label("", 15, PAPER)
 	ants_label = _make_label("", 15, PAPER)
 	mode_label = _make_label("", 15, GOLD)
+	season_label = _make_label("", 14, Color("d5ecee"))
+	season_label.name = "SeasonNote"
+	season_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	season_label.custom_minimum_size = Vector2(430, 40)
 	box.add_child(covered_label)
 	box.add_child(salt_label)
 	box.add_child(ants_label)
 	box.add_child(mode_label)
+	box.add_child(season_label)
 
 	box.add_child(_button_row([
 		["1  Rake", Sim.RAKE, Color("e39a45")],
@@ -354,6 +386,7 @@ func _build_hud() -> void:
 	]))
 	box.add_child(_button_row([
 		["4  Trail", Sim.TRAIL, Color("c4844a")],
+		["5  Pan", Sim.PAN, Color("b7d4d2")],
 		["0  Erase", Sim.EMPTY, Color("c8c2b6")],
 	]))
 
@@ -363,7 +396,7 @@ func _build_hud() -> void:
 	status_label.custom_minimum_size = Vector2(430, 36)
 	summary_label = _make_label("", 18, PAPER)
 	summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	summary_label.custom_minimum_size = Vector2(430, 96)
+	summary_label.custom_minimum_size = Vector2(430, 78)
 	box.add_child(cursor_label)
 	box.add_child(status_label)
 	box.add_child(summary_label)
@@ -443,24 +476,45 @@ func _refresh() -> void:
 		seconds = float(sim.get_ticks_until_rain()) / float(Sim.TICK_HZ) - accum
 		if seconds < 0.0:
 			seconds = 0.0
-		rain_label.text = "Rain in %.1fs" % seconds
 		var urgent := seconds < 10.0
-		rain_label.add_theme_color_override("font_color", Color("a33b2b") if urgent else Color("1d4e63"))
-	detail_label.text = "Salt Coast    covered %d/%d    ants %d/%d" % [
-		sim.get_stored_salt(), Sim.QUOTA, sim.get_population(), Sim.POP_CAP,
+		if sim.get_season() == Sim.DRY:
+			rain_label.text = "Dry season. Rain in %.1fs" % seconds
+			rain_label.add_theme_color_override("font_color", Color("a33b2b") if urgent else Color("8a4b12"))
+		else:
+			rain_label.text = "Wet season. Rain in %.1fs" % seconds
+			rain_label.add_theme_color_override("font_color", Color("a33b2b") if urgent else Color("1d4e63"))
+	var season_name := "wet"
+	if sim.is_over():
+		season_name = "settled"
+	elif sim.get_season() == Sim.DRY:
+		season_name = "dry"
+	detail_label.text = "Salt Coast    %s    covered %d/%d    ants %d/%d" % [
+		season_name, sim.get_stored_salt(), Sim.QUOTA, sim.get_population(), Sim.POP_CAP,
 	]
 	covered_label.text = "Covered salt  %d / %d" % [sim.get_stored_salt(), Sim.QUOTA]
-	salt_label.text = "Loose %d    stacked %d" % [sim.get_loose_salt(), sim.get_stacked_salt()]
+	salt_label.text = "Loose %d    stacked %d    hauled %d" % [
+		sim.get_loose_salt(), sim.get_stacked_salt(), sim.get_wet_haul(),
+	]
 	ants_label.text = "Ants %d / %d" % [sim.get_population(), Sim.POP_CAP]
 	mode_label.text = "Mark: %s" % _mode_name(current_mode)
+	if sim.get_season() == Sim.DRY or sim.is_over():
+		var dry_held := int(sim.get_stored_salt()) - int(sim.get_wet_haul())
+		season_label.text = "Hauled %d. Dry covers %d. Shore rakes are idle; pans crystallize." % [
+			sim.get_wet_haul(), dry_held,
+		]
+	else:
+		season_label.text = "Wet season. Pans wait until the brine pulls back."
 	cursor_label.text = "Cursor %d, %d" % [cursor.x, cursor.y]
 	if sim.is_over():
 		summary_label.text = sim.get_summary()
 		var won: bool = sim.get_stored_salt() >= Sim.QUOTA
 		summary_label.add_theme_color_override("font_color", Color("b7e2c2") if won else Color("ffb4a8"))
 		status_label.text = "Restart scenario to mark the flats again."
+	elif sim.get_season() == Sim.DRY:
+		summary_label.text = "The brine has pulled back and the first haul is banked. Paint pans before the second rain."
+		summary_label.add_theme_color_override("font_color", Color("f0d7b0"))
 	else:
-		summary_label.text = "Result appears when the rain arrives."
+		summary_label.text = "Result appears when the rains have passed."
 		summary_label.add_theme_color_override("font_color", Color("c5d0d6"))
 
 
@@ -515,6 +569,8 @@ func _on_key(keycode: Key) -> void:
 			_set_mode(Sim.COVER)
 		KEY_4, KEY_KP_4:
 			_set_mode(Sim.TRAIL)
+		KEY_5, KEY_KP_5:
+			_set_mode(Sim.PAN)
 		KEY_0, KEY_KP_0:
 			_set_mode(Sim.EMPTY)
 		KEY_SPACE, KEY_ENTER, KEY_KP_ENTER:
@@ -546,6 +602,8 @@ func _mode_color(mode: int) -> Color:
 			return Color("2f6b45")
 		Sim.TRAIL:
 			return Color("8a4e22")
+		Sim.PAN:
+			return Color("3f7f88")
 		_:
 			return Color("f4efe6")
 
@@ -560,5 +618,7 @@ func _mode_name(mode: int) -> String:
 			return "Cover"
 		Sim.TRAIL:
 			return "Trail"
+		Sim.PAN:
+			return "Pan"
 		_:
 			return "Erase"
