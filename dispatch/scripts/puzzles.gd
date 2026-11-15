@@ -1,9 +1,9 @@
 extends RefCounted
 
-## Buildings 1 through 6. Directions: 0 east, 1 south, 2 west, 3 north.
+## Buildings 1 through 7. Directions: 0 east, 1 south, 2 west, 3 north.
 ## `unlocks` is the single new block this puzzle introduces, or "".
 
-const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide"]
+const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin"]
 
 
 static func all() -> Array:
@@ -802,6 +802,122 @@ static func all() -> Array:
 				_block("conveyor", 1, 3, 0),
 			]
 		),
+		_puzzle(
+			51, "Drop the Spare", "bin",
+			"Two parcels leave. Only blue is due.",
+			"",
+			"Split them. Red goes east into the bin. Blue turns off the splitter and takes the south belt. Delivering red fails the order. With no bin, red stays on the splitter and blue never leaves.",
+			5, 3, [],
+			[_source(0, 1, 0, ["red", "blue"])],
+			{"x": 4, "y": 1},
+			[{"color": "blue"}],
+			[
+				_block("splitter", 1, 1, 0), _block("bin", 2, 1, 0),
+				_block("conveyor", 3, 1, 0),
+				_block("conveyor", 1, 2, 0), _block("conveyor", 2, 2, 0),
+				_block("conveyor", 3, 2, 3),
+			]
+		),
+		_puzzle(
+			52, "Red Away", "",
+			"Red and blue both leave. Deliver blue.",
+			"",
+			"The filter sends blue north along the arrow and turns red east. Bin red. A belt, slide, or bridge there carries red to the dock. With nowhere to stand, red stays on the filter and blue never moves.",
+			5, 2, [],
+			[_source(0, 1, 0, ["red", "blue"])],
+			{"x": 4, "y": 1},
+			[{"color": "blue"}],
+			[
+				_block("filter", 1, 1, 3, "blue"),
+				_block("conveyor", 1, 0, 0), _block("conveyor", 2, 0, 0),
+				_block("conveyor", 3, 0, 1), _block("conveyor", 3, 1, 0),
+				_block("bin", 2, 1, 0),
+			]
+		),
+		_puzzle(
+			53, "Skip the Middle", "",
+			"Stamp the two reds 1, then 2. Blue is between them.",
+			"",
+			"The splitter sends both reds north and blue east. Bin blue before it can reach the counter, so the reds leave as 1 and 2. If blue is stamped, the dock sees red 1 and then blue 2.",
+			6, 2, [],
+			[_source(0, 1, 0, ["red", "blue", "red"])],
+			{"x": 5, "y": 0},
+			[{"color": "red", "count": 1}, {"color": "red", "count": 2}],
+			[
+				_block("splitter", 1, 1, 3),
+				_block("conveyor", 1, 0, 0), _block("conveyor", 2, 0, 0),
+				_block("conveyor", 3, 0, 0), _block("counter", 4, 0, 0),
+				_block("bin", 2, 1, 0),
+				_block("conveyor", 3, 1, 0), _block("conveyor", 4, 1, 3),
+			]
+		),
+		_puzzle(
+			54, "Over the Bin", "",
+			"Slide blue across the bin. Bin the red that walks onto it.",
+			"",
+			"Red takes the splitter east onto the bin. Blue turns south, comes up under the slide, and hops north across the bin onto the belt. The hop never stands on the bin, so blue is not scrapped. A belt, slide, or bridge in the bin's cell carries red to the dock first.",
+			5, 4, [],
+			[_source(0, 1, 0, ["red", "blue"])],
+			{"x": 4, "y": 1},
+			[{"color": "blue"}],
+			[
+				_block("splitter", 1, 1, 0), _block("bin", 2, 1, 0),
+				_block("conveyor", 3, 1, 0),
+				_block("conveyor", 1, 2, 1), _block("conveyor", 1, 3, 0),
+				_block("conveyor", 2, 3, 3), _block("slide", 2, 2, 0),
+				_block("conveyor", 2, 0, 0), _block("conveyor", 3, 0, 1),
+			]
+		),
+		_puzzle(
+			55, "After the Latch", "",
+			"Deliver blue. Red must not reach the dock.",
+			"",
+			"Hold red on the latch, then let the splitter drop it in the bin. Blue turns off the splitter and takes the south belt. Without the bin, red stays on the splitter and blue never leaves. A belt, slide, or bridge in the bin's cell carries red to the dock first.",
+			6, 3, [],
+			[_source(0, 1, 0, ["red", "blue"])],
+			{"x": 5, "y": 1},
+			[{"color": "blue"}],
+			[
+				_block("latch", 1, 1, 0), _block("splitter", 2, 1, 0),
+				_block("bin", 3, 1, 0), _block("conveyor", 4, 1, 0),
+				_block("conveyor", 2, 2, 0), _block("conveyor", 3, 2, 0),
+				_block("conveyor", 4, 2, 3),
+			]
+		),
+		_puzzle(
+			56, "Keep the Coat", "",
+			"Deliver gray primed yellow and stamped 1. Bin the blue.",
+			"",
+			"The filter sends blue east into the bin and turns gray south. Gray comes back through the yellow primer and the counter. Blue never takes that coat or that stamp. A belt, slide, or bridge in the bin's cell lets blue take the stamp, and with no bin blue stays on the filter.",
+			6, 3, [],
+			[_source(0, 1, 0, ["blue", "gray"])],
+			{"x": 5, "y": 1},
+			[{"color": "yellow", "count": 1}],
+			[
+				_block("filter", 1, 1, 0, "blue"), _block("bin", 2, 1, 0),
+				_block("primer", 3, 1, 0, "yellow"), _block("counter", 4, 1, 0),
+				_block("conveyor", 1, 2, 0), _block("conveyor", 2, 2, 0),
+				_block("conveyor", 3, 2, 3),
+			]
+		),
+		_puzzle(
+			57, "Night Bin", "",
+			"Deliver red 1, then yellow 2. Blue must not arrive.",
+			"",
+			"The filter bins blue and turns red south onto the counter. Hold gray on the latch, prime it yellow, and let it take stamp 2. A belt, slide, or bridge in the bin's cell delivers blue.",
+			5, 4, [],
+			[_source(0, 0, 0, ["blue", "red"]), _source(0, 3, 0, ["gray"])],
+			{"x": 4, "y": 0},
+			[{"color": "red", "count": 1}, {"color": "yellow", "count": 2}],
+			[
+				_block("filter", 1, 0, 0, "blue"), _block("bin", 2, 0, 0),
+				_block("conveyor", 3, 0, 0),
+				_block("conveyor", 1, 1, 0), _block("primer", 2, 1, 0, "yellow"),
+				_block("counter", 3, 1, 3),
+				_block("conveyor", 1, 3, 3), _block("conveyor", 1, 2, 0),
+				_block("latch", 2, 2, 3),
+			]
+		),
 	]
 
 
@@ -831,7 +947,7 @@ static func _puzzle(id: int, title: String, unlocks: String, brief: String, how_
 		"dock": dock,
 		"order": order,
 		"reference": reference,
-		"building": 6 if id >= 44 else 5 if id >= 37 else 4 if id >= 30 else 3 if id >= 23 else 2 if id >= 16 else 1,
+		"building": 7 if id >= 51 else 6 if id >= 44 else 5 if id >= 37 else 4 if id >= 30 else 3 if id >= 23 else 2 if id >= 16 else 1,
 	}
 
 

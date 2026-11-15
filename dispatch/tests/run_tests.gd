@@ -32,6 +32,8 @@ func _run() -> void:
 	_building_five()
 	_slide_rules()
 	_building_six()
+	_bin_rules()
+	_building_seven()
 	_ui_uses_simulated_par()
 	if _failures.is_empty():
 		print("ALL TESTS PASSED")
@@ -756,15 +758,16 @@ func _slide_rules() -> void:
 func _building_six() -> void:
 	print("building 6")
 	var puzzles := Puzzles.all()
-	_check(puzzles.size() == 50, "routes 44 through 50 follow building 5")
-	_check(Puzzles.INTRO.size() == 10 and Puzzles.INTRO[9] == "slide", "the slide is the block building 6 teaches")
+	_check(puzzles.size() >= 50, "routes 44 through 50 follow building 5")
+	_check(Puzzles.INTRO.size() >= 10 and Puzzles.INTRO[9] == "slide", "the slide is the block building 6 teaches")
 	_check(not Puzzles.unlocked_at(42).has("slide"), "the slide stays locked through route 43")
 	_check(Puzzles.unlocked_at(43).has("slide"), "route 44 unlocks the slide")
 	_check(Puzzles.unlocked_at(49).size() == 10, "building 6 ends with every block")
 	for puzzle in puzzles:
 		var id := int(puzzle["id"])
-		if id < 44:
-			_check(int(puzzle.get("building", 1)) < 6, "route %d stays out of building 6" % id)
+		if id < 44 or id > 50:
+			if id < 44:
+				_check(int(puzzle.get("building", 1)) < 6, "route %d stays out of building 6" % id)
 			continue
 		_check(int(puzzle.get("building", 1)) == 6, "route %d is building 6" % id)
 		var result: Dictionary = Sim.run(puzzle, puzzle["reference"])
@@ -824,6 +827,110 @@ func _building_six() -> void:
 	_check(not bool(Sim.run(_by_id(50), _swap(_by_id(50), "counter", "conveyor"))["success"]), "route 50 fails without the counter")
 
 
+func _bin_rules() -> void:
+	print("bin")
+	var pit := {
+		"width": 4, "height": 1, "walls": [],
+		"sources": [{"x": 0, "y": 0, "dir": 0, "parcels": [{"color": "red"}]}],
+		"dock": {"x": 3, "y": 0},
+		"order": [{"color": "red"}],
+	}
+	var scrapped: Dictionary = Sim.run(pit, [
+		{"type": "bin", "x": 1, "y": 0, "dir": 2},
+		{"type": "conveyor", "x": 2, "y": 0, "dir": 0},
+	])
+	_check(not bool(scrapped["success"]) and scrapped["delivered"].is_empty(), "a parcel that stands on a bin is not delivered")
+	var stood := _frame(scrapped, 1)
+	_check(not stood.is_empty() and _color_at(stood, 1, 0) == "red", "the parcel stands on the bin before it is removed")
+	var gone := _frame(scrapped, 2)
+	_check(not gone.is_empty() and not _at(gone, 1, 0) and gone["delivered"].is_empty(), "the next tick removes the parcel in place")
+	for dir in range(4):
+		var spun: Dictionary = Sim.run(pit, [
+			{"type": "bin", "x": 1, "y": 0, "dir": dir},
+			{"type": "conveyor", "x": 2, "y": 0, "dir": 0},
+		])
+		_check(not bool(spun["success"]) and spun["delivered"].is_empty(), "rotating a bin still scraps the parcel standing on it")
+
+	var hop := {
+		"width": 4, "height": 1, "walls": [],
+		"sources": [{"x": 0, "y": 0, "dir": 0, "parcels": [{"color": "blue"}]}],
+		"dock": {"x": 3, "y": 0},
+		"order": [{"color": "blue"}],
+	}
+	var slid: Dictionary = Sim.run(hop, [
+		{"type": "slide", "x": 1, "y": 0, "dir": 2},
+		{"type": "bin", "x": 2, "y": 0, "dir": 1},
+	])
+	_check(bool(slid["success"]) and int(slid["cycles"]) == 2, "a slide hops over a bin and still delivers")
+	var crossed := false
+	for frame in slid["frames"]:
+		if _at(frame, 2, 0):
+			crossed = true
+	_check(not crossed, "the hopping parcel never stands on the bin")
+	var bridged: Dictionary = Sim.run(hop, [
+		{"type": "bridge", "x": 1, "y": 0, "dir": 0},
+		{"type": "bin", "x": 2, "y": 0, "dir": 3},
+	])
+	_check(bool(bridged["success"]), "a bridge hops over a bin and still delivers")
+
+
+func _building_seven() -> void:
+	print("building 7")
+	var puzzles := Puzzles.all()
+	_check(puzzles.size() == 57, "building 7 adds routes 51 through 57")
+	_check(Puzzles.INTRO.size() == 11 and Puzzles.INTRO[10] == "bin", "the bin is the block building 7 teaches")
+	_check(not Puzzles.unlocked_at(49).has("bin"), "the bin stays locked through route 50")
+	_check(Puzzles.unlocked_at(50).has("bin"), "route 51 unlocks the bin")
+	_check(Puzzles.unlocked_at(56).size() == 11, "building 7 ends with every block")
+	for puzzle in puzzles:
+		var id := int(puzzle["id"])
+		if id < 51:
+			_check(int(puzzle.get("building", 1)) < 7, "route %d stays out of building 7" % id)
+			continue
+		_check(int(puzzle.get("building", 1)) == 7, "route %d is building 7" % id)
+		var result: Dictionary = Sim.run(puzzle, puzzle["reference"])
+		var par: Dictionary = Scoring.compute_par(puzzle)
+		_check(bool(result["success"]), "route %d reference delivers" % id)
+		_check(int(result["cycles"]) == int(par["cycles"]), "route %d reference meets par cycles" % id)
+		_check(int(result["blocks"]) == int(par["blocks"]), "route %d reference meets par blocks" % id)
+		_check(int(result["blocks"]) == puzzle["reference"].size(), "route %d plays the reference block count" % id)
+		if id == 51:
+			_check(str(puzzle.get("unlocks", "")) == "bin", "route 51 teaches the bin")
+		else:
+			_check(str(puzzle.get("unlocks", "")) == "", "route %d adds no further block" % id)
+		var uses_bin := false
+		for block in puzzle["reference"]:
+			if str(block["type"]) == "bin":
+				uses_bin = true
+		_check(uses_bin, "route %d reference uses the bin" % id)
+		if not bool(result["success"]):
+			_dump(result)
+		print("    par route %d  cycles %d  blocks %d" % [id, int(par["cycles"]), int(par["blocks"])])
+
+	for dir in range(4):
+		var spun: Array = _by_id(51)["reference"].duplicate(true)
+		for block in spun:
+			if str(block["type"]) == "bin":
+				block["dir"] = dir
+		_check(bool(Sim.run(_by_id(51), spun)["success"]), "route 51 ignores which way the bin is rotated")
+	var spare: Dictionary = Sim.run(_by_id(51), _swap(_by_id(51), "bin", "conveyor"))
+	_check(not bool(spare["success"]) and str(spare["reason"]) == "wrong_delivery", "delivering the spare on route 51 fails")
+	_check(spare["delivered"].size() >= 1 and str(spare["delivered"][0]["color"]) == "red", "the spare on route 51 reaches the dock when it is not binned")
+	for id in [51, 52, 53, 54, 55, 56, 57]:
+		for kind in ["conveyor", "slide", "bridge"]:
+			var replaced: Dictionary = Sim.run(_by_id(id), _swap(_by_id(id), "bin", kind))
+			_check(not bool(replaced["success"]), "route %d fails if the bin is a %s" % [id, kind])
+		var omitted: Array = []
+		for block in _by_id(id)["reference"]:
+			if str(block["type"]) != "bin":
+				omitted.append(block)
+		_check(not bool(Sim.run(_by_id(id), omitted)["success"]), "route %d fails if the bin is missing" % id)
+	_check(not bool(Sim.run(_by_id(57), _swap(_by_id(57), "latch", "conveyor"))["success"]), "route 57 jams if gray is not held")
+	_check(not bool(Sim.run(_by_id(57), _swap(_by_id(57), "primer", "painter"))["success"]), "route 57 fails if red is painted yellow")
+	_check(not bool(Sim.run(_by_id(57), _swap(_by_id(57), "filter", "conveyor"))["success"]), "route 57 fails if blue is not sent into the bin")
+	_check(not bool(Sim.run(_by_id(57), _swap(_by_id(57), "counter", "conveyor"))["success"]), "route 57 fails without the counter")
+
+
 func _swap(puzzle: Dictionary, from_type: String, to_type: String) -> Array:
 	var graph: Array = puzzle["reference"].duplicate(true)
 	for block in graph:
@@ -863,7 +970,7 @@ func _ui_uses_simulated_par() -> void:
 				routes += 1
 		if row.get_child_count() > 1:
 			width += float(row.get_theme_constant("separation")) * float(row.get_child_count() - 1)
-	_check(routes == 50, "all 50 routes are on the board")
+	_check(routes == 57, "all 57 routes are on the board")
 	_check(width < 1240.0, "the route buttons fit the header (%s)" % width)
 	node.select_puzzle(15)
 	_check(building != null and building.text == "BUILDING 2", "route 16 opens building 2")
@@ -934,6 +1041,20 @@ func _ui_uses_simulated_par() -> void:
 	_check(saw_slide, "route 44 offers the slide")
 	node.select_puzzle(49)
 	_check(building != null and building.text == "BUILDING 6", "route 50 stays in building 6")
+	node.select_puzzle(50)
+	_check(building != null and building.text == "BUILDING 7", "route 51 opens building 7")
+	_check(node.find_child("BuildingSevenMark", true, false) != null, "the route row marks building 7")
+	tools = node.find_child("ToolBox", true, false)
+	var saw_bin := false
+	if tools != null:
+		for child in tools.get_children():
+			if child.is_queued_for_deletion():
+				continue
+			if str(child.text).begins_with("Bin"):
+				saw_bin = true
+	_check(saw_bin, "route 51 offers the bin")
+	node.select_puzzle(56)
+	_check(building != null and building.text == "BUILDING 7", "route 57 stays in building 7")
 	node.queue_free()
 
 
