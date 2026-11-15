@@ -1,6 +1,6 @@
 # Casework
 
-A deduction game with thirteen cases, **The spare key**, **The rehearsal score**, **The gilt stamp**, **The ferry bell**, **The weather slate**, **The loom shuttle**, **The hive smoker**, **The glass pontil**, **The press proof**, **The assay cup**, **The kiln chalk**, **The tide ledger**, and **The night bell**.
+A deduction game with fifteen cases, **The spare key**, **The rehearsal score**, **The gilt stamp**, **The ferry bell**, **The weather slate**, **The loom shuttle**, **The hive smoker**, **The glass pontil**, **The press proof**, **The assay cup**, **The kiln chalk**, **The tide ledger**, **The night bell**, **The salt mark**, and **The wick trim**.
 
 Pick a file. That file keeps a single timeline. You read the exhibits and pin who, the room, and the hour. A theory is accepted only when it fits every exhibit. A theory that does not fit comes back naming the exhibits it contradicts. An empty pin is refused by the name of the missing slot.
 
@@ -33,6 +33,10 @@ There is no voice. The papers and the board are the whole case.
 **The tide ledger.** The tide ledger left its desk at the tide house. Name who entered it, the room they entered it on, and the hour.
 
 **The night bell.** The night bell left its peg at the watch house. Name who stopped it, the room they stopped it in, and the hour.
+
+**The salt mark.** The salt mark left its peg at the salt house. Name who scored it, the room they scored it on, and the hour.
+
+**The wick trim.** The wick trim left its peg at the lamp house. Name who trimmed it, the room they trimmed it in, and the hour.
 
 ## Play
 

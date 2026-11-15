@@ -50,10 +50,20 @@ class_name BeamTracer
 #   rot 0 and 180, drawn "/":  N->E, E->N, S->W, W->S
 #   rot 90 and 270, drawn "\": N->W, W->N, S->E, E->S
 # It reflects only while its own row is flooded. The beam may enter that
-# flooded cell. The next flooded cell that is not itself a tide mirror still
-# stops the beam at the waterline, and a flooded lantern, mirror, prism, pane,
-# dock, or hull still follows the rules above.
+# flooded cell. The next flooded cell that is not itself a tide mirror or a
+# shutter still stops the beam at the waterline, and a flooded lantern, mirror,
+# prism, pane, dock, or hull still follows the rules above.
 # While its row is dry, a beam that hits it keeps its direction and its color.
+#
+# Shutter
+# -------
+# A shutter is not a tide mirror and it does not replace one. It has no facing
+# and it never reflects. Rotation is ignored.
+# While its own row is dry, a beam that hits it stops.
+# While that row is flooded, the beam may enter the cell and passes straight
+# through in the same direction and the same color.
+# The next flooded cell that is not itself a shutter or a tide mirror still
+# stops the beam at the waterline.
 #
 # Docks and boats
 # ---------------
@@ -89,10 +99,15 @@ static func rotate_dir(dir: String, turns: int) -> String:
 static func norm_rot(kind: String, rot: int) -> int:
 	if kind == "prism":
 		return posmod(rot, 360)
+	# A shutter has no facing. Dry stops the beam; flooded water lets it pass.
+	if kind == "shutter":
+		return 0
 	# Mirrors, tide mirrors, and panes repeat every 180 degrees.
 	return posmod(rot, 180)
 
 static func turn_rot(kind: String, rot: int) -> int:
+	if kind == "shutter":
+		return 0
 	var turned := posmod(rot + 90, 360)
 	return norm_rot(kind, turned)
 
@@ -288,7 +303,7 @@ static func _cast(
 			return
 		visited[key] = true
 		var flooded := is_flooded(chart, state, cell)
-		if flooded and not _is_tide_mirror(occupants, cell):
+		if flooded and not _flood_carries(occupants, cell):
 			segments.append(_boundary_seg(prev, cell, color))
 			return
 		segments.append(_center_seg(prev, cell, color))
@@ -320,6 +335,13 @@ static func _cast(
 			prev = cell
 			cell = cell + VEC[dir]
 			continue
+		if kind == "shutter":
+			# Dry glass is shut. Flooded glass is a straight gate: no turn, no tint.
+			if not flooded:
+				return
+			prev = cell
+			cell = cell + VEC[dir]
+			continue
 		if kind == "pane":
 			if color != pane_color(int(occ["rot"])):
 				return
@@ -338,11 +360,14 @@ static func _cast(
 			return
 		return
 
-static func _is_tide_mirror(occupants: Dictionary, cell: Vector2i) -> bool:
+static func _flood_carries(occupants: Dictionary, cell: Vector2i) -> bool:
+	# Tide mirrors reflect under water. Shutters pass straight through it.
+	# Every other flooded cell still stops the beam.
 	if not occupants.has(cell):
 		return false
 	var occ: Dictionary = occupants[cell]
-	return str(occ["kind"]) == "tide_mirror"
+	var kind := str(occ["kind"])
+	return kind == "tide_mirror" or kind == "shutter"
 
 static func _in_bounds(chart: Dictionary, cell: Vector2i) -> bool:
 	return cell.x >= 0 and cell.y >= 0 and cell.x < int(chart["cols"]) and cell.y < int(chart["rows"])
