@@ -144,7 +144,7 @@ func _draw() -> void:
 	if _font == null:
 		_font = ThemeDB.fallback_font
 	var layout := _layout()
-	draw_rect(Rect2(Vector2.ZERO, size if size.x > 32.0 else Vector2(1636, 720)), NIGHT)
+	draw_rect(Rect2(Vector2.ZERO, size if size.x > 32.0 else Vector2(1716, 720)), NIGHT)
 	if state == null or state.floor == null:
 		return
 	_draw_view(layout.view)
@@ -155,7 +155,7 @@ func _draw() -> void:
 func _layout() -> Dictionary:
 	var vp := size
 	if vp.x < 200.0:
-		vp = Vector2(1636, 720)
+		vp = Vector2(1716, 720)
 	var margin := 16.0
 	var hud_h := 200.0
 	var sheet_w := minf(488.0, vp.x * 0.38)
@@ -241,6 +241,8 @@ func _draw_view(view: Rect2) -> void:
 			col = Color(0.78, 0.66, 0.42)
 		elif state.floor.id == "feretory":
 			col = Color(0.78, 0.66, 0.42)
+		elif state.floor.id == "chantry":
+			col = Color(0.78, 0.66, 0.42)
 		if glyph == "*":
 			col = Color(0.14, 0.38, 0.42)
 		elif glyph == "+":
@@ -288,10 +290,12 @@ func _draw_view(view: Rect2) -> void:
 			col = Color(0.22, 0.38, 0.78)
 		elif glyph == "J":
 			col = Color(0.76, 0.73, 0.66)
+		elif glyph == "I":
+			col = Color(0.62, 0.14, 0.18)
 		col *= shade
 		if int(hit.side) == 1:
 			col *= 0.74
-		if glyph != "*" and glyph != "+" and glyph != "=" and glyph != "x" and glyph != "R" and glyph != "B" and glyph != "W" and glyph != "D" and glyph != "P" and glyph != "T" and glyph != "Y" and glyph != "K" and glyph != "N" and glyph != "A" and glyph != "C" and glyph != "X" and glyph != "V" and glyph != "U" and glyph != "Q" and glyph != "O" and glyph != "M" and glyph != "J" and (cell.x + cell.y) % 2 == 0:
+		if glyph != "*" and glyph != "+" and glyph != "=" and glyph != "x" and glyph != "R" and glyph != "B" and glyph != "W" and glyph != "D" and glyph != "P" and glyph != "T" and glyph != "Y" and glyph != "K" and glyph != "N" and glyph != "A" and glyph != "C" and glyph != "X" and glyph != "V" and glyph != "U" and glyph != "Q" and glyph != "O" and glyph != "M" and glyph != "J" and glyph != "I" and (cell.x + cell.y) % 2 == 0:
 			if state.floor.id == "cloister":
 				col = col.lerp(Color(0.42, 0.34, 0.22), 0.22)
 			elif state.floor.id == "crypt":
@@ -336,6 +340,8 @@ func _draw_view(view: Rect2) -> void:
 				col = col.lerp(Color(0.52, 0.40, 0.22), 0.22)
 			elif state.floor.id == "feretory":
 				col = col.lerp(Color(0.52, 0.40, 0.22), 0.22)
+			elif state.floor.id == "chantry":
+				col = col.lerp(Color(0.52, 0.40, 0.22), 0.22)
 			else:
 				col = col.lerp(Color(0.32, 0.20, 0.14), 0.22)
 		var wall_x := origin.y + dist * ray.y if int(hit.side) == 0 else origin.x + dist * ray.x
@@ -351,6 +357,15 @@ func _draw_view(view: Rect2) -> void:
 				col = Color(0.88, 0.90, 0.92)
 			elif wall_x > 0.20 and wall_x < 0.30:
 				col = Color(0.58, 0.55, 0.50)
+		if glyph == "I":
+			if wall_x < 0.08 or wall_x > 0.92:
+				col = Color(0.86, 0.68, 0.22)
+			elif wall_x > 0.38 and wall_x < 0.62:
+				col = Color(0.93, 0.84, 0.72)
+			elif wall_x > 0.22 and wall_x < 0.38:
+				col = Color(0.18, 0.28, 0.62)
+			else:
+				col = Color(0.62, 0.14, 0.18)
 		if state.oil <= 2:
 			col *= 0.45
 		elif state.oil <= 4:
@@ -496,6 +511,11 @@ func _draw_sky_floor(view: Rect2) -> void:
 		sky_lo = Color(0.52, 0.49, 0.44)
 		ground_hi = Color(0.12, 0.10, 0.07)
 		ground_lo = Color(0.44, 0.36, 0.22)
+	elif state.floor.id == "chantry":
+		sky_hi = Color(0.10, 0.04, 0.05)
+		sky_lo = Color(0.42, 0.16, 0.12)
+		ground_hi = Color(0.12, 0.10, 0.07)
+		ground_lo = Color(0.44, 0.36, 0.22)
 	for i in bands:
 		var t := float(i) / float(bands)
 		var sky := sky_hi.lerp(sky_lo, t)
@@ -511,6 +531,12 @@ func _draw_sky_floor(view: Rect2) -> void:
 		for course in 3:
 			var course_y := view.position.y + float(course + 1) * half / 5.0
 			draw_rect(Rect2(view.position.x, course_y, view.size.x, 2.0), Color(0.72, 0.69, 0.62, 0.55))
+	elif state.floor.id == "chantry":
+		var flames: Array = [Vector2(70, 28), Vector2(210, 40), Vector2(380, 22), Vector2(540, 34)]
+		for spot in flames:
+			if spot.x < view.size.x and spot.y < half:
+				draw_circle(view.position + spot, 3.2, Color(0.99, 0.78, 0.28))
+				draw_circle(view.position + spot + Vector2(0, 6), 1.4, Color(0.55, 0.28, 0.08))
 
 
 func _cast(origin: Vector2, ray_dir: Vector2) -> Dictionary:
@@ -594,6 +620,8 @@ func _draw_sprites(view: Rect2, origin: Vector2, dir: Vector2, plane: Vector2, z
 		hazard_kind = "ladychapel"
 	elif state.floor.id == "feretory":
 		hazard_kind = "feretory"
+	elif state.floor.id == "chantry":
+		hazard_kind = "chantry"
 	for hazard in Rules.hazard_cells(state.floor):
 		items.append({"pos": hazard, "kind": hazard_kind})
 	var drawn: Array = []
@@ -747,6 +775,11 @@ func _sprite_column(view: Rect2, column: int, col_w: float, top: float, sprite_h
 			if u > 0.22 and u < 0.78:
 				slices.append([0.62, 0.70, Color(0.90, 0.92, 0.94)])
 				slices.append([0.76, 0.84, Color(0.62, 0.64, 0.68)])
+		"chantry":
+			if u > 0.46 and u < 0.54:
+				slices.append([0.16, 0.26, Color(0.99, 0.86, 0.32)])
+				slices.append([0.26, 0.74, Color(0.86, 0.62, 0.18)])
+				slices.append([0.74, 0.84, Color(0.22, 0.12, 0.06)])
 		"hazard":
 			if u > 0.22 and u < 0.78:
 				slices.append([0.62, 0.70, Color(0.72, 0.34, 0.14)])
@@ -846,6 +879,8 @@ func _draw_sheet(sheet: Rect2) -> void:
 		legend = "Square wall    dot corridor    triangle lady chapel"
 	elif state.floor.id == "feretory":
 		legend = "Square wall    dot corridor    triangle feretory"
+	elif state.floor.id == "chantry":
+		legend = "Square wall    dot corridor    triangle chantry"
 	draw_string(_font, Vector2(sheet.position.x + 16, legend_y), legend, HORIZONTAL_ALIGNMENT_LEFT, sheet.size.x - 32, 14, INK)
 	var swing_note := "Ring is the swing, not ink. Hood is the warden."
 	if state.floor.id == "cistern":
@@ -959,6 +994,8 @@ func _draw_hud(hud: Rect2) -> void:
 			lines.append("You are standing on a lady-chapel crack.")
 		elif state.floor.id == "feretory":
 			lines.append("You are standing on a feretory crack.")
+		elif state.floor.id == "chantry":
+			lines.append("You are standing on a chantry crack.")
 		else:
 			lines.append("You are standing on a hazard crack.")
 	var y := hud.position.y + 46
