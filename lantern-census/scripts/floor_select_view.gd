@@ -19,6 +19,7 @@ const RELIQUARY_AWNING := Color(0.58, 0.28, 0.18)
 const UNDERCROFT_AWNING := Color(0.18, 0.34, 0.30)
 const WELL_AWNING := Color(0.20, 0.28, 0.42)
 const SCRIPTORIUM_AWNING := Color(0.28, 0.16, 0.22)
+const BINDING_AWNING := Color(0.38, 0.32, 0.22)
 
 var notice_label: Label
 var purse_label: Label
@@ -59,8 +60,8 @@ func _build() -> void:
 	var x := margin
 	var narrow := card_w < 220.0
 	var inset := 8.0 if card_w < 150.0 else (12.0 if narrow else 20.0)
-	var record_size := 13 if card_w < 150.0 else (15 if narrow else 18)
-	var status_size := 13 if card_w < 150.0 else (16 if narrow else 20)
+	var record_size := 12 if card_w < 130.0 else (13 if card_w < 150.0 else (15 if narrow else 18))
+	var status_size := 12 if card_w < 130.0 else (13 if card_w < 150.0 else (16 if narrow else 20))
 	for floor in floors:
 		var card := _panel(Vector2(x, 176), Vector2(card_w, 320), _awning_for(str(floor.id)), floor.title)
 		add_child(card)
@@ -78,7 +79,9 @@ func _build() -> void:
 		card.add_child(status)
 		_status[floor.id] = status
 		var button := _button("Descend")
-		if card_w < 150.0:
+		if card_w < 130.0:
+			button.add_theme_font_size_override("font_size", 11)
+		elif card_w < 150.0:
 			button.add_theme_font_size_override("font_size", 12)
 		elif card_w < 160.0:
 			button.add_theme_font_size_override("font_size", 13)
@@ -136,7 +139,9 @@ func _awning_for(floor_id: String) -> Color:
 		return UNDERCROFT_AWNING
 	if floor_id == "wellhouse":
 		return WELL_AWNING
-	return SCRIPTORIUM_AWNING
+	if floor_id == "scriptorium":
+		return SCRIPTORIUM_AWNING
+	return BINDING_AWNING
 
 
 func _bind_descend(button: Button, floor_id: String) -> void:
@@ -196,7 +201,9 @@ func _panel(at: Vector2, panel_size: Vector2, awning: Color, title: String) -> C
 	stripe.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(stripe)
 	var title_size := 26
-	if panel_size.x < 150.0:
+	if panel_size.x < 130.0:
+		title_size = 11
+	elif panel_size.x < 150.0:
 		title_size = 12
 	elif panel_size.x < 160.0:
 		title_size = 13
