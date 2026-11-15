@@ -38,6 +38,7 @@ var turn_label: Label
 var buttons: Array = []
 var top_panel: Panel
 var bottom_panel: Panel
+var bottom_h := 140.0
 
 
 func _ready() -> void:
@@ -71,7 +72,7 @@ func _build_hud() -> void:
 	layer.add_child(bottom_panel)
 
 	var controls := Label.new()
-	controls.text = "Arrows move    F lamp you face    Space wait    U undo    R restart    1–8 east    Shift+1–6 west    click a neighbor or a lamp"
+	controls.text = "Arrows move    F lamp you face    Space wait    U undo    R restart    1–8 east    Shift+1–6 west    Ctrl+1–6 north    click a neighbor or a lamp"
 	controls.add_theme_font_size_override("font_size", 14)
 	controls.add_theme_color_override("font_color", MUTED)
 	controls.position = Vector2(20, 6)
@@ -115,7 +116,7 @@ func _build_hud() -> void:
 
 	legend_label = Label.new()
 	legend_label.text = "Gold diamond — lamplight, you cannot walk it.    Red diamond — a guard is watching.    Arrow — that guard's next step."
-	legend_label.position = Vector2(20, 104)
+	legend_label.position = Vector2(20, row_y + 2.0)
 	legend_label.add_theme_font_size_override("font_size", 14)
 	legend_label.add_theme_color_override("font_color", MUTED)
 	bottom_panel.add_child(legend_label)
@@ -123,8 +124,9 @@ func _build_hud() -> void:
 	status_label = Label.new()
 	status_label.add_theme_font_size_override("font_size", 16)
 	status_label.add_theme_color_override("font_color", CREAM)
-	status_label.position = Vector2(20, 104)
+	status_label.position = Vector2(20, row_y + 2.0)
 	bottom_panel.add_child(status_label)
+	bottom_h = row_y + 38.0
 
 	turn_label = Label.new()
 	turn_label.add_theme_font_size_override("font_size", 16)
@@ -154,7 +156,6 @@ func _button_style(active: bool) -> StyleBoxFlat:
 func _layout() -> void:
 	var view := get_viewport_rect().size
 	var top_h := 124.0
-	var bottom_h := 140.0
 	top_panel.position = Vector2.ZERO
 	top_panel.size = Vector2(view.x, top_h)
 	bottom_panel.position = Vector2(0, view.y - bottom_h)
@@ -257,6 +258,10 @@ func _puzzle_index_for_key(event: InputEventKey) -> int:
 	var digit := _digit_from_key(event)
 	if digit < 0:
 		return -1
+	if event.ctrl_pressed or event.meta_pressed:
+		if digit > 5:
+			return -1
+		return 14 + digit
 	var shifted := event.shift_pressed or _is_shifted_digit(event.keycode)
 	if shifted:
 		if digit > 5:
@@ -307,7 +312,7 @@ func _input(event: InputEvent) -> void:
 		return
 	if not (event is InputEventKey) or not event.pressed:
 		return
-	if event.ctrl_pressed or event.alt_pressed or event.meta_pressed:
+	if event.alt_pressed:
 		return
 	var key_event := event as InputEventKey
 	var key := key_event.keycode
@@ -316,6 +321,8 @@ func _input(event: InputEvent) -> void:
 		if not event.echo:
 			_select_puzzle(puzzle_pick)
 		get_viewport().set_input_as_handled()
+		return
+	if key_event.ctrl_pressed or key_event.meta_pressed:
 		return
 	if key == KEY_U:
 		if not event.echo:
