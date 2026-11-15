@@ -96,7 +96,7 @@ func _build() -> void:
 	rate.position = Vector2(24, 268)
 	rate.size = Vector2(532, 116)
 	rate.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	rate.add_theme_font_size_override("normal_font_size", 13)
+	rate.add_theme_font_size_override("normal_font_size", 12)
 	rate.add_theme_color_override("default_color", Color(0.86, 0.78, 0.62))
 	clerk.add_child(rate)
 

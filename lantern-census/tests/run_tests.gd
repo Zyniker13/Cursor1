@@ -43,6 +43,8 @@ func _boot() -> void:
 	_check("a finished binding census returns to the floor select", _binding_return())
 	_check("a finished chart room census returns to the floor select", _chartroom_return())
 	_check("a finished bell loft census returns to the floor select", _bellloft_return())
+	_check("a finished clock room census returns to the floor select", _clockroom_return())
+	_check("a finished font census returns to the floor select", _font_return())
 	_print_summary()
 	quit(0 if _failed == 0 else 1)
 
@@ -92,6 +94,10 @@ func _run() -> int:
 	_check("chart room census accepts the true sheet and rejects a wrong one", _chartroom_census())
 	_check("bell loft layout, ring, and oil", _bellloft_layout())
 	_check("bell loft census accepts the true sheet and rejects a wrong one", _bellloft_census())
+	_check("clock room layout, ring, and oil", _clockroom_layout())
+	_check("clock room census accepts the true sheet and rejects a wrong one", _clockroom_census())
+	_check("font layout, ring, and oil", _font_layout())
+	_check("font census accepts the true sheet and rejects a wrong one", _font_census())
 	if _failed > 0:
 		return 1
 	return 0
@@ -437,10 +443,10 @@ func _cistern_layout() -> String:
 	if Rules.SMALL_FLASK_OIL != 24 or Rules.LARGE_FLASK_OIL != 120 or Rules.LARGE_FLASK_COST != 40:
 		return "flask sizes changed"
 	var listed: Array = Rules.floors()
-	if listed.size() != 12:
-		return "expected the cellar, the cistern, the cloister, the crypt, the ossuary, the reliquary, the undercroft, the well house, the scriptorium, the binding, the chart room, and the bell loft, found %d" % listed.size()
-	if str(listed[0].id) != "cellar" or str(listed[1].id) != "cistern" or str(listed[2].id) != "cloister" or str(listed[3].id) != "crypt" or str(listed[4].id) != "ossuary" or str(listed[5].id) != "reliquary" or str(listed[6].id) != "undercroft" or str(listed[7].id) != "wellhouse" or str(listed[8].id) != "scriptorium" or str(listed[9].id) != "binding" or str(listed[10].id) != "chartroom" or str(listed[11].id) != "bellloft":
-		return "floor order is not cellar, cistern, cloister, crypt, ossuary, reliquary, undercroft, well house, scriptorium, binding, chart room, then bell loft"
+	if listed.size() != 14:
+		return "expected the cellar, the cistern, the cloister, the crypt, the ossuary, the reliquary, the undercroft, the well house, the scriptorium, the binding, the chart room, the bell loft, the clock room, and the font, found %d" % listed.size()
+	if str(listed[0].id) != "cellar" or str(listed[1].id) != "cistern" or str(listed[2].id) != "cloister" or str(listed[3].id) != "crypt" or str(listed[4].id) != "ossuary" or str(listed[5].id) != "reliquary" or str(listed[6].id) != "undercroft" or str(listed[7].id) != "wellhouse" or str(listed[8].id) != "scriptorium" or str(listed[9].id) != "binding" or str(listed[10].id) != "chartroom" or str(listed[11].id) != "bellloft" or str(listed[12].id) != "clockroom" or str(listed[13].id) != "font":
+		return "floor order is not cellar, cistern, cloister, crypt, ossuary, reliquary, undercroft, well house, scriptorium, binding, chart room, bell loft, clock room, then font"
 	if Rules.default_floor().id != "cellar":
 		return "the default floor is no longer the cellar"
 	var floor = Rules.floor_named("cistern")
@@ -5185,6 +5191,993 @@ func _bellloft_return() -> String:
 		game.free()
 		return "arrival did not say the census is complete"
 	if game.campaign.purse < 326 or game.campaign.last_outcome != "complete":
+		game.free()
+		return "the finished census was not paid"
+	game._show_town()
+	if not game.town.visible or game.floor_select.visible:
+		game.free()
+		return "Back to town did not leave the floor select"
+	if game.town.outcome_label.text.find("complete") < 0:
+		game.free()
+		return "town clerk did not keep the finished census"
+	game.free()
+	return ""
+
+
+func _clockroom_layout() -> String:
+	if Rules.CORRIDOR_VALUE != 3 or Rules.HAZARD_VALUE != 8 or Rules.LOOP_VALUE != 15:
+		return "payout rates changed"
+	if Rules.MOVE_OIL != 1 or Rules.HIT_OIL != 3:
+		return "oil costs changed"
+	if Rules.SMALL_FLASK_OIL != 24 or Rules.LARGE_FLASK_OIL != 120 or Rules.LARGE_FLASK_COST != 40:
+		return "flask sizes changed"
+	var floor = Rules.floor_named("clockroom")
+	if floor == null:
+		return "clock room floor is missing"
+	if floor.record != Rules.CLOCK_RECORD:
+		return "clock room record drifted from its constant"
+	if Rules.CLOCK_RECORD != "Record every corridor, the fourteen clock cracks, and the ring around the clock.":
+		return "the clock room no longer asks for the clock cracks and the ring"
+	var expected := PackedStringArray([
+		"################",
+		"#S.............#",
+		"#.############.#",
+		"#H###.......##.#",
+		"#.###.KKKKK.##.#",
+		"#H###.KKKKK.##.#",
+		"#.###.KKKKK.##.#",
+		"#H###.KKKKK.##.#",
+		"#.###.........H#",
+		"#H###.........H#",
+		"#.###....L...HH#",
+		"#H.H.H.H..E.H.H#",
+		"#.##############",
+		"#.##############",
+		"################",
+	])
+	if floor.rows.size() != expected.size():
+		return "clock room height %d" % floor.rows.size()
+	for i in expected.size():
+		if str(floor.rows[i]) != str(expected[i]):
+			return "clock room row %d is %s" % [i, floor.rows[i]]
+	if Rules.width(floor) != 16 or Rules.height(floor) != 15:
+		return "clock room size %dx%d" % [Rules.width(floor), Rules.height(floor)]
+	if Rules.start_pos(floor) != Vector2i(1, 1):
+		return "start %s" % Rules.start_pos(floor)
+	if Rules.lift_pos(floor) != Vector2i(9, 10):
+		return "lift %s" % Rules.lift_pos(floor)
+	if Rules.enemy_pos(floor) != Vector2i(10, 11):
+		return "warden %s" % Rules.enemy_pos(floor)
+	if Rules.is_corridor_cell(Rules.enemy_pos(floor), floor):
+		return "the warden tile counts as a corridor"
+	if Rules.is_walkable(Rules.enemy_pos(floor), floor):
+		return "the warden's own tile is walkable"
+	if Rules.accurate_sheet(floor).has(Rules.enemy_pos(floor)):
+		return "the true sheet inks the warden"
+	var west := Rules.enemy_pos(floor) + Vector2i(-1, 0)
+	var east := Rules.enemy_pos(floor) + Vector2i(1, 0)
+	if Rules.glyph_at(west, floor) != "." or not Rules.is_corridor_cell(west, floor):
+		return "the tile west of the warden is not an open corridor"
+	if Rules.glyph_at(east, floor) != "." or not Rules.is_corridor_cell(east, floor):
+		return "the tile east of the warden is not an open corridor"
+	var hazards: Array = Rules.hazard_cells(floor)
+	var expect_h: Array = [Vector2i(1, 3), Vector2i(1, 5), Vector2i(1, 7), Vector2i(14, 8), Vector2i(1, 9), Vector2i(14, 9), Vector2i(13, 10), Vector2i(14, 10), Vector2i(1, 11), Vector2i(3, 11), Vector2i(5, 11), Vector2i(7, 11), Vector2i(12, 11), Vector2i(14, 11)]
+	if hazards.size() != 14:
+		return "hazard count %d" % hazards.size()
+	for i in hazards.size():
+		if hazards[i] != expect_h[i]:
+			return "hazard %d is %s" % [i, hazards[i]]
+	var ring_have := {}
+	for cell in Rules.loop_cells(floor):
+		ring_have[cell] = true
+	for crack in hazards:
+		if ring_have.has(crack):
+			return "clock crack %s sits on the ring" % crack
+		if crack == Rules.enemy_pos(floor):
+			return "a clock crack sits on the warden"
+	if Rules.corridor_cells(floor).size() != 75:
+		return "corridors %d" % Rules.corridor_cells(floor).size()
+	var clocks := 0
+	for y in range(4, 8):
+		for x in range(6, 11):
+			if Rules.glyph_at(Vector2i(x, y), floor) != "K":
+				return "clock cell %s is not a clock face" % Vector2i(x, y)
+			clocks += 1
+			if Rules.tile_at(Vector2i(x, y), floor) != Rules.Tile.WALL or Rules.is_walkable(Vector2i(x, y), floor):
+				return "the clock is not solid wall"
+	if clocks != 20:
+		return "clock size %d" % clocks
+	for y in Rules.height(floor):
+		for x in Rules.width(floor):
+			if Rules.glyph_at(Vector2i(x, y), floor) == "K" and (x < 6 or x > 10 or y < 4 or y > 7):
+				return "clock spills outside the 5x4 rectangle at %s" % Vector2i(x, y)
+	if Rules.glyph_at(Vector2i(8, 5), floor) != "K" or Rules.glyph_at(Vector2i(6, 4), floor) != "K" or Rules.glyph_at(Vector2i(10, 7), floor) != "K":
+		return "the clock is not a solid 5x4 rectangle"
+	if Rules.glyph_at(Vector2i(5, 5), floor) == "K" or Rules.glyph_at(Vector2i(11, 5), floor) == "K" or Rules.glyph_at(Vector2i(8, 3), floor) == "K" or Rules.glyph_at(Vector2i(8, 8), floor) == "K":
+		return "the clock is a bar, a block, or an L"
+	if Rules.glyph_at(Vector2i(2, 4), floor) != "#" or Rules.glyph_at(Vector2i(12, 5), floor) != "#":
+		return "the piers are not ordinary walls"
+	if Rules.tile_at(Vector2i(2, 4), floor) != Rules.Tile.WALL:
+		return "a pier is not wall for the sheet"
+	var ring_err := _clockroom_ring(floor)
+	if ring_err != "":
+		return ring_err
+	for other in Rules.floors():
+		if other.id == floor.id:
+			continue
+		if floor.rows == other.rows:
+			return "the clock room copies %s" % other.id
+		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
+			return "the clock room reuses the %s grid" % other.id
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other):
+			return "the clock room reuses the %s warden cell" % other.id
+		if _ring_key(floor) == _ring_key(other):
+			return "the clock room reuses the %s ring" % other.id
+	for y in range(1, 14):
+		if not Rules.is_walkable(Vector2i(1, y), floor):
+			return "the west aisle is closed at %s" % Vector2i(1, y)
+	var landing := 0
+	for x in range(1, 15):
+		if Rules.glyph_at(Vector2i(x, 1), floor) != "." and Rules.glyph_at(Vector2i(x, 1), floor) != "S":
+			return "the north landing is not open floor at %s" % Vector2i(x, 1)
+		if Rules.is_walkable(Vector2i(x, 1), floor):
+			landing += 1
+	if landing != 14:
+		return "the north landing is not open floor"
+	var swings: Array = Rules.swing_tiles(floor)
+	if swings.size() != 2 or swings[0] != east or swings[1] != west:
+		return "the warden should telegraph the east tile, then the west tile"
+	for swing in swings:
+		if not Rules.is_walkable(swing, floor) or not Rules.is_corridor_cell(swing, floor):
+			return "swing tile %s is not an open corridor" % swing
+	var bumper = Rules.new_run(Rules.SMALL_FLASK_OIL, floor)
+	bumper.pos = Vector2i(5, 4)
+	var before_oil: int = bumper.oil
+	var tap: Dictionary = Rules.step(bumper, Vector2i(1, 0))
+	if bool(tap.moved) or bumper.oil != before_oil:
+		return "bumping the clock spent oil or moved"
+	if int(bumper.marks.get(Vector2i(6, 4), Rules.Mark.NONE)) != Rules.Mark.WALL:
+		return "bumping the clock did not ink a wall"
+	if str(tap.message).find("clock") < 0:
+		return "bumping the clock did not name it"
+	var steps := Rules.shortest_path_steps(floor)
+	if steps != 19:
+		return "shortest clock room path is %d, expected 19" % steps
+	if Rules.SMALL_FLASK_OIL - steps != 5:
+		return "small flask margin is %d, expected 5" % (Rules.SMALL_FLASK_OIL - steps)
+	var actions: Array = Rules.scripted_safe_actions(floor)
+	if actions.is_empty():
+		return "no safe exit from the clock room"
+	var state = Rules.new_run(Rules.SMALL_FLASK_OIL, floor)
+	for i in actions.size():
+		var result: Dictionary = Rules.step(state, actions[i])
+		if bool(result.hit):
+			return "hit on clock room exit action %d at %s" % [i, state.pos]
+		if state.end_reason != Rules.EndReason.NONE and i != actions.size() - 1:
+			return "clock room exit ended early at action %d" % i
+		if actions[i] != Vector2i.ZERO and not bool(result.moved):
+			return "clock room exit step %d did not move" % i
+	if state.end_reason != Rules.EndReason.EXTRACTED or state.pos != Rules.lift_pos(floor):
+		return "clock room exit was not an extract at the lift"
+	if state.oil != Rules.SMALL_FLASK_OIL - actions.size():
+		return "clock room exit oil %d after %d actions" % [state.oil, actions.size()]
+	var full: int = int(Rules.payout(Rules.accurate_sheet(floor), floor).total)
+	var carried: int = int(Rules.payout(state.marks, floor).total)
+	if carried <= 0 or carried >= full:
+		return "exit sheet paid %d against full %d" % [carried, full]
+	if Rules.census_accepted(state.marks, floor):
+		return "the exit path was accepted as a finished census"
+	var cover := Rules.safe_survey_steps(floor)
+	if cover != 110:
+		return "safe survey is %d, expected 110" % cover
+	if cover < 100 or cover > 116:
+		return "survey oil %d is outside 100 to 116" % cover
+	if cover > Rules.LARGE_FLASK_OIL or cover <= Rules.SMALL_FLASK_OIL:
+		return "survey oil %d does not sit between the flasks" % cover
+	var expected_pay := Rules.corridor_cells(floor).size() * Rules.CORRIDOR_VALUE + 14 * Rules.HAZARD_VALUE + Rules.LOOP_VALUE
+	var arithmetic := 75 * 3 + 14 * 8 + 15
+	if full != expected_pay or full != arithmetic or full != 352:
+		return "full pay %d does not match 75 x 3 + 14 x 8 + 15" % full
+	print("  clock room shortest %d  survey %d  exit pay %d  full %d" % [steps, cover, carried, full])
+	return ""
+
+
+func _clockroom_ring(floor) -> String:
+	var cells: Array = Rules.loop_cells(floor)
+	if cells.size() != 22:
+		return "ring size %d" % cells.size()
+	var have := {}
+	for cell in cells:
+		if have.has(cell):
+			return "duplicate ring tile %s" % cell
+		have[cell] = true
+		if Rules.glyph_at(cell, floor) != ".":
+			return "ring tile %s is not open floor" % cell
+		if not Rules.is_corridor_cell(cell, floor):
+			return "ring tile %s is not a corridor" % cell
+		if cell == Rules.enemy_pos(floor) or cell == Rules.start_pos(floor):
+			return "ring tile %s is the warden or the start" % cell
+		if Rules.tile_at(cell, floor) == Rules.Tile.HAZARD or Rules.tile_at(cell, floor) == Rules.Tile.WALL:
+			return "ring tile %s is a hazard or a wall" % cell
+	for cell in cells:
+		var degree := 0
+		for dir in Rules.cardinals():
+			if have.has(cell + dir):
+				degree += 1
+		if degree != 2:
+			return "ring tile %s has %d neighbors in the ring" % [cell, degree]
+	if not have.has(Vector2i(8, 3)) or have.has(Vector2i(8, 4)):
+		return "the ring does not rim the clock"
+	if have.has(Vector2i(8, 5)) or have.has(Vector2i(4, 5)) or have.has(Vector2i(12, 5)):
+		return "the ring is not the rectangle around the clock"
+	var expect: Array = []
+	for x in range(5, 12):
+		expect.append(Vector2i(x, 3))
+	for y in range(4, 8):
+		expect.append(Vector2i(5, y))
+		expect.append(Vector2i(11, y))
+	for x in range(5, 12):
+		expect.append(Vector2i(x, 8))
+	if cells.size() != expect.size():
+		return "ring listing size %d" % cells.size()
+	for cell in expect:
+		if not have.has(cell):
+			return "ring is missing %s" % cell
+	if have.size() != 22:
+		return "the ring has tiles besides the 22 around the clock"
+	var clocks := 0
+	for y in Rules.height(floor):
+		for x in Rules.width(floor):
+			var p := Vector2i(x, y)
+			if Rules.glyph_at(p, floor) != "K":
+				continue
+			clocks += 1
+			for dir in Rules.cardinals():
+				var n: Vector2i = p + dir
+				if Rules.is_corridor_cell(n, floor) and not have.has(n):
+					return "corridor %s touches the clock and is outside the ring" % n
+	if clocks != 20:
+		return "clock size %d" % clocks
+	if str(floor.loop_name) != "Clock room ring":
+		return "ring name is %s" % floor.loop_name
+	return ""
+
+
+func _clockroom_census() -> String:
+	var floor = Rules.floor_named("clockroom")
+	var truth: Dictionary = Rules.accurate_sheet(floor)
+	if not Rules.census_accepted(truth, floor):
+		return "the true clock room census was rejected"
+	var bill: Dictionary = Rules.payout(truth, floor)
+	if int(bill.corridors) != 75 or int(bill.hazards) != 14 or int(bill.loop) != 1:
+		return "true counts %s/%s loop %s" % [bill.corridors, bill.hazards, bill.loop]
+	if int(bill.corridor_pay) != 75 * Rules.CORRIDOR_VALUE:
+		return "corridor pay drifted"
+	if int(bill.hazard_pay) != 14 * Rules.HAZARD_VALUE:
+		return "hazard pay drifted"
+	if int(bill.loop_pay) != Rules.LOOP_VALUE:
+		return "ring pay drifted"
+	var arithmetic := 75 * 3 + 14 * 8 + 15
+	if int(bill.total) != arithmetic or int(bill.total) != 352:
+		return "true total %s, expected %s" % [bill.total, arithmetic]
+	if Rules.format_bill(bill).find("Clock room ring") < 0:
+		return "the receipt did not name the clock room ring"
+	if Rules.census_accepted({}, floor):
+		return "an empty sheet was accepted"
+	if int(Rules.payout({}, floor).total) != 0:
+		return "an empty sheet paid out"
+	var missing_corridor: Dictionary = truth.duplicate()
+	missing_corridor.erase(Rules.start_pos(floor))
+	if Rules.census_accepted(missing_corridor, floor):
+		return "a sheet missing the start corridor was accepted"
+	var missing_bill: Dictionary = Rules.payout(missing_corridor, floor)
+	if int(missing_bill.total) >= 352 or int(missing_bill.loop) != 1:
+		return "dropping a corridor outside the ring changed the census the wrong way"
+	var crack: Vector2i = Rules.hazard_cells(floor)[0]
+	var missing_crack: Dictionary = truth.duplicate()
+	missing_crack.erase(crack)
+	if Rules.census_accepted(missing_crack, floor):
+		return "a sheet missing a clock crack was accepted"
+	if int(Rules.payout(missing_crack, floor).total) >= 352:
+		return "dropping a clock crack did not lower pay"
+	var broken_ring: Dictionary = truth.duplicate()
+	var rim: Vector2i = Rules.loop_cells(floor)[0]
+	broken_ring[rim] = Rules.Mark.WALL
+	if Rules.census_accepted(broken_ring, floor):
+		return "a broken ring was accepted"
+	var broken_bill: Dictionary = Rules.payout(broken_ring, floor)
+	if int(broken_bill.loop) != 0 or int(broken_bill.total) >= 352:
+		return "a broken ring still paid as a finished sheet"
+	var swapped: Dictionary = truth.duplicate()
+	swapped[crack] = Rules.Mark.CORRIDOR
+	if Rules.census_accepted(swapped, floor):
+		return "a clock crack marked as a corridor was accepted"
+	if int(Rules.payout(swapped, floor).hazard_pay) >= int(bill.hazard_pay):
+		return "mislabeling a clock crack did not lower hazard pay"
+	if int(Rules.payout(swapped, floor).total) > 352:
+		return "mislabeling a clock crack raised the payout"
+	var corridor: Vector2i = Rules.lift_pos(floor)
+	var swapped_corridor: Dictionary = truth.duplicate()
+	swapped_corridor[corridor] = Rules.Mark.HAZARD
+	if Rules.census_accepted(swapped_corridor, floor):
+		return "the lift marked as a hazard was accepted"
+	if int(Rules.payout(swapped_corridor, floor).total) > 352:
+		return "marking the lift as a hazard raised the payout"
+	var false_wall: Dictionary = truth.duplicate()
+	false_wall[Vector2i(0, 0)] = Rules.Mark.HAZARD
+	if Rules.census_accepted(false_wall, floor):
+		return "a hazard mark on a wall was accepted"
+	if int(Rules.payout(false_wall, floor).total) != 352 or int(Rules.payout(false_wall, floor).hazard_pay) != int(bill.hazard_pay):
+		return "a hazard mark on a wall changed the payout"
+	var pier_wall: Dictionary = truth.duplicate()
+	pier_wall[Vector2i(2, 4)] = Rules.Mark.WALL
+	if not Rules.census_accepted(pier_wall, floor):
+		return "inking a pier as a wall rejected a true census"
+	var clock_wall: Dictionary = truth.duplicate()
+	clock_wall[Vector2i(6, 4)] = Rules.Mark.WALL
+	if not Rules.census_accepted(clock_wall, floor):
+		return "inking the clock as a wall rejected a true census"
+	clock_wall[Vector2i(6, 4)] = Rules.Mark.HAZARD
+	if Rules.census_accepted(clock_wall, floor):
+		return "calling the clock a hazard was accepted"
+	var warden_mark: Dictionary = truth.duplicate()
+	warden_mark[Rules.enemy_pos(floor)] = Rules.Mark.CORRIDOR
+	if Rules.census_accepted(warden_mark, floor):
+		return "the warden tile was accepted as a corridor"
+	if int(Rules.payout(warden_mark, floor).total) != 352:
+		return "marking the warden changed the payout"
+	var only_ring := {}
+	for cell in Rules.loop_cells(floor):
+		only_ring[cell] = Rules.Mark.CORRIDOR
+	if Rules.census_accepted(only_ring, floor):
+		return "the ring alone was accepted as the census"
+	var ring_bill: Dictionary = Rules.payout(only_ring, floor)
+	if int(ring_bill.loop) != 1 or int(ring_bill.hazards) != 0 or int(ring_bill.total) >= 352:
+		return "the ring bonus did not stay inside the shared payout rule"
+	var expect_pay := {
+		"cellar": 211,
+		"cistern": 288,
+		"cloister": 242,
+		"crypt": 316,
+		"ossuary": 240,
+		"reliquary": 251,
+		"undercroft": 238,
+		"wellhouse": 225,
+		"scriptorium": 263,
+		"binding": 343,
+		"chartroom": 306,
+		"bellloft": 326,
+		"font": 354,
+	}
+	var expect_loop := {
+		"cellar": "East square",
+		"cistern": "Cistern ring",
+		"cloister": "Cloister walk",
+		"crypt": "Crypt ring",
+		"ossuary": "Ossuary ring",
+		"reliquary": "Reliquary ring",
+		"undercroft": "Undercroft ring",
+		"wellhouse": "Well ring",
+		"scriptorium": "Scriptorium ring",
+		"binding": "Binding ring",
+		"chartroom": "Chart room ring",
+		"bellloft": "Bell loft ring",
+		"font": "Font ring",
+	}
+	for other in Rules.floors():
+		if other.id == floor.id:
+			continue
+		if Rules.census_accepted(truth, other):
+			return "the clock room sheet was accepted as %s" % other.title
+		if Rules.census_accepted(Rules.accurate_sheet(other), floor):
+			return "the %s sheet was accepted as the clock room" % other.title
+		if not Rules.census_accepted(Rules.accurate_sheet(other), other):
+			return "the %s true census was rejected" % other.title
+		var other_bill: Dictionary = Rules.payout(Rules.accurate_sheet(other), other)
+		if int(other_bill.total) != int(expect_pay[other.id]):
+			return "the %s payout changed to %s" % [other.title, other_bill.total]
+		if str(other_bill.loop_name) != str(expect_loop[other.id]):
+			return "the %s ring name changed" % other.title
+	var approach: Vector2i = Rules.walkable_approach(crack, floor)
+	if approach.x < 0:
+		return "clock crack has no approach"
+	var walker = Rules.new_run(Rules.SMALL_FLASK_OIL, floor)
+	walker.pos = approach
+	walker.oil = 10
+	var before: int = walker.oil
+	var stepped: Dictionary = Rules.step(walker, crack - approach)
+	if bool(stepped.hit):
+		return "opening clock step was a swing"
+	if walker.oil != before - Rules.MOVE_OIL:
+		return "a clock crack burned extra oil"
+	if int(walker.marks.get(crack, Rules.Mark.NONE)) != Rules.Mark.HAZARD:
+		return "a clock crack was not inked as a hazard"
+	return ""
+
+
+func _clockroom_return() -> String:
+	var game_script = load("res://scripts/game.gd")
+	var select_script = load("res://scripts/floor_select_view.gd")
+	if game_script == null or select_script == null:
+		return "game or floor select did not load"
+	var game = game_script.new()
+	root.add_child(game)
+	if game.town == null or game.floor_select == null or game.descent == null:
+		game.free()
+		return "the game did not build its screens"
+	if game.floor_select.record_for("clockroom") != Rules.CLOCK_RECORD:
+		game.free()
+		return "floor select does not offer the clock room census"
+	for other in Rules.floors():
+		if game.floor_select.record_for(other.id) != other.record:
+			game.free()
+			return "floor select dropped the %s census" % other.title
+		if game.floor_select.status_for(other.id) != "Census open":
+			game.free()
+			return "the %s card did not open" % other.title
+	game._on_descend_floor("clockroom")
+	if game.descent.state == null or game.descent.state.floor.id != "clockroom":
+		game.free()
+		return "descend did not open the clock room"
+	var state = game.descent.state
+	var lift: Vector2i = Rules.lift_pos(state.floor)
+	var approach: Vector2i = Rules.walkable_approach(lift, state.floor)
+	state.pos = approach
+	state.oil = 5
+	var left: Dictionary = Rules.step(state, lift - approach)
+	if not bool(left.extracted):
+		game.free()
+		return "short clock room sheet did not leave on the lift"
+	game.descent._open_return()
+	if game.descent.return_button.text != "Return to town":
+		game.free()
+		return "a short sheet offered the floor select"
+	game._on_return(state)
+	if not game.town.visible or game.floor_select.visible or game.descent.visible:
+		game.free()
+		return "a short census did not return to town"
+	if bool(game.campaign.completed.get("clockroom", false)):
+		game.free()
+		return "a short census was accepted"
+	if game.town.outcome_label.text.find("not finished") < 0:
+		game.free()
+		return "the clerk treated a short sheet as finished"
+	game._on_floors()
+	if not game.floor_select.visible or game.town.visible:
+		game.free()
+		return "floor select did not open from town"
+	game._on_descend_floor("clockroom")
+	state = game.descent.state
+	state.marks = Rules.accurate_sheet(state.floor)
+	lift = Rules.lift_pos(state.floor)
+	approach = Rules.walkable_approach(lift, state.floor)
+	state.pos = approach
+	state.oil = 5
+	var done: Dictionary = Rules.step(state, lift - approach)
+	if not bool(done.extracted) or not Rules.census_accepted(state.marks, state.floor):
+		game.free()
+		return "the finished sheet did not extract as an accepted census"
+	game.descent._open_return()
+	if game.descent.return_button.text != "Return to floor select":
+		game.free()
+		return "a finished census did not offer the floor select"
+	game._on_return(state)
+	if not game.floor_select.visible or game.town.visible or game.descent.visible:
+		game.free()
+		return "a finished census did not return to the floor select"
+	if not bool(game.campaign.completed.get("clockroom", false)):
+		game.free()
+		return "the finished census was not recorded"
+	for other in Rules.floors():
+		if other.id == "clockroom":
+			if game.floor_select.status_for(other.id) != "Census complete":
+				game.free()
+				return "floor select did not show the clock room census complete"
+		else:
+			if bool(game.campaign.completed.get(other.id, false)):
+				game.free()
+				return "another floor was marked complete"
+			if game.floor_select.status_for(other.id) != "Census open":
+				game.free()
+				return "another floor card was closed"
+	if game.floor_select.notice_label.text.find("complete") < 0:
+		game.free()
+		return "arrival did not say the census is complete"
+	if int(game.campaign.last_bill.total) != 352 or game.campaign.purse < 352 or game.campaign.last_outcome != "complete":
+		game.free()
+		return "the finished census was not paid"
+	game._show_town()
+	if not game.town.visible or game.floor_select.visible:
+		game.free()
+		return "Back to town did not leave the floor select"
+	if game.town.outcome_label.text.find("complete") < 0:
+		game.free()
+		return "town clerk did not keep the finished census"
+	game.free()
+	return ""
+
+
+func _font_layout() -> String:
+	if Rules.CORRIDOR_VALUE != 3 or Rules.HAZARD_VALUE != 8 or Rules.LOOP_VALUE != 15:
+		return "payout rates changed"
+	if Rules.MOVE_OIL != 1 or Rules.HIT_OIL != 3:
+		return "oil costs changed"
+	if Rules.SMALL_FLASK_OIL != 24 or Rules.LARGE_FLASK_OIL != 120 or Rules.LARGE_FLASK_COST != 40:
+		return "flask sizes changed"
+	var floor = Rules.floor_named("font")
+	if floor == null:
+		return "font floor is missing"
+	if floor.record != Rules.FONT_RECORD:
+		return "font record drifted from its constant"
+	if Rules.FONT_RECORD != "Record every corridor, the fifteen font cracks, and the ring around the font.":
+		return "the font no longer asks for the font cracks and the ring"
+	var expected := PackedStringArray([
+		"#################",
+		"#S..............#",
+		"#.#############.#",
+		"#H####......###.#",
+		"#.####.NNNN.###.#",
+		"#H####.NNNN.###.#",
+		"#.####.NNNN.###.#",
+		"#H####.NNNN.###.#",
+		"#.####.NNNN.###H#",
+		"#H####.NNNN.###H#",
+		"#.####......###.#",
+		"#H........L...HH#",
+		"#..H.H.H.E...H.H#",
+		"#H###############",
+		"#.###############",
+		"#################",
+	])
+	if floor.rows.size() != expected.size():
+		return "font height %d" % floor.rows.size()
+	for i in expected.size():
+		if str(floor.rows[i]) != str(expected[i]):
+			return "font row %d is %s" % [i, floor.rows[i]]
+	if Rules.width(floor) != 17 or Rules.height(floor) != 16:
+		return "font size %dx%d" % [Rules.width(floor), Rules.height(floor)]
+	if Rules.start_pos(floor) != Vector2i(1, 1):
+		return "start %s" % Rules.start_pos(floor)
+	if Rules.lift_pos(floor) != Vector2i(10, 11):
+		return "lift %s" % Rules.lift_pos(floor)
+	if Rules.enemy_pos(floor) != Vector2i(9, 12):
+		return "warden %s" % Rules.enemy_pos(floor)
+	if Rules.is_corridor_cell(Rules.enemy_pos(floor), floor):
+		return "the warden tile counts as a corridor"
+	if Rules.is_walkable(Rules.enemy_pos(floor), floor):
+		return "the warden's own tile is walkable"
+	if Rules.accurate_sheet(floor).has(Rules.enemy_pos(floor)):
+		return "the true sheet inks the warden"
+	var west := Rules.enemy_pos(floor) + Vector2i(-1, 0)
+	var east := Rules.enemy_pos(floor) + Vector2i(1, 0)
+	if Rules.glyph_at(west, floor) != "." or not Rules.is_corridor_cell(west, floor):
+		return "the tile west of the warden is not an open corridor"
+	if Rules.glyph_at(east, floor) != "." or not Rules.is_corridor_cell(east, floor):
+		return "the tile east of the warden is not an open corridor"
+	var hazards: Array = Rules.hazard_cells(floor)
+	var expect_h: Array = [Vector2i(1, 3), Vector2i(1, 5), Vector2i(1, 7), Vector2i(15, 8), Vector2i(1, 9), Vector2i(15, 9), Vector2i(1, 11), Vector2i(14, 11), Vector2i(15, 11), Vector2i(3, 12), Vector2i(5, 12), Vector2i(7, 12), Vector2i(13, 12), Vector2i(15, 12), Vector2i(1, 13)]
+	if hazards.size() != 15:
+		return "hazard count %d" % hazards.size()
+	for i in hazards.size():
+		if hazards[i] != expect_h[i]:
+			return "hazard %d is %s" % [i, hazards[i]]
+	var ring_have := {}
+	for cell in Rules.loop_cells(floor):
+		ring_have[cell] = true
+	for crack in hazards:
+		if ring_have.has(crack):
+			return "font crack %s sits on the ring" % crack
+		if crack == Rules.enemy_pos(floor):
+			return "a font crack sits on the warden"
+	if Rules.corridor_cells(floor).size() != 73:
+		return "corridors %d" % Rules.corridor_cells(floor).size()
+	var basins := 0
+	for y in range(4, 10):
+		for x in range(7, 11):
+			if Rules.glyph_at(Vector2i(x, y), floor) != "N":
+				return "font cell %s is not the basin" % Vector2i(x, y)
+			basins += 1
+			if Rules.tile_at(Vector2i(x, y), floor) != Rules.Tile.WALL or Rules.is_walkable(Vector2i(x, y), floor):
+				return "the font is not solid wall"
+	if basins != 24:
+		return "font size %d" % basins
+	for y in Rules.height(floor):
+		for x in Rules.width(floor):
+			if Rules.glyph_at(Vector2i(x, y), floor) == "N" and (x < 7 or x > 10 or y < 4 or y > 9):
+				return "font spills outside the 4x6 rectangle at %s" % Vector2i(x, y)
+	if Rules.glyph_at(Vector2i(8, 6), floor) != "N" or Rules.glyph_at(Vector2i(7, 4), floor) != "N" or Rules.glyph_at(Vector2i(10, 9), floor) != "N":
+		return "the font is not a solid 4x6 rectangle"
+	if Rules.glyph_at(Vector2i(6, 6), floor) == "N" or Rules.glyph_at(Vector2i(11, 6), floor) == "N" or Rules.glyph_at(Vector2i(8, 3), floor) == "N" or Rules.glyph_at(Vector2i(8, 10), floor) == "N":
+		return "the font is a bar, a block, or an L"
+	if Rules.glyph_at(Vector2i(2, 4), floor) != "#" or Rules.glyph_at(Vector2i(12, 5), floor) != "#":
+		return "the piers are not ordinary walls"
+	if Rules.tile_at(Vector2i(2, 4), floor) != Rules.Tile.WALL:
+		return "a pier is not wall for the sheet"
+	var ring_err := _font_ring(floor)
+	if ring_err != "":
+		return ring_err
+	for other in Rules.floors():
+		if other.id == floor.id:
+			continue
+		if floor.rows == other.rows:
+			return "the font copies %s" % other.id
+		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
+			return "the font reuses the %s grid" % other.id
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other):
+			return "the font reuses the %s warden cell" % other.id
+		if _ring_key(floor) == _ring_key(other):
+			return "the font reuses the %s ring" % other.id
+	for y in range(1, 15):
+		if not Rules.is_walkable(Vector2i(1, y), floor):
+			return "the west aisle is closed at %s" % Vector2i(1, y)
+	var landing := 0
+	for x in range(1, 16):
+		if Rules.glyph_at(Vector2i(x, 1), floor) != "." and Rules.glyph_at(Vector2i(x, 1), floor) != "S":
+			return "the north landing is not open floor at %s" % Vector2i(x, 1)
+		if Rules.is_walkable(Vector2i(x, 1), floor):
+			landing += 1
+	if landing != 15:
+		return "the north landing is not open floor"
+	var swings: Array = Rules.swing_tiles(floor)
+	if swings.size() != 2 or swings[0] != east or swings[1] != west:
+		return "the warden should telegraph the east tile, then the west tile"
+	for swing in swings:
+		if not Rules.is_walkable(swing, floor) or not Rules.is_corridor_cell(swing, floor):
+			return "swing tile %s is not an open corridor" % swing
+	var bumper = Rules.new_run(Rules.SMALL_FLASK_OIL, floor)
+	bumper.pos = Vector2i(6, 4)
+	var before_oil: int = bumper.oil
+	var tap: Dictionary = Rules.step(bumper, Vector2i(1, 0))
+	if bool(tap.moved) or bumper.oil != before_oil:
+		return "bumping the font spent oil or moved"
+	if int(bumper.marks.get(Vector2i(7, 4), Rules.Mark.NONE)) != Rules.Mark.WALL:
+		return "bumping the font did not ink a wall"
+	if str(tap.message).find("font") < 0:
+		return "bumping the font did not name it"
+	var steps := Rules.shortest_path_steps(floor)
+	if steps != 19:
+		return "shortest font path is %d, expected 19" % steps
+	if Rules.SMALL_FLASK_OIL - steps != 5:
+		return "small flask margin is %d, expected 5" % (Rules.SMALL_FLASK_OIL - steps)
+	var actions: Array = Rules.scripted_safe_actions(floor)
+	if actions.is_empty():
+		return "no safe exit from the font"
+	var state = Rules.new_run(Rules.SMALL_FLASK_OIL, floor)
+	for i in actions.size():
+		var result: Dictionary = Rules.step(state, actions[i])
+		if bool(result.hit):
+			return "hit on font exit action %d at %s" % [i, state.pos]
+		if state.end_reason != Rules.EndReason.NONE and i != actions.size() - 1:
+			return "font exit ended early at action %d" % i
+		if actions[i] != Vector2i.ZERO and not bool(result.moved):
+			return "font exit step %d did not move" % i
+	if state.end_reason != Rules.EndReason.EXTRACTED or state.pos != Rules.lift_pos(floor):
+		return "font exit was not an extract at the lift"
+	if state.oil != Rules.SMALL_FLASK_OIL - actions.size():
+		return "font exit oil %d after %d actions" % [state.oil, actions.size()]
+	var full: int = int(Rules.payout(Rules.accurate_sheet(floor), floor).total)
+	var carried: int = int(Rules.payout(state.marks, floor).total)
+	if carried <= 0 or carried >= full:
+		return "exit sheet paid %d against full %d" % [carried, full]
+	if Rules.census_accepted(state.marks, floor):
+		return "the exit path was accepted as a finished census"
+	var cover := Rules.safe_survey_steps(floor)
+	if cover != 110:
+		return "safe survey is %d, expected 110" % cover
+	if cover < 100 or cover > 116:
+		return "survey oil %d is outside 100 to 116" % cover
+	if cover > Rules.LARGE_FLASK_OIL or cover <= Rules.SMALL_FLASK_OIL:
+		return "survey oil %d does not sit between the flasks" % cover
+	var expected_pay := Rules.corridor_cells(floor).size() * Rules.CORRIDOR_VALUE + 15 * Rules.HAZARD_VALUE + Rules.LOOP_VALUE
+	var arithmetic := 73 * 3 + 15 * 8 + 15
+	if full != expected_pay or full != arithmetic or full != 354:
+		return "full pay %d does not match 73 x 3 + 15 x 8 + 15" % full
+	print("  font shortest %d  survey %d  exit pay %d  full %d" % [steps, cover, carried, full])
+	return ""
+
+
+func _font_ring(floor) -> String:
+	var cells: Array = Rules.loop_cells(floor)
+	if cells.size() != 24:
+		return "ring size %d" % cells.size()
+	var have := {}
+	for cell in cells:
+		if have.has(cell):
+			return "duplicate ring tile %s" % cell
+		have[cell] = true
+		if Rules.glyph_at(cell, floor) != ".":
+			return "ring tile %s is not open floor" % cell
+		if not Rules.is_corridor_cell(cell, floor):
+			return "ring tile %s is not a corridor" % cell
+		if cell == Rules.enemy_pos(floor) or cell == Rules.start_pos(floor):
+			return "ring tile %s is the warden or the start" % cell
+		if Rules.tile_at(cell, floor) == Rules.Tile.HAZARD or Rules.tile_at(cell, floor) == Rules.Tile.WALL:
+			return "ring tile %s is a hazard or a wall" % cell
+	for cell in cells:
+		var degree := 0
+		for dir in Rules.cardinals():
+			if have.has(cell + dir):
+				degree += 1
+		if degree != 2:
+			return "ring tile %s has %d neighbors in the ring" % [cell, degree]
+	if not have.has(Vector2i(8, 3)) or have.has(Vector2i(8, 4)):
+		return "the ring does not rim the font"
+	if have.has(Vector2i(8, 6)) or have.has(Vector2i(5, 6)) or have.has(Vector2i(12, 6)):
+		return "the ring is not the rectangle around the font"
+	var expect: Array = []
+	for x in range(6, 12):
+		expect.append(Vector2i(x, 3))
+	for y in range(4, 10):
+		expect.append(Vector2i(6, y))
+		expect.append(Vector2i(11, y))
+	for x in range(6, 12):
+		expect.append(Vector2i(x, 10))
+	if cells.size() != expect.size():
+		return "ring listing size %d" % cells.size()
+	for cell in expect:
+		if not have.has(cell):
+			return "ring is missing %s" % cell
+	if have.size() != 24:
+		return "the ring has tiles besides the 24 around the font"
+	var basins := 0
+	for y in Rules.height(floor):
+		for x in Rules.width(floor):
+			var p := Vector2i(x, y)
+			if Rules.glyph_at(p, floor) != "N":
+				continue
+			basins += 1
+			for dir in Rules.cardinals():
+				var n: Vector2i = p + dir
+				if Rules.is_corridor_cell(n, floor) and not have.has(n):
+					return "corridor %s touches the font and is outside the ring" % n
+	if basins != 24:
+		return "font size %d" % basins
+	if str(floor.loop_name) != "Font ring":
+		return "ring name is %s" % floor.loop_name
+	return ""
+
+
+func _font_census() -> String:
+	var floor = Rules.floor_named("font")
+	var truth: Dictionary = Rules.accurate_sheet(floor)
+	if not Rules.census_accepted(truth, floor):
+		return "the true font census was rejected"
+	var bill: Dictionary = Rules.payout(truth, floor)
+	if int(bill.corridors) != 73 or int(bill.hazards) != 15 or int(bill.loop) != 1:
+		return "true counts %s/%s loop %s" % [bill.corridors, bill.hazards, bill.loop]
+	if int(bill.corridor_pay) != 73 * Rules.CORRIDOR_VALUE:
+		return "corridor pay drifted"
+	if int(bill.hazard_pay) != 15 * Rules.HAZARD_VALUE:
+		return "hazard pay drifted"
+	if int(bill.loop_pay) != Rules.LOOP_VALUE:
+		return "ring pay drifted"
+	var arithmetic := 73 * 3 + 15 * 8 + 15
+	if int(bill.total) != arithmetic or int(bill.total) != 354:
+		return "true total %s, expected %s" % [bill.total, arithmetic]
+	if Rules.format_bill(bill).find("Font ring") < 0:
+		return "the receipt did not name the font ring"
+	if Rules.census_accepted({}, floor):
+		return "an empty sheet was accepted"
+	if int(Rules.payout({}, floor).total) != 0:
+		return "an empty sheet paid out"
+	var missing_corridor: Dictionary = truth.duplicate()
+	missing_corridor.erase(Rules.start_pos(floor))
+	if Rules.census_accepted(missing_corridor, floor):
+		return "a sheet missing the start corridor was accepted"
+	var missing_bill: Dictionary = Rules.payout(missing_corridor, floor)
+	if int(missing_bill.total) >= 354 or int(missing_bill.loop) != 1:
+		return "dropping a corridor outside the ring changed the census the wrong way"
+	var crack: Vector2i = Rules.hazard_cells(floor)[0]
+	var missing_crack: Dictionary = truth.duplicate()
+	missing_crack.erase(crack)
+	if Rules.census_accepted(missing_crack, floor):
+		return "a sheet missing a font crack was accepted"
+	if int(Rules.payout(missing_crack, floor).total) >= 354:
+		return "dropping a font crack did not lower pay"
+	var broken_ring: Dictionary = truth.duplicate()
+	var rim: Vector2i = Rules.loop_cells(floor)[0]
+	broken_ring[rim] = Rules.Mark.WALL
+	if Rules.census_accepted(broken_ring, floor):
+		return "a broken ring was accepted"
+	var broken_bill: Dictionary = Rules.payout(broken_ring, floor)
+	if int(broken_bill.loop) != 0 or int(broken_bill.total) >= 354:
+		return "a broken ring still paid as a finished sheet"
+	var swapped: Dictionary = truth.duplicate()
+	swapped[crack] = Rules.Mark.CORRIDOR
+	if Rules.census_accepted(swapped, floor):
+		return "a font crack marked as a corridor was accepted"
+	if int(Rules.payout(swapped, floor).hazard_pay) >= int(bill.hazard_pay):
+		return "mislabeling a font crack did not lower hazard pay"
+	if int(Rules.payout(swapped, floor).total) > 354:
+		return "mislabeling a font crack raised the payout"
+	var corridor: Vector2i = Rules.lift_pos(floor)
+	var swapped_corridor: Dictionary = truth.duplicate()
+	swapped_corridor[corridor] = Rules.Mark.HAZARD
+	if Rules.census_accepted(swapped_corridor, floor):
+		return "the lift marked as a hazard was accepted"
+	if int(Rules.payout(swapped_corridor, floor).total) > 354:
+		return "marking the lift as a hazard raised the payout"
+	var false_wall: Dictionary = truth.duplicate()
+	false_wall[Vector2i(0, 0)] = Rules.Mark.HAZARD
+	if Rules.census_accepted(false_wall, floor):
+		return "a hazard mark on a wall was accepted"
+	if int(Rules.payout(false_wall, floor).total) != 354 or int(Rules.payout(false_wall, floor).hazard_pay) != int(bill.hazard_pay):
+		return "a hazard mark on a wall changed the payout"
+	var pier_wall: Dictionary = truth.duplicate()
+	pier_wall[Vector2i(2, 4)] = Rules.Mark.WALL
+	if not Rules.census_accepted(pier_wall, floor):
+		return "inking a pier as a wall rejected a true census"
+	var font_wall: Dictionary = truth.duplicate()
+	font_wall[Vector2i(7, 4)] = Rules.Mark.WALL
+	if not Rules.census_accepted(font_wall, floor):
+		return "inking the font as a wall rejected a true census"
+	font_wall[Vector2i(7, 4)] = Rules.Mark.HAZARD
+	if Rules.census_accepted(font_wall, floor):
+		return "calling the font a hazard was accepted"
+	var warden_mark: Dictionary = truth.duplicate()
+	warden_mark[Rules.enemy_pos(floor)] = Rules.Mark.CORRIDOR
+	if Rules.census_accepted(warden_mark, floor):
+		return "the warden tile was accepted as a corridor"
+	if int(Rules.payout(warden_mark, floor).total) != 354:
+		return "marking the warden changed the payout"
+	var only_ring := {}
+	for cell in Rules.loop_cells(floor):
+		only_ring[cell] = Rules.Mark.CORRIDOR
+	if Rules.census_accepted(only_ring, floor):
+		return "the ring alone was accepted as the census"
+	var ring_bill: Dictionary = Rules.payout(only_ring, floor)
+	if int(ring_bill.loop) != 1 or int(ring_bill.hazards) != 0 or int(ring_bill.total) >= 354:
+		return "the ring bonus did not stay inside the shared payout rule"
+	var expect_pay := {
+		"cellar": 211,
+		"cistern": 288,
+		"cloister": 242,
+		"crypt": 316,
+		"ossuary": 240,
+		"reliquary": 251,
+		"undercroft": 238,
+		"wellhouse": 225,
+		"scriptorium": 263,
+		"binding": 343,
+		"chartroom": 306,
+		"bellloft": 326,
+		"clockroom": 352,
+	}
+	var expect_loop := {
+		"cellar": "East square",
+		"cistern": "Cistern ring",
+		"cloister": "Cloister walk",
+		"crypt": "Crypt ring",
+		"ossuary": "Ossuary ring",
+		"reliquary": "Reliquary ring",
+		"undercroft": "Undercroft ring",
+		"wellhouse": "Well ring",
+		"scriptorium": "Scriptorium ring",
+		"binding": "Binding ring",
+		"chartroom": "Chart room ring",
+		"bellloft": "Bell loft ring",
+		"clockroom": "Clock room ring",
+	}
+	for other in Rules.floors():
+		if other.id == floor.id:
+			continue
+		if Rules.census_accepted(truth, other):
+			return "the font sheet was accepted as %s" % other.title
+		if Rules.census_accepted(Rules.accurate_sheet(other), floor):
+			return "the %s sheet was accepted as the font" % other.title
+		if not Rules.census_accepted(Rules.accurate_sheet(other), other):
+			return "the %s true census was rejected" % other.title
+		var other_bill: Dictionary = Rules.payout(Rules.accurate_sheet(other), other)
+		if int(other_bill.total) != int(expect_pay[other.id]):
+			return "the %s payout changed to %s" % [other.title, other_bill.total]
+		if str(other_bill.loop_name) != str(expect_loop[other.id]):
+			return "the %s ring name changed" % other.title
+	var approach: Vector2i = Rules.walkable_approach(crack, floor)
+	if approach.x < 0:
+		return "font crack has no approach"
+	var walker = Rules.new_run(Rules.SMALL_FLASK_OIL, floor)
+	walker.pos = approach
+	walker.oil = 10
+	var before: int = walker.oil
+	var stepped: Dictionary = Rules.step(walker, crack - approach)
+	if bool(stepped.hit):
+		return "opening font step was a swing"
+	if walker.oil != before - Rules.MOVE_OIL:
+		return "a font crack burned extra oil"
+	if int(walker.marks.get(crack, Rules.Mark.NONE)) != Rules.Mark.HAZARD:
+		return "a font crack was not inked as a hazard"
+	return ""
+
+
+func _font_return() -> String:
+	var game_script = load("res://scripts/game.gd")
+	var select_script = load("res://scripts/floor_select_view.gd")
+	if game_script == null or select_script == null:
+		return "game or floor select did not load"
+	var game = game_script.new()
+	root.add_child(game)
+	if game.town == null or game.floor_select == null or game.descent == null:
+		game.free()
+		return "the game did not build its screens"
+	if game.floor_select.record_for("font") != Rules.FONT_RECORD:
+		game.free()
+		return "floor select does not offer the font census"
+	for other in Rules.floors():
+		if game.floor_select.record_for(other.id) != other.record:
+			game.free()
+			return "floor select dropped the %s census" % other.title
+		if game.floor_select.status_for(other.id) != "Census open":
+			game.free()
+			return "the %s card did not open" % other.title
+	game._on_descend_floor("font")
+	if game.descent.state == null or game.descent.state.floor.id != "font":
+		game.free()
+		return "descend did not open the font"
+	var state = game.descent.state
+	var lift: Vector2i = Rules.lift_pos(state.floor)
+	var approach: Vector2i = Rules.walkable_approach(lift, state.floor)
+	state.pos = approach
+	state.oil = 5
+	var left: Dictionary = Rules.step(state, lift - approach)
+	if not bool(left.extracted):
+		game.free()
+		return "short font sheet did not leave on the lift"
+	game.descent._open_return()
+	if game.descent.return_button.text != "Return to town":
+		game.free()
+		return "a short sheet offered the floor select"
+	game._on_return(state)
+	if not game.town.visible or game.floor_select.visible or game.descent.visible:
+		game.free()
+		return "a short census did not return to town"
+	if bool(game.campaign.completed.get("font", false)):
+		game.free()
+		return "a short census was accepted"
+	if game.town.outcome_label.text.find("not finished") < 0:
+		game.free()
+		return "the clerk treated a short sheet as finished"
+	game._on_floors()
+	if not game.floor_select.visible or game.town.visible:
+		game.free()
+		return "floor select did not open from town"
+	game._on_descend_floor("font")
+	state = game.descent.state
+	state.marks = Rules.accurate_sheet(state.floor)
+	lift = Rules.lift_pos(state.floor)
+	approach = Rules.walkable_approach(lift, state.floor)
+	state.pos = approach
+	state.oil = 5
+	var done: Dictionary = Rules.step(state, lift - approach)
+	if not bool(done.extracted) or not Rules.census_accepted(state.marks, state.floor):
+		game.free()
+		return "the finished sheet did not extract as an accepted census"
+	game.descent._open_return()
+	if game.descent.return_button.text != "Return to floor select":
+		game.free()
+		return "a finished census did not offer the floor select"
+	game._on_return(state)
+	if not game.floor_select.visible or game.town.visible or game.descent.visible:
+		game.free()
+		return "a finished census did not return to the floor select"
+	if not bool(game.campaign.completed.get("font", false)):
+		game.free()
+		return "the finished census was not recorded"
+	for other in Rules.floors():
+		if other.id == "font":
+			if game.floor_select.status_for(other.id) != "Census complete":
+				game.free()
+				return "floor select did not show the font census complete"
+		else:
+			if bool(game.campaign.completed.get(other.id, false)):
+				game.free()
+				return "another floor was marked complete"
+			if game.floor_select.status_for(other.id) != "Census open":
+				game.free()
+				return "another floor card was closed"
+	if game.floor_select.notice_label.text.find("complete") < 0:
+		game.free()
+		return "arrival did not say the census is complete"
+	if int(game.campaign.last_bill.total) != 354 or game.campaign.purse < 354 or game.campaign.last_outcome != "complete":
 		game.free()
 		return "the finished census was not paid"
 	game._show_town()

@@ -20,7 +20,9 @@ const MAUL := 11
 const BILL := 12
 const SHADE := 13
 const COWL := 14
-const COUNT := 15
+const HOOD := 15
+const CLOAK := 16
+const COUNT := 17
 
 # fire_ticks and slow_ticks are sim ticks of length DT.
 # light_radius, weapon_range, projectile_speed, and splash_radius are pixels.
@@ -36,7 +38,9 @@ const COUNT := 15
 # splits_hide: this plant's light reveals hide moths and lets shots hurt them.
 # shades_dusk: this plant's radius marks tiles as shaded. It is not a light.
 # cowls_veil: this plant's radius marks tiles as cowled. It is not a light.
-# casts_light: false means the radius does not light tiles. The shade and the cowl use this.
+# hoods_pall: this plant's radius marks tiles as hooded. It is not a light.
+# cloaks_gloom: this plant's radius marks tiles as cloaked. It is not a light.
+# casts_light: false means the radius does not light tiles. The shade, the cowl, the hood, and the cloak use this.
 const DEFS := [
 	{
 		"name": "Pea",
@@ -60,6 +64,8 @@ const DEFS := [
 		"splits_hide": false,
 		"shades_dusk": false,
 		"cowls_veil": false,
+		"hoods_pall": false,
+		"cloaks_gloom": false,
 		"casts_light": true,
 	},
 	{
@@ -84,6 +90,8 @@ const DEFS := [
 		"splits_hide": false,
 		"shades_dusk": false,
 		"cowls_veil": false,
+		"hoods_pall": false,
+		"cloaks_gloom": false,
 		"casts_light": true,
 	},
 	{
@@ -108,6 +116,8 @@ const DEFS := [
 		"splits_hide": false,
 		"shades_dusk": false,
 		"cowls_veil": false,
+		"hoods_pall": false,
+		"cloaks_gloom": false,
 		"casts_light": true,
 	},
 	{
@@ -132,6 +142,8 @@ const DEFS := [
 		"splits_hide": false,
 		"shades_dusk": false,
 		"cowls_veil": false,
+		"hoods_pall": false,
+		"cloaks_gloom": false,
 		"casts_light": true,
 	},
 	{
@@ -156,6 +168,8 @@ const DEFS := [
 		"splits_hide": false,
 		"shades_dusk": false,
 		"cowls_veil": false,
+		"hoods_pall": false,
+		"cloaks_gloom": false,
 		"casts_light": true,
 	},
 	{
@@ -180,6 +194,8 @@ const DEFS := [
 		"splits_hide": false,
 		"shades_dusk": false,
 		"cowls_veil": false,
+		"hoods_pall": false,
+		"cloaks_gloom": false,
 		"casts_light": true,
 	},
 	{
@@ -204,6 +220,8 @@ const DEFS := [
 		"splits_hide": false,
 		"shades_dusk": false,
 		"cowls_veil": false,
+		"hoods_pall": false,
+		"cloaks_gloom": false,
 		"casts_light": true,
 	},
 	{
@@ -228,6 +246,8 @@ const DEFS := [
 		"splits_hide": false,
 		"shades_dusk": false,
 		"cowls_veil": false,
+		"hoods_pall": false,
+		"cloaks_gloom": false,
 		"casts_light": true,
 	},
 	{
@@ -252,6 +272,8 @@ const DEFS := [
 		"splits_hide": false,
 		"shades_dusk": false,
 		"cowls_veil": false,
+		"hoods_pall": false,
+		"cloaks_gloom": false,
 		"casts_light": true,
 	},
 	{
@@ -276,6 +298,8 @@ const DEFS := [
 		"splits_hide": false,
 		"shades_dusk": false,
 		"cowls_veil": false,
+		"hoods_pall": false,
+		"cloaks_gloom": false,
 		"casts_light": true,
 	},
 	{
@@ -300,6 +324,8 @@ const DEFS := [
 		"splits_hide": false,
 		"shades_dusk": false,
 		"cowls_veil": false,
+		"hoods_pall": false,
+		"cloaks_gloom": false,
 		"casts_light": true,
 	},
 	{
@@ -324,6 +350,8 @@ const DEFS := [
 		"splits_hide": false,
 		"shades_dusk": false,
 		"cowls_veil": false,
+		"hoods_pall": false,
+		"cloaks_gloom": false,
 		"casts_light": true,
 	},
 	{
@@ -348,6 +376,8 @@ const DEFS := [
 		"splits_hide": true,
 		"shades_dusk": false,
 		"cowls_veil": false,
+		"hoods_pall": false,
+		"cloaks_gloom": false,
 		"casts_light": true,
 	},
 	{
@@ -372,6 +402,8 @@ const DEFS := [
 		"splits_hide": false,
 		"shades_dusk": true,
 		"cowls_veil": false,
+		"hoods_pall": false,
+		"cloaks_gloom": false,
 		"casts_light": false,
 	},
 	{
@@ -396,6 +428,60 @@ const DEFS := [
 		"splits_hide": false,
 		"shades_dusk": false,
 		"cowls_veil": true,
+		"hoods_pall": false,
+		"cloaks_gloom": false,
+		"casts_light": false,
+	},
+	{
+		"name": "Hood",
+		"role": "Hoods pall, modest shots, no light.",
+		"damage": 2,
+		"fire_ticks": 60,
+		"light_radius": 256.0,
+		"weapon_range": 20.0,
+		"projectile_speed": 240.0,
+		"slow_factor": 1.0,
+		"slow_ticks": 0,
+		"splash_radius": 0.0,
+		"burns_shroud": false,
+		"cracks_rind": false,
+		"melts_pitch": false,
+		"thaws_frost": false,
+		"cuts_web": false,
+		"cracks_glass": false,
+		"strips_scale": false,
+		"cracks_mail": false,
+		"splits_hide": false,
+		"shades_dusk": false,
+		"cowls_veil": false,
+		"hoods_pall": true,
+		"cloaks_gloom": false,
+		"casts_light": false,
+	},
+	{
+		"name": "Cloak",
+		"role": "Cloaks gloom, modest shots, no light.",
+		"damage": 2,
+		"fire_ticks": 66,
+		"light_radius": 272.0,
+		"weapon_range": 16.0,
+		"projectile_speed": 220.0,
+		"slow_factor": 1.0,
+		"slow_ticks": 0,
+		"splash_radius": 0.0,
+		"burns_shroud": false,
+		"cracks_rind": false,
+		"melts_pitch": false,
+		"thaws_frost": false,
+		"cuts_web": false,
+		"cracks_glass": false,
+		"strips_scale": false,
+		"cracks_mail": false,
+		"splits_hide": false,
+		"shades_dusk": false,
+		"cowls_veil": false,
+		"hoods_pall": false,
+		"cloaks_gloom": true,
 		"casts_light": false,
 	},
 ]
