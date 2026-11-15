@@ -9,6 +9,7 @@ class_name HintBook
 # A shutter has no facing. Dry stops the beam, and flooded water lets it pass.
 # A stain has no facing. Its two states are red and blue, not a rotation.
 # A vane has four facings. North, east, south, and west are different pieces.
+# A well has no facing. Rotation is ignored, the same way a shutter ignores it.
 
 const Tracer := preload("res://scripts/beam_tracer.gd")
 

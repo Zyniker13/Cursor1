@@ -24,6 +24,7 @@ const CHART_AWNING := Color(0.12, 0.20, 0.46)
 const BELL_AWNING := Color(0.55, 0.32, 0.12)
 const CLOCK_AWNING := Color(0.63, 0.48, 0.20)
 const FONT_AWNING := Color(0.36, 0.46, 0.26)
+const APSE_AWNING := Color(0.78, 0.66, 0.38)
 
 var notice_label: Label
 var purse_label: Label
@@ -157,6 +158,8 @@ func _awning_for(floor_id: String) -> Color:
 		return CLOCK_AWNING
 	if floor_id == "font":
 		return FONT_AWNING
+	if floor_id == "apse":
+		return APSE_AWNING
 	return CHART_AWNING
 
 
