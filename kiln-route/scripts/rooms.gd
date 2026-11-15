@@ -6,13 +6,15 @@ extends RefCounted
 ## Wing 9 is rooms 65-72. Wing 10 is rooms 73-80. Wing 11 is rooms 81-88.
 ## Wing 12 is rooms 89-96. Wing 13 is rooms 97-104.
 ## Wing 14 is rooms 105-112.
+## Wing 15 is rooms 113-120.
 ## The dwell is taught before a later room depends on it.
 ## The twin is taught before a later room depends on it.
 ## The pass is taught before a later room depends on it.
 ## The slip is taught before a later room depends on it.
 ## The shed is taught before a later room depends on it.
 ## The rake is taught before a later room depends on it.
-## The roller, the weir, the bridge, the grate, the hook, the arm, the drop, the lift, the dwell, the twin, the pass, the slip, the shed, and the rake are taught before a later room depends on them.
+## The hoe is taught before a later room depends on it.
+## The roller, the weir, the bridge, the grate, the hook, the arm, the drop, the lift, the dwell, the twin, the pass, the slip, the shed, the rake, and the hoe are taught before a later room depends on them.
 ## Each solution is a full layout, not a delta from the initial pieces.
 ## Quotas are minimums inside SIM_TICKS.
 
@@ -133,6 +135,14 @@ static func all() -> Array:
 		left_heat_rake(),
 		after_push(),
 		side_bin_rake(),
+		draw_right(),
+		push_ore_hoe(),
+		still_hoe(),
+		seat_hoe(),
+		corner_hoe(),
+		right_heat(),
+		after_push_hoe(),
+		side_bin_hoe(),
 	]
 
 
@@ -4200,6 +4210,325 @@ static func side_bin_rake() -> Dictionary:
 			piece(rules.Kind.BELT, 3, 1, rules.Dir.SOUTH),
 			piece(rules.Kind.BELT, 3, 2, rules.Dir.SOUTH),
 			piece(rules.Kind.RAKE, 1, 3, rules.Dir.SOUTH),
+			piece(rules.Kind.WEIR, 2, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 3, 3, rules.Dir.EAST),
+			piece(rules.Kind.FILTER, 4, 3, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 5, 3, rules.Dir.EAST),
+			piece(rules.Kind.SPLITTER, 6, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 7, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 8, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 6, 4, rules.Dir.EAST),
+			piece(rules.Kind.PRESS, 7, 4, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 8, 4, rules.Dir.EAST),
+		],
+	}
+
+
+static func draw_right() -> Dictionary:
+	var rules = Rules
+	# Draw Left's lane, turned so the exit is right. The hoe faces north:
+	# behind is the plate source, right is the eastbound weir, left is a pit.
+	return {
+		"id": 113,
+		"name": "Draw Right",
+		"blurb": "The hoe holds the first plate until a later item arrives, then sends that plate right. A rake sends that plate left.",
+		"rule": "A hoe holds one item and takes it only from behind. The first plate waits until an ingot arrives, then that plate moves one cell to the right and the ingot becomes the waiting item. The last ingot stays. A rake sends that plate left, into the pit. A belt, a dwell, and a pass send the load forward into the pit. A slip sends the later items forward. A twin refuses the ingot, so the plate never leaves. A shed sends the later item left and keeps the plate. A hook also turns left into the pit. The grate passes the plates into the bin and drops ore and ingots into the pit.",
+		"w": 6,
+		"h": 5,
+		"sources": [
+			source(1, 4, rules.Dir.NORTH, [rules.Mat.PLATE, rules.Mat.INGOT], 1),
+			source(3, 0, rules.Dir.SOUTH, [rules.Mat.ORE], 4),
+		],
+		"sinks": [sink(5, 3, [rules.Mat.PLATE])],
+		"chutes": [cell(0, 3), cell(1, 2), cell(2, 4), cell(4, 4)],
+		"walls": [],
+		"budget": kv([rules.Kind.BELT, 3, rules.Kind.HOE, 1, rules.Kind.WEIR, 1, rules.Kind.GRATE, 1]),
+		"quota": kv([rules.Mat.PLATE, 29]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.HOE, 1, 3, rules.Dir.NORTH),
+			piece(rules.Kind.WEIR, 2, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 3, 1, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 2, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 3, rules.Dir.EAST),
+			piece(rules.Kind.GRATE, 4, 3, rules.Dir.EAST),
+		],
+	}
+
+
+static func push_ore_hoe() -> Dictionary:
+	var rules = Rules
+	# Push Ore, with the kiln on the hoe's right. A rake sends the ore left.
+	return {
+		"id": 114,
+		"name": "Push Ore",
+		"blurb": "The hoe holds the first ore until a plate arrives, then sends that ore right into the kiln. A rake sends the ore left.",
+		"rule": "The hoe holds the first ore until a plate arrives from behind, then sends that ore right. The filter scraps plates and feeds the ore to the kiln. The last plate stays. A rake sends the ore left, into the pit, so the kiln gets nothing. A shed keeps the first ore and sends the plate left. A hook releases left into the pit. A belt, a dwell, and a pass send the ore forward into the pit. A slip sends the plate forward and keeps the ore. A twin refuses the plate, so the ore never leaves.",
+		"w": 8,
+		"h": 5,
+		"sources": [
+			source(1, 4, rules.Dir.NORTH, [rules.Mat.ORE, rules.Mat.PLATE], 3),
+			source(3, 0, rules.Dir.SOUTH, [rules.Mat.PLATE], 6),
+		],
+		"sinks": [sink(7, 3, [rules.Mat.INGOT])],
+		"chutes": [cell(0, 3), cell(1, 2), cell(2, 4), cell(4, 4)],
+		"walls": [],
+		"budget": kv([
+			rules.Kind.BELT, 4,
+			rules.Kind.HOE, 1,
+			rules.Kind.WEIR, 1,
+			rules.Kind.FILTER, 1,
+			rules.Kind.KILN, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 19]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.HOE, 1, 3, rules.Dir.NORTH),
+			piece(rules.Kind.WEIR, 2, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 3, 1, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 2, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 3, rules.Dir.EAST),
+			piece(rules.Kind.FILTER, 4, 3, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 5, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 6, 3, rules.Dir.EAST),
+		],
+	}
+
+
+static func still_hoe() -> Dictionary:
+	var rules = Rules
+	# Still Rake's single belt stays on the crossing. The hoe sends the first
+	# ore right, out of the pit, once a plate arrives.
+	return {
+		"id": 115,
+		"name": "Still Hoe",
+		"blurb": "The tray has one belt, on the crossing. The hoe sends the first item right, out of the pit, and the last item stays.",
+		"rule": "The tray has one belt. It has to stay on the crossing in front of the filter, and the kiln sits against the bin. Two rollers bring the plate onto that belt. The hoe holds the first ore until a plate arrives, then sends that ore right, and the last plate stays. A rake sends the first ore left, into the pit. A shed keeps the ore and sends the plate left. A belt, a dwell, and a pass release the load forward into the pit. A slip sends the plate forward and keeps the ore. A twin refuses the plate, so the ore never leaves. A hook also turns the ore left, into the pit.",
+		"w": 7,
+		"h": 5,
+		"sources": [
+			source(1, 4, rules.Dir.NORTH, [rules.Mat.ORE, rules.Mat.PLATE], 1),
+			source(3, 0, rules.Dir.SOUTH, [rules.Mat.PLATE], 4),
+		],
+		"sinks": [sink(6, 3, [rules.Mat.INGOT])],
+		"chutes": [cell(0, 3), cell(1, 2), cell(2, 4), cell(4, 4)],
+		"walls": [],
+		"budget": kv([
+			rules.Kind.BELT, 1,
+			rules.Kind.ROLLER, 2,
+			rules.Kind.HOE, 1,
+			rules.Kind.WEIR, 1,
+			rules.Kind.FILTER, 1,
+			rules.Kind.KILN, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 28]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.HOE, 1, 3, rules.Dir.NORTH),
+			piece(rules.Kind.WEIR, 2, 3, rules.Dir.EAST),
+			piece(rules.Kind.ROLLER, 3, 1, rules.Dir.SOUTH),
+			piece(rules.Kind.ROLLER, 3, 2, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 3, rules.Dir.EAST),
+			piece(rules.Kind.FILTER, 4, 3, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 5, 3, rules.Dir.EAST),
+		],
+	}
+
+
+static func seat_hoe() -> Dictionary:
+	var rules = Rules
+	# Same lane as Draw Right. The hoe starts off the row, aimed the wrong way.
+	return {
+		"id": 116,
+		"name": "Seat",
+		"blurb": "That hoe is off the lane. Pick it up and seat it where the first item has to leave right.",
+		"rule": "Pickup puts this hoe back on the tray. Seat it on the plate lane, pointing north, so the first plate waits for an ingot and then leaves right, missing the ore crossing. It starts off the route. A rake on that cell sends the plate left, into the pit. A shed keeps the plate and sends the ingot left. A belt sends the plate forward on the next tick. A dwell and a pass release it forward into the pit. A slip sends the later items forward. A twin refuses the ingot, so the plate never leaves. A hook seated there also turns left, into the pit.",
+		"w": 6,
+		"h": 5,
+		"sources": [
+			source(1, 4, rules.Dir.NORTH, [rules.Mat.PLATE, rules.Mat.INGOT], 1),
+			source(3, 0, rules.Dir.SOUTH, [rules.Mat.ORE], 4),
+		],
+		"sinks": [sink(5, 3, [rules.Mat.PLATE])],
+		"chutes": [cell(0, 3), cell(1, 2), cell(2, 4), cell(4, 4)],
+		"walls": [],
+		"budget": kv([rules.Kind.BELT, 3, rules.Kind.HOE, 1, rules.Kind.WEIR, 1, rules.Kind.GRATE, 1]),
+		"quota": kv([rules.Mat.PLATE, 29]),
+		"initial": [
+			piece(rules.Kind.HOE, 0, 4, rules.Dir.WEST),
+		],
+		"solution": [
+			piece(rules.Kind.HOE, 1, 3, rules.Dir.NORTH),
+			piece(rules.Kind.WEIR, 2, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 3, 1, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 2, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 3, rules.Dir.EAST),
+			piece(rules.Kind.GRATE, 4, 3, rules.Dir.EAST),
+		],
+	}
+
+
+static func corner_hoe() -> Dictionary:
+	var rules = Rules
+	# The straight east lane is walled. Two belts bring the stream north into
+	# the back of the hoe, and the hoe sends the waiting item right.
+	return {
+		"id": 117,
+		"name": "Corner",
+		"blurb": "A wall closes the straight lane. Bring the later items into the back of the hoe.",
+		"rule": "The wall blocks a straight lane. Bring the ingots and the plates east, then north into the back of the hoe. The first ingot waits until a plate arrives, then leaves right, and later plates follow on the clear phase. The last ingot stays. The grate passes the plates into the bin. A rake sends those items left, into the pit. A hook releases a tick sooner, also left. A belt on that cell sends the load forward into the pit, and a dwell and a pass do too. A slip sends the arrival forward. A twin refuses the plate, so the ingot never leaves. A shed sends the arrival left. A belt that runs east into the wall delivers nothing.",
+		"w": 8,
+		"h": 5,
+		"sources": [
+			source(1, 4, rules.Dir.EAST, [rules.Mat.INGOT, rules.Mat.PLATE], 2),
+			source(5, 1, rules.Dir.SOUTH, [rules.Mat.ORE], 4),
+		],
+		"sinks": [sink(7, 3, [rules.Mat.PLATE])],
+		"chutes": [cell(2, 3), cell(3, 2), cell(6, 4)],
+		"walls": [cell(4, 4), cell(4, 2), cell(6, 2), cell(7, 2)],
+		"budget": kv([rules.Kind.BELT, 4, rules.Kind.HOE, 1, rules.Kind.WEIR, 1, rules.Kind.GRATE, 1]),
+		"quota": kv([rules.Mat.PLATE, 28]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.BELT, 2, 4, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 3, 4, rules.Dir.NORTH),
+			piece(rules.Kind.HOE, 3, 3, rules.Dir.NORTH),
+			piece(rules.Kind.WEIR, 4, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 5, 2, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 5, 3, rules.Dir.EAST),
+			piece(rules.Kind.GRATE, 6, 3, rules.Dir.EAST),
+		],
+	}
+
+
+static func right_heat() -> Dictionary:
+	var rules = Rules
+	# The weir kilns sit on the hoe's right. The left belt is its own kiln,
+	# and it is also where a rake dumps the waiting ore.
+	return {
+		"id": 118,
+		"name": "Right Heat",
+		"blurb": "The hoe's right exit feeds the kilns with the waiting item. A rake feeds the left lane, and one kiln misses.",
+		"rule": "The hoe takes the stream from behind and refuses the plate aimed at its front. It holds each ore until the next item arrives, then sends that ore right. The filter scraps the plate in the stream. The weir keeps the forward kiln full and spills the rest into a second kiln. The lane to the left has its own kiln. A rake sends the waiting ore left into that lane, and the right kilns miss. A hook and a shed also turn left. A belt, a dwell, and a pass release forward, into the plate, so only the left kiln remains. A slip sends the arrival forward. A twin refuses the plate, so the ore stops. One kiln cannot reach the quota.",
+		"w": 8,
+		"h": 5,
+		"sources": [
+			source(1, 2, rules.Dir.NORTH, [rules.Mat.ORE, rules.Mat.ORE, rules.Mat.PLATE, rules.Mat.ORE], 1),
+			source(1, 0, rules.Dir.SOUTH, [rules.Mat.PLATE], 1),
+			source(0, 0, rules.Dir.SOUTH, [rules.Mat.ORE], 2),
+		],
+		"sinks": [
+			sink(7, 1, [rules.Mat.INGOT]),
+			sink(4, 3, [rules.Mat.INGOT]),
+			sink(0, 3, [rules.Mat.INGOT]),
+		],
+		"chutes": [cell(2, 2)],
+		"walls": [],
+		"budget": kv([
+			rules.Kind.BELT, 4,
+			rules.Kind.HOE, 1,
+			rules.Kind.FILTER, 1,
+			rules.Kind.WEIR, 1,
+			rules.Kind.KILN, 3,
+		]),
+		"quota": kv([rules.Mat.INGOT, 145]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.HOE, 1, 1, rules.Dir.NORTH),
+			piece(rules.Kind.FILTER, 2, 1, rules.Dir.EAST),
+			piece(rules.Kind.WEIR, 3, 1, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 4, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 5, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 6, 1, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 3, 2, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 0, 1, rules.Dir.SOUTH),
+			piece(rules.Kind.KILN, 0, 2, rules.Dir.SOUTH),
+		],
+	}
+
+
+static func after_push_hoe() -> Dictionary:
+	var rules = Rules
+	# After the Push, with the hoe sending the first ore right when a plate
+	# arrives. Left is the scrap pit. Forward meets the scrap stream.
+	return {
+		"id": 119,
+		"name": "After the Push",
+		"blurb": "The filter scraps one stream. The hoe sends the first ore right, away from the scrap, when a later item arrives.",
+		"rule": "A scrap stream of ingots crosses the belt in front of the filter. The hoe holds the first ore until a plate arrives, then sends that ore right, clear of the scrap, and the filter feeds the kiln. The last plate stays. A rake sends that ore left, into the scrap pit, so the kiln gets nothing. A shed sends the later plate left and keeps the ore. A belt, a dwell, and a pass send the ore forward into the scrap. A slip sends the plate forward and keeps the ore. A twin refuses the plate, so the ore never leaves. A hook also turns the ore left, into the scrap. Ingots that do land on the filter fall into the pit. Without the filter the ingots jam the kiln.",
+		"w": 8,
+		"h": 5,
+		"sources": [
+			source(1, 4, rules.Dir.NORTH, [rules.Mat.ORE, rules.Mat.PLATE], 1),
+			source(3, 0, rules.Dir.SOUTH, [rules.Mat.INGOT], 4),
+		],
+		"sinks": [sink(7, 3, [rules.Mat.INGOT])],
+		"chutes": [cell(0, 3), cell(1, 2), cell(2, 4), cell(4, 4)],
+		"walls": [],
+		"budget": kv([
+			rules.Kind.BELT, 4,
+			rules.Kind.HOE, 1,
+			rules.Kind.WEIR, 1,
+			rules.Kind.FILTER, 1,
+			rules.Kind.KILN, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 28]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.HOE, 1, 3, rules.Dir.NORTH),
+			piece(rules.Kind.WEIR, 2, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 3, 1, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 2, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 3, rules.Dir.EAST),
+			piece(rules.Kind.FILTER, 4, 3, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 5, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 6, 3, rules.Dir.EAST),
+		],
+	}
+
+
+static func side_bin_hoe() -> Dictionary:
+	var rules = Rules
+	# Side Bin's splitter, fed from the hoe's right. The first plate leaves
+	# right and is scrapped. The ores that follow are smelted and split.
+	# The lower plates on period 4 are 30, short of the plate quota.
+	return {
+		"id": 120,
+		"name": "Side Bin",
+		"blurb": "The hoe sends the first plate right, and the items that leave right split between the bin and the press.",
+		"rule": "The hoe sends the first plate right when the next ore arrives, then sends that ore right when the following ore arrives. The filter scraps the plate and the crossing plates, and the kiln smelts the ore. Split the ingots between the bin and the press. The last ore stays. The lower plates are not enough alone. A rake sends the load left, into the pit, so both quotas miss. A shed keeps the plate and sends the later ore left. A belt, a dwell, a pass, or a slip dumps the load into the pit. A twin refuses the ore behind the plate, so the plate never leaves. A hook also sends the load left. Pressing every ingot misses the ingot bin.",
+		"w": 10,
+		"h": 6,
+		"sources": [
+			source(0, 5, rules.Dir.EAST, [rules.Mat.PLATE], 4),
+			source(1, 4, rules.Dir.NORTH, [rules.Mat.PLATE, rules.Mat.ORE, rules.Mat.ORE], 1),
+			source(3, 0, rules.Dir.SOUTH, [rules.Mat.PLATE], 6),
+		],
+		"sinks": [
+			sink(3, 5, [rules.Mat.PLATE]),
+			sink(9, 3, [rules.Mat.INGOT]),
+			sink(9, 4, [rules.Mat.PLATE]),
+		],
+		"chutes": [cell(0, 3), cell(1, 2), cell(2, 4), cell(4, 4)],
+		"walls": [],
+		"budget": kv([
+			rules.Kind.BELT, 9,
+			rules.Kind.HOE, 1,
+			rules.Kind.WEIR, 1,
+			rules.Kind.FILTER, 1,
+			rules.Kind.KILN, 1,
+			rules.Kind.SPLITTER, 1,
+			rules.Kind.PRESS, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 19, rules.Mat.PLATE, 39]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.BELT, 1, 5, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 2, 5, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 3, 1, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 2, rules.Dir.SOUTH),
+			piece(rules.Kind.HOE, 1, 3, rules.Dir.NORTH),
 			piece(rules.Kind.WEIR, 2, 3, rules.Dir.EAST),
 			piece(rules.Kind.BELT, 3, 3, rules.Dir.EAST),
 			piece(rules.Kind.FILTER, 4, 3, rules.Dir.EAST),
