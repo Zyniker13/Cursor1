@@ -1,6 +1,6 @@
 # Casework
 
-A deduction game with nineteen cases, **The spare key**, **The rehearsal score**, **The gilt stamp**, **The ferry bell**, **The weather slate**, **The loom shuttle**, **The hive smoker**, **The glass pontil**, **The press proof**, **The assay cup**, **The kiln chalk**, **The tide ledger**, **The night bell**, **The salt mark**, **The wick trim**, **The glass anneal**, **The orchard graft**, **The dye vat**, and **The tar kettle**.
+A deduction game with twenty-two cases, **The spare key**, **The rehearsal score**, **The gilt stamp**, **The ferry bell**, **The weather slate**, **The loom shuttle**, **The hive smoker**, **The glass pontil**, **The press proof**, **The assay cup**, **The kiln chalk**, **The tide ledger**, **The night bell**, **The salt mark**, **The wick trim**, **The glass anneal**, **The orchard graft**, **The dye vat**, **The tar kettle**, **The cork press**, **The net loft**, and **The cask hoop**.
 
 Pick a file. That file keeps a single timeline. You read the exhibits and pin who, the room, and the hour. A theory is accepted only when it fits every exhibit. A theory that does not fit comes back naming the exhibits it contradicts. An empty pin is refused by the name of the missing slot.
 
@@ -45,6 +45,12 @@ There is no voice. The papers and the board are the whole case.
 **The dye vat.** The dye vat left its peg at the dye house. Name who dipped the skein, the room they dipped it in, and the hour.
 
 **The tar kettle.** The tar kettle left its peg at the rope walk. Name who tarred the rope, the room they tarred it in, and the hour.
+
+**The cork press.** The cork press left its peg at the bottle house. Name who pressed the cork, the room they pressed it in, and the hour.
+
+**The net loft.** The net loft left its peg at the drying shed. Name who mended the net, the room they mended it in, and the hour.
+
+**The cask hoop.** The cask hoop left its peg at the cooperage. Name who drove the hoop, the room they drove it in, and the hour.
 
 ## Play
 

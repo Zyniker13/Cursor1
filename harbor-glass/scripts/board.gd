@@ -239,6 +239,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_stain(at, rot)
 		"vane":
 			_draw_vane(at, rot)
+		"well":
+			_draw_well(at)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -306,7 +308,7 @@ func _draw_tide_mirror(at: Vector2i, rot: int) -> void:
 
 func _keeps_its_face_under_water(kind: String) -> bool:
 	# These still act under water, so the closed bars are not drawn over them.
-	return kind == "tide_mirror" or kind == "shutter" or kind == "stain"
+	return kind == "tide_mirror" or kind == "shutter" or kind == "stain" or kind == "well"
 
 func _draw_shutter_gate(at: Vector2i) -> void:
 	# A sluice, not a mirror. Closed bars while the row is dry. An open slot
@@ -374,6 +376,24 @@ func _draw_vane(at: Vector2i, rot: int) -> void:
 	draw_colored_polygon(head, Palette.LANTERN)
 	draw_line(center - dir * r * 0.08, center + dir * r * 0.2, Palette.LANTERN, 4.0)
 	draw_circle(center, 3.5, Palette.WOOD_DARK)
+
+func _draw_well(at: Vector2i) -> void:
+	# A round dark mouth, separate from the vane's arrow. Dry boards lie
+	# across the mouth. Flooded water leaves it open.
+	var center := _center(at)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var outer := cell * 0.30
+	var mouth := cell * 0.16
+	draw_circle(center, outer, Color(Palette.WOOD_DARK.r, Palette.WOOD_DARK.g, Palette.WOOD_DARK.b, 0.96))
+	draw_arc(center, outer, 0, TAU, 32, Palette.WOOD, 3.0, true)
+	draw_circle(center, mouth, Color("07090d"))
+	draw_arc(center, mouth, 0, TAU, 28, Palette.HULL_EDGE, 1.5, true)
+	if flooded:
+		draw_arc(center, mouth * 0.62, 0.35, PI - 0.35, 14, Palette.FOAM, 1.5, true)
+		draw_circle(center + Vector2(-mouth * 0.28, -mouth * 0.2), 2.2, Color(Palette.FOAM.r, Palette.FOAM.g, Palette.FOAM.b, 0.85))
+	else:
+		draw_line(center + Vector2(-mouth * 0.92, -2.0), center + Vector2(mouth * 0.92, -2.0), Palette.WOOD, 2.5)
+		draw_line(center + Vector2(-mouth * 0.68, 4.0), center + Vector2(mouth * 0.68, 4.0), Palette.PILE_EDGE, 2.0)
 
 func _draw_prism(at: Vector2i, rot: int, set_in_stone: bool) -> void:
 	var center := _center(at)
