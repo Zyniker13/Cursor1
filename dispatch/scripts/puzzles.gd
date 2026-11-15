@@ -1,9 +1,9 @@
 extends RefCounted
 
-## Buildings 1 through 10. Directions: 0 east, 1 south, 2 west, 3 north.
+## Buildings 1 through 11. Directions: 0 east, 1 south, 2 west, 3 north.
 ## `unlocks` is the single new block this puzzle introduces, or "".
 
-const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook", "return", "pause"]
+const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook", "return", "pause", "chute"]
 
 
 static func all() -> Array:
@@ -1329,6 +1329,168 @@ static func all() -> Array:
 				_block("conveyor", 2, 4, 3),
 			]
 		),
+		_puzzle(
+			79, "Aimed Step", "chute",
+			"The dock is east of a northbound parcel. Aim the chute at the dock.",
+			"",
+			"The parcel comes in facing north. An east-facing chute writes that facing and steps east onto the dock on the next tick. A pause sends it north. A return sends it south. A hook sends it west. A turn also steps east, so the turn reaches the dock.",
+			3, 4,
+			[
+				_cell(0, 0), _cell(1, 0), _cell(2, 0),
+				_cell(0, 1),
+				_cell(0, 2), _cell(2, 2),
+				_cell(0, 3), _cell(2, 3),
+			],
+			[_source(1, 3, 3, ["gray"])],
+			{"x": 2, "y": 1},
+			[{"color": "gray"}],
+			[
+				_block("conveyor", 1, 2, 3),
+				_block("chute", 1, 1, 0),
+			]
+		),
+		_puzzle(
+			80, "Let Aim", "",
+			"Hold the northbound parcel so blue reaches the dock first.",
+			"",
+			"The chute waits out the arrival tick, writes east, and lets blue take the dock. A pause sends the first parcel north. A conveyor lets it leave on the arrival tick, and both parcels claim the dock.",
+			5, 4,
+			[
+				_cell(0, 0), _cell(1, 0), _cell(2, 0), _cell(3, 0),
+				_cell(0, 1),
+				_cell(0, 2), _cell(2, 2), _cell(3, 2), _cell(4, 2),
+				_cell(0, 3), _cell(2, 3), _cell(3, 3), _cell(4, 3),
+			],
+			[_source(1, 3, 3, ["red"]), _source(4, 0, 1, ["blue"])],
+			{"x": 2, "y": 1},
+			[{"color": "blue"}, {"color": "red"}],
+			[
+				_block("conveyor", 1, 2, 3),
+				_block("chute", 1, 1, 0),
+				_block("conveyor", 4, 1, 2),
+				_block("conveyor", 3, 1, 2),
+			]
+		),
+		_puzzle(
+			81, "Chute Count", "",
+			"Stamp the parcel 1. The counter is east of the chute.",
+			"",
+			"The chute faces east onto the counter. It stamps 1 on the tick after the parcel lands. A pause, a return, and a hook miss the counter.",
+			4, 3,
+			[
+				_cell(0, 0), _cell(1, 0), _cell(2, 0), _cell(3, 0),
+				_cell(0, 1),
+				_cell(0, 2), _cell(2, 2), _cell(3, 2),
+			],
+			[_source(1, 2, 3, ["gray"])],
+			{"x": 3, "y": 1},
+			[{"count": 1}],
+			[
+				_block("chute", 1, 1, 0),
+				_block("counter", 2, 1, 0),
+			]
+		),
+		_puzzle(
+			82, "Clear the Lane", "",
+			"Deliver blue, then red.",
+			"",
+			"The chute holds red one tick, then sends it east so blue takes the dock first. A pause sends red west. A hook sends red south and a turn sends red north. A return also sends red east.",
+			7, 3,
+			[
+				_cell(0, 0), _cell(1, 0), _cell(2, 0),
+				_cell(0, 1), _cell(1, 1),
+				_cell(0, 2), _cell(1, 2), _cell(2, 2), _cell(3, 2), _cell(4, 2), _cell(5, 2), _cell(6, 2),
+			],
+			[_source(6, 1, 2, ["red"]), _source(6, 0, 2, ["blue"])],
+			{"x": 3, "y": 1},
+			[{"color": "blue"}, {"color": "red"}],
+			[
+				_block("conveyor", 5, 1, 2),
+				_block("slide", 4, 1, 0),
+				_block("chute", 2, 1, 0),
+				_block("conveyor", 5, 0, 2),
+				_block("conveyor", 4, 0, 2),
+				_block("conveyor", 3, 0, 1),
+			]
+		),
+		_puzzle(
+			83, "Two Chutes", "",
+			"Deliver red, then blue. One chute has to send them both east.",
+			"",
+			"Red arrives facing south and blue arrives facing north. The east-facing chute sends both east. A pause sends each along its own arrival. A hook turns both a quarter counterclockwise. A turn turns both a quarter clockwise. A return sends each back.",
+			5, 5,
+			[
+				_cell(0, 0), _cell(1, 0), _cell(3, 0), _cell(4, 0),
+				_cell(0, 1), _cell(1, 1), _cell(3, 1), _cell(4, 1),
+				_cell(0, 2),
+				_cell(0, 3), _cell(1, 3), _cell(3, 3), _cell(4, 3),
+				_cell(3, 4), _cell(4, 4),
+			],
+			[_source(2, 0, 1, ["red"]), _source(0, 4, 0, ["blue"])],
+			{"x": 4, "y": 2},
+			[{"color": "red"}, {"color": "blue"}],
+			[
+				_block("conveyor", 2, 1, 1),
+				_block("chute", 2, 2, 0),
+				_block("conveyor", 3, 2, 0),
+				_block("conveyor", 1, 4, 0),
+				_block("conveyor", 2, 4, 3),
+				_block("conveyor", 2, 3, 3),
+			]
+		),
+		_puzzle(
+			84, "Second Chute", "",
+			"Deliver the parcel yellow, stamped 2.",
+			"",
+			"Loop it through the counter. Paint it yellow on the way back. The second send faces the chute, which aims it north onto the dock. A pause keeps the east facing and misses the dock. Rotating the chute off the dock misses.",
+			5, 3,
+			[
+				_cell(0, 0), _cell(4, 0),
+				_cell(4, 1),
+				_cell(0, 2), _cell(1, 2), _cell(2, 2), _cell(3, 2), _cell(4, 2),
+			],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 3, "y": 0},
+			[{"color": "yellow", "count": 2}],
+			[
+				_block("counter", 1, 1, 0),
+				_block("splitter", 2, 1, 3),
+				_block("painter", 2, 0, 2, "yellow"),
+				_block("conveyor", 1, 0, 1),
+				_block("chute", 3, 1, 3),
+			]
+		),
+		_puzzle(
+			85, "Night Chute", "",
+			"Deliver red 1, yellow 2, and blue 3.",
+			"",
+			"Red takes the filter and the chute aims it east onto the counter. Gray takes the long belt and is primed yellow. Blue keeps its color and follows. A pause keeps the arrival facing. A return sends red back north.",
+			5, 5,
+			[
+				_cell(0, 0), _cell(1, 0), _cell(3, 0), _cell(4, 0),
+				_cell(3, 1), _cell(4, 1),
+				_cell(1, 2),
+				_cell(1, 3), _cell(2, 3), _cell(4, 3),
+				_cell(4, 4),
+			],
+			[_source(2, 0, 1, ["gray", "blue", "red"])],
+			{"x": 4, "y": 2},
+			[{"color": "red", "count": 1}, {"color": "yellow", "count": 2}, {"color": "blue", "count": 3}],
+			[
+				_block("filter", 2, 1, 1, "red"),
+				_block("chute", 2, 2, 0),
+				_block("counter", 3, 2, 0),
+				_block("conveyor", 1, 1, 2),
+				_block("conveyor", 0, 1, 1),
+				_block("conveyor", 0, 2, 1),
+				_block("conveyor", 0, 3, 1),
+				_block("conveyor", 0, 4, 0),
+				_block("primer", 1, 4, 0, "yellow"),
+				_block("conveyor", 2, 4, 0),
+				_block("conveyor", 3, 4, 3),
+				_block("conveyor", 3, 3, 3),
+			]
+		),
 	]
 
 
@@ -1358,7 +1520,7 @@ static func _puzzle(id: int, title: String, unlocks: String, brief: String, how_
 		"dock": dock,
 		"order": order,
 		"reference": reference,
-		"building": 10 if id >= 72 else 9 if id >= 65 else 8 if id >= 58 else 7 if id >= 51 else 6 if id >= 44 else 5 if id >= 37 else 4 if id >= 30 else 3 if id >= 23 else 2 if id >= 16 else 1,
+		"building": 11 if id >= 79 else 10 if id >= 72 else 9 if id >= 65 else 8 if id >= 58 else 7 if id >= 51 else 6 if id >= 44 else 5 if id >= 37 else 4 if id >= 30 else 3 if id >= 23 else 2 if id >= 16 else 1,
 	}
 
 
