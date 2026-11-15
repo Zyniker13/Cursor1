@@ -3,7 +3,7 @@ extends RefCounted
 
 const Rules = preload("res://rules/rules.gd")
 
-## Fifteen wings of the closed museum. Each solution is a list of actions the rules
+## Sixteen wings of the closed museum. Each solution is a list of actions the rules
 ## accept. Tokens are R L U D, W for wait, and T0 / T1 for lamps.
 
 
@@ -87,6 +87,8 @@ static func _puzzle(number: int, title: String, lesson: String, rows: PackedStri
 		wing_number = number - 80
 	elif wing == "Screen Wing":
 		wing_number = number - 86
+	elif wing == "Glaze Wing":
+		wing_number = number - 92
 	return {
 		"number": number,
 		"wing": wing,
@@ -131,6 +133,7 @@ static func _all() -> Array:
 	puzzles.append_array(_veil_wing())
 	puzzles.append_array(_shade_wing())
 	puzzles.append_array(_screen_wing())
+	puzzles.append_array(_glaze_wing())
 	return puzzles
 
 
@@ -1788,5 +1791,119 @@ static func _screen_wing() -> Array:
 			[_guard(3, 4, [Vector2i(3, 4)], 3)],
 			"R R R R T0 W W W W W R R",
 			"Screen Wing"
+		),
+	]
+
+
+static func _glaze_wing() -> Array:
+	return [
+		_puzzle(
+			93,
+			"The Watched Gap",
+			"This room is about the rule that the gap beyond the glaze is lit and watched.",
+			PackedStringArray([
+				"########",
+				"##S##X.#",
+				"#..G#..#",
+				"#..Z...#",
+				"#.#.#..#",
+				"#......#",
+				"########",
+			]),
+			[_lamp(3, 4, "n", 2)],
+			[_guard(4, 3, [Vector2i(4, 3)], 3)],
+			"D L D D D R R T0 U U R R U U",
+			"Glaze Wing"
+		),
+		_puzzle(
+			94,
+			"The Lit Glaze",
+			"This room is about the rule that the glaze is lit, so you snuff before you step onto it.",
+			PackedStringArray([
+				"########",
+				"#.X....#",
+				"#.G#...#",
+				"#.Z....#",
+				"#..S...#",
+				"#......#",
+				"########",
+			]),
+			[_lamp(3, 3, "n", 2)],
+			[_guard(2, 2, [Vector2i(2, 2)], 3)],
+			"T0 L U T0 U U",
+			"Glaze Wing"
+		),
+		_puzzle(
+			95,
+			"The Open Sight",
+			"This room is about the rule that the guard sees a lit tile through the glaze, and a wrong step there loses.",
+			PackedStringArray([
+				"#########",
+				"##S##X..#",
+				"#..G#...#",
+				"#..Z....#",
+				"#.#.#...#",
+				"#.......#",
+				"#########",
+			]),
+			[_lamp(3, 4, "n", 2)],
+			[_guard(4, 3, [Vector2i(4, 3)], 3)],
+			"D L D D D R R T0 U U R R U U",
+			"Glaze Wing"
+		),
+		_puzzle(
+			96,
+			"The Closed Road",
+			"This room is about the rule that a guard cannot enter the glaze, so he takes the longer road.",
+			PackedStringArray([
+				"########",
+				"##S##X.#",
+				"#..G#..#",
+				"#..Z...#",
+				"#.#.#..#",
+				"#......#",
+				"#......#",
+				"########",
+			]),
+			[_lamp(3, 4, "n", 2)],
+			[_guard(4, 3, [Vector2i(4, 3)], 3)],
+			"D L D D D R R T0 U U R R U U",
+			"Glaze Wing"
+		),
+		_puzzle(
+			97,
+			"The Second Lamp",
+			"This room is about the rule that a second lamp's light passes the glaze, and the guard sees the gap beyond it.",
+			PackedStringArray([
+				"#########",
+				"##S##X.##",
+				"#..G#..##",
+				"#..Z...##",
+				"#.#.#..##",
+				"#......##",
+				"#########",
+			]),
+			[_lamp(6, 5, "e", 0), _lamp(3, 4, "n", 2)],
+			[_guard(4, 3, [Vector2i(4, 3)], 3)],
+			"D L D D D R R T1 U U R R U U",
+			"Glaze Wing"
+		),
+		_puzzle(
+			98,
+			"The Last Glaze",
+			"This room is about the rule that you leave without stepping on the lit glaze, because the gap beyond it is watched.",
+			PackedStringArray([
+				"#########",
+				"###S##X.#",
+				"#...G#..#",
+				"#...Z...#",
+				"#..#.#..#",
+				"#.......#",
+				"#########",
+			]),
+			[_lamp(4, 4, "n", 2)],
+			[_guard(5, 3, [Vector2i(5, 3)], 3)],
+			"D L D D D R R T0 U U R R U U",
+			"Glaze Wing"
 		),
 	]
