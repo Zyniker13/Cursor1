@@ -1,7 +1,8 @@
 extends RefCounted
 
 ## Kiln Route rooms. Wing 1 is the first eight. Wing 2 is rooms 9-16.
-## The roller and the weir are taught before a later room depends on them.
+## Wing 3 is rooms 17-24.
+## The roller, the weir, and the bridge are taught before a later room depends on them.
 ## Each solution is a full layout, not a delta from the initial pieces.
 ## Quotas are minimums inside SIM_TICKS.
 
@@ -26,6 +27,14 @@ static func all() -> Array:
 		miscast(),
 		hearth(),
 		balance(),
+		span(),
+		thread(),
+		seam(),
+		skew(),
+		bend(),
+		brim(),
+		sift(),
+		ledger(),
 	]
 
 
@@ -526,6 +535,303 @@ static func balance() -> Dictionary:
 			piece(rules.Kind.ROLLER, 3, 1, rules.Dir.EAST),
 			piece(rules.Kind.SPLITTER, 4, 1, rules.Dir.EAST),
 			piece(rules.Kind.BELT, 5, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 4, 2, rules.Dir.EAST),
+			piece(rules.Kind.PRESS, 5, 2, rules.Dir.EAST),
+		],
+	}
+
+
+static func span() -> Dictionary:
+	var rules = Rules
+	# Ingot lane west to east, plate lane north to south. Only a bridge
+	# carries both. A belt on the crossing mixes them and both bins stall.
+	return {
+		"id": 17,
+		"name": "Span",
+		"blurb": "The bridge keeps the ingot lane and the plate lane apart. Both bins have to fill.",
+		"rule": "A bridge holds one item on the forward lane and one on the cross lane. Forward accepts only from behind and leaves forward. The cross lane accepts only from the left and leaves to the right. A belt on the crossing takes the plates, and the ingot bin refuses them.",
+		"w": 5,
+		"h": 5,
+		"sources": [
+			source(0, 1, rules.Dir.EAST, [rules.Mat.INGOT], 2),
+			source(2, 0, rules.Dir.SOUTH, [rules.Mat.PLATE], 2),
+		],
+		"sinks": [
+			sink(4, 1, [rules.Mat.INGOT]),
+			sink(2, 4, [rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [],
+		"budget": kv([rules.Kind.BELT, 4, rules.Kind.BRIDGE, 1]),
+		"quota": kv([rules.Mat.INGOT, 36, rules.Mat.PLATE, 36]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.BELT, 1, 1, rules.Dir.EAST),
+			piece(rules.Kind.BRIDGE, 2, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 3, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 2, 2, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 2, 3, rules.Dir.SOUTH),
+		],
+	}
+
+
+static func thread() -> Dictionary:
+	var rules = Rules
+	# Plates cross the ore that has to be smelted. A plate in front of the kiln stalls it.
+	return {
+		"id": 18,
+		"name": "Thread",
+		"blurb": "Cross the plates over the ore, then smelt the ore the bridge lets through.",
+		"rule": "The kiln accepts ore from behind and refuses plates. Plates that enter the ore lane block the kiln, and they never reach the plate bin. The bridge keeps each material on its own lane.",
+		"w": 7,
+		"h": 4,
+		"sources": [
+			source(0, 1, rules.Dir.EAST, [rules.Mat.ORE], 2),
+			source(2, 0, rules.Dir.SOUTH, [rules.Mat.PLATE], 2),
+		],
+		"sinks": [
+			sink(6, 1, [rules.Mat.INGOT]),
+			sink(2, 3, [rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [],
+		"budget": kv([rules.Kind.BELT, 4, rules.Kind.BRIDGE, 1, rules.Kind.KILN, 1]),
+		"quota": kv([rules.Mat.INGOT, 24, rules.Mat.PLATE, 36]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.BELT, 1, 1, rules.Dir.EAST),
+			piece(rules.Kind.BRIDGE, 2, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 3, 1, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 4, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 5, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 2, 2, rules.Dir.SOUTH),
+		],
+	}
+
+
+static func seam() -> Dictionary:
+	var rules = Rules
+	# One belt. The plate lane needs it, so the kiln has to touch the bridge.
+	return {
+		"id": 19,
+		"name": "Seam",
+		"blurb": "The tray has one belt. Spend it on the plates, and set the kiln against the bridge.",
+		"rule": "The tray pays for one belt. The plate bin needs that belt, so nothing is left to stand between the bridge and the kiln. The kiln still takes ore only from behind.",
+		"w": 4,
+		"h": 4,
+		"sources": [
+			source(0, 1, rules.Dir.EAST, [rules.Mat.ORE], 2),
+			source(1, 0, rules.Dir.SOUTH, [rules.Mat.PLATE], 2),
+		],
+		"sinks": [
+			sink(3, 1, [rules.Mat.INGOT]),
+			sink(1, 3, [rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [],
+		"budget": kv([rules.Kind.BELT, 1, rules.Kind.BRIDGE, 1, rules.Kind.KILN, 1]),
+		"quota": kv([rules.Mat.INGOT, 24, rules.Mat.PLATE, 36]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.BRIDGE, 1, 1, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 2, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 1, 2, rules.Dir.SOUTH),
+		],
+	}
+
+
+static func skew() -> Dictionary:
+	var rules = Rules
+	# The only bridge starts off the crossing. The lane has no spare cell for it.
+	return {
+		"id": 20,
+		"name": "Skew",
+		"blurb": "That bridge is off the crossing. Pick it up and seat it where the lanes meet.",
+		"rule": "Pickup returns a piece to the tray, including this bridge. It has to sit on the crossing, forward along the ingots and open to the plates on its left. The cell it starts on is not on the route.",
+		"w": 5,
+		"h": 5,
+		"sources": [
+			source(0, 1, rules.Dir.EAST, [rules.Mat.INGOT], 2),
+			source(2, 0, rules.Dir.SOUTH, [rules.Mat.PLATE], 2),
+		],
+		"sinks": [
+			sink(4, 1, [rules.Mat.INGOT]),
+			sink(2, 4, [rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [],
+		"budget": kv([rules.Kind.BELT, 4, rules.Kind.BRIDGE, 1]),
+		"quota": kv([rules.Mat.INGOT, 36, rules.Mat.PLATE, 36]),
+		"initial": [
+			piece(rules.Kind.BRIDGE, 1, 0, rules.Dir.EAST),
+		],
+		"solution": [
+			piece(rules.Kind.BELT, 1, 1, rules.Dir.EAST),
+			piece(rules.Kind.BRIDGE, 2, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 3, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 2, 2, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 2, 3, rules.Dir.SOUTH),
+		],
+	}
+
+
+static func bend() -> Dictionary:
+	var rules = Rules
+	# The plate source cannot drop straight onto the bridge. The belts have to turn.
+	return {
+		"id": 21,
+		"name": "Bend",
+		"blurb": "A wall closes the straight drop. Turn the plates into the bridge's left side.",
+		"rule": "Walls and empty floor do not carry items. Plates have to turn south into the bridge's left side. The forward lane still accepts only from behind, so the ingot belts must face the bridge.",
+		"w": 6,
+		"h": 4,
+		"sources": [
+			source(0, 0, rules.Dir.EAST, [rules.Mat.PLATE], 2),
+			source(0, 2, rules.Dir.EAST, [rules.Mat.INGOT], 2),
+		],
+		"sinks": [
+			sink(5, 2, [rules.Mat.INGOT]),
+			sink(3, 3, [rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [cell(0, 1), cell(1, 1), cell(2, 1)],
+		"budget": kv([rules.Kind.BELT, 7, rules.Kind.BRIDGE, 1]),
+		"quota": kv([rules.Mat.INGOT, 36, rules.Mat.PLATE, 24]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.BELT, 1, 0, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 2, 0, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 3, 0, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 1, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 1, 2, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 2, 2, rules.Dir.EAST),
+			piece(rules.Kind.BRIDGE, 3, 2, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 4, 2, rules.Dir.EAST),
+		],
+	}
+
+
+static func brim() -> Dictionary:
+	var rules = Rules
+	# Period 1 ore is faster than one kiln. Plates cross before the weir and must stay there.
+	return {
+		"id": 22,
+		"name": "Brim",
+		"blurb": "Plates stay on the cross. Spill the extra ore into a second kiln or the quota is short.",
+		"rule": "The bridge keeps plates out of the ore. The weir fills the forward kiln and spills the rest to the right. One kiln cannot reach the ingot quota. A spill does not change the next item's preference.",
+		"w": 8,
+		"h": 3,
+		"sources": [
+			source(0, 1, rules.Dir.EAST, [rules.Mat.ORE], 1),
+			source(2, 0, rules.Dir.SOUTH, [rules.Mat.PLATE], 2),
+		],
+		"sinks": [
+			sink(7, 1, [rules.Mat.INGOT]),
+			sink(7, 2, [rules.Mat.INGOT]),
+			sink(2, 2, [rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [],
+		"budget": kv([
+			rules.Kind.BELT, 5,
+			rules.Kind.BRIDGE, 1,
+			rules.Kind.WEIR, 1,
+			rules.Kind.KILN, 2,
+		]),
+		"quota": kv([rules.Mat.INGOT, 70, rules.Mat.PLATE, 36]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.BELT, 1, 1, rules.Dir.EAST),
+			piece(rules.Kind.BRIDGE, 2, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 3, 1, rules.Dir.EAST),
+			piece(rules.Kind.WEIR, 4, 1, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 5, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 6, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 4, 2, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 5, 2, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 6, 2, rules.Dir.EAST),
+		],
+	}
+
+
+static func sift() -> Dictionary:
+	var rules = Rules
+	# Mixed ore and ingots. The filter scraps ingots, then plates cross the ore lane.
+	return {
+		"id": 23,
+		"name": "Sift",
+		"blurb": "Scrap the raw ingots, smelt the ore, and let the plates cross on the bridge.",
+		"rule": "Ore leaves the filter forward into the bridge and the kiln. Ingots leave the filter to the right and fall into the waste chute. Plates cross the bridge and are not smelted. A raw ingot against the kiln stops the ore.",
+		"w": 8,
+		"h": 4,
+		"sources": [
+			source(0, 1, rules.Dir.EAST, [rules.Mat.ORE, rules.Mat.INGOT], 2),
+			source(4, 0, rules.Dir.SOUTH, [rules.Mat.PLATE], 2),
+		],
+		"sinks": [
+			sink(7, 1, [rules.Mat.INGOT]),
+			sink(4, 3, [rules.Mat.PLATE]),
+		],
+		"chutes": [cell(2, 2)],
+		"walls": [],
+		"budget": kv([
+			rules.Kind.BELT, 4,
+			rules.Kind.FILTER, 1,
+			rules.Kind.BRIDGE, 1,
+			rules.Kind.KILN, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 12, rules.Mat.PLATE, 24]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.BELT, 1, 1, rules.Dir.EAST),
+			piece(rules.Kind.FILTER, 2, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 3, 1, rules.Dir.EAST),
+			piece(rules.Kind.BRIDGE, 4, 1, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 5, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 6, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 4, 2, rules.Dir.SOUTH),
+		],
+	}
+
+
+static func ledger() -> Dictionary:
+	var rules = Rules
+	# Crossing plates are too few on their own. Pressed plates are too few on their own.
+	# The ingot bin still has to receive the splitter's forward half.
+	return {
+		"id": 24,
+		"name": "Ledger",
+		"blurb": "Cross the plates, then split the kiln. The bins want ingots and more plates than either line can make alone.",
+		"rule": "The bridge carries plates to their bin while ore goes to the kiln. The splitter alternates ingots forward to the ingot bin and right through the press. Crossing plates alone miss the plate quota, and pressing every ingot misses the ingot bin.",
+		"w": 7,
+		"h": 4,
+		"sources": [
+			source(0, 1, rules.Dir.EAST, [rules.Mat.ORE], 2),
+			source(2, 0, rules.Dir.SOUTH, [rules.Mat.PLATE], 4),
+		],
+		"sinks": [
+			sink(6, 1, [rules.Mat.INGOT]),
+			sink(6, 2, [rules.Mat.PLATE]),
+			sink(2, 3, [rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [],
+		"budget": kv([
+			rules.Kind.BELT, 4,
+			rules.Kind.BRIDGE, 1,
+			rules.Kind.KILN, 1,
+			rules.Kind.SPLITTER, 1,
+			rules.Kind.PRESS, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 16, rules.Mat.PLATE, 36]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.BELT, 1, 1, rules.Dir.EAST),
+			piece(rules.Kind.BRIDGE, 2, 1, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 3, 1, rules.Dir.EAST),
+			piece(rules.Kind.SPLITTER, 4, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 5, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 2, 2, rules.Dir.SOUTH),
 			piece(rules.Kind.BELT, 4, 2, rules.Dir.EAST),
 			piece(rules.Kind.PRESS, 5, 2, rules.Dir.EAST),
 		],

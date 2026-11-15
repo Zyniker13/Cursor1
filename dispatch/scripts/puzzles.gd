@@ -1,9 +1,9 @@
 extends RefCounted
 
-## Building 1. Directions: 0 east, 1 south, 2 west, 3 north.
+## Buildings 1 and 2. Directions: 0 east, 1 south, 2 west, 3 north.
 ## `unlocks` is the single new block this puzzle introduces, or "".
 
-const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter"]
+const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter"]
 
 
 static func all() -> Array:
@@ -226,6 +226,120 @@ static func all() -> Array:
 				_block("conveyor", 3, 2, 3),
 			]
 		),
+		_puzzle(
+			16, "Color Gate", "filter",
+			"Red has to reach the dock before the two blues.",
+			"",
+			"A filter sends its color straight. Any other color turns clockwise.",
+			5, 3, [],
+			[_source(0, 0, 0, ["blue", "blue", "red"])],
+			{"x": 4, "y": 0},
+			[{"color": "red"}, {"color": "blue"}, {"color": "blue"}],
+			[
+				_block("filter", 1, 0, 0, "red"),
+				_block("conveyor", 2, 0, 0), _block("conveyor", 3, 0, 0),
+				_block("conveyor", 1, 1, 1),
+				_block("conveyor", 1, 2, 0), _block("conveyor", 2, 2, 0), _block("conveyor", 3, 2, 0),
+				_block("conveyor", 4, 2, 3), _block("conveyor", 4, 1, 3),
+			]
+		),
+		_puzzle(
+			17, "Side Coat", "",
+			"Deliver red, then both blues painted yellow.",
+			"",
+			"Blues miss the filter. Paint them on the south lane.",
+			5, 3, [],
+			[_source(0, 0, 0, ["blue", "blue", "red"])],
+			{"x": 4, "y": 0},
+			[{"color": "red"}, {"color": "yellow"}, {"color": "yellow"}],
+			[
+				_block("filter", 1, 0, 0, "red"),
+				_block("conveyor", 2, 0, 0), _block("conveyor", 3, 0, 0),
+				_block("conveyor", 1, 1, 1),
+				_block("conveyor", 1, 2, 0), _block("painter", 2, 2, 0, "yellow"),
+				_block("conveyor", 3, 2, 0),
+				_block("conveyor", 4, 2, 3), _block("conveyor", 4, 1, 3),
+			]
+		),
+		_puzzle(
+			18, "Stamp the Match", "",
+			"Stamp red 1, then the blues 2 and 3.",
+			"",
+			"Red takes the arrow into the counter. Blues come up behind it.",
+			5, 3, [],
+			[_source(0, 0, 0, ["blue", "blue", "red"])],
+			{"x": 4, "y": 0},
+			[{"color": "red", "count": 1}, {"color": "blue", "count": 2}, {"color": "blue", "count": 3}],
+			[
+				_block("filter", 1, 0, 0, "red"),
+				_block("conveyor", 2, 0, 0), _block("counter", 3, 0, 0),
+				_block("conveyor", 1, 1, 1),
+				_block("conveyor", 1, 2, 0), _block("conveyor", 2, 2, 0),
+				_block("conveyor", 3, 2, 3), _block("conveyor", 3, 1, 3),
+			]
+		),
+		_puzzle(
+			19, "Hold the Blue", "",
+			"Stamp the reds 1 and 2. Blue is last.",
+			"",
+			"Hold blue on the latch so the reds can take the counter.",
+			5, 3, [],
+			[_source(0, 1, 0, ["blue", "red", "red"])],
+			{"x": 4, "y": 1},
+			[{"color": "red", "count": 1}, {"color": "red", "count": 2}, {"color": "blue", "count": 3}],
+			[
+				_block("filter", 1, 1, 0, "red"),
+				_block("conveyor", 2, 1, 0), _block("counter", 3, 1, 0),
+				_block("conveyor", 1, 2, 0), _block("conveyor", 2, 2, 0),
+				_block("latch", 3, 2, 3),
+			]
+		),
+		_puzzle(
+			20, "Become Red", "",
+			"Deliver red 2, then red 3.",
+			"",
+			"Blue misses the filter. Paint it red on the way back.",
+			4, 2, [],
+			[_source(0, 0, 0, ["blue", "red"])],
+			{"x": 3, "y": 0},
+			[{"color": "red", "count": 2}, {"color": "red", "count": 3}],
+			[
+				_block("counter", 1, 0, 0), _block("filter", 2, 0, 0, "red"),
+				_block("painter", 2, 1, 2, "red"), _block("conveyor", 1, 1, 3),
+			]
+		),
+		_puzzle(
+			21, "Two Tallies", "",
+			"Deliver blue 1, blue 2, red 1, and red 2.",
+			"",
+			"Give each color its own counter. Blues take the arrow.",
+			5, 2, [],
+			[_source(0, 0, 0, ["blue", "blue", "red", "red"])],
+			{"x": 4, "y": 0},
+			[{"color": "blue", "count": 1}, {"color": "blue", "count": 2}, {"color": "red", "count": 1}, {"color": "red", "count": 2}],
+			[
+				_block("filter", 1, 0, 0, "blue"),
+				_block("counter", 2, 0, 0), _block("conveyor", 3, 0, 0),
+				_block("conveyor", 1, 1, 0), _block("counter", 2, 1, 0),
+				_block("conveyor", 3, 1, 3),
+			]
+		),
+		_puzzle(
+			22, "Night Wing", "",
+			"Deliver red 1, yellow 2, and blue 3.",
+			"",
+			"Paint the second red yellow. Let blue follow it into the counter.",
+			5, 2, [],
+			[_source(0, 0, 0, ["red", "red", "blue"])],
+			{"x": 4, "y": 0},
+			[{"color": "red", "count": 1}, {"color": "yellow", "count": 2}, {"color": "blue", "count": 3}],
+			[
+				_block("splitter", 1, 0, 0), _block("filter", 2, 0, 0, "red"),
+				_block("counter", 3, 0, 0),
+				_block("painter", 1, 1, 0, "yellow"), _block("conveyor", 2, 1, 0),
+				_block("conveyor", 3, 1, 3),
+			]
+		),
 	]
 
 
@@ -255,6 +369,7 @@ static func _puzzle(id: int, title: String, unlocks: String, brief: String, how_
 		"dock": dock,
 		"order": order,
 		"reference": reference,
+		"building": 2 if id >= 16 else 1,
 	}
 
 

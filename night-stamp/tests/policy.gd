@@ -196,6 +196,35 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 		guess += 3
 	if rule == "ignore_corners" and _is_corner(row, col) and card_id != "exemption":
 		guess -= 8
+	if rule == "refuse_middle" and row == 1 and card_id != "exemption":
+		guess -= 8
+	if rule == "yield_both_margins" and (col == 0 or col == 2):
+		guess += 3
+	if rule == "double_patience_if_center_empty" and row == 1 and col == 1:
+		guess += 4
+	if rule == "ignore_covered" and row > 0 and state.form[row - 1][col] != null and card_id != "exemption":
+		guess -= 8
+	if rule == "refuse_bottom" and row == 2 and card_id != "exemption":
+		guess -= 8
+	if rule == "yield_exact_two":
+		var filled = 0
+		for filled_row in 3:
+			for filled_col in 3:
+				if state.form[filled_row][filled_col] != null:
+					filled += 1
+		if filled == 1:
+			guess += 3
+		elif filled >= 2:
+			guess -= 5
+	if rule == "no_drop_if_every_row":
+		var row_open = true
+		for existing_col in 3:
+			if state.form[row][existing_col] != null:
+				row_open = false
+		if row_open:
+			guess += 3
+	if rule == "double_last":
+		guess += row * 2 + col
 	if rule == "ignore_isolated":
 		var neighbors = 0
 		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
