@@ -37,6 +37,7 @@ extends RefCounted
 ## The rood's ring is the walk around the rood.
 ## The crossing's ring is the walk around the crossing.
 ## The transept's ring is the walk around the transept.
+## The ambulatory's ring is the walk around the ambulatory.
 ## A census is accepted only when every corridor and hazard is marked truly
 ## and no tile is marked as something it is not.
 
@@ -50,7 +51,7 @@ const HAZARD_VALUE := 8
 const LOOP_VALUE := 15
 
 const TOWN_LINE := "Arrows turn and step, Q and E strafe, M marks the tile you face, and Space waits out the warden's swing."
-const RATE_CARD := "A true corridor pays 3. A true hazard pays 8. The cellar's east square, the cistern ring, the cloister walk, the crypt ring, the ossuary ring, the reliquary ring, the undercroft ring, the well ring, the scriptorium ring, the binding ring, the chart room ring, the bell loft ring, the clock room ring, the font ring, the apse ring, the choir ring, the rood ring, the crossing ring, and the transept ring each pay 15 only when every tile of that ring is marked corridor. A false mark pays nothing."
+const RATE_CARD := "A true corridor pays 3. A true hazard pays 8. The cellar's east square, the cistern ring, the cloister walk, the crypt ring, the ossuary ring, the reliquary ring, the undercroft ring, the well ring, the scriptorium ring, the binding ring, the chart room ring, the bell loft ring, the clock room ring, the font ring, the apse ring, the choir ring, the rood ring, the crossing ring, the transept ring, and the ambulatory ring each pay 15 only when every tile of that ring is marked corridor. A false mark pays nothing."
 
 const CELLAR_RECORD := "Record every corridor, both hazard cracks, and the east square."
 const CISTERN_RECORD := "Record every corridor, the three seep cracks, and the cistern ring around the pit."
@@ -71,6 +72,7 @@ const CHOIR_RECORD := "Record every corridor, the seventeen choir cracks, and th
 const ROOD_RECORD := "Record every corridor, the eighteen rood cracks, and the ring around the rood."
 const CROSSING_RECORD := "Record every corridor, the nineteen crossing cracks, and the ring around the crossing."
 const TRANSEPT_RECORD := "Record every corridor, the nineteen transept cracks, and the ring around the transept."
+const AMBULATORY_RECORD := "Record every corridor, the twenty ambulatory cracks, and the ring around the ambulatory."
 
 const CELLAR_ROWS: PackedStringArray = [
 	"#############",
@@ -454,6 +456,38 @@ const TRANSEPT_ROWS: PackedStringArray = [
 	"######################",
 ]
 
+# The ambulatory is the 10x6 block of 'U' at columns 7-16, rows 4-9.
+# The paid ring is the 36-tile corridor cycle around that ambulatory.
+# The west aisle down to the lift path is ordinary floor. The piers are walls.
+# (11,11) through (20,11) are closed into the east pier. The north landing
+# from (4,1) through (21,1) is closed as well. Left open, that landing
+# surveyed at 124 oil. (1,12), (1,13), and (1,14) stay ordinary walls.
+# (20,10) is pier wall; the crack sits on the new east wall at (21,10).
+# The swing-free survey costs 120 oil.
+const AMBULATORY_ROWS: PackedStringArray = [
+	"#######################",
+	"#S..###################",
+	"#.###################H#",
+	"#H####............###H#",
+	"#.####.UUUUUUUUUU.###H#",
+	"#H####.UUUUUUUUUU.###H#",
+	"#.####.UUUUUUUUUU.###H#",
+	"#H####.UUUUUUUUUU.###H#",
+	"#.####.UUUUUUUUUU.###H#",
+	"#H####.UUUUUUUUUU.###H#",
+	"#.####............###H#",
+	"#H........L##########H#",
+	"##.H.H.H.E.........H.H#",
+	"#######################",
+	"#######################",
+	"#######################",
+	"#######################",
+	"#######################",
+	"#######################",
+	"#######################",
+	"#######################",
+]
+
 enum Tile { WALL, FLOOR, HAZARD, LIFT }
 enum Mark { NONE, CORRIDOR, WALL, HAZARD }
 enum EndReason { NONE, EXTRACTED, LAMP_OUT, ABANDONED }
@@ -494,7 +528,7 @@ static var _floor_list: Array = []
 
 static func floors() -> Array:
 	if _floor_list.is_empty():
-		_floor_list = [_make_cellar(), _make_cistern(), _make_cloister(), _make_crypt(), _make_ossuary(), _make_reliquary(), _make_undercroft(), _make_wellhouse(), _make_scriptorium(), _make_binding(), _make_chartroom(), _make_bellloft(), _make_clockroom(), _make_font(), _make_apse(), _make_choir(), _make_rood(), _make_crossing(), _make_transept()]
+		_floor_list = [_make_cellar(), _make_cistern(), _make_cloister(), _make_crypt(), _make_ossuary(), _make_reliquary(), _make_undercroft(), _make_wellhouse(), _make_scriptorium(), _make_binding(), _make_chartroom(), _make_bellloft(), _make_clockroom(), _make_font(), _make_apse(), _make_choir(), _make_rood(), _make_crossing(), _make_transept(), _make_ambulatory()]
 	return _floor_list
 
 
@@ -869,6 +903,25 @@ static func _make_transept() -> Floor:
 		ring.append(Vector2i(x, 10))
 	floor.loop = ring
 	floor.record = TRANSEPT_RECORD
+	return floor
+
+
+static func _make_ambulatory() -> Floor:
+	var floor := Floor.new()
+	floor.id = "ambulatory"
+	floor.title = "The Ambulatory"
+	floor.rows = AMBULATORY_ROWS
+	floor.loop_name = "Ambulatory ring"
+	var ring: Array = []
+	for x in range(6, 18):
+		ring.append(Vector2i(x, 3))
+	for y in range(4, 10):
+		ring.append(Vector2i(6, y))
+		ring.append(Vector2i(17, y))
+	for x in range(6, 18):
+		ring.append(Vector2i(x, 10))
+	floor.loop = ring
+	floor.record = AMBULATORY_RECORD
 	return floor
 
 
@@ -1281,6 +1334,8 @@ static func ahead_line(state: RunState) -> String:
 				return "Ahead: the crossing. It inks as a wall."
 			if glyph_at(n, plan) == "V":
 				return "Ahead: the transept. It inks as a wall."
+			if glyph_at(n, plan) == "U":
+				return "Ahead: the ambulatory. It inks as a wall."
 			return "Ahead: wall."
 		Tile.HAZARD:
 			if plan != null and plan.id == "cistern":
@@ -1319,6 +1374,8 @@ static func ahead_line(state: RunState) -> String:
 				return "Ahead: a crossing crack. Stepping inks it and costs no extra oil."
 			if plan != null and plan.id == "transept":
 				return "Ahead: a transept crack. Stepping inks it and costs no extra oil."
+			if plan != null and plan.id == "ambulatory":
+				return "Ahead: an ambulatory crack. Stepping inks it and costs no extra oil."
 			return "Ahead: a hazard crack. Stepping inks it and costs no extra oil."
 		Tile.LIFT:
 			return "Ahead: the lift. Stepping on carries the sheet out."
@@ -1428,6 +1485,8 @@ static func step(state: RunState, dir: Vector2i) -> Dictionary:
 				return _pack(state, false, false, false, 0, true, "You tap the crossing and ink it if the square was blank.")
 			if glyph_at(target, plan) == "V":
 				return _pack(state, false, false, false, 0, true, "You tap the transept and ink it if the square was blank.")
+			if glyph_at(target, plan) == "U":
+				return _pack(state, false, false, false, 0, true, "You tap the ambulatory and ink it if the square was blank.")
 			return _pack(state, false, false, false, 0, true, "You tap a wall and ink it if the square was blank.")
 		if target == enemy_pos(plan):
 			return _pack(state, false, false, false, 0, true, "The warden occupies that tile.")
@@ -1485,6 +1544,8 @@ static func step(state: RunState, dir: Vector2i) -> Dictionary:
 			message = "You cross a crossing crack. It is inked if the square was blank."
 		elif plan != null and plan.id == "transept":
 			message = "You cross a transept crack. It is inked if the square was blank."
+		elif plan != null and plan.id == "ambulatory":
+			message = "You cross an ambulatory crack. It is inked if the square was blank."
 		else:
 			message = "You cross a hazard crack. It is inked if the square was blank."
 	return _pack(state, true, true, hit, MOVE_OIL + (HIT_OIL if hit else 0), false, message)

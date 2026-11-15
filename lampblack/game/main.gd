@@ -73,7 +73,7 @@ func _build_hud() -> void:
 	layer.add_child(bottom_panel)
 
 	controls_label = Label.new()
-	controls_label.text = "Arrows move    F lamp you face    Space wait    U undo    R restart    click a neighbor or a lamp\n1–8 east    Shift+1–6 west    Ctrl+1–6 north    Alt+1–6 south    F1–F6 attic    F7–F12 cellar    Keypad 1–6 gallery\nShift+F1–F6 court    Alt+F1–F6 nave    Ctrl+F1–F6 cloister    Ctrl+Shift+F1–F6 porch    Alt+Shift+F1–F6 oriel"
+	controls_label.text = "Arrows move    F lamp you face    Space wait    U undo    R restart    click a neighbor or a lamp\n1–8 east    Shift+1–6 west    Ctrl+1–6 north    Alt+1–6 south    F1–F6 attic    F7–F12 cellar    Keypad 1–6 gallery\nShift+F1–F6 court    Alt+F1–F6 nave    Ctrl+F1–F6 cloister    Ctrl+Shift+F1–F6 porch    Alt+Shift+F1–F6 oriel    Alt+Shift+1–6 veil"
 	controls_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	controls_label.add_theme_font_size_override("font_size", 14)
 	controls_label.add_theme_color_override("font_color", MUTED)
@@ -118,10 +118,10 @@ func _build_hud() -> void:
 		row_y += 36.0
 
 	legend_label = Label.new()
-	legend_label.text = "Gold diamond — lamplight, you cannot walk it.    Red diamond — a guard is watching.    Arrow — that guard's next step.    Brass disc — a plate. Step on it in the dark and the nearest guard is called.    Iron cup — a bell. Step on it in the dark and every guard who can reach it is called.    Iron bars — a grate. It stays dark, you may enter it, and a guard cannot.    Stone sill — a lamp lights it, light stops there, and a guard cannot enter or see through it.    Pale sheet — a pane. Light and sight pass through it, and neither you nor a guard can step on it."
+	legend_label.text = "Gold diamond — lamplight, you cannot walk it.    Red diamond — a guard is watching.    Arrow — that guard's next step.    Brass disc — a plate. Step on it in the dark and the nearest guard is called.    Iron cup — a bell. Step on it in the dark and every guard who can reach it is called.    Iron bars — a grate. It stays dark, you may enter it, and a guard cannot.    Stone sill — a lamp lights it, light stops there, and a guard cannot enter or see through it.    Pale sheet — a pane. Light and sight pass through it, and neither you nor a guard can step on it.    Dark cloth — a curtain. A lamp lights it, light passes, sight stops, and a guard can step on it."
 	legend_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	legend_label.position = Vector2(20, row_y + 2.0)
-	legend_label.size = Vector2(1240, 88)
+	legend_label.size = Vector2(1240, 92)
 	legend_label.add_theme_font_size_override("font_size", 14)
 	legend_label.add_theme_color_override("font_color", MUTED)
 	bottom_panel.add_child(legend_label)
@@ -133,7 +133,7 @@ func _build_hud() -> void:
 	status_label.position = Vector2(20, row_y + 2.0)
 	status_label.size = Vector2(1240, 52)
 	bottom_panel.add_child(status_label)
-	bottom_h = row_y + 98.0
+	bottom_h = row_y + 102.0
 
 	turn_label = Label.new()
 	turn_label.add_theme_font_size_override("font_size", 16)
@@ -170,7 +170,7 @@ func _layout() -> void:
 	if controls_label:
 		controls_label.size = Vector2(maxf(200.0, view.x - 40.0), 84)
 	if legend_label:
-		legend_label.size = Vector2(maxf(200.0, view.x - 40.0), 88)
+		legend_label.size = Vector2(maxf(200.0, view.x - 40.0), 92)
 	if status_label:
 		status_label.size = Vector2(maxf(200.0, view.x - 40.0), 52)
 	title_label.position = Vector2(24, 16)
@@ -295,8 +295,13 @@ func _puzzle_index_for_key(event: InputEventKey) -> int:
 	var digit := _digit_from_key(event)
 	if digit < 0:
 		return -1
-	# Alt alone is the south wing. Alt combined with another modifier keeps the
-	# older behavior: it selects nothing, so Shift and Ctrl stay where they were.
+	# Alt+Shift on a digit is the veil, and only when Ctrl and Meta are not held.
+	# That chord has to be claimed before Alt combined with Shift selects nothing.
+	var veil := _veil_index(event)
+	if veil >= 0:
+		return 74 + veil
+	# Alt alone is the south wing. Alt combined with Ctrl, Meta, or a leftover
+	# Shift selects nothing, so the other wings stay where they were.
 	if event.alt_pressed:
 		if event.ctrl_pressed or event.meta_pressed or event.shift_pressed or _is_shifted_digit(event.keycode):
 			return -1
@@ -313,6 +318,15 @@ func _puzzle_index_for_key(event: InputEventKey) -> int:
 			return -1
 		return 8 + digit
 	if digit > 7:
+		return -1
+	return digit
+
+
+func _veil_index(event: InputEventKey) -> int:
+	if event.ctrl_pressed or event.meta_pressed or not event.alt_pressed or not event.shift_pressed:
+		return -1
+	var digit := _digit_from_key(event)
+	if digit < 0 or digit > 5:
 		return -1
 	return digit
 
@@ -605,6 +619,8 @@ func _draw_tile(state: Dictionary, x: int, y: int, lit: Dictionary, watched: Dic
 	draw_rect(inset, floor_color)
 	if kind == Rules.Tile.SILL:
 		_draw_sill(inset)
+	if kind == Rules.Tile.CURTAIN:
+		_draw_curtain(inset)
 	if kind == Rules.Tile.GAP:
 		var pit := Rect2(inset.position + inset.size * 0.16, inset.size * 0.68)
 		draw_rect(pit, Color("070605"))
@@ -655,6 +671,35 @@ func _draw_plate(center: Vector2) -> void:
 	draw_rect(Rect2(center + Vector2(-tile * 0.07, -tile * 0.018), Vector2(tile * 0.14, tile * 0.036)), Color("3a2c16"))
 	draw_circle(center, tile * 0.045, Color("8d7344"))
 	draw_circle(center, tile * 0.02, Color("3a2c16"))
+
+
+func _draw_curtain(inset: Rect2) -> void:
+	var cloth := Color("2c1420")
+	var deep := Color("14080e")
+	var wine := Color("6a3050")
+	var hem := Color("8a4870")
+	draw_rect(inset, cloth)
+	var bands := 3
+	for i in bands:
+		var band_w := inset.size.x * 0.16
+		var x := inset.position.x + inset.size.x * (float(i) + 0.55) / float(bands) - band_w * 0.5
+		draw_rect(Rect2(Vector2(x, inset.position.y), Vector2(band_w, inset.size.y)), deep if i % 2 == 0 else wine)
+	var sag := inset.position.y + inset.size.y * 0.72
+	draw_colored_polygon(PackedVector2Array([
+		Vector2(inset.position.x, sag),
+		Vector2(inset.position.x + inset.size.x * 0.28, inset.end.y),
+		Vector2(inset.position.x + inset.size.x * 0.5, sag + inset.size.y * 0.1),
+		Vector2(inset.position.x + inset.size.x * 0.74, inset.end.y),
+		Vector2(inset.end.x, sag),
+		inset.end,
+		Vector2(inset.position.x, inset.end.y),
+	]), hem)
+	draw_line(
+		Vector2(inset.position.x + inset.size.x * 0.08, inset.position.y + inset.size.y * 0.18),
+		Vector2(inset.end.x - inset.size.x * 0.08, inset.position.y + inset.size.y * 0.18),
+		wine,
+		maxf(2.0, tile * 0.04)
+	)
 
 
 func _draw_pane(inset: Rect2) -> void:
