@@ -1,6 +1,6 @@
 # Casework
 
-A deduction game with eight cases, **The spare key**, **The rehearsal score**, **The gilt stamp**, **The ferry bell**, **The weather slate**, **The loom shuttle**, **The hive smoker**, and **The glass pontil**.
+A deduction game with nine cases, **The spare key**, **The rehearsal score**, **The gilt stamp**, **The ferry bell**, **The weather slate**, **The loom shuttle**, **The hive smoker**, **The glass pontil**, and **The press proof**.
 
 Pick a file. That file keeps a single timeline. You read the exhibits and pin who, the room, and the hour. A theory is accepted only when it fits every exhibit. A theory that does not fit comes back naming the exhibits it contradicts. An empty pin is refused by the name of the missing slot.
 
@@ -23,6 +23,8 @@ There is no voice. The papers and the board are the whole case.
 **The hive smoker.** The hive smoker left its shelf at the hive shed. Name who took it, the room they took it to, and the hour.
 
 **The glass pontil.** The glass pontil left its rest at the glasshouse. Name who took it, the room they took it to, and the hour.
+
+**The press proof.** The press proof left its nail at the print shop. Name who took it, the room they took it to, and the hour.
 
 ## Play
 
