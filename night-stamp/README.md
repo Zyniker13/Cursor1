@@ -1,6 +1,6 @@
 # Night Stamp
 
-A border-desk deckbuilder across four nights. Travelers arrive with a written rule. You spend ink to press stamps onto a 3×3 form. The cell matters as much as the card. When the turn ends, the form resolves from the top row downward.
+A border-desk deckbuilder across five nights. Travelers arrive with a written rule. You spend ink to press stamps onto a 3×3 form. The cell matters as much as the card. When the turn ends, the form resolves from the top row downward.
 
 This folder is a Godot 4 project. It was built against Godot 4.7.2.
 
@@ -27,7 +27,8 @@ A run is seeded. The seed field decides the shuffle and the draft offers. Restar
 - On a draft or relic choice, click a card or press 1, 2, or 3.
 - Late shift opens the second night with a fresh deck. While that night is open, First bell returns to Act 1.
 - Closing bell opens the third night with a fresh deck. While that night is open, the same button returns to the first bell.
-- Ash watch opens the fourth night with a fresh deck. While that night is open, the same button returns to the first bell. A victory desk can open any later night.
+- Ash watch opens the fourth night with a fresh deck. While that night is open, the same button returns to the first bell.
+- Gutter lamp opens the fifth night with a fresh deck. While that night is open, the same button returns to the first bell. A victory desk can open any later night.
 - Ink is 3 at the start of a turn (4 with Deep Well). Spending the last ink ends the turn. A turn with 0 ink accepts no further stamp.
 
 The rules comment at the top of `rules/rules.gd` is the full rules text. The first bell has four travelers:
@@ -58,6 +59,13 @@ The ash watch is a fourth night. Same stamps, same ink, a new deck.
 - Vetch Rowan — Row Seal. Patience does not fall when every row is stamped.
 - Nim Harth — Tail Slip. The last stamp in the queue scores twice.
 
+The gutter lamp is a fifth night. Same stamps, same ink, a new deck.
+
+- Ivo Dane — Blank Spine. Refuses stamps in column 2.
+- Sera Dodd — Triad Chit. Yields if every column is stamped.
+- Wren Hale — Open Margin. Patience drops twice when column 1 is empty.
+- Kit Yarrow — Neighbor Slip. Ignores a stamp with an orthogonal neighbor.
+
 ## Tests
 
 From this directory:
@@ -66,4 +74,4 @@ From this directory:
 godot --headless --path . -s res://tests/run_tests.gd
 ```
 
-The process exits 0 when every check passes and non-zero when one fails. The checks cover the 20-card pool, a fixed-seed clear of each night, a turn with 0 ink, the chain cap, the same card producing different numbers on two cells, and a correct stamp beside a wrong stamp for each late-shift, closing-bell, and ash-watch form.
+The process exits 0 when every check passes and non-zero when one fails. The checks cover the 20-card pool, a fixed-seed clear of each night, a turn with 0 ink, the chain cap, the same card producing different numbers on two cells, and a correct stamp beside a wrong stamp for each late-shift, closing-bell, ash-watch, and gutter-lamp form.

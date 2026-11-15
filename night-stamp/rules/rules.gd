@@ -152,6 +152,38 @@
 # A refused bottom row zeros that stamp's own progress. It does not cancel
 # the retrigger, and it does not remove Hold or Exemption.
 #
+# GUTTER LAMP, in desk order
+# A fifth night. The stamps, the ink, and the 3x3 form are unchanged. The
+# gutter lamp deals the starting deck again. Drafts and the relic from an
+# earlier night do not carry. Open it from the desk, or from a victory desk.
+# Restart act replays whichever night is on the desk.
+# - Ivo Dane, lane column 2, exemption row top, Blank Spine:
+#   "Refuses stamps in column 2."
+#   Column 2 is the spine. A stamp on the top row or the bottom row still
+#   counts when it is not in column 2.
+#   Exemption on the top row lets column 2 count.
+# - Sera Dodd, lane column 1, exemption row middle, Triad Chit:
+#   "Yields if every column is stamped."
+#   Each of the three columns must hold a stamp. That adds 4 progress after
+#   the queue. Two columns are not enough. Three stamps in one column do not
+#   cover the other columns. One stamp in each column is enough. A full row
+#   yields only because that row touches every column.
+#   Exemption on the middle row cancels the yield.
+# - Wren Hale, lane column 3, exemption row bottom, Open Margin:
+#   "Patience drops twice when column 1 is empty."
+#   The drop is 2 instead of 1. Any stamp in column 1 keeps the drop at 1.
+#   A bottom-row stamp outside column 1 does not spare the drop.
+#   Exemption on the bottom row keeps the drop at 1.
+#   Hold is applied before the double drop.
+# - Kit Yarrow, lane column 1, exemption row middle, Neighbor Slip:
+#   "Ignores a stamp with an orthogonal neighbor."
+#   Orthogonal means the cell above, below, left, or right. A diagonal touch
+#   is not a neighbor. A lone stamp counts. Two stamps that only meet at a
+#   corner both count. Two stamps that share a side both score 0.
+#   Exemption on the middle row lets neighboring stamps count.
+# A refused spine and an ignored neighbor zero that stamp's own progress.
+# They do not cancel the retrigger, and they do not remove Hold or Exemption.
+#
 # RUN
 # - A run is seeded. The shuffle and the draft offer are a pure function of the
 #   seed, the night, the traveler, and the cards owned, so restarting an
@@ -179,6 +211,7 @@ const SHIFT_FIRST := 0
 const SHIFT_LATE := 1
 const SHIFT_CLOSING := 2
 const SHIFT_ASH := 3
+const SHIFT_GUTTER := 4
 
 const ROW_NAMES := ["top row", "middle row", "bottom row"]
 const COL_NAMES := ["column 1", "column 2", "column 3"]
@@ -434,6 +467,54 @@ const ASH_WATCH := [
 ]
 
 
+const GUTTER_LAMP := [
+	{
+		"id": "ivo",
+		"name": "Ivo Dane",
+		"form_name": "Blank Spine",
+		"rule_text": "Refuses stamps in column 2.",
+		"rule": "refuse_col2",
+		"lane": 1,
+		"exemption_row": 0,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "sera",
+		"name": "Sera Dodd",
+		"form_name": "Triad Chit",
+		"rule_text": "Yields if every column is stamped.",
+		"rule": "yield_every_column",
+		"lane": 0,
+		"exemption_row": 1,
+		"goal": 22,
+		"patience": 5,
+	},
+	{
+		"id": "wren",
+		"name": "Wren Hale",
+		"form_name": "Open Margin",
+		"rule_text": "Patience drops twice when column 1 is empty.",
+		"rule": "double_patience_if_col1_empty",
+		"lane": 2,
+		"exemption_row": 2,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "kit",
+		"name": "Kit Yarrow",
+		"form_name": "Neighbor Slip",
+		"rule_text": "Ignores a stamp with an orthogonal neighbor.",
+		"rule": "ignore_adjacent",
+		"lane": 0,
+		"exemption_row": 1,
+		"goal": 20,
+		"patience": 5,
+	},
+]
+
+
 class NightState:
 	extends RefCounted
 	var seed: int = 1
@@ -483,6 +564,8 @@ static func _canonical_shift(shift_index: int) -> int:
 		return SHIFT_CLOSING
 	if shift_index == SHIFT_ASH:
 		return SHIFT_ASH
+	if shift_index == SHIFT_GUTTER:
+		return SHIFT_GUTTER
 	return SHIFT_FIRST
 
 
@@ -498,7 +581,9 @@ static func new_run(seed_value: int, shift_index: int = SHIFT_FIRST) -> NightSta
 	state.next_iid = 0
 	for card_id in STARTING_DECK:
 		_add_library_card(state, String(card_id))
-	if state.shift == SHIFT_ASH:
+	if state.shift == SHIFT_GUTTER:
+		_log(state, "The gutter lamp begins. Seed %d." % state.seed)
+	elif state.shift == SHIFT_ASH:
 		_log(state, "The ash watch begins. Seed %d." % state.seed)
 	elif state.shift == SHIFT_CLOSING:
 		_log(state, "The closing bell begins. Seed %d." % state.seed)
@@ -546,6 +631,8 @@ static func restart_encounter(state: NightState) -> void:
 
 
 static func shift_label(state: NightState) -> String:
+	if state.shift == SHIFT_GUTTER:
+		return "Gutter lamp"
 	if state.shift == SHIFT_ASH:
 		return "Ash watch"
 	if state.shift == SHIFT_CLOSING:
@@ -570,6 +657,8 @@ static func traveler(state: NightState) -> Dictionary:
 
 
 static func _roster(state: NightState) -> Array:
+	if state.shift == SHIFT_GUTTER:
+		return GUTTER_LAMP
 	if state.shift == SHIFT_ASH:
 		return ASH_WATCH
 	if state.shift == SHIFT_CLOSING:
@@ -748,6 +837,8 @@ static func stamp_progress(state: NightState, card_id: String, row: int, col: in
 		return 0
 	if rule == "refuse_col1" and col == 0:
 		return 0
+	if rule == "refuse_col2" and col == 1:
+		return 0
 	if rule == "refuse_middle" and row == 1:
 		return 0
 	if rule == "refuse_bottom" and row == 2:
@@ -757,6 +848,8 @@ static func stamp_progress(state: NightState, card_id: String, row: int, col: in
 	if rule == "ignore_corners" and _is_corner(row, col):
 		return 0
 	if rule == "ignore_covered" and _is_covered(state, row, col):
+		return 0
+	if rule == "ignore_adjacent" and orthogonal_count(state, row, col) > 0:
 		return 0
 	if rule == "double_last" and _is_queue_tail(state, row, col):
 		return amount * 2
@@ -839,6 +932,8 @@ static func patience_loss(state: NightState) -> int:
 		elif rule == "double_patience_if_col3_empty" and not column_has_stamp(state, 2):
 			loss = 2
 		elif rule == "double_patience_if_center_empty" and not _center_filled(state):
+			loss = 2
+		elif rule == "double_patience_if_col1_empty" and not column_has_stamp(state, 0):
 			loss = 2
 		elif rule == "no_drop_if_every_row" and _every_row_stamped(state):
 			loss = 0
@@ -987,6 +1082,8 @@ static func _resolve_stamp(state: NightState, row: int, col: int, hush: bool) ->
 				_log(state, "%s refuses %s on the top row." % [traveler(state)["name"], CARDS[card_id]["name"]])
 			elif rule == "refuse_col1" and col == 0:
 				_log(state, "%s refuses %s in column 1." % [traveler(state)["name"], CARDS[card_id]["name"]])
+			elif rule == "refuse_col2" and col == 1:
+				_log(state, "%s refuses %s in column 2." % [traveler(state)["name"], CARDS[card_id]["name"]])
 			elif rule == "refuse_middle" and row == 1:
 				_log(state, "%s refuses %s on the middle row." % [traveler(state)["name"], CARDS[card_id]["name"]])
 			elif rule == "refuse_bottom" and row == 2:
@@ -995,6 +1092,8 @@ static func _resolve_stamp(state: NightState, row: int, col: int, hush: bool) ->
 				_log(state, "%s ignores %s in a corner box." % [traveler(state)["name"], CARDS[card_id]["name"]])
 			elif rule == "ignore_covered" and _is_covered(state, row, col):
 				_log(state, "%s ignores the covered %s." % [traveler(state)["name"], CARDS[card_id]["name"]])
+			elif rule == "ignore_adjacent" and orthogonal_count(state, row, col) > 0:
+				_log(state, "%s ignores the neighboring %s." % [traveler(state)["name"], CARDS[card_id]["name"]])
 			elif rule == "ignore_isolated":
 				_log(state, "%s ignores the lone %s." % [traveler(state)["name"], CARDS[card_id]["name"]])
 			else:
@@ -1060,6 +1159,10 @@ static func _apply_post_rule(state: NightState, hush: bool) -> void:
 		state.turn_progress += 4
 		if not hush:
 			_log(state, "%s yields (+4)." % traveler(state)["name"])
+	elif rule == "yield_every_column" and _every_column_stamped(state):
+		state.turn_progress += 4
+		if not hush:
+			_log(state, "%s yields (+4)." % traveler(state)["name"])
 
 
 static func _is_corner(row: int, col: int) -> bool:
@@ -1098,6 +1201,10 @@ static func _stamp_count(state: NightState) -> int:
 
 static func _every_row_stamped(state: NightState) -> bool:
 	return row_has_stamp(state, 0) and row_has_stamp(state, 1) and row_has_stamp(state, 2)
+
+
+static func _every_column_stamped(state: NightState) -> bool:
+	return column_has_stamp(state, 0) and column_has_stamp(state, 1) and column_has_stamp(state, 2)
 
 
 static func orthogonal_count(state: NightState, row: int, col: int) -> int:
@@ -1141,7 +1248,9 @@ static func _apply_result(state: NightState, result: Dictionary) -> void:
 		state.encounters_cleared += 1
 		if state.traveler_index >= _roster(state).size() - 1:
 			state.phase = "victory"
-			if state.shift == SHIFT_ASH:
+			if state.shift == SHIFT_GUTTER:
+				_log(state, "The queue is empty. The gutter lamp is clear.")
+			elif state.shift == SHIFT_ASH:
 				_log(state, "The queue is empty. The ash watch is clear.")
 			elif state.shift == SHIFT_CLOSING:
 				_log(state, "The queue is empty. The closing bell is clear.")
