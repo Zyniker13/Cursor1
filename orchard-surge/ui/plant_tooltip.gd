@@ -25,4 +25,12 @@ static func stat_lines(kind: int) -> PackedStringArray:
 		lines.append("Shroud: burns")
 	else:
 		lines.append("Shroud: none")
+	if bool(stats["cracks_rind"]):
+		lines.append("Rind: cracks")
+	else:
+		lines.append("Rind: none")
+	if bool(stats["melts_pitch"]):
+		lines.append("Pitch: melts")
+	else:
+		lines.append("Pitch: none")
 	return lines
