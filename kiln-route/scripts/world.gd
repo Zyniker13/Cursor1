@@ -283,6 +283,7 @@ func _holder(kind: int) -> bool:
 		or kind == Rules.Kind.ARM
 		or kind == Rules.Kind.DROP
 		or kind == Rules.Kind.LIFT
+		or kind == Rules.Kind.DWELL
 	)
 
 
@@ -312,6 +313,14 @@ func _try_output(pos: Vector2i) -> bool:
 		elif machine.kind == Rules.Kind.LIFT:
 			# Back only. A blocked exit waits; the item does not send right.
 			out_dir = Rules.opposite(machine.dir)
+		elif machine.kind == Rules.Kind.DWELL:
+			# The arrival tick only stores the item. The next tick spends the
+			# extra hold. After that the item leaves forward, or waits if blocked.
+			if machine.phase > 0:
+				machine.phase -= 1
+				machine.moved = true
+				return false
+			out_dir = machine.dir
 		elif machine.kind == Rules.Kind.SPLITTER:
 			out_dir = machine.dir if machine.phase == 0 else Rules.right(machine.dir)
 		elif machine.kind == Rules.Kind.WEIR:
@@ -395,6 +404,9 @@ func _can_take(machine: Machine, mat: int, arrival: int) -> bool:
 		# From below only: the right side, the item moving toward the lift's left.
 		# Pointed east, that cell is south. Pointed north, the right side is east.
 		return machine.hold < 0 and arrival == Rules.left(machine.dir)
+	if machine.kind == Rules.Kind.DWELL:
+		# From behind only. A side entry and a head-on entry stay where they were.
+		return machine.hold < 0 and arrival == machine.dir
 	if machine.kind == Rules.Kind.BRIDGE:
 		if arrival == machine.dir:
 			return machine.hold < 0
@@ -442,6 +454,9 @@ func _accept(dest: Vector2i, mat: int, arrival: int) -> bool:
 	if _holder(machine.kind):
 		machine.hold = mat
 		machine.moved = true
+		if machine.kind == Rules.Kind.DWELL:
+			# One tick beyond a belt: the next output pass only clears this hold.
+			machine.phase = Rules.DWELL_HOLD
 	elif machine.kind == Rules.Kind.BRIDGE:
 		if arrival == machine.dir:
 			machine.hold = mat

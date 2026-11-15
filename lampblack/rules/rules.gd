@@ -29,6 +29,16 @@ extends RefCounted
 ## Dark floor and a dark exit may be entered. A gap may be entered only while it is lit.
 ## Lit floor that no guard is watching is refused. Stepping onto a watched tile is a loss,
 ## not a refusal — watched means the tile is lit and lies in a guard's vision.
+## A plate is floor. It may be entered while it is dark. A lit plate is refused, the same
+## as other lit floor, until the lamp covering it is snuffed.
+##
+## Plates
+## The turn the player steps onto a plate calls the nearest guard, by the same rule as a
+## snuff: Manhattan distance to that plate, and the lowest guard index wins a tie. The
+## call does not change the step taken on that turn. The guard takes the arrow step on
+## the next turn, then walks toward the plate and holds there. Waiting while already on
+## the plate does not call again. Leaving and stepping back on does. Lighting a lamp
+## still calls nobody. Snuffing a lamp still does.
 ##
 ## Vision
 ## Each guard watches a Manhattan diamond of their vision radius, and only on tiles that
@@ -37,11 +47,11 @@ extends RefCounted
 ## standing on the guard is a separate loss.
 ##
 ## Guards
-## Alerted guards take one step along a shortest 4-neighbor path to the lamp they were
-## called to. Neighbors are expanded north, east, south, then west, and that order breaks
-## ties. They may walk on floor and exit tiles, lit or dark, but not through walls or gaps.
-## When they step onto the lamp they hold there. They do not resume the rail unless a
-## later snuff calls them.
+## Alerted guards take one step along a shortest 4-neighbor path to the tile they were
+## called to, a lamp or a plate. Neighbors are expanded north, east, south, then west,
+## and that order breaks ties. They may walk on floor, plate, and exit tiles, lit or
+## dark, but not through walls or gaps. When they step onto that tile they hold there.
+## They do not resume the rail unless a later snuff or plate calls them.
 ## A guard who is not alert and not holding patrols their rail. The rail is a list of
 ## waypoints. rail_index is the waypoint they are walking toward, and rail_dir is +1 or -1.
 ## On reaching that waypoint they advance the index, reversing at either end. A rail with
@@ -52,7 +62,7 @@ extends RefCounted
 ## every lamp's lit flag, and every guard's position, rail index, rail direction, alert
 ## target, and hold flag.
 
-enum Tile { WALL, FLOOR, GAP, EXIT }
+enum Tile { WALL, FLOOR, GAP, EXIT, PLATE }
 enum Result { OK, WIN, LOSS, ILLEGAL }
 
 const DIRS := [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]
@@ -89,6 +99,8 @@ static func build(rows: PackedStringArray, lamps: Array, guards: Array) -> Dicti
 				"S":
 					kind = Tile.FLOOR
 					player = {"x": x, "y": y, "fx": 1, "fy": 0}
+				"P":
+					kind = Tile.PLATE
 				_:
 					push_error("bad tile '%s'" % ch)
 			tiles[y * width + x] = kind
@@ -295,7 +307,7 @@ static func loss_reason(state: Dictionary, lit: Dictionary = {}) -> String:
 
 static func guard_walkable(state: Dictionary, x: int, y: int) -> bool:
 	var kind := tile_at(state, x, y)
-	return kind == Tile.FLOOR or kind == Tile.EXIT
+	return kind == Tile.FLOOR or kind == Tile.EXIT or kind == Tile.PLATE
 
 
 static func bfs_path(state: Dictionary, sx: int, sy: int, gx: int, gy: int) -> Dictionary:
@@ -400,7 +412,7 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 	var st := state.duplicate(true)
 	var player: Dictionary = st["player"]
 	var pending_guard := -1
-	var pending_lamp := Vector2i.ZERO
+	var pending_target := Vector2i.ZERO
 	if kind == "wait":
 		pass
 	elif kind == "move":
@@ -422,7 +434,7 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 		if dest == Tile.GAP:
 			if not lit.has(Vector2i(nx, ny)):
 				return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "darkgap")
-		elif dest == Tile.FLOOR or dest == Tile.EXIT:
+		elif dest == Tile.FLOOR or dest == Tile.EXIT or dest == Tile.PLATE:
 			if lit.has(Vector2i(nx, ny)):
 				return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "lit")
 		else:
@@ -438,6 +450,9 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 		player["y"] = ny
 		player["fx"] = dx
 		player["fy"] = dy
+		if dest == Tile.PLATE:
+			pending_guard = nearest_guard(st, {"x": nx, "y": ny})
+			pending_target = Vector2i(nx, ny)
 	elif kind == "toggle":
 		var index := int(action["lamp"])
 		var lamp_list: Array = st["lamps"]
@@ -447,7 +462,7 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 		if absi(int(lamp["x"]) - int(player["x"])) + absi(int(lamp["y"]) - int(player["y"])) != 1:
 			return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "range")
 		var here := tile_at(st, player["x"], player["y"])
-		if here != Tile.FLOOR and here != Tile.EXIT:
+		if here != Tile.FLOOR and here != Tile.EXIT and here != Tile.PLATE:
 			return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "range")
 		var was_lit: bool = lamp["lit"]
 		lamp["lit"] = not was_lit
@@ -455,7 +470,7 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 		player["fy"] = int(lamp["y"]) - int(player["y"])
 		if was_lit:
 			pending_guard = nearest_guard(st, lamp)
-			pending_lamp = Vector2i(lamp["x"], lamp["y"])
+			pending_target = Vector2i(lamp["x"], lamp["y"])
 	else:
 		return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "action")
 
@@ -472,8 +487,8 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 	if pending_guard >= 0:
 		var called: Dictionary = st["guards"][pending_guard]
 		called["alert"] = true
-		called["ax"] = pending_lamp.x
-		called["ay"] = pending_lamp.y
+		called["ax"] = pending_target.x
+		called["ay"] = pending_target.y
 		called["holding"] = false
 	var step := Vector2i(-1, -1)
 	if pending_guard >= 0:

@@ -7,6 +7,7 @@ class_name HintBook
 # Mirror, tide mirror, and pane rotations are compared after normalizing
 # 180-degree repeats, so an equivalent facing is not reported as wrong.
 # A shutter has no facing. Dry stops the beam, and flooded water lets it pass.
+# A stain has no facing. Its two states are red and blue, not a rotation.
 
 const Tracer := preload("res://scripts/beam_tracer.gd")
 
