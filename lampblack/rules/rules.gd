@@ -26,7 +26,8 @@ extends RefCounted
 ## and it is not strictly behind the lamp. "Behind" means the step from the lamp to the
 ## tile has a negative dot product with the lamp's facing (north, east, south, or west).
 ## Sideways tiles count. The tile directly behind the lamp stays dark, so the player
-## can stand there and snuff it. Walls block the flood; they are never lit.
+## can stand there and snuff it. Walls block the flood; they are never lit. A grate does
+## not stop the flood and is never marked lit, so tiles past it still light.
 ##
 ## Movement
 ## Dark floor and a dark exit may be entered. A gap may be entered only while it is lit.
@@ -36,6 +37,8 @@ extends RefCounted
 ## as other lit floor, until the lamp covering it is snuffed.
 ## A bell is floor. It may be entered while it is dark. A lit bell is refused, the same
 ## as other lit floor, until the lamp covering it is snuffed.
+## A grate is floor you may enter. It stays dark even when a lamp's diamond covers its
+## tile, so standing on it is not a loss. A lit floor tile beside a grate is still refused.
 ##
 ## Plates
 ## The turn the player steps onto a plate calls the nearest guard, by the same rule as a
@@ -52,20 +55,31 @@ extends RefCounted
 ## already on the bell does not call again. Leaving and stepping back on does. A snuff
 ## still calls only the nearest guard. A plate still calls only the nearest guard.
 ## Lighting a lamp still calls nobody. A bell pulls a guard off an existing hold. A guard
-## with no floor path to the bell is not called and keeps the rail.
+## with no floor path to the bell is not called and keeps the rail. A grate is not a
+## floor path.
+##
+## Grates
+## A grate is floor you may enter. It is never lit, even when a lamp's diamond covers
+## its tile. Light does not stop at it: tiles past the grate still light. Because the
+## grate itself stays dark, standing on it is not a loss, and it blocks vision the same
+## way any dark floor does. A guard cannot enter a grate. Pathing treats it as closed,
+## the same as a wall, so a called guard walks around it. A grate does not call a guard.
+## A plate still calls only the nearest guard. A bell still calls every guard who can
+## reach it, and a grate is not a path. A lit floor tile beside a grate is still refused.
 ##
 ## Vision
 ## Each guard watches a Manhattan diamond of their vision radius, and only on tiles that
-## are currently lit. Walls and dark tiles block vision. A guard standing in the dark can
-## still look into an adjacent lit tile. The guard's own tile is not marked watched;
-## standing on the guard is a separate loss.
+## are currently lit. Walls and dark tiles block vision. A grate stays dark, so it blocks
+## vision the same way any dark floor does. A guard standing in the dark can still look
+## into an adjacent lit tile. The guard's own tile is not marked watched; standing on
+## the guard is a separate loss.
 ##
 ## Guards
 ## Alerted guards take one step along a shortest 4-neighbor path to the tile they were
 ## called to, a lamp, a plate, or a bell. Neighbors are expanded north, east, south,
 ## then west, and that order breaks ties. They may walk on floor, plate, bell, and exit
-## tiles, lit or dark, but not through walls or gaps. When they step onto that tile they
-## hold there. They do not resume the rail unless a later snuff, plate, or bell calls them.
+## tiles, lit or dark, but not through walls, gaps, or grates. When they step onto that tile
+## they hold there. They do not resume the rail unless a later snuff, plate, or bell calls them.
 ## A guard who is not alert and not holding patrols their rail. The rail is a list of
 ## waypoints. rail_index is the waypoint they are walking toward, and rail_dir is +1 or -1.
 ## On reaching that waypoint they advance the index, reversing at either end. A rail with
@@ -76,7 +90,7 @@ extends RefCounted
 ## every lamp's lit flag, and every guard's position, rail index, rail direction, alert
 ## target, and hold flag.
 
-enum Tile { WALL, FLOOR, GAP, EXIT, PLATE, BELL }
+enum Tile { WALL, FLOOR, GAP, EXIT, PLATE, BELL, GRATE }
 enum Result { OK, WIN, LOSS, ILLEGAL }
 
 const DIRS := [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]
@@ -117,6 +131,8 @@ static func build(rows: PackedStringArray, lamps: Array, guards: Array) -> Dicti
 					kind = Tile.PLATE
 				"B":
 					kind = Tile.BELL
+				"R":
+					kind = Tile.GRATE
 				_:
 					push_error("bad tile '%s'" % ch)
 			tiles[y * width + x] = kind
@@ -238,7 +254,8 @@ static func lamp_lights(state: Dictionary, lamp: Dictionary) -> Array:
 	while head < queue.size():
 		var cell: Vector2i = queue[head]
 		head += 1
-		lit.append(cell)
+		if tile_at(state, cell.x, cell.y) != Tile.GRATE:
+			lit.append(cell)
 		for dir in DIRS:
 			var nxt: Vector2i = cell + dir
 			if seen.has(nxt):
@@ -480,6 +497,8 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 		if dest == Tile.GAP:
 			if not lit.has(Vector2i(nx, ny)):
 				return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "darkgap")
+		elif dest == Tile.GRATE:
+			pass
 		elif dest == Tile.FLOOR or dest == Tile.EXIT or dest == Tile.PLATE or dest == Tile.BELL:
 			if lit.has(Vector2i(nx, ny)):
 				return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "lit")
@@ -515,7 +534,7 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 		if absi(int(lamp["x"]) - int(player["x"])) + absi(int(lamp["y"]) - int(player["y"])) != 1:
 			return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "range")
 		var here := tile_at(st, player["x"], player["y"])
-		if here != Tile.FLOOR and here != Tile.EXIT and here != Tile.PLATE and here != Tile.BELL:
+		if here != Tile.FLOOR and here != Tile.EXIT and here != Tile.PLATE and here != Tile.BELL and here != Tile.GRATE:
 			return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "range")
 		var was_lit: bool = lamp["lit"]
 		lamp["lit"] = not was_lit

@@ -1,6 +1,6 @@
 # Lampblack
 
-Turn-based stealth in a closed museum. The east wing has eight puzzles, the west wing has six, the north wing has six, the south wing has six, the attic has six, the cellar has six, the gallery has six, the court has six, and the nave has six. You walk dark tiles, guards watch the lit ones, and there is no combat.
+Turn-based stealth in a closed museum. The east wing has eight puzzles, the west wing has six, the north wing has six, the south wing has six, the attic has six, the cellar has six, the gallery has six, the court has six, the nave has six, and the cloister has six. You walk dark tiles, guards watch the lit ones, and there is no combat.
 
 ## Play
 
@@ -18,7 +18,7 @@ godot --path lampblack
 - `Space` waits. Click your own tile to wait.
 - `U` undoes the last turn, including after a loss or a win. Undo restores your position and facing, every lamp, and every guard.
 - `R` restarts the puzzle.
-- `1` through `8` select an east-wing puzzle. `Shift` plus `1` through `6` selects a west-wing puzzle. `Ctrl` plus `1` through `6` selects a north-wing puzzle. `Alt` plus `1` through `6` selects a south-wing puzzle. `F1` through `F6` select an attic puzzle. `F7` through `F12` select a cellar puzzle. Keypad `1` through keypad `6` select a gallery puzzle, and those keys are separate from the number row. `Shift` plus `F1` through `F6` selects a court puzzle. `Alt` plus `F1` through `F6` selects a nave puzzle. Plain `F1` through `F6` stay the attic. The buttons along the bottom do the same, grouped by wing.
+- `1` through `8` select an east-wing puzzle. `Shift` plus `1` through `6` selects a west-wing puzzle. `Ctrl` plus `1` through `6` selects a north-wing puzzle. `Alt` plus `1` through `6` selects a south-wing puzzle. `F1` through `F6` select an attic puzzle. `F7` through `F12` select a cellar puzzle. Keypad `1` through keypad `6` select a gallery puzzle, and those keys are separate from the number row. `Shift` plus `F1` through `F6` selects a court puzzle. `Alt` plus `F1` through `F6` selects a nave puzzle. `Ctrl` plus `F1` through `F6` selects a cloister puzzle, and only when Shift and Alt are not also held. Plain `F1` through `F6` stay the attic. `Alt` plus `F1` through `F6` stay the nave. `Shift` plus `F1` through `F6` stay the court. `Ctrl` plus a number key stays the north wing. The buttons along the bottom do the same, grouped by wing.
 
 Puzzle 1 states the rules in the banner. Gold diamonds are lamplight. Red diamonds are tiles a guard is watching. An arrow is that guard's next step.
 
@@ -31,9 +31,10 @@ The authoritative text is the header of `rules/rules.gd`. Short version:
 - Vision is a Manhattan diamond on currently lit tiles only. Dark tiles and walls block it.
 - A plate is floor. You may step onto it while it is dark. A lit plate is closed, the same as other lit floor, until the lamp covering it is snuffed.
 - A bell is floor. You may step onto it while it is dark. A lit bell is closed, the same as other lit floor, until the lamp covering it is snuffed. The bell is drawn as an iron cup, separate from the brass disc of a plate.
+- A grate is floor you may enter. It is never lit, even when a lamp's diamond covers its tile. Light does not stop at it: tiles past the grate still light. Because the grate itself stays dark, standing on it is not a loss, and it blocks vision the same way any dark floor does. A guard cannot enter a grate. Pathing treats it as closed, the same as a wall, so a called guard walks around it. A grate does not call a guard. A plate still calls only the nearest guard. A bell still calls every guard who can reach it, and a grate is not a path. A lit floor tile beside a grate is still refused. The grate is drawn as iron bars, separate from the iron cup of a bell and the brass disc of a plate.
 - Snuffing a lamp calls the nearest guard (Manhattan distance to that lamp; lowest index wins a tie). The guard takes that step on the **next** turn, after your following action. The arrow shows the tile beforehand.
 - The turn you step onto a plate calls the nearest guard by that same rule, toward the plate. Waiting while you are already on it does not call again. Leaving and stepping back on does. Lighting a lamp still calls nobody.
-- The turn you step onto a bell calls every guard who has a floor path to that bell. Each called guard takes the arrow step on the next turn, then walks to the bell and holds. Waiting while you are already on it does not call again. Leaving and stepping back on does. A snuff still calls only the nearest guard. A plate still calls only the nearest guard. Lighting a lamp still calls nobody. A bell pulls a guard off an existing hold. A guard with no floor path to the bell is not called and keeps the rail.
+- The turn you step onto a bell calls every guard who has a floor path to that bell. Each called guard takes the arrow step on the next turn, then walks to the bell and holds. Waiting while you are already on it does not call again. Leaving and stepping back on does. A snuff still calls only the nearest guard. A plate still calls only the nearest guard. Lighting a lamp still calls nobody. A bell pulls a guard off an existing hold. A guard with no floor path to the bell is not called and keeps the rail. A grate is not a floor path.
 - A called guard walks toward the lamp, plate, or bell and then holds. Other guards keep walking their rails.
 - Standing on a watched tile, or on a guard's tile, loses. Reaching the exit wins, before the guards move.
 
@@ -45,7 +46,7 @@ From the repository root:
 godot --headless --path lampblack -s res://tests/run_tests.gd
 ```
 
-The process exits `0` when every check passes and `1` when any check fails. The suite plays each puzzle's scripted solution, rejects a watched step, checks undo, and checks the tile the guard called in puzzle 3 will step to. West-wing, north-wing, south-wing, attic, cellar, gallery, court, and nave checks also play each new solution, undo it back to the start, and step onto a watched lit tile to confirm that step still loses. Court checks also cover a plate that does not call twice while you wait, a return that calls again, a lit plate that is refused, and the nearer keeper answering. Nave checks also cover a bell that does not call twice while you wait, a return that calls again, a lit bell that is refused, the far keeper answering, a plate that still calls only the nearest guard, and a snuff that still calls only the nearest guard.
+The process exits `0` when every check passes and `1` when any check fails. The suite plays each puzzle's scripted solution, rejects a watched step, checks undo, and checks the tile the guard called in puzzle 3 will step to. West-wing, north-wing, south-wing, attic, cellar, gallery, court, nave, and cloister checks also play each new solution, undo it back to the start, and step onto a watched lit tile to confirm that step still loses. Court checks also cover a plate that does not call twice while you wait, a return that calls again, a lit plate that is refused, and the nearer keeper answering. Nave checks also cover a bell that does not call twice while you wait, a return that calls again, a lit bell that is refused, the far keeper answering, a plate that still calls only the nearest guard, and a snuff that still calls only the nearest guard. Cloister checks also cover a grate under a lamp that can be entered, a tile past the grate that is still lit, a guard who does not see through the grate, a guard who paths around a grate, a bell that still calls every reachable guard, and a plate that still calls only the nearest guard.
 
 ## The east wing
 
@@ -130,6 +131,15 @@ The process exits `0` when every check passes and `1` when any check fails. The 
 55. The Bell Gap — the gap beyond the bell stays lit. The bell pulls the keepers off it, then you cross while its lamp is still burning.
 56. The Last Ring — the called guards walk to the bell and hold. Wait until they hold, then cross the lit gap to the exit their rails used to cover.
 
+## The cloister
+
+57. The First Grate — the hall is lit, and the grate in it stays dark, so you cross. Leave the square the keeper is about to take.
+58. The Passed Light — light crosses the grate and still lights the door beyond. That door stays closed until you snuff it.
+59. The Dark Cut — the dark grate blocks the guard's sight of the lit gap beyond it. Snuff is not required for the gap if his sight no longer reaches, but the gap still has to be lit to enter.
+60. The Long Road — the called guard cannot step on the grate, so he takes the longer floor road. You cross before he arrives.
+61. The Lit Edge — the tile beside the grate is lit and refused. The grate itself is enterable. Snuff the edge, then leave.
+62. The Last Grate — cross the grates, then the lit gap, once the keeper's road around the grate has taken him off the door.
+
 ## Limits
 
-There is no sound and no combat. A called guard holds on the lamp, the plate, or the bell until a later snuff, plate, or bell calls him again. Squares are drawn with Godot primitives; there is no art pack. The headless suite is the checked playthrough of all fifty-six solutions.
+There is no sound and no combat. A called guard holds on the lamp, the plate, or the bell until a later snuff, plate, or bell calls him again. A grate is never a hold: guards cannot enter it, and stepping on it calls nobody. Squares are drawn with Godot primitives; there is no art pack. The headless suite is the checked playthrough of all sixty-two solutions.
