@@ -6,201 +6,247 @@ var seed: int = 0
 var week: int = 0
 var rosters: Array = []
 var player_roster: Array = []
-var opponent_roster: Array = []
-var matches: Array = []
-var final_match: Dictionary = {}
+var results: Array = []
 var pending: Dictionary = {}
+var final_games: Array = []
 
 
 func _init(series_seed: int) -> void:
 	seed = series_seed
 	week = 0
-	matches = []
-	final_match = {}
+	results = []
 	pending = {}
+	final_games = []
 	var clubs := Sport.create_clubs(series_seed)
 	rosters = clubs["rosters"]
 	player_roster = rosters[Sport.PLAYER_INDEX]
-	_bind_opponent()
-
-
-func regular_complete() -> bool:
-	return matches.size() >= Sport.regular_match_count()
-
-
-func qualified_for_final() -> bool:
-	if not regular_complete():
-		return false
-	return Sport.rank_of(standings(), Sport.PLAYER_INDEX) <= 2
-
-
-func in_final() -> bool:
-	return week >= Sport.SERIES_WEEKS and final_match.is_empty() and qualified_for_final()
 
 
 func is_over() -> bool:
-	if not regular_complete():
+	if week < Sport.SERIES_WEEKS:
 		return false
-	if not qualified_for_final():
+	if not reached_final():
 		return true
-	return not final_match.is_empty()
+	return _has_series_winner()
 
 
-func standings() -> Array:
-	return Sport.standings(matches, seed)
+func reached_final() -> bool:
+	if week < Sport.SERIES_WEEKS:
+		return false
+	var pair := finalist_indices()
+	return int(pair[0]) == Sport.PLAYER_INDEX or int(pair[1]) == Sport.PLAYER_INDEX
 
 
-func current_fixture() -> Dictionary:
+func in_final() -> bool:
+	return week >= Sport.SERIES_WEEKS and reached_final() and not _has_series_winner()
+
+
+func finalist_indices() -> Array:
+	return Sport.finalist_pair(table())
+
+
+func series_win_counts() -> Array:
+	var counts: Array = []
+	for _club in Sport.CLUB_COUNT:
+		counts.append(0)
+	for game in final_games:
+		_add_final_win(counts, game)
+	return counts
+
+
+func _add_final_win(counts: Array, game: Dictionary) -> void:
+	var winner := str(game.get("winner", "tie"))
+	if winner == "home":
+		var idx := int(game["home_index"])
+		counts[idx] = int(counts[idx]) + 1
+	elif winner == "away":
+		var idx := int(game["away_index"])
+		counts[idx] = int(counts[idx]) + 1
+
+
+func _has_series_winner() -> bool:
+	for count in series_win_counts():
+		if int(count) >= Sport.FINAL_WINS_NEEDED:
+			return true
+	return false
+
+
+func series_winner_index() -> int:
+	var counts := series_win_counts()
+	for club_index in counts.size():
+		if int(counts[club_index]) >= Sport.FINAL_WINS_NEEDED:
+			return club_index
+	return -1
+
+
+func final_game_index() -> int:
+	return final_games.size()
+
+
+func final_home_index(game_index: int) -> int:
+	var pair := finalist_indices()
+	var sides: Array = Sport.final_home_away(int(pair[0]), int(pair[1]), game_index)
+	return int(sides[0])
+
+
+func place() -> int:
+	var ordered := Sport.sorted_table(table())
+	for i in ordered.size():
+		if int(ordered[i]["index"]) == Sport.PLAYER_INDEX:
+			return i + 1
+	return Sport.CLUB_COUNT
+
+
+func fixture() -> Dictionary:
 	if week >= Sport.SERIES_WEEKS:
-		if in_final():
-			return _final_fixture()
-		return {"away": -1, "home": -1}
-	var pair: Array = Sport.player_fixture(week)
-	return {"away": int(pair[0]), "home": int(pair[1])}
+		return _final_card()
+	var cards := Sport.week_fixtures(week)
+	for card in cards:
+		if int(card["home"]) == Sport.PLAYER_INDEX or int(card["away"]) == Sport.PLAYER_INDEX:
+			return card
+	return cards[0]
 
 
-func _final_fixture() -> Dictionary:
-	var table := standings()
-	var first := int(table[0]["club"])
-	var second := int(table[1]["club"])
-	return {"away": second, "home": first}
+func other_fixture() -> Dictionary:
+	if week >= Sport.SERIES_WEEKS:
+		return {}
+	var mine := fixture()
+	for card in Sport.week_fixtures(week):
+		if int(card["home"]) != int(mine["home"]):
+			return card
+	return {}
 
 
-func opponent_index() -> int:
-	var fixture := current_fixture()
-	if int(fixture["away"]) < 0:
-		return -1
-	if int(fixture["away"]) == Sport.PLAYER_INDEX:
-		return int(fixture["home"])
-	return int(fixture["away"])
+func _final_card() -> Dictionary:
+	var pair := finalist_indices()
+	var game_index := final_games.size()
+	var sides: Array = Sport.final_home_away(int(pair[0]), int(pair[1]), game_index)
+	var home := int(sides[0])
+	var away := int(sides[1])
+	return {
+		"home": home,
+		"away": away,
+		"home_club": str(Sport.CLUB_NAMES[home]),
+		"away_club": str(Sport.CLUB_NAMES[away]),
+		"is_final": true,
+		"final_game": game_index + 1,
+		"ahead": int(pair[0]),
+	}
 
 
-func _bind_opponent() -> void:
-	var index := opponent_index()
-	if index < 0:
-		opponent_roster = []
-		return
-	opponent_roster = rosters[index]
+func player_plays() -> bool:
+	if is_over():
+		return false
+	var card := fixture()
+	return int(card["home"]) == Sport.PLAYER_INDEX or int(card["away"]) == Sport.PLAYER_INDEX
 
 
 func player_bats_second() -> bool:
-	var fixture := current_fixture()
-	return int(fixture["home"]) == Sport.PLAYER_INDEX
+	if not player_plays():
+		return false
+	return int(fixture()["home"]) == Sport.PLAYER_INDEX
 
 
-func player_matches() -> Array:
-	var found: Array = []
-	for fixture in matches:
-		if int(fixture["away"]) == Sport.PLAYER_INDEX or int(fixture["home"]) == Sport.PLAYER_INDEX:
-			found.append(fixture)
-	return found
+func table() -> Array:
+	var rows := Sport.table_from_results(results)
+	Sport.apply_seed_ranks(rows, seed)
+	return rows
 
 
 func record() -> Dictionary:
-	var wins := 0
-	var losses := 0
-	var ties := 0
-	for fixture in player_matches():
-		var kind := str(fixture["player_result"])
-		if kind == "win":
-			wins += 1
-		elif kind == "loss":
-			losses += 1
-		else:
-			ties += 1
-	return {"wins": wins, "losses": losses, "ties": ties}
+	var row: Dictionary = table()[Sport.PLAYER_INDEX]
+	return {
+		"wins": int(row["wins"]),
+		"losses": int(row["losses"]),
+		"ties": int(row["ties"]),
+		"points": int(row["points"]),
+		"played": int(row["played"]),
+	}
 
 
 func goal_met() -> bool:
-	if final_match.is_empty():
-		return false
-	return str(final_match.get("player_result", "")) == "win"
+	return series_winner_index() == Sport.PLAYER_INDEX
 
 
-func begin_match(lineup: Array, tactic: String, focus: String) -> Dictionary:
-	if is_over():
-		return {"ok": false, "error": "The series is already over."}
-	if not Sport.is_legal_lineup(player_roster.size(), lineup):
-		return {"ok": false, "error": "The lineup needs four different players."}
-	if not Sport.TACTICS.has(tactic):
-		return {"ok": false, "error": "Pick a tactic."}
-	if not Sport.STATS.has(focus):
-		return {"ok": false, "error": "Pick a training focus."}
-	var week_index := week
-	var fixture := current_fixture()
-	if week >= Sport.SERIES_WEEKS:
-		week_index = Sport.SERIES_WEEKS
-	var player_match := _play_fixture(week_index, fixture, lineup, tactic, focus, true)
-	var other := {}
-	if week < Sport.SERIES_WEEKS:
-		var pair: Array = Sport.other_fixture(week)
-		other = _play_fixture(week, {"away": int(pair[0]), "home": int(pair[1])}, lineup, tactic, focus, false)
-	player_match["ok"] = true
-	player_match["other"] = other
-	pending = player_match
-	return player_match
+func _club_plan(club_index: int, plan_week: int) -> Dictionary:
+	return Sport.opponent_plan(rosters[club_index], plan_week, club_index)
 
 
-func _play_fixture(
-	week_index: int,
-	fixture: Dictionary,
+func _focuses_for(plan_week: int, focus: String) -> Array:
+	var focuses: Array = []
+	for club_index in Sport.CLUB_COUNT:
+		if club_index == Sport.PLAYER_INDEX:
+			focuses.append(focus)
+		else:
+			focuses.append(str(_club_plan(club_index, plan_week)["training"]))
+	return focuses
+
+
+func _simulate_card(
+	card: Dictionary,
 	lineup: Array,
 	tactic: String,
-	focus: String,
-	player_involved: bool
+	plan_week: int,
+	seed_week: int,
+	slot: int,
+	focuses: Array
 ) -> Dictionary:
-	var away_i := int(fixture["away"])
-	var home_i := int(fixture["home"])
-	var away_plan: Dictionary = Sport.opponent_plan(rosters[away_i], week_index, away_i)
-	var home_plan: Dictionary = Sport.opponent_plan(rosters[home_i], week_index, home_i)
-	var away_lineup: Array = away_plan["lineup"]
-	var home_lineup: Array = home_plan["lineup"]
-	var away_tactic := str(away_plan["tactic"])
-	var home_tactic := str(home_plan["tactic"])
-	var away_focus := str(away_plan["training"])
-	var home_focus := str(home_plan["training"])
-	if player_involved and away_i == Sport.PLAYER_INDEX:
-		away_lineup = lineup
-		away_tactic = tactic
-		away_focus = focus
-	if player_involved and home_i == Sport.PLAYER_INDEX:
-		home_lineup = lineup
+	var home_i := int(card["home"])
+	var away_i := int(card["away"])
+	var playing := home_i == Sport.PLAYER_INDEX or away_i == Sport.PLAYER_INDEX
+	var home_indices: Array
+	var away_indices: Array
+	var home_tactic: String
+	var away_tactic: String
+	if home_i == Sport.PLAYER_INDEX:
+		home_indices = lineup.duplicate()
 		home_tactic = tactic
-		home_focus = focus
-	var slot := 0
-	if week_index < Sport.SERIES_WEEKS:
-		slot = Sport.fixture_slot(week_index, away_i, home_i)
+	else:
+		var home_plan := _club_plan(home_i, plan_week)
+		home_indices = (home_plan["lineup"] as Array).duplicate()
+		home_tactic = str(home_plan["tactic"])
+	if away_i == Sport.PLAYER_INDEX:
+		away_indices = lineup.duplicate()
+		away_tactic = tactic
+	else:
+		var away_plan := _club_plan(away_i, plan_week)
+		away_indices = (away_plan["lineup"] as Array).duplicate()
+		away_tactic = str(away_plan["tactic"])
 	var played: Dictionary = Sport.simulate_match(
-		Sport.match_seed_for(seed, week_index, slot),
-		Sport.lineup_players(rosters[home_i], home_lineup),
-		Sport.lineup_players(rosters[away_i], away_lineup),
+		Sport.match_seed_for(seed, seed_week, slot),
+		Sport.lineup_players(rosters[home_i], home_indices),
+		Sport.lineup_players(rosters[away_i], away_indices),
 		home_tactic,
 		away_tactic,
-		str(Sport.CLUBS[home_i]),
-		str(Sport.CLUBS[away_i])
+		str(card["home_club"]),
+		str(card["away_club"])
 	)
-	played["week"] = week_index
-	played["away"] = away_i
-	played["home"] = home_i
-	played["away_lineup"] = away_lineup.duplicate()
-	played["home_lineup"] = home_lineup.duplicate()
-	played["away_tactic"] = away_tactic
+	played["ok"] = true
+	played["week"] = week
+	played["slot"] = slot
+	played["seed_week"] = seed_week
+	played["home_index"] = home_i
+	played["away_index"] = away_i
+	played["player_played"] = playing
+	played["player_bats_second"] = playing and home_i == Sport.PLAYER_INDEX
+	played["player_tactic"] = tactic if playing else ""
+	played["player_lineup"] = lineup.duplicate() if playing else []
+	played["player_focus"] = str(focuses[Sport.PLAYER_INDEX])
 	played["home_tactic"] = home_tactic
-	played["away_focus"] = away_focus
-	played["home_focus"] = home_focus
-	played["final"] = week_index >= Sport.SERIES_WEEKS
-	if away_i == Sport.PLAYER_INDEX or home_i == Sport.PLAYER_INDEX:
-		var at_home := home_i == Sport.PLAYER_INDEX
-		var foe := away_i if at_home else home_i
-		played["player_bats_second"] = at_home
-		played["player_tactic"] = home_tactic if at_home else away_tactic
-		played["opponent_tactic"] = away_tactic if at_home else home_tactic
-		played["player_lineup"] = (home_lineup if at_home else away_lineup).duplicate()
-		played["opponent_lineup"] = (away_lineup if at_home else home_lineup).duplicate()
-		played["player_focus"] = home_focus if at_home else away_focus
-		played["opponent_focus"] = away_focus if at_home else home_focus
-		played["opponent_club"] = str(Sport.CLUBS[foe])
-		if at_home:
+	played["away_tactic"] = away_tactic
+	played["home_lineup"] = home_indices
+	played["away_lineup"] = away_indices
+	played["focuses"] = focuses.duplicate()
+	played["is_final"] = bool(card.get("is_final", false))
+	played["final_game"] = int(card.get("final_game", 0))
+	if playing:
+		var opponent_i := away_i if home_i == Sport.PLAYER_INDEX else home_i
+		played["opponent_index"] = opponent_i
+		played["opponent_club"] = str(Sport.CLUB_NAMES[opponent_i])
+		played["opponent_tactic"] = away_tactic if opponent_i == away_i else home_tactic
+		played["opponent_lineup"] = away_indices if opponent_i == away_i else home_indices
+		played["opponent_focus"] = str(focuses[opponent_i])
+		if home_i == Sport.PLAYER_INDEX:
 			played["player_score"] = int(played["home_score"])
 			played["opponent_score"] = int(played["away_score"])
 		else:
@@ -212,42 +258,105 @@ func _play_fixture(
 			played["player_result"] = "loss"
 		else:
 			played["player_result"] = "tie"
+	else:
+		played["opponent_club"] = ""
+		played["opponent_tactic"] = ""
+		played["opponent_focus"] = ""
+		played["opponent_lineup"] = []
+		played["player_result"] = "other"
+		played["player_score"] = 0
+		played["opponent_score"] = 0
 	return played
 
 
-func _note_focus(fixture: Dictionary, focuses: Dictionary) -> void:
-	focuses[int(fixture["away"])] = str(fixture["away_focus"])
-	focuses[int(fixture["home"])] = str(fixture["home_focus"])
+func begin_match(lineup: Array, tactic: String, focus: String) -> Dictionary:
+	if is_over():
+		return {"ok": false, "error": "The series is already over."}
+	if not Sport.STATS.has(focus):
+		return {"ok": false, "error": "Pick a training focus."}
+	if not player_plays():
+		return {"ok": false, "error": "There is no match to play."}
+	if not Sport.is_legal_lineup(player_roster.size(), lineup):
+		return {"ok": false, "error": "The lineup needs four different players."}
+	if not Sport.TACTICS.has(tactic):
+		return {"ok": false, "error": "Pick a tactic."}
+	if week >= Sport.SERIES_WEEKS:
+		return _begin_final(lineup, tactic, focus)
+	return _begin_week(lineup, tactic, focus)
+
+
+func _begin_week(lineup: Array, tactic: String, focus: String) -> Dictionary:
+	var cards := Sport.week_fixtures(week)
+	var focuses := _focuses_for(week, focus)
+	var player_match: Dictionary = {}
+	var other_match: Dictionary = {}
+	for slot in cards.size():
+		var played := _simulate_card(cards[slot], lineup, tactic, week, week, slot, focuses)
+		if bool(played["player_played"]):
+			player_match = played
+		else:
+			other_match = played
+	if player_match.is_empty():
+		return {"ok": false, "error": "The week has no match for Lumen Reedmice."}
+	player_match["other_match"] = other_match
+	pending = player_match
+	return player_match
+
+
+func _begin_final(lineup: Array, tactic: String, focus: String) -> Dictionary:
+	var game_index := final_games.size()
+	var plan_week := Sport.SERIES_WEEKS + game_index
+	var card := _final_card()
+	var focuses := _focuses_for(plan_week, focus)
+	var played := _simulate_card(card, lineup, tactic, plan_week, plan_week, 0, focuses)
+	played["is_final"] = true
+	played["final_game"] = game_index + 1
+	pending = played
+	return played
+
+
+func _stored_regular(match: Dictionary) -> Dictionary:
+	var copy := match.duplicate(false)
+	copy.erase("other_match")
+	return copy
 
 
 func commit_match() -> Dictionary:
 	if pending.is_empty() or not bool(pending.get("ok", false)):
 		return {"ok": false, "error": "No match is waiting to be recorded."}
-	var other: Dictionary = {}
-	if pending.has("other") and not (pending["other"] as Dictionary).is_empty():
-		other = pending["other"]
-	var stored: Dictionary = pending.duplicate(true)
-	stored.erase("other")
-	stored.erase("ok")
-	var is_final := bool(stored.get("final", false))
-	var focuses := {}
-	_note_focus(stored, focuses)
-	if not other.is_empty():
-		_note_focus(other, focuses)
-	if is_final:
-		final_match = stored
+	var focuses: Array = pending["focuses"]
+	var notes: Array = []
+	for club_index in Sport.CLUB_COUNT:
+		notes.append(Sport.apply_training(rosters[club_index], str(focuses[club_index])))
+	pending["training_notes"] = notes
+	if bool(pending.get("is_final", false)):
+		final_games.append(pending)
+		pending = {}
+		var decided := is_over()
+		return {
+			"ok": true,
+			"week": week,
+			"over": decided,
+			"goal_met": goal_met() if decided else false,
+			"final": true,
+		}
+	var other: Dictionary = pending["other_match"]
+	other["training_notes"] = notes
+	var mine := _stored_regular(pending)
+	var away := _stored_regular(other)
+	if int(mine["slot"]) <= int(away["slot"]):
+		results.append(mine)
+		results.append(away)
 	else:
-		matches.append(stored)
-		matches.append(other.duplicate(true))
-		week += 1
-	for club_index in Sport.CLUBS.size():
-		if focuses.has(club_index):
-			Sport.apply_training(rosters[club_index], str(focuses[club_index]))
+		results.append(away)
+		results.append(mine)
 	pending = {}
-	_bind_opponent()
+	week += 1
+	var over := is_over()
 	return {
 		"ok": true,
 		"week": week,
-		"over": is_over(),
-		"goal_met": goal_met() if is_over() else false,
+		"over": over,
+		"goal_met": goal_met() if over else false,
+		"final": false,
 	}
