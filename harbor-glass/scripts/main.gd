@@ -1,9 +1,10 @@
 extends Control
 
 # South Lantern Quay, then North Glass Reach, then the Turning Basin, then the
-# Painted Lock, then the West Return. Pieces turn in place; a loose piece may
-# also move between the sockets authored for that chart. Lock Chart asks the
-# beam tracer whether every dock has its color and every hull is dark.
+# Painted Lock, then the West Return, then the Meeting Glass. Pieces turn in
+# place; a loose piece may also move between the sockets authored for that
+# chart. Lock Chart asks the beam tracer whether every dock has its color and
+# every hull is dark.
 
 const Charts := preload("res://scripts/charts.gd")
 const Tracer := preload("res://scripts/beam_tracer.gd")
@@ -48,13 +49,15 @@ var reach_grid: GridContainer
 var basin_grid: GridContainer
 var paint_grid: GridContainer
 var west_grid: GridContainer
+var meet_grid: GridContainer
 var quay_book_button: Button
 var reach_book_button: Button
 var basin_book_button: Button
 var paint_book_button: Button
 var west_book_button: Button
+var meet_book_button: Button
 var harbor_label: Label
-var _book_place: Array[int] = [0, 0, 0, 0, 0]
+var _book_place: Array[int] = [0, 0, 0, 0, 0, 0]
 var tide_clock: TideClock
 var _side: Panel
 
@@ -132,26 +135,36 @@ func _build_ui() -> void:
 	west_book_button.tooltip_text = Charts.WEST
 	west_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	west_book_button.pressed.connect(_on_book_pressed.bind(4))
+	meet_book_button = _button("Meet")
+	meet_book_button.tooltip_text = Charts.MEET
+	meet_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	meet_book_button.pressed.connect(_on_book_pressed.bind(5))
 	book_row.add_child(quay_book_button)
 	book_row.add_child(reach_book_button)
 	book_row.add_child(basin_book_button)
 	book_row.add_child(paint_book_button)
 	book_row.add_child(west_book_button)
+	book_row.add_child(meet_book_button)
+	for book_button in [quay_book_button, reach_book_button, basin_book_button, paint_book_button, west_book_button, meet_book_button]:
+		book_button.add_theme_font_size_override("font_size", 13)
 
 	quay_grid = _chart_grid()
 	reach_grid = _chart_grid()
 	basin_grid = _chart_grid()
 	paint_grid = _chart_grid()
 	west_grid = _chart_grid()
+	meet_grid = _chart_grid()
 	reach_grid.visible = false
 	basin_grid.visible = false
 	paint_grid.visible = false
 	west_grid.visible = false
+	meet_grid.visible = false
 	box.add_child(quay_grid)
 	box.add_child(reach_grid)
 	box.add_child(basin_grid)
 	box.add_child(paint_grid)
 	box.add_child(west_grid)
+	box.add_child(meet_grid)
 	var bounds: Array = _book_bounds()
 	for i in charts.size():
 		var button := _button("Chart %d" % (i + 1))
@@ -166,8 +179,10 @@ func _build_ui() -> void:
 			basin_grid.add_child(button)
 		elif i < int(bounds[4]):
 			paint_grid.add_child(button)
-		else:
+		elif i < int(bounds[5]):
 			west_grid.add_child(button)
+		else:
+			meet_grid.add_child(button)
 		chart_buttons.append(button)
 
 	title_label = _label("", 20, Palette.TEXT)
@@ -213,7 +228,7 @@ func _build_ui() -> void:
 	status_label.custom_minimum_size = Vector2(340, 0)
 	box.add_child(status_label)
 
-	var legend := _label("Warm beam, red, and blue. A lamp may already burn one color. Docks take only their marked color. Hulls stay dark. Water shuts the glass it covers.", 13, Palette.MUTED)
+	var legend := _label("Warm beam, red, and blue. A lamp may already burn one color. One mirror can take two lamps. Docks take only their marked color. Hulls stay dark. Water shuts the glass it covers.", 13, Palette.MUTED)
 	legend.custom_minimum_size = Vector2(360, 0)
 	box.add_child(legend)
 	var keys := _label("Arrows or Tab select. R turns. M moves a loose piece. Space locks. H hints. T raises tide, Shift+T lowers it. Backspace restarts.", 12, Palette.MUTED)
@@ -502,15 +517,18 @@ func _refresh_chrome() -> void:
 	basin_grid.visible = book == 2
 	paint_grid.visible = book == 3
 	west_grid.visible = book == 4
+	meet_grid.visible = book == 5
 	reach_book_button.disabled = not unlocked[int(bounds[1])]
 	basin_book_button.disabled = not unlocked[int(bounds[2])]
 	paint_book_button.disabled = not unlocked[int(bounds[3])]
 	west_book_button.disabled = not unlocked[int(bounds[4])]
+	meet_book_button.disabled = not unlocked[int(bounds[5])]
 	_paint_button(quay_book_button, book == 0)
 	_paint_button(reach_book_button, book == 1)
 	_paint_button(basin_book_button, book == 2)
 	_paint_button(paint_book_button, book == 3)
 	_paint_button(west_book_button, book == 4)
+	_paint_button(meet_book_button, book == 5)
 
 func _show_win() -> void:
 	win_body.text = str(chart["win"])
@@ -546,11 +564,14 @@ func _book_bounds() -> Array:
 	var r := q + Charts.reach().size()
 	var b := r + Charts.basin().size()
 	var p := b + Charts.painted().size()
-	return [0, q, r, b, p, charts.size()]
+	var w := p + Charts.west().size()
+	return [0, q, r, b, p, w, charts.size()]
 
 
 func _book_of(index: int) -> int:
 	var bounds: Array = _book_bounds()
+	if index >= int(bounds[5]):
+		return 5
 	if index >= int(bounds[4]):
 		return 4
 	if index >= int(bounds[3]):
@@ -575,8 +596,10 @@ func _on_book_pressed(book: int) -> void:
 			status_label.text = "The basin is still locked."
 		elif book == 3:
 			status_label.text = "The painted lock is still locked."
-		else:
+		elif book == 4:
 			status_label.text = "The west return is still locked."
+		else:
+			status_label.text = "The meeting glass is still locked."
 		return
 	_book_place[here] = chart_index
 	var last := int(bounds[book + 1])
