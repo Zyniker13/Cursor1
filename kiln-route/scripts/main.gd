@@ -1,0 +1,865 @@
+extends Node2D
+
+const Rules = preload("res://scripts/foundry.gd")
+const World = preload("res://scripts/world.gd")
+const Rooms = preload("res://scripts/rooms.gd")
+const Planner = preload("res://scripts/planner.gd")
+
+const SAVE_PATH := "user://kiln_route.cfg"
+const TICK_SEC := 0.05
+
+const COL_BG := Color("12100e")
+const COL_PANEL := Color("1e1914")
+const COL_EDGE := Color("3c332b")
+const COL_TILE := Color("3a322a")
+const COL_TEXT := Color("f6f0e6")
+const COL_DIM := Color("b5a89a")
+const COL_ACCENT := Color("e8883a")
+const COL_OK := Color("9cbe78")
+const COL_BAD := Color("d35b45")
+const COL_LOCK := Color("6d6258")
+const COL_SOURCE := Color("a85a32")
+const COL_SINK := Color("3e7d68")
+const COL_CHUTE := Color("1a1418")
+const COL_WALL := Color("14110f")
+
+enum Mode { EDIT, RUN, DONE }
+
+var rooms: Array = []
+var planners: Array = []
+var room_index := 0
+var cleared := {}
+var save_enabled := true
+var selected_kind := 0
+var selected_dir := 0
+var hover := Vector2i(-1, -1)
+var mode := Mode.EDIT
+var world = null
+var acc := 0.0
+var last_result := {}
+var font: Font
+
+
+func _ready() -> void:
+	boot()
+
+
+func boot() -> void:
+	if not rooms.is_empty():
+		return
+	font = ThemeDB.fallback_font
+	if font == null:
+		font = SystemFont.new()
+	rooms = Rooms.all()
+	save_enabled = not _launched_by_tests()
+	if save_enabled:
+		_load_progress()
+	for room in rooms:
+		planners.append(Planner.new(room))
+	selected_dir = Rules.Dir.EAST
+	selected_kind = _default_kind()
+	queue_redraw()
+
+
+func _process(delta: float) -> void:
+	if rooms.is_empty():
+		return
+	var cell := _cell_at(get_local_mouse_position())
+	if cell != hover:
+		hover = cell
+		queue_redraw()
+	if mode != Mode.RUN or world == null:
+		return
+	acc += delta
+	var steps := 0
+	while acc >= TICK_SEC and mode == Mode.RUN and steps < 8:
+		acc -= TICK_SEC
+		_advance_tick()
+		steps += 1
+	queue_redraw()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if rooms.is_empty():
+		return
+	if event is InputEventMouseMotion:
+		var cell := _cell_at(event.position)
+		if cell != hover:
+			hover = cell
+			queue_redraw()
+		return
+	if event is InputEventMouseButton and event.pressed:
+		_on_click(event.button_index, event.position)
+		get_viewport().set_input_as_handled()
+		return
+	if event is InputEventKey and event.pressed:
+		if event.echo and event.keycode != KEY_R and event.keycode != KEY_Q and event.keycode != KEY_E:
+			return
+		if _on_key(event.keycode):
+			get_viewport().set_input_as_handled()
+
+
+func _on_click(button: int, pos: Vector2) -> void:
+	var lay := _layout()
+	for index in lay.tabs.size():
+		if lay.tabs[index].has_point(pos):
+			if is_unlocked(rooms[index].id):
+				_select_room(index)
+			return
+	if lay.run_btn.has_point(pos):
+		_on_run_pressed()
+		return
+	if lay.restart_btn.has_point(pos):
+		_restart_room()
+		return
+	for slot in lay.tray:
+		if slot.rect.has_point(pos):
+			_select_kind(int(slot.kind))
+			return
+	var cell := _cell_at(pos)
+	if cell.x < 0:
+		return
+	if button == MOUSE_BUTTON_RIGHT:
+		if _planner().at(cell.x, cell.y) != null:
+			_try_rotate_at(cell.x, cell.y, true)
+		else:
+			selected_dir = Rules.right(selected_dir)
+			queue_redraw()
+		return
+	if button != MOUSE_BUTTON_LEFT:
+		return
+	if _planner().at(cell.x, cell.y) != null:
+		_try_pickup(cell.x, cell.y)
+		queue_redraw()
+		return
+	if mode == Mode.RUN:
+		return
+	_try_place(selected_kind, cell.x, cell.y, selected_dir)
+	queue_redraw()
+
+
+func _on_key(code: int) -> bool:
+	var kind := _kind_for_key(code)
+	if kind >= 0:
+		_select_kind(kind)
+		return true
+	if code == KEY_R or code == KEY_E:
+		_rotate_selection(true)
+		return true
+	if code == KEY_Q:
+		_rotate_selection(false)
+		return true
+	if code == KEY_SPACE or code == KEY_ENTER or code == KEY_KP_ENTER:
+		_on_run_pressed()
+		return true
+	if code == KEY_F:
+		if mode == Mode.RUN:
+			_on_run_pressed()
+		return true
+	if code == KEY_BACKSPACE:
+		_restart_room()
+		return true
+	if code == KEY_BRACKETRIGHT:
+		_step_room(1)
+		return true
+	if code == KEY_BRACKETLEFT:
+		_step_room(-1)
+		return true
+	return false
+
+
+func _kind_for_key(code: int) -> int:
+	var map := {
+		KEY_1: Rules.Kind.BELT,
+		KEY_KP_1: Rules.Kind.BELT,
+		KEY_2: Rules.Kind.KILN,
+		KEY_KP_2: Rules.Kind.KILN,
+		KEY_3: Rules.Kind.PRESS,
+		KEY_KP_3: Rules.Kind.PRESS,
+		KEY_4: Rules.Kind.FILTER,
+		KEY_KP_4: Rules.Kind.FILTER,
+		KEY_5: Rules.Kind.SPLITTER,
+		KEY_KP_5: Rules.Kind.SPLITTER,
+	}
+	if not map.has(code):
+		return -1
+	return int(map[code])
+
+
+func _rotate_selection(clockwise: bool) -> void:
+	if hover.x >= 0 and _planner().at(hover.x, hover.y) != null:
+		_try_rotate_at(hover.x, hover.y, clockwise)
+		return
+	selected_dir = Rules.right(selected_dir) if clockwise else Rules.left(selected_dir)
+	queue_redraw()
+
+
+func _select_kind(kind: int) -> void:
+	if int(_room().budget.get(kind, 0)) <= 0:
+		return
+	selected_kind = kind
+	queue_redraw()
+
+
+func _select_room(index: int) -> void:
+	if index < 0 or index >= rooms.size():
+		return
+	if not is_unlocked(rooms[index].id):
+		return
+	_back_to_edit()
+	room_index = index
+	selected_kind = _default_kind()
+	queue_redraw()
+
+
+func _step_room(delta: int) -> void:
+	if rooms.is_empty():
+		return
+	var index := room_index
+	for _hop in rooms.size():
+		index = posmod(index + delta, rooms.size())
+		if is_unlocked(rooms[index].id):
+			_select_room(index)
+			return
+
+
+func _on_run_pressed() -> void:
+	if mode == Mode.RUN:
+		var guard := Rules.SIM_TICKS + 5
+		while mode == Mode.RUN and guard > 0:
+			_advance_tick()
+			guard -= 1
+		queue_redraw()
+		return
+	_start_run()
+
+
+func _restart_room() -> void:
+	_back_to_edit()
+	_planner().reset()
+	selected_kind = _default_kind()
+	queue_redraw()
+
+
+func _start_run() -> void:
+	var built = World.new()
+	built.setup(_room(), _planner().placements)
+	world = built
+	mode = Mode.RUN
+	acc = 0.0
+	last_result = {}
+	if built.error != "":
+		_finish_run()
+	queue_redraw()
+
+
+func _advance_tick() -> void:
+	if mode != Mode.RUN or world == null:
+		return
+	if world.error != "" or world.tick >= Rules.SIM_TICKS:
+		_finish_run()
+		return
+	world.step()
+	if world.tick >= Rules.SIM_TICKS or world.error != "":
+		_finish_run()
+
+
+func _finish_run() -> void:
+	last_result = world.summarize(_planner().placements) if world != null else {}
+	mode = Mode.DONE
+	if not last_result.is_empty() and last_result.success:
+		cleared[int(_room().id)] = true
+		_save_progress()
+	queue_redraw()
+
+
+func _back_to_edit() -> void:
+	mode = Mode.EDIT
+	world = null
+	acc = 0.0
+	last_result = {}
+
+
+func _try_place(kind: int, x: int, y: int, dir: int) -> bool:
+	if mode == Mode.RUN:
+		return false
+	if mode == Mode.DONE:
+		_back_to_edit()
+	return _planner().place(kind, x, y, dir)
+
+
+func _try_pickup(x: int, y: int) -> bool:
+	if _planner().at(x, y) == null:
+		return false
+	if mode != Mode.EDIT:
+		_back_to_edit()
+	return _planner().pickup(x, y)
+
+
+func _try_rotate_at(x: int, y: int, clockwise: bool) -> bool:
+	if _planner().at(x, y) == null:
+		return false
+	if mode != Mode.EDIT:
+		_back_to_edit()
+	var ok: bool = _planner().rotate_at(x, y, clockwise)
+	queue_redraw()
+	return ok
+
+
+func is_unlocked(room_id: int) -> bool:
+	if room_id <= 1:
+		return true
+	if rooms.is_empty() or room_id > rooms.size():
+		return false
+	return cleared.has(room_id - 1) or cleared.has(room_id)
+
+
+func _room() -> Dictionary:
+	return rooms[room_index]
+
+
+func _planner():
+	return planners[room_index]
+
+
+func _default_kind() -> int:
+	var budget: Dictionary = _room().budget
+	for kind in [Rules.Kind.BELT, Rules.Kind.KILN, Rules.Kind.PRESS, Rules.Kind.FILTER, Rules.Kind.SPLITTER]:
+		if int(budget.get(kind, 0)) > 0:
+			return kind
+	return Rules.Kind.BELT
+
+
+func _tray_kinds() -> Array:
+	var kinds: Array = []
+	var budget: Dictionary = _room().budget
+	for kind in [Rules.Kind.BELT, Rules.Kind.KILN, Rules.Kind.PRESS, Rules.Kind.FILTER, Rules.Kind.SPLITTER]:
+		if int(budget.get(kind, 0)) > 0:
+			kinds.append(kind)
+	return kinds
+
+
+func _counts_now() -> Dictionary:
+	if world != null:
+		return world.counts
+	return {Rules.Mat.ORE: 0, Rules.Mat.INGOT: 0, Rules.Mat.PLATE: 0}
+
+
+func _layout() -> Dictionary:
+	var size := get_viewport_rect().size
+	if size.x < 100.0 or size.y < 100.0:
+		size = Vector2(1280, 720)
+	var tab_y := 56.0
+	var tab_h := 40.0
+	var tab_gap := 8.0
+	var tabs: Array = []
+	var tab_w := (size.x - 48.0 - tab_gap * 7.0) / 8.0
+	for index in 8:
+		tabs.append(Rect2(24 + index * (tab_w + tab_gap), tab_y, tab_w, tab_h))
+	var top := 148.0
+	var footer := 156.0
+	var play := Rect2(24, top, size.x - 24 - 312, size.y - top - footer)
+	var side := Rect2(size.x - 300, top, 276, play.size.y)
+	var room := _room()
+	var cell := minf(96.0, minf(play.size.x / float(room.w), play.size.y / float(room.h)))
+	var grid_size := Vector2(cell * float(room.w), cell * float(room.h))
+	var origin := play.position + (play.size - grid_size) * 0.5
+	var kinds := _tray_kinds()
+	var slot := Vector2(158, 88)
+	var gap := 10.0
+	var total := kinds.size() * slot.x + maxf(0, kinds.size() - 1) * gap
+	var x0 := (size.x - total) * 0.5
+	var y0 := size.y - slot.y - 34.0
+	var tray: Array = []
+	for index in kinds.size():
+		tray.append({
+			"kind": kinds[index],
+			"rect": Rect2(x0 + index * (slot.x + gap), y0, slot.x, slot.y),
+		})
+	return {
+		"size": size,
+		"tabs": tabs,
+		"play": play,
+		"side": side,
+		"origin": origin,
+		"cell": cell,
+		"grid": Rect2(origin, grid_size),
+		"run_btn": Rect2(side.position.x + 14, side.position.y + side.size.y - 118, side.size.x - 28, 42),
+		"restart_btn": Rect2(side.position.x + 14, side.position.y + side.size.y - 68, side.size.x - 28, 36),
+		"tray": tray,
+		"blurb": Rect2(24, 108, size.x - 48, 32),
+	}
+
+
+func _cell_at(pos: Vector2) -> Vector2i:
+	if rooms.is_empty():
+		return Vector2i(-1, -1)
+	var lay := _layout()
+	var origin: Vector2 = lay.origin
+	var cell: float = lay.cell
+	var room := _room()
+	var local := pos - origin
+	if local.x < 0.0 or local.y < 0.0:
+		return Vector2i(-1, -1)
+	var x := int(local.x / cell)
+	var y := int(local.y / cell)
+	if x < 0 or y < 0 or x >= int(room.w) or y >= int(room.h):
+		return Vector2i(-1, -1)
+	return Vector2i(x, y)
+
+
+func _draw() -> void:
+	if rooms.is_empty() or font == null:
+		return
+	var lay := _layout()
+	var size: Vector2 = lay.size
+	draw_rect(Rect2(Vector2.ZERO, size), COL_BG)
+	_text(Vector2(24, 14), "KILN ROUTE", 28, COL_TEXT)
+	_text(Vector2(236, 26), "foundry wing", 15, COL_DIM)
+	var minute := "minute  %d / %d" % [_shown_tick(), Rules.SIM_TICKS]
+	var minute_w := font.get_string_size(minute, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
+	_text(Vector2(size.x - 24 - minute_w, 26), minute, 15, COL_DIM)
+	_draw_tabs(lay)
+	_text_in(lay.blurb, _room().blurb, 16, COL_TEXT, HORIZONTAL_ALIGNMENT_LEFT)
+	draw_rect((lay.play as Rect2).grow(8), COL_PANEL)
+	_draw_grid(lay)
+	_draw_side(lay)
+	_draw_tray(lay)
+	_text(Vector2(24, size.y - 28), "1-5 select    R rotate    LMB place or pick up    RMB rotate a piece    Space run    F skip    Bksp restart", 13, COL_DIM)
+
+
+func _draw_tabs(lay: Dictionary) -> void:
+	for index in lay.tabs.size():
+		if index >= rooms.size():
+			break
+		var rect: Rect2 = lay.tabs[index]
+		var room: Dictionary = rooms[index]
+		var unlocked := is_unlocked(int(room.id))
+		var current: bool = int(index) == room_index
+		var bg := COL_PANEL
+		if current:
+			bg = Color("3a2618")
+		elif not unlocked:
+			bg = Color("171410")
+		draw_rect(rect, bg)
+		draw_rect(rect, COL_ACCENT if current else COL_EDGE, false, 2.0)
+		if current:
+			draw_rect(Rect2(rect.position.x, rect.position.y + rect.size.y - 3, rect.size.x, 3), COL_ACCENT)
+		var label := "%d  %s" % [int(room.id), room.name]
+		_text_in(rect, label, 15, COL_TEXT if unlocked else COL_LOCK)
+		if cleared.has(int(room.id)):
+			draw_circle(rect.position + Vector2(rect.size.x - 14, 14), 4.5, COL_OK)
+		elif not unlocked:
+			_padlock(rect.position + Vector2(rect.size.x - 16, 18))
+
+
+func _draw_grid(lay: Dictionary) -> void:
+	var room := _room()
+	var origin: Vector2 = lay.origin
+	var cell: float = lay.cell
+	var blocked: Dictionary = _planner().blocked
+	for y in int(room.h):
+		for x in int(room.w):
+			var rect := Rect2(origin + Vector2(x, y) * cell, Vector2(cell, cell))
+			var inner := rect.grow(-maxf(3.0, cell * 0.06))
+			var pos := Vector2i(x, y)
+			if blocked.has(pos):
+				_draw_fixed(inner, pos)
+			else:
+				draw_rect(inner, COL_TILE)
+				draw_rect(inner, COL_EDGE, false, 1.5)
+				_draw_rivets(inner)
+			var placed = _planner().at(x, y)
+			if placed != null:
+				var live = null
+				if world != null:
+					live = world.machines.get(pos)
+				_draw_piece(inner, int(placed.kind), int(placed.dir), 1.0, live)
+	_draw_ghost(lay)
+	if mode == Mode.DONE and not last_result.is_empty():
+		var border := COL_OK if last_result.success else COL_BAD
+		draw_rect(lay.grid, border, false, 4.0)
+
+
+func _draw_fixed(rect: Rect2, pos: Vector2i) -> void:
+	var room := _room()
+	for src in room.sources:
+		if int(src.x) == pos.x and int(src.y) == pos.y:
+			draw_rect(rect, COL_SOURCE)
+			_arrow(rect.get_center(), int(src.dir), rect.size.x * 0.28, rect.size.x * 0.16, Color("ffd7b0"))
+			var pending := _source_pending(pos)
+			if pending >= 0:
+				_draw_item(rect.get_center(), pending, rect.size.x / 88.0)
+			_text_in(Rect2(rect.position.x, rect.position.y + rect.size.y - 18, rect.size.x, 16), _pattern_label(src.pattern), 12, COL_TEXT)
+			return
+	for sink in room.sinks:
+		if int(sink.x) == pos.x and int(sink.y) == pos.y:
+			draw_rect(rect, COL_SINK)
+			var well := rect.grow(-rect.size.x * 0.22)
+			draw_rect(well, Color("1c3d34"))
+			_text_in(rect, _accept_label(sink.accepts), 13, COL_TEXT)
+			return
+	for chute in room.chutes:
+		if int(chute.x) == pos.x and int(chute.y) == pos.y:
+			draw_rect(rect, COL_CHUTE)
+			draw_circle(rect.get_center(), rect.size.x * 0.22, Color("0c0a0d"))
+			draw_circle(rect.get_center(), rect.size.x * 0.22, Color("5c4a55"), false, 2.0)
+			_text_in(Rect2(rect.position.x, rect.position.y + rect.size.y - 18, rect.size.x, 16), "Waste", 12, COL_DIM)
+			return
+	draw_rect(rect, COL_WALL)
+	draw_line(rect.position, rect.position + rect.size, COL_EDGE, 2.0)
+	draw_line(rect.position + Vector2(rect.size.x, 0), rect.position + Vector2(0, rect.size.y), COL_EDGE, 2.0)
+
+
+func _draw_ghost(lay: Dictionary) -> void:
+	if hover.x < 0 or mode == Mode.RUN:
+		return
+	var planner = _planner()
+	var origin: Vector2 = lay.origin
+	var cell: float = lay.cell
+	var rect := Rect2(origin + Vector2(hover) * cell, Vector2(cell, cell)).grow(-maxf(3.0, cell * 0.06))
+	if planner.at(hover.x, hover.y) != null:
+		draw_rect(rect, COL_ACCENT, false, 2.5)
+		return
+	if planner.can_place(selected_kind, hover.x, hover.y):
+		_draw_piece(rect, selected_kind, selected_dir, 0.45, null)
+	elif not planner.blocked.has(hover):
+		draw_rect(rect, Color(COL_BAD.r, COL_BAD.g, COL_BAD.b, 0.28))
+
+
+func _draw_piece(rect: Rect2, kind: int, dir: int, alpha: float, live) -> void:
+	var phase := 0
+	if live != null:
+		phase = int(live.phase)
+	_glyph(rect, kind, dir, alpha, phase)
+	if live == null:
+		return
+	var center := rect.get_center()
+	var scale := rect.size.x / 88.0
+	if int(live.hold) >= 0:
+		_draw_item(center, int(live.hold), scale)
+	elif live.output_ready:
+		var mat := Rules.Mat.INGOT if kind == Rules.Kind.KILN else Rules.Mat.PLATE
+		_draw_item(center, mat, scale)
+	elif kind == Rules.Kind.KILN and int(live.timer) > 0:
+		_draw_item(center, Rules.Mat.ORE, scale * 0.8)
+		var frac := 1.0 - float(live.timer) / float(Rules.KILN_DELAY)
+		draw_arc(center, 16.0 * scale, -PI * 0.5, -PI * 0.5 + TAU * frac, 18, COL_ACCENT, 2.5, true)
+	elif kind == Rules.Kind.PRESS and int(live.buffer) > 0:
+		for index in int(live.buffer):
+			_draw_item(center + Vector2(-8 + index * 16, 6) * scale, Rules.Mat.INGOT, scale * 0.5)
+
+
+func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
+	var color := _kind_color(kind)
+	color.a = alpha
+	var body := rect.grow(-rect.size.x * 0.14)
+	draw_rect(body.grow(3), Color(0, 0, 0, 0.35 * alpha))
+	draw_rect(body, color)
+	var center := body.get_center()
+	var light := Color(1, 1, 1, 0.9 * alpha)
+	var front := center + Vector2(Rules.vec(dir)) * body.size.x * 0.18
+	if kind == Rules.Kind.KILN:
+		var chim := Rect2(body.position + Vector2(body.size.x * 0.18, -body.size.y * 0.16), Vector2(body.size.x * 0.18, body.size.y * 0.28))
+		draw_rect(chim, color.darkened(0.25))
+		draw_rect(Rect2(chim.position + Vector2(1, 0), Vector2(chim.size.x - 2, 4)), Color(COL_ACCENT.r, COL_ACCENT.g, COL_ACCENT.b, alpha))
+	elif kind == Rules.Kind.PRESS:
+		var ram := Rect2(body.position + Vector2(body.size.x * 0.18, body.size.y * 0.16), Vector2(body.size.x * 0.46, body.size.y * 0.18))
+		draw_rect(ram, Color(0.22, 0.25, 0.3, alpha))
+	var forward_alpha := alpha
+	var right_alpha := alpha
+	if kind == Rules.Kind.SPLITTER:
+		forward_alpha = alpha if phase == 0 else alpha * 0.35
+		right_alpha = alpha if phase == 1 else alpha * 0.35
+	_arrow(front, dir, body.size.x * 0.2, body.size.x * 0.12, Color(light.r, light.g, light.b, forward_alpha))
+	if kind == Rules.Kind.FILTER or kind == Rules.Kind.SPLITTER:
+		var turn := Rules.right(dir)
+		var side := center + Vector2(Rules.vec(turn)) * body.size.x * 0.18
+		var mark := Color("f2d48a") if kind == Rules.Kind.FILTER else light
+		_arrow(side, turn, body.size.x * 0.16, body.size.x * 0.1, Color(mark.r, mark.g, mark.b, right_alpha))
+
+
+func _draw_side(lay: Dictionary) -> void:
+	var side: Rect2 = lay.side
+	draw_rect(side, COL_PANEL)
+	draw_rect(side, COL_EDGE, false, 2.0)
+	var room := _room()
+	var x := side.position.x + 16.0
+	var y := side.position.y + 14.0
+	_text(Vector2(x, y), "%02d   %s" % [int(room.id), room.name], 22, COL_TEXT)
+	y += 40
+	_text(Vector2(x, y), "QUOTA", 12, COL_DIM)
+	y += 20
+	var counts := _counts_now()
+	var mats: Array = room.quota.keys()
+	mats.sort()
+	for mat in mats:
+		var have := int(counts.get(int(mat), 0))
+		var need := int(room.quota[mat])
+		var done := have >= need and mode != Mode.EDIT
+		_text(Vector2(x, y), Rules.MAT_NAME[int(mat)], 18, COL_OK if done else COL_TEXT)
+		var ratio := "%d / %d" % [have, need]
+		var ratio_w := font.get_string_size(ratio, HORIZONTAL_ALIGNMENT_LEFT, -1, 18).x
+		_text(Vector2(side.position.x + side.size.x - 16 - ratio_w, y), ratio, 18, COL_OK if done else COL_ACCENT)
+		y += 28
+	y += 8
+	_text(Vector2(x, y), "RULE", 12, COL_DIM)
+	y += 18
+	var limit := (lay.run_btn as Rect2).position.y - 56.0
+	for line in _wrap(str(room.rule), side.size.x - 32.0, 14):
+		if y > limit:
+			break
+		_text(Vector2(x, y), line, 14, COL_DIM)
+		y += 18
+	var run_label := "Run minute"
+	if mode == Mode.RUN:
+		run_label = "Skip to end"
+	elif mode == Mode.DONE:
+		run_label = "Run again"
+	_button(lay.run_btn, run_label, true)
+	_button(lay.restart_btn, "Restart room", false)
+	if mode == Mode.DONE and not last_result.is_empty():
+		var msg := "CLEARED"
+		var col := COL_OK
+		if not last_result.quota_ok:
+			msg = "QUOTA MISSED"
+			col = COL_BAD
+		elif not last_result.budget_ok:
+			msg = "OVER BUDGET"
+			col = COL_BAD
+		_text(Vector2(x, (lay.run_btn as Rect2).position.y - 28), msg, 16, col)
+
+
+func _draw_tray(lay: Dictionary) -> void:
+	for slot in lay.tray:
+		var rect: Rect2 = slot.rect
+		var kind := int(slot.kind)
+		var selected := kind == selected_kind
+		draw_rect(rect, Color("2a211b") if selected else COL_PANEL)
+		draw_rect(rect, COL_ACCENT if selected else COL_EDGE, false, 2.0)
+		var glyph := Rect2(rect.position + Vector2(8, 12), Vector2(64, 64))
+		_glyph(glyph, kind, selected_dir if selected else Rules.Dir.EAST, 1.0, 0)
+		var text_x := rect.position.x + 80.0
+		_text(Vector2(text_x, rect.position.y + 14), Rules.KIND_NAME[kind], 15, COL_TEXT)
+		var left: int = _planner().remaining(kind)
+		_text(Vector2(text_x, rect.position.y + 36), "%d left" % left, 18, COL_TEXT if left > 0 else COL_LOCK)
+		_text(Vector2(text_x, rect.position.y + 60), "key %d" % (kind + 1), 12, COL_DIM)
+
+
+func _button(rect: Rect2, label: String, hot: bool) -> void:
+	draw_rect(rect, COL_ACCENT if hot else Color("2a241e"))
+	draw_rect(rect, COL_ACCENT if hot else COL_EDGE, false, 2.0)
+	_text_in(rect, label, 16, Color("1a120c") if hot else COL_TEXT)
+
+
+func _padlock(center: Vector2) -> void:
+	draw_line(center + Vector2(-4, 0), center + Vector2(-4, -5), COL_LOCK, 1.5)
+	draw_line(center + Vector2(-4, -5), center + Vector2(4, -5), COL_LOCK, 1.5)
+	draw_line(center + Vector2(4, -5), center + Vector2(4, 0), COL_LOCK, 1.5)
+	draw_rect(Rect2(center + Vector2(-5, 0), Vector2(10, 8)), COL_LOCK)
+
+
+func _arrow(center: Vector2, dir: int, length: float, width: float, color: Color) -> void:
+	var heading := Vector2(Rules.vec(dir))
+	var normal := Vector2(-heading.y, heading.x)
+	var tip := center + heading * length
+	var base := center - heading * length * 0.35
+	draw_colored_polygon(PackedVector2Array([tip, base + normal * width, base - normal * width]), color)
+
+
+func _draw_rivets(rect: Rect2) -> void:
+	var inset := 6.0
+	var radius := 1.6
+	var col := Color(1, 1, 1, 0.08)
+	for corner in [
+		rect.position + Vector2(inset, inset),
+		rect.position + Vector2(rect.size.x - inset, inset),
+		rect.position + Vector2(inset, rect.size.y - inset),
+		rect.position + Vector2(rect.size.x - inset, rect.size.y - inset),
+	]:
+		draw_circle(corner, radius, col)
+
+
+func _draw_item(center: Vector2, mat: int, scale: float) -> void:
+	var col := _mat_color(mat)
+	if mat == Rules.Mat.ORE:
+		draw_circle(center, 12.0 * scale, Color(0, 0, 0, 0.45))
+		draw_circle(center, 10.0 * scale, col)
+		draw_circle(center + Vector2(-3, -3) * scale, 3.2 * scale, col.lightened(0.28))
+	elif mat == Rules.Mat.INGOT:
+		var size := Vector2(26, 11) * scale
+		draw_rect(Rect2(center - size * 0.5 + Vector2(1, 1), size), Color(0, 0, 0, 0.4))
+		draw_rect(Rect2(center - size * 0.5, size), col)
+	else:
+		var size := Vector2(34, 8) * scale
+		draw_rect(Rect2(center - size * 0.5 + Vector2(1, 1), size), Color(0, 0, 0, 0.4))
+		draw_rect(Rect2(center - size * 0.5, size), col)
+
+
+func _kind_color(kind: int) -> Color:
+	if kind == Rules.Kind.BELT:
+		return Color("e0a44a")
+	if kind == Rules.Kind.KILN:
+		return Color("d4532c")
+	if kind == Rules.Kind.PRESS:
+		return Color("b7c0cb")
+	if kind == Rules.Kind.FILTER:
+		return Color("3cb8b0")
+	return Color("c792ef")
+
+
+func _mat_color(mat: int) -> Color:
+	if mat == Rules.Mat.ORE:
+		return Color("c4844a")
+	if mat == Rules.Mat.INGOT:
+		return Color("f2d48a")
+	return Color("d7dee6")
+
+
+func _pattern_label(pattern: Array) -> String:
+	if pattern.size() == 1:
+		return Rules.MAT_NAME[int(pattern[0])]
+	var names: PackedStringArray = []
+	for mat in pattern:
+		names.append(Rules.MAT_NAME[int(mat)])
+	return "/".join(names)
+
+
+func _accept_label(accepts: Array) -> String:
+	if accepts.size() >= 2:
+		return "Ing+Plt"
+	return Rules.MAT_NAME[int(accepts[0])]
+
+
+func _source_pending(pos: Vector2i) -> int:
+	if world == null:
+		return -1
+	for source in world.sources:
+		if source.pos == pos:
+			return int(source.pending)
+	return -1
+
+
+func _shown_tick() -> int:
+	if world == null:
+		return 0
+	return int(world.tick)
+
+
+func _text(pos: Vector2, text: String, size: int, color: Color) -> void:
+	if font == null:
+		return
+	draw_string(font, pos + Vector2(0, font.get_ascent(size)), text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, color)
+
+
+func _text_in(rect: Rect2, text: String, size: int, color: Color, align: HorizontalAlignment = HORIZONTAL_ALIGNMENT_CENTER) -> void:
+	if font == null:
+		return
+	var ascent := font.get_ascent(size)
+	var descent := font.get_descent(size)
+	var baseline := rect.position.y + (rect.size.y - ascent - descent) * 0.5 + ascent
+	draw_string(font, Vector2(rect.position.x + (8 if align == HORIZONTAL_ALIGNMENT_LEFT else 0), baseline), text, align, rect.size.x - (8 if align == HORIZONTAL_ALIGNMENT_LEFT else 0), size, color)
+
+
+func _wrap(text: String, width: float, size: int) -> PackedStringArray:
+	var lines: PackedStringArray = []
+	if font == null:
+		lines.append(text)
+		return lines
+	var current := ""
+	for word in text.split(" "):
+		var trial := word if current == "" else current + " " + word
+		if font.get_string_size(trial, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x > width and current != "":
+			lines.append(current)
+			current = word
+		else:
+			current = trial
+	if current != "":
+		lines.append(current)
+	return lines
+
+
+func _launched_by_tests() -> bool:
+	for arg in OS.get_cmdline_args():
+		if str(arg).contains("run_tests"):
+			return true
+	for arg in OS.get_cmdline_user_args():
+		if str(arg).contains("run_tests"):
+			return true
+	return false
+
+
+func _load_progress() -> void:
+	var config := ConfigFile.new()
+	if config.load(SAVE_PATH) != OK:
+		return
+	for room_id in config.get_value("progress", "cleared", []):
+		cleared[int(room_id)] = true
+
+
+func _save_progress() -> void:
+	if not save_enabled:
+		return
+	var config := ConfigFile.new()
+	var ids: Array = []
+	for room_id in cleared.keys():
+		ids.append(int(room_id))
+	ids.sort()
+	config.set_value("progress", "cleared", ids)
+	config.save(SAVE_PATH)
+
+
+func testing_isolate() -> void:
+	save_enabled = false
+	cleared = {}
+
+
+func testing_tray(kind: int) -> int:
+	return _planner().remaining(kind)
+
+
+func testing_place(kind: int, x: int, y: int, dir: int) -> bool:
+	return _try_place(kind, x, y, dir)
+
+
+func testing_pickup(x: int, y: int) -> bool:
+	var ok := _try_pickup(x, y)
+	queue_redraw()
+	return ok
+
+
+func testing_select(index: int) -> bool:
+	if index < 0 or index >= rooms.size():
+		return false
+	if not is_unlocked(rooms[index].id):
+		return false
+	_select_room(index)
+	return room_index == index
+
+
+func testing_start_only() -> void:
+	_start_run()
+
+
+func testing_mode_edit() -> bool:
+	return mode == Mode.EDIT
+
+
+func testing_apply_and_run(placements: Array) -> Dictionary:
+	if mode != Mode.EDIT:
+		_back_to_edit()
+	var snapshot: Array = _planner().placements.duplicate(true)
+	for piece in snapshot:
+		if not _try_pickup(int(piece.x), int(piece.y)):
+			return {"success": false, "quota_ok": false, "budget_ok": false, "text": "pickup failed"}
+	for piece in placements:
+		if not _try_place(int(piece.kind), int(piece.x), int(piece.y), int(piece.dir)):
+			return {"success": false, "quota_ok": false, "budget_ok": false, "text": "place failed %s" % str(piece)}
+	_start_run()
+	var guard := Rules.SIM_TICKS + 5
+	while mode == Mode.RUN and guard > 0:
+		_advance_tick()
+		guard -= 1
+	if mode != Mode.DONE:
+		return {"success": false, "quota_ok": false, "budget_ok": false, "text": "run did not finish"}
+	return last_result
