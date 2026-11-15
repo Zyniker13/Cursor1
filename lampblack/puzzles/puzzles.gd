@@ -3,7 +3,7 @@ extends RefCounted
 
 const Rules = preload("res://rules/rules.gd")
 
-## Four wings of the closed museum. Each solution is a list of actions the rules
+## Five wings of the closed museum. Each solution is a list of actions the rules
 ## accept. Tokens are R L U D, W for wait, and T0 / T1 for lamps.
 
 
@@ -65,6 +65,8 @@ static func _puzzle(number: int, title: String, lesson: String, rows: PackedStri
 		wing_number = number - 14
 	elif wing == "South Wing":
 		wing_number = number - 20
+	elif wing == "Attic Wing":
+		wing_number = number - 26
 	return {
 		"number": number,
 		"wing": wing,
@@ -98,6 +100,7 @@ static func _all() -> Array:
 	puzzles.append_array(_west_wing())
 	puzzles.append_array(_north_wing())
 	puzzles.append_array(_south_wing())
+	puzzles.append_array(_attic_wing())
 	return puzzles
 
 
@@ -550,5 +553,115 @@ static func _south_wing() -> Array:
 			],
 			"R R T0 R R R R R R R",
 			"South Wing"
+		),
+	]
+
+
+static func _attic_wing() -> Array:
+	return [
+		_puzzle(
+			27,
+			"The Unlit Watch",
+			"This room is about the rule that a guard watches only lit tiles. His reach crosses the dark hall, and that floor is safe. The lit square in the doorway is in his eyes. Step onto it and you lose.",
+			PackedStringArray([
+				"###########",
+				"#S.......X#",
+				"#.........#",
+				"####.######",
+				"#.........#",
+				"#.........#",
+				"###########",
+			]),
+			[_lamp(4, 4, "n", 2)],
+			[_guard(4, 5, [Vector2i(4, 5)], 5)],
+			"R R R R R R R R",
+			"Attic Wing"
+		),
+		_puzzle(
+			28,
+			"The Blind Wall",
+			"This room is about the rule that walls block vision. He stands on the lamp, and the lit near side of the wall is in his eyes. The gap beyond that wall is lit and inside his reach, but the wall cuts his sight. Snuff the lamp from the dark square beside him and cross. Step into the near light and you lose.",
+			PackedStringArray([
+				"############",
+				"#S..#..#####",
+				"#...#..#####",
+				"#...#.GX####",
+				"#...#..#####",
+				"#...#..#####",
+				"#..........#",
+				"############",
+			]),
+			[_lamp(2, 3, "e", 3), _lamp(6, 2, "s", 1)],
+			[_guard(2, 3, [Vector2i(2, 3)], 6)],
+			"D D T0 D R R D D R R U U U R R",
+			"Attic Wing"
+		),
+		_puzzle(
+			29,
+			"The Barred Gap",
+			"This room is about the rule that a called guard cannot cross a gap. Snuff the hall lamp. The short road to it is the gap, so he takes the long floor around. Cross while the gap is still outside his eyes. Wait, and he comes close enough to watch it.",
+			PackedStringArray([
+				"#############",
+				"#S....G....X#",
+				"##.###.#.##.#",
+				"#...........#",
+				"#...........#",
+				"#...........#",
+				"#############",
+			]),
+			[_lamp(4, 1, "e", 1), _lamp(6, 2, "n", 1)],
+			[_guard(10, 4, [Vector2i(10, 4)], 2)],
+			"R R T0 R R R R R R R R",
+			"Attic Wing"
+		),
+		_puzzle(
+			30,
+			"The North Step",
+			"This room is about the rule that a called guard breaks ties north, then east, then south, then west. The lamp is northwest of him. North and west are the same length, and the arrow goes north. Snuff it and take the hall. The lit square south of him is watched.",
+			PackedStringArray([
+				"#########",
+				"#S......#",
+				"#.......#",
+				"#.......#",
+				"#......X#",
+				"#.......#",
+				"#########",
+			]),
+			[_lamp(2, 2, "e", 1), _lamp(4, 5, "e", 1)],
+			[_guard(4, 4, [Vector2i(4, 4)], 3)],
+			"D T0 R R D R R R R D",
+			"Attic Wing"
+		),
+		_puzzle(
+			31,
+			"The Dark Eye",
+			"This room is about the rule that a guard standing in the dark can still look into an adjacent lit tile. His own square stays dark. The lit square up the hall is a loss. Snuff the lamp from the dark tile behind the flame, then walk through before he holds it.",
+			PackedStringArray([
+				"###########",
+				"#S........#",
+				"#.......X.#",
+				"#.........#",
+				"###########",
+			]),
+			[_lamp(4, 2, "e", 2)],
+			[_guard(3, 3, [Vector2i(3, 3)], 3)],
+			"R R D T0 R R R R R",
+			"Attic Wing"
+		),
+		_puzzle(
+			32,
+			"The Early Threshold",
+			"This room is about the rule that reaching the exit wins before the guards move. He is two steps from the door, and so are you. Take it and you are out before his step lands. The lit square south of you is in his eyes.",
+			PackedStringArray([
+				"#######",
+				"#..S.X#",
+				"#.....#",
+				"#.....#",
+				"#######",
+			]),
+			[_lamp(3, 3, "n", 1)],
+			[_guard(5, 3, [Vector2i(5, 1), Vector2i(5, 3)], 3)],
+			"R R",
+			"Attic Wing"
 		),
 	]
