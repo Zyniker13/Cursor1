@@ -33,6 +33,8 @@ const Dado = preload("res://scripts/dado.gd")
 const Spline = preload("res://scripts/spline.gd")
 const Mitre = preload("res://scripts/mitre.gd")
 const Lap = preload("res://scripts/lap.gd")
+const Scarf = preload("res://scripts/scarf.gd")
+const Finger = preload("res://scripts/finger.gd")
 const Catalog = preload("res://scripts/catalog.gd")
 const Solver = preload("res://scripts/solver.gd")
 const Verdict = preload("res://scripts/verdict.gd")
@@ -102,6 +104,10 @@ const MITRE_TIMELINE := "Orrin (saddle hand) cut the mitre in the plough at 103,
 const MITRE_TRUE := {"who": "Orrin", "place": "plough", "hour": "103"}
 const LAP_TIMELINE := "Nye (cradle hand) cut the lap in the plough at 108, seen from the float, so the grain would take the lap.\nYew (grain hand) marked the grain on the gimlet at 107.\nPry (brad clerk) turned the brad in the float.\nThe paring was hung on the gimlet.\nThe float was skimmed at 106.\nThe gimlet was oiled at 109.\nThe plough was hung at 110."
 const LAP_TRUE := {"who": "Nye", "place": "plough", "hour": "108"}
+const SCARF_TIMELINE := "Hob (scarf hand) cut the scarf in the drawknife at 113, seen from the spokeshave, so the shoulder would take the scarf.\nNairn (shoulder hand) marked the shoulder on the firmer at 112.\nCole (wedge clerk) turned the wedge in the spokeshave.\nThe paring was hung on the firmer.\nThe spokeshave was skimmed at 111.\nThe firmer was oiled at 114.\nThe drawknife was hung at 115."
+const SCARF_TRUE := {"who": "Hob", "place": "drawknife", "hour": "113"}
+const FINGER_TIMELINE := "Clem (finger hand) cut the finger in the pad at 118, seen from the badger, so the socket would take the finger.\nGale (socket hand) marked the socket on the jack at 117.\nBoyd (catch clerk) turned the catch in the badger.\nThe chip was hung on the jack.\nThe badger was buffed at 116.\nThe jack was rubbed at 119.\nThe pad was hung at 120."
+const FINGER_TRUE := {"who": "Clem", "place": "pad", "hour": "118"}
 
 var _failures: Array[String] = []
 var _checks := 0
@@ -307,6 +313,18 @@ func _initialize() -> void:
 	_test_lap_only_true_theory()
 	_test_lap_near_misses()
 	_test_lap_incomplete()
+	_test_scarf_file_shape()
+	_test_scarf_unique_model()
+	_test_scarf_each_exhibit_necessary()
+	_test_scarf_only_true_theory()
+	_test_scarf_near_misses()
+	_test_scarf_incomplete()
+	_test_finger_file_shape()
+	_test_finger_unique_model()
+	_test_finger_each_exhibit_necessary()
+	_test_finger_only_true_theory()
+	_test_finger_near_misses()
+	_test_finger_incomplete()
 	_test_solutions_differ()
 	_test_menu_opens_either_case()
 	print("menu interaction done")
@@ -9704,6 +9722,801 @@ func _test_lap_incomplete() -> void:
 
 
 
+func _test_scarf_file_shape() -> void:
+	_expect(Scarf.EXHIBITS.size() == 9, "scarf exhibit count is %d" % Scarf.EXHIBITS.size())
+	_expect(Scarf.PEOPLE.size() == 3, "scarf cast should be three people")
+	_expect(Scarf.PLACES.size() == 3, "scarf room count is %d" % Scarf.PLACES.size())
+	_expect(Scarf.HOURS.size() == 5, "scarf hour list length is %d" % Scarf.HOURS.size())
+	_expect(Scarf.PEOPLE == ["Hob", "Nairn", "Cole"], "scarf cast is %s" % str(Scarf.PEOPLE))
+	_expect(Scarf.PLACES == ["drawknife", "spokeshave", "firmer"], "scarf rooms are %s" % str(Scarf.PLACES))
+	_expect(Scarf.HOURS == ["111", "112", "113", "114", "115"], "scarf hours are %s" % str(Scarf.HOURS))
+	_expect(Scarf.AIMS == ["take_shoulder", "spare_shoulder", "set_shoulder"], "scarf aims are %s" % str(Scarf.AIMS))
+	_expect(Scarf.aim_phrase("take_shoulder") == "so the shoulder would take the scarf", "scarf aim phrase")
+	_expect(Scarf.aim_phrase("spare_shoulder") == "to spare the shoulder still waiting on the scarf", "scarf spare aim")
+	_expect(Scarf.aim_phrase("set_shoulder") == "to set the shoulder before the drawknife was hung", "scarf set aim")
+	_expect(Scarf.TITLE == "The scarf", "scarf title")
+	_expect(Scarf.BLURB == "The scarf left its peg at the joiner's mare. Name who cut the scarf, the room they cut it in, and the hour.", "scarf blurb")
+	_expect(Scarf.FILE_CODE == "CW-34", "scarf file code")
+	_expect(Scarf.fields() == ["taker", "place", "hour", "shoulder", "shoulder_room", "shoulder_hour", "seen_from", "wedge", "aim", "wedge_room", "paring_room", "skim_hour", "oil_hour", "hang_hour"], "scarf fields are %s" % str(Scarf.fields()))
+	_expect(Scarf.PLAYER_FIELDS == ["taker", "place", "hour"], "scarf player fields")
+	_expect(Scarf.HOURS[Scarf.HOURS.size() / 2] == SCARF_TRUE["hour"], "scarf cutting should be the middle hour")
+	_expect(Scarf.HOURS[0] != SCARF_TRUE["hour"], "scarf cutting should not be the earliest hour")
+	_expect(Scarf.HOURS[Scarf.HOURS.size() - 1] != SCARF_TRUE["hour"], "scarf cutting should not be the latest hour")
+	var counts := _player_pin_counts(Scarf)
+	_expect(int(counts["taker"]) == 3 and int(counts["place"]) == 3 and int(counts["hour"]) == 3, "scarf pin counts are %s" % str(counts))
+	var loose_pin: Array = [
+		[CaseData, "spare key"],
+		[Rehearsal, "rehearsal score"],
+		[Gilt, "gilt stamp"],
+		[Ferry, "ferry bell"],
+		[Weather, "weather slate"],
+		[Loom, "loom shuttle"],
+		[Hive, "hive smoker"],
+		[Glass, "glass pontil"],
+		[Press, "press proof"],
+		[Assay, "assay cup"],
+	]
+	var rhythm: Array = [
+		[Kiln, "kiln chalk"],
+		[Tide, "tide ledger"],
+		[Night, "night bell"],
+		[Salt, "salt mark"],
+		[Wick, "wick trim"],
+		[Anneal, "glass anneal"],
+		[Graft, "orchard graft"],
+		[Dye, "dye vat"],
+		[Tar, "tar kettle"],
+		[Cork, "cork press"],
+		[Net, "net loft"],
+		[Cask, "cask hoop"],
+		[Linen, "linen fold"],
+		[Dovetail, "dovetail"],
+		[Mortise, "mortise"],
+		[Rebate, "rebate"],
+		[Housing, "housing"],
+		[Tenon, "tenon"],
+		[Bridle, "bridle"],
+		[Dado, "dado"],
+		[Spline, "spline"],
+		[Mitre, "mitre"],
+		[Lap, "lap"],
+	]
+	for row in loose_pin:
+		_expect(counts != _player_pin_counts(row[0]), "scarf copied the %s pin pattern" % row[1])
+	for row in rhythm:
+		_expect(counts == _player_pin_counts(row[0]), "scarf should keep the %s pin rhythm" % row[1])
+	var earlier: Array = []
+	earlier.append_array(loose_pin)
+	earlier.append_array(rhythm)
+	for row in earlier:
+		var book = row[0]
+		var name := str(row[1])
+		_expect(Scarf.TITLE != book.TITLE, "scarf shares a title with the %s" % name)
+		_expect(Scarf.FILE_CODE != book.FILE_CODE, "scarf shares a file code with the %s" % name)
+		_expect(_field_key(Scarf) != _field_key(book), "scarf copied the %s timeline fields" % name)
+	var seen := {}
+	var stated := {}
+	var paired_hidden := 0
+	var earlier_texts := {}
+	var earlier_sentences := {}
+	for row in earlier:
+		for old_exhibit in row[0].EXHIBITS:
+			var old_text := str(old_exhibit["text"])
+			earlier_texts[old_text] = true
+			for old_sentence in old_text.split(". "):
+				earlier_sentences[old_sentence.trim_suffix(".").strip_edges()] = true
+	var exhibit_titles: Array[String] = []
+	var exhibit_sources: Array[String] = []
+	for exhibit in Scarf.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		exhibit_titles.append(str(exhibit["title"]))
+		exhibit_sources.append(str(exhibit["source"]))
+		_expect(not seen.has(exhibit_id), "duplicate scarf id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		_expect(not earlier_texts.has(str(exhibit["text"])), "scarf copied an earlier exhibit")
+		for sentence in str(exhibit["text"]).split(". "):
+			var cleaned := sentence.trim_suffix(".").strip_edges()
+			_expect(not earlier_sentences.has(cleaned), "scarf copied an earlier sentence: %s" % cleaned)
+		for banned in ["tenon", "gouge", "rasp", "bevel", "haunch", "dowel", "hone", "guide", "harl", "neve", "luth", "nick", "housing", "saw", "square", "bead", "trench", "fillet", "stock", "chalk", "ewan", "maren", "hollin", "mortise", "chisel", "awl", "brace", "bored", "ragged", "racked", "dovetail", "vise", "stile", "apron", "clamp", "peg", "joint", "linen", "fold", "shears", "roller", "hem", "sheet", "crease", "press", "loft", "bench", "bottle", "cork", "shop", "drawer", "seal", "screw", "cellar", "wax", "neck", "plug", "dye", "vat", "indigo", "skein", "rope", "walk", "kettle", "winch", "pitch", "mesh", "rail", "crank", "needle", "twine", "cooperage", "cask", "hoop", "croze", "stave", "rebate", "plane", "gauge", "mallet", "scribe", "shim", "fence", "tansy", "solt", "quern", "bridle", "router", "scraper", "adze", "templet", "strop", "notch", "wend", "sile", "jute", "dado", "groove", "cleat", "spur", "kern", "phel", "tarn", "shavings", "mouth", "iron", "senn", "voss", "cade", "slot", "feather", "whet", "cheek", "spline", "orrin", "venn", "haim", "mitre", "arris", "offcut", "saddle", "kerf", "dressed", "brushed", "nye", "yew", "pry", "lap", "grain", "brad", "plough", "float", "gimlet", "cradle", "crest", "horn", "curl"]:
+			_expect(str(exhibit["text"]).find(banned) == -1, "%s copies %s" % [exhibit_id, banned])
+		var states_player_pin := false
+		var states_unique := false
+		var player_literals := 0
+		var hidden_literals := 0
+		for literal in exhibit["literals"]:
+			stated[str(literal["value"])] = true
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Scarf.PLAYER_FIELDS:
+				states_player_pin = true
+				player_literals += 1
+				var expected := Scarf.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Scarf.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats >= 2, "%s states %s once" % [exhibit_id, field])
+			else:
+				hidden_literals += 1
+				var owners := 0
+				for other in Scarf.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		if hidden_literals == 2:
+			paired_hidden += 1
+		else:
+			_expect(hidden_literals == 1, "%s states %d hidden facts" % [exhibit_id, hidden_literals])
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(player_literals == 1, "%s states %d player pins" % [exhibit_id, player_literals])
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+	_expect(paired_hidden == 2, "scarf should have two slips with two hidden facts, found %d" % paired_hidden)
+	_expect(exhibit_titles == ["Shoulder chit", "Sole sight", "Shaving hook", "Edge slate", "Wedge card", "Film slip", "Scarf leaf", "Scarf note", "Finish order"], "scarf exhibit titles are %s" % str(exhibit_titles))
+	_expect(exhibit_sources == ["Nairn, shoulder hand", "Spokeshave sole", "Firmer tang", "Drawknife edge", "Cole, wedge clerk", "Spokeshave stock", "Shoulder book", "Joiner's mare", "Firmer card"], "scarf sources are %s" % str(exhibit_sources))
+	for hour in Scarf.HOURS:
+		_expect(stated.has(hour), "scarf hour %s is absent from the exhibits" % hour)
+
+
+func _test_scarf_unique_model() -> void:
+	var models := Solver.enumerate(Scarf.EXHIBITS, Scarf)
+	print("scarf models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one scarf model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Hob", "scarf taker")
+	_expect(str(model["place"]) == "drawknife", "scarf place")
+	_expect(str(model["hour"]) == "113", "scarf hour")
+	_expect(str(model["shoulder"]) == "Nairn", "scarf shoulder hand")
+	_expect(str(model["shoulder_room"]) == "firmer", "scarf shoulder room")
+	_expect(str(model["shoulder_hour"]) == "112", "scarf shoulder hour")
+	_expect(str(model["seen_from"]) == "spokeshave", "scarf seen from")
+	_expect(str(model["wedge"]) == "Cole", "scarf wedge")
+	_expect(str(model["aim"]) == "take_shoulder", "scarf aim")
+	_expect(str(model["wedge_room"]) == "spokeshave", "scarf wedge room")
+	_expect(str(model["paring_room"]) == "firmer", "scarf paring room")
+	_expect(str(model["skim_hour"]) == "111", "scarf skim hour")
+	_expect(str(model["oil_hour"]) == "114", "scarf oil hour")
+	_expect(str(model["hang_hour"]) == "115", "scarf hang hour")
+	for hour in Scarf.HOURS:
+		var used := false
+		for field in Scarf.fields():
+			if str(model[field]) == hour:
+				used = true
+		_expect(used, "scarf hour %s is blank in the true timeline" % hour)
+	for place in Scarf.PLACES:
+		var place_used := false
+		for field in Scarf.fields():
+			if str(model[field]) == place:
+				place_used = true
+		_expect(place_used, "scarf room %s is blank in the true timeline" % place)
+	for person in Scarf.PEOPLE:
+		var person_used := false
+		for field in Scarf.fields():
+			if str(model[field]) == person:
+				person_used = true
+		_expect(person_used, "scarf person %s is blank in the true timeline" % person)
+	_expect(Scarf.timeline(model) == SCARF_TIMELINE, "scarf timeline drifted:\n%s" % Scarf.timeline(model))
+	for exhibit in Scarf.EXHIBITS:
+		_expect(Scarf.holds(exhibit, model), "%s rejects the scarf timeline" % exhibit["id"])
+
+
+func _test_scarf_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Scarf.EXHIBITS, Scarf)
+	for exhibit in Scarf.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Scarf.without(exhibit_id), Scarf)
+		print("scarf without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "scarf %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Scarf.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "scarf %s removal did not admit a timeline it forbids" % exhibit_id)
+
+
+func _test_scarf_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	var shave_miss := {"who": "Nairn", "place": "spokeshave", "hour": "111"}
+	_expect(Scarf.conflicting_ids(shave_miss).size() == 9, "Nairn / spokeshave / 111 contradicts %d exhibits" % Scarf.conflicting_ids(shave_miss).size())
+	for who in Scarf.PEOPLE:
+		for place in Scarf.PLACES:
+			for hour in Scarf.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == SCARF_TRUE["who"] and place == SCARF_TRUE["place"] and hour == SCARF_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Scarf)
+					print("scarf true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true scarf theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "scarf acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(SCARF_TIMELINE) >= 0, "scarf acceptance should give the timeline")
+					_expect(str(result["message"]).find("Hob") >= 0, "scarf acceptance omits Hob")
+					_expect(str(result["message"]).find("drawknife") >= 0, "scarf acceptance omits the drawknife")
+					_expect(str(result["message"]).find("113") >= 0, "scarf acceptance omits 113")
+					_expect(str(result["message"]).find("so the shoulder would take the scarf") >= 0, "scarf acceptance omits the shoulder")
+					_expect(str(result["message"]).find("Hob (scarf hand) cut the scarf in the drawknife at 113") >= 0, "scarf acceptance omits the cutting")
+					_expect(Scarf.conflicting_ids(theory).is_empty(), "true scarf theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Scarf)
+					_expect(Scarf.conflicting_ids(theory).size() >= 2, "%s / %s / %s contradicts fewer than two exhibits" % [who, place, hour])
+					rejected += 1
+	for outsider in ["Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal", "Nell"]:
+		_expect_rejected({"who": outsider, "place": "drawknife", "hour": "113"}, Scarf)
+	print("scarf theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d scarf theories" % accepted)
+	_expect(rejected >= 2, "rejected %d scarf theories" % rejected)
+
+
+func _test_scarf_near_misses() -> void:
+	var misses := [
+		{"who": "Hob", "place": "drawknife", "hour": "114", "titles": ["Scarf leaf", "Scarf note", "Finish order"]},
+		{"who": "Hob", "place": "drawknife", "hour": "112", "titles": ["Scarf leaf", "Scarf note", "Finish order"]},
+		{"who": "Hob", "place": "spokeshave", "hour": "113", "titles": ["Edge slate", "Wedge card", "Film slip"]},
+		{"who": "Nairn", "place": "drawknife", "hour": "113", "titles": ["Shoulder chit", "Sole sight", "Shaving hook"]},
+	]
+	var wrong_hour_in_drawknife := 0
+	var wrong_place_at_hour := 0
+	var wrong_person_in_drawknife := 0
+	for theory in misses:
+		_expect_rejected(theory, Scarf)
+		var result: Dictionary = Verdict.submit(theory, Scarf)
+		var message := str(result["message"])
+		_expect(Scarf.conflicting_ids(theory).size() >= 2, "near-miss should contradict at least two exhibits: %s" % message)
+		_expect(Scarf.conflicting_ids(theory).size() == 3, "near-miss should name three exhibits: %s" % message)
+		var named_at := -1
+		for title in theory["titles"]:
+			var at := message.find(str(title))
+			_expect(at >= 0, "near-miss omits %s: %s" % [title, message])
+			_expect(at > named_at, "near-miss names %s out of paper order: %s" % [title, message])
+			named_at = at
+		if str(theory["who"]) == "Hob" and str(theory["place"]) == "drawknife" and str(theory["hour"]) != "113":
+			wrong_hour_in_drawknife += 1
+		if str(theory["who"]) == "Hob" and str(theory["place"]) != "drawknife" and str(theory["hour"]) == "113":
+			wrong_place_at_hour += 1
+		if str(theory["who"]) != "Hob" and str(theory["place"]) == "drawknife" and str(theory["hour"]) == "113":
+			wrong_person_in_drawknife += 1
+	print("scarf near-misses rejected: %d" % misses.size())
+	_expect(misses.size() == 4, "need four scarf near-misses, found %d" % misses.size())
+	_expect(wrong_hour_in_drawknife == 2, "two near-misses should keep Hob in the drawknife at another hour")
+	_expect(wrong_place_at_hour >= 1, "a near-miss should keep Hob at 113 in another room")
+	_expect(wrong_person_in_drawknife >= 1, "a near-miss should keep the drawknife at 113 for another person")
+
+func _test_scarf_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+		"who took the gilt stamp",
+		"where they took the stamp",
+		"at which hour they took the stamp",
+		"who took the ferry bell",
+		"where they took the bell",
+		"at which hour they took the bell",
+		"who took the weather slate",
+		"where they took the slate",
+		"at which hour they took the slate",
+		"who took the loom shuttle",
+		"where they took the shuttle",
+		"at which hour they took the shuttle",
+		"who took the hive smoker",
+		"where they took the smoker",
+		"at which hour they took the smoker",
+		"who took the glass pontil",
+		"where they took the pontil",
+		"at which hour they took the pontil",
+		"who took the press proof",
+		"where they took the proof",
+		"at which hour they took the proof",
+		"who set the assay cup",
+		"where they set the cup",
+		"at which hour they set the cup",
+		"who chalked the kiln mark",
+		"where they chalked the mark",
+		"at which hour they chalked the mark",
+		"who entered the tide ledger",
+		"where they entered the ledger",
+		"at which hour they entered the ledger",
+		"who stopped the night bell",
+		"where they stopped the bell",
+		"at which hour they stopped the bell",
+		"who scored the salt mark",
+		"where they scored the mark",
+		"at which hour they scored the mark",
+		"who trimmed the wick",
+		"where they trimmed the wick",
+		"at which hour they trimmed the wick",
+		"who annealed the gather",
+		"where they annealed the gather",
+		"at which hour they annealed the gather",
+		"who grafted the scion",
+		"where they grafted the scion",
+		"at which hour they grafted the scion",
+		"who dipped the skein",
+		"where they dipped the skein",
+		"at which hour they dipped the skein",
+		"who tarred the rope",
+		"where they tarred the rope",
+		"at which hour they tarred the rope",
+		"who pressed the cork",
+		"where they pressed the cork",
+		"at which hour they pressed the cork",
+		"who mended the net",
+		"where they mended the net",
+		"at which hour they mended the net",
+		"who drove the hoop",
+		"where they drove the hoop",
+		"at which hour they drove the hoop",
+		"who folded the linen",
+		"where they folded the linen",
+		"at which hour they folded the linen",
+		"who cut the dovetail",
+		"where they cut the dovetail",
+		"at which hour they cut the dovetail",
+		"who cut the mortise",
+		"where they cut the mortise",
+		"at which hour they cut the mortise",
+		"who cut the rebate",
+		"where they cut the rebate",
+		"at which hour they cut the rebate",
+		"who cut the housing",
+		"where they cut the housing",
+		"at which hour they cut the housing",
+		"who cut the tenon",
+		"where they cut the tenon",
+		"at which hour they cut the tenon",
+		"who cut the bridle",
+		"where they cut the bridle",
+		"at which hour they cut the bridle",
+		"who cut the dado",
+		"where they cut the dado",
+		"at which hour they cut the dado",
+		"who cut the spline",
+		"where they cut the spline",
+		"at which hour they cut the spline",
+		"who cut the mitre",
+		"where they cut the mitre",
+		"at which hour they cut the mitre",
+		"who cut the lap",
+		"where they cut the lap",
+		"at which hour they cut the lap",
+	]
+	var cases := [
+		{"theory": {"who": "", "place": "drawknife", "hour": "113"}, "present": ["who cut the scarf"], "absent": ["where they cut the scarf", "at which hour they cut the scarf"]},
+		{"theory": {"who": "Hob", "place": "", "hour": "113"}, "present": ["where they cut the scarf"], "absent": ["who cut the scarf", "at which hour they cut the scarf"]},
+		{"theory": {"who": "Hob", "place": "drawknife", "hour": ""}, "present": ["at which hour they cut the scarf"], "absent": ["who cut the scarf", "where they cut the scarf"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who cut the scarf", "where they cut the scarf", "at which hour they cut the scarf"], "absent": []},
+		{"theory": {}, "present": ["who cut the scarf", "where they cut the scarf", "at which hour they cut the scarf"], "absent": []},
+		{"theory": {"who": "Cole", "place": "", "hour": "115"}, "present": ["where they cut the scarf"], "absent": ["who cut the scarf", "at which hour they cut the scarf"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Scarf)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "scarf incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "scarf incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "scarf incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "scarf incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "scarf incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "scarf missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "scarf named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "scarf incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("scarf incomplete submissions refused with the missing slot")
+
+
+
+func _test_finger_file_shape() -> void:
+	_expect(Finger.EXHIBITS.size() == 9, "finger exhibit count is %d" % Finger.EXHIBITS.size())
+	_expect(Finger.PEOPLE.size() == 3, "finger cast should be three people")
+	_expect(Finger.PLACES.size() == 3, "finger room count is %d" % Finger.PLACES.size())
+	_expect(Finger.HOURS.size() == 5, "finger hour list length is %d" % Finger.HOURS.size())
+	_expect(Finger.PEOPLE == ["Clem", "Gale", "Boyd"], "finger cast is %s" % str(Finger.PEOPLE))
+	_expect(Finger.PLACES == ["pad", "badger", "jack"], "finger rooms are %s" % str(Finger.PLACES))
+	_expect(Finger.HOURS == ["116", "117", "118", "119", "120"], "finger hours are %s" % str(Finger.HOURS))
+	_expect(Finger.AIMS == ["take_socket", "spare_socket", "set_socket"], "finger aims are %s" % str(Finger.AIMS))
+	_expect(Finger.aim_phrase("take_socket") == "so the socket would take the finger", "finger aim phrase")
+	_expect(Finger.aim_phrase("spare_socket") == "to spare the socket still waiting on the finger", "finger spare aim")
+	_expect(Finger.aim_phrase("set_socket") == "to set the socket before the pad was hung", "finger set aim")
+	_expect(Finger.TITLE == "The finger", "finger title")
+	_expect(Finger.BLURB == "The finger left its peg at the joiner's pony. Name who cut the finger, the room they cut it in, and the hour.", "finger blurb")
+	_expect(Finger.FILE_CODE == "CW-35", "finger file code")
+	_expect(Finger.fields() == ["taker", "place", "hour", "socket", "socket_room", "socket_hour", "seen_from", "catch", "aim", "catch_room", "chip_room", "buff_hour", "rub_hour", "hang_hour"], "finger fields are %s" % str(Finger.fields()))
+	_expect(Finger.PLAYER_FIELDS == ["taker", "place", "hour"], "finger player fields")
+	_expect(Finger.HOURS[Finger.HOURS.size() / 2] == FINGER_TRUE["hour"], "finger cutting should be the middle hour")
+	_expect(Finger.HOURS[0] != FINGER_TRUE["hour"], "finger cutting should not be the earliest hour")
+	_expect(Finger.HOURS[Finger.HOURS.size() - 1] != FINGER_TRUE["hour"], "finger cutting should not be the latest hour")
+	var counts := _player_pin_counts(Finger)
+	_expect(int(counts["taker"]) == 3 and int(counts["place"]) == 3 and int(counts["hour"]) == 3, "finger pin counts are %s" % str(counts))
+	var loose_pin: Array = [
+		[CaseData, "spare key"],
+		[Rehearsal, "rehearsal score"],
+		[Gilt, "gilt stamp"],
+		[Ferry, "ferry bell"],
+		[Weather, "weather slate"],
+		[Loom, "loom shuttle"],
+		[Hive, "hive smoker"],
+		[Glass, "glass pontil"],
+		[Press, "press proof"],
+		[Assay, "assay cup"],
+	]
+	var rhythm: Array = [
+		[Kiln, "kiln chalk"],
+		[Tide, "tide ledger"],
+		[Night, "night bell"],
+		[Salt, "salt mark"],
+		[Wick, "wick trim"],
+		[Anneal, "glass anneal"],
+		[Graft, "orchard graft"],
+		[Dye, "dye vat"],
+		[Tar, "tar kettle"],
+		[Cork, "cork press"],
+		[Net, "net loft"],
+		[Cask, "cask hoop"],
+		[Linen, "linen fold"],
+		[Dovetail, "dovetail"],
+		[Mortise, "mortise"],
+		[Rebate, "rebate"],
+		[Housing, "housing"],
+		[Tenon, "tenon"],
+		[Bridle, "bridle"],
+		[Dado, "dado"],
+		[Spline, "spline"],
+		[Mitre, "mitre"],
+		[Lap, "lap"],
+		[Scarf, "scarf"],
+	]
+	for row in loose_pin:
+		_expect(counts != _player_pin_counts(row[0]), "finger copied the %s pin pattern" % row[1])
+	for row in rhythm:
+		_expect(counts == _player_pin_counts(row[0]), "finger should keep the %s pin rhythm" % row[1])
+	var earlier: Array = []
+	earlier.append_array(loose_pin)
+	earlier.append_array(rhythm)
+	for row in earlier:
+		var book = row[0]
+		var name := str(row[1])
+		_expect(Finger.TITLE != book.TITLE, "finger shares a title with the %s" % name)
+		_expect(Finger.FILE_CODE != book.FILE_CODE, "finger shares a file code with the %s" % name)
+		_expect(_field_key(Finger) != _field_key(book), "finger copied the %s timeline fields" % name)
+	var seen := {}
+	var stated := {}
+	var paired_hidden := 0
+	var earlier_texts := {}
+	var earlier_sentences := {}
+	for row in earlier:
+		for old_exhibit in row[0].EXHIBITS:
+			var old_text := str(old_exhibit["text"])
+			earlier_texts[old_text] = true
+			for old_sentence in old_text.split(". "):
+				earlier_sentences[old_sentence.trim_suffix(".").strip_edges()] = true
+	var exhibit_titles: Array[String] = []
+	var exhibit_sources: Array[String] = []
+	for exhibit in Finger.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		exhibit_titles.append(str(exhibit["title"]))
+		exhibit_sources.append(str(exhibit["source"]))
+		_expect(not seen.has(exhibit_id), "duplicate finger id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		_expect(not earlier_texts.has(str(exhibit["text"])), "finger copied an earlier exhibit")
+		for sentence in str(exhibit["text"]).split(". "):
+			var cleaned := sentence.trim_suffix(".").strip_edges()
+			_expect(not earlier_sentences.has(cleaned), "finger copied an earlier sentence: %s" % cleaned)
+		for banned in ["tarred", "rope", "kettle", "winch", "pitch", "loft", "strand", "hook", "walk", "dipped", "skein", "indigo", "pressed", "press", "cork", "bottle", "seal", "mallet", "screw", "cellar", "bench", "wax", "neck", "plug", "dye", "vat", "mesh", "shed", "rail", "crank", "needle", "mended", "twine", "house", "cooperage", "cask", "hoop", "croze", "stave", "driver", "yard", "shop", "linen", "fold", "shears", "roller", "hem", "sheet", "crease", "drawer", "dovetail", "vise", "stile", "apron", "saw", "clamp", "peg", "joint", "mortise", "chisel", "tenon", "awl", "brace", "wedge", "bored", "ragged", "racked", "rebate", "plane", "gauge", "shoulder", "scribe", "shim", "fence", "tansy", "solt", "quern", "housing", "square", "bead", "trench", "fillet", "stock", "chalk", "ewan", "maren", "hollin", "gouge", "rasp", "bevel", "haunch", "dowel", "hone", "guide", "harl", "neve", "luth", "nick", "bridle", "router", "scraper", "adze", "tongue", "spline", "templet", "strop", "notch", "wend", "sile", "jute", "dado", "groove", "cleat", "spur", "kern", "phel", "tarn", "shavings", "mouth", "iron", "senn", "voss", "cade", "slot", "feather", "whet", "cheek", "orrin", "venn", "haim", "mitre", "arris", "offcut", "saddle", "kerf", "dressed", "brushed", "nye", "yew", "pry", "lap", "grain", "brad", "plough", "float", "gimlet", "cradle", "crest", "horn", "curl", "scarf", "hob", "nairn", "cole", "shaving", "blade", "spokeshave", "firmer", "paring", "drawknife", "edge", "skimmed", "film", "oiled", "sole", "tang", "mare"]:
+			_expect(str(exhibit["text"]).find(banned) == -1, "%s copies %s" % [exhibit_id, banned])
+		var states_player_pin := false
+		var states_unique := false
+		var player_literals := 0
+		var hidden_literals := 0
+		for literal in exhibit["literals"]:
+			stated[str(literal["value"])] = true
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Finger.PLAYER_FIELDS:
+				states_player_pin = true
+				player_literals += 1
+				var expected := Finger.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Finger.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats >= 2, "%s states %s once" % [exhibit_id, field])
+			else:
+				hidden_literals += 1
+				var owners := 0
+				for other in Finger.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		if hidden_literals == 2:
+			paired_hidden += 1
+		else:
+			_expect(hidden_literals == 1, "%s states %d hidden facts" % [exhibit_id, hidden_literals])
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(player_literals == 1, "%s states %d player pins" % [exhibit_id, player_literals])
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+	_expect(paired_hidden == 2, "finger should have two slips with two hidden facts, found %d" % paired_hidden)
+	_expect(exhibit_titles == ["Socket chit", "Burr sight", "Chip bill", "Face slate", "Catch card", "Sheen slip", "Finger leaf", "Finger note", "Rub order"], "finger exhibit titles are %s" % str(exhibit_titles))
+	_expect(exhibit_sources == ["Gale, socket hand", "Badger burr", "Jack nose", "Pad face", "Boyd, catch clerk", "Badger tote", "Socket book", "Joiner's pony", "Jack card"], "finger sources are %s" % str(exhibit_sources))
+	for hour in Finger.HOURS:
+		_expect(stated.has(hour), "finger hour %s is absent from the exhibits" % hour)
+
+
+func _test_finger_unique_model() -> void:
+	var models := Solver.enumerate(Finger.EXHIBITS, Finger)
+	print("finger models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one finger model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Clem", "finger taker")
+	_expect(str(model["place"]) == "pad", "finger place")
+	_expect(str(model["hour"]) == "118", "finger hour")
+	_expect(str(model["socket"]) == "Gale", "finger socket hand")
+	_expect(str(model["socket_room"]) == "jack", "finger socket room")
+	_expect(str(model["socket_hour"]) == "117", "finger socket hour")
+	_expect(str(model["seen_from"]) == "badger", "finger seen from")
+	_expect(str(model["catch"]) == "Boyd", "finger catch")
+	_expect(str(model["aim"]) == "take_socket", "finger aim")
+	_expect(str(model["catch_room"]) == "badger", "finger catch room")
+	_expect(str(model["chip_room"]) == "jack", "finger chip room")
+	_expect(str(model["buff_hour"]) == "116", "finger buff hour")
+	_expect(str(model["rub_hour"]) == "119", "finger rub hour")
+	_expect(str(model["hang_hour"]) == "120", "finger hang hour")
+	for hour in Finger.HOURS:
+		var used := false
+		for field in Finger.fields():
+			if str(model[field]) == hour:
+				used = true
+		_expect(used, "finger hour %s is blank in the true timeline" % hour)
+	for place in Finger.PLACES:
+		var place_used := false
+		for field in Finger.fields():
+			if str(model[field]) == place:
+				place_used = true
+		_expect(place_used, "finger room %s is blank in the true timeline" % place)
+	for person in Finger.PEOPLE:
+		var person_used := false
+		for field in Finger.fields():
+			if str(model[field]) == person:
+				person_used = true
+		_expect(person_used, "finger person %s is blank in the true timeline" % person)
+	_expect(Finger.timeline(model) == FINGER_TIMELINE, "finger timeline drifted:\n%s" % Finger.timeline(model))
+	for exhibit in Finger.EXHIBITS:
+		_expect(Finger.holds(exhibit, model), "%s rejects the finger timeline" % exhibit["id"])
+
+
+func _test_finger_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Finger.EXHIBITS, Finger)
+	for exhibit in Finger.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Finger.without(exhibit_id), Finger)
+		print("finger without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "finger %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Finger.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "finger %s removal did not admit a timeline it forbids" % exhibit_id)
+
+
+func _test_finger_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	var badger_miss := {"who": "Gale", "place": "badger", "hour": "116"}
+	_expect(Finger.conflicting_ids(badger_miss).size() == 9, "Gale / badger / 116 contradicts %d exhibits" % Finger.conflicting_ids(badger_miss).size())
+	for who in Finger.PEOPLE:
+		for place in Finger.PLACES:
+			for hour in Finger.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == FINGER_TRUE["who"] and place == FINGER_TRUE["place"] and hour == FINGER_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Finger)
+					print("finger true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true finger theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "finger acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(FINGER_TIMELINE) >= 0, "finger acceptance should give the timeline")
+					_expect(str(result["message"]).find("Clem") >= 0, "finger acceptance omits Clem")
+					_expect(str(result["message"]).find("pad") >= 0, "finger acceptance omits the pad")
+					_expect(str(result["message"]).find("118") >= 0, "finger acceptance omits 118")
+					_expect(str(result["message"]).find("so the socket would take the finger") >= 0, "finger acceptance omits the socket")
+					_expect(str(result["message"]).find("Clem (finger hand) cut the finger in the pad at 118") >= 0, "finger acceptance omits the cutting")
+					_expect(Finger.conflicting_ids(theory).is_empty(), "true finger theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Finger)
+					_expect(Finger.conflicting_ids(theory).size() >= 2, "%s / %s / %s contradicts fewer than two exhibits" % [who, place, hour])
+					rejected += 1
+	for outsider in ["Hob", "Nairn", "Cole", "Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal", "Nell"]:
+		_expect_rejected({"who": outsider, "place": "pad", "hour": "118"}, Finger)
+	print("finger theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d finger theories" % accepted)
+	_expect(rejected >= 2, "rejected %d finger theories" % rejected)
+
+
+func _test_finger_near_misses() -> void:
+	var misses := [
+		{"who": "Clem", "place": "pad", "hour": "119", "titles": ["Finger leaf", "Finger note", "Rub order"]},
+		{"who": "Clem", "place": "pad", "hour": "117", "titles": ["Finger leaf", "Finger note", "Rub order"]},
+		{"who": "Clem", "place": "badger", "hour": "118", "titles": ["Face slate", "Catch card", "Sheen slip"]},
+		{"who": "Gale", "place": "pad", "hour": "118", "titles": ["Socket chit", "Burr sight", "Chip bill"]},
+	]
+	var wrong_hour_in_pad := 0
+	var wrong_place_at_hour := 0
+	var wrong_person_in_pad := 0
+	for theory in misses:
+		_expect_rejected(theory, Finger)
+		var result: Dictionary = Verdict.submit(theory, Finger)
+		var message := str(result["message"])
+		_expect(Finger.conflicting_ids(theory).size() >= 2, "near-miss should contradict at least two exhibits: %s" % message)
+		_expect(Finger.conflicting_ids(theory).size() == 3, "near-miss should name three exhibits: %s" % message)
+		var named_at := -1
+		for title in theory["titles"]:
+			var at := message.find(str(title))
+			_expect(at >= 0, "near-miss omits %s: %s" % [title, message])
+			_expect(at > named_at, "near-miss names %s out of paper order: %s" % [title, message])
+			named_at = at
+		if str(theory["who"]) == "Clem" and str(theory["place"]) == "pad" and str(theory["hour"]) != "118":
+			wrong_hour_in_pad += 1
+		if str(theory["who"]) == "Clem" and str(theory["place"]) != "pad" and str(theory["hour"]) == "118":
+			wrong_place_at_hour += 1
+		if str(theory["who"]) != "Clem" and str(theory["place"]) == "pad" and str(theory["hour"]) == "118":
+			wrong_person_in_pad += 1
+	print("finger near-misses rejected: %d" % misses.size())
+	_expect(misses.size() == 4, "need four finger near-misses, found %d" % misses.size())
+	_expect(wrong_hour_in_pad == 2, "two near-misses should keep Clem in the pad at another hour")
+	_expect(wrong_place_at_hour >= 1, "a near-miss should keep Clem at 118 in another room")
+	_expect(wrong_person_in_pad >= 1, "a near-miss should keep the pad at 118 for another person")
+
+func _test_finger_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+		"who took the gilt stamp",
+		"where they took the stamp",
+		"at which hour they took the stamp",
+		"who took the ferry bell",
+		"where they took the bell",
+		"at which hour they took the bell",
+		"who took the weather slate",
+		"where they took the slate",
+		"at which hour they took the slate",
+		"who took the loom shuttle",
+		"where they took the shuttle",
+		"at which hour they took the shuttle",
+		"who took the hive smoker",
+		"where they took the smoker",
+		"at which hour they took the smoker",
+		"who took the glass pontil",
+		"where they took the pontil",
+		"at which hour they took the pontil",
+		"who took the press proof",
+		"where they took the proof",
+		"at which hour they took the proof",
+		"who set the assay cup",
+		"where they set the cup",
+		"at which hour they set the cup",
+		"who chalked the kiln mark",
+		"where they chalked the mark",
+		"at which hour they chalked the mark",
+		"who entered the tide ledger",
+		"where they entered the ledger",
+		"at which hour they entered the ledger",
+		"who stopped the night bell",
+		"where they stopped the bell",
+		"at which hour they stopped the bell",
+		"who scored the salt mark",
+		"where they scored the mark",
+		"at which hour they scored the mark",
+		"who trimmed the wick",
+		"where they trimmed the wick",
+		"at which hour they trimmed the wick",
+		"who annealed the gather",
+		"where they annealed the gather",
+		"at which hour they annealed the gather",
+		"who grafted the scion",
+		"where they grafted the scion",
+		"at which hour they grafted the scion",
+		"who dipped the skein",
+		"where they dipped the skein",
+		"at which hour they dipped the skein",
+		"who tarred the rope",
+		"where they tarred the rope",
+		"at which hour they tarred the rope",
+		"who pressed the cork",
+		"where they pressed the cork",
+		"at which hour they pressed the cork",
+		"who mended the net",
+		"where they mended the net",
+		"at which hour they mended the net",
+		"who drove the hoop",
+		"where they drove the hoop",
+		"at which hour they drove the hoop",
+		"who folded the linen",
+		"where they folded the linen",
+		"at which hour they folded the linen",
+		"who cut the dovetail",
+		"where they cut the dovetail",
+		"at which hour they cut the dovetail",
+		"who cut the mortise",
+		"where they cut the mortise",
+		"at which hour they cut the mortise",
+		"who cut the rebate",
+		"where they cut the rebate",
+		"at which hour they cut the rebate",
+		"who cut the housing",
+		"where they cut the housing",
+		"at which hour they cut the housing",
+		"who cut the tenon",
+		"where they cut the tenon",
+		"at which hour they cut the tenon",
+		"who cut the bridle",
+		"where they cut the bridle",
+		"at which hour they cut the bridle",
+		"who cut the dado",
+		"where they cut the dado",
+		"at which hour they cut the dado",
+		"who cut the spline",
+		"where they cut the spline",
+		"at which hour they cut the spline",
+		"who cut the mitre",
+		"where they cut the mitre",
+		"at which hour they cut the mitre",
+		"who cut the lap",
+		"where they cut the lap",
+		"at which hour they cut the lap",
+		"who cut the scarf",
+		"where they cut the scarf",
+		"at which hour they cut the scarf",
+	]
+	var cases := [
+		{"theory": {"who": "", "place": "pad", "hour": "118"}, "present": ["who cut the finger"], "absent": ["where they cut the finger", "at which hour they cut the finger"]},
+		{"theory": {"who": "Clem", "place": "", "hour": "118"}, "present": ["where they cut the finger"], "absent": ["who cut the finger", "at which hour they cut the finger"]},
+		{"theory": {"who": "Clem", "place": "pad", "hour": ""}, "present": ["at which hour they cut the finger"], "absent": ["who cut the finger", "where they cut the finger"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who cut the finger", "where they cut the finger", "at which hour they cut the finger"], "absent": []},
+		{"theory": {}, "present": ["who cut the finger", "where they cut the finger", "at which hour they cut the finger"], "absent": []},
+		{"theory": {"who": "Boyd", "place": "", "hour": "120"}, "present": ["where they cut the finger"], "absent": ["who cut the finger", "at which hour they cut the finger"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Finger)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "finger incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "finger incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "finger incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "finger incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "finger incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "finger missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "finger named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "finger incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("finger incomplete submissions refused with the missing slot")
+
+
 func _test_solutions_differ() -> void:
 	var spare := {"who": "Nell", "place": "kitchen", "hour": "7"}
 	_expect(spare["who"] != REHEARSAL_TRUE["who"], "rehearsal copied the spare-key taker")
@@ -12396,7 +13209,276 @@ func _test_solutions_differ() -> void:
 	_expect(not Lap.HOURS.has("104"), "lap hours must not take 104")
 	_expect(not Lap.HOURS.has("105"), "lap hours must not take 105")
 
-	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal", "The orchard graft", "The dye vat", "The tar kettle", "The cork press", "The net loft", "The cask hoop", "The linen fold", "The dovetail", "The mortise", "The rebate", "The housing", "The tenon", "The bridle", "The dado", "The spline", "The mitre", "The lap"], "case list is %s" % str(titles))
+	_expect(SCARF_TRUE["who"] == "Hob", "scarf taker")
+	_expect(SCARF_TRUE["place"] == "drawknife", "scarf room")
+	_expect(SCARF_TRUE["hour"] == "113", "scarf hour")
+	for forbidden in ["Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(SCARF_TRUE["who"] != forbidden, "scarf accepted %s" % forbidden)
+	for forbidden_place in ["plough", "float", "gimlet", "router", "scraper", "adze", "gouge", "rasp", "bevel", "saw", "square", "bead", "plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(SCARF_TRUE["place"] != forbidden_place, "scarf accepted the %s" % forbidden_place)
+	_expect(SCARF_TRUE["place"] != "spokeshave", "scarf accepted the spokeshave")
+	_expect(SCARF_TRUE["place"] != "firmer", "scarf accepted the firmer")
+	_expect(SCARF_TRUE["hour"] != "111", "scarf accepted 111")
+	_expect(SCARF_TRUE["hour"] != "112", "scarf accepted 112")
+	_expect(SCARF_TRUE["hour"] != "114", "scarf accepted 114")
+	_expect(SCARF_TRUE["hour"] != "115", "scarf accepted 115")
+	_expect(SCARF_TRUE["hour"] != "106", "scarf accepted 106")
+	_expect(SCARF_TRUE["hour"] != "107", "scarf accepted 107")
+	_expect(SCARF_TRUE["hour"] != "108", "scarf accepted 108")
+	_expect(SCARF_TRUE["hour"] != "109", "scarf accepted 109")
+	_expect(SCARF_TRUE["hour"] != "110", "scarf accepted 110")
+	_expect(SCARF_TRUE["hour"] != "101", "scarf accepted 101")
+	_expect(SCARF_TRUE["hour"] != "102", "scarf accepted 102")
+	_expect(SCARF_TRUE["hour"] != "103", "scarf accepted 103")
+	_expect(SCARF_TRUE["hour"] != "104", "scarf accepted 104")
+	_expect(SCARF_TRUE["hour"] != "105", "scarf accepted 105")
+	_expect(SCARF_TRUE["hour"] != "96", "scarf accepted 96")
+	_expect(SCARF_TRUE["hour"] != "97", "scarf accepted 97")
+	_expect(SCARF_TRUE["hour"] != "98", "scarf accepted 98")
+	_expect(SCARF_TRUE["hour"] != "99", "scarf accepted 99")
+	_expect(SCARF_TRUE["hour"] != "100", "scarf accepted 100")
+	_expect(SCARF_TRUE["hour"] != "91", "scarf accepted 91")
+	_expect(SCARF_TRUE["hour"] != "92", "scarf accepted 92")
+	_expect(SCARF_TRUE["hour"] != "93", "scarf accepted 93")
+	_expect(SCARF_TRUE["hour"] != "94", "scarf accepted 94")
+	_expect(SCARF_TRUE["hour"] != "95", "scarf accepted 95")
+	_expect(SCARF_TRUE["hour"] != "88", "scarf accepted 88")
+	_expect(SCARF_TRUE["hour"] != "83", "scarf accepted 83")
+	_expect(SCARF_TRUE["hour"] != "78", "scarf accepted 78")
+	_expect(SCARF_TRUE["hour"] != "73", "scarf accepted 73")
+	_expect(SCARF_TRUE["hour"] != "68", "scarf accepted 68")
+	_expect(SCARF_TRUE["hour"] != "63", "scarf accepted 63")
+	_expect(SCARF_TRUE["hour"] != "8", "scarf accepted 8")
+	_expect(SCARF_TRUE["hour"] != "6", "scarf accepted 6")
+	_expect(SCARF_TRUE["hour"] != "3", "scarf accepted 3")
+	_expect(SCARF_TRUE["hour"] != "16", "scarf accepted 16")
+	_expect(SCARF_TRUE["hour"] != "19", "scarf accepted 19")
+	var before_scarf: Array = before_lap.duplicate()
+	before_scarf.append([Lap, LAP_TRUE, "lap"])
+	for row in before_scarf:
+		var book = row[0]
+		var truth: Dictionary = row[1]
+		var name := str(row[2])
+		_expect(SCARF_TRUE["who"] != truth["who"], "scarf copied the %s taker" % name)
+		_expect(SCARF_TRUE["place"] != truth["place"], "scarf copied the %s room" % name)
+		_expect(SCARF_TRUE["hour"] != str(truth["hour"]), "scarf copied the %s hour" % name)
+		_expect_rejected(SCARF_TRUE, book)
+		_expect_rejected(truth, Scarf)
+	_expect(LAP_TRUE["who"] == "Nye" and LAP_TRUE["place"] == "plough" and LAP_TRUE["hour"] == "108", "the lap should still accept Nye in the plough at 108")
+	for row in before_scarf:
+		var book = row[0]
+		var name := str(row[2])
+		for person in Scarf.PEOPLE:
+			_expect(not book.PEOPLE.has(person), "scarf cast repeats %s from the %s" % [person, name])
+		for place in Scarf.PLACES:
+			_expect(not book.PLACES.has(place), "scarf rooms repeat %s from the %s" % [place, name])
+		for hour in Scarf.HOURS:
+			_expect(not book.HOURS.has(hour), "scarf hours repeat %s from the %s" % [hour, name])
+	for forbidden_person in ["Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(not Scarf.PEOPLE.has(forbidden_person), "scarf cast must not take %s" % forbidden_person)
+	_expect(Scarf.role_phrase("Hob") == "the scarf hand", "the scarf should call Hob the scarf hand")
+	_expect(Scarf.role_phrase("Nairn") == "the shoulder hand", "the scarf should call Nairn the shoulder hand")
+	_expect(Scarf.role_phrase("Cole") == "the wedge clerk", "the scarf should call Cole the wedge clerk")
+	for forbidden_place in ["plough", "float", "gimlet", "router", "scraper", "adze", "gouge", "rasp", "bevel", "saw", "square", "bead", "plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(not Scarf.PLACES.has(forbidden_place), "scarf rooms must not take the %s" % forbidden_place)
+	_expect(not Scarf.HOURS.has("6"), "scarf hours must not take 6")
+	_expect(not Scarf.HOURS.has("7"), "scarf hours must not take 7")
+	_expect(not Scarf.HOURS.has("8"), "scarf hours must not take 8")
+	_expect(not Scarf.HOURS.has("9"), "scarf hours must not take 9")
+	_expect(not Scarf.HOURS.has("10"), "scarf hours must not take 10")
+	_expect(not Scarf.HOURS.has("60"), "scarf hours must not take 60")
+	_expect(not Scarf.HOURS.has("61"), "scarf hours must not take 61")
+	_expect(not Scarf.HOURS.has("62"), "scarf hours must not take 62")
+	_expect(not Scarf.HOURS.has("63"), "scarf hours must not take 63")
+	_expect(not Scarf.HOURS.has("64"), "scarf hours must not take 64")
+	_expect(not Scarf.HOURS.has("65"), "scarf hours must not take 65")
+	_expect(not Scarf.HOURS.has("66"), "scarf hours must not take 66")
+	_expect(not Scarf.HOURS.has("67"), "scarf hours must not take 67")
+	_expect(not Scarf.HOURS.has("68"), "scarf hours must not take 68")
+	_expect(not Scarf.HOURS.has("69"), "scarf hours must not take 69")
+	_expect(not Scarf.HOURS.has("70"), "scarf hours must not take 70")
+	_expect(not Scarf.HOURS.has("71"), "scarf hours must not take 71")
+	_expect(not Scarf.HOURS.has("72"), "scarf hours must not take 72")
+	_expect(not Scarf.HOURS.has("73"), "scarf hours must not take 73")
+	_expect(not Scarf.HOURS.has("74"), "scarf hours must not take 74")
+	_expect(not Scarf.HOURS.has("75"), "scarf hours must not take 75")
+	_expect(not Scarf.HOURS.has("76"), "scarf hours must not take 76")
+	_expect(not Scarf.HOURS.has("77"), "scarf hours must not take 77")
+	_expect(not Scarf.HOURS.has("78"), "scarf hours must not take 78")
+	_expect(not Scarf.HOURS.has("79"), "scarf hours must not take 79")
+	_expect(not Scarf.HOURS.has("80"), "scarf hours must not take 80")
+	_expect(not Scarf.HOURS.has("81"), "scarf hours must not take 81")
+	_expect(not Scarf.HOURS.has("82"), "scarf hours must not take 82")
+	_expect(not Scarf.HOURS.has("83"), "scarf hours must not take 83")
+	_expect(not Scarf.HOURS.has("84"), "scarf hours must not take 84")
+	_expect(not Scarf.HOURS.has("85"), "scarf hours must not take 85")
+	_expect(not Scarf.HOURS.has("86"), "scarf hours must not take 86")
+	_expect(not Scarf.HOURS.has("87"), "scarf hours must not take 87")
+	_expect(not Scarf.HOURS.has("88"), "scarf hours must not take 88")
+	_expect(not Scarf.HOURS.has("89"), "scarf hours must not take 89")
+	_expect(not Scarf.HOURS.has("90"), "scarf hours must not take 90")
+	_expect(not Scarf.HOURS.has("91"), "scarf hours must not take 91")
+	_expect(not Scarf.HOURS.has("92"), "scarf hours must not take 92")
+	_expect(not Scarf.HOURS.has("93"), "scarf hours must not take 93")
+	_expect(not Scarf.HOURS.has("94"), "scarf hours must not take 94")
+	_expect(not Scarf.HOURS.has("95"), "scarf hours must not take 95")
+	_expect(not Scarf.HOURS.has("96"), "scarf hours must not take 96")
+	_expect(not Scarf.HOURS.has("97"), "scarf hours must not take 97")
+	_expect(not Scarf.HOURS.has("98"), "scarf hours must not take 98")
+	_expect(not Scarf.HOURS.has("99"), "scarf hours must not take 99")
+	_expect(not Scarf.HOURS.has("100"), "scarf hours must not take 100")
+	_expect(not Scarf.HOURS.has("101"), "scarf hours must not take 101")
+	_expect(not Scarf.HOURS.has("102"), "scarf hours must not take 102")
+	_expect(not Scarf.HOURS.has("103"), "scarf hours must not take 103")
+	_expect(not Scarf.HOURS.has("104"), "scarf hours must not take 104")
+	_expect(not Scarf.HOURS.has("105"), "scarf hours must not take 105")
+	_expect(not Scarf.HOURS.has("106"), "scarf hours must not take 106")
+	_expect(not Scarf.HOURS.has("107"), "scarf hours must not take 107")
+	_expect(not Scarf.HOURS.has("108"), "scarf hours must not take 108")
+	_expect(not Scarf.HOURS.has("109"), "scarf hours must not take 109")
+	_expect(not Scarf.HOURS.has("110"), "scarf hours must not take 110")
+
+	_expect(FINGER_TRUE["who"] == "Clem", "finger taker")
+	_expect(FINGER_TRUE["place"] == "pad", "finger room")
+	_expect(FINGER_TRUE["hour"] == "118", "finger hour")
+	for forbidden in ["Hob", "Nairn", "Cole", "Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(FINGER_TRUE["who"] != forbidden, "finger accepted %s" % forbidden)
+	for forbidden_place in ["drawknife", "spokeshave", "firmer", "plough", "float", "gimlet", "router", "scraper", "adze", "gouge", "rasp", "bevel", "saw", "square", "bead", "plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(FINGER_TRUE["place"] != forbidden_place, "finger accepted the %s" % forbidden_place)
+	_expect(FINGER_TRUE["place"] != "badger", "finger accepted the badger")
+	_expect(FINGER_TRUE["place"] != "jack", "finger accepted the jack")
+	_expect(FINGER_TRUE["hour"] != "111", "finger accepted 111")
+	_expect(FINGER_TRUE["hour"] != "112", "finger accepted 112")
+	_expect(FINGER_TRUE["hour"] != "114", "finger accepted 114")
+	_expect(FINGER_TRUE["hour"] != "115", "finger accepted 115")
+	_expect(FINGER_TRUE["hour"] != "106", "finger accepted 106")
+	_expect(FINGER_TRUE["hour"] != "107", "finger accepted 107")
+	_expect(FINGER_TRUE["hour"] != "108", "finger accepted 108")
+	_expect(FINGER_TRUE["hour"] != "109", "finger accepted 109")
+	_expect(FINGER_TRUE["hour"] != "110", "finger accepted 110")
+	_expect(FINGER_TRUE["hour"] != "101", "finger accepted 101")
+	_expect(FINGER_TRUE["hour"] != "102", "finger accepted 102")
+	_expect(FINGER_TRUE["hour"] != "103", "finger accepted 103")
+	_expect(FINGER_TRUE["hour"] != "104", "finger accepted 104")
+	_expect(FINGER_TRUE["hour"] != "105", "finger accepted 105")
+	_expect(FINGER_TRUE["hour"] != "96", "finger accepted 96")
+	_expect(FINGER_TRUE["hour"] != "97", "finger accepted 97")
+	_expect(FINGER_TRUE["hour"] != "98", "finger accepted 98")
+	_expect(FINGER_TRUE["hour"] != "99", "finger accepted 99")
+	_expect(FINGER_TRUE["hour"] != "100", "finger accepted 100")
+	_expect(FINGER_TRUE["hour"] != "91", "finger accepted 91")
+	_expect(FINGER_TRUE["hour"] != "92", "finger accepted 92")
+	_expect(FINGER_TRUE["hour"] != "93", "finger accepted 93")
+	_expect(FINGER_TRUE["hour"] != "94", "finger accepted 94")
+	_expect(FINGER_TRUE["hour"] != "95", "finger accepted 95")
+	_expect(FINGER_TRUE["hour"] != "88", "finger accepted 88")
+	_expect(FINGER_TRUE["hour"] != "83", "finger accepted 83")
+	_expect(FINGER_TRUE["hour"] != "78", "finger accepted 78")
+	_expect(FINGER_TRUE["hour"] != "73", "finger accepted 73")
+	_expect(FINGER_TRUE["hour"] != "68", "finger accepted 68")
+	_expect(FINGER_TRUE["hour"] != "63", "finger accepted 63")
+	_expect(FINGER_TRUE["hour"] != "8", "finger accepted 8")
+	_expect(FINGER_TRUE["hour"] != "6", "finger accepted 6")
+	_expect(FINGER_TRUE["hour"] != "3", "finger accepted 3")
+	_expect(FINGER_TRUE["hour"] != "16", "finger accepted 16")
+	_expect(FINGER_TRUE["hour"] != "19", "finger accepted 19")
+	_expect(FINGER_TRUE["hour"] != "113", "finger accepted 113")
+	_expect(FINGER_TRUE["hour"] != "116", "finger accepted 116")
+	_expect(FINGER_TRUE["hour"] != "117", "finger accepted 117")
+	_expect(FINGER_TRUE["hour"] != "119", "finger accepted 119")
+	_expect(FINGER_TRUE["hour"] != "120", "finger accepted 120")
+	var before_finger: Array = before_scarf.duplicate()
+	before_finger.append([Scarf, SCARF_TRUE, "scarf"])
+	for row in before_finger:
+		var book = row[0]
+		var truth: Dictionary = row[1]
+		var name := str(row[2])
+		_expect(FINGER_TRUE["who"] != truth["who"], "finger copied the %s taker" % name)
+		_expect(FINGER_TRUE["place"] != truth["place"], "finger copied the %s room" % name)
+		_expect(FINGER_TRUE["hour"] != str(truth["hour"]), "finger copied the %s hour" % name)
+		_expect_rejected(FINGER_TRUE, book)
+		_expect_rejected(truth, Finger)
+	_expect(SCARF_TRUE["who"] == "Hob" and SCARF_TRUE["place"] == "drawknife" and SCARF_TRUE["hour"] == "113", "the scarf should still accept Hob in the drawknife at 113")
+	for row in before_finger:
+		var book = row[0]
+		var name := str(row[2])
+		for person in Finger.PEOPLE:
+			_expect(not book.PEOPLE.has(person), "finger cast repeats %s from the %s" % [person, name])
+		for place in Finger.PLACES:
+			_expect(not book.PLACES.has(place), "finger rooms repeat %s from the %s" % [place, name])
+		for hour in Finger.HOURS:
+			_expect(not book.HOURS.has(hour), "finger hours repeat %s from the %s" % [hour, name])
+	for forbidden_person in ["Hob", "Nairn", "Cole", "Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(not Finger.PEOPLE.has(forbidden_person), "finger cast must not take %s" % forbidden_person)
+	_expect(Finger.role_phrase("Clem") == "the finger hand", "the finger should call Clem the finger hand")
+	_expect(Finger.role_phrase("Gale") == "the socket hand", "the finger should call Gale the socket hand")
+	_expect(Finger.role_phrase("Boyd") == "the catch clerk", "the finger should call Boyd the catch clerk")
+	for forbidden_place in ["drawknife", "spokeshave", "firmer", "plough", "float", "gimlet", "router", "scraper", "adze", "gouge", "rasp", "bevel", "saw", "square", "bead", "plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(not Finger.PLACES.has(forbidden_place), "finger rooms must not take the %s" % forbidden_place)
+	_expect(not Finger.HOURS.has("6"), "finger hours must not take 6")
+	_expect(not Finger.HOURS.has("7"), "finger hours must not take 7")
+	_expect(not Finger.HOURS.has("8"), "finger hours must not take 8")
+	_expect(not Finger.HOURS.has("9"), "finger hours must not take 9")
+	_expect(not Finger.HOURS.has("10"), "finger hours must not take 10")
+	_expect(not Finger.HOURS.has("60"), "finger hours must not take 60")
+	_expect(not Finger.HOURS.has("61"), "finger hours must not take 61")
+	_expect(not Finger.HOURS.has("62"), "finger hours must not take 62")
+	_expect(not Finger.HOURS.has("63"), "finger hours must not take 63")
+	_expect(not Finger.HOURS.has("64"), "finger hours must not take 64")
+	_expect(not Finger.HOURS.has("65"), "finger hours must not take 65")
+	_expect(not Finger.HOURS.has("66"), "finger hours must not take 66")
+	_expect(not Finger.HOURS.has("67"), "finger hours must not take 67")
+	_expect(not Finger.HOURS.has("68"), "finger hours must not take 68")
+	_expect(not Finger.HOURS.has("69"), "finger hours must not take 69")
+	_expect(not Finger.HOURS.has("70"), "finger hours must not take 70")
+	_expect(not Finger.HOURS.has("71"), "finger hours must not take 71")
+	_expect(not Finger.HOURS.has("72"), "finger hours must not take 72")
+	_expect(not Finger.HOURS.has("73"), "finger hours must not take 73")
+	_expect(not Finger.HOURS.has("74"), "finger hours must not take 74")
+	_expect(not Finger.HOURS.has("75"), "finger hours must not take 75")
+	_expect(not Finger.HOURS.has("76"), "finger hours must not take 76")
+	_expect(not Finger.HOURS.has("77"), "finger hours must not take 77")
+	_expect(not Finger.HOURS.has("78"), "finger hours must not take 78")
+	_expect(not Finger.HOURS.has("79"), "finger hours must not take 79")
+	_expect(not Finger.HOURS.has("80"), "finger hours must not take 80")
+	_expect(not Finger.HOURS.has("81"), "finger hours must not take 81")
+	_expect(not Finger.HOURS.has("82"), "finger hours must not take 82")
+	_expect(not Finger.HOURS.has("83"), "finger hours must not take 83")
+	_expect(not Finger.HOURS.has("84"), "finger hours must not take 84")
+	_expect(not Finger.HOURS.has("85"), "finger hours must not take 85")
+	_expect(not Finger.HOURS.has("86"), "finger hours must not take 86")
+	_expect(not Finger.HOURS.has("87"), "finger hours must not take 87")
+	_expect(not Finger.HOURS.has("88"), "finger hours must not take 88")
+	_expect(not Finger.HOURS.has("89"), "finger hours must not take 89")
+	_expect(not Finger.HOURS.has("90"), "finger hours must not take 90")
+	_expect(not Finger.HOURS.has("91"), "finger hours must not take 91")
+	_expect(not Finger.HOURS.has("92"), "finger hours must not take 92")
+	_expect(not Finger.HOURS.has("93"), "finger hours must not take 93")
+	_expect(not Finger.HOURS.has("94"), "finger hours must not take 94")
+	_expect(not Finger.HOURS.has("95"), "finger hours must not take 95")
+	_expect(not Finger.HOURS.has("96"), "finger hours must not take 96")
+	_expect(not Finger.HOURS.has("97"), "finger hours must not take 97")
+	_expect(not Finger.HOURS.has("98"), "finger hours must not take 98")
+	_expect(not Finger.HOURS.has("99"), "finger hours must not take 99")
+	_expect(not Finger.HOURS.has("100"), "finger hours must not take 100")
+	_expect(not Finger.HOURS.has("101"), "finger hours must not take 101")
+	_expect(not Finger.HOURS.has("102"), "finger hours must not take 102")
+	_expect(not Finger.HOURS.has("103"), "finger hours must not take 103")
+	_expect(not Finger.HOURS.has("104"), "finger hours must not take 104")
+	_expect(not Finger.HOURS.has("105"), "finger hours must not take 105")
+	_expect(not Finger.HOURS.has("106"), "finger hours must not take 106")
+	_expect(not Finger.HOURS.has("107"), "finger hours must not take 107")
+	_expect(not Finger.HOURS.has("108"), "finger hours must not take 108")
+	_expect(not Finger.HOURS.has("109"), "finger hours must not take 109")
+	_expect(not Finger.HOURS.has("110"), "finger hours must not take 110")
+	_expect(not Finger.HOURS.has("111"), "finger hours must not take 111")
+	_expect(not Finger.HOURS.has("112"), "finger hours must not take 112")
+	_expect(not Finger.HOURS.has("113"), "finger hours must not take 113")
+	_expect(not Finger.HOURS.has("114"), "finger hours must not take 114")
+	_expect(not Finger.HOURS.has("115"), "finger hours must not take 115")
+
+	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal", "The orchard graft", "The dye vat", "The tar kettle", "The cork press", "The net loft", "The cask hoop", "The linen fold", "The dovetail", "The mortise", "The rebate", "The housing", "The tenon", "The bridle", "The dado", "The spline", "The mitre", "The lap", "The scarf", "The finger"], "case list is %s" % str(titles))
+
 
 
 func _test_menu_opens_either_case() -> void:
@@ -12409,7 +13491,7 @@ func _test_menu_opens_either_case() -> void:
 		root._ready()
 	var menu_blob := _visible_label_blob(root)
 	_expect(get_root().size == Vector2i(1280, 800), "case window is %s" % str(get_root().size))
-	_expect(menu_blob.find("Thirty-three files") >= 0, "menu does not offer thirty-three files: %s" % menu_blob)
+	_expect(menu_blob.find("Thirty-five files") >= 0, "menu does not offer thirty-five files: %s" % menu_blob)
 	_expect(menu_blob.find("CW-07") >= 0, "menu omits CW-07")
 	_expect(menu_blob.find("The hive smoker") >= 0, "menu omits The hive smoker")
 	_expect(menu_blob.find("CW-08") >= 0, "menu omits CW-08")
@@ -12464,6 +13546,10 @@ func _test_menu_opens_either_case() -> void:
 	_expect(menu_blob.find("The mitre") >= 0, "menu omits The mitre")
 	_expect(menu_blob.find("CW-33") >= 0, "menu omits CW-33")
 	_expect(menu_blob.find("The lap") >= 0, "menu omits The lap")
+	_expect(menu_blob.find("CW-34") >= 0, "menu omits CW-34")
+	_expect(menu_blob.find("The scarf") >= 0, "menu omits The scarf")
+	_expect(menu_blob.find("CW-35") >= 0, "menu omits CW-35")
+	_expect(menu_blob.find("The finger") >= 0, "menu omits The finger")
 	_expect(root.get_child_count() > 0, "main scene built %d children" % root.get_child_count())
 	_press(root, "How to play")
 	var howto := _visible_label_blob(root)
@@ -12500,6 +13586,8 @@ func _test_menu_opens_either_case() -> void:
 	_expect(howto.find("The spline") >= 0, "how to play omits The spline")
 	_expect(howto.find("The mitre") >= 0, "how to play omits The mitre")
 	_expect(howto.find("The lap") >= 0, "how to play omits The lap")
+	_expect(howto.find("The scarf") >= 0, "how to play omits The scarf")
+	_expect(howto.find("The finger") >= 0, "how to play omits The finger")
 	_expect(howto.find("names that slot") >= 0, "how to play omits the empty-slot rule")
 	_press(root, "Back to the menu")
 	_expect(_find_visible_button(root, "Open The spare key") != null, "menu is missing The spare key")
@@ -12535,6 +13623,8 @@ func _test_menu_opens_either_case() -> void:
 	_expect(_find_visible_button(root, "Open The spline") != null, "menu is missing The spline")
 	_expect(_find_visible_button(root, "Open The mitre") != null, "menu is missing The mitre")
 	_expect(_find_visible_button(root, "Open The lap") != null, "menu is missing The lap")
+	_expect(_find_visible_button(root, "Open The scarf") != null, "menu is missing The scarf")
+	_expect(_find_visible_button(root, "Open The finger") != null, "menu is missing The finger")
 	_press(root, "Open The rehearsal score")
 	var rehearsal_open := _visible_label_blob(root)
 	_expect(rehearsal_open.find("Cut list") >= 0, "rehearsal file did not open")
@@ -15257,6 +16347,407 @@ func _test_menu_opens_either_case() -> void:
 	_expect(mitre_again_blob.find("Grain chit") == -1, "lap papers stayed up after returning to The mitre")
 	_expect(mitre_again_blob.find("Grain note") == -1, "lap papers stayed up after returning to The mitre")
 	_press(root, "Menu")
+	_press(root, "Open The scarf")
+	var scarf_open := _visible_label_blob(root)
+	_expect(scarf_open.find("Shoulder chit") >= 0, "scarf file did not open")
+	_expect(scarf_open.find("Scarf note") >= 0, "scarf file did not show its exhibits")
+	_expect(scarf_open.find("CW-34") >= 0, "scarf file omits CW-34")
+	_expect(scarf_open.find("Shaving hook") >= 0, "scarf file omits Shaving hook")
+	_expect(scarf_open.find("Film slip") >= 0, "scarf file omits Film slip")
+	_expect(scarf_open.find("Scarf leaf") >= 0, "scarf file omits Scarf leaf")
+	_expect(scarf_open.find("Finish order") >= 0, "scarf file omits Finish order")
+	_expect(scarf_open.find("Sole sight") >= 0, "scarf file omits Sole sight")
+	_expect(scarf_open.find("Wedge card") >= 0, "scarf file omits Wedge card")
+	_expect(scarf_open.find("Complaint slip") == -1, "spare key papers showed inside The scarf")
+	_expect(scarf_open.find("Cut list") == -1, "rehearsal papers showed inside The scarf")
+	_expect(scarf_open.find("Move order") == -1, "gilt stamp papers showed inside The scarf")
+	_expect(scarf_open.find("Whistle slip") == -1, "ferry bell papers showed inside The scarf")
+	_expect(scarf_open.find("Frost note") == -1, "weather slate papers showed inside The scarf")
+	_expect(scarf_open.find("Trough tag") == -1, "loom shuttle papers showed inside The scarf")
+	_expect(scarf_open.find("Fuel line") == -1, "hive smoker papers showed inside The scarf")
+	_expect(scarf_open.find("Weight line") == -1, "glass pontil papers showed inside The scarf")
+	_expect(scarf_open.find("Lock line") == -1, "press proof papers showed inside The scarf")
+	_expect(scarf_open.find("Cup line") == -1, "assay cup papers showed inside The scarf")
+	_expect(scarf_open.find("Mark line") == -1, "kiln chalk papers showed inside The scarf")
+	_expect(scarf_open.find("Ledger line") == -1, "tide ledger papers showed inside The scarf")
+	_expect(scarf_open.find("Bell line") == -1, "night bell papers showed inside The scarf")
+	_expect(scarf_open.find("Salt line") == -1, "salt mark papers showed inside The scarf")
+	_expect(scarf_open.find("Oil note") == -1, "wick trim papers showed inside The scarf")
+	_expect(scarf_open.find("Gather note") == -1, "glass anneal papers showed inside The scarf")
+	_expect(scarf_open.find("Scion note") == -1, "orchard graft papers showed inside The scarf")
+	_expect(scarf_open.find("Winder chit") == -1, "dye vat papers showed inside The scarf")
+	_expect(scarf_open.find("Rope chit") == -1, "tar kettle papers showed inside The scarf")
+	_expect(scarf_open.find("Cutter chit") == -1, "cork press papers showed inside The scarf")
+	_expect(scarf_open.find("Mesh chit") == -1, "net loft papers showed inside The scarf")
+	_expect(scarf_open.find("Hoop chit") == -1, "cask hoop papers showed inside The scarf")
+	_expect(scarf_open.find("Shears chit") == -1, "linen fold papers showed inside The scarf")
+	_expect(scarf_open.find("Apron sight") == -1, "dovetail papers showed inside The scarf")
+	_expect(scarf_open.find("Peg hook") == -1, "dovetail papers showed inside The scarf")
+	_expect(scarf_open.find("Joint slate") == -1, "dovetail papers showed inside The scarf")
+	_expect(scarf_open.find("Clamp card") == -1, "dovetail papers showed inside The scarf")
+	_expect(scarf_open.find("Sweep slip") == -1, "dovetail papers showed inside The scarf")
+	_expect(scarf_open.find("Cut leaf") == -1, "dovetail papers showed inside The scarf")
+	_expect(scarf_open.find("Joint note") == -1, "dovetail papers showed inside The scarf")
+	_expect(scarf_open.find("Jaw order") == -1, "dovetail papers showed inside The scarf")
+	_expect(scarf_open.find("CW-24") == -1, "dovetail file code stayed up inside The scarf")
+	_expect(scarf_open.find("Chisel chit") == -1, "mortise papers stayed up inside The scarf")
+	_expect(scarf_open.find("Awl sight") == -1, "mortise papers showed inside The scarf")
+	_expect(scarf_open.find("Wedge hook") == -1, "mortise papers showed inside The scarf")
+	_expect(scarf_open.find("Tenon slate") == -1, "mortise papers showed inside The scarf")
+	_expect(scarf_open.find("Brace card") == -1, "mortise papers showed inside The scarf")
+	_expect(scarf_open.find("Brush slip") == -1, "mortise papers showed inside The scarf")
+	_expect(scarf_open.find("Bore leaf") == -1, "mortise papers showed inside The scarf")
+	_expect(scarf_open.find("Tenon note") == -1, "mortise papers showed inside The scarf")
+	_expect(scarf_open.find("Rack order") == -1, "mortise papers showed inside The scarf")
+	_expect(scarf_open.find("CW-25") == -1, "mortise file code stayed up inside The scarf")
+	_expect(scarf_open.find("Plane chit") == -1, "rebate papers stayed up inside The scarf")
+	_expect(scarf_open.find("Gauge sight") == -1, "rebate papers showed inside The scarf")
+	_expect(scarf_open.find("Shim hook") == -1, "rebate papers showed inside The scarf")
+	_expect(scarf_open.find("Shoulder slate") == -1, "rebate papers showed inside The scarf")
+	_expect(scarf_open.find("Fence card") == -1, "rebate papers showed inside The scarf")
+	_expect(scarf_open.find("Oil slip") == -1, "rebate papers showed inside The scarf")
+	_expect(scarf_open.find("Scribe leaf") == -1, "rebate papers showed inside The scarf")
+	_expect(scarf_open.find("Shoulder note") == -1, "rebate papers showed inside The scarf")
+	_expect(scarf_open.find("CW-26") == -1, "rebate file code stayed up inside The scarf")
+	_expect(scarf_open.find("Saw chit") == -1, "housing papers stayed up inside The scarf")
+	_expect(scarf_open.find("Square sight") == -1, "housing papers showed inside The scarf")
+	_expect(scarf_open.find("Fillet hook") == -1, "housing papers showed inside The scarf")
+	_expect(scarf_open.find("Trench slate") == -1, "housing papers showed inside The scarf")
+	_expect(scarf_open.find("Stock card") == -1, "housing papers showed inside The scarf")
+	_expect(scarf_open.find("Chalk slip") == -1, "housing papers showed inside The scarf")
+	_expect(scarf_open.find("Mark leaf") == -1, "housing papers showed inside The scarf")
+	_expect(scarf_open.find("Trench note") == -1, "housing papers showed inside The scarf")
+	_expect(scarf_open.find("CW-27") == -1, "housing file code stayed up inside The scarf")
+	_expect(scarf_open.find("Gouge chit") == -1, "tenon papers stayed up inside The scarf")
+	_expect(scarf_open.find("Rasp sight") == -1, "tenon papers showed inside The scarf")
+	_expect(scarf_open.find("Dowel hook") == -1, "tenon papers showed inside The scarf")
+	_expect(scarf_open.find("Haunch slate") == -1, "tenon papers showed inside The scarf")
+	_expect(scarf_open.find("Guide card") == -1, "tenon papers showed inside The scarf")
+	_expect(scarf_open.find("Hone slip") == -1, "tenon papers showed inside The scarf")
+	_expect(scarf_open.find("Nick leaf") == -1, "tenon papers showed inside The scarf")
+	_expect(scarf_open.find("Haunch note") == -1, "tenon papers showed inside The scarf")
+	_expect(scarf_open.find("CW-28") == -1, "tenon file code stayed up inside The scarf")
+	_expect(scarf_open.find("Router chit") == -1, "bridle papers stayed up inside The scarf")
+	_expect(scarf_open.find("Scraper sight") == -1, "bridle papers showed inside The scarf")
+	_expect(scarf_open.find("Spline hook") == -1, "bridle papers showed inside The scarf")
+	_expect(scarf_open.find("Tongue slate") == -1, "bridle papers showed inside The scarf")
+	_expect(scarf_open.find("Templet card") == -1, "bridle papers showed inside The scarf")
+	_expect(scarf_open.find("Strop slip") == -1, "bridle papers showed inside The scarf")
+	_expect(scarf_open.find("Notch leaf") == -1, "bridle papers showed inside The scarf")
+	_expect(scarf_open.find("Tongue note") == -1, "bridle papers showed inside The scarf")
+	_expect(scarf_open.find("CW-29") == -1, "bridle file code stayed up inside The scarf")
+	_expect(scarf_open.find("Plough chit") == -1, "dado papers stayed up inside The scarf")
+	_expect(scarf_open.find("Float sight") == -1, "dado papers showed inside The scarf")
+	_expect(scarf_open.find("Cleat hook") == -1, "dado papers showed inside The scarf")
+	_expect(scarf_open.find("Groove slate") == -1, "dado papers showed inside The scarf")
+	_expect(scarf_open.find("Spur card") == -1, "dado papers showed inside The scarf")
+	_expect(scarf_open.find("Whet slip") == -1, "dado papers showed inside The scarf")
+	_expect(scarf_open.find("Score leaf") == -1, "dado papers showed inside The scarf")
+	_expect(scarf_open.find("Groove note") == -1, "dado papers showed inside The scarf")
+	_expect(scarf_open.find("CW-30") == -1, "dado file code stayed up inside The scarf")
+	_expect(scarf_open.find("Slot chit") == -1, "spline papers stayed up inside The scarf")
+	_expect(scarf_open.find("Rest sight") == -1, "spline papers showed inside The scarf")
+	_expect(scarf_open.find("Feather hook") == -1, "spline papers showed inside The scarf")
+	_expect(scarf_open.find("Slot slate") == -1, "spline papers showed inside The scarf")
+	_expect(scarf_open.find("Key card") == -1, "spline papers showed inside The scarf")
+	_expect(scarf_open.find("Cheek slip") == -1, "spline papers showed inside The scarf")
+	_expect(scarf_open.find("Slot leaf") == -1, "spline papers showed inside The scarf")
+	_expect(scarf_open.find("Slot note") == -1, "spline papers showed inside The scarf")
+	_expect(scarf_open.find("Dry order") == -1, "spline papers showed inside The scarf")
+	_expect(scarf_open.find("CW-31") == -1, "spline file code stayed up inside The scarf")
+	_expect(scarf_open.find("Arris chit") == -1, "mitre papers stayed up inside The scarf")
+	_expect(scarf_open.find("Horn sight") == -1, "mitre papers showed inside The scarf")
+	_expect(scarf_open.find("Offcut hook") == -1, "mitre papers showed inside The scarf")
+	_expect(scarf_open.find("Arris slate") == -1, "mitre papers showed inside The scarf")
+	_expect(scarf_open.find("Stop card") == -1, "mitre papers showed inside The scarf")
+	_expect(scarf_open.find("Dress slip") == -1, "mitre papers showed inside The scarf")
+	_expect(scarf_open.find("Arris leaf") == -1, "mitre papers showed inside The scarf")
+	_expect(scarf_open.find("Arris note") == -1, "mitre papers showed inside The scarf")
+	_expect(scarf_open.find("Brush order") == -1, "mitre papers showed inside The scarf")
+	_expect(scarf_open.find("CW-32") == -1, "mitre file code stayed up inside The scarf")
+	_expect(scarf_open.find("Grain chit") == -1, "lap papers stayed up inside The scarf")
+	_expect(scarf_open.find("Crest sight") == -1, "lap papers showed inside The scarf")
+	_expect(scarf_open.find("Paring hook") == -1, "lap papers showed inside The scarf")
+	_expect(scarf_open.find("Grain slate") == -1, "lap papers showed inside The scarf")
+	_expect(scarf_open.find("Brad card") == -1, "lap papers showed inside The scarf")
+	_expect(scarf_open.find("Skim slip") == -1, "lap papers showed inside The scarf")
+	_expect(scarf_open.find("Grain leaf") == -1, "lap papers showed inside The scarf")
+	_expect(scarf_open.find("Grain note") == -1, "lap papers showed inside The scarf")
+	_expect(scarf_open.find("Oil order") == -1, "lap papers showed inside The scarf")
+	_expect(scarf_open.find("CW-33") == -1, "lap file code stayed up inside The scarf")
+	_press(root, "Submit theory")
+	var empty_scarf := _verdict_text(root)
+	_expect(empty_scarf.find("who cut the scarf") >= 0, "empty scarf board: %s" % empty_scarf)
+	_expect(empty_scarf.find("where they cut the scarf") >= 0, "empty scarf board: %s" % empty_scarf)
+	_expect(empty_scarf.find("at which hour they cut the scarf") >= 0, "empty scarf board: %s" % empty_scarf)
+	_expect(empty_scarf.find("who took the spare key") == -1, "empty scarf board used the spare key slot: %s" % empty_scarf)
+	_expect(empty_scarf.find("who cut the lap") == -1, "empty scarf board used a lap slot: %s" % empty_scarf)
+	_expect(empty_scarf.to_lower().find("conflict") == -1, "empty scarf board talked about a conflict: %s" % empty_scarf)
+	_press(root, "Nairn")
+	_press(root, "Spokeshave")
+	_press(root, "111")
+	_press(root, "Submit theory")
+	var scarf_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(scarf_miss, Scarf, {"who": "Nairn", "place": "spokeshave", "hour": "111"})
+	_expect(Scarf.conflicting_ids({"who": "Nairn", "place": "spokeshave", "hour": "111"}).size() == 9, "Nairn / spokeshave / 111 should contradict every exhibit")
+	_expect(scarf_miss.find("Shoulder chit") >= 0, "wrong triple reply omits Shoulder chit: %s" % scarf_miss)
+	_expect(scarf_miss.find("Sole sight") >= 0, "wrong triple reply omits Sole sight: %s" % scarf_miss)
+	_expect(scarf_miss.find("Shaving hook") >= 0, "wrong triple reply omits Shaving hook: %s" % scarf_miss)
+	_expect(scarf_miss.find("Edge slate") >= 0, "wrong triple reply omits Edge slate: %s" % scarf_miss)
+	_expect(scarf_miss.find("Wedge card") >= 0, "wrong triple reply omits Wedge card: %s" % scarf_miss)
+	_expect(scarf_miss.find("Film slip") >= 0, "wrong triple reply omits Film slip: %s" % scarf_miss)
+	_expect(scarf_miss.find("Scarf leaf") >= 0, "wrong triple reply omits Scarf leaf: %s" % scarf_miss)
+	_expect(scarf_miss.find("Scarf note") >= 0, "wrong triple reply omits Scarf note: %s" % scarf_miss)
+	_expect(scarf_miss.find("Finish order") >= 0, "wrong triple reply omits Finish order: %s" % scarf_miss)
+	_press(root, "Hob")
+	_press(root, "Drawknife")
+	_press(root, "113")
+	_press(root, "Submit theory")
+	var scarf_accepted := _verdict_text(root)
+	_expect(scarf_accepted.find("fits every exhibit") >= 0, "scarf board rejected the true theory: %s" % scarf_accepted)
+	_expect(scarf_accepted.find(SCARF_TIMELINE) >= 0, "scarf board timeline: %s" % scarf_accepted)
+	_expect(scarf_accepted.find("Hob (scarf hand) cut the scarf in the drawknife at 113") >= 0, "scarf board omits Hob at 113: %s" % scarf_accepted)
+	_expect(scarf_accepted.find("in the drawknife") >= 0, "scarf board omits the drawknife: %s" % scarf_accepted)
+	_expect(scarf_accepted.find("so the shoulder would take the scarf") >= 0, "scarf board omits the shoulder: %s" % scarf_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var scarf_cleared := _verdict_text(root)
+	_expect(scarf_cleared.find("who cut the scarf") >= 0, "cleared scarf board: %s" % scarf_cleared)
+	_expect(scarf_cleared.find("fits every exhibit") == -1, "cleared scarf board stayed accepted: %s" % scarf_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The lap")
+	var lap_from_scarf := _visible_label_blob(root)
+	_expect(lap_from_scarf.find("Grain chit") >= 0, "could not return to The lap from The scarf")
+	_expect(lap_from_scarf.find("Grain note") >= 0, "lap exhibits did not return")
+	_expect(lap_from_scarf.find("CW-33") >= 0, "returned lap omits CW-33")
+	_expect(lap_from_scarf.find("Shoulder chit") == -1, "scarf papers stayed up inside The lap")
+	_expect(lap_from_scarf.find("Sole sight") == -1, "scarf papers showed inside The lap")
+	_expect(lap_from_scarf.find("Shaving hook") == -1, "scarf papers showed inside The lap")
+	_expect(lap_from_scarf.find("Edge slate") == -1, "scarf papers showed inside The lap")
+	_expect(lap_from_scarf.find("Wedge card") == -1, "scarf papers showed inside The lap")
+	_expect(lap_from_scarf.find("Film slip") == -1, "scarf papers showed inside The lap")
+	_expect(lap_from_scarf.find("Scarf leaf") == -1, "scarf papers showed inside The lap")
+	_expect(lap_from_scarf.find("Scarf note") == -1, "scarf papers showed inside The lap")
+	_expect(lap_from_scarf.find("Finish order") == -1, "scarf papers showed inside The lap")
+	_expect(lap_from_scarf.find("CW-34") == -1, "scarf file code stayed up inside The lap")
+	_press(root, "Nye")
+	_press(root, "Plough")
+	_press(root, "108")
+	_press(root, "Submit theory")
+	var lap_again := _verdict_text(root)
+	_expect(lap_again.find("fits every exhibit") >= 0, "lap board rejected the true theory after The scarf: %s" % lap_again)
+	_expect(lap_again.find("Nye (cradle hand) cut the lap in the plough at 108") >= 0, "lap board timeline after The scarf: %s" % lap_again)
+	var lap_again_blob := _visible_label_blob(root)
+	_expect(lap_again_blob.find("Grain chit") >= 0, "lap papers left after returning")
+	_expect(lap_again_blob.find("Shoulder chit") == -1, "scarf papers stayed up after returning to The lap")
+	_expect(lap_again_blob.find("Scarf note") == -1, "scarf papers stayed up after returning to The lap")
+	_press(root, "Menu")
+	_press(root, "Open The finger")
+	var finger_open := _visible_label_blob(root)
+	_expect(finger_open.find("Socket chit") >= 0, "finger file did not open")
+	_expect(finger_open.find("Finger note") >= 0, "finger file did not show its exhibits")
+	_expect(finger_open.find("CW-35") >= 0, "finger file omits CW-35")
+	_expect(finger_open.find("Chip bill") >= 0, "finger file omits Chip bill")
+	_expect(finger_open.find("Sheen slip") >= 0, "finger file omits Sheen slip")
+	_expect(finger_open.find("Finger leaf") >= 0, "finger file omits Finger leaf")
+	_expect(finger_open.find("Rub order") >= 0, "finger file omits Rub order")
+	_expect(finger_open.find("Burr sight") >= 0, "finger file omits Burr sight")
+	_expect(finger_open.find("Catch card") >= 0, "finger file omits Catch card")
+	_expect(finger_open.find("Face slate") >= 0, "finger file omits Face slate")
+	_expect(finger_open.find("Complaint slip") == -1, "spare key papers showed inside The finger")
+	_expect(finger_open.find("Cut list") == -1, "rehearsal papers showed inside The finger")
+	_expect(finger_open.find("Move order") == -1, "gilt stamp papers showed inside The finger")
+	_expect(finger_open.find("Whistle slip") == -1, "ferry bell papers showed inside The finger")
+	_expect(finger_open.find("Frost note") == -1, "weather slate papers showed inside The finger")
+	_expect(finger_open.find("Trough tag") == -1, "loom shuttle papers showed inside The finger")
+	_expect(finger_open.find("Fuel line") == -1, "hive smoker papers showed inside The finger")
+	_expect(finger_open.find("Weight line") == -1, "glass pontil papers showed inside The finger")
+	_expect(finger_open.find("Lock line") == -1, "press proof papers showed inside The finger")
+	_expect(finger_open.find("Cup line") == -1, "assay cup papers showed inside The finger")
+	_expect(finger_open.find("Mark line") == -1, "kiln chalk papers showed inside The finger")
+	_expect(finger_open.find("Ledger line") == -1, "tide ledger papers showed inside The finger")
+	_expect(finger_open.find("Bell line") == -1, "night bell papers showed inside The finger")
+	_expect(finger_open.find("Salt line") == -1, "salt mark papers showed inside The finger")
+	_expect(finger_open.find("Oil note") == -1, "wick trim papers showed inside The finger")
+	_expect(finger_open.find("Gather note") == -1, "glass anneal papers showed inside The finger")
+	_expect(finger_open.find("Scion note") == -1, "orchard graft papers showed inside The finger")
+	_expect(finger_open.find("Winder chit") == -1, "dye vat papers showed inside The finger")
+	_expect(finger_open.find("Rope chit") == -1, "tar kettle papers showed inside The finger")
+	_expect(finger_open.find("Cutter chit") == -1, "cork press papers showed inside The finger")
+	_expect(finger_open.find("Mesh chit") == -1, "net loft papers showed inside The finger")
+	_expect(finger_open.find("Hoop chit") == -1, "cask hoop papers showed inside The finger")
+	_expect(finger_open.find("Shears chit") == -1, "linen fold papers showed inside The finger")
+	_expect(finger_open.find("Apron sight") == -1, "dovetail papers showed inside The finger")
+	_expect(finger_open.find("Peg hook") == -1, "dovetail papers showed inside The finger")
+	_expect(finger_open.find("Joint slate") == -1, "dovetail papers showed inside The finger")
+	_expect(finger_open.find("Clamp card") == -1, "dovetail papers showed inside The finger")
+	_expect(finger_open.find("Sweep slip") == -1, "dovetail papers showed inside The finger")
+	_expect(finger_open.find("Cut leaf") == -1, "dovetail papers showed inside The finger")
+	_expect(finger_open.find("Joint note") == -1, "dovetail papers showed inside The finger")
+	_expect(finger_open.find("Jaw order") == -1, "dovetail papers showed inside The finger")
+	_expect(finger_open.find("CW-24") == -1, "dovetail file code stayed up inside The finger")
+	_expect(finger_open.find("Chisel chit") == -1, "mortise papers stayed up inside The finger")
+	_expect(finger_open.find("Awl sight") == -1, "mortise papers showed inside The finger")
+	_expect(finger_open.find("Wedge hook") == -1, "mortise papers showed inside The finger")
+	_expect(finger_open.find("Tenon slate") == -1, "mortise papers showed inside The finger")
+	_expect(finger_open.find("Brace card") == -1, "mortise papers showed inside The finger")
+	_expect(finger_open.find("Brush slip") == -1, "mortise papers showed inside The finger")
+	_expect(finger_open.find("Bore leaf") == -1, "mortise papers showed inside The finger")
+	_expect(finger_open.find("Tenon note") == -1, "mortise papers showed inside The finger")
+	_expect(finger_open.find("Rack order") == -1, "mortise papers showed inside The finger")
+	_expect(finger_open.find("CW-25") == -1, "mortise file code stayed up inside The finger")
+	_expect(finger_open.find("Plane chit") == -1, "rebate papers stayed up inside The finger")
+	_expect(finger_open.find("Gauge sight") == -1, "rebate papers showed inside The finger")
+	_expect(finger_open.find("Shim hook") == -1, "rebate papers showed inside The finger")
+	_expect(finger_open.find("Shoulder slate") == -1, "rebate papers showed inside The finger")
+	_expect(finger_open.find("Fence card") == -1, "rebate papers showed inside The finger")
+	_expect(finger_open.find("Oil slip") == -1, "rebate papers showed inside The finger")
+	_expect(finger_open.find("Scribe leaf") == -1, "rebate papers showed inside The finger")
+	_expect(finger_open.find("Shoulder note") == -1, "rebate papers showed inside The finger")
+	_expect(finger_open.find("CW-26") == -1, "rebate file code stayed up inside The finger")
+	_expect(finger_open.find("Saw chit") == -1, "housing papers stayed up inside The finger")
+	_expect(finger_open.find("Square sight") == -1, "housing papers showed inside The finger")
+	_expect(finger_open.find("Fillet hook") == -1, "housing papers showed inside The finger")
+	_expect(finger_open.find("Trench slate") == -1, "housing papers showed inside The finger")
+	_expect(finger_open.find("Stock card") == -1, "housing papers showed inside The finger")
+	_expect(finger_open.find("Chalk slip") == -1, "housing papers showed inside The finger")
+	_expect(finger_open.find("Mark leaf") == -1, "housing papers showed inside The finger")
+	_expect(finger_open.find("Trench note") == -1, "housing papers showed inside The finger")
+	_expect(finger_open.find("CW-27") == -1, "housing file code stayed up inside The finger")
+	_expect(finger_open.find("Gouge chit") == -1, "tenon papers stayed up inside The finger")
+	_expect(finger_open.find("Rasp sight") == -1, "tenon papers showed inside The finger")
+	_expect(finger_open.find("Dowel hook") == -1, "tenon papers showed inside The finger")
+	_expect(finger_open.find("Haunch slate") == -1, "tenon papers showed inside The finger")
+	_expect(finger_open.find("Guide card") == -1, "tenon papers showed inside The finger")
+	_expect(finger_open.find("Hone slip") == -1, "tenon papers showed inside The finger")
+	_expect(finger_open.find("Nick leaf") == -1, "tenon papers showed inside The finger")
+	_expect(finger_open.find("Haunch note") == -1, "tenon papers showed inside The finger")
+	_expect(finger_open.find("CW-28") == -1, "tenon file code stayed up inside The finger")
+	_expect(finger_open.find("Router chit") == -1, "bridle papers stayed up inside The finger")
+	_expect(finger_open.find("Scraper sight") == -1, "bridle papers showed inside The finger")
+	_expect(finger_open.find("Spline hook") == -1, "bridle papers showed inside The finger")
+	_expect(finger_open.find("Tongue slate") == -1, "bridle papers showed inside The finger")
+	_expect(finger_open.find("Templet card") == -1, "bridle papers showed inside The finger")
+	_expect(finger_open.find("Strop slip") == -1, "bridle papers showed inside The finger")
+	_expect(finger_open.find("Notch leaf") == -1, "bridle papers showed inside The finger")
+	_expect(finger_open.find("Tongue note") == -1, "bridle papers showed inside The finger")
+	_expect(finger_open.find("CW-29") == -1, "bridle file code stayed up inside The finger")
+	_expect(finger_open.find("Plough chit") == -1, "dado papers stayed up inside The finger")
+	_expect(finger_open.find("Float sight") == -1, "dado papers showed inside The finger")
+	_expect(finger_open.find("Cleat hook") == -1, "dado papers showed inside The finger")
+	_expect(finger_open.find("Groove slate") == -1, "dado papers showed inside The finger")
+	_expect(finger_open.find("Spur card") == -1, "dado papers showed inside The finger")
+	_expect(finger_open.find("Whet slip") == -1, "dado papers showed inside The finger")
+	_expect(finger_open.find("Score leaf") == -1, "dado papers showed inside The finger")
+	_expect(finger_open.find("Groove note") == -1, "dado papers showed inside The finger")
+	_expect(finger_open.find("CW-30") == -1, "dado file code stayed up inside The finger")
+	_expect(finger_open.find("Slot chit") == -1, "spline papers stayed up inside The finger")
+	_expect(finger_open.find("Rest sight") == -1, "spline papers showed inside The finger")
+	_expect(finger_open.find("Feather hook") == -1, "spline papers showed inside The finger")
+	_expect(finger_open.find("Slot slate") == -1, "spline papers showed inside The finger")
+	_expect(finger_open.find("Key card") == -1, "spline papers showed inside The finger")
+	_expect(finger_open.find("Cheek slip") == -1, "spline papers showed inside The finger")
+	_expect(finger_open.find("Slot leaf") == -1, "spline papers showed inside The finger")
+	_expect(finger_open.find("Slot note") == -1, "spline papers showed inside The finger")
+	_expect(finger_open.find("Dry order") == -1, "spline papers showed inside The finger")
+	_expect(finger_open.find("CW-31") == -1, "spline file code stayed up inside The finger")
+	_expect(finger_open.find("Arris chit") == -1, "mitre papers stayed up inside The finger")
+	_expect(finger_open.find("Horn sight") == -1, "mitre papers showed inside The finger")
+	_expect(finger_open.find("Offcut hook") == -1, "mitre papers showed inside The finger")
+	_expect(finger_open.find("Arris slate") == -1, "mitre papers showed inside The finger")
+	_expect(finger_open.find("Stop card") == -1, "mitre papers showed inside The finger")
+	_expect(finger_open.find("Dress slip") == -1, "mitre papers showed inside The finger")
+	_expect(finger_open.find("Arris leaf") == -1, "mitre papers showed inside The finger")
+	_expect(finger_open.find("Arris note") == -1, "mitre papers showed inside The finger")
+	_expect(finger_open.find("Brush order") == -1, "mitre papers showed inside The finger")
+	_expect(finger_open.find("CW-32") == -1, "mitre file code stayed up inside The finger")
+	_expect(finger_open.find("Grain chit") == -1, "lap papers stayed up inside The finger")
+	_expect(finger_open.find("Crest sight") == -1, "lap papers showed inside The finger")
+	_expect(finger_open.find("Paring hook") == -1, "lap papers showed inside The finger")
+	_expect(finger_open.find("Grain slate") == -1, "lap papers showed inside The finger")
+	_expect(finger_open.find("Brad card") == -1, "lap papers showed inside The finger")
+	_expect(finger_open.find("Skim slip") == -1, "lap papers showed inside The finger")
+	_expect(finger_open.find("Grain leaf") == -1, "lap papers showed inside The finger")
+	_expect(finger_open.find("Grain note") == -1, "lap papers showed inside The finger")
+	_expect(finger_open.find("Oil order") == -1, "lap papers showed inside The finger")
+	_expect(finger_open.find("CW-33") == -1, "lap file code stayed up inside The finger")
+	_expect(finger_open.find("Shoulder chit") == -1, "scarf papers stayed up inside The finger")
+	_expect(finger_open.find("Sole sight") == -1, "scarf papers showed inside The finger")
+	_expect(finger_open.find("Shaving hook") == -1, "scarf papers showed inside The finger")
+	_expect(finger_open.find("Edge slate") == -1, "scarf papers showed inside The finger")
+	_expect(finger_open.find("Wedge card") == -1, "scarf papers showed inside The finger")
+	_expect(finger_open.find("Film slip") == -1, "scarf papers showed inside The finger")
+	_expect(finger_open.find("Scarf leaf") == -1, "scarf papers showed inside The finger")
+	_expect(finger_open.find("Scarf note") == -1, "scarf papers showed inside The finger")
+	_expect(finger_open.find("Finish order") == -1, "scarf papers showed inside The finger")
+	_expect(finger_open.find("CW-34") == -1, "scarf file code stayed up inside The finger")
+	_press(root, "Submit theory")
+	var empty_finger := _verdict_text(root)
+	_expect(empty_finger.find("who cut the finger") >= 0, "empty finger board: %s" % empty_finger)
+	_expect(empty_finger.find("where they cut the finger") >= 0, "empty finger board: %s" % empty_finger)
+	_expect(empty_finger.find("at which hour they cut the finger") >= 0, "empty finger board: %s" % empty_finger)
+	_expect(empty_finger.find("who took the spare key") == -1, "empty finger board used the spare key slot: %s" % empty_finger)
+	_expect(empty_finger.find("who cut the scarf") == -1, "empty finger board used a scarf slot: %s" % empty_finger)
+	_expect(empty_finger.to_lower().find("conflict") == -1, "empty finger board talked about a conflict: %s" % empty_finger)
+	_press(root, "Gale")
+	_press(root, "Badger")
+	_press(root, "116")
+	_press(root, "Submit theory")
+	var finger_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(finger_miss, Finger, {"who": "Gale", "place": "badger", "hour": "116"})
+	_expect(Finger.conflicting_ids({"who": "Gale", "place": "badger", "hour": "116"}).size() == 9, "Gale / badger / 116 should contradict every exhibit")
+	_expect(finger_miss.find("Socket chit") >= 0, "wrong triple reply omits Socket chit: %s" % finger_miss)
+	_expect(finger_miss.find("Burr sight") >= 0, "wrong triple reply omits Burr sight: %s" % finger_miss)
+	_expect(finger_miss.find("Chip bill") >= 0, "wrong triple reply omits Chip bill: %s" % finger_miss)
+	_expect(finger_miss.find("Face slate") >= 0, "wrong triple reply omits Face slate: %s" % finger_miss)
+	_expect(finger_miss.find("Catch card") >= 0, "wrong triple reply omits Catch card: %s" % finger_miss)
+	_expect(finger_miss.find("Sheen slip") >= 0, "wrong triple reply omits Sheen slip: %s" % finger_miss)
+	_expect(finger_miss.find("Finger leaf") >= 0, "wrong triple reply omits Finger leaf: %s" % finger_miss)
+	_expect(finger_miss.find("Finger note") >= 0, "wrong triple reply omits Finger note: %s" % finger_miss)
+	_expect(finger_miss.find("Rub order") >= 0, "wrong triple reply omits Rub order: %s" % finger_miss)
+	_press(root, "Clem")
+	_press(root, "Pad")
+	_press(root, "118")
+	_press(root, "Submit theory")
+	var finger_accepted := _verdict_text(root)
+	_expect(finger_accepted.find("fits every exhibit") >= 0, "finger board rejected the true theory: %s" % finger_accepted)
+	_expect(finger_accepted.find(FINGER_TIMELINE) >= 0, "finger board timeline: %s" % finger_accepted)
+	_expect(finger_accepted.find("Clem (finger hand) cut the finger in the pad at 118") >= 0, "finger board omits Clem at 118: %s" % finger_accepted)
+	_expect(finger_accepted.find("in the pad") >= 0, "finger board omits the pad: %s" % finger_accepted)
+	_expect(finger_accepted.find("so the socket would take the finger") >= 0, "finger board omits the socket: %s" % finger_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var finger_cleared := _verdict_text(root)
+	_expect(finger_cleared.find("who cut the finger") >= 0, "cleared finger board: %s" % finger_cleared)
+	_expect(finger_cleared.find("fits every exhibit") == -1, "cleared finger board stayed accepted: %s" % finger_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The scarf")
+	var scarf_from_finger := _visible_label_blob(root)
+	_expect(scarf_from_finger.find("Shoulder chit") >= 0, "could not return to The scarf from The finger")
+	_expect(scarf_from_finger.find("Scarf note") >= 0, "scarf exhibits did not return")
+	_expect(scarf_from_finger.find("CW-34") >= 0, "returned scarf omits CW-34")
+	_expect(scarf_from_finger.find("Socket chit") == -1, "finger papers stayed up inside The scarf")
+	_expect(scarf_from_finger.find("Burr sight") == -1, "finger papers showed inside The scarf")
+	_expect(scarf_from_finger.find("Chip bill") == -1, "finger papers showed inside The scarf")
+	_expect(scarf_from_finger.find("Face slate") == -1, "finger papers showed inside The scarf")
+	_expect(scarf_from_finger.find("Catch card") == -1, "finger papers showed inside The scarf")
+	_expect(scarf_from_finger.find("Sheen slip") == -1, "finger papers showed inside The scarf")
+	_expect(scarf_from_finger.find("Finger leaf") == -1, "finger papers showed inside The scarf")
+	_expect(scarf_from_finger.find("Finger note") == -1, "finger papers showed inside The scarf")
+	_expect(scarf_from_finger.find("Rub order") == -1, "finger papers showed inside The scarf")
+	_expect(scarf_from_finger.find("CW-35") == -1, "finger file code stayed up inside The scarf")
+	_press(root, "Hob")
+	_press(root, "Drawknife")
+	_press(root, "113")
+	_press(root, "Submit theory")
+	var scarf_again := _verdict_text(root)
+	_expect(scarf_again.find("fits every exhibit") >= 0, "scarf board rejected the true theory after The finger: %s" % scarf_again)
+	_expect(scarf_again.find("Hob (scarf hand) cut the scarf in the drawknife at 113") >= 0, "scarf board timeline after The finger: %s" % scarf_again)
+	var scarf_again_blob := _visible_label_blob(root)
+	_expect(scarf_again_blob.find("Shoulder chit") >= 0, "scarf papers left after returning")
+	_expect(scarf_again_blob.find("Socket chit") == -1, "finger papers stayed up after returning to The scarf")
+	_expect(scarf_again_blob.find("Finger note") == -1, "finger papers stayed up after returning to The scarf")
+	_press(root, "Menu")
 	_menu_root = root
 
 
@@ -15274,8 +16765,10 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 	var spline := _find_visible_button(root, "Open The spline")
 	var mitre := _find_visible_button(root, "Open The mitre")
 	var lap := _find_visible_button(root, "Open The lap")
-	_expect(mortise != null and rebate != null and housing != null and tenon != null and bridle != null and dado != null and spline != null and mitre != null and lap != null, "file list is missing a joiner button")
-	if mortise == null or rebate == null or housing == null or tenon == null or bridle == null or dado == null or spline == null or mitre == null or lap == null:
+	var scarf := _find_visible_button(root, "Open The scarf")
+	var finger := _find_visible_button(root, "Open The finger")
+	_expect(mortise != null and rebate != null and housing != null and tenon != null and bridle != null and dado != null and spline != null and mitre != null and lap != null and scarf != null and finger != null, "file list is missing a joiner button")
+	if mortise == null or rebate == null or housing == null or tenon == null or bridle == null or dado == null or spline == null or mitre == null or lap == null or scarf == null or finger == null:
 		return
 	var mortise_rect := _content_rect(mortise)
 	var rebate_rect := _content_rect(rebate)
@@ -15286,7 +16779,9 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 	var spline_rect := _content_rect(spline)
 	var mitre_rect := _content_rect(mitre)
 	var lap_rect := _content_rect(lap)
-	print("file list mortise %s rebate %s housing %s tenon %s bridle %s dado %s spline %s mitre %s lap %s" % [mortise_rect, rebate_rect, housing_rect, tenon_rect, bridle_rect, dado_rect, spline_rect, mitre_rect, lap_rect])
+	var scarf_rect := _content_rect(scarf)
+	var finger_rect := _content_rect(finger)
+	print("file list mortise %s rebate %s housing %s tenon %s bridle %s dado %s spline %s mitre %s lap %s scarf %s finger %s" % [mortise_rect, rebate_rect, housing_rect, tenon_rect, bridle_rect, dado_rect, spline_rect, mitre_rect, lap_rect, scarf_rect, finger_rect])
 	_expect(rebate_rect.size.y >= 40.0, "Open The rebate has no height")
 	_expect(housing_rect.size.y >= 40.0, "Open The housing has no height")
 	_expect(tenon_rect.size.y >= 40.0, "Open The tenon has no height")
@@ -15295,6 +16790,8 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 	_expect(spline_rect.size.y >= 40.0, "Open The spline has no height")
 	_expect(mitre_rect.size.y >= 40.0, "Open The mitre has no height")
 	_expect(lap_rect.size.y >= 40.0, "Open The lap has no height")
+	_expect(scarf_rect.size.y >= 40.0, "Open The scarf has no height")
+	_expect(finger_rect.size.y >= 40.0, "Open The finger has no height")
 	_expect(mortise_rect.position.y + mortise_rect.size.y <= rebate_rect.position.y, "Open The mortise is not above Open The rebate")
 	_expect(rebate_rect.position.y + rebate_rect.size.y <= housing_rect.position.y, "Open The rebate is not above Open The housing")
 	_expect(housing_rect.position.y + housing_rect.size.y <= tenon_rect.position.y, "Open The housing is not above Open The tenon")
@@ -15303,6 +16800,8 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 	_expect(dado_rect.position.y + dado_rect.size.y <= spline_rect.position.y, "Open The dado is not above Open The spline")
 	_expect(spline_rect.position.y + spline_rect.size.y <= mitre_rect.position.y, "Open The spline is not above Open The mitre")
 	_expect(mitre_rect.position.y + mitre_rect.size.y <= lap_rect.position.y, "Open The mitre is not above Open The lap")
+	_expect(lap_rect.position.y + lap_rect.size.y <= scarf_rect.position.y, "Open The lap is not above Open The scarf")
+	_expect(scarf_rect.position.y + scarf_rect.size.y <= finger_rect.position.y, "Open The scarf is not above Open The finger")
 	_expect(housing_rect.position.y == 4134.0, "housing content top is %s" % housing_rect.position.y)
 	_expect(tenon_rect.position.y == 4281.0, "tenon content top is %s" % tenon_rect.position.y)
 	_expect(bridle_rect.position.y == 4428.0, "bridle content top is %s" % bridle_rect.position.y)
@@ -15310,6 +16809,8 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 	_expect(spline_rect.position.y == 4722.0, "spline content top is %s" % spline_rect.position.y)
 	_expect(mitre_rect.position.y == 4869.0, "mitre content top is %s" % mitre_rect.position.y)
 	_expect(lap_rect.position.y == 5016.0, "lap content top is %s" % lap_rect.position.y)
+	_expect(scarf_rect.position.y == 5163.0, "scarf content top is %s" % scarf_rect.position.y)
+	_expect(finger_rect.position.y == 5310.0, "finger content top is %s" % finger_rect.position.y)
 	var window_height := 800.0
 	var housing_bottom := housing_rect.position.y + housing_rect.size.y
 	var visible_top := housing_bottom - window_height
@@ -15340,6 +16841,14 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 	var lap_visible_top := lap_bottom - window_height
 	_expect(mitre_rect.position.y >= lap_visible_top, "Open The mitre is not fully on screen above Open The lap")
 	_expect(mitre_rect.position.y + mitre_rect.size.y <= lap_bottom, "Open The mitre extends past the window when Open The lap sits at the bottom")
+	var scarf_bottom := scarf_rect.position.y + scarf_rect.size.y
+	var scarf_visible_top := scarf_bottom - window_height
+	_expect(lap_rect.position.y >= scarf_visible_top, "Open The lap is not fully on screen above Open The scarf")
+	_expect(lap_rect.position.y + lap_rect.size.y <= scarf_bottom, "Open The lap extends past the window when Open The scarf sits at the bottom")
+	var finger_bottom := finger_rect.position.y + finger_rect.size.y
+	var finger_visible_top := finger_bottom - window_height
+	_expect(scarf_rect.position.y >= finger_visible_top, "Open The scarf is not fully on screen above Open The finger")
+	_expect(scarf_rect.position.y + scarf_rect.size.y <= finger_bottom, "Open The scarf extends past the window when Open The finger sits at the bottom")
 	var scroll := _find_visible_scroll(root)
 	_expect(scroll != null, "the file list has no scroll")
 	if scroll != null:
@@ -15352,6 +16861,8 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 	_expect(spline_bottom > window_height, "Open The spline already fits without scrolling")
 	_expect(mitre_bottom > window_height, "Open The mitre already fits without scrolling")
 	_expect(lap_bottom > window_height, "Open The lap already fits without scrolling")
+	_expect(scarf_bottom > window_height, "Open The scarf already fits without scrolling")
+	_expect(finger_bottom > window_height, "Open The finger already fits without scrolling")
 
 
 func _content_rect(control: Control) -> Rect2:

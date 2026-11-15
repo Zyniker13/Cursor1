@@ -32,6 +32,7 @@ func _initialize() -> void:
 	_test_standard(errors)
 	_test_jack(errors)
 	_test_ensign(errors)
+	_test_burgee(errors)
 	_test_determinism(errors)
 	_test_population(errors)
 	_test_no_select_ant(errors)
@@ -105,7 +106,7 @@ func _test_determinism(errors: Array) -> void:
 	var plans := _plans(errors)
 	if plans.is_empty():
 		return
-	for plan_name in ["winning", "all_rake", "dry_pans", "continued", "late_pans", "no_crib", "carted", "late_crib", "dry_crib", "no_ship", "shipped", "late_ship", "dry_ship", "no_stall", "sold", "late_sold", "dry_sold", "no_yard", "banked", "late_banked", "dry_banked", "no_bunk", "hired", "late_hired", "dry_hired", "no_loft", "lofted", "late_lofted", "dry_lofted", "no_gate", "gated", "late_gated", "dry_gated", "no_wage", "paid", "late_paid", "dry_paid", "no_relief", "posted", "late_posted", "dry_posted", "no_watch", "stood", "late_stood", "dry_stood", "watch_only", "no_lamp", "lit", "late_lit", "dry_lit", "lamp_only", "no_bell", "rung", "late_rung", "dry_rung", "bell_only", "no_horn", "sounded", "late_sounded", "dry_sounded", "horn_only", "no_flag", "raised", "late_raised", "dry_raised", "flag_only", "no_banner", "hoisted", "late_hoisted", "dry_hoisted", "banner_only", "no_pennant", "flown", "late_flown", "dry_flown", "pennant_only", "no_standard", "carried", "late_carried", "dry_carried", "standard_only", "no_jack", "shown", "late_shown", "dry_shown", "jack_only", "no_ensign", "broken", "late_broken", "dry_broken", "ensign_only"]:
+	for plan_name in ["winning", "all_rake", "dry_pans", "continued", "late_pans", "no_crib", "carted", "late_crib", "dry_crib", "no_ship", "shipped", "late_ship", "dry_ship", "no_stall", "sold", "late_sold", "dry_sold", "no_yard", "banked", "late_banked", "dry_banked", "no_bunk", "hired", "late_hired", "dry_hired", "no_loft", "lofted", "late_lofted", "dry_lofted", "no_gate", "gated", "late_gated", "dry_gated", "no_wage", "paid", "late_paid", "dry_paid", "no_relief", "posted", "late_posted", "dry_posted", "no_watch", "stood", "late_stood", "dry_stood", "watch_only", "no_lamp", "lit", "late_lit", "dry_lit", "lamp_only", "no_bell", "rung", "late_rung", "dry_rung", "bell_only", "no_horn", "sounded", "late_sounded", "dry_sounded", "horn_only", "no_flag", "raised", "late_raised", "dry_raised", "flag_only", "no_banner", "hoisted", "late_hoisted", "dry_hoisted", "banner_only", "no_pennant", "flown", "late_flown", "dry_flown", "pennant_only", "no_standard", "carried", "late_carried", "dry_carried", "standard_only", "no_jack", "shown", "late_shown", "dry_shown", "jack_only", "no_ensign", "broken", "late_broken", "dry_broken", "ensign_only", "no_burgee", "struck", "late_struck", "dry_struck", "burgee_only"]:
 		var before := errors.size()
 		var first = _run_plan(plans, plan_name, errors)
 		var second = _run_plan(plans, plan_name, errors)
@@ -185,6 +186,10 @@ func _test_determinism(errors: Array) -> void:
 		if int(first.get_broken()) != int(second.get_broken()) or int(first.get_jack_left()) != int(second.get_jack_left()):
 			_fail(errors, "%s ensign runs differed (%d unbroken %d, and %d unbroken %d)" % [
 				plan_name, first.get_broken(), first.get_jack_left(), second.get_broken(), second.get_jack_left(),
+			])
+		if int(first.get_struck()) != int(second.get_struck()) or int(first.get_ensign_left()) != int(second.get_ensign_left()):
+			_fail(errors, "%s burgee runs differed (%d unstruck %d, and %d unstruck %d)" % [
+				plan_name, first.get_struck(), first.get_ensign_left(), second.get_struck(), second.get_ensign_left(),
 			])
 		if String(first.get_summary()) != String(second.get_summary()):
 			_fail(errors, "%s summaries differed" % plan_name)
@@ -445,6 +450,40 @@ func _test_scene_boots(errors: Array) -> void:
 	node._on_key(KEY_SPACE)
 	if int(node.sim.get_paint(14, -13)) != Sim.JACK:
 		_fail(errors, "the jack cell accepted an ensign")
+	node._on_key(KEY_Q)
+	if not String(node.mode_label.text).contains("Burgee"):
+		_fail(errors, "burgee mark was not named")
+	var burgee_button: Button = null
+	ensign_button = null
+	for entry in node.mode_buttons:
+		if int(entry["mode"]) == Sim.BURGEE:
+			burgee_button = entry["button"]
+		elif int(entry["mode"]) == Sim.ENSIGN:
+			ensign_button = entry["button"]
+	if burgee_button == null or ensign_button == null:
+		_fail(errors, "burgee button is missing beside the ensign")
+	elif not String(burgee_button.text).contains("Burgee") or not String(ensign_button.text).contains("Ensign"):
+		_fail(errors, "burgee button is not labeled beside the ensign")
+	elif burgee_button.get_parent() != ensign_button.get_parent() or burgee_button.get_index() != ensign_button.get_index() + 1:
+		_fail(errors, "burgee button does not sit beside the ensign")
+	else:
+		var burgee_style := burgee_button.get_theme_stylebox("normal") as StyleBoxFlat
+		if burgee_style == null or burgee_style.get_border_width(SIDE_LEFT) != 3 or burgee_style.border_color != Color("f0c14a"):
+			_fail(errors, "selected burgee has no gold outline")
+	node._on_key(KEY_UP)
+	node._on_key(KEY_UP)
+	node._on_key(KEY_SPACE)
+	if int(node.sim.get_paint(14, -15)) != Sim.BURGEE:
+		_fail(errors, "keyboard cursor did not paint a burgee at 14,-15")
+	node._on_key(KEY_P)
+	node._on_key(KEY_SPACE)
+	if int(node.sim.get_paint(14, -15)) != Sim.BURGEE:
+		_fail(errors, "the burgee cell accepted an ensign")
+	node._on_key(KEY_DOWN)
+	node._on_key(KEY_Q)
+	node._on_key(KEY_SPACE)
+	if int(node.sim.get_paint(14, -14)) != Sim.ENSIGN:
+		_fail(errors, "the ensign cell accepted a burgee")
 	var season = node.find_child("SeasonNote", true, false)
 	if season == null or not String(season.text).to_lower().contains("pan"):
 		_fail(errors, "season note does not mention pans")
@@ -527,6 +566,10 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "rules text does not mention the ensign")
 	if rules == null or not String(rules.text).to_lower().contains("break one"):
 		_fail(errors, "rules text does not name the ensign cap of one")
+	if rules == null or not String(rules.text).to_lower().contains("burgee"):
+		_fail(errors, "rules text does not mention the burgee")
+	if rules == null or not String(rules.text).to_lower().contains("strike one"):
+		_fail(errors, "rules text does not name the burgee cap of one")
 	var hint = node.find_child("HintLine", true, false)
 	if hint == null or not String(hint.text).to_lower().contains("watch"):
 		_fail(errors, "hint line does not name the watch")
@@ -554,14 +597,16 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "hint's last line does not name the jack after the standard: %s" % hint_last)
 	if hint_last.find("p ensign") < hint_last.find("o jack") or not hint_last.contains("p ensign"):
 		_fail(errors, "hint's last line does not name the ensign after the jack: %s" % hint_last)
-	if hint != null and (int(hint.position.y) != 1176 or int(hint.size.x) != 748 or not hint.clip_contents):
+	if hint_last.find("q burgee") < hint_last.find("p ensign") or not hint_last.contains("q burgee"):
+		_fail(errors, "hint's last line does not name the burgee after the ensign: %s" % hint_last)
+	if hint != null and (int(hint.position.y) != 1218 or int(hint.size.x) != 748 or not hint.clip_contents):
 		_fail(errors, "hint line left its box (y %s w %s clip %s)" % [hint.position.y, hint.size.x, hint.clip_contents])
 	if hint == null or not String(hint.text).contains("\n"):
 		_fail(errors, "hint line is still one long line")
 	var panel = node.find_child("Panel", true, false)
 	if hint != null and panel != null and hint.position.x + hint.size.x > panel.position.x:
 		_fail(errors, "hint line runs under the side panel")
-	if hint != null and hint.position.y + hint.size.y > 1280.0:
+	if hint != null and hint.position.y + hint.size.y > 1322.0:
 		_fail(errors, "hint line continues past the window")
 	var map_bottom := 58.0 + float(Sim.GRID_H - Sim.GRID_NORTH) * 42.0
 	if hint != null and hint.position.y < map_bottom:
@@ -798,10 +843,23 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "ensign countdown started at %d, expected %d" % [node.sim.get_ticks_until_rain(), Sim.ENSIGN_TICK])
 	elif not String(node.season_label.text).to_lower().contains("ensign"):
 		_fail(errors, "ensign note does not mention the ensign: %s" % node.season_label.text)
+	var spun_burgee := 0
+	while int(node.sim.get_beat()) != Sim.BURGEEING and not node.sim.is_over() and spun_burgee < int(Sim.ENSIGN_TICK) + 2:
+		node.sim.tick()
+		spun_burgee += 1
+	node._refresh()
+	if int(node.sim.get_beat()) != Sim.BURGEEING or node.sim.is_over():
+		_fail(errors, "the scene did not open the burgee beat")
+	elif not String(node.rain_label.text).to_lower().contains("burgee"):
+		_fail(errors, "burgee countdown was not named: %s" % node.rain_label.text)
+	elif int(node.sim.get_ticks_until_rain()) != int(Sim.BURGEE_TICK):
+		_fail(errors, "burgee countdown started at %d, expected %d" % [node.sim.get_ticks_until_rain(), Sim.BURGEE_TICK])
+	elif not String(node.season_label.text).to_lower().contains("burgee"):
+		_fail(errors, "burgee note does not mention the burgee: %s" % node.season_label.text)
 	node._on_key(KEY_R)
-	if int(node.sim.get_paint(9, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 5)) != Sim.EMPTY or int(node.sim.get_paint(7, 4)) != Sim.EMPTY or int(node.sim.get_paint(7, 3)) != Sim.EMPTY or int(node.sim.get_paint(7, 2)) != Sim.EMPTY or int(node.sim.get_paint(7, 1)) != Sim.EMPTY or int(node.sim.get_paint(7, 0)) != Sim.EMPTY or int(node.sim.get_paint(7, -1)) != Sim.EMPTY or int(node.sim.get_paint(7, -2)) != Sim.EMPTY or int(node.sim.get_paint(7, -3)) != Sim.EMPTY or int(node.sim.get_paint(7, -4)) != Sim.EMPTY or int(node.sim.get_paint(7, -5)) != Sim.EMPTY or int(node.sim.get_paint(7, -6)) != Sim.EMPTY or int(node.sim.get_paint(7, -7)) != Sim.EMPTY or int(node.sim.get_paint(14, -11)) != Sim.EMPTY or int(node.sim.get_paint(14, -12)) != Sim.EMPTY or int(node.sim.get_paint(14, -13)) != Sim.EMPTY or int(node.sim.get_paint(14, -14)) != Sim.EMPTY:
+	if int(node.sim.get_paint(9, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 5)) != Sim.EMPTY or int(node.sim.get_paint(7, 4)) != Sim.EMPTY or int(node.sim.get_paint(7, 3)) != Sim.EMPTY or int(node.sim.get_paint(7, 2)) != Sim.EMPTY or int(node.sim.get_paint(7, 1)) != Sim.EMPTY or int(node.sim.get_paint(7, 0)) != Sim.EMPTY or int(node.sim.get_paint(7, -1)) != Sim.EMPTY or int(node.sim.get_paint(7, -2)) != Sim.EMPTY or int(node.sim.get_paint(7, -3)) != Sim.EMPTY or int(node.sim.get_paint(7, -4)) != Sim.EMPTY or int(node.sim.get_paint(7, -5)) != Sim.EMPTY or int(node.sim.get_paint(7, -6)) != Sim.EMPTY or int(node.sim.get_paint(7, -7)) != Sim.EMPTY or int(node.sim.get_paint(14, -11)) != Sim.EMPTY or int(node.sim.get_paint(14, -12)) != Sim.EMPTY or int(node.sim.get_paint(14, -13)) != Sim.EMPTY or int(node.sim.get_paint(14, -14)) != Sim.EMPTY or int(node.sim.get_paint(14, -15)) != Sim.EMPTY:
 		_fail(errors, "restart scenario did not clear the marks")
-	if int(node.sim.get_season()) != Sim.WET or int(node.sim.get_wet_haul()) != 0 or int(node.sim.get_beat()) != Sim.WET or int(node.sim.get_carted()) != 0 or int(node.sim.get_shipped()) != 0 or int(node.sim.get_coins()) != 0 or int(node.sim.get_banked()) != 0 or int(node.sim.get_hired()) != 0 or int(node.sim.get_lofted()) != 0 or int(node.sim.get_gated()) != 0 or int(node.sim.get_paid()) != 0 or int(node.sim.get_posted()) != 0 or int(node.sim.get_stood()) != 0 or int(node.sim.get_lit()) != 0 or int(node.sim.get_rung()) != 0 or int(node.sim.get_sounded()) != 0 or int(node.sim.get_raised()) != 0 or int(node.sim.get_hoisted()) != 0 or int(node.sim.get_flown()) != 0 or int(node.sim.get_carried()) != 0 or int(node.sim.get_shown()) != 0 or int(node.sim.get_broken()) != 0:
+	if int(node.sim.get_season()) != Sim.WET or int(node.sim.get_wet_haul()) != 0 or int(node.sim.get_beat()) != Sim.WET or int(node.sim.get_carted()) != 0 or int(node.sim.get_shipped()) != 0 or int(node.sim.get_coins()) != 0 or int(node.sim.get_banked()) != 0 or int(node.sim.get_hired()) != 0 or int(node.sim.get_lofted()) != 0 or int(node.sim.get_gated()) != 0 or int(node.sim.get_paid()) != 0 or int(node.sim.get_posted()) != 0 or int(node.sim.get_stood()) != 0 or int(node.sim.get_lit()) != 0 or int(node.sim.get_rung()) != 0 or int(node.sim.get_sounded()) != 0 or int(node.sim.get_raised()) != 0 or int(node.sim.get_hoisted()) != 0 or int(node.sim.get_flown()) != 0 or int(node.sim.get_carried()) != 0 or int(node.sim.get_shown()) != 0 or int(node.sim.get_broken()) != 0 or int(node.sim.get_struck()) != 0:
 		_fail(errors, "restart scenario did not return to the wet season")
 	if int(node.sim.get_population()) > Sim.POP_CAP:
 		_fail(errors, "restart left the population over the cap")
@@ -3097,12 +3155,12 @@ func _test_lamp(errors: Array) -> void:
 	])
 
 
-func _assert_chain(sim, errors: Array, label: String, wet: int, stored: int, carted: int, shipped: int, coins: int, hired: int, yard: int, paid: int, posted: int, stood: int, lit: int, rung: int, sounded: int = 0, raised: int = 0, hoisted: int = 0, flown: int = 0, carried: int = 0, shown: int = 0, broken: int = 0) -> void:
+func _assert_chain(sim, errors: Array, label: String, wet: int, stored: int, carted: int, shipped: int, coins: int, hired: int, yard: int, paid: int, posted: int, stood: int, lit: int, rung: int, sounded: int = 0, raised: int = 0, hoisted: int = 0, flown: int = 0, carried: int = 0, shown: int = 0, broken: int = 0, struck: int = 0) -> void:
 	if sim == null:
 		_fail(errors, "%s did not run" % label)
 		return
-	if int(sim.get_wet_haul()) != wet or int(sim.get_stored_salt()) != stored or int(sim.get_carted()) != carted or int(sim.get_shipped()) != shipped or int(sim.get_coins()) != coins or int(sim.get_hired()) != hired or int(sim.get_yard_left()) != yard or int(sim.get_paid()) != paid or int(sim.get_posted()) != posted or int(sim.get_stood()) != stood or int(sim.get_lit()) != lit or int(sim.get_rung()) != rung or int(sim.get_sounded()) != sounded or int(sim.get_raised()) != raised or int(sim.get_hoisted()) != hoisted or int(sim.get_flown()) != flown or int(sim.get_carried()) != carried or int(sim.get_shown()) != shown or int(sim.get_broken()) != broken:
-		_fail(errors, "%s changed (wet %d stored %d carted %d shipped %d coins %d hired %d yard %d paid %d posted %d stood %d lit %d rung %d sounded %d raised %d hoisted %d flown %d carried %d shown %d broken %d)" % [label, sim.get_wet_haul(), sim.get_stored_salt(), sim.get_carted(), sim.get_shipped(), sim.get_coins(), sim.get_hired(), sim.get_yard_left(), sim.get_paid(), sim.get_posted(), sim.get_stood(), sim.get_lit(), sim.get_rung(), sim.get_sounded(), sim.get_raised(), sim.get_hoisted(), sim.get_flown(), sim.get_carried(), sim.get_shown(), sim.get_broken()])
+	if int(sim.get_wet_haul()) != wet or int(sim.get_stored_salt()) != stored or int(sim.get_carted()) != carted or int(sim.get_shipped()) != shipped or int(sim.get_coins()) != coins or int(sim.get_hired()) != hired or int(sim.get_yard_left()) != yard or int(sim.get_paid()) != paid or int(sim.get_posted()) != posted or int(sim.get_stood()) != stood or int(sim.get_lit()) != lit or int(sim.get_rung()) != rung or int(sim.get_sounded()) != sounded or int(sim.get_raised()) != raised or int(sim.get_hoisted()) != hoisted or int(sim.get_flown()) != flown or int(sim.get_carried()) != carried or int(sim.get_shown()) != shown or int(sim.get_broken()) != broken or int(sim.get_struck()) != struck:
+		_fail(errors, "%s changed (wet %d stored %d carted %d shipped %d coins %d hired %d yard %d paid %d posted %d stood %d lit %d rung %d sounded %d raised %d hoisted %d flown %d carried %d shown %d broken %d struck %d)" % [label, sim.get_wet_haul(), sim.get_stored_salt(), sim.get_carted(), sim.get_shipped(), sim.get_coins(), sim.get_hired(), sim.get_yard_left(), sim.get_paid(), sim.get_posted(), sim.get_stood(), sim.get_lit(), sim.get_rung(), sim.get_sounded(), sim.get_raised(), sim.get_hoisted(), sim.get_flown(), sim.get_carried(), sim.get_shown(), sim.get_broken(), sim.get_struck()])
 
 
 func _test_bell(errors: Array) -> void:
@@ -4721,7 +4779,7 @@ func _test_ensign(errors: Array) -> void:
 		_fail(errors, "ensign beat length %s is not 100 ticks (10 seconds)" % Sim.ENSIGN_TICK)
 	if int(Sim.ENSIGN_CAP) != 1:
 		_fail(errors, "ensign cap is %s, expected 1" % Sim.ENSIGN_CAP)
-	if int(Sim.GRID_NORTH) != -14:
+	if int(Sim.GRID_NORTH) > -14:
 		_fail(errors, "the map was not extended to the ensign row (north %s)" % Sim.GRID_NORTH)
 	if int(Sim.ENSIGN_CELL.x) != 14 or int(Sim.ENSIGN_CELL.y) != -14:
 		_fail(errors, "the ensign cell is not at 14,-14")
@@ -4896,14 +4954,16 @@ func _test_ensign(errors: Array) -> void:
 	if not saw_cap:
 		_fail(errors, "the ensign did not stop at %d while ticks remained (broken %d jack %d shown %d ticks %d)" % [Sim.ENSIGN_CAP, shore.get_broken(), shore.get_jack_left(), shore.get_shown(), shore.get_ticks_until_rain()])
 	var end_guard := 0
-	while not shore.is_over() and end_guard < int(Sim.ENSIGN_TICK) + 2:
+	while int(shore.get_beat()) == Sim.ENSIGNING and not shore.is_over() and end_guard < int(Sim.ENSIGN_TICK) + 2:
 		shore.tick()
 		end_guard += 1
 		if int(shore.get_broken()) != 1 or int(shore.get_jack_left()) != 0 or int(shore.get_shown()) != 1:
 			_fail(errors, "the ensign broke again after the cap (broken %d jack %d shown %d)" % [shore.get_broken(), shore.get_jack_left(), shore.get_shown()])
 			break
-	if not shore.is_over():
-		_fail(errors, "the ensign beat did not end the scenario")
+	if shore.is_over() or int(shore.get_beat()) != Sim.BURGEEING:
+		_fail(errors, "the ensign beat ended the scenario instead of opening the burgee")
+	elif int(shore.get_broken()) != 1 or int(shore.get_struck()) != 0 or int(shore.get_ensign_left()) != 1:
+		_fail(errors, "the ensign beat changed its break count when the burgee opened (broken %d struck %d ensign %d)" % [shore.get_broken(), shore.get_struck(), shore.get_ensign_left()])
 	var short = _prepare_plan(plans, "dry_broken", errors)
 	if short == null:
 		return
@@ -4932,6 +4992,238 @@ func _test_ensign(errors: Array) -> void:
 		_fail(errors, "dry ensign did not stop at 1 with the jack clear (broken %d jack %d shown %d yard %d ticks %d)" % [short.get_broken(), short.get_jack_left(), short.get_shown(), short.get_yard_left(), short.get_ticks_until_rain()])
 	print("broken %d left jack %d unshown %d uncarried %d unflown %d unhoisted %d unraised %d unsounded %d unrung %d unlit %d unstood %d unposted %d unpaid %d; dry broken %d left jack %d unshown %d uncarried %d unflown %d unhoisted %d unraised %d unsounded %d unrung %d unlit %d unstood %d unposted %d unpaid %d; no ensign broken %d left jack %d; ensign without jack broken %d" % [broken.get_broken(), broken.get_jack_left(), broken_unshown, broken_uncarried, broken_unflown, broken_unhoisted, broken_unraised, broken.get_bell_left(), broken_unrung, broken_unlit, broken_unstood, broken_unposted, broken_unpaid, dry_broken.get_broken(), dry_broken.get_jack_left(), dry_unshown, dry_uncarried, dry_unflown, dry_unhoisted, dry_unraised, dry_broken.get_bell_left(), dry_unrung, dry_unlit, dry_unstood, dry_unposted, dry_unpaid, no_ensign.get_broken(), no_ensign.get_jack_left(), bare.get_broken()])
 
+
+func _test_burgee(errors: Array) -> void:
+	if int(Sim.BURGEE_TICK) != 100 or int(Sim.BURGEE_TICK) != int(Sim.TICK_HZ) * 10:
+		_fail(errors, "burgee beat length %s is not 100 ticks (10 seconds)" % Sim.BURGEE_TICK)
+	if int(Sim.BURGEE_CAP) != 1:
+		_fail(errors, "burgee cap is %s, expected 1" % Sim.BURGEE_CAP)
+	if int(Sim.ENSIGN_CAP) != 1:
+		_fail(errors, "ensign cap changed to %s" % Sim.ENSIGN_CAP)
+	if int(Sim.GRID_NORTH) != -15:
+		_fail(errors, "the map was not extended to the burgee row (north %s)" % Sim.GRID_NORTH)
+	if int(Sim.BURGEE_CELL.x) != 14 or int(Sim.BURGEE_CELL.y) != -15:
+		_fail(errors, "the burgee cell is not at 14,-15")
+	if int(Sim.ENSIGN_CELL.x) != 14 or int(Sim.ENSIGN_CELL.y) != -14:
+		_fail(errors, "the ensign moved off 14,-14")
+	if int(Sim.JACK_CELL.x) != 14 or int(Sim.JACK_CELL.y) != -13:
+		_fail(errors, "the jack moved off 14,-13")
+	if int(Sim.STANDARD_CELL.x) != 14 or int(Sim.STANDARD_CELL.y) != -12:
+		_fail(errors, "the standard moved off 14,-12")
+	if int(Sim.PENNANT_CELL.x) != 14 or int(Sim.PENNANT_CELL.y) != -11:
+		_fail(errors, "the pennant moved off 14,-11")
+	var fresh = Sim.new()
+	if fresh.paint_cell(14, -15, Sim.BURGEE) == false or int(fresh.get_paint(14, -15)) != Sim.BURGEE:
+		_fail(errors, "the cell north of the ensign rejected the burgee mark")
+	if fresh.paint_cell(14, -14, Sim.BURGEE):
+		_fail(errors, "the ensign cell accepted a burgee")
+	if int(fresh.get_paint(14, -14)) != Sim.EMPTY:
+		_fail(errors, "a rejected burgee painted the ensign cell")
+	if fresh.paint_cell(14, -15, Sim.ENSIGN):
+		_fail(errors, "the burgee cell accepted an ensign")
+	if int(fresh.get_paint(14, -15)) != Sim.BURGEE:
+		_fail(errors, "a rejected ensign erased the burgee")
+	if fresh.paint_cell(14, -14, Sim.ENSIGN) == false or int(fresh.get_paint(14, -14)) != Sim.ENSIGN:
+		_fail(errors, "the ensign cell no longer accepts an ensign")
+	if fresh.paint_cell(14, -13, Sim.JACK) == false or int(fresh.get_paint(14, -13)) != Sim.JACK:
+		_fail(errors, "the jack cell no longer accepts a jack")
+	if fresh.paint_cell(14, -12, Sim.STANDARD) == false or int(fresh.get_paint(14, -12)) != Sim.STANDARD:
+		_fail(errors, "the standard cell no longer accepts a standard")
+	if fresh.paint_cell(14, -11, Sim.PENNANT) == false or int(fresh.get_paint(14, -11)) != Sim.PENNANT:
+		_fail(errors, "the pennant cell no longer accepts a pennant")
+	if fresh.paint_cell(14, -10, Sim.BANNER) == false or int(fresh.get_paint(14, -10)) != Sim.BANNER:
+		_fail(errors, "the banner cell no longer accepts a banner")
+	if fresh.paint_cell(14, -9, Sim.FLAG) == false or int(fresh.get_paint(14, -9)) != Sim.FLAG:
+		_fail(errors, "the flag cell no longer accepts a flag")
+	if fresh.paint_cell(14, -16, Sim.BURGEE) or fresh.paint_cell(13, -15, Sim.BURGEE) or fresh.paint_cell(15, -15, Sim.BURGEE) or fresh.paint_cell(14, -14, Sim.BURGEE) or fresh.paint_cell(14, -13, Sim.BURGEE):
+		_fail(errors, "a cell other than 14,-15 accepted a burgee")
+	if int(fresh.get_paint(14, -14)) != Sim.ENSIGN:
+		_fail(errors, "a rejected burgee erased the ensign")
+	if fresh.paint_cell(Sim.COAST_X, -15, Sim.BURGEE):
+		_fail(errors, "the brine accepted a burgee")
+	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.BURGEE):
+		_fail(errors, "the anthill accepted a burgee")
+	var plans := _plans(errors)
+	if plans.is_empty():
+		return
+	var won = _run_plan(plans, "winning", errors)
+	var dry = _run_plan(plans, "dry_pans", errors)
+	var broken = _run_plan(plans, "broken", errors)
+	var no_burgee = _run_plan(plans, "no_burgee", errors)
+	var bare = _run_plan(plans, "burgee_only", errors)
+	var shown = _run_plan(plans, "no_ensign", errors)
+	var struck = _run_plan(plans, "struck", errors)
+	var struck_again = _run_plan(plans, "struck", errors)
+	var late = _run_plan(plans, "late_struck", errors)
+	var dry_struck = _run_plan(plans, "dry_struck", errors)
+	if won == null or dry == null or broken == null or no_burgee == null or bare == null or shown == null or struck == null or struck_again == null or late == null or dry_struck == null:
+		return
+	if int(won.get_struck()) != 0 or int(dry.get_struck()) != 0 or int(broken.get_struck()) != 0:
+		_fail(errors, "a plan with no burgee struck someone (winning %d dry %d broken %d)" % [won.get_struck(), dry.get_struck(), broken.get_struck()])
+	if String(broken.get_summary()) != String(no_burgee.get_summary()):
+		_fail(errors, "an ensign with no burgee changed the broken summary: %s" % no_burgee.get_summary())
+	if String(no_burgee.get_summary()).to_lower().contains("struck") or String(no_burgee.get_summary()).to_lower().contains("burgee"):
+		_fail(errors, "an ensign with no burgee names a burgee: %s" % no_burgee.get_summary())
+	var no_unpaid := int(no_burgee.get_hired()) - int(no_burgee.get_paid())
+	var no_unposted := int(no_burgee.get_paid()) - int(no_burgee.get_posted())
+	var no_unstood := int(no_burgee.get_posted()) - int(no_burgee.get_stood())
+	var no_unlit := int(no_burgee.get_stood()) - int(no_burgee.get_lit())
+	var no_unrung := int(no_burgee.get_lit()) - int(no_burgee.get_rung())
+	if int(no_burgee.get_struck()) != 0 or int(no_burgee.get_ensign_left()) != 1 or int(no_burgee.get_broken()) != 1 or int(no_burgee.get_jack_left()) != 0 or int(no_burgee.get_shown()) != 1 or int(no_burgee.get_standard_left()) != 0 or int(no_burgee.get_carried()) != 1 or int(no_burgee.get_pennant_left()) != 0 or int(no_burgee.get_flown()) != 1 or int(no_burgee.get_banner_left()) != 0 or int(no_burgee.get_hoisted()) != 1 or int(no_burgee.get_flag_left()) != 0 or int(no_burgee.get_raised()) != 1 or int(no_burgee.get_horn_left()) != 0 or int(no_burgee.get_sounded()) != 1 or int(no_burgee.get_bell_left()) != 1 or no_unrung != 1 or no_unlit != 1 or no_unstood != 2 or no_unposted != 4 or no_unpaid != 19 or int(no_burgee.get_yard_left()) != 57 or int(no_burgee.get_coins()) != 2997 or int(no_burgee.get_hired()) != 29 or int(no_burgee.get_stored_salt()) != 2997:
+		_fail(errors, "an ensign with no burgee struck someone (struck %d ensign %d broken %d jack %d shown %d unpaid %d)" % [no_burgee.get_struck(), no_burgee.get_ensign_left(), no_burgee.get_broken(), no_burgee.get_jack_left(), no_burgee.get_shown(), no_unpaid])
+	var kept_ensign = plans["no_burgee"]["ensign"][0]
+	var kept_salt: Dictionary = no_burgee.get_cell_salt(int(kept_ensign[0]), int(kept_ensign[1]))
+	var kept_north: Dictionary = no_burgee.get_cell_salt(int(kept_ensign[0]), int(kept_ensign[1]) - 1)
+	if int(kept_salt.get("ensign", 0)) != 1 or int(kept_north.get("burgee", 0)) != 0 or int(kept_salt.get("burgee", 0)) != 0:
+		_fail(errors, "an ensign with no burgee left %s on the ensign and %s on a burgee" % [kept_salt.get("ensign", 0), kept_north.get("burgee", 0)])
+	if String(bare.get_summary()) != String(shown.get_summary()):
+		_fail(errors, "a burgee with no ensign changed the shown summary: %s" % bare.get_summary())
+	if String(bare.get_summary()).to_lower().contains("struck") or String(bare.get_summary()).to_lower().contains("burgee") or String(bare.get_summary()).to_lower().contains("broke") or String(bare.get_summary()).to_lower().contains("ensign"):
+		_fail(errors, "a burgee with no ensign names a burgee: %s" % bare.get_summary())
+	if int(bare.get_struck()) != 0 or int(bare.get_broken()) != 0 or int(bare.get_ensign_left()) != 0 or int(bare.get_shown()) != 1 or int(bare.get_jack_left()) != 1 or int(bare.get_carried()) != 1 or int(bare.get_standard_left()) != 0 or int(bare.get_yard_left()) != 57 or int(bare.get_coins()) != 2997 or int(bare.get_hired()) != 29:
+		_fail(errors, "a burgee with no ensign struck someone (struck %d broken %d shown %d jack %d)" % [bare.get_struck(), bare.get_broken(), bare.get_shown(), bare.get_jack_left()])
+	var bare_burgee = plans["burgee_only"]["burgee"][0]
+	var bare_jack = plans["burgee_only"]["jack"][0]
+	var bare_burgee_salt: Dictionary = bare.get_cell_salt(int(bare_burgee[0]), int(bare_burgee[1]))
+	var bare_jack_salt: Dictionary = bare.get_cell_salt(int(bare_jack[0]), int(bare_jack[1]))
+	if int(bare_burgee_salt.get("burgee", 0)) != 0 or int(bare_jack_salt.get("jack", 0)) != 1 or int(bare_burgee_salt.get("ensign", 0)) != 0:
+		_fail(errors, "burgee without an ensign holds %s, jack holds %s" % [bare_burgee_salt.get("burgee", 0), bare_jack_salt.get("jack", 0)])
+	var burgee_cell = plans["struck"]["burgee"][0]
+	var ensign_cell = plans["struck"]["ensign"][0]
+	var jack_cell = plans["struck"]["jack"][0]
+	var standard_cell = plans["struck"]["standard"][0]
+	var pennant_cell = plans["struck"]["pennant"][0]
+	var banner_cell = plans["struck"]["banner"][0]
+	var flag_cell = plans["struck"]["flag"][0]
+	if int(burgee_cell[0]) != int(ensign_cell[0]) or int(burgee_cell[1]) != int(ensign_cell[1]) - 1:
+		_fail(errors, "struck plan's burgee is not one cell north of the ensign")
+	if int(burgee_cell[0]) != 14 or int(burgee_cell[1]) != -15 or int(ensign_cell[0]) != 14 or int(ensign_cell[1]) != -14 or int(jack_cell[0]) != 14 or int(jack_cell[1]) != -13 or int(standard_cell[0]) != 14 or int(standard_cell[1]) != -12 or int(pennant_cell[0]) != 14 or int(pennant_cell[1]) != -11 or int(banner_cell[0]) != 14 or int(banner_cell[1]) != -10 or int(flag_cell[0]) != 14 or int(flag_cell[1]) != -9:
+		_fail(errors, "struck plan moved the burgee, the ensign, the jack, the standard, the pennant, the banner, or the flag")
+	_assert_chain(struck, errors, "struck plan", 2997, 2997, 2997, 2997, 2997, 29, 57, 10, 6, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1)
+	var struck_unpaid := int(struck.get_hired()) - int(struck.get_paid())
+	var struck_unposted := int(struck.get_paid()) - int(struck.get_posted())
+	var struck_unstood := int(struck.get_posted()) - int(struck.get_stood())
+	var struck_unlit := int(struck.get_stood()) - int(struck.get_lit())
+	var struck_unrung := int(struck.get_lit()) - int(struck.get_rung())
+	var struck_unraised := int(struck.get_sounded()) - int(struck.get_raised())
+	var struck_unhoisted := int(struck.get_raised()) - int(struck.get_hoisted())
+	var struck_unflown := int(struck.get_hoisted()) - int(struck.get_flown())
+	var struck_uncarried := int(struck.get_flown()) - int(struck.get_carried())
+	var struck_unshown := int(struck.get_carried()) - int(struck.get_shown())
+	var struck_unbroken := int(struck.get_shown()) - int(struck.get_broken())
+	var struck_unstruck := int(struck.get_broken()) - int(struck.get_struck())
+	if int(struck.get_struck()) != 1 or int(struck.get_ensign_left()) != 0 or struck_unstruck != 0 or int(struck.get_broken()) != 1 or int(struck.get_jack_left()) != 0 or struck_unbroken != 0 or int(struck.get_shown()) != 1 or int(struck.get_standard_left()) != 0 or struck_unshown != 0 or int(struck.get_carried()) != 1 or struck_uncarried != 0 or int(struck.get_pennant_left()) != 0 or struck_unflown != 0 or struck_unhoisted != 0 or struck_unraised != 0 or int(struck.get_horn_left()) != 0 or int(struck.get_bell_left()) != 1 or struck_unrung != 1 or struck_unlit != 1 or struck_unstood != 2 or struck_unposted != 4 or struck_unpaid != 19 or int(struck.get_lamp_left()) != 1 or int(struck.get_watch_left()) != 1 or int(struck.get_relief_left()) != 2 or int(struck.get_wage_left()) != 4 or int(struck.get_loft_left()) != 19 or int(struck.get_gate_left()) != 0 or int(struck.get_yard_left()) != 57 or int(struck.get_flown()) != 1 or int(struck.get_hoisted()) != 1 or int(struck.get_raised()) != 1 or int(struck.get_sounded()) != 1 or int(struck.get_rung()) != 2 or int(struck.get_lit()) != 3 or int(struck.get_stood()) != 4 or int(struck.get_posted()) != 6 or int(struck.get_coins()) != 2997 or int(struck.get_hired()) != 29 or int(struck.get_stored_salt()) != 2997 or int(struck.get_carted()) != 2997 or int(struck.get_shipped()) != 2997:
+		_fail(errors, "struck %d, left %d broken unstruck, shown unbroken %d, carried unshown %d, flown uncarried %d, hoisted unflown %d, raised unhoisted %d, sounded unraised %d, rung unsounded %d, lit unrung %d, stood unlit %d, posted unstood %d, paid unposted %d, unpaid %d, ensign %d, yard %d, broken %d, shown %d, carried %d, flown %d, hoisted %d, raised %d, sounded %d, rung %d, lit %d, stood %d, posted %d, coins %d, hired %d" % [struck.get_struck(), struck.get_ensign_left(), struck_unbroken, struck_uncarried, struck_unflown, struck_unhoisted, struck_unraised, struck.get_bell_left(), struck_unrung, struck_unlit, struck_unstood, struck_unposted, struck_unpaid, struck.get_ensign_left(), struck.get_yard_left(), struck.get_broken(), struck.get_shown(), struck.get_carried(), struck.get_flown(), struck.get_hoisted(), struck.get_raised(), struck.get_sounded(), struck.get_rung(), struck.get_lit(), struck.get_stood(), struck.get_posted(), struck.get_coins(), struck.get_hired()])
+	if int(struck.get_struck()) > int(Sim.BURGEE_CAP):
+		_fail(errors, "burgee struck %d, over the cap of %d" % [struck.get_struck(), Sim.BURGEE_CAP])
+	var burgee_salt: Dictionary = struck.get_cell_salt(int(burgee_cell[0]), int(burgee_cell[1]))
+	var ensign_salt: Dictionary = struck.get_cell_salt(int(ensign_cell[0]), int(ensign_cell[1]))
+	var jack_salt: Dictionary = struck.get_cell_salt(int(jack_cell[0]), int(jack_cell[1]))
+	if int(burgee_salt.get("burgee", 0)) != 1 or int(ensign_salt.get("ensign", 0)) != 0 or int(jack_salt.get("jack", 0)) != 0 or int(burgee_salt.get("ensign", 0)) != 0:
+		_fail(errors, "burgee cell holds %s, ensign holds %s, jack holds %s" % [burgee_salt.get("burgee", 0), ensign_salt.get("ensign", 0), jack_salt.get("jack", 0)])
+	var struck_summary := String(struck.get_summary())
+	if not struck_summary.contains("Struck 1 on the burgee") or not struck_summary.contains("Left 0 at the ensign") or not struck_summary.contains("Broke 1 on the ensign") or not struck_summary.contains("Left 0 at the jack") or not struck_summary.contains("Coins 2997") or not struck_summary.contains("Hired 29") or not struck_summary.contains("Left 57"):
+		_fail(errors, "struck summary does not name the burgee: %s" % struck_summary)
+	if int(struck_again.get_struck()) != int(struck.get_struck()) or int(struck_again.get_ensign_left()) != int(struck.get_ensign_left()) or int(struck_again.get_broken()) != int(struck.get_broken()) or int(struck_again.get_yard_left()) != int(struck.get_yard_left()) or int(struck_again.get_stored_salt()) != int(struck.get_stored_salt()) or String(struck_again.get_summary()) != String(struck.get_summary()):
+		_fail(errors, "repeated burgee paint struck %d and left ensign %d, then struck %d and left ensign %d" % [struck.get_struck(), struck.get_ensign_left(), struck_again.get_struck(), struck_again.get_ensign_left()])
+	if int(late.get_struck()) != 1 or int(late.get_ensign_left()) != 0 or int(late.get_broken()) != 1 or int(late.get_shown()) != 1 or int(late.get_carried()) != 1 or int(late.get_flown()) != 1 or int(late.get_hoisted()) != 1 or int(late.get_raised()) != 1 or int(late.get_sounded()) != 1 or int(late.get_rung()) != 2 or int(late.get_lit()) != 3 or int(late.get_stood()) != 4 or int(late.get_posted()) != 6 or int(late.get_yard_left()) != 57 or int(late.get_hired()) != 29 or int(late.get_coins()) != 2997 or int(late.get_stored_salt()) != 2997 or int(late.get_loft_left()) != 19 or int(late.get_wage_left()) != 4:
+		_fail(errors, "painting the burgee at the burgee beat (struck %d ensign %d broken %d yard %d) did not match painting it early (struck %d ensign %d broken %d)" % [late.get_struck(), late.get_ensign_left(), late.get_broken(), late.get_yard_left(), struck.get_struck(), struck.get_ensign_left(), struck.get_broken()])
+	_assert_chain(dry_struck, errors, "dry burgee", 0, 1032, 1032, 1032, 1032, 10, 0, 8, 6, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1)
+	var dry_unpaid := int(dry_struck.get_hired()) - int(dry_struck.get_paid())
+	var dry_unposted := int(dry_struck.get_paid()) - int(dry_struck.get_posted())
+	var dry_unstood := int(dry_struck.get_posted()) - int(dry_struck.get_stood())
+	var dry_unlit := int(dry_struck.get_stood()) - int(dry_struck.get_lit())
+	var dry_unrung := int(dry_struck.get_lit()) - int(dry_struck.get_rung())
+	var dry_unraised := int(dry_struck.get_sounded()) - int(dry_struck.get_raised())
+	var dry_unhoisted := int(dry_struck.get_raised()) - int(dry_struck.get_hoisted())
+	var dry_unflown := int(dry_struck.get_hoisted()) - int(dry_struck.get_flown())
+	var dry_uncarried := int(dry_struck.get_flown()) - int(dry_struck.get_carried())
+	var dry_unshown := int(dry_struck.get_carried()) - int(dry_struck.get_shown())
+	var dry_unbroken := int(dry_struck.get_shown()) - int(dry_struck.get_broken())
+	var dry_unstruck := int(dry_struck.get_broken()) - int(dry_struck.get_struck())
+	if int(dry_struck.get_struck()) != 1 or int(dry_struck.get_ensign_left()) != 0 or dry_unstruck != 0 or int(dry_struck.get_broken()) != 1 or int(dry_struck.get_jack_left()) != 0 or dry_unbroken != 0 or int(dry_struck.get_shown()) != 1 or int(dry_struck.get_standard_left()) != 0 or dry_unshown != 0 or int(dry_struck.get_carried()) != 1 or dry_uncarried != 0 or int(dry_struck.get_pennant_left()) != 0 or dry_unflown != 0 or dry_unhoisted != 0 or dry_unraised != 0 or int(dry_struck.get_horn_left()) != 0 or int(dry_struck.get_bell_left()) != 1 or dry_unrung != 1 or dry_unlit != 1 or dry_unstood != 2 or dry_unposted != 2 or dry_unpaid != 2 or int(dry_struck.get_yard_left()) != 0 or int(dry_struck.get_flown()) != 1 or int(dry_struck.get_hoisted()) != 1 or int(dry_struck.get_raised()) != 1 or int(dry_struck.get_sounded()) != 1 or int(dry_struck.get_rung()) != 2 or int(dry_struck.get_lit()) != 3 or int(dry_struck.get_stood()) != 4 or int(dry_struck.get_posted()) != 6 or int(dry_struck.get_wet_haul()) != 0 or int(dry_struck.get_stored_salt()) != 1032 or int(dry_struck.get_gate_left()) != 2 or int(dry_struck.get_wage_left()) != 2 or int(dry_struck.get_loft_left()) != 0:
+		_fail(errors, "dry burgee changed the short crew (wet %d stored %d struck %d ensign %d broken %d jack %d shown %d standard %d carried %d pennant %d flown %d unstruck %d unbroken %d unshown %d uncarried %d unflown %d unhoisted %d unraised %d unsounded %d unrung %d unlit %d unstood %d unposted %d unpaid %d yard %d)" % [dry_struck.get_wet_haul(), dry_struck.get_stored_salt(), dry_struck.get_struck(), dry_struck.get_ensign_left(), dry_struck.get_broken(), dry_struck.get_jack_left(), dry_struck.get_shown(), dry_struck.get_standard_left(), dry_struck.get_carried(), dry_struck.get_pennant_left(), dry_struck.get_flown(), dry_unstruck, dry_unbroken, dry_unshown, dry_uncarried, dry_unflown, dry_unhoisted, dry_unraised, dry_struck.get_bell_left(), dry_unrung, dry_unlit, dry_unstood, dry_unposted, dry_unpaid, dry_struck.get_yard_left()])
+	var dry_burgee_cell = plans["dry_struck"]["burgee"][0]
+	var dry_ensign_cell = plans["dry_struck"]["ensign"][0]
+	var dry_burgee_salt: Dictionary = dry_struck.get_cell_salt(int(dry_burgee_cell[0]), int(dry_burgee_cell[1]))
+	var dry_ensign_salt: Dictionary = dry_struck.get_cell_salt(int(dry_ensign_cell[0]), int(dry_ensign_cell[1]))
+	if int(dry_burgee_salt.get("burgee", 0)) != 1 or int(dry_ensign_salt.get("ensign", 0)) != 0:
+		_fail(errors, "dry burgee cell holds %s, ensign holds %s" % [dry_burgee_salt.get("burgee", 0), dry_ensign_salt.get("ensign", 0)])
+	if not String(dry_struck.get_summary()).contains("Struck 1 on the burgee") or not String(dry_struck.get_summary()).contains("Left 0 at the ensign") or not String(dry_struck.get_summary()).contains("Broke 1 on the ensign") or not String(dry_struck.get_summary()).contains("Left 0 in the yard"):
+		_fail(errors, "dry burgee summary does not name the cap: %s" % dry_struck.get_summary())
+	_assert_pop(struck, errors, "struck plan")
+	_assert_pop(struck_again, errors, "struck plan again")
+	_assert_pop(late, errors, "late_struck")
+	_assert_pop(dry_struck, errors, "dry_struck")
+	_assert_pop(no_burgee, errors, "no_burgee")
+	_assert_pop(bare, errors, "burgee_only")
+	var shore = _prepare_plan(plans, "struck", errors)
+	if shore == null:
+		return
+	var shore_guard := 0
+	var shore_limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + int(Sim.SHIP_TICK) + int(Sim.MARKET_TICK) + int(Sim.YARD_TICK) + int(Sim.BUNK_TICK) + int(Sim.LOFT_TICK) + int(Sim.GATE_TICK) + int(Sim.WAGE_TICK) + int(Sim.RELIEF_TICK) + int(Sim.WATCH_TICK) + int(Sim.LAMP_TICK) + int(Sim.BELL_TICK) + int(Sim.HORN_TICK) + int(Sim.FLAG_TICK) + int(Sim.BANNER_TICK) + int(Sim.PENNANT_TICK) + int(Sim.STANDARD_TICK) + int(Sim.JACK_TICK) + int(Sim.ENSIGN_TICK) + 2
+	while int(shore.get_beat()) != Sim.BURGEEING and not shore.is_over() and shore_guard < shore_limit:
+		shore.tick()
+		shore_guard += 1
+	if int(shore.get_beat()) != Sim.BURGEEING or shore.is_over():
+		_fail(errors, "the ensign beat did not open a burgee beat for the cap check")
+		return
+	if int(shore.get_ticks_until_rain()) != int(Sim.BURGEE_TICK):
+		_fail(errors, "burgee countdown started at %d, expected %d" % [shore.get_ticks_until_rain(), Sim.BURGEE_TICK])
+	if int(shore.get_struck()) != 0 or int(shore.get_broken()) != 1 or int(shore.get_ensign_left()) != 1 or int(shore.get_shown()) != 1 or int(shore.get_jack_left()) != 0 or int(shore.get_carried()) != 1 or int(shore.get_standard_left()) != 0 or int(shore.get_yard_left()) != 57 or int(shore.get_coins()) != 2997 or int(shore.get_stored_salt()) != 2997:
+		_fail(errors, "burgee opened early (struck %d broken %d ensign %d shown %d jack %d carried %d yard %d coins %d stored %d)" % [shore.get_struck(), shore.get_broken(), shore.get_ensign_left(), shore.get_shown(), shore.get_jack_left(), shore.get_carried(), shore.get_yard_left(), shore.get_coins(), shore.get_stored_salt()])
+	var saw_cap := false
+	var strike_guard := 0
+	while not shore.is_over() and strike_guard < int(Sim.BURGEE_TICK) + 2:
+		shore.tick()
+		strike_guard += 1
+		if int(shore.get_struck()) == int(Sim.BURGEE_CAP) and int(shore.get_ensign_left()) == 0 and int(shore.get_broken()) == 1 and int(shore.get_shown()) == 1 and int(shore.get_carried()) == 1 and int(shore.get_flown()) == 1 and int(shore.get_hoisted()) == 1 and int(shore.get_yard_left()) == 57 and int(shore.get_coins()) == 2997 and int(shore.get_hired()) == 29 and int(shore.get_ticks_until_rain()) > 0:
+			saw_cap = true
+			var ticks_left := int(shore.get_ticks_until_rain())
+			shore.tick()
+			if int(shore.get_struck()) != int(Sim.BURGEE_CAP) or int(shore.get_ensign_left()) != 0 or int(shore.get_broken()) != 1 or int(shore.get_shown()) != 1 or int(shore.get_carried()) != 1 or int(shore.get_flown()) != 1 or int(shore.get_hoisted()) != 1 or int(shore.get_raised()) != 1 or int(shore.get_yard_left()) != 57 or int(shore.get_coins()) != 2997 or int(shore.get_hired()) != 29 or int(shore.get_stored_salt()) != 2997 or int(shore.get_posted()) != 6 or int(shore.get_stood()) != 4 or int(shore.get_lit()) != 3 or int(shore.get_rung()) != 2 or int(shore.get_sounded()) != 1:
+				_fail(errors, "the burgee kept striking after the cap (struck %d ensign %d broken %d shown %d carried %d yard %d)" % [shore.get_struck(), shore.get_ensign_left(), shore.get_broken(), shore.get_shown(), shore.get_carried(), shore.get_yard_left()])
+			elif not shore.is_over() and int(shore.get_ticks_until_rain()) >= ticks_left:
+				_fail(errors, "the burgee beat did not spend a tick after the cap")
+			break
+	if not saw_cap:
+		_fail(errors, "the burgee did not stop at %d while ticks remained (struck %d ensign %d broken %d ticks %d)" % [Sim.BURGEE_CAP, shore.get_struck(), shore.get_ensign_left(), shore.get_broken(), shore.get_ticks_until_rain()])
+	var end_guard := 0
+	while not shore.is_over() and end_guard < int(Sim.BURGEE_TICK) + 2:
+		shore.tick()
+		end_guard += 1
+		if int(shore.get_struck()) != 1 or int(shore.get_ensign_left()) != 0 or int(shore.get_broken()) != 1:
+			_fail(errors, "the burgee struck again after the cap (struck %d ensign %d broken %d)" % [shore.get_struck(), shore.get_ensign_left(), shore.get_broken()])
+			break
+	if not shore.is_over():
+		_fail(errors, "the burgee beat did not end the scenario")
+	var short = _prepare_plan(plans, "dry_struck", errors)
+	if short == null:
+		return
+	var short_guard := 0
+	while int(short.get_beat()) != Sim.BURGEEING and not short.is_over() and short_guard < shore_limit:
+		short.tick()
+		short_guard += 1
+	if int(short.get_beat()) != Sim.BURGEEING or short.is_over():
+		_fail(errors, "the ensign beat did not open a burgee beat for the dry cap")
+		return
+	var saw_short := false
+	var short_steps := 0
+	while not short.is_over() and short_steps < int(Sim.BURGEE_TICK) + 2:
+		short.tick()
+		short_steps += 1
+		if int(short.get_struck()) == int(Sim.BURGEE_CAP) and int(short.get_ensign_left()) == 0 and int(short.get_broken()) == 1 and int(short.get_shown()) == 1 and int(short.get_carried()) == 1 and int(short.get_flown()) == 1 and int(short.get_yard_left()) == 0 and int(short.get_wet_haul()) == 0 and int(short.get_ticks_until_rain()) > 0:
+			saw_short = true
+			var short_ticks := int(short.get_ticks_until_rain())
+			short.tick()
+			if int(short.get_struck()) != 1 or int(short.get_ensign_left()) != 0 or int(short.get_broken()) != 1 or int(short.get_shown()) != 1 or int(short.get_carried()) != 1 or int(short.get_flown()) != 1 or int(short.get_yard_left()) != 0 or int(short.get_posted()) != 6 or int(short.get_stored_salt()) != 1032:
+				_fail(errors, "the burgee struck an unbroken hire or passed the cap (struck %d ensign %d broken %d yard %d)" % [short.get_struck(), short.get_ensign_left(), short.get_broken(), short.get_yard_left()])
+			elif not short.is_over() and int(short.get_ticks_until_rain()) >= short_ticks:
+				_fail(errors, "the burgee beat did not spend a tick after the dry cap")
+			break
+	if not saw_short:
+		_fail(errors, "dry burgee did not stop at 1 with the ensign clear (struck %d ensign %d broken %d yard %d ticks %d)" % [short.get_struck(), short.get_ensign_left(), short.get_broken(), short.get_yard_left(), short.get_ticks_until_rain()])
+	print("struck %d left ensign %d unbroken %d unshown %d uncarried %d unflown %d unhoisted %d unraised %d unsounded %d unrung %d unlit %d unstood %d unposted %d unpaid %d; dry struck %d left ensign %d unbroken %d unshown %d uncarried %d unflown %d unhoisted %d unraised %d unsounded %d unrung %d unlit %d unstood %d unposted %d unpaid %d; no burgee struck %d left ensign %d; burgee without ensign struck %d" % [struck.get_struck(), struck.get_ensign_left(), struck_unbroken, struck_unshown, struck_uncarried, struck_unflown, struck_unhoisted, struck_unraised, struck.get_bell_left(), struck_unrung, struck_unlit, struck_unstood, struck_unposted, struck_unpaid, dry_struck.get_struck(), dry_struck.get_ensign_left(), dry_unbroken, dry_unshown, dry_uncarried, dry_unflown, dry_unhoisted, dry_unraised, dry_struck.get_bell_left(), dry_unrung, dry_unlit, dry_unstood, dry_unposted, dry_unpaid, no_burgee.get_struck(), no_burgee.get_ensign_left(), bare.get_struck()])
 
 func _run_plan(plans: Dictionary, plan_name: String, errors: Array):
 	var sim = _prepare_plan(plans, plan_name, errors)
@@ -5293,6 +5585,24 @@ func _run_plan(plans: Dictionary, plan_name: String, errors: Array):
 		_apply_marks(sim, plan["after_jack"], errors)
 		if errors.size() > ensign_before:
 			return null
+	if plan.has("after_ensign"):
+		var burgee_guard := 0
+		var burgee_limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + int(Sim.SHIP_TICK) + int(Sim.MARKET_TICK) + int(Sim.YARD_TICK) + int(Sim.BUNK_TICK) + int(Sim.LOFT_TICK) + int(Sim.GATE_TICK) + int(Sim.WAGE_TICK) + int(Sim.RELIEF_TICK) + int(Sim.WATCH_TICK) + int(Sim.LAMP_TICK) + int(Sim.BELL_TICK) + int(Sim.HORN_TICK) + int(Sim.FLAG_TICK) + int(Sim.BANNER_TICK) + int(Sim.PENNANT_TICK) + int(Sim.STANDARD_TICK) + int(Sim.JACK_TICK) + int(Sim.ENSIGN_TICK) + 2
+		while int(sim.get_beat()) != Sim.BURGEEING and not sim.is_over() and burgee_guard < burgee_limit:
+			sim.tick()
+			burgee_guard += 1
+		if int(sim.get_beat()) != Sim.BURGEEING or sim.is_over():
+			_fail(errors, "%s did not open the burgee beat after the ensign" % plan_name)
+			return null
+		if int(sim.get_ticks_until_rain()) != int(Sim.BURGEE_TICK):
+			_fail(errors, "%s burgee countdown started at %d, expected %d" % [
+				plan_name, sim.get_ticks_until_rain(), Sim.BURGEE_TICK,
+			])
+			return null
+		var burgee_before := errors.size()
+		_apply_marks(sim, plan["after_ensign"], errors)
+		if errors.size() > burgee_before:
+			return null
 	sim.run_until_rain()
 	return sim
 
@@ -5346,6 +5656,8 @@ func _apply_marks(sim, plan: Dictionary, errors: Array) -> void:
 		_apply_cells(sim, plan["jack"], Sim.JACK, errors)
 	if plan.has("ensign"):
 		_apply_cells(sim, plan["ensign"], Sim.ENSIGN, errors)
+	if plan.has("burgee"):
+		_apply_cells(sim, plan["burgee"], Sim.BURGEE, errors)
 	if plan.has("rake_rect"):
 		_apply_rect(sim, plan["rake_rect"], Sim.RAKE, errors)
 

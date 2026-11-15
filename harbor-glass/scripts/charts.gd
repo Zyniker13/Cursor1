@@ -8,7 +8,8 @@ class_name ChartBook
 # The Stain holds eight more. The Vane holds eight more.
 # The Well holds eight more. The Siphon holds eight more.
 # The Sluice holds eight more. The Weir holds eight more.
-# The Lintel holds eight more. The Mullion holds the last eight.
+# The Lintel holds eight more. The Mullion holds eight more.
+# The Transom holds eight more. The Casement holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
@@ -24,6 +25,15 @@ class_name ChartBook
 # north-south beam passes straight through in the same direction and the same
 # color, and that pass costs no bounce. An east-west beam stops and does not
 # enter. While that row is flooded, every beam stops at the waterline.
+# A transom has no facing. Rotation is ignored. While its row is dry, an
+# east-west beam passes straight through in the same direction and the same
+# color, and that pass costs no bounce. A north-south beam stops and does not
+# enter. While that row is flooded, every beam stops at the waterline.
+# A casement has a facing. Rotation changes it. While its row is dry, only a
+# beam already traveling that way passes straight through in the same
+# direction and the same color, and that pass costs no bounce. Every other
+# direction stops and does not enter. While that row is flooded, every beam
+# stops at the waterline.
 # See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
@@ -46,6 +56,8 @@ const SLUICE := "The Sluice"
 const WEIR := "The Weir"
 const LINTEL := "The Lintel"
 const MULLION := "The Mullion"
+const TRANSOM := "The Transom"
+const CASEMENT := "The Casement"
 
 static func all() -> Array:
 	var book: Array = []
@@ -65,6 +77,8 @@ static func all() -> Array:
 	book.append_array(weir())
 	book.append_array(lintel())
 	book.append_array(mullion())
+	book.append_array(transom())
+	book.append_array(casement())
 	return book
 
 
@@ -130,6 +144,14 @@ static func lintel() -> Array:
 
 static func mullion() -> Array:
 	return [chart_119(), chart_120(), chart_121(), chart_122(), chart_123(), chart_124(), chart_125(), chart_126()]
+
+
+static func transom() -> Array:
+	return [chart_127(), chart_128(), chart_129(), chart_130(), chart_131(), chart_132(), chart_133(), chart_134()]
+
+
+static func casement() -> Array:
+	return [chart_135(), chart_136(), chart_137(), chart_138(), chart_139(), chart_140(), chart_141(), chart_142()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -4639,6 +4661,594 @@ static func chart_126() -> Dictionary:
 	}
 
 
+static func chart_127() -> Dictionary:
+	# Tide index 0, flood 0. White travels west through the dry transom.
+	# Blue travels south and stops on the edge. The dock catches only white,
+	# so a vane that turns blue west runs on into the hull.
+	return {
+		"id": "127",
+		"harbor": TRANSOM,
+		"title": "The Dry Transom",
+		"teach": "Tide index 0, flood 0. An east-west beam passes straight through the dry transom onto its dock, and a north-south beam stops. White stays white and blue stays blue. A mullion lets the north-south beam through and misses. A lintel does too. A shutter, weir, sluice, well, siphon, stain, mirror, or vane in that cell also misses.",
+		"win": "The dry transom passes white west and stops blue.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("W", 6, 3, "W", "white"),
+			_lantern("B", 4, 0, "S", "blue"),
+			_lantern("T", 0, 0, "S", "white"),
+		],
+		"docks": [_dock("Wd", 2, 3, "white", true)],
+		"boats": [
+			_boat("Hs", 4, 6),
+			_boat("Ht", 5, 2),
+			_boat("Hb", 0, 3),
+		],
+		"fixtures": [],
+		"pieces": [
+			_mirror("M", "Side mirror", 0, 2, 90, 0),
+			_transom("O", "Transom", 4, 3),
+		],
+	}
+
+
+static func chart_128() -> Dictionary:
+	# Rows 7, flood 2, so y >= 5 is under water. The transom is on the bottom
+	# row. The low beam arrives from the west, traveling east, and stops.
+	# The high lamp lights the dock without entering the transom.
+	return {
+		"id": "128",
+		"harbor": TRANSOM,
+		"title": "The Wet Stop",
+		"teach": "The transom's row is flooded. The east-west beam stops there and does not enter. The dock that must light is reached without entering that cell. A shutter in that cell passes and the chart fails. A flooded mullion, lintel, vane, or mirror still stops at the waterline and still clears. A well, a siphon, or a weir or sluice facing north, south, or west retraces into the lamp, leaves the board, or stops in empty water, and still clears.",
+		"win": "The dock is lit, and the flooded transom holds the eastbound beam.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [2],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("H", 0, 1, "E", "white"),
+			_lantern("L", 0, 4, "S", "white"),
+		],
+		"docks": [_dock("W", 4, 0, "white")],
+		"boats": [_boat("He", 4, 4)],
+		"fixtures": [
+			_fixture("G0", "shutter", 0, 5, 0),
+			_fixture("T0", "tide_mirror", 0, 6, 90),
+			_fixture("G1", "shutter", 1, 6, 0),
+			_fixture("G2", "shutter", 2, 6, 0),
+			_fixture("Te", "tide_mirror", 4, 6, 0),
+			_fixture("Gs", "shutter", 4, 5, 0),
+		],
+		"pieces": [
+			_mirror("M", "Dock mirror", 4, 1, 90, 0),
+			_transom("O", "Transom", 3, 6),
+		],
+	}
+
+
+static func chart_129() -> Dictionary:
+	# White travels west and blue travels east through one dry transom.
+	# Each dock keeps its own color and lets the other color through, so the
+	# two beams can cross. Red travels south and stops.
+	return {
+		"id": "129",
+		"harbor": TRANSOM,
+		"title": "Color Kept",
+		"teach": "The dry transom keeps red, blue, and white. The east-west beams pass straight onto their docks. The north-south beam stops. A stain changes the color and misses. A mullion and a lintel let the north-south beam through and miss. Each dock holds its own color and lets the other color through.",
+		"win": "White and blue come through unchanged, and red stops.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("W", 6, 3, "W", "white"),
+			_lantern("B", 0, 3, "E", "blue"),
+			_lantern("R", 3, 0, "S", "red"),
+			_lantern("T", 4, 0, "S", "white"),
+		],
+		"docks": [
+			_dock("Bd", 5, 3, "blue", true),
+			_dock("Wd", 1, 3, "white", true),
+		],
+		"boats": [
+			_boat("Hs", 3, 6),
+			_boat("Ht", 6, 5),
+		],
+		"fixtures": [],
+		"pieces": [
+			_mirror("M", "Side mirror", 4, 5, 90, 0),
+			_transom("O", "Transom", 3, 3),
+		],
+	}
+
+
+static func chart_130() -> Dictionary:
+	# White goes straight west. Blue stops instead of turning. A mirror or a
+	# vane swings a beam off the dock that the stop is holding.
+	return {
+		"id": "130",
+		"harbor": TRANSOM,
+		"title": "No Turn",
+		"teach": "The dry transom does not change direction. The east-west beam goes straight. The north-south beam stops instead of turning. A mirror or a vane in that cell turns a beam and misses the dock that depends on the stop. A mullion and a lintel let the north-south beam through and miss.",
+		"win": "White goes straight, and blue stops.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("W", 5, 3, "W", "white"),
+			_lantern("B", 3, 0, "S", "blue"),
+			_lantern("T", 6, 0, "S", "white"),
+		],
+		"docks": [
+			_dock("Wd", 1, 3, "white", true),
+			_dock("Kd", 3, 6, "dark", false, true),
+		],
+		"boats": [
+			_boat("Hb", 0, 3),
+			_boat("Ht", 0, 5),
+		],
+		"fixtures": [],
+		"pieces": [
+			_mirror("M", "Side mirror", 6, 5, 0, 90),
+			_transom("O", "Transom", 3, 3),
+		],
+	}
+
+
+static func chart_131() -> Dictionary:
+	# Flood 2 covers y >= 4. The transom is on that line. The dock is on a
+	# dry row. The low beam arrives from the west. A shutter would carry it
+	# onto a dry hull.
+	return {
+		"id": "131",
+		"harbor": TRANSOM,
+		"title": "Beside the Flood",
+		"teach": "The flood covers the transom and leaves the dock's row dry. The beam stops at the transom. The dock is lit without entering that cell. A shutter would carry the beam onto a hull on the dry row, and that hull must stay dark. A flooded mullion, lintel, vane, or mirror still stops at the waterline and still clears. A west-facing weir or sluice retraces into the lamp and still clears.",
+		"win": "The high dock is lit, and the flooded transom stops the low beam.",
+		"cols": 7,
+		"rows": 6,
+		"tide_phases": [2],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 1, "E", "white"),
+			_lantern("B", 0, 3, "E", "white"),
+		],
+		"docks": [_dock("W", 5, 0, "white")],
+		"boats": [
+			_boat("He", 4, 3),
+			_boat("Hn", 3, 3),
+			_boat("Hs", 5, 3),
+		],
+		"fixtures": [
+			_fixture("F", "mirror", 1, 3, 90),
+			_fixture("T", "tide_mirror", 1, 4, 90),
+			_fixture("G", "shutter", 2, 4, 0),
+			_fixture("Te", "tide_mirror", 4, 4, 0),
+			_fixture("Ss", "tide_mirror", 3, 5, 90),
+			_fixture("Gs", "shutter", 4, 5, 0),
+			_fixture("S2", "tide_mirror", 5, 5, 0),
+			_fixture("Gn", "shutter", 5, 4, 0),
+		],
+		"pieces": [
+			_mirror("M", "Dock mirror", 5, 1, 90, 0),
+			_transom("O", "Transom", 3, 4),
+		],
+	}
+
+
+static func chart_132() -> Dictionary:
+	# Both transoms are dry and share a row. White passes west through both.
+	# Blue stops on the first transom and red stops on the second.
+	return {
+		"id": "132",
+		"harbor": TRANSOM,
+		"title": "Two Transoms",
+		"teach": "Both transoms are dry. The east-west beam passes straight through both onto the dock. A north-south beam stops at the first transom. A mullion or a lintel in the first cell lets that north-south beam through and the chart fails. A weir in the first cell also fails, because that row is dry.",
+		"win": "White walks through both dry transoms, and the cross beams stop.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("W", 6, 3, "W", "white"),
+			_lantern("B", 4, 0, "S", "blue"),
+			_lantern("R", 2, 0, "S", "red"),
+			_lantern("T", 5, 0, "S", "white"),
+		],
+		"docks": [_dock("Wd", 1, 3, "white", true)],
+		"boats": [
+			_boat("Hs", 4, 6),
+			_boat("Hr", 2, 6),
+			_boat("Hb", 0, 3),
+			_boat("Ht", 6, 5),
+		],
+		"fixtures": [],
+		"pieces": [
+			_mirror("M", "Side mirror", 5, 5, 90, 0),
+			_transom("O1", "First transom", 4, 3),
+			_transom("O2", "Second transom", 2, 3),
+		],
+	}
+
+
+static func chart_133() -> Dictionary:
+	# Rows 7. Index 1 floods y >= 5. The transom is on that line. The lit
+	# dock is on the dry row. A shutter carries the south beam onto the dock
+	# that has to stay dark.
+	return {
+		"id": "133",
+		"harbor": TRANSOM,
+		"title": "The Held Transom",
+		"teach": "The transom's row is flooded. The beam stops. The dock that must stay dark is the one a shutter would light. A shutter fails. A flooded mullion, lintel, vane, or mirror still stops at the waterline and still clears. A well, a siphon, or a weir or sluice facing north, east, or west retraces into the lamp or stops in empty water, and still clears. Tide index 1, flood 2, with the flood line at y >= 5. The dock on the dry row is lit without entering the transom. Index 0 wakes the south hull. Index 2 covers the lit dock.",
+		"win": "The middle mark holds the transom, the lit dock, and the dark dock.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0, 2, 3],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ld", 0, 4, "E", "white"),
+			_lantern("Lt", 3, 3, "S", "white"),
+			_lantern("Lb", 0, 6, "E", "white"),
+			_lantern("Lm", 0, 0, "E", "white"),
+		],
+		"docks": [
+			_dock("W", 4, 4, "white"),
+			_dock("Kd", 5, 4, "dark", false, true),
+		],
+		"boats": [
+			_boat("Hb", 2, 6),
+			_boat("Hm", 2, 1),
+		],
+		"fixtures": [
+			_fixture("T1", "tide_mirror", 3, 6, 90),
+			_fixture("G1", "shutter", 4, 6, 0),
+			_fixture("T2", "tide_mirror", 5, 6, 0),
+			_fixture("G2", "shutter", 5, 5, 0),
+		],
+		"pieces": [
+			_mirror("M", "North mirror", 2, 0, 90, 0),
+			_transom("O", "Transom", 3, 5),
+		],
+	}
+
+
+static func chart_134() -> Dictionary:
+	# The transom and the shutter trade places. On the line, the dry transom
+	# passes west and stops south. The dark dock is the south landing.
+	return {
+		"id": "134",
+		"harbor": TRANSOM,
+		"title": "The Transom Mark",
+		"teach": "One dry transom, two docks. Move the transom from the side socket onto the line, and move the shutter off that line. The solved socket passes the east-west beam onto one dock and stops the north-south beam so the other dock stays dark. The side socket misses both docks. Stacking both pieces on one cell does not clear. A mullion or a lintel in the solved cell lets the north-south beam through and misses.",
+		"win": "The transom stands on the line. One dock is lit and the other stays dark.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("W", 6, 3, "W", "white"),
+			_lantern("B", 3, 0, "S", "blue"),
+		],
+		"docks": [
+			_dock("Wd", 1, 3, "white", true),
+			_dock("Kd", 3, 6, "dark", false, true),
+		],
+		"boats": [_boat("Hb", 0, 3)],
+		"fixtures": [],
+		"pieces": [
+			_movable("O", "Transom", "transom", [["side", 5, 5], ["line", 3, 3]], "side", "line"),
+			_movable("G", "Line shutter", "shutter", [["line", 3, 3], ["side", 5, 5]], "line", "side"),
+		],
+	}
+
+
+static func chart_135() -> Dictionary:
+	# Tide index 0, flood 0. The casement faces east. White travels east
+	# through it. Blue travels west and stops on the edge. Red from the north
+	# stops, so a vane that turns that flank east lights the red mark.
+	return {
+		"id": "135",
+		"harbor": CASEMENT,
+		"title": "The Dry Casement",
+		"teach": "Tide index 0, flood 0. The casement faces east. An eastbound beam passes straight through onto its dock. A westbound beam stops. White stays white and blue stays blue. A transom lets the westbound beam through and misses. A mullion stops the eastbound beam. A lintel lets both through, and the extra hit misses. A shutter, weir, sluice, well, siphon, stain, mirror, or vane in that cell also misses.",
+		"win": "The dry casement passes white east and stops blue.",
+		"cols": 8,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("W", 2, 0, "S", "white"),
+			_lantern("B", 7, 3, "W", "blue"),
+			_lantern("R", 3, 1, "S", "red"),
+		],
+		"docks": [
+			_dock("Wd", 5, 3, "white", true),
+			_dock("Kb", 2, 2, "blue", true, true),
+			_dock("Kr", 6, 3, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_mirror("M", "Feed mirror", 2, 3, 0, 90),
+			_casement("C", "Casement", 3, 3, 0, 90),
+		],
+	}
+
+
+static func chart_136() -> Dictionary:
+	# The chart opens under water, where every beam stops outside the cell.
+	# The solution lowers the tide. Dry, only the east facing passes. Facing
+	# west sends the opposite beam onto the blue mark. A transom does that
+	# even when the casement would have stopped it.
+	return {
+		"id": "136",
+		"harbor": CASEMENT,
+		"title": "The Wet Stop",
+		"teach": "The casement opens under water, so every beam stops outside the cell. Lower the tide. Dry, it faces east and only that beam passes onto the dock. A dry casement facing west passes the westbound beam onto the wrong dock. Flooding the row again stops every beam, and the dock goes dark. A transom, a mullion, and a lintel are also shut under water. On this same board at the dry tide, only the facing beam passes, and a transom also passes the opposite beam and misses. A mullion stops the eastbound beam. A lintel lets both through.",
+		"win": "The tide is low. The casement faces east, and only that beam reaches the dock.",
+		"cols": 8,
+		"rows": 7,
+		"tide_phases": [0, 2],
+		"start_tide_index": 1,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("W", 0, 5, "E", "white"),
+			_lantern("B", 7, 5, "W", "blue"),
+			_lantern("R", 3, 4, "S", "red"),
+		],
+		"docks": [
+			_dock("Wd", 5, 5, "white", true),
+			_dock("Kb", 1, 5, "blue", true, true),
+			_dock("Kr", 6, 5, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_casement("C", "Casement", 3, 5, 0, 90),
+		],
+	}
+
+
+static func chart_137() -> Dictionary:
+	# White travels east and stays white. The book tests recolor the same pass
+	# to red and to blue. A stain paints the pass and misses.
+	return {
+		"id": "137",
+		"harbor": CASEMENT,
+		"title": "Color Kept",
+		"teach": "The facing pass does not recolor. Red stays red, blue stays blue, and white stays white. The eastbound beam passes straight onto its dock. The westbound beam stops. A stain in that cell recolors and misses. A transom lets the westbound beam through and misses. A mullion stops the eastbound beam. A lintel lets both through.",
+		"win": "The color that enters the casement is the color that leaves it.",
+		"cols": 8,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("W", 2, 0, "S", "white"),
+			_lantern("B", 7, 3, "W", "blue"),
+			_lantern("R", 3, 1, "S", "red"),
+		],
+		"docks": [
+			_dock("Wd", 5, 3, "white", true),
+			_dock("Kb", 2, 2, "blue", true, true),
+			_dock("Kr", 6, 3, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_mirror("M", "Feed mirror", 2, 3, 0, 90),
+			_casement("C", "Casement", 3, 3, 180, 90),
+		],
+	}
+
+
+static func chart_138() -> Dictionary:
+	# White goes straight east. It does not turn. A vane, a mirror, or a prism
+	# swings it off the dock. The westbound beam stops instead of passing.
+	return {
+		"id": "138",
+		"harbor": CASEMENT,
+		"title": "No Turn",
+		"teach": "The facing pass does not turn. The eastbound beam goes straight onto its dock. The westbound beam stops. A vane, a mirror, or a prism in that cell turns and misses. A transom passes the opposite direction as well and misses. A mullion stops the eastbound beam. A lintel lets both through.",
+		"win": "White goes straight east, and blue stops.",
+		"cols": 8,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("W", 2, 0, "S", "white"),
+			_lantern("B", 7, 3, "W", "blue"),
+			_lantern("R", 3, 1, "S", "red"),
+		],
+		"docks": [
+			_dock("Wd", 5, 3, "white", true),
+			_dock("Kb", 2, 2, "blue", true, true),
+			_dock("Kr", 6, 3, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_mirror("M", "Feed mirror", 2, 3, 0, 90),
+			_casement("C", "Casement", 3, 3, 270, 90),
+		],
+	}
+
+
+static func chart_139() -> Dictionary:
+	# Flood 2 covers y >= 4. The casement stays on the dry row above it.
+	# East passes. West stops. A southbound beam from the dry row stops at
+	# the flooded row's waterline.
+	return {
+		"id": "139",
+		"harbor": CASEMENT,
+		"title": "Beside the Flood",
+		"teach": "The casement's own row is dry and the neighboring row is flooded. The facing beam passes. A beam from the flooded row still stops at the waterline and does not enter that cell. A transom on the dry row lets the opposite beam through and misses. A mullion stops the eastbound beam. A lintel lets both through.",
+		"win": "The eastbound beam passes on the dry row, and the beam into the flood stops.",
+		"cols": 8,
+		"rows": 6,
+		"tide_phases": [2],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("W", 0, 3, "E", "white"),
+			_lantern("B", 7, 3, "W", "blue"),
+			_lantern("R", 3, 1, "S", "red"),
+			_lantern("F", 6, 2, "S", "white"),
+		],
+		"docks": [
+			_dock("Wd", 4, 3, "white", true),
+			_dock("Kb", 1, 3, "blue", true, true),
+			_dock("Kr", 5, 3, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_casement("C", "Casement", 3, 3, 0, 90),
+		],
+	}
+
+
+static func chart_140() -> Dictionary:
+	# One casement faces east and one faces north. Each passes only its own
+	# facing. The opposite of each is held by a dark mark.
+	return {
+		"id": "140",
+		"harbor": CASEMENT,
+		"title": "Two Casements",
+		"teach": "One casement faces east and one faces north. Each passes only its own facing. A transom passes the eastbound beam and stops the northbound beam, so one dock misses. A mullion does the opposite. A lintel passes both and also passes the two opposite beams, so the extra hits miss.",
+		"win": "East stays east and north stays north. Each opposite beam stops.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("We", 0, 5, "E", "white"),
+			_lantern("Bw", 6, 5, "W", "blue"),
+			_lantern("Re", 3, 3, "S", "red"),
+			_lantern("Wn", 2, 6, "N", "white"),
+			_lantern("Bs", 2, 0, "S", "blue"),
+			_lantern("Rn", 4, 4, "W", "red"),
+		],
+		"docks": [
+			_dock("Wd", 4, 5, "white", true),
+			_dock("Nd", 2, 2, "white", true),
+			_dock("Kb", 1, 5, "blue", true, true),
+			_dock("Kn", 2, 5, "blue", true, true),
+			_dock("Kr", 5, 5, "red", true, true),
+			_dock("Kf", 2, 1, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_casement("E", "East casement", 3, 5, 0, 90),
+			_casement("N", "North casement", 2, 4, 90, 0),
+		],
+	}
+
+
+static func chart_141() -> Dictionary:
+	# Three tide marks, like The Held Transom. The middle mark leaves the
+	# casement's row dry, so the facing pass can land. Low water wakes the
+	# south hull. High water covers the casement.
+	return {
+		"id": "141",
+		"harbor": CASEMENT,
+		"title": "The Held Casement",
+		"teach": "Place the tide on the middle mark and turn the casement to the east facing. The beam passes only that way. Low water wakes the south hull. High water covers the casement and the dock goes dark. A transom in that cell passes the opposite direction and misses. A mullion misses the facing axis. A lintel lets the opposite beam through.",
+		"win": "The middle mark holds the east casement. White passes and blue stops.",
+		"cols": 9,
+		"rows": 7,
+		"tide_phases": [0, 1, 4],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("W", 2, 1, "S", "white"),
+			_lantern("B", 8, 3, "W", "blue"),
+			_lantern("R", 4, 1, "S", "red"),
+			_lantern("Lb", 0, 6, "E", "white"),
+		],
+		"docks": [
+			_dock("Wd", 6, 3, "white", true),
+			_dock("Kb", 2, 2, "blue", true, true),
+			_dock("Kr", 7, 3, "red", true, true),
+		],
+		"boats": [
+			_boat("Hb", 2, 6),
+		],
+		"fixtures": [],
+		"pieces": [
+			_mirror("M", "Feed mirror", 2, 3, 0, 90),
+			_casement("C", "Casement", 4, 3, 0, 90),
+		],
+	}
+
+
+static func chart_142() -> Dictionary:
+	# The casement and the shutter trade places, as on The Transom Mark.
+	# On the line the casement faces west. Only that beam counts. The
+	# eastbound beam must not, and a transom lets it through.
+	return {
+		"id": "142",
+		"harbor": CASEMENT,
+		"title": "The Casement Mark",
+		"teach": "One dry casement, two sockets. Move the casement from the side socket onto the line, turn it to face west, and move the shutter off that line. The mark is satisfied only by the facing beam. The opposite beam must not count. The side socket misses both docks. Stacking both pieces on one cell does not clear. A transom lets that opposite beam in and misses. A mullion stops the facing beam. A lintel lets the opposite beam through.",
+		"win": "The casement stands on the line, facing west. One dock is lit and the others stay dark.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("W", 6, 3, "W", "white"),
+			_lantern("Be", 0, 3, "E", "blue"),
+			_lantern("R", 3, 0, "S", "red"),
+		],
+		"docks": [
+			_dock("Wd", 2, 3, "white", true),
+			_dock("Kt", 1, 3, "red", true, true),
+			_dock("Ke", 5, 3, "blue", true, true),
+			_dock("Kd", 3, 6, "dark", false, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_placed("C", "Casement", "casement", [["side", 5, 5], ["line", 3, 3]], "side", "line", 0, 270),
+			_placed("G", "Line shutter", "shutter", [["line", 3, 3], ["side", 5, 5]], "line", "side", 0, 0),
+		],
+	}
+
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -4813,6 +5423,52 @@ static func _mullion(id: String, name: String, x: int, y: int) -> Dictionary:
 		"start_rot": 0,
 		"solution_socket": "a",
 		"solution_rot": 0,
+	}
+
+
+static func _transom(id: String, name: String, x: int, y: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "transom",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": 0,
+		"solution_socket": "a",
+		"solution_rot": 0,
+	}
+
+
+static func _casement(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "casement",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _placed(id: String, name: String, kind: String, sockets: Array, start_socket: String, sol_socket: String, start_rot: int, sol_rot: int) -> Dictionary:
+	var packed: Array = []
+	for raw in sockets:
+		var spec: Array = raw
+		packed.append({"id": str(spec[0]), "x": int(spec[1]), "y": int(spec[2])})
+	return {
+		"id": id,
+		"name": name,
+		"kind": kind,
+		"movable": packed.size() > 1,
+		"sockets": packed,
+		"start_socket": start_socket,
+		"start_rot": start_rot,
+		"solution_socket": sol_socket,
+		"solution_rot": sol_rot,
 	}
 
 

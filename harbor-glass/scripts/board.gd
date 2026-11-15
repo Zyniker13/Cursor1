@@ -251,6 +251,10 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_lintel(at)
 		"mullion":
 			_draw_mullion(at)
+		"transom":
+			_draw_transom(at)
+		"casement":
+			_draw_casement(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -550,6 +554,52 @@ func _draw_mullion(at: Vector2i) -> void:
 	draw_rect(bot_cap, edge, false, 1.5)
 	draw_rect(shaft, edge, false, 2.0)
 	draw_line(Vector2(center.x, shaft.position.y + 4.0), Vector2(center.x, shaft.end.y - 4.0), Palette.LANTERN_HOT, 1.5)
+
+func _draw_transom(at: Vector2i) -> void:
+	# A pale horizontal bar with a dark center stroke. Not the lintel's solid
+	# stone bar, and not the mullion's vertical bar. The bar does not turn:
+	# a transom has no facing.
+	var center := _center(at)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var pale := Palette.GLASS
+	pale.a = 0.55 if flooded else 0.96
+	var bar := Rect2(center + Vector2(-cell * 0.42, -cell * 0.11), Vector2(cell * 0.84, cell * 0.22))
+	draw_rect(bar, pale)
+	draw_rect(bar, Palette.FOAM if flooded else Palette.GLASS_EDGE, false, 2.0)
+	draw_line(Vector2(bar.position.x + 6.0, center.y), Vector2(bar.end.x - 6.0, center.y), Palette.GATE_IRON, 3.0)
+
+func _draw_casement(at: Vector2i, rot: int) -> void:
+	# A pale hinged leaf. The dark hinge sits on the facing edge and moves
+	# when the piece is rotated. The leaf has no center stroke, so it is not
+	# the transom's thin bar, and it is not the mullion's vertical shaft.
+	var center := _center(at)
+	var facing := Tracer.casement_facing(rot)
+	var dir := _dir_vec(facing)
+	var flank := Vector2(-dir.y, dir.x)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var pale := Palette.GLASS
+	pale.a = 0.42 if flooded else 0.96
+	var half_along := cell * 0.28
+	var half_across := cell * 0.20
+	var mid := center - dir * cell * 0.06
+	var back := mid - dir * half_along
+	var front := mid + dir * half_along
+	var leaf := PackedVector2Array([
+		back - flank * half_across,
+		back + flank * half_across,
+		front + flank * half_across,
+		front - flank * half_across,
+	])
+	draw_colored_polygon(leaf, pale)
+	var rim := leaf.duplicate()
+	rim.append(leaf[0])
+	draw_polyline(rim, Palette.FOAM if flooded else Palette.GLASS_EDGE, 2.0)
+	var hinge_a := front - flank * (half_across + cell * 0.04)
+	var hinge_b := front + flank * (half_across + cell * 0.04)
+	draw_line(hinge_a, hinge_b, Palette.GATE_IRON, 6.0)
+	draw_circle(hinge_a, 4.2, Palette.WOOD_DARK)
+	draw_circle(hinge_b, 4.2, Palette.WOOD_DARK)
+	draw_circle(hinge_a.lerp(hinge_b, 0.5), 3.2, Palette.GATE_IRON)
 
 func _draw_prism(at: Vector2i, rot: int, set_in_stone: bool) -> void:
 	var center := _center(at)
