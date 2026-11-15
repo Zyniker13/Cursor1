@@ -22,6 +22,7 @@ func _initialize() -> void:
 	_test_gate(errors)
 	_test_wage(errors)
 	_test_relief(errors)
+	_test_watch(errors)
 	_test_determinism(errors)
 	_test_population(errors)
 	_test_no_select_ant(errors)
@@ -95,7 +96,7 @@ func _test_determinism(errors: Array) -> void:
 	var plans := _plans(errors)
 	if plans.is_empty():
 		return
-	for plan_name in ["winning", "all_rake", "dry_pans", "continued", "late_pans", "no_crib", "carted", "late_crib", "dry_crib", "no_ship", "shipped", "late_ship", "dry_ship", "no_stall", "sold", "late_sold", "dry_sold", "no_yard", "banked", "late_banked", "dry_banked", "no_bunk", "hired", "late_hired", "dry_hired", "no_loft", "lofted", "late_lofted", "dry_lofted", "no_gate", "gated", "late_gated", "dry_gated", "no_wage", "paid", "late_paid", "dry_paid", "no_relief", "posted", "late_posted", "dry_posted"]:
+	for plan_name in ["winning", "all_rake", "dry_pans", "continued", "late_pans", "no_crib", "carted", "late_crib", "dry_crib", "no_ship", "shipped", "late_ship", "dry_ship", "no_stall", "sold", "late_sold", "dry_sold", "no_yard", "banked", "late_banked", "dry_banked", "no_bunk", "hired", "late_hired", "dry_hired", "no_loft", "lofted", "late_lofted", "dry_lofted", "no_gate", "gated", "late_gated", "dry_gated", "no_wage", "paid", "late_paid", "dry_paid", "no_relief", "posted", "late_posted", "dry_posted", "no_watch", "stood", "late_stood", "dry_stood", "watch_only"]:
 		var before := errors.size()
 		var first = _run_plan(plans, plan_name, errors)
 		var second = _run_plan(plans, plan_name, errors)
@@ -105,7 +106,7 @@ func _test_determinism(errors: Array) -> void:
 			return
 		var a := int(first.get_stored_salt())
 		var b := int(second.get_stored_salt())
-		print("determinism %s stored %d and %d coins %d banked %d hired %d left %d lofted %d gated %d paid %d posted %d" % [plan_name, a, b, int(first.get_coins()), int(first.get_banked()), int(first.get_hired()), int(first.get_yard_left()), int(first.get_lofted()), int(first.get_gated()), int(first.get_paid()), int(first.get_posted())])
+		print("determinism %s stored %d and %d coins %d banked %d hired %d left %d lofted %d gated %d paid %d posted %d stood %d" % [plan_name, a, b, int(first.get_coins()), int(first.get_banked()), int(first.get_hired()), int(first.get_yard_left()), int(first.get_lofted()), int(first.get_gated()), int(first.get_paid()), int(first.get_posted()), int(first.get_stood())])
 		if a != b:
 			_fail(errors, "%s runs stored %d and %d" % [plan_name, a, b])
 		if int(first.get_wet_haul()) != int(second.get_wet_haul()):
@@ -135,6 +136,10 @@ func _test_determinism(errors: Array) -> void:
 		if int(first.get_posted()) != int(second.get_posted()) or int(first.get_wage_left()) != int(second.get_wage_left()):
 			_fail(errors, "%s relief runs differed (%d unposted %d, and %d unposted %d)" % [
 				plan_name, first.get_posted(), first.get_wage_left(), second.get_posted(), second.get_wage_left(),
+			])
+		if int(first.get_stood()) != int(second.get_stood()) or int(first.get_relief_left()) != int(second.get_relief_left()):
+			_fail(errors, "%s watch runs differed (%d unstood %d, and %d unstood %d)" % [
+				plan_name, first.get_stood(), first.get_relief_left(), second.get_stood(), second.get_relief_left(),
 			])
 		if String(first.get_summary()) != String(second.get_summary()):
 			_fail(errors, "%s summaries differed" % plan_name)
@@ -274,6 +279,13 @@ func _test_scene_boots(errors: Array) -> void:
 	node._on_key(KEY_SPACE)
 	if int(node.sim.get_paint(7, -1)) != Sim.RELIEF:
 		_fail(errors, "keyboard cursor did not paint a relief")
+	node._on_key(KEY_G)
+	if not String(node.mode_label.text).contains("Watch"):
+		_fail(errors, "watch mark was not named")
+	node._on_key(KEY_UP)
+	node._on_key(KEY_SPACE)
+	if int(node.sim.get_paint(7, -2)) != Sim.WATCH:
+		_fail(errors, "keyboard cursor did not paint a watch")
 	var season = node.find_child("SeasonNote", true, false)
 	if season == null or not String(season.text).to_lower().contains("pan"):
 		_fail(errors, "season note does not mention pans")
@@ -316,6 +328,13 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "rules text does not mention the relief")
 	if rules == null or not String(rules.text).contains("six"):
 		_fail(errors, "rules text does not name the relief cap of six")
+	if rules == null or not String(rules.text).to_lower().contains("watch"):
+		_fail(errors, "rules text does not mention the watch")
+	if rules == null or not String(rules.text).to_lower().contains("stand"):
+		_fail(errors, "rules text does not name the watch")
+	var hint = node.find_child("HintLine", true, false)
+	if hint == null or not String(hint.text).to_lower().contains("watch"):
+		_fail(errors, "hint line does not name the watch")
 	var spun_ship := 0
 	while int(node.sim.get_beat()) != Sim.SHIPPING and not node.sim.is_over() and spun_ship < int(Sim.CART_TICK) + 2:
 		node.sim.tick()
@@ -418,10 +437,23 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "relief countdown started at %d, expected %d" % [node.sim.get_ticks_until_rain(), Sim.RELIEF_TICK])
 	elif not String(node.season_label.text).to_lower().contains("relief"):
 		_fail(errors, "relief note does not mention the relief: %s" % node.season_label.text)
+	var spun_watch := 0
+	while int(node.sim.get_beat()) != Sim.WATCHING and not node.sim.is_over() and spun_watch < int(Sim.RELIEF_TICK) + 2:
+		node.sim.tick()
+		spun_watch += 1
+	node._refresh()
+	if int(node.sim.get_beat()) != Sim.WATCHING or node.sim.is_over():
+		_fail(errors, "the scene did not open the watch beat")
+	elif not String(node.rain_label.text).to_lower().contains("watch"):
+		_fail(errors, "watch countdown was not named: %s" % node.rain_label.text)
+	elif int(node.sim.get_ticks_until_rain()) != int(Sim.WATCH_TICK):
+		_fail(errors, "watch countdown started at %d, expected %d" % [node.sim.get_ticks_until_rain(), Sim.WATCH_TICK])
+	elif not String(node.season_label.text).to_lower().contains("watch"):
+		_fail(errors, "watch note does not mention the watch: %s" % node.season_label.text)
 	node._on_key(KEY_R)
-	if int(node.sim.get_paint(9, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 5)) != Sim.EMPTY or int(node.sim.get_paint(7, 4)) != Sim.EMPTY or int(node.sim.get_paint(7, 3)) != Sim.EMPTY or int(node.sim.get_paint(7, 2)) != Sim.EMPTY or int(node.sim.get_paint(7, 1)) != Sim.EMPTY or int(node.sim.get_paint(7, 0)) != Sim.EMPTY or int(node.sim.get_paint(7, -1)) != Sim.EMPTY:
+	if int(node.sim.get_paint(9, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 5)) != Sim.EMPTY or int(node.sim.get_paint(7, 4)) != Sim.EMPTY or int(node.sim.get_paint(7, 3)) != Sim.EMPTY or int(node.sim.get_paint(7, 2)) != Sim.EMPTY or int(node.sim.get_paint(7, 1)) != Sim.EMPTY or int(node.sim.get_paint(7, 0)) != Sim.EMPTY or int(node.sim.get_paint(7, -1)) != Sim.EMPTY or int(node.sim.get_paint(7, -2)) != Sim.EMPTY:
 		_fail(errors, "restart scenario did not clear the marks")
-	if int(node.sim.get_season()) != Sim.WET or int(node.sim.get_wet_haul()) != 0 or int(node.sim.get_beat()) != Sim.WET or int(node.sim.get_carted()) != 0 or int(node.sim.get_shipped()) != 0 or int(node.sim.get_coins()) != 0 or int(node.sim.get_banked()) != 0 or int(node.sim.get_hired()) != 0 or int(node.sim.get_lofted()) != 0 or int(node.sim.get_gated()) != 0 or int(node.sim.get_paid()) != 0 or int(node.sim.get_posted()) != 0:
+	if int(node.sim.get_season()) != Sim.WET or int(node.sim.get_wet_haul()) != 0 or int(node.sim.get_beat()) != Sim.WET or int(node.sim.get_carted()) != 0 or int(node.sim.get_shipped()) != 0 or int(node.sim.get_coins()) != 0 or int(node.sim.get_banked()) != 0 or int(node.sim.get_hired()) != 0 or int(node.sim.get_lofted()) != 0 or int(node.sim.get_gated()) != 0 or int(node.sim.get_paid()) != 0 or int(node.sim.get_posted()) != 0 or int(node.sim.get_stood()) != 0:
 		_fail(errors, "restart scenario did not return to the wet season")
 	if int(node.sim.get_population()) > Sim.POP_CAP:
 		_fail(errors, "restart left the population over the cap")
@@ -1505,8 +1537,8 @@ func _test_gate(errors: Array) -> void:
 	var fresh = Sim.new()
 	if fresh.paint_cell(14, -2, Sim.GATE) == false or int(fresh.get_paint(14, -2)) != Sim.GATE:
 		_fail(errors, "a flat rejected the gate mark")
-	if fresh.paint_cell(14, -5, Sim.GATE):
-		_fail(errors, "the row north of the relief accepted a mark")
+	if fresh.paint_cell(14, -6, Sim.GATE):
+		_fail(errors, "the row north of the watch accepted a mark")
 	if fresh.paint_cell(Sim.COAST_X, -2, Sim.GATE):
 		_fail(errors, "the brine accepted a gate")
 	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.GATE):
@@ -1734,8 +1766,8 @@ func _test_wage(errors: Array) -> void:
 	var fresh = Sim.new()
 	if fresh.paint_cell(14, -3, Sim.WAGE) == false or int(fresh.get_paint(14, -3)) != Sim.WAGE:
 		_fail(errors, "the cell north of the gate rejected the wage mark")
-	if fresh.paint_cell(14, -5, Sim.WAGE):
-		_fail(errors, "the row north of the relief accepted a mark")
+	if fresh.paint_cell(14, -6, Sim.WAGE):
+		_fail(errors, "the row north of the watch accepted a mark")
 	if fresh.paint_cell(Sim.COAST_X, -3, Sim.WAGE):
 		_fail(errors, "the brine accepted a wage")
 	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.WAGE):
@@ -1944,8 +1976,8 @@ func _test_relief(errors: Array) -> void:
 	var fresh = Sim.new()
 	if fresh.paint_cell(14, -4, Sim.RELIEF) == false or int(fresh.get_paint(14, -4)) != Sim.RELIEF:
 		_fail(errors, "the cell north of the wage rejected the relief mark")
-	if fresh.paint_cell(14, -5, Sim.RELIEF):
-		_fail(errors, "the row north of the relief accepted a mark")
+	if fresh.paint_cell(14, -6, Sim.RELIEF):
+		_fail(errors, "the row north of the watch accepted a mark")
 	if fresh.paint_cell(Sim.COAST_X, -4, Sim.RELIEF):
 		_fail(errors, "the brine accepted a relief")
 	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.RELIEF):
@@ -2159,6 +2191,272 @@ func _test_relief(errors: Array) -> void:
 		])
 	print("posted %d left wage %d unpaid %d; dry posted %d left wage %d unpaid %d; no relief posted %d left wage %d" % [
 		posted.get_posted(), posted.get_wage_left(), posted_unpaid, dry_posted.get_posted(), dry_posted.get_wage_left(), dry_unpaid, ignored.get_posted(), ignored.get_wage_left(),
+	])
+
+
+func _test_watch(errors: Array) -> void:
+	if int(Sim.WATCH_TICK) != 100 or int(Sim.WATCH_TICK) != int(Sim.TICK_HZ) * 10:
+		_fail(errors, "watch beat length %s is not 100 ticks (10 seconds)" % Sim.WATCH_TICK)
+	if int(Sim.WATCH_CAP) != 4:
+		_fail(errors, "watch cap is %s, expected 4" % Sim.WATCH_CAP)
+	var fresh = Sim.new()
+	if fresh.paint_cell(14, -5, Sim.WATCH) == false or int(fresh.get_paint(14, -5)) != Sim.WATCH:
+		_fail(errors, "the cell north of the relief rejected the watch mark")
+	if fresh.paint_cell(14, -6, Sim.WATCH):
+		_fail(errors, "the row north of the watch accepted a mark")
+	if fresh.paint_cell(Sim.COAST_X, -5, Sim.WATCH):
+		_fail(errors, "the brine accepted a watch")
+	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.WATCH):
+		_fail(errors, "the anthill accepted a watch")
+	var plans := _plans(errors)
+	if plans.is_empty():
+		return
+	var won = _run_plan(plans, "winning", errors)
+	var dry = _run_plan(plans, "dry_pans", errors)
+	var parked = _run_plan(plans, "carted", errors)
+	var loaded = _run_plan(plans, "shipped", errors)
+	var sold = _run_plan(plans, "sold", errors)
+	var hired = _run_plan(plans, "hired", errors)
+	var lofted = _run_plan(plans, "lofted", errors)
+	var passed = _run_plan(plans, "gated", errors)
+	var paid = _run_plan(plans, "paid", errors)
+	var dry_paid = _run_plan(plans, "dry_paid", errors)
+	var posted = _run_plan(plans, "posted", errors)
+	var dry_posted = _run_plan(plans, "dry_posted", errors)
+	var ignored = _run_plan(plans, "no_watch", errors)
+	var bare = _run_plan(plans, "watch_only", errors)
+	var stood = _run_plan(plans, "stood", errors)
+	var stood_again = _run_plan(plans, "stood", errors)
+	var late = _run_plan(plans, "late_stood", errors)
+	var dry_stood = _run_plan(plans, "dry_stood", errors)
+	if won == null or dry == null or parked == null or loaded == null or sold == null or hired == null or lofted == null or passed == null or paid == null or dry_paid == null or posted == null or dry_posted == null or ignored == null or bare == null or stood == null or stood_again == null or late == null or dry_stood == null:
+		return
+	# Earlier plans keep the numbers they had before the watch existed.
+	# A plan that does not paint the watch also stands nobody.
+	if int(won.get_wet_haul()) != 2997 or int(won.get_stored_salt()) != 2997 or int(won.get_carted()) != 0 or int(won.get_shipped()) != 0 or int(won.get_coins()) != 0 or int(won.get_hired()) != 0 or int(won.get_posted()) != 0 or int(won.get_stood()) != 0:
+		_fail(errors, "winning shore changed (wet %d stored %d carted %d shipped %d coins %d hired %d posted %d stood %d)" % [
+			won.get_wet_haul(), won.get_stored_salt(), won.get_carted(), won.get_shipped(), won.get_coins(), won.get_hired(), won.get_posted(), won.get_stood(),
+		])
+	if int(dry.get_wet_haul()) != 0 or int(dry.get_stored_salt()) != 1032 or int(dry.get_carted()) != 0 or int(dry.get_shipped()) != 0 or int(dry.get_coins()) != 0 or int(dry.get_hired()) != 0 or int(dry.get_posted()) != 0 or int(dry.get_stood()) != 0:
+		_fail(errors, "dry_pans changed (wet %d stored %d carted %d shipped %d coins %d hired %d posted %d stood %d)" % [
+			dry.get_wet_haul(), dry.get_stored_salt(), dry.get_carted(), dry.get_shipped(), dry.get_coins(), dry.get_hired(), dry.get_posted(), dry.get_stood(),
+		])
+	if int(parked.get_wet_haul()) != 2997 or int(parked.get_stored_salt()) != 2997 or int(parked.get_carted()) != 2997 or int(parked.get_shipped()) != 0 or int(parked.get_coins()) != 0 or int(parked.get_posted()) != 0 or int(parked.get_stood()) != 0:
+		_fail(errors, "carted plan changed (wet %d stored %d carted %d shipped %d coins %d posted %d stood %d)" % [
+			parked.get_wet_haul(), parked.get_stored_salt(), parked.get_carted(), parked.get_shipped(), parked.get_coins(), parked.get_posted(), parked.get_stood(),
+		])
+	if int(loaded.get_wet_haul()) != 2997 or int(loaded.get_stored_salt()) != 2997 or int(loaded.get_carted()) != 2997 or int(loaded.get_shipped()) != 2997 or int(loaded.get_coins()) != 0 or int(loaded.get_posted()) != 0 or int(loaded.get_stood()) != 0:
+		_fail(errors, "shipped plan changed (wet %d stored %d carted %d shipped %d coins %d posted %d stood %d)" % [
+			loaded.get_wet_haul(), loaded.get_stored_salt(), loaded.get_carted(), loaded.get_shipped(), loaded.get_coins(), loaded.get_posted(), loaded.get_stood(),
+		])
+	if int(sold.get_wet_haul()) != 2997 or int(sold.get_stored_salt()) != 2997 or int(sold.get_carted()) != 2997 or int(sold.get_shipped()) != 2997 or int(sold.get_coins()) != 2997 or int(sold.get_posted()) != 0 or int(sold.get_stood()) != 0:
+		_fail(errors, "sold plan changed (wet %d stored %d carted %d shipped %d coins %d posted %d stood %d)" % [
+			sold.get_wet_haul(), sold.get_stored_salt(), sold.get_carted(), sold.get_shipped(), sold.get_coins(), sold.get_posted(), sold.get_stood(),
+		])
+	if int(hired.get_hired()) != 29 or int(hired.get_yard_left()) != 97 or int(hired.get_coins()) != 2997 or int(hired.get_stood()) != 0 or int(hired.get_posted()) != 0:
+		_fail(errors, "hired plan changed (coins %d hired %d left %d posted %d stood %d)" % [
+			hired.get_coins(), hired.get_hired(), hired.get_yard_left(), hired.get_posted(), hired.get_stood(),
+		])
+	if int(lofted.get_lofted()) != 29 or int(lofted.get_hired()) != 29 or int(lofted.get_yard_left()) != 97 or int(lofted.get_stood()) != 0 or int(lofted.get_coins()) != 2997:
+		_fail(errors, "lofted plan changed (coins %d hired %d left %d lofted %d stood %d)" % [
+			lofted.get_coins(), lofted.get_hired(), lofted.get_yard_left(), lofted.get_lofted(), lofted.get_stood(),
+		])
+	if int(passed.get_gated()) != 10 or int(passed.get_loft_left()) != 19 or int(passed.get_hired()) != 29 or int(passed.get_yard_left()) != 97 or int(passed.get_paid()) != 0 or int(passed.get_posted()) != 0 or int(passed.get_stood()) != 0 or int(passed.get_coins()) != 2997:
+		_fail(errors, "gated plan changed (coins %d hired %d left %d gated %d loft %d paid %d posted %d stood %d)" % [
+			passed.get_coins(), passed.get_hired(), passed.get_yard_left(), passed.get_gated(), passed.get_loft_left(), passed.get_paid(), passed.get_posted(), passed.get_stood(),
+		])
+	if int(paid.get_paid()) != 10 or int(paid.get_gate_left()) != 0 or int(paid.get_yard_left()) != 57 or int(paid.get_loft_left()) != 19 or int(paid.get_hired()) != 29 or int(paid.get_posted()) != 0 or int(paid.get_stood()) != 0 or int(paid.get_coins()) != 2997 or int(paid.get_stored_salt()) != 2997:
+		_fail(errors, "paid plan changed (stored %d coins %d hired %d yard %d paid %d loft %d posted %d stood %d)" % [
+			paid.get_stored_salt(), paid.get_coins(), paid.get_hired(), paid.get_yard_left(), paid.get_paid(), paid.get_loft_left(), paid.get_posted(), paid.get_stood(),
+		])
+	if int(dry_paid.get_wet_haul()) != 0 or int(dry_paid.get_stored_salt()) != 1032 or int(dry_paid.get_coins()) != 1032 or int(dry_paid.get_hired()) != 10 or int(dry_paid.get_paid()) != 8 or int(dry_paid.get_gate_left()) != 2 or int(dry_paid.get_yard_left()) != 0 or int(dry_paid.get_posted()) != 0 or int(dry_paid.get_stood()) != 0:
+		_fail(errors, "dry wage changed (wet %d stored %d coins %d hired %d paid %d unpaid %d yard %d posted %d stood %d)" % [
+			dry_paid.get_wet_haul(), dry_paid.get_stored_salt(), dry_paid.get_coins(), dry_paid.get_hired(), dry_paid.get_paid(), dry_paid.get_gate_left(), dry_paid.get_yard_left(), dry_paid.get_posted(), dry_paid.get_stood(),
+		])
+	if int(posted.get_posted()) != 6 or int(posted.get_wage_left()) != 4 or int(posted.get_paid()) != 10 or int(posted.get_loft_left()) != 19 or int(posted.get_yard_left()) != 57 or int(posted.get_hired()) != 29 or int(posted.get_coins()) != 2997 or int(posted.get_stored_salt()) != 2997 or int(posted.get_carted()) != 2997 or int(posted.get_shipped()) != 2997 or int(posted.get_stood()) != 0 or int(posted.get_relief_left()) != 6:
+		_fail(errors, "posted plan changed (stored %d carted %d shipped %d coins %d hired %d yard %d paid %d posted %d wage %d loft %d stood %d relief %d)" % [
+			posted.get_stored_salt(), posted.get_carted(), posted.get_shipped(), posted.get_coins(), posted.get_hired(), posted.get_yard_left(), posted.get_paid(), posted.get_posted(), posted.get_wage_left(), posted.get_loft_left(), posted.get_stood(), posted.get_relief_left(),
+		])
+	if int(dry_posted.get_wet_haul()) != 0 or int(dry_posted.get_posted()) != 6 or int(dry_posted.get_wage_left()) != 2 or int(dry_posted.get_gate_left()) != 2 or int(dry_posted.get_yard_left()) != 0 or int(dry_posted.get_paid()) != 8 or int(dry_posted.get_stood()) != 0 or int(dry_posted.get_relief_left()) != 6:
+		_fail(errors, "dry relief changed (wet %d paid %d posted %d wage %d gate %d yard %d stood %d relief %d)" % [
+			dry_posted.get_wet_haul(), dry_posted.get_paid(), dry_posted.get_posted(), dry_posted.get_wage_left(), dry_posted.get_gate_left(), dry_posted.get_yard_left(), dry_posted.get_stood(), dry_posted.get_relief_left(),
+		])
+	# Posted, no watch: the 6 who were posted stay on the relief. The 4 paid
+	# but not posted stay on the wage. The 19 in the loft stay unpaid.
+	var ignored_unpaid := int(ignored.get_hired()) - int(ignored.get_paid())
+	if int(ignored.get_stood()) != 0 or int(ignored.get_relief_left()) != 6 or int(ignored.get_posted()) != 6 or int(ignored.get_wage_left()) != 4 or ignored_unpaid != 19 or int(ignored.get_loft_left()) != 19 or int(ignored.get_gate_left()) != 0 or int(ignored.get_yard_left()) != 57 or int(ignored.get_hired()) != 29 or int(ignored.get_paid()) != 10 or int(ignored.get_coins()) != 2997 or int(ignored.get_stored_salt()) != 2997 or int(ignored.get_carted()) != 2997 or int(ignored.get_shipped()) != 2997:
+		_fail(errors, "no_watch stood someone (stored %d carted %d shipped %d coins %d hired %d yard %d paid %d posted %d relief %d stood %d unpaid %d loft %d wage %d)" % [
+			ignored.get_stored_salt(), ignored.get_carted(), ignored.get_shipped(), ignored.get_coins(), ignored.get_hired(), ignored.get_yard_left(), ignored.get_paid(), ignored.get_posted(), ignored.get_relief_left(), ignored.get_stood(), ignored_unpaid, ignored.get_loft_left(), ignored.get_wage_left(),
+		])
+	if String(ignored.get_summary()) != String(posted.get_summary()):
+		_fail(errors, "no_watch summary changed: %s" % ignored.get_summary())
+	if String(ignored.get_summary()).to_lower().contains("stood") or String(ignored.get_summary()).to_lower().contains("watch"):
+		_fail(errors, "no_watch summary names a watch: %s" % ignored.get_summary())
+	var ignored_relief = plans["no_watch"]["relief"][0]
+	var ignored_salt: Dictionary = ignored.get_cell_salt(int(ignored_relief[0]), int(ignored_relief[1]))
+	if int(ignored_salt.get("relief", 0)) != 6 or int(ignored_salt.get("watch", 0)) != 0:
+		_fail(errors, "no_watch left %s at the relief and %s at a watch" % [ignored_salt.get("relief", 0), ignored_salt.get("watch", 0)])
+	# A watch with nobody posted stands nobody. Paid hires stay on the wage.
+	var bare_unpaid := int(bare.get_hired()) - int(bare.get_paid())
+	if int(bare.get_stood()) != 0 or int(bare.get_posted()) != 0 or int(bare.get_relief_left()) != 0 or int(bare.get_paid()) != 10 or int(bare.get_wage_left()) != 10 or bare_unpaid != 19 or int(bare.get_loft_left()) != 19 or int(bare.get_gate_left()) != 0 or int(bare.get_yard_left()) != 57 or int(bare.get_hired()) != 29 or int(bare.get_coins()) != 2997 or int(bare.get_stored_salt()) != 2997 or int(bare.get_carted()) != 2997 or int(bare.get_shipped()) != 2997:
+		_fail(errors, "watch without a relief stood someone (stored %d carted %d shipped %d coins %d hired %d yard %d paid %d wage %d posted %d stood %d unpaid %d loft %d)" % [
+			bare.get_stored_salt(), bare.get_carted(), bare.get_shipped(), bare.get_coins(), bare.get_hired(), bare.get_yard_left(), bare.get_paid(), bare.get_wage_left(), bare.get_posted(), bare.get_stood(), bare_unpaid, bare.get_loft_left(),
+		])
+	if String(bare.get_summary()) != String(paid.get_summary()):
+		_fail(errors, "watch without a relief changed the summary: %s" % bare.get_summary())
+	if String(bare.get_summary()).to_lower().contains("stood") or String(bare.get_summary()).to_lower().contains("watch") or String(bare.get_summary()).to_lower().contains("relief"):
+		_fail(errors, "watch without a relief names a watch: %s" % bare.get_summary())
+	var bare_watch = plans["watch_only"]["watch"][0]
+	var bare_wage = plans["watch_only"]["wage"][0]
+	var bare_watch_salt: Dictionary = bare.get_cell_salt(int(bare_watch[0]), int(bare_watch[1]))
+	var bare_wage_salt: Dictionary = bare.get_cell_salt(int(bare_wage[0]), int(bare_wage[1]))
+	if int(bare_watch_salt.get("watch", 0)) != 0 or int(bare_wage_salt.get("wage", 0)) != 10 or int(bare_watch_salt.get("relief", 0)) != 0:
+		_fail(errors, "watch without a relief holds %s, wage holds %s" % [bare_watch_salt.get("watch", 0), bare_wage_salt.get("wage", 0)])
+	var watch_cell = plans["stood"]["watch"][0]
+	var relief_cell = plans["stood"]["relief"][0]
+	var wage_cell = plans["stood"]["wage"][0]
+	var gate_cell = plans["stood"]["gate"][0]
+	var loft_cell = plans["stood"]["loft"][0]
+	var yard_cell = plans["stood"]["yard"][0]
+	if int(watch_cell[0]) != int(relief_cell[0]) or int(watch_cell[1]) != int(relief_cell[1]) - 1:
+		_fail(errors, "stood plan's watch is not one cell north of the relief")
+	if int(relief_cell[0]) != int(wage_cell[0]) or int(relief_cell[1]) != int(wage_cell[1]) - 1:
+		_fail(errors, "stood plan's relief is not one cell north of the wage")
+	if int(stood.get_wet_haul()) != 2997 or int(stood.get_stored_salt()) != 2997 or int(stood.get_carted()) != 2997 or int(stood.get_shipped()) != 2997 or int(stood.get_coins()) != 2997 or int(stood.get_hired()) != 29 or int(stood.get_yard_left()) != 57 or int(stood.get_paid()) != 10 or int(stood.get_posted()) != 6 or int(stood.get_gated()) != 10 or int(stood.get_lofted()) != 29:
+		_fail(errors, "watch changed the posted shore (wet %d stored %d carted %d shipped %d coins %d hired %d yard %d paid %d posted %d gated %d lofted %d)" % [
+			stood.get_wet_haul(), stood.get_stored_salt(), stood.get_carted(), stood.get_shipped(), stood.get_coins(), stood.get_hired(), stood.get_yard_left(), stood.get_paid(), stood.get_posted(), stood.get_gated(), stood.get_lofted(),
+		])
+	var stood_unpaid := int(stood.get_hired()) - int(stood.get_paid())
+	var stood_unposted := int(stood.get_paid()) - int(stood.get_posted())
+	if int(stood.get_stood()) != 4 or int(stood.get_relief_left()) != 2 or stood_unposted != 4 or stood_unpaid != 19 or int(stood.get_wage_left()) != 4 or int(stood.get_loft_left()) != 19 or int(stood.get_gate_left()) != 0 or int(stood.get_yard_left()) != 57 or int(stood.get_posted()) != 6:
+		_fail(errors, "stood %d, left %d posted unstood, paid unposted %d, unpaid %d, wage %d, loft %d, gate %d, yard %d, posted %d; expected 4, 2, 4, 19, 4, 19, 0, 57, 6" % [
+			stood.get_stood(), stood.get_relief_left(), stood_unposted, stood_unpaid, stood.get_wage_left(), stood.get_loft_left(), stood.get_gate_left(), stood.get_yard_left(), stood.get_posted(),
+		])
+	if int(stood.get_stood()) > int(Sim.WATCH_CAP):
+		_fail(errors, "watch stood %d, over the cap of %d" % [stood.get_stood(), Sim.WATCH_CAP])
+	var watch_salt: Dictionary = stood.get_cell_salt(int(watch_cell[0]), int(watch_cell[1]))
+	var relief_salt: Dictionary = stood.get_cell_salt(int(relief_cell[0]), int(relief_cell[1]))
+	var wage_salt: Dictionary = stood.get_cell_salt(int(wage_cell[0]), int(wage_cell[1]))
+	var gate_salt: Dictionary = stood.get_cell_salt(int(gate_cell[0]), int(gate_cell[1]))
+	var loft_salt: Dictionary = stood.get_cell_salt(int(loft_cell[0]), int(loft_cell[1]))
+	var yard_salt: Dictionary = stood.get_cell_salt(int(yard_cell[0]), int(yard_cell[1]))
+	if int(watch_salt.get("watch", 0)) != 4 or int(relief_salt.get("relief", 0)) != 2 or int(wage_salt.get("wage", 0)) != 4 or int(gate_salt.get("gate", 0)) != 0 or int(loft_salt.get("loft", 0)) != 19 or int(yard_salt.get("yard", 0)) != 57:
+		_fail(errors, "watch cell holds %s, relief holds %s, wage holds %s, gate holds %s, loft holds %s, yard holds %s" % [
+			watch_salt.get("watch", 0), relief_salt.get("relief", 0), wage_salt.get("wage", 0), gate_salt.get("gate", 0), loft_salt.get("loft", 0), yard_salt.get("yard", 0),
+		])
+	var stood_summary := String(stood.get_summary())
+	if not stood_summary.contains("Stood 4 on the watch") or not stood_summary.contains("Left 2 at the relief") or not stood_summary.contains("Posted 6") or not stood_summary.contains("Left 4 at the wage") or not stood_summary.contains("Paid 10") or not stood_summary.contains("Left 19 in the loft") or not stood_summary.contains("Left 57"):
+		_fail(errors, "stood summary does not name the watch: %s" % stood_summary)
+	if not stood_summary.contains("Coins 2997") or not stood_summary.contains("Hired 29"):
+		_fail(errors, "stood summary dropped the earlier totals: %s" % stood_summary)
+	if int(stood_again.get_stood()) != int(stood.get_stood()) or int(stood_again.get_relief_left()) != int(stood.get_relief_left()) or int(stood_again.get_posted()) != int(stood.get_posted()) or int(stood_again.get_yard_left()) != int(stood.get_yard_left()) or int(stood_again.get_stored_salt()) != int(stood.get_stored_salt()):
+		_fail(errors, "repeated watch paint stood %d and left relief %d, then stood %d and left relief %d" % [
+			stood.get_stood(), stood.get_relief_left(), stood_again.get_stood(), stood_again.get_relief_left(),
+		])
+	if int(late.get_stood()) != 4 or int(late.get_relief_left()) != 2 or int(late.get_posted()) != 6 or int(late.get_wage_left()) != 4 or int(late.get_paid()) != 10 or int(late.get_loft_left()) != 19 or int(late.get_yard_left()) != 57 or int(late.get_hired()) != 29 or int(late.get_coins()) != int(stood.get_coins()) or int(late.get_stored_salt()) != int(stood.get_stored_salt()) or int(late.get_carted()) != int(stood.get_carted()) or int(late.get_shipped()) != int(stood.get_shipped()):
+		_fail(errors, "painting the watch at the watch beat (stood %d relief %d posted %d wage %d paid %d loft %d yard %d hired %d coins %d stored %d) did not match painting it early (stood %d relief %d posted %d wage %d paid %d loft %d yard %d hired %d coins %d stored %d)" % [
+			late.get_stood(), late.get_relief_left(), late.get_posted(), late.get_wage_left(), late.get_paid(), late.get_loft_left(), late.get_yard_left(), late.get_hired(), late.get_coins(), late.get_stored_salt(), stood.get_stood(), stood.get_relief_left(), stood.get_posted(), stood.get_wage_left(), stood.get_paid(), stood.get_loft_left(), stood.get_yard_left(), stood.get_hired(), stood.get_coins(), stood.get_stored_salt(),
+		])
+	var dry_unpaid := int(dry_stood.get_hired()) - int(dry_stood.get_paid())
+	var dry_unposted := int(dry_stood.get_paid()) - int(dry_stood.get_posted())
+	if int(dry_stood.get_wet_haul()) != 0 or int(dry_stood.get_stored_salt()) != 1032 or int(dry_stood.get_carted()) != 1032 or int(dry_stood.get_shipped()) != 1032 or int(dry_stood.get_coins()) != 1032 or int(dry_stood.get_hired()) != 10 or int(dry_stood.get_paid()) != 8 or int(dry_stood.get_posted()) != 6 or int(dry_stood.get_stood()) != 4 or int(dry_stood.get_relief_left()) != 2 or dry_unposted != 2 or dry_unpaid != 2 or int(dry_stood.get_wage_left()) != 2 or int(dry_stood.get_gate_left()) != 2 or int(dry_stood.get_loft_left()) != 0 or int(dry_stood.get_yard_left()) != 0:
+		_fail(errors, "dry watch changed the short crew (wet %d stored %d carted %d shipped %d coins %d hired %d paid %d posted %d stood %d relief %d unposted %d unpaid %d wage %d gate %d loft %d yard %d)" % [
+			dry_stood.get_wet_haul(), dry_stood.get_stored_salt(), dry_stood.get_carted(), dry_stood.get_shipped(), dry_stood.get_coins(), dry_stood.get_hired(), dry_stood.get_paid(), dry_stood.get_posted(), dry_stood.get_stood(), dry_stood.get_relief_left(), dry_unposted, dry_unpaid, dry_stood.get_wage_left(), dry_stood.get_gate_left(), dry_stood.get_loft_left(), dry_stood.get_yard_left(),
+		])
+	var dry_watch_cell = plans["dry_stood"]["watch"][0]
+	var dry_relief_cell = plans["dry_stood"]["relief"][0]
+	var dry_wage_cell = plans["dry_stood"]["wage"][0]
+	var dry_gate_cell = plans["dry_stood"]["gate"][0]
+	var dry_watch_salt: Dictionary = dry_stood.get_cell_salt(int(dry_watch_cell[0]), int(dry_watch_cell[1]))
+	var dry_relief_salt: Dictionary = dry_stood.get_cell_salt(int(dry_relief_cell[0]), int(dry_relief_cell[1]))
+	var dry_wage_salt: Dictionary = dry_stood.get_cell_salt(int(dry_wage_cell[0]), int(dry_wage_cell[1]))
+	var dry_gate_salt: Dictionary = dry_stood.get_cell_salt(int(dry_gate_cell[0]), int(dry_gate_cell[1]))
+	if int(dry_watch_salt.get("watch", 0)) != 4 or int(dry_relief_salt.get("relief", 0)) != 2 or int(dry_wage_salt.get("wage", 0)) != 2 or int(dry_gate_salt.get("gate", 0)) != 2:
+		_fail(errors, "dry watch cell holds %s, relief holds %s, wage holds %s, gate holds %s" % [
+			dry_watch_salt.get("watch", 0), dry_relief_salt.get("relief", 0), dry_wage_salt.get("wage", 0), dry_gate_salt.get("gate", 0),
+		])
+	if not String(dry_stood.get_summary()).contains("Stood 4 on the watch") or not String(dry_stood.get_summary()).contains("Left 2 at the relief") or not String(dry_stood.get_summary()).contains("Posted 6") or not String(dry_stood.get_summary()).contains("Left 2 at the wage") or not String(dry_stood.get_summary()).contains("Paid 8") or not String(dry_stood.get_summary()).contains("Left 2 unpaid") or not String(dry_stood.get_summary()).contains("Left 0 in the yard"):
+		_fail(errors, "dry watch summary does not name the cap: %s" % dry_stood.get_summary())
+	_assert_pop(stood, errors, "stood plan")
+	_assert_pop(stood_again, errors, "stood plan again")
+	_assert_pop(late, errors, "late_stood")
+	_assert_pop(dry_stood, errors, "dry_stood")
+	_assert_pop(ignored, errors, "no_watch")
+	_assert_pop(bare, errors, "watch_only")
+	# The cap stops the watch while ticks remain and posted hires remain.
+	# Hires still in the loft, and hires who were paid but not posted, stay put.
+	var shore = _prepare_plan(plans, "stood", errors)
+	if shore == null:
+		return
+	var shore_guard := 0
+	var shore_limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + int(Sim.SHIP_TICK) + int(Sim.MARKET_TICK) + int(Sim.YARD_TICK) + int(Sim.BUNK_TICK) + int(Sim.LOFT_TICK) + int(Sim.GATE_TICK) + int(Sim.WAGE_TICK) + int(Sim.RELIEF_TICK) + 2
+	while int(shore.get_beat()) != Sim.WATCHING and not shore.is_over() and shore_guard < shore_limit:
+		shore.tick()
+		shore_guard += 1
+	if int(shore.get_beat()) != Sim.WATCHING or shore.is_over():
+		_fail(errors, "the relief beat did not open a watch beat for the cap check")
+		return
+	if int(shore.get_ticks_until_rain()) != int(Sim.WATCH_TICK):
+		_fail(errors, "watch countdown started at %d, expected %d" % [shore.get_ticks_until_rain(), Sim.WATCH_TICK])
+	if int(shore.get_stood()) != 0 or int(shore.get_posted()) != 6 or int(shore.get_relief_left()) != 6 or int(shore.get_yard_left()) != 57:
+		_fail(errors, "watch opened early (stood %d posted %d relief %d yard %d)" % [
+			shore.get_stood(), shore.get_posted(), shore.get_relief_left(), shore.get_yard_left(),
+		])
+	var saw_cap := false
+	var stand_guard := 0
+	while not shore.is_over() and stand_guard < int(Sim.WATCH_TICK) + 2:
+		shore.tick()
+		stand_guard += 1
+		if int(shore.get_stood()) == int(Sim.WATCH_CAP) and int(shore.get_relief_left()) == 2 and int(shore.get_posted()) == 6 and int(shore.get_wage_left()) == 4 and int(shore.get_paid()) == 10 and int(shore.get_loft_left()) == 19 and int(shore.get_gate_left()) == 0 and int(shore.get_yard_left()) == 57 and int(shore.get_ticks_until_rain()) > 0:
+			saw_cap = true
+			var ticks_left := int(shore.get_ticks_until_rain())
+			shore.tick()
+			if int(shore.get_stood()) != int(Sim.WATCH_CAP) or int(shore.get_relief_left()) != 2 or int(shore.get_posted()) != 6 or int(shore.get_wage_left()) != 4 or int(shore.get_loft_left()) != 19 or int(shore.get_gate_left()) != 0 or int(shore.get_yard_left()) != 57 or int(shore.get_paid()) != 10 or int(shore.get_stored_salt()) != 2997 or int(shore.get_coins()) != 2997 or int(shore.get_hired()) != 29:
+				_fail(errors, "the watch kept standing after the cap (stood %d relief %d posted %d wage %d loft %d gate %d yard %d paid %d)" % [
+					shore.get_stood(), shore.get_relief_left(), shore.get_posted(), shore.get_wage_left(), shore.get_loft_left(), shore.get_gate_left(), shore.get_yard_left(), shore.get_paid(),
+				])
+			elif not shore.is_over() and int(shore.get_ticks_until_rain()) >= ticks_left:
+				_fail(errors, "the watch beat did not spend a tick after the cap")
+			break
+	if not saw_cap:
+		_fail(errors, "the watch did not stop at %d while ticks remained (stood %d relief %d posted %d wage %d loft %d yard %d ticks %d)" % [
+			Sim.WATCH_CAP, shore.get_stood(), shore.get_relief_left(), shore.get_posted(), shore.get_wage_left(), shore.get_loft_left(), shore.get_yard_left(), shore.get_ticks_until_rain(),
+		])
+	# Dry pans post 6 and the cap still stands only 4. The 2 who were paid and
+	# not posted stay on the wage. The 2 who passed and were not paid stay on
+	# the gate. The yard stays empty.
+	var short = _prepare_plan(plans, "dry_stood", errors)
+	if short == null:
+		return
+	var short_guard := 0
+	while int(short.get_beat()) != Sim.WATCHING and not short.is_over() and short_guard < shore_limit:
+		short.tick()
+		short_guard += 1
+	if int(short.get_beat()) != Sim.WATCHING or short.is_over():
+		_fail(errors, "the relief beat did not open a watch beat for the dry cap")
+		return
+	var saw_short := false
+	var short_steps := 0
+	while not short.is_over() and short_steps < int(Sim.WATCH_TICK) + 2:
+		short.tick()
+		short_steps += 1
+		if int(short.get_stood()) == int(Sim.WATCH_CAP) and int(short.get_relief_left()) == 2 and int(short.get_posted()) == 6 and int(short.get_wage_left()) == 2 and int(short.get_gate_left()) == 2 and int(short.get_paid()) == 8 and int(short.get_yard_left()) == 0 and int(short.get_loft_left()) == 0 and int(short.get_ticks_until_rain()) > 0:
+			saw_short = true
+			var short_ticks := int(short.get_ticks_until_rain())
+			short.tick()
+			if int(short.get_stood()) != 4 or int(short.get_relief_left()) != 2 or int(short.get_wage_left()) != 2 or int(short.get_gate_left()) != 2 or int(short.get_yard_left()) != 0 or int(short.get_posted()) != 6 or int(short.get_paid()) != 8:
+				_fail(errors, "the watch stood an unposted hire or passed the cap (stood %d relief %d wage %d gate %d yard %d posted %d paid %d)" % [
+					short.get_stood(), short.get_relief_left(), short.get_wage_left(), short.get_gate_left(), short.get_yard_left(), short.get_posted(), short.get_paid(),
+				])
+			elif not short.is_over() and int(short.get_ticks_until_rain()) >= short_ticks:
+				_fail(errors, "the watch beat did not spend a tick after the dry cap")
+			break
+	if not saw_short:
+		_fail(errors, "dry watch did not stop at 4 with unposted hires left (stood %d relief %d wage %d gate %d yard %d posted %d paid %d ticks %d)" % [
+			short.get_stood(), short.get_relief_left(), short.get_wage_left(), short.get_gate_left(), short.get_yard_left(), short.get_posted(), short.get_paid(), short.get_ticks_until_rain(),
+		])
+	print("stood %d left relief %d unposted %d unpaid %d; dry stood %d left relief %d unposted %d unpaid %d; no watch stood %d left relief %d; watch without relief stood %d" % [
+		stood.get_stood(), stood.get_relief_left(), stood_unposted, stood_unpaid, dry_stood.get_stood(), dry_stood.get_relief_left(), dry_unposted, dry_unpaid, ignored.get_stood(), ignored.get_relief_left(), bare.get_stood(),
 	])
 
 
@@ -2409,6 +2707,24 @@ func _run_plan(plans: Dictionary, plan_name: String, errors: Array):
 		_apply_marks(sim, plan["after_wage"], errors)
 		if errors.size() > relief_before:
 			return null
+	if plan.has("after_relief"):
+		var watch_guard := 0
+		var watch_limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + int(Sim.SHIP_TICK) + int(Sim.MARKET_TICK) + int(Sim.YARD_TICK) + int(Sim.BUNK_TICK) + int(Sim.LOFT_TICK) + int(Sim.GATE_TICK) + int(Sim.WAGE_TICK) + int(Sim.RELIEF_TICK) + 2
+		while int(sim.get_beat()) != Sim.WATCHING and not sim.is_over() and watch_guard < watch_limit:
+			sim.tick()
+			watch_guard += 1
+		if int(sim.get_beat()) != Sim.WATCHING or sim.is_over():
+			_fail(errors, "%s did not open the watch beat after the relief" % plan_name)
+			return null
+		if int(sim.get_ticks_until_rain()) != int(Sim.WATCH_TICK):
+			_fail(errors, "%s watch countdown started at %d, expected %d" % [
+				plan_name, sim.get_ticks_until_rain(), Sim.WATCH_TICK,
+			])
+			return null
+		var watch_before := errors.size()
+		_apply_marks(sim, plan["after_relief"], errors)
+		if errors.size() > watch_before:
+			return null
 	sim.run_until_rain()
 	return sim
 
@@ -2442,6 +2758,8 @@ func _apply_marks(sim, plan: Dictionary, errors: Array) -> void:
 		_apply_cells(sim, plan["wage"], Sim.WAGE, errors)
 	if plan.has("relief"):
 		_apply_cells(sim, plan["relief"], Sim.RELIEF, errors)
+	if plan.has("watch"):
+		_apply_cells(sim, plan["watch"], Sim.WATCH, errors)
 	if plan.has("rake_rect"):
 		_apply_rect(sim, plan["rake_rect"], Sim.RAKE, errors)
 
