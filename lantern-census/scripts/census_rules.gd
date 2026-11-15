@@ -28,6 +28,7 @@ extends RefCounted
 ## The well house's ring is the walk around the shaft.
 ## The scriptorium's ring is the walk around the desk.
 ## The binding's ring is the walk around the press.
+## The chart room's ring is the walk around the table.
 ## A census is accepted only when every corridor and hazard is marked truly
 ## and no tile is marked as something it is not.
 
@@ -41,7 +42,7 @@ const HAZARD_VALUE := 8
 const LOOP_VALUE := 15
 
 const TOWN_LINE := "Arrows turn and step, Q and E strafe, M marks the tile you face, and Space waits out the warden's swing."
-const RATE_CARD := "A true corridor pays 3. A true hazard pays 8. The cellar's east square, the cistern ring, the cloister walk, the crypt ring, the ossuary ring, the reliquary ring, the undercroft ring, the well ring, the scriptorium ring, and the binding ring each pay 15 only when every tile of that ring is marked corridor. A false mark pays nothing."
+const RATE_CARD := "A true corridor pays 3. A true hazard pays 8. The cellar's east square, the cistern ring, the cloister walk, the crypt ring, the ossuary ring, the reliquary ring, the undercroft ring, the well ring, the scriptorium ring, the binding ring, and the chart room ring each pay 15 only when every tile of that ring is marked corridor. A false mark pays nothing."
 
 const CELLAR_RECORD := "Record every corridor, both hazard cracks, and the east square."
 const CISTERN_RECORD := "Record every corridor, the three seep cracks, and the cistern ring around the pit."
@@ -53,6 +54,7 @@ const UNDERCROFT_RECORD := "Record every corridor, the eight salt cracks, and th
 const WELL_RECORD := "Record every corridor, the nine well cracks, and the well ring around the shaft."
 const SCRIPTORIUM_RECORD := "Record every corridor, the ten ink cracks, and the scriptorium ring around the desk."
 const BINDING_RECORD := "Record every corridor, the eleven glue cracks, and the binding ring around the press."
+const CHART_RECORD := "Record every corridor, the twelve chart cracks, and the chart room ring around the table."
 
 const CELLAR_ROWS: PackedStringArray = [
 	"#############",
@@ -226,6 +228,23 @@ const BINDING_ROWS: PackedStringArray = [
 	"################",
 ]
 
+# The table is the 2x8 bar of 'T' at columns 9-10, rows 2-9.
+# The paid ring is the 24-tile corridor cycle around that table.
+# The west aisle and the south landing are ordinary floors. The piers are walls.
+const CHART_ROWS: PackedStringArray = [
+	"#################",
+	"#S..............#",
+	"#.######.TT.##..#",
+	"#H######.TT.##H.#",
+	"#.######.TT.##..#",
+	"#H######.TT.##..#",
+	"#.######.TT.##HL#",
+	"#H######.TT.##..#",
+	"#.######.TT.##H.#",
+	"#H.......TT.....#",
+	"#..HEH.H....H.H.#",
+]
+
 enum Tile { WALL, FLOOR, HAZARD, LIFT }
 enum Mark { NONE, CORRIDOR, WALL, HAZARD }
 enum EndReason { NONE, EXTRACTED, LAMP_OUT, ABANDONED }
@@ -266,7 +285,7 @@ static var _floor_list: Array = []
 
 static func floors() -> Array:
 	if _floor_list.is_empty():
-		_floor_list = [_make_cellar(), _make_cistern(), _make_cloister(), _make_crypt(), _make_ossuary(), _make_reliquary(), _make_undercroft(), _make_wellhouse(), _make_scriptorium(), _make_binding()]
+		_floor_list = [_make_cellar(), _make_cistern(), _make_cloister(), _make_crypt(), _make_ossuary(), _make_reliquary(), _make_undercroft(), _make_wellhouse(), _make_scriptorium(), _make_binding(), _make_chartroom()]
 	return _floor_list
 
 
@@ -470,6 +489,25 @@ static func _make_binding() -> Floor:
 		ring.append(Vector2i(x, 8))
 	floor.loop = ring
 	floor.record = BINDING_RECORD
+	return floor
+
+
+static func _make_chartroom() -> Floor:
+	var floor := Floor.new()
+	floor.id = "chartroom"
+	floor.title = "The Chart Room"
+	floor.rows = CHART_ROWS
+	floor.loop_name = "Chart room ring"
+	var ring: Array = []
+	for x in range(8, 12):
+		ring.append(Vector2i(x, 1))
+	for y in range(2, 10):
+		ring.append(Vector2i(8, y))
+		ring.append(Vector2i(11, y))
+	for x in range(8, 12):
+		ring.append(Vector2i(x, 10))
+	floor.loop = ring
+	floor.record = CHART_RECORD
 	return floor
 
 
@@ -864,6 +902,8 @@ static func ahead_line(state: RunState) -> String:
 				return "Ahead: the copying desk. It inks as a wall."
 			if glyph_at(n, plan) == "P":
 				return "Ahead: the press. It inks as a wall."
+			if glyph_at(n, plan) == "T":
+				return "Ahead: the chart table. It inks as a wall."
 			return "Ahead: wall."
 		Tile.HAZARD:
 			if plan != null and plan.id == "cistern":
@@ -884,6 +924,8 @@ static func ahead_line(state: RunState) -> String:
 				return "Ahead: an ink crack. Stepping inks it and costs no extra oil."
 			if plan != null and plan.id == "binding":
 				return "Ahead: a glue crack. Stepping inks it and costs no extra oil."
+			if plan != null and plan.id == "chartroom":
+				return "Ahead: a chart crack. Stepping inks it and costs no extra oil."
 			return "Ahead: a hazard crack. Stepping inks it and costs no extra oil."
 		Tile.LIFT:
 			return "Ahead: the lift. Stepping on carries the sheet out."
@@ -975,6 +1017,8 @@ static func step(state: RunState, dir: Vector2i) -> Dictionary:
 				return _pack(state, false, false, false, 0, true, "You tap the copying desk and ink it if the square was blank.")
 			if glyph_at(target, plan) == "P":
 				return _pack(state, false, false, false, 0, true, "You tap the press and ink it if the square was blank.")
+			if glyph_at(target, plan) == "T":
+				return _pack(state, false, false, false, 0, true, "You tap the chart table and ink it if the square was blank.")
 			return _pack(state, false, false, false, 0, true, "You tap a wall and ink it if the square was blank.")
 		if target == enemy_pos(plan):
 			return _pack(state, false, false, false, 0, true, "The warden occupies that tile.")
@@ -1014,6 +1058,8 @@ static func step(state: RunState, dir: Vector2i) -> Dictionary:
 			message = "You cross an ink crack. It is inked if the square was blank."
 		elif plan != null and plan.id == "binding":
 			message = "You cross a glue crack. It is inked if the square was blank."
+		elif plan != null and plan.id == "chartroom":
+			message = "You cross a chart crack. It is inked if the square was blank."
 		else:
 			message = "You cross a hazard crack. It is inked if the square was blank."
 	return _pack(state, true, true, hit, MOVE_OIL + (HIT_OIL if hit else 0), false, message)
