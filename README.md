@@ -10,6 +10,7 @@ Playable slices, Godot 4. Steam packaging comes later.
 - [Lantern Census](lantern-census/) — a one-floor map survey
 - [Lowball](lowball/) — a four-week fictional sports season
 - [Casework](casework/) — a one-case deduction board
+- [Lampblack](lampblack/) — a turn-based museum stealth puzzle
 
 ```bash
 godot --path harbor-glass
@@ -28,4 +29,6 @@ godot --path lowball
 godot --headless --path lowball -s res://scripts/tests.gd
 godot --path casework
 godot --headless --path casework -s res://tests/run.gd
+godot --path lampblack
+godot --headless --path lampblack -s res://tests/run_tests.gd
 ```
