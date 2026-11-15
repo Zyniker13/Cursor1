@@ -235,6 +235,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_tide_mirror(at, rot)
 		"shutter":
 			_draw_shutter_gate(at)
+		"stain":
+			_draw_stain(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -301,7 +303,8 @@ func _draw_tide_mirror(at: Vector2i, rot: int) -> void:
 	draw_line(Vector2(center.x + r * 0.16, wave + 3.0), Vector2(center.x + r * 0.62, wave), wave_col, 2.0)
 
 func _keeps_its_face_under_water(kind: String) -> bool:
-	return kind == "tide_mirror" or kind == "shutter"
+	# These still act under water, so the closed bars are not drawn over them.
+	return kind == "tide_mirror" or kind == "shutter" or kind == "stain"
 
 func _draw_shutter_gate(at: Vector2i) -> void:
 	# A sluice, not a mirror. Closed bars while the row is dry. An open slot
@@ -325,6 +328,26 @@ func _draw_shutter_gate(at: Vector2i) -> void:
 		for i in 4:
 			var y := rect.position.y + 6.0 + float(i) * (rect.size.y - 10.0) / 3.0
 			draw_line(Vector2(rect.position.x + 4.0, y), Vector2(rect.end.x - 4.0, y), bar, 3.0)
+
+func _draw_stain(at: Vector2i, rot: int) -> void:
+	# A blot of pigment on glass. No facing: the color is the whole piece.
+	var center := _center(at)
+	var tint := Tracer.stain_color(rot)
+	var col := Palette.BEAM_RED if tint == "red" else Palette.BEAM_BLUE
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	draw_circle(center, cell * 0.30, Color(Palette.GLASS.r, Palette.GLASS.g, Palette.GLASS.b, 0.28))
+	draw_arc(center, cell * 0.30, 0, TAU, 28, Palette.GLASS_EDGE, 2.0, true)
+	var blot := col
+	blot.a = 0.88
+	draw_circle(center + Vector2(-6, 3), cell * 0.15, blot)
+	draw_circle(center + Vector2(7, -4), cell * 0.09, blot)
+	draw_circle(center + Vector2(1, 9), cell * 0.06, blot)
+	draw_line(center + Vector2(1, 8), center + Vector2(3, cell * 0.22), blot, 3.0)
+	var chip := Rect2(center.x - 18.0, center.y - 9.0, 36.0, 16.0)
+	draw_rect(chip, Color(0.05, 0.04, 0.06, 0.78))
+	_label(center + Vector2(-14, 4), tint, 12, Color.WHITE)
+	if flooded:
+		draw_arc(center, cell * 0.34, 0, TAU, 24, Palette.FOAM, 1.5, true)
 
 func _draw_prism(at: Vector2i, rot: int, set_in_stone: bool) -> void:
 	var center := _center(at)
