@@ -9,7 +9,8 @@ class_name ChartBook
 # The Well holds eight more. The Siphon holds eight more.
 # The Sluice holds eight more. The Weir holds eight more.
 # The Lintel holds eight more. The Mullion holds eight more.
-# The Transom holds eight more. The Casement holds the last eight.
+# The Transom holds eight more. The Casement holds eight more.
+# The Jamb holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
@@ -34,6 +35,12 @@ class_name ChartBook
 # direction and the same color, and that pass costs no bounce. Every other
 # direction stops and does not enter. While that row is flooded, every beam
 # stops at the waterline.
+# A jamb has a facing. Rotation changes it: 0 north, 90 east, 180 south,
+# 270 west. While its row is dry, north or south opens the north-south axis
+# and east or west opens the east-west axis. A beam on that axis passes
+# straight through in the same direction and the same color, and that pass
+# costs no bounce. The other axis stops and does not enter. While that row is
+# flooded, every beam stops at the waterline.
 # See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
@@ -58,6 +65,7 @@ const LINTEL := "The Lintel"
 const MULLION := "The Mullion"
 const TRANSOM := "The Transom"
 const CASEMENT := "The Casement"
+const JAMB := "The Jamb"
 
 static func all() -> Array:
 	var book: Array = []
@@ -79,6 +87,7 @@ static func all() -> Array:
 	book.append_array(mullion())
 	book.append_array(transom())
 	book.append_array(casement())
+	book.append_array(jamb())
 	return book
 
 
@@ -152,6 +161,10 @@ static func transom() -> Array:
 
 static func casement() -> Array:
 	return [chart_135(), chart_136(), chart_137(), chart_138(), chart_139(), chart_140(), chart_141(), chart_142()]
+
+
+static func jamb() -> Array:
+	return [chart_143(), chart_144(), chart_145(), chart_146(), chart_147(), chart_148(), chart_149(), chart_150()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -5249,6 +5262,283 @@ static func chart_142() -> Dictionary:
 	}
 
 
+static func chart_143() -> Dictionary:
+	# Tide index 0, flood 0. A north jamb passes the outbound beam and the
+	# return. The chart opens on the east-west axis, which stops both.
+	return {
+		"id": "143",
+		"harbor": JAMB,
+		"title": "The Dry Jamb",
+		"teach": "Tide index 0, flood 0. A dry north jamb passes both the outbound beam and the return. White stays white and blue stays blue. A casement in that cell refuses the return. A transom stops both north-south beams and lets the east-west beam through. A lintel lets the east-west beam through. A shutter, weir, sluice, well, siphon, stain, mirror, or vane in that cell also misses.",
+		"win": "The dry north jamb passes the outbound beam and the return.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ws", 3, 6, "N", "white"),
+			_lantern("Bn", 3, 0, "S", "blue"),
+			_lantern("Re", 0, 3, "E", "red"),
+		],
+		"docks": [
+			_dock("Wd", 3, 1, "white", true),
+			_dock("Bd", 3, 5, "blue", true),
+			_dock("Ke", 6, 3, "dark", false, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_jamb("J", "Jamb", 3, 3, 90, 0),
+		],
+	}
+
+
+static func chart_144() -> Dictionary:
+	# The chart opens under water. The beam from the dry row stops at the
+	# waterline. The solution lowers the tide, and the north-south axis passes
+	# both ways.
+	return {
+		"id": "144",
+		"harbor": JAMB,
+		"title": "The Wet Stop",
+		"teach": "The jamb opens under water, so every beam stops at the waterline and does not enter. Lower the tide. Dry, the north-south axis passes both ways. A shutter would pass while flooded. A well, a siphon, a sluice, or a weir would carry the beam. A casement refuses the return. A transom lets the east-west beam through.",
+		"win": "The tide is low. The jamb passes both ways, and the east-west beam stops.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0, 3],
+		"start_tide_index": 1,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ws", 3, 1, "S", "white"),
+			_lantern("Bn", 3, 6, "N", "blue"),
+			_lantern("Re", 0, 4, "E", "red"),
+		],
+		"docks": [
+			_dock("Bd", 3, 2, "blue", true),
+			_dock("Wd", 3, 5, "white", true),
+			_dock("Ke", 6, 4, "dark", false, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_jamb("J", "Jamb", 3, 4, 90, 0),
+		],
+	}
+
+
+static func chart_145() -> Dictionary:
+	# Red goes north and stays red. Blue goes south and stays blue. A stain
+	# paints both passes the same color.
+	return {
+		"id": "145",
+		"harbor": JAMB,
+		"title": "Color Kept",
+		"teach": "The dry jamb keeps red, blue, and white. Red stays red and blue stays blue. White stays white. A stain or a weir would change the color. A casement refuses the return. A transom lets the east-west beam through. A lintel lets that beam through.",
+		"win": "The color that enters the jamb is the color that leaves it.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Rs", 3, 6, "N", "red"),
+			_lantern("Bn", 3, 0, "S", "blue"),
+			_lantern("Re", 0, 3, "E", "red"),
+		],
+		"docks": [
+			_dock("Rd", 3, 1, "red", true),
+			_dock("Bd", 3, 5, "blue", true),
+			_dock("Ke", 6, 3, "dark", false, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_jamb("J", "Jamb", 3, 3, 270, 0),
+		],
+	}
+
+
+static func chart_146() -> Dictionary:
+	# White goes straight north. Blue goes straight south. Neither beam turns.
+	return {
+		"id": "146",
+		"harbor": JAMB,
+		"title": "No Turn",
+		"teach": "The beam leaves on the same side it entered. It does not turn. A prism, a vane, a sluice, or a mirror would turn it. A casement refuses the return. A transom lets the east-west beam through.",
+		"win": "White goes straight north, and blue goes straight south.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ws", 3, 6, "N", "white"),
+			_lantern("Bn", 3, 0, "S", "blue"),
+			_lantern("Re", 0, 3, "E", "red"),
+		],
+		"docks": [
+			_dock("Wd", 3, 1, "white", true),
+			_dock("Bd", 3, 5, "blue", true),
+			_dock("Ke", 6, 3, "dark", false, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_jamb("J", "Jamb", 3, 3, 90, 0),
+		],
+	}
+
+
+static func chart_147() -> Dictionary:
+	# Flood 2 covers y >= 4. The jamb stays on the dry row and opens east-west.
+	# A separate beam stops at the flooded row's waterline.
+	return {
+		"id": "147",
+		"harbor": JAMB,
+		"title": "Beside the Flood",
+		"teach": "The jamb's own row is dry, so both east and west pass. The next flooded cell that is not a flood carrier still stops the beam at the waterline. A mullion stops the east-west beam. A casement refuses the return. A lintel lets the north-south beam through.",
+		"win": "Both east and west pass on the dry row, and the beam into the flood stops.",
+		"cols": 8,
+		"rows": 6,
+		"tide_phases": [2],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("We", 0, 2, "E", "white"),
+			_lantern("Bw", 7, 2, "W", "blue"),
+			_lantern("Rs", 3, 0, "S", "red"),
+			_lantern("F", 6, 3, "S", "white"),
+		],
+		"docks": [
+			_dock("Wd", 5, 2, "white", true),
+			_dock("Bd", 1, 2, "blue", true),
+			_dock("Kd", 3, 3, "dark", false, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_jamb("J", "Jamb", 3, 2, 0, 90),
+		],
+	}
+
+
+static func chart_148() -> Dictionary:
+	# One jamb opens east-west and one opens north-south. Each axis is required
+	# in both directions, and each blocked axis hits a dark mark.
+	return {
+		"id": "148",
+		"harbor": JAMB,
+		"title": "Two Jambs",
+		"teach": "One jamb is open on the north-south axis and one on the east-west axis. Swapping their axes fails. A mullion cannot take the east-west seat. A transom cannot take the north-south seat. A casement refuses the return. A lintel passes the blocked axis.",
+		"win": "East-west stays east-west and north-south stays north-south.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("We", 0, 5, "E", "white"),
+			_lantern("Bw", 6, 5, "W", "blue"),
+			_lantern("Wn", 2, 6, "N", "white"),
+			_lantern("Bs", 2, 0, "S", "blue"),
+			_lantern("Rn", 3, 6, "N", "red"),
+			_lantern("Re", 0, 3, "E", "red"),
+		],
+		"docks": [
+			_dock("Wd", 5, 5, "white", true),
+			_dock("Bd", 1, 5, "blue", true),
+			_dock("Nd", 2, 1, "white", true),
+			_dock("Sd", 2, 4, "blue", true),
+			_dock("Kd", 3, 1, "dark", false, true),
+			_dock("Ke", 6, 3, "dark", false, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_jamb("E", "East jamb", 3, 5, 0, 90),
+			_jamb("N", "North jamb", 2, 3, 90, 0),
+		],
+	}
+
+
+static func chart_149() -> Dictionary:
+	# Three tide marks. The middle mark leaves the jamb dry on the north-south
+	# axis. The chart starts on the east-west axis. Low water wakes the hull.
+	# High water covers the jamb.
+	return {
+		"id": "149",
+		"harbor": JAMB,
+		"title": "The Held Jamb",
+		"teach": "The held facing is part of the solution. The chart starts on the other axis. Place the tide on the middle mark and open the north-south axis. Low water wakes the south hull. High water covers the jamb and the beam stops at the waterline. A casement refuses the return. A transom lets the east-west beam through. A lintel lets that beam through.",
+		"win": "The middle mark holds the north-south jamb. Both directions pass, and the hull stays dark.",
+		"cols": 8,
+		"rows": 7,
+		"tide_phases": [0, 1, 4],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Bn", 4, 0, "S", "blue"),
+			_lantern("Wn", 4, 5, "N", "white"),
+			_lantern("Re", 0, 3, "E", "red"),
+			_lantern("Hl", 0, 6, "E", "white"),
+		],
+		"docks": [
+			_dock("Wd", 4, 1, "white", true),
+			_dock("Bd", 4, 4, "blue", true),
+			_dock("Ke", 7, 3, "dark", false, true),
+		],
+		"boats": [
+			_boat("Hb", 3, 6),
+		],
+		"fixtures": [],
+		"pieces": [
+			_jamb("J", "Jamb", 4, 3, 90, 0),
+		],
+	}
+
+
+static func chart_150() -> Dictionary:
+	# The jamb and the shutter trade places. On the line the jamb opens
+	# north-south. Both directions count. The east-west beam must not.
+	return {
+		"id": "150",
+		"harbor": JAMB,
+		"title": "The Jamb Mark",
+		"teach": "Move the jamb from the side socket onto the line and open the north-south axis. The mark is satisfied only by that open axis. Both the outbound beam and the return pass. The east-west beam must not count. A casement refuses the return. A transom stops the north-south beams and lets the east-west beam through. A lintel lets the east-west beam through. A mullion passes this same axis, and it fails on an east-west seat.",
+		"win": "The jamb stands on the line, open north and south. Both docks are lit and the cross beam stays dark.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Wn", 3, 6, "N", "white"),
+			_lantern("Bn", 3, 0, "S", "blue"),
+			_lantern("Re", 0, 3, "E", "red"),
+		],
+		"docks": [
+			_dock("Wd", 3, 1, "white", true),
+			_dock("Bd", 3, 5, "blue", true),
+			_dock("Ke", 6, 3, "dark", false, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_placed("J", "Jamb", "jamb", [["side", 5, 5], ["line", 3, 3]], "side", "line", 90, 0),
+			_placed("G", "Line shutter", "shutter", [["line", 3, 3], ["side", 5, 5]], "line", "side", 0, 0),
+		],
+	}
+
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -5445,6 +5735,20 @@ static func _casement(id: String, name: String, x: int, y: int, start_rot: int, 
 		"id": id,
 		"name": name,
 		"kind": "casement",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _jamb(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "jamb",
 		"movable": false,
 		"sockets": [{"id": "a", "x": x, "y": y}],
 		"start_socket": "a",
