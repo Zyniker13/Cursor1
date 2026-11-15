@@ -73,15 +73,15 @@ func _build_hud() -> void:
 	layer.add_child(bottom_panel)
 
 	controls_label = Label.new()
-	controls_label.text = "Arrows move    F lamp you face    Space wait    U undo    R restart    click a neighbor or a lamp\n1–8 east    Shift+1–6 west    Ctrl+1–6 north    Alt+1–6 south    F1–F6 attic    F7–F12 cellar    Keypad 1–6 gallery    Shift+F1–F6 court    Alt+F1–F6 nave    Ctrl+F1–F6 cloister"
+	controls_label.text = "Arrows move    F lamp you face    Space wait    U undo    R restart    click a neighbor or a lamp\n1–8 east    Shift+1–6 west    Ctrl+1–6 north    Alt+1–6 south    F1–F6 attic    F7–F12 cellar    Keypad 1–6 gallery\nShift+F1–F6 court    Alt+F1–F6 nave    Ctrl+F1–F6 cloister    Ctrl+Shift+F1–F6 porch"
 	controls_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	controls_label.add_theme_font_size_override("font_size", 14)
 	controls_label.add_theme_color_override("font_color", MUTED)
 	controls_label.position = Vector2(20, 4)
-	controls_label.size = Vector2(1240, 64)
+	controls_label.size = Vector2(1240, 84)
 	bottom_panel.add_child(controls_label)
 
-	var row_y := 72.0
+	var row_y := 90.0
 	var wings: Array = Puzzles.wings()
 	for wing_i in wings.size():
 		var wing: Dictionary = wings[wing_i]
@@ -118,10 +118,10 @@ func _build_hud() -> void:
 		row_y += 36.0
 
 	legend_label = Label.new()
-	legend_label.text = "Gold diamond — lamplight, you cannot walk it.    Red diamond — a guard is watching.    Arrow — that guard's next step.    Brass disc — a plate. Step on it in the dark and the nearest guard is called.    Iron cup — a bell. Step on it in the dark and every guard who can reach it is called.    Iron bars — a grate. It stays dark, you may enter it, and a guard cannot."
+	legend_label.text = "Gold diamond — lamplight, you cannot walk it.    Red diamond — a guard is watching.    Arrow — that guard's next step.    Brass disc — a plate. Step on it in the dark and the nearest guard is called.    Iron cup — a bell. Step on it in the dark and every guard who can reach it is called.    Iron bars — a grate. It stays dark, you may enter it, and a guard cannot.    Stone sill — a lamp lights it, light stops there, and a guard cannot enter or see through it."
 	legend_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	legend_label.position = Vector2(20, row_y + 2.0)
-	legend_label.size = Vector2(1240, 52)
+	legend_label.size = Vector2(1240, 64)
 	legend_label.add_theme_font_size_override("font_size", 14)
 	legend_label.add_theme_color_override("font_color", MUTED)
 	bottom_panel.add_child(legend_label)
@@ -133,7 +133,7 @@ func _build_hud() -> void:
 	status_label.position = Vector2(20, row_y + 2.0)
 	status_label.size = Vector2(1240, 52)
 	bottom_panel.add_child(status_label)
-	bottom_h = row_y + 62.0
+	bottom_h = row_y + 74.0
 
 	turn_label = Label.new()
 	turn_label.add_theme_font_size_override("font_size", 16)
@@ -168,9 +168,9 @@ func _layout() -> void:
 	bottom_panel.position = Vector2(0, view.y - bottom_h)
 	bottom_panel.size = Vector2(view.x, bottom_h)
 	if controls_label:
-		controls_label.size = Vector2(maxf(200.0, view.x - 40.0), 64)
+		controls_label.size = Vector2(maxf(200.0, view.x - 40.0), 84)
 	if legend_label:
-		legend_label.size = Vector2(maxf(200.0, view.x - 40.0), 52)
+		legend_label.size = Vector2(maxf(200.0, view.x - 40.0), 64)
 	if status_label:
 		status_label.size = Vector2(maxf(200.0, view.x - 40.0), 52)
 	title_label.position = Vector2(24, 16)
@@ -271,6 +271,9 @@ func _puzzle_index_for_key(event: InputEventKey) -> int:
 	var gallery := _gallery_index(event)
 	if gallery >= 0:
 		return 38 + gallery
+	var porch := _porch_index(event)
+	if porch >= 0:
+		return 62 + porch
 	var court := _court_index(event)
 	if court >= 0:
 		return 44 + court
@@ -311,6 +314,19 @@ func _puzzle_index_for_key(event: InputEventKey) -> int:
 	return digit
 
 
+func _porch_index(event: InputEventKey) -> int:
+	if event.alt_pressed or not event.shift_pressed:
+		return -1
+	if not event.ctrl_pressed and not event.meta_pressed:
+		return -1
+	var key := event.physical_keycode
+	if key < KEY_F1 or key > KEY_F6:
+		key = event.keycode
+	if key < KEY_F1 or key > KEY_F6:
+		return -1
+	return int(key) - int(KEY_F1)
+
+
 func _cloister_index(event: InputEventKey) -> int:
 	if event.shift_pressed or event.alt_pressed:
 		return -1
@@ -336,7 +352,7 @@ func _nave_index(event: InputEventKey) -> int:
 
 
 func _court_index(event: InputEventKey) -> int:
-	if not event.shift_pressed:
+	if not event.shift_pressed or event.ctrl_pressed or event.meta_pressed:
 		return -1
 	var key := event.physical_keycode
 	if key < KEY_F1 or key > KEY_F6:
@@ -566,6 +582,8 @@ func _draw_tile(state: Dictionary, x: int, y: int, lit: Dictionary, watched: Dic
 	if lit.has(cell) and kind != Rules.Tile.GRATE:
 		floor_color = LIT
 	draw_rect(inset, floor_color)
+	if kind == Rules.Tile.SILL:
+		_draw_sill(inset)
 	if kind == Rules.Tile.GAP:
 		var pit := Rect2(inset.position + inset.size * 0.16, inset.size * 0.68)
 		draw_rect(pit, Color("070605"))
@@ -616,6 +634,21 @@ func _draw_plate(center: Vector2) -> void:
 	draw_rect(Rect2(center + Vector2(-tile * 0.07, -tile * 0.018), Vector2(tile * 0.14, tile * 0.036)), Color("3a2c16"))
 	draw_circle(center, tile * 0.045, Color("8d7344"))
 	draw_circle(center, tile * 0.02, Color("3a2c16"))
+
+
+func _draw_sill(inset: Rect2) -> void:
+	var stone := Color("b7a48c")
+	var dark := Color("6d5e4e")
+	var lip := Color("efe2d0")
+	var mortar := Color("2a241c")
+	var slab := Rect2(inset.position + Vector2(inset.size.x * 0.06, inset.size.y * 0.28), Vector2(inset.size.x * 0.88, inset.size.y * 0.44))
+	draw_rect(slab, stone)
+	var lip_h := maxf(3.0, tile * 0.08)
+	draw_rect(Rect2(slab.position, Vector2(slab.size.x, lip_h)), lip)
+	var base_h := maxf(3.0, tile * 0.07)
+	draw_rect(Rect2(Vector2(slab.position.x, slab.position.y + slab.size.y - base_h), Vector2(slab.size.x, base_h)), dark)
+	var joint_x := slab.position.x + slab.size.x * 0.5
+	draw_line(Vector2(joint_x, slab.position.y + 2.0), Vector2(joint_x, slab.position.y + slab.size.y - 2.0), mortar, maxf(1.5, tile * 0.03))
 
 
 func _draw_grate(inset: Rect2) -> void:
