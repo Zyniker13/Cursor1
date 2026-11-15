@@ -21,8 +21,9 @@ extends RefCounted
 ## does not increase hazard pay or the total.
 ##
 ## The cellar's ring is the east square. The cistern's ring is the walk
-## around the pit. A census is accepted only when every corridor and hazard
-## is marked truly and no tile is marked as something it is not.
+## around the pit. The cloister's ring is the walk around the garth.
+## A census is accepted only when every corridor and hazard is marked truly
+## and no tile is marked as something it is not.
 
 const SMALL_FLASK_OIL := 24
 const LARGE_FLASK_OIL := 120
@@ -34,10 +35,11 @@ const HAZARD_VALUE := 8
 const LOOP_VALUE := 15
 
 const TOWN_LINE := "Arrows turn and step, Q and E strafe, M marks the tile you face, and Space waits out the warden's swing."
-const RATE_CARD := "A true corridor pays 3. A true hazard pays 8. The cellar's east square and the cistern ring each pay 15 only when every tile of that ring is marked corridor. A false mark pays nothing."
+const RATE_CARD := "A true corridor pays 3. A true hazard pays 8. The cellar's east square, the cistern ring, and the cloister walk each pay 15 only when every tile of that ring is marked corridor. A false mark pays nothing."
 
 const CELLAR_RECORD := "Record every corridor, both hazard cracks, and the east square."
 const CISTERN_RECORD := "Record every corridor, the three seep cracks, and the cistern ring around the pit."
+const CLOISTER_RECORD := "Record every corridor, the four cinder cracks, and the cloister walk around the garth."
 
 const CELLAR_ROWS: PackedStringArray = [
 	"#############",
@@ -67,6 +69,21 @@ const CISTERN_ROWS: PackedStringArray = [
 	"#............L#",
 	"#..E..H..H.H..#",
 	"###############",
+]
+
+# The garth is the 5x2 block of '+' at columns 4-8, rows 4-5.
+# The paid walk is the 18-tile corridor cycle around that garth.
+const CLOISTER_ROWS: PackedStringArray = [
+	"################",
+	"#S.............#",
+	"#.############.#",
+	"#.#.......####.#",
+	"#.#.+++++.####.#",
+	"#.#.+++++.####.#",
+	"#.#.......####.#",
+	"#..E..........L#",
+	"#.H.H.H.H......#",
+	"################",
 ]
 
 enum Tile { WALL, FLOOR, HAZARD, LIFT }
@@ -109,7 +126,7 @@ static var _floor_list: Array = []
 
 static func floors() -> Array:
 	if _floor_list.is_empty():
-		_floor_list = [_make_cellar(), _make_cistern()]
+		_floor_list = [_make_cellar(), _make_cistern(), _make_cloister()]
 	return _floor_list
 
 
@@ -160,6 +177,25 @@ static func _make_cistern() -> Floor:
 	return floor
 
 
+static func _make_cloister() -> Floor:
+	var floor := Floor.new()
+	floor.id = "cloister"
+	floor.title = "The Cloister"
+	floor.rows = CLOISTER_ROWS
+	floor.loop_name = "Cloister walk"
+	var ring: Array = []
+	for x in range(3, 10):
+		ring.append(Vector2i(x, 3))
+	for y in range(4, 6):
+		ring.append(Vector2i(3, y))
+		ring.append(Vector2i(9, y))
+	for x in range(3, 10):
+		ring.append(Vector2i(x, 6))
+	floor.loop = ring
+	floor.record = CLOISTER_RECORD
+	return floor
+
+
 static func width(floor: Floor = null) -> int:
 	return _use(floor).rows[0].length()
 
@@ -182,7 +218,7 @@ static func glyph_at(p: Vector2i, floor: Floor = null) -> String:
 
 static func tile_at(p: Vector2i, floor: Floor = null) -> int:
 	var ch := glyph_at(p, floor)
-	if ch == "#" or ch == "*":
+	if ch == "#" or ch == "*" or ch == "+":
 		return Tile.WALL
 	if ch == "H":
 		return Tile.HAZARD
@@ -535,10 +571,14 @@ static func ahead_line(state: RunState) -> String:
 		Tile.WALL:
 			if glyph_at(n, plan) == "*":
 				return "Ahead: the cistern pit. It inks as a wall."
+			if glyph_at(n, plan) == "+":
+				return "Ahead: the garth. It inks as a wall."
 			return "Ahead: wall."
 		Tile.HAZARD:
 			if plan != null and plan.id == "cistern":
 				return "Ahead: a seep crack. Stepping inks it and costs no extra oil."
+			if plan != null and plan.id == "cloister":
+				return "Ahead: a cinder crack. Stepping inks it and costs no extra oil."
 			return "Ahead: a hazard crack. Stepping inks it and costs no extra oil."
 		Tile.LIFT:
 			return "Ahead: the lift. Stepping on carries the sheet out."
@@ -614,6 +654,8 @@ static func step(state: RunState, dir: Vector2i) -> Dictionary:
 			_observe(state, target)
 			if glyph_at(target, plan) == "*":
 				return _pack(state, false, false, false, 0, true, "You tap the cistern pit and ink it if the square was blank.")
+			if glyph_at(target, plan) == "+":
+				return _pack(state, false, false, false, 0, true, "You tap the garth and ink it if the square was blank.")
 			return _pack(state, false, false, false, 0, true, "You tap a wall and ink it if the square was blank.")
 		if target == enemy_pos(plan):
 			return _pack(state, false, false, false, 0, true, "The warden occupies that tile.")
@@ -637,6 +679,8 @@ static func step(state: RunState, dir: Vector2i) -> Dictionary:
 	elif tile_at(target, plan) == Tile.HAZARD:
 		if plan != null and plan.id == "cistern":
 			message = "You cross a seep crack. It is inked if the square was blank."
+		elif plan != null and plan.id == "cloister":
+			message = "You cross a cinder crack. It is inked if the square was blank."
 		else:
 			message = "You cross a hazard crack. It is inked if the square was blank."
 	return _pack(state, true, true, hit, MOVE_OIL + (HIT_OIL if hit else 0), false, message)
