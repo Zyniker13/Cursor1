@@ -7,6 +7,7 @@ Playable slices, Godot 4. Steam packaging comes later.
 - [Dispatch](dispatch/) — a parcel-routing puzzle
 - [Night Stamp](night-stamp/) — a border-desk deckbuilder
 - [Orchard Surge](orchard-surge/) — a dark-orchard wave game
+- [Lantern Census](lantern-census/) — a one-floor map survey
 
 ```bash
 godot --path harbor-glass
@@ -19,4 +20,6 @@ godot --path night-stamp
 godot --headless --path night-stamp -s res://tests/run_tests.gd
 godot --path orchard-surge
 godot --headless --path orchard-surge --script res://tests/run_tests.gd
+godot --path lantern-census
+godot --headless --path lantern-census -s res://tests/run_tests.gd
 ```
