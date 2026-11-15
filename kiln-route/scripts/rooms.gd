@@ -12,6 +12,8 @@ extends RefCounted
 ## Wing 18 is rooms 137-144.
 ## Wing 19 is rooms 145-152.
 ## Wing 20 is rooms 153-160.
+## Wing 21 is rooms 161-168.
+## Wing 22 is rooms 169-176.
 ## The dwell is taught before a later room depends on it.
 ## The twin is taught before a later room depends on it.
 ## The pass is taught before a later room depends on it.
@@ -24,7 +26,9 @@ extends RefCounted
 ## The prong is taught before a later room depends on it.
 ## The share is taught before a later room depends on it.
 ## The coulter is taught before a later room depends on it.
-## The roller, the weir, the bridge, the grate, the hook, the arm, the drop, the lift, the dwell, the twin, the pass, the slip, the shed, the rake, the hoe, the harrow, the fork, the prong, the share, and the coulter are taught before a later room depends on them.
+## The moldboard is taught before a later room depends on it.
+## The landside is taught before a later room depends on it.
+## The roller, the weir, the bridge, the grate, the hook, the arm, the drop, the lift, the dwell, the twin, the pass, the slip, the shed, the rake, the hoe, the harrow, the fork, the prong, the share, the coulter, the moldboard, and the landside are taught before a later room depends on them.
 ## Each solution is a full layout, not a delta from the initial pieces.
 ## Quotas are minimums inside SIM_TICKS.
 
@@ -193,6 +197,22 @@ static func all() -> Array:
 		two_heats_coulter(),
 		after_split_coulter(),
 		split_bin_coulter(),
+		left_ore(),
+		still_moldboard(),
+		seat_moldboard(),
+		split_corner_moldboard(),
+		two_stocks(),
+		after_split_moldboard(),
+		split_bin_moldboard(),
+		held_pair(),
+		right_ore(),
+		still_landside(),
+		seat_landside(),
+		split_corner_landside(),
+		two_stocks_landside(),
+		after_split_landside(),
+		split_bin_landside(),
+		held_pair_landside(),
 	]
 
 
@@ -6202,5 +6222,677 @@ static func split_bin_coulter() -> Dictionary:
 			piece(rules.Kind.BELT, 6, 4, rules.Dir.EAST),
 			piece(rules.Kind.PRESS, 7, 4, rules.Dir.EAST),
 			piece(rules.Kind.BELT, 8, 4, rules.Dir.EAST),
+		],
+	}
+
+
+static func left_ore() -> Dictionary:
+	var rules = Rules
+	# Ore leaves left into the kiln. The plate behind it leaves forward.
+	# The right cell is a pit, so a coulter's plate is lost.
+	return {
+		"id": 161,
+		"name": "Left Ore",
+		"blurb": "The first item is ore and leaves left into a kiln. The plate that arrives behind it leaves forward into the plate bin.",
+		"rule": "The first item is ore. It leaves left into the kiln. The plate that arrives behind it leaves forward into the plate bin. A share sends the ore forward and the plate left, so the kiln misses. A coulter sends the plate right, where there is no bin. A fork sends the plate right and misses the forward bin. A slip sends the plate forward and holds the ore. A rake sends the ore left and holds the plate. A prong sends the ore right and the plate left. A belt, a dwell, a twin, a pass, a shed, a hook, a hoe, and a harrow miss too.",
+		"w": 5,
+		"h": 5,
+		"sources": [
+			source(3, 4, rules.Dir.NORTH, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+		],
+		"sinks": [
+			sink(3, 0, [rules.Mat.PLATE]),
+			sink(0, 3, [rules.Mat.INGOT]),
+		],
+		"chutes": [cell(4, 3), cell(2, 4), cell(4, 4)],
+		"walls": [],
+		"budget": kv([
+			rules.Kind.BELT, 3,
+			rules.Kind.KILN, 1,
+			rules.Kind.MOLDBOARD, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 29]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.MOLDBOARD, 3, 3, rules.Dir.NORTH),
+			piece(rules.Kind.BELT, 2, 3, rules.Dir.WEST),
+			piece(rules.Kind.KILN, 1, 3, rules.Dir.WEST),
+			piece(rules.Kind.BELT, 3, 2, rules.Dir.NORTH),
+			piece(rules.Kind.BELT, 3, 1, rules.Dir.NORTH),
+		],
+	}
+
+
+static func still_moldboard() -> Dictionary:
+	var rules = Rules
+	# The moldboard faces south. Left is the kiln. Forward is the weir.
+	# The one belt sits on the crossing and empties into the scrap chute.
+	return {
+		"id": 162,
+		"name": "Still Moldboard",
+		"blurb": "The tray has one belt, on the crossing. The moldboard faces south. The first item stays until a later item arrives, then the first leaves left into the kiln and the later item leaves forward.",
+		"rule": "The tray has one belt, on the crossing. The moldboard faces south. The first item stays until a later item arrives, then the first leaves left into the kiln, out of the left pit, and the later item leaves forward, out of the scrap pit. The crossing belt is full, so the weir spills that plate into the bin. A share sends the ore forward into the scrap. A coulter sends the plate right. A fork misses the forward bin. A prong misses both. A belt, a dwell, a twin, a pass, a slip, a shed, a hook, a rake, a hoe, and a harrow miss too.",
+		"w": 8,
+		"h": 5,
+		"sources": [
+			source(3, 0, rules.Dir.SOUTH, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+			source(6, 3, rules.Dir.WEST, [rules.Mat.INGOT], 4),
+			source(0, 4, rules.Dir.NORTH, [rules.Mat.INGOT], 4),
+		],
+		"sinks": [
+			sink(6, 1, [rules.Mat.INGOT]),
+			sink(2, 2, [rules.Mat.PLATE]),
+		],
+		"chutes": [cell(2, 1), cell(7, 1), cell(1, 3), cell(3, 4)],
+		"walls": [],
+		"budget": kv([
+			rules.Kind.BELT, 1,
+			rules.Kind.ROLLER, 3,
+			rules.Kind.MOLDBOARD, 1,
+			rules.Kind.KILN, 1,
+			rules.Kind.WEIR, 1,
+			rules.Kind.FILTER, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 30]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.MOLDBOARD, 3, 1, rules.Dir.SOUTH),
+			piece(rules.Kind.ROLLER, 4, 1, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 5, 1, rules.Dir.EAST),
+			piece(rules.Kind.WEIR, 3, 2, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 3, rules.Dir.SOUTH),
+			piece(rules.Kind.ROLLER, 4, 3, rules.Dir.WEST),
+			piece(rules.Kind.ROLLER, 5, 3, rules.Dir.WEST),
+			piece(rules.Kind.FILTER, 0, 3, rules.Dir.NORTH),
+		],
+	}
+
+
+static func seat_moldboard() -> Dictionary:
+	var rules = Rules
+	# The moldboard starts off the lane. Seat it so ore leaves left and plate leaves forward.
+	return {
+		"id": 163,
+		"name": "Seat",
+		"blurb": "The moldboard starts off the lane. Seat it where the ore has to leave left and the plate has to leave forward.",
+		"rule": "The moldboard starts off the lane. Pick it up and seat it where the ore has to leave left into the kiln and the plate has to leave forward into the plate bin. Leaving it parked misses. A share seated there swaps them and misses the kiln. A coulter seated there misses the forward bin. A fork sends the plate right. A slip sends the plate forward and holds the ore. A rake sends the ore left and holds the plate. A belt, a dwell, a twin, a pass, a prong, a shed, a hook, a hoe, and a harrow miss too.",
+		"w": 5,
+		"h": 5,
+		"sources": [
+			source(3, 4, rules.Dir.NORTH, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+		],
+		"sinks": [
+			sink(3, 1, [rules.Mat.PLATE]),
+			sink(0, 3, [rules.Mat.INGOT]),
+		],
+		"chutes": [cell(4, 3), cell(2, 4), cell(4, 4)],
+		"walls": [],
+		"budget": kv([
+			rules.Kind.BELT, 2,
+			rules.Kind.KILN, 1,
+			rules.Kind.MOLDBOARD, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 30]),
+		"initial": [
+			piece(rules.Kind.MOLDBOARD, 0, 4, rules.Dir.WEST),
+		],
+		"solution": [
+			piece(rules.Kind.MOLDBOARD, 3, 3, rules.Dir.NORTH),
+			piece(rules.Kind.BELT, 2, 3, rules.Dir.WEST),
+			piece(rules.Kind.KILN, 1, 3, rules.Dir.WEST),
+			piece(rules.Kind.BELT, 3, 2, rules.Dir.NORTH),
+		],
+	}
+
+
+static func split_corner_moldboard() -> Dictionary:
+	var rules = Rules
+	# The wall closes the right lane. Ore leaves left through the grate. Plate leaves forward.
+	return {
+		"id": 164,
+		"name": "Split Corner",
+		"blurb": "A wall closes the right lane a coulter would use. Later items enter from behind. The waiter leaves left and the arrival leaves forward.",
+		"rule": "A wall closes the right lane a coulter would use. Later items enter from behind. The waiter leaves left and the arrival leaves forward. The left grate sends the ore on toward the kiln and scraps a plate. A share swaps them into the grate and the wrong bin. A coulter sends the arrival right into the wall. A fork sends the arrival right and misses the forward bin. A prong misses both. A rake sends the ore left and holds the plate. A belt, a dwell, a twin, a pass, a slip, a shed, a hook, a hoe, and a harrow miss too.",
+		"w": 8,
+		"h": 5,
+		"sources": [
+			source(2, 4, rules.Dir.EAST, [rules.Mat.ORE, rules.Mat.PLATE], 1),
+		],
+		"sinks": [
+			sink(7, 1, [rules.Mat.PLATE]),
+			sink(2, 1, [rules.Mat.INGOT]),
+		],
+		"chutes": [cell(1, 3)],
+		"walls": [cell(5, 4), cell(5, 3)],
+		"budget": kv([
+			rules.Kind.BELT, 7,
+			rules.Kind.MOLDBOARD, 1,
+			rules.Kind.KILN, 1,
+			rules.Kind.GRATE, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 57, rules.Mat.PLATE, 57]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.BELT, 3, 4, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 4, 4, rules.Dir.NORTH),
+			piece(rules.Kind.MOLDBOARD, 4, 3, rules.Dir.NORTH),
+			piece(rules.Kind.BELT, 4, 2, rules.Dir.NORTH),
+			piece(rules.Kind.BELT, 4, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 5, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 6, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 3, 3, rules.Dir.WEST),
+			piece(rules.Kind.GRATE, 2, 3, rules.Dir.WEST),
+			piece(rules.Kind.KILN, 2, 2, rules.Dir.NORTH),
+		],
+	}
+
+
+static func two_stocks() -> Dictionary:
+	var rules = Rules
+	# The ore waiter feeds the left kiln. The plate arrival feeds the forward bin.
+	# The right cell is a pit. Both exits are not ore kilns.
+	return {
+		"id": 165,
+		"name": "Two Stocks",
+		"blurb": "The left exit feeds a kiln with the ore waiter. The forward exit feeds a plate bin with the plate arrival.",
+		"rule": "The left exit feeds a kiln with the ore waiter. The forward exit feeds a plate bin with the plate arrival. A share feeds the kiln with the plate and the plate bin with the ore, so both miss. A coulter sends the plate right, where there is no bin. A fork sends the plate right and misses the forward bin. A prong misses both. A slip sends the plate forward and holds the ore. A rake sends the ore left and holds the plate. A belt, a dwell, a twin, a pass, a shed, a hook, a hoe, and a harrow miss too.",
+		"w": 9,
+		"h": 6,
+		"sources": [
+			source(4, 5, rules.Dir.NORTH, [rules.Mat.ORE, rules.Mat.PLATE], 1),
+		],
+		"sinks": [
+			sink(4, 0, [rules.Mat.PLATE]),
+			sink(0, 4, [rules.Mat.INGOT]),
+		],
+		"chutes": [cell(5, 4)],
+		"walls": [],
+		"budget": kv([
+			rules.Kind.BELT, 5,
+			rules.Kind.KILN, 1,
+			rules.Kind.MOLDBOARD, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 58, rules.Mat.PLATE, 58]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.MOLDBOARD, 4, 4, rules.Dir.NORTH),
+			piece(rules.Kind.BELT, 3, 4, rules.Dir.WEST),
+			piece(rules.Kind.KILN, 2, 4, rules.Dir.WEST),
+			piece(rules.Kind.BELT, 1, 4, rules.Dir.WEST),
+			piece(rules.Kind.BELT, 4, 3, rules.Dir.NORTH),
+			piece(rules.Kind.BELT, 4, 2, rules.Dir.NORTH),
+			piece(rules.Kind.BELT, 4, 1, rules.Dir.NORTH),
+		],
+	}
+
+
+static func after_split_moldboard() -> Dictionary:
+	var rules = Rules
+	# The moldboard faces south. Ore leaves left, away from the scrap.
+	# The plate leaves forward. The filter scraps the crossing ingots.
+	return {
+		"id": 166,
+		"name": "After the Split",
+		"blurb": "A filter scraps one stream. The moldboard faces south. It sends the ore left, away from the scrap, and the other item forward.",
+		"rule": "A filter scraps the crossing ingots. The moldboard faces south. It sends the ore left, away from the scrap, into the kiln, and the plate forward into the bin. The scrap pit is past that bin. A share sends the ore forward, toward the scrap, and the plate left, so both miss. A coulter sends the plate right, where there is no bin. A fork sends the plate right and misses the forward bin. A prong misses both. A belt, a dwell, a twin, a pass, a slip, a shed, a hook, a rake, a hoe, and a harrow miss too.",
+		"w": 8,
+		"h": 5,
+		"sources": [
+			source(2, 0, rules.Dir.SOUTH, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+			source(6, 4, rules.Dir.NORTH, [rules.Mat.INGOT], 4),
+		],
+		"sinks": [
+			sink(5, 1, [rules.Mat.INGOT]),
+			sink(2, 3, [rules.Mat.PLATE]),
+		],
+		"chutes": [cell(1, 1), cell(2, 4), cell(7, 2)],
+		"walls": [],
+		"budget": kv([
+			rules.Kind.BELT, 3,
+			rules.Kind.ROLLER, 2,
+			rules.Kind.MOLDBOARD, 1,
+			rules.Kind.KILN, 1,
+			rules.Kind.FILTER, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 30]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.MOLDBOARD, 2, 1, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 1, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 4, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 2, 2, rules.Dir.SOUTH),
+			piece(rules.Kind.ROLLER, 6, 3, rules.Dir.NORTH),
+			piece(rules.Kind.ROLLER, 6, 2, rules.Dir.NORTH),
+			piece(rules.Kind.BELT, 6, 1, rules.Dir.EAST),
+			piece(rules.Kind.FILTER, 7, 1, rules.Dir.EAST),
+		],
+	}
+
+
+static func split_bin_moldboard() -> Dictionary:
+	var rules = Rules
+	# Ore leaves left into the kiln line. Plates leave forward into their bin.
+	# A share swaps those exits and misses the ingot quota.
+	return {
+		"id": 167,
+		"name": "Split Bin",
+		"blurb": "The left stream and the forward stream each reach a different quota. A share swaps them and misses at least one.",
+		"rule": "The moldboard sends the ore left into the kiln and the plate forward into its bin. Those ingots split between the ingot bin and the press. The lower plates are not enough alone. A share swaps the two exits and misses the ingot quota. A coulter sends the plate right and misses both. A fork misses the plate quota. A prong misses both. A harrow, a hoe, and a rake each miss at least one quota. A belt, a dwell, a twin, a pass, a slip, a shed, and a hook miss too. Pressing every ingot misses the ingot bin.",
+		"w": 10,
+		"h": 6,
+		"sources": [
+			source(9, 5, rules.Dir.WEST, [rules.Mat.PLATE], 4),
+			source(8, 4, rules.Dir.NORTH, [rules.Mat.ORE, rules.Mat.PLATE], 1),
+			source(6, 0, rules.Dir.SOUTH, [rules.Mat.PLATE], 6),
+		],
+		"sinks": [
+			sink(8, 2, [rules.Mat.PLATE]),
+			sink(6, 5, [rules.Mat.PLATE]),
+			sink(0, 3, [rules.Mat.INGOT]),
+			sink(0, 2, [rules.Mat.PLATE]),
+		],
+		"chutes": [cell(9, 3), cell(7, 2), cell(5, 2)],
+		"walls": [],
+		"budget": kv([
+			rules.Kind.BELT, 9,
+			rules.Kind.MOLDBOARD, 1,
+			rules.Kind.WEIR, 1,
+			rules.Kind.FILTER, 1,
+			rules.Kind.KILN, 1,
+			rules.Kind.SPLITTER, 1,
+			rules.Kind.PRESS, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 19, rules.Mat.PLATE, 99]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.BELT, 8, 5, rules.Dir.WEST),
+			piece(rules.Kind.BELT, 7, 5, rules.Dir.WEST),
+			piece(rules.Kind.BELT, 6, 1, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 6, 2, rules.Dir.SOUTH),
+			piece(rules.Kind.MOLDBOARD, 8, 3, rules.Dir.NORTH),
+			piece(rules.Kind.WEIR, 7, 3, rules.Dir.WEST),
+			piece(rules.Kind.BELT, 6, 3, rules.Dir.WEST),
+			piece(rules.Kind.FILTER, 5, 3, rules.Dir.WEST),
+			piece(rules.Kind.KILN, 4, 3, rules.Dir.WEST),
+			piece(rules.Kind.SPLITTER, 3, 3, rules.Dir.WEST),
+			piece(rules.Kind.BELT, 2, 3, rules.Dir.WEST),
+			piece(rules.Kind.BELT, 1, 3, rules.Dir.WEST),
+			piece(rules.Kind.BELT, 3, 2, rules.Dir.WEST),
+			piece(rules.Kind.PRESS, 2, 2, rules.Dir.WEST),
+			piece(rules.Kind.BELT, 1, 2, rules.Dir.WEST),
+		],
+	}
+
+
+static func held_pair() -> Dictionary:
+	var rules = Rules
+	# Period 2, one cell behind the moldboard. The first ore waits through the empty tick.
+	return {
+		"id": 168,
+		"name": "Held Pair",
+		"blurb": "The first item waits through a tick with nothing behind it, then the pair leaves on the arrival tick. A belt would have moved the first item on the first tick.",
+		"rule": "The first item waits through a tick with nothing behind it, then the pair leaves on the arrival tick. A belt would have moved the first item on that first tick. A lone item never leaves. The ore still has to leave left into the kiln and the plate forward into the bin, so a share misses. A coulter sends the plate right, where there is no bin. A fork sends the plate right and misses the forward bin. A slip sends the plate forward and holds the ore. A rake sends the ore left and holds the plate. A prong misses both. A dwell, a twin, a pass, a shed, a hook, a hoe, and a harrow miss too.",
+		"w": 5,
+		"h": 5,
+		"sources": [
+			source(3, 4, rules.Dir.NORTH, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+		],
+		"sinks": [
+			sink(3, 1, [rules.Mat.PLATE]),
+			sink(0, 3, [rules.Mat.INGOT]),
+		],
+		"chutes": [cell(4, 3), cell(2, 4), cell(4, 4)],
+		"walls": [],
+		"budget": kv([
+			rules.Kind.BELT, 2,
+			rules.Kind.KILN, 1,
+			rules.Kind.MOLDBOARD, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 30]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.MOLDBOARD, 3, 3, rules.Dir.NORTH),
+			piece(rules.Kind.BELT, 2, 3, rules.Dir.WEST),
+			piece(rules.Kind.KILN, 1, 3, rules.Dir.WEST),
+			piece(rules.Kind.BELT, 3, 2, rules.Dir.NORTH),
+		],
+	}
+
+
+static func right_ore() -> Dictionary:
+	var rules = Rules
+	# Ore leaves right into the kiln. The plate behind it leaves forward.
+	# The left cell is a pit, so a moldboard's ore is lost.
+	return {
+		"id": 169,
+		"name": "Right Ore",
+		"blurb": "The first item is ore and leaves right into a kiln. The plate that arrives behind it leaves forward into the plate bin.",
+		"rule": "The first item is ore. It leaves right into the kiln. The plate that arrives behind it leaves forward into the plate bin. A moldboard sends the ore left, into a pit. A coulter sends the ore forward and the plate right, so the kiln misses. A share sends the ore forward. A fork and a prong miss the forward bin. A slip sends the plate forward and holds the ore. A hoe sends the ore right and holds the plate. A belt, a dwell, a twin, a pass, a shed, a hook, a rake, and a harrow miss too.",
+		"w": 5,
+		"h": 5,
+		"sources": [
+			source(1, 4, rules.Dir.NORTH, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+		],
+		"sinks": [
+			sink(1, 0, [rules.Mat.PLATE]),
+			sink(4, 3, [rules.Mat.INGOT]),
+		],
+		"chutes": [cell(0, 3), cell(2, 4), cell(0, 4)],
+		"walls": [],
+		"budget": kv([
+			rules.Kind.BELT, 3,
+			rules.Kind.KILN, 1,
+			rules.Kind.LANDSIDE, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 29]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.LANDSIDE, 1, 3, rules.Dir.NORTH),
+			piece(rules.Kind.BELT, 2, 3, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 3, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 1, 2, rules.Dir.NORTH),
+			piece(rules.Kind.BELT, 1, 1, rules.Dir.NORTH),
+		],
+	}
+
+
+static func still_landside() -> Dictionary:
+	var rules = Rules
+	# The landside faces south. Right is the kiln. Forward is the weir.
+	# The one belt sits on the crossing and empties into the scrap chute.
+	return {
+		"id": 170,
+		"name": "Still Landside",
+		"blurb": "The tray has one belt, on the crossing. The landside faces south. The first item stays until a later item arrives, then the first leaves right and the later item leaves forward.",
+		"rule": "The tray has one belt, on the crossing. The landside faces south. The first item stays until a later item arrives, then the first leaves right into the kiln and the later item leaves forward, out of the scrap pit. The crossing belt is full, so the weir spills that plate into the bin. A moldboard sends the ore left, into a pit. A coulter sends the ore forward into the scrap. A share sends the ore forward and the plate left. A fork misses the forward bin. A prong misses the plate bin. A belt, a dwell, a twin, a pass, a slip, a shed, a hook, a rake, a hoe, and a harrow miss too.",
+		"w": 8,
+		"h": 5,
+		"sources": [
+			source(3, 0, rules.Dir.SOUTH, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+			source(6, 3, rules.Dir.WEST, [rules.Mat.INGOT], 4),
+			source(0, 4, rules.Dir.NORTH, [rules.Mat.INGOT], 4),
+		],
+		"sinks": [
+			sink(0, 1, [rules.Mat.INGOT]),
+			sink(2, 2, [rules.Mat.PLATE]),
+		],
+		"chutes": [cell(4, 1), cell(7, 1), cell(1, 3), cell(3, 4)],
+		"walls": [],
+		"budget": kv([
+			rules.Kind.BELT, 1,
+			rules.Kind.ROLLER, 3,
+			rules.Kind.LANDSIDE, 1,
+			rules.Kind.KILN, 1,
+			rules.Kind.WEIR, 1,
+			rules.Kind.FILTER, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 30]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.LANDSIDE, 3, 1, rules.Dir.SOUTH),
+			piece(rules.Kind.ROLLER, 2, 1, rules.Dir.WEST),
+			piece(rules.Kind.KILN, 1, 1, rules.Dir.WEST),
+			piece(rules.Kind.WEIR, 3, 2, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 3, rules.Dir.SOUTH),
+			piece(rules.Kind.ROLLER, 4, 3, rules.Dir.WEST),
+			piece(rules.Kind.ROLLER, 5, 3, rules.Dir.WEST),
+			piece(rules.Kind.FILTER, 0, 3, rules.Dir.NORTH),
+		],
+	}
+
+
+static func seat_landside() -> Dictionary:
+	var rules = Rules
+	# The landside starts off the lane. Seat it so ore leaves right and plate leaves forward.
+	return {
+		"id": 171,
+		"name": "Seat",
+		"blurb": "The landside starts off the lane. Seat it where the ore has to leave right and the plate has to leave forward.",
+		"rule": "The landside starts off the lane. Pick it up and seat it where the ore has to leave right into the kiln and the plate has to leave forward into the plate bin. Leaving it parked misses. A moldboard seated there sends the ore left. A coulter seated there misses the forward bin. A share sends the ore forward. A fork sends the plate right. A slip sends the plate forward and holds the ore. A hoe sends the ore right and holds the plate. A belt, a dwell, a twin, a pass, a prong, a shed, a hook, a rake, and a harrow miss too.",
+		"w": 5,
+		"h": 5,
+		"sources": [
+			source(1, 4, rules.Dir.NORTH, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+		],
+		"sinks": [
+			sink(1, 1, [rules.Mat.PLATE]),
+			sink(4, 3, [rules.Mat.INGOT]),
+		],
+		"chutes": [cell(0, 3), cell(2, 4), cell(0, 4)],
+		"walls": [],
+		"budget": kv([
+			rules.Kind.BELT, 2,
+			rules.Kind.KILN, 1,
+			rules.Kind.LANDSIDE, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 30]),
+		"initial": [
+			piece(rules.Kind.LANDSIDE, 4, 4, rules.Dir.EAST),
+		],
+		"solution": [
+			piece(rules.Kind.LANDSIDE, 1, 3, rules.Dir.NORTH),
+			piece(rules.Kind.BELT, 2, 3, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 3, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 1, 2, rules.Dir.NORTH),
+		],
+	}
+
+
+static func split_corner_landside() -> Dictionary:
+	var rules = Rules
+	# The wall closes the left lane. Ore leaves right through the grate. Plate leaves forward.
+	return {
+		"id": 172,
+		"name": "Split Corner",
+		"blurb": "A wall closes the left lane a moldboard would use. The waiter leaves right and the arrival leaves forward.",
+		"rule": "A wall closes the left lane a moldboard would use. Later items enter from behind. The waiter leaves right and the arrival leaves forward. The right grate sends the ore on toward the kiln and scraps a plate. A moldboard sends the waiter into the wall. A coulter sends the ore forward and the plate right. A share sends the ore forward. A fork and a prong miss the forward bin. A hoe sends the ore right and holds the plate. A belt, a dwell, a twin, a pass, a slip, a shed, a hook, a rake, and a harrow miss too.",
+		"w": 8,
+		"h": 5,
+		"sources": [
+			source(0, 1, rules.Dir.EAST, [rules.Mat.ORE, rules.Mat.PLATE], 1),
+		],
+		"sinks": [
+			sink(7, 1, [rules.Mat.PLATE]),
+			sink(1, 3, [rules.Mat.INGOT]),
+		],
+		"chutes": [cell(3, 4)],
+		"walls": [cell(3, 0), cell(4, 0)],
+		"budget": kv([
+			rules.Kind.BELT, 6,
+			rules.Kind.LANDSIDE, 1,
+			rules.Kind.KILN, 1,
+			rules.Kind.GRATE, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 57, rules.Mat.PLATE, 57]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.BELT, 1, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 2, 1, rules.Dir.EAST),
+			piece(rules.Kind.LANDSIDE, 3, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 4, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 5, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 6, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 3, 2, rules.Dir.SOUTH),
+			piece(rules.Kind.GRATE, 3, 3, rules.Dir.SOUTH),
+			piece(rules.Kind.KILN, 2, 3, rules.Dir.WEST),
+		],
+	}
+
+
+static func two_stocks_landside() -> Dictionary:
+	var rules = Rules
+	# Two landsides. Each sends the ore waiter right into a kiln and the plate arrival forward.
+	return {
+		"id": 173,
+		"name": "Two Stocks",
+		"blurb": "Two landsides, two materials. Both quotas are met only when each landside sends the waiter right and the arrival forward.",
+		"rule": "Two landsides, two materials. The right exit of each feeds a kiln with the ore waiter. The forward exit of each feeds a plate bin with the plate arrival. Both quotas are met only when each landside sends the waiter right and the arrival forward. A moldboard sends the ore left, into a pit. A coulter sends the ore forward and the plate right. A share sends the ore forward. A fork and a prong miss the forward bins. A slip sends the plate forward and holds the ore. A hoe sends the ore right and holds the plate. A belt, a dwell, a twin, a pass, a shed, a hook, a rake, and a harrow miss too.",
+		"w": 10,
+		"h": 6,
+		"sources": [
+			source(1, 5, rules.Dir.NORTH, [rules.Mat.ORE, rules.Mat.PLATE], 1),
+			source(6, 5, rules.Dir.NORTH, [rules.Mat.ORE, rules.Mat.PLATE], 1),
+		],
+		"sinks": [
+			sink(1, 0, [rules.Mat.PLATE]),
+			sink(4, 4, [rules.Mat.INGOT]),
+			sink(6, 0, [rules.Mat.PLATE]),
+			sink(9, 4, [rules.Mat.INGOT]),
+		],
+		"chutes": [cell(0, 4), cell(5, 4)],
+		"walls": [],
+		"budget": kv([
+			rules.Kind.BELT, 8,
+			rules.Kind.KILN, 2,
+			rules.Kind.LANDSIDE, 2,
+		]),
+		"quota": kv([rules.Mat.INGOT, 116, rules.Mat.PLATE, 116]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.LANDSIDE, 1, 4, rules.Dir.NORTH),
+			piece(rules.Kind.BELT, 2, 4, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 3, 4, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 1, 3, rules.Dir.NORTH),
+			piece(rules.Kind.BELT, 1, 2, rules.Dir.NORTH),
+			piece(rules.Kind.BELT, 1, 1, rules.Dir.NORTH),
+			piece(rules.Kind.LANDSIDE, 6, 4, rules.Dir.NORTH),
+			piece(rules.Kind.BELT, 7, 4, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 8, 4, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 6, 3, rules.Dir.NORTH),
+			piece(rules.Kind.BELT, 6, 2, rules.Dir.NORTH),
+			piece(rules.Kind.BELT, 6, 1, rules.Dir.NORTH),
+		],
+	}
+
+
+static func after_split_landside() -> Dictionary:
+	var rules = Rules
+	# The landside faces south. Ore leaves right, away from the scrap.
+	# The plate leaves forward. The filter scraps the crossing ingots.
+	return {
+		"id": 174,
+		"name": "After the Split",
+		"blurb": "A filter scraps one stream. The landside sends the ore right, away from the scrap, and the other item forward.",
+		"rule": "A filter scraps the crossing ingots. The landside faces south. It sends the ore right, away from the scrap, into the kiln, and the plate forward into the bin. The scrap pit is past that bin. A moldboard sends the ore left, toward the scrap side. A coulter sends the ore forward, toward the scrap, and the plate right. A share sends the ore forward and the plate left. A fork sends the plate right and misses the forward bin. A prong misses the plate bin. A belt, a dwell, a twin, a pass, a slip, a shed, a hook, a rake, a hoe, and a harrow miss too.",
+		"w": 8,
+		"h": 5,
+		"sources": [
+			source(4, 0, rules.Dir.SOUTH, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+			source(6, 4, rules.Dir.NORTH, [rules.Mat.INGOT], 4),
+		],
+		"sinks": [
+			sink(1, 1, [rules.Mat.INGOT]),
+			sink(4, 3, [rules.Mat.PLATE]),
+		],
+		"chutes": [cell(5, 1), cell(4, 4), cell(7, 2)],
+		"walls": [],
+		"budget": kv([
+			rules.Kind.BELT, 3,
+			rules.Kind.ROLLER, 2,
+			rules.Kind.LANDSIDE, 1,
+			rules.Kind.KILN, 1,
+			rules.Kind.FILTER, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 30]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.LANDSIDE, 4, 1, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 1, rules.Dir.WEST),
+			piece(rules.Kind.KILN, 2, 1, rules.Dir.WEST),
+			piece(rules.Kind.BELT, 4, 2, rules.Dir.SOUTH),
+			piece(rules.Kind.ROLLER, 6, 3, rules.Dir.NORTH),
+			piece(rules.Kind.ROLLER, 6, 2, rules.Dir.NORTH),
+			piece(rules.Kind.BELT, 6, 1, rules.Dir.EAST),
+			piece(rules.Kind.FILTER, 7, 1, rules.Dir.EAST),
+		],
+	}
+
+
+static func split_bin_landside() -> Dictionary:
+	var rules = Rules
+	# Ore leaves right into the kiln line. Plates leave forward into their bin.
+	# Swapping those exits misses at least one quota.
+	return {
+		"id": 175,
+		"name": "Split Bin",
+		"blurb": "The right stream and the forward stream each reach a different quota. Swapping them misses at least one.",
+		"rule": "The landside sends the ore right into the kiln and the plate forward into its bin. Those ingots split between the ingot bin and the press. The lower plates are not enough alone. A moldboard sends the ore left, into a pit. A coulter swaps the two exits and misses at least one quota. A share sends the plate left. A fork misses the plate quota. A prong misses the forward plates. A harrow, a hoe, and a rake each miss at least one quota. A belt, a dwell, a twin, a pass, a slip, a shed, and a hook miss too. Pressing every ingot misses the ingot bin.",
+		"w": 10,
+		"h": 6,
+		"sources": [
+			source(0, 5, rules.Dir.EAST, [rules.Mat.PLATE], 4),
+			source(1, 4, rules.Dir.NORTH, [rules.Mat.ORE, rules.Mat.PLATE], 1),
+			source(3, 0, rules.Dir.SOUTH, [rules.Mat.PLATE], 6),
+		],
+		"sinks": [
+			sink(1, 2, [rules.Mat.PLATE]),
+			sink(3, 5, [rules.Mat.PLATE]),
+			sink(9, 3, [rules.Mat.INGOT]),
+			sink(9, 4, [rules.Mat.PLATE]),
+		],
+		"chutes": [cell(0, 3), cell(2, 4), cell(4, 4)],
+		"walls": [],
+		"budget": kv([
+			rules.Kind.BELT, 9,
+			rules.Kind.LANDSIDE, 1,
+			rules.Kind.WEIR, 1,
+			rules.Kind.FILTER, 1,
+			rules.Kind.KILN, 1,
+			rules.Kind.SPLITTER, 1,
+			rules.Kind.PRESS, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 19, rules.Mat.PLATE, 99]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.BELT, 1, 5, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 2, 5, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 3, 1, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 2, rules.Dir.SOUTH),
+			piece(rules.Kind.LANDSIDE, 1, 3, rules.Dir.NORTH),
+			piece(rules.Kind.WEIR, 2, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 3, 3, rules.Dir.EAST),
+			piece(rules.Kind.FILTER, 4, 3, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 5, 3, rules.Dir.EAST),
+			piece(rules.Kind.SPLITTER, 6, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 7, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 8, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 6, 4, rules.Dir.EAST),
+			piece(rules.Kind.PRESS, 7, 4, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 8, 4, rules.Dir.EAST),
+		],
+	}
+
+
+static func held_pair_landside() -> Dictionary:
+	var rules = Rules
+	# Period 2, one cell behind the landside. The first ore waits through the empty tick.
+	return {
+		"id": 176,
+		"name": "Held Pair",
+		"blurb": "The pair has to leave on the arrival tick, waiter right and arrival forward, and the cell is empty afterward.",
+		"rule": "The first item waits through a tick with nothing behind it, then the pair leaves on the arrival tick, the waiter right and the arrival forward, and the cell is empty afterward. A belt would have moved the first item on that first tick. A lone item never leaves. A piece that keeps either item misses. A moldboard sends the ore left. A coulter sends the ore forward and the plate right. A share sends the ore forward. A fork and a prong miss the forward bin. A slip sends the plate forward and holds the ore. A hoe sends the ore right and holds the plate. A dwell, a twin, a pass, a shed, a hook, a rake, and a harrow miss too.",
+		"w": 5,
+		"h": 5,
+		"sources": [
+			source(1, 4, rules.Dir.NORTH, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+		],
+		"sinks": [
+			sink(1, 1, [rules.Mat.PLATE]),
+			sink(4, 3, [rules.Mat.INGOT]),
+		],
+		"chutes": [cell(0, 3), cell(2, 4), cell(0, 4)],
+		"walls": [],
+		"budget": kv([
+			rules.Kind.BELT, 2,
+			rules.Kind.KILN, 1,
+			rules.Kind.LANDSIDE, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 30]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.LANDSIDE, 1, 3, rules.Dir.NORTH),
+			piece(rules.Kind.BELT, 2, 3, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 3, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 1, 2, rules.Dir.NORTH),
 		],
 	}

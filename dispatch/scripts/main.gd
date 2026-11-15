@@ -5,7 +5,7 @@ const Puzzles = preload("res://scripts/puzzles.gd")
 const Scoring = preload("res://scripts/scoring.gd")
 
 const HEADER_H := 168.0
-const PANEL_W := 308.0
+const PANEL_W := 438.0
 const MARGIN := 18.0
 const FRAME_SEC := 0.36
 
@@ -488,6 +488,10 @@ func _building_mark_name(building: int) -> String:
 			return "BuildingFifteenMark"
 		16:
 			return "BuildingSixteenMark"
+		17:
+			return "BuildingSeventeenMark"
+		18:
+			return "BuildingEighteenMark"
 		_:
 			return "Building%dMark" % building
 
@@ -640,7 +644,7 @@ func _sync_facing() -> void:
 			_facing.text = "Facing   counterclockwise"
 		elif _selected == "slide":
 			_facing.text = "Facing   with the parcel"
-		elif _selected == "bin" or _selected == "return" or _selected == "pause" or _selected == "shunt" or _selected == "bias" or _selected == "vault" or _selected == "sling" or _selected == "cant":
+		elif _selected == "bin" or _selected == "return" or _selected == "pause" or _selected == "shunt" or _selected == "bias" or _selected == "vault" or _selected == "sling" or _selected == "cant" or _selected == "balk" or _selected == "loft":
 			_facing.text = "Facing   none"
 		else:
 			_facing.text = "Facing   %s" % Sim.DIR_NAMES[_ghost_dir]
@@ -933,6 +937,10 @@ func _draw_block(block: Dictionary, alpha: float) -> void:
 		_sling_mark(rect, ink)
 	elif typ == "cant":
 		_cant_mark(rect, ink)
+	elif typ == "balk":
+		_balk_mark(rect, ink)
+	elif typ == "loft":
+		_loft_mark(rect, ink)
 	elif typ == "slide":
 		_slide_mark(rect, ink)
 	elif typ == "bin":
@@ -1184,6 +1192,26 @@ func _cant_mark(rect: Rect2, color: Color) -> void:
 	draw_line(right, tip, color, 2.5)
 
 
+func _balk_mark(rect: Rect2, color: Color) -> void:
+	var center := rect.get_center()
+	var span := rect.size.x
+	var tip := center + Vector2(-span * 0.26, 0.0)
+	var up := tip + Vector2(span * 0.42, -span * 0.30)
+	var down := tip + Vector2(span * 0.42, span * 0.30)
+	draw_line(up, tip, color, 2.5)
+	draw_line(down, tip, color, 2.5)
+
+
+func _loft_mark(rect: Rect2, color: Color) -> void:
+	var center := rect.get_center()
+	var span := rect.size.x
+	for i in 3:
+		var tip := center + Vector2(-span * 0.32 + float(i) * span * 0.28, 0.0)
+		var back := tip + Vector2(-span * 0.16, 0.0)
+		draw_line(back + Vector2(0.0, -span * 0.14), tip, color, 2.5)
+		draw_line(back + Vector2(0.0, span * 0.14), tip, color, 2.5)
+
+
 func _pause_mark(rect: Rect2, color: Color) -> void:
 	var center := rect.get_center()
 	var bar_w := maxf(rect.size.x * 0.12, 3.0)
@@ -1301,6 +1329,10 @@ func _tool_color(tool: String) -> Color:
 			return Color("#6b8f3a")
 		"cant":
 			return Color("#8a4e6a")
+		"balk":
+			return Color("#5a6e8a")
+		"loft":
+			return Color("#c45c3e")
 		"slide":
 			return Color("#d06b86")
 		"bin":
@@ -1365,6 +1397,10 @@ func _tool_tip(tool: String) -> String:
 			return "Waits one tick, then jumps a parcel two cells to its right. The cell beside it is not entered, and the parcel keeps the facing it arrived with."
 		"cant":
 			return "Waits one tick, then jumps a parcel two cells to its left. The cell beside it is not entered, and the parcel keeps the facing it arrived with."
+		"balk":
+			return "Waits one tick, then jumps a parcel two cells backward. The cell behind it is not entered, and the parcel keeps the facing it arrived with."
+		"loft":
+			return "Waits one tick, then jumps a parcel three cells forward. The two cells in front are not entered, and the parcel keeps the facing it arrived with."
 		"slide":
 			return "Moves a parcel two cells in its facing and does not rotate it. The cell between can be a brick, a belt, or another parcel."
 		"bin":
