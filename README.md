@@ -6,7 +6,7 @@ Playable slices, Godot 4. Steam packaging comes later.
 - [Brine Mark](brine-mark/) — an indirect salt-flat colony sim through the cart beat
 - [Dispatch](dispatch/) — a parcel-routing puzzle through Building 3
 - [Night Stamp](night-stamp/) — a border-desk deckbuilder through the vellum bell
-- [Orchard Surge](orchard-surge/) — a dark-orchard wave game through night 9
+- [Orchard Surge](orchard-surge/) — a dark-orchard wave game through night 11
 - [Lantern Census](lantern-census/) — a four-floor map survey
 - [Lowball](lowball/) — an eight-week three-club round-robin with a final
 - [Casework](casework/) — a seven-case deduction board
