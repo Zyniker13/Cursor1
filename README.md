@@ -6,6 +6,7 @@ Playable slices, Godot 4. Steam packaging comes later.
 - [Brine Mark](brine-mark/) — an indirect salt-flat colony sim
 - [Dispatch](dispatch/) — a parcel-routing puzzle
 - [Night Stamp](night-stamp/) — a border-desk deckbuilder
+- [Orchard Surge](orchard-surge/) — a dark-orchard wave game
 
 ```bash
 godot --path harbor-glass
@@ -16,4 +17,6 @@ godot --path dispatch
 godot --headless --path dispatch -s res://tests/run_tests.gd
 godot --path night-stamp
 godot --headless --path night-stamp -s res://tests/run_tests.gd
+godot --path orchard-surge
+godot --headless --path orchard-surge --script res://tests/run_tests.gd
 ```
