@@ -72,7 +72,7 @@ func _build_hud() -> void:
 	layer.add_child(bottom_panel)
 
 	var controls := Label.new()
-	controls.text = "Arrows move    F lamp you face    Space wait    U undo    R restart    1–8 east    Shift+1–6 west    Ctrl+1–6 north    Alt+1–6 south    F1–F6 attic    F7–F12 cellar    click a neighbor or a lamp"
+	controls.text = "Arrows move    F lamp you face    Space wait    U undo    R restart    1–8 east    Shift+1–6 west    Ctrl+1–6 north    Alt+1–6 south    F1–F6 attic    F7–F12 cellar    Keypad 1–6 gallery    click a neighbor or a lamp"
 	controls.add_theme_font_size_override("font_size", 14)
 	controls.add_theme_color_override("font_color", MUTED)
 	controls.position = Vector2(20, 6)
@@ -88,7 +88,7 @@ func _build_hud() -> void:
 		bottom_panel.add_child(row)
 		var wing_label := Label.new()
 		wing_label.text = str(wing["name"])
-		wing_label.custom_minimum_size = Vector2(118, 32)
+		wing_label.custom_minimum_size = Vector2(136, 32)
 		wing_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		wing_label.add_theme_font_size_override("font_size", 15)
 		wing_label.add_theme_color_override("font_color", CREAM)
@@ -255,6 +255,9 @@ func _undo() -> void:
 
 
 func _puzzle_index_for_key(event: InputEventKey) -> int:
+	var gallery := _gallery_index(event)
+	if gallery >= 0:
+		return 38 + gallery
 	var attic := _attic_index(event)
 	if attic >= 0:
 		return 26 + attic
@@ -286,6 +289,15 @@ func _puzzle_index_for_key(event: InputEventKey) -> int:
 	return digit
 
 
+func _gallery_index(event: InputEventKey) -> int:
+	var key := event.physical_keycode
+	if key < KEY_KP_1 or key > KEY_KP_6:
+		key = event.keycode
+	if key < KEY_KP_1 or key > KEY_KP_6:
+		return -1
+	return int(key) - int(KEY_KP_1)
+
+
 func _attic_index(event: InputEventKey) -> int:
 	var key := event.physical_keycode
 	if key < KEY_F1 or key > KEY_F6:
@@ -308,13 +320,9 @@ func _digit_from_key(event: InputEventKey) -> int:
 	var key := event.physical_keycode
 	if key >= KEY_1 and key <= KEY_8:
 		return key - KEY_1
-	if key >= KEY_KP_1 and key <= KEY_KP_8:
-		return key - KEY_KP_1
 	key = event.keycode
 	if key >= KEY_1 and key <= KEY_8:
 		return key - KEY_1
-	if key >= KEY_KP_1 and key <= KEY_KP_8:
-		return key - KEY_KP_1
 	match key:
 		KEY_EXCLAM:
 			return 0
