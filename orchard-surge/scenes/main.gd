@@ -7,14 +7,18 @@ const Catalog = preload("res://sim/plant_catalog.gd")
 const Tooltip = preload("res://ui/plant_tooltip.gd")
 
 const ORIGIN := Vector2(16, 76)
-const PANEL_X := 752.0
-const PANEL_W := 352.0
+const CARD_W := 352.0
+const CARD_H := 176.0
+const CARD_GAP := 6.0
+const CARD_LEFT := 752.0
+const CARD_TOP := 72.0
 
 const KIND_COLOR := [
 	Color(0.561, 0.859, 0.333, 1),
 	Color(0.243, 0.561, 0.333, 1),
 	Color(1.0, 0.784, 0.341, 1),
 	Color(0.878, 0.478, 0.184, 1),
+	Color(0.93, 0.34, 0.2, 1),
 ]
 
 var sim = null
@@ -80,6 +84,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			selected = 2
 		elif event.is_action_pressed("plant_4"):
 			selected = 3
+		elif event.is_action_pressed("plant_5"):
+			selected = 4
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if sim != null and sim.outcome == Sim.OUTCOME_RUNNING and sim.phase == Sim.PHASE_PLANT:
 			var cell := _mouse_cell()
@@ -138,6 +144,7 @@ func _bind_keys() -> void:
 	_bind("plant_2", [KEY_2, KEY_KP_2])
 	_bind("plant_3", [KEY_3, KEY_KP_3])
 	_bind("plant_4", [KEY_4, KEY_KP_4])
+	_bind("plant_5", [KEY_5, KEY_KP_5])
 	_bind("restart", [KEY_R])
 
 
@@ -266,11 +273,17 @@ func _build_hud() -> void:
 	restart.pressed.connect(_restart)
 	layer.add_child(restart)
 
-	hint_label = _label("Move: WASD / arrows (paused while planting). Plant: 1-4 then click a tile. Unlit tiles hide pests.", 13, Color("aeb8a4"))
-	hint_label.position = Vector2(16, 640)
-	hint_label.size = Vector2(720, 44)
+	var hint_box := Control.new()
+	hint_box.position = Vector2(16, 612)
+	hint_box.size = Vector2(720, 64)
+	hint_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hint_box.clip_contents = true
+	layer.add_child(hint_box)
+	hint_label = _label("Move: WASD or arrows, paused while planting. Plant with 1-5, then click a tile. Only a wick burns shroud.", 13, Color("aeb8a4"))
 	hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	layer.add_child(hint_label)
+	hint_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	hint_label.clip_text = true
+	hint_box.add_child(hint_label)
 
 	reject_label = _label("", 14, Color("e0b4a0"))
 	reject_label.position = Vector2(16, 588)
@@ -279,9 +292,9 @@ func _build_hud() -> void:
 
 	for kind in Catalog.COUNT:
 		var panel := PanelContainer.new()
-		panel.position = Vector2(PANEL_X, 76 + float(kind) * 176.0)
-		panel.size = Vector2(PANEL_W, 168)
-		panel.custom_minimum_size = Vector2(PANEL_W, 168)
+		panel.position = Vector2(CARD_LEFT, CARD_TOP + float(kind) * (CARD_H + CARD_GAP))
+		panel.size = Vector2(CARD_W, CARD_H)
+		panel.custom_minimum_size = Vector2(CARD_W, CARD_H)
 		panel.clip_contents = true
 		panel.focus_mode = Control.FOCUS_NONE
 		panel.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -303,7 +316,7 @@ func _build_hud() -> void:
 		box.add_child(hotkey)
 		var index := 0
 		for line in Tooltip.stat_lines(kind):
-			var row := _label(line, 12 if index > 0 else 16, Color("f4f0e4") if index == 0 else Color("d5d0c4"))
+			var row := _label(line, 12 if index > 0 else 15, Color("f4f0e4") if index == 0 else Color("d5d0c4"))
 			row.name = "Stat%d" % index
 			row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			box.add_child(row)
@@ -364,7 +377,7 @@ func _refresh_hud() -> void:
 		return
 	overlay.visible = true
 	if sim.outcome == Sim.OUTCOME_WON:
-		outcome_label.text = "The surge breaks.\nThree waves passed, and the orchard still stands."
+		outcome_label.text = "The surge breaks.\nFive nights passed, and the orchard still stands."
 	else:
 		outcome_label.text = "The lights went out.\nHealth reached zero before the orchard was clear."
 
@@ -443,13 +456,17 @@ func _draw_tree(rect: Rect2) -> void:
 
 
 func _draw_fog() -> void:
+	var late: bool = sim.wave >= 4 or (sim.phase == Sim.PHASE_PLANT and sim.wave >= 3)
 	for ty in Sim.MAP_H:
 		for tx in Sim.MAP_W:
 			var rect := _tile_rect(tx, ty)
-			if sim.tile_lit(tx, ty):
+			if sim.tile_burns_shroud(tx, ty):
+				draw_rect(rect, Color(0.9, 0.32, 0.12, 0.12), true)
+			elif sim.tile_lit(tx, ty):
 				draw_rect(rect, Color(0.95, 0.82, 0.45, 0.07), true)
 			else:
-				draw_rect(rect, Color(0.015, 0.02, 0.035, 0.58), true)
+				var alpha := 0.7 if late else 0.58
+				draw_rect(rect, Color(0.015, 0.02, 0.035, alpha), true)
 
 
 func _draw_hover() -> void:
@@ -490,6 +507,14 @@ func _draw_plant(plant) -> void:
 			draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 			draw_circle(at + Vector2(0, -8), 4.0, Color("c46822"))
 			draw_line(at + Vector2(0, -12), at + Vector2(2, -18), Color("6a8f3a"), 2.0)
+		Catalog.WICK:
+			draw_line(at + Vector2(0, 16), at + Vector2(0, 0), Color("2c221c"), 3.2)
+			draw_line(at + Vector2(-8, 9), at + Vector2(-1, 2), Color("3d2e26"), 2.0)
+			draw_line(at + Vector2(8, 11), at + Vector2(1, 3), Color("3d2e26"), 2.0)
+			var pulse := 0.55 + 0.45 * sin(float(sim.tick) * 0.18)
+			draw_circle(at + Vector2(0, -7), 11.0, Color(1.0, 0.32, 0.1, 0.16 + 0.1 * pulse))
+			draw_circle(at + Vector2(0, -7), 3.6, Color("ff5c32"))
+			draw_circle(at + Vector2(-0.6, -8.0), 1.4, Color("fff1e4"))
 		_:
 			draw_circle(at, 6.0, Color.WHITE)
 
@@ -503,6 +528,10 @@ func _draw_shot(shot) -> void:
 			draw_line(at - shot.dir * 7.0, at, Color("9be7a0"), 2.0)
 		Catalog.LANTERN:
 			draw_circle(at, 2.6, Color("fff1c2"))
+		Catalog.WICK:
+			draw_circle(at, 3.6, Color(1.0, 0.35, 0.12, 0.35))
+			draw_circle(at, 2.2, Color("ff6a3a"))
+			draw_circle(at, 1.0, Color("fff0e2"))
 		_:
 			draw_circle(at, 6.0, Color("ffb15a"))
 			draw_circle(at, 2.5, Color("fff0d2"))
@@ -513,9 +542,15 @@ func _draw_pest(pest) -> void:
 	var flutter := sin(float(sim.tick) * 0.45 + float(pest.id)) * 3.0
 	var wing := Color("3c3554")
 	var body := Color("2a2438")
+	if pest.shrouded:
+		wing = Color("241820")
+		body = Color("120e14")
 	if pest.slow_ticks > 0:
 		wing = Color("2f6b58")
 		body = Color("21483c")
+		if pest.shrouded:
+			wing = Color("2a4038")
+			body = Color("1c2c28")
 	draw_colored_polygon(PackedVector2Array([
 		at + Vector2(-14, flutter),
 		at + Vector2(-4, 0),
@@ -532,8 +567,11 @@ func _draw_pest(pest) -> void:
 		at + Vector2(0, 8),
 		at + Vector2(-7, 0),
 	]), body)
-	draw_circle(at + Vector2(-2, -1), 1.3, Color("f2e7c8"))
-	draw_circle(at + Vector2(2, -1), 1.3, Color("f2e7c8"))
+	var eye := Color("ffb080") if pest.shrouded else Color("f2e7c8")
+	draw_circle(at + Vector2(-2, -1), 1.3, eye)
+	draw_circle(at + Vector2(2, -1), 1.3, eye)
+	if pest.shrouded:
+		draw_arc(at, 13.0, 0.45, TAU - 0.35, 18, Color(1.0, 0.42, 0.18, 0.85), 1.3, true)
 	if pest.hp < Sim.PEST_HP:
 		var width := 16.0 * clampf(float(pest.hp) / float(Sim.PEST_HP), 0.0, 1.0)
 		draw_rect(Rect2(at + Vector2(-8, -14), Vector2(16, 3)), Color(0, 0, 0, 0.45), true)

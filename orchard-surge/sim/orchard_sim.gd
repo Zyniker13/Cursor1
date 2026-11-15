@@ -3,6 +3,7 @@ extends RefCounted
 ## Fixed-timestep orchard combat. No SceneTree, no drawing, no input devices.
 ## Given the same seed and the same command each tick, the run is deterministic.
 ## The scene only reads this state and sends commands.
+## Shroud moths stay hidden in ordinary light and ignore shots until a wick burns their tile.
 
 const Catalog = preload("res://sim/plant_catalog.gd")
 
@@ -27,16 +28,19 @@ const PEST_SPEED := 42.0
 const PEST_RADIUS := 11.0
 const START_SEEDS := 6
 const PLANT_TICKS := 240
-const WAVE_COUNT := 3
+const WAVE_COUNT := 5
 const START_CELL := Vector2i(7, 5)
 const PROJECTILE_RADIUS := 4.0
 const PROJECTILE_LIFE := 75
 
-# Wave 3 is a larger group of the same pest, not a separate boss.
+# Nights 1–3 are the original waves. Nights 4 and 5 bring shroud moths, not a boss.
+# shroud_every 0: no shrouds. 1: every spawn. N: every Nth spawn, the Nth included.
 const WAVES := [
-	{"count": 8, "interval": 72},
-	{"count": 12, "interval": 66},
-	{"count": 22, "interval": 60},
+	{"count": 8, "interval": 72, "shroud_every": 0, "name": ""},
+	{"count": 12, "interval": 66, "shroud_every": 0, "name": ""},
+	{"count": 22, "interval": 60, "shroud_every": 0, "name": ""},
+	{"count": 8, "interval": 78, "shroud_every": 1, "name": "Shroud"},
+	{"count": 16, "interval": 54, "shroud_every": 2, "name": "Ash"},
 ]
 
 
@@ -61,6 +65,7 @@ class Plant:
 	var slow_factor: float = 1.0
 	var slow_ticks: int = 0
 	var splash_radius: float = 0.0
+	var burns_shroud: bool = false
 
 
 class Pest:
@@ -69,6 +74,7 @@ class Pest:
 	var hp: int = 0
 	var alive: bool = true
 	var hidden: bool = true
+	var shrouded: bool = false
 	var speed: float = 0.0
 	var slow_factor: float = 1.0
 	var slow_ticks: int = 0
@@ -102,6 +108,8 @@ var spawns_left: int = 0
 var spawn_wait: int = 0
 var spawn_interval: int = 0
 var shots_fired: int = 0
+var shrouds_spawned: int = 0
+var shrouds_killed: int = 0
 var plants: Array = []
 var pests: Array = []
 var projectiles: Array = []
@@ -157,19 +165,30 @@ func cell_of(pos: Vector2) -> Vector2i:
 
 
 func tile_lit(tx: int, ty: int) -> bool:
+	return _tile_in_light(tx, ty, false)
+
+
+func tile_burns_shroud(tx: int, ty: int) -> bool:
+	return _tile_in_light(tx, ty, true)
+
+
+func _tile_in_light(tx: int, ty: int, shroud_only: bool) -> bool:
 	if tx < 0 or ty < 0 or tx >= MAP_W or ty >= MAP_H:
 		return false
 	var rect_min := Vector2(float(tx) * TILE, float(ty) * TILE)
 	var rect_max := rect_min + Vector2(TILE, TILE)
 	for plant in plants:
-		if not (plant as Plant).alive:
+		var grown := plant as Plant
+		if not grown.alive:
 			continue
-		var source: Vector2 = (plant as Plant).pos
+		if shroud_only and not grown.burns_shroud:
+			continue
+		var source: Vector2 = grown.pos
 		var closest := Vector2(
 			clampf(source.x, rect_min.x, rect_max.x),
 			clampf(source.y, rect_min.y, rect_max.y)
 		)
-		if source.distance_to(closest) <= (plant as Plant).light_radius:
+		if source.distance_to(closest) <= grown.light_radius:
 			return true
 	return false
 
@@ -225,12 +244,21 @@ func phase_text() -> String:
 		return "The lights went out"
 	if phase == PHASE_PLANT:
 		var next_wave := mini(wave + 1, WAVE_COUNT)
-		return "Planting — wave %d in %.1fs" % [next_wave, plant_seconds_left()]
-	return "Wave %d of %d — %d pests left" % [wave, WAVE_COUNT, pests_remaining()]
+		return "Planting — night %d%s in %.1fs" % [next_wave, _night_suffix(next_wave), plant_seconds_left()]
+	return "Night %d of %d%s — %d pests left" % [wave, WAVE_COUNT, _night_suffix(wave), pests_remaining()]
+
+
+func _night_suffix(index: int) -> String:
+	if index < 1 or index > WAVES.size():
+		return ""
+	var name := str(WAVES[index - 1].get("name", ""))
+	if name == "":
+		return ""
+	return " (%s)" % name
 
 
 ## Shared entry for wave spawns and the visibility test. Does not alter damage or health.
-func spawn_pest(pos: Vector2):
+func spawn_pest(pos: Vector2, shrouded: bool = false):
 	var pest := Pest.new()
 	pest.id = _next_pest_id
 	_next_pest_id += 1
@@ -240,8 +268,10 @@ func spawn_pest(pos: Vector2):
 	pest.speed = PEST_SPEED
 	pest.slow_factor = 1.0
 	pest.slow_ticks = 0
-	var cell := cell_of(pos)
-	pest.hidden = not tile_lit(cell.x, cell.y)
+	pest.shrouded = shrouded
+	if shrouded:
+		shrouds_spawned += 1
+	_apply_visibility(pest)
 	pests.append(pest)
 	return pest
 
@@ -292,6 +322,7 @@ func _try_plant(cmd: Command) -> void:
 	plant.slow_factor = float(stats["slow_factor"])
 	plant.slow_ticks = int(stats["slow_ticks"])
 	plant.splash_radius = float(stats["splash_radius"])
+	plant.burns_shroud = bool(stats["burns_shroud"])
 	plants.append(plant)
 	seeds -= 1
 	events.append({"type": "planted", "kind": kind, "x": cmd.tile.x, "y": cmd.tile.y})
@@ -325,7 +356,11 @@ func _wave_spawns() -> void:
 		cell = Vector2i(0, 1 + _rng.randi() % (MAP_H - 2))
 	else:
 		cell = Vector2i(MAP_W - 1, 1 + _rng.randi() % (MAP_H - 2))
-	spawn_pest(tile_center(cell.x, cell.y))
+	var spec: Dictionary = WAVES[wave - 1]
+	var every := int(spec.get("shroud_every", 0))
+	var index := int(spec["count"]) - spawns_left
+	var shrouded := every > 0 and index % every == every - 1
+	spawn_pest(tile_center(cell.x, cell.y), shrouded)
 	spawns_left -= 1
 	spawn_wait = spawn_interval
 
@@ -352,12 +387,25 @@ func _move_pests() -> void:
 
 func _refresh_visibility() -> void:
 	for entry in pests:
-		var pest := entry as Pest
-		if not pest.alive:
-			pest.hidden = true
-			continue
-		var cell := cell_of(pest.pos)
+		_apply_visibility(entry as Pest)
+
+
+func _apply_visibility(pest: Pest) -> void:
+	if not pest.alive:
+		pest.hidden = true
+		return
+	var cell := cell_of(pest.pos)
+	if pest.shrouded:
+		pest.hidden = not tile_burns_shroud(cell.x, cell.y)
+	else:
 		pest.hidden = not tile_lit(cell.x, cell.y)
+
+
+func _shroud_up(pest: Pest) -> bool:
+	if not pest.shrouded:
+		return false
+	var cell := cell_of(pest.pos)
+	return not tile_burns_shroud(cell.x, cell.y)
 
 
 func _plants_fire() -> void:
@@ -445,6 +493,8 @@ func _impact(shot: Projectile, target: Pest) -> void:
 
 
 func _damage_pest(pest: Pest, shot: Projectile) -> void:
+	if _shroud_up(pest):
+		return
 	pest.hp -= shot.damage
 	if shot.slow_ticks > 0:
 		pest.slow_ticks = shot.slow_ticks
@@ -460,6 +510,8 @@ func _damage_pest(pest: Pest, shot: Projectile) -> void:
 	if pest.hp <= 0:
 		pest.hp = 0
 		pest.alive = false
+		if pest.shrouded:
+			shrouds_killed += 1
 		events.append({
 			"type": "died",
 			"x": pest.pos.x,
