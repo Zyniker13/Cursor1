@@ -4,10 +4,11 @@ class_name ChartBook
 # South Lantern Quay holds six charts. North Glass Reach holds eight more.
 # The Turning Basin holds the next eight. The Painted Lock holds eight more.
 # The West Return holds eight more. The Meeting Glass holds eight more.
-# The Tide Mirror holds the last eight.
+# The Tide Mirror holds eight more. The Shutter holds eight more.
+# The Stain holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
-# facings repeat). Prisms use 0, 90, 180, and 270. See BeamTracer for the
-# optical meaning of each number.
+# facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
+# 90 for blue, and that number is a color, not a facing. See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
 # or both. Tide index picks an entry of tide_phases, which is the count of
@@ -20,6 +21,8 @@ const PAINTED := "The Painted Lock"
 const WEST := "The West Return"
 const MEET := "The Meeting Glass"
 const TIDE := "The Tide Mirror"
+const SHUTTER := "The Shutter"
+const STAIN := "The Stain"
 
 static func all() -> Array:
 	var book: Array = []
@@ -30,6 +33,8 @@ static func all() -> Array:
 	book.append_array(west())
 	book.append_array(meet())
 	book.append_array(tide())
+	book.append_array(shutter())
+	book.append_array(stain())
 	return book
 
 
@@ -59,6 +64,14 @@ static func meet() -> Array:
 
 static func tide() -> Array:
 	return [chart_47(), chart_48(), chart_49(), chart_50(), chart_51(), chart_52(), chart_53(), chart_54()]
+
+
+static func shutter() -> Array:
+	return [chart_55(), chart_56(), chart_57(), chart_58(), chart_59(), chart_60(), chart_61(), chart_62()]
+
+
+static func stain() -> Array:
+	return [chart_63(), chart_64(), chart_65(), chart_66(), chart_67(), chart_68(), chart_69(), chart_70()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -2021,6 +2034,594 @@ static func chart_54() -> Dictionary:
 		],
 	}
 
+static func chart_55() -> Dictionary:
+	# Two shutters sit on the row above the tide mirrors. Flood 2 covers both
+	# rows. The feed mirror sends the beam south into the first shutter. While
+	# that row is flooded the shutter passes it, the tide mirrors turn it east
+	# and north, and the second shutter lets it climb to the dock.
+	# While the row is dry the first shutter stops the beam. The lower lamp
+	# still passes the dry tide mirrors and wakes the hull.
+	# A tide mirror cannot stand in for a shutter: under water it would turn
+	# the beam instead of letting it continue.
+	return {
+		"id": "55",
+		"harbor": SHUTTER,
+		"title": "The Dry Gate",
+		"teach": "A shutter stops a beam while its own row is dry. While that row is flooded, the beam passes straight through and keeps its color. It does not reflect. Turn the mirror so the beam falls, then turn the tide mirrors so the beam runs east and climbs through the second shutter to the dock. On the wrong tide the shutter is dry: the beam stops, the dock stays dark, and the lower lamp wakes the hull.",
+		"win": "The open shutter lets the beam climb.",
+		"cols": 6,
+		"rows": 6,
+		"tide_phases": [0, 2],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 1, "E", "white"),
+			_lantern("S", 0, 5, "E", "white"),
+		],
+		"docks": [
+			_dock("D", 3, 3, "white"),
+		],
+		"boats": [
+			_boat("Hm", 2, 0),
+			_boat("Hb", 5, 5),
+		],
+		"fixtures": [],
+		"pieces": [
+			_mirror("M", "Feed mirror", 2, 1, 0, 90),
+			_shutter("G", "Shutter", 2, 4),
+			_shutter("U", "Upper shutter", 3, 4),
+			_tide_mirror("T", "Tide mirror", 2, 5, 0, 90),
+			_tide_mirror("B", "East tide mirror", 3, 5, 90, 0),
+		],
+	}
+
+static func chart_56() -> Dictionary:
+	# Same gate as The Dry Gate, fed by a red lamp. The pass keeps the color,
+	# so only the red face of the pane lets the climb reach the dock. A blue
+	# pane stops that red. The shutter does not turn the beam aside.
+	return {
+		"id": "56",
+		"harbor": SHUTTER,
+		"title": "Straight Red",
+		"teach": "The shutter does not change color, and it does not reflect. Red falls through the flooded shutter and is still red when it climbs through the red pane. A blue pane stops that red. The other face of the mirror wakes the hull. While the row is dry the shutter stops the beam.",
+		"win": "Red climbs through its own pane.",
+		"cols": 6,
+		"rows": 6,
+		"tide_phases": [0, 2],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 2, "E", "red"),
+			_lantern("S", 0, 5, "E", "white"),
+		],
+		"docks": [
+			_dock("Rd", 3, 1, "red"),
+		],
+		"boats": [
+			_boat("Hm", 2, 0),
+			_boat("Hb", 5, 5),
+		],
+		"fixtures": [],
+		"pieces": [
+			_mirror("M", "Feed mirror", 2, 2, 0, 90),
+			_shutter("G", "Shutter", 2, 4),
+			_shutter("U", "Upper shutter", 3, 4),
+			_tide_mirror("T", "Tide mirror", 2, 5, 0, 90),
+			_tide_mirror("B", "East tide mirror", 3, 5, 90, 0),
+			_pane("C", "Red pane", 3, 2, 90, 0),
+		],
+	}
+
+static func chart_57() -> Dictionary:
+	# The climb comes back through the upper shutter, then a normal mirror
+	# bends it east through a red pane. That mirror's other face sends the
+	# beam west into a hull. Dry water stops the beam on the shutter, and the
+	# lower lamp wakes the hull beyond the tide mirrors.
+	return {
+		"id": "57",
+		"harbor": SHUTTER,
+		"title": "The Open Bend",
+		"teach": "Turn the tide mirrors and leave both shutters on the flooded row so red climbs, then bend it east through the red pane. The other bend of the upper mirror wakes a hull. While the row is dry the shutter stops the beam and the lower lamp wakes the hull.",
+		"win": "Red bends east, and the hulls stay asleep.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0, 2],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 4, "E", "red"),
+			_lantern("S", 0, 6, "E", "white"),
+		],
+		"docks": [
+			_dock("Rd", 6, 2, "red"),
+		],
+		"boats": [
+			_boat("Hm", 2, 0),
+			_boat("Hw", 0, 2),
+			_boat("Hb", 5, 6),
+		],
+		"fixtures": [],
+		"pieces": [
+			_mirror("M", "Feed mirror", 2, 4, 0, 90),
+			_shutter("G", "Shutter", 2, 5),
+			_shutter("U", "Upper shutter", 3, 5),
+			_tide_mirror("T", "Tide mirror", 2, 6, 0, 90),
+			_tide_mirror("B", "East tide mirror", 3, 6, 90, 0),
+			_mirror("N", "Upper mirror", 3, 2, 90, 0),
+			_pane("C", "Red pane", 5, 2, 90, 0),
+		],
+	}
+
+static func chart_58() -> Dictionary:
+	# The side socket never sees the climb. On the line, rot 0 drinks the
+	# northbound white beam: red leaves west, blue leaves east. Any other face
+	# absorbs it. Without the prism, white runs on into the hull. A dry shutter
+	# stops the beam before the tide mirrors can turn it.
+	return {
+		"id": "58",
+		"harbor": SHUTTER,
+		"title": "Off the Gate",
+		"teach": "Move the prism onto the column the shutters feed, and turn it so red leaves west and blue leaves east. The other bend of the feed mirror wakes a hull. White that misses the prism wakes the other hull. While the row is dry the shutter stops the beam and the lower lamp wakes the hull.",
+		"win": "The prism sits on the climb, and both docks take their color.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0, 2],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 4, "E", "white"),
+			_lantern("S", 0, 6, "E", "white"),
+		],
+		"docks": [
+			_dock("Rd", 1, 2, "red"),
+			_dock("Bd", 5, 2, "blue"),
+		],
+		"boats": [
+			_boat("Hm", 2, 0),
+			_boat("Hw", 3, 0),
+			_boat("Hb", 5, 6),
+		],
+		"fixtures": [],
+		"pieces": [
+			_prism("P", "Prism", [["side", 6, 3], ["line", 3, 2]], "side", 90, "line", 0),
+			_mirror("M", "Feed mirror", 2, 4, 0, 90),
+			_shutter("G", "Shutter", 2, 5),
+			_shutter("U", "Upper shutter", 3, 5),
+			_tide_mirror("T", "Tide mirror", 2, 6, 0, 90),
+			_tide_mirror("B", "East tide mirror", 3, 6, 90, 0),
+		],
+	}
+
+static func chart_59() -> Dictionary:
+	# The dock sits on the row high water covers. Flood 2 leaves that row dry
+	# and covers the shutters and the tide mirrors, so the beam can pass and
+	# still land. Flood 3 covers the dock. Flood 0 stops the beam on the dry
+	# shutter, and the lower lamp wakes the hull.
+	return {
+		"id": "59",
+		"harbor": SHUTTER,
+		"title": "The Held Gate",
+		"teach": "Turn the tide mirrors so the beam climbs through the shutters to the dock. The other bend of the feed mirror wakes a hull. Low water is the wrong tide: the shutter is dry, the beam stops, and the lower lamp wakes the hull. High water covers the dock. Hold the middle mark.",
+		"win": "The middle mark holds the open gate.",
+		"cols": 6,
+		"rows": 7,
+		"tide_phases": [0, 2, 3],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 2, "E", "white"),
+			_lantern("S", 0, 6, "E", "white"),
+		],
+		"docks": [
+			_dock("D", 3, 4, "white"),
+		],
+		"boats": [
+			_boat("Hm", 2, 0),
+			_boat("Hb", 5, 6),
+		],
+		"fixtures": [],
+		"pieces": [
+			_mirror("M", "Feed mirror", 2, 2, 0, 90),
+			_shutter("G", "Shutter", 2, 5),
+			_shutter("U", "Upper shutter", 3, 5),
+			_tide_mirror("T", "Tide mirror", 2, 6, 0, 90),
+			_tide_mirror("B", "East tide mirror", 3, 6, 90, 0),
+		],
+	}
+
+static func chart_60() -> Dictionary:
+	# The gate returns white to a mirror that sends it west. Prism rot 270
+	# drinks that westbound beam: blue climbs through the blue pane, red falls
+	# onto the low dock. The east face absorbs the returning beam.
+	return {
+		"id": "60",
+		"harbor": SHUTTER,
+		"title": "The West Gate",
+		"teach": "Turn the tide mirrors so white climbs through the shutters, then bend it west into the prism. Blue climbs through the blue pane. Red falls to the low dock. The other bend of the feed mirror or the west mirror wakes a hull. While the row is dry the shutter stops the beam and the lower lamp wakes the hull.",
+		"win": "Blue climbs. Red falls. The hulls stay asleep.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0, 2],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 4, "E", "white"),
+			_lantern("S", 0, 6, "E", "white"),
+		],
+		"docks": [
+			_dock("Bd", 1, 0, "blue"),
+			_dock("Rd", 1, 3, "red"),
+		],
+		"boats": [
+			_boat("Hm", 2, 0),
+			_boat("Ha", 5, 2),
+			_boat("Hb", 5, 6),
+		],
+		"fixtures": [],
+		"pieces": [
+			_mirror("M", "Feed mirror", 2, 4, 0, 90),
+			_shutter("G", "Shutter", 2, 5),
+			_shutter("U", "Upper shutter", 3, 5),
+			_tide_mirror("T", "Tide mirror", 2, 6, 0, 90),
+			_tide_mirror("B", "East tide mirror", 3, 6, 90, 0),
+			_mirror("A", "West mirror", 3, 2, 0, 90),
+			_prism("P", "West prism", [["a", 1, 2]], "a", 90, "a", 270),
+			_pane("Cb", "Blue pane", 1, 1, 0, 90),
+		],
+	}
+
+static func chart_61() -> Dictionary:
+	# White climbs through the gate into a mirror that sends it east, then a
+	# mirror that sends it south into prism rot 180. Blue leaves west through
+	# the blue pane. Red leaves east through the red pane.
+	return {
+		"id": "61",
+		"harbor": SHUTTER,
+		"title": "The South Gate",
+		"teach": "Turn the tide mirrors so white climbs through the shutters. Bend it east, then south into the prism, so blue leaves west and red leaves east. Leave each pane on its own color. The other bend of the feed mirror, the east mirror, or the south mirror wakes a hull. While the row is dry the shutter stops the beam and the lower lamp wakes the hull.",
+		"win": "Blue runs west. Red runs east. The hulls stay asleep.",
+		"cols": 8,
+		"rows": 7,
+		"tide_phases": [0, 2],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 4, "E", "white"),
+			_lantern("S", 0, 6, "E", "white"),
+		],
+		"docks": [
+			_dock("Bd", 0, 3, "blue"),
+			_dock("Rs", 7, 3, "red"),
+		],
+		"boats": [
+			_boat("Hm", 2, 0),
+			_boat("He", 0, 2),
+			_boat("Hf", 5, 0),
+			_boat("Hb", 6, 6),
+		],
+		"fixtures": [],
+		"pieces": [
+			_mirror("M", "Feed mirror", 2, 4, 0, 90),
+			_shutter("G", "Shutter", 2, 5),
+			_shutter("U", "Upper shutter", 3, 5),
+			_tide_mirror("T", "Tide mirror", 2, 6, 0, 90),
+			_tide_mirror("B", "East tide mirror", 3, 6, 90, 0),
+			_mirror("E", "East mirror", 3, 2, 90, 0),
+			_mirror("F", "South mirror", 5, 2, 0, 90),
+			_prism("P", "South prism", [["a", 5, 3]], "a", 90, "a", 180),
+			_pane("Cb", "Blue pane", 4, 3, 0, 90),
+			_pane("Cr", "Red pane", 6, 3, 90, 0),
+		],
+	}
+
+static func chart_62() -> Dictionary:
+	# Capstone. The lamp socket swallows the red lamp. The west socket sits on
+	# the row high water covers: blue from that face climbs through the blue
+	# pane, and red falls into the flooded gate row. The shutters sit above
+	# the tide mirrors, so only the middle mark both floods them and leaves
+	# the west row dry. Low water stops the white beam on the dry shutter and
+	# lets the lower lamp wake the hull.
+	return {
+		"id": "62",
+		"harbor": SHUTTER,
+		"title": "The Shutter Mark",
+		"teach": "Move the prism off the red lamp and onto the west row. Bend the red lamp north, then east through the red pane. Turn the tide mirrors so white falls through the shutters, runs east, and comes back west, so blue climbs through the blue pane. Red from that face falls into the water. The other bend of the lamp mirror, the upper mirror, the feed mirror, the east mirror, the south mirror, or the west mirror wakes a hull. Low water stops the beam on the dry shutter and wakes the lower hull. High water covers the west row. Hold the middle mark.",
+		"win": "Lamp, west climb, and the middle mark. The gate holds.",
+		"cols": 9,
+		"rows": 8,
+		"tide_phases": [0, 2, 3],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Lr", 0, 2, "E", "red"),
+			_lantern("Lw", 1, 4, "E", "white"),
+			_lantern("S", 6, 7, "E", "white"),
+		],
+		"docks": [
+			_dock("Rl", 6, 1, "red"),
+			_dock("Bd", 0, 3, "blue"),
+		],
+		"boats": [
+			_boat("Hu", 1, 1),
+			_boat("Hm", 2, 3),
+			_boat("Hw", 4, 3),
+			_boat("Ha", 7, 0),
+			_boat("He", 8, 5),
+			_boat("Hb", 8, 7),
+		],
+		"fixtures": [],
+		"pieces": [
+			_prism("P", "Prism", [["lamp", 5, 1], ["west", 0, 5]], "lamp", 90, "west", 270),
+			_mirror("Mr", "Lamp mirror", 2, 2, 90, 0),
+			_mirror("Mu", "Upper mirror", 2, 1, 90, 0),
+			_pane("Cp", "Lamp pane", 4, 1, 90, 0),
+			_mirror("M", "Feed mirror", 4, 4, 0, 90),
+			_shutter("G", "Shutter", 4, 6),
+			_shutter("U", "Upper shutter", 5, 6),
+			_tide_mirror("T", "Tide mirror", 4, 7, 0, 90),
+			_tide_mirror("B", "East tide mirror", 5, 7, 90, 0),
+			_mirror("H", "East mirror", 5, 3, 90, 0),
+			_mirror("F", "South mirror", 7, 3, 0, 90),
+			_mirror("D", "West mirror", 7, 5, 90, 0),
+			_pane("Cb", "Blue pane", 0, 4, 0, 90),
+		],
+	}
+
+static func chart_63() -> Dictionary:
+	# White runs east through a stain onto a red dock. Red leaves red and
+	# keeps the same direction. Blue leaves blue, so the dock fails. A pane
+	# would stop the white beam. A prism would split it instead of passing
+	# one red beam straight through.
+	return {
+		"id": "63",
+		"harbor": STAIN,
+		"title": "The Red Stain",
+		"teach": "A stain has a color, red or blue, and no facing. A beam that hits it keeps going straight, and the beam's color becomes the stain's color. White becomes red. It does not split, and it does not reflect. Click the stain so it is red. Swapping it to blue fails the dock. A pane stops white instead of turning it red. A prism splits white and does not pass one red beam straight through.",
+		"win": "White leaves the stain as red.",
+		"cols": 5,
+		"rows": 3,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [_lantern("L", 0, 1, "E", "white")],
+		"docks": [_dock("D", 4, 1, "red")],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_stain("K", "Stain", 2, 1, 90, 0),
+		],
+	}
+
+static func chart_64() -> Dictionary:
+	# The stain sits on a dry row and the dock is the first flooded cell at
+	# the high mark. Dry recolors white to red and lands. High water covers
+	# the dock. A shutter in the stain's cell would stop the dry beam.
+	return {
+		"id": "64",
+		"harbor": STAIN,
+		"title": "Dry Color",
+		"teach": "The stain recolors the beam while its own row is dry. White becomes red and runs south onto the red dock. A shutter in that cell would stop the beam. Raise the tide and the dock is under water, so the recolored beam dies on the waterline. Hold the dry mark.",
+		"win": "The dry stain turns the beam red.",
+		"cols": 5,
+		"rows": 4,
+		"tide_phases": [0, 2],
+		"start_tide_index": 1,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [_lantern("L", 2, 0, "S", "white")],
+		"docks": [_dock("Rd", 2, 2, "red")],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_stain("K", "Stain", 2, 1, 90, 0),
+		],
+	}
+
+static func chart_65() -> Dictionary:
+	# Blue becomes red at the stain, then the red pane lets it through.
+	# Left blue, that same pane stops the beam. A blue pane would pass the
+	# unclicked stain and still miss the red dock.
+	return {
+		"id": "65",
+		"harbor": STAIN,
+		"title": "Blue to Red",
+		"teach": "A blue beam hits the stain and leaves red, then passes the red pane. Left blue, the red pane stops it. The stain does not split the beam, and it does not reflect.",
+		"win": "Blue goes in. Red comes out.",
+		"cols": 6,
+		"rows": 3,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [_lantern("L", 0, 1, "E", "blue")],
+		"docks": [_dock("Rd", 5, 1, "red")],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_stain("K", "Stain", 2, 1, 90, 0),
+			_pane("C", "Red pane", 3, 1, 0, 0),
+		],
+	}
+
+static func chart_66() -> Dictionary:
+	# The stain starts blue. One click makes it red, and the mirror's "/"
+	# sends that red north onto the dock. The other face of the mirror sends
+	# the beam south into the hull. Leaving the stain blue fails the dock.
+	return {
+		"id": "66",
+		"harbor": STAIN,
+		"title": "The Swap",
+		"teach": "The stain starts blue. Click it to red. The beam keeps going straight, and the mirror turns that red onto the dock. The unclicked stain leaves blue on the dock. The other face of the mirror wakes the hull.",
+		"win": "The stain is red, and the dock takes it.",
+		"cols": 5,
+		"rows": 4,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [_lantern("L", 0, 2, "E", "white")],
+		"docks": [_dock("Rd", 4, 0, "red")],
+		"boats": [_boat("Hm", 4, 3)],
+		"fixtures": [],
+		"pieces": [
+			_stain("K", "Stain", 2, 2, 90, 0),
+			_mirror("M", "Mirror", 4, 2, 90, 0),
+		],
+	}
+
+static func chart_67() -> Dictionary:
+	# Prism rot 90 drinks the eastbound white beam. Red climbs to the north
+	# dock. Blue falls into the stain, which must be red so the south dock
+	# takes red. Any other prism face absorbs the beam. Leaving the stain
+	# blue satisfies the north dock and misses the south one.
+	return {
+		"id": "67",
+		"harbor": STAIN,
+		"title": "One Color",
+		"teach": "The prism splits white. Red climbs to the red dock. Blue falls through the stain, which turns it red for the lower dock. Leaving the stain unclicked leaves that dock blue. The other faces of the prism absorb the beam.",
+		"win": "Both docks take red. The stain did the second one.",
+		"cols": 5,
+		"rows": 5,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [_lantern("L", 0, 2, "E", "white")],
+		"docks": [
+			_dock("Rn", 2, 0, "red"),
+			_dock("Rs", 2, 4, "red"),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_prism("P", "Prism", [["a", 2, 2]], "a", 0, "a", 90),
+			_stain("K", "Stain", 2, 3, 90, 0),
+		],
+	}
+
+static func chart_68() -> Dictionary:
+	# Flood 2 opens the shutter. White falls through it, the tide mirrors
+	# turn it, and the stain on the flooded row makes it red before the
+	# climb. Dry water stops on the shutter and the lower lamp wakes the
+	# hull. A shutter in the stain's cell would pass white and miss.
+	return {
+		"id": "68",
+		"harbor": STAIN,
+		"title": "After the Gate",
+		"teach": "A shutter stops the beam while its row is dry. Raise the tide and the shutter lets the beam through. The stain beyond it turns white into red. The shutter alone would deliver white and miss the red dock. The other bend of the feed mirror wakes a hull. While the row is dry the shutter stops the beam and the lower lamp wakes the hull.",
+		"win": "The gate opens, and the stain turns the beam red.",
+		"cols": 6,
+		"rows": 6,
+		"tide_phases": [0, 2],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 2, "E", "white"),
+			_lantern("S", 0, 5, "E", "white"),
+		],
+		"docks": [_dock("Rd", 4, 2, "red")],
+		"boats": [
+			_boat("Hm", 2, 0),
+			_boat("Hb", 5, 5),
+		],
+		"fixtures": [],
+		"pieces": [
+			_mirror("M", "Feed mirror", 2, 2, 0, 90),
+			_shutter("G", "Shutter", 2, 4),
+			_tide_mirror("T", "Tide mirror", 2, 5, 0, 90),
+			_stain("K", "Stain", 3, 5, 90, 0),
+			_tide_mirror("B", "East tide mirror", 4, 5, 90, 0),
+			_shutter("U", "Upper shutter", 4, 4),
+		],
+	}
+
+static func chart_69() -> Dictionary:
+	# Phases 0, 2, and 3. Flood 2 covers the shutter, the stain, and the tide
+	# mirrors, and leaves the dock dry. Flood 3 covers the dock. Flood 0
+	# stops on the dry shutter and the lower lamp wakes the hull. The stain
+	# is under water at the middle mark and still recolors.
+	return {
+		"id": "69",
+		"harbor": STAIN,
+		"title": "The Held Stain",
+		"teach": "Turn the tide mirrors so white falls through the shutter, and the stain on the flooded row turns it red before it climbs to the dock. Low water is the wrong tide: the shutter is dry, the beam stops, and the lower lamp wakes the hull. High water covers the dock. The stain still recolors at the middle mark. Hold the middle mark.",
+		"win": "The middle mark holds, and the stain still colors the beam.",
+		"cols": 6,
+		"rows": 7,
+		"tide_phases": [0, 2, 3],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 2, "E", "white"),
+			_lantern("S", 0, 6, "E", "white"),
+		],
+		"docks": [_dock("Rd", 4, 4, "red")],
+		"boats": [
+			_boat("Hm", 2, 0),
+			_boat("Hb", 5, 6),
+		],
+		"fixtures": [],
+		"pieces": [
+			_mirror("M", "Feed mirror", 2, 2, 0, 90),
+			_shutter("G", "Shutter", 2, 5),
+			_tide_mirror("T", "Tide mirror", 2, 6, 0, 90),
+			_stain("K", "Stain", 3, 6, 90, 0),
+			_tide_mirror("B", "East tide mirror", 4, 6, 90, 0),
+			_shutter("U", "Upper shutter", 4, 5),
+		],
+	}
+
+static func chart_70() -> Dictionary:
+	# The side socket lets white run into a hull. On the line, prism rot 90
+	# sends red north and blue south through the gate. The stain must be
+	# clicked to red so the lower dock takes red. Only the middle mark both
+	# opens the shutter and leaves that dock dry.
+	return {
+		"id": "70",
+		"harbor": STAIN,
+		"title": "The Stain Mark",
+		"teach": "Move the prism onto the white beam so red climbs and blue falls through the shutter. Click the stain so that blue becomes red before it climbs to the lower dock. The other socket lets white wake the hull. The other faces of the prism absorb the beam. Low water is the wrong tide: the shutter is dry and the lower lamp wakes the hull. High water covers the lower dock. Hold the middle mark.",
+		"win": "Prism, stain, and the middle mark. The color holds.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0, 2, 3],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 2, "E", "white"),
+			_lantern("S", 0, 6, "E", "white"),
+		],
+		"docks": [
+			_dock("Rn", 2, 0, "red"),
+			_dock("Rs", 4, 4, "red"),
+		],
+		"boats": [
+			_boat("Hw", 6, 2),
+			_boat("Hb", 6, 6),
+		],
+		"fixtures": [],
+		"pieces": [
+			_prism("P", "Prism", [["side", 5, 0], ["line", 2, 2]], "side", 0, "line", 90),
+			_shutter("G", "Shutter", 2, 5),
+			_tide_mirror("T", "Tide mirror", 2, 6, 0, 90),
+			_stain("K", "Stain", 3, 6, 90, 0),
+			_tide_mirror("B", "East tide mirror", 4, 6, 90, 0),
+			_shutter("U", "Upper shutter", 4, 5),
+		],
+	}
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -2150,6 +2751,33 @@ static func _pane(id: String, name: String, x: int, y: int, start_rot: int, sol_
 		"solution_rot": sol_rot,
 	}
 
+
+static func _stain(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "stain",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _shutter(id: String, name: String, x: int, y: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "shutter",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": 0,
+		"solution_socket": "a",
+		"solution_rot": 0,
+	}
 
 static func _tide_mirror(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
 	return {

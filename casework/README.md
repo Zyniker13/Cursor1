@@ -1,6 +1,6 @@
 # Casework
 
-A deduction game with fourteen cases, **The spare key**, **The rehearsal score**, **The gilt stamp**, **The ferry bell**, **The weather slate**, **The loom shuttle**, **The hive smoker**, **The glass pontil**, **The press proof**, **The assay cup**, **The kiln chalk**, **The tide ledger**, **The night bell**, and **The salt mark**.
+A deduction game with seventeen cases, **The spare key**, **The rehearsal score**, **The gilt stamp**, **The ferry bell**, **The weather slate**, **The loom shuttle**, **The hive smoker**, **The glass pontil**, **The press proof**, **The assay cup**, **The kiln chalk**, **The tide ledger**, **The night bell**, **The salt mark**, **The wick trim**, **The glass anneal**, and **The orchard graft**.
 
 Pick a file. That file keeps a single timeline. You read the exhibits and pin who, the room, and the hour. A theory is accepted only when it fits every exhibit. A theory that does not fit comes back naming the exhibits it contradicts. An empty pin is refused by the name of the missing slot.
 
@@ -35,6 +35,12 @@ There is no voice. The papers and the board are the whole case.
 **The night bell.** The night bell left its peg at the watch house. Name who stopped it, the room they stopped it in, and the hour.
 
 **The salt mark.** The salt mark left its peg at the salt house. Name who scored it, the room they scored it on, and the hour.
+
+**The wick trim.** The wick trim left its peg at the lamp house. Name who trimmed it, the room they trimmed it in, and the hour.
+
+**The glass anneal.** The glass anneal left its peg at the glasshouse. Name who annealed the gather, the room they annealed it in, and the hour.
+
+**The orchard graft.** The orchard graft left its peg at the nursery. Name who grafted the scion, the room they grafted it in, and the hour.
 
 ## Play
 
