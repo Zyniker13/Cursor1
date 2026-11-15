@@ -7,7 +7,7 @@ const DIRS: Array[Vector2i] = [
 	Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, -1)
 ]
 const DIR_NAMES: Array[String] = ["East", "South", "West", "North"]
-const TYPES: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook", "return", "pause", "chute"]
+const TYPES: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook", "return", "pause", "chute", "shunt"]
 const PAINTS: Array[String] = ["red", "blue", "yellow"]
 const TICK_CAP := 250
 
@@ -134,11 +134,11 @@ static func run(puzzle: Dictionary, graph: Array) -> Dictionary:
 			elif typ == "slide":
 				var step: Vector2i = DIRS[int(parcel["dir"])]
 				parcel["intent"] = Vector2i(int(parcel["x"]), int(parcel["y"])) + step * 2
-			elif typ == "turn" or typ == "hook" or typ == "return" or typ == "pause" or typ == "chute":
+			elif typ == "turn" or typ == "hook" or typ == "return" or typ == "pause" or typ == "chute" or typ == "shunt":
 				if int(parcel["hold"]) < 1:
 					if typ == "chute":
 						parcel["dir"] = int(block["dir"])
-					else:
+					elif typ != "shunt" and typ != "pause":
 						var quarter := 0
 						if typ == "turn":
 							quarter = 1
@@ -149,7 +149,10 @@ static func run(puzzle: Dictionary, graph: Array) -> Dictionary:
 						if quarter != 0:
 							parcel["dir"] = (int(parcel["dir"]) + quarter) % 4
 				else:
-					parcel["intent"] = Vector2i(int(parcel["x"]), int(parcel["y"])) + DIRS[int(parcel["dir"])]
+					var step_dir := int(parcel["dir"])
+					if typ == "shunt":
+						step_dir = (step_dir + 1) % 4
+					parcel["intent"] = Vector2i(int(parcel["x"]), int(parcel["y"])) + DIRS[step_dir]
 			elif typ == "bin":
 				pass
 			else:
@@ -206,7 +209,7 @@ static func run(puzzle: Dictionary, graph: Array) -> Dictionary:
 				ejected[_key(origin.x, origin.y)] = true
 			moved = true
 			var travel := _dir_of(dest - origin)
-			if travel >= 0:
+			if travel >= 0 and not (block != null and str(block["type"]) == "shunt"):
 				parcel["dir"] = travel
 			if dest == dock:
 				delivered.append({
@@ -268,8 +271,11 @@ static func run(puzzle: Dictionary, graph: Array) -> Dictionary:
 				ahead += DIRS[int(block["dir"])]
 				if _find_at(parcels, ahead) == null and _enterable(ahead, dock, width, height, walls, source_cells, blocks):
 					latch_pending = true
-			elif (typ == "turn" or typ == "hook" or typ == "return" or typ == "pause" or typ == "chute") and int(parcel["hold"]) >= 1:
-				ahead += DIRS[int(parcel["dir"])]
+			elif (typ == "turn" or typ == "hook" or typ == "return" or typ == "pause" or typ == "chute" or typ == "shunt") and int(parcel["hold"]) >= 1:
+				var step_dir := int(parcel["dir"])
+				if typ == "shunt":
+					step_dir = (step_dir + 1) % 4
+				ahead += DIRS[step_dir]
 				if _find_at(parcels, ahead) != null or _enterable(ahead, dock, width, height, walls, source_cells, blocks):
 					turn_pending = true
 		if tick >= TICK_CAP:
