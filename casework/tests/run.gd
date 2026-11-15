@@ -10,6 +10,7 @@ const Hive = preload("res://scripts/hive_smoker.gd")
 const Glass = preload("res://scripts/glass_pontil.gd")
 const Press = preload("res://scripts/press_proof.gd")
 const Assay = preload("res://scripts/assay_cup.gd")
+const Kiln = preload("res://scripts/kiln_chalk.gd")
 const Catalog = preload("res://scripts/catalog.gd")
 const Solver = preload("res://scripts/solver.gd")
 const Verdict = preload("res://scripts/verdict.gd")
@@ -33,6 +34,8 @@ const PRESS_TIMELINE := "Nim (lockhand) took the press proof at 41 from the gall
 const PRESS_TRUE := {"who": "Nim", "place": "stone", "hour": "41"}
 const ASSAY_TIMELINE := "Lark (weigher) set the assay cup at 16 from the muffle to the scale, so the weight would read light.\nCress (cupeller) packed the bone ash at 14 on the flux bench.\nTor (touch hand) drew the needle at 15.\nThe button was parted at the muffle.\nThe flux was stirred at 17.\nThe cup was quenched at 18."
 const ASSAY_TRUE := {"who": "Lark", "place": "scale", "hour": "16"}
+const KILN_TIMELINE := "Wren (draught hand) chalked the kiln mark at 52 from the crown to the flue, so the draught would read shut.\nBram (fireman) mixed the slip at 50 at the fire mouth.\nNoll (watcher) read the spy hole at 51.\nThe damper was seated at the crown.\nThe spy hole was read at the crown.\nThe damper was shut at 53.\nThe cones were drawn at 54."
+const KILN_TRUE := {"who": "Wren", "place": "flue", "hour": "52"}
 
 var _failures: Array[String] = []
 var _checks := 0
@@ -99,6 +102,12 @@ func _initialize() -> void:
 	_test_assay_only_true_theory()
 	_test_assay_near_misses()
 	_test_assay_incomplete()
+	_test_kiln_file_shape()
+	_test_kiln_unique_model()
+	_test_kiln_each_exhibit_necessary()
+	_test_kiln_only_true_theory()
+	_test_kiln_near_misses()
+	_test_kiln_incomplete()
 	_test_solutions_differ()
 	_test_menu_opens_either_case()
 	if _failures.is_empty():
@@ -1985,6 +1994,260 @@ func _test_assay_incomplete() -> void:
 	print("assay incomplete submissions refused with the missing slot")
 
 
+func _test_kiln_file_shape() -> void:
+	_expect(Kiln.EXHIBITS.size() == 9, "kiln exhibit count is %d" % Kiln.EXHIBITS.size())
+	_expect(Kiln.PEOPLE.size() == 3, "kiln cast should be three people")
+	_expect(Kiln.PLACES.size() == 3, "kiln room count is %d" % Kiln.PLACES.size())
+	_expect(Kiln.HOURS.size() == 5, "kiln hour list length is %d" % Kiln.HOURS.size())
+	_expect(Kiln.TITLE == "The kiln chalk", "kiln title")
+	_expect(Kiln.TITLE != CaseData.TITLE and Kiln.TITLE != Rehearsal.TITLE and Kiln.TITLE != Gilt.TITLE and Kiln.TITLE != Ferry.TITLE and Kiln.TITLE != Weather.TITLE and Kiln.TITLE != Loom.TITLE and Kiln.TITLE != Hive.TITLE and Kiln.TITLE != Glass.TITLE and Kiln.TITLE != Press.TITLE and Kiln.TITLE != Assay.TITLE, "kiln shares a title")
+	_expect(Kiln.FILE_CODE == "CW-11", "kiln file code")
+	_expect(Kiln.FILE_CODE != CaseData.FILE_CODE and Kiln.FILE_CODE != Rehearsal.FILE_CODE and Kiln.FILE_CODE != Gilt.FILE_CODE and Kiln.FILE_CODE != Ferry.FILE_CODE and Kiln.FILE_CODE != Weather.FILE_CODE and Kiln.FILE_CODE != Loom.FILE_CODE and Kiln.FILE_CODE != Hive.FILE_CODE and Kiln.FILE_CODE != Glass.FILE_CODE and Kiln.FILE_CODE != Press.FILE_CODE and Kiln.FILE_CODE != Assay.FILE_CODE, "kiln shares a file code")
+	_expect(Kiln.HOURS[Kiln.HOURS.size() / 2] == KILN_TRUE["hour"], "kiln chalking should be the middle hour")
+	_expect(Kiln.HOURS[0] != KILN_TRUE["hour"], "kiln chalking should not be the earliest hour")
+	_expect(Kiln.HOURS[Kiln.HOURS.size() - 1] != KILN_TRUE["hour"], "kiln chalking should not be the latest hour")
+	var counts := _player_pin_counts(Kiln)
+	_expect(int(counts["taker"]) == 3 and int(counts["place"]) == 3 and int(counts["hour"]) == 3, "kiln pin counts are %s" % str(counts))
+	_expect(counts != _player_pin_counts(CaseData), "kiln copied the spare-key pin pattern")
+	_expect(counts != _player_pin_counts(Rehearsal), "kiln copied the rehearsal pin pattern")
+	_expect(counts != _player_pin_counts(Gilt), "kiln copied the gilt pin pattern")
+	_expect(counts != _player_pin_counts(Ferry), "kiln copied the ferry pin pattern")
+	_expect(counts != _player_pin_counts(Weather), "kiln copied the weather pin pattern")
+	_expect(counts != _player_pin_counts(Loom), "kiln copied the loom pin pattern")
+	_expect(counts != _player_pin_counts(Hive), "kiln copied the hive pin pattern")
+	_expect(counts != _player_pin_counts(Glass), "kiln copied the glass pin pattern")
+	_expect(counts != _player_pin_counts(Press), "kiln copied the press pin pattern")
+	_expect(counts != _player_pin_counts(Assay), "kiln copied the assay pin pattern")
+	_expect(_field_key(Kiln) != _field_key(CaseData), "kiln copied the spare-key timeline fields")
+	_expect(_field_key(Kiln) != _field_key(Rehearsal), "kiln copied the rehearsal timeline fields")
+	_expect(_field_key(Kiln) != _field_key(Gilt), "kiln copied the gilt timeline fields")
+	_expect(_field_key(Kiln) != _field_key(Ferry), "kiln copied the ferry timeline fields")
+	_expect(_field_key(Kiln) != _field_key(Weather), "kiln copied the weather timeline fields")
+	_expect(_field_key(Kiln) != _field_key(Loom), "kiln copied the loom timeline fields")
+	_expect(_field_key(Kiln) != _field_key(Hive), "kiln copied the hive timeline fields")
+	_expect(_field_key(Kiln) != _field_key(Glass), "kiln copied the glass timeline fields")
+	_expect(_field_key(Kiln) != _field_key(Press), "kiln copied the press timeline fields")
+	_expect(_field_key(Kiln) != _field_key(Assay), "kiln copied the assay timeline fields")
+	var seen := {}
+	var stated := {}
+	var paired_hidden := 0
+	for exhibit in Kiln.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		_expect(not seen.has(exhibit_id), "duplicate kiln id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		var states_player_pin := false
+		var states_unique := false
+		var player_literals := 0
+		var hidden_literals := 0
+		for literal in exhibit["literals"]:
+			stated[str(literal["value"])] = true
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Kiln.PLAYER_FIELDS:
+				states_player_pin = true
+				player_literals += 1
+				var expected := Kiln.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Kiln.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats >= 2, "%s states %s once" % [exhibit_id, field])
+			else:
+				hidden_literals += 1
+				var owners := 0
+				for other in Kiln.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		if hidden_literals == 2:
+			paired_hidden += 1
+		else:
+			_expect(hidden_literals == 1, "%s states %d hidden facts" % [exhibit_id, hidden_literals])
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(player_literals == 1, "%s states %d player pins" % [exhibit_id, player_literals])
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+	_expect(paired_hidden == 2, "kiln should have two slips with two hidden facts, found %d" % paired_hidden)
+	for hour in Kiln.HOURS:
+		_expect(stated.has(hour), "kiln hour %s is absent from the exhibits" % hour)
+
+
+func _test_kiln_unique_model() -> void:
+	var models := Solver.enumerate(Kiln.EXHIBITS, Kiln)
+	print("kiln models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one kiln model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Wren", "kiln taker")
+	_expect(str(model["place"]) == "flue", "kiln place")
+	_expect(str(model["hour"]) == "52", "kiln hour")
+	_expect(str(model["mixer"]) == "Bram", "kiln mixer")
+	_expect(str(model["mix_place"]) == "fire_mouth", "kiln mix place")
+	_expect(str(model["mix_hour"]) == "50", "kiln mix hour")
+	_expect(str(model["watcher"]) == "Noll", "kiln watcher")
+	_expect(str(model["watch_hour"]) == "51", "kiln watch hour")
+	_expect(str(model["origin"]) == "crown", "kiln origin")
+	_expect(str(model["purpose"]) == "read_shut", "kiln purpose")
+	_expect(str(model["spy_place"]) == "crown", "kiln spy place")
+	_expect(str(model["seat_place"]) == "crown", "kiln seat place")
+	_expect(str(model["damper_hour"]) == "53", "kiln damper hour")
+	_expect(str(model["cone_hour"]) == "54", "kiln cone hour")
+	for hour in Kiln.HOURS:
+		var used := false
+		for field in Kiln.fields():
+			if str(model[field]) == hour:
+				used = true
+		_expect(used, "kiln hour %s is blank in the true timeline" % hour)
+	for place in Kiln.PLACES:
+		var place_used := false
+		for field in Kiln.fields():
+			if str(model[field]) == place:
+				place_used = true
+		_expect(place_used, "kiln room %s is blank in the true timeline" % place)
+	for person in Kiln.PEOPLE:
+		var person_used := false
+		for field in Kiln.fields():
+			if str(model[field]) == person:
+				person_used = true
+		_expect(person_used, "kiln person %s is blank in the true timeline" % person)
+	_expect(Kiln.timeline(model) == KILN_TIMELINE, "kiln timeline drifted:\n%s" % Kiln.timeline(model))
+	for exhibit in Kiln.EXHIBITS:
+		_expect(Kiln.holds(exhibit, model), "%s rejects the kiln timeline" % exhibit["id"])
+
+
+func _test_kiln_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Kiln.EXHIBITS, Kiln)
+	for exhibit in Kiln.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Kiln.without(exhibit_id), Kiln)
+		print("kiln without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "kiln %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Kiln.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "kiln %s removal did not admit a timeline it forbids" % exhibit_id)
+
+
+func _test_kiln_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	for who in Kiln.PEOPLE:
+		for place in Kiln.PLACES:
+			for hour in Kiln.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == KILN_TRUE["who"] and place == KILN_TRUE["place"] and hour == KILN_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Kiln)
+					print("kiln true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true kiln theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "kiln acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(KILN_TIMELINE) >= 0, "kiln acceptance should give the timeline")
+					_expect(str(result["message"]).find("Wren") >= 0, "kiln acceptance omits Wren")
+					_expect(str(result["message"]).find("flue") >= 0, "kiln acceptance omits the flue")
+					_expect(str(result["message"]).find("52") >= 0, "kiln acceptance omits 52")
+					_expect(str(result["message"]).find("so the draught would read shut") >= 0, "kiln acceptance omits the draught")
+					_expect(Kiln.conflicting_ids(theory).is_empty(), "true kiln theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Kiln)
+					rejected += 1
+	print("kiln theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d kiln theories" % accepted)
+	_expect(rejected >= 2, "rejected %d kiln theories" % rejected)
+
+
+func _test_kiln_near_misses() -> void:
+	var misses := [
+		{"who": "Wren", "place": "flue", "hour": "53"},
+		{"who": "Wren", "place": "flue", "hour": "50"},
+		{"who": "Wren", "place": "crown", "hour": "52"},
+		{"who": "Bram", "place": "flue", "hour": "52"},
+	]
+	var wrong_hour_on_flue := 0
+	var wrong_place_at_hour := 0
+	for theory in misses:
+		_expect_rejected(theory, Kiln)
+		if str(theory["who"]) == "Wren" and str(theory["place"]) == "flue" and str(theory["hour"]) != "52":
+			wrong_hour_on_flue += 1
+		if str(theory["who"]) == "Wren" and str(theory["place"]) != "flue" and str(theory["hour"]) == "52":
+			wrong_place_at_hour += 1
+	var hour_miss: Dictionary = Verdict.submit({"who": "Wren", "place": "flue", "hour": "53"}, Kiln)
+	var hour_message := str(hour_miss["message"])
+	_expect(hour_message.find("Watch slip") >= 0, "wrong hour omits Watch slip: %s" % hour_message)
+	_expect(hour_message.find("Draught note") >= 0, "wrong hour omits Draught note: %s" % hour_message)
+	_expect(hour_message.find("Damper line") >= 0, "wrong hour omits Damper line: %s" % hour_message)
+	print("kiln near-misses rejected: %d" % misses.size())
+	_expect(misses.size() == 4, "need four kiln near-misses, found %d" % misses.size())
+	_expect(wrong_hour_on_flue >= 1, "a near-miss should keep Wren on the flue at another hour")
+	_expect(wrong_place_at_hour >= 1, "a near-miss should keep Wren at 52 in another room")
+
+
+func _test_kiln_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+		"who took the gilt stamp",
+		"where they took the stamp",
+		"at which hour they took the stamp",
+		"who took the ferry bell",
+		"where they took the bell",
+		"at which hour they took the bell",
+		"who took the weather slate",
+		"where they took the slate",
+		"at which hour they took the slate",
+		"who took the loom shuttle",
+		"where they took the shuttle",
+		"at which hour they took the shuttle",
+		"who took the hive smoker",
+		"where they took the smoker",
+		"at which hour they took the smoker",
+		"who took the glass pontil",
+		"where they took the pontil",
+		"at which hour they took the pontil",
+		"who took the press proof",
+		"where they took the proof",
+		"at which hour they took the proof",
+		"who set the assay cup",
+		"where they set the cup",
+		"at which hour they set the cup",
+	]
+	var cases := [
+		{"theory": {"who": "", "place": "flue", "hour": "52"}, "present": ["who chalked the kiln mark"], "absent": ["where they chalked the mark", "at which hour they chalked the mark"]},
+		{"theory": {"who": "Wren", "place": "", "hour": "52"}, "present": ["where they chalked the mark"], "absent": ["who chalked the kiln mark", "at which hour they chalked the mark"]},
+		{"theory": {"who": "Wren", "place": "flue", "hour": ""}, "present": ["at which hour they chalked the mark"], "absent": ["who chalked the kiln mark", "where they chalked the mark"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who chalked the kiln mark", "where they chalked the mark", "at which hour they chalked the mark"], "absent": []},
+		{"theory": {}, "present": ["who chalked the kiln mark", "where they chalked the mark", "at which hour they chalked the mark"], "absent": []},
+		{"theory": {"who": "Noll", "place": "", "hour": "54"}, "present": ["where they chalked the mark"], "absent": ["who chalked the kiln mark", "at which hour they chalked the mark"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Kiln)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "kiln incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "kiln incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "kiln incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "kiln incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "kiln incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "kiln missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "kiln named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "kiln incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("kiln incomplete submissions refused with the missing slot")
+
+
 func _test_solutions_differ() -> void:
 	var spare := {"who": "Nell", "place": "kitchen", "hour": "7"}
 	_expect(spare["who"] != REHEARSAL_TRUE["who"], "rehearsal copied the spare-key taker")
@@ -2366,10 +2629,95 @@ func _test_solutions_differ() -> void:
 		_expect(not Hive.HOURS.has(hour), "assay hours repeat %s from the hive smoker" % hour)
 		_expect(not Glass.HOURS.has(hour), "assay hours repeat %s from the glass pontil" % hour)
 		_expect(not Press.HOURS.has(hour), "assay hours repeat %s from the press proof" % hour)
+	_expect(KILN_TRUE["who"] != spare["who"], "kiln chalk copied the spare-key taker")
+	_expect(KILN_TRUE["place"] != spare["place"], "kiln chalk copied the spare-key room")
+	_expect(KILN_TRUE["hour"] != spare["hour"], "kiln chalk copied the spare-key hour")
+	_expect(KILN_TRUE["who"] != REHEARSAL_TRUE["who"], "kiln chalk copied the rehearsal taker")
+	_expect(KILN_TRUE["place"] != REHEARSAL_TRUE["place"], "kiln chalk copied the rehearsal room")
+	_expect(KILN_TRUE["hour"] != REHEARSAL_TRUE["hour"], "kiln chalk copied the rehearsal hour")
+	_expect(KILN_TRUE["who"] != GILT_TRUE["who"], "kiln chalk copied the gilt taker")
+	_expect(KILN_TRUE["place"] != GILT_TRUE["place"], "kiln chalk copied the gilt room")
+	_expect(KILN_TRUE["hour"] != GILT_TRUE["hour"], "kiln chalk copied the gilt hour")
+	_expect(KILN_TRUE["who"] != FERRY_TRUE["who"], "kiln chalk copied the ferry taker")
+	_expect(KILN_TRUE["place"] != FERRY_TRUE["place"], "kiln chalk copied the ferry room")
+	_expect(KILN_TRUE["hour"] != FERRY_TRUE["hour"], "kiln chalk copied the ferry hour")
+	_expect(KILN_TRUE["who"] != WEATHER_TRUE["who"], "kiln chalk copied the weather taker")
+	_expect(KILN_TRUE["place"] != WEATHER_TRUE["place"], "kiln chalk copied the weather room")
+	_expect(KILN_TRUE["hour"] != WEATHER_TRUE["hour"], "kiln chalk copied the weather hour")
+	_expect(KILN_TRUE["who"] != LOOM_TRUE["who"], "kiln chalk copied the loom taker")
+	_expect(KILN_TRUE["place"] != LOOM_TRUE["place"], "kiln chalk copied the loom room")
+	_expect(KILN_TRUE["hour"] != LOOM_TRUE["hour"], "kiln chalk copied the loom hour")
+	_expect(KILN_TRUE["who"] != HIVE_TRUE["who"], "kiln chalk copied the hive taker")
+	_expect(KILN_TRUE["place"] != HIVE_TRUE["place"], "kiln chalk copied the hive room")
+	_expect(KILN_TRUE["hour"] != HIVE_TRUE["hour"], "kiln chalk copied the hive hour")
+	_expect(KILN_TRUE["who"] != GLASS_TRUE["who"], "kiln chalk copied the glass taker")
+	_expect(KILN_TRUE["place"] != GLASS_TRUE["place"], "kiln chalk copied the glass room")
+	_expect(KILN_TRUE["hour"] != GLASS_TRUE["hour"], "kiln chalk copied the glass hour")
+	_expect(KILN_TRUE["who"] != PRESS_TRUE["who"], "kiln chalk copied the press taker")
+	_expect(KILN_TRUE["place"] != PRESS_TRUE["place"], "kiln chalk copied the press room")
+	_expect(KILN_TRUE["hour"] != PRESS_TRUE["hour"], "kiln chalk copied the press hour")
+	_expect(KILN_TRUE["who"] != ASSAY_TRUE["who"], "kiln chalk copied the assay taker")
+	_expect(KILN_TRUE["place"] != ASSAY_TRUE["place"], "kiln chalk copied the assay room")
+	_expect(KILN_TRUE["hour"] != ASSAY_TRUE["hour"], "kiln chalk copied the assay hour")
+	_expect_rejected(KILN_TRUE, CaseData)
+	_expect_rejected(KILN_TRUE, Rehearsal)
+	_expect_rejected(KILN_TRUE, Gilt)
+	_expect_rejected(KILN_TRUE, Ferry)
+	_expect_rejected(KILN_TRUE, Weather)
+	_expect_rejected(KILN_TRUE, Loom)
+	_expect_rejected(KILN_TRUE, Hive)
+	_expect_rejected(KILN_TRUE, Glass)
+	_expect_rejected(KILN_TRUE, Press)
+	_expect_rejected(KILN_TRUE, Assay)
+	_expect_rejected(spare, Kiln)
+	_expect_rejected(REHEARSAL_TRUE, Kiln)
+	_expect_rejected(GILT_TRUE, Kiln)
+	_expect_rejected(FERRY_TRUE, Kiln)
+	_expect_rejected(WEATHER_TRUE, Kiln)
+	_expect_rejected(LOOM_TRUE, Kiln)
+	_expect_rejected(HIVE_TRUE, Kiln)
+	_expect_rejected(GLASS_TRUE, Kiln)
+	_expect_rejected(PRESS_TRUE, Kiln)
+	_expect_rejected(ASSAY_TRUE, Kiln)
+	for person in Kiln.PEOPLE:
+		_expect(not CaseData.PEOPLE.has(person), "kiln cast repeats %s from the spare key" % person)
+		_expect(not Rehearsal.PEOPLE.has(person), "kiln cast repeats %s from the rehearsal score" % person)
+		_expect(not Gilt.PEOPLE.has(person), "kiln cast repeats %s from the gilt stamp" % person)
+		_expect(not Weather.PEOPLE.has(person), "kiln cast repeats %s from the weather slate" % person)
+		_expect(not Loom.PEOPLE.has(person), "kiln cast repeats %s from the loom shuttle" % person)
+		_expect(not Hive.PEOPLE.has(person), "kiln cast repeats %s from the hive smoker" % person)
+		_expect(not Glass.PEOPLE.has(person), "kiln cast repeats %s from the glass pontil" % person)
+		_expect(not Press.PEOPLE.has(person), "kiln cast repeats %s from the press proof" % person)
+		_expect(not Assay.PEOPLE.has(person), "kiln cast repeats %s from the assay cup" % person)
+		if person != "Wren":
+			_expect(not Ferry.PEOPLE.has(person), "kiln cast repeats %s from the ferry bell" % person)
+	_expect(Ferry.PEOPLE.has("Wren"), "the ferry bell should still name Wren the pilot")
+	for place in Kiln.PLACES:
+		_expect(not CaseData.PLACES.has(place), "kiln rooms repeat %s from the spare key" % place)
+		_expect(not Rehearsal.PLACES.has(place), "kiln rooms repeat %s from the rehearsal score" % place)
+		_expect(not Gilt.PLACES.has(place), "kiln rooms repeat %s from the gilt stamp" % place)
+		_expect(not Ferry.PLACES.has(place), "kiln rooms repeat %s from the ferry bell" % place)
+		_expect(not Weather.PLACES.has(place), "kiln rooms repeat %s from the weather slate" % place)
+		_expect(not Loom.PLACES.has(place), "kiln rooms repeat %s from the loom shuttle" % place)
+		_expect(not Hive.PLACES.has(place), "kiln rooms repeat %s from the hive smoker" % place)
+		_expect(not Glass.PLACES.has(place), "kiln rooms repeat %s from the glass pontil" % place)
+		_expect(not Press.PLACES.has(place), "kiln rooms repeat %s from the press proof" % place)
+		_expect(not Assay.PLACES.has(place), "kiln rooms repeat %s from the assay cup" % place)
+	for hour in Kiln.HOURS:
+		_expect(not CaseData.HOURS.has(hour), "kiln hours repeat %s from the spare key" % hour)
+		_expect(not Rehearsal.HOURS.has(hour), "kiln hours repeat %s from the rehearsal score" % hour)
+		_expect(not Gilt.HOURS.has(hour), "kiln hours repeat %s from the gilt stamp" % hour)
+		_expect(not Ferry.HOURS.has(hour), "kiln hours repeat %s from the ferry bell" % hour)
+		_expect(not Weather.HOURS.has(hour), "kiln hours repeat %s from the weather slate" % hour)
+		_expect(not Loom.HOURS.has(hour), "kiln hours repeat %s from the loom shuttle" % hour)
+		_expect(not Hive.HOURS.has(hour), "kiln hours repeat %s from the hive smoker" % hour)
+		_expect(not Glass.HOURS.has(hour), "kiln hours repeat %s from the glass pontil" % hour)
+		_expect(not Press.HOURS.has(hour), "kiln hours repeat %s from the press proof" % hour)
+		_expect(not Assay.HOURS.has(hour), "kiln hours repeat %s from the assay cup" % hour)
 	var titles: Array[String] = []
 	for book in Catalog.all():
 		titles.append(str(book.TITLE))
-	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup"], "case list is %s" % str(titles))
+	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk"], "case list is %s" % str(titles))
 
 
 func _test_menu_opens_either_case() -> void:
@@ -2381,7 +2729,7 @@ func _test_menu_opens_either_case() -> void:
 	if root.get_child_count() == 0:
 		root._ready()
 	var menu_blob := _visible_label_blob(root)
-	_expect(menu_blob.find("Ten files") >= 0, "menu does not offer ten files: %s" % menu_blob)
+	_expect(menu_blob.find("Eleven files") >= 0, "menu does not offer eleven files: %s" % menu_blob)
 	_expect(menu_blob.find("CW-07") >= 0, "menu omits CW-07")
 	_expect(menu_blob.find("The hive smoker") >= 0, "menu omits The hive smoker")
 	_expect(menu_blob.find("CW-08") >= 0, "menu omits CW-08")
@@ -2390,6 +2738,8 @@ func _test_menu_opens_either_case() -> void:
 	_expect(menu_blob.find("The press proof") >= 0, "menu omits The press proof")
 	_expect(menu_blob.find("CW-10") >= 0, "menu omits CW-10")
 	_expect(menu_blob.find("The assay cup") >= 0, "menu omits The assay cup")
+	_expect(menu_blob.find("CW-11") >= 0, "menu omits CW-11")
+	_expect(menu_blob.find("The kiln chalk") >= 0, "menu omits The kiln chalk")
 	_expect(root.get_child_count() > 0, "main scene built %d children" % root.get_child_count())
 	_press(root, "How to play")
 	var howto := _visible_label_blob(root)
@@ -2403,6 +2753,7 @@ func _test_menu_opens_either_case() -> void:
 	_expect(howto.find("The glass pontil") >= 0, "how to play omits The glass pontil")
 	_expect(howto.find("The press proof") >= 0, "how to play omits The press proof")
 	_expect(howto.find("The assay cup") >= 0, "how to play omits The assay cup")
+	_expect(howto.find("The kiln chalk") >= 0, "how to play omits The kiln chalk")
 	_expect(howto.find("names that slot") >= 0, "how to play omits the empty-slot rule")
 	_press(root, "Back to the menu")
 	_expect(_find_visible_button(root, "Open The spare key") != null, "menu is missing The spare key")
@@ -2415,6 +2766,7 @@ func _test_menu_opens_either_case() -> void:
 	_expect(_find_visible_button(root, "Open The glass pontil") != null, "menu is missing The glass pontil")
 	_expect(_find_visible_button(root, "Open The press proof") != null, "menu is missing The press proof")
 	_expect(_find_visible_button(root, "Open The assay cup") != null, "menu is missing The assay cup")
+	_expect(_find_visible_button(root, "Open The kiln chalk") != null, "menu is missing The kiln chalk")
 	_press(root, "Open The rehearsal score")
 	var rehearsal_open := _visible_label_blob(root)
 	_expect(rehearsal_open.find("Cut list") >= 0, "rehearsal file did not open")
@@ -2860,6 +3212,70 @@ func _test_menu_opens_either_case() -> void:
 	var press_from_assay := _visible_label_blob(root)
 	_expect(press_from_assay.find("Lock line") >= 0, "could not return to The press proof from The assay cup")
 	_expect(press_from_assay.find("Cup line") == -1, "assay cup papers stayed up after switching files")
+	_press(root, "Menu")
+	_press(root, "Open The kiln chalk")
+	var kiln_open := _visible_label_blob(root)
+	_expect(kiln_open.find("Mark line") >= 0, "kiln chalk file did not open")
+	_expect(kiln_open.find("Draught note") >= 0, "kiln chalk file did not show its exhibits")
+	_expect(kiln_open.find("CW-11") >= 0, "kiln chalk file omits CW-11")
+	_expect(kiln_open.find("Complaint slip") == -1, "spare key papers showed inside The kiln chalk")
+	_expect(kiln_open.find("Cut list") == -1, "rehearsal papers showed inside The kiln chalk")
+	_expect(kiln_open.find("Move order") == -1, "gilt stamp papers showed inside The kiln chalk")
+	_expect(kiln_open.find("Whistle slip") == -1, "ferry bell papers showed inside The kiln chalk")
+	_expect(kiln_open.find("Frost note") == -1, "weather slate papers showed inside The kiln chalk")
+	_expect(kiln_open.find("Trough tag") == -1, "loom shuttle papers showed inside The kiln chalk")
+	_expect(kiln_open.find("Fuel line") == -1, "hive smoker papers showed inside The kiln chalk")
+	_expect(kiln_open.find("Weight line") == -1, "glass pontil papers showed inside The kiln chalk")
+	_expect(kiln_open.find("Lock line") == -1, "press proof papers showed inside The kiln chalk")
+	_expect(kiln_open.find("Cup line") == -1, "assay cup papers showed inside The kiln chalk")
+	_press(root, "Submit theory")
+	var empty_kiln := _verdict_text(root)
+	_expect(empty_kiln.find("who chalked the kiln mark") >= 0, "empty kiln board: %s" % empty_kiln)
+	_expect(empty_kiln.find("where they chalked the mark") >= 0, "empty kiln board: %s" % empty_kiln)
+	_expect(empty_kiln.find("at which hour they chalked the mark") >= 0, "empty kiln board: %s" % empty_kiln)
+	_expect(empty_kiln.find("who took the spare key") == -1, "empty kiln board used the spare key slot: %s" % empty_kiln)
+	_expect(empty_kiln.find("rehearsal score") == -1, "empty kiln board used a rehearsal slot: %s" % empty_kiln)
+	_expect(empty_kiln.find("gilt stamp") == -1, "empty kiln board used a gilt slot: %s" % empty_kiln)
+	_expect(empty_kiln.find("ferry bell") == -1, "empty kiln board used a ferry slot: %s" % empty_kiln)
+	_expect(empty_kiln.find("weather slate") == -1, "empty kiln board used a weather slot: %s" % empty_kiln)
+	_expect(empty_kiln.find("loom shuttle") == -1, "empty kiln board used a loom slot: %s" % empty_kiln)
+	_expect(empty_kiln.find("hive smoker") == -1, "empty kiln board used a hive slot: %s" % empty_kiln)
+	_expect(empty_kiln.find("glass pontil") == -1, "empty kiln board used a glass slot: %s" % empty_kiln)
+	_expect(empty_kiln.find("press proof") == -1, "empty kiln board used a press slot: %s" % empty_kiln)
+	_expect(empty_kiln.find("assay cup") == -1, "empty kiln board used an assay slot: %s" % empty_kiln)
+	_expect(empty_kiln.to_lower().find("conflict") == -1, "empty kiln board talked about a conflict: %s" % empty_kiln)
+	_press(root, "Wren")
+	_press(root, "Flue")
+	_press(root, "53")
+	_press(root, "Submit theory")
+	var kiln_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(kiln_miss, Kiln, {"who": "Wren", "place": "flue", "hour": "53"})
+	_expect(kiln_miss.find("Watch slip") >= 0, "wrong hour reply omits Watch slip: %s" % kiln_miss)
+	_expect(kiln_miss.find("Draught note") >= 0, "wrong hour reply omits Draught note: %s" % kiln_miss)
+	_expect(kiln_miss.find("Damper line") >= 0, "wrong hour reply omits Damper line: %s" % kiln_miss)
+	_press(root, "Crown")
+	_press(root, "52")
+	_press(root, "Submit theory")
+	var kiln_place_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(kiln_place_miss, Kiln, {"who": "Wren", "place": "crown", "hour": "52"})
+	_press(root, "Flue")
+	_press(root, "Submit theory")
+	var kiln_accepted := _verdict_text(root)
+	_expect(kiln_accepted.find("fits every exhibit") >= 0, "kiln chalk board rejected the true theory: %s" % kiln_accepted)
+	_expect(kiln_accepted.find(KILN_TIMELINE) >= 0, "kiln chalk board timeline: %s" % kiln_accepted)
+	_expect(kiln_accepted.find("Wren (draught hand) chalked the kiln mark at 52") >= 0, "kiln chalk board omits Wren at 52: %s" % kiln_accepted)
+	_expect(kiln_accepted.find("to the flue") >= 0, "kiln chalk board omits the flue: %s" % kiln_accepted)
+	_expect(kiln_accepted.find("so the draught would read shut") >= 0, "kiln chalk board omits the draught: %s" % kiln_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var kiln_cleared := _verdict_text(root)
+	_expect(kiln_cleared.find("who chalked the kiln mark") >= 0, "cleared kiln board: %s" % kiln_cleared)
+	_expect(kiln_cleared.find("fits every exhibit") == -1, "cleared kiln board stayed accepted: %s" % kiln_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The assay cup")
+	var assay_from_kiln := _visible_label_blob(root)
+	_expect(assay_from_kiln.find("Cup line") >= 0, "could not return to The assay cup from The kiln chalk")
+	_expect(assay_from_kiln.find("Mark line") == -1, "kiln chalk papers stayed up after switching files")
 	root.queue_free()
 
 
