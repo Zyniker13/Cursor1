@@ -1,0 +1,329 @@
+extends RefCounted
+
+## Deterministic tick simulation for Dispatch.
+## Directions: 0 east, 1 south, 2 west, 3 north (clockwise on screen, +y is south).
+
+const DIRS: Array[Vector2i] = [
+	Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, -1)
+]
+const DIR_NAMES: Array[String] = ["East", "South", "West", "North"]
+const TYPES: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter"]
+const PAINTS: Array[String] = ["red", "blue", "yellow"]
+const TICK_CAP := 250
+
+
+static func run(puzzle: Dictionary, graph: Array) -> Dictionary:
+	var width := int(puzzle["width"])
+	var height := int(puzzle["height"])
+	var dock := Vector2i(int(puzzle["dock"]["x"]), int(puzzle["dock"]["y"]))
+	var walls := {}
+	for wall in puzzle.get("walls", []):
+		walls[_key(int(wall["x"]), int(wall["y"]))] = true
+	var source_cells := {}
+	var sources: Array = []
+	for source in puzzle["sources"]:
+		var queue: Array = []
+		for spec in source["parcels"]:
+			queue.append({
+				"color": str(spec.get("color", "gray")),
+				"count": int(spec.get("count", 0)),
+			})
+		var sx := int(source["x"])
+		var sy := int(source["y"])
+		source_cells[_key(sx, sy)] = true
+		sources.append({
+			"x": sx,
+			"y": sy,
+			"dir": int(source["dir"]),
+			"queue": queue,
+		})
+
+	var blocks := {}
+	var seen := {}
+	for raw in graph:
+		var typ := str(raw.get("type", ""))
+		if not TYPES.has(typ):
+			return _finish(false, 0, graph.size(), "invalid", 0, [], [])
+		var x := int(raw.get("x", -1))
+		var y := int(raw.get("y", -1))
+		var dir := int(raw.get("dir", -1))
+		if dir < 0 or dir > 3:
+			return _finish(false, 0, graph.size(), "invalid", 0, [], [])
+		var key := _key(x, y)
+		if seen.has(key):
+			return _finish(false, 0, graph.size(), "invalid", 0, [], [])
+		seen[key] = true
+		if not _in_bounds(x, y, width, height):
+			return _finish(false, 0, graph.size(), "invalid", 0, [], [])
+		if walls.has(key) or source_cells.has(key) or Vector2i(x, y) == dock:
+			return _finish(false, 0, graph.size(), "invalid", 0, [], [])
+		var color := str(raw.get("color", ""))
+		if typ == "painter" and not PAINTS.has(color):
+			return _finish(false, 0, graph.size(), "invalid", 0, [], [])
+		blocks[key] = {
+			"type": typ,
+			"x": x,
+			"y": y,
+			"dir": dir,
+			"color": color,
+			"phase": 0,
+			"value": 0,
+		}
+
+	var order: Array = puzzle["order"]
+	var parcels: Array = []
+	var delivered: Array = []
+	var frames: Array = []
+	var next_id := 1
+	frames.append(_snapshot(0, parcels, delivered, blocks))
+
+	var end_tick := 0
+	for tick in range(1, TICK_CAP + 1):
+		end_tick = tick
+		for parcel in parcels:
+			var block = blocks.get(_key(int(parcel["x"]), int(parcel["y"])))
+			if block == null:
+				continue
+			if str(block["type"]) == "painter":
+				parcel["color"] = str(block["color"])
+			elif str(block["type"]) == "counter" and not bool(parcel["counted"]):
+				block["value"] = int(block["value"]) + 1
+				parcel["count"] = int(block["value"])
+				parcel["counted"] = true
+
+		var occupied := {}
+		for parcel in parcels:
+			occupied[_key(int(parcel["x"]), int(parcel["y"]))] = parcel
+		for parcel in parcels:
+			parcel["intent"] = null
+			var block = blocks.get(_key(int(parcel["x"]), int(parcel["y"])))
+			if block == null:
+				continue
+			var typ := str(block["type"])
+			if typ == "latch":
+				if int(parcel["hold"]) < 1:
+					continue
+				var dest := Vector2i(int(parcel["x"]), int(parcel["y"])) + DIRS[int(block["dir"])]
+				if occupied.has(_key(dest.x, dest.y)):
+					continue
+				if not _enterable(dest, dock, width, height, walls, source_cells, blocks):
+					continue
+				parcel["intent"] = dest
+			elif typ == "splitter":
+				var out := int(block["dir"])
+				if int(block["phase"]) != 0:
+					out = (out + 1) % 4
+				parcel["intent"] = Vector2i(int(parcel["x"]), int(parcel["y"])) + DIRS[out]
+			else:
+				parcel["intent"] = Vector2i(int(parcel["x"]), int(parcel["y"])) + DIRS[int(block["dir"])]
+
+		var guard := 0
+		while true:
+			guard += 1
+			if guard > 64:
+				for parcel in parcels:
+					parcel["intent"] = null
+				break
+			var changed := false
+			var groups := {}
+			for parcel in parcels:
+				if parcel["intent"] == null:
+					continue
+				var dest: Vector2i = parcel["intent"]
+				var gk := _key(dest.x, dest.y)
+				if not groups.has(gk):
+					groups[gk] = []
+				var bucket: Array = groups[gk]
+				bucket.append(parcel)
+			for gk in groups.keys():
+				var group: Array = groups[gk]
+				var dest: Vector2i = group[0]["intent"]
+				var cancel := false
+				if group.size() >= 2 or not _enterable(dest, dock, width, height, walls, source_cells, blocks):
+					cancel = true
+				else:
+					var occ = occupied.get(gk)
+					if occ != null and occ["intent"] == null:
+						cancel = true
+				if cancel:
+					for parcel in group:
+						if parcel["intent"] != null:
+							parcel["intent"] = null
+							changed = true
+			if not changed:
+				break
+
+		var moved := false
+		var ejected := {}
+		var still: Array = []
+		for parcel in parcels:
+			if parcel["intent"] == null:
+				parcel["hold"] = int(parcel["hold"]) + 1
+				still.append(parcel)
+				continue
+			var origin := Vector2i(int(parcel["x"]), int(parcel["y"]))
+			var dest: Vector2i = parcel["intent"]
+			var block = blocks.get(_key(origin.x, origin.y))
+			if block != null and str(block["type"]) == "splitter":
+				ejected[_key(origin.x, origin.y)] = true
+			moved = true
+			if dest == dock:
+				delivered.append({
+					"color": str(parcel["color"]),
+					"count": int(parcel["count"]),
+				})
+			else:
+				parcel["x"] = dest.x
+				parcel["y"] = dest.y
+				parcel["hold"] = 0
+				parcel["counted"] = false
+				parcel["intent"] = null
+				still.append(parcel)
+		parcels = still
+		for key in ejected.keys():
+			blocks[key]["phase"] = 1 - int(blocks[key]["phase"])
+
+		var emitted := false
+		for source in sources:
+			var queue: Array = source["queue"]
+			if queue.is_empty():
+				continue
+			var dest: Vector2i = Vector2i(int(source["x"]), int(source["y"])) + DIRS[int(source["dir"])]
+			if _find_at(parcels, dest) != null:
+				continue
+			if not _spawnable(dest, dock, width, height, walls, source_cells):
+				continue
+			var spec: Dictionary = queue.pop_front()
+			parcels.append({
+				"id": next_id,
+				"x": dest.x,
+				"y": dest.y,
+				"color": str(spec["color"]),
+				"count": int(spec["count"]),
+				"hold": 0,
+				"counted": false,
+				"intent": null,
+			})
+			next_id += 1
+			emitted = true
+
+		frames.append(_snapshot(tick, parcels, delivered, blocks))
+
+		if not _prefix_ok(delivered, order):
+			return _finish(false, 0, graph.size(), "wrong_delivery", end_tick, delivered, frames)
+		if delivered.size() == order.size() and order.size() > 0:
+			return _finish(true, tick, graph.size(), "", end_tick, delivered, frames)
+
+		var latch_pending := false
+		for parcel in parcels:
+			var block = blocks.get(_key(int(parcel["x"]), int(parcel["y"])))
+			if block == null or str(block["type"]) != "latch" or int(parcel["hold"]) < 1:
+				continue
+			var dest := Vector2i(int(parcel["x"]), int(parcel["y"])) + DIRS[int(block["dir"])]
+			if _find_at(parcels, dest) == null and _enterable(dest, dock, width, height, walls, source_cells, blocks):
+				latch_pending = true
+		if tick >= TICK_CAP:
+			return _finish(false, 0, graph.size(), "tick_cap", end_tick, delivered, frames)
+		if not moved and not emitted and not latch_pending:
+			return _finish(false, 0, graph.size(), "stuck", end_tick, delivered, frames)
+
+	return _finish(false, 0, graph.size(), "tick_cap", end_tick, delivered, frames)
+
+
+static func _finish(success: bool, cycles: int, blocks: int, reason: String, ticks: int, delivered: Array, frames: Array) -> Dictionary:
+	return {
+		"success": success,
+		"cycles": cycles,
+		"blocks": blocks,
+		"reason": reason,
+		"ticks": ticks,
+		"delivered": delivered,
+		"frames": frames,
+	}
+
+
+static func _snapshot(tick: int, parcels: Array, delivered: Array, blocks: Dictionary) -> Dictionary:
+	var ps: Array = []
+	for parcel in parcels:
+		ps.append({
+			"id": int(parcel["id"]),
+			"x": int(parcel["x"]),
+			"y": int(parcel["y"]),
+			"color": str(parcel["color"]),
+			"count": int(parcel["count"]),
+		})
+	var markers: Array = []
+	for key in blocks.keys():
+		var block: Dictionary = blocks[key]
+		if str(block["type"]) == "splitter":
+			markers.append({
+				"x": int(block["x"]),
+				"y": int(block["y"]),
+				"kind": "splitter",
+				"phase": int(block["phase"]),
+			})
+		elif str(block["type"]) == "counter":
+			markers.append({
+				"x": int(block["x"]),
+				"y": int(block["y"]),
+				"kind": "counter",
+				"value": int(block["value"]),
+			})
+	return {
+		"tick": tick,
+		"parcels": ps,
+		"delivered": delivered.duplicate(true),
+		"markers": markers,
+	}
+
+
+static func _prefix_ok(delivered: Array, order: Array) -> bool:
+	if delivered.size() > order.size():
+		return false
+	for i in delivered.size():
+		if not _matches(delivered[i], order[i]):
+			return false
+	return true
+
+
+static func _matches(parcel: Dictionary, spec: Dictionary) -> bool:
+	if spec.has("color") and str(spec["color"]) != str(parcel["color"]):
+		return false
+	if spec.has("count") and int(spec["count"]) != int(parcel["count"]):
+		return false
+	return true
+
+
+static func _enterable(dest: Vector2i, dock: Vector2i, width: int, height: int, walls: Dictionary, source_cells: Dictionary, blocks: Dictionary) -> bool:
+	if dest == dock:
+		return true
+	if not _in_bounds(dest.x, dest.y, width, height):
+		return false
+	var key := _key(dest.x, dest.y)
+	if walls.has(key) or source_cells.has(key):
+		return false
+	return blocks.has(key)
+
+
+static func _spawnable(dest: Vector2i, dock: Vector2i, width: int, height: int, walls: Dictionary, source_cells: Dictionary) -> bool:
+	if dest == dock:
+		return false
+	if not _in_bounds(dest.x, dest.y, width, height):
+		return false
+	var key := _key(dest.x, dest.y)
+	return not walls.has(key) and not source_cells.has(key)
+
+
+static func _find_at(parcels: Array, pos: Vector2i):
+	for parcel in parcels:
+		if int(parcel["x"]) == pos.x and int(parcel["y"]) == pos.y:
+			return parcel
+	return null
+
+
+static func _in_bounds(x: int, y: int, width: int, height: int) -> bool:
+	return x >= 0 and y >= 0 and x < width and y < height
+
+
+static func _key(x: int, y: int) -> String:
+	return "%d,%d" % [x, y]
