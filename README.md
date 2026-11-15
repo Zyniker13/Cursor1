@@ -10,7 +10,7 @@ Playable slices, Godot 4. Steam packaging comes later.
 - [Lantern Census](lantern-census/) — an eight-floor map survey
 - [Lowball](lowball/) — a ten-week five-club round-robin with a best-of-three final
 - [Casework](casework/) — a twelve-case deduction board
-- [Lampblack](lampblack/) — turn-based museum stealth, east, west, north, south, and attic
+- [Lampblack](lampblack/) — turn-based museum stealth, east, west, north, south, attic, and cellar
 - [Kiln Route](kiln-route/) — a fifty-six-room foundry puzzle
 
 ```bash
