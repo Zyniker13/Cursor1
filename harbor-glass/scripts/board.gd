@@ -251,6 +251,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_lintel(at)
 		"mullion":
 			_draw_mullion(at)
+		"transom":
+			_draw_transom(at)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -550,6 +552,19 @@ func _draw_mullion(at: Vector2i) -> void:
 	draw_rect(bot_cap, edge, false, 1.5)
 	draw_rect(shaft, edge, false, 2.0)
 	draw_line(Vector2(center.x, shaft.position.y + 4.0), Vector2(center.x, shaft.end.y - 4.0), Palette.LANTERN_HOT, 1.5)
+
+func _draw_transom(at: Vector2i) -> void:
+	# A pale horizontal bar with a dark center stroke. Not the lintel's solid
+	# stone bar, and not the mullion's vertical bar. The bar does not turn:
+	# a transom has no facing.
+	var center := _center(at)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var pale := Palette.GLASS
+	pale.a = 0.55 if flooded else 0.96
+	var bar := Rect2(center + Vector2(-cell * 0.42, -cell * 0.11), Vector2(cell * 0.84, cell * 0.22))
+	draw_rect(bar, pale)
+	draw_rect(bar, Palette.FOAM if flooded else Palette.GLASS_EDGE, false, 2.0)
+	draw_line(Vector2(bar.position.x + 6.0, center.y), Vector2(bar.end.x - 6.0, center.y), Palette.GATE_IRON, 3.0)
 
 func _draw_prism(at: Vector2i, rot: int, set_in_stone: bool) -> void:
 	var center := _center(at)
