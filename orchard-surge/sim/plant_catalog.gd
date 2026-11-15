@@ -26,7 +26,8 @@ const CAPE := 17
 const SHAWL := 18
 const STOLE := 19
 const MANTLE := 20
-const COUNT := 21
+const TIPPET := 21
+const COUNT := 22
 
 # fire_ticks and slow_ticks are sim ticks of length DT.
 # light_radius, weapon_range, projectile_speed, and splash_radius are pixels.
@@ -48,7 +49,8 @@ const COUNT := 21
 # shawls_dread: this plant's radius marks tiles as shawled. It is not a light.
 # stoles_woe: this plant's radius marks tiles as stoled. It is not a light.
 # mantles_blight: this plant's radius marks tiles as mantled. It is not a light.
-# casts_light: false means the radius does not light tiles. The shade, the cowl, the hood, the cloak, the cape, the shawl, the stole, and the mantle use this.
+# tippets_rot: this plant's radius marks tiles as rotted. It is not a light.
+# casts_light: false means the radius does not light tiles. The shade, the cowl, the hood, the cloak, the cape, the shawl, the stole, the mantle, and the tippet use this.
 const DEFS := [
 	{
 		"name": "Pea",
@@ -78,6 +80,7 @@ const DEFS := [
 		"shawls_dread": false,
 		"stoles_woe": false,
 		"mantles_blight": false,
+		"tippets_rot": false,
 		"casts_light": true,
 	},
 	{
@@ -108,6 +111,7 @@ const DEFS := [
 		"shawls_dread": false,
 		"stoles_woe": false,
 		"mantles_blight": false,
+		"tippets_rot": false,
 		"casts_light": true,
 	},
 	{
@@ -138,6 +142,7 @@ const DEFS := [
 		"shawls_dread": false,
 		"stoles_woe": false,
 		"mantles_blight": false,
+		"tippets_rot": false,
 		"casts_light": true,
 	},
 	{
@@ -168,6 +173,7 @@ const DEFS := [
 		"shawls_dread": false,
 		"stoles_woe": false,
 		"mantles_blight": false,
+		"tippets_rot": false,
 		"casts_light": true,
 	},
 	{
@@ -198,6 +204,7 @@ const DEFS := [
 		"shawls_dread": false,
 		"stoles_woe": false,
 		"mantles_blight": false,
+		"tippets_rot": false,
 		"casts_light": true,
 	},
 	{
@@ -228,6 +235,7 @@ const DEFS := [
 		"shawls_dread": false,
 		"stoles_woe": false,
 		"mantles_blight": false,
+		"tippets_rot": false,
 		"casts_light": true,
 	},
 	{
@@ -258,6 +266,7 @@ const DEFS := [
 		"shawls_dread": false,
 		"stoles_woe": false,
 		"mantles_blight": false,
+		"tippets_rot": false,
 		"casts_light": true,
 	},
 	{
@@ -288,6 +297,7 @@ const DEFS := [
 		"shawls_dread": false,
 		"stoles_woe": false,
 		"mantles_blight": false,
+		"tippets_rot": false,
 		"casts_light": true,
 	},
 	{
@@ -318,6 +328,7 @@ const DEFS := [
 		"shawls_dread": false,
 		"stoles_woe": false,
 		"mantles_blight": false,
+		"tippets_rot": false,
 		"casts_light": true,
 	},
 	{
@@ -348,6 +359,7 @@ const DEFS := [
 		"shawls_dread": false,
 		"stoles_woe": false,
 		"mantles_blight": false,
+		"tippets_rot": false,
 		"casts_light": true,
 	},
 	{
@@ -378,6 +390,7 @@ const DEFS := [
 		"shawls_dread": false,
 		"stoles_woe": false,
 		"mantles_blight": false,
+		"tippets_rot": false,
 		"casts_light": true,
 	},
 	{
@@ -408,6 +421,7 @@ const DEFS := [
 		"shawls_dread": false,
 		"stoles_woe": false,
 		"mantles_blight": false,
+		"tippets_rot": false,
 		"casts_light": true,
 	},
 	{
@@ -438,6 +452,7 @@ const DEFS := [
 		"shawls_dread": false,
 		"stoles_woe": false,
 		"mantles_blight": false,
+		"tippets_rot": false,
 		"casts_light": true,
 	},
 	{
@@ -468,6 +483,7 @@ const DEFS := [
 		"shawls_dread": false,
 		"stoles_woe": false,
 		"mantles_blight": false,
+		"tippets_rot": false,
 		"casts_light": false,
 	},
 	{
@@ -498,6 +514,7 @@ const DEFS := [
 		"shawls_dread": false,
 		"stoles_woe": false,
 		"mantles_blight": false,
+		"tippets_rot": false,
 		"casts_light": false,
 	},
 	{
@@ -528,6 +545,7 @@ const DEFS := [
 		"shawls_dread": false,
 		"stoles_woe": false,
 		"mantles_blight": false,
+		"tippets_rot": false,
 		"casts_light": false,
 	},
 	{
@@ -558,6 +576,7 @@ const DEFS := [
 		"shawls_dread": false,
 		"stoles_woe": false,
 		"mantles_blight": false,
+		"tippets_rot": false,
 		"casts_light": false,
 	},
 	{
@@ -588,6 +607,7 @@ const DEFS := [
 		"shawls_dread": false,
 		"stoles_woe": false,
 		"mantles_blight": false,
+		"tippets_rot": false,
 		"casts_light": false,
 	},
 	{
@@ -618,6 +638,7 @@ const DEFS := [
 		"shawls_dread": true,
 		"stoles_woe": false,
 		"mantles_blight": false,
+		"tippets_rot": false,
 		"casts_light": false,
 	},
 	{
@@ -648,6 +669,7 @@ const DEFS := [
 		"shawls_dread": false,
 		"stoles_woe": true,
 		"mantles_blight": false,
+		"tippets_rot": false,
 		"casts_light": false,
 	},
 	{
@@ -678,6 +700,38 @@ const DEFS := [
 		"shawls_dread": false,
 		"stoles_woe": false,
 		"mantles_blight": true,
+		"tippets_rot": false,
+		"casts_light": false,
+	},
+	{
+		"name": "Tippet",
+		"role": "Tippets rot, modest shots, no light.",
+		"damage": 2,
+		"fire_ticks": 84,
+		"light_radius": 352.0,
+		"weapon_range": 12.0,
+		"projectile_speed": 160.0,
+		"slow_factor": 1.0,
+		"slow_ticks": 0,
+		"splash_radius": 0.0,
+		"burns_shroud": false,
+		"cracks_rind": false,
+		"melts_pitch": false,
+		"thaws_frost": false,
+		"cuts_web": false,
+		"cracks_glass": false,
+		"strips_scale": false,
+		"cracks_mail": false,
+		"splits_hide": false,
+		"shades_dusk": false,
+		"cowls_veil": false,
+		"hoods_pall": false,
+		"cloaks_gloom": false,
+		"capes_murk": false,
+		"shawls_dread": false,
+		"stoles_woe": false,
+		"mantles_blight": false,
+		"tippets_rot": true,
 		"casts_light": false,
 	},
 ]
