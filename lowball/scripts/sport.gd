@@ -3,11 +3,11 @@ extends RefCounted
 # Lowball — sport model
 #
 # Lowball is an invented three-inning bat-and-ball sport. It is not baseball,
-# cricket, or any real league. This slice has nine fictional clubs in the town
+# cricket, or any real league. This slice has ten fictional clubs in the town
 # of Lumen Quay: Lumen Reedmice, Southspur Glass, Pellwick Cinders, Marrowgate
-# Herons, Saltmere Kites, Ashfen Moths, Reedfen Larks, Cinderwharf Pikes, and
-# Saltwharf Gulls. Players are generated. Nothing here is a real club, crest,
-# or athlete.
+# Herons, Saltmere Kites, Ashfen Moths, Reedfen Larks, Cinderwharf Pikes,
+# Saltwharf Gulls, and Marrowfen Owls. Players are generated. Nothing here is
+# a real club, crest, or athlete.
 #
 # A match
 #   * 3 innings. Each inning has a top half and a bottom half.
@@ -35,39 +35,35 @@ extends RefCounted
 # Training
 #   * Before a week the club picks one stat as the focus.
 #   * After the week, every player on the roster gains TRAINING_GAIN (+1) in
-#     that stat, whether or not the club played. The result is clamped to
-#     STAT_CAP. Stats never fall below STAT_FLOOR. Eighteen weeks means
-#     eighteen drills, including a bye. The same focus each week takes a
-#     generated stat to the cap of 20, and a stat already at 20 stays at 20.
+#     that stat. The result is clamped to STAT_CAP. Stats never fall below
+#     STAT_FLOOR. Eighteen weeks means eighteen drills. The same focus each
+#     week takes a generated stat to the cap of 20, and a stat already at 20
+#     stays at 20.
 #   * Each final game, when Lumen Reedmice reach the final, is one more drill.
-#     Every club drills after that game, including the seven clubs left out. A
+#     Every club drills after that game, including the eight clubs left out. A
 #     missed final adds no further drill. Training still stops at 20.
 #
 # Series
-#   * Eighteen weeks, four matches and one bye a week, nine clubs.
-#   * Weeks 1-9 are a round-robin. The club left out has the bye. Weeks 10-18
-#     are the same pairings with home reversed, so the schedule is a double
-#     round-robin. Every club plays every other club once at home and once
-#     away, and every club has two byes. ROUND_ROBIN lists the four matches
+#   * Eighteen weeks, five matches a week, ten clubs. There is no bye. Every
+#     club plays every week.
+#   * Weeks 1-9 are a round-robin. Weeks 10-18 are the same pairings with home
+#     reversed, so the schedule is a double round-robin. Every club plays every
+#     other club once at home and once away. ROUND_ROBIN lists the five matches
 #     for each week. Home is the first index and bats in the bottom half.
-#     Week 1 keeps the eight-club opening and gives Saltwharf Gulls the bye.
-#     Lumen Reedmice are off in week 2 and week 11.
-#   * The office shows the whole schedule from week 1, including the bye, so
-#     all four matches can be followed before any of them is played.
-#   * You watch or skip your own match. The other three matches that week are
-#     recorded with it. On a bye, Watch and Skip follow the first listed match
-#     and the other three are recorded with it. No match is recorded for the
-#     club that is off.
+#   * The office shows the whole schedule from week 1, so all five matches can
+#     be followed before any of them is played.
+#   * You watch or skip your own match. The other four matches that week are
+#     recorded with it.
 #   * A win is WIN_POINTS (2) and a tie is TIE_POINTS (1).
 #   * Table order is points per game, then run difference, then the series
 #     seed. Run difference is runs scored minus runs allowed. Rates are
 #     compared as fractions. An equal rate is not ahead on its own. Divide the
-#     series seed by 9 and keep the remainder: 0 starts with Lumen Reedmice,
+#     series seed by 10 and keep the remainder: 0 starts with Lumen Reedmice,
 #     1 with Southspur Glass, 2 with Pellwick Cinders, 3 with Marrowgate
 #     Herons, 4 with Saltmere Kites, 5 with Ashfen Moths, 6 with Reedfen Larks,
-#     7 with Cinderwharf Pikes, and 8 with Saltwharf Gulls. The order walks
-#     CLUB_NAMES from there and wraps. The earlier club is ahead. TIE_RULE and
-#     SEED_RULE state that on screen.
+#     7 with Cinderwharf Pikes, 8 with Saltwharf Gulls, and 9 with Marrowfen
+#     Owls. The order walks CLUB_NAMES from there and wraps. The earlier club
+#     is ahead. TIE_RULE and SEED_RULE state that on screen.
 #   * After week 18 the top two clubs play a best-of-three final. The first
 #     club to reach two wins takes the series. Home alternates.
 #     The club that led after the league is home, listed first, and bats second
@@ -76,7 +72,7 @@ extends RefCounted
 #   * A tie in a final game is not a win for either side. FINAL_TIE_TEXT says
 #     so, and says that the series continues with another game until one club
 #     has two wins. The final does not change the table.
-#   * If Lumen Reedmice finish 3rd through 9th, the season ends with no final.
+#   * If Lumen Reedmice finish 3rd through 10th, the season ends with no final.
 #   * The board goal is to reach that final and win the series. GOAL_TEXT
 #     states it on the office from the start and again on the board. Missing
 #     the final, or losing the series, misses the goal. A tie in one final
@@ -133,7 +129,7 @@ extends RefCounted
 #   "c", and the closed joins were checked against a blocklist (see tests).
 
 const TOWN := "Lumen Quay"
-const CLUB_NAMES: Array = ["Lumen Reedmice", "Southspur Glass", "Pellwick Cinders", "Marrowgate Herons", "Saltmere Kites", "Ashfen Moths", "Reedfen Larks", "Cinderwharf Pikes", "Saltwharf Gulls"]
+const CLUB_NAMES: Array = ["Lumen Reedmice", "Southspur Glass", "Pellwick Cinders", "Marrowgate Herons", "Saltmere Kites", "Ashfen Moths", "Reedfen Larks", "Cinderwharf Pikes", "Saltwharf Gulls", "Marrowfen Owls"]
 const PLAYER_CLUB := "Lumen Reedmice"
 const OPPONENT_CLUB := "Southspur Glass"
 const THIRD_CLUB := "Pellwick Cinders"
@@ -143,34 +139,34 @@ const SIXTH_CLUB := "Ashfen Moths"
 const SEVENTH_CLUB := "Reedfen Larks"
 const EIGHTH_CLUB := "Cinderwharf Pikes"
 const NINTH_CLUB := "Saltwharf Gulls"
+const TENTH_CLUB := "Marrowfen Owls"
 const PLAYER_INDEX := 0
-const CLUB_COUNT := 9
+const CLUB_COUNT := 10
 
-# Each week is four [home, away] pairs. Home bats in the bottom half.
-# The club missing from the four pairs has the bye. Weeks 1-9 are one full
-# round-robin. Weeks 10-18 repeat those pairs with home reversed. Every club
-# plays every other club once at home and once away, and every club has two
-# byes. Week 1 keeps the eight-club opening and gives Saltwharf Gulls the bye.
-# Lumen Reedmice are off in week 2 and again in week 11.
+# Each week is five [home, away] pairs. Home bats in the bottom half.
+# There is no bye: every club plays every week. Weeks 1-9 are one full
+# round-robin, built by the circle method. Weeks 10-18 repeat those pairs
+# with home reversed. Every club plays every other club once at home and
+# once away.
 const ROUND_ROBIN: Array = [
-	[[0, 5], [1, 4], [2, 3], [6, 7]],
-	[[1, 8], [2, 5], [6, 4], [7, 3]],
-	[[2, 0], [6, 8], [7, 5], [3, 4]],
-	[[6, 1], [7, 0], [3, 8], [4, 5]],
-	[[7, 2], [3, 1], [4, 0], [5, 8]],
-	[[3, 6], [4, 2], [5, 1], [8, 0]],
-	[[4, 7], [5, 6], [8, 2], [0, 1]],
-	[[5, 3], [8, 7], [0, 6], [1, 2]],
-	[[8, 4], [0, 3], [1, 7], [2, 6]],
-	[[5, 0], [4, 1], [3, 2], [7, 6]],
-	[[8, 1], [5, 2], [4, 6], [3, 7]],
-	[[0, 2], [8, 6], [5, 7], [4, 3]],
-	[[1, 6], [0, 7], [8, 3], [5, 4]],
-	[[2, 7], [1, 3], [0, 4], [8, 5]],
-	[[6, 3], [2, 4], [1, 5], [0, 8]],
-	[[7, 4], [6, 5], [2, 8], [1, 0]],
-	[[3, 5], [7, 8], [6, 0], [2, 1]],
-	[[4, 8], [3, 0], [7, 1], [6, 2]],
+	[[0, 9], [1, 8], [2, 7], [3, 6], [4, 5]],
+	[[8, 0], [7, 9], [6, 1], [5, 2], [4, 3]],
+	[[0, 7], [8, 6], [9, 5], [1, 4], [2, 3]],
+	[[6, 0], [5, 7], [4, 8], [3, 9], [2, 1]],
+	[[0, 5], [6, 4], [7, 3], [8, 2], [9, 1]],
+	[[4, 0], [3, 5], [2, 6], [1, 7], [9, 8]],
+	[[0, 3], [4, 2], [5, 1], [6, 9], [7, 8]],
+	[[2, 0], [1, 3], [9, 4], [8, 5], [7, 6]],
+	[[0, 1], [2, 9], [3, 8], [4, 7], [5, 6]],
+	[[9, 0], [8, 1], [7, 2], [6, 3], [5, 4]],
+	[[0, 8], [9, 7], [1, 6], [2, 5], [3, 4]],
+	[[7, 0], [6, 8], [5, 9], [4, 1], [3, 2]],
+	[[0, 6], [7, 5], [8, 4], [9, 3], [1, 2]],
+	[[5, 0], [4, 6], [3, 7], [2, 8], [1, 9]],
+	[[0, 4], [5, 3], [6, 2], [7, 1], [8, 9]],
+	[[3, 0], [2, 4], [1, 5], [9, 6], [8, 7]],
+	[[0, 2], [3, 1], [4, 9], [5, 8], [6, 7]],
+	[[1, 0], [9, 2], [8, 3], [7, 4], [6, 5]],
 ]
 
 const STAT_FLOOR := 1
@@ -182,20 +178,19 @@ const ROSTER_SIZE := 6
 const LINEUP_SIZE := 4
 const INNINGS := 3
 const SERIES_WEEKS := 18
-const MATCHES_PER_WEEK := 4
-const BYES_EACH := 2
-const GAMES_EACH := SERIES_WEEKS - BYES_EACH
+const MATCHES_PER_WEEK := 5
+const GAMES_EACH := SERIES_WEEKS
 const FINAL_WINS_NEEDED := 2
 const PAS_PER_MATCH := INNINGS * 2 * LINEUP_SIZE
 const WIN_POINTS := 2
 const TIE_POINTS := 1
 
 const GOAL_TEXT := "Board goal: reach the final and win the series."
-const FINAL_TEXT := "After week 18 the top two clubs play a best-of-three final. The first club to two wins takes the series. The club that led after the league is home for game 1 and, if needed, game 3. Home alternates. A win is 2 points and a tie is 1. An equal rate is not ahead. If Lumen Reedmice finish 3rd through 9th, the season ends with no final. The final does not change the table."
+const FINAL_TEXT := "After week 18 the top two clubs play a best-of-three final. The first club to two wins takes the series. The club that led after the league is home for game 1 and, if needed, game 3. Home alternates. A win is 2 points and a tie is 1. An equal rate is not ahead. If Lumen Reedmice finish 3rd through 10th, the season ends with no final. The final does not change the table."
 const FINAL_TIE_TEXT := "A tie in a final game is not a win for either side. The series continues with another game until one club has two wins. The club that led after the league is home for game 1, game 3, and every later odd-numbered game. The other finalist is home for game 2 and every later even-numbered game."
 const TIE_RULE := "Ties in the table break by run difference, then by the existing series seed."
-const SEED_RULE := "Run difference is runs scored minus runs allowed. Divide the series seed by 9 and keep the remainder. Remainder 0 starts with Lumen Reedmice, remainder 1 with Southspur Glass, remainder 2 with Pellwick Cinders, remainder 3 with Marrowgate Herons, remainder 4 with Saltmere Kites, remainder 5 with Ashfen Moths, remainder 6 with Reedfen Larks, remainder 7 with Cinderwharf Pikes, and remainder 8 with Saltwharf Gulls. The order then walks that club list and wraps, and the earlier club is ahead."
-const SCHEDULE_TEXT := "Eighteen weeks. Each week has four matches and one bye. A double round-robin: every club plays every other club once at home and once away, and every club has two byes. Home is listed first and bats second."
+const SEED_RULE := "Run difference is runs scored minus runs allowed. Divide the series seed by 10 and keep the remainder. Remainder 0 starts with Lumen Reedmice, remainder 1 with Southspur Glass, remainder 2 with Pellwick Cinders, remainder 3 with Marrowgate Herons, remainder 4 with Saltmere Kites, remainder 5 with Ashfen Moths, remainder 6 with Reedfen Larks, remainder 7 with Cinderwharf Pikes, remainder 8 with Saltwharf Gulls, and remainder 9 with Marrowfen Owls. The order then walks that club list and wraps, and the earlier club is ahead."
+const SCHEDULE_TEXT := "Eighteen weeks, five matches a week, and no bye. A double round-robin: every club plays every week, and every club plays every other club once at home and once away. Home is listed first and bats second."
 
 const STATS: Array = ["lash", "eye", "legs", "glove", "arm", "read"]
 const TACTICS: Array = ["aggressive", "patient", "field"]
@@ -363,6 +358,7 @@ static func create_clubs(series_seed: int) -> Dictionary:
 		"seventh_club": SEVENTH_CLUB,
 		"eighth_club": EIGHTH_CLUB,
 		"ninth_club": NINTH_CLUB,
+		"tenth_club": TENTH_CLUB,
 		"player_roster": rosters[0],
 		"opponent_roster": rosters[1],
 		"third_roster": rosters[2],
@@ -372,6 +368,7 @@ static func create_clubs(series_seed: int) -> Dictionary:
 		"seventh_roster": rosters[6],
 		"eighth_roster": rosters[7],
 		"ninth_roster": rosters[8],
+		"tenth_roster": rosters[9],
 	}
 
 
@@ -485,22 +482,8 @@ static func opponent_plan(roster: Array, week: int, club_index: int = 0) -> Dict
 	return {"tactic": tactic, "lineup": lineup, "training": focus}
 
 
-static func week_bye(week: int) -> int:
-	var used: Array = []
-	for _club in CLUB_COUNT:
-		used.append(false)
-	for pair in ROUND_ROBIN[week]:
-		used[int(pair[0])] = true
-		used[int(pair[1])] = true
-	for club_index in CLUB_COUNT:
-		if not bool(used[club_index]):
-			return club_index
-	return -1
-
-
 static func week_fixtures(week: int) -> Array:
 	var pairs: Array = ROUND_ROBIN[week]
-	var bye := week_bye(week)
 	var cards: Array = []
 	for pair in pairs:
 		var home := int(pair[0])
@@ -508,11 +491,9 @@ static func week_fixtures(week: int) -> Array:
 		cards.append({
 			"home": home,
 			"away": away,
-			"bye": bye,
 			"slot": cards.size(),
 			"home_club": str(CLUB_NAMES[home]),
 			"away_club": str(CLUB_NAMES[away]),
-			"bye_club": str(CLUB_NAMES[bye]),
 		})
 	return cards
 
@@ -678,7 +659,7 @@ static func goal_reached(rows: Array) -> bool:
 	return true
 
 
-# Regular matches use week 0-17 and slot 0-3. Final game N (0-based) uses week
+# Regular matches use week 0-17 and slot 0-4. Final game N (0-based) uses week
 # SERIES_WEEKS + N and slot 0. The formula stays fixed so the same series seed
 # still repeats every at-bat, including every final game.
 static func match_seed_for(series_seed: int, week: int, slot: int = 0) -> int:
