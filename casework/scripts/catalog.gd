@@ -18,8 +18,10 @@ const WickTrim = preload("res://scripts/wick_trim.gd")
 const GlassAnneal = preload("res://scripts/glass_anneal.gd")
 const OrchardGraft = preload("res://scripts/orchard_graft.gd")
 const DyeVat = preload("res://scripts/dye_vat.gd")
+const TarKettle = preload("res://scripts/tar_kettle.gd")
+const CorkPress = preload("res://scripts/cork_press.gd")
 
-const CASES: Array = [SpareKey, RehearsalScore, GiltStamp, FerryBell, WeatherSlate, LoomShuttle, HiveSmoker, GlassPontil, PressProof, AssayCup, KilnChalk, TideLedger, NightBell, SaltMark, WickTrim, GlassAnneal, OrchardGraft, DyeVat]
+const CASES: Array = [SpareKey, RehearsalScore, GiltStamp, FerryBell, WeatherSlate, LoomShuttle, HiveSmoker, GlassPontil, PressProof, AssayCup, KilnChalk, TideLedger, NightBell, SaltMark, WickTrim, GlassAnneal, OrchardGraft, DyeVat, TarKettle, CorkPress]
 
 
 static func all() -> Array:
