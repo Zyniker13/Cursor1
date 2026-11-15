@@ -660,6 +660,157 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 					later_tied = true
 		if late_count >= 2 and not strictly_higher and not later_tied:
 			guess += late_number
+	if rule == "double_lowest_latest":
+		var low_number = _stamp_number(state, card_id, row, col)
+		var low_count = 1
+		var strictly_lower = false
+		var later_tied = false
+		for low_row in range(0, row + 1):
+			var low_end = 2
+			if low_row == row:
+				low_end = col - 1
+			for low_col in range(0, low_end + 1):
+				var low_stamp = state.form[low_row][low_col]
+				if low_stamp == null:
+					continue
+				low_count += 1
+				if _stamp_number(state, String(low_stamp["card_id"]), low_row, low_col) < low_number:
+					strictly_lower = true
+		for low_row in range(row, 3):
+			var low_start = 0
+			if low_row == row:
+				low_start = col + 1
+			for low_col in range(low_start, 3):
+				var low_stamp = state.form[low_row][low_col]
+				if low_stamp == null:
+					continue
+				low_count += 1
+				if _stamp_number(state, String(low_stamp["card_id"]), low_row, low_col) <= low_number:
+					later_tied = true
+		if low_count >= 2 and not strictly_lower and not later_tied:
+			guess += low_number
+	if rule == "drop_if_exact_six":
+		var six_filled = 0
+		for six_row in 3:
+			for six_col in 3:
+				if state.form[six_row][six_col] != null:
+					six_filled += 1
+		if six_filled == 5:
+			guess -= 6
+		elif six_filled == 6:
+			guess += 4
+	if rule == "double_full_column":
+		var column_filled = 0
+		for scan_row in 3:
+			if state.form[scan_row][col] != null:
+				column_filled += 1
+		if column_filled == 2:
+			guess += 10
+		elif column_filled == 1:
+			guess += 4
+	if rule == "double_side_later":
+		var sided = false
+		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var side_row = row + delta.x
+			var side_col = col + delta.y
+			if side_row < 0 or side_col < 0 or side_row > 2 or side_col > 2:
+				continue
+			if state.form[side_row][side_col] == null:
+				continue
+			if side_row < row or (side_row == row and side_col < col):
+				sided = true
+		if sided:
+			guess += _stamp_number(state, card_id, row, col)
+	if rule == "drop_if_exact_seven":
+		var seven_filled = 0
+		for seven_row in 3:
+			for seven_col in 3:
+				if state.form[seven_row][seven_col] != null:
+					seven_filled += 1
+		if seven_filled == 6:
+			guess -= 6
+		elif seven_filled == 7:
+			guess += 4
+	if rule == "double_lone_column":
+		var lone_filled = 0
+		for lone_row in 3:
+			if state.form[lone_row][col] != null:
+				lone_filled += 1
+		if lone_filled == 0:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+	if rule == "yield_side_pay":
+		var side_pay = 0
+		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var pay_row = row + delta.x
+			var pay_col = col + delta.y
+			if pay_row < 0 or pay_col < 0 or pay_row > 2 or pay_col > 2:
+				continue
+			if state.form[pay_row][pay_col] != null:
+				side_pay += 1
+		if side_pay > 0:
+			guess += 3
+	if rule == "double_next_filled":
+		var filled_next_row = row
+		var filled_next_col = col + 1
+		if filled_next_col > 2:
+			filled_next_row = row + 1
+			filled_next_col = 0
+		if filled_next_row <= 2 and state.form[filled_next_row][filled_next_col] != null:
+			guess += _stamp_number(state, card_id, row, col)
+		var filled_prev_row = row
+		var filled_prev_col = col - 1
+		if filled_prev_col < 0:
+			filled_prev_row = row - 1
+			filled_prev_col = 2
+		if filled_prev_row >= 0 and state.form[filled_prev_row][filled_prev_col] != null:
+			guess += 2
+	if rule == "drop_if_exact_eight":
+		var eight_filled = 0
+		for eight_row in 3:
+			for eight_col in 3:
+				if state.form[eight_row][eight_col] != null:
+					eight_filled += 1
+		if eight_filled == 7:
+			guess -= 6
+		elif eight_filled == 8:
+			guess += 4
+	if rule == "double_prior_filled":
+		var prior_row = row
+		var prior_col = col - 1
+		if prior_col < 0:
+			prior_row = row - 1
+			prior_col = 2
+		if prior_row >= 0 and state.form[prior_row][prior_col] != null:
+			guess += _stamp_number(state, card_id, row, col)
+		var prior_next_row = row
+		var prior_next_col = col + 1
+		if prior_next_col > 2:
+			prior_next_row = row + 1
+			prior_next_col = 0
+		if prior_next_row <= 2 and state.form[prior_next_row][prior_next_col] != null:
+			guess += 4
+	if rule == "yield_corner_pay":
+		var corner_pay = 0
+		for delta in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var corner_row = row + delta.x
+			var corner_col = col + delta.y
+			if corner_row < 0 or corner_col < 0 or corner_row > 2 or corner_col > 2:
+				continue
+			if state.form[corner_row][corner_col] != null:
+				corner_pay += 1
+		if corner_pay > 0:
+			guess += 8
+	if rule == "double_short_row":
+		var short_filled = 0
+		for short_col in 3:
+			if state.form[row][short_col] != null:
+				short_filled += 1
+		if short_filled == 1:
+			guess += _stamp_number(state, card_id, row, col) + 4
+		elif short_filled == 2:
+			guess -= 8
 	if rule == "yield_diagonal_pair":
 		var partner_row = -1
 		var partner_col = -1

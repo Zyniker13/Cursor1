@@ -1,6 +1,6 @@
 # Night Stamp
 
-A border-desk deckbuilder across sixteen nights. Travelers arrive with a written rule. You spend ink to press stamps onto a 3×3 form. The cell matters as much as the card. When the turn ends, the form resolves from the top row downward.
+A border-desk deckbuilder across nineteen nights. Travelers arrive with a written rule. You spend ink to press stamps onto a 3×3 form. The cell matters as much as the card. When the turn ends, the form resolves from the top row downward.
 
 This folder is a Godot 4 project. It was built against Godot 4.7.2.
 
@@ -40,6 +40,9 @@ A run is seeded. The seed field decides the shuffle and the draft offers. Restar
 - Ledger bell opens the fourteenth night with a fresh deck. While that night is open, the same button returns to the first bell. A victory desk can open it too.
 - Spine bell opens the fifteenth night with a fresh deck. While that night is open, the same button returns to the first bell. A victory desk can open it too.
 - Headband bell opens the sixteenth night with a fresh deck. While that night is open, the same button returns to the first bell. A victory desk can open it too.
+- Clasp bell opens the seventeenth night with a fresh deck. While that night is open, the same button returns to the first bell. A victory desk can open it too.
+- Signature bell opens the eighteenth night with a fresh deck. While that night is open, the same button returns to the first bell. A victory desk can open it too.
+- Catchword bell opens the nineteenth night with a fresh deck. While that night is open, the same button returns to the first bell. A victory desk can open it too.
 - Ink is 3 at the start of a turn (4 with Deep Well). Spending the last ink ends the turn. A turn with 0 ink accepts no further stamp.
 
 The rules comment at the top of `rules/rules.gd` is the full rules text. The first bell has four travelers:
@@ -154,6 +157,27 @@ The headband bell is a sixteenth night. Same stamps, same ink, a new deck.
 - Ida Quill — Late High. Goal 22. Lane column 2. Exemption row top. When two or more stamps are filled, the latest stamp among those showing the highest number scores twice. If two stamps share that highest number, only the later one doubles. A lone stamp scores its own number. Wynn Quill already doubles the earlier of the highest number, so Ida does not.
 - Cal Quern — Diagonal Pair. Goal 20. Lane column 2. Exemption row middle. When two filled stamps on one three-cell diagonal have exactly one empty cell between them, those two each score +3 once. The diagonals are top-left / center / bottom-right, and top-right / center / bottom-left. A filled center means neither pair qualifies. Sera Pell already pays a column pair, and Nell Voss already pays a row's wings, so Cal does not.
 
+The clasp bell is a seventeenth night. Same stamps, same ink, a new deck.
+
+- Noll Hart — Late Low. Goal 20. Lane column 1. Exemption row bottom. When two or more stamps are filled, the latest stamp among those showing the lowest number scores twice. If two stamps share that lowest number, only the later one doubles. A lone stamp scores its own number. Ida Mire already doubles the earlier of the lowest number, and Ida Quill already doubles the later of the highest number, so Noll does not.
+- Hugh Pell — Six Toll. Goal 16. Lane column 2. Exemption row top. Patience drops by 2 when exactly six cells are filled. Any other count, including an empty form and a form of five, keeps the drop at 1. Hold is applied first. Joss Pell already drops for exactly five cells, Ada Hart for exactly four, and Pell Dane for exactly three, so Hugh does not.
+- Fenn Hart — Full Column. Goal 22. Lane column 3. Exemption row middle. A stamp scores twice only when its own column is full. A stamp in a column that is not full scores its own number. Wynn Hart already doubles a stamp only when its own row is full, so Fenn does not.
+- Rue Hart — Side Slip. Goal 18. Lane column 1. Exemption row bottom. When a stamp shares a side with an earlier stamp, the later stamp scores twice. The earlier stamp scores its own number. A corner-only touch does not count. A lone stamp scores its own number. Nim Voss already zeros that later stamp, so Rue does not.
+
+The signature bell is an eighteenth night. Same stamps, same ink, a new deck.
+
+- Dory Hart — Seven Toll. Goal 18. Lane column 3. Exemption row bottom. Patience drops by 2 when exactly seven cells are filled. Any other count, including an empty form and a form of six, keeps the drop at 1. Hold is applied first. Hugh Pell already drops for exactly six cells, Joss Pell for exactly five, Ada Hart for exactly four, and Pell Dane for exactly three, so Dory does not.
+- Lin Pell — Lone Column. Goal 20. Lane column 1. Exemption row top. A stamp scores twice only when it is the only filled stamp in its column. If that column holds another stamp, every stamp in the column scores its own number. Tam Quern already zeros a second stamp in column 1, and Fenn Hart already doubles a stamp only when its column is full, so Lin does not.
+- Opal Quill — Side Pay. Goal 22. Lane column 2. Exemption row middle. Each stamp that shares a side with another filled stamp scores +3 once. A stamp that shares two sides still scores +3 once. A corner-only touch does not count. A lone stamp scores its own number. Rue Hart already doubles the later stamp of a side pair, and Nim Voss already zeros that later stamp, so Opal does not.
+- Holt Quern — Next Fill. Goal 16. Lane column 2. Exemption row bottom. A stamp scores twice only when the queue cell immediately after it is filled. A stamp whose next cell is empty scores its own number. The bottom-right cell has no cell after it, so it does not double. Bram Solt already doubles a stamp when the next cell is empty and a later cell is filled, so Holt does not.
+
+The catchword bell is a nineteenth night. Same stamps, same ink, a new deck.
+
+- Gwyn Brant — Eight Toll. Goal 16. Lane column 3. Exemption row top. Patience drops by 2 when exactly eight cells are filled. Any other count, including an empty form, a form of seven, and a full form of nine, keeps the drop at 1. Hold is applied first. The toll does not change what a stamp scores. Exemption on the top row keeps the drop at 1 even when exactly eight cells are filled. An Exemption off the top row does not. Dory Hart already drops for exactly seven cells, Hugh Pell for six, Joss Pell for five, Ada Hart for four, and Pell Dane for three, so Gwyn does not.
+- Hester Keel — Prior Fill. Goal 20. Lane column 1. Exemption row bottom. A stamp scores twice only when the queue cell immediately before it is filled. The queue is read from the top row downward, left to right inside a row, the same order Holt Quern uses. A stamp whose previous cell is empty scores its own number. The top-left cell has no cell before it, so it does not double. A gap means the stamp after the gap does not double. A retrigger of a stamp whose previous cell is filled scores twice again. A retrigger of a stamp whose previous cell is empty does not. Exemption on the bottom row cancels the doubling, so every stamp scores its own number. An Exemption off the bottom row does not. The slip does not change patience. Holt Quern already doubles a stamp when the next cell is filled, Bram Solt already doubles a stamp when the next cell is empty and a later cell is filled, and Sable Quern already doubles a stamp when the previous cell is empty and some earlier cell is filled, so Hester does none of those.
+- Idris Reed — Corner Pay. Goal 22. Lane column 2. Exemption row middle. Each stamp that has at least one filled diagonal neighbor scores +3 once. A diagonal neighbor is one of the four corner-touching cells. An orthogonal neighbor does not count. A stamp with two or more diagonal neighbors still scores +3 once, not +3 for each. A stamp that only has orthogonal neighbors scores its own number. A lone stamp scores its own number. A retrigger of a stamp that has a filled diagonal neighbor adds 3 again. Exemption on the middle row cancels the bonus, so every stamp scores its own number. An Exemption off the middle row does not. An Exemption that has a filled diagonal neighbor and sits off the middle row still adds 3. The pay does not change patience. Opal Quill already adds 3 for a side share, and Rho Tallow already yields when two stamps meet at a corner, so Idris does neither.
+- Colm Brigg — Short Row. Goal 18. Lane column 1. Exemption row top. A stamp scores twice only when its own row holds exactly two filled stamps. Both stamps in that row double. A row with one stamp scores that stamp's own number. A full row of three scores each stamp's own number. Other rows are independent. A retrigger of a stamp in a two-stamp row scores twice again. A retrigger of a stamp in a row of one or three does not. Exemption on the top row cancels the doubling, so every stamp scores its own number. An Exemption off the top row does not. The slip does not change patience. Wynn Hart already doubles a stamp only when its own row is full, so Colm does not.
+
 ## Tests
 
 From this directory:
@@ -162,4 +186,4 @@ From this directory:
 godot --headless --path . -s res://tests/run_tests.gd
 ```
 
-The process exits 0 when every check passes and non-zero when one fails. The checks cover the 20-card pool, a fixed-seed clear of each night, a turn with 0 ink, the chain cap, the same card producing different numbers on two cells, and a correct stamp beside a wrong stamp for each late-shift, closing-bell, ash-watch, gutter-lamp, vellum-bell, quire-watch, salt-watch, quay-bell, folio-bell, wick-bell, margin-bell, index-bell, ledger-bell, spine-bell, and headband-bell form.
+The process exits 0 when every check passes and non-zero when one fails. The checks cover the 20-card pool, a fixed-seed clear of each night, a turn with 0 ink, the chain cap, the same card producing different numbers on two cells, and a correct stamp beside a wrong stamp for each late-shift, closing-bell, ash-watch, gutter-lamp, vellum-bell, quire-watch, salt-watch, quay-bell, folio-bell, wick-bell, margin-bell, index-bell, ledger-bell, spine-bell, headband-bell, clasp-bell, signature-bell, and catchword-bell form.
