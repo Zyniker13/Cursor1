@@ -3,14 +3,16 @@ extends RefCounted
 const CaseData = preload("res://scripts/case_data.gd")
 
 
-static func enumerate(exhibits: Array) -> Array:
+static func enumerate(exhibits: Array, case_data = null) -> Array:
+	var book = CaseData if case_data == null else case_data
 	var found: Array = []
 	var current := {}
-	_walk(CaseData.fields(), 0, current, exhibits, found)
+	_walk(book, book.fields(), 0, current, exhibits, found)
 	return found
 
 
 static func _walk(
+	book,
 	fields: Array[String],
 	index: int,
 	current: Dictionary,
@@ -23,9 +25,9 @@ static func _walk(
 		found.append(current.duplicate(true))
 		return
 	var field := fields[index]
-	for value in CaseData.domain(field):
+	for value in book.domain(field):
 		current[field] = value
-		_walk(fields, index + 1, current, exhibits, found)
+		_walk(book, fields, index + 1, current, exhibits, found)
 	current.erase(field)
 
 

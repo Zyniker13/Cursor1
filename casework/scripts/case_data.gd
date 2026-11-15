@@ -10,6 +10,10 @@ extends RefCounted
 # Exactly one full timeline fits every exhibit. Drop any exhibit and another
 # timeline fits. Any other pin triple disagrees with at least two exhibits.
 
+const TITLE := "The spare key"
+const FILE_CODE := "CW-01"
+const BLURB := "The spare key left its hook at the inn. Name who took it, the room they took it to, and the hour."
+
 const PEOPLE: Array[String] = ["Nell", "Moss", "Ada"]
 const PLACES: Array[String] = ["front_desk", "kitchen", "pantry"]
 const HOURS: Array[String] = ["7", "8", "9"]
@@ -386,3 +390,46 @@ static func matches_theory(model: Dictionary, theory: Dictionary) -> bool:
 		and str(model["place"]) == pins["place"]
 		and str(model["hour"]) == pins["hour"]
 	)
+
+
+static func exhibit_heading() -> String:
+	return "The file  ·  seven exhibits"
+
+
+static func board_question() -> String:
+	return "Who took the spare key, where, and at which hour?"
+
+
+static func board_brief() -> String:
+	return "Where means the room they took the key to."
+
+
+static func cast_line() -> String:
+	return "Nell, night cook    Moss, lodger    Ada, clerk"
+
+
+static func ready_line() -> String:
+	return "Pin who took the spare key, the room they took it to, and the hour. Then submit."
+
+
+static func choice_label(slot: String, value: String) -> String:
+	if slot == "place":
+		return place_button(value)
+	return value
+
+
+static func choices(slot: String) -> Array:
+	var values: Array[String] = []
+	match slot:
+		"who":
+			values = PEOPLE.duplicate()
+		"place":
+			values = PLACES.duplicate()
+		"hour":
+			values = HOURS.duplicate()
+		_:
+			push_error("Unknown pin: %s" % slot)
+	var rows: Array = []
+	for value in values:
+		rows.append({"value": value, "label": choice_label(slot, value)})
+	return rows
