@@ -1,0 +1,623 @@
+extends Control
+
+# South Lantern Quay. Pieces turn in place; a loose piece may also move
+# between the sockets authored for that chart. Lock Chart asks the beam
+# tracer whether every dock has its color and every hull is dark.
+
+const Charts := preload("res://scripts/charts.gd")
+const Tracer := preload("res://scripts/beam_tracer.gd")
+const Hints := preload("res://scripts/hint.gd")
+const Palette := preload("res://scripts/palette.gd")
+const HarborBoard := preload("res://scripts/board.gd")
+const TideClock := preload("res://scripts/tide_clock.gd")
+
+static var persist_progress := true
+
+const SAVE_PATH := "user://south_lantern_quay.cfg"
+const HINTS_PER_CHART := 3
+
+var charts: Array = []
+var chart: Dictionary = {}
+var state: Dictionary = {}
+var chart_index := 0
+var unlocked: Array[bool] = [true, false, false, false, false, false]
+var solved: Array[bool] = [false, false, false, false, false, false]
+var selected_id := ""
+var hint_highlight := ""
+var hints_left := HINTS_PER_CHART
+var board_locked := false
+var _laying_out := false
+
+var board: HarborBoard
+var teach_label: Label
+var title_label: Label
+var status_label: Label
+var held_label: Label
+var selected_label: Label
+var tide_readout: Label
+var hint_button: Button
+var raise_button: Button
+var lower_button: Button
+var win_layer: Control
+var win_body: Label
+var win_next: Button
+var chart_buttons: Array[Button] = []
+var tide_clock: TideClock
+var _side: Panel
+
+func _ready() -> void:
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	charts = Charts.all()
+	_build_ui()
+	_load_progress()
+	select_chart(0)
+	resized.connect(_layout)
+	_layout()
+
+func _build_ui() -> void:
+	var background := ColorRect.new()
+	background.color = Palette.NIGHT
+	background.set_anchors_preset(Control.PRESET_FULL_RECT)
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(background)
+
+	board = HarborBoard.new()
+	board.z_index = 1
+	add_child(board)
+
+	_side = Panel.new()
+	_side.z_index = 2
+	_side.add_theme_stylebox_override("panel", _style(Palette.PANEL, Palette.PANEL_EDGE, 10))
+	add_child(_side)
+
+	var box := VBoxContainer.new()
+	box.set_anchors_preset(Control.PRESET_FULL_RECT)
+	box.offset_left = 14
+	box.offset_top = 10
+	box.offset_right = -12
+	box.offset_bottom = -10
+	box.add_theme_constant_override("separation", 4)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_side.add_child(box)
+
+	var harbor := _label("Harbor Glass", 26, Palette.LANTERN)
+	harbor.autowrap_mode = TextServer.AUTOWRAP_OFF
+	box.add_child(harbor)
+	var quay := _label(Charts.HARBOR, 14, Palette.MUTED)
+	quay.autowrap_mode = TextServer.AUTOWRAP_OFF
+	box.add_child(quay)
+
+	var grid := GridContainer.new()
+	grid.columns = 3
+	grid.add_theme_constant_override("h_separation", 6)
+	grid.add_theme_constant_override("v_separation", 6)
+	box.add_child(grid)
+	for i in charts.size():
+		var button := _button("Chart %d" % (i + 1))
+		button.custom_minimum_size = Vector2(112, 32)
+		button.pressed.connect(_on_chart_pressed.bind(i))
+		grid.add_child(button)
+		chart_buttons.append(button)
+
+	title_label = _label("", 20, Palette.TEXT)
+	box.add_child(title_label)
+	teach_label = _label("", 14, Palette.TEXT)
+	teach_label.custom_minimum_size = Vector2(360, 0)
+	box.add_child(teach_label)
+	selected_label = _label("", 14, Palette.SELECT)
+	box.add_child(selected_label)
+
+	tide_clock = TideClock.new()
+	tide_clock.custom_minimum_size = Vector2(340, 92)
+	box.add_child(tide_clock)
+	tide_readout = _label("", 13, Palette.MUTED)
+	box.add_child(tide_readout)
+
+	var tide_row := HBoxContainer.new()
+	tide_row.add_theme_constant_override("separation", 6)
+	box.add_child(tide_row)
+	raise_button = _button("Raise tide (T)")
+	raise_button.pressed.connect(raise_tide)
+	lower_button = _button("Lower tide")
+	lower_button.pressed.connect(lower_tide)
+	tide_row.add_child(raise_button)
+	tide_row.add_child(lower_button)
+
+	var turn := _button("Turn (R)")
+	turn.pressed.connect(rotate_selected)
+	box.add_child(turn)
+	var lock := _button("Lock Chart (Space)")
+	lock.pressed.connect(try_lock)
+	box.add_child(lock)
+	hint_button = _button("Hint (H)")
+	hint_button.pressed.connect(try_hint)
+	box.add_child(hint_button)
+	var restart := _button("Restart chart")
+	restart.pressed.connect(restart_chart)
+	box.add_child(restart)
+
+	held_label = _label("", 15, Palette.GOOD)
+	box.add_child(held_label)
+	status_label = _label("", 14, Palette.TEXT)
+	status_label.custom_minimum_size = Vector2(340, 0)
+	box.add_child(status_label)
+
+	var legend := _label("Warm beam, red, and blue. Docks take only their marked color. Hulls stay dark. Water shuts the glass it covers.", 13, Palette.MUTED)
+	legend.custom_minimum_size = Vector2(360, 0)
+	box.add_child(legend)
+	var keys := _label("Arrows or Tab select. R turns. M moves a loose piece. Space locks. H hints. T raises tide. Backspace restarts.", 12, Palette.MUTED)
+	keys.custom_minimum_size = Vector2(360, 0)
+	box.add_child(keys)
+
+	win_layer = Control.new()
+	win_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	win_layer.mouse_filter = Control.MOUSE_FILTER_STOP
+	win_layer.visible = false
+	win_layer.z_index = 4
+	add_child(win_layer)
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.62)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	win_layer.add_child(dim)
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	win_layer.add_child(center)
+	var card := Panel.new()
+	card.custom_minimum_size = Vector2(460, 220)
+	card.add_theme_stylebox_override("panel", _style(Color("12202c"), Palette.LANTERN, 12))
+	center.add_child(card)
+	var win_box := VBoxContainer.new()
+	win_box.set_anchors_preset(Control.PRESET_FULL_RECT)
+	win_box.offset_left = 22
+	win_box.offset_top = 18
+	win_box.offset_right = -22
+	win_box.offset_bottom = -18
+	win_box.add_theme_constant_override("separation", 10)
+	card.add_child(win_box)
+	win_box.add_child(_label("The quay holds", 28, Palette.LANTERN_HOT))
+	win_body = _label("", 16, Palette.TEXT)
+	win_body.custom_minimum_size = Vector2(400, 48)
+	win_box.add_child(win_body)
+	var win_keys := _label("Space continues. Escape keeps this chart in view.", 13, Palette.MUTED)
+	win_box.add_child(win_keys)
+	var win_buttons := HBoxContainer.new()
+	win_buttons.add_theme_constant_override("separation", 8)
+	win_box.add_child(win_buttons)
+	win_next = _button("Next chart")
+	win_next.pressed.connect(_advance_from_win)
+	win_buttons.add_child(win_next)
+	var stay := _button("Stay")
+	stay.pressed.connect(_stay_on_chart)
+	win_buttons.add_child(stay)
+
+func _layout() -> void:
+	if _side == null or _laying_out:
+		return
+	_laying_out = true
+	var vp := get_viewport_rect().size
+	if vp.x < 200.0 or vp.y < 200.0:
+		vp = Vector2(1280, 720)
+	var side_w := 408.0
+	var panel_left := vp.x - side_w - 16.0
+	_side.position = Vector2(panel_left, 16.0)
+	_side.size = Vector2(side_w, vp.y - 32.0)
+	if not chart.is_empty():
+		var left := 28.0
+		var gap := 24.0
+		var area_w := maxf(panel_left - left - gap, 160.0)
+		var area_h := vp.y - 40.0
+		var cols := int(chart["cols"])
+		var rows := int(chart["rows"])
+		var fit := minf(area_w / float(cols), area_h / float(rows))
+		board.cell = clampf(fit, 36.0, 84.0)
+		var grid_w := float(cols) * board.cell
+		var grid_h := float(rows) * board.cell
+		if grid_w > area_w:
+			board.cell = area_w / float(cols)
+			grid_w = float(cols) * board.cell
+			grid_h = float(rows) * board.cell
+		board.position = Vector2(left + (area_w - grid_w) * 0.5, 18.0 + maxf(area_h - grid_h, 0.0) * 0.5)
+		_refresh_board()
+	_laying_out = false
+
+func select_chart(index: int) -> bool:
+	if index < 0 or index >= charts.size():
+		return false
+	if not unlocked[index]:
+		if status_label:
+			status_label.text = "That chart is still locked."
+		return false
+	chart_index = index
+	chart = charts[index]
+	state = Charts.make_state(chart, false)
+	hints_left = HINTS_PER_CHART
+	hint_highlight = ""
+	board_locked = false
+	selected_id = str(chart["pieces"][0]["id"])
+	_hide_win()
+	if status_label:
+		status_label.text = ""
+	_refresh()
+	return true
+
+func rotate_selected() -> void:
+	if selected_id == "" or chart.is_empty():
+		return
+	var piece := Charts.piece_def(chart, selected_id)
+	if piece.is_empty():
+		return
+	_resume_editing()
+	var cur := int(state["pieces"][selected_id]["rot"])
+	state["pieces"][selected_id]["rot"] = Tracer.turn_rot(str(piece["kind"]), cur)
+	_clear_hint_if_resolved()
+	_refresh()
+
+func move_selected_to(socket_id: String) -> bool:
+	var piece := Charts.piece_def(chart, selected_id)
+	if piece.is_empty() or not bool(piece["movable"]):
+		status_label.text = "This piece turns in place."
+		return false
+	var found := false
+	for raw in piece["sockets"]:
+		var sock: Dictionary = raw
+		if str(sock["id"]) == socket_id:
+			found = true
+			break
+	if not found:
+		return false
+	_resume_editing()
+	state["pieces"][selected_id]["socket"] = socket_id
+	_clear_hint_if_resolved()
+	_refresh()
+	return true
+
+func cycle_socket() -> void:
+	var piece := Charts.piece_def(chart, selected_id)
+	if piece.is_empty() or not bool(piece["movable"]):
+		status_label.text = "This piece turns in place."
+		return
+	var sockets: Array = piece["sockets"]
+	var cur := str(state["pieces"][selected_id]["socket"])
+	var idx := 0
+	for i in sockets.size():
+		var sock: Dictionary = sockets[i]
+		if str(sock["id"]) == cur:
+			idx = i
+			break
+	var nxt: Dictionary = sockets[(idx + 1) % sockets.size()]
+	move_selected_to(str(nxt["id"]))
+
+func raise_tide() -> void:
+	var phases: Array = chart["tide_phases"]
+	if phases.size() <= 1:
+		status_label.text = "The tide is fixed on this chart."
+		return
+	if int(state["tide_index"]) >= phases.size() - 1:
+		return
+	_resume_editing()
+	state["tide_index"] = int(state["tide_index"]) + 1
+	_clear_hint_if_resolved()
+	_refresh()
+
+func lower_tide() -> void:
+	var phases: Array = chart["tide_phases"]
+	if phases.size() <= 1:
+		status_label.text = "The tide is fixed on this chart."
+		return
+	if int(state["tide_index"]) <= 0:
+		return
+	_resume_editing()
+	state["tide_index"] = int(state["tide_index"]) - 1
+	_clear_hint_if_resolved()
+	_refresh()
+
+func try_lock() -> void:
+	if board_locked:
+		_show_win()
+		return
+	var notes := Tracer.failure_notes(chart, state)
+	if notes.is_empty():
+		board_locked = true
+		solved[chart_index] = true
+		if chart_index + 1 < charts.size():
+			unlocked[chart_index + 1] = true
+		_save_progress()
+		status_label.text = "Chart locked."
+		_refresh()
+		_show_win()
+	else:
+		status_label.text = " ".join(notes)
+		_refresh_chrome()
+
+func try_hint() -> void:
+	if board_locked:
+		status_label.text = "This chart is already locked."
+		return
+	var result := Hints.take_hint(chart, state, hints_left, hint_highlight)
+	hints_left = int(result["hints_left"])
+	hint_highlight = str(result["mark"])
+	match str(result["kind"]):
+		"match":
+			status_label.text = "Nothing is out of place."
+		"same":
+			status_label.text = "That mark is still the one to study. Hints left: %d." % hints_left
+		"empty":
+			status_label.text = "No hints left on this chart."
+		_:
+			if hint_highlight == "tide":
+				status_label.text = "The tide clock is marked. Hints left: %d." % hints_left
+			else:
+				status_label.text = "One piece is marked. Hints left: %d." % hints_left
+	_refresh()
+
+func restart_chart() -> void:
+	state = Charts.make_state(chart, false)
+	hints_left = HINTS_PER_CHART
+	hint_highlight = ""
+	board_locked = false
+	selected_id = str(chart["pieces"][0]["id"])
+	_hide_win()
+	status_label.text = "Chart reset."
+	_refresh()
+
+func _resume_editing() -> void:
+	if board_locked:
+		board_locked = false
+
+func _clear_hint_if_resolved() -> void:
+	if hint_highlight == "":
+		return
+	if not Hints.wrong_pieces(chart, state).has(hint_highlight):
+		hint_highlight = ""
+
+func _refresh() -> void:
+	if chart.is_empty():
+		return
+	_layout()
+	_refresh_chrome()
+
+func _refresh_board() -> void:
+	if chart.is_empty() or board == null:
+		return
+	var traced := Tracer.trace(chart, state)
+	board.present(chart, state, traced, selected_id, hint_highlight)
+
+func _refresh_chrome() -> void:
+	title_label.text = "Chart %s  ·  %s" % [str(chart["id"]), str(chart["title"])]
+	teach_label.text = str(chart["teach"])
+	var piece := Charts.piece_def(chart, selected_id)
+	selected_label.text = "Selected: %s" % str(piece.get("name", "none"))
+	var flood := Tracer.flood_count(chart, state)
+	var phase := _phase_name()
+	var water := "Waterline is below the quay."
+	if flood == 1:
+		water = "Waterline covers the lowest row. Glass there is shut."
+	elif flood > 1:
+		water = "Waterline covers the lowest %d rows. Glass there is shut." % flood
+	tide_readout.text = "%s. %s" % [phase, water]
+	var phases: Array = chart["tide_phases"]
+	var multi := phases.size() > 1
+	raise_button.visible = multi
+	lower_button.visible = multi
+	if multi:
+		raise_button.disabled = int(state["tide_index"]) >= phases.size() - 1
+		lower_button.disabled = int(state["tide_index"]) <= 0
+	tide_clock.phases = phases
+	tide_clock.phase_index = int(state["tide_index"])
+	tide_clock.rows = int(chart["rows"])
+	tide_clock.marked = hint_highlight == "tide"
+	tide_clock.queue_redraw()
+	hint_button.text = "Hint (H)  %d left" % hints_left
+	held_label.visible = board_locked
+	held_label.text = "This chart is locked." if board_locked else ""
+	for i in chart_buttons.size():
+		var button := chart_buttons[i]
+		if not unlocked[i]:
+			button.text = "Lock %d" % (i + 1)
+			button.disabled = true
+		else:
+			button.disabled = false
+			button.text = "Held %d" % (i + 1) if solved[i] else "Chart %d" % (i + 1)
+		var border := Palette.LANTERN if i == chart_index else Palette.PANEL_EDGE
+		var bg := Color("2c2618") if i == chart_index else Color("1a2836")
+		button.add_theme_stylebox_override("normal", _style(bg, border))
+		button.add_theme_stylebox_override("hover", _style(bg.lightened(0.08), Palette.LANTERN))
+
+func _show_win() -> void:
+	win_body.text = str(chart["win"])
+	var has_next := chart_index + 1 < charts.size() and unlocked[chart_index + 1]
+	win_next.visible = has_next
+	win_next.text = "Next chart"
+	win_layer.visible = true
+
+func _hide_win() -> void:
+	if win_layer:
+		win_layer.visible = false
+
+func _advance_from_win() -> void:
+	var nxt := chart_index + 1
+	_hide_win()
+	if nxt < charts.size() and unlocked[nxt]:
+		select_chart(nxt)
+	else:
+		status_label.text = "Chart locked. The glass holds."
+		_refresh_chrome()
+
+func _stay_on_chart() -> void:
+	_hide_win()
+	status_label.text = "Chart locked. The glass holds."
+	_refresh_chrome()
+
+func _on_chart_pressed(index: int) -> void:
+	select_chart(index)
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		var mouse := event as InputEventMouseButton
+		if mouse.pressed and (mouse.button_index == MOUSE_BUTTON_LEFT or mouse.button_index == MOUSE_BUTTON_RIGHT):
+			_on_board_click(mouse.position, mouse.button_index == MOUSE_BUTTON_RIGHT)
+		return
+	if event is InputEventKey:
+		var key := event as InputEventKey
+		if key.pressed and not key.echo:
+			_on_key(key)
+
+func _on_key(key: InputEventKey) -> void:
+	var code := key.keycode
+	if code == KEY_R:
+		rotate_selected()
+	elif code == KEY_M:
+		cycle_socket()
+	elif code == KEY_H:
+		try_hint()
+	elif code == KEY_T:
+		raise_tide()
+	elif code == KEY_BACKSPACE:
+		restart_chart()
+	elif code == KEY_ESCAPE:
+		if win_layer.visible:
+			_stay_on_chart()
+	elif code == KEY_SPACE or code == KEY_ENTER or code == KEY_KP_ENTER:
+		if win_layer.visible:
+			_advance_from_win()
+		else:
+			try_lock()
+	elif code == KEY_LEFT or code == KEY_UP or (code == KEY_TAB and key.shift_pressed):
+		_cycle_selection(-1)
+	elif code == KEY_RIGHT or code == KEY_DOWN or code == KEY_TAB:
+		_cycle_selection(1)
+
+func _on_board_click(pos: Vector2, turn_now: bool) -> void:
+	if win_layer.visible or chart.is_empty():
+		return
+	var cell := board.cell_at_global(pos)
+	if cell.x < 0:
+		return
+	var piece_id := _piece_at(cell)
+	if piece_id != "":
+		if turn_now or piece_id == selected_id:
+			selected_id = piece_id
+			rotate_selected()
+		else:
+			selected_id = piece_id
+			_refresh()
+		return
+	var sock := _socket_at(cell)
+	if sock != "":
+		move_selected_to(sock)
+		return
+	if _fixture_at(cell):
+		status_label.text = "That glass is set in the stone."
+
+func _piece_at(cell: Vector2i) -> String:
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		var id := str(piece["id"])
+		if Charts.piece_cell(chart, state, id) == cell:
+			return id
+	return ""
+
+func _socket_at(cell: Vector2i) -> String:
+	var piece := Charts.piece_def(chart, selected_id)
+	if piece.is_empty() or not bool(piece["movable"]):
+		return ""
+	for raw in piece["sockets"]:
+		var sock: Dictionary = raw
+		if Vector2i(int(sock["x"]), int(sock["y"])) == cell:
+			return str(sock["id"])
+	return ""
+
+func _fixture_at(cell: Vector2i) -> bool:
+	for raw in chart["fixtures"]:
+		var fix: Dictionary = raw
+		if Vector2i(int(fix["x"]), int(fix["y"])) == cell:
+			return true
+	return false
+
+func _cycle_selection(step: int) -> void:
+	var ids: Array[String] = []
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		ids.append(str(piece["id"]))
+	if ids.is_empty():
+		return
+	var idx := ids.find(selected_id)
+	if idx < 0:
+		idx = 0
+	else:
+		idx = posmod(idx + step, ids.size())
+	selected_id = ids[idx]
+	_refresh()
+
+func _load_progress() -> void:
+	if not persist_progress:
+		return
+	var file := ConfigFile.new()
+	if file.load(SAVE_PATH) != OK:
+		return
+	for i in charts.size():
+		solved[i] = bool(file.get_value("progress", "solved_%d" % i, false))
+		unlocked[i] = bool(file.get_value("progress", "unlocked_%d" % i, i == 0))
+	unlocked[0] = true
+	for i in range(charts.size() - 1):
+		if solved[i]:
+			unlocked[i + 1] = true
+
+func _save_progress() -> void:
+	if not persist_progress:
+		return
+	var file := ConfigFile.new()
+	for i in charts.size():
+		file.set_value("progress", "solved_%d" % i, solved[i])
+		file.set_value("progress", "unlocked_%d" % i, unlocked[i])
+	file.save(SAVE_PATH)
+
+func _phase_name() -> String:
+	var phases: Array = chart["tide_phases"]
+	if phases.size() <= 1:
+		return "Tide holding"
+	var index := int(state["tide_index"])
+	if index <= 0:
+		return "Low water"
+	if index >= phases.size() - 1:
+		return "High water"
+	return "Mid water"
+
+func _label(text: String, size: int, color: Color) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.add_theme_font_size_override("font_size", size)
+	label.add_theme_color_override("font_color", color)
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return label
+
+func _button(text: String) -> Button:
+	var button := Button.new()
+	button.text = text
+	button.focus_mode = Control.FOCUS_NONE
+	button.add_theme_font_size_override("font_size", 15)
+	button.add_theme_color_override("font_color", Palette.TEXT)
+	button.add_theme_color_override("font_hover_color", Palette.LANTERN_HOT)
+	button.add_theme_color_override("font_pressed_color", Palette.LANTERN)
+	button.add_theme_color_override("font_disabled_color", Color("667484"))
+	button.add_theme_stylebox_override("normal", _style(Color("1a2836"), Palette.PANEL_EDGE))
+	button.add_theme_stylebox_override("hover", _style(Color("243848"), Palette.LANTERN))
+	button.add_theme_stylebox_override("pressed", _style(Color("101820"), Palette.LANTERN))
+	button.add_theme_stylebox_override("disabled", _style(Color("12181e"), Color("243038")))
+	button.custom_minimum_size = Vector2(0, 32)
+	return button
+
+func _style(bg: Color, border: Color, radius: int = 6) -> StyleBoxFlat:
+	var box := StyleBoxFlat.new()
+	box.bg_color = bg
+	box.border_color = border
+	box.set_border_width_all(1)
+	box.set_corner_radius_all(radius)
+	box.content_margin_left = 8
+	box.content_margin_right = 8
+	box.content_margin_top = 4
+	box.content_margin_bottom = 4
+	return box
