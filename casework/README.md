@@ -1,6 +1,6 @@
 # Casework
 
-A deduction game with twenty-two cases, **The spare key**, **The rehearsal score**, **The gilt stamp**, **The ferry bell**, **The weather slate**, **The loom shuttle**, **The hive smoker**, **The glass pontil**, **The press proof**, **The assay cup**, **The kiln chalk**, **The tide ledger**, **The night bell**, **The salt mark**, **The wick trim**, **The glass anneal**, **The orchard graft**, **The dye vat**, **The tar kettle**, **The cork press**, **The net loft**, and **The cask hoop**.
+A deduction game with twenty-four cases, **The spare key**, **The rehearsal score**, **The gilt stamp**, **The ferry bell**, **The weather slate**, **The loom shuttle**, **The hive smoker**, **The glass pontil**, **The press proof**, **The assay cup**, **The kiln chalk**, **The tide ledger**, **The night bell**, **The salt mark**, **The wick trim**, **The glass anneal**, **The orchard graft**, **The dye vat**, **The tar kettle**, **The cork press**, **The net loft**, **The cask hoop**, **The linen fold**, and **The dovetail**.
 
 Pick a file. That file keeps a single timeline. You read the exhibits and pin who, the room, and the hour. A theory is accepted only when it fits every exhibit. A theory that does not fit comes back naming the exhibits it contradicts. An empty pin is refused by the name of the missing slot.
 
@@ -51,6 +51,10 @@ There is no voice. The papers and the board are the whole case.
 **The net loft.** The net loft left its peg at the drying shed. Name who mended the net, the room they mended it in, and the hour.
 
 **The cask hoop.** The cask hoop left its peg at the cooperage. Name who drove the hoop, the room they drove it in, and the hour.
+
+**The linen fold.** The linen fold left its peg at the cloth loft. Name who folded the linen, the room they folded it in, and the hour.
+
+**The dovetail.** The dovetail left its peg at the joiner's bench. Name who cut the dovetail, the room they cut it in, and the hour.
 
 ## Play
 

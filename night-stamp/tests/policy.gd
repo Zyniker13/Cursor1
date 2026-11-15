@@ -811,6 +811,47 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 			guess += _stamp_number(state, card_id, row, col) + 4
 		elif short_filled == 2:
 			guess -= 8
+	if rule == "drop_if_exact_nine":
+		var nine_filled = 0
+		for nine_row in 3:
+			for nine_col in 3:
+				if state.form[nine_row][nine_col] != null:
+					nine_filled += 1
+		if nine_filled == 8:
+			guess -= 6
+		elif nine_filled == 9:
+			guess += 4
+	if rule == "double_lone_row":
+		var lone_row_filled = 0
+		for lone_col in 3:
+			if state.form[row][lone_col] != null:
+				lone_row_filled += 1
+		if lone_row_filled == 0:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+	if rule == "double_short_column":
+		var short_col_filled = 0
+		for short_row in 3:
+			if state.form[short_row][col] != null:
+				short_col_filled += 1
+		if short_col_filled == 1:
+			guess += _stamp_number(state, card_id, row, col) + 4
+		elif short_col_filled == 2:
+			guess -= 8
+	if rule == "double_corner_later":
+		var cornered_later = false
+		for delta in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var corner_row = row + delta.x
+			var corner_col = col + delta.y
+			if corner_row < 0 or corner_col < 0 or corner_row > 2 or corner_col > 2:
+				continue
+			if state.form[corner_row][corner_col] == null:
+				continue
+			if corner_row < row or (corner_row == row and corner_col < col):
+				cornered_later = true
+		if cornered_later:
+			guess += _stamp_number(state, card_id, row, col)
 	if rule == "yield_diagonal_pair":
 		var partner_row = -1
 		var partner_col = -1
@@ -886,6 +927,46 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 		if earlier_match:
 			guess += shared_number
 		guess += row
+	if rule == "drop_if_odd_count":
+		var odd_filled = 0
+		for odd_row in 3:
+			for odd_col in 3:
+				if state.form[odd_row][odd_col] != null:
+					odd_filled += 1
+		if odd_filled % 2 == 0:
+			guess -= 2
+		else:
+			guess += 2
+	if rule == "double_next_empty":
+		var blank_next_row = row
+		var blank_next_col = col + 1
+		if blank_next_col > 2:
+			blank_next_row = row + 1
+			blank_next_col = 0
+		if blank_next_row > 2:
+			guess -= 6
+		elif state.form[blank_next_row][blank_next_col] == null:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+		var blank_prev_row = row
+		var blank_prev_col = col - 1
+		if blank_prev_col < 0:
+			blank_prev_row = row - 1
+			blank_prev_col = 2
+		if blank_prev_row >= 0 and state.form[blank_prev_row][blank_prev_col] != null:
+			var blank_prev = state.form[blank_prev_row][blank_prev_col]
+			guess -= _stamp_number(state, String(blank_prev["card_id"]), blank_prev_row, blank_prev_col)
+	if rule == "double_corner_cell":
+		if (row == 0 or row == 2) and (col == 0 or col == 2):
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 3
+	if rule == "yield_middle_pay":
+		if row == 1:
+			guess += 6
+		else:
+			guess -= 1
 	if rule == "ignore_isolated":
 		var neighbors = 0
 		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:

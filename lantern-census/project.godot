@@ -6,7 +6,7 @@ config_version=5
 [application]
 
 config/name="Lantern Census"
-config/description="Fifteen dark floors. The guild pays for the map you carry out."
+config/description="Seventeen dark floors. The guild pays for the map you carry out."
 run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
