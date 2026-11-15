@@ -8,6 +8,7 @@ var rosters: Array = []
 var player_roster: Array = []
 var results: Array = []
 var pending: Dictionary = {}
+var final_result: Dictionary = {}
 
 
 func _init(series_seed: int) -> void:
@@ -15,17 +16,55 @@ func _init(series_seed: int) -> void:
 	week = 0
 	results = []
 	pending = {}
+	final_result = {}
 	var clubs := Sport.create_clubs(series_seed)
 	rosters = clubs["rosters"]
 	player_roster = rosters[Sport.PLAYER_INDEX]
 
 
 func is_over() -> bool:
-	return week >= Sport.SERIES_WEEKS
+	if week < Sport.SERIES_WEEKS:
+		return false
+	if final_result.is_empty() and reached_final():
+		return false
+	return true
+
+
+func reached_final() -> bool:
+	if week < Sport.SERIES_WEEKS:
+		return false
+	var pair := finalist_indices()
+	return int(pair[0]) == Sport.PLAYER_INDEX or int(pair[1]) == Sport.PLAYER_INDEX
+
+
+func in_final() -> bool:
+	return week >= Sport.SERIES_WEEKS and final_result.is_empty() and reached_final()
+
+
+func finalist_indices() -> Array:
+	return Sport.finalist_pair(table())
 
 
 func fixture() -> Dictionary:
+	if week >= Sport.SERIES_WEEKS:
+		return _final_card()
 	return Sport.fixture(week)
+
+
+func _final_card() -> Dictionary:
+	var pair := finalist_indices()
+	var home := int(pair[0])
+	var away := int(pair[1])
+	var bye := Sport.CLUB_COUNT - home - away
+	return {
+		"home": home,
+		"away": away,
+		"bye": bye,
+		"home_club": str(Sport.CLUB_NAMES[home]),
+		"away_club": str(Sport.CLUB_NAMES[away]),
+		"bye_club": str(Sport.CLUB_NAMES[bye]),
+		"is_final": true,
+	}
 
 
 func player_plays() -> bool:
@@ -42,7 +81,9 @@ func player_bats_second() -> bool:
 
 
 func table() -> Array:
-	return Sport.table_from_results(results)
+	var rows := Sport.table_from_results(results)
+	Sport.apply_seed_ranks(rows, seed)
+	return rows
 
 
 func record() -> Dictionary:
@@ -57,7 +98,7 @@ func record() -> Dictionary:
 
 
 func goal_met() -> bool:
-	return Sport.goal_reached(table())
+	return str(final_result.get("player_result", "")) == "win"
 
 
 func _club_plan(club_index: int) -> Dictionary:
@@ -127,6 +168,7 @@ func begin_match(lineup: Array, tactic: String, focus: String) -> Dictionary:
 		else:
 			focuses.append(str(_club_plan(club_index)["training"]))
 	played["focuses"] = focuses
+	played["is_final"] = week >= Sport.SERIES_WEEKS
 	if playing:
 		var opponent_i := away_i if home_i == Sport.PLAYER_INDEX else home_i
 		played["opponent_index"] = opponent_i
@@ -164,6 +206,17 @@ func commit_match() -> Dictionary:
 	for club_index in Sport.CLUB_COUNT:
 		notes.append(Sport.apply_training(rosters[club_index], str(focuses[club_index])))
 	pending["training_notes"] = notes
+	var championship := bool(pending.get("is_final", false))
+	if championship:
+		final_result = pending
+		pending = {}
+		return {
+			"ok": true,
+			"week": week,
+			"over": true,
+			"goal_met": goal_met(),
+			"final": true,
+		}
 	results.append(pending)
 	pending = {}
 	week += 1
@@ -172,4 +225,5 @@ func commit_match() -> Dictionary:
 		"week": week,
 		"over": is_over(),
 		"goal_met": goal_met() if is_over() else false,
+		"final": false,
 	}

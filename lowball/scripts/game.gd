@@ -62,6 +62,7 @@ var stat_strip: Label
 var week_label: Label
 var record_label: Label
 var goal_label: Label
+var rule_label: Label
 var shape_label: Label
 var schedule_label: Label
 var standings_label: Label
@@ -298,6 +299,9 @@ func _build_ui() -> void:
 	goal_label = _label(Sport.GOAL_TEXT, 16, COL_ACCENT)
 	goal_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	office.add_child(goal_label)
+	rule_label = _label("%s %s %s" % [Sport.FINAL_TEXT, Sport.TIE_RULE, Sport.SEED_RULE], 14, COL_TEXT)
+	rule_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	office.add_child(rule_label)
 
 	var round_row := HBoxContainer.new()
 	round_row.add_theme_constant_override("separation", 16)
@@ -435,7 +439,7 @@ func _build_ui() -> void:
 	restart_button.pressed.connect(press_restart)
 	action_row.add_child(restart_button)
 
-	var help := _label("The schedule lists every week. On a bye, Watch and Skip follow the other match. Lineup and tactic wait, and training still drills. Keyboard: Tab then Enter. Keys 1-4 pick a slot, Left/Right change that batter, T tactic, Y training, W watch, S skip, N continue, R restart on the office or the board.", 13, COL_MUTED)
+	var help := _label("The schedule lists every week. On a bye, Watch and Skip follow the other match. Lineup and tactic wait, and training still drills. The final uses the same lineup, tactic, training, Watch, and Skip. If Lumen Reedmice miss the final, the season ends on the board. Keyboard: Tab then Enter. Keys 1-4 pick a slot, Left/Right change that batter, T tactic, Y training, W watch, S skip, N continue, R restart on the office or the board.", 13, COL_MUTED)
 	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	office.add_child(help)
 
@@ -502,7 +506,7 @@ func _build_ui() -> void:
 	board_box.add_theme_constant_override("separation", 10)
 	board_scroll.add_child(board_box)
 	board_box.add_child(_label("Board meeting", 32, COL_ACCENT))
-	board_box.add_child(_label("Eight-week round-robin in %s." % Sport.TOWN, 18, COL_TEXT))
+	board_box.add_child(_label("Eight-week round-robin in %s, then the final." % Sport.TOWN, 18, COL_TEXT))
 	board_label = _label("", 16, COL_TEXT)
 	board_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	board_box.add_child(board_label)
@@ -612,11 +616,15 @@ func _refresh_office() -> void:
 		return
 	if series.is_over():
 		return
-	var shown_week: int = mini(int(series.week) + 1, Sport.SERIES_WEEKS)
-	week_label.text = "Week %d of %d" % [shown_week, Sport.SERIES_WEEKS]
-	seed_label.text = "Series seed %d" % int(series.seed)
 	var rec: Dictionary = series.record()
-	goal_label.text = "%s  Points so far: %d from %d." % [Sport.GOAL_TEXT, int(rec["points"]), int(rec["played"])]
+	if series.in_final():
+		week_label.text = "Final"
+		goal_label.text = "%s  You reached the final." % Sport.GOAL_TEXT
+	else:
+		var shown_week: int = mini(int(series.week) + 1, Sport.SERIES_WEEKS)
+		week_label.text = "Week %d of %d" % [shown_week, Sport.SERIES_WEEKS]
+		goal_label.text = "%s  Points so far: %d from %d." % [Sport.GOAL_TEXT, int(rec["points"]), int(rec["played"])]
+	seed_label.text = "Series seed %d" % int(series.seed)
 	if series.player_plays():
 		record_label.text = "Record %d-%d-%d. %s" % [
 			int(rec["wins"]),
@@ -635,7 +643,10 @@ func _refresh_office() -> void:
 	var card: Dictionary = series.fixture()
 	if series.player_plays():
 		var opponent_name := str(card["away_club"]) if int(card["home"]) == Sport.PLAYER_INDEX else str(card["home_club"])
-		fixture_title.text = opponent_name
+		if series.in_final():
+			fixture_title.text = "Final: %s" % opponent_name
+		else:
+			fixture_title.text = opponent_name
 		fixture_title.add_theme_color_override("font_color", _club_color(opponent_name))
 	else:
 		fixture_title.text = "Bye week"
@@ -669,13 +680,21 @@ func _refresh_office() -> void:
 		training_buttons[i].text = Sport.STAT_LABEL[stat_name] + (" [on]" if on else "")
 		_paint_button(training_buttons[i], on)
 	var tactic_line := str(TACTIC_HELP[tactic])
-	if series.player_plays():
+	if series.in_final():
+		tactic_help.text = tactic_line + " This is the final. The club ahead in the table is home and bats second."
+		training_help.text = "After the final, every %s player gains +1 %s, capped at %d. All three clubs drill, including the club left out." % [
+			Sport.PLAYER_CLUB, Sport.STAT_LABEL[training], Sport.STAT_CAP,
+		]
+	elif series.player_plays():
 		tactic_help.text = tactic_line
+		training_help.text = "After the week, every %s player gains +1 %s, capped at %d. All three clubs drill every week, including a bye." % [
+			Sport.PLAYER_CLUB, Sport.STAT_LABEL[training], Sport.STAT_CAP,
+		]
 	else:
 		tactic_help.text = tactic_line + " This week is a bye, so the tactic is not used."
-	training_help.text = "After the week, every %s player gains +1 %s, capped at %d. All three clubs drill every week, including a bye." % [
-		Sport.PLAYER_CLUB, Sport.STAT_LABEL[training], Sport.STAT_CAP,
-	]
+		training_help.text = "After the week, every %s player gains +1 %s, capped at %d. All three clubs drill every week, including a bye." % [
+			Sport.PLAYER_CLUB, Sport.STAT_LABEL[training], Sport.STAT_CAP,
+		]
 	opponent_label.text = _opponent_blurb()
 
 
@@ -707,6 +726,8 @@ func _opponent_blurb() -> String:
 	var opponent_i := int(card["away"]) if int(card["home"]) == Sport.PLAYER_INDEX else int(card["home"])
 	var plan: Dictionary = Sport.opponent_plan(series.rosters[opponent_i], int(series.week), opponent_i)
 	var where := "You are home and bat second." if series.player_bats_second() else "You are away and bat first."
+	if series.in_final():
+		where = "This is the final. " + where + " The club ahead in the table is home."
 	return "%s\nPosted tactic: %s.\nLineup: %s.\nThey drill %s after the match.\nBatting second gives no stat bonus. The side that bats second is only the bottom of each inning." % [
 		where,
 		Sport.TACTIC_LABEL[str(plan["tactic"])],
@@ -730,6 +751,18 @@ func _schedule_text() -> String:
 				int(result["away_score"]),
 			]
 		lines.append("%sWeek %d   %s   %s bye" % [prefix, w + 1, match_bit, str(card["bye_club"])])
+	if int(series.week) >= Sport.SERIES_WEEKS:
+		var final_card: Dictionary = series.fixture()
+		var final_prefix := "> " if series.in_final() else "  "
+		var final_bit := "%s vs %s" % [str(final_card["home_club"]), str(final_card["away_club"])]
+		if not series.final_result.is_empty():
+			final_bit = "%s %d, %s %d" % [
+				str(series.final_result["home_club"]),
+				int(series.final_result["home_score"]),
+				str(series.final_result["away_club"]),
+				int(series.final_result["away_score"]),
+			]
+		lines.append("%sFinal   %s   %s out" % [final_prefix, final_bit, str(final_card["bye_club"])])
 	return "\n".join(lines)
 
 
@@ -740,11 +773,20 @@ func _ppg_text(points: int, played: int) -> String:
 	return "%d.%03d per game" % [int(milli / 1000.0), milli % 1000]
 
 
+func _run_diff_text(value: int) -> String:
+	if value > 0:
+		return "run diff +%d" % value
+	return "run diff %d" % value
+
+
 func _standings_text() -> String:
 	var rows: Array = Sport.sorted_table(series.table())
-	var lines: Array = ["Ordered by points per game"]
+	var lines: Array = [
+		Sport.TIE_RULE,
+		"Series seed order: %s." % Sport.seed_order_names(int(series.seed)),
+	]
 	for row in rows:
-		lines.append("%s   %d-%d-%d   %d pts from %d   %s" % [
+		lines.append("%s   %d-%d-%d   %d pts from %d   %s   %s" % [
 			str(row["club"]),
 			int(row["wins"]),
 			int(row["losses"]),
@@ -752,6 +794,7 @@ func _standings_text() -> String:
 			int(row["points"]),
 			int(row["played"]),
 			_ppg_text(int(row["points"]), int(row["played"])),
+			_run_diff_text(int(row["run_diff"])),
 		])
 	return "\n".join(lines)
 
@@ -899,7 +942,9 @@ func _result_text(played: Dictionary) -> String:
 	if bool(played["player_played"]):
 		var word := _result_word(str(played["player_result"]))
 		var order := "second" if bool(played["player_bats_second"]) else "first"
-		lines.append("Final: %s %d, %s %d. %s. You batted %s. %s against %s." % [
+		var lead := "The final" if bool(played.get("is_final", false)) else "Final"
+		lines.append("%s: %s %d, %s %d. %s. You batted %s. %s against %s." % [
+			lead,
 			Sport.PLAYER_CLUB,
 			int(played["player_score"]),
 			str(played["opponent_club"]),
@@ -976,11 +1021,44 @@ func _board_week_line(result: Dictionary) -> String:
 	]
 
 
+func _final_board_lines() -> Array:
+	var ordered: Array = Sport.sorted_table(series.table())
+	var home_name := str(ordered[0]["club"])
+	var away_name := str(ordered[1]["club"])
+	var lines: Array = []
+	if series.final_result.is_empty():
+		lines.append("The final: not played. %s missed it, so the season ends without a final." % Sport.PLAYER_CLUB)
+		lines.append("The clubs ahead were %s at home and %s away." % [home_name, away_name])
+		return lines
+	var played: Dictionary = series.final_result
+	var word := _result_word(str(played["player_result"]))
+	var order := "Batted second" if bool(played["player_bats_second"]) else "Batted first"
+	lines.append("The final: %s %d, %s %d. %s. %s. %s against %s." % [
+		Sport.PLAYER_CLUB,
+		int(played["player_score"]),
+		str(played["opponent_club"]),
+		int(played["opponent_score"]),
+		word,
+		order,
+		Sport.TACTIC_LABEL[str(played["player_tactic"])],
+		Sport.TACTIC_LABEL[str(played["opponent_tactic"])],
+	])
+	if str(played["player_result"]) == "win":
+		lines.append("%s reached the final and won it." % Sport.PLAYER_CLUB)
+	else:
+		lines.append("%s reached the final and did not win it." % Sport.PLAYER_CLUB)
+	return lines
+
+
 func _board_text() -> String:
 	var rec: Dictionary = series.record()
 	var verdict := "MET" if series.goal_met() else "MISSED"
 	var lines: Array = []
 	lines.append(Sport.GOAL_TEXT)
+	lines.append(Sport.FINAL_TEXT)
+	lines.append(Sport.TIE_RULE)
+	lines.append(Sport.SEED_RULE)
+	lines.append("Series seed order: %s." % Sport.seed_order_names(int(series.seed)))
 	lines.append(Sport.SCHEDULE_TEXT)
 	lines.append("Result: %s" % verdict)
 	lines.append("Your points: %d from %d. Record %d-%d-%d." % [
@@ -988,6 +1066,9 @@ func _board_text() -> String:
 	])
 	lines.append("")
 	lines.append(_standings_text())
+	lines.append("")
+	for line in _final_board_lines():
+		lines.append(line)
 	lines.append("")
 	for result in series.results:
 		lines.append(_board_week_line(result))
