@@ -1,6 +1,6 @@
 # Casework
 
-A deduction game with twenty-seven cases, **The spare key**, **The rehearsal score**, **The gilt stamp**, **The ferry bell**, **The weather slate**, **The loom shuttle**, **The hive smoker**, **The glass pontil**, **The press proof**, **The assay cup**, **The kiln chalk**, **The tide ledger**, **The night bell**, **The salt mark**, **The wick trim**, **The glass anneal**, **The orchard graft**, **The dye vat**, **The tar kettle**, **The cork press**, **The net loft**, **The cask hoop**, **The linen fold**, **The dovetail**, **The mortise**, **The rebate**, and **The housing**.
+A deduction game with twenty-nine cases, **The spare key**, **The rehearsal score**, **The gilt stamp**, **The ferry bell**, **The weather slate**, **The loom shuttle**, **The hive smoker**, **The glass pontil**, **The press proof**, **The assay cup**, **The kiln chalk**, **The tide ledger**, **The night bell**, **The salt mark**, **The wick trim**, **The glass anneal**, **The orchard graft**, **The dye vat**, **The tar kettle**, **The cork press**, **The net loft**, **The cask hoop**, **The linen fold**, **The dovetail**, **The mortise**, **The rebate**, **The housing**, **The tenon**, and **The bridle**.
 
 Pick a file. That file keeps a single timeline. You read the exhibits and pin who, the room, and the hour. A theory is accepted only when it fits every exhibit. A theory that does not fit comes back naming the exhibits it contradicts. An empty pin is refused by the name of the missing slot.
 
@@ -61,6 +61,10 @@ There is no voice. The papers and the board are the whole case.
 **The rebate.** The rebate left its peg at the joiner's wall. Name who cut the rebate, the room they cut it in, and the hour.
 
 **The housing.** The housing left its peg at the joiner's horse. Name who cut the housing, the room they cut it in, and the hour.
+
+**The tenon.** The tenon left its peg at the joiner's bench. Name who cut the tenon, the room they cut it in, and the hour.
+
+**The bridle.** The bridle left its peg at the joiner's stool. Name who cut the bridle, the room they cut it in, and the hour.
 
 ## Play
 

@@ -42,6 +42,8 @@ func _run() -> void:
 	_building_ten()
 	_chute_rules()
 	_building_eleven()
+	_shunt_rules()
+	_building_twelve()
 	_ui_uses_simulated_par()
 	if _failures.is_empty():
 		print("ALL TESTS PASSED")
@@ -1727,8 +1729,8 @@ func _chute_rules() -> void:
 func _building_eleven() -> void:
 	print("building 11")
 	var puzzles := Puzzles.all()
-	_check(puzzles.size() == 85, "building 11 adds routes 79 through 85")
-	_check(Puzzles.INTRO.size() == 15 and Puzzles.INTRO[14] == "chute", "the chute is the block building 11 teaches")
+	_check(puzzles.size() >= 85, "building 11 adds routes 79 through 85")
+	_check(Puzzles.INTRO.size() >= 15 and Puzzles.INTRO[14] == "chute", "the chute is the block building 11 teaches")
 	_check(not Puzzles.unlocked_at(77).has("chute"), "the chute stays locked through route 78")
 	_check(Puzzles.unlocked_at(78).has("chute"), "route 79 unlocks the chute")
 	_check(Puzzles.unlocked_at(84).size() == 15, "building 11 ends with every block")
@@ -1745,6 +1747,8 @@ func _building_eleven() -> void:
 		var id := int(puzzle["id"])
 		if id < 79:
 			_check(int(puzzle.get("building", 1)) < 11, "route %d stays out of building 11" % id)
+			continue
+		if id > 85:
 			continue
 		_check(int(puzzle.get("building", 1)) == 11, "route %d is building 11" % id)
 		var result: Dictionary = Sim.run(puzzle, puzzle["reference"])
@@ -1876,6 +1880,307 @@ func _chute_turn_exit(graph: Array) -> Array:
 	return copy
 
 
+func _shunt_rules() -> void:
+	print("shunt")
+	var straight := {
+		"width": 4, "height": 3,
+		"walls": [
+			{"x": 0, "y": 0}, {"x": 1, "y": 0}, {"x": 2, "y": 0}, {"x": 3, "y": 0},
+			{"x": 3, "y": 1},
+			{"x": 0, "y": 2}, {"x": 1, "y": 2},
+		],
+		"sources": [{"x": 0, "y": 1, "dir": 0, "parcels": [{"color": "gray"}]}],
+		"dock": {"x": 3, "y": 2},
+		"order": [{"color": "gray"}],
+	}
+	var graph := [
+		{"type": "conveyor", "x": 1, "y": 1, "dir": 0},
+		{"type": "shunt", "x": 2, "y": 1, "dir": 0},
+		{"type": "pause", "x": 2, "y": 2, "dir": 0},
+	]
+	var sent: Dictionary = Sim.run(straight, graph)
+	_check(bool(sent["success"]), "a shunt steps aside and the kept facing delivers")
+	_check(int(sent["cycles"]) == 6 and int(sent["blocks"]) == 3, "the shunt waits a tick and delivers on tick 6")
+	var born := _frame(sent, 2)
+	var waited := _frame(sent, 3)
+	var stepped := _frame(sent, 4)
+	_check(not born.is_empty() and _dir_at(born, 2, 1) == 0, "the parcel arrives facing east")
+	_check(not waited.is_empty() and _at(waited, 2, 1) and not _at(waited, 2, 2), "the shunt does not move the parcel on that tick")
+	_check(_dir_at(waited, 2, 1) == 0, "the shunt leaves the east facing unchanged")
+	_check(_count_at(waited, 2, 1) == 0 and _color_at(waited, 2, 1) == "gray", "a shunt does not stamp or paint")
+	_check(not stepped.is_empty() and _at(stepped, 2, 2) and _dir_at(stepped, 2, 2) == 0, "the side step goes south and the parcel still faces east")
+	var tinted: Dictionary = Sim.run(straight, [
+		{"type": "conveyor", "x": 1, "y": 1, "dir": 0},
+		{"type": "shunt", "x": 2, "y": 1, "dir": 0, "color": "red"},
+		{"type": "pause", "x": 2, "y": 2, "dir": 0},
+	])
+	_check(bool(tinted["success"]) and str(tinted["delivered"][0]["color"]) == "gray" and int(tinted["delivered"][0]["count"]) == 0, "a color on a shunt is ignored")
+	for dir in range(4):
+		var spun: Array = graph.duplicate(true)
+		spun[1]["dir"] = dir
+		var run: Dictionary = Sim.run(straight, spun)
+		_check(bool(run["success"]) and int(run["cycles"]) == 6, "rotating a shunt does not change the side step")
+	var turned: Dictionary = Sim.run(straight, [
+		{"type": "conveyor", "x": 1, "y": 1, "dir": 0},
+		{"type": "turn", "x": 2, "y": 1, "dir": 0},
+		{"type": "pause", "x": 2, "y": 2, "dir": 0},
+	])
+	_check(not bool(turned["success"]), "a turn in the shunt's cell faces south and the pause misses the dock")
+	var turned_face := _frame(turned, 3)
+	var turned_step := _frame(turned, 4)
+	_check(not turned_face.is_empty() and _dir_at(turned_face, 2, 1) == 1, "the turn writes south before it steps")
+	_check(not turned_step.is_empty() and _at(turned_step, 2, 2) and _dir_at(turned_step, 2, 2) == 1, "the turn's step faces the way it moved")
+	var kept: Dictionary = Sim.run(straight, [
+		{"type": "conveyor", "x": 1, "y": 1, "dir": 0},
+		{"type": "pause", "x": 2, "y": 1, "dir": 0},
+		{"type": "pause", "x": 2, "y": 2, "dir": 0},
+	])
+	_check(not bool(kept["success"]), "a pause in the shunt's cell keeps east and never steps south")
+	var kept_face := _frame(kept, 3)
+	_check(not kept_face.is_empty() and _at(kept_face, 2, 1) and _dir_at(kept_face, 2, 1) == 0 and not _at(kept_face, 2, 2), "the pause is still on the shunt cell facing east")
+	var aimed: Dictionary = Sim.run(straight, [
+		{"type": "conveyor", "x": 1, "y": 1, "dir": 0},
+		{"type": "chute", "x": 2, "y": 1, "dir": 0},
+		{"type": "pause", "x": 2, "y": 2, "dir": 0},
+	])
+	_check(not bool(aimed["success"]), "an east chute sends the parcel east and misses the side step")
+	var hooked: Dictionary = Sim.run(straight, [
+		{"type": "conveyor", "x": 1, "y": 1, "dir": 0},
+		{"type": "hook", "x": 2, "y": 1, "dir": 0},
+		{"type": "pause", "x": 2, "y": 2, "dir": 0},
+	])
+	_check(not bool(hooked["success"]), "a hook in the shunt's cell misses the dock")
+	_check(_dir_at(_frame(hooked, 3), 2, 1) == 3, "a hook sends the eastbound parcel north")
+	var backed: Dictionary = Sim.run(straight, [
+		{"type": "conveyor", "x": 1, "y": 1, "dir": 0},
+		{"type": "return", "x": 2, "y": 1, "dir": 0},
+		{"type": "pause", "x": 2, "y": 2, "dir": 0},
+	])
+	_check(not bool(backed["success"]) and str(backed["reason"]) == "tick_cap", "a return in the shunt's cell misses the dock")
+	_check(_dir_at(_frame(backed, 3), 2, 1) == 2, "a return sends the eastbound parcel west")
+	_check(_at(_frame(backed, 4), 1, 1) and _dir_at(_frame(backed, 4), 1, 1) == 2, "the return then steps back west")
+	var early_board := {
+		"width": 4, "height": 3,
+		"walls": [
+			{"x": 0, "y": 0}, {"x": 1, "y": 0}, {"x": 2, "y": 0}, {"x": 3, "y": 0},
+			{"x": 0, "y": 2}, {"x": 1, "y": 2},
+		],
+		"sources": [{"x": 0, "y": 1, "dir": 0, "parcels": [{"color": "gray"}]}],
+		"dock": {"x": 3, "y": 2},
+		"order": [{"color": "gray"}],
+	}
+	var early_graph := [
+		{"type": "conveyor", "x": 1, "y": 1, "dir": 0},
+		{"type": "shunt", "x": 2, "y": 1, "dir": 0},
+		{"type": "conveyor", "x": 3, "y": 1, "dir": 3},
+		{"type": "pause", "x": 2, "y": 2, "dir": 0},
+	]
+	var held_side: Dictionary = Sim.run(early_board, early_graph)
+	_check(bool(held_side["success"]) and int(held_side["cycles"]) == 6, "an unused east belt does not change the shunt")
+	_check(_at(_frame(held_side, 3), 2, 1) and not _at(_frame(held_side, 3), 3, 1), "the shunt is still waiting on the arrival tick")
+	var early: Dictionary = Sim.run(early_board, [
+		{"type": "conveyor", "x": 1, "y": 1, "dir": 0},
+		{"type": "conveyor", "x": 2, "y": 1, "dir": 0},
+		{"type": "conveyor", "x": 3, "y": 1, "dir": 3},
+		{"type": "pause", "x": 2, "y": 2, "dir": 0},
+	])
+	_check(not bool(early["success"]), "an east conveyor leaves on the arrival tick and misses the dock")
+	_check(_at(_frame(early, 3), 3, 1), "the conveyor is already east while a shunt would still be waiting")
+
+	var rights := [
+		{"name": "east", "src": Vector2i(0, 1), "arrival": 0, "shunt": Vector2i(1, 1), "side": Vector2i(1, 2), "dock": Vector2i(2, 2)},
+		{"name": "south", "src": Vector2i(1, 0), "arrival": 1, "shunt": Vector2i(1, 1), "side": Vector2i(0, 1), "dock": Vector2i(0, 2)},
+		{"name": "west", "src": Vector2i(2, 1), "arrival": 2, "shunt": Vector2i(1, 1), "side": Vector2i(1, 0), "dock": Vector2i(0, 0)},
+		{"name": "north", "src": Vector2i(1, 2), "arrival": 3, "shunt": Vector2i(1, 1), "side": Vector2i(2, 1), "dock": Vector2i(2, 0)},
+	]
+	for spec in rights:
+		var src_at: Vector2i = spec["src"]
+		var shunt_at: Vector2i = spec["shunt"]
+		var side_at: Vector2i = spec["side"]
+		var dock_at: Vector2i = spec["dock"]
+		var arrival := int(spec["arrival"])
+		var lane := {
+			"width": 3, "height": 3, "walls": [],
+			"sources": [{"x": src_at.x, "y": src_at.y, "dir": arrival, "parcels": [{"color": "gray"}]}],
+			"dock": {"x": dock_at.x, "y": dock_at.y},
+			"order": [{"color": "gray"}],
+		}
+		var blocks := [
+			{"type": "shunt", "x": shunt_at.x, "y": shunt_at.y, "dir": 0},
+			{"type": "pause", "x": side_at.x, "y": side_at.y, "dir": 0},
+		]
+		var run: Dictionary = Sim.run(lane, blocks)
+		var moved := _frame(run, 3)
+		_check(bool(run["success"]) and int(run["cycles"]) == 5, "a %s parcel steps to its right and the pause follows the old facing" % str(spec["name"]))
+		_check(not moved.is_empty() and _at(moved, side_at.x, side_at.y) and _dir_at(moved, side_at.x, side_at.y) == arrival, "a %s parcel still faces %s after the side step" % [str(spec["name"]), str(spec["name"])])
+
+	var hop := {
+		"width": 3, "height": 4, "walls": [{"x": 1, "y": 2}],
+		"sources": [{"x": 0, "y": 1, "dir": 0, "parcels": [{"color": "gray"}]}],
+		"dock": {"x": 1, "y": 3},
+		"order": [{"color": "gray"}],
+	}
+	var blocked: Dictionary = Sim.run(hop, [{"type": "shunt", "x": 1, "y": 1, "dir": 0}])
+	_check(not bool(blocked["success"]), "a shunt does not carry a parcel over the next cell")
+	var crossed := false
+	for frame in blocked["frames"]:
+		if _at(frame, 1, 3):
+			crossed = true
+	_check(not crossed, "the parcel never reaches the cell past a shunt")
+
+	var gap := {
+		"width": 4, "height": 3, "walls": [],
+		"sources": [
+			{"x": 0, "y": 1, "dir": 0, "parcels": [{"color": "gray"}]},
+			{"x": 0, "y": 2, "dir": 0, "parcels": [{"color": "blue"}]},
+		],
+		"dock": {"x": 3, "y": 2},
+		"order": [{"color": "blue"}, {"color": "gray"}],
+	}
+	var followed: Dictionary = Sim.run(gap, [
+		{"type": "conveyor", "x": 1, "y": 1, "dir": 0},
+		{"type": "shunt", "x": 2, "y": 1, "dir": 0},
+		{"type": "pause", "x": 1, "y": 2, "dir": 0},
+		{"type": "conveyor", "x": 2, "y": 2, "dir": 0},
+	])
+	_check(bool(followed["success"]) and int(followed["cycles"]) == 5, "a shunt can enter a cell another parcel is leaving")
+	var into := _frame(followed, 4)
+	_check(not into.is_empty() and _color_at(into, 2, 2) == "gray" and _dir_at(into, 2, 2) == 0, "the shunt steps into the cell the other parcel left and still faces east")
+	_check(into.get("delivered", []).size() == 1 and str(into["delivered"][0]["color"]) == "blue", "the parcel ahead is delivered on that tick")
+
+	var held_board := {
+		"width": 4, "height": 4, "walls": [{"x": 3, "y": 2}],
+		"sources": [
+			{"x": 0, "y": 1, "dir": 0, "parcels": [{"color": "gray"}]},
+			{"x": 2, "y": 3, "dir": 3, "parcels": [{"color": "blue"}]},
+		],
+		"dock": {"x": 3, "y": 1},
+		"order": [{"color": "gray"}],
+	}
+	var waiting: Dictionary = Sim.run(held_board, [
+		{"type": "conveyor", "x": 1, "y": 1, "dir": 0},
+		{"type": "shunt", "x": 2, "y": 1, "dir": 0},
+		{"type": "conveyor", "x": 2, "y": 2, "dir": 0},
+	])
+	_check(not bool(waiting["success"]) and str(waiting["reason"]) == "tick_cap", "a shunt keeps waiting while its side cell stays blocked")
+	var same := _frame(waiting, 3)
+	var first_try := _frame(waiting, 4)
+	var later := _frame(waiting, 5)
+	_check(not same.is_empty() and _at(same, 2, 1) and _dir_at(same, 2, 1) == 0, "the blocked shunt still faces east on the wait")
+	_check(not first_try.is_empty() and _at(first_try, 2, 1) and _dir_at(first_try, 2, 1) == 0, "the first blocked side step does not change the facing")
+	_check(not later.is_empty() and _at(later, 2, 1) and _dir_at(later, 2, 1) == 0 and _color_at(later, 2, 2) == "blue", "the shunt keeps the arrival facing while the other parcel stays")
+
+
+func _building_twelve() -> void:
+	print("building 12")
+	var puzzles := Puzzles.all()
+	_check(puzzles.size() == 92, "building 12 adds routes 86 through 92")
+	_check(Puzzles.INTRO.size() == 16 and Puzzles.INTRO[15] == "shunt", "the shunt is the block building 12 teaches")
+	_check(not Puzzles.unlocked_at(84).has("shunt"), "the shunt stays locked through route 85")
+	_check(Puzzles.unlocked_at(85).has("shunt"), "route 86 unlocks the shunt")
+	_check(Puzzles.unlocked_at(91).size() == 16, "building 12 ends with every block")
+	var pars := {
+		86: [6, 3],
+		87: [8, 10],
+		88: [7, 4],
+		89: [8, 10],
+		90: [18, 16],
+		91: [11, 6],
+		92: [12, 12],
+	}
+	for puzzle in puzzles:
+		var id := int(puzzle["id"])
+		if id < 86:
+			_check(int(puzzle.get("building", 1)) < 12, "route %d stays out of building 12" % id)
+			continue
+		_check(int(puzzle.get("building", 1)) == 12, "route %d is building 12" % id)
+		var result: Dictionary = Sim.run(puzzle, puzzle["reference"])
+		var par: Dictionary = Scoring.compute_par(puzzle)
+		_check(bool(result["success"]), "route %d reference delivers" % id)
+		_check(int(result["cycles"]) == int(par["cycles"]), "route %d reference meets par cycles" % id)
+		_check(int(result["blocks"]) == int(par["blocks"]), "route %d reference meets par blocks" % id)
+		_check(int(result["blocks"]) == puzzle["reference"].size(), "route %d plays the reference block count" % id)
+		var locked: Array = pars[id]
+		_check(int(par["cycles"]) == int(locked[0]) and int(par["blocks"]) == int(locked[1]), "route %d par is %d cycles and %d blocks" % [id, int(locked[0]), int(locked[1])])
+		if id == 86:
+			_check(str(puzzle.get("unlocks", "")) == "shunt", "route 86 teaches the shunt")
+		else:
+			_check(str(puzzle.get("unlocks", "")) == "", "route %d adds no further block" % id)
+		var uses_shunt := false
+		for block in puzzle["reference"]:
+			if str(block["type"]) == "shunt":
+				uses_shunt = true
+		_check(uses_shunt, "route %d reference uses the shunt" % id)
+		if not bool(result["success"]):
+			_dump(result)
+		print("    par route %d  cycles %d  blocks %d" % [id, int(par["cycles"]), int(par["blocks"])])
+
+	var lesson: Dictionary = Sim.run(_by_id(86), _by_id(86)["reference"])
+	_check(not _frame(lesson, 2).is_empty() and _dir_at(_frame(lesson, 2), 2, 1) == 0, "route 86 starts the parcel facing east on the shunt")
+	_check(_at(_frame(lesson, 3), 2, 1) and _dir_at(_frame(lesson, 3), 2, 1) == 0, "route 86 keeps the parcel facing east without moving it")
+	_check(_at(_frame(lesson, 4), 2, 2) and _dir_at(_frame(lesson, 4), 2, 2) == 0, "route 86 steps south and still faces east")
+	for id in [86, 87, 88, 89, 90, 91, 92]:
+		for dir in range(4):
+			var spun: Array = _by_id(id)["reference"].duplicate(true)
+			for block in spun:
+				if str(block["type"]) == "shunt":
+					block["dir"] = dir
+			var spun_run: Dictionary = Sim.run(_by_id(id), spun)
+			_check(bool(spun_run["success"]) and int(spun_run["cycles"]) == int(pars[id][0]), "route %d ignores which way the shunt block is rotated" % id)
+		for kind in ["turn", "pause", "chute", "hook", "return", "conveyor"]:
+			var swapped: Dictionary = Sim.run(_by_id(id), _swap(_by_id(id), "shunt", kind))
+			_check(not bool(swapped["success"]), "route %d fails if the shunt is a %s" % [id, kind])
+		var omitted: Array = []
+		for block in _by_id(id)["reference"]:
+			if str(block["type"]) != "shunt":
+				omitted.append(block)
+		_check(not bool(Sim.run(_by_id(id), omitted)["success"]), "route %d fails if the shunt is missing" % id)
+
+	var let_turn := _frame(Sim.run(_by_id(87), _swap(_by_id(87), "shunt", "turn")), 4)
+	_check(not let_turn.is_empty() and _at(let_turn, 2, 2) and _dir_at(let_turn, 2, 2) == 1, "route 87's turn steps south facing south")
+	_check(str(Sim.run(_by_id(87), _swap(_by_id(87), "shunt", "conveyor"))["reason"]) == "wrong_delivery", "route 87's conveyor delivers red before blue")
+	_check(str(Sim.run(_by_id(87), _swap(_by_id(87), "shunt", "pause"))["reason"]) == "wrong_delivery", "route 87's pause sends red east ahead of blue")
+	var counted: Dictionary = Sim.run(_by_id(88), _by_id(88)["reference"])
+	_check(int(counted["delivered"][0]["count"]) == 1, "route 88 delivers count 1")
+	_check(_at(_frame(counted, 4), 2, 2) and _dir_at(_frame(counted, 4), 2, 2) == 0, "route 88 lands facing east, not along the side step")
+	var count_turn := _frame(Sim.run(_by_id(88), _swap(_by_id(88), "shunt", "turn")), 4)
+	_check(not count_turn.is_empty() and _at(count_turn, 2, 2) and _dir_at(count_turn, 2, 2) == 1, "route 88's turn reaches the side cell facing south")
+	_check(not bool(Sim.run(_by_id(88), _swap(_by_id(88), "counter", "conveyor"))["success"]), "route 88 fails without the counter")
+	var clear_turn := _frame(Sim.run(_by_id(89), _swap(_by_id(89), "shunt", "turn")), 4)
+	_check(not clear_turn.is_empty() and _at(clear_turn, 2, 3) and _dir_at(clear_turn, 2, 3) == 1, "route 89's turn steps aside facing south")
+	_check(str(Sim.run(_by_id(89), _swap(_by_id(89), "shunt", "pause"))["reason"]) == "wrong_delivery", "route 89's pause does not step aside")
+	var paired: Dictionary = Sim.run(_by_id(90), _by_id(90)["reference"])
+	_check(_at(_frame(paired, 4), 2, 3) and _dir_at(_frame(paired, 4), 2, 3) == 0, "route 90 steps red south and leaves it facing east")
+	_check(_at(_frame(paired, 6), 2, 1) and _dir_at(_frame(paired, 6), 2, 1) == 2, "route 90 steps blue north and leaves it facing west")
+	var both_turn: Dictionary = Sim.run(_by_id(90), _swap(_by_id(90), "shunt", "turn"))
+	_check(_dir_at(_frame(both_turn, 3), 2, 2) == 1, "route 90 turns red a quarter clockwise")
+	_check(_dir_at(_frame(both_turn, 5), 2, 2) == 3, "route 90 turns blue a quarter clockwise")
+	_check(not bool(Sim.run(_by_id(91), _swap(_by_id(91), "painter", "conveyor"))["success"]), "route 91 fails if the parcel is not painted")
+	_check(not bool(Sim.run(_by_id(91), _swap(_by_id(91), "counter", "conveyor"))["success"]), "route 91 fails without the second stamp")
+	_check(not bool(Sim.run(_by_id(91), _swap(_by_id(91), "splitter", "conveyor"))["success"]), "route 91 loops if the splitter cannot send the second pass east")
+	var second: Dictionary = Sim.run(_by_id(91), _by_id(91)["reference"])
+	_check(str(second["delivered"][0]["color"]) == "yellow" and int(second["delivered"][0]["count"]) == 2, "route 91 delivers yellow 2")
+	_check(_at(_frame(second, 9), 3, 2) and _dir_at(_frame(second, 9), 3, 2) == 0, "route 91 steps south and still faces east")
+	var second_turn := _frame(Sim.run(_by_id(91), _swap(_by_id(91), "shunt", "turn")), 9)
+	_check(not second_turn.is_empty() and _at(second_turn, 3, 2) and _dir_at(second_turn, 3, 2) == 1, "route 91's turn reaches the side cell facing south")
+	var second_pause := _frame(Sim.run(_by_id(91), _swap(_by_id(91), "shunt", "pause")), 8)
+	_check(not second_pause.is_empty() and _at(second_pause, 3, 1) and _dir_at(second_pause, 3, 1) == 0 and not _at(second_pause, 3, 2), "route 91's pause never takes the side step")
+	_check(not bool(Sim.run(_by_id(92), _swap(_by_id(92), "primer", "painter"))["success"]), "route 92 fails if blue is painted yellow")
+	_check(not bool(Sim.run(_by_id(92), _swap(_by_id(92), "filter", "conveyor"))["success"]), "route 92 fails if red is not pulled ahead")
+	_check(not bool(Sim.run(_by_id(92), _swap(_by_id(92), "counter", "conveyor"))["success"]), "route 92 fails without the counter")
+	var night: Dictionary = Sim.run(_by_id(92), _by_id(92)["reference"])
+	_check(str(night["delivered"][0]["color"]) == "red" and int(night["delivered"][0]["count"]) == 1, "route 92 stamps red 1")
+	_check(str(night["delivered"][1]["color"]) == "yellow" and int(night["delivered"][1]["count"]) == 2, "route 92 stamps yellow 2")
+	_check(str(night["delivered"][2]["color"]) == "blue" and int(night["delivered"][2]["count"]) == 3, "route 92 stamps blue 3")
+	_check(_at(_frame(night, 6), 3, 2) and _dir_at(_frame(night, 6), 3, 2) == 0, "route 92 steps red south and leaves it facing east")
+	var night_turn := _frame(Sim.run(_by_id(92), _swap(_by_id(92), "shunt", "turn")), 6)
+	_check(not night_turn.is_empty() and _at(night_turn, 3, 2) and _dir_at(night_turn, 3, 2) == 1, "route 92's turn steps aside facing south")
+	var night_pause := _frame(Sim.run(_by_id(92), _swap(_by_id(92), "shunt", "pause")), 6)
+	_check(not night_pause.is_empty() and _at(night_pause, 3, 1) and _dir_at(night_pause, 3, 1) == 0 and not _at(night_pause, 3, 2), "route 92's pause keeps east and does not step aside")
+	var night_chute := _frame(Sim.run(_by_id(92), _swap(_by_id(92), "shunt", "chute")), 5)
+	_check(not night_chute.is_empty() and _dir_at(night_chute, 3, 1) == 0, "route 92's chute writes its own east facing")
+
+
 func _ui_uses_simulated_par() -> void:
 	print("scoreboard ui")
 	var scene := load("res://scenes/main.tscn")
@@ -1904,10 +2209,10 @@ func _ui_uses_simulated_par() -> void:
 				routes += 1
 		if row.get_child_count() > 1:
 			width += float(row.get_theme_constant("separation")) * float(row.get_child_count() - 1)
-	_check(routes == 85, "all 85 routes are on the board")
+	_check(routes == 92, "all 92 routes are on the board")
 	print("    route row width ", width)
-	_check(width == 1700.0, "the route row minimum width is 1700 (%s)" % width)
-	_check(int(ProjectSettings.get_setting("display/window/size/viewport_width")) == 1740, "the window is 1740 wide")
+	_check(width == 1848.0, "the route row minimum width is 1848 (%s)" % width)
+	_check(int(ProjectSettings.get_setting("display/window/size/viewport_width")) == 1888, "the window is 1888 wide")
 	node.select_puzzle(15)
 	_check(building != null and building.text == "BUILDING 2", "route 16 opens building 2")
 	var tools: Node = node.find_child("ToolBox", true, false)
@@ -2107,6 +2412,37 @@ func _ui_uses_simulated_par() -> void:
 			if str(child.text).begins_with("Chute"):
 				saw_chute = true
 	_check(saw_chute, "route 85 still offers the chute")
+	var saw_shunt := false
+	if tools != null:
+		for child in tools.get_children():
+			if child.is_queued_for_deletion():
+				continue
+			if str(child.text).begins_with("Shunt"):
+				saw_shunt = true
+	_check(not saw_shunt, "route 85 keeps the shunt locked")
+	node.select_puzzle(85)
+	_check(building != null and building.text == "BUILDING 12", "route 86 opens building 12")
+	_check(node.find_child("BuildingTwelveMark", true, false) != null, "the route row marks building 12")
+	tools = node.find_child("ToolBox", true, false)
+	saw_shunt = false
+	if tools != null:
+		for child in tools.get_children():
+			if child.is_queued_for_deletion():
+				continue
+			if str(child.text).begins_with("Shunt"):
+				saw_shunt = true
+	_check(saw_shunt, "route 86 offers the shunt")
+	node.select_puzzle(91)
+	_check(building != null and building.text == "BUILDING 12", "route 92 stays in building 12")
+	tools = node.find_child("ToolBox", true, false)
+	saw_shunt = false
+	if tools != null:
+		for child in tools.get_children():
+			if child.is_queued_for_deletion():
+				continue
+			if str(child.text).begins_with("Shunt"):
+				saw_shunt = true
+	_check(saw_shunt, "route 92 still offers the shunt")
 	node.select_puzzle(0)
 	node._unhandled_input(_key_press(KEY_8))
 	_check(int(node.get_puzzle()["id"]) == 8, "key 8 still selects route 8")
