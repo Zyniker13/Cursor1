@@ -261,6 +261,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_astragal(at, rot)
 		"scotia":
 			_draw_scotia(at, rot)
+		"torus":
+			_draw_torus(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -718,6 +720,36 @@ func _draw_scotia(at: Vector2i, rot: int) -> void:
 	draw_rect(back_post, edge, false, 2.5)
 	_scotia_fillet(face_post, facing, flooded)
 	_scotia_fillet(back_post, back, flooded)
+
+func _draw_torus(at: Vector2i, rot: int) -> void:
+	# Two rounded beads on the opposite edge and the clockwise edge, with a
+	# pale gap between them. A north torus puts the beads on the south and
+	# east edges. The beads are round and pale. They are not the scotia's two
+	# dark posts, and they are not the astragal's iron bars.
+	var center := _center(at)
+	var facing := Tracer.torus_facing(rot)
+	var opposite := Tracer.rotate_dir(facing, 2)
+	var clock := Tracer.rotate_dir(facing, 1)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var sx := 1.0 if opposite == "E" or clock == "E" else -1.0
+	var sy := 1.0 if opposite == "S" or clock == "S" else -1.0
+	var bead_r := cell * 0.115
+	var along := cell * 0.05
+	var edge := cell * 0.34
+	var opp_at := center + Vector2(sx * along, sy * edge)
+	var clock_at := center + Vector2(sx * edge, sy * along)
+	var gap_at := (opp_at + clock_at) * 0.5
+	var gap := Palette.GLASS
+	gap.a = 0.42 if flooded else 0.98
+	draw_circle(gap_at, cell * 0.075, gap)
+	draw_arc(gap_at, cell * 0.075, 0.0, TAU, 16, Palette.GLASS_EDGE, 1.5)
+	var bead := Palette.GATE if not flooded else Palette.WOOD
+	var rim := Palette.LANTERN if not flooded else Palette.FOAM
+	var highlight := Color(1, 1, 1, 0.28 if flooded else 0.72)
+	for bead_at in [opp_at, clock_at]:
+		draw_circle(bead_at, bead_r, bead)
+		draw_arc(bead_at, bead_r, 0.0, TAU, 20, rim, 2.5)
+		draw_circle(bead_at + Vector2(-bead_r * 0.28, -bead_r * 0.28), bead_r * 0.32, highlight)
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
 	if dir == "N" or dir == "S":
