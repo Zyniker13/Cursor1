@@ -29,7 +29,7 @@ func _run() -> void:
 	for index in Puzzles.count():
 		var puzzle: Dictionary = Puzzles.get_puzzle(index)
 		var wing := str(puzzle["wing"])
-		if wing == "West Wing" or wing == "North Wing":
+		if wing == "West Wing" or wing == "North Wing" or wing == "South Wing":
 			_check_undo_restores_exact_state(index)
 	_check_alert_step()
 	_check_west_lit_step_still_loses()
@@ -45,26 +45,51 @@ func _run() -> void:
 	_check_far_watch()
 	_check_closing_door_race()
 	_check_north_snuffs_are_required()
+	_check_dark_half()
+	_check_passing_watch()
+	_check_owed_step()
+	_check_fading_watch()
+	_check_covered_flame()
+	_check_far_answer()
+	_check_south_snuffs_are_required()
 	_check_puzzle_select_shows_both_wings()
 	print("%d passed, %d failed" % [_passed, _failed])
 
 
 func _check_wings() -> void:
 	var wings: Array = Puzzles.wings()
-	_check(Puzzles.count() == 20, "three wings together are 20 puzzles")
-	_check(wings.size() == 3, "puzzle select lists three wings")
+	_check(Puzzles.count() == 26, "four wings together are 26 puzzles")
+	_check(wings.size() == 4, "puzzle select lists four wings")
 	_check(
-		wings.size() == 3 and str(wings[0]["name"]) == "East Wing" and int(wings[0]["count"]) == 8 and int(wings[0]["first"]) == 0,
+		wings.size() == 4 and str(wings[0]["name"]) == "East Wing" and int(wings[0]["count"]) == 8 and int(wings[0]["first"]) == 0,
 		"the east wing still has 8 puzzles"
 	)
 	_check(
-		wings.size() == 3 and str(wings[1]["name"]) == "West Wing" and int(wings[1]["count"]) == 6 and int(wings[1]["first"]) == 8,
+		wings.size() == 4 and str(wings[1]["name"]) == "West Wing" and int(wings[1]["count"]) == 6 and int(wings[1]["first"]) == 8,
 		"the west wing has 6 puzzles"
 	)
 	_check(
-		wings.size() == 3 and str(wings[2]["name"]) == "North Wing" and int(wings[2]["count"]) == 6 and int(wings[2]["first"]) == 14,
+		wings.size() == 4 and str(wings[2]["name"]) == "North Wing" and int(wings[2]["count"]) == 6 and int(wings[2]["first"]) == 14,
 		"the north wing has 6 puzzles"
 	)
+	_check(
+		wings.size() == 4 and str(wings[3]["name"]) == "South Wing" and int(wings[3]["count"]) == 6 and int(wings[3]["first"]) == 20,
+		"the south wing has 6 puzzles"
+	)
+	var south_titles: PackedStringArray = PackedStringArray([
+		"The Dark Half",
+		"The Passing Watch",
+		"The Owed Step",
+		"The Fading Watch",
+		"The Covered Flame",
+		"The Far Answer",
+	])
+	var south_ok := true
+	for i in south_titles.size():
+		var room: Dictionary = Puzzles.get_puzzle(20 + i)
+		if str(room["title"]) != south_titles[i] or str(room["wing"]) != "South Wing" or int(room["wing_number"]) != i + 1 or int(room["number"]) != 21 + i:
+			south_ok = false
+	_check(south_ok, "the south wing is numbered 21 through 26")
 
 
 func _index_of(title: String) -> int:
@@ -339,15 +364,17 @@ func _check_puzzle_select_shows_both_wings() -> void:
 	var east := false
 	var west := false
 	var north := false
+	var south := false
 	var wing_y := {}
 	var legend_y := -1.0
+	var hint := ""
 	var puzzle_buttons := 0
 	var stack: Array = [main]
 	while not stack.is_empty():
 		var node: Node = stack.pop_back()
 		if node is Label:
 			var label := node as Label
-			if label.text == "East Wing" or label.text == "West Wing" or label.text == "North Wing":
+			if label.text == "East Wing" or label.text == "West Wing" or label.text == "North Wing" or label.text == "South Wing":
 				wing_y[label.text] = label.get_parent().position.y
 			if label.text == "East Wing":
 				east = true
@@ -355,20 +382,25 @@ func _check_puzzle_select_shows_both_wings() -> void:
 				west = true
 			elif label.text == "North Wing":
 				north = true
+			elif label.text == "South Wing":
+				south = true
 			elif label.text.begins_with("Gold diamond"):
 				legend_y = label.position.y
+			elif label.text.begins_with("Arrows move"):
+				hint = label.text
 		elif node is Button:
 			var caption := (node as Button).text
 			if caption.is_valid_int():
 				puzzle_buttons += 1
 		for child in node.get_children():
 			stack.append(child)
-	_check(east and west and north, "puzzle select shows all three wings")
+	_check(east and west and north and south, "puzzle select shows all four wings")
 	_check(
-		wing_y.has("East Wing") and wing_y.has("West Wing") and wing_y.has("North Wing") and float(wing_y["East Wing"]) < float(wing_y["West Wing"]) and float(wing_y["West Wing"]) < float(wing_y["North Wing"]),
-		"the three wings are listed in order"
+		wing_y.has("East Wing") and wing_y.has("West Wing") and wing_y.has("North Wing") and wing_y.has("South Wing") and float(wing_y["East Wing"]) < float(wing_y["West Wing"]) and float(wing_y["West Wing"]) < float(wing_y["North Wing"]) and float(wing_y["North Wing"]) < float(wing_y["South Wing"]),
+		"the four wings are listed in order"
 	)
-	_check(legend_y >= float(wing_y["North Wing"]) + 32.0, "the north wing row sits above the legend")
+	_check(legend_y >= float(wing_y["South Wing"]) + 32.0, "the south wing row sits above the legend")
+	_check(hint.contains("Alt+1–6 south"), "the control hint names the south binding")
 	_check(puzzle_buttons == Puzzles.count(), "puzzle select has a button for every room")
 	var east_key := InputEventKey.new()
 	east_key.physical_keycode = KEY_3
@@ -396,8 +428,33 @@ func _check_puzzle_select_shows_both_wings() -> void:
 	_check(main._puzzle_index_for_key(west_key) == 8, "shift+1 selects the first west room")
 	_check(main._puzzle_index_for_key(last_key) == 13, "shift+6 selects the last west room")
 	_check(main._puzzle_index_for_key(bare_shift) == 9, "the @ key selects the second west room")
+	var south_key := InputEventKey.new()
+	south_key.physical_keycode = KEY_1
+	south_key.keycode = KEY_1
+	south_key.alt_pressed = true
+	var south_last := InputEventKey.new()
+	south_last.physical_keycode = KEY_6
+	south_last.keycode = KEY_6
+	south_last.alt_pressed = true
+	var east_eight := InputEventKey.new()
+	east_eight.physical_keycode = KEY_8
+	east_eight.keycode = KEY_8
+	var alt_seven := InputEventKey.new()
+	alt_seven.physical_keycode = KEY_7
+	alt_seven.keycode = KEY_7
+	alt_seven.alt_pressed = true
+	var alt_shift := InputEventKey.new()
+	alt_shift.physical_keycode = KEY_1
+	alt_shift.keycode = KEY_1
+	alt_shift.alt_pressed = true
+	alt_shift.shift_pressed = true
 	_check(main._puzzle_index_for_key(north_key) == 14, "ctrl+1 selects the first north room")
 	_check(main._puzzle_index_for_key(north_last) == 19, "ctrl+6 selects the last north room")
+	_check(main._puzzle_index_for_key(south_key) == 20, "alt+1 selects the first south room")
+	_check(main._puzzle_index_for_key(south_last) == 25, "alt+6 selects the last south room")
+	_check(main._puzzle_index_for_key(east_eight) == 7, "key 8 still selects the last east room")
+	_check(main._puzzle_index_for_key(alt_seven) == -1, "alt+7 does not select an east room")
+	_check(main._puzzle_index_for_key(alt_shift) == -1, "alt does not take a west room")
 	main.free()
 
 
@@ -590,6 +647,271 @@ func _check_north_snuffs_are_required() -> void:
 	for index in Puzzles.count():
 		var puzzle: Dictionary = Puzzles.get_puzzle(index)
 		if str(puzzle["wing"]) != "North Wing":
+			continue
+		var uses := false
+		for action in puzzle["solution"]:
+			if str(action["type"]) == "toggle":
+				uses = true
+		if uses:
+			_check_toggles_required(index)
+
+
+func _check_dark_half() -> void:
+	var index := _index_of("The Dark Half")
+	var state := Puzzles.initial_state(index)
+	var lamp: Dictionary = state["lamps"][0]
+	var south := Vector2i(2, 4)
+	var reach := absi(south.x - int(lamp["x"])) + absi(south.y - int(lamp["y"]))
+	_check(reach <= int(lamp["radius"]) and Rules.tile_at(state, south.x, south.y) == Rules.Tile.FLOOR, "the south gallery sits inside the diamond")
+	_check(not Rules.light_map(state).has(south), "the south side of the diamond stays dark")
+	var exit_lit := false
+	var found := false
+	var lit: Dictionary = Rules.light_map(state)
+	for y in state["h"]:
+		for x in state["w"]:
+			if Rules.tile_at(state, x, y) == Rules.Tile.EXIT:
+				found = true
+				exit_lit = lit.has(Vector2i(x, y))
+	_check(found and exit_lit, "the dark half's door starts inside the lamp")
+	var refused: Dictionary = Rules.apply(state, {"type": "move", "dx": 0, "dy": -1})
+	var stayed: Dictionary = refused["state"]["player"]
+	_check(
+		refused["result"] == Rules.Result.ILLEGAL and refused["reason"] == "lit" and stayed["x"] == int(state["player"]["x"]) and stayed["y"] == int(state["player"]["y"]),
+		"unwatched lit floor in the south wing is refused"
+	)
+	for _i in 4:
+		var step: Dictionary = Rules.apply(state, {"type": "move", "dx": 1, "dy": 0})
+		if step["result"] != Rules.Result.OK:
+			_check(false, "dark half approach failed before the lamp")
+			return
+		state = step["state"]
+	var lost: Dictionary = Rules.apply(state, {"type": "move", "dx": 0, "dy": -1})
+	var landed: Dictionary = lost["state"]["player"]
+	_check(
+		lost["result"] == Rules.Result.LOSS and lost["reason"] == "watched" and landed["x"] == 5 and landed["y"] == 3,
+		"a watched lit step in the south wing still loses"
+	)
+
+
+func _check_passing_watch() -> void:
+	var index := _index_of("The Passing Watch")
+	var puzzle: Dictionary = Puzzles.get_puzzle(index)
+	var waits := 0
+	var toggles := 0
+	for action in puzzle["solution"]:
+		if str(action["type"]) == "wait":
+			waits += 1
+		elif str(action["type"]) == "toggle":
+			toggles += 1
+	_check(waits == 1 and toggles == 0, "the passing watch waits once and does not snuff")
+	var state := Puzzles.initial_state(index)
+	var gap := Vector2i(4, 1)
+	var lit: Dictionary = Rules.light_map(state)
+	_check(lit.has(gap) and not Rules.watched_tiles(state, lit).has(gap), "the gap starts lit while he is on the far end")
+	for _i in 2:
+		var step: Dictionary = Rules.apply(state, {"type": "move", "dx": 1, "dy": 0})
+		if step["result"] != Rules.Result.OK:
+			_check(false, "passing watch approach failed")
+			return
+		state = step["state"]
+	lit = Rules.light_map(state)
+	_check(lit.has(gap) and Rules.watched_tiles(state, lit).has(gap), "the near end puts the gap in his eyes")
+	var rushed: Dictionary = Rules.apply(state, {"type": "move", "dx": 1, "dy": 0})
+	var landed: Dictionary = rushed["state"]["player"]
+	_check(
+		rushed["result"] == Rules.Result.LOSS and rushed["reason"] == "watched" and landed["x"] == gap.x and landed["y"] == gap.y,
+		"stepping onto the watched gap still loses"
+	)
+
+
+func _check_owed_step() -> void:
+	var index := _index_of("The Owed Step")
+	var state := Puzzles.initial_state(index)
+	var approach: Dictionary = Rules.apply(state, {"type": "move", "dx": 1, "dy": 0})
+	if approach["result"] != Rules.Result.OK:
+		_check(false, "owed step approach failed")
+		return
+	state = approach["state"]
+	var before: Dictionary = state["guards"][0]
+	var snuff: Dictionary = Rules.apply(state, {"type": "toggle", "lamp": 0})
+	var after: Dictionary = snuff["state"]["guards"][0]
+	var player: Dictionary = snuff["state"]["player"]
+	_check(snuff["result"] == Rules.Result.OK and int(snuff["called"]) == 0, "the owed step snuff calls the keeper")
+	_check(
+		int(after["x"]) == 3 and int(after["y"]) == 3 and int(before["y"]) == 4,
+		"on the snuff turn his owed step falls short"
+	)
+	_check(
+		snuff["step"] == Vector2i(int(player["x"]), int(player["y"])),
+		"the arrow then points at the tile you are standing on"
+	)
+	var stayed: Dictionary = Rules.apply(snuff["state"], {"type": "wait"})
+	var caught: Dictionary = stayed["state"]["guards"][0]
+	_check(
+		stayed["result"] == Rules.Result.LOSS and stayed["reason"] == "guard" and int(caught["x"]) == 3 and int(caught["y"]) == 2,
+		"waiting after the snuff lets the arrow land on you"
+	)
+	var late := Puzzles.initial_state(index)
+	late = Rules.apply(late, {"type": "wait"})["state"]
+	late = Rules.apply(late, {"type": "move", "dx": 1, "dy": 0})["state"]
+	var late_snuff: Dictionary = Rules.apply(late, {"type": "toggle", "lamp": 0})
+	_check(
+		late_snuff["result"] == Rules.Result.LOSS and late_snuff["reason"] == "guard",
+		"waiting first makes the owed step land on you"
+	)
+
+
+func _check_fading_watch() -> void:
+	var index := _index_of("The Fading Watch")
+	var puzzle: Dictionary = Puzzles.get_puzzle(index)
+	var toggles := 0
+	for action in puzzle["solution"]:
+		if str(action["type"]) == "toggle":
+			toggles += 1
+	_check(toggles == 1, "the fading watch snuffs its lamp once")
+	var state := Puzzles.initial_state(index)
+	var lit: Dictionary = Rules.light_map(state)
+	var watch: Dictionary = Rules.watched_tiles(state, lit)
+	var exit_cell := Vector2i(-1, -1)
+	for y in state["h"]:
+		for x in state["w"]:
+			if Rules.tile_at(state, x, y) == Rules.Tile.EXIT:
+				exit_cell = Vector2i(x, y)
+	_check(lit.has(exit_cell) and not watch.has(exit_cell), "the fading door is lit and unwatched")
+	_check(lit.has(Vector2i(4, 1)) and watch.has(Vector2i(4, 1)), "the lamp square is lit and watched")
+	for _i in 2:
+		var step: Dictionary = Rules.apply(state, {"type": "move", "dx": 1, "dy": 0})
+		if step["result"] != Rules.Result.OK:
+			_check(false, "fading watch approach failed")
+			return
+		state = step["state"]
+	var lost: Dictionary = Rules.apply(state, {"type": "move", "dx": 1, "dy": 0})
+	var landed: Dictionary = lost["state"]["player"]
+	_check(
+		lost["result"] == Rules.Result.LOSS and lost["reason"] == "watched" and landed["x"] == 4 and landed["y"] == 1,
+		"stepping onto the watched lamp square still loses"
+	)
+
+
+func _check_covered_flame() -> void:
+	var index := _index_of("The Covered Flame")
+	var puzzle: Dictionary = Puzzles.get_puzzle(index)
+	var state := Puzzles.initial_state(index)
+	_check(Rules.light_map(state).has(Vector2i(5, 1)) and Rules.tile_at(state, 5, 1) == Rules.Tile.FLOOR, "the hall lamp covers the tile behind the door lamp")
+	var exit_lit := false
+	for y in state["h"]:
+		for x in state["w"]:
+			if Rules.tile_at(state, x, y) == Rules.Tile.EXIT:
+				exit_lit = Rules.light_map(state).has(Vector2i(x, y))
+	_check(exit_lit, "the covered flame's door starts lit")
+	var order: Array = []
+	for action in puzzle["solution"]:
+		if str(action["type"]) == "toggle":
+			order.append(int(action["lamp"]))
+	_check(order.size() == 2 and int(order[0]) == 0 and int(order[1]) == 1, "the covered flame snuffs the hall lamp, then the door lamp")
+	var saw_first := false
+	var saw_second := false
+	for action in puzzle["solution"]:
+		if str(action["type"]) != "toggle":
+			var step: Dictionary = Rules.apply(state, action)
+			if step["result"] != Rules.Result.OK:
+				_check(false, "covered flame approach failed")
+				return
+			state = step["state"]
+			continue
+		var guard_before: Dictionary = state["guards"][0]
+		var out: Dictionary = Rules.apply(state, action)
+		if not saw_first:
+			saw_first = true
+			var guard_after: Dictionary = out["state"]["guards"][0]
+			_check(out["result"] == Rules.Result.OK and int(out["called"]) == 0, "snuffing the hall lamp calls the keeper")
+			_check(out["step"] == Vector2i(3, 2), "his next step is up toward the hall lamp")
+			_check(
+				int(guard_after["x"]) == int(guard_before["x"]) and int(guard_after["y"]) == int(guard_before["y"]),
+				"he has not taken that step yet"
+			)
+			state = out["state"]
+			continue
+		saw_second = true
+		var again: Dictionary = out["state"]["guards"][0]
+		_check(out["result"] == Rules.Result.OK and int(out["called"]) == 0, "snuffing the door lamp calls him again")
+		_check(bool(guard_before["holding"]) and not bool(again["holding"]) and bool(again["alert"]), "the second snuff lifts the hold")
+		_check(int(again["ax"]) == 6 and int(again["ay"]) == 1, "the second call targets the door lamp")
+		_check(not bool(out["state"]["lamps"][1]["lit"]), "the door lamp is out")
+		_check(
+			int(again["x"]) == int(guard_before["x"]) and int(again["y"]) == int(guard_before["y"]),
+			"he does not step on the second snuff turn"
+		)
+		break
+	_check(saw_first and saw_second, "the covered flame solution snuffs both lamps")
+
+
+func _check_far_answer() -> void:
+	var index := _index_of("The Far Answer")
+	var puzzle: Dictionary = Puzzles.get_puzzle(index)
+	var state := Puzzles.initial_state(index)
+	var hall: Dictionary = state["lamps"][0]
+	var gap_lamp: Dictionary = state["lamps"][1]
+	var far: Dictionary = state["guards"][0]
+	var near: Dictionary = state["guards"][1]
+	var hall_far := absi(int(far["x"]) - int(hall["x"])) + absi(int(far["y"]) - int(hall["y"]))
+	var hall_near := absi(int(near["x"]) - int(hall["x"])) + absi(int(near["y"]) - int(hall["y"]))
+	var gap_far := absi(int(far["x"]) - int(gap_lamp["x"])) + absi(int(far["y"]) - int(gap_lamp["y"]))
+	var gap_near := absi(int(near["x"]) - int(gap_lamp["x"])) + absi(int(near["y"]) - int(gap_lamp["y"]))
+	_check(hall_far < hall_near, "the far keeper is closer to the hall lamp")
+	_check(gap_near < gap_far, "the door keeper is closer to the gap lamp")
+	var used := {}
+	for action in puzzle["solution"]:
+		if str(action["type"]) == "toggle":
+			used[int(action["lamp"])] = true
+	_check(used.has(0) and not used.has(1), "the far answer snuffs the hall lamp and leaves the gap lamp")
+	var gap := Vector2i(8, 1)
+	var crossed := false
+	var saw := false
+	for action in puzzle["solution"]:
+		if str(action["type"]) == "move":
+			var dest := Vector2i(int(state["player"]["x"]) + int(action["dx"]), int(state["player"]["y"]) + int(action["dy"]))
+			if dest == gap:
+				var lights: Dictionary = Rules.light_map(state)
+				_check(
+					bool(state["lamps"][1]["lit"]) and not bool(state["lamps"][0]["lit"]) and lights.has(gap) and not Rules.watched_tiles(state, lights).has(gap),
+					"the gap is still lit and unwatched when you cross"
+				)
+				crossed = true
+		if str(action["type"]) == "toggle":
+			var out: Dictionary = Rules.apply(state, action)
+			saw = true
+			_check(out["result"] == Rules.Result.OK and int(out["called"]) == 0, "the hall snuff calls the far keeper")
+			_check(not bool(out["state"]["guards"][1]["alert"]), "the door keeper is not called")
+			state = out["state"]
+			continue
+		var step: Dictionary = Rules.apply(state, action)
+		if step["result"] == Rules.Result.LOSS or step["result"] == Rules.Result.ILLEGAL:
+			_check(false, "far answer solution failed during the call check")
+			return
+		state = step["state"]
+		if step["result"] == Rules.Result.WIN:
+			break
+	_check(saw and crossed, "the far answer solution snuffs the hall and crosses the gap")
+	state = Puzzles.initial_state(index)
+	for _i in 2:
+		var approach: Dictionary = Rules.apply(state, {"type": "move", "dx": 1, "dy": 0})
+		if approach["result"] != Rules.Result.OK:
+			_check(false, "far answer lit-step approach failed")
+			return
+		state = approach["state"]
+	var lost: Dictionary = Rules.apply(state, {"type": "move", "dx": 1, "dy": 0})
+	var landed: Dictionary = lost["state"]["player"]
+	_check(
+		lost["result"] == Rules.Result.LOSS and lost["reason"] == "watched" and landed["x"] == 4 and landed["y"] == 1,
+		"a watched lit step beside the far answer still loses"
+	)
+
+
+func _check_south_snuffs_are_required() -> void:
+	for index in Puzzles.count():
+		var puzzle: Dictionary = Puzzles.get_puzzle(index)
+		if str(puzzle["wing"]) != "South Wing":
 			continue
 		var uses := false
 		for action in puzzle["solution"]:
