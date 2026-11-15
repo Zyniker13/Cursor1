@@ -3,7 +3,8 @@ class_name ChartBook
 
 # South Lantern Quay holds six charts. North Glass Reach holds eight more.
 # The Turning Basin holds the next eight. The Painted Lock holds eight more.
-# The West Return holds eight more. The Meeting Glass holds the last eight.
+# The West Return holds eight more. The Meeting Glass holds eight more.
+# The Tide Mirror holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. See BeamTracer for the
 # optical meaning of each number.
@@ -18,6 +19,7 @@ const BASIN := "The Turning Basin"
 const PAINTED := "The Painted Lock"
 const WEST := "The West Return"
 const MEET := "The Meeting Glass"
+const TIDE := "The Tide Mirror"
 
 static func all() -> Array:
 	var book: Array = []
@@ -27,6 +29,7 @@ static func all() -> Array:
 	book.append_array(painted())
 	book.append_array(west())
 	book.append_array(meet())
+	book.append_array(tide())
 	return book
 
 
@@ -52,6 +55,10 @@ static func west() -> Array:
 
 static func meet() -> Array:
 	return [chart_39(), chart_40(), chart_41(), chart_42(), chart_43(), chart_44(), chart_45(), chart_46()]
+
+
+static func tide() -> Array:
+	return [chart_47(), chart_48(), chart_49(), chart_50(), chart_51(), chart_52(), chart_53(), chart_54()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -1689,6 +1696,331 @@ static func chart_46() -> Dictionary:
 		],
 	}
 
+static func chart_47() -> Dictionary:
+	# Two tide mirrors on the bottom row. Flood 1 covers that row, so a
+	# southbound beam reflects east, then north, onto the dock.
+	# The first glass at rot 90 sends S east. The second at rot 0 sends E north.
+	# While the row is dry both glasses pass a beam straight through: the upper
+	# mirror's beam falls off the board, and the lower lamp reaches the hull.
+	# The upper mirror's other face sends its beam north into the hull.
+	return {
+		"id": "47",
+		"harbor": TIDE,
+		"title": "Wet Glass",
+		"teach": "A tide mirror reflects only while its own row is flooded. Turn the upper mirror so the beam falls, then turn the two tide mirrors so the beam runs east and climbs to the dock. On the wrong tide the row is dry: the beam passes straight through, the dock stays dark, and the lower lamp wakes the hull.",
+		"win": "The flooded glass climbs to the dock.",
+		"cols": 6,
+		"rows": 5,
+		"tide_phases": [0, 1],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 1, "E", "white"),
+			_lantern("S", 0, 4, "E", "white"),
+		],
+		"docks": [
+			_dock("D", 3, 3, "white"),
+		],
+		"boats": [
+			_boat("Hm", 2, 0),
+			_boat("Hb", 5, 4),
+		],
+		"fixtures": [],
+		"pieces": [
+			_tide_mirror("T", "Tide mirror", 2, 4, 0, 90),
+			_tide_mirror("B", "East tide mirror", 3, 4, 90, 0),
+			_mirror("M", "Upper mirror", 2, 1, 0, 90),
+		],
+	}
+
+static func chart_48() -> Dictionary:
+	# Same corner as Wet Glass, fed by a red lamp. Reflection keeps the color,
+	# so only the red face of the pane lets the climb reach the dock.
+	# A blue pane stops that red. Dry water passes the beam through, and the
+	# lower lamp wakes the hull.
+	return {
+		"id": "48",
+		"harbor": TIDE,
+		"title": "Still Red",
+		"teach": "The tide mirror does not change color. Red falls onto the flooded glass and is still red when it climbs through the red pane. The other face of the upper mirror wakes the hull. While the row is dry the beam passes straight through and the lower lamp wakes the hull.",
+		"win": "Red climbs through its own pane.",
+		"cols": 6,
+		"rows": 5,
+		"tide_phases": [0, 1],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 2, "E", "red"),
+			_lantern("S", 0, 4, "E", "white"),
+		],
+		"docks": [
+			_dock("Rd", 3, 0, "red"),
+		],
+		"boats": [
+			_boat("Hm", 2, 0),
+			_boat("Hb", 5, 4),
+		],
+		"fixtures": [],
+		"pieces": [
+			_tide_mirror("T", "Tide mirror", 2, 4, 0, 90),
+			_tide_mirror("B", "East tide mirror", 3, 4, 90, 0),
+			_mirror("M", "Upper mirror", 2, 2, 0, 90),
+			_pane("C", "Red pane", 3, 3, 90, 0),
+		],
+	}
+
+static func chart_49() -> Dictionary:
+	# The climb is bent east by a normal mirror. rot 0 sends the northbound
+	# beam east through the red pane. rot 90 sends it west into the hull.
+	# The feed mirror's other face wakes the upper hull. Dry water wakes the
+	# lower hull, because the tide mirrors pass the lower lamp straight through.
+	return {
+		"id": "49",
+		"harbor": TIDE,
+		"title": "The Wet Bend",
+		"teach": "Turn the tide mirrors so red climbs, then bend it east through the red pane. The other bend of the upper mirror wakes a hull. While the row is dry the beam passes straight through and the lower lamp wakes the hull.",
+		"win": "Red bends east, and the hulls stay asleep.",
+		"cols": 7,
+		"rows": 6,
+		"tide_phases": [0, 1],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 3, "E", "red"),
+			_lantern("S", 0, 5, "E", "white"),
+		],
+		"docks": [
+			_dock("Rd", 6, 1, "red"),
+		],
+		"boats": [
+			_boat("Hm", 2, 0),
+			_boat("Hw", 0, 1),
+			_boat("Hb", 5, 5),
+		],
+		"fixtures": [],
+		"pieces": [
+			_tide_mirror("T", "Tide mirror", 2, 5, 0, 90),
+			_tide_mirror("B", "East tide mirror", 3, 5, 90, 0),
+			_mirror("M", "Feed mirror", 2, 3, 0, 90),
+			_mirror("N", "Upper mirror", 3, 1, 90, 0),
+			_pane("C", "Red pane", 4, 1, 90, 0),
+		],
+	}
+
+static func chart_50() -> Dictionary:
+	# The side socket never sees the beam. On the line, rot 0 drinks the
+	# northbound white beam: red leaves west, blue leaves east. Any other face
+	# absorbs it. Without the prism, white runs on into the hull. Dry water
+	# lets the lower lamp pass the tide mirrors and wake the lower hull.
+	return {
+		"id": "50",
+		"harbor": TIDE,
+		"title": "Off the Tide",
+		"teach": "Move the prism onto the column the tide mirrors feed, and turn it so red leaves west and blue leaves east. The other bend of the feed mirror wakes a hull. White that misses the prism wakes the other hull. While the row is dry the beam passes straight through and the lower lamp wakes the hull.",
+		"win": "The prism sits on the climb, and both docks take their color.",
+		"cols": 6,
+		"rows": 6,
+		"tide_phases": [0, 1],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 3, "E", "white"),
+			_lantern("S", 0, 5, "E", "white"),
+		],
+		"docks": [
+			_dock("Rd", 0, 2, "red"),
+			_dock("Bd", 5, 2, "blue"),
+		],
+		"boats": [
+			_boat("Hm", 2, 0),
+			_boat("Hw", 3, 0),
+			_boat("Hb", 5, 5),
+		],
+		"fixtures": [],
+		"pieces": [
+			_prism("P", "Prism", [["side", 5, 4], ["line", 3, 2]], "side", 90, "line", 0),
+			_tide_mirror("T", "Tide mirror", 2, 5, 0, 90),
+			_tide_mirror("B", "East tide mirror", 3, 5, 90, 0),
+			_mirror("M", "Feed mirror", 2, 3, 0, 90),
+		],
+	}
+
+static func chart_51() -> Dictionary:
+	# The dock sits on the row high water covers. Flood 1 leaves that row dry
+	# and covers the tide mirrors, so the beam can reflect and still land.
+	# Flood 2 covers the dock and the cell the feed beam has to cross.
+	# Flood 0 lets the lower lamp pass straight through and wake the hull.
+	return {
+		"id": "51",
+		"harbor": TIDE,
+		"title": "The Clear Row",
+		"teach": "Turn the tide mirrors so the beam runs east and climbs to the dock. The other bend of the feed mirror wakes a hull. Low water is the wrong tide: the row is dry, the beam passes straight through, and the lower lamp wakes the hull. High water covers the dock. Hold the middle mark.",
+		"win": "The middle mark holds the climb.",
+		"cols": 6,
+		"rows": 7,
+		"tide_phases": [0, 1, 2],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 2, "E", "white"),
+			_lantern("S", 0, 6, "E", "white"),
+		],
+		"docks": [
+			_dock("D", 3, 5, "white"),
+		],
+		"boats": [
+			_boat("Hm", 2, 0),
+			_boat("Hb", 5, 6),
+		],
+		"fixtures": [],
+		"pieces": [
+			_tide_mirror("T", "Tide mirror", 2, 6, 0, 90),
+			_tide_mirror("B", "East tide mirror", 3, 6, 90, 0),
+			_mirror("M", "Feed mirror", 2, 2, 0, 90),
+		],
+	}
+
+static func chart_52() -> Dictionary:
+	# The second tide mirror sends white north into a mirror that turns it west.
+	# Prism rot 270 drinks that westbound beam: blue climbs through the blue
+	# pane, red falls onto the low dock. The east face absorbs the returning
+	# beam. The other face of the feed mirror or the west mirror wakes a hull.
+	return {
+		"id": "52",
+		"harbor": TIDE,
+		"title": "The West Tide",
+		"teach": "Turn the tide mirrors so white climbs, then bend it west into the prism. Blue climbs through the blue pane. Red falls to the low dock. The other bend of the feed mirror or the west mirror wakes a hull. While the row is dry the beam passes straight through and the lower lamp wakes the hull.",
+		"win": "Blue climbs. Red falls. The hulls stay asleep.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0, 1],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 5, "E", "white"),
+			_lantern("S", 0, 6, "E", "white"),
+		],
+		"docks": [
+			_dock("Bd", 1, 0, "blue"),
+			_dock("Rd", 1, 4, "red"),
+		],
+		"boats": [
+			_boat("Hm", 2, 0),
+			_boat("Ha", 6, 3),
+			_boat("Hb", 5, 6),
+		],
+		"fixtures": [],
+		"pieces": [
+			_tide_mirror("T", "Tide mirror", 2, 6, 0, 90),
+			_tide_mirror("B", "East tide mirror", 3, 6, 90, 0),
+			_mirror("M", "Feed mirror", 2, 5, 0, 90),
+			_mirror("A", "West mirror", 3, 3, 0, 90),
+			_prism("P", "West prism", [["a", 1, 3]], "a", 90, "a", 270),
+			_pane("Cb", "Blue pane", 1, 1, 0, 90),
+		],
+	}
+
+static func chart_53() -> Dictionary:
+	# White climbs into a mirror that sends it east, then a mirror that sends
+	# it south into prism rot 180. Blue leaves west through the blue pane.
+	# Red leaves east through the red pane. The other face of each of those
+	# bends wakes a hull. Dry water lets the lower lamp pass straight through.
+	return {
+		"id": "53",
+		"harbor": TIDE,
+		"title": "The South Tide",
+		"teach": "Turn the tide mirrors so white climbs. Bend it east, then south into the prism, so blue leaves west and red leaves east. Leave each pane on its own color. The other bend of the feed mirror, the east mirror, or the south mirror wakes a hull. While the row is dry the lower lamp wakes the hull.",
+		"win": "Blue runs west. Red runs east. The hulls stay asleep.",
+		"cols": 8,
+		"rows": 7,
+		"tide_phases": [0, 1],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 5, "E", "white"),
+			_lantern("S", 0, 6, "E", "white"),
+		],
+		"docks": [
+			_dock("Bd", 0, 4, "blue"),
+			_dock("Rs", 7, 4, "red"),
+		],
+		"boats": [
+			_boat("Hm", 2, 0),
+			_boat("He", 0, 3),
+			_boat("Hf", 5, 0),
+			_boat("Hb", 6, 6),
+		],
+		"fixtures": [],
+		"pieces": [
+			_tide_mirror("T", "Tide mirror", 2, 6, 0, 90),
+			_tide_mirror("B", "East tide mirror", 3, 6, 90, 0),
+			_mirror("M", "Feed mirror", 2, 5, 0, 90),
+			_mirror("E", "East mirror", 3, 3, 90, 0),
+			_mirror("F", "South mirror", 5, 3, 0, 90),
+			_prism("P", "South prism", [["a", 5, 4]], "a", 90, "a", 180),
+			_pane("Cb", "Blue pane", 4, 4, 0, 90),
+			_pane("Cr", "Red pane", 6, 4, 90, 0),
+		],
+	}
+
+static func chart_54() -> Dictionary:
+	# Capstone. The lamp socket swallows the red lamp. The west socket is on
+	# the row high water covers: blue from that face climbs through the blue
+	# pane, and red falls into the flooded bottom row. The tide mirrors sit on
+	# the bottom row, so only the middle mark both floods them and leaves the
+	# west row dry. Low water lets the lower lamp pass straight through and
+	# wake the hull. Each feed mirror's other face wakes a hull of its own.
+	return {
+		"id": "54",
+		"harbor": TIDE,
+		"title": "The Tide Mark",
+		"teach": "Move the prism off the red lamp and onto the returning beam. Bend the red lamp north, then east through the red pane. Turn the tide mirrors so white climbs, bend it east and south, then west, so blue climbs through the blue pane. Red from that face falls into the water. The other bend of the lamp mirror, the upper mirror, the feed mirror, the east mirror, the south mirror, or the west mirror wakes a hull. Low water wakes the lower hull. High water covers the west row. Hold the middle mark.",
+		"win": "Lamp, west climb, and the middle mark. The tide holds.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [0, 1, 2],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Lr", 0, 2, "E", "red"),
+			_lantern("Lw", 0, 4, "E", "white"),
+			_lantern("S", 0, 7, "E", "white"),
+		],
+		"docks": [
+			_dock("Rl", 6, 1, "red"),
+			_dock("Bd", 1, 3, "blue"),
+		],
+		"boats": [
+			_boat("Hu", 0, 1),
+			_boat("Hm", 2, 3),
+			_boat("Ha", 5, 0),
+			_boat("He", 7, 6),
+			_boat("Hb", 6, 7),
+		],
+		"fixtures": [],
+		"pieces": [
+			_prism("P", "Prism", [["lamp", 5, 1], ["west", 1, 6]], "lamp", 90, "west", 270),
+			_mirror("Mr", "Lamp mirror", 2, 2, 90, 0),
+			_mirror("Mu", "Upper mirror", 2, 1, 90, 0),
+			_pane("Cp", "Lamp pane", 4, 1, 90, 0),
+			_mirror("M", "Feed mirror", 2, 4, 0, 90),
+			_tide_mirror("T", "Tide mirror", 2, 7, 0, 90),
+			_tide_mirror("B", "East tide mirror", 3, 7, 90, 0),
+			_mirror("A", "East mirror", 3, 5, 90, 0),
+			_mirror("C", "South mirror", 5, 5, 0, 90),
+			_mirror("D", "West mirror", 5, 6, 90, 0),
+			_pane("Cb", "Blue pane", 1, 5, 0, 90),
+		],
+	}
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -1810,6 +2142,20 @@ static func _pane(id: String, name: String, x: int, y: int, start_rot: int, sol_
 		"id": id,
 		"name": name,
 		"kind": "pane",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _tide_mirror(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "tide_mirror",
 		"movable": false,
 		"sockets": [{"id": "a", "x": x, "y": y}],
 		"start_socket": "a",
