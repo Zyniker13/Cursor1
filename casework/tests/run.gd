@@ -31,6 +31,7 @@ const Tenon = preload("res://scripts/tenon.gd")
 const Bridle = preload("res://scripts/bridle.gd")
 const Dado = preload("res://scripts/dado.gd")
 const Spline = preload("res://scripts/spline.gd")
+const Mitre = preload("res://scripts/mitre.gd")
 const Catalog = preload("res://scripts/catalog.gd")
 const Solver = preload("res://scripts/solver.gd")
 const Verdict = preload("res://scripts/verdict.gd")
@@ -96,6 +97,8 @@ const DADO_TIMELINE := "Kern (plough hand) cut the dado in the plough at 93, see
 const DADO_TRUE := {"who": "Kern", "place": "plough", "hour": "93"}
 const SPLINE_TIMELINE := "Senn (vise hand) cut the spline in the plough at 98, seen from the float, so the tongue would take the slot.\nVoss (chest hand) marked the slot on the gimlet at 97.\nCade (horse clerk) turned the key in the float.\nThe feather was hung on the gimlet.\nThe float was whetted at 96.\nThe gimlet was wiped at 99.\nThe plough was hung at 100."
 const SPLINE_TRUE := {"who": "Senn", "place": "plough", "hour": "98"}
+const MITRE_TIMELINE := "Orrin (saddle hand) cut the mitre in the plough at 103, seen from the float, so the arris would take the mitre.\nVenn (kerf hand) marked the arris on the gimlet at 102.\nHaim (bit clerk) turned the stop in the float.\nThe offcut was hung on the gimlet.\nThe float was dressed at 101.\nThe gimlet was brushed at 104.\nThe plough was hung at 105."
+const MITRE_TRUE := {"who": "Orrin", "place": "plough", "hour": "103"}
 
 var _failures: Array[String] = []
 var _checks := 0
@@ -289,6 +292,12 @@ func _initialize() -> void:
 	_test_spline_only_true_theory()
 	_test_spline_near_misses()
 	_test_spline_incomplete()
+	_test_mitre_file_shape()
+	_test_mitre_unique_model()
+	_test_mitre_each_exhibit_necessary()
+	_test_mitre_only_true_theory()
+	_test_mitre_near_misses()
+	_test_mitre_incomplete()
 	_test_solutions_differ()
 	_test_menu_opens_either_case()
 	print("menu interaction done")
@@ -8904,6 +8913,395 @@ func _test_spline_incomplete() -> void:
 	print("spline incomplete submissions refused with the missing slot")
 
 
+func _test_mitre_file_shape() -> void:
+	_expect(Mitre.EXHIBITS.size() == 9, "mitre exhibit count is %d" % Mitre.EXHIBITS.size())
+	_expect(Mitre.PEOPLE.size() == 3, "mitre cast should be three people")
+	_expect(Mitre.PLACES.size() == 3, "mitre room count is %d" % Mitre.PLACES.size())
+	_expect(Mitre.HOURS.size() == 5, "mitre hour list length is %d" % Mitre.HOURS.size())
+	_expect(Mitre.PEOPLE == ["Orrin", "Venn", "Haim"], "mitre cast is %s" % str(Mitre.PEOPLE))
+	_expect(Mitre.PLACES == ["plough", "float", "gimlet"], "mitre rooms are %s" % str(Mitre.PLACES))
+	_expect(Mitre.HOURS == ["101", "102", "103", "104", "105"], "mitre hours are %s" % str(Mitre.HOURS))
+	_expect(Mitre.AIMS == ["take_arris", "spare_arris", "set_arris"], "mitre aims are %s" % str(Mitre.AIMS))
+	_expect(Mitre.aim_phrase("take_arris") == "so the arris would take the mitre", "mitre aim phrase")
+	_expect(Mitre.aim_phrase("spare_arris") == "to spare the arris still waiting on the mitre", "mitre spare aim")
+	_expect(Mitre.aim_phrase("set_arris") == "to set the arris before the plough was hung", "mitre set aim")
+	_expect(Mitre.TITLE == "The mitre", "mitre title")
+	_expect(Mitre.BLURB == "The mitre left its peg at the joiner's saddle. Name who cut the mitre, the room they cut it in, and the hour.", "mitre blurb")
+	_expect(Mitre.FILE_CODE == "CW-32", "mitre file code")
+	_expect(Mitre.fields() == ["taker", "place", "hour", "arriser", "arris_room", "arris_hour", "seen_from", "stop", "aim", "stop_room", "offcut_room", "dress_hour", "brush_hour", "hang_hour"], "mitre fields are %s" % str(Mitre.fields()))
+	_expect(Mitre.PLAYER_FIELDS == ["taker", "place", "hour"], "mitre player fields")
+	_expect(Mitre.HOURS[Mitre.HOURS.size() / 2] == MITRE_TRUE["hour"], "mitre cutting should be the middle hour")
+	_expect(Mitre.HOURS[0] != MITRE_TRUE["hour"], "mitre cutting should not be the earliest hour")
+	_expect(Mitre.HOURS[Mitre.HOURS.size() - 1] != MITRE_TRUE["hour"], "mitre cutting should not be the latest hour")
+	var counts := _player_pin_counts(Mitre)
+	_expect(int(counts["taker"]) == 3 and int(counts["place"]) == 3 and int(counts["hour"]) == 3, "mitre pin counts are %s" % str(counts))
+	var loose_pin: Array = [
+		[CaseData, "spare key"],
+		[Rehearsal, "rehearsal score"],
+		[Gilt, "gilt stamp"],
+		[Ferry, "ferry bell"],
+		[Weather, "weather slate"],
+		[Loom, "loom shuttle"],
+		[Hive, "hive smoker"],
+		[Glass, "glass pontil"],
+		[Press, "press proof"],
+		[Assay, "assay cup"],
+	]
+	var rhythm: Array = [
+		[Kiln, "kiln chalk"],
+		[Tide, "tide ledger"],
+		[Night, "night bell"],
+		[Salt, "salt mark"],
+		[Wick, "wick trim"],
+		[Anneal, "glass anneal"],
+		[Graft, "orchard graft"],
+		[Dye, "dye vat"],
+		[Tar, "tar kettle"],
+		[Cork, "cork press"],
+		[Net, "net loft"],
+		[Cask, "cask hoop"],
+		[Linen, "linen fold"],
+		[Dovetail, "dovetail"],
+		[Mortise, "mortise"],
+		[Rebate, "rebate"],
+		[Housing, "housing"],
+		[Tenon, "tenon"],
+		[Bridle, "bridle"],
+		[Dado, "dado"],
+		[Spline, "spline"],
+	]
+	for row in loose_pin:
+		_expect(counts != _player_pin_counts(row[0]), "mitre copied the %s pin pattern" % row[1])
+	for row in rhythm:
+		_expect(counts == _player_pin_counts(row[0]), "mitre should keep the %s pin rhythm" % row[1])
+	var earlier: Array = []
+	earlier.append_array(loose_pin)
+	earlier.append_array(rhythm)
+	for row in earlier:
+		var book = row[0]
+		var name := str(row[1])
+		_expect(Mitre.TITLE != book.TITLE, "mitre shares a title with the %s" % name)
+		_expect(Mitre.FILE_CODE != book.FILE_CODE, "mitre shares a file code with the %s" % name)
+		_expect(_field_key(Mitre) != _field_key(book), "mitre copied the %s timeline fields" % name)
+	var seen := {}
+	var stated := {}
+	var paired_hidden := 0
+	var earlier_texts := {}
+	var earlier_sentences := {}
+	for row in earlier:
+		for old_exhibit in row[0].EXHIBITS:
+			var old_text := str(old_exhibit["text"])
+			earlier_texts[old_text] = true
+			for old_sentence in old_text.split(". "):
+				earlier_sentences[old_sentence.trim_suffix(".").strip_edges()] = true
+	var exhibit_titles: Array[String] = []
+	var exhibit_sources: Array[String] = []
+	for exhibit in Mitre.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		exhibit_titles.append(str(exhibit["title"]))
+		exhibit_sources.append(str(exhibit["source"]))
+		_expect(not seen.has(exhibit_id), "duplicate mitre id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		_expect(not earlier_texts.has(str(exhibit["text"])), "mitre copied an earlier exhibit")
+		for sentence in str(exhibit["text"]).split(". "):
+			var cleaned := sentence.trim_suffix(".").strip_edges()
+			_expect(not earlier_sentences.has(cleaned), "mitre copied an earlier sentence: %s" % cleaned)
+		for banned in ["tenon", "gouge", "rasp", "bevel", "haunch", "dowel", "hone", "guide", "harl", "neve", "luth", "nick", "housing", "saw", "square", "bead", "trench", "fillet", "stock", "chalk", "ewan", "maren", "hollin", "mortise", "chisel", "awl", "brace", "wedge", "bored", "ragged", "racked", "dovetail", "vise", "stile", "apron", "clamp", "peg", "joint", "linen", "fold", "shears", "roller", "hem", "sheet", "crease", "press", "loft", "bench", "bottle", "cork", "shop", "drawer", "seal", "screw", "cellar", "wax", "neck", "plug", "dye", "vat", "indigo", "skein", "rope", "walk", "kettle", "winch", "pitch", "mesh", "rail", "crank", "needle", "twine", "cooperage", "cask", "hoop", "croze", "stave", "rebate", "plane", "gauge", "mallet", "shoulder", "scribe", "shim", "fence", "tansy", "solt", "quern", "bridle", "router", "scraper", "adze", "templet", "strop", "notch", "wend", "sile", "jute", "dado", "groove", "cleat", "spur", "kern", "phel", "tarn", "shavings", "mouth", "iron", "senn", "voss", "cade", "slot", "feather", "whet", "cheek", "spline"]:
+			_expect(str(exhibit["text"]).find(banned) == -1, "%s copies %s" % [exhibit_id, banned])
+		var states_player_pin := false
+		var states_unique := false
+		var player_literals := 0
+		var hidden_literals := 0
+		for literal in exhibit["literals"]:
+			stated[str(literal["value"])] = true
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Mitre.PLAYER_FIELDS:
+				states_player_pin = true
+				player_literals += 1
+				var expected := Mitre.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Mitre.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats >= 2, "%s states %s once" % [exhibit_id, field])
+			else:
+				hidden_literals += 1
+				var owners := 0
+				for other in Mitre.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		if hidden_literals == 2:
+			paired_hidden += 1
+		else:
+			_expect(hidden_literals == 1, "%s states %d hidden facts" % [exhibit_id, hidden_literals])
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(player_literals == 1, "%s states %d player pins" % [exhibit_id, player_literals])
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+	_expect(paired_hidden == 2, "mitre should have two slips with two hidden facts, found %d" % paired_hidden)
+	_expect(exhibit_titles == ["Arris chit", "Horn sight", "Offcut hook", "Arris slate", "Stop card", "Dress slip", "Arris leaf", "Arris note", "Brush order"], "mitre exhibit titles are %s" % str(exhibit_titles))
+	_expect(exhibit_sources == ["Venn, kerf hand", "Float horn", "Gimlet brad", "Plough horn", "Haim, bit clerk", "Float pad", "Arris book", "Joiner's saddle", "Gimlet pad"], "mitre sources are %s" % str(exhibit_sources))
+	for hour in Mitre.HOURS:
+		_expect(stated.has(hour), "mitre hour %s is absent from the exhibits" % hour)
+
+
+func _test_mitre_unique_model() -> void:
+	var models := Solver.enumerate(Mitre.EXHIBITS, Mitre)
+	print("mitre models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one mitre model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Orrin", "mitre taker")
+	_expect(str(model["place"]) == "plough", "mitre place")
+	_expect(str(model["hour"]) == "103", "mitre hour")
+	_expect(str(model["arriser"]) == "Venn", "mitre arriser")
+	_expect(str(model["arris_room"]) == "gimlet", "mitre arris room")
+	_expect(str(model["arris_hour"]) == "102", "mitre arris hour")
+	_expect(str(model["seen_from"]) == "float", "mitre seen from")
+	_expect(str(model["stop"]) == "Haim", "mitre stop")
+	_expect(str(model["aim"]) == "take_arris", "mitre aim")
+	_expect(str(model["stop_room"]) == "float", "mitre stop room")
+	_expect(str(model["offcut_room"]) == "gimlet", "mitre offcut room")
+	_expect(str(model["dress_hour"]) == "101", "mitre dress hour")
+	_expect(str(model["brush_hour"]) == "104", "mitre brush hour")
+	_expect(str(model["hang_hour"]) == "105", "mitre hang hour")
+	for hour in Mitre.HOURS:
+		var used := false
+		for field in Mitre.fields():
+			if str(model[field]) == hour:
+				used = true
+		_expect(used, "mitre hour %s is blank in the true timeline" % hour)
+	for place in Mitre.PLACES:
+		var place_used := false
+		for field in Mitre.fields():
+			if str(model[field]) == place:
+				place_used = true
+		_expect(place_used, "mitre room %s is blank in the true timeline" % place)
+	for person in Mitre.PEOPLE:
+		var person_used := false
+		for field in Mitre.fields():
+			if str(model[field]) == person:
+				person_used = true
+		_expect(person_used, "mitre person %s is blank in the true timeline" % person)
+	_expect(Mitre.timeline(model) == MITRE_TIMELINE, "mitre timeline drifted:\n%s" % Mitre.timeline(model))
+	for exhibit in Mitre.EXHIBITS:
+		_expect(Mitre.holds(exhibit, model), "%s rejects the mitre timeline" % exhibit["id"])
+
+
+func _test_mitre_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Mitre.EXHIBITS, Mitre)
+	for exhibit in Mitre.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Mitre.without(exhibit_id), Mitre)
+		print("mitre without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "mitre %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Mitre.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "mitre %s removal did not admit a timeline it forbids" % exhibit_id)
+
+
+func _test_mitre_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	var float_miss := {"who": "Venn", "place": "float", "hour": "101"}
+	_expect(Mitre.conflicting_ids(float_miss).size() == 9, "Venn / float / 101 contradicts %d exhibits" % Mitre.conflicting_ids(float_miss).size())
+	for who in Mitre.PEOPLE:
+		for place in Mitre.PLACES:
+			for hour in Mitre.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == MITRE_TRUE["who"] and place == MITRE_TRUE["place"] and hour == MITRE_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Mitre)
+					print("mitre true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true mitre theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "mitre acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(MITRE_TIMELINE) >= 0, "mitre acceptance should give the timeline")
+					_expect(str(result["message"]).find("Orrin") >= 0, "mitre acceptance omits Orrin")
+					_expect(str(result["message"]).find("plough") >= 0, "mitre acceptance omits the plough")
+					_expect(str(result["message"]).find("103") >= 0, "mitre acceptance omits 103")
+					_expect(str(result["message"]).find("so the arris would take the mitre") >= 0, "mitre acceptance omits the arris")
+					_expect(str(result["message"]).find("Orrin (saddle hand) cut the mitre in the plough at 103") >= 0, "mitre acceptance omits the cutting")
+					_expect(Mitre.conflicting_ids(theory).is_empty(), "true mitre theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Mitre)
+					_expect(Mitre.conflicting_ids(theory).size() >= 2, "%s / %s / %s contradicts fewer than two exhibits" % [who, place, hour])
+					rejected += 1
+	for outsider in ["Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal", "Nell"]:
+		_expect_rejected({"who": outsider, "place": "plough", "hour": "103"}, Mitre)
+	print("mitre theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d mitre theories" % accepted)
+	_expect(rejected >= 2, "rejected %d mitre theories" % rejected)
+
+
+func _test_mitre_near_misses() -> void:
+	var misses := [
+		{"who": "Orrin", "place": "plough", "hour": "104", "titles": ["Arris leaf", "Arris note", "Brush order"]},
+		{"who": "Orrin", "place": "plough", "hour": "102", "titles": ["Arris leaf", "Arris note", "Brush order"]},
+		{"who": "Orrin", "place": "float", "hour": "103", "titles": ["Arris slate", "Stop card", "Dress slip"]},
+		{"who": "Venn", "place": "plough", "hour": "103", "titles": ["Arris chit", "Horn sight", "Offcut hook"]},
+	]
+	var wrong_hour_in_plough := 0
+	var wrong_place_at_hour := 0
+	var wrong_person_in_plough := 0
+	for theory in misses:
+		_expect_rejected(theory, Mitre)
+		var result: Dictionary = Verdict.submit(theory, Mitre)
+		var message := str(result["message"])
+		_expect(Mitre.conflicting_ids(theory).size() >= 2, "near-miss should contradict at least two exhibits: %s" % message)
+		_expect(Mitre.conflicting_ids(theory).size() == 3, "near-miss should name three exhibits: %s" % message)
+		var named_at := -1
+		for title in theory["titles"]:
+			var at := message.find(str(title))
+			_expect(at >= 0, "near-miss omits %s: %s" % [title, message])
+			_expect(at > named_at, "near-miss names %s out of paper order: %s" % [title, message])
+			named_at = at
+		if str(theory["who"]) == "Orrin" and str(theory["place"]) == "plough" and str(theory["hour"]) != "103":
+			wrong_hour_in_plough += 1
+		if str(theory["who"]) == "Orrin" and str(theory["place"]) != "plough" and str(theory["hour"]) == "103":
+			wrong_place_at_hour += 1
+		if str(theory["who"]) != "Orrin" and str(theory["place"]) == "plough" and str(theory["hour"]) == "103":
+			wrong_person_in_plough += 1
+	print("mitre near-misses rejected: %d" % misses.size())
+	_expect(misses.size() == 4, "need four mitre near-misses, found %d" % misses.size())
+	_expect(wrong_hour_in_plough == 2, "two near-misses should keep Orrin in the plough at another hour")
+	_expect(wrong_place_at_hour >= 1, "a near-miss should keep Orrin at 103 in another room")
+	_expect(wrong_person_in_plough >= 1, "a near-miss should keep the plough at 103 for another person")
+
+
+func _test_mitre_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+		"who took the gilt stamp",
+		"where they took the stamp",
+		"at which hour they took the stamp",
+		"who took the ferry bell",
+		"where they took the bell",
+		"at which hour they took the bell",
+		"who took the weather slate",
+		"where they took the slate",
+		"at which hour they took the slate",
+		"who took the loom shuttle",
+		"where they took the shuttle",
+		"at which hour they took the shuttle",
+		"who took the hive smoker",
+		"where they took the smoker",
+		"at which hour they took the smoker",
+		"who took the glass pontil",
+		"where they took the pontil",
+		"at which hour they took the pontil",
+		"who took the press proof",
+		"where they took the proof",
+		"at which hour they took the proof",
+		"who set the assay cup",
+		"where they set the cup",
+		"at which hour they set the cup",
+		"who chalked the kiln mark",
+		"where they chalked the mark",
+		"at which hour they chalked the mark",
+		"who entered the tide ledger",
+		"where they entered the ledger",
+		"at which hour they entered the ledger",
+		"who stopped the night bell",
+		"where they stopped the bell",
+		"at which hour they stopped the bell",
+		"who scored the salt mark",
+		"where they scored the mark",
+		"at which hour they scored the mark",
+		"who trimmed the wick",
+		"where they trimmed the wick",
+		"at which hour they trimmed the wick",
+		"who annealed the gather",
+		"where they annealed the gather",
+		"at which hour they annealed the gather",
+		"who grafted the scion",
+		"where they grafted the scion",
+		"at which hour they grafted the scion",
+		"who dipped the skein",
+		"where they dipped the skein",
+		"at which hour they dipped the skein",
+		"who tarred the rope",
+		"where they tarred the rope",
+		"at which hour they tarred the rope",
+		"who pressed the cork",
+		"where they pressed the cork",
+		"at which hour they pressed the cork",
+		"who mended the net",
+		"where they mended the net",
+		"at which hour they mended the net",
+		"who drove the hoop",
+		"where they drove the hoop",
+		"at which hour they drove the hoop",
+		"who folded the linen",
+		"where they folded the linen",
+		"at which hour they folded the linen",
+		"who cut the dovetail",
+		"where they cut the dovetail",
+		"at which hour they cut the dovetail",
+		"who cut the mortise",
+		"where they cut the mortise",
+		"at which hour they cut the mortise",
+		"who cut the rebate",
+		"where they cut the rebate",
+		"at which hour they cut the rebate",
+		"who cut the housing",
+		"where they cut the housing",
+		"at which hour they cut the housing",
+		"who cut the tenon",
+		"where they cut the tenon",
+		"at which hour they cut the tenon",
+		"who cut the bridle",
+		"where they cut the bridle",
+		"at which hour they cut the bridle",
+		"who cut the dado",
+		"where they cut the dado",
+		"at which hour they cut the dado",
+		"who cut the spline",
+		"where they cut the spline",
+		"at which hour they cut the spline",
+	]
+	var cases := [
+		{"theory": {"who": "", "place": "plough", "hour": "103"}, "present": ["who cut the mitre"], "absent": ["where they cut the mitre", "at which hour they cut the mitre"]},
+		{"theory": {"who": "Orrin", "place": "", "hour": "103"}, "present": ["where they cut the mitre"], "absent": ["who cut the mitre", "at which hour they cut the mitre"]},
+		{"theory": {"who": "Orrin", "place": "plough", "hour": ""}, "present": ["at which hour they cut the mitre"], "absent": ["who cut the mitre", "where they cut the mitre"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who cut the mitre", "where they cut the mitre", "at which hour they cut the mitre"], "absent": []},
+		{"theory": {}, "present": ["who cut the mitre", "where they cut the mitre", "at which hour they cut the mitre"], "absent": []},
+		{"theory": {"who": "Haim", "place": "", "hour": "105"}, "present": ["where they cut the mitre"], "absent": ["who cut the mitre", "at which hour they cut the mitre"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Mitre)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "mitre incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "mitre incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "mitre incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "mitre incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "mitre incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "mitre missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "mitre named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "mitre incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("mitre incomplete submissions refused with the missing slot")
+
+
+
 func _test_solutions_differ() -> void:
 	var spare := {"who": "Nell", "place": "kitchen", "hour": "7"}
 	_expect(spare["who"] != REHEARSAL_TRUE["who"], "rehearsal copied the spare-key taker")
@@ -11357,7 +11755,122 @@ func _test_solutions_differ() -> void:
 	_expect(not Spline.HOURS.has("94"), "spline hours must not take 94")
 	_expect(not Spline.HOURS.has("95"), "spline hours must not take 95")
 
-	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal", "The orchard graft", "The dye vat", "The tar kettle", "The cork press", "The net loft", "The cask hoop", "The linen fold", "The dovetail", "The mortise", "The rebate", "The housing", "The tenon", "The bridle", "The dado", "The spline"], "case list is %s" % str(titles))
+	_expect(MITRE_TRUE["who"] == "Orrin", "mitre taker")
+	_expect(MITRE_TRUE["place"] == "plough", "mitre room")
+	_expect(MITRE_TRUE["hour"] == "103", "mitre hour")
+	for forbidden in ["Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(MITRE_TRUE["who"] != forbidden, "mitre accepted %s" % forbidden)
+	for forbidden_place in ["router", "scraper", "adze", "gouge", "rasp", "bevel", "saw", "square", "bead", "plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(MITRE_TRUE["place"] != forbidden_place, "mitre accepted the %s" % forbidden_place)
+	_expect(MITRE_TRUE["place"] != "float", "mitre accepted the float")
+	_expect(MITRE_TRUE["place"] != "gimlet", "mitre accepted the gimlet")
+	_expect(MITRE_TRUE["hour"] != "101", "mitre accepted 101")
+	_expect(MITRE_TRUE["hour"] != "102", "mitre accepted 102")
+	_expect(MITRE_TRUE["hour"] != "104", "mitre accepted 104")
+	_expect(MITRE_TRUE["hour"] != "105", "mitre accepted 105")
+	_expect(MITRE_TRUE["hour"] != "96", "mitre accepted 96")
+	_expect(MITRE_TRUE["hour"] != "97", "mitre accepted 97")
+	_expect(MITRE_TRUE["hour"] != "98", "mitre accepted 98")
+	_expect(MITRE_TRUE["hour"] != "99", "mitre accepted 99")
+	_expect(MITRE_TRUE["hour"] != "100", "mitre accepted 100")
+	_expect(MITRE_TRUE["hour"] != "93", "mitre accepted 93")
+	_expect(MITRE_TRUE["hour"] != "91", "mitre accepted 91")
+	_expect(MITRE_TRUE["hour"] != "92", "mitre accepted 92")
+	_expect(MITRE_TRUE["hour"] != "94", "mitre accepted 94")
+	_expect(MITRE_TRUE["hour"] != "95", "mitre accepted 95")
+	_expect(MITRE_TRUE["hour"] != "88", "mitre accepted 88")
+	_expect(MITRE_TRUE["hour"] != "83", "mitre accepted 83")
+	_expect(MITRE_TRUE["hour"] != "78", "mitre accepted 78")
+	_expect(MITRE_TRUE["hour"] != "73", "mitre accepted 73")
+	_expect(MITRE_TRUE["hour"] != "68", "mitre accepted 68")
+	_expect(MITRE_TRUE["hour"] != "63", "mitre accepted 63")
+	_expect(MITRE_TRUE["hour"] != "8", "mitre accepted 8")
+	_expect(MITRE_TRUE["hour"] != "6", "mitre accepted 6")
+	_expect(MITRE_TRUE["hour"] != "3", "mitre accepted 3")
+	_expect(MITRE_TRUE["hour"] != "16", "mitre accepted 16")
+	_expect(MITRE_TRUE["hour"] != "19", "mitre accepted 19")
+	var before_mitre: Array = before_spline.duplicate()
+	before_mitre.append([Spline, SPLINE_TRUE, "spline"])
+	for row in before_mitre:
+		var book = row[0]
+		var truth: Dictionary = row[1]
+		var name := str(row[2])
+		_expect(MITRE_TRUE["who"] != truth["who"], "mitre copied the %s taker" % name)
+		if name == "spline" or name == "dado":
+			_expect(MITRE_TRUE["place"] == truth["place"], "mitre should keep the plough the %s already uses" % name)
+		else:
+			_expect(MITRE_TRUE["place"] != truth["place"], "mitre copied the %s room" % name)
+		_expect(MITRE_TRUE["hour"] != str(truth["hour"]), "mitre copied the %s hour" % name)
+		_expect_rejected(MITRE_TRUE, book)
+		_expect_rejected(truth, Mitre)
+	_expect(SPLINE_TRUE["who"] == "Senn" and SPLINE_TRUE["place"] == "plough" and SPLINE_TRUE["hour"] == "98", "the spline should still accept Senn in the plough at 98")
+	for row in before_mitre:
+		var book = row[0]
+		var name := str(row[2])
+		for person in Mitre.PEOPLE:
+			_expect(not book.PEOPLE.has(person), "mitre cast repeats %s from the %s" % [person, name])
+		for place in Mitre.PLACES:
+			if name == "spline" or name == "dado":
+				_expect(book.PLACES.has(place), "mitre shares the %s with the %s" % [place, name])
+			else:
+				_expect(not book.PLACES.has(place), "mitre rooms repeat %s from the %s" % [place, name])
+		for hour in Mitre.HOURS:
+			_expect(not book.HOURS.has(hour), "mitre hours repeat %s from the %s" % [hour, name])
+	for forbidden_person in ["Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(not Mitre.PEOPLE.has(forbidden_person), "mitre cast must not take %s" % forbidden_person)
+	_expect(Mitre.role_phrase("Orrin") == "the saddle hand", "the mitre should call Orrin the saddle hand")
+	_expect(Mitre.role_phrase("Venn") == "the kerf hand", "the mitre should call Venn the kerf hand")
+	_expect(Mitre.role_phrase("Haim") == "the bit clerk", "the mitre should call Haim the bit clerk")
+	for forbidden_place in ["router", "scraper", "adze", "gouge", "rasp", "bevel", "saw", "square", "bead", "plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(not Mitre.PLACES.has(forbidden_place), "mitre rooms must not take the %s" % forbidden_place)
+	_expect(not Mitre.HOURS.has("6"), "mitre hours must not take 6")
+	_expect(not Mitre.HOURS.has("7"), "mitre hours must not take 7")
+	_expect(not Mitre.HOURS.has("8"), "mitre hours must not take 8")
+	_expect(not Mitre.HOURS.has("9"), "mitre hours must not take 9")
+	_expect(not Mitre.HOURS.has("10"), "mitre hours must not take 10")
+	_expect(not Mitre.HOURS.has("60"), "mitre hours must not take 60")
+	_expect(not Mitre.HOURS.has("61"), "mitre hours must not take 61")
+	_expect(not Mitre.HOURS.has("62"), "mitre hours must not take 62")
+	_expect(not Mitre.HOURS.has("63"), "mitre hours must not take 63")
+	_expect(not Mitre.HOURS.has("64"), "mitre hours must not take 64")
+	_expect(not Mitre.HOURS.has("65"), "mitre hours must not take 65")
+	_expect(not Mitre.HOURS.has("66"), "mitre hours must not take 66")
+	_expect(not Mitre.HOURS.has("67"), "mitre hours must not take 67")
+	_expect(not Mitre.HOURS.has("68"), "mitre hours must not take 68")
+	_expect(not Mitre.HOURS.has("69"), "mitre hours must not take 69")
+	_expect(not Mitre.HOURS.has("70"), "mitre hours must not take 70")
+	_expect(not Mitre.HOURS.has("71"), "mitre hours must not take 71")
+	_expect(not Mitre.HOURS.has("72"), "mitre hours must not take 72")
+	_expect(not Mitre.HOURS.has("73"), "mitre hours must not take 73")
+	_expect(not Mitre.HOURS.has("74"), "mitre hours must not take 74")
+	_expect(not Mitre.HOURS.has("75"), "mitre hours must not take 75")
+	_expect(not Mitre.HOURS.has("76"), "mitre hours must not take 76")
+	_expect(not Mitre.HOURS.has("77"), "mitre hours must not take 77")
+	_expect(not Mitre.HOURS.has("78"), "mitre hours must not take 78")
+	_expect(not Mitre.HOURS.has("79"), "mitre hours must not take 79")
+	_expect(not Mitre.HOURS.has("80"), "mitre hours must not take 80")
+	_expect(not Mitre.HOURS.has("81"), "mitre hours must not take 81")
+	_expect(not Mitre.HOURS.has("82"), "mitre hours must not take 82")
+	_expect(not Mitre.HOURS.has("83"), "mitre hours must not take 83")
+	_expect(not Mitre.HOURS.has("84"), "mitre hours must not take 84")
+	_expect(not Mitre.HOURS.has("85"), "mitre hours must not take 85")
+	_expect(not Mitre.HOURS.has("86"), "mitre hours must not take 86")
+	_expect(not Mitre.HOURS.has("87"), "mitre hours must not take 87")
+	_expect(not Mitre.HOURS.has("88"), "mitre hours must not take 88")
+	_expect(not Mitre.HOURS.has("89"), "mitre hours must not take 89")
+	_expect(not Mitre.HOURS.has("90"), "mitre hours must not take 90")
+	_expect(not Mitre.HOURS.has("91"), "mitre hours must not take 91")
+	_expect(not Mitre.HOURS.has("92"), "mitre hours must not take 92")
+	_expect(not Mitre.HOURS.has("93"), "mitre hours must not take 93")
+	_expect(not Mitre.HOURS.has("94"), "mitre hours must not take 94")
+	_expect(not Mitre.HOURS.has("95"), "mitre hours must not take 95")
+	_expect(not Mitre.HOURS.has("96"), "mitre hours must not take 96")
+	_expect(not Mitre.HOURS.has("97"), "mitre hours must not take 97")
+	_expect(not Mitre.HOURS.has("98"), "mitre hours must not take 98")
+	_expect(not Mitre.HOURS.has("99"), "mitre hours must not take 99")
+	_expect(not Mitre.HOURS.has("100"), "mitre hours must not take 100")
+
+	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal", "The orchard graft", "The dye vat", "The tar kettle", "The cork press", "The net loft", "The cask hoop", "The linen fold", "The dovetail", "The mortise", "The rebate", "The housing", "The tenon", "The bridle", "The dado", "The spline", "The mitre"], "case list is %s" % str(titles))
 
 
 func _test_menu_opens_either_case() -> void:
@@ -11370,7 +11883,7 @@ func _test_menu_opens_either_case() -> void:
 		root._ready()
 	var menu_blob := _visible_label_blob(root)
 	_expect(get_root().size == Vector2i(1280, 800), "case window is %s" % str(get_root().size))
-	_expect(menu_blob.find("Thirty-one files") >= 0, "menu does not offer thirty-one files: %s" % menu_blob)
+	_expect(menu_blob.find("Thirty-two files") >= 0, "menu does not offer thirty-two files: %s" % menu_blob)
 	_expect(menu_blob.find("CW-07") >= 0, "menu omits CW-07")
 	_expect(menu_blob.find("The hive smoker") >= 0, "menu omits The hive smoker")
 	_expect(menu_blob.find("CW-08") >= 0, "menu omits CW-08")
@@ -11421,6 +11934,8 @@ func _test_menu_opens_either_case() -> void:
 	_expect(menu_blob.find("The dado") >= 0, "menu omits The dado")
 	_expect(menu_blob.find("CW-31") >= 0, "menu omits CW-31")
 	_expect(menu_blob.find("The spline") >= 0, "menu omits The spline")
+	_expect(menu_blob.find("CW-32") >= 0, "menu omits CW-32")
+	_expect(menu_blob.find("The mitre") >= 0, "menu omits The mitre")
 	_expect(root.get_child_count() > 0, "main scene built %d children" % root.get_child_count())
 	_press(root, "How to play")
 	var howto := _visible_label_blob(root)
@@ -11455,6 +11970,7 @@ func _test_menu_opens_either_case() -> void:
 	_expect(howto.find("The bridle") >= 0, "how to play omits The bridle")
 	_expect(howto.find("The dado") >= 0, "how to play omits The dado")
 	_expect(howto.find("The spline") >= 0, "how to play omits The spline")
+	_expect(howto.find("The mitre") >= 0, "how to play omits The mitre")
 	_expect(howto.find("names that slot") >= 0, "how to play omits the empty-slot rule")
 	_press(root, "Back to the menu")
 	_expect(_find_visible_button(root, "Open The spare key") != null, "menu is missing The spare key")
@@ -11488,6 +12004,7 @@ func _test_menu_opens_either_case() -> void:
 	_expect(_find_visible_button(root, "Open The bridle") != null, "menu is missing The bridle")
 	_expect(_find_visible_button(root, "Open The dado") != null, "menu is missing The dado")
 	_expect(_find_visible_button(root, "Open The spline") != null, "menu is missing The spline")
+	_expect(_find_visible_button(root, "Open The mitre") != null, "menu is missing The mitre")
 	_press(root, "Open The rehearsal score")
 	var rehearsal_open := _visible_label_blob(root)
 	_expect(rehearsal_open.find("Cut list") >= 0, "rehearsal file did not open")
@@ -13853,6 +14370,178 @@ func _test_menu_opens_either_case() -> void:
 	_expect(dado_again_blob.find("Slot chit") == -1, "spline papers stayed up after returning to The dado")
 	_expect(dado_again_blob.find("Slot note") == -1, "spline papers stayed up after returning to The dado")
 	_press(root, "Menu")
+	_press(root, "Open The mitre")
+	var mitre_open := _visible_label_blob(root)
+	_expect(mitre_open.find("Arris chit") >= 0, "mitre file did not open")
+	_expect(mitre_open.find("Arris note") >= 0, "mitre file did not show its exhibits")
+	_expect(mitre_open.find("CW-32") >= 0, "mitre file omits CW-32")
+	_expect(mitre_open.find("Offcut hook") >= 0, "mitre file omits Offcut hook")
+	_expect(mitre_open.find("Dress slip") >= 0, "mitre file omits Dress slip")
+	_expect(mitre_open.find("Arris leaf") >= 0, "mitre file omits Arris leaf")
+	_expect(mitre_open.find("Brush order") >= 0, "mitre file omits Brush order")
+	_expect(mitre_open.find("Complaint slip") == -1, "spare key papers showed inside The mitre")
+	_expect(mitre_open.find("Cut list") == -1, "rehearsal papers showed inside The mitre")
+	_expect(mitre_open.find("Move order") == -1, "gilt stamp papers showed inside The mitre")
+	_expect(mitre_open.find("Whistle slip") == -1, "ferry bell papers showed inside The mitre")
+	_expect(mitre_open.find("Frost note") == -1, "weather slate papers showed inside The mitre")
+	_expect(mitre_open.find("Trough tag") == -1, "loom shuttle papers showed inside The mitre")
+	_expect(mitre_open.find("Fuel line") == -1, "hive smoker papers showed inside The mitre")
+	_expect(mitre_open.find("Weight line") == -1, "glass pontil papers showed inside The mitre")
+	_expect(mitre_open.find("Lock line") == -1, "press proof papers showed inside The mitre")
+	_expect(mitre_open.find("Cup line") == -1, "assay cup papers showed inside The mitre")
+	_expect(mitre_open.find("Mark line") == -1, "kiln chalk papers showed inside The mitre")
+	_expect(mitre_open.find("Ledger line") == -1, "tide ledger papers showed inside The mitre")
+	_expect(mitre_open.find("Bell line") == -1, "night bell papers showed inside The mitre")
+	_expect(mitre_open.find("Salt line") == -1, "salt mark papers showed inside The mitre")
+	_expect(mitre_open.find("Oil note") == -1, "wick trim papers showed inside The mitre")
+	_expect(mitre_open.find("Gather note") == -1, "glass anneal papers showed inside The mitre")
+	_expect(mitre_open.find("Scion note") == -1, "orchard graft papers showed inside The mitre")
+	_expect(mitre_open.find("Winder chit") == -1, "dye vat papers showed inside The mitre")
+	_expect(mitre_open.find("Rope chit") == -1, "tar kettle papers showed inside The mitre")
+	_expect(mitre_open.find("Cutter chit") == -1, "cork press papers showed inside The mitre")
+	_expect(mitre_open.find("Mesh chit") == -1, "net loft papers showed inside The mitre")
+	_expect(mitre_open.find("Hoop chit") == -1, "cask hoop papers showed inside The mitre")
+	_expect(mitre_open.find("Shears chit") == -1, "linen fold papers showed inside The mitre")
+	_expect(mitre_open.find("Apron sight") == -1, "dovetail papers showed inside The mitre")
+	_expect(mitre_open.find("Peg hook") == -1, "dovetail papers showed inside The mitre")
+	_expect(mitre_open.find("Joint slate") == -1, "dovetail papers showed inside The mitre")
+	_expect(mitre_open.find("Clamp card") == -1, "dovetail papers showed inside The mitre")
+	_expect(mitre_open.find("Sweep slip") == -1, "dovetail papers showed inside The mitre")
+	_expect(mitre_open.find("Cut leaf") == -1, "dovetail papers showed inside The mitre")
+	_expect(mitre_open.find("Joint note") == -1, "dovetail papers showed inside The mitre")
+	_expect(mitre_open.find("Jaw order") == -1, "dovetail papers showed inside The mitre")
+	_expect(mitre_open.find("CW-24") == -1, "dovetail file code stayed up inside The mitre")
+	_expect(mitre_open.find("Chisel chit") == -1, "mortise papers stayed up inside The mitre")
+	_expect(mitre_open.find("Awl sight") == -1, "mortise papers showed inside The mitre")
+	_expect(mitre_open.find("Wedge hook") == -1, "mortise papers showed inside The mitre")
+	_expect(mitre_open.find("Tenon slate") == -1, "mortise papers showed inside The mitre")
+	_expect(mitre_open.find("Brace card") == -1, "mortise papers showed inside The mitre")
+	_expect(mitre_open.find("Brush slip") == -1, "mortise papers showed inside The mitre")
+	_expect(mitre_open.find("Bore leaf") == -1, "mortise papers showed inside The mitre")
+	_expect(mitre_open.find("Tenon note") == -1, "mortise papers showed inside The mitre")
+	_expect(mitre_open.find("Rack order") == -1, "mortise papers showed inside The mitre")
+	_expect(mitre_open.find("CW-25") == -1, "mortise file code stayed up inside The mitre")
+	_expect(mitre_open.find("Plane chit") == -1, "rebate papers stayed up inside The mitre")
+	_expect(mitre_open.find("Gauge sight") == -1, "rebate papers showed inside The mitre")
+	_expect(mitre_open.find("Shim hook") == -1, "rebate papers showed inside The mitre")
+	_expect(mitre_open.find("Shoulder slate") == -1, "rebate papers showed inside The mitre")
+	_expect(mitre_open.find("Fence card") == -1, "rebate papers showed inside The mitre")
+	_expect(mitre_open.find("Oil slip") == -1, "rebate papers showed inside The mitre")
+	_expect(mitre_open.find("Scribe leaf") == -1, "rebate papers showed inside The mitre")
+	_expect(mitre_open.find("Shoulder note") == -1, "rebate papers showed inside The mitre")
+	_expect(mitre_open.find("CW-26") == -1, "rebate file code stayed up inside The mitre")
+	_expect(mitre_open.find("Saw chit") == -1, "housing papers stayed up inside The mitre")
+	_expect(mitre_open.find("Square sight") == -1, "housing papers showed inside The mitre")
+	_expect(mitre_open.find("Fillet hook") == -1, "housing papers showed inside The mitre")
+	_expect(mitre_open.find("Trench slate") == -1, "housing papers showed inside The mitre")
+	_expect(mitre_open.find("Stock card") == -1, "housing papers showed inside The mitre")
+	_expect(mitre_open.find("Chalk slip") == -1, "housing papers showed inside The mitre")
+	_expect(mitre_open.find("Mark leaf") == -1, "housing papers showed inside The mitre")
+	_expect(mitre_open.find("Trench note") == -1, "housing papers showed inside The mitre")
+	_expect(mitre_open.find("CW-27") == -1, "housing file code stayed up inside The mitre")
+	_expect(mitre_open.find("Gouge chit") == -1, "tenon papers stayed up inside The mitre")
+	_expect(mitre_open.find("Rasp sight") == -1, "tenon papers showed inside The mitre")
+	_expect(mitre_open.find("Dowel hook") == -1, "tenon papers showed inside The mitre")
+	_expect(mitre_open.find("Haunch slate") == -1, "tenon papers showed inside The mitre")
+	_expect(mitre_open.find("Guide card") == -1, "tenon papers showed inside The mitre")
+	_expect(mitre_open.find("Hone slip") == -1, "tenon papers showed inside The mitre")
+	_expect(mitre_open.find("Nick leaf") == -1, "tenon papers showed inside The mitre")
+	_expect(mitre_open.find("Haunch note") == -1, "tenon papers showed inside The mitre")
+	_expect(mitre_open.find("CW-28") == -1, "tenon file code stayed up inside The mitre")
+	_expect(mitre_open.find("Router chit") == -1, "bridle papers stayed up inside The mitre")
+	_expect(mitre_open.find("Scraper sight") == -1, "bridle papers showed inside The mitre")
+	_expect(mitre_open.find("Spline hook") == -1, "bridle papers showed inside The mitre")
+	_expect(mitre_open.find("Tongue slate") == -1, "bridle papers showed inside The mitre")
+	_expect(mitre_open.find("Templet card") == -1, "bridle papers showed inside The mitre")
+	_expect(mitre_open.find("Strop slip") == -1, "bridle papers showed inside The mitre")
+	_expect(mitre_open.find("Notch leaf") == -1, "bridle papers showed inside The mitre")
+	_expect(mitre_open.find("Tongue note") == -1, "bridle papers showed inside The mitre")
+	_expect(mitre_open.find("CW-29") == -1, "bridle file code stayed up inside The mitre")
+	_expect(mitre_open.find("Plough chit") == -1, "dado papers stayed up inside The mitre")
+	_expect(mitre_open.find("Float sight") == -1, "dado papers showed inside The mitre")
+	_expect(mitre_open.find("Cleat hook") == -1, "dado papers showed inside The mitre")
+	_expect(mitre_open.find("Groove slate") == -1, "dado papers showed inside The mitre")
+	_expect(mitre_open.find("Spur card") == -1, "dado papers showed inside The mitre")
+	_expect(mitre_open.find("Whet slip") == -1, "dado papers showed inside The mitre")
+	_expect(mitre_open.find("Score leaf") == -1, "dado papers showed inside The mitre")
+	_expect(mitre_open.find("Groove note") == -1, "dado papers showed inside The mitre")
+	_expect(mitre_open.find("CW-30") == -1, "dado file code stayed up inside The mitre")
+	_expect(mitre_open.find("Slot chit") == -1, "spline papers stayed up inside The mitre")
+	_expect(mitre_open.find("Rest sight") == -1, "spline papers showed inside The mitre")
+	_expect(mitre_open.find("Feather hook") == -1, "spline papers showed inside The mitre")
+	_expect(mitre_open.find("Slot slate") == -1, "spline papers showed inside The mitre")
+	_expect(mitre_open.find("Key card") == -1, "spline papers showed inside The mitre")
+	_expect(mitre_open.find("Cheek slip") == -1, "spline papers showed inside The mitre")
+	_expect(mitre_open.find("Slot leaf") == -1, "spline papers showed inside The mitre")
+	_expect(mitre_open.find("Slot note") == -1, "spline papers showed inside The mitre")
+	_expect(mitre_open.find("Dry order") == -1, "spline papers showed inside The mitre")
+	_expect(mitre_open.find("CW-31") == -1, "spline file code stayed up inside The mitre")
+	_press(root, "Submit theory")
+	var empty_mitre := _verdict_text(root)
+	_expect(empty_mitre.find("who cut the mitre") >= 0, "empty mitre board: %s" % empty_mitre)
+	_expect(empty_mitre.find("where they cut the mitre") >= 0, "empty mitre board: %s" % empty_mitre)
+	_expect(empty_mitre.find("at which hour they cut the mitre") >= 0, "empty mitre board: %s" % empty_mitre)
+	_expect(empty_mitre.find("who took the spare key") == -1, "empty mitre board used the spare key slot: %s" % empty_mitre)
+	_expect(empty_mitre.find("who cut the spline") == -1, "empty mitre board used a spline slot: %s" % empty_mitre)
+	_expect(empty_mitre.to_lower().find("conflict") == -1, "empty mitre board talked about a conflict: %s" % empty_mitre)
+	_press(root, "Venn")
+	_press(root, "Float")
+	_press(root, "101")
+	_press(root, "Submit theory")
+	var mitre_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(mitre_miss, Mitre, {"who": "Venn", "place": "float", "hour": "101"})
+	_expect(Mitre.conflicting_ids({"who": "Venn", "place": "float", "hour": "101"}).size() == 9, "Venn / float / 101 should contradict every exhibit")
+	_expect(mitre_miss.find("Arris chit") >= 0, "wrong triple reply omits Arris chit: %s" % mitre_miss)
+	_expect(mitre_miss.find("Horn sight") >= 0, "wrong triple reply omits Horn sight: %s" % mitre_miss)
+	_expect(mitre_miss.find("Offcut hook") >= 0, "wrong triple reply omits Offcut hook: %s" % mitre_miss)
+	_expect(mitre_miss.find("Arris slate") >= 0, "wrong triple reply omits Arris slate: %s" % mitre_miss)
+	_expect(mitre_miss.find("Stop card") >= 0, "wrong triple reply omits Stop card: %s" % mitre_miss)
+	_expect(mitre_miss.find("Dress slip") >= 0, "wrong triple reply omits Dress slip: %s" % mitre_miss)
+	_expect(mitre_miss.find("Arris leaf") >= 0, "wrong triple reply omits Arris leaf: %s" % mitre_miss)
+	_expect(mitre_miss.find("Arris note") >= 0, "wrong triple reply omits Arris note: %s" % mitre_miss)
+	_expect(mitre_miss.find("Brush order") >= 0, "wrong triple reply omits Brush order: %s" % mitre_miss)
+	_press(root, "Orrin")
+	_press(root, "Plough")
+	_press(root, "103")
+	_press(root, "Submit theory")
+	var mitre_accepted := _verdict_text(root)
+	_expect(mitre_accepted.find("fits every exhibit") >= 0, "mitre board rejected the true theory: %s" % mitre_accepted)
+	_expect(mitre_accepted.find(MITRE_TIMELINE) >= 0, "mitre board timeline: %s" % mitre_accepted)
+	_expect(mitre_accepted.find("Orrin (saddle hand) cut the mitre in the plough at 103") >= 0, "mitre board omits Orrin at 103: %s" % mitre_accepted)
+	_expect(mitre_accepted.find("in the plough") >= 0, "mitre board omits the plough: %s" % mitre_accepted)
+	_expect(mitre_accepted.find("so the arris would take the mitre") >= 0, "mitre board omits the arris: %s" % mitre_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var mitre_cleared := _verdict_text(root)
+	_expect(mitre_cleared.find("who cut the mitre") >= 0, "cleared mitre board: %s" % mitre_cleared)
+	_expect(mitre_cleared.find("fits every exhibit") == -1, "cleared mitre board stayed accepted: %s" % mitre_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The spline")
+	var spline_from_mitre := _visible_label_blob(root)
+	_expect(spline_from_mitre.find("Slot chit") >= 0, "could not return to The spline from The mitre")
+	_expect(spline_from_mitre.find("Slot note") >= 0, "spline exhibits did not return")
+	_expect(spline_from_mitre.find("CW-31") >= 0, "returned spline omits CW-31")
+	_expect(spline_from_mitre.find("Arris chit") == -1, "mitre papers stayed up inside The spline")
+	_expect(spline_from_mitre.find("Horn sight") == -1, "mitre papers showed inside The spline")
+	_expect(spline_from_mitre.find("Offcut hook") == -1, "mitre papers showed inside The spline")
+	_expect(spline_from_mitre.find("Arris slate") == -1, "mitre papers showed inside The spline")
+	_expect(spline_from_mitre.find("Stop card") == -1, "mitre papers showed inside The spline")
+	_expect(spline_from_mitre.find("Dress slip") == -1, "mitre papers showed inside The spline")
+	_expect(spline_from_mitre.find("Arris leaf") == -1, "mitre papers showed inside The spline")
+	_expect(spline_from_mitre.find("Arris note") == -1, "mitre papers showed inside The spline")
+	_expect(spline_from_mitre.find("CW-32") == -1, "mitre file code stayed up inside The spline")
+	_press(root, "Senn")
+	_press(root, "Plough")
+	_press(root, "98")
+	_press(root, "Submit theory")
+	var spline_again := _verdict_text(root)
+	_expect(spline_again.find("fits every exhibit") >= 0, "spline board rejected the true theory after The mitre: %s" % spline_again)
+	_expect(spline_again.find("Senn (vise hand) cut the spline in the plough at 98") >= 0, "spline board timeline after The mitre: %s" % spline_again)
+	var spline_again_blob := _visible_label_blob(root)
+	_expect(spline_again_blob.find("Slot chit") >= 0, "spline papers left after returning")
+	_expect(spline_again_blob.find("Arris chit") == -1, "mitre papers stayed up after returning to The spline")
+	_expect(spline_again_blob.find("Arris note") == -1, "mitre papers stayed up after returning to The spline")
+	_press(root, "Menu")
 	_menu_root = root
 
 
@@ -13868,8 +14557,9 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 	var bridle := _find_visible_button(root, "Open The bridle")
 	var dado := _find_visible_button(root, "Open The dado")
 	var spline := _find_visible_button(root, "Open The spline")
-	_expect(mortise != null and rebate != null and housing != null and tenon != null and bridle != null and dado != null and spline != null, "file list is missing a joiner button")
-	if mortise == null or rebate == null or housing == null or tenon == null or bridle == null or dado == null or spline == null:
+	var mitre := _find_visible_button(root, "Open The mitre")
+	_expect(mortise != null and rebate != null and housing != null and tenon != null and bridle != null and dado != null and spline != null and mitre != null, "file list is missing a joiner button")
+	if mortise == null or rebate == null or housing == null or tenon == null or bridle == null or dado == null or spline == null or mitre == null:
 		return
 	var mortise_rect := _content_rect(mortise)
 	var rebate_rect := _content_rect(rebate)
@@ -13878,24 +14568,28 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 	var bridle_rect := _content_rect(bridle)
 	var dado_rect := _content_rect(dado)
 	var spline_rect := _content_rect(spline)
-	print("file list mortise %s rebate %s housing %s tenon %s bridle %s dado %s spline %s" % [mortise_rect, rebate_rect, housing_rect, tenon_rect, bridle_rect, dado_rect, spline_rect])
+	var mitre_rect := _content_rect(mitre)
+	print("file list mortise %s rebate %s housing %s tenon %s bridle %s dado %s spline %s mitre %s" % [mortise_rect, rebate_rect, housing_rect, tenon_rect, bridle_rect, dado_rect, spline_rect, mitre_rect])
 	_expect(rebate_rect.size.y >= 40.0, "Open The rebate has no height")
 	_expect(housing_rect.size.y >= 40.0, "Open The housing has no height")
 	_expect(tenon_rect.size.y >= 40.0, "Open The tenon has no height")
 	_expect(bridle_rect.size.y >= 40.0, "Open The bridle has no height")
 	_expect(dado_rect.size.y >= 40.0, "Open The dado has no height")
 	_expect(spline_rect.size.y >= 40.0, "Open The spline has no height")
+	_expect(mitre_rect.size.y >= 40.0, "Open The mitre has no height")
 	_expect(mortise_rect.position.y + mortise_rect.size.y <= rebate_rect.position.y, "Open The mortise is not above Open The rebate")
 	_expect(rebate_rect.position.y + rebate_rect.size.y <= housing_rect.position.y, "Open The rebate is not above Open The housing")
 	_expect(housing_rect.position.y + housing_rect.size.y <= tenon_rect.position.y, "Open The housing is not above Open The tenon")
 	_expect(tenon_rect.position.y + tenon_rect.size.y <= bridle_rect.position.y, "Open The tenon is not above Open The bridle")
 	_expect(bridle_rect.position.y + bridle_rect.size.y <= dado_rect.position.y, "Open The bridle is not above Open The dado")
 	_expect(dado_rect.position.y + dado_rect.size.y <= spline_rect.position.y, "Open The dado is not above Open The spline")
+	_expect(spline_rect.position.y + spline_rect.size.y <= mitre_rect.position.y, "Open The spline is not above Open The mitre")
 	_expect(housing_rect.position.y == 4134.0, "housing content top is %s" % housing_rect.position.y)
 	_expect(tenon_rect.position.y == 4281.0, "tenon content top is %s" % tenon_rect.position.y)
 	_expect(bridle_rect.position.y == 4428.0, "bridle content top is %s" % bridle_rect.position.y)
 	_expect(dado_rect.position.y == 4575.0, "dado content top is %s" % dado_rect.position.y)
 	_expect(spline_rect.position.y == 4722.0, "spline content top is %s" % spline_rect.position.y)
+	_expect(mitre_rect.position.y == 4869.0, "mitre content top is %s" % mitre_rect.position.y)
 	var window_height := 800.0
 	var housing_bottom := housing_rect.position.y + housing_rect.size.y
 	var visible_top := housing_bottom - window_height
@@ -13918,6 +14612,10 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 	var spline_visible_top := spline_bottom - window_height
 	_expect(dado_rect.position.y >= spline_visible_top, "Open The dado is not fully on screen above Open The spline")
 	_expect(dado_rect.position.y + dado_rect.size.y <= spline_bottom, "Open The dado extends past the window when Open The spline sits at the bottom")
+	var mitre_bottom := mitre_rect.position.y + mitre_rect.size.y
+	var mitre_visible_top := mitre_bottom - window_height
+	_expect(spline_rect.position.y >= mitre_visible_top, "Open The spline is not fully on screen above Open The mitre")
+	_expect(spline_rect.position.y + spline_rect.size.y <= mitre_bottom, "Open The spline extends past the window when Open The mitre sits at the bottom")
 	var scroll := _find_visible_scroll(root)
 	_expect(scroll != null, "the file list has no scroll")
 	if scroll != null:
@@ -13928,6 +14626,7 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 	_expect(bridle_bottom > window_height, "Open The bridle already fits without scrolling")
 	_expect(dado_bottom > window_height, "Open The dado already fits without scrolling")
 	_expect(spline_bottom > window_height, "Open The spline already fits without scrolling")
+	_expect(mitre_bottom > window_height, "Open The mitre already fits without scrolling")
 
 
 func _content_rect(control: Control) -> Rect2:
