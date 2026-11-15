@@ -1,6 +1,6 @@
 # Dispatch
 
-A wiring puzzle. Route parcels across Building 1 and Building 2, then submit the belt. After a delivery, the game shows your cycles and block count beside par. Par is not a handwritten number: it is the result of simulating that puzzle's reference graph.
+A wiring puzzle. Route parcels across Building 1, Building 2, and Building 3, then submit the belt. After a delivery, the game shows your cycles and block count beside par. Par is not a handwritten number: it is the result of simulating that puzzle's reference graph.
 
 Blocks are drawn by Godot. There is no imported art.
 
@@ -30,7 +30,7 @@ The process exits non-zero if a test fails. These were written for Godot 4.7.
 
 ## Controls
 
-Left-click an empty cell to place the selected block. Left-click a block of the same type to rotate it, or a different type to replace it. Right-click deletes. `R` rotates the block under the cursor, or the placement arrow if the cell is empty. `Delete` removes the block under the cursor. `Enter` submits. `Backspace` restarts the puzzle. Keys `1` through `8` select the first eight puzzles. `[` and `]` step to the previous or next puzzle. Puzzle 1 also prints the how-to on the board. Building 2 is routes 16 through 22, marked on the route row, and it opens after route 15.
+Left-click an empty cell to place the selected block. Left-click a block of the same type to rotate it, or a different type to replace it. Right-click deletes. `R` rotates the block under the cursor, or the placement arrow if the cell is empty. `Delete` removes the block under the cursor. `Enter` submits. `Backspace` restarts the puzzle. Keys `1` through `8` select the first eight puzzles. `[` and `]` step to the previous or next puzzle. Puzzle 1 also prints the how-to on the board. Building 2 is routes 16 through 22 and Building 3 is routes 23 through 29. Each later building is marked on the route row. Building 2 opens after route 15, and Building 3 opens after route 22.
 
 ## Simulation
 
@@ -38,9 +38,9 @@ Ticks are deterministic. A parcel sits on at most one cell. Sources and the dock
 
 Each tick, in order:
 
-1. A painter sets the color of a parcel standing on it. A counter increments once for that parcel and stamps the new value. A parcel is stamped only on the first tick it spends on that counter.
+1. A painter sets the color of a parcel standing on it. A primer sets the color only when that parcel is gray. A counter increments once for that parcel and stamps the new value. A parcel is stamped only on the first tick it spends on that counter.
 2. Every parcel picks a destination from the block under it.
-3. Destinations that are illegal, contested by two parcels, or occupied by a parcel that is staying are cancelled. This repeats until it settles. Conveyors, painters, counters, splitters, and filters may step into a cell another parcel is leaving on the same tick.
+3. Destinations that are illegal, contested by two parcels, or occupied by a parcel that is staying are cancelled. This repeats until it settles. Conveyors, painters, counters, splitters, filters, and primers may step into a cell another parcel is leaving on the same tick.
 4. The surviving moves happen together. A parcel that steps onto the dock is delivered, in order.
 5. A splitter that actually sent a parcel switches to its other output.
 6. Each source emits its next parcel into the cell it faces, if that cell is empty and in bounds.
@@ -81,6 +81,10 @@ On the first tick a parcel spends on a counter, the counter adds one and writes 
 
 Sends a parcel of its own color along the arrow. Any other color leaves clockwise. The color is red, blue, or yellow, and the filter does not change the parcel. It moves every tick, including into a cell another parcel is leaving.
 
+### Primer
+
+Paints a gray parcel its color, then moves the parcel forward with the same rule as a conveyor. A parcel that already has a color keeps that color. Primers are red, blue, or yellow.
+
 ## Puzzles
 
 1. First Mile introduces the conveyor. Send the parcel straight to the dock.
@@ -105,7 +109,14 @@ Sends a parcel of its own color along the arrow. Any other color leaves clockwis
 20. Become Red paints the looping blue red, so the filter lets it out on the next pass. The deliveries are red 2 and red 3.
 21. Two Tallies gives each color its own counter. Blues stay on the arrow. Reds turn off it.
 22. Night Wing uses the splitter and the filter together. The second red is painted yellow, the first red goes through, and blue follows yellow into the counter.
+23. Spare the Red introduces the primer. Gray becomes blue. Red crosses the same block and stays red.
+24. Middle Yellow paints only the gray yellow, then stamps red 1, yellow 2, and blue 3.
+25. Hold the South sends red through the filter. Gray is primed yellow on the south belt, and a latch holds that belt so red arrives first. Blue keeps its color.
+26. Red Ahead primes gray red so the filter pulls it ahead of blue.
+27. Shared Coat merges a red chute and a gray chute. The latch lets red through the primer first. Gray becomes yellow and is stamped 2.
+28. Stamp Blue First primes gray red, lets blue through the filter into the counter, and brings red back for stamp 2.
+29. Night Coat uses the filter, the primer, and the latch. Red is stamped 1, gray becomes yellow and is stamped 2, and blue is held for stamp 3.
 
 ## Limits
 
-These are Building 1 and Building 2. There is no histogram, no sound, and no proof that par is the shortest possible route: par is the reference graph, and another graph can deliver the order with a different cycle count or block count. Playback of a run that hits the tick cap is shortened on screen; the simulation itself still runs to the cap.
+These are Building 1, Building 2, and Building 3. There is no histogram, no sound, and no proof that par is the shortest possible route: par is the reference graph, and another graph can deliver the order with a different cycle count or block count. Playback of a run that hits the tick cap is shortened on screen; the simulation itself still runs to the cap.
