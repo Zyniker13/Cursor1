@@ -39,6 +39,7 @@ extends RefCounted
 ## The transept's ring is the walk around the transept.
 ## The ambulatory's ring is the walk around the ambulatory.
 ## The chevet's ring is the walk around the chevet.
+## The retrochoir's ring is the walk around the retrochoir.
 ## A census is accepted only when every corridor and hazard is marked truly
 ## and no tile is marked as something it is not.
 
@@ -52,7 +53,7 @@ const HAZARD_VALUE := 8
 const LOOP_VALUE := 15
 
 const TOWN_LINE := "Arrows turn and step, Q and E strafe, M marks the tile you face, and Space waits out the warden's swing."
-const RATE_CARD := "A true corridor pays 3. A true hazard pays 8. The cellar's east square, the cistern ring, the cloister walk, the crypt ring, the ossuary ring, the reliquary ring, the undercroft ring, the well ring, the scriptorium ring, the binding ring, the chart room ring, the bell loft ring, the clock room ring, the font ring, the apse ring, the choir ring, the rood ring, the crossing ring, the transept ring, the ambulatory ring, and the chevet ring each pay 15 only when every tile of that ring is marked corridor. A false mark pays nothing."
+const RATE_CARD := "A true corridor pays 3. A true hazard pays 8. The cellar's east square, the cistern ring, the cloister walk, the crypt ring, the ossuary ring, the reliquary ring, the undercroft ring, the well ring, the scriptorium ring, the binding ring, the chart room ring, the bell loft ring, the clock room ring, the font ring, the apse ring, the choir ring, the rood ring, the crossing ring, the transept ring, the ambulatory ring, the chevet ring, and the retrochoir ring each pay 15 only when every tile of that ring is marked corridor. A false mark pays nothing."
 
 const CELLAR_RECORD := "Record every corridor, both hazard cracks, and the east square."
 const CISTERN_RECORD := "Record every corridor, the three seep cracks, and the cistern ring around the pit."
@@ -75,6 +76,7 @@ const CROSSING_RECORD := "Record every corridor, the nineteen crossing cracks, a
 const TRANSEPT_RECORD := "Record every corridor, the nineteen transept cracks, and the ring around the transept."
 const AMBULATORY_RECORD := "Record every corridor, the twenty ambulatory cracks, and the ring around the ambulatory."
 const CHEVET_RECORD := "Record every corridor, the twenty-one chevet cracks, and the ring around the chevet."
+const RETROCHOIR_RECORD := "Record every corridor, the twenty-two retrochoir cracks, and the ring around the retrochoir."
 
 const CELLAR_ROWS: PackedStringArray = [
 	"#############",
@@ -524,6 +526,43 @@ const CHEVET_ROWS: PackedStringArray = [
 	"########################",
 ]
 
+
+# The retrochoir is the 12x6 block of 'O' at columns 7-18, rows 4-9.
+# The paid ring is the 40-tile corridor cycle around that retrochoir.
+# O was unused on every earlier floor. P is the binding press, so it stays unused.
+# The sheet grows the chevet one column to the east. Cracks that sat on x=22
+# move to x=23. The new crack is (23,14). (11,11) through (22,11) are closed
+# into the east pier, and (4,1) through (23,1) are closed on the north landing.
+# (19,3), (20,3), and (21,3) stay open. With (22,3) still wall, a swing-free
+# survey costs 136 oil. (22,3) stays open as one more passage cell, which
+# brings the survey to 126. The ordinary floors (2,12) and (11,12) through
+# (18,12) are closed as well, so the survey costs 120. (1,12), (1,13), and
+# (1,14) stay ordinary walls. (2,1) and (3,1) stay open floor. (19,12) stays
+# a crack.
+const RETROCHOIR_ROWS: PackedStringArray = [
+	"#########################",
+	"#S..#####################",
+	"#.#####################H#",
+	"#H####.................H#",
+	"#.####.OOOOOOOOOOOO.###H#",
+	"#H####.OOOOOOOOOOOO.###H#",
+	"#.####.OOOOOOOOOOOO.###H#",
+	"#H####.OOOOOOOOOOOO.###H#",
+	"#.####.OOOOOOOOOOOO.###H#",
+	"#H####.OOOOOOOOOOOO.###H#",
+	"#.####..............###H#",
+	"#H........L############H#",
+	"###H.H.H.E.########H...H#",
+	"#######################H#",
+	"#######################H#",
+	"#########################",
+	"#########################",
+	"#########################",
+	"#########################",
+	"#########################",
+	"#########################",
+]
+
 enum Tile { WALL, FLOOR, HAZARD, LIFT }
 enum Mark { NONE, CORRIDOR, WALL, HAZARD }
 enum EndReason { NONE, EXTRACTED, LAMP_OUT, ABANDONED }
@@ -564,7 +603,7 @@ static var _floor_list: Array = []
 
 static func floors() -> Array:
 	if _floor_list.is_empty():
-		_floor_list = [_make_cellar(), _make_cistern(), _make_cloister(), _make_crypt(), _make_ossuary(), _make_reliquary(), _make_undercroft(), _make_wellhouse(), _make_scriptorium(), _make_binding(), _make_chartroom(), _make_bellloft(), _make_clockroom(), _make_font(), _make_apse(), _make_choir(), _make_rood(), _make_crossing(), _make_transept(), _make_ambulatory(), _make_chevet()]
+		_floor_list = [_make_cellar(), _make_cistern(), _make_cloister(), _make_crypt(), _make_ossuary(), _make_reliquary(), _make_undercroft(), _make_wellhouse(), _make_scriptorium(), _make_binding(), _make_chartroom(), _make_bellloft(), _make_clockroom(), _make_font(), _make_apse(), _make_choir(), _make_rood(), _make_crossing(), _make_transept(), _make_ambulatory(), _make_chevet(), _make_retrochoir()]
 	return _floor_list
 
 
@@ -977,6 +1016,26 @@ static func _make_chevet() -> Floor:
 		ring.append(Vector2i(x, 10))
 	floor.loop = ring
 	floor.record = CHEVET_RECORD
+	return floor
+
+
+
+static func _make_retrochoir() -> Floor:
+	var floor := Floor.new()
+	floor.id = "retrochoir"
+	floor.title = "The Retrochoir"
+	floor.rows = RETROCHOIR_ROWS
+	floor.loop_name = "Retrochoir ring"
+	var ring: Array = []
+	for x in range(6, 20):
+		ring.append(Vector2i(x, 3))
+	for y in range(4, 10):
+		ring.append(Vector2i(6, y))
+		ring.append(Vector2i(19, y))
+	for x in range(6, 20):
+		ring.append(Vector2i(x, 10))
+	floor.loop = ring
+	floor.record = RETROCHOIR_RECORD
 	return floor
 
 
@@ -1393,6 +1452,8 @@ static func ahead_line(state: RunState) -> String:
 				return "Ahead: the ambulatory. It inks as a wall."
 			if glyph_at(n, plan) == "Q":
 				return "Ahead: the chevet. It inks as a wall."
+			if glyph_at(n, plan) == "O":
+				return "Ahead: the retrochoir. It inks as a wall."
 			return "Ahead: wall."
 		Tile.HAZARD:
 			if plan != null and plan.id == "cistern":
@@ -1435,6 +1496,8 @@ static func ahead_line(state: RunState) -> String:
 				return "Ahead: an ambulatory crack. Stepping inks it and costs no extra oil."
 			if plan != null and plan.id == "chevet":
 				return "Ahead: a chevet crack. Stepping inks it and costs no extra oil."
+			if plan != null and plan.id == "retrochoir":
+				return "Ahead: a retrochoir crack. Stepping inks it and costs no extra oil."
 			return "Ahead: a hazard crack. Stepping inks it and costs no extra oil."
 		Tile.LIFT:
 			return "Ahead: the lift. Stepping on carries the sheet out."
@@ -1548,6 +1611,8 @@ static func step(state: RunState, dir: Vector2i) -> Dictionary:
 				return _pack(state, false, false, false, 0, true, "You tap the ambulatory and ink it if the square was blank.")
 			if glyph_at(target, plan) == "Q":
 				return _pack(state, false, false, false, 0, true, "You tap the chevet and ink it if the square was blank.")
+			if glyph_at(target, plan) == "O":
+				return _pack(state, false, false, false, 0, true, "You tap the retrochoir and ink it if the square was blank.")
 			return _pack(state, false, false, false, 0, true, "You tap a wall and ink it if the square was blank.")
 		if target == enemy_pos(plan):
 			return _pack(state, false, false, false, 0, true, "The warden occupies that tile.")
@@ -1609,6 +1674,8 @@ static func step(state: RunState, dir: Vector2i) -> Dictionary:
 			message = "You cross an ambulatory crack. It is inked if the square was blank."
 		elif plan != null and plan.id == "chevet":
 			message = "You cross a chevet crack. It is inked if the square was blank."
+		elif plan != null and plan.id == "retrochoir":
+			message = "You cross a retrochoir crack. It is inked if the square was blank."
 		else:
 			message = "You cross a hazard crack. It is inked if the square was blank."
 	return _pack(state, true, true, hit, MOVE_OIL + (HIT_OIL if hit else 0), false, message)
