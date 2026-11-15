@@ -21,6 +21,7 @@ const WELL_AWNING := Color(0.20, 0.28, 0.42)
 const SCRIPTORIUM_AWNING := Color(0.28, 0.16, 0.22)
 const BINDING_AWNING := Color(0.38, 0.32, 0.22)
 const CHART_AWNING := Color(0.12, 0.20, 0.46)
+const BELL_AWNING := Color(0.55, 0.32, 0.12)
 
 var notice_label: Label
 var purse_label: Label
@@ -146,6 +147,8 @@ func _awning_for(floor_id: String) -> Color:
 		return SCRIPTORIUM_AWNING
 	if floor_id == "binding":
 		return BINDING_AWNING
+	if floor_id == "bellloft":
+		return BELL_AWNING
 	return CHART_AWNING
 
 

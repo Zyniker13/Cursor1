@@ -38,6 +38,8 @@ func _run() -> void:
 	test_shutter_book()
 	test_stain_rule()
 	test_stain_book()
+	test_vane_rule()
+	test_vane_book()
 	test_chart_4_boat()
 	test_one_rotation_is_not_solved()
 	test_hint_points_at_one_piece()
@@ -192,7 +194,8 @@ func test_charts() -> void:
 	check(Charts.tide().size() == 8, "tide mirror adds eight charts")
 	check(Charts.shutter().size() == 8, "shutter adds eight charts")
 	check(Charts.stain().size() == 8, "stain adds eight charts")
-	check(book.size() == 70, "seventy charts")
+	check(Charts.vane().size() == 8, "vane adds eight charts")
+	check(book.size() == 78, "seventy-eight charts")
 	check(str(book[13]["id"]) == "14" and str(book[13]["title"]) == "The Holding Line", "chart 14 stays the reach capstone")
 	check(str(book[14]["title"]) == "North Light", "chart 15 opens the basin")
 	check(str(book[21]["id"]) == "22" and str(book[21]["title"]) == "The Basin Mark", "chart 22 stays the basin capstone")
@@ -207,6 +210,8 @@ func test_charts() -> void:
 	check(str(book[54]["title"]) == "The Dry Gate", "chart 55 opens the shutter")
 	check(str(book[61]["id"]) == "62" and str(book[61]["title"]) == "The Shutter Mark", "chart 62 stays the shutter capstone")
 	check(str(book[62]["title"]) == "The Red Stain", "chart 63 opens the stain")
+	check(str(book[69]["id"]) == "70" and str(book[69]["title"]) == "The Stain Mark", "chart 70 stays the stain capstone")
+	check(str(book[70]["title"]) == "The East Vane", "chart 71 opens the vane")
 	var seen_ids := {}
 	var seen_titles := {}
 	var quay_titles := ["First Glass", "Around the Pilings", "High Water", "Sleeping Hull", "Split the White", "The Night Mark"]
@@ -1828,6 +1833,330 @@ func test_stain_book() -> void:
 		check(int(mark_clear["tide_index"]) == 1, "every chart 70 clear is mid water")
 
 
+func test_vane_rule() -> void:
+	check(Tracer.vane_facing(0) == "N" and Tracer.vane_facing(90) == "E", "vane 0 faces north and 90 faces east")
+	check(Tracer.vane_facing(180) == "S" and Tracer.vane_facing(270) == "W", "vane 180 faces south and 270 faces west")
+	check(Tracer.vane_facing(360) == "N" and Tracer.vane_facing(450) == "E", "vane facing repeats every full turn")
+	check(Tracer.norm_rot("vane", 0) == 0 and Tracer.norm_rot("vane", 90) == 90, "a vane keeps its east facing")
+	check(Tracer.norm_rot("vane", 180) == 180 and Tracer.norm_rot("vane", 270) == 270, "a vane's opposite facing is not the same")
+	check(Tracer.turn_rot("vane", 0) == 90 and Tracer.turn_rot("vane", 90) == 180, "clicking a vane turns clockwise")
+	check(Tracer.turn_rot("vane", 180) == 270 and Tracer.turn_rot("vane", 270) == 0, "a vane click walks all four facings")
+	var spun := 0
+	for _i in 4:
+		spun = Tracer.turn_rot("vane", spun)
+	check(spun == 0, "four clicks restore the vane facing")
+
+	var side := _blank(6, 5)
+	side["lanterns"] = [_lamp("L", 2, 4, "N", "red")]
+	side["docks"] = [_need("D", 4, 2, "red"), _need("N", 2, 0, "red"), _need("W", 0, 2, "red")]
+	side["pieces"] = [_fixed_vane("V", 2, 2, 90)]
+	var side_hit: Dictionary = Tracer.trace(side, Charts.make_state(side, true))
+	check(side_hit["docks"]["D"].has("red") and side_hit["docks"]["D"].size() == 1, "a side entry leaves in the vane's facing")
+	check(side_hit["docks"]["N"].is_empty() and side_hit["docks"]["W"].is_empty(), "a side entry does not keep its old direction")
+	check(_arrives(side_hit, 2, 2, "red") and _departs(side_hit, 2, 2, "red"), "a side entry keeps its color")
+	check(_center_hit(side_hit, 3, 2) and not _center_hit(side_hit, 2, 1), "the east facing, not the entry, picks the exit")
+
+	var other := _blank(6, 5)
+	other["lanterns"] = [_lamp("L", 2, 0, "S", "red")]
+	other["docks"] = [_need("D", 4, 2, "red"), _need("S", 2, 4, "red")]
+	other["pieces"] = [_fixed_vane("V", 2, 2, 90)]
+	var other_hit: Dictionary = Tracer.trace(other, Charts.make_state(other, true))
+	check(other_hit["docks"]["D"].has("red") and other_hit["docks"]["D"].size() == 1, "the other side also leaves in the vane's facing")
+	check(other_hit["docks"]["S"].is_empty(), "the other side does not pass straight")
+	check(_departs(other_hit, 2, 2, "red") and _segments_are(other_hit, "red"), "the other side keeps its color")
+
+	var north := _blank(5, 5)
+	north["lanterns"] = [_lamp("L", 0, 2, "E", "blue")]
+	north["docks"] = [_need("N", 2, 0, "blue"), _need("E", 4, 2, "blue")]
+	north["pieces"] = [_fixed_vane("V", 2, 2, 0)]
+	var north_hit: Dictionary = Tracer.trace(north, Charts.make_state(north, true))
+	check(north_hit["docks"]["N"].has("blue") and north_hit["docks"]["N"].size() == 1, "a side entry follows a north facing")
+	check(north_hit["docks"]["E"].is_empty() and _departs(north_hit, 2, 2, "blue"), "a north vane does not recolor and does not send the beam east")
+
+	var aligned := _blank(6, 3)
+	aligned["lanterns"] = [_lamp("L", 0, 1, "E", "blue")]
+	aligned["docks"] = [_need("D", 5, 1, "blue")]
+	aligned["pieces"] = [_fixed_vane("V", 2, 1, 90)]
+	var aligned_hit: Dictionary = Tracer.trace(aligned, Charts.make_state(aligned, true))
+	check(aligned_hit["docks"]["D"].has("blue") and aligned_hit["docks"]["D"].size() == 1, "a beam already aligned passes straight")
+	check(_same_row(aligned_hit, 1) and _segments_are(aligned_hit, "blue"), "an aligned vane keeps the row and the color")
+
+	var head := _blank(6, 3)
+	head["lanterns"] = [_lamp("L", 4, 1, "W", "white")]
+	head["docks"] = [_need("W", 0, 1, "white"), _need("N", 2, 0, "white"), _need("S", 2, 2, "white")]
+	head["pieces"] = [_fixed_vane("V", 2, 1, 90)]
+	var head_hit: Dictionary = Tracer.trace(head, Charts.make_state(head, true))
+	check(head_hit["docks"]["W"].is_empty() and head_hit["docks"]["N"].is_empty() and head_hit["docks"]["S"].is_empty(), "a head-on beam stops")
+	check(_center_hit(head_hit, 2, 1) and not _center_hit(head_hit, 1, 1), "a head-on beam does not leave the vane")
+	check(_segments_are(head_hit, "white"), "a head-on stop does not recolor")
+
+	var wet := _blank(3, 4)
+	wet["tide_phases"] = [0, 2]
+	wet["solution_tide_index"] = 1
+	wet["lanterns"] = [_lamp("L", 1, 0, "S", "white")]
+	wet["docks"] = [_need("D", 1, 3, "white")]
+	wet["pieces"] = [_fixed_vane("V", 1, 2, 180)]
+	var wet_state := Charts.make_state(wet, true)
+	check(Tracer.is_flooded(wet, wet_state, Vector2i(1, 2)), "the sample vane is under water")
+	var wet_hit: Dictionary = Tracer.trace(wet, wet_state)
+	check(wet_hit["docks"]["D"].is_empty() and not _center_hit(wet_hit, 1, 2), "a flooded vane stops the beam at the waterline")
+	check(not _center_hit(wet_hit, 1, 3), "a flooded vane does not let the beam through")
+	var on_line := false
+	for raw_line in wet_hit["segments"]:
+		var line: Dictionary = raw_line
+		if is_equal_approx(float(line["x1"]), 1.5) and is_equal_approx(float(line["y1"]), 2.0):
+			on_line = true
+	check(on_line, "a flooded vane ends on the waterline")
+	var dry := Charts.duplicate_state(wet_state)
+	dry["tide_index"] = 0
+	check(Tracer.trace(wet, dry)["docks"]["D"].has("white"), "the same vane passes while its row is dry")
+	var gate := _blank(3, 4)
+	gate["tide_phases"] = [2]
+	gate["lanterns"] = [_lamp("L", 1, 0, "S", "white")]
+	gate["docks"] = [_need("D", 1, 3, "white")]
+	gate["pieces"] = [_fixed_shutter("G", 1, 2)]
+	var gate_hit: Dictionary = Tracer.trace(gate, Charts.make_state(gate, true))
+	check(_center_hit(gate_hit, 1, 2) and not _center_hit(wet_hit, 1, 2), "a flooded shutter opens and a flooded vane does not")
+
+
+func test_vane_book() -> void:
+	var book: Array = Charts.vane()
+	check(book.size() == 8, "vane book has eight charts")
+	var titles := ["The East Vane", "After the Color", "Dry Turn", "The Quarter", "Two Bends", "Above the Gate", "The Held Vane", "The Vane Mark"]
+	var solution_tides := [0, 0, 0, 0, 0, 1, 1, 1]
+	for i in book.size():
+		var chart: Dictionary = book[i]
+		check(str(chart["id"]) == str(i + 71), "vane chart %d keeps its number" % (i + 71))
+		check(str(chart["title"]) == str(titles[i]), "vane chart %d keeps its title" % (i + 71))
+		check(str(chart["harbor"]) == Charts.VANE, "chart %s belongs to the vane" % str(chart["id"]))
+		check(int(chart["solution_tide_index"]) == int(solution_tides[i]), "chart %s keeps its clearing tide" % str(chart["id"]))
+		var vane_count := 0
+		for raw_piece in chart["pieces"]:
+			var piece: Dictionary = raw_piece
+			if str(piece["kind"]) == "vane":
+				vane_count += 1
+		check(vane_count >= 1, "chart %s needs the vane" % str(chart["id"]))
+		var tides := {}
+		for raw_clear in _clears(chart):
+			var clearing: Dictionary = raw_clear
+			tides[int(clearing["tide_index"])] = true
+		check(tides.size() == 1 and tides.has(int(solution_tides[i])), "chart %s has one clearing tide" % str(chart["id"]))
+	check(str(book[0]["teach"]).to_lower().contains("does not recolor"), "chart 71 teaches that a vane does not recolor")
+	check(str(book[0]["teach"]).to_lower().contains("does not split"), "chart 71 teaches that a vane does not split")
+	check(str(book[0]["teach"]).to_lower().contains("head-on"), "chart 71 teaches the head-on stop")
+	check(str(book[0]["teach"]).to_lower().contains("stain"), "chart 71 teaches the stain difference")
+	check(str(book[1]["teach"]).to_lower().contains("unrotated"), "chart 72 teaches the unrotated vane")
+	check(str(book[2]["teach"]).to_lower().contains("shutter"), "chart 73 teaches the shutter difference")
+	check(str(book[2]["teach"]).to_lower().contains("waterline"), "chart 73 teaches the waterline")
+	check(str(book[3]["teach"]).to_lower().contains("unclicked"), "chart 74 teaches the unclicked vane")
+	check(str(book[3]["teach"]).to_lower().contains("two facings"), "chart 74 teaches that a mirror has two facings")
+	check(str(book[4]["teach"]).to_lower().contains("unrotated"), "chart 75 teaches either vane left unrotated")
+	check(str(book[5]["teach"]).to_lower().contains("dry row"), "chart 76 teaches the dry row")
+	check(str(book[5]["teach"]).to_lower().contains("flooded row"), "chart 76 teaches the flooded row")
+	check(str(book[6]["teach"]).to_lower().contains("wrong tide"), "chart 77 warns about the wrong tide")
+	check(str(book[6]["teach"]).to_lower().contains("middle"), "chart 77 teaches the middle mark")
+	check(str(book[7]["teach"]).to_lower().contains("middle"), "chart 78 teaches the middle mark")
+	for raw_old in Charts.all().slice(0, 70):
+		var older: Dictionary = raw_old
+		for raw_piece in older["pieces"]:
+			var older_piece: Dictionary = raw_piece
+			check(str(older_piece["kind"]) != "vane", "chart %s keeps its pieces" % str(older["id"]))
+		for raw_fix in older["fixtures"]:
+			var older_fix: Dictionary = raw_fix
+			check(str(older_fix["kind"]) != "vane", "chart %s keeps its fixed glass" % str(older["id"]))
+
+	var east: Dictionary = book[0]
+	var east_solved := Charts.make_state(east, true)
+	check(int(east_solved["pieces"]["V"]["rot"]) == 90, "chart 71 solution faces east")
+	var east_hit: Dictionary = Tracer.trace(east, east_solved)
+	check(east_hit["docks"]["D"].has("white") and east_hit["docks"]["D"].size() == 1, "chart 71 lands white on the dock")
+	check(not bool(east_hit["boats"]["Hn"]) and not bool(east_hit["boats"]["Hw"]), "chart 71 solution leaves both hulls dark")
+	check(_departs(east_hit, 2, 2, "white") and _center_hit(east_hit, 4, 2), "chart 71 leaves the vane heading east")
+	var east_north := Charts.duplicate_state(east_solved)
+	east_north["pieces"]["V"]["rot"] = 0
+	check(bool(Tracer.trace(east, east_north)["boats"]["Hn"]) and not Tracer.trace(east, east_north)["docks"]["D"].has("white"), "chart 71 faced north passes and misses")
+	var east_west := Charts.duplicate_state(east_solved)
+	east_west["pieces"]["V"]["rot"] = 270
+	check(bool(Tracer.trace(east, east_west)["boats"]["Hw"]) and not Tracer.is_cleared(east, east_west), "chart 71 faced west leaves west")
+	var east_head := Charts.duplicate_state(east_solved)
+	east_head["pieces"]["V"]["rot"] = 180
+	var east_head_hit: Dictionary = Tracer.trace(east, east_head)
+	check(east_head_hit["docks"]["D"].is_empty() and not bool(east_head_hit["boats"]["Hn"]) and not bool(east_head_hit["boats"]["Hw"]), "chart 71 faced south is head-on and stops")
+	check(_center_hit(east_head_hit, 2, 2) and not _center_hit(east_head_hit, 2, 1) and not _center_hit(east_head_hit, 3, 2), "chart 71 head-on beam does not leave the vane")
+	var east_same := Charts.duplicate_state(east_solved)
+	east_same["pieces"]["V"]["rot"] = 450
+	check(Tracer.is_cleared(east, east_same) and Hints.first_wrong(east, east_same) == "", "chart 71 vane 450 is the same east facing")
+	var east_flip := Charts.duplicate_state(east_solved)
+	east_flip["pieces"]["V"]["rot"] = 270
+	check(Hints.first_wrong(east, east_flip) == "V", "chart 71 west facing is not an equivalent east")
+	var as_stain: Dictionary = Charts.vane()[0]
+	_retarget(as_stain, "V", "stain", 0)
+	var stain_hit: Dictionary = Tracer.trace(as_stain, Charts.make_state(as_stain, true))
+	check(bool(stain_hit["boats"]["Hn"]) and stain_hit["docks"]["D"].is_empty() and not Tracer.is_cleared(as_stain, Charts.make_state(as_stain, true)), "a stain cannot turn chart 71's beam onto the dock")
+	check(_center_hit(stain_hit, 2, 1) and _center_hit(stain_hit, 2, 0) and not _center_hit(stain_hit, 3, 2), "chart 71's stain keeps going north")
+
+	var color: Dictionary = book[1]
+	var color_start := Charts.make_state(color, false)
+	check(int(color_start["pieces"]["K"]["rot"]) == 90 and int(color_start["pieces"]["V"]["rot"]) == 90, "chart 72 starts with a blue stain and an east vane")
+	var color_solved := Charts.make_state(color, true)
+	var color_hit: Dictionary = Tracer.trace(color, color_solved)
+	check(color_hit["docks"]["Rd"].has("red") and color_hit["docks"]["Rd"].size() == 1 and not bool(color_hit["boats"]["Hs"]), "chart 72 turns the red beam onto the dock")
+	check(_arrives(color_hit, 3, 2, "red") and _departs(color_hit, 3, 2, "red"), "chart 72 vane keeps the red")
+	var color_left := Charts.duplicate_state(color_solved)
+	color_left["pieces"]["V"]["rot"] = 90
+	var color_left_hit: Dictionary = Tracer.trace(color, color_left)
+	check(color_left_hit["docks"]["Rd"].is_empty() and _center_hit(color_left_hit, 4, 2) and not _center_hit(color_left_hit, 3, 1), "chart 72 unrotated vane passes east and misses")
+	var color_south := Charts.duplicate_state(color_solved)
+	color_south["pieces"]["V"]["rot"] = 180
+	check(bool(Tracer.trace(color, color_south)["boats"]["Hs"]) and not Tracer.is_cleared(color, color_south), "chart 72 faced south wakes the hull")
+	var color_blue := Charts.duplicate_state(color_solved)
+	color_blue["pieces"]["K"]["rot"] = 90
+	check(Tracer.trace(color, color_blue)["docks"]["Rd"].has("blue") and not Tracer.is_cleared(color, color_blue), "chart 72 blue stain misses the red dock")
+
+	var dry: Dictionary = book[2]
+	var dry_solved := Charts.make_state(dry, true)
+	check(int(dry_solved["tide_index"]) == 0, "chart 73 is authored dry")
+	check(not Tracer.is_flooded(dry, dry_solved, Vector2i(2, 3)), "chart 73 vane is on a dry row")
+	var dry_hit: Dictionary = Tracer.trace(dry, dry_solved)
+	check(dry_hit["docks"]["D"].has("white") and dry_hit["docks"]["D"].size() == 1 and not bool(dry_hit["boats"]["Hs"]), "chart 73 dry vane turns onto the dock")
+	var dry_south := Charts.duplicate_state(dry_solved)
+	dry_south["pieces"]["V"]["rot"] = 180
+	check(bool(Tracer.trace(dry, dry_south)["boats"]["Hs"]) and not Tracer.is_cleared(dry, dry_south), "chart 73 faced south passes into the hull")
+	var dry_wet := Charts.duplicate_state(dry_solved)
+	dry_wet["tide_index"] = 1
+	var dry_wet_hit: Dictionary = Tracer.trace(dry, dry_wet)
+	check(Tracer.is_flooded(dry, dry_wet, Vector2i(2, 3)), "chart 73 flood covers the vane")
+	check(dry_wet_hit["docks"]["D"].is_empty() and not _center_hit(dry_wet_hit, 2, 3) and not Tracer.is_cleared(dry, dry_wet), "chart 73 flood shuts the vane at the waterline")
+	var as_shutter: Dictionary = Charts.vane()[2]
+	_retarget(as_shutter, "V", "shutter", 0)
+	var shutter_dry: Dictionary = Tracer.trace(as_shutter, Charts.make_state(as_shutter, true))
+	check(shutter_dry["docks"]["D"].is_empty() and not Tracer.is_cleared(as_shutter, Charts.make_state(as_shutter, true)), "a shutter in chart 73's vane cell stops the dry beam")
+	check(_center_hit(shutter_dry, 2, 3) and not _center_hit(shutter_dry, 3, 3), "chart 73's dry shutter does not turn the beam")
+	var shutter_wet_state := Charts.make_state(as_shutter, true)
+	shutter_wet_state["tide_index"] = 1
+	var shutter_wet: Dictionary = Tracer.trace(as_shutter, shutter_wet_state)
+	check(_center_hit(shutter_wet, 2, 3) and shutter_wet["docks"]["D"].is_empty(), "chart 73's shutter opens under water and still misses the dock")
+
+	var quarter: Dictionary = book[3]
+	var quarter_start := Charts.make_state(quarter, false)
+	check(int(quarter_start["pieces"]["V"]["rot"]) == 270, "chart 74 vane starts facing west")
+	var quarter_open: Dictionary = Tracer.trace(quarter, quarter_start)
+	check(bool(quarter_open["boats"]["Hw"]) and quarter_open["docks"]["D"].is_empty(), "chart 74 unclicked vane misses into the hull")
+	var quarter_solved := Charts.make_state(quarter, true)
+	var quarter_hit: Dictionary = Tracer.trace(quarter, quarter_solved)
+	check(quarter_hit["docks"]["D"].has("white") and quarter_hit["docks"]["D"].size() == 1 and not bool(quarter_hit["boats"]["Hw"]), "chart 74 both beams leave east")
+	var quarter_north := Charts.duplicate_state(quarter_solved)
+	quarter_north["pieces"]["V"]["rot"] = 0
+	check(quarter_north["pieces"]["V"]["rot"] == Tracer.turn_rot("vane", 270) and not Tracer.is_cleared(quarter, quarter_north), "chart 74 one click from west still misses")
+	var as_slash: Dictionary = Charts.vane()[3]
+	_retarget(as_slash, "V", "mirror", 0)
+	var slash_hit: Dictionary = Tracer.trace(as_slash, Charts.make_state(as_slash, true))
+	check(bool(slash_hit["boats"]["Hw"]) and not Tracer.is_cleared(as_slash, Charts.make_state(as_slash, true)), "a slash mirror cannot replace chart 74's vane")
+	var as_backslash: Dictionary = Charts.vane()[3]
+	_retarget(as_backslash, "V", "mirror", 90)
+	var back_hit: Dictionary = Tracer.trace(as_backslash, Charts.make_state(as_backslash, true))
+	check(bool(back_hit["boats"]["Hw"]) and not Tracer.is_cleared(as_backslash, Charts.make_state(as_backslash, true)), "a backslash mirror cannot replace chart 74's vane")
+
+	var bends: Dictionary = book[4]
+	var bends_start := Charts.make_state(bends, false)
+	check(int(bends_start["pieces"]["V1"]["rot"]) == 90 and int(bends_start["pieces"]["V2"]["rot"]) == 0, "chart 75 both vanes start unrotated")
+	var bends_solved := Charts.make_state(bends, true)
+	var bends_hit: Dictionary = Tracer.trace(bends, bends_solved)
+	check(bends_hit["docks"]["D"].has("white") and not bool(bends_hit["boats"]["H"]), "chart 75 walks the beam around the hull")
+	var bends_first := Charts.duplicate_state(bends_solved)
+	bends_first["pieces"]["V1"]["rot"] = 90
+	check(bool(Tracer.trace(bends, bends_first)["boats"]["H"]) and not Tracer.is_cleared(bends, bends_first), "chart 75 first vane left unrotated wakes the hull")
+	var bends_second := Charts.duplicate_state(bends_solved)
+	bends_second["pieces"]["V2"]["rot"] = 0
+	var bends_second_hit: Dictionary = Tracer.trace(bends, bends_second)
+	check(bends_second_hit["docks"]["D"].is_empty() and _center_hit(bends_second_hit, 2, 4) and not _center_hit(bends_second_hit, 3, 4), "chart 75 second vane left unrotated stops the beam")
+
+	var gate_chart: Dictionary = book[5]
+	var gate_solved := Charts.make_state(gate_chart, true)
+	check(int(gate_solved["tide_index"]) == 1, "chart 76 opens on the flood")
+	check(not Tracer.is_flooded(gate_chart, gate_solved, Vector2i(3, 3)), "chart 76 vane is above the water")
+	check(Tracer.is_flooded(gate_chart, gate_solved, Vector2i(2, 4)) and Tracer.is_flooded(gate_chart, gate_solved, Vector2i(3, 4)), "chart 76 gate rows are flooded")
+	var gate_beam: Dictionary = Tracer.trace(gate_chart, gate_solved)
+	check(gate_beam["docks"]["D"].has("white") and not bool(gate_beam["boats"]["Hm"]) and not bool(gate_beam["boats"]["Ha"]) and not bool(gate_beam["boats"]["Hb"]), "chart 76 vane turns the beam above the gate")
+	var gate_low := Charts.duplicate_state(gate_solved)
+	gate_low["tide_index"] = 0
+	check(bool(Tracer.trace(gate_chart, gate_low)["boats"]["Hb"]) and not Tracer.trace(gate_chart, gate_low)["docks"]["D"].has("white"), "chart 76 dry shutter stops the beam and the lower lamp wakes the hull")
+	var gate_north := Charts.duplicate_state(gate_solved)
+	gate_north["pieces"]["V"]["rot"] = 0
+	check(bool(Tracer.trace(gate_chart, gate_north)["boats"]["Ha"]) and not Tracer.is_cleared(gate_chart, gate_north), "chart 76 vane facing north wakes the hull")
+	var gate_feed := Charts.duplicate_state(gate_solved)
+	gate_feed["pieces"]["M"]["rot"] = 0
+	check(bool(Tracer.trace(gate_chart, gate_feed)["boats"]["Hm"]), "chart 76 feed mirror turned north wakes the hull")
+	var sunk: Dictionary = Charts.vane()[5]
+	for raw_sunk in sunk["pieces"]:
+		var sunk_piece: Dictionary = raw_sunk
+		if str(sunk_piece["id"]) != "V":
+			continue
+		var sunk_socks: Array = sunk_piece["sockets"]
+		var sunk_sock: Dictionary = sunk_socks[0]
+		sunk_sock["y"] = 4
+	var sunk_state := Charts.make_state(sunk, true)
+	check(Tracer.is_flooded(sunk, sunk_state, Vector2i(3, 4)), "chart 76 vane moved onto the gate is under water")
+	var sunk_hit: Dictionary = Tracer.trace(sunk, sunk_state)
+	check(sunk_hit["docks"]["D"].is_empty() and not _center_hit(sunk_hit, 3, 4) and not Tracer.is_cleared(sunk, sunk_state), "a vane on chart 76's flooded row stops at the waterline")
+
+	var held: Dictionary = book[6]
+	var held_solved := Charts.make_state(held, true)
+	check(int(held_solved["tide_index"]) == 1, "chart 77 is authored at mid water")
+	check(not Tracer.is_flooded(held, held_solved, Vector2i(3, 4)), "chart 77 vane is dry at the middle mark")
+	var held_hit: Dictionary = Tracer.trace(held, held_solved)
+	check(held_hit["docks"]["D"].has("white") and not bool(held_hit["boats"]["Hm"]) and not bool(held_hit["boats"]["Ha"]) and not bool(held_hit["boats"]["Hb"]), "chart 77 middle mark turns the beam and holds the dock")
+	var held_low := Charts.duplicate_state(held_solved)
+	held_low["tide_index"] = 0
+	check(bool(Tracer.trace(held, held_low)["boats"]["Hb"]) and not Tracer.is_cleared(held, held_low), "chart 77 low water is the wrong tide")
+	var held_high := Charts.duplicate_state(held_solved)
+	held_high["tide_index"] = 2
+	check(Tracer.is_flooded(held, held_high, Vector2i(5, 4)) and not Tracer.trace(held, held_high)["docks"]["D"].has("white") and not Tracer.is_cleared(held, held_high), "chart 77 high water covers the dock")
+	var held_north := Charts.duplicate_state(held_solved)
+	held_north["pieces"]["V"]["rot"] = 0
+	check(bool(Tracer.trace(held, held_north)["boats"]["Ha"]) and not Tracer.is_cleared(held, held_north), "chart 77 vane facing north wakes the hull")
+	var held_feed := Charts.duplicate_state(held_solved)
+	held_feed["pieces"]["M"]["rot"] = 0
+	check(bool(Tracer.trace(held, held_feed)["boats"]["Hm"]), "chart 77 feed mirror turned north wakes the hull")
+	for raw_held in _clears(held):
+		var held_state: Dictionary = raw_held
+		check(int(held_state["tide_index"]) == 1, "every chart 77 clear is mid water")
+
+	var mark: Dictionary = book[7]
+	var mark_start := Charts.make_state(mark, false)
+	check(str(mark_start["pieces"]["P"]["socket"]) == "side", "chart 78 prism starts off the beam")
+	check(int(mark_start["pieces"]["K"]["rot"]) == 90, "chart 78 stain starts blue")
+	check(int(mark_start["pieces"]["V"]["rot"]) == 0, "chart 78 vane starts facing north")
+	var mark_solved := Charts.make_state(mark, true)
+	check(int(mark_solved["tide_index"]) == 1 and str(mark_solved["pieces"]["P"]["socket"]) == "line", "chart 78 solution moves the prism and holds mid water")
+	check(int(mark_solved["pieces"]["K"]["rot"]) == 0 and int(mark_solved["pieces"]["V"]["rot"]) == 90, "chart 78 solution clicks the stain and faces the vane east")
+	var mark_hit: Dictionary = Tracer.trace(mark, mark_solved)
+	check(mark_hit["docks"]["Rn"].has("red") and mark_hit["docks"]["Rs"].has("red") and mark_hit["docks"]["Rs"].size() == 1, "chart 78 lands red on both docks")
+	check(not bool(mark_hit["boats"]["Hw"]) and not bool(mark_hit["boats"]["Hb"]) and not bool(mark_hit["boats"]["Ha"]), "chart 78 solution leaves every hull dark")
+	var mark_side := Charts.duplicate_state(mark_solved)
+	mark_side["pieces"]["P"]["socket"] = "side"
+	check(bool(Tracer.trace(mark, mark_side)["boats"]["Hw"]) and not Tracer.trace(mark, mark_side)["docks"]["Rn"].has("red"), "chart 78 side socket lets white wake the hull")
+	var mark_blue := Charts.duplicate_state(mark_solved)
+	mark_blue["pieces"]["K"]["rot"] = 90
+	var mark_blue_hit: Dictionary = Tracer.trace(mark, mark_blue)
+	check(mark_blue_hit["docks"]["Rn"].has("red") and mark_blue_hit["docks"]["Rs"].has("blue") and not Tracer.is_cleared(mark, mark_blue), "chart 78 unclicked stain fails the lower dock")
+	var mark_north := Charts.duplicate_state(mark_solved)
+	mark_north["pieces"]["V"]["rot"] = 0
+	check(bool(Tracer.trace(mark, mark_north)["boats"]["Ha"]) and not Tracer.trace(mark, mark_north)["docks"]["Rs"].has("red"), "chart 78 vane facing north wakes the hull and misses the dock")
+	var mark_low := Charts.duplicate_state(mark_solved)
+	mark_low["tide_index"] = 0
+	check(bool(Tracer.trace(mark, mark_low)["boats"]["Hb"]) and Tracer.trace(mark, mark_low)["docks"]["Rn"].has("red") and not Tracer.is_cleared(mark, mark_low), "chart 78 low water is the wrong tide")
+	var mark_high := Charts.duplicate_state(mark_solved)
+	mark_high["tide_index"] = 2
+	check(Tracer.trace(mark, mark_high)["docks"]["Rn"].has("red") and not Tracer.trace(mark, mark_high)["docks"]["Rs"].has("red") and not Tracer.is_cleared(mark, mark_high), "chart 78 high water covers the lower dock")
+	var mark_face := Charts.duplicate_state(mark_solved)
+	mark_face["pieces"]["P"]["rot"] = 0
+	check(Tracer.trace(mark, mark_face)["docks"]["Rn"].is_empty() and Tracer.trace(mark, mark_face)["docks"]["Rs"].is_empty(), "chart 78 north face absorbs the east beam")
+	for raw_mark in _clears(mark):
+		var mark_clear: Dictionary = raw_mark
+		check(int(mark_clear["tide_index"]) == 1, "every chart 78 clear is mid water")
+
+
 func _segments_are(result: Dictionary, color: String) -> bool:
 	var segs: Array = result["segments"]
 	if segs.is_empty():
@@ -1906,7 +2235,13 @@ func test_smoke() -> void:
 	main._on_book_pressed(8)
 	check(main.chart_index == stuck, "Stain stays shut until the shutter mark is held")
 	check(str(main.status_label.text).to_lower().contains("stain"), "a locked stain is named")
-	check(main.quay_grid.visible and not main.reach_grid.visible and not main.basin_grid.visible and not main.paint_grid.visible and not main.west_grid.visible and not main.meet_grid.visible and not main.tide_grid.visible and not main.shutter_grid.visible and not main.stain_grid.visible, "the quay grid is the one on screen")
+	check(not main.select_chart(70), "a locked vane chart stays shut")
+	check(main.chart_index == stuck, "a locked vane chart does not switch")
+	check(main.vane_book_button.disabled, "the vane starts locked")
+	main._on_book_pressed(9)
+	check(main.chart_index == stuck, "Vane stays shut until the stain mark is held")
+	check(str(main.status_label.text).to_lower().contains("vane"), "a locked vane is named")
+	check(main.quay_grid.visible and not main.reach_grid.visible and not main.basin_grid.visible and not main.paint_grid.visible and not main.west_grid.visible and not main.meet_grid.visible and not main.tide_grid.visible and not main.shutter_grid.visible and not main.stain_grid.visible and not main.vane_grid.visible, "the quay grid is the one on screen")
 	_tap(main, KEY_R)
 	_tap(main, KEY_SPACE)
 	check(main.board_locked, "keyboard R then Space locks chart 1")
@@ -1953,7 +2288,7 @@ func test_smoke() -> void:
 	check(main.board_locked and main.unlocked[14], "holding the line opens the basin")
 	main._advance_from_win()
 	check(str(main.chart["id"]) == "15", "next chart from the reach enters North Light")
-	check(main.basin_grid.visible and not main.reach_grid.visible and not main.quay_grid.visible and not main.paint_grid.visible and not main.west_grid.visible and not main.tide_grid.visible and not main.shutter_grid.visible and not main.stain_grid.visible, "the basin grid opens with North Light")
+	check(main.basin_grid.visible and not main.reach_grid.visible and not main.quay_grid.visible and not main.paint_grid.visible and not main.west_grid.visible and not main.tide_grid.visible and not main.shutter_grid.visible and not main.stain_grid.visible and not main.vane_grid.visible, "the basin grid opens with North Light")
 	check(str(main.harbor_label.text) == Charts.BASIN, "the harbor name follows the basin")
 	check(not main.raise_button.visible, "chart 15 tide is fixed")
 	var north_rot := int(main.state["pieces"]["P"]["rot"])
@@ -1968,7 +2303,7 @@ func test_smoke() -> void:
 	check(main.board_locked and main.unlocked[22], "holding the basin mark opens the painted lock")
 	main._advance_from_win()
 	check(str(main.chart["id"]) == "23", "next chart from the basin enters Red Already")
-	check(main.paint_grid.visible and not main.basin_grid.visible and not main.reach_grid.visible and not main.quay_grid.visible and not main.west_grid.visible and not main.tide_grid.visible and not main.shutter_grid.visible and not main.stain_grid.visible, "the painted grid opens with Red Already")
+	check(main.paint_grid.visible and not main.basin_grid.visible and not main.reach_grid.visible and not main.quay_grid.visible and not main.west_grid.visible and not main.tide_grid.visible and not main.shutter_grid.visible and not main.stain_grid.visible and not main.vane_grid.visible, "the painted grid opens with Red Already")
 	check(str(main.harbor_label.text) == Charts.PAINTED, "the harbor name follows the painted lock")
 	check(not main.raise_button.visible, "chart 23 tide is fixed")
 	var lamp_rot := int(main.state["pieces"]["M"]["rot"])
@@ -1983,7 +2318,7 @@ func test_smoke() -> void:
 	check(main.board_locked and main.unlocked[30], "holding the painted mark opens the west return")
 	main._advance_from_win()
 	check(str(main.chart["id"]) == "31", "next chart from the painted lock enters West Light")
-	check(main.west_grid.visible and not main.paint_grid.visible and not main.basin_grid.visible and not main.reach_grid.visible and not main.quay_grid.visible and not main.meet_grid.visible and not main.tide_grid.visible and not main.shutter_grid.visible and not main.stain_grid.visible, "the west grid opens with West Light")
+	check(main.west_grid.visible and not main.paint_grid.visible and not main.basin_grid.visible and not main.reach_grid.visible and not main.quay_grid.visible and not main.meet_grid.visible and not main.tide_grid.visible and not main.shutter_grid.visible and not main.stain_grid.visible and not main.vane_grid.visible, "the west grid opens with West Light")
 	check(str(main.harbor_label.text) == Charts.WEST, "the harbor name follows the west return")
 	check(not main.raise_button.visible, "chart 31 tide is fixed")
 	var west_rot := int(main.state["pieces"]["P"]["rot"])
@@ -1998,7 +2333,7 @@ func test_smoke() -> void:
 	check(main.board_locked and main.unlocked[38], "holding the return mark opens the meeting glass")
 	main._advance_from_win()
 	check(str(main.chart["id"]) == "39", "next chart from the west return enters Two Lamps")
-	check(main.meet_grid.visible and not main.west_grid.visible and not main.paint_grid.visible and not main.basin_grid.visible and not main.reach_grid.visible and not main.quay_grid.visible and not main.tide_grid.visible and not main.shutter_grid.visible and not main.stain_grid.visible, "the meeting grid opens with Two Lamps")
+	check(main.meet_grid.visible and not main.west_grid.visible and not main.paint_grid.visible and not main.basin_grid.visible and not main.reach_grid.visible and not main.quay_grid.visible and not main.tide_grid.visible and not main.shutter_grid.visible and not main.stain_grid.visible and not main.vane_grid.visible, "the meeting grid opens with Two Lamps")
 	check(str(main.harbor_label.text) == Charts.MEET, "the harbor name follows the meeting glass")
 	check(not main.raise_button.visible, "chart 39 tide is fixed")
 	var meet_rot := int(main.state["pieces"]["M"]["rot"])
@@ -2013,7 +2348,7 @@ func test_smoke() -> void:
 	check(main.board_locked and main.unlocked[46], "holding the meeting mark opens the tide mirror")
 	main._advance_from_win()
 	check(str(main.chart["id"]) == "47", "next chart from the meeting glass enters Wet Glass")
-	check(main.tide_grid.visible and not main.shutter_grid.visible and not main.stain_grid.visible and not main.meet_grid.visible and not main.west_grid.visible and not main.paint_grid.visible and not main.basin_grid.visible and not main.reach_grid.visible and not main.quay_grid.visible, "the tide grid opens with Wet Glass")
+	check(main.tide_grid.visible and not main.shutter_grid.visible and not main.stain_grid.visible and not main.vane_grid.visible and not main.meet_grid.visible and not main.west_grid.visible and not main.paint_grid.visible and not main.basin_grid.visible and not main.reach_grid.visible and not main.quay_grid.visible, "the tide grid opens with Wet Glass")
 	check(str(main.harbor_label.text) == Charts.TIDE, "the harbor name follows the tide mirror")
 	check(main.raise_button.visible, "chart 47 shows the tide lever")
 	check(int(main.state["tide_index"]) == 0, "chart 47 starts at low water")
@@ -2029,7 +2364,7 @@ func test_smoke() -> void:
 	check(main.board_locked and main.unlocked[54], "holding the tide mark opens the shutter")
 	main._advance_from_win()
 	check(str(main.chart["id"]) == "55", "next chart from the tide mark enters The Dry Gate")
-	check(main.shutter_grid.visible and not main.tide_grid.visible and not main.stain_grid.visible, "the shutter grid opens with The Dry Gate")
+	check(main.shutter_grid.visible and not main.tide_grid.visible and not main.stain_grid.visible and not main.vane_grid.visible, "the shutter grid opens with The Dry Gate")
 	check(str(main.harbor_label.text) == Charts.SHUTTER, "the harbor name follows the shutter")
 	check(main.raise_button.visible, "chart 55 shows the tide lever")
 	check(int(main.state["tide_index"]) == 0, "chart 55 starts at low water")
@@ -2051,7 +2386,7 @@ func test_smoke() -> void:
 	check(main.board_locked and main.unlocked[62], "holding the shutter mark opens the stain")
 	main._advance_from_win()
 	check(str(main.chart["id"]) == "63", "next chart from the shutter mark enters The Red Stain")
-	check(main.stain_grid.visible and not main.shutter_grid.visible, "the stain grid opens with The Red Stain")
+	check(main.stain_grid.visible and not main.shutter_grid.visible and not main.vane_grid.visible, "the stain grid opens with The Red Stain")
 	check(str(main.harbor_label.text) == Charts.STAIN, "the harbor name follows the stain")
 	check(not main.raise_button.visible, "chart 63 tide is fixed")
 	check(int(main.state["pieces"]["K"]["rot"]) == 90, "chart 63 stain starts blue")
@@ -2072,7 +2407,7 @@ func test_smoke() -> void:
 	check(main.board_locked and main.unlocked[6], "holding the night mark opens the reach")
 	main._advance_from_win()
 	check(str(main.chart["id"]) == "7", "next chart from the quay enters Blue Glass")
-	check(main.reach_grid.visible and not main.quay_grid.visible and not main.basin_grid.visible and not main.paint_grid.visible and not main.west_grid.visible and not main.meet_grid.visible and not main.tide_grid.visible and not main.shutter_grid.visible and not main.stain_grid.visible, "the reach grid opens with Blue Glass")
+	check(main.reach_grid.visible and not main.quay_grid.visible and not main.basin_grid.visible and not main.paint_grid.visible and not main.west_grid.visible and not main.meet_grid.visible and not main.tide_grid.visible and not main.shutter_grid.visible and not main.stain_grid.visible and not main.vane_grid.visible, "the reach grid opens with Blue Glass")
 	check(str(main.harbor_label.text) == Charts.REACH, "the harbor name follows the reach")
 	check(not main.raise_button.visible, "chart 7 tide is fixed")
 	var pane_rot := int(main.state["pieces"]["C"]["rot"])
@@ -2132,7 +2467,7 @@ func test_smoke() -> void:
 	check(str(main.chart["id"]) == "46" and main.raise_button.visible, "chart 46 is the meeting capstone")
 	main._on_book_pressed(6)
 	check(str(main.chart["id"]) == "47", "Tide returns to Wet Glass")
-	check(main.tide_grid.visible and not main.shutter_grid.visible and not main.stain_grid.visible and not main.meet_grid.visible, "Tide shows the tide grid")
+	check(main.tide_grid.visible and not main.shutter_grid.visible and not main.stain_grid.visible and not main.vane_grid.visible and not main.meet_grid.visible, "Tide shows the tide grid")
 	main.select_chart(49)
 	check(str(main.chart["id"]) == "50" and str(main.state["pieces"]["P"]["socket"]) == "side", "the tide prism starts off the column")
 	_tap(main, KEY_M)
@@ -2141,7 +2476,7 @@ func test_smoke() -> void:
 	check(str(main.chart["id"]) == "54" and main.raise_button.visible, "chart 54 is the tide capstone")
 	main._on_book_pressed(7)
 	check(str(main.chart["id"]) == "55", "Shutter returns to The Dry Gate")
-	check(main.shutter_grid.visible and not main.tide_grid.visible and not main.stain_grid.visible, "Shutter shows the shutter grid")
+	check(main.shutter_grid.visible and not main.tide_grid.visible and not main.stain_grid.visible and not main.vane_grid.visible, "Shutter shows the shutter grid")
 	main.select_chart(57)
 	check(str(main.chart["id"]) == "58" and str(main.state["pieces"]["P"]["socket"]) == "side", "the shutter prism starts off the climb")
 	_tap(main, KEY_M)
@@ -2150,7 +2485,37 @@ func test_smoke() -> void:
 	check(str(main.chart["id"]) == "62" and main.raise_button.visible, "chart 62 is the shutter capstone")
 	main._on_book_pressed(8)
 	check(str(main.chart["id"]) == "63", "Stain returns to The Red Stain")
-	check(main.stain_grid.visible and not main.shutter_grid.visible, "Stain shows the stain grid")
+	check(main.stain_grid.visible and not main.shutter_grid.visible and not main.vane_grid.visible, "Stain shows the stain grid")
+	main.unlocked[69] = true
+	main.unlocked[70] = false
+	check(main.select_chart(69), "chart 70 opens when unlocked")
+	check(main.vane_book_button.disabled, "the vane stays locked until the stain mark is held")
+	main.state = Charts.duplicate_state(Charts.make_state(main.chart, true))
+	main._refresh()
+	main.try_lock()
+	check(main.board_locked and main.unlocked[70], "holding the stain mark opens the vane")
+	main._advance_from_win()
+	check(str(main.chart["id"]) == "71", "next chart from the stain mark enters The East Vane")
+	check(main.vane_grid.visible and not main.stain_grid.visible, "the vane grid opens with The East Vane")
+	check(str(main.harbor_label.text) == Charts.VANE, "the harbor name follows the vane")
+	check(not main.raise_button.visible, "chart 71 tide is fixed")
+	check(int(main.state["pieces"]["V"]["rot"]) == 0, "chart 71 vane starts facing north")
+	_click_cell(main, 2, 2, false)
+	check(int(main.state["pieces"]["V"]["rot"]) == 90, "a click turns the vane from north to east")
+	check(str(main.status_label.text).to_lower().contains("clockwise") and str(main.status_label.text).to_lower().contains("does not recolor"), "the vane says it turns and does not recolor")
+	_click_cell(main, 2, 2, false)
+	check(int(main.state["pieces"]["V"]["rot"]) == 180, "the next click faces the vane south")
+	_click_cell(main, 2, 2, false)
+	check(int(main.state["pieces"]["V"]["rot"]) == 270, "the next click faces the vane west")
+	_click_cell(main, 2, 2, false)
+	check(int(main.state["pieces"]["V"]["rot"]) == 0, "four clicks restore the north facing")
+	_click_cell(main, 2, 2, false)
+	check(int(main.state["pieces"]["V"]["rot"]) == 90, "the vane is east again")
+	_tap(main, KEY_SPACE)
+	check(main.board_locked and main.unlocked[71], "the east vane locks and opens the next chart")
+	main._on_book_pressed(9)
+	check(str(main.chart["id"]) == "71", "Vane returns to The East Vane")
+	check(main.vane_grid.visible and not main.stain_grid.visible, "Vane shows the vane grid")
 	main.select_chart(0)
 	main.restart_chart()
 	var before_rot := int(main.state["pieces"]["M"]["rot"])
@@ -2210,8 +2575,9 @@ func _walk(chart: Dictionary, state: Dictionary, index: int, found: Array) -> vo
 	var kind := str(piece["kind"])
 	# A shutter has no facing, so only one rotation is a distinct state.
 	# A stain has no facing either, but 0 (red) and 90 (blue) are different colors.
+	# A vane has four facings, the same count as a prism has faces.
 	var rots: Array = [0]
-	if kind == "prism":
+	if kind == "prism" or kind == "vane":
 		rots = [0, 90, 180, 270]
 	elif kind != "shutter":
 		rots = [0, 90]
@@ -2329,6 +2695,20 @@ func _fixed_stain(id: String, x: int, y: int, rot: int) -> Dictionary:
 		"id": id,
 		"name": "Stain",
 		"kind": "stain",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": rot,
+		"solution_socket": "a",
+		"solution_rot": rot,
+	}
+
+
+func _fixed_vane(id: String, x: int, y: int, rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": "Vane",
+		"kind": "vane",
 		"movable": false,
 		"sockets": [{"id": "a", "x": x, "y": y}],
 		"start_socket": "a",

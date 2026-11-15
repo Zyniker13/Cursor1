@@ -29,7 +29,7 @@ func _run() -> void:
 	for index in Puzzles.count():
 		var puzzle: Dictionary = Puzzles.get_puzzle(index)
 		var wing := str(puzzle["wing"])
-		if wing == "West Wing" or wing == "North Wing" or wing == "South Wing" or wing == "Attic Wing" or wing == "Cellar Wing" or wing == "Gallery Wing" or wing == "Court Wing":
+		if wing == "West Wing" or wing == "North Wing" or wing == "South Wing" or wing == "Attic Wing" or wing == "Cellar Wing" or wing == "Gallery Wing" or wing == "Court Wing" or wing == "Nave Wing":
 			_check_undo_restores_exact_state(index)
 	_check_alert_step()
 	_check_west_lit_step_still_loses()
@@ -60,36 +60,38 @@ func _run() -> void:
 	_check_gallery_snuffs_are_required()
 	_check_court_rooms()
 	_check_court_snuffs_are_required()
+	_check_nave_rooms()
+	_check_nave_snuffs_are_required()
 	_check_puzzle_select_shows_both_wings()
 	print("%d passed, %d failed" % [_passed, _failed])
 
 
 func _check_wings() -> void:
 	var wings: Array = Puzzles.wings()
-	_check(Puzzles.count() == 50, "eight wings together are 50 puzzles")
-	_check(wings.size() == 8, "puzzle select lists eight wings")
+	_check(Puzzles.count() == 56, "nine wings together are 56 puzzles")
+	_check(wings.size() == 9, "puzzle select lists nine wings")
 	_check(
-		wings.size() == 8 and str(wings[0]["name"]) == "East Wing" and int(wings[0]["count"]) == 8 and int(wings[0]["first"]) == 0,
+		wings.size() == 9 and str(wings[0]["name"]) == "East Wing" and int(wings[0]["count"]) == 8 and int(wings[0]["first"]) == 0,
 		"the east wing still has 8 puzzles"
 	)
 	_check(
-		wings.size() == 8 and str(wings[1]["name"]) == "West Wing" and int(wings[1]["count"]) == 6 and int(wings[1]["first"]) == 8,
+		wings.size() == 9 and str(wings[1]["name"]) == "West Wing" and int(wings[1]["count"]) == 6 and int(wings[1]["first"]) == 8,
 		"the west wing has 6 puzzles"
 	)
 	_check(
-		wings.size() == 8 and str(wings[2]["name"]) == "North Wing" and int(wings[2]["count"]) == 6 and int(wings[2]["first"]) == 14,
+		wings.size() == 9 and str(wings[2]["name"]) == "North Wing" and int(wings[2]["count"]) == 6 and int(wings[2]["first"]) == 14,
 		"the north wing has 6 puzzles"
 	)
 	_check(
-		wings.size() == 8 and str(wings[3]["name"]) == "South Wing" and int(wings[3]["count"]) == 6 and int(wings[3]["first"]) == 20,
+		wings.size() == 9 and str(wings[3]["name"]) == "South Wing" and int(wings[3]["count"]) == 6 and int(wings[3]["first"]) == 20,
 		"the south wing has 6 puzzles"
 	)
 	_check(
-		wings.size() == 8 and str(wings[4]["name"]) == "Attic Wing" and int(wings[4]["count"]) == 6 and int(wings[4]["first"]) == 26,
+		wings.size() == 9 and str(wings[4]["name"]) == "Attic Wing" and int(wings[4]["count"]) == 6 and int(wings[4]["first"]) == 26,
 		"the attic has 6 puzzles"
 	)
 	_check(
-		wings.size() == 8 and str(wings[5]["name"]) == "Cellar Wing" and int(wings[5]["count"]) == 6 and int(wings[5]["first"]) == 32,
+		wings.size() == 9 and str(wings[5]["name"]) == "Cellar Wing" and int(wings[5]["count"]) == 6 and int(wings[5]["first"]) == 32,
 		"the cellar has 6 puzzles"
 	)
 	var south_titles: PackedStringArray = PackedStringArray([
@@ -157,7 +159,7 @@ func _check_wings() -> void:
 			cellar_ok = false
 	_check(cellar_ok, "the cellar is numbered 33 through 38 and each banner names its rule")
 	_check(
-		wings.size() == 8 and str(wings[6]["name"]) == "Gallery Wing" and int(wings[6]["count"]) == 6 and int(wings[6]["first"]) == 38,
+		wings.size() == 9 and str(wings[6]["name"]) == "Gallery Wing" and int(wings[6]["count"]) == 6 and int(wings[6]["first"]) == 38,
 		"the gallery has 6 puzzles"
 	)
 	var gallery_titles: PackedStringArray = PackedStringArray([
@@ -186,7 +188,7 @@ func _check_wings() -> void:
 			gallery_ok = false
 	_check(gallery_ok, "the gallery is numbered 39 through 44 and each banner names its rule")
 	_check(
-		wings.size() == 8 and str(wings[7]["name"]) == "Court Wing" and int(wings[7]["count"]) == 6 and int(wings[7]["first"]) == 44,
+		wings.size() == 9 and str(wings[7]["name"]) == "Court Wing" and int(wings[7]["count"]) == 6 and int(wings[7]["first"]) == 44,
 		"the court has 6 puzzles"
 	)
 	var court_titles: PackedStringArray = PackedStringArray([
@@ -214,6 +216,39 @@ func _check_wings() -> void:
 		if not court_lesson.begins_with("This room is about the rule that ") or not court_lesson.contains(court_rules[i]):
 			court_ok = false
 	_check(court_ok, "the court is numbered 45 through 50 and each banner names its rule")
+	_check(
+		wings.size() == 9 and str(wings[8]["name"]) == "Nave Wing" and int(wings[8]["count"]) == 6 and int(wings[8]["first"]) == 50,
+		"the nave has 6 puzzles"
+	)
+	var nave_titles: PackedStringArray = PackedStringArray([
+		"The First Bell",
+		"The Quiet Bell",
+		"The Far Bell",
+		"The Lit Bell",
+		"The Bell Gap",
+		"The Last Ring",
+	])
+	var nave_ok := true
+	var nave_rules: PackedStringArray = PackedStringArray([
+		"the turn you step onto a bell calls every guard",
+		"waiting on a bell does not call",
+		"including the far one",
+		"a lit bell is refused",
+		"stepping on a bell calls every guard",
+		"called guards walk to the bell and hold",
+	])
+	for i in nave_titles.size():
+		var nave_room: Dictionary = Puzzles.get_puzzle(50 + i)
+		var nave_lesson := str(nave_room["lesson"])
+		if str(nave_room["title"]) != nave_titles[i] or str(nave_room["wing"]) != "Nave Wing" or int(nave_room["wing_number"]) != i + 1 or int(nave_room["number"]) != 51 + i:
+			nave_ok = false
+		if not nave_lesson.begins_with("This room is about the rule that ") or not nave_lesson.contains(nave_rules[i]):
+			nave_ok = false
+		if i == 0 and nave_lesson.count(".") != 1:
+			nave_ok = false
+	_check(nave_ok, "the nave is numbered 51 through 56 and each banner names its rule")
+	var first_bell: Dictionary = Puzzles.get_puzzle(50)
+	_check(str(first_bell["lesson"]).count(".") == 1, "room 51 states the bell rule in one sentence")
 
 
 func _index_of(title: String) -> int:
@@ -493,6 +528,9 @@ func _check_puzzle_select_shows_both_wings() -> void:
 	var cellar := false
 	var gallery := false
 	var court := false
+	var nave := false
+	var nave_buttons := PackedStringArray()
+	var nave_tips := PackedStringArray()
 	var wing_y := {}
 	var legend_y := -1.0
 	var hint := ""
@@ -502,7 +540,7 @@ func _check_puzzle_select_shows_both_wings() -> void:
 		var node: Node = stack.pop_back()
 		if node is Label:
 			var label := node as Label
-			if label.text == "East Wing" or label.text == "West Wing" or label.text == "North Wing" or label.text == "South Wing" or label.text == "Attic Wing" or label.text == "Cellar Wing" or label.text == "Gallery Wing" or label.text == "Court Wing":
+			if label.text == "East Wing" or label.text == "West Wing" or label.text == "North Wing" or label.text == "South Wing" or label.text == "Attic Wing" or label.text == "Cellar Wing" or label.text == "Gallery Wing" or label.text == "Court Wing" or label.text == "Nave Wing":
 				wing_y[label.text] = label.get_parent().position.y
 			if label.text == "East Wing":
 				east = true
@@ -520,6 +558,12 @@ func _check_puzzle_select_shows_both_wings() -> void:
 				gallery = true
 			elif label.text == "Court Wing":
 				court = true
+			elif label.text == "Nave Wing":
+				nave = true
+				for child in label.get_parent().get_children():
+					if child is Button and str((child as Button).text).is_valid_int():
+						nave_buttons.append((child as Button).text)
+						nave_tips.append((child as Button).tooltip_text)
 			elif label.text.begins_with("Gold diamond"):
 				legend_y = label.position.y
 			elif label.text.begins_with("Arrows move"):
@@ -530,19 +574,26 @@ func _check_puzzle_select_shows_both_wings() -> void:
 				puzzle_buttons += 1
 		for child in node.get_children():
 			stack.append(child)
-	_check(east and west and north and south and attic and cellar and gallery and court, "puzzle select shows all eight wings")
+	_check(east and west and north and south and attic and cellar and gallery and court and nave, "puzzle select shows all nine wings")
 	_check(
-		wing_y.has("East Wing") and wing_y.has("West Wing") and wing_y.has("North Wing") and wing_y.has("South Wing") and wing_y.has("Attic Wing") and wing_y.has("Cellar Wing") and wing_y.has("Gallery Wing") and wing_y.has("Court Wing") and float(wing_y["East Wing"]) < float(wing_y["West Wing"]) and float(wing_y["West Wing"]) < float(wing_y["North Wing"]) and float(wing_y["North Wing"]) < float(wing_y["South Wing"]) and float(wing_y["South Wing"]) < float(wing_y["Attic Wing"]) and float(wing_y["Attic Wing"]) < float(wing_y["Cellar Wing"]) and float(wing_y["Cellar Wing"]) < float(wing_y["Gallery Wing"]) and float(wing_y["Gallery Wing"]) < float(wing_y["Court Wing"]),
-		"the eight wings are listed in order"
+		wing_y.has("East Wing") and wing_y.has("West Wing") and wing_y.has("North Wing") and wing_y.has("South Wing") and wing_y.has("Attic Wing") and wing_y.has("Cellar Wing") and wing_y.has("Gallery Wing") and wing_y.has("Court Wing") and wing_y.has("Nave Wing") and float(wing_y["East Wing"]) < float(wing_y["West Wing"]) and float(wing_y["West Wing"]) < float(wing_y["North Wing"]) and float(wing_y["North Wing"]) < float(wing_y["South Wing"]) and float(wing_y["South Wing"]) < float(wing_y["Attic Wing"]) and float(wing_y["Attic Wing"]) < float(wing_y["Cellar Wing"]) and float(wing_y["Cellar Wing"]) < float(wing_y["Gallery Wing"]) and float(wing_y["Gallery Wing"]) < float(wing_y["Court Wing"]) and float(wing_y["Court Wing"]) < float(wing_y["Nave Wing"]),
+		"the nine wings are listed in order"
 	)
 	_check(legend_y >= float(wing_y["Cellar Wing"]) + 32.0, "the cellar row sits above the legend")
 	_check(legend_y >= float(wing_y["Gallery Wing"]) + 32.0, "the gallery row sits above the legend")
 	_check(legend_y >= float(wing_y["Court Wing"]) + 32.0, "the court row sits above the legend")
+	_check(legend_y >= float(wing_y["Nave Wing"]) + 32.0, "the nave row sits above the legend")
+	_check(nave_buttons == PackedStringArray(["1", "2", "3", "4", "5", "6"]), "the nave row is labeled 1 through 6")
+	_check(
+		nave_tips == PackedStringArray(["The First Bell", "The Quiet Bell", "The Far Bell", "The Lit Bell", "The Bell Gap", "The Last Ring"]),
+		"the nave buttons name the six bells"
+	)
 	_check(hint.contains("Alt+1–6 south"), "the control hint names the south binding")
 	_check(hint.contains("F1–F6 attic"), "the control hint names the attic binding")
 	_check(hint.contains("F7–F12 cellar"), "the control hint names the cellar binding")
 	_check(hint.contains("Keypad 1–6 gallery"), "the control hint names the gallery binding")
 	_check(hint.contains("Shift+F1–F6 court"), "the control hint names the court binding")
+	_check(hint.contains("Alt+F1–F6 nave"), "the control hint names the nave binding")
 	_check(puzzle_buttons == Puzzles.count(), "puzzle select has a button for every room")
 	var east_key := InputEventKey.new()
 	east_key.physical_keycode = KEY_3
@@ -621,7 +672,8 @@ func _check_puzzle_select_shows_both_wings() -> void:
 	_check(main._puzzle_index_for_key(attic_physical) == 28, "the physical F3 key selects the third attic room")
 	_check(main._puzzle_index_for_key(attic_code) == 29, "the F4 keycode selects the fourth attic room")
 	_check(main._puzzle_index_for_key(attic_seven) == 32, "F7 selects the first cellar room")
-	_check(main._puzzle_index_for_key(attic_alt) == 26, "F1 still selects the attic when alt is held")
+	_check(main._puzzle_index_for_key(attic_alt) == 50, "alt+F1 selects the first nave room")
+	_check(main._attic_index(attic_alt) == -1, "the attic handler ignores alt+F")
 	var cellar_last := InputEventKey.new()
 	cellar_last.physical_keycode = KEY_F12
 	cellar_last.keycode = KEY_F12
@@ -727,6 +779,37 @@ func _check_puzzle_select_shows_both_wings() -> void:
 	_check(main._puzzle_index_for_key(court_plain) == 26, "plain F1 still selects the attic")
 	_check(main._puzzle_index_for_key(court_ctrl) == 26, "ctrl does not take F1 off the attic")
 	_check(main._puzzle_index_for_key(gallery_key) == 38, "keypad 1 still selects the gallery")
+	var nave_key := InputEventKey.new()
+	nave_key.physical_keycode = KEY_F1
+	nave_key.keycode = KEY_F1
+	nave_key.alt_pressed = true
+	var nave_last := InputEventKey.new()
+	nave_last.physical_keycode = KEY_F6
+	nave_last.keycode = KEY_F6
+	nave_last.alt_pressed = true
+	var nave_physical := InputEventKey.new()
+	nave_physical.physical_keycode = KEY_F2
+	nave_physical.keycode = KEY_NONE
+	nave_physical.alt_pressed = true
+	var nave_code := InputEventKey.new()
+	nave_code.keycode = KEY_F3
+	nave_code.physical_keycode = KEY_NONE
+	nave_code.alt_pressed = true
+	var nave_shift := InputEventKey.new()
+	nave_shift.physical_keycode = KEY_F1
+	nave_shift.keycode = KEY_F1
+	nave_shift.alt_pressed = true
+	nave_shift.shift_pressed = true
+	var nave_plain := InputEventKey.new()
+	nave_plain.physical_keycode = KEY_F4
+	nave_plain.keycode = KEY_F4
+	_check(main._puzzle_index_for_key(nave_key) == 50, "alt+F1 selects the first nave room")
+	_check(main._puzzle_index_for_key(nave_last) == 55, "alt+F6 selects the last nave room")
+	_check(main._puzzle_index_for_key(nave_physical) == 51, "the physical alt+F2 key selects the second nave room")
+	_check(main._puzzle_index_for_key(nave_code) == 52, "the alt+F3 keycode selects the third nave room")
+	_check(main._puzzle_index_for_key(nave_shift) == 44, "shift+alt+F1 stays on the court")
+	_check(main._puzzle_index_for_key(nave_plain) == 29, "plain F4 still selects the attic")
+	_check(main._puzzle_index_for_key(south_key) == 20, "alt+1 still selects the south wing")
 	main.free()
 
 
@@ -2413,4 +2496,590 @@ func _check_plate_tie_calls_lower_index() -> void:
 	_check(
 		Vector2i(int(called["ax"]), int(called["ay"])) == plate and not bool(stepped["state"]["guards"][1]["alert"]),
 		"the higher index is not called"
+	)
+
+
+func _check_nave_snuffs_are_required() -> void:
+	for index in Puzzles.count():
+		var puzzle: Dictionary = Puzzles.get_puzzle(index)
+		if str(puzzle["wing"]) != "Nave Wing":
+			continue
+		var uses := false
+		for action in puzzle["solution"]:
+			if str(action["type"]) == "toggle":
+				uses = true
+		if uses:
+			_check_toggles_required(index)
+
+
+func _check_nave_rooms() -> void:
+	_check_nave_identity()
+	_check_earlier_wings_have_no_bells()
+	_check_nave_bells_are_required()
+	_check_nave_watched_steps()
+	_check_first_bell()
+	_check_quiet_bell()
+	_check_far_bell()
+	_check_lit_bell()
+	_check_bell_gap()
+	_check_last_ring()
+	_check_bell_wait_does_not_call_twice()
+	_check_bell_return_calls_again()
+	_check_unreachable_guard_keeps_the_rail()
+	_check_bell_pulls_off_hold()
+	_check_plate_still_calls_only_nearest()
+	_check_snuff_still_calls_only_nearest()
+	_check_lighting_still_calls_nobody()
+	_check_bell_tie_reports_lower_index()
+
+
+func _check_nave_identity() -> void:
+	var layouts := {}
+	var titles := {}
+	var layout_ok := true
+	var title_ok := true
+	for i in Puzzles.count():
+		var puzzle: Dictionary = Puzzles.get_puzzle(i)
+		var layout := "|".join(puzzle["rows"])
+		var title := str(puzzle["title"])
+		if str(puzzle["wing"]) == "Nave Wing":
+			if layouts.has(layout):
+				layout_ok = false
+			if titles.has(title):
+				title_ok = false
+		if not layouts.has(layout):
+			layouts[layout] = title
+		if not titles.has(title):
+			titles[title] = true
+	_check(layout_ok, "each nave room has its own layout")
+	_check(title_ok, "each nave room has its own name")
+
+
+func _check_earlier_wings_have_no_bells() -> void:
+	var clean := true
+	for i in Puzzles.count():
+		var puzzle: Dictionary = Puzzles.get_puzzle(i)
+		if str(puzzle["wing"]) == "Nave Wing":
+			continue
+		for row in puzzle["rows"]:
+			if str(row).contains("B"):
+				clean = false
+		var state := Puzzles.initial_state(i)
+		for y in state["h"]:
+			for x in state["w"]:
+				if Rules.tile_at(state, x, y) == Rules.Tile.BELL:
+					clean = false
+	_check(clean, "earlier wings have no bells")
+
+
+func _check_nave_bells_are_required() -> void:
+	for i in Puzzles.count():
+		var puzzle: Dictionary = Puzzles.get_puzzle(i)
+		if str(puzzle["wing"]) != "Nave Wing":
+			continue
+		var state := Puzzles.initial_state(i)
+		var stepped := false
+		for action in puzzle["solution"]:
+			if str(action["type"]) == "move" and Rules.tile_at(state, int(state["player"]["x"]) + int(action["dx"]), int(state["player"]["y"]) + int(action["dy"])) == Rules.Tile.BELL:
+				stepped = true
+			var out: Dictionary = Rules.apply(state, action)
+			if out["result"] != Rules.Result.OK and out["result"] != Rules.Result.WIN:
+				break
+			state = out["state"]
+		_check(stepped, str(puzzle["title"]) + " steps onto a bell")
+		var blocked := Puzzles.initial_state(i)
+		for y in blocked["h"]:
+			for x in blocked["w"]:
+				if Rules.tile_at(blocked, x, y) == Rules.Tile.BELL:
+					blocked["tiles"][y * int(blocked["w"]) + x] = Rules.Tile.WALL
+		var won := false
+		for action in puzzle["solution"]:
+			var walled: Dictionary = Rules.apply(blocked, action)
+			if walled["result"] == Rules.Result.WIN:
+				won = true
+				break
+			if walled["result"] == Rules.Result.OK:
+				blocked = walled["state"]
+		_check(not won, str(puzzle["title"]) + " needs the bell")
+
+
+func _check_nave_watched_steps() -> void:
+	var cases := [
+		["The First Bell", "D D", 1, 3],
+		["The Quiet Bell", "D L D", 7, 3],
+		["The Far Bell", "D", 1, 2],
+		["The Lit Bell", "D D R R R R R R R R R", 10, 3],
+		["The Bell Gap", "R R R R R", 6, 1],
+		["The Last Ring", "R R R R R R R R D", 9, 2],
+	]
+	for entry in cases:
+		_expect_watched_loss(str(entry[0]), str(entry[1]), int(entry[2]), int(entry[3]))
+
+
+func _check_first_bell() -> void:
+	var index := _index_of("The First Bell")
+	var puzzle: Dictionary = Puzzles.get_puzzle(index)
+	var state := Puzzles.initial_state(index)
+	var bell := _find_tile(state, Rules.Tile.BELL)
+	var near: Dictionary = state["guards"][0]
+	var far: Dictionary = state["guards"][1]
+	var near_dist := absi(int(near["x"]) - bell.x) + absi(int(near["y"]) - bell.y)
+	var far_dist := absi(int(far["x"]) - bell.x) + absi(int(far["y"]) - bell.y)
+	_check(near_dist < far_dist, "the first bell's nearest keeper is closer than the other")
+	var saw := false
+	for action in puzzle["solution"]:
+		var player: Dictionary = state["player"]
+		var dest := Vector2i(int(player["x"]) + int(action.get("dx", 0)), int(player["y"]) + int(action.get("dy", 0)))
+		var near_before: Dictionary = state["guards"][0]
+		var far_before: Dictionary = state["guards"][1]
+		var out: Dictionary = Rules.apply(state, action)
+		if str(action["type"]) == "move" and dest == bell:
+			var near_after: Dictionary = out["state"]["guards"][0]
+			var far_after: Dictionary = out["state"]["guards"][1]
+			_check(out["result"] == Rules.Result.OK and int(out["called"]) == 0, "stepping on the first bell calls the nearest keeper")
+			_check(out["step"] == bell, "the arrow shows the square the nearest one is about to take")
+			_check(bool(near_after["alert"]) and Vector2i(int(near_after["ax"]), int(near_after["ay"])) == bell, "the nearest keeper is called to the bell")
+			_check(bool(far_after["alert"]) and Vector2i(int(far_after["ax"]), int(far_after["ay"])) == bell, "the farther keeper is called to the bell too")
+			_check(
+				int(near_after["x"]) == int(near_before["x"]) and int(near_after["y"]) == int(near_before["y"]),
+				"the nearest keeper has not taken that step yet"
+			)
+			_check(
+				int(far_after["x"]) == int(far_before["x"]) and int(far_after["y"]) == int(far_before["y"]),
+				"the farther keeper has not taken that step yet"
+			)
+			var left: Dictionary = Rules.apply(out["state"], {"type": "move", "dx": 1, "dy": 0})
+			_check(left["result"] == Rules.Result.WIN, "leaving that square wins")
+			var stayed: Dictionary = Rules.apply(out["state"], {"type": "wait"})
+			_check(stayed["result"] == Rules.Result.LOSS and stayed["reason"] == "guard", "staying on that square loses")
+			saw = true
+			break
+		if out["result"] != Rules.Result.OK:
+			_check(false, "first bell approach failed")
+			return
+		state = out["state"]
+	_check(saw, "the first bell solution steps on the bell")
+
+
+func _check_quiet_bell() -> void:
+	var index := _index_of("The Quiet Bell")
+	var puzzle: Dictionary = Puzzles.get_puzzle(index)
+	var state := Puzzles.initial_state(index)
+	var bell := _find_tile(state, Rules.Tile.BELL)
+	var called_on_entry := false
+	var waited := false
+	for action in puzzle["solution"]:
+		var player: Dictionary = state["player"]
+		var on_bell := Rules.tile_at(state, int(player["x"]), int(player["y"])) == Rules.Tile.BELL
+		var guard_before: Dictionary = state["guards"][0]
+		var dest := Vector2i(int(player["x"]), int(player["y"]))
+		if str(action["type"]) == "move":
+			dest = Vector2i(int(player["x"]) + int(action["dx"]), int(player["y"]) + int(action["dy"]))
+		var out: Dictionary = Rules.apply(state, action)
+		if out["result"] != Rules.Result.OK and out["result"] != Rules.Result.WIN:
+			_check(false, "quiet bell solution failed")
+			return
+		if str(action["type"]) == "move" and dest == bell and int(out["called"]) >= 0:
+			called_on_entry = true
+		if str(action["type"]) == "wait" and on_bell:
+			var guard_after: Dictionary = out["state"]["guards"][0]
+			_check(called_on_entry, "the quiet bell wait is after the bell has already called")
+			_check(int(out["called"]) == -1, "waiting on a bell does not call twice")
+			_check(
+				int(guard_after["x"]) != int(guard_before["x"]) or int(guard_after["y"]) != int(guard_before["y"]),
+				"the called keeper still takes his one step while you wait"
+			)
+			waited = true
+		state = out["state"]
+	_check(waited, "the quiet bell solution waits on the bell")
+	state = Puzzles.initial_state(index)
+	var entries := 0
+	var returned := false
+	for token in ["L", "L", "L", "L", "R", "L"]:
+		var action := {"type": "move", "dx": -1 if token == "L" else 1, "dy": 0}
+		var player: Dictionary = state["player"]
+		var dest := Vector2i(int(player["x"]) + int(action["dx"]), int(player["y"]))
+		var out: Dictionary = Rules.apply(state, action)
+		if out["result"] != Rules.Result.OK:
+			_check(false, "quiet bell return approach failed")
+			return
+		if dest == bell:
+			entries += 1
+			if entries == 2:
+				_check(int(out["called"]) == 0, "leaving and stepping back on a bell calls again")
+				returned = true
+		state = out["state"]
+	_check(returned, "the return route steps back onto the bell")
+	var caught: Dictionary = Rules.apply(state, {"type": "move", "dx": 1, "dy": 0})
+	var landed: Dictionary = caught["state"]["player"]
+	_check(
+		caught["result"] == Rules.Result.LOSS and caught["reason"] == "guard" and int(landed["x"]) == bell.x + 1 and int(landed["y"]) == bell.y,
+		"that second ring catches a route that returns"
+	)
+
+
+func _check_far_bell() -> void:
+	var index := _index_of("The Far Bell")
+	var puzzle: Dictionary = Puzzles.get_puzzle(index)
+	var state := Puzzles.initial_state(index)
+	var bell := _find_tile(state, Rules.Tile.BELL)
+	var near: Dictionary = state["guards"][0]
+	var far: Dictionary = state["guards"][1]
+	var near_dist := absi(int(near["x"]) - bell.x) + absi(int(near["y"]) - bell.y)
+	var far_dist := absi(int(far["x"]) - bell.x) + absi(int(far["y"]) - bell.y)
+	_check(near_dist < far_dist, "the far bell's second keeper is farther from the bell")
+	var called_both := false
+	var far_start := Vector2i(int(far["x"]), int(far["y"]))
+	for action in puzzle["solution"]:
+		var player: Dictionary = state["player"]
+		var out: Dictionary = Rules.apply(state, action)
+		if out["result"] != Rules.Result.OK and out["result"] != Rules.Result.WIN:
+			_check(false, "far bell solution failed")
+			return
+		if str(action["type"]) == "move":
+			var dest := Vector2i(int(player["x"]) + int(action["dx"]), int(player["y"]) + int(action["dy"]))
+			if dest == bell:
+				var near_after: Dictionary = out["state"]["guards"][0]
+				var far_after: Dictionary = out["state"]["guards"][1]
+				_check(int(out["called"]) == 0, "the bell reports the nearer keeper")
+				_check(
+					bool(near_after["alert"]) and Vector2i(int(near_after["ax"]), int(near_after["ay"])) == bell,
+					"the nearer keeper answers the bell"
+				)
+				_check(
+					bool(far_after["alert"]) and Vector2i(int(far_after["ax"]), int(far_after["ay"])) == bell,
+					"the far keeper answers the bell"
+				)
+				called_both = true
+		state = out["state"]
+	var far_end: Dictionary = state["guards"][1]
+	_check(called_both, "the far bell solution steps on the bell")
+	_check(
+		Vector2i(int(far_end["x"]), int(far_end["y"])) != far_start,
+		"the far keeper leaves his post to answer"
+	)
+
+
+func _check_lit_bell() -> void:
+	var index := _index_of("The Lit Bell")
+	var puzzle: Dictionary = Puzzles.get_puzzle(index)
+	var state := Puzzles.initial_state(index)
+	var bell := _find_tile(state, Rules.Tile.BELL)
+	var lit0: Dictionary = Rules.light_map(state)
+	_check(lit0.has(bell) and not Rules.watched_tiles(state, lit0).has(bell), "the lit bell starts inside a lamp diamond and unwatched")
+	var first: Dictionary = Rules.apply(state, {"type": "move", "dx": 1, "dy": 0})
+	_check(first["result"] == Rules.Result.OK, "the square before the lit bell is dark")
+	var refused: Dictionary = Rules.apply(first["state"], {"type": "move", "dx": 1, "dy": 0})
+	var stayed: Dictionary = refused["state"]["player"]
+	_check(
+		refused["result"] == Rules.Result.ILLEGAL and refused["reason"] == "lit" and int(stayed["x"]) == 2 and int(stayed["y"]) == 1,
+		"a lit bell is refused"
+	)
+	var snuff_called_only_near := false
+	var bell_called_both := false
+	state = Puzzles.initial_state(index)
+	for action in puzzle["solution"]:
+		var player: Dictionary = state["player"]
+		var dest := Vector2i(int(player["x"]), int(player["y"]))
+		if str(action["type"]) == "move":
+			dest = Vector2i(int(player["x"]) + int(action["dx"]), int(player["y"]) + int(action["dy"]))
+		var before_lit: Dictionary = Rules.light_map(state)
+		var out: Dictionary = Rules.apply(state, action)
+		if out["result"] != Rules.Result.OK and out["result"] != Rules.Result.WIN:
+			_check(false, "lit bell solution failed")
+			return
+		if str(action["type"]) == "toggle":
+			var near: Dictionary = out["state"]["guards"][0]
+			var far: Dictionary = out["state"]["guards"][1]
+			_check(int(out["called"]) == 0 and bool(near["alert"]) and not bool(far["alert"]), "snuffing the lamp over the bell calls only the nearest guard")
+			_check(Vector2i(int(near["ax"]), int(near["ay"])) == Vector2i(3, 2), "the snuff calls him to the lamp")
+			snuff_called_only_near = true
+		if str(action["type"]) == "move" and dest == bell:
+			var near: Dictionary = out["state"]["guards"][0]
+			var far: Dictionary = out["state"]["guards"][1]
+			_check(not before_lit.has(bell), "the bell is dark when you step on it")
+			_check(
+				int(out["called"]) == 0 and bool(near["alert"]) and bool(far["alert"]) and Vector2i(int(near["ax"]), int(near["ay"])) == bell and Vector2i(int(far["ax"]), int(far["ay"])) == bell,
+				"stepping onto the dark bell calls every guard"
+			)
+			bell_called_both = true
+		state = out["state"]
+	_check(snuff_called_only_near and bell_called_both, "the lit bell snuffs, then rings")
+
+
+func _check_bell_gap() -> void:
+	var index := _index_of("The Bell Gap")
+	var puzzle: Dictionary = Puzzles.get_puzzle(index)
+	var toggles := 0
+	for action in puzzle["solution"]:
+		if str(action["type"]) == "toggle":
+			toggles += 1
+	_check(toggles == 0, "the bell gap is solved without snuffing")
+	var state := Puzzles.initial_state(index)
+	var gap := _find_tile(state, Rules.Tile.GAP)
+	var bell := _find_tile(state, Rules.Tile.BELL)
+	var called := false
+	var crossed := false
+	for action in puzzle["solution"]:
+		var player: Dictionary = state["player"]
+		var dest := Vector2i(int(player["x"]), int(player["y"]))
+		if str(action["type"]) == "move":
+			dest = Vector2i(int(player["x"]) + int(action["dx"]), int(player["y"]) + int(action["dy"]))
+			if dest == gap:
+				var lights: Dictionary = Rules.light_map(state)
+				_check(
+					bool(state["lamps"][0]["lit"]) and lights.has(gap) and not Rules.watched_tiles(state, lights).has(gap),
+					"the bell gap stays lit and unwatched when you cross"
+				)
+				var south: Dictionary = state["guards"][0]
+				var east: Dictionary = state["guards"][1]
+				_check(
+					Vector2i(int(south["x"]), int(south["y"])) != Vector2i(6, 2) and Vector2i(int(east["x"]), int(east["y"])) != Vector2i(7, 1),
+					"both keepers have left the gap"
+				)
+				crossed = true
+		var out: Dictionary = Rules.apply(state, action)
+		if out["result"] != Rules.Result.OK and out["result"] != Rules.Result.WIN:
+			_check(false, "bell gap solution failed")
+			return
+		if dest == bell and str(action["type"]) == "move":
+			var south_after: Dictionary = out["state"]["guards"][0]
+			var east_after: Dictionary = out["state"]["guards"][1]
+			_check(
+				int(out["called"]) == 0 and bool(south_after["alert"]) and bool(east_after["alert"]) and Vector2i(int(south_after["ax"]), int(south_after["ay"])) == bell and Vector2i(int(east_after["ax"]), int(east_after["ay"])) == bell,
+				"the bell pulls both keepers off the gap"
+			)
+			called = true
+		state = out["state"]
+	_check(called and crossed, "the bell gap solution steps the bell, then crosses")
+
+
+func _check_last_ring() -> void:
+	var index := _index_of("The Last Ring")
+	var puzzle: Dictionary = Puzzles.get_puzzle(index)
+	var state := Puzzles.initial_state(index)
+	var gap := _find_tile(state, Rules.Tile.GAP)
+	var bell := _find_tile(state, Rules.Tile.BELL)
+	var held := false
+	var crossed := false
+	var hold_state: Dictionary = {}
+	for action in puzzle["solution"]:
+		var player: Dictionary = state["player"]
+		if str(action["type"]) == "move":
+			var dest := Vector2i(int(player["x"]) + int(action["dx"]), int(player["y"]) + int(action["dy"]))
+			if dest == gap:
+				var lights: Dictionary = Rules.light_map(state)
+				var west: Dictionary = state["guards"][0]
+				var east: Dictionary = state["guards"][1]
+				_check(
+					bool(west["holding"]) and bool(east["holding"]) and Vector2i(int(west["x"]), int(west["y"])) == bell and Vector2i(int(east["x"]), int(east["y"])) == bell,
+					"both keepers are holding on the bell when you cross"
+				)
+				_check(
+					bool(state["lamps"][0]["lit"]) and lights.has(gap) and not Rules.watched_tiles(state, lights).has(gap),
+					"the last ring's gap is still lit and unwatched when you cross"
+				)
+				crossed = true
+		var out: Dictionary = Rules.apply(state, action)
+		if out["result"] != Rules.Result.OK and out["result"] != Rules.Result.WIN:
+			_check(false, "last ring solution failed")
+			return
+		state = out["state"]
+		var west_now: Dictionary = state["guards"][0]
+		var east_now: Dictionary = state["guards"][1]
+		if bool(west_now["holding"]) and bool(east_now["holding"]) and not held:
+			held = true
+			hold_state = Rules.clone(state)
+			_check(
+				Vector2i(int(west_now["x"]), int(west_now["y"])) == bell and Vector2i(int(east_now["x"]), int(east_now["y"])) == bell,
+				"both keepers hold on the bell"
+			)
+	_check(held and crossed, "the last ring solution waits until they hold, then crosses")
+	for guard_index in [0, 1]:
+		var released: Dictionary = Rules.clone(hold_state)
+		released["guards"][guard_index]["holding"] = false
+		var resumed: Vector2i = Rules.planned_step(released, guard_index)
+		_check(resumed != bell, "without the hold keeper %d would resume the rail" % guard_index)
+	for guard_index in [0, 1]:
+		var rail: Array = hold_state["guards"][guard_index]["rail"]
+		for point in rail:
+			var rail_cell: Vector2i = point
+			var posted: Dictionary = Rules.clone(hold_state)
+			posted["guards"][guard_index]["x"] = rail_cell.x
+			posted["guards"][guard_index]["y"] = rail_cell.y
+			posted["guards"][guard_index]["holding"] = false
+			posted["guards"][guard_index]["alert"] = false
+			var lights: Dictionary = Rules.light_map(posted)
+			_check(lights.has(gap) and Rules.watched_tiles(posted, lights).has(gap), "back on the rail at %s, that gap is watched" % rail_cell)
+
+
+func _check_bell_wait_does_not_call_twice() -> void:
+	var state := Rules.build(
+		PackedStringArray(["########", "#S.B...#", "#......#", "#......#", "########"]),
+		[],
+		[
+			{"x": 6, "y": 2, "vision": 1, "rail": [Vector2i(6, 2)]},
+			{"x": 1, "y": 3, "vision": 1, "rail": [Vector2i(1, 3)]},
+		]
+	)
+	var bell := Vector2i(3, 1)
+	var stepped: Dictionary = Rules.apply(Rules.apply(state, {"type": "move", "dx": 1, "dy": 0})["state"], {"type": "move", "dx": 1, "dy": 0})
+	_check(stepped["result"] == Rules.Result.OK and int(stepped["called"]) == 0, "the first step onto the bell calls")
+	_check(bool(stepped["state"]["guards"][0]["alert"]) and bool(stepped["state"]["guards"][1]["alert"]), "both keepers are called by that step")
+	var waited: Dictionary = Rules.apply(stepped["state"], {"type": "wait"})
+	_check(waited["result"] == Rules.Result.OK and int(waited["called"]) == -1, "waiting on a bell does not call twice")
+	_check(
+		Vector2i(int(waited["state"]["guards"][0]["ax"]), int(waited["state"]["guards"][0]["ay"])) == bell and Vector2i(int(waited["state"]["guards"][1]["ax"]), int(waited["state"]["guards"][1]["ay"])) == bell,
+		"the first call is still the bell"
+	)
+
+
+func _check_bell_return_calls_again() -> void:
+	var state := Rules.build(
+		PackedStringArray(["########", "#S.B...#", "#......#", "#......#", "########"]),
+		[],
+		[
+			{"x": 6, "y": 2, "vision": 1, "rail": [Vector2i(6, 2)]},
+			{"x": 1, "y": 3, "vision": 1, "rail": [Vector2i(1, 3)]},
+		]
+	)
+	var on_bell: Dictionary = Rules.apply(Rules.apply(state, {"type": "move", "dx": 1, "dy": 0})["state"], {"type": "move", "dx": 1, "dy": 0})
+	var off: Dictionary = Rules.apply(on_bell["state"], {"type": "move", "dx": -1, "dy": 0})
+	_check(off["result"] == Rules.Result.OK and int(off["called"]) == -1, "leaving the bell does not ring it")
+	var back: Dictionary = Rules.apply(off["state"], {"type": "move", "dx": 1, "dy": 0})
+	_check(back["result"] == Rules.Result.OK and int(back["called"]) == 0, "leaving and stepping back on a bell calls again")
+	_check(bool(back["state"]["guards"][0]["alert"]) and bool(back["state"]["guards"][1]["alert"]), "the second ring calls both keepers")
+
+
+func _check_unreachable_guard_keeps_the_rail() -> void:
+	var state := Rules.build(
+		PackedStringArray(["#######", "#S.B..#", "#######", "#.....#", "#######"]),
+		[],
+		[
+			{"x": 5, "y": 1, "vision": 1, "rail": [Vector2i(5, 1)]},
+			{"x": 2, "y": 3, "vision": 1, "rail": [Vector2i(2, 3), Vector2i(4, 3)], "rail_index": 0, "rail_dir": 1},
+		]
+	)
+	var approach: Dictionary = Rules.apply(state, {"type": "move", "dx": 1, "dy": 0})
+	var stepped: Dictionary = Rules.apply(approach["state"], {"type": "move", "dx": 1, "dy": 0})
+	var reachable: Dictionary = stepped["state"]["guards"][0]
+	var blocked: Dictionary = stepped["state"]["guards"][1]
+	_check(stepped["result"] == Rules.Result.OK and bool(reachable["alert"]) and Vector2i(int(reachable["ax"]), int(reachable["ay"])) == Vector2i(3, 1), "the keeper with a path is called")
+	_check(
+		not bool(blocked["alert"]) and not bool(blocked["holding"]) and Vector2i(int(blocked["x"]), int(blocked["y"])) == Vector2i(4, 3),
+		"a guard with no floor path to the bell is not called"
+	)
+	var left: Dictionary = Rules.apply(stepped["state"], {"type": "move", "dx": -1, "dy": 0})
+	var still: Dictionary = left["state"]["guards"][1]
+	_check(
+		left["result"] == Rules.Result.OK and not bool(still["alert"]) and not bool(still["holding"]) and Vector2i(int(still["x"]), int(still["y"])) == Vector2i(3, 3),
+		"the blocked guard keeps the rail"
+	)
+
+
+func _check_bell_pulls_off_hold() -> void:
+	var state := Rules.build(
+		PackedStringArray(["#######", "#S.B..#", "#######", "#.....#", "#######"]),
+		[],
+		[
+			{"x": 5, "y": 1, "vision": 1, "rail": [Vector2i(5, 1)]},
+			{"x": 2, "y": 3, "vision": 1, "rail": [Vector2i(2, 3), Vector2i(4, 3)]},
+		]
+	)
+	state["guards"][0]["holding"] = true
+	state["guards"][0]["alert"] = false
+	state["guards"][1]["holding"] = true
+	state["guards"][1]["alert"] = false
+	var approach: Dictionary = Rules.apply(state, {"type": "move", "dx": 1, "dy": 0})
+	var stepped: Dictionary = Rules.apply(approach["state"], {"type": "move", "dx": 1, "dy": 0})
+	var pulled: Dictionary = stepped["state"]["guards"][0]
+	var kept: Dictionary = stepped["state"]["guards"][1]
+	_check(
+		stepped["result"] == Rules.Result.OK and bool(pulled["alert"]) and not bool(pulled["holding"]) and Vector2i(int(pulled["ax"]), int(pulled["ay"])) == Vector2i(3, 1) and int(pulled["x"]) == 5 and int(pulled["y"]) == 1,
+		"a bell pulls a guard off an existing hold"
+	)
+	_check(
+		bool(kept["holding"]) and not bool(kept["alert"]) and int(kept["x"]) == 2 and int(kept["y"]) == 3,
+		"a guard with no path keeps his hold"
+	)
+
+
+func _check_plate_still_calls_only_nearest() -> void:
+	var state := Rules.build(
+		PackedStringArray(["########", "#S.P...#", "#......#", "#......#", "########"]),
+		[],
+		[
+			{"x": 6, "y": 2, "vision": 1, "rail": [Vector2i(6, 2)]},
+			{"x": 3, "y": 2, "vision": 1, "rail": [Vector2i(3, 2)]},
+		]
+	)
+	var plate := Vector2i(3, 1)
+	var far_dist := absi(6 - plate.x) + absi(2 - plate.y)
+	var near_dist := absi(3 - plate.x) + absi(2 - plate.y)
+	_check(near_dist < far_dist, "the plate fixture's second keeper is nearer")
+	var approach: Dictionary = Rules.apply(state, {"type": "move", "dx": 1, "dy": 0})
+	var stepped: Dictionary = Rules.apply(approach["state"], {"type": "move", "dx": 1, "dy": 0})
+	var near: Dictionary = stepped["state"]["guards"][1]
+	var far: Dictionary = stepped["state"]["guards"][0]
+	_check(stepped["result"] == Rules.Result.OK and int(stepped["called"]) == 1 and bool(near["alert"]) and not bool(far["alert"]), "a plate still calls only the nearest guard")
+	_check(Vector2i(int(near["ax"]), int(near["ay"])) == plate, "the plate call targets the plate")
+
+
+func _check_snuff_still_calls_only_nearest() -> void:
+	var state := Rules.build(
+		PackedStringArray(["########", "#S.....#", "#......#", "#......#", "########"]),
+		[{"x": 3, "y": 1, "facing": "e", "radius": 1, "lit": true}],
+		[
+			{"x": 6, "y": 2, "vision": 1, "rail": [Vector2i(6, 2)]},
+			{"x": 3, "y": 2, "vision": 1, "rail": [Vector2i(3, 2)]},
+		]
+	)
+	var lamp := Vector2i(3, 1)
+	var far_dist := absi(6 - lamp.x) + absi(2 - lamp.y)
+	var near_dist := absi(3 - lamp.x) + absi(2 - lamp.y)
+	_check(near_dist < far_dist, "the snuff fixture's second keeper is closer")
+	var stepped: Dictionary = Rules.apply(state, {"type": "move", "dx": 1, "dy": 0})
+	var snuffed: Dictionary = Rules.apply(stepped["state"], {"type": "toggle", "lamp": 0})
+	var near: Dictionary = snuffed["state"]["guards"][1]
+	var far: Dictionary = snuffed["state"]["guards"][0]
+	_check(snuffed["result"] == Rules.Result.OK and int(snuffed["called"]) == 1 and bool(near["alert"]) and not bool(far["alert"]), "a snuff still calls only the nearest guard")
+	_check(Vector2i(int(near["ax"]), int(near["ay"])) == lamp and not bool(snuffed["state"]["lamps"][0]["lit"]), "the snuff targets that lamp")
+
+
+func _check_lighting_still_calls_nobody() -> void:
+	var state := Rules.build(
+		PackedStringArray(["########", "#S.....#", "#......#", "#......#", "########"]),
+		[{"x": 3, "y": 1, "facing": "e", "radius": 1, "lit": false}],
+		[
+			{"x": 6, "y": 2, "vision": 1, "rail": [Vector2i(6, 2)]},
+			{"x": 1, "y": 3, "vision": 1, "rail": [Vector2i(1, 3)]},
+		]
+	)
+	var stepped: Dictionary = Rules.apply(state, {"type": "move", "dx": 1, "dy": 0})
+	var lit: Dictionary = Rules.apply(stepped["state"], {"type": "toggle", "lamp": 0})
+	_check(
+		lit["result"] == Rules.Result.OK and int(lit["called"]) == -1 and bool(lit["state"]["lamps"][0]["lit"]) and not bool(lit["state"]["guards"][0]["alert"]) and not bool(lit["state"]["guards"][1]["alert"]),
+		"lighting a lamp still calls nobody"
+	)
+
+
+func _check_bell_tie_reports_lower_index() -> void:
+	var state := Rules.build(
+		PackedStringArray(["#######", "#S.B..#", "#.....#", "#######"]),
+		[],
+		[
+			{"x": 1, "y": 2, "vision": 1, "rail": [Vector2i(1, 2)]},
+			{"x": 5, "y": 2, "vision": 1, "rail": [Vector2i(5, 2)]},
+		]
+	)
+	var bell := Vector2i(3, 1)
+	var dist0 := absi(1 - bell.x) + absi(2 - bell.y)
+	var dist1 := absi(5 - bell.x) + absi(2 - bell.y)
+	_check(dist0 == dist1, "the bell tie keeps both keepers the same distance")
+	var approach: Dictionary = Rules.apply(state, {"type": "move", "dx": 1, "dy": 0})
+	var stepped: Dictionary = Rules.apply(approach["state"], {"type": "move", "dx": 1, "dy": 0})
+	_check(stepped["result"] == Rules.Result.OK and int(stepped["called"]) == 0, "a distance tie on a bell reports the lower index")
+	_check(
+		bool(stepped["state"]["guards"][0]["alert"]) and bool(stepped["state"]["guards"][1]["alert"]),
+		"a distance tie on a bell still calls both keepers"
 	)
