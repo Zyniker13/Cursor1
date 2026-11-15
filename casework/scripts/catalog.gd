@@ -11,8 +11,9 @@ const GlassPontil = preload("res://scripts/glass_pontil.gd")
 const PressProof = preload("res://scripts/press_proof.gd")
 const AssayCup = preload("res://scripts/assay_cup.gd")
 const KilnChalk = preload("res://scripts/kiln_chalk.gd")
+const TideLedger = preload("res://scripts/tide_ledger.gd")
 
-const CASES: Array = [SpareKey, RehearsalScore, GiltStamp, FerryBell, WeatherSlate, LoomShuttle, HiveSmoker, GlassPontil, PressProof, AssayCup, KilnChalk]
+const CASES: Array = [SpareKey, RehearsalScore, GiltStamp, FerryBell, WeatherSlate, LoomShuttle, HiveSmoker, GlassPontil, PressProof, AssayCup, KilnChalk, TideLedger]
 
 
 static func all() -> Array:
