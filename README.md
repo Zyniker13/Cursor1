@@ -8,6 +8,7 @@ Playable slices, Godot 4. Steam packaging comes later.
 - [Night Stamp](night-stamp/) — a border-desk deckbuilder
 - [Orchard Surge](orchard-surge/) — a dark-orchard wave game
 - [Lantern Census](lantern-census/) — a one-floor map survey
+- [Lowball](lowball/) — a four-week fictional sports season
 
 ```bash
 godot --path harbor-glass
@@ -22,4 +23,6 @@ godot --path orchard-surge
 godot --headless --path orchard-surge --script res://tests/run_tests.gd
 godot --path lantern-census
 godot --headless --path lantern-census -s res://tests/run_tests.gd
+godot --path lowball
+godot --headless --path lowball -s res://scripts/tests.gd
 ```
