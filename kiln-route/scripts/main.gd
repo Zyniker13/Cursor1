@@ -192,6 +192,8 @@ func _kind_for_key(code: int) -> int:
 		KEY_KP_0: Rules.Kind.HOOK,
 		KEY_MINUS: Rules.Kind.ARM,
 		KEY_KP_SUBTRACT: Rules.Kind.ARM,
+		KEY_EQUAL: Rules.Kind.DROP,
+		KEY_KP_ADD: Rules.Kind.DROP,
 	}
 	if not map.has(code):
 		return -1
@@ -347,6 +349,7 @@ func _kind_order() -> Array:
 		Rules.Kind.GRATE,
 		Rules.Kind.HOOK,
 		Rules.Kind.ARM,
+		Rules.Kind.DROP,
 	]
 
 
@@ -378,12 +381,16 @@ func _layout() -> Dictionary:
 	if size.x < 100.0 or size.y < 100.0:
 		size = Vector2(1280, 720)
 	# Past 32 rooms, rows of ten keep each name readable.
-	# The sixth wing adds a fifth row. Shorter tabs give that row back
-	# so the rule text keeps the space it had with four.
+	# The sixth wing adds a fifth row. The seventh adds a sixth.
+	# Shorter tabs give that row back so the rule text keeps its space.
 	var per_row := 8
 	var tab_h := 30.0
 	var row_gap := 4.0
-	if rooms.size() > 40:
+	if rooms.size() > 48:
+		per_row = 10
+		tab_h = 18.0
+		row_gap = 2.0
+	elif rooms.size() > 40:
 		per_row = 10
 		tab_h = 20.0
 		row_gap = 2.0
@@ -464,7 +471,7 @@ func _draw() -> void:
 	var size: Vector2 = lay.size
 	draw_rect(Rect2(Vector2.ZERO, size), COL_BG)
 	_text(Vector2(24, 14), "KILN ROUTE", 28, COL_TEXT)
-	_text(Vector2(236, 26), "six wings", 15, COL_DIM)
+	_text(Vector2(236, 26), "seven wings", 15, COL_DIM)
 	var minute := "minute  %d / %d" % [_shown_tick(), Rules.SIM_TICKS]
 	var minute_w := font.get_string_size(minute, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
 	_text(Vector2(size.x - 24 - minute_w, 26), minute, 15, COL_DIM)
@@ -474,7 +481,7 @@ func _draw() -> void:
 	_draw_grid(lay)
 	_draw_side(lay)
 	_draw_tray(lay)
-	_text(Vector2(24, size.y - 28), "1-9, 0, - select    R rotate    LMB place or pick up    RMB rotate a piece    Space run    F skip    Bksp restart", 13, COL_DIM)
+	_text(Vector2(24, size.y - 28), "1-9, 0, -, = select    R rotate    LMB place or pick up    RMB rotate a piece    Space run    F skip    Bksp restart", 13, COL_DIM)
 
 
 func _draw_tabs(lay: Dictionary) -> void:
@@ -496,7 +503,9 @@ func _draw_tabs(lay: Dictionary) -> void:
 			draw_rect(Rect2(rect.position.x, rect.position.y + rect.size.y - 3, rect.size.x, 3), COL_ACCENT)
 		var label := "%d  %s" % [int(room.id), room.name]
 		var tab_size := 15
-		if rooms.size() > 24:
+		if rooms.size() > 48:
+			tab_size = 11
+		elif rooms.size() > 24:
 			tab_size = 12
 		elif rooms.size() > 8:
 			tab_size = 14
@@ -659,6 +668,16 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 		var tip := bend + along * body.size.x * 0.24
 		draw_line(grip, bend, ink, thick)
 		draw_line(bend, tip, ink, thick)
+	elif kind == Rules.Kind.DROP:
+		var along := Vector2(Rules.vec(dir))
+		var aside := Vector2(Rules.vec(Rules.right(dir)))
+		var ink := Color(1, 1, 1, 0.72 * alpha)
+		var thick := maxf(2.0, body.size.x * 0.07)
+		var lip := center + along * body.size.x * 0.28
+		var bend := center
+		var tip := bend + aside * body.size.x * 0.28
+		draw_line(lip, bend, ink, thick)
+		draw_line(bend, tip, ink, thick)
 	elif kind == Rules.Kind.GRATE:
 		var along := Vector2(Rules.vec(dir))
 		var across := Vector2(Rules.vec(Rules.right(dir)))
@@ -678,12 +697,17 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 	var forward := light
 	if kind == Rules.Kind.GRATE:
 		forward = Color("d7dee6")
-	if kind != Rules.Kind.HOOK:
+	if kind != Rules.Kind.HOOK and kind != Rules.Kind.DROP:
 		_arrow(front, dir, body.size.x * 0.2, body.size.x * 0.12, Color(forward.r, forward.g, forward.b, forward_alpha))
 	if kind == Rules.Kind.HOOK:
 		var turn := Rules.left(dir)
 		var side := center + Vector2(Rules.vec(turn)) * body.size.x * 0.2
 		var mark := Color("f4e1b5")
+		_arrow(side, turn, body.size.x * 0.16, body.size.x * 0.1, Color(mark.r, mark.g, mark.b, alpha))
+	elif kind == Rules.Kind.DROP:
+		var turn := Rules.right(dir)
+		var side := center + Vector2(Rules.vec(turn)) * body.size.x * 0.2
+		var mark := Color("e4d4f4")
 		_arrow(side, turn, body.size.x * 0.16, body.size.x * 0.1, Color(mark.r, mark.g, mark.b, alpha))
 	elif kind == Rules.Kind.FILTER or kind == Rules.Kind.SPLITTER or kind == Rules.Kind.WEIR or kind == Rules.Kind.GRATE:
 		var turn := Rules.right(dir)
@@ -822,6 +846,8 @@ func _key_label(kind: int) -> String:
 		return "0"
 	if kind == Rules.Kind.ARM:
 		return "-"
+	if kind == Rules.Kind.DROP:
+		return "="
 	return str(kind + 1)
 
 
@@ -848,6 +874,8 @@ func _kind_color(kind: int) -> Color:
 		return Color("3d6ea8")
 	if kind == Rules.Kind.ARM:
 		return Color("a35d3a")
+	if kind == Rules.Kind.DROP:
+		return Color("6e5aa8")
 	return Color("c792ef")
 
 
