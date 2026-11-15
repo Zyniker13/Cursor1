@@ -14,6 +14,7 @@ const Kiln = preload("res://scripts/kiln_chalk.gd")
 const Tide = preload("res://scripts/tide_ledger.gd")
 const Night = preload("res://scripts/night_bell.gd")
 const Salt = preload("res://scripts/salt_mark.gd")
+const Wick = preload("res://scripts/wick_trim.gd")
 const Catalog = preload("res://scripts/catalog.gd")
 const Solver = preload("res://scripts/solver.gd")
 const Verdict = preload("res://scripts/verdict.gd")
@@ -45,6 +46,8 @@ const NIGHT_TIMELINE := "Vesper (night ringer) stopped the night bell at 44 from
 const NIGHT_TRUE := {"who": "Vesper", "place": "tower", "hour": "44"}
 const SALT_TIMELINE := "Holt (salt hand) scored the salt mark at 19 from the cistern to the pan, so the weigh would read heavy.\nLin (rake hand) raked the crust at 17 on the rake bay.\nOpal (brine hand) read the brine stick at 18.\nThe rake was rested on the cistern.\nThe brine stick was read on the cistern.\nThe pan was boiled at 20.\nThe salt was drawn at 21."
 const SALT_TRUE := {"who": "Holt", "place": "pan", "hour": "19"}
+const WICK_TIMELINE := "Quin (wick hand) trimmed the wick in the loft at 4, seen from the gallery, so the lamp would hold through the fog.\nMara (oil hand) filled the lamp oil at 2 in the stair.\nSable (lamp watch) kept the lamp watch at 3 in the gallery.\nThe snuffer was hung in the stair.\nThe gallery lamp was lit at 5.\nThe stair lamp was put out at 6."
+const WICK_TRUE := {"who": "Quin", "place": "loft", "hour": "4"}
 
 var _failures: Array[String] = []
 var _checks := 0
@@ -135,6 +138,12 @@ func _initialize() -> void:
 	_test_salt_only_true_theory()
 	_test_salt_near_misses()
 	_test_salt_incomplete()
+	_test_wick_file_shape()
+	_test_wick_unique_model()
+	_test_wick_each_exhibit_necessary()
+	_test_wick_only_true_theory()
+	_test_wick_near_misses()
+	_test_wick_incomplete()
 	_test_solutions_differ()
 	_test_menu_opens_either_case()
 	if _failures.is_empty():
@@ -3077,6 +3086,285 @@ func _test_salt_incomplete() -> void:
 	print("salt incomplete submissions refused with the missing slot")
 
 
+func _test_wick_file_shape() -> void:
+	_expect(Wick.EXHIBITS.size() == 9, "wick exhibit count is %d" % Wick.EXHIBITS.size())
+	_expect(Wick.PEOPLE.size() == 3, "wick cast should be three people")
+	_expect(Wick.PLACES.size() == 3, "wick room count is %d" % Wick.PLACES.size())
+	_expect(Wick.HOURS.size() == 5, "wick hour list length is %d" % Wick.HOURS.size())
+	_expect(Wick.TITLE == "The wick trim", "wick title")
+	_expect(Wick.TITLE != CaseData.TITLE and Wick.TITLE != Rehearsal.TITLE and Wick.TITLE != Gilt.TITLE and Wick.TITLE != Ferry.TITLE and Wick.TITLE != Weather.TITLE and Wick.TITLE != Loom.TITLE and Wick.TITLE != Hive.TITLE and Wick.TITLE != Glass.TITLE and Wick.TITLE != Press.TITLE and Wick.TITLE != Assay.TITLE and Wick.TITLE != Kiln.TITLE and Wick.TITLE != Tide.TITLE and Wick.TITLE != Night.TITLE and Wick.TITLE != Salt.TITLE, "wick shares a title")
+	_expect(Wick.FILE_CODE == "CW-15", "wick file code")
+	_expect(Wick.FILE_CODE != CaseData.FILE_CODE and Wick.FILE_CODE != Rehearsal.FILE_CODE and Wick.FILE_CODE != Gilt.FILE_CODE and Wick.FILE_CODE != Ferry.FILE_CODE and Wick.FILE_CODE != Weather.FILE_CODE and Wick.FILE_CODE != Loom.FILE_CODE and Wick.FILE_CODE != Hive.FILE_CODE and Wick.FILE_CODE != Glass.FILE_CODE and Wick.FILE_CODE != Press.FILE_CODE and Wick.FILE_CODE != Assay.FILE_CODE and Wick.FILE_CODE != Kiln.FILE_CODE and Wick.FILE_CODE != Tide.FILE_CODE and Wick.FILE_CODE != Night.FILE_CODE and Wick.FILE_CODE != Salt.FILE_CODE, "wick shares a file code")
+	_expect(Wick.HOURS[Wick.HOURS.size() / 2] == WICK_TRUE["hour"], "wick trim should be the middle hour")
+	_expect(Wick.HOURS[0] != WICK_TRUE["hour"], "wick trim should not be the earliest hour")
+	_expect(Wick.HOURS[Wick.HOURS.size() - 1] != WICK_TRUE["hour"], "wick trim should not be the latest hour")
+	var counts := _player_pin_counts(Wick)
+	_expect(int(counts["taker"]) == 3 and int(counts["place"]) == 3 and int(counts["hour"]) == 3, "wick pin counts are %s" % str(counts))
+	_expect(counts != _player_pin_counts(CaseData), "wick copied the spare-key pin pattern")
+	_expect(counts != _player_pin_counts(Rehearsal), "wick copied the rehearsal pin pattern")
+	_expect(counts != _player_pin_counts(Gilt), "wick copied the gilt pin pattern")
+	_expect(counts != _player_pin_counts(Ferry), "wick copied the ferry pin pattern")
+	_expect(counts != _player_pin_counts(Weather), "wick copied the weather pin pattern")
+	_expect(counts != _player_pin_counts(Loom), "wick copied the loom pin pattern")
+	_expect(counts != _player_pin_counts(Hive), "wick copied the hive pin pattern")
+	_expect(counts != _player_pin_counts(Glass), "wick copied the glass pin pattern")
+	_expect(counts != _player_pin_counts(Press), "wick copied the press pin pattern")
+	_expect(counts != _player_pin_counts(Assay), "wick copied the assay pin pattern")
+	_expect(counts == _player_pin_counts(Kiln), "wick trim should keep the kiln chalk pin rhythm")
+	_expect(counts == _player_pin_counts(Tide), "wick trim should keep the tide ledger pin rhythm")
+	_expect(counts == _player_pin_counts(Night), "wick trim should keep the night bell pin rhythm")
+	_expect(counts == _player_pin_counts(Salt), "wick trim should keep the salt mark pin rhythm")
+	_expect(_field_key(Wick) != _field_key(CaseData), "wick copied the spare-key timeline fields")
+	_expect(_field_key(Wick) != _field_key(Rehearsal), "wick copied the rehearsal timeline fields")
+	_expect(_field_key(Wick) != _field_key(Gilt), "wick copied the gilt timeline fields")
+	_expect(_field_key(Wick) != _field_key(Ferry), "wick copied the ferry timeline fields")
+	_expect(_field_key(Wick) != _field_key(Weather), "wick copied the weather timeline fields")
+	_expect(_field_key(Wick) != _field_key(Loom), "wick copied the loom timeline fields")
+	_expect(_field_key(Wick) != _field_key(Hive), "wick copied the hive timeline fields")
+	_expect(_field_key(Wick) != _field_key(Glass), "wick copied the glass timeline fields")
+	_expect(_field_key(Wick) != _field_key(Press), "wick copied the press timeline fields")
+	_expect(_field_key(Wick) != _field_key(Assay), "wick copied the assay timeline fields")
+	_expect(_field_key(Wick) != _field_key(Kiln), "wick copied the kiln timeline fields")
+	_expect(_field_key(Wick) != _field_key(Tide), "wick copied the tide timeline fields")
+	_expect(_field_key(Wick) != _field_key(Night), "wick copied the night timeline fields")
+	_expect(_field_key(Wick) != _field_key(Salt), "wick copied the salt timeline fields")
+	var seen := {}
+	var stated := {}
+	var paired_hidden := 0
+	for exhibit in Wick.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		_expect(not seen.has(exhibit_id), "duplicate wick id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		var states_player_pin := false
+		var states_unique := false
+		var player_literals := 0
+		var hidden_literals := 0
+		for literal in exhibit["literals"]:
+			stated[str(literal["value"])] = true
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Wick.PLAYER_FIELDS:
+				states_player_pin = true
+				player_literals += 1
+				var expected := Wick.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Wick.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats >= 2, "%s states %s once" % [exhibit_id, field])
+			else:
+				hidden_literals += 1
+				var owners := 0
+				for other in Wick.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		if hidden_literals == 2:
+			paired_hidden += 1
+		else:
+			_expect(hidden_literals == 1, "%s states %d hidden facts" % [exhibit_id, hidden_literals])
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(player_literals == 1, "%s states %d player pins" % [exhibit_id, player_literals])
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+	_expect(paired_hidden == 2, "wick should have two slips with two hidden facts, found %d" % paired_hidden)
+	for hour in Wick.HOURS:
+		_expect(stated.has(hour), "wick hour %s is absent from the exhibits" % hour)
+
+
+func _test_wick_unique_model() -> void:
+	var models := Solver.enumerate(Wick.EXHIBITS, Wick)
+	print("wick models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one wick model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Quin", "wick taker")
+	_expect(str(model["place"]) == "loft", "wick place")
+	_expect(str(model["hour"]) == "4", "wick hour")
+	_expect(str(model["oiler"]) == "Mara", "wick oiler")
+	_expect(str(model["oil_place"]) == "stair", "wick oil place")
+	_expect(str(model["oil_hour"]) == "2", "wick oil hour")
+	_expect(str(model["watcher"]) == "Sable", "wick watcher")
+	_expect(str(model["watch_hour"]) == "3", "wick watch hour")
+	_expect(str(model["seen_from"]) == "gallery", "wick seen from")
+	_expect(str(model["purpose"]) == "hold_fog", "wick purpose")
+	_expect(str(model["watch_place"]) == "gallery", "wick watch place")
+	_expect(str(model["snuffer_place"]) == "stair", "wick snuffer place")
+	_expect(str(model["gallery_hour"]) == "5", "wick gallery hour")
+	_expect(str(model["stair_hour"]) == "6", "wick stair hour")
+	for hour in Wick.HOURS:
+		var used := false
+		for field in Wick.fields():
+			if str(model[field]) == hour:
+				used = true
+		_expect(used, "wick hour %s is blank in the true timeline" % hour)
+	for place in Wick.PLACES:
+		var place_used := false
+		for field in Wick.fields():
+			if str(model[field]) == place:
+				place_used = true
+		_expect(place_used, "wick room %s is blank in the true timeline" % place)
+	for person in Wick.PEOPLE:
+		var person_used := false
+		for field in Wick.fields():
+			if str(model[field]) == person:
+				person_used = true
+		_expect(person_used, "wick person %s is blank in the true timeline" % person)
+	_expect(Wick.timeline(model) == WICK_TIMELINE, "wick timeline drifted:\n%s" % Wick.timeline(model))
+	for exhibit in Wick.EXHIBITS:
+		_expect(Wick.holds(exhibit, model), "%s rejects the wick timeline" % exhibit["id"])
+
+
+func _test_wick_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Wick.EXHIBITS, Wick)
+	for exhibit in Wick.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Wick.without(exhibit_id), Wick)
+		print("wick without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "wick %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Wick.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "wick %s removal did not admit a timeline it forbids" % exhibit_id)
+
+
+func _test_wick_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	for who in Wick.PEOPLE:
+		for place in Wick.PLACES:
+			for hour in Wick.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == WICK_TRUE["who"] and place == WICK_TRUE["place"] and hour == WICK_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Wick)
+					print("wick true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true wick theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "wick acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(WICK_TIMELINE) >= 0, "wick acceptance should give the timeline")
+					_expect(str(result["message"]).find("Quin") >= 0, "wick acceptance omits Quin")
+					_expect(str(result["message"]).find("loft") >= 0, "wick acceptance omits the loft")
+					_expect(str(result["message"]).find("4") >= 0, "wick acceptance omits 4")
+					_expect(str(result["message"]).find("so the lamp would hold through the fog") >= 0, "wick acceptance omits the fog")
+					_expect(Wick.conflicting_ids(theory).is_empty(), "true wick theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Wick)
+					rejected += 1
+	for outsider in ["Holt", "Lin", "Opal", "Vesper", "Nell", "Ivo", "Nessa", "Quill", "Pim", "Fenn"]:
+		_expect_rejected({"who": outsider, "place": "loft", "hour": "4"}, Wick)
+	print("wick theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d wick theories" % accepted)
+	_expect(rejected >= 2, "rejected %d wick theories" % rejected)
+
+
+func _test_wick_near_misses() -> void:
+	var misses := [
+		{"who": "Quin", "place": "loft", "hour": "5", "titles": ["Watch leaf", "Fog line", "Lamp order"]},
+		{"who": "Quin", "place": "loft", "hour": "3", "titles": ["Watch leaf", "Fog line", "Lamp order"]},
+		{"who": "Quin", "place": "gallery", "hour": "4", "titles": ["Loft board", "Watch margin", "Fill chit"]},
+		{"who": "Mara", "place": "loft", "hour": "4", "titles": ["Oil note", "Gallery glass", "Hook slip"]},
+	]
+	var wrong_hour_in_loft := 0
+	var wrong_place_at_hour := 0
+	var wrong_person_in_loft := 0
+	for theory in misses:
+		_expect_rejected(theory, Wick)
+		var result: Dictionary = Verdict.submit(theory, Wick)
+		var message := str(result["message"])
+		for title in theory["titles"]:
+			_expect(message.find(str(title)) >= 0, "near-miss omits %s: %s" % [title, message])
+		if str(theory["who"]) == "Quin" and str(theory["place"]) == "loft" and str(theory["hour"]) != "4":
+			wrong_hour_in_loft += 1
+		if str(theory["who"]) == "Quin" and str(theory["place"]) != "loft" and str(theory["hour"]) == "4":
+			wrong_place_at_hour += 1
+		if str(theory["who"]) != "Quin" and str(theory["place"]) == "loft" and str(theory["hour"]) == "4":
+			wrong_person_in_loft += 1
+	print("wick near-misses rejected: %d" % misses.size())
+	_expect(misses.size() == 4, "need four wick near-misses, found %d" % misses.size())
+	_expect(wrong_hour_in_loft == 2, "two near-misses should keep Quin in the loft at another hour")
+	_expect(wrong_place_at_hour >= 1, "a near-miss should keep Quin at 4 in another room")
+	_expect(wrong_person_in_loft >= 1, "a near-miss should keep the loft at 4 for another person")
+
+
+func _test_wick_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+		"who took the gilt stamp",
+		"where they took the stamp",
+		"at which hour they took the stamp",
+		"who took the ferry bell",
+		"where they took the bell",
+		"at which hour they took the bell",
+		"who took the weather slate",
+		"where they took the slate",
+		"at which hour they took the slate",
+		"who took the loom shuttle",
+		"where they took the shuttle",
+		"at which hour they took the shuttle",
+		"who took the hive smoker",
+		"where they took the smoker",
+		"at which hour they took the smoker",
+		"who took the glass pontil",
+		"where they took the pontil",
+		"at which hour they took the pontil",
+		"who took the press proof",
+		"where they took the proof",
+		"at which hour they took the proof",
+		"who set the assay cup",
+		"where they set the cup",
+		"at which hour they set the cup",
+		"who chalked the kiln mark",
+		"where they chalked the mark",
+		"at which hour they chalked the mark",
+		"who entered the tide ledger",
+		"where they entered the ledger",
+		"at which hour they entered the ledger",
+		"who stopped the night bell",
+		"where they stopped the bell",
+		"at which hour they stopped the bell",
+		"who scored the salt mark",
+		"where they scored the mark",
+		"at which hour they scored the mark",
+	]
+	var cases := [
+		{"theory": {"who": "", "place": "loft", "hour": "4"}, "present": ["who trimmed the wick"], "absent": ["where they trimmed the wick", "at which hour they trimmed the wick"]},
+		{"theory": {"who": "Quin", "place": "", "hour": "4"}, "present": ["where they trimmed the wick"], "absent": ["who trimmed the wick", "at which hour they trimmed the wick"]},
+		{"theory": {"who": "Quin", "place": "loft", "hour": ""}, "present": ["at which hour they trimmed the wick"], "absent": ["who trimmed the wick", "where they trimmed the wick"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who trimmed the wick", "where they trimmed the wick", "at which hour they trimmed the wick"], "absent": []},
+		{"theory": {}, "present": ["who trimmed the wick", "where they trimmed the wick", "at which hour they trimmed the wick"], "absent": []},
+		{"theory": {"who": "Sable", "place": "", "hour": "6"}, "present": ["where they trimmed the wick"], "absent": ["who trimmed the wick", "at which hour they trimmed the wick"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Wick)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "wick incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "wick incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "wick incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "wick incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "wick incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "wick missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "wick named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "wick incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("wick incomplete submissions refused with the missing slot")
+
+
 func _test_solutions_differ() -> void:
 	var spare := {"who": "Nell", "place": "kitchen", "hour": "7"}
 	_expect(spare["who"] != REHEARSAL_TRUE["who"], "rehearsal copied the spare-key taker")
@@ -3910,10 +4198,157 @@ func _test_solutions_differ() -> void:
 			_expect(not Loom.HOURS.has(hour), "salt hours repeat %s from the loom shuttle" % hour)
 			_expect(not Assay.HOURS.has(hour), "salt hours repeat %s from the assay cup" % hour)
 			_expect(not Hive.HOURS.has(hour), "salt hours repeat %s from the hive smoker" % hour)
+	_expect(WICK_TRUE["who"] == "Quin", "wick trim taker")
+	_expect(WICK_TRUE["place"] == "loft", "wick trim room")
+	_expect(WICK_TRUE["hour"] == "4", "wick trim hour")
+	for forbidden in ["Holt", "Lin", "Opal"]:
+		_expect(WICK_TRUE["who"] != forbidden, "wick trim accepted %s" % forbidden)
+	for forbidden_place in ["pan", "cistern", "rake_bay"]:
+		_expect(WICK_TRUE["place"] != forbidden_place, "wick trim accepted the %s" % forbidden_place)
+	_expect(WICK_TRUE["hour"] != "19", "wick trim accepted 19")
+	_expect(WICK_TRUE["who"] != spare["who"], "wick trim copied the spare-key taker")
+	_expect(WICK_TRUE["place"] != spare["place"], "wick trim copied the spare-key room")
+	_expect(WICK_TRUE["hour"] != spare["hour"], "wick trim copied the spare-key hour")
+	_expect(WICK_TRUE["who"] != REHEARSAL_TRUE["who"], "wick trim copied the rehearsal taker")
+	_expect(WICK_TRUE["place"] != REHEARSAL_TRUE["place"], "wick trim copied the rehearsal room")
+	_expect(REHEARSAL_TRUE["hour"] == "4", "the rehearsal score should still accept hour 4")
+	_expect(WICK_TRUE["hour"] == REHEARSAL_TRUE["hour"], "wick trim may share the rehearsal hour")
+	_expect(WICK_TRUE["who"] != GILT_TRUE["who"], "wick trim copied the gilt taker")
+	_expect(WICK_TRUE["place"] != GILT_TRUE["place"], "wick trim copied the gilt room")
+	_expect(WICK_TRUE["hour"] != GILT_TRUE["hour"], "wick trim copied the gilt hour")
+	_expect(WICK_TRUE["who"] != FERRY_TRUE["who"], "wick trim copied the ferry taker")
+	_expect(WICK_TRUE["place"] != FERRY_TRUE["place"], "wick trim copied the ferry room")
+	_expect(WICK_TRUE["hour"] != FERRY_TRUE["hour"], "wick trim copied the ferry hour")
+	_expect(WICK_TRUE["who"] != WEATHER_TRUE["who"], "wick trim copied the weather taker")
+	_expect(WICK_TRUE["place"] != WEATHER_TRUE["place"], "wick trim copied the weather room")
+	_expect(WICK_TRUE["hour"] != WEATHER_TRUE["hour"], "wick trim copied the weather hour")
+	_expect(WICK_TRUE["who"] != LOOM_TRUE["who"], "wick trim copied the loom taker")
+	_expect(WICK_TRUE["place"] != LOOM_TRUE["place"], "wick trim copied the loom room")
+	_expect(WICK_TRUE["hour"] != LOOM_TRUE["hour"], "wick trim copied the loom hour")
+	_expect(WICK_TRUE["who"] != HIVE_TRUE["who"], "wick trim copied the hive taker")
+	_expect(WICK_TRUE["place"] != HIVE_TRUE["place"], "wick trim copied the hive room")
+	_expect(WICK_TRUE["hour"] != HIVE_TRUE["hour"], "wick trim copied the hive hour")
+	_expect(WICK_TRUE["who"] != GLASS_TRUE["who"], "wick trim copied the glass taker")
+	_expect(WICK_TRUE["place"] != GLASS_TRUE["place"], "wick trim copied the glass room")
+	_expect(WICK_TRUE["hour"] != GLASS_TRUE["hour"], "wick trim copied the glass hour")
+	_expect(WICK_TRUE["who"] != PRESS_TRUE["who"], "wick trim copied the press taker")
+	_expect(WICK_TRUE["place"] != PRESS_TRUE["place"], "wick trim copied the press room")
+	_expect(WICK_TRUE["hour"] != PRESS_TRUE["hour"], "wick trim copied the press hour")
+	_expect(WICK_TRUE["who"] != ASSAY_TRUE["who"], "wick trim copied the assay taker")
+	_expect(WICK_TRUE["place"] != ASSAY_TRUE["place"], "wick trim copied the assay room")
+	_expect(WICK_TRUE["hour"] != ASSAY_TRUE["hour"], "wick trim copied the assay hour")
+	_expect(WICK_TRUE["who"] != KILN_TRUE["who"], "wick trim copied the kiln taker")
+	_expect(WICK_TRUE["place"] != KILN_TRUE["place"], "wick trim copied the kiln room")
+	_expect(WICK_TRUE["hour"] != KILN_TRUE["hour"], "wick trim copied the kiln hour")
+	_expect(WICK_TRUE["who"] != TIDE_TRUE["who"], "wick trim copied the tide taker")
+	_expect(WICK_TRUE["place"] != TIDE_TRUE["place"], "wick trim copied the tide room")
+	_expect(WICK_TRUE["hour"] != TIDE_TRUE["hour"], "wick trim copied the tide hour")
+	_expect(WICK_TRUE["who"] != NIGHT_TRUE["who"], "wick trim copied the night taker")
+	_expect(WICK_TRUE["place"] != NIGHT_TRUE["place"], "wick trim copied the night room")
+	_expect(WICK_TRUE["hour"] != NIGHT_TRUE["hour"], "wick trim copied the night hour")
+	_expect(WICK_TRUE["who"] != SALT_TRUE["who"], "wick trim copied the salt taker")
+	_expect(WICK_TRUE["place"] != SALT_TRUE["place"], "wick trim copied the salt room")
+	_expect(WICK_TRUE["hour"] != SALT_TRUE["hour"], "wick trim copied the salt hour")
+	_expect(SALT_TRUE["who"] == "Holt" and SALT_TRUE["place"] == "pan" and SALT_TRUE["hour"] == "19", "the salt mark should still accept Holt on the pan at 19")
+	_expect_rejected(WICK_TRUE, CaseData)
+	_expect_rejected(WICK_TRUE, Rehearsal)
+	_expect_rejected(WICK_TRUE, Gilt)
+	_expect_rejected(WICK_TRUE, Ferry)
+	_expect_rejected(WICK_TRUE, Weather)
+	_expect_rejected(WICK_TRUE, Loom)
+	_expect_rejected(WICK_TRUE, Hive)
+	_expect_rejected(WICK_TRUE, Glass)
+	_expect_rejected(WICK_TRUE, Press)
+	_expect_rejected(WICK_TRUE, Assay)
+	_expect_rejected(WICK_TRUE, Kiln)
+	_expect_rejected(WICK_TRUE, Tide)
+	_expect_rejected(WICK_TRUE, Night)
+	_expect_rejected(WICK_TRUE, Salt)
+	_expect_rejected(spare, Wick)
+	_expect_rejected(REHEARSAL_TRUE, Wick)
+	_expect_rejected(GILT_TRUE, Wick)
+	_expect_rejected(FERRY_TRUE, Wick)
+	_expect_rejected(WEATHER_TRUE, Wick)
+	_expect_rejected(LOOM_TRUE, Wick)
+	_expect_rejected(HIVE_TRUE, Wick)
+	_expect_rejected(GLASS_TRUE, Wick)
+	_expect_rejected(PRESS_TRUE, Wick)
+	_expect_rejected(ASSAY_TRUE, Wick)
+	_expect_rejected(KILN_TRUE, Wick)
+	_expect_rejected(TIDE_TRUE, Wick)
+	_expect_rejected(NIGHT_TRUE, Wick)
+	_expect_rejected(SALT_TRUE, Wick)
+	for person in Wick.PEOPLE:
+		if person == "Mara":
+			_expect(Gilt.PEOPLE.has(person), "wick trim may share Mara with the gilt stamp")
+		else:
+			_expect(not Gilt.PEOPLE.has(person), "wick cast repeats %s from the gilt stamp" % person)
+		if person == "Sable":
+			_expect(Glass.PEOPLE.has(person), "wick trim may share Sable with the glass pontil")
+		else:
+			_expect(not Glass.PEOPLE.has(person), "wick cast repeats %s from the glass pontil" % person)
+		_expect(not CaseData.PEOPLE.has(person), "wick cast repeats %s from the spare key" % person)
+		_expect(not Rehearsal.PEOPLE.has(person), "wick cast repeats %s from the rehearsal score" % person)
+		_expect(not Ferry.PEOPLE.has(person), "wick cast repeats %s from the ferry bell" % person)
+		_expect(not Weather.PEOPLE.has(person), "wick cast repeats %s from the weather slate" % person)
+		_expect(not Loom.PEOPLE.has(person), "wick cast repeats %s from the loom shuttle" % person)
+		_expect(not Hive.PEOPLE.has(person), "wick cast repeats %s from the hive smoker" % person)
+		_expect(not Press.PEOPLE.has(person), "wick cast repeats %s from the press proof" % person)
+		_expect(not Assay.PEOPLE.has(person), "wick cast repeats %s from the assay cup" % person)
+		_expect(not Kiln.PEOPLE.has(person), "wick cast repeats %s from the kiln chalk" % person)
+		_expect(not Tide.PEOPLE.has(person), "wick cast repeats %s from the tide ledger" % person)
+		_expect(not Night.PEOPLE.has(person), "wick cast repeats %s from the night bell" % person)
+		_expect(not Salt.PEOPLE.has(person), "wick cast repeats %s from the salt mark" % person)
+	for forbidden_person in ["Holt", "Lin", "Opal"]:
+		_expect(not Wick.PEOPLE.has(forbidden_person), "wick trim cast must not take %s" % forbidden_person)
+	_expect(Wick.role_phrase("Quin") == "the wick hand", "the wick trim should call Quin the wick hand")
+	for place in Wick.PLACES:
+		if place == "gallery":
+			_expect(Rehearsal.PLACES.has(place), "wick trim may share the gallery with the rehearsal score")
+		else:
+			_expect(not Rehearsal.PLACES.has(place), "wick rooms repeat %s from the rehearsal score" % place)
+		_expect(not CaseData.PLACES.has(place), "wick rooms repeat %s from the spare key" % place)
+		_expect(not Gilt.PLACES.has(place), "wick rooms repeat %s from the gilt stamp" % place)
+		_expect(not Ferry.PLACES.has(place), "wick rooms repeat %s from the ferry bell" % place)
+		_expect(not Weather.PLACES.has(place), "wick rooms repeat %s from the weather slate" % place)
+		_expect(not Loom.PLACES.has(place), "wick rooms repeat %s from the loom shuttle" % place)
+		_expect(not Hive.PLACES.has(place), "wick rooms repeat %s from the hive smoker" % place)
+		_expect(not Glass.PLACES.has(place), "wick rooms repeat %s from the glass pontil" % place)
+		_expect(not Press.PLACES.has(place), "wick rooms repeat %s from the press proof" % place)
+		_expect(not Assay.PLACES.has(place), "wick rooms repeat %s from the assay cup" % place)
+		_expect(not Kiln.PLACES.has(place), "wick rooms repeat %s from the kiln chalk" % place)
+		_expect(not Tide.PLACES.has(place), "wick rooms repeat %s from the tide ledger" % place)
+		_expect(not Night.PLACES.has(place), "wick rooms repeat %s from the night bell" % place)
+		_expect(not Salt.PLACES.has(place), "wick rooms repeat %s from the salt mark" % place)
+	for forbidden_place in ["pan", "cistern", "rake_bay"]:
+		_expect(not Wick.PLACES.has(forbidden_place), "wick trim rooms must not take the %s" % forbidden_place)
+	for hour in Wick.HOURS:
+		_expect(not CaseData.HOURS.has(hour), "wick hours repeat %s from the spare key" % hour)
+		_expect(not Ferry.HOURS.has(hour), "wick hours repeat %s from the ferry bell" % hour)
+		_expect(not Weather.HOURS.has(hour), "wick hours repeat %s from the weather slate" % hour)
+		_expect(not Loom.HOURS.has(hour), "wick hours repeat %s from the loom shuttle" % hour)
+		_expect(not Hive.HOURS.has(hour), "wick hours repeat %s from the hive smoker" % hour)
+		_expect(not Glass.HOURS.has(hour), "wick hours repeat %s from the glass pontil" % hour)
+		_expect(not Press.HOURS.has(hour), "wick hours repeat %s from the press proof" % hour)
+		_expect(not Assay.HOURS.has(hour), "wick hours repeat %s from the assay cup" % hour)
+		_expect(not Kiln.HOURS.has(hour), "wick hours repeat %s from the kiln chalk" % hour)
+		_expect(not Tide.HOURS.has(hour), "wick hours repeat %s from the tide ledger" % hour)
+		_expect(not Night.HOURS.has(hour), "wick hours repeat %s from the night bell" % hour)
+		_expect(not Salt.HOURS.has(hour), "wick hours repeat %s from the salt mark" % hour)
+		if hour == "2" or hour == "3":
+			_expect(Gilt.HOURS.has(hour), "wick hour %s may also sit on the gilt stamp" % hour)
+			_expect(not Rehearsal.HOURS.has(hour), "wick hours repeat %s from the rehearsal score" % hour)
+		elif hour == "4" or hour == "5" or hour == "6":
+			_expect(Rehearsal.HOURS.has(hour), "wick hour %s may also sit on the rehearsal score" % hour)
+			_expect(not Gilt.HOURS.has(hour), "wick hours repeat %s from the gilt stamp" % hour)
+		else:
+			_expect(not Gilt.HOURS.has(hour), "wick hours repeat %s from the gilt stamp" % hour)
+			_expect(not Rehearsal.HOURS.has(hour), "wick hours repeat %s from the rehearsal score" % hour)
+	_expect(not Wick.HOURS.has("19"), "wick trim hours must not take 19")
 	var titles: Array[String] = []
 	for book in Catalog.all():
 		titles.append(str(book.TITLE))
-	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark"], "case list is %s" % str(titles))
+	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim"], "case list is %s" % str(titles))
 
 
 func _test_menu_opens_either_case() -> void:
@@ -3925,7 +4360,7 @@ func _test_menu_opens_either_case() -> void:
 	if root.get_child_count() == 0:
 		root._ready()
 	var menu_blob := _visible_label_blob(root)
-	_expect(menu_blob.find("Fourteen files") >= 0, "menu does not offer fourteen files: %s" % menu_blob)
+	_expect(menu_blob.find("Fifteen files") >= 0, "menu does not offer fifteen files: %s" % menu_blob)
 	_expect(menu_blob.find("CW-07") >= 0, "menu omits CW-07")
 	_expect(menu_blob.find("The hive smoker") >= 0, "menu omits The hive smoker")
 	_expect(menu_blob.find("CW-08") >= 0, "menu omits CW-08")
@@ -3942,6 +4377,8 @@ func _test_menu_opens_either_case() -> void:
 	_expect(menu_blob.find("The night bell") >= 0, "menu omits The night bell")
 	_expect(menu_blob.find("CW-14") >= 0, "menu omits CW-14")
 	_expect(menu_blob.find("The salt mark") >= 0, "menu omits The salt mark")
+	_expect(menu_blob.find("CW-15") >= 0, "menu omits CW-15")
+	_expect(menu_blob.find("The wick trim") >= 0, "menu omits The wick trim")
 	_expect(root.get_child_count() > 0, "main scene built %d children" % root.get_child_count())
 	_press(root, "How to play")
 	var howto := _visible_label_blob(root)
@@ -3959,6 +4396,7 @@ func _test_menu_opens_either_case() -> void:
 	_expect(howto.find("The tide ledger") >= 0, "how to play omits The tide ledger")
 	_expect(howto.find("The night bell") >= 0, "how to play omits The night bell")
 	_expect(howto.find("The salt mark") >= 0, "how to play omits The salt mark")
+	_expect(howto.find("The wick trim") >= 0, "how to play omits The wick trim")
 	_expect(howto.find("names that slot") >= 0, "how to play omits the empty-slot rule")
 	_press(root, "Back to the menu")
 	_expect(_find_visible_button(root, "Open The spare key") != null, "menu is missing The spare key")
@@ -3975,6 +4413,7 @@ func _test_menu_opens_either_case() -> void:
 	_expect(_find_visible_button(root, "Open The tide ledger") != null, "menu is missing The tide ledger")
 	_expect(_find_visible_button(root, "Open The night bell") != null, "menu is missing The night bell")
 	_expect(_find_visible_button(root, "Open The salt mark") != null, "menu is missing The salt mark")
+	_expect(_find_visible_button(root, "Open The wick trim") != null, "menu is missing The wick trim")
 	_press(root, "Open The rehearsal score")
 	var rehearsal_open := _visible_label_blob(root)
 	_expect(rehearsal_open.find("Cut list") >= 0, "rehearsal file did not open")
@@ -4690,6 +5129,76 @@ func _test_menu_opens_either_case() -> void:
 	var night_from_salt := _visible_label_blob(root)
 	_expect(night_from_salt.find("Bell line") >= 0, "could not return to The night bell from The salt mark")
 	_expect(night_from_salt.find("Salt line") == -1, "salt mark papers stayed up after switching files")
+	_press(root, "Menu")
+	_press(root, "Open The wick trim")
+	var wick_open := _visible_label_blob(root)
+	_expect(wick_open.find("Oil note") >= 0, "wick trim file did not open")
+	_expect(wick_open.find("Fog line") >= 0, "wick trim file did not show its exhibits")
+	_expect(wick_open.find("CW-15") >= 0, "wick trim file omits CW-15")
+	_expect(wick_open.find("Complaint slip") == -1, "spare key papers showed inside The wick trim")
+	_expect(wick_open.find("Cut list") == -1, "rehearsal papers showed inside The wick trim")
+	_expect(wick_open.find("Move order") == -1, "gilt stamp papers showed inside The wick trim")
+	_expect(wick_open.find("Whistle slip") == -1, "ferry bell papers showed inside The wick trim")
+	_expect(wick_open.find("Frost note") == -1, "weather slate papers showed inside The wick trim")
+	_expect(wick_open.find("Trough tag") == -1, "loom shuttle papers showed inside The wick trim")
+	_expect(wick_open.find("Fuel line") == -1, "hive smoker papers showed inside The wick trim")
+	_expect(wick_open.find("Weight line") == -1, "glass pontil papers showed inside The wick trim")
+	_expect(wick_open.find("Lock line") == -1, "press proof papers showed inside The wick trim")
+	_expect(wick_open.find("Cup line") == -1, "assay cup papers showed inside The wick trim")
+	_expect(wick_open.find("Mark line") == -1, "kiln chalk papers showed inside The wick trim")
+	_expect(wick_open.find("Ledger line") == -1, "tide ledger papers showed inside The wick trim")
+	_expect(wick_open.find("Bell line") == -1, "night bell papers showed inside The wick trim")
+	_expect(wick_open.find("Salt line") == -1, "salt mark papers showed inside The wick trim")
+	_press(root, "Submit theory")
+	var empty_wick := _verdict_text(root)
+	_expect(empty_wick.find("who trimmed the wick") >= 0, "empty wick board: %s" % empty_wick)
+	_expect(empty_wick.find("where they trimmed the wick") >= 0, "empty wick board: %s" % empty_wick)
+	_expect(empty_wick.find("at which hour they trimmed the wick") >= 0, "empty wick board: %s" % empty_wick)
+	_expect(empty_wick.find("who took the spare key") == -1, "empty wick board used the spare key slot: %s" % empty_wick)
+	_expect(empty_wick.find("rehearsal score") == -1, "empty wick board used a rehearsal slot: %s" % empty_wick)
+	_expect(empty_wick.find("gilt stamp") == -1, "empty wick board used a gilt slot: %s" % empty_wick)
+	_expect(empty_wick.find("ferry bell") == -1, "empty wick board used a ferry slot: %s" % empty_wick)
+	_expect(empty_wick.find("weather slate") == -1, "empty wick board used a weather slot: %s" % empty_wick)
+	_expect(empty_wick.find("loom shuttle") == -1, "empty wick board used a loom slot: %s" % empty_wick)
+	_expect(empty_wick.find("hive smoker") == -1, "empty wick board used a hive slot: %s" % empty_wick)
+	_expect(empty_wick.find("glass pontil") == -1, "empty wick board used a glass slot: %s" % empty_wick)
+	_expect(empty_wick.find("press proof") == -1, "empty wick board used a press slot: %s" % empty_wick)
+	_expect(empty_wick.find("assay cup") == -1, "empty wick board used an assay slot: %s" % empty_wick)
+	_expect(empty_wick.find("kiln mark") == -1, "empty wick board used a kiln slot: %s" % empty_wick)
+	_expect(empty_wick.find("tide ledger") == -1, "empty wick board used a tide slot: %s" % empty_wick)
+	_expect(empty_wick.find("night bell") == -1, "empty wick board used a night slot: %s" % empty_wick)
+	_expect(empty_wick.find("salt mark") == -1, "empty wick board used a salt slot: %s" % empty_wick)
+	_expect(empty_wick.to_lower().find("conflict") == -1, "empty wick board talked about a conflict: %s" % empty_wick)
+	_press(root, "Quin")
+	_press(root, "Loft")
+	_press(root, "5")
+	_press(root, "Submit theory")
+	var wick_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(wick_miss, Wick, {"who": "Quin", "place": "loft", "hour": "5"})
+	_expect(wick_miss.find("Watch leaf") >= 0, "wrong hour reply omits Watch leaf: %s" % wick_miss)
+	_expect(wick_miss.find("Fog line") >= 0, "wrong hour reply omits Fog line: %s" % wick_miss)
+	_expect(wick_miss.find("Lamp order") >= 0, "wrong hour reply omits Lamp order: %s" % wick_miss)
+	_press(root, "Clear")
+	_press(root, "Quin")
+	_press(root, "Loft")
+	_press(root, "4")
+	_press(root, "Submit theory")
+	var wick_accepted := _verdict_text(root)
+	_expect(wick_accepted.find("fits every exhibit") >= 0, "wick trim board rejected the true theory: %s" % wick_accepted)
+	_expect(wick_accepted.find(WICK_TIMELINE) >= 0, "wick trim board timeline: %s" % wick_accepted)
+	_expect(wick_accepted.find("Quin (wick hand) trimmed the wick in the loft at 4") >= 0, "wick trim board omits Quin at 4: %s" % wick_accepted)
+	_expect(wick_accepted.find("in the loft") >= 0, "wick trim board omits the loft: %s" % wick_accepted)
+	_expect(wick_accepted.find("so the lamp would hold through the fog") >= 0, "wick trim board omits the fog: %s" % wick_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var wick_cleared := _verdict_text(root)
+	_expect(wick_cleared.find("who trimmed the wick") >= 0, "cleared wick board: %s" % wick_cleared)
+	_expect(wick_cleared.find("fits every exhibit") == -1, "cleared wick board stayed accepted: %s" % wick_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The salt mark")
+	var salt_from_wick := _visible_label_blob(root)
+	_expect(salt_from_wick.find("Salt line") >= 0, "could not return to The salt mark from The wick trim")
+	_expect(salt_from_wick.find("Oil note") == -1, "wick trim papers stayed up after switching files")
 	root.queue_free()
 
 
