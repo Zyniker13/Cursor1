@@ -16,6 +16,7 @@ class_name HintBook
 # A weir has four facings. North, east, south, and west are different pieces.
 # A hint uses that facing. Dry, every facing stops the beam. Flood swaps red
 # with blue and leaves along the facing. White stays white.
+# A lintel has no facing, so rotation is ignored: while its row is dry a beam passes straight through in the same direction and color without a bounce, and while that row is flooded the beam stops at the waterline and does not enter.
 
 const Tracer := preload("res://scripts/beam_tracer.gd")
 
