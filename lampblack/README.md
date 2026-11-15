@@ -1,6 +1,6 @@
 # Lampblack
 
-Turn-based stealth in a closed museum. The east wing has eight puzzles, the west wing has six, and the north wing has six. You walk dark tiles, guards watch the lit ones, and there is no combat.
+Turn-based stealth in a closed museum. The east wing has eight puzzles, the west wing has six, the north wing has six, and the south wing has six. You walk dark tiles, guards watch the lit ones, and there is no combat.
 
 ## Play
 
@@ -18,7 +18,7 @@ godot --path lampblack
 - `Space` waits. Click your own tile to wait.
 - `U` undoes the last turn, including after a loss or a win. Undo restores your position and facing, every lamp, and every guard.
 - `R` restarts the puzzle.
-- `1` through `8` select an east-wing puzzle. `Shift` plus `1` through `6` selects a west-wing puzzle. `Ctrl` plus `1` through `6` selects a north-wing puzzle. The buttons along the bottom do the same, grouped by wing.
+- `1` through `8` select an east-wing puzzle. `Shift` plus `1` through `6` selects a west-wing puzzle. `Ctrl` plus `1` through `6` selects a north-wing puzzle. `Alt` plus `1` through `6` selects a south-wing puzzle. The buttons along the bottom do the same, grouped by wing.
 
 Puzzle 1 states the rules in the banner. Gold diamonds are lamplight. Red diamonds are tiles a guard is watching. An arrow is that guard's next step.
 
@@ -41,7 +41,7 @@ From the repository root:
 godot --headless --path lampblack -s res://tests/run_tests.gd
 ```
 
-The process exits `0` when every check passes and `1` when any check fails. The suite plays each puzzle's scripted solution, rejects a watched step, checks undo, and checks the tile the guard called in puzzle 3 will step to. West-wing and north-wing checks also play each new solution, undo it back to the start, and step onto a watched lit tile to confirm that step still loses.
+The process exits `0` when every check passes and `1` when any check fails. The suite plays each puzzle's scripted solution, rejects a watched step, checks undo, and checks the tile the guard called in puzzle 3 will step to. West-wing, north-wing, and south-wing checks also play each new solution, undo it back to the start, and step onto a watched lit tile to confirm that step still loses.
 
 ## The east wing
 
@@ -72,6 +72,15 @@ The process exits `0` when every check passes and `1` when any check fails. The 
 19. The Far Watch — the gap stays lit. Snuff the other wick to call him off it, then cross once his watch no longer reaches.
 20. The Closing Door — the lamp stands on the door. Snuff it and step through on the next turn, before he holds the exit.
 
+## The south wing
+
+21. The Dark Half — a north-facing lamp leaves its whole south side dark. Snuff from there and cross the lamp tile before the keeper holds it.
+22. The Passing Watch — the gap stays lit. Wait while the patrol stands on the near end, then cross. Stepping on while he is there is a loss.
+23. The Owed Step — snuff while the owed rail step still falls short. The arrow then points at your tile, so leave it.
+24. The Fading Watch — the lamp square is watched. The lit door is not, and it stays closed until you snuff.
+25. The Covered Flame — the hall lamp lights the tile behind the door lamp. Snuff the hall, then the door, and take the door before he arrives.
+26. The Far Answer — the far keeper is closer to the hall lamp, so he answers. Leave the gap lamp, which would call the keeper by the door.
+
 ## Limits
 
-There is no sound and no combat. A called guard holds on the lamp until a later snuff calls him again. Squares are drawn with Godot primitives; there is no art pack. The headless suite is the checked playthrough of all twenty solutions.
+There is no sound and no combat. A called guard holds on the lamp until a later snuff calls him again. Squares are drawn with Godot primitives; there is no art pack. The headless suite is the checked playthrough of all twenty-six solutions.
