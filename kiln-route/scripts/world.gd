@@ -278,6 +278,7 @@ func _holder(kind: int) -> bool:
 		or kind == Rules.Kind.SPLITTER
 		or kind == Rules.Kind.ROLLER
 		or kind == Rules.Kind.WEIR
+		or kind == Rules.Kind.GRATE
 	)
 
 
@@ -293,6 +294,8 @@ func _try_output(pos: Vector2i) -> bool:
 		mat = machine.hold
 		if machine.kind == Rules.Kind.FILTER:
 			out_dir = machine.dir if mat == Rules.Mat.ORE else Rules.right(machine.dir)
+		elif machine.kind == Rules.Kind.GRATE:
+			out_dir = machine.dir if mat == Rules.Mat.PLATE else Rules.right(machine.dir)
 		elif machine.kind == Rules.Kind.SPLITTER:
 			out_dir = machine.dir if machine.phase == 0 else Rules.right(machine.dir)
 		elif machine.kind == Rules.Kind.WEIR:
@@ -362,6 +365,7 @@ func _can_take(machine: Machine, mat: int, arrival: int) -> bool:
 		or machine.kind == Rules.Kind.SPLITTER
 		or machine.kind == Rules.Kind.ROLLER
 		or machine.kind == Rules.Kind.WEIR
+		or machine.kind == Rules.Kind.GRATE
 	):
 		return machine.hold < 0 and arrival == machine.dir
 	if machine.kind == Rules.Kind.BRIDGE:

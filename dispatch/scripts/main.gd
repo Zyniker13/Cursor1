@@ -36,6 +36,7 @@ var _font: Font
 var _help: Label
 var _brief: Label
 var _name: Label
+var _building_label: Label
 var _facing: Label
 var _tick: Label
 var _placed_label: Label
@@ -166,7 +167,7 @@ func _submit() -> void:
 			"y": int(block["y"]),
 			"dir": int(block["dir"]),
 		}
-		if str(block["type"]) == "painter":
+		if str(block["type"]) == "painter" or str(block["type"]) == "filter" or str(block["type"]) == "primer":
 			item["color"] = str(block["color"])
 		graph.append(item)
 	_last_result = Sim.run(_puzzle, graph)
@@ -247,7 +248,7 @@ func _on_left(screen: Vector2) -> void:
 		var block: Dictionary = _placed[cell]
 		if str(block["type"]) != _selected:
 			_put(cell)
-		elif str(block["type"]) == "painter" and str(block.get("color", "")) != _paint:
+		elif (str(block["type"]) == "painter" or str(block["type"]) == "filter" or str(block["type"]) == "primer") and str(block.get("color", "")) != _paint:
 			block["color"] = _paint
 		else:
 			block["dir"] = (int(block["dir"]) + 1) % 4
@@ -286,7 +287,7 @@ func _put(cell: Vector2i) -> void:
 		"y": cell.y,
 		"dir": _ghost_dir,
 	}
-	if _selected == "painter":
+	if _selected == "painter" or _selected == "filter" or _selected == "primer":
 		block["color"] = _paint
 	_placed[cell] = block
 
@@ -328,21 +329,36 @@ func _build_ui() -> void:
 	var gap := Control.new()
 	gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title_row.add_child(gap)
-	var building := Label.new()
-	building.text = "BUILDING 1"
-	building.add_theme_color_override("font_color", MUTED)
-	building.add_theme_font_size_override("font_size", 16)
-	title_row.add_child(building)
+	_building_label = Label.new()
+	_building_label.name = "BuildingLabel"
+	_building_label.text = "BUILDING 1"
+	_building_label.add_theme_color_override("font_color", MUTED)
+	_building_label.add_theme_font_size_override("font_size", 16)
+	title_row.add_child(_building_label)
 
 	var puzzles_row := HBoxContainer.new()
-	puzzles_row.add_theme_constant_override("separation", 6)
+	puzzles_row.name = "PuzzleRow"
+	puzzles_row.add_theme_constant_override("separation", 4)
 	column.add_child(puzzles_row)
 	for i in _puzzles.size():
+		var building_now := int(_puzzles[i].get("building", 1))
+		var building_prev := 1
+		if i > 0:
+			building_prev = int(_puzzles[i - 1].get("building", 1))
+		if building_now > 1 and building_now != building_prev:
+			var mark := Label.new()
+			mark.name = "BuildingTwoMark" if building_now == 2 else "BuildingThreeMark"
+			mark.text = "B%d" % building_now
+			mark.add_theme_color_override("font_color", AMBER)
+			mark.add_theme_font_size_override("font_size", 13)
+			puzzles_row.add_child(mark)
 		var button := Button.new()
+		button.name = "RouteButton%d" % (i + 1)
 		button.text = str(i + 1)
 		button.tooltip_text = str(_puzzles[i]["title"])
 		button.focus_mode = Control.FOCUS_NONE
-		button.custom_minimum_size = Vector2(40, 32)
+		button.custom_minimum_size = Vector2(30, 28)
+		button.add_theme_font_size_override("font_size", 13)
 		button.pressed.connect(select_puzzle.bind(i))
 		puzzles_row.add_child(button)
 		_puzzle_buttons.append(button)
@@ -391,6 +407,7 @@ func _build_ui() -> void:
 
 	upper.add_child(_section("BLOCKS"))
 	var tools := HFlowContainer.new()
+	tools.name = "ToolBox"
 	tools.add_theme_constant_override("h_separation", 6)
 	tools.add_theme_constant_override("v_separation", 6)
 	_tool_box = tools
@@ -461,6 +478,8 @@ func _refresh_copy() -> void:
 		return
 	_name.text = "%d   %s" % [int(_puzzle["id"]), str(_puzzle["title"])]
 	_brief.text = str(_puzzle["brief"])
+	if _building_label:
+		_building_label.text = "BUILDING %d" % int(_puzzle.get("building", 1))
 	var lines: PackedStringArray = []
 	if str(_puzzle.get("how_to", "")) != "":
 		lines.append(str(_puzzle["how_to"]))
@@ -492,7 +511,7 @@ func _rebuild_tools() -> void:
 		_tool_box.add_child(button)
 		_tool_buttons[str(tool)] = button
 	_style_tools()
-	if unlocked.has("painter"):
+	if unlocked.has("painter") or unlocked.has("filter") or unlocked.has("primer"):
 		for color_name in Sim.PAINTS:
 			var swatch := Button.new()
 			swatch.focus_mode = Control.FOCUS_NONE
@@ -540,9 +559,9 @@ func _style_puzzle_buttons() -> void:
 	for i in _puzzle_buttons.size():
 		var button: Button = _puzzle_buttons[i]
 		if i == _index:
-			_paint_button(button, AMBER, Color("#1a140e"), Color("#f6e2c2"))
+			_paint_button(button, AMBER, Color("#1a140e"), Color("#f6e2c2"), 2)
 		else:
-			_paint_button(button, Color("#2c3348"), INK, Color("#4a536c"))
+			_paint_button(button, Color("#2c3348"), INK, Color("#4a536c"), 2)
 
 
 func _style_tools() -> void:
@@ -563,10 +582,10 @@ func _style_swatches() -> void:
 		_paint_button(button, fill, Color("#1a140e"), border)
 
 
-func _paint_button(button: Button, fill: Color, font: Color, border: Color) -> void:
-	var normal := _box(fill, border, 4)
-	var hover := _box(fill.lightened(0.12), border, 4)
-	var pressed := _box(fill.darkened(0.12), border, 4)
+func _paint_button(button: Button, fill: Color, font: Color, border: Color, pad: int = 8) -> void:
+	var normal := _box(fill, border, 4, pad)
+	var hover := _box(fill.lightened(0.12), border, 4, pad)
+	var pressed := _box(fill.darkened(0.12), border, 4, pad)
 	button.add_theme_stylebox_override("normal", normal)
 	button.add_theme_stylebox_override("hover", hover)
 	button.add_theme_stylebox_override("pressed", pressed)
@@ -806,7 +825,7 @@ func _draw_block(block: Dictionary, alpha: float) -> void:
 	var rect := _cell_rect(int(block["x"]), int(block["y"])).grow(-5)
 	var typ := str(block["type"])
 	var fill := _tool_color(typ)
-	if typ == "painter":
+	if typ == "painter" or typ == "filter" or typ == "primer":
 		fill = _parcel_color(str(block.get("color", _paint)))
 	fill.a = alpha
 	var border := Color(1, 1, 1, 0.35 * alpha)
@@ -833,6 +852,17 @@ func _draw_block(block: Dictionary, alpha: float) -> void:
 		_centered(rect, label, int(_cell * 0.36), ink, -2)
 	elif typ == "painter":
 		draw_circle(rect.get_center(), _cell * 0.13, Color(1, 1, 1, 0.9 * alpha))
+		_edge_arrow(rect, dir, ink)
+	elif typ == "filter":
+		var miss := (dir + 1) % 4
+		_filter_bar(rect, dir, ink)
+		_edge_arrow(rect, dir, ink, 1.2)
+		var dim := ink
+		dim.a = alpha * 0.55
+		_edge_arrow(rect, miss, dim, 1.0)
+	elif typ == "primer":
+		draw_arc(rect.get_center(), _cell * 0.16, 0, TAU, 20, ink, 2.5)
+		draw_circle(rect.get_center(), _cell * 0.045, Color(0.851, 0.827, 0.780, alpha))
 		_edge_arrow(rect, dir, ink)
 	else:
 		_arrow(rect, dir, ink, 0.78)
@@ -962,6 +992,13 @@ func _tri(center: Vector2, vec: Vector2, length: float, width: float, color: Col
 	draw_colored_polygon(PackedVector2Array([tip, base + side * width, base - side * width]), color)
 
 
+func _filter_bar(rect: Rect2, dir: int, color: Color) -> void:
+	var vec := _dir_vec(dir)
+	var side := Vector2(-vec.y, vec.x)
+	var center := rect.get_center()
+	draw_line(center - side * rect.size.x * 0.16, center + side * rect.size.x * 0.16, color, 3.0)
+
+
 func _gate(rect: Rect2, dir: int, color: Color) -> void:
 	var vec := _dir_vec(dir)
 	var side := Vector2(-vec.y, vec.x)
@@ -1009,6 +1046,10 @@ func _tool_color(tool: String) -> Color:
 			return Color("#8fc47c")
 		"painter":
 			return _parcel_color(_paint)
+		"filter":
+			return Color("#3aa89a")
+		"primer":
+			return Color("#c9844a")
 		_:
 			return Color("#888888")
 
@@ -1043,18 +1084,22 @@ func _tool_tip(tool: String) -> String:
 			return "Sets a parcel's color, then moves it forward."
 		"counter":
 			return "Stamps 1, then 2, then 3 on each parcel that passes."
+		"filter":
+			return "Sends its color along the arrow. Any other color turns clockwise."
+		"primer":
+			return "Paints a gray parcel, then moves it forward. A color already on the parcel stays."
 		_:
 			return ""
 
 
-func _box(fill: Color, border: Color, radius: int) -> StyleBoxFlat:
+func _box(fill: Color, border: Color, radius: int, pad: int = 8) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = fill
 	style.border_color = border
 	style.set_border_width_all(2)
 	style.set_corner_radius_all(radius)
-	style.content_margin_left = 8
-	style.content_margin_right = 8
-	style.content_margin_top = 4
-	style.content_margin_bottom = 4
+	style.content_margin_left = pad
+	style.content_margin_right = pad
+	style.content_margin_top = 4 if pad >= 8 else 1
+	style.content_margin_bottom = 4 if pad >= 8 else 1
 	return style

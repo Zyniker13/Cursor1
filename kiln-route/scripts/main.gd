@@ -186,6 +186,8 @@ func _kind_for_key(code: int) -> int:
 		KEY_KP_7: Rules.Kind.WEIR,
 		KEY_8: Rules.Kind.BRIDGE,
 		KEY_KP_8: Rules.Kind.BRIDGE,
+		KEY_9: Rules.Kind.GRATE,
+		KEY_KP_9: Rules.Kind.GRATE,
 	}
 	if not map.has(code):
 		return -1
@@ -338,6 +340,7 @@ func _kind_order() -> Array:
 		Rules.Kind.ROLLER,
 		Rules.Kind.WEIR,
 		Rules.Kind.BRIDGE,
+		Rules.Kind.GRATE,
 	]
 
 
@@ -368,7 +371,9 @@ func _layout() -> Dictionary:
 	var size := get_viewport_rect().size
 	if size.x < 100.0 or size.y < 100.0:
 		size = Vector2(1280, 720)
-	var per_row := 8
+	# Eight tabs fit the first three wings on three rows. A fourth row crowds
+	# the rule text, so the fourth wing uses a wider row and stays on three.
+	var per_row := 11 if rooms.size() > 24 else 8
 	var rows := 1
 	if not rooms.is_empty():
 		rows = ceili(float(rooms.size()) / float(per_row))
@@ -442,7 +447,7 @@ func _draw() -> void:
 	var size: Vector2 = lay.size
 	draw_rect(Rect2(Vector2.ZERO, size), COL_BG)
 	_text(Vector2(24, 14), "KILN ROUTE", 28, COL_TEXT)
-	_text(Vector2(236, 26), "three wings", 15, COL_DIM)
+	_text(Vector2(236, 26), "four wings", 15, COL_DIM)
 	var minute := "minute  %d / %d" % [_shown_tick(), Rules.SIM_TICKS]
 	var minute_w := font.get_string_size(minute, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
 	_text(Vector2(size.x - 24 - minute_w, 26), minute, 15, COL_DIM)
@@ -452,7 +457,7 @@ func _draw() -> void:
 	_draw_grid(lay)
 	_draw_side(lay)
 	_draw_tray(lay)
-	_text(Vector2(24, size.y - 28), "1-8 select    R rotate    LMB place or pick up    RMB rotate a piece    Space run    F skip    Bksp restart", 13, COL_DIM)
+	_text(Vector2(24, size.y - 28), "1-9 select    R rotate    LMB place or pick up    RMB rotate a piece    Space run    F skip    Bksp restart", 13, COL_DIM)
 
 
 func _draw_tabs(lay: Dictionary) -> void:
@@ -473,7 +478,11 @@ func _draw_tabs(lay: Dictionary) -> void:
 		if current:
 			draw_rect(Rect2(rect.position.x, rect.position.y + rect.size.y - 3, rect.size.x, 3), COL_ACCENT)
 		var label := "%d  %s" % [int(room.id), room.name]
-		var tab_size := 14 if rooms.size() > 8 else 15
+		var tab_size := 15
+		if rooms.size() > 24:
+			tab_size = 12
+		elif rooms.size() > 8:
+			tab_size = 14
 		_text_in(rect, label, tab_size, COL_TEXT if unlocked else COL_LOCK)
 		if cleared.has(int(room.id)):
 			draw_circle(rect.position + Vector2(rect.size.x - 14, 14), 4.5, COL_OK)
@@ -518,7 +527,9 @@ func _draw_fixed(rect: Rect2, pos: Vector2i) -> void:
 			var pending := _source_pending(pos)
 			if pending >= 0:
 				_draw_item(rect.get_center(), pending, rect.size.x / 88.0)
-			_text_in(Rect2(rect.position.x, rect.position.y + rect.size.y - 18, rect.size.x, 16), _pattern_label(src.pattern), 12, COL_TEXT)
+			var pattern_label := _pattern_label(src.pattern)
+			var pattern_size := 10 if pattern_label.length() > 11 else 12
+			_text_in(Rect2(rect.position.x, rect.position.y + rect.size.y - 18, rect.size.x, 16), pattern_label, pattern_size, COL_TEXT)
 			return
 	for sink in room.sinks:
 		if int(sink.x) == pos.x and int(sink.y) == pos.y:
@@ -610,6 +621,15 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 	elif kind == Rules.Kind.BRIDGE:
 		var across := Vector2(Rules.vec(Rules.right(dir)))
 		draw_line(center - across * body.size.x * 0.36, center + across * body.size.x * 0.36, Color(1, 1, 1, 0.34 * alpha), maxf(2.0, body.size.x * 0.08))
+	elif kind == Rules.Kind.GRATE:
+		var along := Vector2(Rules.vec(dir))
+		var across := Vector2(Rules.vec(Rules.right(dir)))
+		var bar := Color(1, 1, 1, 0.4 * alpha)
+		var thick := maxf(1.5, body.size.x * 0.045)
+		var offsets: Array[float] = [-0.18, 0.0, 0.18]
+		for offset in offsets:
+			var origin := center + across * body.size.x * offset
+			draw_line(origin - along * body.size.x * 0.3, origin + along * body.size.x * 0.1, bar, thick)
 	var forward_alpha := alpha
 	var right_alpha := alpha
 	if kind == Rules.Kind.SPLITTER:
@@ -617,11 +637,18 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 		right_alpha = alpha if phase == 1 else alpha * 0.35
 	elif kind == Rules.Kind.WEIR:
 		right_alpha = alpha * 0.4
-	_arrow(front, dir, body.size.x * 0.2, body.size.x * 0.12, Color(light.r, light.g, light.b, forward_alpha))
-	if kind == Rules.Kind.FILTER or kind == Rules.Kind.SPLITTER or kind == Rules.Kind.WEIR:
+	var forward := light
+	if kind == Rules.Kind.GRATE:
+		forward = Color("d7dee6")
+	_arrow(front, dir, body.size.x * 0.2, body.size.x * 0.12, Color(forward.r, forward.g, forward.b, forward_alpha))
+	if kind == Rules.Kind.FILTER or kind == Rules.Kind.SPLITTER or kind == Rules.Kind.WEIR or kind == Rules.Kind.GRATE:
 		var turn := Rules.right(dir)
 		var side := center + Vector2(Rules.vec(turn)) * body.size.x * 0.18
-		var mark := Color("f2d48a") if kind == Rules.Kind.FILTER else light
+		var mark := light
+		if kind == Rules.Kind.FILTER:
+			mark = Color("f2d48a")
+		elif kind == Rules.Kind.GRATE:
+			mark = Color("e7b15a")
 		_arrow(side, turn, body.size.x * 0.16, body.size.x * 0.1, Color(mark.r, mark.g, mark.b, right_alpha))
 	elif kind == Rules.Kind.BRIDGE:
 		var turn := Rules.right(dir)
@@ -763,6 +790,8 @@ func _kind_color(kind: int) -> Color:
 		return Color("8fbf6a")
 	if kind == Rules.Kind.BRIDGE:
 		return Color("6f8f9a")
+	if kind == Rules.Kind.GRATE:
+		return Color("b56b7c")
 	return Color("c792ef")
 
 
@@ -778,8 +807,11 @@ func _pattern_label(pattern: Array) -> String:
 	if pattern.size() == 1:
 		return Rules.MAT_NAME[int(pattern[0])]
 	var names: PackedStringArray = []
+	var short := ["Ore", "Ing", "Plt"]
+	var squeeze := pattern.size() >= 3
 	for mat in pattern:
-		names.append(Rules.MAT_NAME[int(mat)])
+		var index := int(mat)
+		names.append(short[index] if squeeze else Rules.MAT_NAME[index])
 	return "/".join(names)
 
 

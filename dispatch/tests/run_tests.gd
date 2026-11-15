@@ -22,6 +22,10 @@ func _run() -> void:
 	_teaching_blocks_matter()
 	_tick_cap()
 	_return_routes()
+	_filter_rules()
+	_building_two()
+	_primer_rules()
+	_building_three()
 	_ui_uses_simulated_par()
 	if _failures.is_empty():
 		print("ALL TESTS PASSED")
@@ -108,7 +112,7 @@ func _introduction_order() -> void:
 			_check(used, "puzzle %d reference uses %s" % [int(puzzle["id"]), introduced])
 		for block in puzzle["reference"]:
 			_check(allowed.has(str(block["type"])), "puzzle %d reference stays within introduced blocks (%s)" % [int(puzzle["id"]), str(block["type"])])
-	_check(next_intro == Puzzles.INTRO.size(), "all five blocks are introduced in order")
+	_check(next_intro == Puzzles.INTRO.size(), "every block is introduced in order")
 	_check(Puzzles.unlocked_at(0) == ["conveyor"], "puzzle 1 unlocks only the conveyor")
 	_check(Puzzles.unlocked_at(2) == ["conveyor"], "early puzzles stay on conveyors")
 	_check(Puzzles.unlocked_at(3).has("latch") and not Puzzles.unlocked_at(3).has("splitter"), "latch arrives before the splitter")
@@ -225,17 +229,18 @@ func _teaching_blocks_matter() -> void:
 func _return_routes() -> void:
 	print("return routes")
 	var puzzles := Puzzles.all()
-	_check(puzzles.size() == 15, "seven return routes follow the first eight")
+	_check(puzzles.size() >= 15, "seven return routes follow the first eight")
 	for puzzle in puzzles:
-		if int(puzzle["id"]) < 9:
+		var id := int(puzzle["id"])
+		if id < 9 or id > 15:
 			continue
 		var result: Dictionary = Sim.run(puzzle, puzzle["reference"])
 		var par: Dictionary = Scoring.compute_par(puzzle)
-		_check(bool(result["success"]), "return route %d delivers" % int(puzzle["id"]))
-		_check(int(result["cycles"]) <= int(par["cycles"]), "return route %d cycles are at or under par" % int(puzzle["id"]))
-		_check(int(result["blocks"]) <= int(par["blocks"]), "return route %d blocks are at or under par" % int(puzzle["id"]))
-		_check(str(puzzle.get("unlocks", "")) == "", "return puzzle %d adds no new block" % int(puzzle["id"]))
-	_check(Puzzles.unlocked_at(puzzles.size() - 1).size() == 5, "return routes keep every block")
+		_check(bool(result["success"]), "return route %d delivers" % id)
+		_check(int(result["cycles"]) <= int(par["cycles"]), "return route %d cycles are at or under par" % id)
+		_check(int(result["blocks"]) <= int(par["blocks"]), "return route %d blocks are at or under par" % id)
+		_check(str(puzzle.get("unlocks", "")) == "", "return puzzle %d adds no new block" % id)
+	_check(Puzzles.unlocked_at(14).size() == 5, "return routes keep every block")
 
 	var second: Dictionary = _by_id(9)
 	var straight := [
@@ -287,6 +292,167 @@ func _tick_cap() -> void:
 	_check(int(result["ticks"]) == Sim.TICK_CAP, "the loop stops on the cap tick")
 
 
+func _filter_rules() -> void:
+	print("filter")
+	var belt := {
+		"width": 3, "height": 2, "walls": [],
+		"sources": [{"x": 0, "y": 0, "dir": 0, "parcels": [{"color": "blue"}, {"color": "red"}]}],
+		"dock": {"x": 2, "y": 0},
+		"order": [{"color": "red"}, {"color": "blue"}],
+	}
+	var graph := [
+		{"type": "filter", "x": 1, "y": 0, "dir": 0, "color": "red"},
+		{"type": "conveyor", "x": 1, "y": 1, "dir": 0},
+		{"type": "conveyor", "x": 2, "y": 1, "dir": 3},
+	]
+	var sorted: Dictionary = Sim.run(belt, graph)
+	_check(bool(sorted["success"]), "a red filter lets red pass and sends blue clockwise")
+	var frame := _frame(sorted, 2)
+	_check(not frame.is_empty() and _at(frame, 1, 1) and not _at(frame, 2, 0), "blue leaves the filter clockwise on tick 2")
+	var matched := graph.duplicate(true)
+	matched[0]["color"] = "blue"
+	var matched_belt: Dictionary = belt.duplicate(true)
+	matched_belt["order"] = [{"color": "blue"}, {"color": "red"}]
+	var straight: Dictionary = Sim.run(matched_belt, matched)
+	var early := _frame(straight, 2)
+	_check(bool(straight["success"]), "a matching color still reaches the dock")
+	_check(not early.is_empty() and not _at(early, 1, 1), "a matching color does not turn clockwise")
+	_check(early["delivered"].size() == 1 and str(early["delivered"][0]["color"]) == "blue", "the matching parcel is delivered on tick 2")
+	var bare := Sim.run(belt, [{"type": "filter", "x": 1, "y": 0, "dir": 0}])
+	_check(str(bare["reason"]) == "invalid", "a filter with no color cannot run")
+
+
+func _building_two() -> void:
+	print("building 2")
+	var puzzles := Puzzles.all()
+	_check(puzzles.size() >= 22, "routes 16 through 22 follow building 1")
+	for i in puzzles.size():
+		_check(int(puzzles[i]["id"]) == i + 1, "route %d keeps its place" % (i + 1))
+	_check(Puzzles.INTRO.size() >= 6 and Puzzles.INTRO[5] == "filter", "the filter is the block building 2 teaches")
+	_check(not Puzzles.unlocked_at(14).has("filter"), "the filter stays locked through route 15")
+	_check(Puzzles.unlocked_at(15).has("filter"), "route 16 unlocks the filter")
+	_check(Puzzles.unlocked_at(21).size() == 6, "building 2 ends with every block")
+	for puzzle in puzzles:
+		var id := int(puzzle["id"])
+		var building := int(puzzle.get("building", 1))
+		if id < 16:
+			_check(building == 1, "route %d stays in building 1" % id)
+			continue
+		if id > 22:
+			continue
+		_check(building == 2, "route %d is building 2" % id)
+		var result: Dictionary = Sim.run(puzzle, puzzle["reference"])
+		var par: Dictionary = Scoring.compute_par(puzzle)
+		_check(bool(result["success"]), "route %d reference delivers" % id)
+		_check(int(result["cycles"]) == int(par["cycles"]), "route %d reference meets par cycles" % id)
+		_check(int(result["blocks"]) == int(par["blocks"]), "route %d reference meets par blocks" % id)
+		_check(int(result["blocks"]) == puzzle["reference"].size(), "route %d plays the reference block count" % id)
+		if id == 16:
+			_check(str(puzzle.get("unlocks", "")) == "filter", "route 16 teaches the filter")
+		else:
+			_check(str(puzzle.get("unlocks", "")) == "", "route %d adds no further block" % id)
+		var uses_filter := false
+		for block in puzzle["reference"]:
+			if str(block["type"]) == "filter":
+				uses_filter = true
+		_check(uses_filter, "route %d reference uses the filter" % id)
+		print("    par route %d  cycles %d  blocks %d" % [id, int(par["cycles"]), int(par["blocks"])])
+
+	_check(not bool(Sim.run(_by_id(16), _swap(_by_id(16), "filter", "conveyor"))["success"]), "route 16 fails if the filter is a conveyor")
+	_check(not bool(Sim.run(_by_id(16), _swap(_by_id(16), "filter", "splitter"))["success"]), "route 16 fails if the filter is a splitter")
+	_check(not bool(Sim.run(_by_id(19), _swap(_by_id(19), "latch", "conveyor"))["success"]), "route 19 jams if blue is not held")
+	_check(not bool(Sim.run(_by_id(20), _swap(_by_id(20), "painter", "conveyor"))["success"]), "route 20 loops if blue is not painted red")
+	_check(not bool(Sim.run(_by_id(21), _swap(_by_id(21), "filter", "splitter"))["success"]), "route 21 fails if a splitter sorts the colors")
+	_check(not bool(Sim.run(_by_id(22), _swap(_by_id(22), "filter", "conveyor"))["success"]), "route 22 fails if blue is not turned aside")
+
+
+func _primer_rules() -> void:
+	print("primer")
+	var belt := {
+		"width": 4, "height": 1, "walls": [],
+		"sources": [{"x": 0, "y": 0, "dir": 0, "parcels": [{"color": "gray"}, {"color": "red"}]}],
+		"dock": {"x": 3, "y": 0},
+		"order": [{"color": "blue"}, {"color": "red"}],
+	}
+	var graph := [
+		{"type": "primer", "x": 1, "y": 0, "dir": 0, "color": "blue"},
+		{"type": "conveyor", "x": 2, "y": 0, "dir": 0},
+	]
+	var coated: Dictionary = Sim.run(belt, graph)
+	_check(bool(coated["success"]), "a primer paints gray and leaves red alone")
+	var frame := _frame(coated, 2)
+	_check(not frame.is_empty() and _color_at(frame, 2, 0) == "blue", "gray leaves the primer blue on tick 2")
+	var later := _frame(coated, 3)
+	_check(not later.is_empty() and _color_at(later, 2, 0) == "red", "red crosses the same primer and stays red")
+	var painted := graph.duplicate(true)
+	painted[0]["type"] = "painter"
+	_check(not bool(Sim.run(belt, painted)["success"]), "a painter in the primer's place recolors red")
+	var bare := Sim.run(belt, [{"type": "primer", "x": 1, "y": 0, "dir": 0}])
+	_check(str(bare["reason"]) == "invalid", "a primer with no color cannot run")
+
+
+func _building_three() -> void:
+	print("building 3")
+	var puzzles := Puzzles.all()
+	_check(puzzles.size() == 29, "routes 23 through 29 follow building 2")
+	_check(Puzzles.INTRO.size() == 7 and Puzzles.INTRO[6] == "primer", "the primer is the block building 3 teaches")
+	_check(not Puzzles.unlocked_at(21).has("primer"), "the primer stays locked through route 22")
+	_check(Puzzles.unlocked_at(22).has("primer"), "route 23 unlocks the primer")
+	_check(Puzzles.unlocked_at(28).size() == 7, "building 3 ends with every block")
+	for puzzle in puzzles:
+		var id := int(puzzle["id"])
+		if id < 23:
+			_check(int(puzzle.get("building", 1)) < 3, "route %d stays out of building 3" % id)
+			continue
+		_check(int(puzzle.get("building", 1)) == 3, "route %d is building 3" % id)
+		var result: Dictionary = Sim.run(puzzle, puzzle["reference"])
+		var par: Dictionary = Scoring.compute_par(puzzle)
+		_check(bool(result["success"]), "route %d reference delivers" % id)
+		_check(int(result["cycles"]) == int(par["cycles"]), "route %d reference meets par cycles" % id)
+		_check(int(result["blocks"]) == int(par["blocks"]), "route %d reference meets par blocks" % id)
+		_check(int(result["blocks"]) == puzzle["reference"].size(), "route %d plays the reference block count" % id)
+		if id == 23:
+			_check(str(puzzle.get("unlocks", "")) == "primer", "route 23 teaches the primer")
+		else:
+			_check(str(puzzle.get("unlocks", "")) == "", "route %d adds no further block" % id)
+		var uses_primer := false
+		for block in puzzle["reference"]:
+			if str(block["type"]) == "primer":
+				uses_primer = true
+		_check(uses_primer, "route %d reference uses the primer" % id)
+		if not bool(result["success"]):
+			_dump(result)
+		print("    par route %d  cycles %d  blocks %d" % [id, int(par["cycles"]), int(par["blocks"])])
+
+	_check(not bool(Sim.run(_by_id(23), _swap(_by_id(23), "primer", "painter"))["success"]), "route 23 fails if the primer overwrites red")
+	_check(not bool(Sim.run(_by_id(23), _swap(_by_id(23), "primer", "conveyor"))["success"]), "route 23 fails if gray is not primed")
+	_check(not bool(Sim.run(_by_id(24), _swap(_by_id(24), "primer", "painter"))["success"]), "route 24 fails if every parcel is painted")
+	_check(not bool(Sim.run(_by_id(24), _swap(_by_id(24), "counter", "conveyor"))["success"]), "route 24 fails without the counter")
+	_check(not bool(Sim.run(_by_id(25), _swap(_by_id(25), "latch", "conveyor"))["success"]), "route 25 fails if the south belt is not held")
+	_check(not bool(Sim.run(_by_id(25), _swap(_by_id(25), "primer", "painter"))["success"]), "route 25 fails if blue is painted yellow")
+	_check(not bool(Sim.run(_by_id(25), _swap(_by_id(25), "filter", "conveyor"))["success"]), "route 25 fails if red is not let through")
+	_check(not bool(Sim.run(_by_id(26), _swap(_by_id(26), "primer", "painter"))["success"]), "route 26 fails if blue is painted red")
+	_check(not bool(Sim.run(_by_id(26), _swap(_by_id(26), "filter", "conveyor"))["success"]), "route 26 fails if the new red is not pulled ahead")
+	_check(not bool(Sim.run(_by_id(27), _swap(_by_id(27), "latch", "conveyor"))["success"]), "route 27 jams if gray is not held")
+	_check(not bool(Sim.run(_by_id(27), _swap(_by_id(27), "primer", "painter"))["success"]), "route 27 fails if red is painted yellow")
+	_check(not bool(Sim.run(_by_id(28), _swap(_by_id(28), "primer", "painter"))["success"]), "route 28 fails if blue is painted red")
+	_check(not bool(Sim.run(_by_id(28), _swap(_by_id(28), "filter", "conveyor"))["success"]), "route 28 fails if blue is not let into the counter first")
+	_check(not bool(Sim.run(_by_id(29), _swap(_by_id(29), "latch", "conveyor"))["success"]), "route 29 jams if the south belt is not held")
+	_check(not bool(Sim.run(_by_id(29), _swap(_by_id(29), "primer", "painter"))["success"]), "route 29 fails if blue is painted yellow")
+	_check(not bool(Sim.run(_by_id(29), _swap(_by_id(29), "filter", "conveyor"))["success"]), "route 29 fails if red is not taken first")
+
+
+func _swap(puzzle: Dictionary, from_type: String, to_type: String) -> Array:
+	var graph: Array = puzzle["reference"].duplicate(true)
+	for block in graph:
+		if str(block["type"]) != from_type:
+			continue
+		block["type"] = to_type
+		if to_type != "painter" and to_type != "filter" and to_type != "primer":
+			block.erase("color")
+	return graph
+
+
 func _ui_uses_simulated_par() -> void:
 	print("scoreboard ui")
 	var scene := load("res://scenes/main.tscn")
@@ -295,12 +461,53 @@ func _ui_uses_simulated_par() -> void:
 		return
 	var node = scene.instantiate()
 	root.add_child(node)
-	for index in [0, 6, Puzzles.all().size() - 1]:
+	for index in [0, 6, 14, Puzzles.all().size() - 1]:
 		node.select_puzzle(index)
 		var puzzle: Dictionary = node.get_puzzle()
 		var result: Dictionary = Sim.run(puzzle, puzzle["reference"])
 		var shown: String = node.format_result(result)
 		_check(shown == Scoring.present(puzzle, result), "puzzle %d banner is the simulated scoreboard" % int(puzzle["id"]))
+	node.select_puzzle(14)
+	var building: Label = node.find_child("BuildingLabel", true, false)
+	_check(building != null and building.text == "BUILDING 1", "route 15 still reads as building 1")
+	_check(node.find_child("BuildingTwoMark", true, false) != null, "the route row marks building 2")
+	var row: Node = node.find_child("PuzzleRow", true, false)
+	var routes := 0
+	var width := 0.0
+	if row != null:
+		for child in row.get_children():
+			width += child.get_combined_minimum_size().x
+			if child is Button:
+				routes += 1
+		if row.get_child_count() > 1:
+			width += float(row.get_theme_constant("separation")) * float(row.get_child_count() - 1)
+	_check(routes == 29, "all 29 routes are on the board")
+	_check(width < 1240.0, "the route buttons fit the header (%s)" % width)
+	node.select_puzzle(15)
+	_check(building != null and building.text == "BUILDING 2", "route 16 opens building 2")
+	var tools: Node = node.find_child("ToolBox", true, false)
+	var saw_filter := false
+	if tools != null:
+		for child in tools.get_children():
+			if child.is_queued_for_deletion():
+				continue
+			if str(child.text).begins_with("Filter"):
+				saw_filter = true
+	_check(saw_filter, "route 16 offers the filter")
+	node.select_puzzle(21)
+	_check(building != null and building.text == "BUILDING 2", "route 22 stays in building 2")
+	node.select_puzzle(22)
+	_check(building != null and building.text == "BUILDING 3", "route 23 opens building 3")
+	_check(node.find_child("BuildingThreeMark", true, false) != null, "the route row marks building 3")
+	tools = node.find_child("ToolBox", true, false)
+	var saw_primer := false
+	if tools != null:
+		for child in tools.get_children():
+			if child.is_queued_for_deletion():
+				continue
+			if str(child.text).begins_with("Primer"):
+				saw_primer = true
+	_check(saw_primer, "route 23 offers the primer")
 	node.queue_free()
 
 
@@ -312,10 +519,14 @@ func _frame(result: Dictionary, tick: int) -> Dictionary:
 
 
 func _at(frame: Dictionary, x: int, y: int) -> bool:
+	return _color_at(frame, x, y) != ""
+
+
+func _color_at(frame: Dictionary, x: int, y: int) -> String:
 	for parcel in frame["parcels"]:
 		if int(parcel["x"]) == x and int(parcel["y"]) == y:
-			return true
-	return false
+			return str(parcel["color"])
+	return ""
 
 
 func _dump(result: Dictionary) -> void:
