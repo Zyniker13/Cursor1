@@ -26,6 +26,10 @@ extends RefCounted
 ## No other plant opens dread. Outside the shawl the dread seals again.
 ## Woe moths stay sealed until a stole covers their tile. The stole is not a light.
 ## No other plant opens woe. Outside the stole the woe seals again.
+## Blight moths stay sealed until a mantle covers their tile. The mantle is not a light.
+## No other plant opens blight. Outside the mantle the blight seals again.
+## Rot moths stay sealed until a tippet covers their tile. The tippet is not a light.
+## No other plant opens rot. Outside the tippet the rot seals again.
 
 const Catalog = preload("res://sim/plant_catalog.gd")
 
@@ -48,9 +52,9 @@ const HURT_TICKS := 12
 const PEST_HP := 12
 const PEST_SPEED := 42.0
 const PEST_RADIUS := 11.0
-const START_SEEDS := 17
+const START_SEEDS := 19
 const PLANT_TICKS := 240
-const WAVE_COUNT := 35
+const WAVE_COUNT := 39
 const START_CELL := Vector2i(7, 5)
 const PROJECTILE_RADIUS := 4.0
 const PROJECTILE_LIFE := 75
@@ -71,7 +75,9 @@ const PROJECTILE_LIFE := 75
 # Nights 30 and 31 bring murk moths. Night 31 sends murk, gloom, pall, veil, dusk, hide, mail, scale, glass, web, frost, pitch, rind, and shroud together.
 # Nights 32 and 33 bring dread moths. Night 33 sends dread, murk, gloom, pall, veil, dusk, hide, mail, scale, glass, web, frost, pitch, rind, and shroud together.
 # Nights 34 and 35 bring woe moths. Night 34 is woe alone. Night 35 sends woe, dread, murk, gloom, pall, veil, dusk, hide, mail, scale, glass, web, frost, pitch, rind, and shroud together.
-# shroud_every / rind_every / pitch_every / frost_every / web_every / glass_every / scale_every / mail_every / hide_every / dusk_every / veil_every / pall_every / gloom_every / murk_every / dread_every / woe_every 0: none. 1: every spawn. N: every Nth spawn, the Nth included.
+# Nights 36 and 37 bring blight moths. Night 36 is blight alone. Night 37 sends blight, woe, dread, murk, gloom, pall, veil, dusk, hide, mail, scale, glass, web, frost, pitch, rind, and shroud together.
+# Nights 38 and 39 bring rot moths. Night 38 is rot alone. Night 39 sends rot, blight, woe, dread, murk, gloom, pall, veil, dusk, hide, mail, scale, glass, web, frost, pitch, rind, and shroud together.
+# shroud_every / rind_every / pitch_every / frost_every / web_every / glass_every / scale_every / mail_every / hide_every / dusk_every / veil_every / pall_every / gloom_every / murk_every / dread_every / woe_every / blight_every / rot_every 0: none. 1: every spawn. N: every Nth spawn, the Nth included.
 # Nights 1–21 omit dusk_every; a missing key spawns no dusk.
 # Nights 1–23 omit veil_every; a missing key spawns no veil.
 # Nights 1–25 omit pall_every; a missing key spawns no pall.
@@ -79,6 +85,8 @@ const PROJECTILE_LIFE := 75
 # Nights 1–29 omit murk_every; a missing key spawns no murk. Night 29 is still Cope and carries no murk.
 # Nights 1–31 omit dread_every; a missing key spawns no dread. Night 31 is still Fell and carries no dread.
 # Nights 1–33 omit woe_every; a missing key spawns no woe. Night 32 is still Dread and carries no woe. Night 33 is still Bane and carries no woe.
+# Nights 1–35 omit blight_every; a missing key spawns no blight. Night 33 is still Bane and carries no blight. Night 34 is still Woe and carries no blight. Night 35 is still Hex and carries no blight.
+# Nights 1–37 omit rot_every; a missing key spawns no rot. Night 36 is still Gall and carries no rot. Night 37 is still Canker and carries no rot.
 const WAVES := [
 	{"count": 8, "interval": 72, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "hide_every": 0, "name": ""},
 	{"count": 12, "interval": 66, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "hide_every": 0, "name": ""},
@@ -115,6 +123,10 @@ const WAVES := [
 	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 1, "scale_every": 1, "mail_every": 1, "hide_every": 1, "dusk_every": 1, "veil_every": 1, "pall_every": 1, "gloom_every": 1, "murk_every": 1, "dread_every": 1, "name": "Bane"},
 	{"count": 10, "interval": 72, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "hide_every": 0, "dusk_every": 0, "veil_every": 0, "pall_every": 0, "gloom_every": 0, "murk_every": 0, "dread_every": 0, "woe_every": 1, "name": "Woe"},
 	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 1, "scale_every": 1, "mail_every": 1, "hide_every": 1, "dusk_every": 1, "veil_every": 1, "pall_every": 1, "gloom_every": 1, "murk_every": 1, "dread_every": 1, "woe_every": 1, "name": "Hex"},
+	{"count": 10, "interval": 78, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "hide_every": 0, "dusk_every": 0, "veil_every": 0, "pall_every": 0, "gloom_every": 0, "murk_every": 0, "dread_every": 0, "woe_every": 0, "blight_every": 1, "name": "Gall"},
+	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 1, "scale_every": 1, "mail_every": 1, "hide_every": 1, "dusk_every": 1, "veil_every": 1, "pall_every": 1, "gloom_every": 1, "murk_every": 1, "dread_every": 1, "woe_every": 1, "blight_every": 1, "name": "Canker"},
+	{"count": 10, "interval": 84, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "hide_every": 0, "dusk_every": 0, "veil_every": 0, "pall_every": 0, "gloom_every": 0, "murk_every": 0, "dread_every": 0, "woe_every": 0, "blight_every": 0, "rot_every": 1, "name": "Rot"},
+	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 1, "scale_every": 1, "mail_every": 1, "hide_every": 1, "dusk_every": 1, "veil_every": 1, "pall_every": 1, "gloom_every": 1, "murk_every": 1, "dread_every": 1, "woe_every": 1, "blight_every": 1, "rot_every": 1, "name": "Smut"},
 ]
 
 
@@ -155,6 +167,8 @@ class Plant:
 	var capes_murk: bool = false
 	var shawls_dread: bool = false
 	var stoles_woe: bool = false
+	var mantles_blight: bool = false
+	var tippets_rot: bool = false
 	var casts_light: bool = true
 
 
@@ -180,6 +194,8 @@ class Pest:
 	var murked: bool = false
 	var dreaded: bool = false
 	var woed: bool = false
+	var blighted: bool = false
+	var rotted: bool = false
 	var speed: float = 0.0
 	var slow_factor: float = 1.0
 	var slow_ticks: int = 0
@@ -245,6 +261,10 @@ var dreads_spawned: int = 0
 var dreads_killed: int = 0
 var woes_spawned: int = 0
 var woes_killed: int = 0
+var blights_spawned: int = 0
+var blights_killed: int = 0
+var rots_spawned: int = 0
+var rots_killed: int = 0
 var plants: Array = []
 var pests: Array = []
 var projectiles: Array = []
@@ -367,7 +387,15 @@ func tile_stoles_woe(tx: int, ty: int) -> bool:
 	return _tile_in_light(tx, ty, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true)
 
 
-func _tile_in_light(tx: int, ty: int, shroud_only: bool, rind_only: bool, pitch_only: bool, frost_only: bool, web_only: bool, glass_only: bool, scale_only: bool, mail_only: bool, hide_only: bool, dusk_only: bool, veil_only: bool = false, pall_only: bool = false, gloom_only: bool = false, murk_only: bool = false, dread_only: bool = false, woe_only: bool = false) -> bool:
+func tile_mantles_blight(tx: int, ty: int) -> bool:
+	return _tile_in_light(tx, ty, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true)
+
+
+func tile_tippets_rot(tx: int, ty: int) -> bool:
+	return _tile_in_light(tx, ty, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true)
+
+
+func _tile_in_light(tx: int, ty: int, shroud_only: bool, rind_only: bool, pitch_only: bool, frost_only: bool, web_only: bool, glass_only: bool, scale_only: bool, mail_only: bool, hide_only: bool, dusk_only: bool, veil_only: bool = false, pall_only: bool = false, gloom_only: bool = false, murk_only: bool = false, dread_only: bool = false, woe_only: bool = false, blight_only: bool = false, rot_only: bool = false) -> bool:
 	if tx < 0 or ty < 0 or tx >= MAP_W or ty >= MAP_H:
 		return false
 	var rect_min := Vector2(float(tx) * TILE, float(ty) * TILE)
@@ -408,7 +436,11 @@ func _tile_in_light(tx: int, ty: int, shroud_only: bool, rind_only: bool, pitch_
 			continue
 		if woe_only and not grown.stoles_woe:
 			continue
-		var special := shroud_only or rind_only or pitch_only or frost_only or web_only or glass_only or scale_only or mail_only or hide_only or dusk_only or veil_only or pall_only or gloom_only or murk_only or dread_only or woe_only
+		if blight_only and not grown.mantles_blight:
+			continue
+		if rot_only and not grown.tippets_rot:
+			continue
+		var special := shroud_only or rind_only or pitch_only or frost_only or web_only or glass_only or scale_only or mail_only or hide_only or dusk_only or veil_only or pall_only or gloom_only or murk_only or dread_only or woe_only or blight_only or rot_only
 		if not special and not grown.casts_light:
 			continue
 		var source: Vector2 = grown.pos
@@ -486,7 +518,7 @@ func _night_suffix(index: int) -> String:
 
 
 ## Shared entry for wave spawns and the visibility test. Does not alter damage or health.
-func spawn_pest(pos: Vector2, shrouded: bool = false, rinded: bool = false, pitched: bool = false, frosted: bool = false, webbed: bool = false, glassed: bool = false, scaled: bool = false, mailed: bool = false, hided: bool = false, dusked: bool = false, veiled: bool = false, palled: bool = false, gloomed: bool = false, murked: bool = false, dreaded: bool = false, woed: bool = false):
+func spawn_pest(pos: Vector2, shrouded: bool = false, rinded: bool = false, pitched: bool = false, frosted: bool = false, webbed: bool = false, glassed: bool = false, scaled: bool = false, mailed: bool = false, hided: bool = false, dusked: bool = false, veiled: bool = false, palled: bool = false, gloomed: bool = false, murked: bool = false, dreaded: bool = false, woed: bool = false, blighted: bool = false, rotted: bool = false):
 	var pest := Pest.new()
 	pest.id = _next_pest_id
 	_next_pest_id += 1
@@ -512,6 +544,8 @@ func spawn_pest(pos: Vector2, shrouded: bool = false, rinded: bool = false, pitc
 	pest.murked = murked
 	pest.dreaded = dreaded
 	pest.woed = woed
+	pest.blighted = blighted
+	pest.rotted = rotted
 	if shrouded:
 		shrouds_spawned += 1
 	if rinded:
@@ -544,6 +578,10 @@ func spawn_pest(pos: Vector2, shrouded: bool = false, rinded: bool = false, pitc
 		dreads_spawned += 1
 	if woed:
 		woes_spawned += 1
+	if blighted:
+		blights_spawned += 1
+	if rotted:
+		rots_spawned += 1
 	_apply_visibility(pest)
 	pests.append(pest)
 	return pest
@@ -611,6 +649,8 @@ func _try_plant(cmd: Command) -> void:
 	plant.capes_murk = bool(stats["capes_murk"])
 	plant.shawls_dread = bool(stats["shawls_dread"])
 	plant.stoles_woe = bool(stats["stoles_woe"])
+	plant.mantles_blight = bool(stats["mantles_blight"])
+	plant.tippets_rot = bool(stats["tippets_rot"])
 	plant.casts_light = bool(stats["casts_light"])
 	plants.append(plant)
 	seeds -= 1
@@ -662,6 +702,8 @@ func _wave_spawns() -> void:
 	var murk_every := int(spec.get("murk_every", 0))
 	var dread_every := int(spec.get("dread_every", 0))
 	var woe_every := int(spec.get("woe_every", 0))
+	var blight_every := int(spec.get("blight_every", 0))
+	var rot_every := int(spec.get("rot_every", 0))
 	var index := int(spec["count"]) - spawns_left
 	var shrouded := shroud_every > 0 and index % shroud_every == shroud_every - 1
 	var rinded := rind_every > 0 and index % rind_every == rind_every - 1
@@ -679,7 +721,9 @@ func _wave_spawns() -> void:
 	var murked := murk_every > 0 and index % murk_every == murk_every - 1
 	var dreaded := dread_every > 0 and index % dread_every == dread_every - 1
 	var woed := woe_every > 0 and index % woe_every == woe_every - 1
-	spawn_pest(tile_center(cell.x, cell.y), shrouded, rinded, pitched, frosted, webbed, glassed, scaled, mailed, hided, dusked, veiled, palled, gloomed, murked, dreaded, woed)
+	var blighted := blight_every > 0 and index % blight_every == blight_every - 1
+	var rotted := rot_every > 0 and index % rot_every == rot_every - 1
+	spawn_pest(tile_center(cell.x, cell.y), shrouded, rinded, pitched, frosted, webbed, glassed, scaled, mailed, hided, dusked, veiled, palled, gloomed, murked, dreaded, woed, blighted, rotted)
 	spawns_left -= 1
 	spawn_wait = spawn_interval
 
@@ -714,7 +758,7 @@ func _apply_visibility(pest: Pest) -> void:
 		pest.hidden = true
 		return
 	var cell := cell_of(pest.pos)
-	if pest.shrouded or pest.rinded or pest.pitched or pest.frosted or pest.webbed or pest.glassed or pest.scaled or pest.mailed or pest.hided or pest.dusked or pest.veiled or pest.palled or pest.gloomed or pest.murked or pest.dreaded or pest.woed:
+	if pest.shrouded or pest.rinded or pest.pitched or pest.frosted or pest.webbed or pest.glassed or pest.scaled or pest.mailed or pest.hided or pest.dusked or pest.veiled or pest.palled or pest.gloomed or pest.murked or pest.dreaded or pest.woed or pest.blighted or pest.rotted:
 		var open := true
 		if pest.shrouded:
 			open = open and tile_burns_shroud(cell.x, cell.y)
@@ -748,6 +792,10 @@ func _apply_visibility(pest: Pest) -> void:
 			open = open and tile_shawls_dread(cell.x, cell.y)
 		if pest.woed:
 			open = open and tile_stoles_woe(cell.x, cell.y)
+		if pest.blighted:
+			open = open and tile_mantles_blight(cell.x, cell.y)
+		if pest.rotted:
+			open = open and tile_tippets_rot(cell.x, cell.y)
 		pest.hidden = not open
 	else:
 		pest.hidden = not tile_lit(cell.x, cell.y)
@@ -865,6 +913,20 @@ func _woe_up(pest: Pest) -> bool:
 	return not tile_stoles_woe(cell.x, cell.y)
 
 
+func _blight_up(pest: Pest) -> bool:
+	if not pest.blighted:
+		return false
+	var cell := cell_of(pest.pos)
+	return not tile_mantles_blight(cell.x, cell.y)
+
+
+func _rot_up(pest: Pest) -> bool:
+	if not pest.rotted:
+		return false
+	var cell := cell_of(pest.pos)
+	return not tile_tippets_rot(cell.x, cell.y)
+
+
 func _plants_fire() -> void:
 	for entry in plants:
 		var plant := entry as Plant
@@ -950,7 +1012,7 @@ func _impact(shot: Projectile, target: Pest) -> void:
 
 
 func _damage_pest(pest: Pest, shot: Projectile) -> void:
-	if _shroud_up(pest) or _rind_up(pest) or _pitch_up(pest) or _frost_up(pest) or _web_up(pest) or _glass_up(pest) or _scale_up(pest) or _mail_up(pest) or _hide_up(pest) or _dusk_up(pest) or _veil_up(pest) or _pall_up(pest) or _gloom_up(pest) or _murk_up(pest) or _dread_up(pest) or _woe_up(pest):
+	if _shroud_up(pest) or _rind_up(pest) or _pitch_up(pest) or _frost_up(pest) or _web_up(pest) or _glass_up(pest) or _scale_up(pest) or _mail_up(pest) or _hide_up(pest) or _dusk_up(pest) or _veil_up(pest) or _pall_up(pest) or _gloom_up(pest) or _murk_up(pest) or _dread_up(pest) or _woe_up(pest) or _blight_up(pest) or _rot_up(pest):
 		return
 	pest.hp -= shot.damage
 	if shot.slow_ticks > 0:
@@ -999,6 +1061,10 @@ func _damage_pest(pest: Pest, shot: Projectile) -> void:
 			dreads_killed += 1
 		if pest.woed:
 			woes_killed += 1
+		if pest.blighted:
+			blights_killed += 1
+		if pest.rotted:
+			rots_killed += 1
 		events.append({
 			"type": "died",
 			"x": pest.pos.x,

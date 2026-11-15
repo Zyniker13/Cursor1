@@ -49,6 +49,10 @@ func _initialize() -> void:
 	_test_thirty_second_nights()
 	_test_woe_rule()
 	_test_thirty_fourth_nights()
+	_test_blight_rule()
+	_test_thirty_sixth_nights()
+	_test_rot_rule()
+	_test_thirty_eighth_nights()
 	_test_fog_visibility()
 	_test_no_dominance()
 	_test_scene_shows_tooltips()
@@ -83,7 +87,7 @@ func _test_tooltip_matches_sim() -> void:
 	print("tooltip numbers match planted sim stats and dealt damage")
 	var planter = Sim.new(3)
 	planter.seeds = Catalog.COUNT
-	var tiles := [Vector2i(2, 2), Vector2i(4, 2), Vector2i(6, 2), Vector2i(8, 2), Vector2i(10, 2), Vector2i(12, 2), Vector2i(12, 4), Vector2i(10, 4), Vector2i(8, 4), Vector2i(6, 4), Vector2i(4, 4), Vector2i(2, 4), Vector2i(2, 6), Vector2i(4, 6), Vector2i(6, 6), Vector2i(8, 6), Vector2i(10, 6), Vector2i(12, 6), Vector2i(12, 8), Vector2i(10, 8)]
+	var tiles := [Vector2i(2, 2), Vector2i(4, 2), Vector2i(6, 2), Vector2i(8, 2), Vector2i(10, 2), Vector2i(12, 2), Vector2i(12, 4), Vector2i(10, 4), Vector2i(8, 4), Vector2i(6, 4), Vector2i(4, 4), Vector2i(2, 4), Vector2i(2, 6), Vector2i(4, 6), Vector2i(6, 6), Vector2i(8, 6), Vector2i(10, 6), Vector2i(12, 6), Vector2i(12, 8), Vector2i(10, 8), Vector2i(8, 8), Vector2i(6, 8)]
 	for kind in Catalog.COUNT:
 		var cmd = Sim.Command.new()
 		cmd.plant_kind = kind
@@ -118,6 +122,8 @@ func _test_tooltip_matches_sim() -> void:
 		_expect(bool(plant.capes_murk) == bool(stats["capes_murk"]), "%s murk rule copied" % stats["name"])
 		_expect(bool(plant.shawls_dread) == bool(stats["shawls_dread"]), "%s dread rule copied" % stats["name"])
 		_expect(bool(plant.stoles_woe) == bool(stats["stoles_woe"]), "%s woe rule copied" % stats["name"])
+		_expect(bool(plant.mantles_blight) == bool(stats["mantles_blight"]), "%s blight rule copied" % stats["name"])
+		_expect(bool(plant.tippets_rot) == bool(stats["tippets_rot"]), "%s rot rule copied" % stats["name"])
 		_expect(bool(plant.casts_light) == bool(stats["casts_light"]), "%s light rule copied" % stats["name"])
 		var shown := _parse_tooltip(kind)
 		_expect(int(shown["damage"]) == int(plant.damage), "%s tooltip damage" % stats["name"])
@@ -209,6 +215,16 @@ func _test_tooltip_matches_sim() -> void:
 			_expect(woe_line == "Woe: stoles", "%s tooltip stoles woe" % stats["name"])
 		else:
 			_expect(woe_line == "Woe: none", "%s tooltip has no woe stole" % stats["name"])
+		var blight_line := Tooltip.stat_lines(kind)[23]
+		if bool(plant.mantles_blight):
+			_expect(blight_line == "Blight: mantles", "%s tooltip mantles blight" % stats["name"])
+		else:
+			_expect(blight_line == "Blight: none", "%s tooltip has no blight mantle" % stats["name"])
+		var rot_line := Tooltip.stat_lines(kind)[24]
+		if bool(plant.tippets_rot):
+			_expect(rot_line == "Rot: tippets", "%s tooltip tippets rot" % stats["name"])
+		else:
+			_expect(rot_line == "Rot: none", "%s tooltip has no rot tippet" % stats["name"])
 		var radius_line := Tooltip.stat_lines(kind)[4]
 		if bool(plant.cowls_veil):
 			_expect(radius_line.begins_with("Cowl: "), "%s tooltip calls its radius a cowl" % stats["name"])
@@ -222,6 +238,10 @@ func _test_tooltip_matches_sim() -> void:
 			_expect(radius_line.begins_with("Shawl: "), "%s tooltip calls its radius a shawl" % stats["name"])
 		elif bool(plant.stoles_woe):
 			_expect(radius_line.begins_with("Stole: "), "%s tooltip calls its radius a stole" % stats["name"])
+		elif bool(plant.mantles_blight):
+			_expect(radius_line.begins_with("Mantle: "), "%s tooltip calls its radius a mantle" % stats["name"])
+		elif bool(plant.tippets_rot):
+			_expect(radius_line.begins_with("Tippet: "), "%s tooltip calls its radius a tippet" % stats["name"])
 		elif bool(plant.casts_light):
 			_expect(radius_line.begins_with("Light: "), "%s tooltip calls its radius light" % stats["name"])
 		else:
@@ -405,10 +425,12 @@ func _test_scripted_survives() -> void:
 		_expect(not sim.has_plant(Catalog.CAPE), "seed %s did not need a cape yet" % run_seed)
 		_expect(not sim.has_plant(Catalog.SHAWL), "seed %s did not need a shawl yet" % run_seed)
 		_expect(not sim.has_plant(Catalog.STOLE), "seed %s did not need a stole yet" % run_seed)
+		_expect(not sim.has_plant(Catalog.MANTLE), "seed %s did not need a mantle yet" % run_seed)
+		_expect(not sim.has_plant(Catalog.TIPPET), "seed %s did not need a tippet yet" % run_seed)
 		_expect(sim.seeds == Sim.START_SEEDS - 2, "seed %s spent only those two seeds" % run_seed)
 
 
-func _garden_command(sim, wick_tile: Vector2i, briar_tile: Vector2i = Vector2i(-1, -1), flare_tile: Vector2i = Vector2i(-1, -1), hearth_tile: Vector2i = Vector2i(-1, -1), shear_tile: Vector2i = Vector2i(-1, -1), chime_tile: Vector2i = Vector2i(-1, -1), rasp_tile: Vector2i = Vector2i(-1, -1), maul_tile: Vector2i = Vector2i(-1, -1), bill_tile: Vector2i = Vector2i(-1, -1), shade_tile: Vector2i = Vector2i(-1, -1), use_lantern: bool = true, cowl_tile: Vector2i = Vector2i(-1, -1), hood_tile: Vector2i = Vector2i(-1, -1), cloak_tile: Vector2i = Vector2i(-1, -1), cape_tile: Vector2i = Vector2i(-1, -1), shawl_tile: Vector2i = Vector2i(-1, -1), stole_tile: Vector2i = Vector2i(-1, -1)):
+func _garden_command(sim, wick_tile: Vector2i, briar_tile: Vector2i = Vector2i(-1, -1), flare_tile: Vector2i = Vector2i(-1, -1), hearth_tile: Vector2i = Vector2i(-1, -1), shear_tile: Vector2i = Vector2i(-1, -1), chime_tile: Vector2i = Vector2i(-1, -1), rasp_tile: Vector2i = Vector2i(-1, -1), maul_tile: Vector2i = Vector2i(-1, -1), bill_tile: Vector2i = Vector2i(-1, -1), shade_tile: Vector2i = Vector2i(-1, -1), use_lantern: bool = true, cowl_tile: Vector2i = Vector2i(-1, -1), hood_tile: Vector2i = Vector2i(-1, -1), cloak_tile: Vector2i = Vector2i(-1, -1), cape_tile: Vector2i = Vector2i(-1, -1), shawl_tile: Vector2i = Vector2i(-1, -1), stole_tile: Vector2i = Vector2i(-1, -1), mantle_tile: Vector2i = Vector2i(-1, -1), tippet_tile: Vector2i = Vector2i(-1, -1)):
 	var cmd = Sim.Command.new()
 	if sim.outcome != Sim.OUTCOME_RUNNING or sim.phase != Sim.PHASE_PLANT or sim.seeds <= 0:
 		return cmd
@@ -466,6 +488,12 @@ func _garden_command(sim, wick_tile: Vector2i, briar_tile: Vector2i = Vector2i(-
 	elif stole_tile.x >= 0 and not sim.has_plant(Catalog.STOLE):
 		cmd.plant_kind = Catalog.STOLE
 		cmd.tile = stole_tile
+	elif mantle_tile.x >= 0 and not sim.has_plant(Catalog.MANTLE):
+		cmd.plant_kind = Catalog.MANTLE
+		cmd.tile = mantle_tile
+	elif tippet_tile.x >= 0 and not sim.has_plant(Catalog.TIPPET):
+		cmd.plant_kind = Catalog.TIPPET
+		cmd.tile = tippet_tile
 	return cmd
 
 
@@ -601,16 +629,40 @@ func _corner_stole_command(sim):
 	return _garden_command(sim, Vector2i(6, 5), Vector2i(6, 4), Vector2i(7, 4), Vector2i(5, 5), Vector2i(7, 6), Vector2i(8, 6), Vector2i(9, 5), Vector2i(9, 6), Vector2i(8, 4), Vector2i(6, 6), false, Vector2i(7, 5), Vector2i(5, 6), Vector2i(4, 6), Vector2i(3, 6), Vector2i(2, 6), Vector2i(1, 1))
 
 
-# [outcome, wave, phase, tick, hp, shots, shrouds_spawned, shrouds_killed, seeds, plants, rinds_spawned, rinds_killed, pitches_spawned, pitches_killed, frosts_spawned, frosts_killed, webs_spawned, webs_killed, glasses_spawned, glasses_killed, scales_spawned, scales_killed, mails_spawned, mails_killed, hides_spawned, hides_killed, dusks_spawned, dusks_killed, veils_spawned, veils_killed, palls_spawned, palls_killed, glooms_spawned, glooms_killed, murks_spawned, murks_killed, dreads_spawned, dreads_killed, woes_spawned, woes_killed]
+# (1, 6) is open, south of the stole and west of the shawl. A 336px radius there covers the stole and every tile a Canker moth needs all at once. Rasp (9, 5) and maul (9, 6) sit outside that intersection, so they are not a miss.
+const MANTLE_TILE := Vector2i(1, 6)
+
+
+func _mantle_command(sim):
+	return _garden_command(sim, Vector2i(6, 5), Vector2i(6, 4), Vector2i(7, 4), Vector2i(5, 5), Vector2i(7, 6), Vector2i(8, 6), Vector2i(9, 5), Vector2i(9, 6), Vector2i(8, 4), Vector2i(6, 6), false, Vector2i(7, 5), Vector2i(5, 6), Vector2i(4, 6), Vector2i(3, 6), Vector2i(2, 6), STOLE_TILE, MANTLE_TILE)
+
+
+func _corner_mantle_command(sim):
+	return _garden_command(sim, Vector2i(6, 5), Vector2i(6, 4), Vector2i(7, 4), Vector2i(5, 5), Vector2i(7, 6), Vector2i(8, 6), Vector2i(9, 5), Vector2i(9, 6), Vector2i(8, 4), Vector2i(6, 6), false, Vector2i(7, 5), Vector2i(5, 6), Vector2i(4, 6), Vector2i(3, 6), Vector2i(2, 6), STOLE_TILE, Vector2i(1, 1))
+
+
+# (1, 7) is the first open tile south of the mantle. A 352px radius there covers the mantle and every tile a Smut moth needs all at once. Rasp (9, 5) and maul (9, 6) sit outside that intersection, so they are not a miss.
+const TIPPET_TILE := Vector2i(1, 7)
+
+
+func _tippet_command(sim):
+	return _garden_command(sim, Vector2i(6, 5), Vector2i(6, 4), Vector2i(7, 4), Vector2i(5, 5), Vector2i(7, 6), Vector2i(8, 6), Vector2i(9, 5), Vector2i(9, 6), Vector2i(8, 4), Vector2i(6, 6), false, Vector2i(7, 5), Vector2i(5, 6), Vector2i(4, 6), Vector2i(3, 6), Vector2i(2, 6), STOLE_TILE, MANTLE_TILE, TIPPET_TILE)
+
+
+func _corner_tippet_command(sim):
+	return _garden_command(sim, Vector2i(6, 5), Vector2i(6, 4), Vector2i(7, 4), Vector2i(5, 5), Vector2i(7, 6), Vector2i(8, 6), Vector2i(9, 5), Vector2i(9, 6), Vector2i(8, 4), Vector2i(6, 6), false, Vector2i(7, 5), Vector2i(5, 6), Vector2i(4, 6), Vector2i(3, 6), Vector2i(2, 6), STOLE_TILE, MANTLE_TILE, Vector2i(1, 1))
+
+
+# [outcome, wave, phase, tick, hp, shots, shrouds_spawned, shrouds_killed, seeds, plants, rinds_spawned, rinds_killed, pitches_spawned, pitches_killed, frosts_spawned, frosts_killed, webs_spawned, webs_killed, glasses_spawned, glasses_killed, scales_spawned, scales_killed, mails_spawned, mails_killed, hides_spawned, hides_killed, dusks_spawned, dusks_killed, veils_spawned, veils_killed, palls_spawned, palls_killed, glooms_spawned, glooms_killed, murks_spawned, murks_killed, dreads_spawned, dreads_killed, woes_spawned, woes_killed, blights_spawned, blights_killed, rots_spawned, rots_killed]
 func _play(seed: int, planner: Callable, stop_after_night: int = -1) -> Array:
 	var sim = Sim.new(seed)
 	var guard := 0
-	while sim.outcome == Sim.OUTCOME_RUNNING and guard < 80000:
+	while sim.outcome == Sim.OUTCOME_RUNNING and guard < 120000:
 		if stop_after_night > 0 and sim.wave == stop_after_night and sim.phase == Sim.PHASE_PLANT and sim.phase_ticks == 0:
 			break
 		sim.step(planner.call(sim))
 		guard += 1
-	return [sim.outcome, sim.wave, sim.phase, sim.tick, sim.player_hp, sim.shots_fired, sim.shrouds_spawned, sim.shrouds_killed, sim.seeds, sim.plants.size(), sim.rinds_spawned, sim.rinds_killed, sim.pitches_spawned, sim.pitches_killed, sim.frosts_spawned, sim.frosts_killed, sim.webs_spawned, sim.webs_killed, sim.glasses_spawned, sim.glasses_killed, sim.scales_spawned, sim.scales_killed, sim.mails_spawned, sim.mails_killed, sim.hides_spawned, sim.hides_killed, sim.dusks_spawned, sim.dusks_killed, sim.veils_spawned, sim.veils_killed, sim.palls_spawned, sim.palls_killed, sim.glooms_spawned, sim.glooms_killed, sim.murks_spawned, sim.murks_killed, sim.dreads_spawned, sim.dreads_killed, sim.woes_spawned, sim.woes_killed]
+	return [sim.outcome, sim.wave, sim.phase, sim.tick, sim.player_hp, sim.shots_fired, sim.shrouds_spawned, sim.shrouds_killed, sim.seeds, sim.plants.size(), sim.rinds_spawned, sim.rinds_killed, sim.pitches_spawned, sim.pitches_killed, sim.frosts_spawned, sim.frosts_killed, sim.webs_spawned, sim.webs_killed, sim.glasses_spawned, sim.glasses_killed, sim.scales_spawned, sim.scales_killed, sim.mails_spawned, sim.mails_killed, sim.hides_spawned, sim.hides_killed, sim.dusks_spawned, sim.dusks_killed, sim.veils_spawned, sim.veils_killed, sim.palls_spawned, sim.palls_killed, sim.glooms_spawned, sim.glooms_killed, sim.murks_spawned, sim.murks_killed, sim.dreads_spawned, sim.dreads_killed, sim.woes_spawned, sim.woes_killed, sim.blights_spawned, sim.blights_killed, sim.rots_spawned, sim.rots_killed]
 
 
 func _test_shroud_rule() -> void:
@@ -713,7 +765,7 @@ func _test_shroud_rule() -> void:
 
 func _test_later_nights() -> void:
 	print("nights 4 and 5")
-	_expect(Sim.WAVE_COUNT == 35, "thirty-five nights")
+	_expect(Sim.WAVE_COUNT == 39, "thirty-nine nights")
 	_expect(int(Sim.WAVES[0]["count"]) == 8 and int(Sim.WAVES[0]["interval"]) == 72 and int(Sim.WAVES[0]["shroud_every"]) == 0 and int(Sim.WAVES[0]["rind_every"]) == 0 and int(Sim.WAVES[0]["pitch_every"]) == 0, "night 1 is the original wave")
 	_expect(int(Sim.WAVES[1]["count"]) == 12 and int(Sim.WAVES[1]["interval"]) == 66 and int(Sim.WAVES[1]["shroud_every"]) == 0 and int(Sim.WAVES[1]["rind_every"]) == 0 and int(Sim.WAVES[1]["pitch_every"]) == 0, "night 2 is the original wave")
 	_expect(int(Sim.WAVES[2]["count"]) == 22 and int(Sim.WAVES[2]["interval"]) == 60 and int(Sim.WAVES[2]["shroud_every"]) == 0 and int(Sim.WAVES[2]["rind_every"]) == 0 and int(Sim.WAVES[2]["pitch_every"]) == 0, "night 3 is the original wave")
@@ -722,9 +774,9 @@ func _test_later_nights() -> void:
 	var named = Sim.new(1)
 	named.wave = 4
 	named.phase = Sim.PHASE_WAVE
-	_expect(named.phase_text() == "Night 4 of 35 (Shroud) — 0 pests left", "night 4 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 4 of 39 (Shroud) — 0 pests left", "night 4 heading: %s" % named.phase_text())
 	named.wave = 5
-	_expect(named.phase_text() == "Night 5 of 35 (Ash) — 0 pests left", "night 5 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 5 of 39 (Ash) — 0 pests left", "night 5 heading: %s" % named.phase_text())
 	named.wave = 3
 	named.phase = Sim.PHASE_PLANT
 	named.phase_ticks = 0
@@ -922,9 +974,9 @@ func _test_deeper_nights() -> void:
 	var named = Sim.new(1)
 	named.wave = 6
 	named.phase = Sim.PHASE_WAVE
-	_expect(named.phase_text() == "Night 6 of 35 (Rind) — 0 pests left", "night 6 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 6 of 39 (Rind) — 0 pests left", "night 6 heading: %s" % named.phase_text())
 	named.wave = 7
-	_expect(named.phase_text() == "Night 7 of 35 (Gall) — 0 pests left", "night 7 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 7 of 39 (Gall) — 0 pests left", "night 7 heading: %s" % named.phase_text())
 	named.wave = 5
 	named.phase = Sim.PHASE_PLANT
 	named.phase_ticks = 0
@@ -1133,9 +1185,9 @@ func _test_eighth_nights() -> void:
 	var named = Sim.new(1)
 	named.wave = 8
 	named.phase = Sim.PHASE_WAVE
-	_expect(named.phase_text() == "Night 8 of 35 (Pitch) — 0 pests left", "night 8 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 8 of 39 (Pitch) — 0 pests left", "night 8 heading: %s" % named.phase_text())
 	named.wave = 9
-	_expect(named.phase_text() == "Night 9 of 35 (Tar) — 0 pests left", "night 9 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 9 of 39 (Tar) — 0 pests left", "night 9 heading: %s" % named.phase_text())
 	named.wave = 7
 	named.phase = Sim.PHASE_PLANT
 	named.phase_ticks = 0
@@ -1382,7 +1434,7 @@ func _test_tenth_nights() -> void:
 		[10, 72, 0, 0, 0, 1, "Frost"],
 		[16, 60, 2, 1, 1, 1, "Rime"],
 	]
-	_expect(Sim.WAVES.size() == 35 and Sim.WAVE_COUNT == 35, "thirty-five nights")
+	_expect(Sim.WAVES.size() == 39 and Sim.WAVE_COUNT == 39, "thirty-nine nights")
 	for i in nights.size():
 		var spec: Dictionary = Sim.WAVES[i]
 		var want: Array = nights[i]
@@ -1399,9 +1451,9 @@ func _test_tenth_nights() -> void:
 	var named = Sim.new(1)
 	named.wave = 10
 	named.phase = Sim.PHASE_WAVE
-	_expect(named.phase_text() == "Night 10 of 35 (Frost) — 0 pests left", "night 10 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 10 of 39 (Frost) — 0 pests left", "night 10 heading: %s" % named.phase_text())
 	named.wave = 11
-	_expect(named.phase_text() == "Night 11 of 35 (Rime) — 0 pests left", "night 11 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 11 of 39 (Rime) — 0 pests left", "night 11 heading: %s" % named.phase_text())
 	named.wave = 9
 	named.phase = Sim.PHASE_PLANT
 	named.phase_ticks = 0
@@ -1661,9 +1713,9 @@ func _test_twelfth_nights() -> void:
 	var named = Sim.new(1)
 	named.wave = 12
 	named.phase = Sim.PHASE_WAVE
-	_expect(named.phase_text() == "Night 12 of 35 (Web) — 0 pests left", "night 12 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 12 of 39 (Web) — 0 pests left", "night 12 heading: %s" % named.phase_text())
 	named.wave = 13
-	_expect(named.phase_text() == "Night 13 of 35 (Snare) — 0 pests left", "night 13 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 13 of 39 (Snare) — 0 pests left", "night 13 heading: %s" % named.phase_text())
 	named.wave = 11
 	named.phase = Sim.PHASE_PLANT
 	named.phase_ticks = 0
@@ -1944,9 +1996,9 @@ func _test_fourteenth_nights() -> void:
 	var named = Sim.new(1)
 	named.wave = 14
 	named.phase = Sim.PHASE_WAVE
-	_expect(named.phase_text() == "Night 14 of 35 (Glass) — 0 pests left", "night 14 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 14 of 39 (Glass) — 0 pests left", "night 14 heading: %s" % named.phase_text())
 	named.wave = 15
-	_expect(named.phase_text() == "Night 15 of 35 (Pane) — 0 pests left", "night 15 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 15 of 39 (Pane) — 0 pests left", "night 15 heading: %s" % named.phase_text())
 	named.wave = 13
 	named.phase = Sim.PHASE_PLANT
 	named.phase_ticks = 0
@@ -2250,9 +2302,9 @@ func _test_sixteenth_nights() -> void:
 	var named = Sim.new(1)
 	named.wave = 16
 	named.phase = Sim.PHASE_WAVE
-	_expect(named.phase_text() == "Night 16 of 35 (Scale) — 0 pests left", "night 16 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 16 of 39 (Scale) — 0 pests left", "night 16 heading: %s" % named.phase_text())
 	named.wave = 17
-	_expect(named.phase_text() == "Night 17 of 35 (Plate) — 0 pests left", "night 17 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 17 of 39 (Plate) — 0 pests left", "night 17 heading: %s" % named.phase_text())
 	named.wave = 15
 	named.phase = Sim.PHASE_PLANT
 	named.phase_ticks = 0
@@ -2547,9 +2599,9 @@ func _test_eighteenth_nights() -> void:
 	var named = Sim.new(1)
 	named.wave = 18
 	named.phase = Sim.PHASE_WAVE
-	_expect(named.phase_text() == "Night 18 of 35 (Mail) — 0 pests left", "night 18 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 18 of 39 (Mail) — 0 pests left", "night 18 heading: %s" % named.phase_text())
 	named.wave = 19
-	_expect(named.phase_text() == "Night 19 of 35 (Armor) — 0 pests left", "night 19 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 19 of 39 (Armor) — 0 pests left", "night 19 heading: %s" % named.phase_text())
 	named.wave = 17
 	named.phase = Sim.PHASE_PLANT
 	named.phase_ticks = 0
@@ -2859,9 +2911,9 @@ func _test_twentieth_nights() -> void:
 	var named = Sim.new(1)
 	named.wave = 20
 	named.phase = Sim.PHASE_WAVE
-	_expect(named.phase_text() == "Night 20 of 35 (Hide) — 0 pests left", "night 20 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 20 of 39 (Hide) — 0 pests left", "night 20 heading: %s" % named.phase_text())
 	named.wave = 21
-	_expect(named.phase_text() == "Night 21 of 35 (Coat) — 0 pests left", "night 21 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 21 of 39 (Coat) — 0 pests left", "night 21 heading: %s" % named.phase_text())
 	named.wave = 19
 	named.phase = Sim.PHASE_PLANT
 	named.phase_ticks = 0
@@ -3157,7 +3209,7 @@ func _test_dusk_rule() -> void:
 
 func _test_twenty_second_nights() -> void:
 	print("nights 22 and 23")
-	_expect(Sim.START_SEEDS == 17, "the run starts with seventeen seeds")
+	_expect(Sim.START_SEEDS == 19, "the run starts with nineteen seeds")
 	_expect(int(Sim.WAVES[21]["count"]) == 10 and int(Sim.WAVES[21]["interval"]) == 72 and int(Sim.WAVES[21]["shroud_every"]) == 0 and int(Sim.WAVES[21]["rind_every"]) == 0 and int(Sim.WAVES[21]["pitch_every"]) == 0 and int(Sim.WAVES[21]["frost_every"]) == 0 and int(Sim.WAVES[21]["web_every"]) == 0 and int(Sim.WAVES[21]["glass_every"]) == 0 and int(Sim.WAVES[21]["scale_every"]) == 0 and int(Sim.WAVES[21]["mail_every"]) == 0 and int(Sim.WAVES[21]["hide_every"]) == 0 and int(Sim.WAVES[21]["dusk_every"]) == 1 and str(Sim.WAVES[21]["name"]) == "Dusk", "night 22 is all dusk")
 	_expect(int(Sim.WAVES[22]["count"]) == 16 and int(Sim.WAVES[22]["interval"]) == 60 and int(Sim.WAVES[22]["shroud_every"]) == 2 and int(Sim.WAVES[22]["rind_every"]) == 1 and int(Sim.WAVES[22]["pitch_every"]) == 1 and int(Sim.WAVES[22]["frost_every"]) == 1 and int(Sim.WAVES[22]["web_every"]) == 1 and int(Sim.WAVES[22]["glass_every"]) == 1 and int(Sim.WAVES[22]["scale_every"]) == 1 and int(Sim.WAVES[22]["mail_every"]) == 1 and int(Sim.WAVES[22]["hide_every"]) == 1 and int(Sim.WAVES[22]["dusk_every"]) == 1 and str(Sim.WAVES[22]["name"]) == "Dim", "night 23 is dusk, hide, mail, scale, glass, web, frost, pitch, and rind, every second also a shroud")
 	for i in 21:
@@ -3165,9 +3217,9 @@ func _test_twenty_second_nights() -> void:
 	var named = Sim.new(1)
 	named.wave = 22
 	named.phase = Sim.PHASE_WAVE
-	_expect(named.phase_text() == "Night 22 of 35 (Dusk) — 0 pests left", "night 22 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 22 of 39 (Dusk) — 0 pests left", "night 22 heading: %s" % named.phase_text())
 	named.wave = 23
-	_expect(named.phase_text() == "Night 23 of 35 (Dim) — 0 pests left", "night 23 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 23 of 39 (Dim) — 0 pests left", "night 23 heading: %s" % named.phase_text())
 	named.wave = 21
 	named.phase = Sim.PHASE_PLANT
 	named.phase_ticks = 0
@@ -3471,8 +3523,8 @@ func _test_veil_rule() -> void:
 
 func _test_twenty_fourth_nights() -> void:
 	print("nights 24 and 25")
-	_expect(Sim.START_SEEDS == 17, "the run starts with seventeen seeds")
-	_expect(Sim.WAVE_COUNT == 35 and Sim.WAVES.size() == 35, "thirty-five nights")
+	_expect(Sim.START_SEEDS == 19, "the run starts with nineteen seeds")
+	_expect(Sim.WAVE_COUNT == 39 and Sim.WAVES.size() == 39, "thirty-nine nights")
 	_expect(int(Sim.WAVES[23]["count"]) == 10 and int(Sim.WAVES[23]["interval"]) == 72 and int(Sim.WAVES[23]["shroud_every"]) == 0 and int(Sim.WAVES[23]["rind_every"]) == 0 and int(Sim.WAVES[23]["pitch_every"]) == 0 and int(Sim.WAVES[23]["frost_every"]) == 0 and int(Sim.WAVES[23]["web_every"]) == 0 and int(Sim.WAVES[23]["glass_every"]) == 0 and int(Sim.WAVES[23]["scale_every"]) == 0 and int(Sim.WAVES[23]["mail_every"]) == 0 and int(Sim.WAVES[23]["hide_every"]) == 0 and int(Sim.WAVES[23]["dusk_every"]) == 0 and int(Sim.WAVES[23]["veil_every"]) == 1 and str(Sim.WAVES[23]["name"]) == "Veil", "night 24 is all veil")
 	_expect(int(Sim.WAVES[24]["count"]) == 16 and int(Sim.WAVES[24]["interval"]) == 60 and int(Sim.WAVES[24]["shroud_every"]) == 2 and int(Sim.WAVES[24]["rind_every"]) == 1 and int(Sim.WAVES[24]["pitch_every"]) == 1 and int(Sim.WAVES[24]["frost_every"]) == 1 and int(Sim.WAVES[24]["web_every"]) == 1 and int(Sim.WAVES[24]["glass_every"]) == 1 and int(Sim.WAVES[24]["scale_every"]) == 1 and int(Sim.WAVES[24]["mail_every"]) == 1 and int(Sim.WAVES[24]["hide_every"]) == 1 and int(Sim.WAVES[24]["dusk_every"]) == 1 and int(Sim.WAVES[24]["veil_every"]) == 1 and str(Sim.WAVES[24]["name"]) == "Mask", "night 25 is veil, dusk, hide, mail, scale, glass, web, frost, pitch, and rind, every second also a shroud")
 	for i in 23:
@@ -3482,9 +3534,9 @@ func _test_twenty_fourth_nights() -> void:
 	var named = Sim.new(1)
 	named.wave = 24
 	named.phase = Sim.PHASE_WAVE
-	_expect(named.phase_text() == "Night 24 of 35 (Veil) — 0 pests left", "night 24 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 24 of 39 (Veil) — 0 pests left", "night 24 heading: %s" % named.phase_text())
 	named.wave = 25
-	_expect(named.phase_text() == "Night 25 of 35 (Mask) — 0 pests left", "night 25 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 25 of 39 (Mask) — 0 pests left", "night 25 heading: %s" % named.phase_text())
 	named.wave = 23
 	named.phase = Sim.PHASE_PLANT
 	named.phase_ticks = 0
@@ -3818,8 +3870,8 @@ func _test_pall_rule() -> void:
 
 func _test_twenty_sixth_nights() -> void:
 	print("nights 26 and 27")
-	_expect(Sim.START_SEEDS == 17, "the run starts with seventeen seeds")
-	_expect(Sim.WAVE_COUNT == 35 and Sim.WAVES.size() == 35, "thirty-five nights")
+	_expect(Sim.START_SEEDS == 19, "the run starts with nineteen seeds")
+	_expect(Sim.WAVE_COUNT == 39 and Sim.WAVES.size() == 39, "thirty-nine nights")
 	_expect(int(Sim.WAVES[25]["count"]) == 10 and int(Sim.WAVES[25]["interval"]) == 72 and int(Sim.WAVES[25]["shroud_every"]) == 0 and int(Sim.WAVES[25]["rind_every"]) == 0 and int(Sim.WAVES[25]["pitch_every"]) == 0 and int(Sim.WAVES[25]["frost_every"]) == 0 and int(Sim.WAVES[25]["web_every"]) == 0 and int(Sim.WAVES[25]["glass_every"]) == 0 and int(Sim.WAVES[25]["scale_every"]) == 0 and int(Sim.WAVES[25]["mail_every"]) == 0 and int(Sim.WAVES[25]["hide_every"]) == 0 and int(Sim.WAVES[25]["dusk_every"]) == 0 and int(Sim.WAVES[25]["veil_every"]) == 0 and int(Sim.WAVES[25]["pall_every"]) == 1 and str(Sim.WAVES[25]["name"]) == "Pall", "night 26 is all pall")
 	_expect(int(Sim.WAVES[26]["count"]) == 16 and int(Sim.WAVES[26]["interval"]) == 60 and int(Sim.WAVES[26]["shroud_every"]) == 2 and int(Sim.WAVES[26]["rind_every"]) == 1 and int(Sim.WAVES[26]["pitch_every"]) == 1 and int(Sim.WAVES[26]["frost_every"]) == 1 and int(Sim.WAVES[26]["web_every"]) == 1 and int(Sim.WAVES[26]["glass_every"]) == 1 and int(Sim.WAVES[26]["scale_every"]) == 1 and int(Sim.WAVES[26]["mail_every"]) == 1 and int(Sim.WAVES[26]["hide_every"]) == 1 and int(Sim.WAVES[26]["dusk_every"]) == 1 and int(Sim.WAVES[26]["veil_every"]) == 1 and int(Sim.WAVES[26]["pall_every"]) == 1 and str(Sim.WAVES[26]["name"]) == "Mantle", "night 27 is pall, veil, dusk, hide, mail, scale, glass, web, frost, pitch, and rind, every second also a shroud")
 	for i in 25:
@@ -3830,9 +3882,9 @@ func _test_twenty_sixth_nights() -> void:
 	var named = Sim.new(1)
 	named.wave = 26
 	named.phase = Sim.PHASE_WAVE
-	_expect(named.phase_text() == "Night 26 of 35 (Pall) — 0 pests left", "night 26 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 26 of 39 (Pall) — 0 pests left", "night 26 heading: %s" % named.phase_text())
 	named.wave = 27
-	_expect(named.phase_text() == "Night 27 of 35 (Mantle) — 0 pests left", "night 27 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 27 of 39 (Mantle) — 0 pests left", "night 27 heading: %s" % named.phase_text())
 	named.wave = 25
 	named.phase = Sim.PHASE_PLANT
 	named.phase_ticks = 0
@@ -4186,8 +4238,8 @@ func _test_gloom_rule() -> void:
 
 func _test_twenty_eighth_nights() -> void:
 	print("nights 28 and 29")
-	_expect(Sim.START_SEEDS == 17, "the run starts with seventeen seeds")
-	_expect(Sim.WAVE_COUNT == 35 and Sim.WAVES.size() == 35, "thirty-five nights")
+	_expect(Sim.START_SEEDS == 19, "the run starts with nineteen seeds")
+	_expect(Sim.WAVE_COUNT == 39 and Sim.WAVES.size() == 39, "thirty-nine nights")
 	_expect(int(Sim.WAVES[27]["count"]) == 10 and int(Sim.WAVES[27]["interval"]) == 72 and int(Sim.WAVES[27]["shroud_every"]) == 0 and int(Sim.WAVES[27]["rind_every"]) == 0 and int(Sim.WAVES[27]["pitch_every"]) == 0 and int(Sim.WAVES[27]["frost_every"]) == 0 and int(Sim.WAVES[27]["web_every"]) == 0 and int(Sim.WAVES[27]["glass_every"]) == 0 and int(Sim.WAVES[27]["scale_every"]) == 0 and int(Sim.WAVES[27]["mail_every"]) == 0 and int(Sim.WAVES[27]["hide_every"]) == 0 and int(Sim.WAVES[27]["dusk_every"]) == 0 and int(Sim.WAVES[27]["veil_every"]) == 0 and int(Sim.WAVES[27]["pall_every"]) == 0 and int(Sim.WAVES[27]["gloom_every"]) == 1 and int(Sim.WAVES[27].get("murk_every", 0)) == 0 and str(Sim.WAVES[27]["name"]) == "Gloom", "night 28 is all gloom")
 	_expect(int(Sim.WAVES[28]["count"]) == 16 and int(Sim.WAVES[28]["interval"]) == 60 and int(Sim.WAVES[28]["shroud_every"]) == 2 and int(Sim.WAVES[28]["rind_every"]) == 1 and int(Sim.WAVES[28]["pitch_every"]) == 1 and int(Sim.WAVES[28]["frost_every"]) == 1 and int(Sim.WAVES[28]["web_every"]) == 1 and int(Sim.WAVES[28]["glass_every"]) == 1 and int(Sim.WAVES[28]["scale_every"]) == 1 and int(Sim.WAVES[28]["mail_every"]) == 1 and int(Sim.WAVES[28]["hide_every"]) == 1 and int(Sim.WAVES[28]["dusk_every"]) == 1 and int(Sim.WAVES[28]["veil_every"]) == 1 and int(Sim.WAVES[28]["pall_every"]) == 1 and int(Sim.WAVES[28]["gloom_every"]) == 1 and int(Sim.WAVES[28].get("murk_every", 0)) == 0 and str(Sim.WAVES[28]["name"]) == "Cope", "night 29 is gloom, pall, veil, dusk, hide, mail, scale, glass, web, frost, pitch, and rind, every second also a shroud, and no murk")
 	for i in 27:
@@ -4197,9 +4249,9 @@ func _test_twenty_eighth_nights() -> void:
 	var named = Sim.new(1)
 	named.wave = 28
 	named.phase = Sim.PHASE_WAVE
-	_expect(named.phase_text() == "Night 28 of 35 (Gloom) — 0 pests left", "night 28 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 28 of 39 (Gloom) — 0 pests left", "night 28 heading: %s" % named.phase_text())
 	named.wave = 29
-	_expect(named.phase_text() == "Night 29 of 35 (Cope) — 0 pests left", "night 29 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 29 of 39 (Cope) — 0 pests left", "night 29 heading: %s" % named.phase_text())
 	named.wave = 27
 	named.phase = Sim.PHASE_PLANT
 	named.phase_ticks = 0
@@ -4579,8 +4631,8 @@ func _test_murk_rule() -> void:
 
 func _test_thirtieth_nights() -> void:
 	print("nights 30 and 31")
-	_expect(Sim.START_SEEDS == 17, "the run starts with seventeen seeds")
-	_expect(Sim.WAVE_COUNT == 35 and Sim.WAVES.size() == 35, "thirty-five nights")
+	_expect(Sim.START_SEEDS == 19, "the run starts with nineteen seeds")
+	_expect(Sim.WAVE_COUNT == 39 and Sim.WAVES.size() == 39, "thirty-nine nights")
 	_expect(int(Sim.WAVES[29]["count"]) == 10 and int(Sim.WAVES[29]["interval"]) == 72 and int(Sim.WAVES[29]["shroud_every"]) == 0 and int(Sim.WAVES[29]["rind_every"]) == 0 and int(Sim.WAVES[29]["pitch_every"]) == 0 and int(Sim.WAVES[29]["frost_every"]) == 0 and int(Sim.WAVES[29]["web_every"]) == 0 and int(Sim.WAVES[29]["glass_every"]) == 0 and int(Sim.WAVES[29]["scale_every"]) == 0 and int(Sim.WAVES[29]["mail_every"]) == 0 and int(Sim.WAVES[29]["hide_every"]) == 0 and int(Sim.WAVES[29]["dusk_every"]) == 0 and int(Sim.WAVES[29]["veil_every"]) == 0 and int(Sim.WAVES[29]["pall_every"]) == 0 and int(Sim.WAVES[29]["gloom_every"]) == 0 and int(Sim.WAVES[29]["murk_every"]) == 1 and str(Sim.WAVES[29]["name"]) == "Murk", "night 30 is all murk")
 	_expect(int(Sim.WAVES[30]["count"]) == 16 and int(Sim.WAVES[30]["interval"]) == 60 and int(Sim.WAVES[30]["shroud_every"]) == 2 and int(Sim.WAVES[30]["rind_every"]) == 1 and int(Sim.WAVES[30]["pitch_every"]) == 1 and int(Sim.WAVES[30]["frost_every"]) == 1 and int(Sim.WAVES[30]["web_every"]) == 1 and int(Sim.WAVES[30]["glass_every"]) == 1 and int(Sim.WAVES[30]["scale_every"]) == 1 and int(Sim.WAVES[30]["mail_every"]) == 1 and int(Sim.WAVES[30]["hide_every"]) == 1 and int(Sim.WAVES[30]["dusk_every"]) == 1 and int(Sim.WAVES[30]["veil_every"]) == 1 and int(Sim.WAVES[30]["pall_every"]) == 1 and int(Sim.WAVES[30]["gloom_every"]) == 1 and int(Sim.WAVES[30]["murk_every"]) == 1 and int(Sim.WAVES[30].get("dread_every", 0)) == 0 and str(Sim.WAVES[30]["name"]) == "Fell", "night 31 is still Fell: murk, gloom, pall, veil, dusk, hide, mail, scale, glass, web, frost, pitch, and rind, every second also a shroud, and no dread")
 	for i in 29:
@@ -4591,9 +4643,9 @@ func _test_thirtieth_nights() -> void:
 	var named = Sim.new(1)
 	named.wave = 30
 	named.phase = Sim.PHASE_WAVE
-	_expect(named.phase_text() == "Night 30 of 35 (Murk) — 0 pests left", "night 30 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 30 of 39 (Murk) — 0 pests left", "night 30 heading: %s" % named.phase_text())
 	named.wave = 31
-	_expect(named.phase_text() == "Night 31 of 35 (Fell) — 0 pests left", "night 31 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 31 of 39 (Fell) — 0 pests left", "night 31 heading: %s" % named.phase_text())
 	named.wave = 29
 	named.phase = Sim.PHASE_PLANT
 	named.phase_ticks = 0
@@ -4990,8 +5042,8 @@ func _test_dread_rule() -> void:
 
 func _test_thirty_second_nights() -> void:
 	print("nights 32 and 33")
-	_expect(Sim.START_SEEDS == 17, "the run starts with seventeen seeds")
-	_expect(Sim.WAVE_COUNT == 35 and Sim.WAVES.size() == 35, "thirty-five nights")
+	_expect(Sim.START_SEEDS == 19, "the run starts with nineteen seeds")
+	_expect(Sim.WAVE_COUNT == 39 and Sim.WAVES.size() == 39, "thirty-nine nights")
 	_expect(int(Sim.WAVES[31]["count"]) == 10 and int(Sim.WAVES[31]["interval"]) == 72 and int(Sim.WAVES[31]["shroud_every"]) == 0 and int(Sim.WAVES[31]["rind_every"]) == 0 and int(Sim.WAVES[31]["pitch_every"]) == 0 and int(Sim.WAVES[31]["frost_every"]) == 0 and int(Sim.WAVES[31]["web_every"]) == 0 and int(Sim.WAVES[31]["glass_every"]) == 0 and int(Sim.WAVES[31]["scale_every"]) == 0 and int(Sim.WAVES[31]["mail_every"]) == 0 and int(Sim.WAVES[31]["hide_every"]) == 0 and int(Sim.WAVES[31]["dusk_every"]) == 0 and int(Sim.WAVES[31]["veil_every"]) == 0 and int(Sim.WAVES[31]["pall_every"]) == 0 and int(Sim.WAVES[31]["gloom_every"]) == 0 and int(Sim.WAVES[31]["murk_every"]) == 0 and int(Sim.WAVES[31]["dread_every"]) == 1 and str(Sim.WAVES[31]["name"]) == "Dread", "night 32 is all dread")
 	_expect(int(Sim.WAVES[32]["count"]) == 16 and int(Sim.WAVES[32]["interval"]) == 60 and int(Sim.WAVES[32]["shroud_every"]) == 2 and int(Sim.WAVES[32]["rind_every"]) == 1 and int(Sim.WAVES[32]["pitch_every"]) == 1 and int(Sim.WAVES[32]["frost_every"]) == 1 and int(Sim.WAVES[32]["web_every"]) == 1 and int(Sim.WAVES[32]["glass_every"]) == 1 and int(Sim.WAVES[32]["scale_every"]) == 1 and int(Sim.WAVES[32]["mail_every"]) == 1 and int(Sim.WAVES[32]["hide_every"]) == 1 and int(Sim.WAVES[32]["dusk_every"]) == 1 and int(Sim.WAVES[32]["veil_every"]) == 1 and int(Sim.WAVES[32]["pall_every"]) == 1 and int(Sim.WAVES[32]["gloom_every"]) == 1 and int(Sim.WAVES[32]["murk_every"]) == 1 and int(Sim.WAVES[32]["dread_every"]) == 1 and int(Sim.WAVES[32].get("woe_every", 0)) == 0 and str(Sim.WAVES[32]["name"]) == "Bane", "night 33 is still Bane and carries no woe")
 	_expect(int(Sim.WAVES[31].get("woe_every", 0)) == 0, "night 32 is still Dread and carries no woe")
@@ -5003,9 +5055,9 @@ func _test_thirty_second_nights() -> void:
 	var named = Sim.new(1)
 	named.wave = 32
 	named.phase = Sim.PHASE_WAVE
-	_expect(named.phase_text() == "Night 32 of 35 (Dread) — 0 pests left", "night 32 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 32 of 39 (Dread) — 0 pests left", "night 32 heading: %s" % named.phase_text())
 	named.wave = 33
-	_expect(named.phase_text() == "Night 33 of 35 (Bane) — 0 pests left", "night 33 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 33 of 39 (Bane) — 0 pests left", "night 33 heading: %s" % named.phase_text())
 	named.wave = 31
 	named.phase = Sim.PHASE_PLANT
 	named.phase_ticks = 0
@@ -5268,21 +5320,21 @@ func _test_woe_rule() -> void:
 
 func _test_thirty_fourth_nights() -> void:
 	print("nights 34 and 35")
-	_expect(Sim.START_SEEDS == 17, "the run starts with seventeen seeds")
-	_expect(Sim.WAVE_COUNT == 35 and Sim.WAVES.size() == 35, "thirty-five nights")
-	_expect(int(Sim.WAVES[33]["count"]) == 10 and int(Sim.WAVES[33]["interval"]) == 72 and int(Sim.WAVES[33]["shroud_every"]) == 0 and int(Sim.WAVES[33]["rind_every"]) == 0 and int(Sim.WAVES[33]["pitch_every"]) == 0 and int(Sim.WAVES[33]["frost_every"]) == 0 and int(Sim.WAVES[33]["web_every"]) == 0 and int(Sim.WAVES[33]["glass_every"]) == 0 and int(Sim.WAVES[33]["scale_every"]) == 0 and int(Sim.WAVES[33]["mail_every"]) == 0 and int(Sim.WAVES[33]["hide_every"]) == 0 and int(Sim.WAVES[33]["dusk_every"]) == 0 and int(Sim.WAVES[33]["veil_every"]) == 0 and int(Sim.WAVES[33]["pall_every"]) == 0 and int(Sim.WAVES[33]["gloom_every"]) == 0 and int(Sim.WAVES[33]["murk_every"]) == 0 and int(Sim.WAVES[33]["dread_every"]) == 0 and int(Sim.WAVES[33]["woe_every"]) == 1 and str(Sim.WAVES[33]["name"]) == "Woe", "night 34 is all woe")
-	_expect(int(Sim.WAVES[34]["count"]) == 16 and int(Sim.WAVES[34]["interval"]) == 60 and int(Sim.WAVES[34]["shroud_every"]) == 2 and int(Sim.WAVES[34]["rind_every"]) == 1 and int(Sim.WAVES[34]["pitch_every"]) == 1 and int(Sim.WAVES[34]["frost_every"]) == 1 and int(Sim.WAVES[34]["web_every"]) == 1 and int(Sim.WAVES[34]["glass_every"]) == 1 and int(Sim.WAVES[34]["scale_every"]) == 1 and int(Sim.WAVES[34]["mail_every"]) == 1 and int(Sim.WAVES[34]["hide_every"]) == 1 and int(Sim.WAVES[34]["dusk_every"]) == 1 and int(Sim.WAVES[34]["veil_every"]) == 1 and int(Sim.WAVES[34]["pall_every"]) == 1 and int(Sim.WAVES[34]["gloom_every"]) == 1 and int(Sim.WAVES[34]["murk_every"]) == 1 and int(Sim.WAVES[34]["dread_every"]) == 1 and int(Sim.WAVES[34]["woe_every"]) == 1 and str(Sim.WAVES[34]["name"]) == "Hex", "night 35 is woe, dread, murk, gloom, pall, veil, dusk, hide, mail, scale, glass, web, frost, pitch, and rind, every second also a shroud")
+	_expect(Sim.START_SEEDS == 19, "the run starts with nineteen seeds")
+	_expect(Sim.WAVE_COUNT == 39 and Sim.WAVES.size() == 39, "thirty-nine nights")
+	_expect(int(Sim.WAVES[33]["count"]) == 10 and int(Sim.WAVES[33]["interval"]) == 72 and int(Sim.WAVES[33]["shroud_every"]) == 0 and int(Sim.WAVES[33]["rind_every"]) == 0 and int(Sim.WAVES[33]["pitch_every"]) == 0 and int(Sim.WAVES[33]["frost_every"]) == 0 and int(Sim.WAVES[33]["web_every"]) == 0 and int(Sim.WAVES[33]["glass_every"]) == 0 and int(Sim.WAVES[33]["scale_every"]) == 0 and int(Sim.WAVES[33]["mail_every"]) == 0 and int(Sim.WAVES[33]["hide_every"]) == 0 and int(Sim.WAVES[33]["dusk_every"]) == 0 and int(Sim.WAVES[33]["veil_every"]) == 0 and int(Sim.WAVES[33]["pall_every"]) == 0 and int(Sim.WAVES[33]["gloom_every"]) == 0 and int(Sim.WAVES[33]["murk_every"]) == 0 and int(Sim.WAVES[33]["dread_every"]) == 0 and int(Sim.WAVES[33]["woe_every"]) == 1 and int(Sim.WAVES[33].get("blight_every", 0)) == 0 and str(Sim.WAVES[33]["name"]) == "Woe", "night 34 is all woe and carries no blight")
+	_expect(int(Sim.WAVES[34]["count"]) == 16 and int(Sim.WAVES[34]["interval"]) == 60 and int(Sim.WAVES[34]["shroud_every"]) == 2 and int(Sim.WAVES[34]["rind_every"]) == 1 and int(Sim.WAVES[34]["pitch_every"]) == 1 and int(Sim.WAVES[34]["frost_every"]) == 1 and int(Sim.WAVES[34]["web_every"]) == 1 and int(Sim.WAVES[34]["glass_every"]) == 1 and int(Sim.WAVES[34]["scale_every"]) == 1 and int(Sim.WAVES[34]["mail_every"]) == 1 and int(Sim.WAVES[34]["hide_every"]) == 1 and int(Sim.WAVES[34]["dusk_every"]) == 1 and int(Sim.WAVES[34]["veil_every"]) == 1 and int(Sim.WAVES[34]["pall_every"]) == 1 and int(Sim.WAVES[34]["gloom_every"]) == 1 and int(Sim.WAVES[34]["murk_every"]) == 1 and int(Sim.WAVES[34]["dread_every"]) == 1 and int(Sim.WAVES[34]["woe_every"]) == 1 and int(Sim.WAVES[34].get("blight_every", 0)) == 0 and str(Sim.WAVES[34]["name"]) == "Hex", "night 35 is still Hex and carries no blight")
 	for i in 33:
 		_expect(int(Sim.WAVES[i].get("woe_every", 0)) == 0, "night %d still spawns no woe" % (i + 1))
 	_expect(int(Sim.WAVES[30].get("dread_every", 0)) == 0 and int(Sim.WAVES[30].get("woe_every", 0)) == 0 and str(Sim.WAVES[30]["name"]) == "Fell", "night 31 is still Fell and carries no dread and no woe")
 	_expect(int(Sim.WAVES[31].get("woe_every", 0)) == 0 and str(Sim.WAVES[31]["name"]) == "Dread", "night 32 stays Dread and carries no woe")
-	_expect(int(Sim.WAVES[32].get("woe_every", 0)) == 0 and str(Sim.WAVES[32]["name"]) == "Bane", "night 33 stays Bane and carries no woe")
+	_expect(int(Sim.WAVES[32].get("woe_every", 0)) == 0 and int(Sim.WAVES[32].get("blight_every", 0)) == 0 and str(Sim.WAVES[32]["name"]) == "Bane", "night 33 stays Bane and carries no woe and no blight")
 	var named = Sim.new(1)
 	named.wave = 34
 	named.phase = Sim.PHASE_WAVE
-	_expect(named.phase_text() == "Night 34 of 35 (Woe) — 0 pests left", "night 34 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 34 of 39 (Woe) — 0 pests left", "night 34 heading: %s" % named.phase_text())
 	named.wave = 35
-	_expect(named.phase_text() == "Night 35 of 35 (Hex) — 0 pests left", "night 35 heading: %s" % named.phase_text())
+	_expect(named.phase_text() == "Night 35 of 39 (Hex) — 0 pests left", "night 35 heading: %s" % named.phase_text())
 	named.wave = 33
 	named.phase = Sim.PHASE_PLANT
 	named.phase_ticks = 0
@@ -5298,10 +5350,10 @@ func _test_thirty_fourth_nights() -> void:
 		_expect(int(bare[38]) > 0 and int(bare[39]) == 0, "seed %s left every woe moth unstoled (%s spawned, %s killed)" % [run_seed, bare[38], bare[39]])
 		_expect(int(bare[36]) == 26 and int(bare[37]) == 26, "seed %s had already shawled dread before woe (%s/%s)" % [run_seed, bare[37], bare[36]])
 		_expect(int(bare[8]) == Sim.START_SEEDS - 16 and int(bare[9]) == 16, "seed %s still has the seventeenth seed unspent when woe arrives" % run_seed)
-		var held := _play(run_seed, Callable(self, "_stole_command"))
+		var held := _play(run_seed, Callable(self, "_stole_command"), 35)
 		print("  stole seed=%s outcome=%s night=%s hp=%s tick=%s shrouds=%s/%s rinds=%s/%s pitches=%s/%s frosts=%s/%s webs=%s/%s glasses=%s/%s scales=%s/%s mails=%s/%s hides=%s/%s dusk=%s/%s veil=%s/%s pall=%s/%s gloom=%s/%s murk=%s/%s dread=%s/%s woe=%s/%s" % [run_seed, held[0], held[1], held[4], held[3], held[7], held[6], held[11], held[10], held[13], held[12], held[15], held[14], held[17], held[16], held[19], held[18], held[21], held[20], held[23], held[22], held[25], held[24], held[27], held[26], held[29], held[28], held[31], held[30], held[33], held[32], held[35], held[34], held[37], held[36], held[39], held[38]])
-		_expect(int(held[0]) == Sim.OUTCOME_WON, "seed %s clears all thirty-five nights with the stole at (1, 5)" % run_seed)
-		_expect(int(held[1]) == 35, "seed %s win is night 35" % run_seed)
+		_expect(int(held[0]) == Sim.OUTCOME_RUNNING and int(held[2]) == Sim.PHASE_PLANT, "seed %s is still planting after night 35" % run_seed)
+		_expect(int(held[1]) == 35, "seed %s cleared through night 35" % run_seed)
 		_expect(int(held[4]) == 100, "seed %s finished night 35 at full health (%s)" % [run_seed, held[4]])
 		_expect(int(held[6]) == 136 and int(held[7]) == 136, "seed %s burned every shroud moth (%s/%s)" % [run_seed, held[7], held[6]])
 		_expect(int(held[10]) == 250 and int(held[11]) == 250, "seed %s cracked every rind moth (%s/%s)" % [run_seed, held[11], held[10]])
@@ -5319,14 +5371,16 @@ func _test_thirty_fourth_nights() -> void:
 		_expect(int(held[34]) == 58 and int(held[35]) == 58, "seed %s caped every murk moth (%s/%s)" % [run_seed, held[35], held[34]])
 		_expect(int(held[36]) == 42 and int(held[37]) == 42, "seed %s shawled every dread moth (%s/%s)" % [run_seed, held[37], held[36]])
 		_expect(int(held[38]) == 26 and int(held[39]) == 26, "seed %s stoled every woe moth (%s/%s)" % [run_seed, held[39], held[38]])
-		_expect(int(held[8]) == 0 and int(held[9]) == 17, "seed %s spent the seventeen seeds, including the stole" % run_seed)
+		_expect(int(held[40]) == 0 and int(held[41]) == 0, "seed %s meets no blight moth before night 36" % run_seed)
+		_expect(int(held[8]) == Sim.START_SEEDS - 17 and int(held[9]) == 17, "seed %s spent seventeen seeds and left the eighteenth unspent" % run_seed)
 		var layout := _stole_garden_layout(run_seed)
 		_expect(not bool(layout["lantern"]), "seed %s left the lantern unplanted" % run_seed)
 		_expect(layout["shawl"] == Vector2i(2, 6), "seed %s kept the shawl at (2, 6)" % run_seed)
 		_expect(layout["stole"] == STOLE_TILE, "seed %s planted the stole at (1, 5)" % run_seed)
-	var again := _play(42, Callable(self, "_stole_command"))
-	var replay := _play(42, Callable(self, "_stole_command"))
-	_expect(str(again) == str(replay), "same seed and stole plan replay")
+		_expect(not bool(layout["mantle"]), "seed %s left the eighteenth seed unspent and the mantle unplanted" % run_seed)
+	var again := _play(42, Callable(self, "_stole_command"), 35)
+	var replay := _play(42, Callable(self, "_stole_command"), 35)
+	_expect(str(again) == str(replay), "same seed and stole plan replay through night 35")
 
 
 func _stole_garden_layout(seed_value: int) -> Dictionary:
@@ -5339,6 +5393,543 @@ func _stole_garden_layout(seed_value: int) -> Dictionary:
 		"lantern": sim.has_plant(Catalog.LANTERN),
 		"shawl": _plant_cell(sim, Catalog.SHAWL),
 		"stole": _plant_cell(sim, Catalog.STOLE),
+		"mantle": sim.has_plant(Catalog.MANTLE),
+	}
+
+
+func _test_blight_rule() -> void:
+	print("mantle blight rule")
+	var placed = Sim.new(4)
+	placed.seeds = 24
+	for spec in [
+		[Catalog.WICK, Vector2i(6, 5)],
+		[Catalog.BRIAR, Vector2i(6, 4)],
+		[Catalog.FLARE, Vector2i(7, 4)],
+		[Catalog.HEARTH, Vector2i(5, 5)],
+		[Catalog.SHEAR, Vector2i(7, 6)],
+		[Catalog.CHIME, Vector2i(8, 6)],
+		[Catalog.RASP, Vector2i(9, 5)],
+		[Catalog.MAUL, Vector2i(9, 6)],
+		[Catalog.BILL, Vector2i(8, 4)],
+		[Catalog.SHADE, Vector2i(6, 6)],
+		[Catalog.COWL, Vector2i(7, 5)],
+		[Catalog.HOOD, Vector2i(5, 6)],
+		[Catalog.CLOAK, Vector2i(4, 6)],
+		[Catalog.CAPE, Vector2i(3, 6)],
+		[Catalog.SHAWL, Vector2i(2, 6)],
+		[Catalog.STOLE, STOLE_TILE],
+	]:
+		var sow = Sim.Command.new()
+		sow.plant_kind = int(spec[0])
+		sow.tile = spec[1]
+		placed.step(sow)
+	var idle = Sim.Command.new()
+	placed.step(idle)
+	_expect(placed.tile_stoles_woe(7, 5) and not placed.tile_mantles_blight(7, 5), "the stole covers the gardener and does not mantle blight")
+	_expect(not placed.plant_of_kind(Catalog.STOLE).mantles_blight, "a stole does not mantle blight")
+	var west = Sim.new(4)
+	var at_west = Sim.Command.new()
+	at_west.plant_kind = Catalog.MANTLE
+	at_west.tile = MANTLE_TILE
+	west.step(at_west)
+	_expect(west.tile_mantles_blight(1, 5) and west.tile_mantles_blight(2, 6) and west.tile_mantles_blight(7, 5) and west.tile_mantles_blight(8, 4) and west.tile_mantles_blight(8, 5) and west.tile_mantles_blight(8, 6), "a mantle at (1, 6) covers the stole and the kill tiles")
+	_expect(not west.tile_mantles_blight(9, 5) and not west.tile_mantles_blight(9, 6), "rasp and maul sit outside the kill intersection, so missing them is not a lock miss")
+	_expect(not west.tile_lit(1, 6) and not west.tile_stoles_woe(1, 6), "a lone mantle does not light its tile and does not stole woe")
+	var corner = Sim.Command.new()
+	corner.plant_kind = Catalog.MANTLE
+	corner.tile = Vector2i(1, 1)
+	placed.step(corner)
+	_expect(placed.tile_mantles_blight(1, 1), "a mantle on its own tile mantles it")
+	_expect(not placed.tile_lit(1, 1), "a mantle does not light its own tile")
+	_expect(placed.tile_mantles_blight(7, 5) and placed.tile_mantles_blight(1, 5), "a 336px mantle at (1, 1) reaches the gardener and the stole")
+	_expect(not placed.tile_mantles_blight(8, 5) and not placed.tile_mantles_blight(7, 6) and not placed.tile_mantles_blight(8, 6), "that corner mantle misses the pea, the shear, and the chime")
+	var beside = Sim.Command.new()
+	beside.plant_kind = Catalog.MANTLE
+	beside.tile = MANTLE_TILE
+	placed.step(beside)
+	_expect(placed.tile_mantles_blight(1, 5) and placed.tile_mantles_blight(2, 6) and placed.tile_mantles_blight(7, 5) and placed.tile_mantles_blight(6, 6) and placed.tile_mantles_blight(5, 5) and placed.tile_mantles_blight(8, 5), "the winning mantle covers the stole, the shawl, the gardener, the shade, the hearth, and the pea")
+	_expect(placed.tile_mantles_blight(7, 4) and placed.tile_mantles_blight(6, 5) and placed.tile_mantles_blight(8, 4) and placed.tile_mantles_blight(5, 6) and placed.tile_mantles_blight(4, 6) and placed.tile_mantles_blight(3, 6) and placed.tile_mantles_blight(6, 4) and placed.tile_mantles_blight(7, 6) and placed.tile_mantles_blight(8, 6), "that mantle also covers the flare, the wick, the bill, the hood, the cloak, the cape, the briar, the shear, and the chime")
+	_expect(not placed.tile_mantles_blight(13, 9), "the winning mantle leaves the far orchard edge sealed")
+	var mantle_plant = placed.plant_of_kind(Catalog.MANTLE)
+	_expect(mantle_plant != null and mantle_plant.mantles_blight and not mantle_plant.casts_light and not mantle_plant.stoles_woe and not mantle_plant.shawls_dread and not mantle_plant.capes_murk and not mantle_plant.cloaks_gloom and not mantle_plant.hoods_pall and not mantle_plant.cowls_veil and not mantle_plant.shades_dusk and not mantle_plant.splits_hide and not mantle_plant.burns_shroud and not mantle_plant.cracks_rind and not mantle_plant.melts_pitch and not mantle_plant.thaws_frost and not mantle_plant.cuts_web and not mantle_plant.cracks_glass and not mantle_plant.strips_scale and not mantle_plant.cracks_mail, "the mantle mantles blight and does not light, stole, shawl, cape, cloak, hood, cowl, shade, split, burn, crack rind, melt, thaw, cut web, crack glass, strip scale, or crack mail")
+	var winning_mantle = null
+	for plant in placed.plants:
+		if plant.alive and plant.kind == Catalog.MANTLE and plant.cell == MANTLE_TILE:
+			winning_mantle = plant
+	_expect(winning_mantle != null and winning_mantle.mantles_blight and not winning_mantle.stoles_woe, "the mantle at (1, 6) mantles blight and does not stole woe")
+
+	var only = Sim.new(5)
+	var sow_mantle = Sim.Command.new()
+	sow_mantle.plant_kind = Catalog.MANTLE
+	sow_mantle.tile = MANTLE_TILE
+	only.step(sow_mantle)
+	var sealed_woe = only.spawn_pest(only.tile_center(1, 6), false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true)
+	var opened_blight = only.spawn_pest(only.tile_center(1, 6), false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true)
+	var plain = only.spawn_pest(only.tile_center(1, 6), false, false, false, false, false, false, false, false, false, false, false, false, false)
+	_expect(only.tile_mantles_blight(1, 6) and only.tile_mantles_blight(1, 5) and not only.tile_lit(1, 6) and not only.tile_stoles_woe(1, 6), "mantle marks the tile without lighting it or stoling woe")
+	_expect(sealed_woe.hidden, "a mantle does not reveal a woe moth")
+	_expect(not opened_blight.hidden, "a mantle reveals a blight moth on its tile")
+	_expect(plain.hidden, "an ordinary moth stays hidden in a mantle with no light")
+	var mantle_hit := false
+	var woe_hurt := false
+	var guard := 0
+	while guard < 160 and only.outcome == Sim.OUTCOME_RUNNING and not mantle_hit:
+		only.step(idle)
+		guard += 1
+		for event in only.events:
+			if str(event.get("type", "")) != "hit":
+				continue
+			if int(event["pest_id"]) == int(opened_blight.id):
+				mantle_hit = true
+			if int(event["pest_id"]) == int(sealed_woe.id):
+				woe_hurt = true
+	var woe_left = only.pest_by_id(int(sealed_woe.id))
+	_expect(mantle_hit, "the revealed blight moth takes a hit")
+	_expect(not woe_hurt and woe_left != null and int(woe_left.hp) == Sim.PEST_HP, "shots do not hurt a woe moth standing in a mantle")
+
+	var blocked = Sim.new(6)
+	var sow_stole = Sim.Command.new()
+	sow_stole.plant_kind = Catalog.STOLE
+	sow_stole.tile = STOLE_TILE
+	blocked.step(sow_stole)
+	var sow_pea = Sim.Command.new()
+	sow_pea.plant_kind = Catalog.PEA
+	sow_pea.tile = Vector2i(8, 5)
+	blocked.step(sow_pea)
+	var hidden_blight = blocked.spawn_pest(blocked.tile_center(7, 5), false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true)
+	var shown_woe = blocked.spawn_pest(blocked.tile_center(1, 5), false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true)
+	_expect(hidden_blight.hidden and not shown_woe.hidden, "a stole opens woe and leaves blight sealed")
+	var blight_id := int(hidden_blight.id)
+	var blight_hit := false
+	guard = 0
+	while guard < 40 and blocked.outcome == Sim.OUTCOME_RUNNING:
+		blocked.step(idle)
+		guard += 1
+		for event in blocked.events:
+			if str(event.get("type", "")) == "hit" and int(event["pest_id"]) == blight_id:
+				blight_hit = true
+	var blight_now = blocked.pest_by_id(blight_id)
+	_expect(not blight_hit and blight_now != null and int(blight_now.hp) == Sim.PEST_HP, "a stole does not damage a blight moth")
+
+	var splash = Sim.new(8)
+	var sow_gourd = Sim.Command.new()
+	sow_gourd.plant_kind = Catalog.GOURD
+	sow_gourd.tile = Vector2i(5, 5)
+	splash.step(sow_gourd)
+	var sow_lamp = Sim.Command.new()
+	sow_lamp.plant_kind = Catalog.LANTERN
+	sow_lamp.tile = Vector2i(7, 5)
+	splash.step(sow_lamp)
+	var victim = splash.spawn_pest(splash.tile_center(10, 5))
+	var ghost = splash.spawn_pest(splash.tile_center(10, 5), false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true)
+	var ghost_id := int(ghost.id)
+	var saw_splash_target := false
+	guard = 0
+	while guard < 80 and splash.outcome == Sim.OUTCOME_RUNNING and not saw_splash_target:
+		splash.step(idle)
+		guard += 1
+		for event in splash.events:
+			if str(event.get("type", "")) == "hit" and int(event["pest_id"]) == int(victim.id):
+				saw_splash_target = true
+	var ghost_now = splash.pest_by_id(ghost_id)
+	_expect(saw_splash_target, "gourd hit the visible moth beside the blight moth")
+	_expect(ghost_now != null and ghost_now.alive and int(ghost_now.hp) == Sim.PEST_HP, "gourd splash does not hurt a blight moth outside a mantle")
+
+	var canker = Sim.new(9)
+	canker.seeds = 24
+	for spec in [
+		[Catalog.WICK, Vector2i(6, 5)],
+		[Catalog.BRIAR, Vector2i(6, 4)],
+		[Catalog.FLARE, Vector2i(7, 4)],
+		[Catalog.PEA, Vector2i(8, 5)],
+		[Catalog.HEARTH, Vector2i(5, 5)],
+		[Catalog.SHEAR, Vector2i(7, 6)],
+		[Catalog.CHIME, Vector2i(8, 6)],
+		[Catalog.RASP, Vector2i(9, 5)],
+		[Catalog.MAUL, Vector2i(9, 6)],
+		[Catalog.BILL, Vector2i(8, 4)],
+		[Catalog.SHADE, Vector2i(6, 6)],
+		[Catalog.COWL, Vector2i(7, 5)],
+		[Catalog.HOOD, Vector2i(5, 6)],
+		[Catalog.CLOAK, Vector2i(4, 6)],
+		[Catalog.CAPE, Vector2i(3, 6)],
+		[Catalog.SHAWL, Vector2i(2, 6)],
+		[Catalog.STOLE, STOLE_TILE],
+	]:
+		var sow = Sim.Command.new()
+		sow.plant_kind = int(spec[0])
+		sow.tile = spec[1]
+		canker.step(sow)
+	var sealed = canker.spawn_pest(canker.tile_center(7, 4), true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true)
+	var sealed_id := int(sealed.id)
+	_expect(canker.tile_stoles_woe(7, 4) and not canker.tile_mantles_blight(7, 4) and sealed.hidden, "every older lock leaves a blight moth sealed")
+	guard = 0
+	var sealed_hit := false
+	while guard < 20 and canker.outcome == Sim.OUTCOME_RUNNING:
+		canker.step(idle)
+		guard += 1
+		for event in canker.events:
+			if str(event.get("type", "")) == "hit" and int(event["pest_id"]) == sealed_id:
+				sealed_hit = true
+	var sealed_now = canker.pest_by_id(sealed_id)
+	_expect(not sealed_hit and sealed_now != null and int(sealed_now.hp) == Sim.PEST_HP, "a canker moth ignores shots until every lock, including the mantle, is open")
+	var canker_mantle = Sim.Command.new()
+	canker_mantle.plant_kind = Catalog.MANTLE
+	canker_mantle.tile = MANTLE_TILE
+	canker.step(canker_mantle)
+	var opened = canker.pest_by_id(sealed_id)
+	_expect(opened != null and not opened.hidden, "mantle plus the older locks together reveal a canker moth")
+	var outside = canker.spawn_pest(canker.tile_center(13, 9), false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true)
+	_expect(outside.hidden, "a blight moth outside the mantle seals again")
+	var opened_hit := false
+	guard = 0
+	while guard < 80 and canker.outcome == Sim.OUTCOME_RUNNING and not opened_hit:
+		canker.step(idle)
+		guard += 1
+		for event in canker.events:
+			if str(event.get("type", "")) == "hit" and int(event["pest_id"]) == sealed_id:
+				opened_hit = true
+	_expect(opened_hit, "the opened canker moth takes a hit")
+
+
+func _test_thirty_sixth_nights() -> void:
+	print("nights 36 and 37")
+	_expect(Sim.START_SEEDS == 19, "the run starts with nineteen seeds")
+	_expect(Sim.WAVE_COUNT == 39 and Sim.WAVES.size() == 39, "thirty-nine nights")
+	_expect(int(Sim.WAVES[35]["count"]) == 10 and int(Sim.WAVES[35]["interval"]) == 78 and int(Sim.WAVES[35]["shroud_every"]) == 0 and int(Sim.WAVES[35]["rind_every"]) == 0 and int(Sim.WAVES[35]["pitch_every"]) == 0 and int(Sim.WAVES[35]["frost_every"]) == 0 and int(Sim.WAVES[35]["web_every"]) == 0 and int(Sim.WAVES[35]["glass_every"]) == 0 and int(Sim.WAVES[35]["scale_every"]) == 0 and int(Sim.WAVES[35]["mail_every"]) == 0 and int(Sim.WAVES[35]["hide_every"]) == 0 and int(Sim.WAVES[35]["dusk_every"]) == 0 and int(Sim.WAVES[35]["veil_every"]) == 0 and int(Sim.WAVES[35]["pall_every"]) == 0 and int(Sim.WAVES[35]["gloom_every"]) == 0 and int(Sim.WAVES[35]["murk_every"]) == 0 and int(Sim.WAVES[35]["dread_every"]) == 0 and int(Sim.WAVES[35]["woe_every"]) == 0 and int(Sim.WAVES[35]["blight_every"]) == 1 and str(Sim.WAVES[35]["name"]) == "Gall", "night 36 is all blight and no other lock")
+	_expect(int(Sim.WAVES[36]["count"]) == 16 and int(Sim.WAVES[36]["interval"]) == 60 and int(Sim.WAVES[36]["shroud_every"]) == 2 and int(Sim.WAVES[36]["rind_every"]) == 1 and int(Sim.WAVES[36]["pitch_every"]) == 1 and int(Sim.WAVES[36]["frost_every"]) == 1 and int(Sim.WAVES[36]["web_every"]) == 1 and int(Sim.WAVES[36]["glass_every"]) == 1 and int(Sim.WAVES[36]["scale_every"]) == 1 and int(Sim.WAVES[36]["mail_every"]) == 1 and int(Sim.WAVES[36]["hide_every"]) == 1 and int(Sim.WAVES[36]["dusk_every"]) == 1 and int(Sim.WAVES[36]["veil_every"]) == 1 and int(Sim.WAVES[36]["pall_every"]) == 1 and int(Sim.WAVES[36]["gloom_every"]) == 1 and int(Sim.WAVES[36]["murk_every"]) == 1 and int(Sim.WAVES[36]["dread_every"]) == 1 and int(Sim.WAVES[36]["woe_every"]) == 1 and int(Sim.WAVES[36]["blight_every"]) == 1 and str(Sim.WAVES[36]["name"]) == "Canker", "night 37 is blight, woe, dread, murk, gloom, pall, veil, dusk, hide, mail, scale, glass, web, frost, pitch, and rind, every second also a shroud")
+	for i in 35:
+		_expect(int(Sim.WAVES[i].get("blight_every", 0)) == 0, "night %d still spawns no blight" % (i + 1))
+	_expect(int(Sim.WAVES[32].get("blight_every", 0)) == 0 and str(Sim.WAVES[32]["name"]) == "Bane", "night 33 stays Bane and carries no blight")
+	_expect(int(Sim.WAVES[33].get("blight_every", 0)) == 0 and str(Sim.WAVES[33]["name"]) == "Woe", "night 34 stays Woe and carries no blight")
+	_expect(int(Sim.WAVES[34].get("blight_every", 0)) == 0 and str(Sim.WAVES[34]["name"]) == "Hex", "night 35 stays Hex and carries no blight")
+	_expect(int(Sim.WAVES[35].get("rot_every", 0)) == 0, "night 36 Gall carries no rot")
+	_expect(int(Sim.WAVES[36].get("rot_every", 0)) == 0, "night 37 Canker carries no rot")
+	var named = Sim.new(1)
+	named.wave = 36
+	named.phase = Sim.PHASE_WAVE
+	_expect(named.phase_text() == "Night 36 of 39 (Gall) — 0 pests left", "night 36 heading: %s" % named.phase_text())
+	named.wave = 37
+	_expect(named.phase_text() == "Night 37 of 39 (Canker) — 0 pests left", "night 37 heading: %s" % named.phase_text())
+	named.wave = 35
+	named.phase = Sim.PHASE_PLANT
+	named.phase_ticks = 0
+	_expect(named.phase_text().begins_with("Planting — night 36 (Gall)"), "planting before blight: %s" % named.phase_text())
+	_expect(MANTLE_TILE == Vector2i(1, 6), "the mantle landed at (1, 6) because that radius covers the stole and every Canker lock tile")
+
+	for run_seed in [42, 1, 7, 99, 256, 2026]:
+		var bare := _play(run_seed, Callable(self, "_stole_command"))
+		print("  no mantle seed=%s outcome=%s night=%s hp=%s blight=%s/%s woe=%s/%s" % [run_seed, bare[0], bare[1], bare[4], bare[41], bare[40], bare[39], bare[38]])
+		_expect(int(bare[0]) == Sim.OUTCOME_LOST, "seed %s dies when the stole has no mantle" % run_seed)
+		_expect(int(bare[1]) == 36, "seed %s dies on the blight night (night %s)" % [run_seed, bare[1]])
+		_expect(int(bare[4]) == 0, "seed %s health reached zero on the blight night" % run_seed)
+		_expect(int(bare[40]) > 0 and int(bare[41]) == 0, "seed %s left every blight moth unmantled (%s spawned, %s killed)" % [run_seed, bare[40], bare[41]])
+		_expect(int(bare[38]) == 26 and int(bare[39]) == 26, "seed %s had already stoled woe before blight (%s/%s)" % [run_seed, bare[39], bare[38]])
+		_expect(int(bare[8]) == Sim.START_SEEDS - 17 and int(bare[9]) == 17, "seed %s still has the eighteenth seed unspent when blight arrives" % run_seed)
+		var missed := _play(run_seed, Callable(self, "_corner_mantle_command"), 37)
+		print("  corner mantle seed=%s outcome=%s night=%s hp=%s blight=%s/%s" % [run_seed, missed[0], missed[1], missed[4], missed[41], missed[40]])
+		# (1, 1) still mantles the gardener tile, so Gall is not a sealed night. It misses the pea, the shear, and the chime, and it finishes night 37 below full health.
+		_expect(int(missed[1]) == 37, "seed %s reaches night 37 with a corner mantle (night %s)" % [run_seed, missed[1]])
+		_expect(int(missed[4]) < 100, "seed %s finishes night 37 below full health with a corner mantle (%s)" % [run_seed, missed[4]])
+		_expect(int(missed[8]) == 1 and int(missed[9]) == 18, "seed %s planted the mantle and left the nineteenth seed unspent" % run_seed)
+		var held := _play(run_seed, Callable(self, "_mantle_command"), 37)
+		print("  mantle seed=%s outcome=%s night=%s hp=%s tick=%s shrouds=%s/%s rinds=%s/%s pitches=%s/%s frosts=%s/%s webs=%s/%s glasses=%s/%s scales=%s/%s mails=%s/%s hides=%s/%s dusk=%s/%s veil=%s/%s pall=%s/%s gloom=%s/%s murk=%s/%s dread=%s/%s woe=%s/%s blight=%s/%s" % [run_seed, held[0], held[1], held[4], held[3], held[7], held[6], held[11], held[10], held[13], held[12], held[15], held[14], held[17], held[16], held[19], held[18], held[21], held[20], held[23], held[22], held[25], held[24], held[27], held[26], held[29], held[28], held[31], held[30], held[33], held[32], held[35], held[34], held[37], held[36], held[39], held[38], held[41], held[40]])
+		_expect(int(held[0]) == Sim.OUTCOME_RUNNING and int(held[2]) == Sim.PHASE_PLANT, "seed %s is still planting after night 37" % run_seed)
+		_expect(int(held[1]) == 37, "seed %s cleared through night 37" % run_seed)
+		_expect(int(held[4]) == 100, "seed %s finished night 37 at full health (%s)" % [run_seed, held[4]])
+		_expect(int(held[6]) == 144 and int(held[7]) == 144, "seed %s burned every shroud moth (%s/%s)" % [run_seed, held[7], held[6]])
+		_expect(int(held[10]) == 266 and int(held[11]) == 266, "seed %s cracked every rind moth (%s/%s)" % [run_seed, held[11], held[10]])
+		_expect(int(held[12]) == 250 and int(held[13]) == 250, "seed %s melted every pitch moth (%s/%s)" % [run_seed, held[13], held[12]])
+		_expect(int(held[14]) == 234 and int(held[15]) == 234, "seed %s thawed every frost moth (%s/%s)" % [run_seed, held[15], held[14]])
+		_expect(int(held[16]) == 218 and int(held[17]) == 218, "seed %s cut every web moth (%s/%s)" % [run_seed, held[17], held[16]])
+		_expect(int(held[18]) == 202 and int(held[19]) == 202, "seed %s cracked every glass moth (%s/%s)" % [run_seed, held[19], held[18]])
+		_expect(int(held[20]) == 186 and int(held[21]) == 186, "seed %s stripped every scale moth (%s/%s)" % [run_seed, held[21], held[20]])
+		_expect(int(held[22]) == 170 and int(held[23]) == 170, "seed %s cracked every mail moth (%s/%s)" % [run_seed, held[23], held[22]])
+		_expect(int(held[24]) == 154 and int(held[25]) == 154, "seed %s split every hide moth (%s/%s)" % [run_seed, held[25], held[24]])
+		_expect(int(held[26]) == 138 and int(held[27]) == 138, "seed %s shaded every dusk moth (%s/%s)" % [run_seed, held[27], held[26]])
+		_expect(int(held[28]) == 122 and int(held[29]) == 122, "seed %s cowled every veil moth (%s/%s)" % [run_seed, held[29], held[28]])
+		_expect(int(held[30]) == 106 and int(held[31]) == 106, "seed %s hooded every pall moth (%s/%s)" % [run_seed, held[31], held[30]])
+		_expect(int(held[32]) == 90 and int(held[33]) == 90, "seed %s cloaked every gloom moth (%s/%s)" % [run_seed, held[33], held[32]])
+		_expect(int(held[34]) == 74 and int(held[35]) == 74, "seed %s caped every murk moth (%s/%s)" % [run_seed, held[35], held[34]])
+		_expect(int(held[36]) == 58 and int(held[37]) == 58, "seed %s shawled every dread moth (%s/%s)" % [run_seed, held[37], held[36]])
+		_expect(int(held[38]) == 42 and int(held[39]) == 42, "seed %s stoled every woe moth (%s/%s)" % [run_seed, held[39], held[38]])
+		_expect(int(held[40]) == 26 and int(held[41]) == 26, "seed %s mantled every blight moth (%s/%s)" % [run_seed, held[41], held[40]])
+		_expect(int(held[42]) == 0 and int(held[43]) == 0, "seed %s meets no rot moth before night 38" % run_seed)
+		_expect(int(held[8]) == 1 and int(held[9]) == 18, "seed %s spent eighteen seeds and left the nineteenth unspent" % run_seed)
+		var layout := _mantle_garden_layout(run_seed)
+		_expect(not bool(layout["lantern"]), "seed %s left the lantern unplanted" % run_seed)
+		_expect(layout["shawl"] == Vector2i(2, 6), "seed %s kept the shawl at (2, 6)" % run_seed)
+		_expect(layout["stole"] == STOLE_TILE, "seed %s kept the stole at (1, 5)" % run_seed)
+		_expect(layout["mantle"] == MANTLE_TILE, "seed %s planted the mantle at (1, 6)" % run_seed)
+	var again := _play(42, Callable(self, "_mantle_command"), 37)
+	var replay := _play(42, Callable(self, "_mantle_command"), 37)
+	_expect(str(again) == str(replay), "same seed and mantle plan replay through night 37")
+
+
+func _mantle_garden_layout(seed_value: int) -> Dictionary:
+	var sim = Sim.new(seed_value)
+	var guard := 0
+	while sim.phase == Sim.PHASE_PLANT and sim.outcome == Sim.OUTCOME_RUNNING and guard < 400:
+		sim.step(_mantle_command(sim))
+		guard += 1
+	return {
+		"lantern": sim.has_plant(Catalog.LANTERN),
+		"shawl": _plant_cell(sim, Catalog.SHAWL),
+		"stole": _plant_cell(sim, Catalog.STOLE),
+		"mantle": _plant_cell(sim, Catalog.MANTLE),
+	}
+
+
+func _test_rot_rule() -> void:
+	print("tippet rot rule")
+	var west = Sim.new(4)
+	var at_west = Sim.Command.new()
+	at_west.plant_kind = Catalog.TIPPET
+	at_west.tile = TIPPET_TILE
+	west.step(at_west)
+	_expect(west.tile_tippets_rot(1, 6) and west.tile_tippets_rot(1, 5) and west.tile_tippets_rot(2, 6) and west.tile_tippets_rot(7, 5), "a tippet at (1, 7) covers the mantle, the stole, the shawl, and the gardener")
+	_expect(west.tile_tippets_rot(8, 4) and west.tile_tippets_rot(8, 5) and west.tile_tippets_rot(8, 6) and west.tile_tippets_rot(7, 4) and west.tile_tippets_rot(6, 4) and west.tile_tippets_rot(7, 6) and west.tile_tippets_rot(6, 5) and west.tile_tippets_rot(6, 6) and west.tile_tippets_rot(5, 4) and west.tile_tippets_rot(5, 5) and west.tile_tippets_rot(5, 6) and west.tile_tippets_rot(7, 3) and west.tile_tippets_rot(6, 3), "that tippet covers every tile a Smut moth needs all at once")
+	_expect(not west.tile_tippets_rot(9, 5) and not west.tile_tippets_rot(9, 6), "rasp and maul sit outside the kill intersection, so missing them is not a lock miss")
+	_expect(not west.tile_lit(1, 7) and not west.tile_mantles_blight(1, 7) and not west.tile_stoles_woe(1, 7), "a lone tippet does not light its tile, mantle blight, or stole woe")
+	var corner = Sim.new(4)
+	var at_corner = Sim.Command.new()
+	at_corner.plant_kind = Catalog.TIPPET
+	at_corner.tile = Vector2i(1, 1)
+	corner.step(at_corner)
+	_expect(corner.tile_tippets_rot(7, 5), "a tippet at (1, 1) reaches the gardener")
+	_expect(not corner.tile_tippets_rot(8, 5) and not corner.tile_tippets_rot(8, 6), "that corner tippet misses the pea and the chime")
+	var tippet_plant = west.plant_of_kind(Catalog.TIPPET)
+	_expect(tippet_plant != null and tippet_plant.tippets_rot and not tippet_plant.casts_light and not tippet_plant.mantles_blight and not tippet_plant.stoles_woe and not tippet_plant.shawls_dread and not tippet_plant.capes_murk and not tippet_plant.cloaks_gloom and not tippet_plant.hoods_pall and not tippet_plant.cowls_veil and not tippet_plant.shades_dusk and not tippet_plant.splits_hide and not tippet_plant.burns_shroud and not tippet_plant.cracks_rind and not tippet_plant.melts_pitch and not tippet_plant.thaws_frost and not tippet_plant.cuts_web and not tippet_plant.cracks_glass and not tippet_plant.strips_scale and not tippet_plant.cracks_mail, "the tippet tippets rot and does not light, mantle, stole, shawl, cape, cloak, hood, cowl, shade, split, burn, crack rind, melt, thaw, cut web, crack glass, strip scale, or crack mail")
+
+	var idle = Sim.Command.new()
+	var only = Sim.new(5)
+	var sow_tippet = Sim.Command.new()
+	sow_tippet.plant_kind = Catalog.TIPPET
+	sow_tippet.tile = TIPPET_TILE
+	only.step(sow_tippet)
+	var sealed_blight = only.spawn_pest(only.tile_center(1, 7), false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true)
+	var opened_rot = only.spawn_pest(only.tile_center(1, 7), false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true)
+	var plain = only.spawn_pest(only.tile_center(1, 7), false, false, false, false, false, false, false, false, false, false, false, false, false)
+	_expect(only.tile_tippets_rot(1, 7) and not only.tile_lit(1, 7) and not only.tile_mantles_blight(1, 7), "tippet marks the tile without lighting it or mantling blight")
+	_expect(sealed_blight.hidden, "a tippet does not reveal a blight moth")
+	_expect(not opened_rot.hidden, "a tippet reveals a rot moth on its tile")
+	_expect(plain.hidden, "an ordinary moth stays hidden in a tippet with no light")
+	var rot_hit := false
+	var blight_hurt := false
+	var guard := 0
+	while guard < 200 and only.outcome == Sim.OUTCOME_RUNNING and not rot_hit:
+		only.step(idle)
+		guard += 1
+		for event in only.events:
+			if str(event.get("type", "")) != "hit":
+				continue
+			if int(event["pest_id"]) == int(opened_rot.id):
+				rot_hit = true
+			if int(event["pest_id"]) == int(sealed_blight.id):
+				blight_hurt = true
+	var blight_left = only.pest_by_id(int(sealed_blight.id))
+	_expect(rot_hit, "the revealed rot moth takes a hit")
+	_expect(not blight_hurt and blight_left != null and int(blight_left.hp) == Sim.PEST_HP, "shots do not hurt a blight moth standing in a tippet")
+
+	var blocked = Sim.new(6)
+	var sow_mantle = Sim.Command.new()
+	sow_mantle.plant_kind = Catalog.MANTLE
+	sow_mantle.tile = MANTLE_TILE
+	blocked.step(sow_mantle)
+	var sow_pea = Sim.Command.new()
+	sow_pea.plant_kind = Catalog.PEA
+	sow_pea.tile = Vector2i(8, 5)
+	blocked.step(sow_pea)
+	var hidden_rot = blocked.spawn_pest(blocked.tile_center(7, 5), false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true)
+	var shown_blight = blocked.spawn_pest(blocked.tile_center(1, 6), false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true)
+	_expect(hidden_rot.hidden and not shown_blight.hidden, "a mantle opens blight and leaves rot sealed")
+	var rot_id := int(hidden_rot.id)
+	var mantle_rot_hit := false
+	guard = 0
+	while guard < 40 and blocked.outcome == Sim.OUTCOME_RUNNING:
+		blocked.step(idle)
+		guard += 1
+		for event in blocked.events:
+			if str(event.get("type", "")) == "hit" and int(event["pest_id"]) == rot_id:
+				mantle_rot_hit = true
+	var rot_now = blocked.pest_by_id(rot_id)
+	_expect(not mantle_rot_hit and rot_now != null and int(rot_now.hp) == Sim.PEST_HP, "a mantle does not damage a rot moth")
+
+	var splash = Sim.new(8)
+	var sow_gourd = Sim.Command.new()
+	sow_gourd.plant_kind = Catalog.GOURD
+	sow_gourd.tile = Vector2i(5, 5)
+	splash.step(sow_gourd)
+	var sow_lamp = Sim.Command.new()
+	sow_lamp.plant_kind = Catalog.LANTERN
+	sow_lamp.tile = Vector2i(7, 5)
+	splash.step(sow_lamp)
+	var victim = splash.spawn_pest(splash.tile_center(10, 5))
+	var ghost = splash.spawn_pest(splash.tile_center(10, 5), false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true)
+	var ghost_id := int(ghost.id)
+	var saw_splash_target := false
+	guard = 0
+	while guard < 80 and splash.outcome == Sim.OUTCOME_RUNNING and not saw_splash_target:
+		splash.step(idle)
+		guard += 1
+		for event in splash.events:
+			if str(event.get("type", "")) == "hit" and int(event["pest_id"]) == int(victim.id):
+				saw_splash_target = true
+	var ghost_now = splash.pest_by_id(ghost_id)
+	_expect(saw_splash_target, "gourd hit the visible moth beside the rot moth")
+	_expect(ghost_now != null and ghost_now.alive and int(ghost_now.hp) == Sim.PEST_HP, "gourd splash does not hurt a rot moth outside a tippet")
+
+	var touch = Sim.new(11)
+	var sealed_touch = touch.spawn_pest(touch.player_pos, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true)
+	_expect(sealed_touch.hidden, "a rot moth on the gardener stays closed with no tippet")
+	touch.step(idle)
+	var touched = touch.pest_by_id(int(sealed_touch.id))
+	_expect(touch.player_hp == Sim.PLAYER_HP - Sim.CONTACT_DAMAGE, "contact damage still lands on a closed rot moth")
+	_expect(touched != null and int(touched.hp) == Sim.PEST_HP, "that contact does not count as a shot")
+
+	var smut = Sim.new(9)
+	smut.seeds = 24
+	for spec in [
+		[Catalog.WICK, Vector2i(6, 5)],
+		[Catalog.BRIAR, Vector2i(6, 4)],
+		[Catalog.FLARE, Vector2i(7, 4)],
+		[Catalog.PEA, Vector2i(8, 5)],
+		[Catalog.HEARTH, Vector2i(5, 5)],
+		[Catalog.SHEAR, Vector2i(7, 6)],
+		[Catalog.CHIME, Vector2i(8, 6)],
+		[Catalog.RASP, Vector2i(9, 5)],
+		[Catalog.MAUL, Vector2i(9, 6)],
+		[Catalog.BILL, Vector2i(8, 4)],
+		[Catalog.SHADE, Vector2i(6, 6)],
+		[Catalog.COWL, Vector2i(7, 5)],
+		[Catalog.HOOD, Vector2i(5, 6)],
+		[Catalog.CLOAK, Vector2i(4, 6)],
+		[Catalog.CAPE, Vector2i(3, 6)],
+		[Catalog.SHAWL, Vector2i(2, 6)],
+		[Catalog.STOLE, STOLE_TILE],
+		[Catalog.MANTLE, MANTLE_TILE],
+	]:
+		var sow = Sim.Command.new()
+		sow.plant_kind = int(spec[0])
+		sow.tile = spec[1]
+		smut.step(sow)
+	var sealed = smut.spawn_pest(smut.tile_center(7, 4), true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true)
+	var sealed_id := int(sealed.id)
+	_expect(smut.tile_mantles_blight(7, 4) and not smut.tile_tippets_rot(7, 4) and sealed.hidden, "every older lock leaves a rot moth sealed")
+	guard = 0
+	var sealed_hit := false
+	while guard < 20 and smut.outcome == Sim.OUTCOME_RUNNING:
+		smut.step(idle)
+		guard += 1
+		for event in smut.events:
+			if str(event.get("type", "")) == "hit" and int(event["pest_id"]) == sealed_id:
+				sealed_hit = true
+	var sealed_now = smut.pest_by_id(sealed_id)
+	_expect(not sealed_hit and sealed_now != null and int(sealed_now.hp) == Sim.PEST_HP, "a smut moth ignores shots until every lock, including the tippet, is open")
+	var smut_tippet = Sim.Command.new()
+	smut_tippet.plant_kind = Catalog.TIPPET
+	smut_tippet.tile = TIPPET_TILE
+	smut.step(smut_tippet)
+	var opened = smut.pest_by_id(sealed_id)
+	_expect(opened != null and not opened.hidden, "tippet plus the older locks together reveal a smut moth")
+	var outside = smut.spawn_pest(smut.tile_center(13, 9), false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true)
+	_expect(outside.hidden, "a rot moth outside the tippet seals again")
+	var opened_hit := false
+	guard = 0
+	while guard < 80 and smut.outcome == Sim.OUTCOME_RUNNING and not opened_hit:
+		smut.step(idle)
+		guard += 1
+		for event in smut.events:
+			if str(event.get("type", "")) == "hit" and int(event["pest_id"]) == sealed_id:
+				opened_hit = true
+	_expect(opened_hit, "the opened smut moth takes a hit")
+
+
+func _test_thirty_eighth_nights() -> void:
+	print("nights 38 and 39")
+	_expect(Sim.START_SEEDS == 19, "the run starts with nineteen seeds")
+	_expect(Sim.WAVE_COUNT == 39 and Sim.WAVES.size() == 39, "thirty-nine nights")
+	_expect(int(Sim.WAVES[37]["count"]) == 10 and int(Sim.WAVES[37]["interval"]) == 84 and int(Sim.WAVES[37]["shroud_every"]) == 0 and int(Sim.WAVES[37]["rind_every"]) == 0 and int(Sim.WAVES[37]["pitch_every"]) == 0 and int(Sim.WAVES[37]["frost_every"]) == 0 and int(Sim.WAVES[37]["web_every"]) == 0 and int(Sim.WAVES[37]["glass_every"]) == 0 and int(Sim.WAVES[37]["scale_every"]) == 0 and int(Sim.WAVES[37]["mail_every"]) == 0 and int(Sim.WAVES[37]["hide_every"]) == 0 and int(Sim.WAVES[37]["dusk_every"]) == 0 and int(Sim.WAVES[37]["veil_every"]) == 0 and int(Sim.WAVES[37]["pall_every"]) == 0 and int(Sim.WAVES[37]["gloom_every"]) == 0 and int(Sim.WAVES[37]["murk_every"]) == 0 and int(Sim.WAVES[37]["dread_every"]) == 0 and int(Sim.WAVES[37]["woe_every"]) == 0 and int(Sim.WAVES[37]["blight_every"]) == 0 and int(Sim.WAVES[37]["rot_every"]) == 1 and str(Sim.WAVES[37]["name"]) == "Rot", "night 38 is all rot and no other lock")
+	_expect(int(Sim.WAVES[38]["count"]) == 16 and int(Sim.WAVES[38]["interval"]) == 60 and int(Sim.WAVES[38]["shroud_every"]) == 2 and int(Sim.WAVES[38]["rind_every"]) == 1 and int(Sim.WAVES[38]["pitch_every"]) == 1 and int(Sim.WAVES[38]["frost_every"]) == 1 and int(Sim.WAVES[38]["web_every"]) == 1 and int(Sim.WAVES[38]["glass_every"]) == 1 and int(Sim.WAVES[38]["scale_every"]) == 1 and int(Sim.WAVES[38]["mail_every"]) == 1 and int(Sim.WAVES[38]["hide_every"]) == 1 and int(Sim.WAVES[38]["dusk_every"]) == 1 and int(Sim.WAVES[38]["veil_every"]) == 1 and int(Sim.WAVES[38]["pall_every"]) == 1 and int(Sim.WAVES[38]["gloom_every"]) == 1 and int(Sim.WAVES[38]["murk_every"]) == 1 and int(Sim.WAVES[38]["dread_every"]) == 1 and int(Sim.WAVES[38]["woe_every"]) == 1 and int(Sim.WAVES[38]["blight_every"]) == 1 and int(Sim.WAVES[38]["rot_every"]) == 1 and str(Sim.WAVES[38]["name"]) == "Smut", "night 39 is rot, blight, woe, dread, murk, gloom, pall, veil, dusk, hide, mail, scale, glass, web, frost, pitch, and rind, every second also a shroud")
+	for i in 37:
+		_expect(int(Sim.WAVES[i].get("rot_every", 0)) == 0, "night %d still spawns no rot" % (i + 1))
+	var named = Sim.new(1)
+	named.wave = 38
+	named.phase = Sim.PHASE_WAVE
+	_expect(named.phase_text() == "Night 38 of 39 (Rot) — 0 pests left", "night 38 heading: %s" % named.phase_text())
+	named.wave = 39
+	_expect(named.phase_text() == "Night 39 of 39 (Smut) — 0 pests left", "night 39 heading: %s" % named.phase_text())
+	_expect(TIPPET_TILE == Vector2i(1, 7), "the tippet landed at (1, 7) because that radius covers the mantle and every Smut lock tile")
+
+	for run_seed in [42, 1, 7, 99, 256, 2026]:
+		var bare := _play(run_seed, Callable(self, "_mantle_command"))
+		print("  no tippet seed=%s outcome=%s night=%s hp=%s rot=%s/%s" % [run_seed, bare[0], bare[1], bare[4], bare[43], bare[42]])
+		_expect(int(bare[0]) == Sim.OUTCOME_LOST, "seed %s dies when the mantle has no tippet" % run_seed)
+		_expect(int(bare[1]) == 38, "seed %s dies on the rot night (night %s)" % [run_seed, bare[1]])
+		_expect(int(bare[4]) == 0, "seed %s health reached zero on the rot night" % run_seed)
+		_expect(int(bare[42]) > 0 and int(bare[43]) == 0, "seed %s left every rot moth untippetted (%s spawned, %s killed)" % [run_seed, bare[42], bare[43]])
+		_expect(int(bare[40]) == 26 and int(bare[41]) == 26, "seed %s had already mantled blight before rot (%s/%s)" % [run_seed, bare[41], bare[40]])
+		_expect(int(bare[8]) == 1 and int(bare[9]) == 18, "seed %s still has the nineteenth seed unspent when rot arrives" % run_seed)
+		var held := _play(run_seed, Callable(self, "_tippet_command"))
+		print("  tippet seed=%s outcome=%s night=%s hp=%s tick=%s shrouds=%s/%s rinds=%s/%s pitches=%s/%s frosts=%s/%s webs=%s/%s glasses=%s/%s scales=%s/%s mails=%s/%s hides=%s/%s dusk=%s/%s veil=%s/%s pall=%s/%s gloom=%s/%s murk=%s/%s dread=%s/%s woe=%s/%s blight=%s/%s rot=%s/%s" % [run_seed, held[0], held[1], held[4], held[3], held[7], held[6], held[11], held[10], held[13], held[12], held[15], held[14], held[17], held[16], held[19], held[18], held[21], held[20], held[23], held[22], held[25], held[24], held[27], held[26], held[29], held[28], held[31], held[30], held[33], held[32], held[35], held[34], held[37], held[36], held[39], held[38], held[41], held[40], held[43], held[42]])
+		_expect(int(held[0]) == Sim.OUTCOME_WON, "seed %s clears all thirty-nine nights with the tippet at (1, 7)" % run_seed)
+		_expect(int(held[1]) == 39, "seed %s win is night 39" % run_seed)
+		_expect(int(held[4]) == 100, "seed %s finished night 39 at full health (%s)" % [run_seed, held[4]])
+		_expect(int(held[6]) == 152 and int(held[7]) == 152, "seed %s burned every shroud moth (%s/%s)" % [run_seed, held[7], held[6]])
+		_expect(int(held[10]) == 282 and int(held[11]) == 282, "seed %s cracked every rind moth (%s/%s)" % [run_seed, held[11], held[10]])
+		_expect(int(held[12]) == 266 and int(held[13]) == 266, "seed %s melted every pitch moth (%s/%s)" % [run_seed, held[13], held[12]])
+		_expect(int(held[14]) == 250 and int(held[15]) == 250, "seed %s thawed every frost moth (%s/%s)" % [run_seed, held[15], held[14]])
+		_expect(int(held[16]) == 234 and int(held[17]) == 234, "seed %s cut every web moth (%s/%s)" % [run_seed, held[17], held[16]])
+		_expect(int(held[18]) == 218 and int(held[19]) == 218, "seed %s cracked every glass moth (%s/%s)" % [run_seed, held[19], held[18]])
+		_expect(int(held[20]) == 202 and int(held[21]) == 202, "seed %s stripped every scale moth (%s/%s)" % [run_seed, held[21], held[20]])
+		_expect(int(held[22]) == 186 and int(held[23]) == 186, "seed %s cracked every mail moth (%s/%s)" % [run_seed, held[23], held[22]])
+		_expect(int(held[24]) == 170 and int(held[25]) == 170, "seed %s split every hide moth (%s/%s)" % [run_seed, held[25], held[24]])
+		_expect(int(held[26]) == 154 and int(held[27]) == 154, "seed %s shaded every dusk moth (%s/%s)" % [run_seed, held[27], held[26]])
+		_expect(int(held[28]) == 138 and int(held[29]) == 138, "seed %s cowled every veil moth (%s/%s)" % [run_seed, held[29], held[28]])
+		_expect(int(held[30]) == 122 and int(held[31]) == 122, "seed %s hooded every pall moth (%s/%s)" % [run_seed, held[31], held[30]])
+		_expect(int(held[32]) == 106 and int(held[33]) == 106, "seed %s cloaked every gloom moth (%s/%s)" % [run_seed, held[33], held[32]])
+		_expect(int(held[34]) == 90 and int(held[35]) == 90, "seed %s caped every murk moth (%s/%s)" % [run_seed, held[35], held[34]])
+		_expect(int(held[36]) == 74 and int(held[37]) == 74, "seed %s shawled every dread moth (%s/%s)" % [run_seed, held[37], held[36]])
+		_expect(int(held[38]) == 58 and int(held[39]) == 58, "seed %s stoled every woe moth (%s/%s)" % [run_seed, held[39], held[38]])
+		_expect(int(held[40]) == 42 and int(held[41]) == 42, "seed %s mantled every blight moth (%s/%s)" % [run_seed, held[41], held[40]])
+		_expect(int(held[42]) == 26 and int(held[43]) == 26, "seed %s tippetted every rot moth (%s/%s)" % [run_seed, held[43], held[42]])
+		_expect(int(held[8]) == 0 and int(held[9]) == 19, "seed %s spent the nineteen seeds, including the tippet" % run_seed)
+		var layout := _tippet_garden_layout(run_seed)
+		_expect(not bool(layout["lantern"]), "seed %s left the lantern unplanted" % run_seed)
+		_expect(layout["shawl"] == Vector2i(2, 6), "seed %s kept the shawl at (2, 6)" % run_seed)
+		_expect(layout["stole"] == STOLE_TILE, "seed %s kept the stole at (1, 5)" % run_seed)
+		_expect(layout["mantle"] == MANTLE_TILE, "seed %s kept the mantle at (1, 6)" % run_seed)
+		_expect(layout["tippet"] == TIPPET_TILE, "seed %s planted the tippet at (1, 7)" % run_seed)
+		var missed := _play(run_seed, Callable(self, "_corner_tippet_command"))
+		print("  corner tippet seed=%s outcome=%s night=%s hp=%s rot=%s/%s" % [run_seed, missed[0], missed[1], missed[4], missed[43], missed[42]])
+		# (1, 1) still tippets the gardener, so night 38 is not a sealed death. It misses the pea and the chime. The other plants stay put. Seeds 1, 7, 99, 256, and 2026 finish night 39 damaged. Seed 42 still kills every rot moth before contact and finishes at full health.
+		var corner_hp := 100
+		if run_seed == 1 or run_seed == 256:
+			corner_hp = 60
+		elif run_seed == 7 or run_seed == 99:
+			corner_hp = 40
+		elif run_seed == 2026:
+			corner_hp = 80
+		_expect(int(missed[0]) == Sim.OUTCOME_WON and int(missed[1]) == 39, "seed %s with a corner tippet finishes night 39 (outcome %s night %s)" % [run_seed, missed[0], missed[1]])
+		_expect(int(missed[4]) == corner_hp, "seed %s corner tippet health is %s (got %s)" % [run_seed, corner_hp, missed[4]])
+		_expect(int(missed[42]) == 26 and int(missed[43]) == 26, "seed %s corner tippet still tippetted every rot moth (%s/%s)" % [run_seed, missed[43], missed[42]])
+	var again := _play(42, Callable(self, "_tippet_command"))
+	var replay := _play(42, Callable(self, "_tippet_command"))
+	_expect(str(again) == str(replay), "same seed and tippet plan replay")
+
+
+func _tippet_garden_layout(seed_value: int) -> Dictionary:
+	var sim = Sim.new(seed_value)
+	var guard := 0
+	while sim.phase == Sim.PHASE_PLANT and sim.outcome == Sim.OUTCOME_RUNNING and guard < 400:
+		sim.step(_tippet_command(sim))
+		guard += 1
+	return {
+		"lantern": sim.has_plant(Catalog.LANTERN),
+		"shawl": _plant_cell(sim, Catalog.SHAWL),
+		"stole": _plant_cell(sim, Catalog.STOLE),
+		"mantle": _plant_cell(sim, Catalog.MANTLE),
+		"tippet": _plant_cell(sim, Catalog.TIPPET),
 	}
 
 
@@ -5401,6 +5992,8 @@ func _test_no_dominance() -> void:
 	var capers := 0
 	var shawlers := 0
 	var stolers := 0
+	var mantlers := 0
+	var tippeters := 0
 	var scores: Array = []
 	for kind in Catalog.COUNT:
 		var stats := Catalog.get_stats(kind)
@@ -5436,6 +6029,10 @@ func _test_no_dominance() -> void:
 			shawlers += 1
 		if bool(stats["stoles_woe"]):
 			stolers += 1
+		if bool(stats["mantles_blight"]):
+			mantlers += 1
+		if bool(stats["tippets_rot"]):
+			tippeters += 1
 		var specials := 0
 		if bool(stats["burns_shroud"]):
 			specials += 1
@@ -5469,6 +6066,10 @@ func _test_no_dominance() -> void:
 			specials += 1
 		if bool(stats["stoles_woe"]):
 			specials += 1
+		if bool(stats["mantles_blight"]):
+			specials += 1
+		if bool(stats["tippets_rot"]):
+			specials += 1
 		_expect(specials <= 1, "%s keeps a single light rule" % stats["name"])
 		scores.append(stats)
 	_expect(burners == 1, "only one plant burns shroud")
@@ -5487,6 +6088,8 @@ func _test_no_dominance() -> void:
 	_expect(capers == 1, "only one plant capes murk")
 	_expect(shawlers == 1, "only one plant shawls dread")
 	_expect(stolers == 1, "only one plant stoles woe")
+	_expect(mantlers == 1, "only one plant mantles blight")
+	_expect(tippeters == 1, "only one plant tippets rot")
 	var wick := Catalog.get_stats(Catalog.WICK)
 	_expect(bool(wick["burns_shroud"]), "wick burns shroud")
 	_expect(not bool(wick["cracks_rind"]), "wick does not crack rind")
@@ -5640,6 +6243,8 @@ func _test_no_dominance() -> void:
 	_expect(not bool(shade["capes_murk"]), "shade does not cape murk")
 	_expect(not bool(shade["shawls_dread"]), "shade does not shawl dread")
 	_expect(not bool(shade["stoles_woe"]), "shade does not stole woe")
+	_expect(not bool(shade["mantles_blight"]), "shade does not mantle blight")
+	_expect(not bool(shade["tippets_rot"]), "shade does not tippet rot")
 	_expect(int(shade["damage"]) < damage_max, "shade is not the highest damage")
 	_expect(int(shade["fire_ticks"]) > fastest, "shade is not the fastest fire")
 	var cowl := Catalog.get_stats(Catalog.COWL)
@@ -5660,6 +6265,8 @@ func _test_no_dominance() -> void:
 	_expect(not bool(cowl["capes_murk"]), "cowl does not cape murk")
 	_expect(not bool(cowl["shawls_dread"]), "cowl does not shawl dread")
 	_expect(not bool(cowl["stoles_woe"]), "cowl does not stole woe")
+	_expect(not bool(cowl["mantles_blight"]), "cowl does not mantle blight")
+	_expect(not bool(cowl["tippets_rot"]), "cowl does not tippet rot")
 	_expect(int(cowl["damage"]) < damage_max, "cowl is not the highest damage")
 	_expect(int(cowl["fire_ticks"]) > fastest, "cowl is not the fastest fire")
 	_expect(float(cowl["light_radius"]) == 240.0, "cowl radius is 240px")
@@ -5681,6 +6288,8 @@ func _test_no_dominance() -> void:
 	_expect(not bool(hood["capes_murk"]), "hood does not cape murk")
 	_expect(not bool(hood["shawls_dread"]), "hood does not shawl dread")
 	_expect(not bool(hood["stoles_woe"]), "hood does not stole woe")
+	_expect(not bool(hood["mantles_blight"]), "hood does not mantle blight")
+	_expect(not bool(hood["tippets_rot"]), "hood does not tippet rot")
 	_expect(int(hood["damage"]) < damage_max, "hood is not the highest damage")
 	_expect(int(hood["fire_ticks"]) > fastest, "hood is not the fastest fire")
 	_expect(float(hood["light_radius"]) == 256.0, "hood radius is 256px")
@@ -5708,6 +6317,8 @@ func _test_no_dominance() -> void:
 	_expect(not bool(cloak["capes_murk"]), "cloak does not cape murk")
 	_expect(not bool(cloak["shawls_dread"]), "cloak does not shawl dread")
 	_expect(not bool(cloak["stoles_woe"]), "cloak does not stole woe")
+	_expect(not bool(cloak["mantles_blight"]), "cloak does not mantle blight")
+	_expect(not bool(cloak["tippets_rot"]), "cloak does not tippet rot")
 	_expect(int(cloak["damage"]) < damage_max, "cloak is not the highest damage")
 	_expect(int(cloak["damage"]) > lantern_damage, "cloak damage stays above the lantern")
 	_expect(int(cloak["fire_ticks"]) > fastest, "cloak is not the fastest fire")
@@ -5736,6 +6347,8 @@ func _test_no_dominance() -> void:
 	_expect(not bool(cape["splits_hide"]), "cape does not split hide")
 	_expect(not bool(cape["shawls_dread"]), "cape does not shawl dread")
 	_expect(not bool(cape["stoles_woe"]), "cape does not stole woe")
+	_expect(not bool(cape["mantles_blight"]), "cape does not mantle blight")
+	_expect(not bool(cape["tippets_rot"]), "cape does not tippet rot")
 	_expect(int(cape["damage"]) < damage_max, "cape is not the highest damage")
 	_expect(int(cape["damage"]) > lantern_damage, "cape damage stays above the lantern")
 	_expect(int(cape["fire_ticks"]) > fastest, "cape is not the fastest fire")
@@ -5775,6 +6388,8 @@ func _test_no_dominance() -> void:
 	_expect(float(shawl["splash_radius"]) == 0.0, "shawl has no splash")
 	_expect(int(shawl["slow_ticks"]) == 0, "shawl has no slow")
 	_expect(not bool(shawl["stoles_woe"]), "shawl does not stole woe")
+	_expect(not bool(shawl["mantles_blight"]), "shawl does not mantle blight")
+	_expect(not bool(shawl["tippets_rot"]), "shawl does not tippet rot")
 	_expect(str(shawl["role"]) == "Shawls dread, modest shots, no light.", "shawl role text")
 	var stole := Catalog.get_stats(Catalog.STOLE)
 	_expect(bool(stole["stoles_woe"]), "stole stoles woe")
@@ -5808,7 +6423,77 @@ func _test_no_dominance() -> void:
 	_expect(int(stole["damage"]) == 2, "stole damage is 2")
 	_expect(float(stole["splash_radius"]) == 0.0, "stole has no splash")
 	_expect(int(stole["slow_ticks"]) == 0, "stole has no slow")
+	_expect(not bool(stole["mantles_blight"]), "stole does not mantle blight")
+	_expect(not bool(stole["tippets_rot"]), "stole does not tippet rot")
 	_expect(str(stole["role"]) == "Stoles woe, modest shots, no light.", "stole role text")
+	var mantle := Catalog.get_stats(Catalog.MANTLE)
+	_expect(bool(mantle["mantles_blight"]), "mantle mantles blight")
+	_expect(not bool(mantle["casts_light"]), "mantle is not a light")
+	_expect(not bool(mantle["stoles_woe"]), "mantle does not stole woe")
+	_expect(not bool(mantle["shawls_dread"]), "mantle does not shawl dread")
+	_expect(not bool(mantle["capes_murk"]), "mantle does not cape murk")
+	_expect(not bool(mantle["cloaks_gloom"]), "mantle does not cloak gloom")
+	_expect(not bool(mantle["hoods_pall"]), "mantle does not hood pall")
+	_expect(not bool(mantle["cowls_veil"]), "mantle does not cowl veil")
+	_expect(not bool(mantle["shades_dusk"]), "mantle does not shade dusk")
+	_expect(not bool(mantle["burns_shroud"]), "mantle does not burn shroud")
+	_expect(not bool(mantle["cracks_rind"]), "mantle does not crack rind")
+	_expect(not bool(mantle["melts_pitch"]), "mantle does not melt pitch")
+	_expect(not bool(mantle["thaws_frost"]), "mantle does not thaw frost")
+	_expect(not bool(mantle["cuts_web"]), "mantle does not cut web")
+	_expect(not bool(mantle["cracks_glass"]), "mantle does not crack glass")
+	_expect(not bool(mantle["strips_scale"]), "mantle does not strip scale")
+	_expect(not bool(mantle["cracks_mail"]), "mantle does not crack mail")
+	_expect(not bool(mantle["splits_hide"]), "mantle does not split hide")
+	_expect(int(mantle["damage"]) < damage_max, "mantle is not the highest damage")
+	_expect(int(mantle["damage"]) > lantern_damage, "mantle damage stays above the lantern")
+	_expect(int(mantle["fire_ticks"]) > fastest, "mantle is not the fastest fire")
+	_expect(int(mantle["fire_ticks"]) > int(stole["fire_ticks"]), "mantle fires slower than the stole")
+	_expect(float(mantle["light_radius"]) == 336.0, "mantle radius is 336px")
+	_expect(float(mantle["light_radius"]) > float(stole["light_radius"]), "mantle radius is wider than the stole")
+	_expect(float(mantle["weapon_range"]) == 12.0, "mantle weapon range is 12px")
+	_expect(float(mantle["projectile_speed"]) == 180.0, "mantle shot speed is 180px/s")
+	_expect(float(mantle["projectile_speed"]) < float(stole["projectile_speed"]), "mantle shot is slower than the stole")
+	_expect(int(mantle["fire_ticks"]) == 78, "mantle fires every 78 ticks")
+	_expect(int(mantle["damage"]) == 2, "mantle damage is 2")
+	_expect(float(mantle["splash_radius"]) == 0.0, "mantle has no splash")
+	_expect(int(mantle["slow_ticks"]) == 0, "mantle has no slow")
+	_expect(not bool(mantle["tippets_rot"]), "mantle does not tippet rot")
+	_expect(str(mantle["role"]) == "Mantles blight, modest shots, no light.", "mantle role text")
+	var tippet := Catalog.get_stats(Catalog.TIPPET)
+	_expect(bool(tippet["tippets_rot"]), "tippet tippets rot")
+	_expect(not bool(tippet["casts_light"]), "tippet is not a light")
+	_expect(not bool(tippet["mantles_blight"]), "tippet does not mantle blight")
+	_expect(not bool(tippet["stoles_woe"]), "tippet does not stole woe")
+	_expect(not bool(tippet["shawls_dread"]), "tippet does not shawl dread")
+	_expect(not bool(tippet["capes_murk"]), "tippet does not cape murk")
+	_expect(not bool(tippet["cloaks_gloom"]), "tippet does not cloak gloom")
+	_expect(not bool(tippet["hoods_pall"]), "tippet does not hood pall")
+	_expect(not bool(tippet["cowls_veil"]), "tippet does not cowl veil")
+	_expect(not bool(tippet["shades_dusk"]), "tippet does not shade dusk")
+	_expect(not bool(tippet["burns_shroud"]), "tippet does not burn shroud")
+	_expect(not bool(tippet["cracks_rind"]), "tippet does not crack rind")
+	_expect(not bool(tippet["melts_pitch"]), "tippet does not melt pitch")
+	_expect(not bool(tippet["thaws_frost"]), "tippet does not thaw frost")
+	_expect(not bool(tippet["cuts_web"]), "tippet does not cut web")
+	_expect(not bool(tippet["cracks_glass"]), "tippet does not crack glass")
+	_expect(not bool(tippet["strips_scale"]), "tippet does not strip scale")
+	_expect(not bool(tippet["cracks_mail"]), "tippet does not crack mail")
+	_expect(not bool(tippet["splits_hide"]), "tippet does not split hide")
+	_expect(int(tippet["damage"]) < damage_max, "tippet is not the highest damage")
+	_expect(int(tippet["damage"]) > lantern_damage, "tippet damage stays above the lantern")
+	_expect(int(tippet["fire_ticks"]) > fastest, "tippet is not the fastest fire")
+	_expect(int(tippet["fire_ticks"]) > int(mantle["fire_ticks"]), "tippet fires slower than the mantle")
+	_expect(float(tippet["light_radius"]) == 352.0, "tippet radius is 352px")
+	_expect(float(tippet["light_radius"]) > float(mantle["light_radius"]), "tippet radius is wider than the mantle")
+	_expect(float(tippet["weapon_range"]) == 12.0, "tippet weapon range is 12px")
+	_expect(float(tippet["projectile_speed"]) == 160.0, "tippet shot speed is 160px/s")
+	_expect(float(tippet["projectile_speed"]) < float(mantle["projectile_speed"]), "tippet shot is slower than the mantle")
+	_expect(int(tippet["fire_ticks"]) == 84, "tippet fires every 84 ticks")
+	_expect(int(tippet["damage"]) == 2, "tippet damage is 2")
+	_expect(float(tippet["splash_radius"]) == 0.0, "tippet has no splash")
+	_expect(int(tippet["slow_ticks"]) == 0, "tippet has no slow")
+	_expect(str(tippet["role"]) == "Tippets rot, modest shots, no light.", "tippet role text")
 	_expect(lantern_damage == 1, "lantern damage stays 1")
 	for kind in Catalog.COUNT:
 		_expect(int(Catalog.get_stats(kind)["damage"]) >= lantern_damage, "%s damage stays at or above the lantern" % str(Catalog.get_stats(kind)["name"]))
@@ -5853,6 +6538,8 @@ func _axis_scores(stats: Dictionary) -> Array:
 		1.0 if bool(stats["capes_murk"]) else 0.0,
 		1.0 if bool(stats["shawls_dread"]) else 0.0,
 		1.0 if bool(stats["stoles_woe"]) else 0.0,
+		1.0 if bool(stats["mantles_blight"]) else 0.0,
+		1.0 if bool(stats["tippets_rot"]) else 0.0,
 		1.0 if int(stats["slow_ticks"]) > 0 else 0.0,
 	]
 
@@ -5949,14 +6636,28 @@ func _test_scene_shows_tooltips() -> void:
 	var stole_keys: Array = InputMap.action_get_events("plant_l")
 	_expect(stole_keys.size() == 1 and int(stole_keys[0].keycode) == KEY_L, "stole is bound to L, the next free letter")
 	_expect(str(node.hint_label.text).find("stole") >= 0, "hint tells the player about the stole")
+	var mantle_box: Node = node.plant_card_boxes[Catalog.MANTLE]
+	_expect(str(mantle_box.get_node("Hotkey").text) == "M", "mantle hotkey is M")
+	_expect(InputMap.has_action("plant_m"), "mantle has a letter action")
+	var mantle_keys: Array = InputMap.action_get_events("plant_m")
+	_expect(mantle_keys.size() == 1 and int(mantle_keys[0].keycode) == KEY_M, "mantle is bound to M")
+	_expect(str(node.hint_label.text).find("mantle") >= 0, "hint tells the player about the mantle")
+	var tippet_box: Node = node.plant_card_boxes[Catalog.TIPPET]
+	_expect(str(tippet_box.get_node("Hotkey").text) == "N", "tippet hotkey is N")
+	_expect(InputMap.has_action("plant_n"), "tippet has a letter action")
+	var tippet_keys: Array = InputMap.action_get_events("plant_n")
+	_expect(tippet_keys.size() == 1 and int(tippet_keys[0].keycode) == KEY_N, "tippet is bound to N, the next free letter")
+	_expect(str(node.hint_label.text).find("tippet") >= 0, "hint tells the player about the tippet")
 	for action in ["move_left", "move_right", "move_up", "move_down", "restart"]:
 		for ev in InputMap.action_get_events(action):
 			_expect(int(ev.keycode) != KEY_K, "K is not bound to %s" % action)
 			_expect(int(ev.keycode) != KEY_L, "L is not bound to %s" % action)
+			_expect(int(ev.keycode) != KEY_M, "M is not bound to %s" % action)
+			_expect(int(ev.keycode) != KEY_N, "N is not bound to %s" % action)
 	node.sim.outcome = Sim.OUTCOME_WON
-	node.sim.wave = 35
+	node.sim.wave = 37
 	node._refresh_hud()
-	_expect(str(node.outcome_label.text).find("Thirty-five nights") >= 0, "win copy counts thirty-five nights: %s" % node.outcome_label.text)
+	_expect(str(node.outcome_label.text).find("Thirty-nine nights") >= 0, "win copy counts thirty-nine nights: %s" % node.outcome_label.text)
 	_scene_node = node
 
 
@@ -5985,7 +6686,7 @@ func _test_card_layout() -> void:
 				last_line = child
 		var line_inside := last_line != null and panel.get_global_rect().encloses(last_line.get_global_rect())
 		_expect(line_inside, "card %d last tooltip line stays inside the card" % kind)
-		_expect(bottom <= 7030.0, "card %d stays on screen (bottom %.1f)" % [kind, bottom])
+		_expect(bottom <= 7710.0, "card %d stays on screen (bottom %.1f)" % [kind, bottom])
 		_expect(right <= 1112.0, "card %d stays on screen (right %.1f)" % [kind, right])
 	var cowl_panel: Control = node.card_panels[Catalog.COWL]
 	var hood_panel: Control = node.card_panels[Catalog.HOOD]
@@ -6006,11 +6707,20 @@ func _test_card_layout() -> void:
 	_expect(is_equal_approx(stole_panel.position.y, 6634.0), "stole card starts at y 6634 (%.1f)" % stole_panel.position.y)
 	_expect(is_equal_approx(stole_panel.size.y, 340.0), "stole card keeps CARD_H at 340 (%.1f)" % stole_panel.size.y)
 	_expect(is_equal_approx(stole_panel.position.y + stole_panel.size.y, 6974.0), "stole card ends at y 6974 (%.1f)" % (stole_panel.position.y + stole_panel.size.y))
+	var mantle_panel: Control = node.card_panels[Catalog.MANTLE]
+	_expect(is_equal_approx(mantle_panel.position.y, 6974.0), "mantle card starts at y 6974 (%.1f)" % mantle_panel.position.y)
+	_expect(is_equal_approx(mantle_panel.size.y, 340.0), "mantle card keeps CARD_H at 340 (%.1f)" % mantle_panel.size.y)
+	_expect(is_equal_approx(mantle_panel.position.y + mantle_panel.size.y, 7314.0), "mantle card ends at y 7314 (%.1f)" % (mantle_panel.position.y + mantle_panel.size.y))
+	var tippet_panel: Control = node.card_panels[Catalog.TIPPET]
+	_expect(is_equal_approx(tippet_panel.position.y, 7314.0), "tippet card starts at y 7314 (%.1f)" % tippet_panel.position.y)
+	_expect(is_equal_approx(tippet_panel.size.y, 340.0), "tippet card keeps CARD_H at 340 (%.1f)" % tippet_panel.size.y)
+	_expect(is_equal_approx(tippet_panel.position.y + tippet_panel.size.y, 7654.0), "tippet card ends at y 7654 (%.1f)" % (tippet_panel.position.y + tippet_panel.size.y))
+	_expect(is_equal_approx(node.get_viewport_rect().size.y - (tippet_panel.position.y + tippet_panel.size.y), 66.0), "gap under the tippet card matches the gap under the mantle card")
 	var shawl_stat: Label = node.plant_card_boxes[Catalog.SHAWL].get_node("Stat2")
 	_expect(int(shawl_stat.get_theme_font_size("font_size")) == 10, "stat lines stay 10px")
-	_expect(is_equal_approx(node.get_viewport_rect().size.y, 7040.0), "window height is 7040 (%.1f)" % node.get_viewport_rect().size.y)
+	_expect(is_equal_approx(node.get_viewport_rect().size.y, 7720.0), "window height is 7720 (%.1f)" % node.get_viewport_rect().size.y)
 	_expect(int(ProjectSettings.get_setting("display/window/size/viewport_width")) == 1120, "window width is 1120")
-	_expect(int(ProjectSettings.get_setting("display/window/size/viewport_height")) == 7040, "window height setting is 7040")
+	_expect(int(ProjectSettings.get_setting("display/window/size/viewport_height")) == 7720, "window height setting is 7720")
 	var hint_end: float = _scene_node.hint_label.get_global_rect().end.x
 	_expect(hint_end <= 748.0, "hint ends before the plant cards (%.1f)" % hint_end)
 	_expect(_scene_node.hint_label.get_line_count() <= 5, "hint fits in %d line(s)" % _scene_node.hint_label.get_line_count())
