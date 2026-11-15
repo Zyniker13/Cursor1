@@ -305,6 +305,11 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 					earlier = true
 		if not earlier:
 			guess += (2 - row) * 2 + (2 - col)
+	if rule == "drop_if_shared_number":
+		if _form_has_number(state, _stamp_number(state, card_id, row, col)):
+			guess -= 2
+	if rule == "yield_frame" and not (row == 1 and col == 1):
+		guess += 3
 	if rule == "ignore_isolated":
 		var neighbors = 0
 		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
@@ -324,3 +329,49 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 
 static func _is_corner(row: int, col: int) -> bool:
 	return (row == 0 or row == 2) and (col == 0 or col == 2)
+
+
+static func _stamp_number(state, card_id: String, row: int, col: int) -> int:
+	match card_id:
+		"duty":
+			var duty_amount = 4 if row == 2 else 2
+			if state.relic_id == Rules.RELIC_IRON_PAD:
+				duty_amount += 1
+			return duty_amount
+		"exemption", "hold", "echo", "reply":
+			return 1
+		"surcharge":
+			var surcharge_amount = 2
+			if row > 0 and state.form[row - 1][col] != null:
+				surcharge_amount += 3
+			return surcharge_amount
+		"entry_mark", "ripple":
+			return 2
+		"visa_dot":
+			return 3
+		"wax_seal":
+			return 6
+		"heavy_chop":
+			return 6 if row == 2 else 3
+		"queue_push":
+			return 4 if row == 0 else 2
+		"night_fee":
+			return 1 + int(state.ink_spent)
+		"final_notice":
+			var notice = 3
+			if row == 2 and state.form[row - 1][col] != null:
+				notice += 3
+			return notice
+		_:
+			return 2
+
+
+static func _form_has_number(state, number: int) -> bool:
+	for row in 3:
+		for col in 3:
+			var stamp = state.form[row][col]
+			if stamp == null:
+				continue
+			if _stamp_number(state, String(stamp["card_id"]), row, col) == number:
+				return true
+	return false
