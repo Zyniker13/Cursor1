@@ -353,6 +353,82 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 			guess -= 8
 	if rule == "drop_if_queue_gap" and _placement_opens_gap(state, row, col):
 		guess -= 6
+	if rule == "refuse_stacked_bottom" and row == 2 and card_id != "exemption":
+		var bottom_stacked = false
+		for bottom_col in 3:
+			if state.form[2][bottom_col] != null:
+				bottom_stacked = true
+		if bottom_stacked:
+			guess -= 12
+	if rule == "double_first_if_followed":
+		var followed_earlier = false
+		for followed_row in range(0, row + 1):
+			var followed_end = 2
+			if followed_row == row:
+				followed_end = col - 1
+			for followed_col in range(0, followed_end + 1):
+				if state.form[followed_row][followed_col] != null:
+					followed_earlier = true
+		if not followed_earlier:
+			guess += 5
+	if rule == "zero_shared_later":
+		var barred_number = _stamp_number(state, card_id, row, col)
+		var barred_earlier = false
+		for barred_row in range(0, row + 1):
+			var barred_end = 2
+			if barred_row == row:
+				barred_end = col - 1
+			for barred_col in range(0, barred_end + 1):
+				var barred_stamp = state.form[barred_row][barred_col]
+				if barred_stamp == null:
+					continue
+				if _stamp_number(state, String(barred_stamp["card_id"]), barred_row, barred_col) == barred_number:
+					barred_earlier = true
+		if barred_earlier:
+			guess -= 20
+		else:
+			guess += 3
+	if rule == "yield_empty":
+		var occupied = 0
+		for occupied_row in 3:
+			for occupied_col in 3:
+				if state.form[occupied_row][occupied_col] != null:
+					occupied += 1
+		guess += 8 - occupied
+	if rule == "zero_side_later" and card_id != "exemption":
+		var side = false
+		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var side_row = row + delta.x
+			var side_col = col + delta.y
+			if side_row < 0 or side_col < 0 or side_row > 2 or side_col > 2:
+				continue
+			if state.form[side_row][side_col] != null:
+				side = true
+		if side:
+			guess -= 10
+	if rule == "double_patience_if_last_col3":
+		var tail_row = -1
+		var tail_col = -1
+		for scan_row in range(2, -1, -1):
+			for scan_col in range(2, -1, -1):
+				if state.form[scan_row][scan_col] != null:
+					tail_row = scan_row
+					tail_col = scan_col
+					break
+			if tail_row >= 0:
+				break
+		var becomes_tail = tail_row < 0 or row > tail_row or (row == tail_row and col > tail_col)
+		if becomes_tail and col == 2:
+			guess -= 12
+		elif becomes_tail and tail_col == 2:
+			guess += 6
+	if rule == "double_frame_if_center":
+		if row == 1 and col == 1:
+			guess += 4
+		elif state.form[1][1] != null:
+			guess += 4
+	if rule == "yield_queue_gap" and _placement_opens_gap(state, row, col):
+		guess += 4
 	if rule == "double_shared_later":
 		var shared_number = _stamp_number(state, card_id, row, col)
 		var earlier_match = false

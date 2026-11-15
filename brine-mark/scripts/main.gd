@@ -6,7 +6,7 @@ extends Node2D
 const Sim = preload("res://scripts/sim.gd")
 
 const CELL := 44.0
-const MAP_ORIGIN := Vector2(20, 92)
+const MAP_ORIGIN := Vector2(20, 58)
 const PANEL_POS := Vector2(788, 12)
 const PANEL_SIZE := Vector2(476, 696)
 
@@ -97,7 +97,7 @@ func _draw() -> void:
 	if sim == null:
 		return
 	_draw_bars()
-	for y in Sim.GRID_H:
+	for y in range(Sim.GRID_NORTH, Sim.GRID_H):
 		for x in Sim.GRID_W:
 			_draw_cell(x, y)
 	_draw_coast_label()
@@ -110,7 +110,7 @@ func _draw() -> void:
 	if sim != null and beat == Sim.DRY and not sim.is_over():
 		opening = ticks_left > Sim.DRY_TICK - Sim.TICK_HZ * 3
 	# The cart beat is clear weather. Rain shows for the season changes and the end.
-	if sim != null and beat != Sim.CART and beat != Sim.SHIPPING and beat != Sim.MARKET and beat != Sim.YARDING and beat != Sim.BUNKING and (sim.is_over() or ticks_left < Sim.TICK_HZ * 3 or opening):
+	if sim != null and beat != Sim.CART and beat != Sim.SHIPPING and beat != Sim.MARKET and beat != Sim.YARDING and beat != Sim.BUNKING and beat != Sim.LOFTING and beat != Sim.GATING and (sim.is_over() or ticks_left < Sim.TICK_HZ * 3 or opening):
 		_draw_rain(sim.is_over() or opening)
 
 
@@ -121,7 +121,13 @@ func _draw_bars() -> void:
 	var beat := int(sim.get_beat())
 	var span := Sim.RAIN_TICK
 	var rain_color := Color("2f7590")
-	if beat == Sim.BUNKING:
+	if beat == Sim.GATING:
+		span = Sim.GATE_TICK
+		rain_color = Color("3e4c59")
+	elif beat == Sim.LOFTING:
+		span = Sim.LOFT_TICK
+		rain_color = Color("4a3b2a")
+	elif beat == Sim.BUNKING:
 		span = Sim.BUNK_TICK
 		rain_color = Color("5c3b2e")
 	elif beat == Sim.YARDING:
@@ -141,7 +147,13 @@ func _draw_bars() -> void:
 		rain_color = Color("c47a3a")
 	var rain_frac := clampf(float(sim.get_ticks_until_rain()) / float(maxi(span, 1)), 0.0, 1.0)
 	var quota_frac := clampf(float(sim.get_stored_salt()) / float(Sim.QUOTA), 0.0, 1.0)
-	if beat == Sim.BUNKING:
+	if beat == Sim.GATING:
+		var room := mini(int(sim.get_lofted()), int(Sim.GATE_CAP))
+		quota_frac = 0.0 if room <= 0 else clampf(float(sim.get_gated()) / float(room), 0.0, 1.0)
+	elif beat == Sim.LOFTING:
+		var crew := int(sim.get_hired())
+		quota_frac = 0.0 if crew <= 0 else clampf(float(sim.get_lofted()) / float(crew), 0.0, 1.0)
+	elif beat == Sim.BUNKING:
 		var spendable := int(sim.get_banked()) - (int(sim.get_banked()) % int(Sim.HIRE_COST))
 		quota_frac = 0.0 if spendable <= 0 else clampf(float(int(sim.get_hired()) * int(Sim.HIRE_COST)) / float(spendable), 0.0, 1.0)
 	elif beat == Sim.YARDING:
@@ -186,19 +198,23 @@ func _draw_cell(x: int, y: int) -> void:
 		Sim.PAN:
 			_draw_pan(rect)
 		Sim.CRIB:
-			_draw_crib(rect, sim.get_beat() == Sim.CART or sim.get_beat() == Sim.SHIPPING or sim.get_beat() == Sim.MARKET or sim.get_beat() == Sim.YARDING or sim.get_beat() == Sim.BUNKING)
+			_draw_crib(rect, sim.get_beat() == Sim.CART or sim.get_beat() == Sim.SHIPPING or sim.get_beat() == Sim.MARKET or sim.get_beat() == Sim.YARDING or sim.get_beat() == Sim.BUNKING or sim.get_beat() == Sim.LOFTING or sim.get_beat() == Sim.GATING)
 		Sim.SHIP:
-			_draw_ship(rect, sim.get_beat() == Sim.SHIPPING or sim.get_beat() == Sim.MARKET or sim.get_beat() == Sim.YARDING or sim.get_beat() == Sim.BUNKING)
+			_draw_ship(rect, sim.get_beat() == Sim.SHIPPING or sim.get_beat() == Sim.MARKET or sim.get_beat() == Sim.YARDING or sim.get_beat() == Sim.BUNKING or sim.get_beat() == Sim.LOFTING or sim.get_beat() == Sim.GATING)
 		Sim.STALL:
-			_draw_stall(rect, sim.get_beat() == Sim.MARKET or sim.get_beat() == Sim.YARDING or sim.get_beat() == Sim.BUNKING)
+			_draw_stall(rect, sim.get_beat() == Sim.MARKET or sim.get_beat() == Sim.YARDING or sim.get_beat() == Sim.BUNKING or sim.get_beat() == Sim.LOFTING or sim.get_beat() == Sim.GATING)
 		Sim.YARD:
-			_draw_yard(rect, sim.get_beat() == Sim.YARDING or sim.get_beat() == Sim.BUNKING)
+			_draw_yard(rect, sim.get_beat() == Sim.YARDING or sim.get_beat() == Sim.BUNKING or sim.get_beat() == Sim.LOFTING or sim.get_beat() == Sim.GATING)
 		Sim.BUNK:
-			_draw_bunk(rect, sim.get_beat() == Sim.BUNKING)
+			_draw_bunk(rect, sim.get_beat() == Sim.BUNKING or sim.get_beat() == Sim.LOFTING or sim.get_beat() == Sim.GATING)
+		Sim.LOFT:
+			_draw_loft(rect, sim.get_beat() == Sim.LOFTING or sim.get_beat() == Sim.GATING)
+		Sim.GATE:
+			_draw_gate(rect, sim.get_beat() == Sim.GATING)
 	if Vector2i(x, y) == Sim.ANTHILL:
 		_draw_anthill(rect)
 	var salt: Dictionary = sim.get_cell_salt(x, y)
-	_draw_salt(rect, int(salt["loose"]), int(salt["stacked"]), int(salt["covered"]), int(salt["crib"]), int(salt["ship"]), int(salt["stall"]), int(salt["yard"]), int(salt["bunk"]))
+	_draw_salt(rect, int(salt["loose"]), int(salt["stacked"]), int(salt["covered"]), int(salt["crib"]), int(salt["ship"]), int(salt["stall"]), int(salt["yard"]), int(salt["bunk"]), int(salt["loft"]), int(salt["gate"]))
 
 
 func _draw_coast(rect: Rect2, dry: bool) -> void:
@@ -312,6 +328,37 @@ func _draw_bunk(rect: Rect2, open: bool) -> void:
 	draw_rect(Rect2(room.position + Vector2(room.size.x * 0.38, room.size.y * 0.15), Vector2(room.size.x * 0.24, room.size.y * 0.28)), Color("f4efe6") if open else Color("c8c2b6"))
 
 
+func _draw_loft(rect: Rect2, open: bool) -> void:
+	var timber := Color("4a3b2a") if open else Color("b7a48a")
+	var floor := Color("e7d3a4") if open else Color("d5cec0")
+	var wash := Color(0.29, 0.23, 0.16, 0.28) if open else Color(0.29, 0.23, 0.16, 0.12)
+	draw_rect(rect, wash)
+	var platform := Rect2(rect.position + Vector2(6, 8), Vector2(rect.size.x - 12, 8))
+	draw_rect(platform, timber)
+	draw_rect(Rect2(platform.position + Vector2(2, 2), Vector2(platform.size.x - 4, 4)), floor)
+	var post_h := rect.size.y - 22.0
+	draw_rect(Rect2(rect.position + Vector2(8, 16), Vector2(3, post_h)), timber)
+	draw_rect(Rect2(rect.position + Vector2(rect.size.x - 11, 16), Vector2(3, post_h)), timber)
+	var ladder_x := rect.position.x + rect.size.x * 0.5
+	draw_line(Vector2(ladder_x - 4, rect.position.y + 18), Vector2(ladder_x - 4, rect.end.y - 6), timber, 2.0)
+	draw_line(Vector2(ladder_x + 4, rect.position.y + 18), Vector2(ladder_x + 4, rect.end.y - 6), timber, 2.0)
+	for i in 3:
+		var y_line := rect.position.y + 24.0 + float(i) * 6.0
+		draw_line(Vector2(ladder_x - 4, y_line), Vector2(ladder_x + 4, y_line), floor, 1.5)
+
+
+func _draw_gate(rect: Rect2, open: bool) -> void:
+	var iron := Color("3e4c59") if open else Color("b7a48a")
+	var bar := Color("d7e3ea") if open else Color("d5cec0")
+	var wash := Color(0.24, 0.32, 0.38, 0.28) if open else Color(0.24, 0.32, 0.38, 0.12)
+	draw_rect(rect, wash)
+	draw_rect(Rect2(rect.position + Vector2(8, 10), Vector2(4, rect.size.y - 18)), iron)
+	draw_rect(Rect2(rect.position + Vector2(rect.size.x - 12, 10), Vector2(4, rect.size.y - 18)), iron)
+	draw_rect(Rect2(rect.position + Vector2(8, 10), Vector2(rect.size.x - 16, 4)), iron)
+	draw_line(rect.position + Vector2(12, 22), rect.position + Vector2(rect.size.x - 12, rect.size.y - 12), bar, 2.0)
+	draw_line(rect.position + Vector2(rect.size.x - 12, 22), rect.position + Vector2(12, rect.size.y - 12), bar, 2.0)
+
+
 func _draw_pan(rect: Rect2) -> void:
 	draw_rect(rect, Color(0.62, 0.74, 0.76, 0.42))
 	var basin := Rect2(rect.position + Vector2(7, 12), rect.size - Vector2(14, 18))
@@ -351,7 +398,7 @@ func _draw_anthill(rect: Rect2) -> void:
 	draw_circle(center + Vector2(1, 5), 3.0, Color("1a100c"))
 
 
-func _draw_salt(rect: Rect2, loose: int, stacked: int, covered: int, crib: int, ship: int, stall: int, yard: int, bunk: int) -> void:
+func _draw_salt(rect: Rect2, loose: int, stacked: int, covered: int, crib: int, ship: int, stall: int, yard: int, bunk: int, loft: int, gate: int) -> void:
 	for i in mini(loose, 4):
 		var col := i % 2
 		var row := int(i / 2)
@@ -370,7 +417,11 @@ func _draw_salt(rect: Rect2, loose: int, stacked: int, covered: int, crib: int, 
 		_diamond(rect.position + Vector2(12 + i * 10, rect.size.y - 12), 4.2, Color("fff1b8"))
 	for i in mini(bunk, 3):
 		_diamond(rect.position + Vector2(12 + i * 10, rect.size.y - 12), 4.2, Color("f4efe6"))
-	var total := loose + stacked + covered + crib + ship + stall + yard + bunk
+	for i in mini(loft, 3):
+		_diamond(rect.position + Vector2(12 + i * 10, rect.size.y - 12), 4.2, Color("efe4d4"))
+	for i in mini(gate, 3):
+		_diamond(rect.position + Vector2(12 + i * 10, rect.size.y - 12), 4.2, Color("d7e3ea"))
+	var total := loose + stacked + covered + crib + ship + stall + yard + bunk + loft + gate
 	if total > 0:
 		var digits := str(total)
 		var badge := Rect2(rect.position + Vector2(2, 2), Vector2(6.0 + 7.0 * digits.length(), 13))
@@ -420,7 +471,7 @@ func _draw_rain(heavy: bool) -> void:
 	var streaks := 80 if heavy else 28
 	var tint := Color(0.75, 0.88, 0.96, 0.62 if heavy else 0.35)
 	var span_x := int(Sim.GRID_W * CELL)
-	var span_y := int(Sim.GRID_H * CELL)
+	var span_y := int((Sim.GRID_H - Sim.GRID_NORTH) * CELL)
 	for i in streaks:
 		var x := float((i * 53) % span_x)
 		var y := float((i * 29) % span_y)
@@ -470,12 +521,12 @@ func _build_hud() -> void:
 	hud.add_child(rain_label)
 
 	var hint_a := _make_label("Drag to paint. Right-click erases. Arrows or WASD move the cursor.", 14, INK)
-	hint_a.position = Vector2(20, 628)
-	hint_a.size = Vector2(740, 20)
+	hint_a.position = Vector2(20, 676)
+	hint_a.size = Vector2(760, 20)
 	hud.add_child(hint_a)
-	var hint_b := _make_label("1 rake, 2 stack, 3 cover, 4 trail, 5 pan, 6 crib, 7 ship, 8 stall, 9 yard, 0 bunk. Space paints. R restarts.", 14, INK)
-	hint_b.position = Vector2(20, 650)
-	hint_b.size = Vector2(740, 20)
+	var hint_b := _make_label("1 rake, 2 stack, 3 cover, 4 trail, 5 pan, 6 crib, 7 ship, 8 stall, 9 yard, 0 bunk, B loft, C gate. Space paints. R restarts.", 14, INK)
+	hint_b.position = Vector2(20, 696)
+	hint_b.size = Vector2(760, 20)
 	hud.add_child(hint_b)
 
 	var panel := PanelContainer.new()
@@ -501,9 +552,9 @@ func _build_hud() -> void:
 
 	box.add_child(_make_label("BRINE MARK", 26, PAPER))
 	box.add_child(_make_label("Salt Coast", 16, GOLD))
-	var rules := _make_label("Paint the flats. Workers follow the mark under their feet and are not selectable.\nWet season: rake the shore, stack the loose salt, cover the stacks. The first rain banks covered salt and pulls the brine back. Dry season: shore rakes go idle. Paint pans and workers crystallize salt until the second rain. Then paint a crib. Workers move the banked salt into it. Then paint a ship. Workers load that crib onto it. Then paint a stall. Workers sell that cargo, one coin a unit. Then paint a yard. Workers bank those coins, one at a time. Then paint a bunk. Workers hire from those coins, one hundred a hire. Trail is how they cross.", 14, PAPER)
+	var rules := _make_label("Paint the flats. Workers follow the mark under their feet and are not selectable.\nWet season: rake the shore, stack the loose salt, cover the stacks. The first rain banks covered salt and pulls the brine back. Dry season: shore rakes go idle. Paint pans and workers crystallize salt until the second rain. Then paint a crib. Workers move the banked salt into it. Then paint a ship. Workers load that crib onto it. Then paint a stall. Workers sell that cargo, one coin a unit. Then paint a yard. Workers bank those coins, one at a time. Then paint a bunk. Workers hire from those coins, one hundred a hire. Then paint a loft. Workers move those hires into it, one at a time. Then paint a gate. Workers let ten of those hires through, one at a time. Trail is how they cross.", 14, PAPER)
 	rules.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	rules.custom_minimum_size = Vector2(430, 236)
+	rules.custom_minimum_size = Vector2(430, 276)
 	rules.name = "RulesNote"
 	box.add_child(rules)
 
@@ -536,6 +587,8 @@ func _build_hud() -> void:
 		["8  Stall", Sim.STALL, Color("c4553a")],
 		["9  Yard", Sim.YARD, Color("7dcea0")],
 		["0  Bunk", Sim.BUNK, Color("c4a484")],
+		["B  Loft", Sim.LOFT, Color("d7c4a3")],
+		["C  Gate", Sim.GATE, Color("8aa0a8")],
 		["Erase", Sim.EMPTY, Color("c8c2b6")],
 	]))
 
@@ -545,7 +598,7 @@ func _build_hud() -> void:
 	status_label.custom_minimum_size = Vector2(430, 36)
 	summary_label = _make_label("", 18, PAPER)
 	summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	summary_label.custom_minimum_size = Vector2(430, 88)
+	summary_label.custom_minimum_size = Vector2(430, 72)
 	box.add_child(cursor_label)
 	box.add_child(status_label)
 	box.add_child(summary_label)
@@ -619,7 +672,13 @@ func _refresh() -> void:
 		return
 	var seconds := 0.0
 	if sim.is_over():
-		if int(sim.get_hired()) > 0:
+		if int(sim.get_gated()) > 0:
+			rain_label.text = "The crew passed the gate"
+			rain_label.add_theme_color_override("font_color", Color("3e4c59"))
+		elif int(sim.get_lofted()) > 0:
+			rain_label.text = "The crew is in the loft"
+			rain_label.add_theme_color_override("font_color", Color("4a3b2a"))
+		elif int(sim.get_hired()) > 0:
 			rain_label.text = "The bunk has hired"
 			rain_label.add_theme_color_override("font_color", Color("5c3b2e"))
 		elif int(sim.get_banked()) > 0:
@@ -642,7 +701,13 @@ func _refresh() -> void:
 		if seconds < 0.0:
 			seconds = 0.0
 		var urgent := seconds < 10.0
-		if sim.get_beat() == Sim.BUNKING:
+		if sim.get_beat() == Sim.GATING:
+			rain_label.text = "Open the gate. %.1fs" % seconds
+			rain_label.add_theme_color_override("font_color", Color("a33b2b") if urgent else Color("3e4c59"))
+		elif sim.get_beat() == Sim.LOFTING:
+			rain_label.text = "Loft the crew. %.1fs" % seconds
+			rain_label.add_theme_color_override("font_color", Color("a33b2b") if urgent else Color("4a3b2a"))
+		elif sim.get_beat() == Sim.BUNKING:
 			rain_label.text = "Hire the bunk. %.1fs" % seconds
 			rain_label.add_theme_color_override("font_color", Color("a33b2b") if urgent else Color("5c3b2e"))
 		elif sim.get_beat() == Sim.YARDING:
@@ -666,6 +731,10 @@ func _refresh() -> void:
 	var season_name := "wet"
 	if sim.is_over():
 		season_name = "settled"
+	elif sim.get_beat() == Sim.GATING:
+		season_name = "gate"
+	elif sim.get_beat() == Sim.LOFTING:
+		season_name = "loft"
 	elif sim.get_beat() == Sim.BUNKING:
 		season_name = "bunk"
 	elif sim.get_beat() == Sim.YARDING:
@@ -682,7 +751,15 @@ func _refresh() -> void:
 		season_name, sim.get_stored_salt(), Sim.QUOTA, sim.get_population(), Sim.POP_CAP,
 	]
 	covered_label.text = "Covered salt  %d / %d" % [sim.get_stored_salt(), Sim.QUOTA]
-	if sim.get_beat() == Sim.BUNKING or (sim.is_over() and int(sim.get_hired()) > 0):
+	if sim.get_beat() == Sim.GATING or (sim.is_over() and int(sim.get_gated()) > 0):
+		salt_label.text = "Loose %d    stacked %d    loft %d    gated %d" % [
+			sim.get_loose_salt(), sim.get_stacked_salt(), sim.get_loft_left(), sim.get_gated(),
+		]
+	elif sim.get_beat() == Sim.LOFTING or (sim.is_over() and int(sim.get_lofted()) > 0):
+		salt_label.text = "Loose %d    stacked %d    bunk %d    lofted %d" % [
+			sim.get_loose_salt(), sim.get_stacked_salt(), sim.get_bunk_left(), sim.get_lofted(),
+		]
+	elif sim.get_beat() == Sim.BUNKING or (sim.is_over() and int(sim.get_hired()) > 0):
 		salt_label.text = "Loose %d    stacked %d    hired %d    yard %d" % [
 			sim.get_loose_salt(), sim.get_stacked_salt(), sim.get_hired(), sim.get_yard_left(),
 		]
@@ -708,12 +785,24 @@ func _refresh() -> void:
 		]
 	ants_label.text = "Ants %d / %d" % [sim.get_population(), Sim.POP_CAP]
 	mode_label.text = "Mark: %s" % _mode_name(current_mode)
-	if sim.get_beat() == Sim.BUNKING and not sim.is_over():
+	if sim.get_beat() == Sim.GATING and not sim.is_over():
+		season_label.text = "Loft %d. Through %d. Paint a gate and workers let the hires through." % [
+			sim.get_loft_left(), sim.get_gated(),
+		]
+	elif sim.is_over() and int(sim.get_gated()) > 0:
+		season_label.text = "Gated %d." % sim.get_gated()
+	elif sim.get_beat() == Sim.LOFTING and not sim.is_over():
+		season_label.text = "Bunk %d. Lofted %d. Paint a loft and workers move the hires." % [
+			sim.get_bunk_left(), sim.get_lofted(),
+		]
+	elif sim.is_over() and int(sim.get_lofted()) > 0:
+		season_label.text = "The crew was not gated. A gate is where workers let them through."
+	elif sim.get_beat() == Sim.BUNKING and not sim.is_over():
 		season_label.text = "Yard %d. Hired %d. Paint a bunk and workers hire from the coins." % [
 			sim.get_yard_left(), sim.get_hired(),
 		]
 	elif sim.is_over() and int(sim.get_hired()) > 0:
-		season_label.text = "Hired %d. Left %d in the yard." % [sim.get_hired(), sim.get_yard_left()]
+		season_label.text = "The hires were not lofted. A loft is where workers move them."
 	elif sim.get_beat() == Sim.YARDING and not sim.is_over():
 		season_label.text = "Coins %d. Banked %d. Paint a yard and workers bank the purse." % [
 			sim.get_coins(), sim.get_banked(),
@@ -753,6 +842,12 @@ func _refresh() -> void:
 		var won: bool = sim.get_stored_salt() >= Sim.QUOTA
 		summary_label.add_theme_color_override("font_color", Color("b7e2c2") if won else Color("ffb4a8"))
 		status_label.text = "Restart scenario to mark the flats again."
+	elif sim.get_beat() == Sim.GATING:
+		summary_label.text = "The loft beat has ended. Paint a gate. Workers let the hires already recorded through."
+		summary_label.add_theme_color_override("font_color", Color("f0d7b0"))
+	elif sim.get_beat() == Sim.LOFTING:
+		summary_label.text = "The bunk beat has ended. Paint a loft. Workers move the hires already recorded."
+		summary_label.add_theme_color_override("font_color", Color("f0d7b0"))
 	elif sim.get_beat() == Sim.BUNKING:
 		summary_label.text = "The yard beat has ended. Paint a bunk. Workers hire from the coins already banked."
 		summary_label.add_theme_color_override("font_color", Color("f0d7b0"))
@@ -778,8 +873,8 @@ func _refresh() -> void:
 
 func _paint_at_mouse(mode: int) -> void:
 	var local := get_global_mouse_position() - MAP_ORIGIN
-	var cell := Vector2i(floori(local.x / CELL), floori(local.y / CELL))
-	if cell.x < 0 or cell.y < 0 or cell.x >= Sim.GRID_W or cell.y >= Sim.GRID_H:
+	var cell := Vector2i(floori(local.x / CELL), floori(local.y / CELL) + Sim.GRID_NORTH)
+	if cell.x < 0 or cell.y < Sim.GRID_NORTH or cell.x >= Sim.GRID_W or cell.y >= Sim.GRID_H:
 		return
 	cursor = cell
 	_paint_cell(cell.x, cell.y, mode)
@@ -839,6 +934,10 @@ func _on_key(keycode: Key) -> void:
 			_set_mode(Sim.YARD)
 		KEY_0, KEY_KP_0:
 			_set_mode(Sim.BUNK)
+		KEY_B:
+			_set_mode(Sim.LOFT)
+		KEY_C:
+			_set_mode(Sim.GATE)
 		KEY_SPACE, KEY_ENTER, KEY_KP_ENTER:
 			_paint_cell(cursor.x, cursor.y, current_mode)
 		KEY_R:
@@ -847,7 +946,7 @@ func _on_key(keycode: Key) -> void:
 
 func _move_cursor(dx: int, dy: int) -> void:
 	cursor.x = clampi(cursor.x + dx, 0, Sim.GRID_W - 1)
-	cursor.y = clampi(cursor.y + dy, 0, Sim.GRID_H - 1)
+	cursor.y = clampi(cursor.y + dy, Sim.GRID_NORTH, Sim.GRID_H - 1)
 
 
 func _is_move_key(keycode: Key) -> bool:
@@ -855,7 +954,8 @@ func _is_move_key(keycode: Key) -> bool:
 
 
 func _cell_rect(x: int, y: int) -> Rect2:
-	return Rect2(MAP_ORIGIN + Vector2(x * CELL, y * CELL), Vector2(CELL - 2.0, CELL - 2.0))
+	var row := y - Sim.GRID_NORTH
+	return Rect2(MAP_ORIGIN + Vector2(x * CELL, row * CELL), Vector2(CELL - 2.0, CELL - 2.0))
 
 
 func _mode_color(mode: int) -> Color:
@@ -880,6 +980,10 @@ func _mode_color(mode: int) -> Color:
 			return Color("2f6b45")
 		Sim.BUNK:
 			return Color("5c3b2e")
+		Sim.LOFT:
+			return Color("4a3b2a")
+		Sim.GATE:
+			return Color("3e4c59")
 		_:
 			return Color("f4efe6")
 
@@ -906,5 +1010,9 @@ func _mode_name(mode: int) -> String:
 			return "Yard"
 		Sim.BUNK:
 			return "Bunk"
+		Sim.LOFT:
+			return "Loft"
+		Sim.GATE:
+			return "Gate"
 		_:
 			return "Erase"

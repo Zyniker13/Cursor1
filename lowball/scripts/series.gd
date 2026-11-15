@@ -107,14 +107,15 @@ func fixture() -> Dictionary:
 	return cards[0]
 
 
-func other_fixture() -> Dictionary:
+func other_fixtures() -> Array:
 	if week >= Sport.SERIES_WEEKS:
-		return {}
+		return []
 	var mine := fixture()
+	var others: Array = []
 	for card in Sport.week_fixtures(week):
-		if int(card["home"]) != int(mine["home"]):
-			return card
-	return {}
+		if int(card["slot"]) != int(mine["slot"]):
+			others.append(card)
+	return others
 
 
 func _final_card() -> Dictionary:
@@ -239,9 +240,6 @@ func _simulate_card(
 	played["focuses"] = focuses.duplicate()
 	played["is_final"] = bool(card.get("is_final", false))
 	played["final_game"] = int(card.get("final_game", 0))
-	if card.has("bye"):
-		played["bye_index"] = int(card["bye"])
-		played["bye_club"] = str(card["bye_club"])
 	if playing:
 		var opponent_i := away_i if home_i == Sport.PLAYER_INDEX else home_i
 		played["opponent_index"] = opponent_i
@@ -277,51 +275,42 @@ func begin_match(lineup: Array, tactic: String, focus: String) -> Dictionary:
 		return {"ok": false, "error": "The series is already over."}
 	if not Sport.STATS.has(focus):
 		return {"ok": false, "error": "Pick a training focus."}
-	var playing := player_plays()
-	if playing or week >= Sport.SERIES_WEEKS:
-		if not Sport.is_legal_lineup(player_roster.size(), lineup):
-			return {"ok": false, "error": "The lineup needs four different players."}
-		if not Sport.TACTICS.has(tactic):
-			return {"ok": false, "error": "Pick a tactic."}
+	if not Sport.is_legal_lineup(player_roster.size(), lineup):
+		return {"ok": false, "error": "The lineup needs four different players."}
+	if not Sport.TACTICS.has(tactic):
+		return {"ok": false, "error": "Pick a tactic."}
 	if week >= Sport.SERIES_WEEKS:
 		return _begin_final(lineup, tactic, focus)
-	if playing:
-		return _begin_week(lineup, tactic, focus)
-	return _begin_bye(lineup, tactic, focus)
-
-
-func _begin_bye(lineup: Array, tactic: String, focus: String) -> Dictionary:
-	var cards := Sport.week_fixtures(week)
-	var focuses := _focuses_for(week, focus)
-	var played_cards: Array = []
-	for slot in cards.size():
-		var played := _simulate_card(cards[slot], lineup, tactic, week, week, slot, focuses)
-		played["player_result"] = "bye"
-		played_cards.append(played)
-	if played_cards.size() < Sport.MATCHES_PER_WEEK:
-		return {"ok": false, "error": "The bye week is missing a match."}
-	var first: Dictionary = played_cards[0]
-	first["other_match"] = played_cards[1]
-	pending = first
-	return first
+	return _begin_week(lineup, tactic, focus)
 
 
 func _begin_week(lineup: Array, tactic: String, focus: String) -> Dictionary:
 	var cards := Sport.week_fixtures(week)
 	var focuses := _focuses_for(week, focus)
-	var player_match: Dictionary = {}
-	var other_match: Dictionary = {}
+	var follow_slot := 0
+	for card in cards:
+		if int(card["home"]) == Sport.PLAYER_INDEX or int(card["away"]) == Sport.PLAYER_INDEX:
+			follow_slot = int(card["slot"])
+	var bye := int(cards[0]["bye"])
+	var watched: Dictionary = {}
+	var others: Array = []
 	for slot in cards.size():
 		var played := _simulate_card(cards[slot], lineup, tactic, week, week, slot, focuses)
-		if bool(played["player_played"]):
-			player_match = played
+		played["bye_index"] = bye
+		played["bye_club"] = str(cards[0]["bye_club"])
+		if slot == follow_slot:
+			watched = played
 		else:
-			other_match = played
-	if player_match.is_empty():
-		return {"ok": false, "error": "The week has no match for Lumen Reedmice."}
-	player_match["other_match"] = other_match
-	pending = player_match
-	return player_match
+			others.append(played)
+	if watched.is_empty():
+		return {"ok": false, "error": "The week is missing a match."}
+	if others.size() != Sport.MATCHES_PER_WEEK - 1:
+		return {"ok": false, "error": "The week is missing a match."}
+	if not bool(watched["player_played"]):
+		watched["player_result"] = "bye"
+	watched["other_matches"] = others
+	pending = watched
+	return watched
 
 
 func _begin_final(lineup: Array, tactic: String, focus: String) -> Dictionary:
@@ -338,7 +327,7 @@ func _begin_final(lineup: Array, tactic: String, focus: String) -> Dictionary:
 
 func _stored_regular(match: Dictionary) -> Dictionary:
 	var copy := match.duplicate(false)
-	copy.erase("other_match")
+	copy.erase("other_matches")
 	return copy
 
 
@@ -361,16 +350,17 @@ func commit_match() -> Dictionary:
 			"goal_met": goal_met() if decided else false,
 			"final": true,
 		}
-	var other: Dictionary = pending["other_match"]
-	other["training_notes"] = notes
+	var packed: Array = []
+	for _slot in Sport.MATCHES_PER_WEEK:
+		packed.append({})
 	var mine := _stored_regular(pending)
-	var away := _stored_regular(other)
-	if int(mine["slot"]) <= int(away["slot"]):
-		results.append(mine)
-		results.append(away)
-	else:
-		results.append(away)
-		results.append(mine)
+	packed[int(mine["slot"])] = mine
+	for raw_other in pending["other_matches"]:
+		var copy := _stored_regular(raw_other)
+		copy["training_notes"] = notes
+		packed[int(copy["slot"])] = copy
+	for item in packed:
+		results.append(item)
 	pending = {}
 	week += 1
 	var over := is_over()

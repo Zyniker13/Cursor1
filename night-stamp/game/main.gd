@@ -53,6 +53,8 @@ var quire_button: Button
 var salt_button: Button
 var quay_button: Button
 var folio_button: Button
+var wick_button: Button
+var margin_button: Button
 var name_label: Label
 var rule_label: Label
 var meta_label: Label
@@ -208,6 +210,12 @@ func _build_traveler() -> Control:
 	folio_button = _button("Folio bell")
 	folio_button.pressed.connect(_toggle_folio)
 	header.add_child(folio_button)
+	wick_button = _button("Wick bell")
+	wick_button.pressed.connect(_toggle_wick)
+	header.add_child(wick_button)
+	margin_button = _button("Margin bell")
+	margin_button.pressed.connect(_toggle_margin)
+	header.add_child(margin_button)
 	header.add_child(_spacer())
 	relic_label = _label("Relic: none", 16, INK)
 	header.add_child(relic_label)
@@ -499,6 +507,28 @@ func _begin_folio_bell() -> void:
 	_open_shift(Rules.SHIFT_FOLIO, state.seed)
 
 
+func _toggle_wick() -> void:
+	var next := Rules.SHIFT_WICK
+	if state.shift == Rules.SHIFT_WICK:
+		next = Rules.SHIFT_FIRST
+	_open_shift(next, _parse_seed())
+
+
+func _begin_wick_bell() -> void:
+	_open_shift(Rules.SHIFT_WICK, state.seed)
+
+
+func _toggle_margin() -> void:
+	var next := Rules.SHIFT_MARGIN
+	if state.shift == Rules.SHIFT_MARGIN:
+		next = Rules.SHIFT_FIRST
+	_open_shift(next, _parse_seed())
+
+
+func _begin_margin_bell() -> void:
+	_open_shift(Rules.SHIFT_MARGIN, state.seed)
+
+
 func _open_shift(shift_index: int, seed_value: int) -> void:
 	state = Rules.new_run(seed_value, shift_index)
 	seed_edit.text = str(state.seed)
@@ -555,6 +585,8 @@ func _refresh_ui() -> void:
 	salt_button.text = "First bell" if state.shift == Rules.SHIFT_SALT else "Salt watch"
 	quay_button.text = "First bell" if state.shift == Rules.SHIFT_QUAY else "Quay bell"
 	folio_button.text = "First bell" if state.shift == Rules.SHIFT_FOLIO else "Folio bell"
+	wick_button.text = "First bell" if state.shift == Rules.SHIFT_WICK else "Wick bell"
+	margin_button.text = "First bell" if state.shift == Rules.SHIFT_MARGIN else "Margin bell"
 	name_label.text = String(traveler["name"])
 	rule_label.text = "\"%s\"" % traveler["rule_text"]
 	var lane := String(Rules.COL_NAMES[int(traveler["lane"])])
@@ -688,12 +720,96 @@ func _fill_modal() -> void:
 			modal_box.add_child(button)
 		_add_modal_restarts()
 	elif state.phase == "victory":
-		if state.shift == Rules.SHIFT_FOLIO:
+		if state.shift == Rules.SHIFT_MARGIN:
+			modal_box.add_child(_label("The margin bell is clear", 32, TEXT))
+			modal_box.add_child(_wrapped("Nim Voss, Orla Quill, Bram Hart, and Sable Solt passed the desk. Restart this night to run the seed again, or open another bell.", 18, MUTED))
+			var restart_margin := _button("Restart act")
+			restart_margin.pressed.connect(_restart_act)
+			modal_box.add_child(restart_margin)
+			var margin_wick := _button("Open the wick bell")
+			margin_wick.pressed.connect(_begin_wick_bell)
+			modal_box.add_child(margin_wick)
+			var margin_folio := _button("Open the folio bell")
+			margin_folio.pressed.connect(_begin_folio_bell)
+			modal_box.add_child(margin_folio)
+			var margin_quay := _button("Open the quay bell")
+			margin_quay.pressed.connect(_begin_quay_bell)
+			modal_box.add_child(margin_quay)
+			var margin_salt := _button("Open the salt watch")
+			margin_salt.pressed.connect(_begin_salt_watch)
+			modal_box.add_child(margin_salt)
+			var margin_quire := _button("Open the quire watch")
+			margin_quire.pressed.connect(_begin_quire_watch)
+			modal_box.add_child(margin_quire)
+			var margin_vellum := _button("Open the vellum bell")
+			margin_vellum.pressed.connect(_begin_vellum_bell)
+			modal_box.add_child(margin_vellum)
+			var margin_gutter := _button("Open the gutter lamp")
+			margin_gutter.pressed.connect(_begin_gutter_lamp)
+			modal_box.add_child(margin_gutter)
+			var margin_ash := _button("Open the ash watch")
+			margin_ash.pressed.connect(_begin_ash_watch)
+			modal_box.add_child(margin_ash)
+			var margin_closing := _button("Open the closing bell")
+			margin_closing.pressed.connect(_begin_closing_bell)
+			modal_box.add_child(margin_closing)
+			var margin_late := _button("Open the late shift")
+			margin_late.pressed.connect(_begin_late_shift)
+			modal_box.add_child(margin_late)
+			var margin_first := _button("Open the first bell")
+			margin_first.pressed.connect(_begin_first_bell)
+			modal_box.add_child(margin_first)
+		elif state.shift == Rules.SHIFT_WICK:
+			modal_box.add_child(_label("The wick bell is clear", 32, TEXT))
+			modal_box.add_child(_wrapped("Odell Voss, Cress Hart, Jun Solt, and Ives Mire passed the desk. Restart this night to run the seed again, or open another bell.", 18, MUTED))
+			var restart_wick := _button("Restart act")
+			restart_wick.pressed.connect(_restart_act)
+			modal_box.add_child(restart_wick)
+			var wick_margin := _button("Open the margin bell")
+			wick_margin.pressed.connect(_begin_margin_bell)
+			modal_box.add_child(wick_margin)
+			var wick_folio := _button("Open the folio bell")
+			wick_folio.pressed.connect(_begin_folio_bell)
+			modal_box.add_child(wick_folio)
+			var wick_quay := _button("Open the quay bell")
+			wick_quay.pressed.connect(_begin_quay_bell)
+			modal_box.add_child(wick_quay)
+			var wick_salt := _button("Open the salt watch")
+			wick_salt.pressed.connect(_begin_salt_watch)
+			modal_box.add_child(wick_salt)
+			var wick_quire := _button("Open the quire watch")
+			wick_quire.pressed.connect(_begin_quire_watch)
+			modal_box.add_child(wick_quire)
+			var wick_vellum := _button("Open the vellum bell")
+			wick_vellum.pressed.connect(_begin_vellum_bell)
+			modal_box.add_child(wick_vellum)
+			var wick_gutter := _button("Open the gutter lamp")
+			wick_gutter.pressed.connect(_begin_gutter_lamp)
+			modal_box.add_child(wick_gutter)
+			var wick_ash := _button("Open the ash watch")
+			wick_ash.pressed.connect(_begin_ash_watch)
+			modal_box.add_child(wick_ash)
+			var wick_closing := _button("Open the closing bell")
+			wick_closing.pressed.connect(_begin_closing_bell)
+			modal_box.add_child(wick_closing)
+			var wick_late := _button("Open the late shift")
+			wick_late.pressed.connect(_begin_late_shift)
+			modal_box.add_child(wick_late)
+			var wick_first := _button("Open the first bell")
+			wick_first.pressed.connect(_begin_first_bell)
+			modal_box.add_child(wick_first)
+		elif state.shift == Rules.SHIFT_FOLIO:
 			modal_box.add_child(_label("The folio bell is clear", 32, TEXT))
 			modal_box.add_child(_wrapped("Ness Hart, Wynn Cress, Tam Quern, and Pell Sallow passed the desk. Restart this night to run the seed again, or open another bell.", 18, MUTED))
 			var restart_folio := _button("Restart act")
 			restart_folio.pressed.connect(_restart_act)
 			modal_box.add_child(restart_folio)
+			var folio_margin := _button("Open the margin bell")
+			folio_margin.pressed.connect(_begin_margin_bell)
+			modal_box.add_child(folio_margin)
+			var folio_wick := _button("Open the wick bell")
+			folio_wick.pressed.connect(_begin_wick_bell)
+			modal_box.add_child(folio_wick)
 			var folio_quay := _button("Open the quay bell")
 			folio_quay.pressed.connect(_begin_quay_bell)
 			modal_box.add_child(folio_quay)
@@ -727,6 +843,12 @@ func _fill_modal() -> void:
 			var restart_quay := _button("Restart act")
 			restart_quay.pressed.connect(_restart_act)
 			modal_box.add_child(restart_quay)
+			var quay_margin := _button("Open the margin bell")
+			quay_margin.pressed.connect(_begin_margin_bell)
+			modal_box.add_child(quay_margin)
+			var quay_wick := _button("Open the wick bell")
+			quay_wick.pressed.connect(_begin_wick_bell)
+			modal_box.add_child(quay_wick)
 			var quay_folio := _button("Open the folio bell")
 			quay_folio.pressed.connect(_begin_folio_bell)
 			modal_box.add_child(quay_folio)
@@ -760,6 +882,12 @@ func _fill_modal() -> void:
 			var restart_salt := _button("Restart act")
 			restart_salt.pressed.connect(_restart_act)
 			modal_box.add_child(restart_salt)
+			var salt_margin := _button("Open the margin bell")
+			salt_margin.pressed.connect(_begin_margin_bell)
+			modal_box.add_child(salt_margin)
+			var salt_wick := _button("Open the wick bell")
+			salt_wick.pressed.connect(_begin_wick_bell)
+			modal_box.add_child(salt_wick)
 			var salt_folio := _button("Open the folio bell")
 			salt_folio.pressed.connect(_begin_folio_bell)
 			modal_box.add_child(salt_folio)
@@ -793,6 +921,12 @@ func _fill_modal() -> void:
 			var restart_quire := _button("Restart act")
 			restart_quire.pressed.connect(_restart_act)
 			modal_box.add_child(restart_quire)
+			var quire_margin := _button("Open the margin bell")
+			quire_margin.pressed.connect(_begin_margin_bell)
+			modal_box.add_child(quire_margin)
+			var quire_wick := _button("Open the wick bell")
+			quire_wick.pressed.connect(_begin_wick_bell)
+			modal_box.add_child(quire_wick)
 			var quire_folio := _button("Open the folio bell")
 			quire_folio.pressed.connect(_begin_folio_bell)
 			modal_box.add_child(quire_folio)
@@ -826,6 +960,12 @@ func _fill_modal() -> void:
 			var restart_vellum := _button("Restart act")
 			restart_vellum.pressed.connect(_restart_act)
 			modal_box.add_child(restart_vellum)
+			var vellum_margin := _button("Open the margin bell")
+			vellum_margin.pressed.connect(_begin_margin_bell)
+			modal_box.add_child(vellum_margin)
+			var vellum_wick := _button("Open the wick bell")
+			vellum_wick.pressed.connect(_begin_wick_bell)
+			modal_box.add_child(vellum_wick)
 			var vellum_folio := _button("Open the folio bell")
 			vellum_folio.pressed.connect(_begin_folio_bell)
 			modal_box.add_child(vellum_folio)
@@ -859,6 +999,12 @@ func _fill_modal() -> void:
 			var restart_gutter := _button("Restart act")
 			restart_gutter.pressed.connect(_restart_act)
 			modal_box.add_child(restart_gutter)
+			var gutter_margin := _button("Open the margin bell")
+			gutter_margin.pressed.connect(_begin_margin_bell)
+			modal_box.add_child(gutter_margin)
+			var gutter_wick := _button("Open the wick bell")
+			gutter_wick.pressed.connect(_begin_wick_bell)
+			modal_box.add_child(gutter_wick)
 			var gutter_folio := _button("Open the folio bell")
 			gutter_folio.pressed.connect(_begin_folio_bell)
 			modal_box.add_child(gutter_folio)
@@ -892,6 +1038,12 @@ func _fill_modal() -> void:
 			var restart_ash := _button("Restart act")
 			restart_ash.pressed.connect(_restart_act)
 			modal_box.add_child(restart_ash)
+			var ash_margin := _button("Open the margin bell")
+			ash_margin.pressed.connect(_begin_margin_bell)
+			modal_box.add_child(ash_margin)
+			var ash_wick := _button("Open the wick bell")
+			ash_wick.pressed.connect(_begin_wick_bell)
+			modal_box.add_child(ash_wick)
 			var ash_folio := _button("Open the folio bell")
 			ash_folio.pressed.connect(_begin_folio_bell)
 			modal_box.add_child(ash_folio)
@@ -925,6 +1077,12 @@ func _fill_modal() -> void:
 			var restart_closing := _button("Restart act")
 			restart_closing.pressed.connect(_restart_act)
 			modal_box.add_child(restart_closing)
+			var closing_margin := _button("Open the margin bell")
+			closing_margin.pressed.connect(_begin_margin_bell)
+			modal_box.add_child(closing_margin)
+			var closing_wick := _button("Open the wick bell")
+			closing_wick.pressed.connect(_begin_wick_bell)
+			modal_box.add_child(closing_wick)
 			var closing_folio := _button("Open the folio bell")
 			closing_folio.pressed.connect(_begin_folio_bell)
 			modal_box.add_child(closing_folio)
@@ -955,6 +1113,12 @@ func _fill_modal() -> void:
 		elif state.shift == Rules.SHIFT_LATE:
 			modal_box.add_child(_label("The late shift is clear", 32, TEXT))
 			modal_box.add_child(_wrapped("Nell Parr, Sol Wicks, Pim Larke, and Rue Calder passed the desk. The closing bell, the ash watch, the gutter lamp, the vellum bell, the quire watch, the salt watch, the quay bell, and the folio bell are later nights. Same stamps, a fresh deck, and four new forms.", 18, MUTED))
+			var late_margin := _button("Open the margin bell")
+			late_margin.pressed.connect(_begin_margin_bell)
+			modal_box.add_child(late_margin)
+			var late_wick := _button("Open the wick bell")
+			late_wick.pressed.connect(_begin_wick_bell)
+			modal_box.add_child(late_wick)
 			var late_folio := _button("Open the folio bell")
 			late_folio.pressed.connect(_begin_folio_bell)
 			modal_box.add_child(late_folio)
@@ -988,6 +1152,12 @@ func _fill_modal() -> void:
 		else:
 			modal_box.add_child(_label("Act 1 is clear", 32, TEXT))
 			modal_box.add_child(_wrapped("Four travelers passed the desk. Later nights use the same stamps and a fresh deck: the late shift, the closing bell, the ash watch, the gutter lamp, the vellum bell, the quire watch, the salt watch, the quay bell, and the folio bell.", 18, MUTED))
+			var act_margin := _button("Open the margin bell")
+			act_margin.pressed.connect(_begin_margin_bell)
+			modal_box.add_child(act_margin)
+			var act_wick := _button("Open the wick bell")
+			act_wick.pressed.connect(_begin_wick_bell)
+			modal_box.add_child(act_wick)
 			var act_folio := _button("Open the folio bell")
 			act_folio.pressed.connect(_begin_folio_bell)
 			modal_box.add_child(act_folio)

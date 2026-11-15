@@ -1,6 +1,6 @@
 # Night Stamp
 
-A border-desk deckbuilder across ten nights. Travelers arrive with a written rule. You spend ink to press stamps onto a 3×3 form. The cell matters as much as the card. When the turn ends, the form resolves from the top row downward.
+A border-desk deckbuilder across twelve nights. Travelers arrive with a written rule. You spend ink to press stamps onto a 3×3 form. The cell matters as much as the card. When the turn ends, the form resolves from the top row downward.
 
 This folder is a Godot 4 project. It was built against Godot 4.7.2.
 
@@ -34,6 +34,8 @@ A run is seeded. The seed field decides the shuffle and the draft offers. Restar
 - Salt watch opens the eighth night with a fresh deck. While that night is open, the same button returns to the first bell.
 - Quay bell opens the ninth night with a fresh deck. While that night is open, the same button returns to the first bell.
 - Folio bell opens the tenth night with a fresh deck. While that night is open, the same button returns to the first bell. A victory desk can open any later night.
+- Wick bell opens the eleventh night with a fresh deck. While that night is open, the same button returns to the first bell. A victory desk can open it too.
+- Margin bell opens the twelfth night with a fresh deck. While that night is open, the same button returns to the first bell. A victory desk can open it too.
 - Ink is 3 at the start of a turn (4 with Deep Well). Spending the last ink ends the turn. A turn with 0 ink accepts no further stamp.
 
 The rules comment at the top of `rules/rules.gd` is the full rules text. The first bell has four travelers:
@@ -106,6 +108,20 @@ The folio bell is a tenth night. Same stamps, same ink, a new deck.
 - Tam Quern — Column Bar. A stamp in column 1 scores 0 when that column holds another stamp. A lone stamp in column 1 counts. Columns 2 and 3 score normally. Nell Parr already refuses every stamp in column 1, so Tam does not.
 - Pell Sallow — Gap Toll. Patience drops by 2 if two stamps have an empty cell between them in queue order.
 
+The wick bell is an eleventh night. Same stamps, same ink, a new deck.
+
+- Odell Voss — Row Bar. A stamp on the bottom row scores 0 when that row holds another stamp. A lone bottom-row stamp counts.
+- Cress Hart — First Slip. The first stamp in the queue scores twice when a later stamp follows it. A lone stamp scores its own number. Ida Cress already doubles a lone first stamp, so Cress does not.
+- Jun Solt — Pair Bar. If two stamps share a number, the later one scores 0. The earlier stamp scores its own number.
+- Ives Mire — Empty Yield. Each empty cell adds 1 to every filled stamp's own progress.
+
+The margin bell is a twelfth night. Same stamps, same ink, a new deck.
+
+- Nim Voss — Side Bar. A stamp scores 0 when it shares a side with an earlier stamp. The earlier stamp scores its own number. A corner-only touch does not count, and a lone stamp scores its own number. Kit Yarrow already zeros both stamps of a side-sharing pair, so Nim does not.
+- Orla Quill — Last Toll. Patience drops by 2 if the last filled cell is in column 3. Hold is applied first.
+- Bram Hart — Frame Slip. A stamp on the outer frame scores twice when the center is filled. If the center is empty, frame stamps score their own number. The center scores its own number.
+- Sable Solt — Gap Yield. If two filled stamps have an empty cell between them, each of those stamps scores +2. Stamps that are not part of a gap score their own number. This changes the score. It does not change patience.
+
 ## Tests
 
 From this directory:
@@ -114,4 +130,4 @@ From this directory:
 godot --headless --path . -s res://tests/run_tests.gd
 ```
 
-The process exits 0 when every check passes and non-zero when one fails. The checks cover the 20-card pool, a fixed-seed clear of each night, a turn with 0 ink, the chain cap, the same card producing different numbers on two cells, and a correct stamp beside a wrong stamp for each late-shift, closing-bell, ash-watch, gutter-lamp, vellum-bell, quire-watch, salt-watch, quay-bell, and folio-bell form.
+The process exits 0 when every check passes and non-zero when one fails. The checks cover the 20-card pool, a fixed-seed clear of each night, a turn with 0 ink, the chain cap, the same card producing different numbers on two cells, and a correct stamp beside a wrong stamp for each late-shift, closing-bell, ash-watch, gutter-lamp, vellum-bell, quire-watch, salt-watch, quay-bell, folio-bell, wick-bell, and margin-bell form.
