@@ -2,7 +2,7 @@
 
 Kiln Route is a foundry puzzle. Each room hands you a tray of machines and a quota. The route clears when the quota is met inside one simulated minute. Pieces can always be picked back up.
 
-This project is the full route: ten wings, 80 rooms. Clearing room 8 unlocks room 9. Clearing room 16 unlocks room 17. Clearing room 24 unlocks room 25. Clearing room 32 unlocks room 33. Clearing room 40 unlocks room 41. Clearing room 48 unlocks room 49. Clearing room 56 unlocks room 57. Clearing room 64 unlocks room 65. Clearing room 72 unlocks room 73.
+This project is the full route: eleven wings, 88 rooms. Clearing room 8 unlocks room 9. Clearing room 16 unlocks room 17. Clearing room 24 unlocks room 25. Clearing room 32 unlocks room 33. Clearing room 40 unlocks room 41. Clearing room 48 unlocks room 49. Clearing room 56 unlocks room 57. Clearing room 64 unlocks room 65. Clearing room 72 unlocks room 73. Clearing room 80 unlocks room 81.
 
 Art is drawn by Godot (rects, polygons, lines, and arcs). There are no imported sprites.
 
@@ -16,7 +16,7 @@ godot --path kiln-route
 
 ## Controls
 
-- 1 belt, 2 kiln, 3 press, 4 filter, 5 splitter, 6 roller, 7 weir, 8 bridge, 9 grate, 0 hook, - arm, = drop, \\ lift, ; dwell, , twin (only pieces in the tray can be selected). Keypad plus also selects the drop. Keypad * also selects the lift. Keypad period also selects the dwell. Keypad 0 stays on the hook.
+- 1 belt, 2 kiln, 3 press, 4 filter, 5 splitter, 6 roller, 7 weir, 8 bridge, 9 grate, 0 hook, - arm, = drop, \\ lift, ; dwell, , twin, ' pass (only pieces in the tray can be selected). Keypad plus also selects the drop. Keypad * also selects the lift. Keypad period also selects the dwell. Keypad divide also selects the pass. Keypad 0 stays on the hook.
 - R or E rotates clockwise, Q rotates counter-clockwise. R rotates the piece under the cursor when there is one, otherwise it rotates the piece you are about to place. Right-click does the same.
 - Left-click an empty floor cell to place the selected piece. Left-click a placed piece to pick it up and return it to the tray.
 - Space or Enter runs the minute. While it is running, Space or F skips to the result. The Run button does the same.
@@ -65,6 +65,7 @@ Facing is east, south, west, or north. North is up. "Right" means 90 degrees clo
 - **Lift.** Holds one item. Accepts any material, but only from below: its right side, the item moving toward the lift's left. It pushes that item back, the opposite of forward. It refuses a left-side entry, a rear entry, and a head-on entry. If the back exit cannot accept the item, the item waits. The lift does not send right, does not spill, and does not alternate. When it points east, below is the south cell and back is west; the north cell is above, and the lift refuses it. Its key is backslash, not the hook's 0, the arm's minus, or the drop's equals. Keypad * selects it too.
 - **Dwell.** Holds one item. Accepts any material, but only from behind. It refuses a side entry and a head-on entry. On the tick it accepts an item, it does not send. A belt sends on the next tick. The dwell spends that next tick holding, and only then tries to push the item forward. If the forward cell refuses, the item waits and the dwell tries again next tick. It does not spill, rotate, alternate, or send left, right, or back. While it is holding, the cell is full, so the next item waits behind it. Its key is semicolon, not the hook's 0, the arm's minus, the drop's equals, or the lift's backslash. Keypad period selects it too.
 - **Twin.** Holds one waiting item. Accepts any material, but only from behind. It refuses a side entry and a head-on entry. The first item waits. It does not leave on the next tick, and it does not leave one tick after that. A lone item never leaves. That is the difference from a belt and from a dwell. When a second item of the same material arrives from behind, the waiting item moves one cell forward on that tick if the forward cell can take it, and the new item becomes the waiting item. The last item of a run stays in the twin. A different material is refused. The waiting item stays, and the different item waits on the previous piece. If the forward cell refuses, the second item is not accepted and the waiting item stays. The twin does not spill, rotate, alternate, or send left, right, or back. Its key is comma, not the hook's 0, the arm's minus, the drop's equals, the lift's backslash, or the dwell's semicolon. Keypad 0 stays on the hook.
+- **Pass.** Holds one waiting item. Accepts any material, but only from behind. It refuses a side entry and a head-on entry. The first item waits. It does not leave on the next tick, and it does not leave one tick after that. A lone item never leaves. When a second item arrives from behind, the waiting item moves one cell forward on that tick if the forward cell can take it, and the new item becomes the waiting item. The second item may be a different material. That is the difference from a twin, which refuses a different material. The last item of a run stays in the pass. If the forward cell refuses, the second item is not accepted and the waiting item stays. The pass does not spill, rotate, alternate, or send left, right, or back. Its key is apostrophe, not the hook's 0, the arm's minus, the drop's equals, the lift's backslash, the dwell's semicolon, or the twin's comma. Keypad divide selects it too. Keypad 0 stays on the hook.
 
 ### Budget and clearing
 
@@ -152,6 +153,14 @@ The tray is the piece budget. Placing a piece you do not have is refused. A run 
 78. **Second Heat** — twin, then a weir into two kilns. A belt or a dwell jams one kiln.
 79. **After the Scrap** — the filter scraps raw ingots, and the twin holds the ore until the next ore arrives. A dwell lets the ore collide with the scrap stream.
 80. **Both Bins** — twin the ore into the kiln, then split ingots between the bin and the press. The upper plates alone miss, and pressing every ingot misses the ingot bin. A belt or a dwell changes the arrival so both quotas miss.
+81. **Pair** — the pass holds the first plate until an ingot arrives from behind, then sends the plate. A twin refuses that ingot, so the plate never leaves. A belt sends the plate too soon. The last ingot stays in the pass. Quota: 19 plates.
+82. **Match** — the pass feeds ore to a kiln only when a plate arrives behind it. A twin refuses the plate, so the ore never reaches the kiln. Quota: 19 ingots.
+83. **Stint** — the tray has one belt, on the crossing, and the kiln sits against the bin. A belt, a dwell, or a twin in the pass cell dumps the ore into the pit or never releases it. Quota: 19 ingots.
+84. **Late** — the pass starts off the lane. Pick it up and seat it where the ingot has to push the plates. Quota: 19 plates.
+85. **Bend** — a wall closes the straight lane. Bring the pushing items into the back of the pass. Quota: 19 plates.
+86. **Second Heat** — pass, then a weir into two kilns. A belt takes a side plate and the ore never enters. A dwell is too slow to feed both kilns. A twin refuses the plate in the ore stream and the ore stops. One kiln misses. Quota: 70 ingots.
+87. **After the Scrap** — the filter scraps one stream, and the pass holds the ore until a plate arrives. A twin never lets that ore go. Quota: 19 ingots.
+88. **Both Bins** — pass the ore into the kiln, then split ingots between the bin and the press. A belt, a dwell, or a twin changes the arrival so both quotas miss. Quota: 10 ingots and 34 plates.
 
 ## Tests
 
@@ -169,12 +178,12 @@ The suite checks:
 - A layout that meets the quota with an extra piece is rejected, and the tray itself refuses that extra piece.
 - Flooding one machine from different inputs (two schedules into one belt, two patterns into one splitter, two rates into one kiln) is deterministic: the same seed and state produce the same deliveries, and the different floods do not collapse to one output.
 - Pickup returns a placed belt to the tray, including a kiln the room started with, and pickup during a run does the same through the game object.
-- The documented belt, kiln, press, filter, splitter, roller, weir, bridge, grate, hook, arm, drop, lift, dwell, and twin timings, including that a blocked splitter does not flip, that a weir tries forward again after a spill, that a bridge keeps its two lanes apart, that a blocked grate does not spill onto its other exit, that a blocked hook does not spill forward, that a blocked arm does not send left, that a blocked drop does not send forward, that a blocked lift does not send right, that a blocked dwell does not spill to the side or back, and that a lone item never leaves a twin, a different material is refused, and a blocked twin does not spill.
-- Replacing the dwell with a belt misses rooms 65 through 72. Replacing the twin with a belt misses rooms 73 through 80, and replacing it with a dwell misses those rooms too. The authored solution for each of those rooms uses the tray exactly, and an extra piece is rejected.
+- The documented belt, kiln, press, filter, splitter, roller, weir, bridge, grate, hook, arm, drop, lift, dwell, twin, and pass timings, including that a blocked splitter does not flip, that a weir tries forward again after a spill, that a bridge keeps its two lanes apart, that a blocked grate does not spill onto its other exit, that a blocked hook does not spill forward, that a blocked arm does not send left, that a blocked drop does not send forward, that a blocked lift does not send right, that a blocked dwell does not spill to the side or back, that a lone item never leaves a twin, a different material is refused, and a blocked twin does not spill, and that a lone item never leaves a pass, a different material from behind does push, and a blocked pass does not spill.
+- Replacing the dwell with a belt misses rooms 65 through 72. Replacing the twin with a belt misses rooms 73 through 80, and replacing it with a dwell misses those rooms too. Replacing the pass with a belt, a dwell, or a twin misses rooms 81 through 88. The authored solution for each of those rooms uses the tray exactly, and an extra piece is rejected.
 
 ## Limitations
 
-- Ten wings, 80 rooms. There is no overworld.
+- Eleven wings, 88 rooms. There is no overworld.
 - No audio, no gamepad, and no drag-paint.
 - Items wait when blocked. They are not deleted, except by a waste chute.
 - A splitter does not skip a blocked exit.

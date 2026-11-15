@@ -199,6 +199,8 @@ func _kind_for_key(code: int) -> int:
 		KEY_SEMICOLON: Rules.Kind.DWELL,
 		KEY_KP_PERIOD: Rules.Kind.DWELL,
 		KEY_COMMA: Rules.Kind.TWIN,
+		KEY_APOSTROPHE: Rules.Kind.PASS,
+		KEY_KP_DIVIDE: Rules.Kind.PASS,
 	}
 	if not map.has(code):
 		return -1
@@ -358,6 +360,7 @@ func _kind_order() -> Array:
 		Rules.Kind.LIFT,
 		Rules.Kind.DWELL,
 		Rules.Kind.TWIN,
+		Rules.Kind.PASS,
 	]
 
 
@@ -718,6 +721,14 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 		var rear := center - along * body.size.x * 0.2
 		draw_circle(rear - along * body.size.x * 0.12, body.size.x * 0.075, ink)
 		draw_circle(rear + along * body.size.x * 0.08, body.size.x * 0.075, ink)
+	elif kind == Rules.Kind.PASS:
+		var along := Vector2(Rules.vec(dir))
+		var across := Vector2(Rules.vec(Rules.right(dir)))
+		var ink := Color(1, 1, 1, 0.82 * alpha)
+		var thick := maxf(2.0, body.size.x * 0.08)
+		var gate := center - along * body.size.x * 0.16
+		draw_line(gate - across * body.size.x * 0.28, gate - across * body.size.x * 0.08, ink, thick)
+		draw_line(gate + across * body.size.x * 0.08, gate + across * body.size.x * 0.28, ink, thick)
 	elif kind == Rules.Kind.GRATE:
 		var along := Vector2(Rules.vec(dir))
 		var across := Vector2(Rules.vec(Rules.right(dir)))
@@ -899,6 +910,8 @@ func _key_label(kind: int) -> String:
 		return ";"
 	if kind == Rules.Kind.TWIN:
 		return ","
+	if kind == Rules.Kind.PASS:
+		return "'"
 	return str(kind + 1)
 
 
@@ -933,6 +946,8 @@ func _kind_color(kind: int) -> Color:
 		return Color("c4a35a")
 	if kind == Rules.Kind.TWIN:
 		return Color("7d6bbd")
+	if kind == Rules.Kind.PASS:
+		return Color("d07a8c")
 	return Color("c792ef")
 
 

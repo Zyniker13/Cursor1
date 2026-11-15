@@ -73,15 +73,15 @@ func _build_hud() -> void:
 	layer.add_child(bottom_panel)
 
 	controls_label = Label.new()
-	controls_label.text = "Arrows move    F lamp you face    Space wait    U undo    R restart    click a neighbor or a lamp\n1–8 east    Shift+1–6 west    Ctrl+1–6 north    Alt+1–6 south    F1–F6 attic    F7–F12 cellar    Keypad 1–6 gallery    Shift+F1–F6 court    Alt+F1–F6 nave"
+	controls_label.text = "Arrows move    F lamp you face    Space wait    U undo    R restart    click a neighbor or a lamp\n1–8 east    Shift+1–6 west    Ctrl+1–6 north    Alt+1–6 south    F1–F6 attic    F7–F12 cellar    Keypad 1–6 gallery    Shift+F1–F6 court    Alt+F1–F6 nave    Ctrl+F1–F6 cloister"
 	controls_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	controls_label.add_theme_font_size_override("font_size", 14)
 	controls_label.add_theme_color_override("font_color", MUTED)
 	controls_label.position = Vector2(20, 4)
-	controls_label.size = Vector2(1240, 48)
+	controls_label.size = Vector2(1240, 64)
 	bottom_panel.add_child(controls_label)
 
-	var row_y := 56.0
+	var row_y := 72.0
 	var wings: Array = Puzzles.wings()
 	for wing_i in wings.size():
 		var wing: Dictionary = wings[wing_i]
@@ -118,10 +118,10 @@ func _build_hud() -> void:
 		row_y += 36.0
 
 	legend_label = Label.new()
-	legend_label.text = "Gold diamond — lamplight, you cannot walk it.    Red diamond — a guard is watching.    Arrow — that guard's next step.    Brass disc — a plate. Step on it in the dark and the nearest guard is called.    Iron cup — a bell. Step on it in the dark and every guard who can reach it is called."
+	legend_label.text = "Gold diamond — lamplight, you cannot walk it.    Red diamond — a guard is watching.    Arrow — that guard's next step.    Brass disc — a plate. Step on it in the dark and the nearest guard is called.    Iron cup — a bell. Step on it in the dark and every guard who can reach it is called.    Iron bars — a grate. It stays dark, you may enter it, and a guard cannot."
 	legend_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	legend_label.position = Vector2(20, row_y + 2.0)
-	legend_label.size = Vector2(1240, 36)
+	legend_label.size = Vector2(1240, 52)
 	legend_label.add_theme_font_size_override("font_size", 14)
 	legend_label.add_theme_color_override("font_color", MUTED)
 	bottom_panel.add_child(legend_label)
@@ -131,9 +131,9 @@ func _build_hud() -> void:
 	status_label.add_theme_font_size_override("font_size", 16)
 	status_label.add_theme_color_override("font_color", CREAM)
 	status_label.position = Vector2(20, row_y + 2.0)
-	status_label.size = Vector2(1240, 36)
+	status_label.size = Vector2(1240, 52)
 	bottom_panel.add_child(status_label)
-	bottom_h = row_y + 48.0
+	bottom_h = row_y + 62.0
 
 	turn_label = Label.new()
 	turn_label.add_theme_font_size_override("font_size", 16)
@@ -168,11 +168,11 @@ func _layout() -> void:
 	bottom_panel.position = Vector2(0, view.y - bottom_h)
 	bottom_panel.size = Vector2(view.x, bottom_h)
 	if controls_label:
-		controls_label.size = Vector2(maxf(200.0, view.x - 40.0), 48)
+		controls_label.size = Vector2(maxf(200.0, view.x - 40.0), 64)
 	if legend_label:
-		legend_label.size = Vector2(maxf(200.0, view.x - 40.0), 36)
+		legend_label.size = Vector2(maxf(200.0, view.x - 40.0), 52)
 	if status_label:
-		status_label.size = Vector2(maxf(200.0, view.x - 40.0), 36)
+		status_label.size = Vector2(maxf(200.0, view.x - 40.0), 52)
 	title_label.position = Vector2(24, 16)
 	title_label.size = Vector2(view.x - 220, 34)
 	lesson_label.position = Vector2(24, 54)
@@ -277,6 +277,9 @@ func _puzzle_index_for_key(event: InputEventKey) -> int:
 	var nave := _nave_index(event)
 	if nave >= 0:
 		return 50 + nave
+	var cloister := _cloister_index(event)
+	if cloister >= 0:
+		return 56 + cloister
 	var attic := _attic_index(event)
 	if attic >= 0:
 		return 26 + attic
@@ -306,6 +309,19 @@ func _puzzle_index_for_key(event: InputEventKey) -> int:
 	if digit > 7:
 		return -1
 	return digit
+
+
+func _cloister_index(event: InputEventKey) -> int:
+	if event.shift_pressed or event.alt_pressed:
+		return -1
+	if not event.ctrl_pressed and not event.meta_pressed:
+		return -1
+	var key := event.physical_keycode
+	if key < KEY_F1 or key > KEY_F6:
+		key = event.keycode
+	if key < KEY_F1 or key > KEY_F6:
+		return -1
+	return int(key) - int(KEY_F1)
 
 
 func _nave_index(event: InputEventKey) -> int:
@@ -340,7 +356,7 @@ func _gallery_index(event: InputEventKey) -> int:
 
 
 func _attic_index(event: InputEventKey) -> int:
-	if event.alt_pressed:
+	if event.alt_pressed or event.ctrl_pressed or event.meta_pressed:
 		return -1
 	var key := event.physical_keycode
 	if key < KEY_F1 or key > KEY_F6:
@@ -547,7 +563,7 @@ func _draw_tile(state: Dictionary, x: int, y: int, lit: Dictionary, watched: Dic
 	var floor_color := FLOOR_ALT if (x + y) % 2 == 0 else FLOOR
 	draw_rect(rect, GROUT)
 	var inset := Rect2(rect.position + Vector2(2, 2), rect.size - Vector2(4, 4))
-	if lit.has(cell):
+	if lit.has(cell) and kind != Rules.Tile.GRATE:
 		floor_color = LIT
 	draw_rect(inset, floor_color)
 	if kind == Rules.Tile.GAP:
@@ -562,12 +578,14 @@ func _draw_tile(state: Dictionary, x: int, y: int, lit: Dictionary, watched: Dic
 		draw_rect(Rect2(door.position - Vector2(3, 3), door.size + Vector2(6, 6)), EXIT_COLOR)
 		draw_rect(door, Color("10210f"))
 	var center := rect.get_center()
-	if lit.has(cell):
+	if lit.has(cell) and kind != Rules.Tile.GRATE:
 		draw_colored_polygon(_diamond(center, tile * 0.34, tile * 0.34), LIGHT)
 	if kind == Rules.Tile.PLATE:
 		_draw_plate(center)
 	if kind == Rules.Tile.BELL:
 		_draw_bell(center)
+	if kind == Rules.Tile.GRATE:
+		_draw_grate(inset)
 	if watched.has(cell):
 		draw_colored_polygon(_diamond(center, tile * 0.26, tile * 0.26), WATCH)
 		draw_polyline(_diamond_loop(center, tile * 0.3, tile * 0.3), Color(1, 0.55, 0.45, 0.9), 1.5)
@@ -598,6 +616,28 @@ func _draw_plate(center: Vector2) -> void:
 	draw_rect(Rect2(center + Vector2(-tile * 0.07, -tile * 0.018), Vector2(tile * 0.14, tile * 0.036)), Color("3a2c16"))
 	draw_circle(center, tile * 0.045, Color("8d7344"))
 	draw_circle(center, tile * 0.02, Color("3a2c16"))
+
+
+func _draw_grate(inset: Rect2) -> void:
+	var iron := Color("5c6770")
+	var shine := Color("d5dee6")
+	var gap := Color("07080a")
+	var inner := Rect2(inset.position + inset.size * 0.12, inset.size * 0.76)
+	draw_rect(inner, gap)
+	var rail := maxf(2.0, tile * 0.045)
+	draw_rect(Rect2(inner.position, Vector2(inner.size.x, rail)), iron)
+	draw_rect(Rect2(Vector2(inner.position.x, inner.position.y + inner.size.y - rail), Vector2(inner.size.x, rail)), iron)
+	var bars := 5
+	var bar_w := maxf(2.0, tile * 0.055)
+	for i in bars:
+		var x := inner.position.x + inner.size.x * (float(i) + 0.5) / float(bars) - bar_w * 0.5
+		draw_rect(Rect2(Vector2(x, inner.position.y), Vector2(bar_w, inner.size.y)), iron)
+		draw_line(
+			Vector2(x + bar_w * 0.32, inner.position.y + rail),
+			Vector2(x + bar_w * 0.32, inner.position.y + inner.size.y - rail),
+			shine,
+			1.0
+		)
 
 
 func _draw_bell(center: Vector2) -> void:

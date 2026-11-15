@@ -23,6 +23,9 @@ const BINDING_AWNING := Color(0.38, 0.32, 0.22)
 const CHART_AWNING := Color(0.12, 0.20, 0.46)
 const BELL_AWNING := Color(0.55, 0.32, 0.12)
 const CLOCK_AWNING := Color(0.63, 0.48, 0.20)
+const FONT_AWNING := Color(0.36, 0.46, 0.26)
+const APSE_AWNING := Color(0.78, 0.66, 0.38)
+const CHOIR_AWNING := Color(0.58, 0.40, 0.18)
 
 var notice_label: Label
 var purse_label: Label
@@ -62,9 +65,9 @@ func _build() -> void:
 	var card_w := (1280.0 - margin * 2.0 - gap * float(floors.size() - 1)) / float(floors.size())
 	var x := margin
 	var narrow := card_w < 220.0
-	var inset := 6.0 if card_w < 112.0 else (8.0 if card_w < 150.0 else (12.0 if narrow else 20.0))
-	var record_size := 11 if card_w < 112.0 else (12 if card_w < 130.0 else (13 if card_w < 150.0 else (15 if narrow else 18)))
-	var status_size := 11 if card_w < 112.0 else (12 if card_w < 130.0 else (13 if card_w < 150.0 else (16 if narrow else 20)))
+	var inset := 4.0 if card_w < 90.0 else (6.0 if card_w < 112.0 else (8.0 if card_w < 150.0 else (12.0 if narrow else 20.0)))
+	var record_size := 10 if card_w < 90.0 else (11 if card_w < 112.0 else (12 if card_w < 130.0 else (13 if card_w < 150.0 else (15 if narrow else 18))))
+	var status_size := 10 if card_w < 90.0 else (11 if card_w < 112.0 else (12 if card_w < 130.0 else (13 if card_w < 150.0 else (16 if narrow else 20))))
 	for floor in floors:
 		var card := _panel(Vector2(x, 176), Vector2(card_w, 320), _awning_for(str(floor.id)), floor.title)
 		add_child(card)
@@ -81,8 +84,10 @@ func _build() -> void:
 		status.size = Vector2(card_w - inset * 2.0, 28)
 		card.add_child(status)
 		_status[floor.id] = status
-		var button := _button("Descend")
-		if card_w < 112.0:
+		var button := _button("Descend", 2 if card_w < 96.0 else 12)
+		if card_w < 90.0:
+			button.add_theme_font_size_override("font_size", 9)
+		elif card_w < 112.0:
 			button.add_theme_font_size_override("font_size", 10)
 		elif card_w < 130.0:
 			button.add_theme_font_size_override("font_size", 11)
@@ -152,6 +157,12 @@ func _awning_for(floor_id: String) -> Color:
 		return BELL_AWNING
 	if floor_id == "clockroom":
 		return CLOCK_AWNING
+	if floor_id == "font":
+		return FONT_AWNING
+	if floor_id == "apse":
+		return APSE_AWNING
+	if floor_id == "choir":
+		return CHOIR_AWNING
 	return CHART_AWNING
 
 
@@ -212,7 +223,9 @@ func _panel(at: Vector2, panel_size: Vector2, awning: Color, title: String) -> C
 	stripe.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(stripe)
 	var title_size := 26
-	if panel_size.x < 112.0:
+	if panel_size.x < 90.0:
+		title_size = 9
+	elif panel_size.x < 112.0:
 		title_size = 10
 	elif panel_size.x < 130.0:
 		title_size = 11
@@ -224,7 +237,7 @@ func _panel(at: Vector2, panel_size: Vector2, awning: Color, title: String) -> C
 		title_size = 15
 	elif panel_size.x < 220.0:
 		title_size = 18
-	var inset := 6.0 if panel_size.x < 112.0 else (8.0 if panel_size.x < 150.0 else (12.0 if panel_size.x < 220.0 else 20.0))
+	var inset := 4.0 if panel_size.x < 90.0 else (6.0 if panel_size.x < 112.0 else (8.0 if panel_size.x < 150.0 else (12.0 if panel_size.x < 220.0 else 20.0)))
 	var heading := _label(title, title_size, PARCHMENT)
 	heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	heading.clip_text = true
@@ -243,7 +256,7 @@ func _label(text: String, font_size: int, color: Color) -> Label:
 	return label
 
 
-func _button(text: String) -> Button:
+func _button(text: String, horizontal_pad: int = 12) -> Button:
 	var button := Button.new()
 	button.text = text
 	button.focus_mode = Control.FOCUS_ALL
@@ -252,10 +265,10 @@ func _button(text: String) -> Button:
 	button.add_theme_color_override("font_hover_color", INK)
 	button.add_theme_color_override("font_pressed_color", INK)
 	button.add_theme_color_override("font_disabled_color", Color(0.55, 0.48, 0.40))
-	var normal := _box(AMBER, Color(0.35, 0.22, 0.08))
-	var hover := _box(Color(0.98, 0.78, 0.40), Color(0.45, 0.28, 0.08))
-	var pressed := _box(Color(0.78, 0.52, 0.18), Color(0.30, 0.18, 0.06))
-	var disabled := _box(Color(0.28, 0.24, 0.20), Color(0.18, 0.15, 0.12))
+	var normal := _box(AMBER, Color(0.35, 0.22, 0.08), horizontal_pad)
+	var hover := _box(Color(0.98, 0.78, 0.40), Color(0.45, 0.28, 0.08), horizontal_pad)
+	var pressed := _box(Color(0.78, 0.52, 0.18), Color(0.30, 0.18, 0.06), horizontal_pad)
+	var disabled := _box(Color(0.28, 0.24, 0.20), Color(0.18, 0.15, 0.12), horizontal_pad)
 	button.add_theme_stylebox_override("normal", normal)
 	button.add_theme_stylebox_override("hover", hover)
 	button.add_theme_stylebox_override("pressed", pressed)
@@ -264,12 +277,12 @@ func _button(text: String) -> Button:
 	return button
 
 
-func _box(fill: Color, edge: Color) -> StyleBoxFlat:
+func _box(fill: Color, edge: Color, horizontal_pad: int = 12) -> StyleBoxFlat:
 	var box := StyleBoxFlat.new()
 	box.bg_color = fill
 	box.border_color = edge
 	box.set_border_width_all(2)
 	box.set_corner_radius_all(3)
-	box.content_margin_left = 12
-	box.content_margin_right = 12
+	box.content_margin_left = horizontal_pad
+	box.content_margin_right = horizontal_pad
 	return box
