@@ -3,11 +3,12 @@ extends RefCounted
 ## Kiln Route rooms. Wing 1 is the first eight. Wing 2 is rooms 9-16.
 ## Wing 3 is rooms 17-24. Wing 4 is rooms 25-32. Wing 5 is rooms 33-40.
 ## Wing 6 is rooms 41-48. Wing 7 is rooms 49-56. Wing 8 is rooms 57-64.
-## Wing 9 is rooms 65-72. Wing 10 is rooms 73-80. Wing 11 is rooms 81-88.
+## Wing 9 is rooms 65-72. Wing 10 is rooms 73-80. Wing 11 is rooms 81-88. Wing 12 is rooms 89-96.
 ## The dwell is taught before a later room depends on it.
 ## The twin is taught before a later room depends on it.
 ## The pass is taught before a later room depends on it.
-## The roller, the weir, the bridge, the grate, the hook, the arm, the drop, the lift, the dwell, the twin, and the pass are taught before a later room depends on them.
+## The slip is taught before a later room depends on it.
+## The roller, the weir, the bridge, the grate, the hook, the arm, the drop, the lift, the dwell, the twin, the pass, and the slip are taught before a later room depends on them.
 ## Each solution is a full layout, not a delta from the initial pieces.
 ## Quotas are minimums inside SIM_TICKS.
 
@@ -104,6 +105,14 @@ static func all() -> Array:
 		second_heat_pass(),
 		after_scrap_pass(),
 		both_bins_pass(),
+		hold_slip(),
+		keep_slip(),
+		still_slip(),
+		seat_slip(),
+		turn_slip(),
+		spare_heat_slip(),
+		after_hold_slip(),
+		one_bin_slip(),
 	]
 
 
@@ -3215,6 +3224,321 @@ static func both_bins_pass() -> Dictionary:
 			piece(rules.Kind.BELT, 3, 1, rules.Dir.SOUTH),
 			piece(rules.Kind.BELT, 3, 2, rules.Dir.SOUTH),
 			piece(rules.Kind.PASS, 1, 3, rules.Dir.EAST),
+			piece(rules.Kind.WEIR, 2, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 3, 3, rules.Dir.EAST),
+			piece(rules.Kind.FILTER, 4, 3, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 5, 3, rules.Dir.EAST),
+			piece(rules.Kind.SPLITTER, 6, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 7, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 8, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 6, 4, rules.Dir.EAST),
+			piece(rules.Kind.PRESS, 7, 4, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 8, 4, rules.Dir.EAST),
+		],
+	}
+
+static func hold_slip() -> Dictionary:
+	var rules = Rules
+	# Period-2 plates and ingots. Crossing ore on period 4 sits on the junction
+	# when a belt, a dwell, or a pass lets a plate go. The slip keeps the first
+	# plate and lets later plates through on the clear phase.
+	return {
+		"id": 89,
+		"name": "Hold",
+		"blurb": "The slip keeps the first plate and lets every later item through. A pass sends that plate and keeps the last item.",
+		"rule": "A slip holds one item and takes it only from behind. The first plate stays. Every later item moves one cell forward on the tick it arrives, and that plate remains the waiting item. A pass sends the plate and keeps the last item, so the plates hit the ore crossing and the weir dumps them. A belt sends the plate on the next tick, into the crossing. A dwell releases it while the crossing is still full. A twin refuses the ingot, so the plate never leaves and nothing behind it can pass. The grate passes later plates into the bin and drops ore and ingots into the pit.",
+		"w": 6,
+		"h": 5,
+		"sources": [
+			source(0, 3, rules.Dir.EAST, [rules.Mat.PLATE, rules.Mat.INGOT], 2),
+			source(3, 0, rules.Dir.SOUTH, [rules.Mat.ORE], 4),
+		],
+		"sinks": [sink(5, 3, [rules.Mat.PLATE])],
+		"chutes": [cell(2, 4), cell(4, 4)],
+		"walls": [],
+		"budget": kv([rules.Kind.BELT, 3, rules.Kind.SLIP, 1, rules.Kind.WEIR, 1, rules.Kind.GRATE, 1]),
+		"quota": kv([rules.Mat.PLATE, 29]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.SLIP, 1, 3, rules.Dir.EAST),
+			piece(rules.Kind.WEIR, 2, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 3, 1, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 2, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 3, rules.Dir.EAST),
+			piece(rules.Kind.GRATE, 4, 3, rules.Dir.EAST),
+		],
+	}
+
+
+static func keep_slip() -> Dictionary:
+	var rules = Rules
+	# Match's crossing. The filter faces east, so ore falls into the east pit
+	# and ingots drop south into the press. The slip holds the first ore.
+	return {
+		"id": 90,
+		"name": "Keep",
+		"blurb": "The slip holds the first ore and lets the ingots through to the press. A pass sends that ore onward.",
+		"rule": "The slip holds the first ore and lets later ingots through. The filter scraps ore into the pit and feeds ingots to the press. A pass sends that ore onward, so the press never fills and the plate bin misses. A belt and a dwell release the ore into the crossing, and the weir dumps the load. A twin refuses the ingot, so the ore never leaves.",
+		"w": 8,
+		"h": 5,
+		"sources": [
+			source(0, 3, rules.Dir.EAST, [rules.Mat.ORE, rules.Mat.INGOT], 1),
+			source(3, 0, rules.Dir.SOUTH, [rules.Mat.ORE], 6),
+		],
+		"sinks": [sink(6, 4, [rules.Mat.PLATE])],
+		"chutes": [cell(2, 4), cell(5, 3)],
+		"walls": [],
+		"budget": kv([
+			rules.Kind.BELT, 4,
+			rules.Kind.SLIP, 1,
+			rules.Kind.WEIR, 1,
+			rules.Kind.FILTER, 1,
+			rules.Kind.PRESS, 1,
+		]),
+		"quota": kv([rules.Mat.PLATE, 19]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.SLIP, 1, 3, rules.Dir.EAST),
+			piece(rules.Kind.WEIR, 2, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 3, 1, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 2, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 3, rules.Dir.EAST),
+			piece(rules.Kind.FILTER, 4, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 4, 4, rules.Dir.EAST),
+			piece(rules.Kind.PRESS, 5, 4, rules.Dir.EAST),
+		],
+	}
+
+
+static func still_slip() -> Dictionary:
+	var rules = Rules
+	# Stint's single belt stays on the crossing. The slip keeps the first ore
+	# out of the pit and lets later ore through once the crossing plate has left.
+	return {
+		"id": 91,
+		"name": "Still",
+		"blurb": "The tray has one belt. Leave it on the crossing. The slip keeps the first ore out of the pit.",
+		"rule": "The tray has one belt. It has to stay on the crossing in front of the filter, and the kiln sits against the bin. Two rollers bring the plate onto that belt. The slip keeps the first ore and lets later ore through after the crossing plate has left. A pass sends that ore into the crossing and the weir dumps it. A belt and a dwell release it into the pit as well. A twin refuses the plate, so the ore never leaves.",
+		"w": 7,
+		"h": 5,
+		"sources": [
+			source(0, 3, rules.Dir.EAST, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+			source(3, 0, rules.Dir.SOUTH, [rules.Mat.PLATE], 4),
+		],
+		"sinks": [sink(6, 3, [rules.Mat.INGOT])],
+		"chutes": [cell(2, 4), cell(4, 4)],
+		"walls": [],
+		"budget": kv([
+			rules.Kind.BELT, 1,
+			rules.Kind.ROLLER, 2,
+			rules.Kind.SLIP, 1,
+			rules.Kind.WEIR, 1,
+			rules.Kind.FILTER, 1,
+			rules.Kind.KILN, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 28]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.SLIP, 1, 3, rules.Dir.EAST),
+			piece(rules.Kind.WEIR, 2, 3, rules.Dir.EAST),
+			piece(rules.Kind.ROLLER, 3, 1, rules.Dir.SOUTH),
+			piece(rules.Kind.ROLLER, 3, 2, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 3, rules.Dir.EAST),
+			piece(rules.Kind.FILTER, 4, 3, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 5, 3, rules.Dir.EAST),
+		],
+	}
+
+
+static func seat_slip() -> Dictionary:
+	var rules = Rules
+	# Same lane as Hold. The slip starts off the row, aimed the wrong way.
+	return {
+		"id": 92,
+		"name": "Seat",
+		"blurb": "That slip is off the lane. Pick it up and seat it where the first plate has to stay.",
+		"rule": "Pickup puts this slip back on the tray. Seat it on the plate lane, pointing east, so the first plate stays and later plates miss the ore crossing. It starts off the route. A pass on that cell sends the plate into the pit and keeps the last item. A belt sends the plate on the next tick. A dwell releases the plate before the crossing is clear. A twin refuses the ingot, so the plate never leaves.",
+		"w": 6,
+		"h": 5,
+		"sources": [
+			source(0, 3, rules.Dir.EAST, [rules.Mat.PLATE, rules.Mat.INGOT], 2),
+			source(3, 0, rules.Dir.SOUTH, [rules.Mat.ORE], 4),
+		],
+		"sinks": [sink(5, 3, [rules.Mat.PLATE])],
+		"chutes": [cell(2, 4), cell(4, 4)],
+		"walls": [],
+		"budget": kv([rules.Kind.BELT, 3, rules.Kind.SLIP, 1, rules.Kind.WEIR, 1, rules.Kind.GRATE, 1]),
+		"quota": kv([rules.Mat.PLATE, 29]),
+		"initial": [
+			piece(rules.Kind.SLIP, 0, 4, rules.Dir.WEST),
+		],
+		"solution": [
+			piece(rules.Kind.SLIP, 1, 3, rules.Dir.EAST),
+			piece(rules.Kind.WEIR, 2, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 3, 1, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 2, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 3, rules.Dir.EAST),
+			piece(rules.Kind.GRATE, 4, 3, rules.Dir.EAST),
+		],
+	}
+
+
+static func turn_slip() -> Dictionary:
+	var rules = Rules
+	# Bend's wall. Two belts bring plates and ingots into the back of the slip.
+	return {
+		"id": 93,
+		"name": "Turn",
+		"blurb": "A wall closes the straight lane. Bring the later items into the back of the slip.",
+		"rule": "The wall blocks a straight lane. Bring the plates and the ingots north, then east into the back of the slip. The first plate stays, and later plates miss the ore crossing. The grate passes them into the bin. A pass sends the first plate and keeps an ingot, so the bin misses. A belt on that cell sends the plate into the pit, and a dwell releases it before the crossing is clear. A twin refuses the ingot, so the plate never leaves. A belt that turns south into the wall delivers nothing.",
+		"w": 8,
+		"h": 4,
+		"sources": [
+			source(1, 3, rules.Dir.NORTH, [rules.Mat.PLATE, rules.Mat.INGOT], 1),
+			source(5, 0, rules.Dir.SOUTH, [rules.Mat.ORE], 4),
+		],
+		"sinks": [sink(7, 2, [rules.Mat.PLATE])],
+		"chutes": [cell(4, 3), cell(6, 3)],
+		"walls": [cell(0, 2), cell(2, 3), cell(3, 3), cell(5, 3)],
+		"budget": kv([rules.Kind.BELT, 4, rules.Kind.SLIP, 1, rules.Kind.WEIR, 1, rules.Kind.GRATE, 1]),
+		"quota": kv([rules.Mat.PLATE, 28]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.BELT, 1, 2, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 2, 2, rules.Dir.EAST),
+			piece(rules.Kind.SLIP, 3, 2, rules.Dir.EAST),
+			piece(rules.Kind.WEIR, 4, 2, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 5, 1, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 5, 2, rules.Dir.EAST),
+			piece(rules.Kind.GRATE, 6, 2, rules.Dir.EAST),
+		],
+	}
+
+
+static func spare_heat_slip() -> Dictionary:
+	var rules = Rules
+	# Plate, then three ores, on period 1. The side plate aims at the slip.
+	# The slip keeps the plate. A pass sends it and holds an ore, so the quota misses.
+	# One kiln cannot take the ore the weir spills.
+	return {
+		"id": 94,
+		"name": "Spare Heat",
+		"blurb": "Slip the ore into two kilns. A pass holds the ore, and one kiln misses.",
+		"rule": "The slip takes the stream from behind and refuses the plate aimed at its side. It keeps the first plate and lets the ore through. The filter scraps later plates. The weir keeps the forward kiln full and spills the rest into a second kiln. One kiln misses the quota. A pass sends the plate and holds an ore, so the quota misses. A belt accepts the side plate, so the ore never enters. A dwell refuses the side plate but releases too slowly to feed both kilns. A twin refuses the ore behind the plate, so the ore stops.",
+		"w": 8,
+		"h": 4,
+		"sources": [
+			source(1, 0, rules.Dir.SOUTH, [rules.Mat.PLATE], 1),
+			source(0, 1, rules.Dir.EAST, [rules.Mat.PLATE, rules.Mat.ORE, rules.Mat.ORE, rules.Mat.ORE], 1),
+		],
+		"sinks": [
+			sink(7, 1, [rules.Mat.INGOT]),
+			sink(4, 3, [rules.Mat.INGOT]),
+		],
+		"chutes": [cell(2, 2)],
+		"walls": [],
+		"budget": kv([
+			rules.Kind.BELT, 3,
+			rules.Kind.SLIP, 1,
+			rules.Kind.FILTER, 1,
+			rules.Kind.WEIR, 1,
+			rules.Kind.KILN, 2,
+		]),
+		"quota": kv([rules.Mat.INGOT, 86]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.SLIP, 1, 1, rules.Dir.EAST),
+			piece(rules.Kind.FILTER, 2, 1, rules.Dir.EAST),
+			piece(rules.Kind.WEIR, 3, 1, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 4, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 5, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 6, 1, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 3, 2, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 3, rules.Dir.EAST),
+		],
+	}
+
+
+static func after_hold_slip() -> Dictionary:
+	var rules = Rules
+	# Scrap's crossing, with the slip keeping the first ore. Later ore misses
+	# the ingot stream. A pass sends that ore into the crossing.
+	return {
+		"id": 95,
+		"name": "After the Hold",
+		"blurb": "The filter scraps one stream. The slip keeps the first ore while later items pass.",
+		"rule": "A scrap stream of ingots crosses the belt in front of the filter. The slip keeps the first ore and lets later ore through after that stream has passed, and the filter sends it into the kiln. A pass sends that ore onward into the crossing, and the weir dumps it. A belt and a dwell do too. A twin refuses the plate, so the ore never leaves. Ingots that do land fall into the pit. Without the filter the ingots jam the kiln.",
+		"w": 8,
+		"h": 5,
+		"sources": [
+			source(0, 3, rules.Dir.EAST, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+			source(3, 0, rules.Dir.SOUTH, [rules.Mat.INGOT], 4),
+		],
+		"sinks": [sink(7, 3, [rules.Mat.INGOT])],
+		"chutes": [cell(2, 4), cell(4, 4)],
+		"walls": [],
+		"budget": kv([
+			rules.Kind.BELT, 4,
+			rules.Kind.SLIP, 1,
+			rules.Kind.WEIR, 1,
+			rules.Kind.FILTER, 1,
+			rules.Kind.KILN, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 28]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.SLIP, 1, 3, rules.Dir.EAST),
+			piece(rules.Kind.WEIR, 2, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 3, 1, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 2, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 3, rules.Dir.EAST),
+			piece(rules.Kind.FILTER, 4, 3, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 5, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 6, 3, rules.Dir.EAST),
+		],
+	}
+
+
+static func one_bin_slip() -> Dictionary:
+	var rules = Rules
+	# Both bins' splitter. The slip keeps the first plate and lets ore through
+	# to the kiln. Upper plates on period 4 are 30, short of 39.
+	return {
+		"id": 96,
+		"name": "One Bin",
+		"blurb": "The slip keeps the first plate. Later ingots split between the bin and the press.",
+		"rule": "The slip keeps the first plate and lets the ore through to the kiln. The filter scraps the crossing plates. Split the ingots between the bin and the press. The upper plates are not enough alone. A pass sends that plate and holds an ore, so both quotas miss. A belt or a dwell dumps the ore into the pit, and a twin refuses the ore, so the plate never leaves. Pressing every ingot misses the ingot bin.",
+		"w": 10,
+		"h": 6,
+		"sources": [
+			source(0, 5, rules.Dir.EAST, [rules.Mat.PLATE], 4),
+			source(0, 3, rules.Dir.EAST, [rules.Mat.PLATE, rules.Mat.ORE], 1),
+			source(3, 0, rules.Dir.SOUTH, [rules.Mat.PLATE], 6),
+		],
+		"sinks": [
+			sink(3, 5, [rules.Mat.PLATE]),
+			sink(9, 3, [rules.Mat.INGOT]),
+			sink(9, 4, [rules.Mat.PLATE]),
+		],
+		"chutes": [cell(2, 4), cell(4, 4)],
+		"walls": [],
+		"budget": kv([
+			rules.Kind.BELT, 9,
+			rules.Kind.SLIP, 1,
+			rules.Kind.WEIR, 1,
+			rules.Kind.FILTER, 1,
+			rules.Kind.KILN, 1,
+			rules.Kind.SPLITTER, 1,
+			rules.Kind.PRESS, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 19, rules.Mat.PLATE, 39]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.BELT, 1, 5, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 2, 5, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 3, 1, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 2, rules.Dir.SOUTH),
+			piece(rules.Kind.SLIP, 1, 3, rules.Dir.EAST),
 			piece(rules.Kind.WEIR, 2, 3, rules.Dir.EAST),
 			piece(rules.Kind.BELT, 3, 3, rules.Dir.EAST),
 			piece(rules.Kind.FILTER, 4, 3, rules.Dir.EAST),

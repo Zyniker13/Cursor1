@@ -3,7 +3,7 @@ extends RefCounted
 
 const Rules = preload("res://rules/rules.gd")
 
-## Ten wings of the closed museum. Each solution is a list of actions the rules
+## Eleven wings of the closed museum. Each solution is a list of actions the rules
 ## accept. Tokens are R L U D, W for wait, and T0 / T1 for lamps.
 
 
@@ -77,6 +77,8 @@ static func _puzzle(number: int, title: String, lesson: String, rows: PackedStri
 		wing_number = number - 50
 	elif wing == "Cloister Wing":
 		wing_number = number - 56
+	elif wing == "Porch Wing":
+		wing_number = number - 62
 	return {
 		"number": number,
 		"wing": wing,
@@ -116,6 +118,7 @@ static func _all() -> Array:
 	puzzles.append_array(_court_wing())
 	puzzles.append_array(_nave_wing())
 	puzzles.append_array(_cloister_wing())
+	puzzles.append_array(_porch_wing())
 	return puzzles
 
 
@@ -1233,5 +1236,112 @@ static func _cloister_wing() -> Array:
 			[_guard(10, 2, [Vector2i(10, 2)], 1)],
 			"R R T0 R R R R R R R R",
 			"Cloister Wing"
+		),
+	]
+
+
+static func _porch_wing() -> Array:
+	return [
+		_puzzle(
+			63,
+			"The First Sill",
+			"This room is about the rule that a sill under a lamp is lit and refused until you snuff it, so you cross, and the tile past that sill was already dark.",
+			PackedStringArray([
+				"############",
+				"#S..I.....X#",
+				"#.##########",
+				"#I.........#",
+				"#..........#",
+				"############",
+			]),
+			[_lamp(3, 1, "e", 6), _lamp(1, 4, "n", 1)],
+			[_guard(2, 4, [Vector2i(2, 4)], 2)],
+			"R T0 R R R R R R R R",
+			"Porch Wing"
+		),
+		_puzzle(
+			64,
+			"The Stopped Light",
+			"This room is about the rule that light stops at a sill, so the door beyond it stays dark and can be entered. A grate in that cell would light the door.",
+			PackedStringArray([
+				"###########",
+				"#S..X.....#",
+				"#..#I.....#",
+				"#.........#",
+				"#.......I.#",
+				"###########",
+			]),
+			[_lamp(4, 3, "n", 2), _lamp(8, 3, "s", 1)],
+			[_guard(9, 4, [Vector2i(9, 4)], 2)],
+			"R R R",
+			"Porch Wing"
+		),
+		_puzzle(
+			65,
+			"The Seen Gap",
+			"This room is about the rule that a sill does not hide the lit gap beside it, so the guard still sees that gap. Snuff the lamp in his sight and cross while the gap stays lit.",
+			PackedStringArray([
+				"###########",
+				"#.........#",
+				"#......####",
+				"#S....GI.X#",
+				"#.####.#.##",
+				"#I........#",
+				"###########",
+			]),
+			[_lamp(5, 2, "e", 3), _lamp(6, 4, "n", 1), _lamp(2, 5, "w", 1)],
+			[_guard(6, 1, [Vector2i(6, 1)], 4), _guard(3, 5, [Vector2i(3, 5)], 2)],
+			"U R R R T0 R D R R R R",
+			"Porch Wing"
+		),
+		_puzzle(
+			66,
+			"The Closed Walk",
+			"This room is about the rule that a called guard cannot enter a sill, so he takes the longer floor road, and you cross before he arrives.",
+			PackedStringArray([
+				"#############",
+				"#S....I....X#",
+				"##.###.#.##.#",
+				"#...........#",
+				"#.......I...#",
+				"#...........#",
+				"#############",
+			]),
+			[_lamp(4, 1, "e", 1), _lamp(9, 4, "w", 1)],
+			[_guard(10, 4, [Vector2i(10, 4)], 2)],
+			"R R T0 R R R R R R R R",
+			"Porch Wing"
+		),
+		_puzzle(
+			67,
+			"The Dark Past",
+			"This room is about the rule that the tile past a sill stays dark even under the lamp's reach, and the lit sill itself is refused until it is snuffed.",
+			PackedStringArray([
+				"##############",
+				"#S..I........#",
+				"#I#########.##",
+				"#...........X#",
+				"##############",
+			]),
+			[_lamp(3, 1, "e", 8), _lamp(1, 3, "n", 1)],
+			[_guard(2, 3, [Vector2i(2, 3)], 2)],
+			"R T0 R R R R R R R R R D D R",
+			"Porch Wing"
+		),
+		_puzzle(
+			68,
+			"The Last Sill",
+			"This room is about the rule that a snuffed sill can be crossed once it is dark, and the door beyond stays dark because the light stopped.",
+			PackedStringArray([
+				"############",
+				"#S..I.X....#",
+				"#I##########",
+				"#..........#",
+				"############",
+			]),
+			[_lamp(3, 1, "e", 4), _lamp(1, 3, "n", 1)],
+			[_guard(2, 3, [Vector2i(2, 3)], 2)],
+			"R T0 R R R R",
+			"Porch Wing"
 		),
 	]

@@ -23,6 +23,8 @@ const Cork = preload("res://scripts/cork_press.gd")
 const Net = preload("res://scripts/net_loft.gd")
 const Cask = preload("res://scripts/cask_hoop.gd")
 const Linen = preload("res://scripts/linen_fold.gd")
+const Dovetail = preload("res://scripts/dovetail.gd")
+const Mortise = preload("res://scripts/mortise.gd")
 const Catalog = preload("res://scripts/catalog.gd")
 const Solver = preload("res://scripts/solver.gd")
 const Verdict = preload("res://scripts/verdict.gd")
@@ -72,6 +74,10 @@ const CASK_TIMELINE := "Maeve (shop hand) drove the hoop in the shop at 3, seen 
 const CASK_TRUE := {"who": "Maeve", "place": "shop", "hour": "3"}
 const LINEN_TIMELINE := "Vetch (press hand) folded the linen in the press at 8, seen from the loft, so the loft would take the sheet.\nOdell (fold hand) cut the linen on the bench at 7.\nBrigg (loft clerk) turned the roller in the loft.\nThe pin was hung on the bench.\nThe loft was swept at 6.\nThe bench was wiped at 9.\nThe press was closed at 10."
 const LINEN_TRUE := {"who": "Vetch", "place": "press", "hour": "8"}
+const DOVETAIL_TIMELINE := "Doss (saw hand) cut the dovetail in the vise at 63, seen from the apron, so the stile would take the joint.\nYarrow (board hand) sawed the board on the stile at 62.\nPeck (clamp clerk) turned the clamp in the apron.\nThe peg was hung on the stile.\nThe apron was swept at 61.\nThe stile was wiped at 64.\nThe vise was closed at 65."
+const DOVETAIL_TRUE := {"who": "Doss", "place": "vise", "hour": "63"}
+const MORTISE_TIMELINE := "Arlo (chisel hand) cut the mortise in the chisel at 68, seen from the awl, so the last would take the tenon.\nKeel (awl hand) bored the hole on the last at 67.\nWeske (last clerk) turned the brace in the awl.\nThe wedge was hung on the last.\nThe awl was brushed at 66.\nThe last was ragged at 69.\nThe chisel was racked at 70."
+const MORTISE_TRUE := {"who": "Arlo", "place": "chisel", "hour": "68"}
 
 var _failures: Array[String] = []
 var _checks := 0
@@ -216,6 +222,18 @@ func _initialize() -> void:
 	_test_linen_only_true_theory()
 	_test_linen_near_misses()
 	_test_linen_incomplete()
+	_test_dovetail_file_shape()
+	_test_dovetail_unique_model()
+	_test_dovetail_each_exhibit_necessary()
+	_test_dovetail_only_true_theory()
+	_test_dovetail_near_misses()
+	_test_dovetail_incomplete()
+	_test_mortise_file_shape()
+	_test_mortise_unique_model()
+	_test_mortise_each_exhibit_necessary()
+	_test_mortise_only_true_theory()
+	_test_mortise_near_misses()
+	_test_mortise_incomplete()
 	_test_solutions_differ()
 	_test_menu_opens_either_case()
 	if _failures.is_empty():
@@ -5905,6 +5923,700 @@ func _test_linen_incomplete() -> void:
 	print("linen incomplete submissions refused with the missing slot")
 
 
+func _test_dovetail_file_shape() -> void:
+	_expect(Dovetail.EXHIBITS.size() == 9, "dovetail exhibit count is %d" % Dovetail.EXHIBITS.size())
+	_expect(Dovetail.PEOPLE.size() == 3, "dovetail cast should be three people")
+	_expect(Dovetail.PLACES.size() == 3, "dovetail room count is %d" % Dovetail.PLACES.size())
+	_expect(Dovetail.HOURS.size() == 5, "dovetail hour list length is %d" % Dovetail.HOURS.size())
+	_expect(Dovetail.PEOPLE == ["Doss", "Yarrow", "Peck"], "dovetail cast is %s" % str(Dovetail.PEOPLE))
+	_expect(Dovetail.PLACES == ["vise", "stile", "apron"], "dovetail rooms are %s" % str(Dovetail.PLACES))
+	_expect(Dovetail.HOURS == ["61", "62", "63", "64", "65"], "dovetail hours are %s" % str(Dovetail.HOURS))
+	_expect(Dovetail.AIMS == ["take_joint", "spare_joint", "set_joint"], "dovetail aims are %s" % str(Dovetail.AIMS))
+	_expect(Dovetail.aim_phrase("take_joint") == "so the stile would take the joint", "dovetail aim phrase")
+	_expect(Dovetail.TITLE == "The dovetail", "dovetail title")
+	_expect(Dovetail.BLURB == "The dovetail left its peg at the joiner's bench. Name who cut the dovetail, the room they cut it in, and the hour.", "dovetail blurb")
+	_expect(Dovetail.FILE_CODE == "CW-24", "dovetail file code")
+	_expect(Dovetail.fields() == ["taker", "place", "hour", "sawyer", "saw_room", "saw_hour", "seen_from", "clamp", "aim", "clamp_room", "peg_room", "sweep_hour", "wipe_hour", "close_hour"], "dovetail fields are %s" % str(Dovetail.fields()))
+	_expect(Dovetail.PLAYER_FIELDS == ["taker", "place", "hour"], "dovetail player fields")
+	_expect(Dovetail.HOURS[Dovetail.HOURS.size() / 2] == DOVETAIL_TRUE["hour"], "dovetail cutting should be the middle hour")
+	_expect(Dovetail.HOURS[0] != DOVETAIL_TRUE["hour"], "dovetail cutting should not be the earliest hour")
+	_expect(Dovetail.HOURS[Dovetail.HOURS.size() - 1] != DOVETAIL_TRUE["hour"], "dovetail cutting should not be the latest hour")
+	var counts := _player_pin_counts(Dovetail)
+	_expect(int(counts["taker"]) == 3 and int(counts["place"]) == 3 and int(counts["hour"]) == 3, "dovetail pin counts are %s" % str(counts))
+	var loose_pin: Array = [
+		[CaseData, "spare key"],
+		[Rehearsal, "rehearsal score"],
+		[Gilt, "gilt stamp"],
+		[Ferry, "ferry bell"],
+		[Weather, "weather slate"],
+		[Loom, "loom shuttle"],
+		[Hive, "hive smoker"],
+		[Glass, "glass pontil"],
+		[Press, "press proof"],
+		[Assay, "assay cup"],
+	]
+	var rhythm: Array = [
+		[Kiln, "kiln chalk"],
+		[Tide, "tide ledger"],
+		[Night, "night bell"],
+		[Salt, "salt mark"],
+		[Wick, "wick trim"],
+		[Anneal, "glass anneal"],
+		[Graft, "orchard graft"],
+		[Dye, "dye vat"],
+		[Tar, "tar kettle"],
+		[Cork, "cork press"],
+		[Net, "net loft"],
+		[Cask, "cask hoop"],
+		[Linen, "linen fold"],
+	]
+	for row in loose_pin:
+		_expect(counts != _player_pin_counts(row[0]), "dovetail copied the %s pin pattern" % row[1])
+	for row in rhythm:
+		_expect(counts == _player_pin_counts(row[0]), "dovetail should keep the %s pin rhythm" % row[1])
+	var earlier: Array = []
+	earlier.append_array(loose_pin)
+	earlier.append_array(rhythm)
+	for row in earlier:
+		var book = row[0]
+		var name := str(row[1])
+		_expect(Dovetail.TITLE != book.TITLE, "dovetail shares a title with the %s" % name)
+		_expect(Dovetail.FILE_CODE != book.FILE_CODE, "dovetail shares a file code with the %s" % name)
+		_expect(_field_key(Dovetail) != _field_key(book), "dovetail copied the %s timeline fields" % name)
+	var seen := {}
+	var stated := {}
+	var paired_hidden := 0
+	var earlier_texts := {}
+	var earlier_sentences := {}
+	for row in earlier:
+		for old_exhibit in row[0].EXHIBITS:
+			var old_text := str(old_exhibit["text"])
+			earlier_texts[old_text] = true
+			for old_sentence in old_text.split(". "):
+				earlier_sentences[old_sentence.trim_suffix(".").strip_edges()] = true
+	var exhibit_titles: Array[String] = []
+	var exhibit_sources: Array[String] = []
+	for exhibit in Dovetail.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		exhibit_titles.append(str(exhibit["title"]))
+		exhibit_sources.append(str(exhibit["source"]))
+		_expect(not seen.has(exhibit_id), "duplicate dovetail id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		_expect(not earlier_texts.has(str(exhibit["text"])), "dovetail copied an earlier exhibit")
+		for sentence in str(exhibit["text"]).split(". "):
+			var cleaned := sentence.trim_suffix(".").strip_edges()
+			_expect(not earlier_sentences.has(cleaned), "dovetail copied an earlier sentence: %s" % cleaned)
+		for banned in ["linen", "fold", "shears", "roller", "hem", "sheet", "crease", "press", "loft", "bench", "bottle", "cork", "seal", "mallet", "screw", "cellar", "wax", "neck", "plug", "dye", "vat", "indigo", "skein", "rope", "walk", "kettle", "winch", "pitch", "mesh", "shed", "rail", "crank", "needle", "twine", "cooperage", "cask", "hoop", "croze", "stave", "shop", "drawer"]:
+			_expect(str(exhibit["text"]).find(banned) == -1, "%s copies %s" % [exhibit_id, banned])
+		var states_player_pin := false
+		var states_unique := false
+		var player_literals := 0
+		var hidden_literals := 0
+		for literal in exhibit["literals"]:
+			stated[str(literal["value"])] = true
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Dovetail.PLAYER_FIELDS:
+				states_player_pin = true
+				player_literals += 1
+				var expected := Dovetail.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Dovetail.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats >= 2, "%s states %s once" % [exhibit_id, field])
+			else:
+				hidden_literals += 1
+				var owners := 0
+				for other in Dovetail.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		if hidden_literals == 2:
+			paired_hidden += 1
+		else:
+			_expect(hidden_literals == 1, "%s states %d hidden facts" % [exhibit_id, hidden_literals])
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(player_literals == 1, "%s states %d player pins" % [exhibit_id, player_literals])
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+	_expect(paired_hidden == 2, "dovetail should have two slips with two hidden facts, found %d" % paired_hidden)
+	_expect(exhibit_titles == ["Saw chit", "Apron sight", "Peg hook", "Joint slate", "Clamp card", "Sweep slip", "Cut leaf", "Joint note", "Jaw order"], "dovetail exhibit titles are %s" % str(exhibit_titles))
+	_expect(exhibit_sources == ["Yarrow, board hand", "Apron rail", "Stile peg", "Vise jaw", "Peck, clamp clerk", "Apron book", "Cut book", "Joiner's bench", "Stile slate"], "dovetail sources are %s" % str(exhibit_sources))
+	for hour in Dovetail.HOURS:
+		_expect(stated.has(hour), "dovetail hour %s is absent from the exhibits" % hour)
+
+func _test_dovetail_unique_model() -> void:
+	var models := Solver.enumerate(Dovetail.EXHIBITS, Dovetail)
+	print("dovetail models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one dovetail model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Doss", "dovetail taker")
+	_expect(str(model["place"]) == "vise", "dovetail place")
+	_expect(str(model["hour"]) == "63", "dovetail hour")
+	_expect(str(model["sawyer"]) == "Yarrow", "dovetail sawyer")
+	_expect(str(model["saw_room"]) == "stile", "dovetail saw room")
+	_expect(str(model["saw_hour"]) == "62", "dovetail saw hour")
+	_expect(str(model["seen_from"]) == "apron", "dovetail seen from")
+	_expect(str(model["clamp"]) == "Peck", "dovetail clamp")
+	_expect(str(model["aim"]) == "take_joint", "dovetail aim")
+	_expect(str(model["clamp_room"]) == "apron", "dovetail clamp room")
+	_expect(str(model["peg_room"]) == "stile", "dovetail peg room")
+	_expect(str(model["sweep_hour"]) == "61", "dovetail sweep hour")
+	_expect(str(model["wipe_hour"]) == "64", "dovetail wipe hour")
+	_expect(str(model["close_hour"]) == "65", "dovetail close hour")
+	for hour in Dovetail.HOURS:
+		var used := false
+		for field in Dovetail.fields():
+			if str(model[field]) == hour:
+				used = true
+		_expect(used, "dovetail hour %s is blank in the true timeline" % hour)
+	for place in Dovetail.PLACES:
+		var place_used := false
+		for field in Dovetail.fields():
+			if str(model[field]) == place:
+				place_used = true
+		_expect(place_used, "dovetail room %s is blank in the true timeline" % place)
+	for person in Dovetail.PEOPLE:
+		var person_used := false
+		for field in Dovetail.fields():
+			if str(model[field]) == person:
+				person_used = true
+		_expect(person_used, "dovetail person %s is blank in the true timeline" % person)
+	_expect(Dovetail.timeline(model) == DOVETAIL_TIMELINE, "dovetail timeline drifted:\n%s" % Dovetail.timeline(model))
+	for exhibit in Dovetail.EXHIBITS:
+		_expect(Dovetail.holds(exhibit, model), "%s rejects the dovetail timeline" % exhibit["id"])
+
+func _test_dovetail_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Dovetail.EXHIBITS, Dovetail)
+	for exhibit in Dovetail.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Dovetail.without(exhibit_id), Dovetail)
+		print("dovetail without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "dovetail %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Dovetail.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "dovetail %s removal did not admit a timeline it forbids" % exhibit_id)
+
+func _test_dovetail_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	var apron_miss := {"who": "Yarrow", "place": "apron", "hour": "61"}
+	_expect(Dovetail.conflicting_ids(apron_miss).size() == 9, "Yarrow / apron / 61 contradicts %d exhibits" % Dovetail.conflicting_ids(apron_miss).size())
+	for who in Dovetail.PEOPLE:
+		for place in Dovetail.PLACES:
+			for hour in Dovetail.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == DOVETAIL_TRUE["who"] and place == DOVETAIL_TRUE["place"] and hour == DOVETAIL_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Dovetail)
+					print("dovetail true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true dovetail theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "dovetail acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(DOVETAIL_TIMELINE) >= 0, "dovetail acceptance should give the timeline")
+					_expect(str(result["message"]).find("Doss") >= 0, "dovetail acceptance omits Doss")
+					_expect(str(result["message"]).find("vise") >= 0, "dovetail acceptance omits the vise")
+					_expect(str(result["message"]).find("63") >= 0, "dovetail acceptance omits 63")
+					_expect(str(result["message"]).find("so the stile would take the joint") >= 0, "dovetail acceptance omits the joint")
+					_expect(str(result["message"]).find("Doss (saw hand) cut the dovetail in the vise at 63") >= 0, "dovetail acceptance omits the cutting")
+					_expect(Dovetail.conflicting_ids(theory).is_empty(), "true dovetail theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Dovetail)
+					_expect(Dovetail.conflicting_ids(theory).size() >= 2, "%s / %s / %s contradicts fewer than two exhibits" % [who, place, hour])
+					rejected += 1
+	for outsider in ["Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal", "Nell"]:
+		_expect_rejected({"who": outsider, "place": "vise", "hour": "63"}, Dovetail)
+	print("dovetail theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d dovetail theories" % accepted)
+	_expect(rejected >= 2, "rejected %d dovetail theories" % rejected)
+
+func _test_dovetail_near_misses() -> void:
+	var misses := [
+		{"who": "Doss", "place": "vise", "hour": "64", "titles": ["Cut leaf", "Joint note", "Jaw order"]},
+		{"who": "Doss", "place": "vise", "hour": "62", "titles": ["Cut leaf", "Joint note", "Jaw order"]},
+		{"who": "Doss", "place": "apron", "hour": "63", "titles": ["Joint slate", "Clamp card", "Sweep slip"]},
+		{"who": "Yarrow", "place": "vise", "hour": "63", "titles": ["Saw chit", "Apron sight", "Peg hook"]},
+	]
+	var wrong_hour_in_vise := 0
+	var wrong_place_at_hour := 0
+	var wrong_person_in_vise := 0
+	for theory in misses:
+		_expect_rejected(theory, Dovetail)
+		var result: Dictionary = Verdict.submit(theory, Dovetail)
+		var message := str(result["message"])
+		_expect(Dovetail.conflicting_ids(theory).size() == 3, "near-miss should name three exhibits: %s" % message)
+		for title in theory["titles"]:
+			_expect(message.find(str(title)) >= 0, "near-miss omits %s: %s" % [title, message])
+		if str(theory["who"]) == "Doss" and str(theory["place"]) == "vise" and str(theory["hour"]) != "63":
+			wrong_hour_in_vise += 1
+		if str(theory["who"]) == "Doss" and str(theory["place"]) != "vise" and str(theory["hour"]) == "63":
+			wrong_place_at_hour += 1
+		if str(theory["who"]) != "Doss" and str(theory["place"]) == "vise" and str(theory["hour"]) == "63":
+			wrong_person_in_vise += 1
+	print("dovetail near-misses rejected: %d" % misses.size())
+	_expect(misses.size() == 4, "need four dovetail near-misses, found %d" % misses.size())
+	_expect(wrong_hour_in_vise == 2, "two near-misses should keep Doss in the vise at another hour")
+	_expect(wrong_place_at_hour >= 1, "a near-miss should keep Doss at 63 in another room")
+	_expect(wrong_person_in_vise >= 1, "a near-miss should keep the vise at 63 for another person")
+
+func _test_dovetail_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+		"who took the gilt stamp",
+		"where they took the stamp",
+		"at which hour they took the stamp",
+		"who took the ferry bell",
+		"where they took the bell",
+		"at which hour they took the bell",
+		"who took the weather slate",
+		"where they took the slate",
+		"at which hour they took the slate",
+		"who took the loom shuttle",
+		"where they took the shuttle",
+		"at which hour they took the shuttle",
+		"who took the hive smoker",
+		"where they took the smoker",
+		"at which hour they took the smoker",
+		"who took the glass pontil",
+		"where they took the pontil",
+		"at which hour they took the pontil",
+		"who took the press proof",
+		"where they took the proof",
+		"at which hour they took the proof",
+		"who set the assay cup",
+		"where they set the cup",
+		"at which hour they set the cup",
+		"who chalked the kiln mark",
+		"where they chalked the mark",
+		"at which hour they chalked the mark",
+		"who entered the tide ledger",
+		"where they entered the ledger",
+		"at which hour they entered the ledger",
+		"who stopped the night bell",
+		"where they stopped the bell",
+		"at which hour they stopped the bell",
+		"who scored the salt mark",
+		"where they scored the mark",
+		"at which hour they scored the mark",
+		"who trimmed the wick",
+		"where they trimmed the wick",
+		"at which hour they trimmed the wick",
+		"who annealed the gather",
+		"where they annealed the gather",
+		"at which hour they annealed the gather",
+		"who grafted the scion",
+		"where they grafted the scion",
+		"at which hour they grafted the scion",
+		"who dipped the skein",
+		"where they dipped the skein",
+		"at which hour they dipped the skein",
+		"who tarred the rope",
+		"where they tarred the rope",
+		"at which hour they tarred the rope",
+		"who pressed the cork",
+		"where they pressed the cork",
+		"at which hour they pressed the cork",
+		"who mended the net",
+		"where they mended the net",
+		"at which hour they mended the net",
+		"who drove the hoop",
+		"where they drove the hoop",
+		"at which hour they drove the hoop",
+		"who folded the linen",
+		"where they folded the linen",
+		"at which hour they folded the linen",
+	]
+	var cases := [
+		{"theory": {"who": "", "place": "vise", "hour": "63"}, "present": ["who cut the dovetail"], "absent": ["where they cut the dovetail", "at which hour they cut the dovetail"]},
+		{"theory": {"who": "Doss", "place": "", "hour": "63"}, "present": ["where they cut the dovetail"], "absent": ["who cut the dovetail", "at which hour they cut the dovetail"]},
+		{"theory": {"who": "Doss", "place": "vise", "hour": ""}, "present": ["at which hour they cut the dovetail"], "absent": ["who cut the dovetail", "where they cut the dovetail"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who cut the dovetail", "where they cut the dovetail", "at which hour they cut the dovetail"], "absent": []},
+		{"theory": {}, "present": ["who cut the dovetail", "where they cut the dovetail", "at which hour they cut the dovetail"], "absent": []},
+		{"theory": {"who": "Peck", "place": "", "hour": "65"}, "present": ["where they cut the dovetail"], "absent": ["who cut the dovetail", "at which hour they cut the dovetail"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Dovetail)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "dovetail incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "dovetail incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "dovetail incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "dovetail incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "dovetail incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "dovetail missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "dovetail named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "dovetail incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("dovetail incomplete submissions refused with the missing slot")
+
+
+
+
+func _test_mortise_file_shape() -> void:
+	_expect(Mortise.EXHIBITS.size() == 9, "mortise exhibit count is %d" % Mortise.EXHIBITS.size())
+	_expect(Mortise.PEOPLE.size() == 3, "mortise cast should be three people")
+	_expect(Mortise.PLACES.size() == 3, "mortise room count is %d" % Mortise.PLACES.size())
+	_expect(Mortise.HOURS.size() == 5, "mortise hour list length is %d" % Mortise.HOURS.size())
+	_expect(Mortise.PEOPLE == ["Arlo", "Keel", "Weske"], "mortise cast is %s" % str(Mortise.PEOPLE))
+	_expect(Mortise.PLACES == ["chisel", "last", "awl"], "mortise rooms are %s" % str(Mortise.PLACES))
+	_expect(Mortise.HOURS == ["66", "67", "68", "69", "70"], "mortise hours are %s" % str(Mortise.HOURS))
+	_expect(Mortise.ENDS == ["take_tenon", "spare_tenon", "set_tenon"], "mortise ends are %s" % str(Mortise.ENDS))
+	_expect(Mortise.end_phrase("take_tenon") == "so the last would take the tenon", "mortise end phrase")
+	_expect(Mortise.TITLE == "The mortise", "mortise title")
+	_expect(Mortise.BLURB == "The mortise left its peg at the joiner's rack. Name who cut the mortise, the room they cut it in, and the hour.", "mortise blurb")
+	_expect(Mortise.FILE_CODE == "CW-25", "mortise file code")
+	_expect(Mortise.fields() == ["taker", "place", "hour", "borer", "bore_room", "bore_hour", "sight_from", "brace", "end", "brace_room", "wedge_room", "brush_hour", "rag_hour", "rack_hour"], "mortise fields are %s" % str(Mortise.fields()))
+	_expect(Mortise.PLAYER_FIELDS == ["taker", "place", "hour"], "mortise player fields")
+	_expect(Mortise.HOURS[Mortise.HOURS.size() / 2] == MORTISE_TRUE["hour"], "mortise cutting should be the middle hour")
+	_expect(Mortise.HOURS[0] != MORTISE_TRUE["hour"], "mortise cutting should not be the earliest hour")
+	_expect(Mortise.HOURS[Mortise.HOURS.size() - 1] != MORTISE_TRUE["hour"], "mortise cutting should not be the latest hour")
+	var counts := _player_pin_counts(Mortise)
+	_expect(int(counts["taker"]) == 3 and int(counts["place"]) == 3 and int(counts["hour"]) == 3, "mortise pin counts are %s" % str(counts))
+	var loose_pin: Array = [
+		[CaseData, "spare key"],
+		[Rehearsal, "rehearsal score"],
+		[Gilt, "gilt stamp"],
+		[Ferry, "ferry bell"],
+		[Weather, "weather slate"],
+		[Loom, "loom shuttle"],
+		[Hive, "hive smoker"],
+		[Glass, "glass pontil"],
+		[Press, "press proof"],
+		[Assay, "assay cup"],
+	]
+	var rhythm: Array = [
+		[Kiln, "kiln chalk"],
+		[Tide, "tide ledger"],
+		[Night, "night bell"],
+		[Salt, "salt mark"],
+		[Wick, "wick trim"],
+		[Anneal, "glass anneal"],
+		[Graft, "orchard graft"],
+		[Dye, "dye vat"],
+		[Tar, "tar kettle"],
+		[Cork, "cork press"],
+		[Net, "net loft"],
+		[Cask, "cask hoop"],
+		[Linen, "linen fold"],
+		[Dovetail, "dovetail"],
+	]
+	for row in loose_pin:
+		_expect(counts != _player_pin_counts(row[0]), "mortise copied the %s pin pattern" % row[1])
+	for row in rhythm:
+		_expect(counts == _player_pin_counts(row[0]), "mortise should keep the %s pin rhythm" % row[1])
+	var earlier: Array = []
+	earlier.append_array(loose_pin)
+	earlier.append_array(rhythm)
+	for row in earlier:
+		var book = row[0]
+		var name := str(row[1])
+		_expect(Mortise.TITLE != book.TITLE, "mortise shares a title with the %s" % name)
+		_expect(Mortise.FILE_CODE != book.FILE_CODE, "mortise shares a file code with the %s" % name)
+		_expect(_field_key(Mortise) != _field_key(book), "mortise copied the %s timeline fields" % name)
+	var seen := {}
+	var stated := {}
+	var paired_hidden := 0
+	var earlier_texts := {}
+	var earlier_sentences := {}
+	for row in earlier:
+		for old_exhibit in row[0].EXHIBITS:
+			var old_text := str(old_exhibit["text"])
+			earlier_texts[old_text] = true
+			for old_sentence in old_text.split(". "):
+				earlier_sentences[old_sentence.trim_suffix(".").strip_edges()] = true
+	var exhibit_titles: Array[String] = []
+	var exhibit_sources: Array[String] = []
+	for exhibit in Mortise.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		exhibit_titles.append(str(exhibit["title"]))
+		exhibit_sources.append(str(exhibit["source"]))
+		_expect(not seen.has(exhibit_id), "duplicate mortise id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		_expect(not earlier_texts.has(str(exhibit["text"])), "mortise copied an earlier exhibit")
+		for sentence in str(exhibit["text"]).split(". "):
+			var cleaned := sentence.trim_suffix(".").strip_edges()
+			_expect(not earlier_sentences.has(cleaned), "mortise copied an earlier sentence: %s" % cleaned)
+		for banned in ["dovetail", "vise", "stile", "apron", "saw", "clamp", "peg", "joint", "linen", "fold", "shears", "roller", "hem", "sheet", "crease", "press", "loft", "bench", "bottle", "cork", "shop", "drawer", "seal", "mallet", "screw", "cellar", "wax", "neck", "plug", "dye", "vat", "indigo", "skein", "rope", "walk", "kettle", "winch", "pitch", "mesh", "rail", "crank", "needle", "twine", "cooperage", "cask", "hoop", "croze", "stave"]:
+			_expect(str(exhibit["text"]).find(banned) == -1, "%s copies %s" % [exhibit_id, banned])
+		var states_player_pin := false
+		var states_unique := false
+		var player_literals := 0
+		var hidden_literals := 0
+		for literal in exhibit["literals"]:
+			stated[str(literal["value"])] = true
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Mortise.PLAYER_FIELDS:
+				states_player_pin = true
+				player_literals += 1
+				var expected := Mortise.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Mortise.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats >= 2, "%s states %s once" % [exhibit_id, field])
+			else:
+				hidden_literals += 1
+				var owners := 0
+				for other in Mortise.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		if hidden_literals == 2:
+			paired_hidden += 1
+		else:
+			_expect(hidden_literals == 1, "%s states %d hidden facts" % [exhibit_id, hidden_literals])
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(player_literals == 1, "%s states %d player pins" % [exhibit_id, player_literals])
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+	_expect(paired_hidden == 2, "mortise should have two slips with two hidden facts, found %d" % paired_hidden)
+	_expect(exhibit_titles == ["Chisel chit", "Awl sight", "Wedge hook", "Tenon slate", "Brace card", "Brush slip", "Bore leaf", "Tenon note", "Rack order"], "mortise exhibit titles are %s" % str(exhibit_titles))
+	_expect(exhibit_sources == ["Keel, awl hand", "Awl rail", "Last peg", "Chisel jaw", "Weske, last clerk", "Awl book", "Bore book", "Joiner's rack", "Last slate"], "mortise sources are %s" % str(exhibit_sources))
+	for hour in Mortise.HOURS:
+		_expect(stated.has(hour), "mortise hour %s is absent from the exhibits" % hour)
+
+func _test_mortise_unique_model() -> void:
+	var models := Solver.enumerate(Mortise.EXHIBITS, Mortise)
+	print("mortise models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one mortise model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Arlo", "mortise taker")
+	_expect(str(model["place"]) == "chisel", "mortise place")
+	_expect(str(model["hour"]) == "68", "mortise hour")
+	_expect(str(model["borer"]) == "Keel", "mortise borer")
+	_expect(str(model["bore_room"]) == "last", "mortise bore room")
+	_expect(str(model["bore_hour"]) == "67", "mortise bore hour")
+	_expect(str(model["sight_from"]) == "awl", "mortise sight from")
+	_expect(str(model["brace"]) == "Weske", "mortise brace")
+	_expect(str(model["end"]) == "take_tenon", "mortise end")
+	_expect(str(model["brace_room"]) == "awl", "mortise brace room")
+	_expect(str(model["wedge_room"]) == "last", "mortise wedge room")
+	_expect(str(model["brush_hour"]) == "66", "mortise brush hour")
+	_expect(str(model["rag_hour"]) == "69", "mortise rag hour")
+	_expect(str(model["rack_hour"]) == "70", "mortise rack hour")
+	for hour in Mortise.HOURS:
+		var used := false
+		for field in Mortise.fields():
+			if str(model[field]) == hour:
+				used = true
+		_expect(used, "mortise hour %s is blank in the true timeline" % hour)
+	for place in Mortise.PLACES:
+		var place_used := false
+		for field in Mortise.fields():
+			if str(model[field]) == place:
+				place_used = true
+		_expect(place_used, "mortise room %s is blank in the true timeline" % place)
+	for person in Mortise.PEOPLE:
+		var person_used := false
+		for field in Mortise.fields():
+			if str(model[field]) == person:
+				person_used = true
+		_expect(person_used, "mortise person %s is blank in the true timeline" % person)
+	_expect(Mortise.timeline(model) == MORTISE_TIMELINE, "mortise timeline drifted:\n%s" % Mortise.timeline(model))
+	for exhibit in Mortise.EXHIBITS:
+		_expect(Mortise.holds(exhibit, model), "%s rejects the mortise timeline" % exhibit["id"])
+
+func _test_mortise_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Mortise.EXHIBITS, Mortise)
+	for exhibit in Mortise.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Mortise.without(exhibit_id), Mortise)
+		print("mortise without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "mortise %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Mortise.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "mortise %s removal did not admit a timeline it forbids" % exhibit_id)
+
+func _test_mortise_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	var awl_miss := {"who": "Keel", "place": "awl", "hour": "66"}
+	_expect(Mortise.conflicting_ids(awl_miss).size() == 9, "Keel / awl / 66 contradicts %d exhibits" % Mortise.conflicting_ids(awl_miss).size())
+	for who in Mortise.PEOPLE:
+		for place in Mortise.PLACES:
+			for hour in Mortise.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == MORTISE_TRUE["who"] and place == MORTISE_TRUE["place"] and hour == MORTISE_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Mortise)
+					print("mortise true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true mortise theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "mortise acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(MORTISE_TIMELINE) >= 0, "mortise acceptance should give the timeline")
+					_expect(str(result["message"]).find("Arlo") >= 0, "mortise acceptance omits Arlo")
+					_expect(str(result["message"]).find("chisel") >= 0, "mortise acceptance omits the chisel")
+					_expect(str(result["message"]).find("68") >= 0, "mortise acceptance omits 68")
+					_expect(str(result["message"]).find("so the last would take the tenon") >= 0, "mortise acceptance omits the tenon")
+					_expect(str(result["message"]).find("Arlo (chisel hand) cut the mortise in the chisel at 68") >= 0, "mortise acceptance omits the cutting")
+					_expect(Mortise.conflicting_ids(theory).is_empty(), "true mortise theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Mortise)
+					_expect(Mortise.conflicting_ids(theory).size() >= 2, "%s / %s / %s contradicts fewer than two exhibits" % [who, place, hour])
+					rejected += 1
+	for outsider in ["Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal", "Nell"]:
+		_expect_rejected({"who": outsider, "place": "chisel", "hour": "68"}, Mortise)
+	print("mortise theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d mortise theories" % accepted)
+	_expect(rejected >= 2, "rejected %d mortise theories" % rejected)
+
+func _test_mortise_near_misses() -> void:
+	var misses := [
+		{"who": "Arlo", "place": "chisel", "hour": "69", "titles": ["Bore leaf", "Tenon note", "Rack order"]},
+		{"who": "Arlo", "place": "chisel", "hour": "67", "titles": ["Bore leaf", "Tenon note", "Rack order"]},
+		{"who": "Arlo", "place": "awl", "hour": "68", "titles": ["Tenon slate", "Brace card", "Brush slip"]},
+		{"who": "Keel", "place": "chisel", "hour": "68", "titles": ["Chisel chit", "Awl sight", "Wedge hook"]},
+	]
+	var wrong_hour_in_chisel := 0
+	var wrong_place_at_hour := 0
+	var wrong_person_in_chisel := 0
+	for theory in misses:
+		_expect_rejected(theory, Mortise)
+		var result: Dictionary = Verdict.submit(theory, Mortise)
+		var message := str(result["message"])
+		_expect(Mortise.conflicting_ids(theory).size() == 3, "near-miss should name three exhibits: %s" % message)
+		for title in theory["titles"]:
+			_expect(message.find(str(title)) >= 0, "near-miss omits %s: %s" % [title, message])
+		if str(theory["who"]) == "Arlo" and str(theory["place"]) == "chisel" and str(theory["hour"]) != "68":
+			wrong_hour_in_chisel += 1
+		if str(theory["who"]) == "Arlo" and str(theory["place"]) != "chisel" and str(theory["hour"]) == "68":
+			wrong_place_at_hour += 1
+		if str(theory["who"]) != "Arlo" and str(theory["place"]) == "chisel" and str(theory["hour"]) == "68":
+			wrong_person_in_chisel += 1
+	print("mortise near-misses rejected: %d" % misses.size())
+	_expect(misses.size() == 4, "need four mortise near-misses, found %d" % misses.size())
+	_expect(wrong_hour_in_chisel == 2, "two near-misses should keep Arlo in the chisel at another hour")
+	_expect(wrong_place_at_hour >= 1, "a near-miss should keep Arlo at 68 in another room")
+	_expect(wrong_person_in_chisel >= 1, "a near-miss should keep the chisel at 68 for another person")
+
+func _test_mortise_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+		"who took the gilt stamp",
+		"where they took the stamp",
+		"at which hour they took the stamp",
+		"who took the ferry bell",
+		"where they took the bell",
+		"at which hour they took the bell",
+		"who took the weather slate",
+		"where they took the slate",
+		"at which hour they took the slate",
+		"who took the loom shuttle",
+		"where they took the shuttle",
+		"at which hour they took the shuttle",
+		"who took the hive smoker",
+		"where they took the smoker",
+		"at which hour they took the smoker",
+		"who took the glass pontil",
+		"where they took the pontil",
+		"at which hour they took the pontil",
+		"who took the press proof",
+		"where they took the proof",
+		"at which hour they took the proof",
+		"who set the assay cup",
+		"where they set the cup",
+		"at which hour they set the cup",
+		"who chalked the kiln mark",
+		"where they chalked the mark",
+		"at which hour they chalked the mark",
+		"who entered the tide ledger",
+		"where they entered the ledger",
+		"at which hour they entered the ledger",
+		"who stopped the night bell",
+		"where they stopped the bell",
+		"at which hour they stopped the bell",
+		"who scored the salt mark",
+		"where they scored the mark",
+		"at which hour they scored the mark",
+		"who trimmed the wick",
+		"where they trimmed the wick",
+		"at which hour they trimmed the wick",
+		"who annealed the gather",
+		"where they annealed the gather",
+		"at which hour they annealed the gather",
+		"who grafted the scion",
+		"where they grafted the scion",
+		"at which hour they grafted the scion",
+		"who dipped the skein",
+		"where they dipped the skein",
+		"at which hour they dipped the skein",
+		"who tarred the rope",
+		"where they tarred the rope",
+		"at which hour they tarred the rope",
+		"who pressed the cork",
+		"where they pressed the cork",
+		"at which hour they pressed the cork",
+		"who mended the net",
+		"where they mended the net",
+		"at which hour they mended the net",
+		"who drove the hoop",
+		"where they drove the hoop",
+		"at which hour they drove the hoop",
+		"who folded the linen",
+		"where they folded the linen",
+		"at which hour they folded the linen",
+		"who cut the dovetail",
+		"where they cut the dovetail",
+		"at which hour they cut the dovetail",
+	]
+	var cases := [
+		{"theory": {"who": "", "place": "chisel", "hour": "68"}, "present": ["who cut the mortise"], "absent": ["where they cut the mortise", "at which hour they cut the mortise"]},
+		{"theory": {"who": "Arlo", "place": "", "hour": "68"}, "present": ["where they cut the mortise"], "absent": ["who cut the mortise", "at which hour they cut the mortise"]},
+		{"theory": {"who": "Arlo", "place": "chisel", "hour": ""}, "present": ["at which hour they cut the mortise"], "absent": ["who cut the mortise", "where they cut the mortise"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who cut the mortise", "where they cut the mortise", "at which hour they cut the mortise"], "absent": []},
+		{"theory": {}, "present": ["who cut the mortise", "where they cut the mortise", "at which hour they cut the mortise"], "absent": []},
+		{"theory": {"who": "Weske", "place": "", "hour": "70"}, "present": ["where they cut the mortise"], "absent": ["who cut the mortise", "at which hour they cut the mortise"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Mortise)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "mortise incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "mortise incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "mortise incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "mortise incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "mortise incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "mortise missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "mortise named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "mortise incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("mortise incomplete submissions refused with the missing slot")
+
+
 func _test_solutions_differ() -> void:
 	var spare := {"who": "Nell", "place": "kitchen", "hour": "7"}
 	_expect(spare["who"] != REHEARSAL_TRUE["who"], "rehearsal copied the spare-key taker")
@@ -7768,7 +8480,116 @@ func _test_solutions_differ() -> void:
 	_expect(not Linen.HOURS.has("16"), "linen fold hours must not take 16")
 	_expect(not Linen.HOURS.has("19"), "linen fold hours must not take 19")
 
-	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal", "The orchard graft", "The dye vat", "The tar kettle", "The cork press", "The net loft", "The cask hoop", "The linen fold"], "case list is %s" % str(titles))
+	_expect(DOVETAIL_TRUE["who"] == "Doss", "dovetail taker")
+	_expect(DOVETAIL_TRUE["place"] == "vise", "dovetail room")
+	_expect(DOVETAIL_TRUE["hour"] == "63", "dovetail hour")
+	for forbidden in ["Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(DOVETAIL_TRUE["who"] != forbidden, "dovetail accepted %s" % forbidden)
+	for forbidden_place in ["press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(DOVETAIL_TRUE["place"] != forbidden_place, "dovetail accepted the %s" % forbidden_place)
+	_expect(DOVETAIL_TRUE["hour"] != "61", "dovetail accepted 61")
+	_expect(DOVETAIL_TRUE["hour"] != "62", "dovetail accepted 62")
+	_expect(DOVETAIL_TRUE["hour"] != "64", "dovetail accepted 64")
+	_expect(DOVETAIL_TRUE["hour"] != "65", "dovetail accepted 65")
+	_expect(DOVETAIL_TRUE["hour"] != "8", "dovetail accepted 8")
+	_expect(DOVETAIL_TRUE["hour"] != "6", "dovetail accepted 6")
+	_expect(DOVETAIL_TRUE["hour"] != "3", "dovetail accepted 3")
+	_expect(DOVETAIL_TRUE["hour"] != "16", "dovetail accepted 16")
+	_expect(DOVETAIL_TRUE["hour"] != "19", "dovetail accepted 19")
+	var before_dovetail: Array = before_linen.duplicate()
+	before_dovetail.append([Linen, LINEN_TRUE, "linen fold"])
+	for row in before_dovetail:
+		var book = row[0]
+		var truth: Dictionary = row[1]
+		var name := str(row[2])
+		_expect(DOVETAIL_TRUE["who"] != truth["who"], "dovetail copied the %s taker" % name)
+		_expect(DOVETAIL_TRUE["place"] != truth["place"], "dovetail copied the %s room" % name)
+		_expect(DOVETAIL_TRUE["hour"] != str(truth["hour"]), "dovetail copied the %s hour" % name)
+		_expect_rejected(DOVETAIL_TRUE, book)
+		_expect_rejected(truth, Dovetail)
+	_expect(LINEN_TRUE["who"] == "Vetch" and LINEN_TRUE["place"] == "press" and LINEN_TRUE["hour"] == "8", "the linen fold should still accept Vetch in the press at 8")
+	for row in before_dovetail:
+		var book = row[0]
+		var name := str(row[2])
+		for person in Dovetail.PEOPLE:
+			_expect(not book.PEOPLE.has(person), "dovetail cast repeats %s from the %s" % [person, name])
+		for place in Dovetail.PLACES:
+			_expect(not book.PLACES.has(place), "dovetail rooms repeat %s from the %s" % [place, name])
+		for hour in Dovetail.HOURS:
+			_expect(not book.HOURS.has(hour), "dovetail hours repeat %s from the %s" % [hour, name])
+	for forbidden_person in ["Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(not Dovetail.PEOPLE.has(forbidden_person), "dovetail cast must not take %s" % forbidden_person)
+	_expect(Dovetail.role_phrase("Doss") == "the saw hand", "the dovetail should call Doss the saw hand")
+	_expect(Dovetail.role_phrase("Yarrow") == "the board hand", "the dovetail should call Yarrow the board hand")
+	_expect(Dovetail.role_phrase("Peck") == "the clamp clerk", "the dovetail should call Peck the clamp clerk")
+	for forbidden_place in ["press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "dye_house", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(not Dovetail.PLACES.has(forbidden_place), "dovetail rooms must not take the %s" % forbidden_place)
+	_expect(not Dovetail.HOURS.has("6"), "dovetail hours must not take 6")
+	_expect(not Dovetail.HOURS.has("7"), "dovetail hours must not take 7")
+	_expect(not Dovetail.HOURS.has("8"), "dovetail hours must not take 8")
+	_expect(not Dovetail.HOURS.has("9"), "dovetail hours must not take 9")
+	_expect(not Dovetail.HOURS.has("10"), "dovetail hours must not take 10")
+	_expect(not Dovetail.HOURS.has("60"), "dovetail hours must not take 60")
+	_expect(not Dovetail.HOURS.has("66"), "dovetail hours must not take 66")
+
+	_expect(MORTISE_TRUE["who"] == "Arlo", "mortise taker")
+	_expect(MORTISE_TRUE["place"] == "chisel", "mortise room")
+	_expect(MORTISE_TRUE["hour"] == "68", "mortise hour")
+	for forbidden in ["Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(MORTISE_TRUE["who"] != forbidden, "mortise accepted %s" % forbidden)
+	for forbidden_place in ["vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(MORTISE_TRUE["place"] != forbidden_place, "mortise accepted the %s" % forbidden_place)
+	_expect(MORTISE_TRUE["hour"] != "66", "mortise accepted 66")
+	_expect(MORTISE_TRUE["hour"] != "67", "mortise accepted 67")
+	_expect(MORTISE_TRUE["hour"] != "69", "mortise accepted 69")
+	_expect(MORTISE_TRUE["hour"] != "70", "mortise accepted 70")
+	_expect(MORTISE_TRUE["hour"] != "63", "mortise accepted 63")
+	_expect(MORTISE_TRUE["hour"] != "8", "mortise accepted 8")
+	_expect(MORTISE_TRUE["hour"] != "6", "mortise accepted 6")
+	_expect(MORTISE_TRUE["hour"] != "3", "mortise accepted 3")
+	_expect(MORTISE_TRUE["hour"] != "16", "mortise accepted 16")
+	_expect(MORTISE_TRUE["hour"] != "19", "mortise accepted 19")
+	var before_mortise: Array = before_dovetail.duplicate()
+	before_mortise.append([Dovetail, DOVETAIL_TRUE, "dovetail"])
+	for row in before_mortise:
+		var book = row[0]
+		var truth: Dictionary = row[1]
+		var name := str(row[2])
+		_expect(MORTISE_TRUE["who"] != truth["who"], "mortise copied the %s taker" % name)
+		_expect(MORTISE_TRUE["place"] != truth["place"], "mortise copied the %s room" % name)
+		_expect(MORTISE_TRUE["hour"] != str(truth["hour"]), "mortise copied the %s hour" % name)
+		_expect_rejected(MORTISE_TRUE, book)
+		_expect_rejected(truth, Mortise)
+	_expect(DOVETAIL_TRUE["who"] == "Doss" and DOVETAIL_TRUE["place"] == "vise" and DOVETAIL_TRUE["hour"] == "63", "the dovetail should still accept Doss in the vise at 63")
+	for row in before_mortise:
+		var book = row[0]
+		var name := str(row[2])
+		for person in Mortise.PEOPLE:
+			_expect(not book.PEOPLE.has(person), "mortise cast repeats %s from the %s" % [person, name])
+		for place in Mortise.PLACES:
+			_expect(not book.PLACES.has(place), "mortise rooms repeat %s from the %s" % [place, name])
+		for hour in Mortise.HOURS:
+			_expect(not book.HOURS.has(hour), "mortise hours repeat %s from the %s" % [hour, name])
+	for forbidden_person in ["Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(not Mortise.PEOPLE.has(forbidden_person), "mortise cast must not take %s" % forbidden_person)
+	_expect(Mortise.role_phrase("Arlo") == "the chisel hand", "the mortise should call Arlo the chisel hand")
+	_expect(Mortise.role_phrase("Keel") == "the awl hand", "the mortise should call Keel the awl hand")
+	_expect(Mortise.role_phrase("Weske") == "the last clerk", "the mortise should call Weske the last clerk")
+	for forbidden_place in ["vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "dye_house", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(not Mortise.PLACES.has(forbidden_place), "mortise rooms must not take the %s" % forbidden_place)
+	_expect(not Mortise.HOURS.has("6"), "mortise hours must not take 6")
+	_expect(not Mortise.HOURS.has("7"), "mortise hours must not take 7")
+	_expect(not Mortise.HOURS.has("8"), "mortise hours must not take 8")
+	_expect(not Mortise.HOURS.has("9"), "mortise hours must not take 9")
+	_expect(not Mortise.HOURS.has("10"), "mortise hours must not take 10")
+	_expect(not Mortise.HOURS.has("60"), "mortise hours must not take 60")
+	_expect(not Mortise.HOURS.has("61"), "mortise hours must not take 61")
+	_expect(not Mortise.HOURS.has("62"), "mortise hours must not take 62")
+	_expect(not Mortise.HOURS.has("63"), "mortise hours must not take 63")
+	_expect(not Mortise.HOURS.has("64"), "mortise hours must not take 64")
+	_expect(not Mortise.HOURS.has("65"), "mortise hours must not take 65")
+
+	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal", "The orchard graft", "The dye vat", "The tar kettle", "The cork press", "The net loft", "The cask hoop", "The linen fold", "The dovetail", "The mortise"], "case list is %s" % str(titles))
 
 
 func _test_menu_opens_either_case() -> void:
@@ -7780,7 +8601,7 @@ func _test_menu_opens_either_case() -> void:
 	if root.get_child_count() == 0:
 		root._ready()
 	var menu_blob := _visible_label_blob(root)
-	_expect(menu_blob.find("Twenty-three files") >= 0, "menu does not offer twenty-three files: %s" % menu_blob)
+	_expect(menu_blob.find("Twenty-five files") >= 0, "menu does not offer twenty-five files: %s" % menu_blob)
 	_expect(menu_blob.find("CW-07") >= 0, "menu omits CW-07")
 	_expect(menu_blob.find("The hive smoker") >= 0, "menu omits The hive smoker")
 	_expect(menu_blob.find("CW-08") >= 0, "menu omits CW-08")
@@ -7815,6 +8636,10 @@ func _test_menu_opens_either_case() -> void:
 	_expect(menu_blob.find("The cask hoop") >= 0, "menu omits The cask hoop")
 	_expect(menu_blob.find("CW-23") >= 0, "menu omits CW-23")
 	_expect(menu_blob.find("The linen fold") >= 0, "menu omits The linen fold")
+	_expect(menu_blob.find("CW-24") >= 0, "menu omits CW-24")
+	_expect(menu_blob.find("The dovetail") >= 0, "menu omits The dovetail")
+	_expect(menu_blob.find("CW-25") >= 0, "menu omits CW-25")
+	_expect(menu_blob.find("The mortise") >= 0, "menu omits The mortise")
 	_expect(root.get_child_count() > 0, "main scene built %d children" % root.get_child_count())
 	_press(root, "How to play")
 	var howto := _visible_label_blob(root)
@@ -7841,6 +8666,8 @@ func _test_menu_opens_either_case() -> void:
 	_expect(howto.find("The net loft") >= 0, "how to play omits The net loft")
 	_expect(howto.find("The cask hoop") >= 0, "how to play omits The cask hoop")
 	_expect(howto.find("The linen fold") >= 0, "how to play omits The linen fold")
+	_expect(howto.find("The dovetail") >= 0, "how to play omits The dovetail")
+	_expect(howto.find("The mortise") >= 0, "how to play omits The mortise")
 	_expect(howto.find("names that slot") >= 0, "how to play omits the empty-slot rule")
 	_press(root, "Back to the menu")
 	_expect(_find_visible_button(root, "Open The spare key") != null, "menu is missing The spare key")
@@ -7866,6 +8693,8 @@ func _test_menu_opens_either_case() -> void:
 	_expect(_find_visible_button(root, "Open The net loft") != null, "menu is missing The net loft")
 	_expect(_find_visible_button(root, "Open The cask hoop") != null, "menu is missing The cask hoop")
 	_expect(_find_visible_button(root, "Open The linen fold") != null, "menu is missing The linen fold")
+	_expect(_find_visible_button(root, "Open The dovetail") != null, "menu is missing The dovetail")
+	_expect(_find_visible_button(root, "Open The mortise") != null, "menu is missing The mortise")
 	_press(root, "Open The rehearsal score")
 	var rehearsal_open := _visible_label_blob(root)
 	_expect(rehearsal_open.find("Cut list") >= 0, "rehearsal file did not open")
@@ -9201,6 +10030,204 @@ func _test_menu_opens_either_case() -> void:
 	var cask_from_linen := _visible_label_blob(root)
 	_expect(cask_from_linen.find("Hoop chit") >= 0, "could not return to The cask hoop from The linen fold")
 	_expect(cask_from_linen.find("Shears chit") == -1, "linen fold papers stayed up after switching files")
+
+	_press(root, "Menu")
+	_press(root, "Open The dovetail")
+	var dovetail_open := _visible_label_blob(root)
+	_expect(dovetail_open.find("Saw chit") >= 0, "dovetail file did not open")
+	_expect(dovetail_open.find("Joint note") >= 0, "dovetail file did not show its exhibits")
+	_expect(dovetail_open.find("CW-24") >= 0, "dovetail file omits CW-24")
+	_expect(dovetail_open.find("Complaint slip") == -1, "spare key papers showed inside The dovetail")
+	_expect(dovetail_open.find("Cut list") == -1, "rehearsal papers showed inside The dovetail")
+	_expect(dovetail_open.find("Move order") == -1, "gilt stamp papers showed inside The dovetail")
+	_expect(dovetail_open.find("Whistle slip") == -1, "ferry bell papers showed inside The dovetail")
+	_expect(dovetail_open.find("Frost note") == -1, "weather slate papers showed inside The dovetail")
+	_expect(dovetail_open.find("Trough tag") == -1, "loom shuttle papers showed inside The dovetail")
+	_expect(dovetail_open.find("Fuel line") == -1, "hive smoker papers showed inside The dovetail")
+	_expect(dovetail_open.find("Weight line") == -1, "glass pontil papers showed inside The dovetail")
+	_expect(dovetail_open.find("Lock line") == -1, "press proof papers showed inside The dovetail")
+	_expect(dovetail_open.find("Cup line") == -1, "assay cup papers showed inside The dovetail")
+	_expect(dovetail_open.find("Mark line") == -1, "kiln chalk papers showed inside The dovetail")
+	_expect(dovetail_open.find("Ledger line") == -1, "tide ledger papers showed inside The dovetail")
+	_expect(dovetail_open.find("Bell line") == -1, "night bell papers showed inside The dovetail")
+	_expect(dovetail_open.find("Salt line") == -1, "salt mark papers showed inside The dovetail")
+	_expect(dovetail_open.find("Oil note") == -1, "wick trim papers showed inside The dovetail")
+	_expect(dovetail_open.find("Gather note") == -1, "glass anneal papers showed inside The dovetail")
+	_expect(dovetail_open.find("Scion note") == -1, "orchard graft papers showed inside The dovetail")
+	_expect(dovetail_open.find("Winder chit") == -1, "dye vat papers showed inside The dovetail")
+	_expect(dovetail_open.find("Rope chit") == -1, "tar kettle papers showed inside The dovetail")
+	_expect(dovetail_open.find("Cutter chit") == -1, "cork press papers showed inside The dovetail")
+	_expect(dovetail_open.find("Mesh chit") == -1, "net loft papers showed inside The dovetail")
+	_expect(dovetail_open.find("Hoop chit") == -1, "cask hoop papers showed inside The dovetail")
+	_expect(dovetail_open.find("Shears chit") == -1, "linen fold papers showed inside The dovetail")
+	_press(root, "Submit theory")
+	var empty_dovetail := _verdict_text(root)
+	_expect(empty_dovetail.find("who cut the dovetail") >= 0, "empty dovetail board: %s" % empty_dovetail)
+	_expect(empty_dovetail.find("where they cut the dovetail") >= 0, "empty dovetail board: %s" % empty_dovetail)
+	_expect(empty_dovetail.find("at which hour they cut the dovetail") >= 0, "empty dovetail board: %s" % empty_dovetail)
+	_expect(empty_dovetail.find("who took the spare key") == -1, "empty dovetail board used the spare key slot: %s" % empty_dovetail)
+	_expect(empty_dovetail.find("who folded the linen") == -1, "empty dovetail board used a linen slot: %s" % empty_dovetail)
+	_expect(empty_dovetail.to_lower().find("conflict") == -1, "empty dovetail board talked about a conflict: %s" % empty_dovetail)
+	_press(root, "Yarrow")
+	_press(root, "Apron")
+	_press(root, "61")
+	_press(root, "Submit theory")
+	var dovetail_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(dovetail_miss, Dovetail, {"who": "Yarrow", "place": "apron", "hour": "61"})
+	_expect(dovetail_miss.find("Saw chit") >= 0, "wrong triple reply omits Saw chit: %s" % dovetail_miss)
+	_expect(dovetail_miss.find("Apron sight") >= 0, "wrong triple reply omits Apron sight: %s" % dovetail_miss)
+	_expect(dovetail_miss.find("Peg hook") >= 0, "wrong triple reply omits Peg hook: %s" % dovetail_miss)
+	_expect(dovetail_miss.find("Joint slate") >= 0, "wrong triple reply omits Joint slate: %s" % dovetail_miss)
+	_expect(dovetail_miss.find("Clamp card") >= 0, "wrong triple reply omits Clamp card: %s" % dovetail_miss)
+	_expect(dovetail_miss.find("Sweep slip") >= 0, "wrong triple reply omits Sweep slip: %s" % dovetail_miss)
+	_expect(dovetail_miss.find("Cut leaf") >= 0, "wrong triple reply omits Cut leaf: %s" % dovetail_miss)
+	_expect(dovetail_miss.find("Joint note") >= 0, "wrong triple reply omits Joint note: %s" % dovetail_miss)
+	_expect(dovetail_miss.find("Jaw order") >= 0, "wrong triple reply omits Jaw order: %s" % dovetail_miss)
+	_press(root, "Doss")
+	_press(root, "Vise")
+	_press(root, "63")
+	_press(root, "Submit theory")
+	var dovetail_accepted := _verdict_text(root)
+	_expect(dovetail_accepted.find("fits every exhibit") >= 0, "dovetail board rejected the true theory: %s" % dovetail_accepted)
+	_expect(dovetail_accepted.find(DOVETAIL_TIMELINE) >= 0, "dovetail board timeline: %s" % dovetail_accepted)
+	_expect(dovetail_accepted.find("Doss (saw hand) cut the dovetail in the vise at 63") >= 0, "dovetail board omits Doss at 63: %s" % dovetail_accepted)
+	_expect(dovetail_accepted.find("in the vise") >= 0, "dovetail board omits the vise: %s" % dovetail_accepted)
+	_expect(dovetail_accepted.find("so the stile would take the joint") >= 0, "dovetail board omits the joint: %s" % dovetail_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var dovetail_cleared := _verdict_text(root)
+	_expect(dovetail_cleared.find("who cut the dovetail") >= 0, "cleared dovetail board: %s" % dovetail_cleared)
+	_expect(dovetail_cleared.find("fits every exhibit") == -1, "cleared dovetail board stayed accepted: %s" % dovetail_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The linen fold")
+	var linen_from_dovetail := _visible_label_blob(root)
+	_expect(linen_from_dovetail.find("Shears chit") >= 0, "could not return to The linen fold from The dovetail")
+	_expect(linen_from_dovetail.find("Sheet note") >= 0, "linen fold exhibits did not return")
+	_expect(linen_from_dovetail.find("CW-23") >= 0, "returned linen fold omits CW-23")
+	_expect(linen_from_dovetail.find("Saw chit") == -1, "dovetail papers stayed up inside The linen fold")
+	_expect(linen_from_dovetail.find("Apron sight") == -1, "dovetail papers showed inside The linen fold")
+	_expect(linen_from_dovetail.find("Peg hook") == -1, "dovetail papers showed inside The linen fold")
+	_expect(linen_from_dovetail.find("Joint slate") == -1, "dovetail papers showed inside The linen fold")
+	_expect(linen_from_dovetail.find("Clamp card") == -1, "dovetail papers showed inside The linen fold")
+	_expect(linen_from_dovetail.find("Cut leaf") == -1, "dovetail papers showed inside The linen fold")
+	_expect(linen_from_dovetail.find("Joint note") == -1, "dovetail papers showed inside The linen fold")
+	_expect(linen_from_dovetail.find("Jaw order") == -1, "dovetail papers showed inside The linen fold")
+	_expect(linen_from_dovetail.find("CW-24") == -1, "dovetail file code stayed up inside The linen fold")
+	_press(root, "Vetch")
+	_press(root, "Press")
+	_press(root, "8")
+	_press(root, "Submit theory")
+	var linen_again := _verdict_text(root)
+	_expect(linen_again.find("fits every exhibit") >= 0, "linen fold board rejected the true theory after The dovetail: %s" % linen_again)
+	_expect(linen_again.find("Vetch (press hand) folded the linen in the press at 8") >= 0, "linen fold board timeline after The dovetail: %s" % linen_again)
+	var linen_again_blob := _visible_label_blob(root)
+	_expect(linen_again_blob.find("Shears chit") >= 0, "linen papers left after returning")
+	_expect(linen_again_blob.find("Saw chit") == -1, "dovetail papers stayed up after returning to The linen fold")
+
+
+	_press(root, "Menu")
+	_press(root, "Open The mortise")
+	var mortise_open := _visible_label_blob(root)
+	_expect(mortise_open.find("Chisel chit") >= 0, "mortise file did not open")
+	_expect(mortise_open.find("Tenon note") >= 0, "mortise file did not show its exhibits")
+	_expect(mortise_open.find("CW-25") >= 0, "mortise file omits CW-25")
+	_expect(mortise_open.find("Complaint slip") == -1, "spare key papers showed inside The mortise")
+	_expect(mortise_open.find("Cut list") == -1, "rehearsal papers showed inside The mortise")
+	_expect(mortise_open.find("Move order") == -1, "gilt stamp papers showed inside The mortise")
+	_expect(mortise_open.find("Whistle slip") == -1, "ferry bell papers showed inside The mortise")
+	_expect(mortise_open.find("Frost note") == -1, "weather slate papers showed inside The mortise")
+	_expect(mortise_open.find("Trough tag") == -1, "loom shuttle papers showed inside The mortise")
+	_expect(mortise_open.find("Fuel line") == -1, "hive smoker papers showed inside The mortise")
+	_expect(mortise_open.find("Weight line") == -1, "glass pontil papers showed inside The mortise")
+	_expect(mortise_open.find("Lock line") == -1, "press proof papers showed inside The mortise")
+	_expect(mortise_open.find("Cup line") == -1, "assay cup papers showed inside The mortise")
+	_expect(mortise_open.find("Mark line") == -1, "kiln chalk papers showed inside The mortise")
+	_expect(mortise_open.find("Ledger line") == -1, "tide ledger papers showed inside The mortise")
+	_expect(mortise_open.find("Bell line") == -1, "night bell papers showed inside The mortise")
+	_expect(mortise_open.find("Salt line") == -1, "salt mark papers showed inside The mortise")
+	_expect(mortise_open.find("Oil note") == -1, "wick trim papers showed inside The mortise")
+	_expect(mortise_open.find("Gather note") == -1, "glass anneal papers showed inside The mortise")
+	_expect(mortise_open.find("Scion note") == -1, "orchard graft papers showed inside The mortise")
+	_expect(mortise_open.find("Winder chit") == -1, "dye vat papers showed inside The mortise")
+	_expect(mortise_open.find("Rope chit") == -1, "tar kettle papers showed inside The mortise")
+	_expect(mortise_open.find("Cutter chit") == -1, "cork press papers showed inside The mortise")
+	_expect(mortise_open.find("Mesh chit") == -1, "net loft papers showed inside The mortise")
+	_expect(mortise_open.find("Hoop chit") == -1, "cask hoop papers showed inside The mortise")
+	_expect(mortise_open.find("Shears chit") == -1, "linen fold papers showed inside The mortise")
+	_expect(mortise_open.find("Saw chit") == -1, "dovetail papers stayed up inside The mortise")
+	_expect(mortise_open.find("Apron sight") == -1, "dovetail papers showed inside The mortise")
+	_expect(mortise_open.find("Peg hook") == -1, "dovetail papers showed inside The mortise")
+	_expect(mortise_open.find("Joint slate") == -1, "dovetail papers showed inside The mortise")
+	_expect(mortise_open.find("Clamp card") == -1, "dovetail papers showed inside The mortise")
+	_expect(mortise_open.find("Sweep slip") == -1, "dovetail papers showed inside The mortise")
+	_expect(mortise_open.find("Cut leaf") == -1, "dovetail papers showed inside The mortise")
+	_expect(mortise_open.find("Joint note") == -1, "dovetail papers showed inside The mortise")
+	_expect(mortise_open.find("Jaw order") == -1, "dovetail papers showed inside The mortise")
+	_expect(mortise_open.find("CW-24") == -1, "dovetail file code stayed up inside The mortise")
+	_press(root, "Submit theory")
+	var empty_mortise := _verdict_text(root)
+	_expect(empty_mortise.find("who cut the mortise") >= 0, "empty mortise board: %s" % empty_mortise)
+	_expect(empty_mortise.find("where they cut the mortise") >= 0, "empty mortise board: %s" % empty_mortise)
+	_expect(empty_mortise.find("at which hour they cut the mortise") >= 0, "empty mortise board: %s" % empty_mortise)
+	_expect(empty_mortise.find("who took the spare key") == -1, "empty mortise board used the spare key slot: %s" % empty_mortise)
+	_expect(empty_mortise.find("who cut the dovetail") == -1, "empty mortise board used a dovetail slot: %s" % empty_mortise)
+	_expect(empty_mortise.to_lower().find("conflict") == -1, "empty mortise board talked about a conflict: %s" % empty_mortise)
+	_press(root, "Keel")
+	_press(root, "Awl")
+	_press(root, "66")
+	_press(root, "Submit theory")
+	var mortise_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(mortise_miss, Mortise, {"who": "Keel", "place": "awl", "hour": "66"})
+	_expect(mortise_miss.find("Chisel chit") >= 0, "wrong triple reply omits Chisel chit: %s" % mortise_miss)
+	_expect(mortise_miss.find("Awl sight") >= 0, "wrong triple reply omits Awl sight: %s" % mortise_miss)
+	_expect(mortise_miss.find("Wedge hook") >= 0, "wrong triple reply omits Wedge hook: %s" % mortise_miss)
+	_expect(mortise_miss.find("Tenon slate") >= 0, "wrong triple reply omits Tenon slate: %s" % mortise_miss)
+	_expect(mortise_miss.find("Brace card") >= 0, "wrong triple reply omits Brace card: %s" % mortise_miss)
+	_expect(mortise_miss.find("Brush slip") >= 0, "wrong triple reply omits Brush slip: %s" % mortise_miss)
+	_expect(mortise_miss.find("Bore leaf") >= 0, "wrong triple reply omits Bore leaf: %s" % mortise_miss)
+	_expect(mortise_miss.find("Tenon note") >= 0, "wrong triple reply omits Tenon note: %s" % mortise_miss)
+	_expect(mortise_miss.find("Rack order") >= 0, "wrong triple reply omits Rack order: %s" % mortise_miss)
+	_press(root, "Arlo")
+	_press(root, "Chisel")
+	_press(root, "68")
+	_press(root, "Submit theory")
+	var mortise_accepted := _verdict_text(root)
+	_expect(mortise_accepted.find("fits every exhibit") >= 0, "mortise board rejected the true theory: %s" % mortise_accepted)
+	_expect(mortise_accepted.find(MORTISE_TIMELINE) >= 0, "mortise board timeline: %s" % mortise_accepted)
+	_expect(mortise_accepted.find("Arlo (chisel hand) cut the mortise in the chisel at 68") >= 0, "mortise board omits Arlo at 68: %s" % mortise_accepted)
+	_expect(mortise_accepted.find("in the chisel") >= 0, "mortise board omits the chisel: %s" % mortise_accepted)
+	_expect(mortise_accepted.find("so the last would take the tenon") >= 0, "mortise board omits the tenon: %s" % mortise_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var mortise_cleared := _verdict_text(root)
+	_expect(mortise_cleared.find("who cut the mortise") >= 0, "cleared mortise board: %s" % mortise_cleared)
+	_expect(mortise_cleared.find("fits every exhibit") == -1, "cleared mortise board stayed accepted: %s" % mortise_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The dovetail")
+	var dovetail_from_mortise := _visible_label_blob(root)
+	_expect(dovetail_from_mortise.find("Saw chit") >= 0, "could not return to The dovetail from The mortise")
+	_expect(dovetail_from_mortise.find("Joint note") >= 0, "dovetail exhibits did not return")
+	_expect(dovetail_from_mortise.find("CW-24") >= 0, "returned dovetail omits CW-24")
+	_expect(dovetail_from_mortise.find("Chisel chit") == -1, "mortise papers stayed up inside The dovetail")
+	_expect(dovetail_from_mortise.find("Awl sight") == -1, "mortise papers showed inside The dovetail")
+	_expect(dovetail_from_mortise.find("Wedge hook") == -1, "mortise papers showed inside The dovetail")
+	_expect(dovetail_from_mortise.find("Tenon slate") == -1, "mortise papers showed inside The dovetail")
+	_expect(dovetail_from_mortise.find("Brace card") == -1, "mortise papers showed inside The dovetail")
+	_expect(dovetail_from_mortise.find("Brush slip") == -1, "mortise papers showed inside The dovetail")
+	_expect(dovetail_from_mortise.find("Bore leaf") == -1, "mortise papers showed inside The dovetail")
+	_expect(dovetail_from_mortise.find("Tenon note") == -1, "mortise papers showed inside The dovetail")
+	_expect(dovetail_from_mortise.find("Rack order") == -1, "mortise papers showed inside The dovetail")
+	_expect(dovetail_from_mortise.find("CW-25") == -1, "mortise file code stayed up inside The dovetail")
+	_press(root, "Doss")
+	_press(root, "Vise")
+	_press(root, "63")
+	_press(root, "Submit theory")
+	var dovetail_again := _verdict_text(root)
+	_expect(dovetail_again.find("fits every exhibit") >= 0, "dovetail board rejected the true theory after The mortise: %s" % dovetail_again)
+	_expect(dovetail_again.find("Doss (saw hand) cut the dovetail in the vise at 63") >= 0, "dovetail board timeline after The mortise: %s" % dovetail_again)
+	var dovetail_again_blob := _visible_label_blob(root)
+	_expect(dovetail_again_blob.find("Saw chit") >= 0, "dovetail papers left after returning")
+	_expect(dovetail_again_blob.find("Chisel chit") == -1, "mortise papers stayed up after returning to The dovetail")
 
 	root.queue_free()
 
