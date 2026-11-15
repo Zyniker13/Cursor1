@@ -1,7 +1,7 @@
 extends RefCounted
 class_name ChartBook
 
-# Six hand-authored charts for South Lantern Quay.
+# South Lantern Quay holds six charts. North Glass Reach holds eight more.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. See BeamTracer for the
 # optical meaning of each number.
@@ -11,9 +11,21 @@ class_name ChartBook
 # flooded rows measured up from the bottom.
 
 const HARBOR := "South Lantern Quay"
+const REACH := "North Glass Reach"
 
 static func all() -> Array:
+	var book: Array = []
+	book.append_array(quay())
+	book.append_array(reach())
+	return book
+
+
+static func quay() -> Array:
 	return [chart_1(), chart_2(), chart_3(), chart_4(), chart_5(), chart_6()]
+
+
+static func reach() -> Array:
+	return [chart_7(), chart_8(), chart_9(), chart_10(), chart_11(), chart_12(), chart_13(), chart_14()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -179,6 +191,264 @@ static func chart_6() -> Dictionary:
 			_prism("P", "Prism", [["a", 2, 4]], "a", 0, "a", 90),
 			_mirror("M", "Mirror", 2, 2, 90, 0),
 			_pane("C", "Tinted pane", 4, 2, 90, 0),
+		],
+	}
+
+static func chart_7() -> Dictionary:
+	# Set prism, rot 90: white traveling east splits. Red goes north into
+	# the red dock. Blue goes south through the pane. Only the blue face
+	# lets blue reach the lower dock. The pane starts on red.
+	return {
+		"id": "7",
+		"harbor": REACH,
+		"title": "Blue Glass",
+		"teach": "The set prism splits white. Red already climbs to its dock. Turn the pane so its face is blue, and blue can fall to the lower dock.",
+		"win": "Red and blue rest on their own docks.",
+		"cols": 5,
+		"rows": 5,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [_lantern("L", 0, 1, "E", "white")],
+		"docks": [
+			_dock("Rd", 2, 0, "red"),
+			_dock("Bd", 2, 4, "blue"),
+		],
+		"boats": [],
+		"fixtures": [
+			_fixture("Px", "prism", 2, 1, 90),
+		],
+		"pieces": [
+			_pane("C", "Lower pane", 2, 3, 0, 90),
+		],
+	}
+
+
+static func chart_8() -> Dictionary:
+	# Three tide marks. The mirror sits on the row high water covers.
+	# "/" sends the eastbound beam north to the dock. "\" sends it south
+	# into the flooded bottom, or into the hull while that row is dry.
+	# A second lantern on the bottom row lights the hull until the first
+	# mark of water shuts it. Only the middle mark clears.
+	return {
+		"id": "8",
+		"harbor": REACH,
+		"title": "Between the Marks",
+		"teach": "Three marks on the clock. Low water leaves the hull in the east light. High water covers the mirror. Choose the middle, and aim the beam up to the dock.",
+		"win": "Mid water, and the dock lamp takes the beam.",
+		"cols": 6,
+		"rows": 5,
+		"tide_phases": [0, 1, 2],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 3, "E", "white"),
+			_lantern("S", 0, 4, "E", "white"),
+		],
+		"docks": [_dock("D", 3, 0, "white")],
+		"boats": [_boat("B", 3, 4)],
+		"fixtures": [],
+		"pieces": [
+			_mirror("M", "Mirror", 3, 3, 90, 0),
+		],
+	}
+
+
+static func chart_9() -> Dictionary:
+	# Same split as Blue Glass, aimed the other way. Blue falls toward a
+	# hull. The red face of the pane stops blue, so the hull stays dark.
+	# The blue face lets blue through and wakes the hull. Red still climbs.
+	return {
+		"id": "9",
+		"harbor": REACH,
+		"title": "The Red Shield",
+		"teach": "Blue falls toward a sleeping hull. Turn the pane to red so that color stops. Red still climbs to its dock.",
+		"win": "The dock takes red. The hull stays asleep.",
+		"cols": 6,
+		"rows": 5,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [_lantern("L", 1, 1, "E", "white")],
+		"docks": [_dock("Rd", 3, 0, "red")],
+		"boats": [_boat("B", 3, 4)],
+		"fixtures": [
+			_fixture("Px", "prism", 3, 1, 90),
+		],
+		"pieces": [
+			_pane("C", "Lower pane", 3, 3, 90, 0),
+		],
+	}
+
+
+static func chart_10() -> Dictionary:
+	# Prism rot 90. Red leaves north and must be bent east. Blue leaves
+	# south and must pass a blue pane. Either wrong piece misses its dock.
+	return {
+		"id": "10",
+		"harbor": REACH,
+		"title": "Bend the Red",
+		"teach": "Bend red along the top glass. The pane on the falling beam has to show blue, or that dock stays dark.",
+		"win": "Red runs the top. Blue falls through.",
+		"cols": 6,
+		"rows": 5,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [_lantern("L", 0, 1, "E", "white")],
+		"docks": [
+			_dock("Rd", 4, 0, "red"),
+			_dock("Bd", 2, 4, "blue"),
+		],
+		"boats": [],
+		"fixtures": [
+			_fixture("Px", "prism", 2, 1, 90),
+		],
+		"pieces": [
+			_mirror("M", "Top mirror", 2, 0, 90, 0),
+			_pane("C", "Lower pane", 2, 3, 0, 90),
+		],
+	}
+
+
+static func chart_11() -> Dictionary:
+	# Blue has to pass the pane and bend west along the row high water
+	# covers. That row is dry at the middle mark and shut at high water.
+	# The bottom lantern lights the hull whenever the bottom row is dry,
+	# so low water cannot lock. Red climbs straight to its dock.
+	return {
+		"id": "11",
+		"harbor": REACH,
+		"title": "The Dry Step",
+		"teach": "Blue must pass the pane and bend west on the low mirror. High water covers that mirror. Low water wakes the hull. The middle mark is the one that holds.",
+		"win": "The middle mark holds both colors, and the hull stays dark.",
+		"cols": 5,
+		"rows": 6,
+		"tide_phases": [0, 1, 2],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 1, "E", "white"),
+			_lantern("S", 0, 5, "E", "white"),
+		],
+		"docks": [
+			_dock("Rd", 2, 0, "red"),
+			_dock("Bd", 0, 4, "blue"),
+		],
+		"boats": [_boat("B", 3, 5)],
+		"fixtures": [
+			_fixture("Px", "prism", 2, 1, 90),
+		],
+		"pieces": [
+			_pane("C", "Lower pane", 2, 3, 0, 90),
+			_mirror("M", "Low mirror", 2, 4, 90, 0),
+		],
+	}
+
+
+static func chart_12() -> Dictionary:
+	# The prism has a socket off the lantern's row. Only the socket on that
+	# row, turned to rot 90, splits the eastbound white beam. Red then has
+	# to bend east, and blue has to pass the pane.
+	return {
+		"id": "12",
+		"harbor": REACH,
+		"title": "The Working Socket",
+		"teach": "Move the prism onto the lantern's row and turn it until the beam splits. Bend red along the top. Let blue through the pane.",
+		"win": "The prism sits in the working socket, and both docks take their color.",
+		"cols": 7,
+		"rows": 5,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [_lantern("L", 0, 2, "E", "white")],
+		"docks": [
+			_dock("Rd", 5, 0, "red"),
+			_dock("Bd", 2, 4, "blue"),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_prism("P", "Prism", [["side", 4, 1], ["line", 2, 2]], "side", 0, "line", 90),
+			_mirror("M", "Top mirror", 2, 0, 90, 0),
+			_pane("C", "Lower pane", 2, 3, 0, 90),
+		],
+	}
+
+
+static func chart_13() -> Dictionary:
+	# Both colors leave the set prism and have to bend east through a pane
+	# of their own color. The top mirror's other face sends red west into
+	# the hull. The low mirror's other face sends blue west, off the dock.
+	return {
+		"id": "13",
+		"harbor": REACH,
+		"title": "Crossed Marks",
+		"teach": "Each color has to bend, then pass a pane of its own color. The wrong bend on the top glass wakes the hull.",
+		"win": "Both colors cross, and the hull stays asleep.",
+		"cols": 7,
+		"rows": 5,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [_lantern("L", 0, 2, "E", "white")],
+		"docks": [
+			_dock("Rd", 6, 0, "red"),
+			_dock("Bd", 6, 4, "blue"),
+		],
+		"boats": [_boat("B", 1, 0)],
+		"fixtures": [
+			_fixture("Px", "prism", 3, 2, 90),
+		],
+		"pieces": [
+			_mirror("Mr", "Top mirror", 3, 0, 90, 0),
+			_pane("Cr", "Top pane", 5, 0, 90, 0),
+			_mirror("Mb", "Low mirror", 3, 4, 0, 90),
+			_pane("Cb", "Low pane", 5, 4, 0, 90),
+		],
+	}
+
+
+static func chart_14() -> Dictionary:
+	# Capstone. The working socket is on the lantern's row; the other socket
+	# is not, so the prism there never sees the beam. Rot 90 splits white:
+	# red bends east along the top, blue bends east through the blue pane.
+	# Low water lets the bottom lantern wake the hull. High water covers the
+	# low mirror, the pane, and the blue dock. Only the middle mark holds.
+	return {
+		"id": "14",
+		"harbor": REACH,
+		"title": "The Holding Line",
+		"teach": "Move the prism onto the lantern's row, bend both colors, and leave the pane blue. Low water wakes the hull. High water covers the low glass. Hold the middle mark.",
+		"win": "Tide, socket, and color. The reach holds.",
+		"cols": 7,
+		"rows": 6,
+		"tide_phases": [0, 1, 2],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 2, "E", "white"),
+			_lantern("S", 0, 5, "E", "white"),
+		],
+		"docks": [
+			_dock("Rd", 5, 0, "red"),
+			_dock("Bd", 6, 4, "blue"),
+		],
+		"boats": [_boat("B", 4, 5)],
+		"fixtures": [],
+		"pieces": [
+			_prism("P", "Prism", [["side", 5, 3], ["line", 2, 2]], "side", 0, "line", 90),
+			_mirror("Mr", "Top mirror", 2, 0, 90, 0),
+			_mirror("Mb", "Low mirror", 2, 4, 0, 90),
+			_pane("C", "Low pane", 4, 4, 0, 90),
 		],
 	}
 

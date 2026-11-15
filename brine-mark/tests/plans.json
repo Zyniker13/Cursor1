@@ -8,6 +8,30 @@
     "cover": [[3, 4], [3, 5], [3, 6]],
     "trail": [[4, 5], [5, 5], [6, 5], [7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]]
   },
+  "dry_pans": {
+    "note": "No shore rakes. Pans crystallize only after the first rain, when the brine has pulled back. Stacks and covers sit inland of the pans, with a trail back to the anthill. This plan misses the quota if the dry-season rule is ignored.",
+    "pan": [[4, 4], [4, 5], [4, 6]],
+    "stack": [[5, 4], [5, 5], [5, 6]],
+    "cover": [[6, 4], [6, 5], [6, 6]],
+    "trail": [[7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]]
+  },
+  "continued": {
+    "note": "The wet-season shore line, plus pans that wake up in the dry season and feed their own stacks and covers. The side marks stay off the trail so the first rain's haul matches the winning plan.",
+    "rake": [[1, 4], [1, 5], [1, 6]],
+    "stack": [[2, 4], [2, 5], [2, 6], [6, 4], [6, 6]],
+    "cover": [[3, 4], [3, 5], [3, 6], [7, 4], [7, 6]],
+    "pan": [[5, 4], [5, 6]],
+    "trail": [[4, 5], [5, 5], [6, 5], [7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]]
+  },
+  "late_pans": {
+    "note": "A trail only, until the first rain. Pans, stacks, and covers are painted once the dry season opens, the way a player answers the brine pulling back.",
+    "trail": [[7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]],
+    "after_first_rain": {
+      "pan": [[4, 4], [4, 5], [4, 6]],
+      "stack": [[5, 4], [5, 5], [5, 6]],
+      "cover": [[6, 4], [6, 5], [6, 6]]
+    }
+  },
   "all_rake": {
     "note": "One rake region from the shore to the column beside the anthill. No stack, cover, or trail.",
     "rake_rect": [1, 0, 13, 11]

@@ -9,11 +9,13 @@ const PEA := 0
 const VINE := 1
 const LANTERN := 2
 const GOURD := 3
-const COUNT := 4
+const WICK := 4
+const COUNT := 5
 
 # fire_ticks and slow_ticks are sim ticks of length DT.
 # light_radius, weapon_range, projectile_speed, and splash_radius are pixels.
 # slow_factor is the movement multiplier applied on hit (1.0 means no slow).
+# burns_shroud: this plant's light reveals shroud moths and lets shots hurt them.
 const DEFS := [
 	{
 		"name": "Pea",
@@ -26,6 +28,7 @@ const DEFS := [
 		"slow_factor": 1.0,
 		"slow_ticks": 0,
 		"splash_radius": 0.0,
+		"burns_shroud": false,
 	},
 	{
 		"name": "Vine",
@@ -38,6 +41,7 @@ const DEFS := [
 		"slow_factor": 0.40,
 		"slow_ticks": 60,
 		"splash_radius": 0.0,
+		"burns_shroud": false,
 	},
 	{
 		"name": "Lantern",
@@ -50,6 +54,7 @@ const DEFS := [
 		"slow_factor": 1.0,
 		"slow_ticks": 0,
 		"splash_radius": 0.0,
+		"burns_shroud": false,
 	},
 	{
 		"name": "Gourd",
@@ -62,6 +67,20 @@ const DEFS := [
 		"slow_factor": 1.0,
 		"slow_ticks": 0,
 		"splash_radius": 64.0,
+		"burns_shroud": false,
+	},
+	{
+		"name": "Wick",
+		"role": "Burns shroud, modest shots, tight light.",
+		"damage": 3,
+		"fire_ticks": 12,
+		"light_radius": 96.0,
+		"weapon_range": 240.0,
+		"projectile_speed": 480.0,
+		"slow_factor": 1.0,
+		"slow_ticks": 0,
+		"splash_radius": 0.0,
+		"burns_shroud": true,
 	},
 ]
 

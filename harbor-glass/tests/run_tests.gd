@@ -27,6 +27,7 @@ func _run() -> void:
 	test_flooded_lantern_is_dark()
 	test_mirror_loop_terminates()
 	test_charts()
+	test_reach_book()
 	test_chart_4_boat()
 	test_one_rotation_is_not_solved()
 	test_hint_points_at_one_piece()
@@ -172,10 +173,22 @@ func test_mirror_loop_terminates() -> void:
 
 func test_charts() -> void:
 	var book: Array = Charts.all()
-	check(book.size() == 6, "six charts")
+	check(Charts.quay().size() == 6, "quay keeps six charts")
+	check(Charts.reach().size() == 8, "reach adds eight charts")
+	check(book.size() == 14, "fourteen charts")
+	var seen_ids := {}
+	var seen_titles := {}
+	var quay_titles := ["First Glass", "Around the Pilings", "High Water", "Sleeping Hull", "Split the White", "The Night Mark"]
+	for i in Charts.quay().size():
+		check(str(Charts.quay()[i]["title"]) == quay_titles[i], "quay chart %d keeps its title" % (i + 1))
 	for raw in book:
 		var chart: Dictionary = raw
 		var id := str(chart["id"])
+		var title := str(chart["title"])
+		check(not seen_ids.has(id), "chart id %s is unique" % id)
+		check(not seen_titles.has(title), "chart title %s is unique" % title)
+		seen_ids[id] = true
+		seen_titles[title] = true
 		var initial := Charts.make_state(chart, false)
 		var solved := Charts.make_state(chart, true)
 		var initial_errors: Array = Charts.placement_errors(chart, initial)
@@ -195,10 +208,17 @@ func test_charts() -> void:
 			check(true, "chart %s initial is unsolved" % id)
 		else:
 			check(false, "chart %s initial is unsolved %s" % [id, str(Tracer.trace(chart, initial))])
+		var solved_trace: Dictionary = Tracer.trace(chart, solved)
+		var solved_again: Dictionary = Tracer.trace(chart, solved)
+		check(_trace_sig(solved_trace) == _trace_sig(solved_again), "chart %s solution trace is deterministic" % id)
+		var initial_trace: Dictionary = Tracer.trace(chart, initial)
+		var initial_again: Dictionary = Tracer.trace(chart, initial)
+		check(_trace_sig(initial_trace) == _trace_sig(initial_again), "chart %s initial trace is deterministic" % id)
 		if Tracer.is_cleared(chart, solved):
 			check(true, "chart %s solution clears" % id)
 		else:
-			check(false, "chart %s solution clears notes=%s trace=%s" % [id, str(Tracer.failure_notes(chart, solved)), str(Tracer.trace(chart, solved))])
+			check(false, "chart %s solution clears notes=%s trace=%s" % [id, str(Tracer.failure_notes(chart, solved)), str(solved_trace)])
+		check(int(solved_trace["segments"].size()) > 0, "chart %s solution draws a beam" % id)
 		var lit: Dictionary = Tracer.trace(chart, solved)
 		for dock_raw in chart["docks"]:
 			var dock: Dictionary = dock_raw
@@ -211,7 +231,8 @@ func test_charts() -> void:
 			check(true, "chart %s has one clearing state" % id)
 			check(_same_solution(chart, clears[0], solved), "chart %s clearing state is the authored solution" % id)
 		else:
-			check(false, "chart %s has one clearing state (found %d)" % [id, clears.size()])
+			var shown: Array = clears.slice(0, 4)
+			check(false, "chart %s has one clearing state (found %d) %s" % [id, clears.size(), str(shown)])
 
 func test_chart_4_boat() -> void:
 	var chart: Dictionary = Charts.all()[3]
@@ -313,6 +334,96 @@ func test_chart_6_combined() -> void:
 		var clearing: Dictionary = raw
 		check(int(clearing["tide_index"]) == 1, "every chart 6 clear has the tide raised")
 
+func test_reach_book() -> void:
+	var reach: Array = Charts.reach()
+	check(reach.size() == 8, "reach book has eight charts")
+	check(str(reach[0]["teach"]).to_lower().contains("blue"), "chart 7 teaches the blue face")
+	check(str(reach[1]["teach"]).to_lower().contains("middle"), "chart 8 teaches the middle mark")
+	for raw in reach:
+		var chart: Dictionary = raw
+		check(str(chart["harbor"]) == Charts.REACH, "chart %s belongs to the reach" % str(chart["id"]))
+
+	var blue: Dictionary = reach[0]
+	var blue_solved := Charts.make_state(blue, true)
+	var blue_hit: Dictionary = Tracer.trace(blue, blue_solved)
+	check(blue_hit["docks"]["Rd"].has("red") and blue_hit["docks"]["Bd"].has("blue"), "chart 7 lands red and blue")
+	var blue_blocked := Charts.duplicate_state(blue_solved)
+	blue_blocked["pieces"]["C"]["rot"] = 0
+	var blocked_hit: Dictionary = Tracer.trace(blue, blue_blocked)
+	check(blocked_hit["docks"]["Rd"].has("red") and not blocked_hit["docks"]["Bd"].has("blue"), "chart 7 red pane lets red climb and stops blue")
+
+	var marks: Dictionary = reach[1]
+	var mid := Charts.make_state(marks, true)
+	check(int(mid["tide_index"]) == 1, "chart 8 is authored at mid water")
+	var low := Charts.duplicate_state(mid)
+	low["tide_index"] = 0
+	check(bool(Tracer.trace(marks, low)["boats"]["B"]), "chart 8 low water lights the hull")
+	check(not Tracer.is_cleared(marks, low), "chart 8 low water does not clear")
+	var high := Charts.duplicate_state(mid)
+	high["tide_index"] = 2
+	check(not Tracer.trace(marks, high)["docks"]["D"].has("white"), "chart 8 high water misses the dock")
+	check(not Tracer.is_cleared(marks, high), "chart 8 high water does not clear")
+
+	var shield: Dictionary = reach[2]
+	var shield_solved := Charts.make_state(shield, true)
+	var shield_hit: Dictionary = Tracer.trace(shield, shield_solved)
+	check(shield_hit["docks"]["Rd"].has("red") and not bool(shield_hit["boats"]["B"]), "chart 9 keeps red and a dark hull")
+	var open_shield := Charts.duplicate_state(shield_solved)
+	open_shield["pieces"]["C"]["rot"] = 90
+	var open_hit: Dictionary = Tracer.trace(shield, open_shield)
+	check(bool(open_hit["boats"]["B"]) and open_hit["docks"]["Rd"].has("red"), "chart 9 blue pane lets blue wake the hull")
+	check(not Tracer.is_cleared(shield, open_shield), "chart 9 open pane does not clear")
+
+	var bend: Dictionary = reach[3]
+	var bend_solved := Charts.make_state(bend, true)
+	var missed := Charts.duplicate_state(bend_solved)
+	missed["pieces"]["M"]["rot"] = 90
+	check(not Tracer.trace(bend, missed)["docks"]["Rd"].has("red"), "chart 10 wrong mirror misses the red dock")
+	var tinted := Charts.duplicate_state(bend_solved)
+	tinted["pieces"]["C"]["rot"] = 0
+	check(not Tracer.trace(bend, tinted)["docks"]["Bd"].has("blue"), "chart 10 red pane blocks blue")
+
+	var dry: Dictionary = reach[4]
+	var dry_solved := Charts.make_state(dry, true)
+	check(int(dry_solved["tide_index"]) == 1, "chart 11 is authored at mid water")
+	var dry_low := Charts.duplicate_state(dry_solved)
+	dry_low["tide_index"] = 0
+	check(bool(Tracer.trace(dry, dry_low)["boats"]["B"]), "chart 11 low water lights the hull")
+	var dry_high := Charts.duplicate_state(dry_solved)
+	dry_high["tide_index"] = 2
+	check(not Tracer.trace(dry, dry_high)["docks"]["Bd"].has("blue"), "chart 11 high water shuts the blue dock")
+	for raw_clear in _clears(dry):
+		var clearing: Dictionary = raw_clear
+		check(int(clearing["tide_index"]) == 1, "every chart 11 clear is mid water")
+
+	var socket: Dictionary = reach[5]
+	var socket_start := Charts.make_state(socket, false)
+	check(str(socket_start["pieces"]["P"]["socket"]) == "side", "chart 12 prism starts off the lantern row")
+	check(not Tracer.trace(socket, socket_start)["docks"]["Rd"].has("red"), "chart 12 side socket does not feed the red dock")
+
+	var crossed: Dictionary = reach[6]
+	var crossed_solved := Charts.make_state(crossed, true)
+	var crossed_hit: Dictionary = Tracer.trace(crossed, crossed_solved)
+	check(crossed_hit["docks"]["Rd"].has("red") and crossed_hit["docks"]["Bd"].has("blue"), "chart 13 lands both colors")
+	check(not bool(crossed_hit["boats"]["B"]), "chart 13 solution leaves the hull dark")
+	var into_hull := Charts.duplicate_state(crossed_solved)
+	into_hull["pieces"]["Mr"]["rot"] = 90
+	check(bool(Tracer.trace(crossed, into_hull)["boats"]["B"]), "chart 13 top mirror turned west wakes the hull")
+
+	var hold: Dictionary = reach[7]
+	var hold_solved := Charts.make_state(hold, true)
+	check(int(hold_solved["tide_index"]) == 1, "chart 14 is authored at mid water")
+	var hold_hit: Dictionary = Tracer.trace(hold, hold_solved)
+	check(hold_hit["docks"]["Rd"].has("red") and hold_hit["docks"]["Bd"].has("blue") and not bool(hold_hit["boats"]["B"]), "chart 14 solution holds both docks and a dark hull")
+	var hold_low := Charts.duplicate_state(hold_solved)
+	hold_low["tide_index"] = 0
+	check(bool(Tracer.trace(hold, hold_low)["boats"]["B"]), "chart 14 low water lights the hull")
+	var hold_high := Charts.duplicate_state(hold_solved)
+	hold_high["tide_index"] = 2
+	check(not Tracer.trace(hold, hold_high)["docks"]["Bd"].has("blue"), "chart 14 high water misses the blue dock")
+	for raw_hold in _clears(hold):
+		var hold_clear: Dictionary = raw_hold
+		check(int(hold_clear["tide_index"]) == 1, "every chart 14 clear is mid water")
 func test_smoke() -> void:
 	var main_script: Script = load("res://scripts/main.gd")
 	main_script.persist_progress = false
@@ -334,6 +445,12 @@ func test_smoke() -> void:
 	var stuck: int = main.chart_index
 	check(not main.select_chart(2), "a locked chart stays shut")
 	check(main.chart_index == stuck, "selecting a locked chart does not switch")
+	check(not main.select_chart(6), "a locked reach chart stays shut")
+	check(main.chart_index == stuck, "a locked reach chart does not switch")
+	check(main.reach_book_button.disabled, "the reach book starts locked")
+	main._on_book_pressed(1)
+	check(main.chart_index == stuck, "Reach stays shut until the quay is finished")
+	check(main.quay_grid.visible and not main.reach_grid.visible, "the quay grid is the one on screen")
 	_tap(main, KEY_R)
 	_tap(main, KEY_SPACE)
 	check(main.board_locked, "keyboard R then Space locks chart 1")
@@ -371,8 +488,72 @@ func test_smoke() -> void:
 	main.try_lock()
 	check(not main.board_locked, "chart 4 start does not lock")
 	check(str(main.status_label.text).to_lower().contains("hull"), "a lit hull is named when lock fails")
+	for i in main.charts.size():
+		main.unlocked[i] = true
+	check(main.select_chart(5), "the night mark opens")
+	main.state = Charts.duplicate_state(Charts.make_state(main.chart, true))
+	main._refresh()
+	main.try_lock()
+	check(main.board_locked and main.unlocked[6], "holding the night mark opens the reach")
+	main._advance_from_win()
+	check(str(main.chart["id"]) == "7", "next chart from the quay enters Blue Glass")
+	check(main.reach_grid.visible and not main.quay_grid.visible, "the reach grid opens with Blue Glass")
+	check(str(main.harbor_label.text) == Charts.REACH, "the harbor name follows the reach")
+	check(not main.raise_button.visible, "chart 7 tide is fixed")
+	var pane_rot := int(main.state["pieces"]["C"]["rot"])
+	_tap(main, KEY_R)
+	check(int(main.state["pieces"]["C"]["rot"]) != pane_rot, "R turns the reach pane")
+	_tap(main, KEY_T, true)
+	check(int(main.state["tide_index"]) == 0, "Shift+T does not move a fixed tide")
+	main._on_book_pressed(0)
+	check(str(main.chart["id"]) == "6", "Quay returns to the chart that was open")
+	check(main.quay_grid.visible and not main.reach_grid.visible, "Quay shows the quay grid")
+	main._on_book_pressed(1)
+	check(str(main.chart["id"]) == "7", "Reach returns to Blue Glass")
+	check(main.select_chart(7), "chart 8 opens")
+	check(main.raise_button.visible and main.lower_button.visible, "chart 8 shows both tide levers")
+	check(int(main.state["tide_index"]) == 0, "chart 8 starts at low water")
+	_tap(main, KEY_T)
+	check(int(main.state["tide_index"]) == 1, "T raises to the middle mark")
+	_tap(main, KEY_T)
+	check(int(main.state["tide_index"]) == 2, "T raises to high water")
+	_tap(main, KEY_T, true)
+	check(int(main.state["tide_index"]) == 1, "Shift+T lowers the tide")
+	check(main.select_chart(main.charts.size() - 1), "the holding line opens")
+	check(str(main.chart["id"]) == "14" and main.raise_button.visible, "chart 14 is the reach capstone")
+	main.select_chart(0)
+	main.restart_chart()
+	var before_rot := int(main.state["pieces"]["M"]["rot"])
+	_click_cell(main, 2, 2, false)
+	check(int(main.state["pieces"]["M"]["rot"]) != before_rot, "left click turns the selected mirror")
+	_click_cell(main, 2, 2, true)
+	check(int(main.state["pieces"]["M"]["rot"]) == before_rot, "right click turns the mirror back")
 	main.free()
 
+func _trace_sig(result: Dictionary) -> String:
+	var parts := PackedStringArray()
+	parts.append("flood=%d" % int(result["flood"]))
+	var docks: Dictionary = result["docks"]
+	var dock_ids: Array = docks.keys()
+	dock_ids.sort()
+	for dock_id in dock_ids:
+		var hits: Array = docks[dock_id]
+		var colors := PackedStringArray()
+		for color in hits:
+			colors.append(str(color))
+		colors.sort()
+		parts.append("dock %s=%s" % [str(dock_id), ",".join(colors)])
+	var boats: Dictionary = result["boats"]
+	var boat_ids: Array = boats.keys()
+	boat_ids.sort()
+	for boat_id in boat_ids:
+		parts.append("boat %s=%s" % [str(boat_id), "1" if bool(boats[boat_id]) else "0"])
+	var segs: Array = result["segments"]
+	parts.append("segments=%d" % segs.size())
+	for raw in segs:
+		var seg: Dictionary = raw
+		parts.append("%.4f,%.4f>%.4f,%.4f:%s" % [float(seg["x0"]), float(seg["y0"]), float(seg["x1"]), float(seg["y1"]), str(seg["color"])])
+	return "|".join(parts)
 func _clears(chart: Dictionary) -> Array:
 	var found: Array = []
 	for candidate in _enumerate(chart):
@@ -427,13 +608,25 @@ func _solve_piece(chart: Dictionary, state: Dictionary, id: String) -> void:
 	state["pieces"][id]["rot"] = int(piece["solution_rot"])
 	state["pieces"][id]["socket"] = str(piece["solution_socket"])
 
-func _tap(node: Node, keycode: Key) -> void:
+func _tap(node: Node, keycode: Key, shift := false) -> void:
 	var event := InputEventKey.new()
 	event.pressed = true
 	event.echo = false
 	event.keycode = keycode
 	event.physical_keycode = keycode
+	event.shift_pressed = shift
 	node._unhandled_input(event)
+
+
+func _click_cell(main, c: int, r: int, right: bool) -> void:
+	var board: Node2D = main.board
+	var cell_size := float(board.get("cell"))
+	var local := Vector2(float(c) + 0.5, float(r) + 0.5) * cell_size
+	var event := InputEventMouseButton.new()
+	event.pressed = true
+	event.button_index = MOUSE_BUTTON_RIGHT if right else MOUSE_BUTTON_LEFT
+	event.position = board.get_global_transform_with_canvas() * local
+	main._unhandled_input(event)
 
 func _blank(cols: int, rows: int) -> Dictionary:
 	return {

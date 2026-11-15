@@ -2,7 +2,7 @@ extends Control
 
 const Rules := preload("res://scripts/census_rules.gd")
 
-signal descend_pressed
+signal floors_pressed
 signal buy_pressed
 signal restart_pressed
 
@@ -18,6 +18,7 @@ var purse_label: Label
 var flask_label: Label
 var price_label: Label
 var buy_button: Button
+var floors_button: Button
 var outcome_label: Label
 var receipt_label: Label
 
@@ -34,7 +35,7 @@ func _build() -> void:
 	title.size = Vector2(760, 56)
 	add_child(title)
 
-	var flavor := _label("The guild pays for the map you carry out.", 20, PARCHMENT)
+	var flavor := _label("The guild pays for the map you carry out of each floor.", 20, PARCHMENT)
 	flavor.position = Vector2(48, 78)
 	flavor.size = Vector2(900, 30)
 	add_child(flavor)
@@ -99,11 +100,11 @@ func _build() -> void:
 	rate.add_theme_color_override("default_color", Color(0.86, 0.78, 0.62))
 	clerk.add_child(rate)
 
-	var descend := _button("Descend")
-	descend.position = Vector2(40, 584)
-	descend.size = Vector2(300, 64)
-	descend.pressed.connect(func() -> void: descend_pressed.emit())
-	add_child(descend)
+	floors_button = _button("Floor select")
+	floors_button.position = Vector2(40, 584)
+	floors_button.size = Vector2(300, 64)
+	floors_button.pressed.connect(func() -> void: floors_pressed.emit())
+	add_child(floors_button)
 
 	var restart := _button("Restart")
 	restart.position = Vector2(360, 584)
@@ -128,19 +129,11 @@ func show_campaign(campaign: Rules.Campaign) -> void:
 		buy_button.text = "Buy large flask (%d oil) for %d coin" % [Rules.LARGE_FLASK_OIL, Rules.LARGE_FLASK_COST]
 		buy_button.disabled = not Rules.can_buy(campaign)
 	price_label.text = "Large flask: %d oil for %d coin. It replaces the small flask for later descents." % [Rules.LARGE_FLASK_OIL, Rules.LARGE_FLASK_COST]
-	match campaign.last_outcome:
-		"paid":
-			outcome_label.text = "Sheet turned in. The payout below was added to your purse."
-			receipt_label.text = Rules.format_bill(campaign.last_bill)
-		"dark":
-			outcome_label.text = "The lamp went out. A lost sheet pays nothing."
-			receipt_label.text = Rules.format_bill(campaign.last_bill)
-		"abandoned":
-			outcome_label.text = "You came back without the lift. The clerk pays nothing."
-			receipt_label.text = Rules.format_bill(campaign.last_bill)
-		_:
-			outcome_label.text = "No sheet has been turned in yet."
-			receipt_label.text = "Corridors\nHazards\nEast square\nTotal"
+	outcome_label.text = Rules.outcome_line(campaign)
+	if campaign.last_outcome == "fresh":
+		receipt_label.text = "Corridors\nHazards\nRing\nTotal"
+	else:
+		receipt_label.text = Rules.format_bill(campaign.last_bill)
 	queue_redraw()
 
 

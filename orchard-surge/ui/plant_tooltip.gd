@@ -21,4 +21,8 @@ static func stat_lines(kind: int) -> PackedStringArray:
 		lines.append("Splash: %dpx" % int(round(float(stats["splash_radius"]))))
 	else:
 		lines.append("Splash: none")
+	if bool(stats["burns_shroud"]):
+		lines.append("Shroud: burns")
+	else:
+		lines.append("Shroud: none")
 	return lines
