@@ -302,12 +302,19 @@ func _draw_lantern(lantern: Dictionary) -> void:
 	var body := Rect2(center - Vector2(cell * 0.16, cell * 0.22), Vector2(cell * 0.32, cell * 0.40))
 	draw_rect(body, Color("3a2a22"))
 	draw_rect(body, Color("6b4a32"), false, 2.0)
+	var tint := str(lantern["color"])
 	var glow := Palette.LANTERN_HOT if not flooded else Color("5c5148")
+	var rim := Palette.LANTERN
+	if tint != "white":
+		glow = Palette.beam(tint) if not flooded else Color("5c5148")
+		rim = Palette.beam(tint)
 	draw_circle(center + Vector2(0, -2), cell * 0.12, glow)
-	draw_circle(center + Vector2(0, -2), cell * 0.12, Palette.LANTERN, false, 2.0)
+	draw_circle(center + Vector2(0, -2), cell * 0.12, rim, false, 2.0)
 	if not flooded:
 		var dir := _dir_vec(str(lantern["dir"]))
-		draw_line(center, center + dir * cell * 0.34, Palette.LANTERN, 3.0)
+		draw_line(center, center + dir * cell * 0.34, rim if tint != "white" else Palette.LANTERN, 3.0)
+	if tint != "white":
+		_label(center + Vector2(-14, cell * 0.36), tint, 12, Palette.beam(tint))
 
 func _draw_dock(dock: Dictionary) -> void:
 	var at := Vector2i(int(dock["x"]), int(dock["y"]))
