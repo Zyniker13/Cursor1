@@ -5,6 +5,7 @@ Playable slices, Godot 4. Steam packaging comes later.
 - [Harbor Glass](harbor-glass/) — a tide-clock light puzzle
 - [Brine Mark](brine-mark/) — an indirect salt-flat colony sim
 - [Dispatch](dispatch/) — a parcel-routing puzzle
+- [Night Stamp](night-stamp/) — a border-desk deckbuilder
 
 ```bash
 godot --path harbor-glass
@@ -13,4 +14,6 @@ godot --path brine-mark
 godot --headless --path brine-mark -s res://tests/run_tests.gd
 godot --path dispatch
 godot --headless --path dispatch -s res://tests/run_tests.gd
+godot --path night-stamp
+godot --headless --path night-stamp -s res://tests/run_tests.gd
 ```
