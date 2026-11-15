@@ -14,6 +14,7 @@ const CELLAR_AWNING := Color(0.50, 0.18, 0.16)
 const CISTERN_AWNING := Color(0.12, 0.36, 0.40)
 const CLOISTER_AWNING := Color(0.42, 0.30, 0.14)
 const CRYPT_AWNING := Color(0.36, 0.26, 0.46)
+const OSSUARY_AWNING := Color(0.55, 0.48, 0.32)
 
 var notice_label: Label
 var purse_label: Label
@@ -56,19 +57,21 @@ func _build() -> void:
 		var card := _panel(Vector2(x, 176), Vector2(card_w, 320), _awning_for(str(floor.id)), floor.title)
 		add_child(card)
 		var record := _label(floor.record, 18, PARCHMENT)
-		record.position = Vector2(20, 64)
-		record.size = Vector2(card_w - 40.0, 120)
 		record.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		record.clip_text = true
+		record.position = Vector2(20, 60)
+		record.custom_minimum_size = Vector2(card_w - 40.0, 0)
+		record.size = Vector2(card_w - 40.0, 144)
 		card.add_child(record)
 		_record[floor.id] = record
 		var status := _label("Census open", 20, PARCHMENT)
-		status.position = Vector2(20, 188)
+		status.position = Vector2(20, 208)
 		status.size = Vector2(card_w - 40.0, 32)
 		card.add_child(status)
 		_status[floor.id] = status
 		var button := _button("Descend")
-		button.position = Vector2(20, 232)
-		button.size = Vector2(card_w - 40.0, 64)
+		button.position = Vector2(20, 244)
+		button.size = Vector2(card_w - 40.0, 60)
 		_bind_descend(button, floor.id)
 		card.add_child(button)
 		_descend[floor.id] = button
@@ -109,7 +112,9 @@ func _awning_for(floor_id: String) -> Color:
 		return CISTERN_AWNING
 	if floor_id == "cloister":
 		return CLOISTER_AWNING
-	return CRYPT_AWNING
+	if floor_id == "crypt":
+		return CRYPT_AWNING
+	return OSSUARY_AWNING
 
 
 func _bind_descend(button: Button, floor_id: String) -> void:
