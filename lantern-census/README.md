@@ -540,9 +540,9 @@ The full sheet is `81 × 3 + 19 × 8 + 15 = 410` coin. The shortest path to the 
 
 ## The Transept
 
-Hand-authored, 22 by 21. `S` start, `L` lift, `H` transept crack, `E` warden, `V` the transept. `V` was an unused letter. The transept is wall for the sheet and is drawn as pale ashlar, distinct from the crossing's dark stone, the rood's timber screen, and the choir's pale stalls. Bumping it inks a wall. Walls are warm limestone. Transept cracks read as gilt seams, distinct from the crossing's iron seams. The west aisle and the north landing are open floor. The piers are ordinary walls.
+Hand-authored, 22 by 21. `S` start, `L` lift, `H` transept crack, `E` warden, `V` the transept. `V` was an unused letter. The transept is wall for the sheet and is drawn as pale ashlar, distinct from the crossing's dark stone, the rood's timber screen, and the choir's pale stalls. Bumping it inks a wall. Walls are warm limestone. Transept cracks read as gilt seams, distinct from the crossing's iron seams. The west aisle down to the lift path, and the north landing, are open floor. The piers are ordinary walls.
 
-The landing east of the lift was open through column 19. Those nine floor tiles, `(11,11)`, `(12,11)`, `(13,11)`, `(14,11)`, `(15,11)`, `(16,11)`, `(17,11)`, `(18,11)`, and `(19,11)`, are closed into the east pier. Left open, that landing surveyed at 134 oil. Closing every one of them is the lowest swing-free survey those tiles can buy, and it costs 124 oil. The large flask holds 120. Reaching 120 would mean moving the transept, the ring, the cracks, the warden, the lift, the start, or the 19-step path. None of those moved.
+The landing east of the lift was open through column 19. Those nine floor tiles, `(11,11)`, `(12,11)`, `(13,11)`, `(14,11)`, `(15,11)`, `(16,11)`, `(17,11)`, `(18,11)`, and `(19,11)`, are closed into the east pier. Left open, that landing surveyed at 134 oil. The ordinary floors `(1,12)` and `(1,14)`, and the former crack `(1,13)`, are ordinary walls. `(1,13)` is no longer a crack. `(20,10)` stays a crack. With those three walls, a swing-free survey costs 120 oil. The large flask holds 120, so a careful survey fits. The transept, the ring, the other nineteen cracks, the warden, the lift, the start, and the 19-step path are unchanged.
 
 ```
 ######################
@@ -557,9 +557,9 @@ The landing east of the lift was open through column 19. Those nine floor tiles,
 #H####.VVVVVVVVV.###H#
 #.####...........###H#
 #H........L#########H#
-#..H.H.H.E........H.H#
-#H####################
-#.####################
+##.H.H.H.E........H.H#
+######################
+######################
 ######################
 ######################
 ######################
@@ -568,9 +568,9 @@ The landing east of the lift was open through column 19. Those nine floor tiles,
 ######################
 ```
 
-Record every corridor, the twenty transept cracks, and the ring around the transept. The transept cracks are `(1,3)`, `(20,3)`, `(20,4)`, `(1,5)`, `(20,5)`, `(20,6)`, `(1,7)`, `(20,7)`, `(20,8)`, `(1,9)`, `(20,9)`, `(20,10)`, `(1,11)`, `(20,11)`, `(3,12)`, `(5,12)`, `(7,12)`, `(18,12)`, `(20,12)`, and `(1,13)`. The new crack, beyond the crossing's nineteen, is `(20,10)` on the new east wall. The warden stands at `(9,12)`, with open corridor immediately west at `(8,12)` and east at `(10,12)`. The lift is at `(10,11)`. The start is at `(1,1)`. The transept is one solid 9×6 rectangle at columns 7–15 and rows 4–9. The ring is the 34-tile corridor cycle around that transept: `(6,3)` through `(16,3)`, the sides `(6,4)` `(16,4)` `(6,5)` `(16,5)` `(6,6)` `(16,6)` `(6,7)` `(16,7)` `(6,8)` `(16,8)` `(6,9)` `(16,9)`, and `(6,10)` through `(16,10)`. Every ring tile is ordinary floor.
+Record every corridor, the nineteen transept cracks, and the ring around the transept. The transept cracks are `(1,3)`, `(20,3)`, `(20,4)`, `(1,5)`, `(20,5)`, `(20,6)`, `(1,7)`, `(20,7)`, `(20,8)`, `(1,9)`, `(20,9)`, `(20,10)`, `(1,11)`, `(20,11)`, `(3,12)`, `(5,12)`, `(7,12)`, `(18,12)`, and `(20,12)`. `(20,10)` stays the crack on the new east wall. `(1,13)` is an ordinary wall. The warden stands at `(9,12)`, with open corridor immediately west at `(8,12)` and east at `(10,12)`. The lift is at `(10,11)`. The start is at `(1,1)`. The transept is one solid 9×6 rectangle at columns 7–15 and rows 4–9. The ring is the 34-tile corridor cycle around that transept: `(6,3)` through `(16,3)`, the sides `(6,4)` `(16,4)` `(6,5)` `(16,5)` `(6,6)` `(16,6)` `(6,7)` `(16,7)` `(6,8)` `(16,8)` `(6,9)` `(16,9)`, and `(6,10)` through `(16,10)`. Every ring tile is ordinary floor.
 
-The full sheet is `84 × 3 + 20 × 8 + 15 = 427` coin. The shortest path to the lift is 19 steps, so the small flask has a margin of 5. A checked route that steps on every payable tile without taking a swing, then reaches the lift, costs 124 oil. The floor select stays 1280 by 720. The Transept card sits beside the Crossing card and does not cover it.
+The full sheet is `82 × 3 + 19 × 8 + 15 = 413` coin. The shortest path to the lift is 19 steps, so the small flask has a margin of 5. A checked route that steps on every payable tile without taking a swing, then reaches the lift, costs 120 oil. The large flask holds 120, so a careful survey fits and a wandering one can still run the lamp out. The floor select stays 1280 by 720. The Transept card sits beside the Crossing card and does not cover it.
 
 ## Presentation
 
@@ -582,4 +582,4 @@ All nineteen floors use the same code-drawn raycaster, with billboards for the w
 - The same floor can be turned in again on a later extract. A finished census stays finished.
 - Mouse look is optional and snaps by quarter turns. There is no sound.
 - Walls are for the sheet, not for the payout.
-- The automated checks cover the rules and all nineteen floors, including that the transept's true census is accepted and a wrong, short, or swapped sheet is rejected. They do not play the window, and this slice was not given a human playtest here. The transept's swing-free survey costs 124 oil, four above the large flask, after every open tile on the east landing has been closed.
+- The automated checks cover the rules and all nineteen floors, including that the transept's true census is accepted and a wrong, short, or swapped sheet is rejected. They do not play the window, and this slice was not given a human playtest here. The transept's swing-free survey costs 120 oil after `(1,12)`, `(1,13)`, and `(1,14)` were closed into ordinary walls. `(1,13)` is no longer a crack.

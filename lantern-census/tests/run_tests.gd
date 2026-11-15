@@ -5567,7 +5567,7 @@ func _clockroom_census() -> String:
 		"choir": 394,
 		"rood": 405,
 		"crossing": 410,
-		"transept": 427,
+		"transept": 413,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -6071,7 +6071,7 @@ func _font_census() -> String:
 		"choir": 394,
 		"rood": 405,
 		"crossing": 410,
-		"transept": 427,
+		"transept": 413,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -6587,7 +6587,7 @@ func _apse_census() -> String:
 		"choir": 394,
 		"rood": 405,
 		"crossing": 410,
-		"transept": 427,
+		"transept": 413,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -7129,7 +7129,7 @@ func _choir_census() -> String:
 		"apse": 374,
 		"rood": 405,
 		"crossing": 410,
-		"transept": 427,
+		"transept": 413,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -7687,7 +7687,7 @@ func _rood_census() -> String:
 		"apse": 374,
 		"choir": 394,
 		"crossing": 410,
-		"transept": 427,
+		"transept": 413,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -8253,7 +8253,7 @@ func _crossing_census() -> String:
 		"apse": 374,
 		"choir": 394,
 		"rood": 405,
-		"transept": 427,
+		"transept": 413,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -8428,7 +8428,7 @@ func _transept_layout() -> String:
 		return "transept floor is missing"
 	if floor.record != Rules.TRANSEPT_RECORD:
 		return "transept record drifted from its constant"
-	if Rules.TRANSEPT_RECORD != "Record every corridor, the twenty transept cracks, and the ring around the transept.":
+	if Rules.TRANSEPT_RECORD != "Record every corridor, the nineteen transept cracks, and the ring around the transept.":
 		return "the transept no longer asks for the transept cracks and the ring"
 	var expected := PackedStringArray([
 		"######################",
@@ -8443,9 +8443,9 @@ func _transept_layout() -> String:
 		"#H####.VVVVVVVVV.###H#",
 		"#.####...........###H#",
 		"#H........L#########H#",
-		"#..H.H.H.E........H.H#",
-		"#H####################",
-		"#.####################",
+		"##.H.H.H.E........H.H#",
+		"######################",
+		"######################",
 		"######################",
 		"######################",
 		"######################",
@@ -8489,8 +8489,8 @@ func _transept_layout() -> String:
 	if Rules.glyph_at(east, floor) != "." or not Rules.is_corridor_cell(east, floor):
 		return "the tile east of the warden is not an open corridor"
 	var hazards: Array = Rules.hazard_cells(floor)
-	var expect_h: Array = [Vector2i(1, 3), Vector2i(20, 3), Vector2i(20, 4), Vector2i(1, 5), Vector2i(20, 5), Vector2i(20, 6), Vector2i(1, 7), Vector2i(20, 7), Vector2i(20, 8), Vector2i(1, 9), Vector2i(20, 9), Vector2i(20, 10), Vector2i(1, 11), Vector2i(20, 11), Vector2i(3, 12), Vector2i(5, 12), Vector2i(7, 12), Vector2i(18, 12), Vector2i(20, 12), Vector2i(1, 13)]
-	if hazards.size() != 20:
+	var expect_h: Array = [Vector2i(1, 3), Vector2i(20, 3), Vector2i(20, 4), Vector2i(1, 5), Vector2i(20, 5), Vector2i(20, 6), Vector2i(1, 7), Vector2i(20, 7), Vector2i(20, 8), Vector2i(1, 9), Vector2i(20, 9), Vector2i(20, 10), Vector2i(1, 11), Vector2i(20, 11), Vector2i(3, 12), Vector2i(5, 12), Vector2i(7, 12), Vector2i(18, 12), Vector2i(20, 12)]
+	if hazards.size() != 19:
 		return "hazard count %d" % hazards.size()
 	for i in hazards.size():
 		if hazards[i] != expect_h[i]:
@@ -8503,8 +8503,16 @@ func _transept_layout() -> String:
 			return "transept crack %s sits on the ring" % crack
 		if crack == Rules.enemy_pos(floor) or crack == Rules.lift_pos(floor) or crack == Rules.start_pos(floor):
 			return "a transept crack sits on the warden, the lift, or the start"
-	if Rules.corridor_cells(floor).size() != 84:
+	if Rules.corridor_cells(floor).size() != 82:
 		return "corridors %d" % Rules.corridor_cells(floor).size()
+	for spur_y in [12, 13, 14]:
+		var spur := Vector2i(1, spur_y)
+		if Rules.glyph_at(spur, floor) != "#" or Rules.tile_at(spur, floor) != Rules.Tile.WALL or Rules.is_walkable(spur, floor):
+			return "spur %s is not an ordinary wall" % spur
+	if hazards.has(Vector2i(1, 13)):
+		return "(1,13) is still a crack"
+	if Rules.glyph_at(Vector2i(20, 10), floor) != "H":
+		return "the east-wall crack left (20,10)"
 	var stones := 0
 	for y in range(4, 10):
 		for x in range(7, 16):
@@ -8553,7 +8561,7 @@ func _transept_layout() -> String:
 			return "the transept reuses the %s warden cell" % other.id
 		if _ring_key(floor) == _ring_key(other):
 			return "the transept reuses the %s ring" % other.id
-	for y in range(1, 15):
+	for y in range(1, 12):
 		if not Rules.is_walkable(Vector2i(1, y), floor):
 			return "the west aisle is closed at %s" % Vector2i(1, y)
 	var landing := 0
@@ -8635,15 +8643,23 @@ func _transept_layout() -> String:
 	if Rules.census_accepted(state.marks, floor):
 		return "the exit path was accepted as a finished census"
 	var cover := Rules.safe_survey_steps(floor)
-	if cover != 124:
-		return "safe survey is %d, expected 124" % cover
+	if cover != 120:
+		return "safe survey is %d, expected 120" % cover
+	if cover > Rules.LARGE_FLASK_OIL or cover <= Rules.SMALL_FLASK_OIL:
+		return "survey oil %d does not sit between the flasks" % cover
 	var opened := Rules.Floor.new()
 	var open_rows := PackedStringArray()
 	for i in floor.rows.size():
+		var row := str(floor.rows[i])
 		if i == 11:
-			open_rows.append("#H........L.........H#")
-		else:
-			open_rows.append(str(floor.rows[i]))
+			row = "#H........L.........H#"
+		elif i == 12:
+			row = row.substr(0, 1) + "." + row.substr(2)
+		elif i == 13:
+			row = row.substr(0, 1) + "H" + row.substr(2)
+		elif i == 14:
+			row = row.substr(0, 1) + "." + row.substr(2)
+		open_rows.append(row)
 	opened.rows = open_rows
 	if Rules.shortest_path_steps(opened) != 19:
 		return "opening the east landing changed the path to %d" % Rules.shortest_path_steps(opened)
@@ -8652,10 +8668,10 @@ func _transept_layout() -> String:
 		return "open landing survey is %d, expected 134" % open_cover
 	if Rules.corridor_cells(opened).size() != 93:
 		return "open landing corridors %d" % Rules.corridor_cells(opened).size()
-	var expected_pay := Rules.corridor_cells(floor).size() * Rules.CORRIDOR_VALUE + 20 * Rules.HAZARD_VALUE + Rules.LOOP_VALUE
-	var arithmetic := 84 * 3 + 20 * 8 + 15
-	if full != expected_pay or full != arithmetic or full != 427:
-		return "full pay %d does not match 84 x 3 + 20 x 8 + 15" % full
+	var expected_pay := Rules.corridor_cells(floor).size() * Rules.CORRIDOR_VALUE + 19 * Rules.HAZARD_VALUE + Rules.LOOP_VALUE
+	var arithmetic := 82 * 3 + 19 * 8 + 15
+	if full != expected_pay or full != arithmetic or full != 413:
+		return "full pay %d does not match 82 x 3 + 19 x 8 + 15" % full
 	if int(Rules.payout(Rules.accurate_sheet(Rules.floor_named("crossing")), Rules.floor_named("crossing")).total) != 410:
 		return "the crossing sheet changed"
 	if int(Rules.payout(Rules.accurate_sheet(Rules.floor_named("rood")), Rules.floor_named("rood")).total) != 405:
@@ -8733,16 +8749,16 @@ func _transept_census() -> String:
 	if not Rules.census_accepted(truth, floor):
 		return "the true transept census was rejected"
 	var bill: Dictionary = Rules.payout(truth, floor)
-	if int(bill.corridors) != 84 or int(bill.hazards) != 20 or int(bill.loop) != 1:
+	if int(bill.corridors) != 82 or int(bill.hazards) != 19 or int(bill.loop) != 1:
 		return "true counts %s/%s loop %s" % [bill.corridors, bill.hazards, bill.loop]
-	if int(bill.corridor_pay) != 84 * Rules.CORRIDOR_VALUE:
+	if int(bill.corridor_pay) != 82 * Rules.CORRIDOR_VALUE:
 		return "corridor pay drifted"
-	if int(bill.hazard_pay) != 20 * Rules.HAZARD_VALUE:
+	if int(bill.hazard_pay) != 19 * Rules.HAZARD_VALUE:
 		return "hazard pay drifted"
 	if int(bill.loop_pay) != Rules.LOOP_VALUE:
 		return "ring pay drifted"
-	var arithmetic := 84 * 3 + 20 * 8 + 15
-	if int(bill.total) != arithmetic or int(bill.total) != 427:
+	var arithmetic := 82 * 3 + 19 * 8 + 15
+	if int(bill.total) != arithmetic or int(bill.total) != 413:
 		return "true total %s, expected %s" % [bill.total, arithmetic]
 	if Rules.format_bill(bill).find("Transept ring") < 0:
 		return "the receipt did not name the transept ring"
@@ -8755,14 +8771,14 @@ func _transept_census() -> String:
 	if Rules.census_accepted(missing_corridor, floor):
 		return "a sheet missing the start corridor was accepted"
 	var missing_bill: Dictionary = Rules.payout(missing_corridor, floor)
-	if int(missing_bill.total) >= 427 or int(missing_bill.loop) != 1:
+	if int(missing_bill.total) >= 413 or int(missing_bill.loop) != 1:
 		return "dropping a corridor outside the ring changed the census the wrong way"
 	var crack: Vector2i = Rules.hazard_cells(floor)[0]
 	var missing_crack: Dictionary = truth.duplicate()
 	missing_crack.erase(crack)
 	if Rules.census_accepted(missing_crack, floor):
 		return "a sheet missing a transept crack was accepted"
-	if int(Rules.payout(missing_crack, floor).total) >= 427:
+	if int(Rules.payout(missing_crack, floor).total) >= 413:
 		return "dropping a transept crack did not lower pay"
 	var broken_ring: Dictionary = truth.duplicate()
 	var rim: Vector2i = Rules.loop_cells(floor)[0]
@@ -8770,7 +8786,7 @@ func _transept_census() -> String:
 	if Rules.census_accepted(broken_ring, floor):
 		return "a broken ring was accepted"
 	var broken_bill: Dictionary = Rules.payout(broken_ring, floor)
-	if int(broken_bill.loop) != 0 or int(broken_bill.total) >= 427:
+	if int(broken_bill.loop) != 0 or int(broken_bill.total) >= 413:
 		return "a broken ring still paid as a finished sheet"
 	var swapped: Dictionary = truth.duplicate()
 	swapped[crack] = Rules.Mark.CORRIDOR
@@ -8778,20 +8794,20 @@ func _transept_census() -> String:
 		return "a transept crack marked as a corridor was accepted"
 	if int(Rules.payout(swapped, floor).hazard_pay) >= int(bill.hazard_pay):
 		return "mislabeling a transept crack did not lower hazard pay"
-	if int(Rules.payout(swapped, floor).total) > 427:
+	if int(Rules.payout(swapped, floor).total) > 413:
 		return "mislabeling a transept crack raised the payout"
 	var corridor: Vector2i = Rules.lift_pos(floor)
 	var swapped_corridor: Dictionary = truth.duplicate()
 	swapped_corridor[corridor] = Rules.Mark.HAZARD
 	if Rules.census_accepted(swapped_corridor, floor):
 		return "the lift marked as a hazard was accepted"
-	if int(Rules.payout(swapped_corridor, floor).total) > 427:
+	if int(Rules.payout(swapped_corridor, floor).total) > 413:
 		return "marking the lift as a hazard raised the payout"
 	var false_wall: Dictionary = truth.duplicate()
 	false_wall[Vector2i(0, 0)] = Rules.Mark.HAZARD
 	if Rules.census_accepted(false_wall, floor):
 		return "a hazard mark on a wall was accepted"
-	if int(Rules.payout(false_wall, floor).total) != 427 or int(Rules.payout(false_wall, floor).hazard_pay) != int(bill.hazard_pay):
+	if int(Rules.payout(false_wall, floor).total) != 413 or int(Rules.payout(false_wall, floor).hazard_pay) != int(bill.hazard_pay):
 		return "a hazard mark on a wall changed the payout"
 	var pier_wall: Dictionary = truth.duplicate()
 	pier_wall[Vector2i(2, 4)] = Rules.Mark.WALL
@@ -8808,7 +8824,7 @@ func _transept_census() -> String:
 	warden_mark[Rules.enemy_pos(floor)] = Rules.Mark.CORRIDOR
 	if Rules.census_accepted(warden_mark, floor):
 		return "the warden tile was accepted as a corridor"
-	if int(Rules.payout(warden_mark, floor).total) != 427:
+	if int(Rules.payout(warden_mark, floor).total) != 413:
 		return "marking the warden changed the payout"
 	var only_ring := {}
 	for cell in Rules.loop_cells(floor):
@@ -8816,7 +8832,7 @@ func _transept_census() -> String:
 	if Rules.census_accepted(only_ring, floor):
 		return "the ring alone was accepted as the census"
 	var ring_bill: Dictionary = Rules.payout(only_ring, floor)
-	if int(ring_bill.loop) != 1 or int(ring_bill.hazards) != 0 or int(ring_bill.total) >= 427:
+	if int(ring_bill.loop) != 1 or int(ring_bill.hazards) != 0 or int(ring_bill.total) >= 413:
 		return "the ring bonus did not stay inside the shared payout rule"
 	var expect_pay := {
 		"cellar": 211,
@@ -9014,7 +9030,7 @@ func _transept_return() -> String:
 	if game.floor_select.notice_label.text.find("complete") < 0:
 		game.free()
 		return "arrival did not say the census is complete"
-	if int(game.campaign.last_bill.total) != 427 or game.campaign.purse < 427 or game.campaign.last_outcome != "complete":
+	if int(game.campaign.last_bill.total) != 413 or game.campaign.purse < 413 or game.campaign.last_outcome != "complete":
 		game.free()
 		return "the finished census was not paid"
 	game._show_town()

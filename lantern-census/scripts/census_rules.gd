@@ -70,7 +70,7 @@ const APSE_RECORD := "Record every corridor, the sixteen apse cracks, and the ri
 const CHOIR_RECORD := "Record every corridor, the seventeen choir cracks, and the ring around the choir."
 const ROOD_RECORD := "Record every corridor, the eighteen rood cracks, and the ring around the rood."
 const CROSSING_RECORD := "Record every corridor, the nineteen crossing cracks, and the ring around the crossing."
-const TRANSEPT_RECORD := "Record every corridor, the twenty transept cracks, and the ring around the transept."
+const TRANSEPT_RECORD := "Record every corridor, the nineteen transept cracks, and the ring around the transept."
 
 const CELLAR_ROWS: PackedStringArray = [
 	"#############",
@@ -426,9 +426,10 @@ const CROSSING_ROWS: PackedStringArray = [
 
 # The transept is the 9x6 block of 'V' at columns 7-15, rows 4-9.
 # The paid ring is the 34-tile corridor cycle around that transept.
-# The west aisle and the north landing are ordinary floors. The piers are walls.
+# The west aisle down to the lift path, and the north landing, are ordinary floors. The piers are walls.
 # (11,11) through (19,11) are closed into the east pier. Left open, that landing
-# surveys at 134 oil. Closing every one of those tiles is the minimum, at 124 oil.
+# surveys at 134 oil. (1,12), (1,13), and (1,14) are ordinary walls. (1,13) is
+# no longer a crack. The swing-free survey costs 120 oil.
 const TRANSEPT_ROWS: PackedStringArray = [
 	"######################",
 	"#S...................#",
@@ -442,9 +443,9 @@ const TRANSEPT_ROWS: PackedStringArray = [
 	"#H####.VVVVVVVVV.###H#",
 	"#.####...........###H#",
 	"#H........L#########H#",
-	"#..H.H.H.E........H.H#",
-	"#H####################",
-	"#.####################",
+	"##.H.H.H.E........H.H#",
+	"######################",
+	"######################",
 	"######################",
 	"######################",
 	"######################",
