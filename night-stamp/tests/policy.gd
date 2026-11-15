@@ -475,6 +475,71 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 			guess += 10
 		elif row_filled == 1:
 			guess += 4
+	if rule == "yield_row_wings" and (col == 0 or col == 2):
+		var other_wing = 2 if col == 0 else 0
+		if state.form[row][other_wing] != null:
+			guess += 6
+		else:
+			guess += 2
+	if rule == "drop_if_exact_three":
+		var toll_filled = 0
+		for toll_row in 3:
+			for toll_col in 3:
+				if state.form[toll_row][toll_col] != null:
+					toll_filled += 1
+		if toll_filled == 2:
+			guess -= 6
+		elif toll_filled == 3:
+			guess += 4
+	if rule == "double_lowest_earliest":
+		var low_number = _stamp_number(state, card_id, row, col)
+		var low_count = 1
+		var earlier_lower = false
+		var later_lower = false
+		for low_row in range(0, row + 1):
+			var low_end = 2
+			if low_row == row:
+				low_end = col - 1
+			for low_col in range(0, low_end + 1):
+				var low_stamp = state.form[low_row][low_col]
+				if low_stamp == null:
+					continue
+				low_count += 1
+				if _stamp_number(state, String(low_stamp["card_id"]), low_row, low_col) <= low_number:
+					earlier_lower = true
+		for low_row in range(row, 3):
+			var low_start = 0
+			if low_row == row:
+				low_start = col + 1
+			for low_col in range(low_start, 3):
+				var low_stamp = state.form[low_row][low_col]
+				if low_stamp == null:
+					continue
+				low_count += 1
+				if _stamp_number(state, String(low_stamp["card_id"]), low_row, low_col) < low_number:
+					later_lower = true
+		if low_count >= 2 and not earlier_lower and not later_lower:
+			guess += low_number
+	if rule == "double_after_gap":
+		if row == 0 and col == 0:
+			guess += 2
+		else:
+			var before_row = row
+			var before_col = col - 1
+			if before_col < 0:
+				before_row = row - 1
+				before_col = 2
+			if state.form[before_row][before_col] == null:
+				var earlier_filled = false
+				for scan_row in range(0, before_row + 1):
+					var scan_end = 2
+					if scan_row == before_row:
+						scan_end = before_col - 1
+					for scan_col in range(0, scan_end + 1):
+						if state.form[scan_row][scan_col] != null:
+							earlier_filled = true
+				if earlier_filled:
+					guess += _stamp_number(state, card_id, row, col)
 	if rule == "yield_end_match":
 		var first_number = -1
 		var last_number = -1
