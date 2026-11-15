@@ -429,6 +429,84 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 			guess += 4
 	if rule == "yield_queue_gap" and _placement_opens_gap(state, row, col):
 		guess += 4
+	if rule == "zero_corner_later":
+		var corner_spared = card_id == "exemption" and row == int(Rules.traveler(state)["exemption_row"])
+		if not corner_spared:
+			var exempt_row = int(Rules.traveler(state)["exemption_row"])
+			for scan_col in 3:
+				var scan_stamp = state.form[exempt_row][scan_col]
+				if scan_stamp != null and String(scan_stamp["card_id"]) == "exemption":
+					corner_spared = true
+		if not corner_spared:
+			var cornered = false
+			for delta in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+				var corner_row = row + delta.x
+				var corner_col = col + delta.y
+				if corner_row < 0 or corner_col < 0 or corner_row > 2 or corner_col > 2:
+					continue
+				if state.form[corner_row][corner_col] == null:
+					continue
+				if corner_row < row or (corner_row == row and corner_col < col):
+					cornered = true
+			if cornered:
+				guess -= 12
+	if rule == "double_patience_if_first_col1":
+		var head_row = -1
+		var head_col = -1
+		for scan_row in 3:
+			for scan_col in 3:
+				if state.form[scan_row][scan_col] != null:
+					head_row = scan_row
+					head_col = scan_col
+					break
+			if head_row >= 0:
+				break
+		var becomes_head = head_row < 0 or row < head_row or (row == head_row and col < head_col)
+		if becomes_head and col == 0:
+			guess -= 12
+		elif becomes_head and head_col == 0:
+			guess += 6
+	if rule == "double_full_row":
+		var row_filled = 0
+		for scan_col in 3:
+			if state.form[row][scan_col] != null:
+				row_filled += 1
+		if row_filled == 2:
+			guess += 10
+		elif row_filled == 1:
+			guess += 4
+	if rule == "yield_end_match":
+		var first_number = -1
+		var last_number = -1
+		var filled = 0
+		var match_head_row = -1
+		var match_head_col = -1
+		var match_tail_row = -1
+		var match_tail_col = -1
+		for scan_row in 3:
+			for scan_col in 3:
+				var scan_stamp = state.form[scan_row][scan_col]
+				if scan_stamp == null:
+					continue
+				var scan_number = _stamp_number(state, String(scan_stamp["card_id"]), scan_row, scan_col)
+				if filled == 0:
+					first_number = scan_number
+					match_head_row = scan_row
+					match_head_col = scan_col
+				last_number = scan_number
+				match_tail_row = scan_row
+				match_tail_col = scan_col
+				filled += 1
+		if filled >= 1:
+			var mine = _stamp_number(state, card_id, row, col)
+			var becomes_match_head = row < match_head_row or (row == match_head_row and col < match_head_col)
+			var becomes_match_tail = row > match_tail_row or (row == match_tail_row and col > match_tail_col)
+			var new_first = mine if becomes_match_head else first_number
+			var new_last = mine if becomes_match_tail else last_number
+			if new_first == new_last:
+				guess += 4 + filled
+			elif filled >= 2 and first_number == last_number:
+				guess -= 6
 	if rule == "double_shared_later":
 		var shared_number = _stamp_number(state, card_id, row, col)
 		var earlier_match = false
