@@ -22,6 +22,11 @@ extends RefCounted
 ## A harrow does not forward in step 2 on its own. The first item stays.
 ## When a later item arrives from behind, that arrival moves one cell to the
 ## right and the first item remains the waiter.
+## A fork does not forward in step 2 on its own. The first item stays.
+## When a later item arrives from behind, the waiter moves one cell to the
+## left and the arrival moves one cell to the right, and only if both of
+## those cells can take them. The fork is empty after that tick. If either
+## side refuses, neither item leaves.
 
 const Rules = preload("res://scripts/foundry.gd")
 
@@ -53,7 +58,7 @@ class Machine:
 	## Second lane on a bridge. -1 is empty. Other machines leave it empty.
 	var cross := -1
 	var cross_moved := false
-	## True while a twin, a pass, a slip, a shed, a rake, a hoe, or a harrow is resolving an arrival, so a loop cannot re-enter.
+	## True while a twin, a pass, a slip, a shed, a rake, a hoe, a harrow, or a fork is resolving an arrival, so a loop cannot re-enter.
 	var pairing := false
 
 class Source:
@@ -432,8 +437,9 @@ func _can_take(machine: Machine, mat: int, arrival: int) -> bool:
 		or machine.kind == Rules.Kind.RAKE
 		or machine.kind == Rules.Kind.HOE
 		or machine.kind == Rules.Kind.HARROW
+		or machine.kind == Rules.Kind.FORK
 	):
-		# Pairing is handled in _accept. A twin, a pass, a slip, a shed, a rake, a hoe, or a harrow may already be holding.
+		# Pairing is handled in _accept. A twin, a pass, a slip, a shed, a rake, a hoe, a harrow, or a fork may already be holding.
 		return false
 	if machine.kind == Rules.Kind.BRIDGE:
 		if arrival == machine.dir:
@@ -491,6 +497,8 @@ func _accept(dest: Vector2i, mat: int, arrival: int) -> bool:
 		return _accept_hoe(dest, machine, mat, arrival)
 	if machine.kind == Rules.Kind.HARROW:
 		return _accept_harrow(dest, machine, mat, arrival)
+	if machine.kind == Rules.Kind.FORK:
+		return _accept_fork(dest, machine, mat, arrival)
 	if not _can_take(machine, mat, arrival):
 		return false
 	if _holder(machine.kind):
@@ -693,6 +701,75 @@ func _accept_harrow(pos: Vector2i, machine: Machine, mat: int, arrival: int) -> 
 		return false
 	machine.moved = true
 	return true
+
+
+## Behind only. The first item waits and never leaves on its own. A later item
+## from behind may be a different material. On that tick the waiter moves one
+## cell to the left and the arrival moves one cell to the right, if both cells
+## can take them. The fork is empty afterwards. If either side cell refuses,
+## neither item leaves and the arrival is not accepted. A lone item never
+## leaves, including on the next tick and the tick after that. The fork does
+## not spill, rotate, alternate, or send forward or back, and it does not send
+## only one of the two items.
+func _accept_fork(pos: Vector2i, machine: Machine, mat: int, arrival: int) -> bool:
+	if arrival != machine.dir:
+		return false
+	if machine.hold < 0:
+		machine.hold = mat
+		machine.moved = true
+		return true
+	if machine.moved or machine.pairing:
+		return false
+	var left_dir := Rules.left(machine.dir)
+	var right_dir := Rules.right(machine.dir)
+	var mark := _checkpoint()
+	machine.pairing = true
+	var left_sent: bool = _accept(pos + Rules.vec(left_dir), machine.hold, left_dir)
+	var right_sent := false
+	if left_sent:
+		right_sent = _accept(pos + Rules.vec(right_dir), mat, right_dir)
+	if not left_sent or not right_sent:
+		_restore(mark)
+		return false
+	machine.pairing = false
+	machine.hold = -1
+	machine.moved = false
+	return true
+
+
+func _checkpoint() -> Dictionary:
+	var machines_copy := {}
+	for pos in machines.keys():
+		machines_copy[pos] = _copy_machine(machines[pos])
+	return {
+		"machines": machines_copy,
+		"counts": counts.duplicate(),
+		"trace": trace.duplicate(),
+		"discarded": discarded,
+	}
+
+
+func _restore(mark: Dictionary) -> void:
+	machines = mark.machines
+	counts = mark.counts
+	trace = mark.trace
+	discarded = int(mark.discarded)
+
+
+func _copy_machine(machine: Machine) -> Machine:
+	var copy := Machine.new()
+	copy.kind = machine.kind
+	copy.dir = machine.dir
+	copy.hold = machine.hold
+	copy.moved = machine.moved
+	copy.timer = machine.timer
+	copy.buffer = machine.buffer
+	copy.output_ready = machine.output_ready
+	copy.phase = machine.phase
+	copy.cross = machine.cross
+	copy.cross_moved = machine.cross_moved
+	copy.pairing = machine.pairing
+	return copy
 
 
 func _emit_sources() -> void:

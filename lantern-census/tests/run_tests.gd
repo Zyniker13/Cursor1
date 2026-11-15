@@ -51,6 +51,7 @@ func _boot() -> void:
 	_check("a finished crossing census returns to the floor select", _crossing_return())
 	_check("a finished transept census returns to the floor select", _transept_return())
 	_check("a finished ambulatory census returns to the floor select", _ambulatory_return())
+	_check("a finished chevet census returns to the floor select", _chevet_return())
 	_print_summary()
 	quit(0 if _failed == 0 else 1)
 
@@ -116,6 +117,8 @@ func _run() -> int:
 	_check("transept census accepts the true sheet and rejects a wrong one", _transept_census())
 	_check("ambulatory layout, ring, and oil", _ambulatory_layout())
 	_check("ambulatory census accepts the true sheet and rejects a wrong one", _ambulatory_census())
+	_check("chevet layout, ring, and oil", _chevet_layout())
+	_check("chevet census accepts the true sheet and rejects a wrong one", _chevet_census())
 	if _failed > 0:
 		return 1
 	return 0
@@ -461,10 +464,10 @@ func _cistern_layout() -> String:
 	if Rules.SMALL_FLASK_OIL != 24 or Rules.LARGE_FLASK_OIL != 120 or Rules.LARGE_FLASK_COST != 40:
 		return "flask sizes changed"
 	var listed: Array = Rules.floors()
-	if listed.size() != 20:
-		return "expected the cellar, the cistern, the cloister, the crypt, the ossuary, the reliquary, the undercroft, the well house, the scriptorium, the binding, the chart room, the bell loft, the clock room, the font, the apse, the choir, the rood, the crossing, the transept, and the ambulatory, found %d" % listed.size()
-	if str(listed[0].id) != "cellar" or str(listed[1].id) != "cistern" or str(listed[2].id) != "cloister" or str(listed[3].id) != "crypt" or str(listed[4].id) != "ossuary" or str(listed[5].id) != "reliquary" or str(listed[6].id) != "undercroft" or str(listed[7].id) != "wellhouse" or str(listed[8].id) != "scriptorium" or str(listed[9].id) != "binding" or str(listed[10].id) != "chartroom" or str(listed[11].id) != "bellloft" or str(listed[12].id) != "clockroom" or str(listed[13].id) != "font" or str(listed[14].id) != "apse" or str(listed[15].id) != "choir" or str(listed[16].id) != "rood" or str(listed[17].id) != "crossing" or str(listed[18].id) != "transept" or str(listed[19].id) != "ambulatory":
-		return "floor order is not cellar, cistern, cloister, crypt, ossuary, reliquary, undercroft, well house, scriptorium, binding, chart room, bell loft, clock room, font, apse, choir, rood, crossing, transept, then ambulatory"
+	if listed.size() != 21:
+		return "expected the cellar, the cistern, the cloister, the crypt, the ossuary, the reliquary, the undercroft, the well house, the scriptorium, the binding, the chart room, the bell loft, the clock room, the font, the apse, the choir, the rood, the crossing, the transept, the ambulatory, and the chevet, found %d" % listed.size()
+	if str(listed[0].id) != "cellar" or str(listed[1].id) != "cistern" or str(listed[2].id) != "cloister" or str(listed[3].id) != "crypt" or str(listed[4].id) != "ossuary" or str(listed[5].id) != "reliquary" or str(listed[6].id) != "undercroft" or str(listed[7].id) != "wellhouse" or str(listed[8].id) != "scriptorium" or str(listed[9].id) != "binding" or str(listed[10].id) != "chartroom" or str(listed[11].id) != "bellloft" or str(listed[12].id) != "clockroom" or str(listed[13].id) != "font" or str(listed[14].id) != "apse" or str(listed[15].id) != "choir" or str(listed[16].id) != "rood" or str(listed[17].id) != "crossing" or str(listed[18].id) != "transept" or str(listed[19].id) != "ambulatory" or str(listed[20].id) != "chevet":
+		return "floor order is not cellar, cistern, cloister, crypt, ossuary, reliquary, undercroft, well house, scriptorium, binding, chart room, bell loft, clock room, font, apse, choir, rood, crossing, transept, ambulatory, then chevet"
 	if Rules.default_floor().id != "cellar":
 		return "the default floor is no longer the cellar"
 	var floor = Rules.floor_named("cistern")
@@ -5572,6 +5575,7 @@ func _clockroom_census() -> String:
 		"crossing": 410,
 		"transept": 413,
 		"ambulatory": 376,
+		"chevet": 402,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -5593,6 +5597,7 @@ func _clockroom_census() -> String:
 		"crossing": "Crossing ring",
 		"transept": "Transept ring",
 		"ambulatory": "Ambulatory ring",
+		"chevet": "Chevet ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -5833,7 +5838,7 @@ func _font_layout() -> String:
 			return "the font copies %s" % other.id
 		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
 			return "the font reuses the %s grid" % other.id
-		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory":
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet":
 			return "the font reuses the %s warden cell" % other.id
 		if _ring_key(floor) == _ring_key(other):
 			return "the font reuses the %s ring" % other.id
@@ -6078,6 +6083,7 @@ func _font_census() -> String:
 		"crossing": 410,
 		"transept": 413,
 		"ambulatory": 376,
+		"chevet": 402,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -6099,6 +6105,7 @@ func _font_census() -> String:
 		"crossing": "Crossing ring",
 		"transept": "Transept ring",
 		"ambulatory": "Ambulatory ring",
+		"chevet": "Chevet ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -6342,7 +6349,7 @@ func _apse_layout() -> String:
 			return "the apse copies %s" % other.id
 		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
 			return "the apse reuses the %s grid" % other.id
-		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory":
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet":
 			return "the apse reuses the %s warden cell" % other.id
 		if _ring_key(floor) == _ring_key(other):
 			return "the apse reuses the %s ring" % other.id
@@ -6596,6 +6603,7 @@ func _apse_census() -> String:
 		"crossing": 410,
 		"transept": 413,
 		"ambulatory": 376,
+		"chevet": 402,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -6617,6 +6625,7 @@ func _apse_census() -> String:
 		"crossing": "Crossing ring",
 		"transept": "Transept ring",
 		"ambulatory": "Ambulatory ring",
+		"chevet": "Chevet ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -6674,9 +6683,9 @@ func _apse_return() -> String:
 		if game.floor_select.status_for(other.id) != "Census open":
 			game.free()
 			return "the %s card did not open" % other.title
-	if Rules.floors().size() != 20:
+	if Rules.floors().size() != 21:
 		game.free()
-		return "floor select does not list twenty floors"
+		return "floor select does not list twenty-one floors"
 	game._on_descend_floor("apse")
 	if game.descent.state == null or game.descent.state.floor.id != "apse":
 		game.free()
@@ -6870,7 +6879,7 @@ func _choir_layout() -> String:
 			return "the choir copies %s" % other.id
 		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
 			return "the choir reuses the %s grid" % other.id
-		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory":
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet":
 			return "the choir reuses the %s warden cell" % other.id
 		if _ring_key(floor) == _ring_key(other):
 			return "the choir reuses the %s ring" % other.id
@@ -7140,6 +7149,7 @@ func _choir_census() -> String:
 		"crossing": 410,
 		"transept": 413,
 		"ambulatory": 376,
+		"chevet": 402,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -7161,6 +7171,7 @@ func _choir_census() -> String:
 		"crossing": "Crossing ring",
 		"transept": "Transept ring",
 		"ambulatory": "Ambulatory ring",
+		"chevet": "Chevet ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -7218,9 +7229,9 @@ func _choir_return() -> String:
 		if game.floor_select.status_for(other.id) != "Census open":
 			game.free()
 			return "the %s card did not open" % other.title
-	if Rules.floors().size() != 20:
+	if Rules.floors().size() != 21:
 		game.free()
-		return "floor select does not list twenty floors"
+		return "floor select does not list twenty-one floors"
 	game._on_descend_floor("choir")
 	if game.descent.state == null or game.descent.state.floor.id != "choir":
 		game.free()
@@ -7426,7 +7437,7 @@ func _rood_layout() -> String:
 			return "the rood copies %s" % other.id
 		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
 			return "the rood reuses the %s grid" % other.id
-		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory":
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet":
 			return "the rood reuses the %s warden cell" % other.id
 		if _ring_key(floor) == _ring_key(other):
 			return "the rood reuses the %s ring" % other.id
@@ -7700,6 +7711,7 @@ func _rood_census() -> String:
 		"crossing": 410,
 		"transept": 413,
 		"ambulatory": 376,
+		"chevet": 402,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -7721,6 +7733,7 @@ func _rood_census() -> String:
 		"crossing": "Crossing ring",
 		"transept": "Transept ring",
 		"ambulatory": "Ambulatory ring",
+		"chevet": "Chevet ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -7778,9 +7791,9 @@ func _rood_return() -> String:
 		if game.floor_select.status_for(other.id) != "Census open":
 			game.free()
 			return "the %s card did not open" % other.title
-	if Rules.floors().size() != 20:
+	if Rules.floors().size() != 21:
 		game.free()
-		return "floor select does not list twenty floors"
+		return "floor select does not list twenty-one floors"
 	game._on_descend_floor("rood")
 	if game.descent.state == null or game.descent.state.floor.id != "rood":
 		game.free()
@@ -7992,7 +8005,7 @@ func _crossing_layout() -> String:
 			return "the crossing copies %s" % other.id
 		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
 			return "the crossing reuses the %s grid" % other.id
-		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "transept" and str(other.id) != "ambulatory":
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet":
 			return "the crossing reuses the %s warden cell" % other.id
 		if _ring_key(floor) == _ring_key(other):
 			return "the crossing reuses the %s ring" % other.id
@@ -8268,6 +8281,7 @@ func _crossing_census() -> String:
 		"rood": 405,
 		"transept": 413,
 		"ambulatory": 376,
+		"chevet": 402,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -8289,6 +8303,7 @@ func _crossing_census() -> String:
 		"rood": "Rood ring",
 		"transept": "Transept ring",
 		"ambulatory": "Ambulatory ring",
+		"chevet": "Chevet ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -8346,9 +8361,9 @@ func _crossing_return() -> String:
 		if game.floor_select.status_for(other.id) != "Census open":
 			game.free()
 			return "the %s card did not open" % other.title
-	if Rules.floors().size() != 20:
+	if Rules.floors().size() != 21:
 		game.free()
-		return "floor select does not list twenty floors"
+		return "floor select does not list twenty-one floors"
 	game._on_descend_floor("crossing")
 	if game.descent.state == null or game.descent.state.floor.id != "crossing":
 		game.free()
@@ -8572,7 +8587,7 @@ func _transept_layout() -> String:
 			return "the transept copies %s" % other.id
 		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
 			return "the transept reuses the %s grid" % other.id
-		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "ambulatory":
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "ambulatory" and str(other.id) != "chevet":
 			return "the transept reuses the %s warden cell" % other.id
 		if _ring_key(floor) == _ring_key(other):
 			return "the transept reuses the %s ring" % other.id
@@ -8869,6 +8884,7 @@ func _transept_census() -> String:
 		"rood": 405,
 		"crossing": 410,
 		"ambulatory": 376,
+		"chevet": 402,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -8890,6 +8906,7 @@ func _transept_census() -> String:
 		"rood": "Rood ring",
 		"crossing": "Crossing ring",
 		"ambulatory": "Ambulatory ring",
+		"chevet": "Chevet ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -8953,9 +8970,9 @@ func _transept_return() -> String:
 		if game.floor_select.status_for(other.id) != "Census open":
 			game.free()
 			return "the %s card did not open" % other.title
-	if Rules.floors().size() != 20:
+	if Rules.floors().size() != 21:
 		game.free()
-		return "floor select does not list twenty floors"
+		return "floor select does not list twenty-one floors"
 	var cross_card: Control = game.floor_select._record["crossing"].get_parent()
 	var tran_card: Control = game.floor_select._record["transept"].get_parent()
 	var cross_rect := Rect2(cross_card.position, cross_card.size)
@@ -9208,7 +9225,7 @@ func _ambulatory_layout() -> String:
 			return "the ambulatory copies %s" % other.id
 		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
 			return "the ambulatory reuses the %s grid" % other.id
-		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept":
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "chevet":
 			return "the ambulatory reuses the %s warden cell" % other.id
 		if _ring_key(floor) == _ring_key(other):
 			return "the ambulatory reuses the %s ring" % other.id
@@ -9468,6 +9485,8 @@ func _ambulatory_census() -> String:
 		"rood": 405,
 		"crossing": 410,
 		"transept": 413,
+		"ambulatory": 376,
+		"chevet": 402,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -9489,6 +9508,8 @@ func _ambulatory_census() -> String:
 		"rood": "Rood ring",
 		"crossing": "Crossing ring",
 		"transept": "Transept ring",
+		"ambulatory": "Ambulatory ring",
+		"chevet": "Chevet ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -9552,9 +9573,9 @@ func _ambulatory_return() -> String:
 		if game.floor_select.status_for(other.id) != "Census open":
 			game.free()
 			return "the %s card did not open" % other.title
-	if Rules.floors().size() != 20:
+	if Rules.floors().size() != 21:
 		game.free()
-		return "floor select does not list twenty floors"
+		return "floor select does not list twenty-one floors"
 	var tran_card: Control = game.floor_select._record["transept"].get_parent()
 	var amb_card: Control = game.floor_select._record["ambulatory"].get_parent()
 	var tran_rect := Rect2(tran_card.position, tran_card.size)
@@ -9587,8 +9608,9 @@ func _ambulatory_return() -> String:
 		var title_size := heading.get_theme_font_size("font_size")
 		var wrapped := title_font.get_multiline_string_size(heading.text, HORIZONTAL_ALIGNMENT_LEFT, heading.size.x, title_size)
 		if wrapped.y > heading.size.y + 0.5 or wrapped.x > heading.size.x + 0.5:
+			var clipped := heading.text
 			game.free()
-			return "the %s title is clipped on its card" % heading.text
+			return "the %s title is clipped on its card" % clipped
 		previous = card
 	game._on_descend_floor("ambulatory")
 	if game.descent.state == null or game.descent.state.floor.id != "ambulatory":
@@ -9659,6 +9681,640 @@ func _ambulatory_return() -> String:
 		game.free()
 		return "arrival did not say the census is complete"
 	if int(game.campaign.last_bill.total) != 376 or game.campaign.purse < 376 or game.campaign.last_outcome != "complete":
+		game.free()
+		return "the finished census was not paid"
+	game._show_town()
+	if not game.town.visible or game.floor_select.visible:
+		game.free()
+		return "Back to town did not leave the floor select"
+	if game.town.outcome_label.text.find("complete") < 0:
+		game.free()
+		return "town clerk did not keep the finished census"
+	game.free()
+	return ""
+
+
+func _chevet_layout() -> String:
+	if Rules.CORRIDOR_VALUE != 3 or Rules.HAZARD_VALUE != 8 or Rules.LOOP_VALUE != 15:
+		return "payout rates changed"
+	if Rules.MOVE_OIL != 1 or Rules.HIT_OIL != 3:
+		return "oil costs changed"
+	if Rules.SMALL_FLASK_OIL != 24 or Rules.LARGE_FLASK_OIL != 120 or Rules.LARGE_FLASK_COST != 40:
+		return "flask sizes changed"
+	var floor = Rules.floor_named("chevet")
+	if floor == null:
+		return "chevet floor is missing"
+	if floor.record != Rules.CHEVET_RECORD:
+		return "chevet record drifted from its constant"
+	if Rules.CHEVET_RECORD != "Record every corridor, the twenty-one chevet cracks, and the ring around the chevet.":
+		return "the chevet no longer asks for the chevet cracks and the ring"
+	var expected := PackedStringArray([
+		"########################",
+		"#S..####################",
+		"#.####################H#",
+		"#H####................H#",
+		"#.####.QQQQQQQQQQQ.###H#",
+		"#H####.QQQQQQQQQQQ.###H#",
+		"#.####.QQQQQQQQQQQ.###H#",
+		"#H####.QQQQQQQQQQQ.###H#",
+		"#.####.QQQQQQQQQQQ.###H#",
+		"#H####.QQQQQQQQQQQ.###H#",
+		"#.####.............###H#",
+		"#H........L###########H#",
+		"##.H.H.H.E.........H..H#",
+		"######################H#",
+		"########################",
+		"########################",
+		"########################",
+		"########################",
+		"########################",
+		"########################",
+		"########################",
+	])
+	if floor.rows.size() != expected.size():
+		return "chevet height %d" % floor.rows.size()
+	for i in expected.size():
+		if str(floor.rows[i]) != str(expected[i]):
+			return "chevet row %d is %s" % [i, floor.rows[i]]
+	if Rules.width(floor) != 24 or Rules.height(floor) != 21:
+		return "chevet size %dx%d" % [Rules.width(floor), Rules.height(floor)]
+	if Rules.start_pos(floor) != Vector2i(1, 1):
+		return "start %s" % Rules.start_pos(floor)
+	if Rules.lift_pos(floor) != Vector2i(10, 11):
+		return "lift %s" % Rules.lift_pos(floor)
+	if Rules.enemy_pos(floor) != Vector2i(9, 12):
+		return "warden %s" % Rules.enemy_pos(floor)
+	if Rules.enemy_pos(Rules.floor_named("ambulatory")) != Vector2i(9, 12):
+		return "the ambulatory warden is no longer on (9,12)"
+	if Rules.is_corridor_cell(Rules.enemy_pos(floor), floor):
+		return "the warden tile counts as a corridor"
+	if Rules.is_walkable(Rules.enemy_pos(floor), floor):
+		return "the warden's own tile is walkable"
+	if Rules.accurate_sheet(floor).has(Rules.enemy_pos(floor)):
+		return "the true sheet inks the warden"
+	var west := Rules.enemy_pos(floor) + Vector2i(-1, 0)
+	var east := Rules.enemy_pos(floor) + Vector2i(1, 0)
+	if Rules.glyph_at(west, floor) != "." or not Rules.is_corridor_cell(west, floor):
+		return "the tile west of the warden is not an open corridor"
+	if Rules.glyph_at(east, floor) != "." or not Rules.is_corridor_cell(east, floor):
+		return "the tile east of the warden is not an open corridor"
+	var hazards: Array = Rules.hazard_cells(floor)
+	var expect_h: Array = [Vector2i(22, 2), Vector2i(1, 3), Vector2i(22, 3), Vector2i(22, 4), Vector2i(1, 5), Vector2i(22, 5), Vector2i(22, 6), Vector2i(1, 7), Vector2i(22, 7), Vector2i(22, 8), Vector2i(1, 9), Vector2i(22, 9), Vector2i(22, 10), Vector2i(1, 11), Vector2i(22, 11), Vector2i(3, 12), Vector2i(5, 12), Vector2i(7, 12), Vector2i(19, 12), Vector2i(22, 12), Vector2i(22, 13)]
+	if hazards.size() != 21:
+		return "hazard count %d" % hazards.size()
+	for i in hazards.size():
+		if hazards[i] != expect_h[i]:
+			return "hazard %d is %s" % [i, hazards[i]]
+	var ring_have := {}
+	for cell in Rules.loop_cells(floor):
+		ring_have[cell] = true
+	for crack in hazards:
+		if ring_have.has(crack):
+			return "chevet crack %s sits on the ring" % crack
+		if crack == Rules.enemy_pos(floor) or crack == Rules.lift_pos(floor) or crack == Rules.start_pos(floor):
+			return "a chevet crack sits on the warden, the lift, or the start"
+	if Rules.corridor_cells(floor).size() != 73:
+		return "corridors %d" % Rules.corridor_cells(floor).size()
+	for spur_y in [12, 13, 14]:
+		var spur := Vector2i(1, spur_y)
+		if Rules.glyph_at(spur, floor) != "#" or Rules.tile_at(spur, floor) != Rules.Tile.WALL or Rules.is_walkable(spur, floor):
+			return "spur %s is not an ordinary wall" % spur
+	if hazards.has(Vector2i(1, 12)) or hazards.has(Vector2i(1, 13)) or hazards.has(Vector2i(1, 14)):
+		return "the west spur was reopened as a crack"
+	if Rules.glyph_at(Vector2i(19, 12), floor) != "H":
+		return "(19,12) was shifted off its ambulatory crack"
+	if Rules.glyph_at(Vector2i(22, 12), floor) != "H" or Rules.glyph_at(Vector2i(22, 2), floor) != "H" or Rules.glyph_at(Vector2i(22, 10), floor) != "H" or Rules.glyph_at(Vector2i(22, 11), floor) != "H":
+		return "an east-wall crack did not move to x 22"
+	if Rules.glyph_at(Vector2i(22, 13), floor) != "H":
+		return "the new east-wall crack is not on (22,13)"
+	if Rules.glyph_at(Vector2i(21, 12), floor) != "." or not Rules.is_corridor_cell(Vector2i(21, 12), floor):
+		return "(21,12) no longer reaches the east cracks"
+	var stones := 0
+	for y in range(4, 10):
+		for x in range(7, 18):
+			if Rules.glyph_at(Vector2i(x, y), floor) != "Q":
+				return "chevet cell %s is not the chevet" % Vector2i(x, y)
+			stones += 1
+			if Rules.tile_at(Vector2i(x, y), floor) != Rules.Tile.WALL or Rules.is_walkable(Vector2i(x, y), floor):
+				return "the chevet is not solid wall"
+	if stones != 66:
+		return "chevet size %d" % stones
+	for y in Rules.height(floor):
+		for x in Rules.width(floor):
+			if Rules.glyph_at(Vector2i(x, y), floor) == "Q" and (x < 7 or x > 17 or y < 4 or y > 9):
+				return "chevet spills outside the 11x6 rectangle at %s" % Vector2i(x, y)
+	if Rules.glyph_at(Vector2i(12, 6), floor) != "Q" or Rules.glyph_at(Vector2i(7, 4), floor) != "Q" or Rules.glyph_at(Vector2i(17, 9), floor) != "Q":
+		return "the chevet is not a solid 11x6 rectangle"
+	if Rules.glyph_at(Vector2i(17, 4), floor) != "Q":
+		return "the chevet is a 10x6"
+	if Rules.glyph_at(Vector2i(6, 6), floor) == "Q" or Rules.glyph_at(Vector2i(18, 6), floor) == "Q" or Rules.glyph_at(Vector2i(11, 3), floor) == "Q" or Rules.glyph_at(Vector2i(11, 10), floor) == "Q":
+		return "the chevet is a bar, a block, or an L"
+	if floor.rows == Rules.floor_named("ambulatory").rows:
+		return "the chevet copies the ambulatory"
+	for other in Rules.floors():
+		if other.id == floor.id:
+			continue
+		for row in other.rows:
+			if str(row).find("Q") >= 0:
+				return "glyph Q is already used on %s" % other.id
+	if Rules.glyph_at(Vector2i(2, 4), floor) != "#" or Rules.glyph_at(Vector2i(19, 5), floor) != "#":
+		return "the piers are not ordinary walls"
+	if Rules.tile_at(Vector2i(2, 4), floor) != Rules.Tile.WALL:
+		return "a pier is not wall for the sheet"
+	for x in range(11, 22):
+		var closed := Vector2i(x, 11)
+		if Rules.glyph_at(closed, floor) != "#" or Rules.tile_at(closed, floor) != Rules.Tile.WALL or Rules.is_walkable(closed, floor):
+			return "east landing %s was not closed into the pier" % closed
+	for x in range(4, 23):
+		var landing_wall := Vector2i(x, 1)
+		if Rules.glyph_at(landing_wall, floor) != "#" or Rules.tile_at(landing_wall, floor) != Rules.Tile.WALL or Rules.is_walkable(landing_wall, floor):
+			return "north landing %s was not closed" % landing_wall
+	if Rules.glyph_at(Vector2i(2, 1), floor) != "." or Rules.glyph_at(Vector2i(3, 1), floor) != ".":
+		return "the two tiles east of the start were closed"
+	if Rules.glyph_at(Vector2i(22, 11), floor) != "H" or Rules.glyph_at(Vector2i(10, 11), floor) != "L" or Rules.glyph_at(Vector2i(21, 11), floor) == "H":
+		return "closing the landing moved the east crack or the lift"
+	var path_cells := {}
+	for cell in Rules.shortest_path_cells(floor):
+		path_cells[cell] = true
+	for x in [19, 20, 21]:
+		var passage := Vector2i(x, 3)
+		if Rules.glyph_at(passage, floor) != "." or not Rules.is_corridor_cell(passage, floor):
+			return "north passage %s is not ordinary floor" % passage
+		if ring_have.has(passage) or path_cells.has(passage) or hazards.has(passage):
+			return "north passage %s is a ring tile, a crack, or on the path" % passage
+	var ring_err := _chevet_ring(floor)
+	if ring_err != "":
+		return ring_err
+	for other in Rules.floors():
+		if other.id == floor.id:
+			continue
+		if floor.rows == other.rows:
+			return "the chevet copies %s" % other.id
+		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
+			return "the chevet reuses the %s grid" % other.id
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory":
+			return "the chevet reuses the %s warden cell" % other.id
+		if _ring_key(floor) == _ring_key(other):
+			return "the chevet reuses the %s ring" % other.id
+	for y in range(1, 12):
+		if not Rules.is_walkable(Vector2i(1, y), floor):
+			return "the west aisle is closed at %s" % Vector2i(1, y)
+	var path: Array = Rules.shortest_path_cells(floor)
+	for cell in path:
+		if Rules.glyph_at(cell, floor) == "#":
+			return "the 19-step path was closed at %s" % cell
+	var swings: Array = Rules.swing_tiles(floor)
+	if swings.size() != 2 or swings[0] != east or swings[1] != west:
+		return "the warden should telegraph the east tile, then the west tile"
+	for swing in swings:
+		if not Rules.is_walkable(swing, floor) or not Rules.is_corridor_cell(swing, floor):
+			return "swing tile %s is not an open corridor" % swing
+	var bumper = Rules.new_run(Rules.SMALL_FLASK_OIL, floor)
+	bumper.pos = Vector2i(6, 4)
+	var before_oil: int = bumper.oil
+	var tap: Dictionary = Rules.step(bumper, Vector2i(1, 0))
+	if bool(tap.moved) or bumper.oil != before_oil:
+		return "bumping the chevet spent oil or moved"
+	if int(bumper.marks.get(Vector2i(7, 4), Rules.Mark.NONE)) != Rules.Mark.WALL:
+		return "bumping the chevet did not ink a wall"
+	if str(tap.message).find("chevet") < 0:
+		return "bumping the chevet did not name it"
+	if str(tap.message).find("ambulatory") >= 0 or str(tap.message).find("transept") >= 0 or str(tap.message).find("crossing") >= 0:
+		return "bumping the chevet named another floor"
+	var facing = Rules.new_run(Rules.SMALL_FLASK_OIL, floor)
+	facing.pos = Vector2i(6, 4)
+	facing.facing = Rules.facing_from_vector(Vector2i(1, 0))
+	if Rules.ahead_line(facing).find("the chevet") < 0:
+		return "facing the chevet did not name it"
+	facing.pos = Vector2i(1, 2)
+	facing.facing = Rules.facing_from_vector(Vector2i(0, 1))
+	if Rules.ahead_line(facing).find("chevet crack") < 0:
+		return "facing a chevet crack did not name it"
+	var steps := Rules.shortest_path_steps(floor)
+	if steps != 19:
+		return "shortest chevet path is %d, expected 19" % steps
+	if Rules.SMALL_FLASK_OIL - steps != 5:
+		return "small flask margin is %d, expected 5" % (Rules.SMALL_FLASK_OIL - steps)
+	var aisle = Rules.new_run(Rules.SMALL_FLASK_OIL, floor)
+	var walked := 0
+	for _step in 10:
+		var south: Dictionary = Rules.step(aisle, Vector2i(0, 1))
+		if not bool(south.moved) or bool(south.hit):
+			return "west aisle step failed at %s" % aisle.pos
+		walked += 1
+	if aisle.pos != Vector2i(1, 11):
+		return "the west aisle did not reach the landing at %s" % aisle.pos
+	for _step in 9:
+		var eastward: Dictionary = Rules.step(aisle, Vector2i(1, 0))
+		if not bool(eastward.moved) or bool(eastward.hit):
+			return "landing step failed at %s" % aisle.pos
+		walked += 1
+	if walked != 19 or aisle.pos != Rules.lift_pos(floor) or aisle.end_reason != Rules.EndReason.EXTRACTED:
+		return "west-aisle then landing walk is %d at %s" % [walked, aisle.pos]
+	var actions: Array = Rules.scripted_safe_actions(floor)
+	if actions.is_empty():
+		return "no safe exit from the chevet"
+	var state = Rules.new_run(Rules.SMALL_FLASK_OIL, floor)
+	for i in actions.size():
+		var result: Dictionary = Rules.step(state, actions[i])
+		if bool(result.hit):
+			return "hit on chevet exit action %d at %s" % [i, state.pos]
+		if state.end_reason != Rules.EndReason.NONE and i != actions.size() - 1:
+			return "chevet exit ended early at action %d" % i
+		if actions[i] != Vector2i.ZERO and not bool(result.moved):
+			return "chevet exit step %d did not move" % i
+	if state.end_reason != Rules.EndReason.EXTRACTED or state.pos != Rules.lift_pos(floor):
+		return "chevet exit was not an extract at the lift"
+	if state.oil != Rules.SMALL_FLASK_OIL - actions.size():
+		return "chevet exit oil %d after %d actions" % [state.oil, actions.size()]
+	var full: int = int(Rules.payout(Rules.accurate_sheet(floor), floor).total)
+	var carried: int = int(Rules.payout(state.marks, floor).total)
+	if carried <= 0 or carried >= full:
+		return "exit sheet paid %d against full %d" % [carried, full]
+	if Rules.census_accepted(state.marks, floor):
+		return "the exit path was accepted as a finished census"
+	var cover := Rules.safe_survey_steps(floor)
+	if cover != 120:
+		return "safe survey is %d, expected 120" % cover
+	if cover > Rules.LARGE_FLASK_OIL or cover <= Rules.SMALL_FLASK_OIL:
+		return "survey oil %d does not sit between the flasks" % cover
+	var walled := Rules.Floor.new()
+	var walled_rows := PackedStringArray()
+	for i in floor.rows.size():
+		var row := str(floor.rows[i])
+		if i == 3:
+			row = "#H####.............###H#"
+		walled_rows.append(row)
+	walled.rows = walled_rows
+	if Rules.shortest_path_steps(walled) != 19:
+		return "walling the north passage changed the path to %d" % Rules.shortest_path_steps(walled)
+	var walled_cover := Rules.safe_survey_steps(walled)
+	if walled_cover != 126:
+		return "walled passage survey is %d, expected 126" % walled_cover
+	if Rules.corridor_cells(walled).size() != 70:
+		return "walled passage corridors %d" % Rules.corridor_cells(walled).size()
+	var opened := Rules.Floor.new()
+	var open_rows := PackedStringArray()
+	for i in floor.rows.size():
+		var open_row := str(floor.rows[i])
+		if i == 1:
+			open_row = "#S.....................#"
+		open_rows.append(open_row)
+	opened.rows = open_rows
+	if Rules.shortest_path_steps(opened) != 19:
+		return "opening the north landing changed the path to %d" % Rules.shortest_path_steps(opened)
+	var open_cover := Rules.safe_survey_steps(opened)
+	if open_cover != 136:
+		return "open landing survey is %d, expected 136" % open_cover
+	if Rules.corridor_cells(opened).size() != 92:
+		return "open landing corridors %d" % Rules.corridor_cells(opened).size()
+	var expected_pay := Rules.corridor_cells(floor).size() * Rules.CORRIDOR_VALUE + 21 * Rules.HAZARD_VALUE + Rules.LOOP_VALUE
+	var arithmetic := 73 * 3 + 21 * 8 + 15
+	if full != expected_pay or full != arithmetic or full != 402:
+		return "full pay %d does not match 73 x 3 + 21 x 8 + 15" % full
+	if int(Rules.payout(Rules.accurate_sheet(Rules.floor_named("ambulatory")), Rules.floor_named("ambulatory")).total) != 376:
+		return "the ambulatory sheet changed"
+	if Rules.corridor_cells(Rules.floor_named("ambulatory")).size() != 67:
+		return "the ambulatory corridor count changed"
+	if Rules.hazard_cells(Rules.floor_named("ambulatory")).size() != 20:
+		return "the ambulatory crack count changed"
+	if Rules.loop_cells(Rules.floor_named("ambulatory")).size() != 36:
+		return "the ambulatory ring changed"
+	if Rules.shortest_path_steps(Rules.floor_named("ambulatory")) != 19:
+		return "the ambulatory path changed"
+	if Rules.safe_survey_steps(Rules.floor_named("ambulatory")) != 120:
+		return "the ambulatory survey changed"
+	print("  chevet shortest %d  survey %d  walled %d  open %d  exit pay %d  full %d" % [steps, cover, walled_cover, open_cover, carried, full])
+	return ""
+
+
+func _chevet_ring(floor) -> String:
+	var cells: Array = Rules.loop_cells(floor)
+	if cells.size() != 38:
+		return "ring size %d" % cells.size()
+	var have := {}
+	for cell in cells:
+		if have.has(cell):
+			return "duplicate ring tile %s" % cell
+		have[cell] = true
+		if Rules.glyph_at(cell, floor) != ".":
+			return "ring tile %s is not open floor" % cell
+		if not Rules.is_corridor_cell(cell, floor):
+			return "ring tile %s is not a corridor" % cell
+		if cell == Rules.enemy_pos(floor) or cell == Rules.start_pos(floor):
+			return "ring tile %s is the warden or the start" % cell
+		if Rules.tile_at(cell, floor) == Rules.Tile.HAZARD or Rules.tile_at(cell, floor) == Rules.Tile.WALL:
+			return "ring tile %s is a hazard or a wall" % cell
+	for cell in cells:
+		var degree := 0
+		for dir in Rules.cardinals():
+			if have.has(cell + dir):
+				degree += 1
+		if degree != 2:
+			return "ring tile %s has %d neighbors in the ring" % [cell, degree]
+	if not have.has(Vector2i(12, 3)) or have.has(Vector2i(12, 4)):
+		return "the ring does not rim the chevet"
+	if have.has(Vector2i(12, 6)) or have.has(Vector2i(5, 6)) or have.has(Vector2i(19, 6)):
+		return "the ring is not the rectangle around the chevet"
+	var expect: Array = []
+	for x in range(6, 19):
+		expect.append(Vector2i(x, 3))
+	for y in range(4, 10):
+		expect.append(Vector2i(6, y))
+		expect.append(Vector2i(18, y))
+	for x in range(6, 19):
+		expect.append(Vector2i(x, 10))
+	if cells.size() != expect.size():
+		return "ring listing size %d" % cells.size()
+	for cell in expect:
+		if not have.has(cell):
+			return "ring is missing %s" % cell
+	if have.size() != 38:
+		return "the ring has tiles besides the 38 around the chevet"
+	var stones := 0
+	for y in Rules.height(floor):
+		for x in Rules.width(floor):
+			var p := Vector2i(x, y)
+			if Rules.glyph_at(p, floor) != "Q":
+				continue
+			stones += 1
+			for dir in Rules.cardinals():
+				var n: Vector2i = p + dir
+				if Rules.is_corridor_cell(n, floor) and not have.has(n):
+					return "corridor %s touches the chevet and is outside the ring" % n
+	if stones != 66:
+		return "chevet size %d" % stones
+	if str(floor.loop_name) != "Chevet ring":
+		return "ring name is %s" % floor.loop_name
+	return ""
+
+
+func _chevet_census() -> String:
+	var floor = Rules.floor_named("chevet")
+	var truth: Dictionary = Rules.accurate_sheet(floor)
+	if not Rules.census_accepted(truth, floor):
+		return "the true chevet census was rejected"
+	var bill: Dictionary = Rules.payout(truth, floor)
+	if int(bill.corridors) != 73 or int(bill.hazards) != 21 or int(bill.loop) != 1:
+		return "true counts %s/%s loop %s" % [bill.corridors, bill.hazards, bill.loop]
+	if int(bill.corridor_pay) != 73 * Rules.CORRIDOR_VALUE:
+		return "corridor pay drifted"
+	if int(bill.hazard_pay) != 21 * Rules.HAZARD_VALUE:
+		return "hazard pay drifted"
+	if int(bill.loop_pay) != Rules.LOOP_VALUE or int(bill.total) != 402:
+		return "full chevet payout is %s" % bill.total
+	if str(bill.loop_name) != "Chevet ring":
+		return "the receipt did not name the chevet ring"
+	var crack: Vector2i = Rules.hazard_cells(floor)[0]
+	var missing: Dictionary = truth.duplicate()
+	missing.erase(crack)
+	if Rules.census_accepted(missing, floor):
+		return "a sheet missing a chevet crack was accepted"
+	if int(Rules.payout(missing, floor).total) >= 402:
+		return "dropping a chevet crack did not lower pay"
+	var mislabeled: Dictionary = truth.duplicate()
+	mislabeled[crack] = Rules.Mark.CORRIDOR
+	if Rules.census_accepted(mislabeled, floor):
+		return "a chevet crack marked as a corridor was accepted"
+	if int(Rules.payout(mislabeled, floor).hazard_pay) >= 21 * Rules.HAZARD_VALUE:
+		return "mislabeling a chevet crack did not lower hazard pay"
+	if int(Rules.payout(mislabeled, floor).total) > 402:
+		return "mislabeling a chevet crack raised the payout"
+	var chevet_wall: Dictionary = truth.duplicate()
+	chevet_wall[Vector2i(7, 4)] = Rules.Mark.WALL
+	if not Rules.census_accepted(chevet_wall, floor):
+		return "inking the chevet as a wall rejected a true census"
+	chevet_wall[Vector2i(7, 4)] = Rules.Mark.HAZARD
+	if Rules.census_accepted(chevet_wall, floor):
+		return "calling the chevet a hazard was accepted"
+	var warden_mark: Dictionary = truth.duplicate()
+	warden_mark[Rules.enemy_pos(floor)] = Rules.Mark.CORRIDOR
+	if Rules.census_accepted(warden_mark, floor):
+		return "the warden tile was accepted as a corridor"
+	if int(Rules.payout(warden_mark, floor).total) != 402:
+		return "marking the warden changed the payout"
+	var only_ring := {}
+	for cell in Rules.loop_cells(floor):
+		only_ring[cell] = Rules.Mark.CORRIDOR
+	if Rules.census_accepted(only_ring, floor):
+		return "the ring alone was accepted as the census"
+	var ring_bill: Dictionary = Rules.payout(only_ring, floor)
+	if int(ring_bill.loop) != 1 or int(ring_bill.hazards) != 0 or int(ring_bill.total) >= 402:
+		return "the ring bonus did not stay inside the shared payout rule"
+	var expect_pay := {
+		"cellar": 211,
+		"cistern": 288,
+		"cloister": 242,
+		"crypt": 316,
+		"ossuary": 240,
+		"reliquary": 251,
+		"undercroft": 238,
+		"wellhouse": 225,
+		"scriptorium": 263,
+		"binding": 343,
+		"chartroom": 306,
+		"bellloft": 326,
+		"clockroom": 352,
+		"font": 354,
+		"apse": 374,
+		"choir": 394,
+		"rood": 405,
+		"crossing": 410,
+		"transept": 413,
+		"ambulatory": 376,
+	}
+	var expect_loop := {
+		"cellar": "East square",
+		"cistern": "Cistern ring",
+		"cloister": "Cloister walk",
+		"crypt": "Crypt ring",
+		"ossuary": "Ossuary ring",
+		"reliquary": "Reliquary ring",
+		"undercroft": "Undercroft ring",
+		"wellhouse": "Well ring",
+		"scriptorium": "Scriptorium ring",
+		"binding": "Binding ring",
+		"chartroom": "Chart room ring",
+		"bellloft": "Bell loft ring",
+		"clockroom": "Clock room ring",
+		"font": "Font ring",
+		"apse": "Apse ring",
+		"choir": "Choir ring",
+		"rood": "Rood ring",
+		"crossing": "Crossing ring",
+		"transept": "Transept ring",
+		"ambulatory": "Ambulatory ring",
+	}
+	for other in Rules.floors():
+		if other.id == floor.id:
+			continue
+		if Rules.census_accepted(truth, other):
+			return "the chevet sheet was accepted as %s" % other.title
+		if Rules.census_accepted(Rules.accurate_sheet(other), floor):
+			return "the %s sheet was accepted as the chevet" % other.title
+		if not Rules.census_accepted(Rules.accurate_sheet(other), other):
+			return "the %s true census was rejected" % other.title
+		var other_bill: Dictionary = Rules.payout(Rules.accurate_sheet(other), other)
+		if int(other_bill.total) != int(expect_pay[other.id]):
+			return "the %s payout changed to %s" % [other.title, other_bill.total]
+		if str(other_bill.loop_name) != str(expect_loop[other.id]):
+			return "the %s ring name changed" % other.title
+	var approach: Vector2i = Rules.walkable_approach(crack, floor)
+	if approach.x < 0:
+		return "chevet crack has no approach"
+	var walker = Rules.new_run(Rules.SMALL_FLASK_OIL, floor)
+	walker.pos = approach
+	walker.oil = 10
+	var before: int = walker.oil
+	var stepped: Dictionary = Rules.step(walker, crack - approach)
+	if bool(stepped.hit):
+		return "opening chevet step was a swing"
+	if walker.oil != before - Rules.MOVE_OIL:
+		return "a chevet crack burned extra oil"
+	if int(walker.marks.get(crack, Rules.Mark.NONE)) != Rules.Mark.HAZARD:
+		return "a chevet crack was not inked as a hazard"
+	if str(stepped.message).find("chevet crack") < 0:
+		return "stepping on a chevet crack did not name it"
+	return ""
+
+
+func _chevet_return() -> String:
+	var game_script = load("res://scripts/game.gd")
+	var select_script = load("res://scripts/floor_select_view.gd")
+	if game_script == null or select_script == null:
+		return "game or floor select did not load"
+	var game = game_script.new()
+	root.add_child(game)
+	if game.town == null or game.floor_select == null or game.descent == null:
+		game.free()
+		return "the game did not build its screens"
+	if game.floor_select.record_for("chevet") != Rules.CHEVET_RECORD:
+		game.free()
+		return "floor select does not offer the chevet census"
+	if game.floor_select.record_for("ambulatory") != Rules.AMBULATORY_RECORD:
+		game.free()
+		return "floor select dropped the ambulatory census"
+	if Rules.floor_named("chevet").title != "The Chevet":
+		game.free()
+		return "floor select does not name the Chevet"
+	if Rules.floor_named("ambulatory").title != "The Ambulatory":
+		game.free()
+		return "floor select does not name the Ambulatory"
+	for other in Rules.floors():
+		if game.floor_select.record_for(other.id) != other.record:
+			game.free()
+			return "floor select dropped the %s census" % other.title
+		if game.floor_select.status_for(other.id) != "Census open":
+			game.free()
+			return "the %s card did not open" % other.title
+	if Rules.floors().size() != 21:
+		game.free()
+		return "floor select does not list twenty-one floors"
+	var amb_card: Control = game.floor_select._record["ambulatory"].get_parent()
+	var che_card: Control = game.floor_select._record["chevet"].get_parent()
+	var amb_rect := Rect2(amb_card.position, amb_card.size)
+	var che_rect := Rect2(che_card.position, che_card.size)
+	if amb_rect.intersects(che_rect):
+		game.free()
+		return "the chevet card covers the ambulatory card"
+	if che_rect.position.x <= amb_rect.position.x:
+		game.free()
+		return "the chevet card is not listed after the ambulatory"
+	var window_w: float = select_script.WINDOW_W
+	if amb_rect.position.x < 0.0 or che_rect.position.x + che_rect.size.x > window_w:
+		game.free()
+		return "the ambulatory or chevet card sits outside the window"
+	var previous: Control = null
+	for listed in Rules.floors():
+		var card: Control = game.floor_select._record[listed.id].get_parent()
+		var card_rect := Rect2(card.position, card.size)
+		if card_rect.position.x < 0.0 or card_rect.position.x + card_rect.size.x > window_w + 0.5:
+			game.free()
+			return "the %s card sits outside the window" % listed.title
+		if previous != null and card_rect.intersects(Rect2(previous.position, previous.size)):
+			game.free()
+			return "the %s card covers another card" % listed.title
+		var heading: Label = card.get_child(2)
+		if heading == null or heading.text != listed.title:
+			game.free()
+			return "the %s card title is missing" % listed.title
+		var title_font := heading.get_theme_font("font")
+		var title_size := heading.get_theme_font_size("font_size")
+		var wrapped := title_font.get_multiline_string_size(heading.text, HORIZONTAL_ALIGNMENT_LEFT, heading.size.x, title_size)
+		if wrapped.y > heading.size.y + 0.5 or wrapped.x > heading.size.x + 0.5:
+			var clipped := heading.text
+			game.free()
+			return "the %s title is clipped on its card" % clipped
+		previous = card
+	game._on_descend_floor("chevet")
+	if game.descent.state == null or game.descent.state.floor.id != "chevet":
+		game.free()
+		return "descend did not open the chevet"
+	var state = game.descent.state
+	var lift: Vector2i = Rules.lift_pos(state.floor)
+	var approach: Vector2i = Rules.walkable_approach(lift, state.floor)
+	state.pos = approach
+	state.oil = 5
+	var left: Dictionary = Rules.step(state, lift - approach)
+	if not bool(left.extracted):
+		game.free()
+		return "short chevet sheet did not leave on the lift"
+	game.descent._open_return()
+	if game.descent.return_button.text != "Return to town":
+		game.free()
+		return "a short sheet offered the floor select"
+	game._on_return(state)
+	if not game.town.visible or game.floor_select.visible or game.descent.visible:
+		game.free()
+		return "a short census did not return to town"
+	if bool(game.campaign.completed.get("chevet", false)):
+		game.free()
+		return "a short census was accepted"
+	if game.town.outcome_label.text.find("not finished") < 0:
+		game.free()
+		return "the clerk treated a short sheet as finished"
+	game._on_floors()
+	if not game.floor_select.visible or game.town.visible:
+		game.free()
+		return "floor select did not open from town"
+	game._on_descend_floor("chevet")
+	state = game.descent.state
+	state.marks = Rules.accurate_sheet(state.floor)
+	lift = Rules.lift_pos(state.floor)
+	approach = Rules.walkable_approach(lift, state.floor)
+	state.pos = approach
+	state.oil = 5
+	var done: Dictionary = Rules.step(state, lift - approach)
+	if not bool(done.extracted) or not Rules.census_accepted(state.marks, state.floor):
+		game.free()
+		return "the finished sheet did not extract as an accepted census"
+	game.descent._open_return()
+	if game.descent.return_button.text != "Return to floor select":
+		game.free()
+		return "a finished census did not offer the floor select"
+	game._on_return(state)
+	if not game.floor_select.visible or game.town.visible or game.descent.visible:
+		game.free()
+		return "a finished census did not return to the floor select"
+	if not bool(game.campaign.completed.get("chevet", false)):
+		game.free()
+		return "the finished census was not recorded"
+	for other in Rules.floors():
+		if other.id == "chevet":
+			if game.floor_select.status_for(other.id) != "Census complete":
+				game.free()
+				return "floor select did not show the chevet census complete"
+		else:
+			if bool(game.campaign.completed.get(other.id, false)):
+				game.free()
+				return "another floor was marked complete"
+			if game.floor_select.status_for(other.id) != "Census open":
+				game.free()
+				return "another floor card was closed"
+	if game.floor_select.notice_label.text.find("complete") < 0:
+		game.free()
+		return "arrival did not say the census is complete"
+	if int(game.campaign.last_bill.total) != 402 or game.campaign.purse < 402 or game.campaign.last_outcome != "complete":
 		game.free()
 		return "the finished census was not paid"
 	game._show_town()

@@ -8,7 +8,7 @@ config_version=5
 [application]
 
 config/name="Casework"
-config/description="A deduction game. Thirty cases: The spare key, The rehearsal score, The gilt stamp, The ferry bell, The weather slate, The loom shuttle, The hive smoker, The glass pontil, The press proof, The assay cup, The kiln chalk, The tide ledger, The night bell, The salt mark, The wick trim, The glass anneal, The orchard graft, The dye vat, The tar kettle, The cork press, The net loft, The cask hoop, The linen fold, The dovetail, The mortise, The rebate, The housing, The tenon, The bridle, and The dado."
+config/description="A deduction game. Thirty-two cases: The spare key, The rehearsal score, The gilt stamp, The ferry bell, The weather slate, The loom shuttle, The hive smoker, The glass pontil, The press proof, The assay cup, The kiln chalk, The tide ledger, The night bell, The salt mark, The wick trim, The glass anneal, The orchard graft, The dye vat, The tar kettle, The cork press, The net loft, The cask hoop, The linen fold, The dovetail, The mortise, The rebate, The housing, The tenon, The bridle, The dado, The spline, and The mitre."
 run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
