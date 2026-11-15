@@ -255,6 +255,10 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_transom(at)
 		"casement":
 			_draw_casement(at, rot)
+		"jamb":
+			_draw_jamb(at, rot)
+		"astragal":
+			_draw_astragal(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -600,6 +604,88 @@ func _draw_casement(at: Vector2i, rot: int) -> void:
 	draw_circle(hinge_a, 4.2, Palette.WOOD_DARK)
 	draw_circle(hinge_b, 4.2, Palette.WOOD_DARK)
 	draw_circle(hinge_a.lerp(hinge_b, 0.5), 3.2, Palette.GATE_IRON)
+
+func _draw_jamb(at: Vector2i, rot: int) -> void:
+	# Two dark posts on the edges of the open axis, with a pale gap between
+	# them. North or south puts the posts on the north and south edges. East
+	# or west puts them on the east and west edges. Not one hinge, not one
+	# bar, and not one shaft.
+	var center := _center(at)
+	var facing := Tracer.jamb_facing(rot)
+	var north_south := facing == "N" or facing == "S"
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var post := Palette.WOOD_DARK if not flooded else Palette.WOOD
+	var edge := Palette.PILE_EDGE if not flooded else Palette.FOAM
+	var gap := Palette.GLASS
+	gap.a = 0.42 if flooded else 0.96
+	if north_south:
+		var post_w := cell * 0.70
+		var post_h := cell * 0.13
+		var north := Rect2(center + Vector2(-post_w * 0.5, -cell * 0.42), Vector2(post_w, post_h))
+		var south := Rect2(center + Vector2(-post_w * 0.5, cell * 0.42 - post_h), Vector2(post_w, post_h))
+		var opening := Rect2(center + Vector2(-cell * 0.11, -cell * 0.24), Vector2(cell * 0.22, cell * 0.48))
+		draw_rect(opening, gap)
+		draw_rect(opening, Palette.GLASS_EDGE, false, 1.5)
+		draw_rect(north, post)
+		draw_rect(south, post)
+		draw_rect(north, edge, false, 2.0)
+		draw_rect(south, edge, false, 2.0)
+	else:
+		var post_w := cell * 0.13
+		var post_h := cell * 0.70
+		var west := Rect2(center + Vector2(-cell * 0.42, -post_h * 0.5), Vector2(post_w, post_h))
+		var east := Rect2(center + Vector2(cell * 0.42 - post_w, -post_h * 0.5), Vector2(post_w, post_h))
+		var opening := Rect2(center + Vector2(-cell * 0.24, -cell * 0.11), Vector2(cell * 0.48, cell * 0.22))
+		draw_rect(opening, gap)
+		draw_rect(opening, Palette.GLASS_EDGE, false, 1.5)
+		draw_rect(west, post)
+		draw_rect(east, post)
+		draw_rect(west, edge, false, 2.0)
+		draw_rect(east, edge, false, 2.0)
+
+func _draw_astragal(at: Vector2i, rot: int) -> void:
+	# Two dark posts on the facing edge and the clockwise edge, with a pale
+	# corner between them. A north astragal puts the posts on the north and
+	# east edges. Not the jamb's two opposite posts, not the casement's single
+	# hinge, not the transom's one horizontal bar, and not the mullion's one
+	# vertical shaft.
+	var center := _center(at)
+	var facing := Tracer.astragal_facing(rot)
+	var clock := Tracer.rotate_dir(facing, 1)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var post := Palette.GATE_IRON if not flooded else Palette.WOOD
+	var edge := Palette.WOOD_DARK if not flooded else Palette.FOAM
+	var gap := Palette.GLASS
+	gap.a = 0.5 if flooded else 0.98
+	var sx := 1.0 if facing == "E" or clock == "E" else -1.0
+	var sy := 1.0 if facing == "S" or clock == "S" else -1.0
+	var reach := cell * 0.40
+	var thick := cell * 0.15
+	var pocket := cell * 0.24
+	var corner_x := center.x + sx * reach
+	var corner_y := center.y + sy * reach
+	var pale_x := corner_x - (pocket if sx > 0.0 else 0.0)
+	var pale_y := corner_y - (pocket if sy > 0.0 else 0.0)
+	var pale := Rect2(Vector2(pale_x, pale_y), Vector2(pocket, pocket))
+	draw_rect(pale, gap)
+	draw_rect(pale, Palette.GLASS_EDGE, false, 2.0)
+	var face_post := _astragal_post(center, facing, sx, sy, reach, thick, pocket)
+	var clock_post := _astragal_post(center, clock, sx, sy, reach, thick, pocket)
+	draw_rect(face_post, post)
+	draw_rect(clock_post, post)
+	draw_rect(face_post, edge, false, 2.0)
+	draw_rect(clock_post, edge, false, 2.0)
+
+func _astragal_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
+	if dir == "N" or dir == "S":
+		var y := center.y + sy * reach - (thick if sy > 0.0 else 0.0)
+		var far := center.x - sx * reach
+		var near := center.x + sx * (reach - pocket)
+		return Rect2(Vector2(minf(far, near), y), Vector2(absf(near - far), thick))
+	var x := center.x + sx * reach - (thick if sx > 0.0 else 0.0)
+	var far_y := center.y - sy * reach
+	var near_y := center.y + sy * (reach - pocket)
+	return Rect2(Vector2(x, minf(far_y, near_y)), Vector2(thick, absf(near_y - far_y)))
 
 func _draw_prism(at: Vector2i, rot: int, set_in_stone: bool) -> void:
 	var center := _center(at)

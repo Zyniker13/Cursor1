@@ -1342,6 +1342,63 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 		if long_back_row >= 0 and state.form[long_back_row][long_back_col] != null:
 			var long_spoiled = state.form[long_back_row][long_back_col]
 			guess -= _stamp_number(state, String(long_spoiled["card_id"]), long_back_row, long_back_col)
+	if rule == "drop_if_power_count":
+		var power_filled = 0
+		for power_row in 3:
+			for power_col in 3:
+				if state.form[power_row][power_col] != null:
+					power_filled += 1
+		var power_next = power_filled + 1
+		if power_next == 1 or power_next == 2 or power_next == 4 or power_next == 8:
+			guess -= 4
+		elif power_filled == 1 or power_filled == 2 or power_filled == 4 or power_filled == 8:
+			guess += 5
+	if rule == "double_farther_blank":
+		var farther_ahead_row = row
+		var farther_ahead_col = col + 5
+		while farther_ahead_col > 2:
+			farther_ahead_row += 1
+			farther_ahead_col -= 3
+		if farther_ahead_row > 2:
+			guess -= 4
+		elif state.form[farther_ahead_row][farther_ahead_col] == null:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+		var farther_back_row = row
+		var farther_back_col = col - 5
+		while farther_back_col < 0:
+			farther_back_row -= 1
+			farther_back_col += 3
+		if farther_back_row >= 0 and state.form[farther_back_row][farther_back_col] != null:
+			var farther_spoiled = state.form[farther_back_row][farther_back_col]
+			guess -= _stamp_number(state, String(farther_spoiled["card_id"]), farther_back_row, farther_back_col)
+	if rule == "yield_rim_pay":
+		var rim = (row == 1 and col != 1) or (col == 1 and row != 1)
+		if rim:
+			guess += 6
+		else:
+			guess -= 1
+	if rule == "double_long_fill":
+		var fill_ahead_row = row
+		var fill_ahead_col = col + 4
+		while fill_ahead_col > 2:
+			fill_ahead_row += 1
+			fill_ahead_col -= 3
+		if fill_ahead_row > 2:
+			guess -= 4
+		elif state.form[fill_ahead_row][fill_ahead_col] != null:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+		var fill_back_row = row
+		var fill_back_col = col - 4
+		while fill_back_col < 0:
+			fill_back_row -= 1
+			fill_back_col += 3
+		if fill_back_row >= 0 and state.form[fill_back_row][fill_back_col] != null:
+			var fill_helped = state.form[fill_back_row][fill_back_col]
+			guess += _stamp_number(state, String(fill_helped["card_id"]), fill_back_row, fill_back_col)
 	if rule == "ignore_isolated":
 		var neighbors = 0
 		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
