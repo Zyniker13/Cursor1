@@ -5,7 +5,7 @@ class_name BrineSim
 #
 # The player never selects an ant. They paint cells. Workers are simulated
 # labor that follow the paint under their feet. This slice has one scenario:
-# a wet season, a short dry season, a cart beat, a ship beat, a market beat, a yard beat, a bunk beat, a loft beat, a gate beat, a wage beat, a relief beat, a watch beat, a lamp beat, a bell beat, a horn beat, a flag beat, a banner beat, a pennant beat, a standard beat, a jack beat, an ensign beat, a burgee beat, a cornet beat, then a guidon beat. The full game's population cap is
+# a wet season, a short dry season, a cart beat, a ship beat, a market beat, a yard beat, a bunk beat, a loft beat, a gate beat, a wage beat, a relief beat, a watch beat, a lamp beat, a bell beat, a horn beat, a flag beat, a banner beat, a pennant beat, a standard beat, a jack beat, an ensign beat, a burgee beat, a cornet beat, a guidon beat, then a fanion beat. The full game's population cap is
 # 200; this slice hard-caps at POP_CAP (40) and will not grow past it.
 #
 # Map
@@ -14,7 +14,7 @@ class_name BrineSim
 #   stays unwalkable, and shore rakes no longer touch water.
 # - The anthill is the fixed cell ANTHILL (14, 5). It is walkable, not
 #   paintable, and the only place workers spawn.
-# - Rows run from GRID_NORTH through GRID_H - 1. GRID_NORTH is seventeen rows north
+# - Rows run from GRID_NORTH through GRID_H - 1. GRID_NORTH is eighteen rows north
 #   of the old shore edge, so a loft can sit one cell north of a bunk on row 0,
 #   a gate can sit one cell north of that loft, a wage can sit one cell
 #   north of that gate, a relief can sit one cell north of that wage, a
@@ -24,9 +24,9 @@ class_name BrineSim
 #   north of that horn, a banner can sit one cell north of that flag, a
 #   pennant can sit one cell north of that banner, a standard can sit
 #   one cell north of that pennant, a jack can sit one cell north of
-#   that standard, an ensign can sit one cell north of that jack, a burgee can sit one cell north of that ensign, a cornet can sit one cell north of that burgee, and a guidon can sit one cell north of that cornet.
+#   that standard, an ensign can sit one cell north of that jack, a burgee can sit one cell north of that ensign, a cornet can sit one cell north of that burgee, a guidon can sit one cell north of that cornet, and a fanion can sit one cell north of that guidon.
 # - Every other cell accepts one mark: empty, rake, stack, cover, trail, pan,
-#   crib, ship, stall, yard, bunk, loft, gate, wage, relief, watch, lamp, bell, horn, flag, banner, pennant, standard, jack, ensign, burgee, cornet, or guidon. A pennant is accepted only at (14, -11). That cell rejects a banner, a standard, a jack, an ensign, a burgee, a cornet, and a guidon. The banner cell (14, -10) still accepts a banner and rejects a pennant. A standard is accepted only at (14, -12). That cell rejects a pennant and a jack. A jack is accepted only at (14, -13). That cell rejects a standard, an ensign, a burgee, a cornet, and a guidon. An ensign is accepted only at (14, -14). That cell rejects a jack, a burgee, a cornet, and a guidon. A burgee is accepted only at (14, -15). That cell rejects an ensign, a cornet, and a guidon. A cornet is accepted only at (14, -16). That cell rejects a burgee and a guidon. A guidon is accepted only at (14, -17). That cell rejects a cornet. A crib is not walkable until the cart beat,
+#   crib, ship, stall, yard, bunk, loft, gate, wage, relief, watch, lamp, bell, horn, flag, banner, pennant, standard, jack, ensign, burgee, cornet, or guidon, or fanion. A pennant is accepted only at (14, -11). That cell rejects a banner, a standard, a jack, an ensign, a burgee, a cornet, and a guidon. The banner cell (14, -10) still accepts a banner and rejects a pennant. A standard is accepted only at (14, -12). That cell rejects a pennant and a jack. A jack is accepted only at (14, -13). That cell rejects a standard, an ensign, a burgee, a cornet, and a guidon. An ensign is accepted only at (14, -14). That cell rejects a jack, a burgee, a cornet, and a guidon. A burgee is accepted only at (14, -15). That cell rejects an ensign, a cornet, and a guidon. A cornet is accepted only at (14, -16). That cell rejects a burgee and a guidon. A guidon is accepted only at (14, -17). That cell rejects a cornet and a fanion. A fanion is accepted only at (14, -18). That cell rejects a guidon. A crib is not walkable until the cart beat,
 #   a ship is not walkable until the ship beat, a stall is not walkable until
 #   the market beat, a yard is not walkable until the yard beat, a bunk is
 #   not walkable until the bunk beat, a loft is not walkable until the loft
@@ -41,8 +41,9 @@ class_name BrineSim
 #   walkable until the jack beat, an ensign is not walkable until the
 #   ensign beat, a burgee is not walkable until the
 #   burgee beat, a cornet is not walkable until the
-#   cornet beat, and a guidon is not walkable until the
-#   guidon beat,
+#   cornet beat, a guidon is not walkable until the
+#   guidon beat, and a fanion is not walkable until the
+#   fanion beat,
 #   so painting one cannot change an earlier haul.
 #
 # Determinism
@@ -57,7 +58,7 @@ class_name BrineSim
 # Seasons
 # - Wet season: tick indexes 0 .. RAIN_TICK-1. Gatherers on brine-adjacent
 #   rake cells pile loose salt. Pan cells are only ground to cross. Crib
-#   cells, ship cells, stall cells, yard cells, bunk cells, loft cells, gate cells, wage cells, relief cells, watch cells, lamp cells, bell cells, horn cells, flag cells, banner cells, pennant cells, standard cells, jack cells, ensign cells, burgee cells, cornet cells, and guidon cells are marks only.
+#   cells, ship cells, stall cells, yard cells, bunk cells, loft cells, gate cells, wage cells, relief cells, watch cells, lamp cells, bell cells, horn cells, flag cells, banner cells, pennant cells, standard cells, jack cells, ensign cells, burgee cells, cornet cells, guidon cells, and fanion cells are marks only.
 # - At tick RAIN_TICK the first rain falls. Loose salt is destroyed. Stacked
 #   salt on a cover cell is hauled into the wet-season ledger and cleared
 #   from the flats. Stacked salt outside cover is destroyed. The scenario
@@ -486,7 +487,38 @@ class_name BrineSim
 #   count, the coins left in the yard, or any earlier count. The dipped total
 #   still counts a hire who was later saluted.
 # - At tick RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK
-#   the guidon beat ends and the scenario ends. Stored salt is the ledger still
+#   the guidon beat ends and the fanion beat opens. The scenario does not end.
+#   Hires who were saluted stay on the guidon until they are presented.
+# - Fanion beat: the next FANION_TICK work rounds (100 ticks, 10 seconds).
+#   Every worker walks to a fanion. A fanion cell is the only goal, and it
+#   is walkable only now. One unit of work presents 1 hire who was already
+#   saluted, taking guidons in row-major order (the same order they were
+#   saluted: north to south, then west to east), up to FANION_CAP hires in
+#   total. One hire moves. Nothing is rolled. The fanion stops at FANION_CAP
+#   even if ticks remain and saluted hires remain. Hires who were not
+#   saluted are not presented. That includes hires still in a loft, hires who
+#   passed a gate but were not paid, hires who were paid but were not posted,
+#   hires who were posted but were not stood, hires who were stood but were
+#   not lit, hires who were lit but were not rung, hires who were rung but
+#   were not sounded, hires who were sounded but were not raised, hires
+#   who were raised but were not hoisted, hires who were hoisted but were
+#   not flown, hires who were flown but were not carried, hires who were
+#   carried but were not shown, hires who were shown but were not broken,
+#   hires who were broken but were not struck, hires who were struck
+#   but were not dipped, and hires who were dipped but were not saluted.
+#   Rakes and pans make no salt. With no fanion, the saluted hires stay on the
+#   guidon and the presented total stays 0. With nobody saluted, the presented
+#   total stays 0 and the dipped hire stays on the cornet. The hire total,
+#   the posted total, the stood total, the lit total, the rung total, the
+#   sounded total, the raised total, the hoisted total, the flown total, the
+#   carried total, the shown total, the broken total, the struck total, the
+#   dipped total, and the saluted total are still reported. Presenting spends
+#   no coins and does not change the stored, carted, shipped, or earned-coin
+#   totals, the hire count, the coins left in the yard, or any earlier count,
+#   including the saluted count. The saluted total still counts a hire who was
+#   later presented.
+# - At tick RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK + FANION_TICK
+#   the fanion beat ends and the scenario ends. Stored salt is the ledger still
 #   unmoved, plus covered salt still on the map, plus salt still in cribs,
 #   plus salt still on ships, plus coins still at stalls, plus coins still
 #   in yards, plus coins spent on hires, plus coins spent on wages. Hires
@@ -495,8 +527,8 @@ class_name BrineSim
 #   rung on a bell, hires sounded on a horn, hires raised on a flag, hires
 #   hoisted on a banner, hires flown on a pennant, hires carried on a
 #   standard, hires shown on a jack, hires broken on an ensign, hires
-#   struck on a burgee, hires dipped on a cornet, and hires saluted on a
-#   guidon, still count.
+#   struck on a burgee, hires dipped on a cornet, hires saluted on a
+#   guidon, and hires presented on a fanion, still count.
 #
 # Tick (work rounds, then a rain at each season boundary)
 # 1. If the scenario has already ended, the tick does nothing.
@@ -523,6 +555,7 @@ class_name BrineSim
 #    During the burgee beat every job strikes those hires.
 #    During the cornet beat every job dips those hires.
 #    During the guidon beat every job salutes those hires.
+#    During the fanion beat every job presents those hires.
 #    The job id does not change.
 #    The new worker acts on the tick it spawns. The starting population is
 #    INITIAL_POP, created before tick 0. Spawn refuses to exceed POP_CAP.
@@ -623,6 +656,11 @@ class_name BrineSim
 #              that flow. One salute moves one dipped hire. The total stops at
 #              GUIDON_CAP. Hires who were not dipped are not goals and are not
 #              saluted.
+#      Fanion: fanion cell while fewer than FANION_CAP hires have been presented
+#              and any saluted hire is still on a guidon. All three jobs share
+#              that flow. One present moves one saluted hire. The total stops at
+#              FANION_CAP. Hires who were not saluted are not goals and are not
+#              presented.
 #    Trail cells are only ground to cross. They are not goals. Pan cells are
 #    not goals during the wet season. Rake cells are not goals during the
 #    dry season or any later beat. Crib cells are not goals before the cart
@@ -675,6 +713,8 @@ class_name BrineSim
 #    burgee to the cornet. Cornet cells are not goals before the cornet beat.
 #    During the guidon beat they are only ground, so workers can walk from the
 #    cornet to the guidon. Guidon cells are not goals before the guidon beat.
+#    During the fanion beat they are only ground, so workers can walk from the
+#    guidon to the fanion. Fanion cells are not goals before the fanion beat.
 # 4. Each job builds a flow field: multi-source BFS from its goals through
 #    walkable cells (any painted cell, plus the anthill). A goal's next step
 #    is itself. Every other reached cell points one step toward the nearest
@@ -810,6 +850,16 @@ class_name BrineSim
 #              still on a watch, hires still on a relief, hires still on a
 #              wage, hires still on a gate, and hires still in a loft are not
 #              saluted.
+#      Fanion: 1 hire moves from a guidon onto this fanion. Guidons are taken
+#              in row-major order (y, then x), the same order the hires were
+#              saluted. The fanion presents at most FANION_CAP hires, then stops.
+#              Hires still on a cornet, hires still on a burgee, hires still on
+#              an ensign, hires still on a jack, hires still on a standard,
+#              hires still on a pennant, hires still on a banner, hires still
+#              on a flag, hires still on a horn, hires still on a bell, hires
+#              still on a lamp, hires still on a watch, hires still on a relief,
+#              hires still on a wage, hires still on a gate, and hires still in
+#              a loft are not presented.
 # 6. If the population is above POP_CAP, the violation is counted. Spawning
 #    is the only way workers are added, and it stops at the cap.
 # 7. The tick index increases by 1. When it reaches RAIN_TICK, the first rain
@@ -858,7 +908,9 @@ class_name BrineSim
 #    RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK,
 #    the guidon beat's first work round is the next tick. When it reaches
 #    RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK,
-#    the guidon beat ends.
+#    the fanion beat's first work round is the next tick. When it reaches
+#    RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK + FANION_TICK,
+#    the fanion beat ends.
 #
 # Rain
 # - Loose salt is destroyed on every cell. Loose salt never survives a rain.
@@ -872,7 +924,7 @@ class_name BrineSim
 #   the coins, the bunk beat then hires from that purse, the loft beat then
 #   moves those hires, the gate beat then lets them through, the wage beat
 #   then pays them, the relief beat then posts them, the watch beat then
-#   stands them, the lamp beat then lights them, the bell beat then rings them, the horn beat then sounds them, the flag beat then raises them, the banner beat then hoists them, the pennant beat then flies them, the standard beat then carries them, the jack beat then shows them, the ensign beat then breaks them, the burgee beat then strikes them, the cornet beat then dips them, and the guidon beat then salutes them; the rain does none of those.
+#   stands them, the lamp beat then lights them, the bell beat then rings them, the horn beat then sounds them, the flag beat then raises them, the banner beat then hoists them, the pennant beat then flies them, the standard beat then carries them, the jack beat then shows them, the ensign beat then breaks them, the burgee beat then strikes them, the cornet beat then dips them, the guidon beat then salutes them, and the fanion beat then presents them; the rain does none of those.
 # - Stacked or covered salt outside a cover cell is destroyed.
 # - Destruction is applied row-major. The same paint map yields the same
 #   stored-salt number.
@@ -916,7 +968,9 @@ class_name BrineSim
 #   those struck hires, the line names the cornet, how many were dipped, and
 #   how many struck hires stayed on the burgee. If the guidon saluted any of
 #   those dipped hires, the line names the guidon, how many were saluted, and
-#   how many dipped hires stayed on the cornet. A plan
+#   how many dipped hires stayed on the cornet. If the fanion presented any of
+#   those saluted hires, the line names the fanion, how many were presented, and
+#   how many saluted hires stayed on the guidon. A plan
 #   that paints no crib keeps the summary it had before the cart beat existed.
 #   A plan that paints no ship keeps the summary it had before the ship beat
 #   existed. A plan that paints no stall keeps the summary it had before the
@@ -941,7 +995,8 @@ class_name BrineSim
 #   the summary it had before the ensign beat existed. A plan that paints no burgee keeps
 #   the summary it had before the burgee beat existed. A plan that paints no cornet keeps
 #   the summary it had before the cornet beat existed. A plan that paints no guidon keeps
-#   the summary it had before the guidon beat existed.
+#   the summary it had before the guidon beat existed. A plan that paints no fanion keeps
+#   the summary it had before the fanion beat existed.
 # - Stored salt == 0 and any salt was destroyed: the quota was missed because
 #   uncovered salt was destroyed. An all-rake coast does this: workers pile
 #   loose salt, nothing is stacked into cover, the first rain wrecks the
@@ -960,7 +1015,7 @@ class_name BrineSim
 #   beat ends. The wage countdown refills when the gate beat ends. The relief
 #   countdown refills when the wage beat ends. The watch countdown refills
 #   when the relief beat ends. The lamp countdown refills when the watch beat
-#   ends. The bell countdown refills when the lamp beat ends. The horn countdown refills when the bell beat ends. The flag countdown refills when the horn beat ends. The banner countdown refills when the flag beat ends. The pennant countdown refills when the banner beat ends. The standard countdown refills when the pennant beat ends. The jack countdown refills when the standard beat ends. The ensign countdown refills when the jack beat ends. The burgee countdown refills when the ensign beat ends. The cornet countdown refills when the burgee beat ends. The guidon countdown refills when the cornet beat ends. The sim itself counts ticks,
+#   ends. The bell countdown refills when the lamp beat ends. The horn countdown refills when the bell beat ends. The flag countdown refills when the horn beat ends. The banner countdown refills when the flag beat ends. The pennant countdown refills when the banner beat ends. The standard countdown refills when the pennant beat ends. The jack countdown refills when the standard beat ends. The ensign countdown refills when the jack beat ends. The burgee countdown refills when the ensign beat ends. The cornet countdown refills when the burgee beat ends. The guidon countdown refills when the cornet beat ends. The fanion countdown refills when the guidon beat ends. The sim itself counts ticks,
 #   not wall-clock time, so a headless run is the same scenario as the window.
 
 const EMPTY := 0
@@ -991,12 +1046,13 @@ const ENSIGN := 24
 const BURGEE := 25
 const CORNET := 26
 const GUIDON := 27
+const FANION := 28
 
 const WET := 0
 const DRY := 1
 # Cart is a beat after the dry season. The ship beat follows the cart, then
 # the market, then the yard, then the bunk, then the loft, then the gate,
-# then the wage, then the relief, then the watch, then the lamp, then the bell, then the horn, then the flag, then the banner, then the pennant, then the standard, then the jack, then the ensign, then the burgee, then the cornet, then the guidon. get_season() stays DRY through all of them.
+# then the wage, then the relief, then the watch, then the lamp, then the bell, then the horn, then the flag, then the banner, then the pennant, then the standard, then the jack, then the ensign, then the burgee, then the cornet, then the guidon, then the fanion. get_season() stays DRY through all of them.
 const CART := 2
 const SHIPPING := 3
 const MARKET := 4
@@ -1019,6 +1075,7 @@ const ENSIGNING := 20
 const BURGEEING := 21
 const CORNETING := 22
 const GUIDONING := 23
+const FANIONING := 24
 
 const GRID_W := 17
 const GRID_H := 12
@@ -1027,8 +1084,8 @@ const GRID_H := 12
 # watch is row -5, the lamp is row -6, the bell is row -7, the horn is row -8,
 # the flag is row -9, the banner is row -10, the pennant is row -11, the
 # standard is row -12, the jack is row -13, the ensign is row -14, the
-# burgee is row -15, the cornet is row -16, and the guidon is row -17.
-const GRID_NORTH := -17
+# burgee is row -15, the cornet is row -16, the guidon is row -17, and the fanion is row -18.
+const GRID_NORTH := -18
 # The only cell that accepts a pennant. One cell north of the banner at (14, -10).
 const PENNANT_CELL := Vector2i(14, -11)
 # The only cell that accepts a standard. One cell north of the pennant.
@@ -1043,6 +1100,8 @@ const BURGEE_CELL := Vector2i(14, -15)
 const CORNET_CELL := Vector2i(14, -16)
 # The only cell that accepts a guidon. One cell north of the cornet.
 const GUIDON_CELL := Vector2i(14, -17)
+# The only cell that accepts a fanion. One cell north of the guidon.
+const FANION_CELL := Vector2i(14, -18)
 const COAST_X := 0
 const ANTHILL := Vector2i(14, 5)
 
@@ -1074,6 +1133,7 @@ const ENSIGN_TICK := 100
 const BURGEE_TICK := 100
 const CORNET_TICK := 100
 const GUIDON_TICK := 100
+const FANION_TICK := 100
 const TICK_HZ := 10
 const HIRE_COST := 100
 # Coins one payment takes from the yard. A shorter purse pays nobody.
@@ -1119,6 +1179,8 @@ const BURGEE_CAP := 1
 const CORNET_CAP := 1
 # Total dipped hires the guidon salutes. Past this the beat stops moving them.
 const GUIDON_CAP := 1
+# Total saluted hires the fanion presents. Past this the beat stops moving them.
+const FANION_CAP := 1
 
 const JOB_GATHER := 0
 const JOB_STACK := 1
@@ -1153,6 +1215,7 @@ var _ensign: Dictionary = {}
 var _burgee: Dictionary = {}
 var _cornet: Dictionary = {}
 var _guidon: Dictionary = {}
+var _fanion: Dictionary = {}
 var _workers: Array = []
 
 var _next_id: int = 0
@@ -1206,6 +1269,7 @@ func restart() -> void:
 	_burgee.clear()
 	_cornet.clear()
 	_guidon.clear()
+	_fanion.clear()
 	_workers.clear()
 	_next_id = 0
 	_tick_index = 0
@@ -1228,7 +1292,7 @@ func paint_cell(x: int, y: int, mode: int) -> bool:
 		return false
 	if not _paintable(x, y):
 		return false
-	if mode < EMPTY or mode > GUIDON:
+	if mode < EMPTY or mode > FANION:
 		return false
 	# The pennant row accepts a pennant only at PENNANT_CELL. A banner stays
 	# one cell south, and that cell rejects a pennant. The standard row accepts
@@ -1238,6 +1302,7 @@ func paint_cell(x: int, y: int, mode: int) -> bool:
 	# The burgee row accepts a burgee only at BURGEE_CELL, one cell north of the ensign.
 	# The cornet row accepts a cornet only at CORNET_CELL, one cell north of the burgee.
 	# The guidon row accepts a guidon only at GUIDON_CELL, one cell north of the cornet.
+	# The fanion row accepts a fanion only at FANION_CELL, one cell north of the guidon.
 	if mode == PENNANT and Vector2i(x, y) != PENNANT_CELL:
 		return false
 	if y == PENNANT_CELL.y and mode != PENNANT and mode != EMPTY:
@@ -1266,6 +1331,10 @@ func paint_cell(x: int, y: int, mode: int) -> bool:
 		return false
 	if y == GUIDON_CELL.y and mode != GUIDON and mode != EMPTY:
 		return false
+	if mode == FANION and Vector2i(x, y) != FANION_CELL:
+		return false
+	if y == FANION_CELL.y and mode != FANION and mode != EMPTY:
+		return false
 	var cell := Vector2i(x, y)
 	if mode == EMPTY:
 		_paint.erase(cell)
@@ -1281,7 +1350,7 @@ func get_paint(x: int, y: int) -> int:
 func tick() -> void:
 	if _rain_done:
 		return
-	var end_tick := RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK
+	var end_tick := RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK + FANION_TICK
 	if _tick_index >= end_tick:
 		_finish()
 		return
@@ -1338,13 +1407,15 @@ func tick() -> void:
 		_open_cornet()
 	elif _tick_index == RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK:
 		_open_guidon()
+	elif _tick_index == RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK:
+		_open_fanion()
 	elif _tick_index >= end_tick:
 		_finish()
 
 
 func run_until_rain() -> void:
 	var guard := 0
-	var limit := RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK + 2
+	var limit := RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK + FANION_TICK + 2
 	while not _rain_done and guard < limit:
 		tick()
 		guard += 1
@@ -1370,7 +1441,7 @@ func get_season() -> int:
 	return _season
 
 
-# WET, DRY, CART, SHIPPING, MARKET, YARDING, BUNKING, LOFTING, GATING, WAGING, RELIEVING, WATCHING, LAMPING, BELLING, HORNING, FLAGGING, BANNERING, PENNANTING, STANDARDING, JACKING, ENSIGNING, BURGEEING, CORNETING, or GUIDONING. Weather stays dry after the first rain.
+# WET, DRY, CART, SHIPPING, MARKET, YARDING, BUNKING, LOFTING, GATING, WAGING, RELIEVING, WATCHING, LAMPING, BELLING, HORNING, FLAGGING, BANNERING, PENNANTING, STANDARDING, JACKING, ENSIGNING, BURGEEING, CORNETING, GUIDONING, or FANIONING. Weather stays dry after the first rain.
 func get_beat() -> int:
 	return _phase
 
@@ -1419,7 +1490,7 @@ func get_yard_left() -> int:
 # posted to a relief, hires later stood on a watch, and hires later lit
 # by a lamp. One hire costs HIRE_COST. Nothing is rolled.
 func get_hired() -> int:
-	return _sum(_bunk) + _sum(_loft) + _sum(_gate) + _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon)
+	return _sum(_bunk) + _sum(_loft) + _sum(_gate) + _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion)
 
 
 # Hires still sitting at a bunk. Lofting moves these one at a time.
@@ -1431,7 +1502,7 @@ func get_bunk_left() -> int:
 # hires later paid a wage, hires later posted, hires later stood, and hires
 # later lit. The hire total still counts these.
 func get_lofted() -> int:
-	return _sum(_loft) + _sum(_gate) + _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon)
+	return _sum(_loft) + _sum(_gate) + _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion)
 
 
 # Hires still sitting in a loft. The gate moves these one at a time.
@@ -1443,7 +1514,7 @@ func get_loft_left() -> int:
 # hires later posted, hires later stood, and hires later lit. Nothing is
 # rolled. The loft total and the hire total still count these.
 func get_gated() -> int:
-	return _sum(_gate) + _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon)
+	return _sum(_gate) + _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion)
 
 
 # Hires who passed a gate and have not been paid. The wage pays these one at a time.
@@ -1455,7 +1526,7 @@ func get_gate_left() -> int:
 # hires later lit. Pay is WAGE_COST coins from the yard. Nothing is rolled.
 # The gate total and the hire total still count these.
 func get_paid() -> int:
-	return _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon)
+	return _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion)
 
 
 # Hires who were paid and have not been posted. The relief posts these one at a time.
@@ -1467,7 +1538,7 @@ func get_wage_left() -> int:
 # on a watch and hires later lit by a lamp. Nothing is rolled. The paid
 # total and the hire total still count these. Posting spends no coins.
 func get_posted() -> int:
-	return _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon)
+	return _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion)
 
 
 # Hires who were posted and have not been stood. The watch stands these one at a time.
@@ -1479,7 +1550,7 @@ func get_relief_left() -> int:
 # lamp. Nothing is rolled. The posted total and the hire total still count
 # these. Standing spends no coins and does not change the posted count.
 func get_stood() -> int:
-	return _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon)
+	return _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion)
 
 
 # Hires who were stood and have not been lit. The lamp lights these one at a time.
@@ -1492,7 +1563,7 @@ func get_watch_left() -> int:
 # and the hire total still count these. Lighting spends no coins and does not
 # change the stood count or the posted count.
 func get_lit() -> int:
-	return _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon)
+	return _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion)
 
 
 # Hires who were lit and have not been rung. The bell rings these one at a time.
@@ -1505,7 +1576,7 @@ func get_lamp_left() -> int:
 # Ringing spends no coins and does not change the lit count, the stood count,
 # or the posted count.
 func get_rung() -> int:
-	return _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon)
+	return _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion)
 
 
 # Hires who were rung and have not been sounded. The horn sounds these one at a time.
@@ -1519,7 +1590,7 @@ func get_bell_left() -> int:
 # does not change the rung count, the lit count, the stood count, or the
 # posted count.
 func get_sounded() -> int:
-	return _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon)
+	return _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion)
 
 
 # Hires who were sounded and have not been raised. The flag raises these one at a time.
@@ -1533,7 +1604,7 @@ func get_horn_left() -> int:
 # the rung count, the lit count, the stood count, or the posted count.
 # The raised total still counts a hire who was later hoisted.
 func get_raised() -> int:
-	return _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon)
+	return _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion)
 
 
 # Hires who were raised and have not been hoisted. The banner hoists these one at a time.
@@ -1547,7 +1618,7 @@ func get_flag_left() -> int:
 # the sounded count, the rung count, the lit count, the stood count, or the
 # posted count. The hoisted total still counts a hire who was later flown.
 func get_hoisted() -> int:
-	return _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon)
+	return _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion)
 
 
 # Hires who were hoisted and have not been flown. The pennant flies these one at a time.
@@ -1562,7 +1633,7 @@ func get_banner_left() -> int:
 # count, or the posted count. The flown total still counts a hire who was later
 # carried.
 func get_flown() -> int:
-	return _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon)
+	return _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion)
 
 
 # Hires who were flown and have not been carried. The standard carries these one at a time.
@@ -1577,7 +1648,7 @@ func get_pennant_left() -> int:
 # lit count, the stood count, or the posted count. The carried total still
 # counts a hire who was later shown.
 func get_carried() -> int:
-	return _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon)
+	return _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion)
 
 
 # Hires who were carried and have not been shown. The jack shows these one at a time.
@@ -1593,7 +1664,7 @@ func get_standard_left() -> int:
 # count, the lit count, the stood count, or the posted count. The shown total
 # still counts a hire who was later broken, struck, or dipped.
 func get_shown() -> int:
-	return _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon)
+	return _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion)
 
 
 # Hires who were shown and have not been broken. The ensign breaks these one at a time.
@@ -1609,7 +1680,7 @@ func get_jack_left() -> int:
 # the stood count, or the posted count. The broken total still counts a hire
 # who was later struck or dipped.
 func get_broken() -> int:
-	return _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon)
+	return _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion)
 
 
 # Hires who were broken and have not been struck. The burgee strikes these one at a time.
@@ -1625,7 +1696,7 @@ func get_ensign_left() -> int:
 # the rung count, the lit count, the stood count, or the posted count. The
 # struck total still counts a hire who was later dipped or saluted.
 func get_struck() -> int:
-	return _sum(_burgee) + _sum(_cornet) + _sum(_guidon)
+	return _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion)
 
 
 # Hires who were struck and have not been dipped. The cornet dips these one at a time.
@@ -1641,7 +1712,7 @@ func get_burgee_left() -> int:
 # count, the stood count, or the posted count. The dipped total still counts
 # a hire who was later saluted.
 func get_dipped() -> int:
-	return _sum(_cornet) + _sum(_guidon)
+	return _sum(_cornet) + _sum(_guidon) + _sum(_fanion)
 
 
 # Hires who were dipped and have not been saluted. The guidon salutes these one at a time.
@@ -1649,14 +1720,30 @@ func get_cornet_left() -> int:
 	return _sum(_cornet)
 
 
-# Hires saluted on a guidon, at most GUIDON_CAP. Nothing is rolled. The dipped
-# total and the hire total still count these. Saluting spends no coins and does
-# not change the dipped count, the struck count, the broken count, the shown
-# count, the carried count, the flown count, the hoisted count, the raised
-# count, the sounded count, the rung count, the lit count, the stood count, or
-# the posted count.
+# Hires saluted on a guidon, at most GUIDON_CAP, including hires later presented
+# on a fanion. Nothing is rolled. The dipped total and the hire total still
+# count these. Saluting spends no coins and does not change the dipped count,
+# the struck count, the broken count, the shown count, the carried count, the
+# flown count, the hoisted count, the raised count, the sounded count, the rung
+# count, the lit count, the stood count, or the posted count. The saluted total
+# still counts a hire who was later presented.
 func get_saluted() -> int:
+	return _sum(_guidon) + _sum(_fanion)
+
+
+# Hires who were saluted and have not been presented. The fanion presents these one at a time.
+func get_guidon_left() -> int:
 	return _sum(_guidon)
+
+
+# Hires presented on a fanion, at most FANION_CAP. Nothing is rolled. The saluted
+# total and the hire total still count these. Presenting spends no coins and does
+# not change the saluted count, the dipped count, the struck count, the broken
+# count, the shown count, the carried count, the flown count, the hoisted count,
+# the raised count, the sounded count, the rung count, the lit count, the stood
+# count, or the posted count.
+func get_presented() -> int:
+	return _sum(_fanion)
 
 
 func _hired_coins() -> int:
@@ -1741,6 +1828,8 @@ func get_ticks_until_rain() -> int:
 		horizon = RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK
 	elif _phase == GUIDONING:
 		horizon = RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK
+	elif _phase == FANIONING:
+		horizon = RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK + FANION_TICK
 	return maxi(horizon - _tick_index, 0)
 
 
@@ -1780,6 +1869,7 @@ func get_cell_salt(x: int, y: int) -> Dictionary:
 		"burgee": _amount(_burgee, cell),
 		"cornet": _amount(_cornet, cell),
 		"guidon": _amount(_guidon, cell),
+		"fanion": _amount(_fanion, cell),
 	}
 
 
@@ -1852,6 +1942,8 @@ func rules_api() -> PackedStringArray:
 		"get_dipped",
 		"get_cornet_left",
 		"get_saluted",
+		"get_guidon_left",
+		"get_presented",
 		"get_bank_left",
 		"get_population",
 		"get_max_population",
@@ -1920,12 +2012,13 @@ func _walkable(x: int, y: int) -> bool:
 	# standard beat, a jack stays shut until the jack beat, an ensign
 	# stays shut until the ensign beat, a burgee stays shut until the
 	# burgee beat, a cornet stays shut until the
-	# cornet beat, and a guidon stays shut until the
-	# guidon beat, so none of
+	# cornet beat, a guidon stays shut until the
+	# guidon beat, and a fanion stays shut until the
+	# fanion beat, so none of
 	# them can shortcut an earlier haul. Each stays
 	# open afterward so workers can walk the coins, the hires, the crew, the
 	# pay, the posting, the standing, the lighting, the ringing, the sounding,
-	# the raising, the hoisting, the flying, the carrying, the showing, the breaking, the striking, the dipping, and then the saluting forward.
+	# the raising, the hoisting, the flying, the carrying, the showing, the breaking, the striking, the dipping, the saluting, and then the presenting forward.
 	# Phase numbers increase in that order, so a mark is open from its own beat on.
 	if paint == CRIB and _phase < CART:
 		return false
@@ -1970,6 +2063,8 @@ func _walkable(x: int, y: int) -> bool:
 	if paint == CORNET and _phase < CORNETING:
 		return false
 	if paint == GUIDON and _phase < GUIDONING:
+		return false
+	if paint == FANION and _phase < FANIONING:
 		return false
 	return true
 
@@ -2164,6 +2259,13 @@ func _flows() -> Dictionary:
 			JOB_GATHER: saluting,
 			JOB_STACK: saluting,
 			JOB_COVER: saluting,
+		}
+	if _phase == FANIONING:
+		var presenting := _build_flow(_fanion_goals())
+		return {
+			JOB_GATHER: presenting,
+			JOB_STACK: presenting,
+			JOB_COVER: presenting,
 		}
 	return {
 		JOB_GATHER: _build_flow(_gather_goals()),
@@ -2506,6 +2608,21 @@ func _guidon_goals() -> Array:
 	return goals
 
 
+func _fanion_goals() -> Array:
+	var goals: Array = []
+	if get_presented() >= FANION_CAP or get_guidon_left() <= 0:
+		return goals
+	for y in range(GRID_NORTH, GRID_H):
+		for x in GRID_W:
+			var cell := Vector2i(x, y)
+			if _paint_at(cell) != FANION:
+				continue
+			if _amount(_fanion, cell) >= FANION_CAP:
+				continue
+			goals.append(cell)
+	return goals
+
+
 func _lamp_goals() -> Array:
 	var goals: Array = []
 	if get_lit() >= LAMP_CAP or get_watch_left() <= 0:
@@ -2667,6 +2784,9 @@ func _work(worker: Worker) -> void:
 		return
 	if _phase == GUIDONING:
 		_salute_guidon(worker)
+		return
+	if _phase == FANIONING:
+		_present_fanion(worker)
 		return
 	var cell := Vector2i(worker.x, worker.y)
 	if worker.job == JOB_GATHER:
@@ -3018,6 +3138,26 @@ func _hoist_banner(worker: Worker) -> void:
 			return
 
 
+func _present_fanion(worker: Worker) -> void:
+	var cell := Vector2i(worker.x, worker.y)
+	if _paint_at(cell) != FANION:
+		return
+	if get_presented() >= FANION_CAP:
+		return
+	var held := _amount(_fanion, cell)
+	if held >= FANION_CAP:
+		return
+	for y in range(GRID_NORTH, GRID_H):
+		for x in GRID_W:
+			var src := Vector2i(x, y)
+			var amount := _amount(_guidon, src)
+			if amount <= 0:
+				continue
+			_put(_guidon, src, amount - 1)
+			_put(_fanion, cell, held + 1)
+			return
+
+
 func _salute_guidon(worker: Worker) -> void:
 	var cell := Vector2i(worker.x, worker.y)
 	if _paint_at(cell) != GUIDON:
@@ -3339,6 +3479,12 @@ func _open_guidon() -> void:
 	_phase = GUIDONING
 
 
+func _open_fanion() -> void:
+	if _phase != GUIDONING or _rain_done:
+		return
+	_phase = FANIONING
+
+
 func _finish() -> void:
 	if _rain_done:
 		return
@@ -3433,4 +3579,6 @@ func _make_summary() -> String:
 		message += " Dipped %d on the cornet. Left %d at the burgee." % [get_dipped(), get_burgee_left()]
 	if get_saluted() > 0:
 		message += " Saluted %d on the guidon. Left %d at the cornet." % [get_saluted(), get_cornet_left()]
+	if get_presented() > 0:
+		message += " Presented %d on the fanion. Left %d at the guidon." % [get_presented(), get_guidon_left()]
 	return message
