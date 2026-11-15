@@ -18,9 +18,12 @@ func _init() -> void:
 	test_traveler_rules()
 	test_late_shift_rules()
 	test_late_shift_opens()
+	test_closing_bell_rules()
+	test_closing_bell_opens()
 	test_reward_flow_and_restart()
 	test_policy_clears_act()
 	test_policy_clears_late_shift()
+	test_policy_clears_closing_bell()
 	if failures.is_empty():
 		print("ALL TESTS PASSED")
 		quit(0)
@@ -426,3 +429,253 @@ func test_policy_clears_late_shift() -> void:
 	check(state.phase == "victory", "late shift ends in victory")
 	check(state.shift == Rules.SHIFT_LATE, "the clear stayed on the late shift")
 	print("late shift finished in %d actions, %d ms" % [steps, elapsed])
+
+
+func test_closing_bell_rules() -> void:
+	var moss = Rules.scripted_encounter(21, 0, ["duty"], 3, Rules.SHIFT_CLOSING)
+	check(String(Rules.traveler(moss)["name"]) == "Moss Quen", "the closing bell's first form is Moss Quen")
+	check(String(Rules.traveler(moss)["form_name"]) == "Folded Band", "Moss brings the Folded Band")
+	check(String(Rules.traveler(moss)["rule_text"]) == "Refuses stamps on the middle row.", "Moss's form states the middle-row rule")
+	check(Rules.can_play(moss, 0, 1, 1), "rules accept a middle-row duty as a placement")
+	check(Rules.preview_progress(moss, "duty", 1, 1) == 0, "preview rejects a middle-row duty for Moss")
+	check(Rules.preview_progress(moss, "duty", 2, 1) == 4, "preview accepts Moss's bottom row")
+	check(Rules.preview_progress(moss, "duty", 0, 1) == 2, "preview still reads Moss's top row")
+
+	var refused = Rules.scripted_encounter(21, 0, ["duty"], 1, Rules.SHIFT_CLOSING)
+	check(play_named(refused, "duty", 1, 1), "Moss receives a middle-row duty, the wrong stamp")
+	check(refused.last_progress_gained == 0, "Moss refuses the middle row (%d)" % refused.last_progress_gained)
+	check(refused.turn_number == 2 and refused.progress == 0, "the refused duty resolved and scored nothing")
+	check(refused.last_patience_loss == 1, "a refused middle-row stamp still spends the turn")
+
+	var accepted = Rules.scripted_encounter(21, 0, ["duty"], 1, Rules.SHIFT_CLOSING)
+	check(play_named(accepted, "duty", 2, 1), "Moss receives a bottom-row duty, the correct stamp")
+	check(accepted.last_progress_gained == 4, "Moss counts that duty (%d)" % accepted.last_progress_gained)
+
+	var top = Rules.scripted_encounter(21, 0, ["duty"], 1, Rules.SHIFT_CLOSING)
+	check(play_named(top, "duty", 0, 1), "Moss receives a top-row duty")
+	check(top.last_progress_gained == 2, "Moss does not refuse the top row (%d)" % top.last_progress_gained)
+
+	var cleared = Rules.scripted_encounter(21, 0, ["exemption", "duty"], 2, Rules.SHIFT_CLOSING)
+	check(play_named(cleared, "exemption", 1, 0), "exemption is placed on Moss's middle row")
+	check(cleared.phase == "play", "Moss's exemption leaves the turn open")
+	check(play_named(cleared, "duty", 1, 2), "a middle-row duty follows the exemption")
+	check(cleared.last_progress_gained == 3, "exemption lets Moss's middle row count (%d)" % cleared.last_progress_gained)
+
+	var kel_one = Rules.scripted_encounter(22, 1, ["entry_mark"], 1, Rules.SHIFT_CLOSING)
+	check(String(Rules.traveler(kel_one)["name"]) == "Kel Breck", "the closing bell's second form is Kel Breck")
+	check(String(Rules.traveler(kel_one)["form_name"]) == "Twin Margin", "Kel brings the Twin Margin")
+	check(String(Rules.traveler(kel_one)["rule_text"]) == "Yields if column 1 and column 3 are both stamped.", "Kel's form states the margin rule")
+	check(play_named(kel_one, "entry_mark", 1, 0), "Kel receives one stamp in column 1, a wrong stamp for the yield")
+	check(kel_one.last_progress_gained == 2, "one margin does not make Kel yield (%d)" % kel_one.last_progress_gained)
+
+	var kel_other = Rules.scripted_encounter(22, 1, ["entry_mark"], 1, Rules.SHIFT_CLOSING)
+	check(play_named(kel_other, "entry_mark", 1, 2), "Kel receives one stamp in column 3")
+	check(kel_other.last_progress_gained == 2, "column 3 alone does not make Kel yield (%d)" % kel_other.last_progress_gained)
+
+	var kel_center = Rules.scripted_encounter(22, 1, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_CLOSING)
+	check(play_named(kel_center, "entry_mark", 0, 1), "first stamp in Kel's column 2")
+	check(play_named(kel_center, "entry_mark", 2, 1), "second stamp in Kel's column 2")
+	check(kel_center.last_progress_gained == 4, "column 2 does not satisfy either margin (%d)" % kel_center.last_progress_gained)
+
+	var kel_same = Rules.scripted_encounter(22, 1, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_CLOSING)
+	check(play_named(kel_same, "entry_mark", 0, 0), "first stamp of a single margin")
+	check(play_named(kel_same, "entry_mark", 2, 0), "second stamp of that same margin")
+	check(kel_same.last_progress_gained == 4, "two stamps in column 1 still leave Kel short (%d)" % kel_same.last_progress_gained)
+
+	var kel_yield = Rules.scripted_encounter(22, 1, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_CLOSING)
+	check(play_named(kel_yield, "entry_mark", 0, 0), "Kel receives the correct stamp in column 1")
+	check(play_named(kel_yield, "entry_mark", 2, 2), "Kel receives the correct stamp in column 3")
+	check(kel_yield.last_progress_gained == 8, "Kel yields +4 when both margins are stamped (%d)" % kel_yield.last_progress_gained)
+
+	var kel_band = Rules.scripted_encounter(22, 1, ["exemption", "entry_mark", "entry_mark"], 3, Rules.SHIFT_CLOSING)
+	check(play_named(kel_band, "exemption", 1, 1), "exemption sits off Kel's top row")
+	check(play_named(kel_band, "entry_mark", 1, 0), "column 1 beside that exemption")
+	check(play_named(kel_band, "entry_mark", 1, 2), "column 3 beside that exemption")
+	check(kel_band.last_progress_gained == 9, "both margins still yield when exemption is not on the top row (%d)" % kel_band.last_progress_gained)
+
+	var kel_muted = Rules.scripted_encounter(22, 1, ["exemption", "entry_mark", "entry_mark"], 4, Rules.SHIFT_CLOSING)
+	check(play_named(kel_muted, "exemption", 0, 1), "exemption is placed on Kel's top row")
+	check(kel_muted.phase == "play", "Kel's exemption leaves the turn open")
+	check(play_named(kel_muted, "entry_mark", 1, 0), "column 1 under a cancelled yield")
+	check(play_named(kel_muted, "entry_mark", 1, 2), "column 3 under a cancelled yield")
+	check(kel_muted.last_progress_gained == 5, "exemption cancels Kel's yield (%d)" % kel_muted.last_progress_gained)
+
+	var tansy_empty = Rules.scripted_encounter(23, 2, ["entry_mark"], 1, Rules.SHIFT_CLOSING)
+	check(String(Rules.traveler(tansy_empty)["name"]) == "Tansy Pell", "the closing bell's third form is Tansy Pell")
+	check(String(Rules.traveler(tansy_empty)["form_name"]) == "Center Void", "Tansy brings the Center Void")
+	check(String(Rules.traveler(tansy_empty)["rule_text"]) == "Patience drops twice when the center cell is empty.", "Tansy's form states the center rule")
+	check(play_named(tansy_empty, "entry_mark", 2, 0), "Tansy receives a stamp outside the center, the wrong stamp")
+	check(tansy_empty.last_progress_gained == 2, "the outside stamp still scores for Tansy")
+	check(tansy_empty.last_patience_loss == 2, "an empty center drops Tansy's patience by 2 (%d)" % tansy_empty.last_patience_loss)
+	check(tansy_empty.patience == 3, "Tansy's patience is 3 after the double drop")
+
+	var tansy_center = Rules.scripted_encounter(23, 2, ["entry_mark"], 1, Rules.SHIFT_CLOSING)
+	check(play_named(tansy_center, "entry_mark", 1, 1), "Tansy receives a center stamp, the correct stamp")
+	check(tansy_center.last_progress_gained == 2, "the center stamp scores for Tansy")
+	check(tansy_center.last_patience_loss == 1, "the center keeps Tansy's drop at 1")
+
+	var tansy_held = Rules.scripted_encounter(23, 2, ["hold"], 1, Rules.SHIFT_CLOSING)
+	check(play_named(tansy_held, "hold", 0, 0), "hold in Tansy's column")
+	check(tansy_held.last_patience_loss == 0 and tansy_held.patience == 5, "hold delays Tansy before the double drop")
+
+	var tansy_missed = Rules.scripted_encounter(23, 2, ["hold"], 1, Rules.SHIFT_CLOSING)
+	check(play_named(tansy_missed, "hold", 0, 2), "hold outside Tansy's column")
+	check(tansy_missed.last_patience_loss == 2, "hold in another column does not spare Tansy")
+
+	var tansy_spared = Rules.scripted_encounter(23, 2, ["exemption"], 1, Rules.SHIFT_CLOSING)
+	check(play_named(tansy_spared, "exemption", 2, 1), "exemption on Tansy's bottom row, center still empty")
+	check(tansy_spared.last_patience_loss == 1, "exemption keeps Tansy's drop at 1")
+	check(tansy_spared.last_progress_gained == 1, "the exemption itself scores 1")
+
+	var lumen = Rules.scripted_encounter(24, 3, ["entry_mark", "duty"], 3, Rules.SHIFT_CLOSING)
+	check(String(Rules.traveler(lumen)["name"]) == "Lumen Peck", "the closing bell's fourth form is Lumen Peck")
+	check(String(Rules.traveler(lumen)["form_name"]) == "Overprint Slip", "Lumen brings the Overprint Slip")
+	check(String(Rules.traveler(lumen)["rule_text"]) == "Ignores a stamp with a stamp directly above it.", "Lumen's form states the covered-stamp rule")
+	check(play_named(lumen, "entry_mark", 0, 1), "a stamp is placed above the cell Lumen will judge")
+	check(lumen.phase == "play", "the covering stamp leaves the turn open")
+	check(Rules.can_play(lumen, 0, 1, 1), "rules accept a covered duty as a placement")
+	check(Rules.preview_progress(lumen, "duty", 1, 1) == 0, "preview rejects a duty with a stamp directly above")
+	check(Rules.preview_progress(lumen, "duty", 1, 2) == 2, "preview accepts a duty with an empty cell above")
+	check(Rules.preview_progress(lumen, "duty", 2, 1) == 4, "preview accepts a bottom-row duty when the middle cell is empty")
+
+	var covered = Rules.scripted_encounter(24, 3, ["entry_mark", "duty"], 2, Rules.SHIFT_CLOSING)
+	check(play_named(covered, "entry_mark", 0, 1), "Lumen's covering stamp is on the top row")
+	check(play_named(covered, "duty", 1, 1), "Lumen receives a covered duty, the wrong stamp")
+	check(covered.last_progress_gained == 2, "Lumen ignores the covered duty (%d)" % covered.last_progress_gained)
+
+	var open_bottom = Rules.scripted_encounter(24, 3, ["duty"], 1, Rules.SHIFT_CLOSING)
+	check(play_named(open_bottom, "duty", 2, 1), "Lumen receives an uncovered bottom-row duty, the correct stamp")
+	check(open_bottom.last_progress_gained == 4, "Lumen counts a duty with nothing directly above (%d)" % open_bottom.last_progress_gained)
+
+	var gap = Rules.scripted_encounter(24, 3, ["entry_mark", "duty"], 2, Rules.SHIFT_CLOSING)
+	check(play_named(gap, "entry_mark", 0, 0), "the top of the column is filled")
+	check(play_named(gap, "duty", 2, 0), "the bottom stamp has an empty cell directly above")
+	check(gap.last_progress_gained == 6, "Lumen counts a stamp when only the top of the column is filled (%d)" % gap.last_progress_gained)
+
+	var stacked = Rules.scripted_encounter(24, 3, ["entry_mark", "duty"], 2, Rules.SHIFT_CLOSING)
+	check(play_named(stacked, "entry_mark", 1, 0), "a middle-row stamp covers the cell below")
+	check(play_named(stacked, "duty", 2, 0), "the bottom duty sits directly under that stamp")
+	check(stacked.last_progress_gained == 2, "Lumen ignores a stamp directly under another (%d)" % stacked.last_progress_gained)
+
+	var freed = Rules.scripted_encounter(24, 3, ["entry_mark", "duty", "exemption"], 3, Rules.SHIFT_CLOSING)
+	check(play_named(freed, "entry_mark", 1, 0), "a stamp covers the bottom of column 1")
+	check(play_named(freed, "exemption", 2, 1), "exemption is placed on Lumen's bottom row")
+	check(freed.phase == "play", "Lumen's exemption leaves the turn open")
+	check(play_named(freed, "duty", 2, 0), "the covered duty follows the exemption")
+	check(freed.last_progress_gained == 7, "exemption lets Lumen's covered stamp count (%d)" % freed.last_progress_gained)
+
+	var covered_reply = Rules.scripted_encounter(24, 3, ["entry_mark", "reply"], 2, Rules.SHIFT_CLOSING)
+	check(play_named(covered_reply, "entry_mark", 0, 1), "entry mark covers the reply")
+	check(play_named(covered_reply, "reply", 1, 1), "reply is placed directly under that stamp")
+	check(covered_reply.last_chain_count == 1, "the ignored reply still retriggers")
+	check(covered_reply.last_progress_gained == 4, "the covered reply scores 0 and the retrigger still pays (%d)" % covered_reply.last_progress_gained)
+
+	var open_reply = Rules.scripted_encounter(24, 3, ["reply", "entry_mark"], 2, Rules.SHIFT_CLOSING)
+	check(play_named(open_reply, "reply", 0, 1), "reply is placed on the top row")
+	check(play_named(open_reply, "entry_mark", 1, 2), "entry mark is placed beside the column under that reply")
+	check(open_reply.last_chain_count == 0, "a top-row reply has no stamp above to retrigger")
+	check(open_reply.last_progress_gained == 3, "Lumen counts both uncovered stamps (%d)" % open_reply.last_progress_gained)
+
+	var covered_hold = Rules.scripted_encounter(24, 3, ["entry_mark", "hold"], 2, Rules.SHIFT_CLOSING)
+	check(play_named(covered_hold, "entry_mark", 0, 2), "a stamp covers Lumen's lane")
+	check(play_named(covered_hold, "hold", 1, 2), "hold is placed in that lane, under the stamp")
+	check(covered_hold.last_progress_gained == 2, "the covered hold grants no progress")
+	check(covered_hold.last_patience_loss == 0 and covered_hold.patience == 5, "a covered hold still delays Lumen")
+
+	var bram = Rules.scripted_encounter(5, 1, ["duty"], 1)
+	check(play_named(bram, "duty", 1, 0), "Bram still receives a middle-row duty")
+	check(bram.last_progress_gained == 2, "Act 1 does not refuse the middle row (%d)" % bram.last_progress_gained)
+	var nell = Rules.scripted_encounter(8, 0, ["duty"], 1, Rules.SHIFT_LATE)
+	check(play_named(nell, "duty", 1, 1), "Nell still receives a middle-row duty outside column 1")
+	check(nell.last_progress_gained == 2, "the late shift does not refuse the middle row (%d)" % nell.last_progress_gained)
+
+
+func test_closing_bell_opens() -> void:
+	check(Rules.CLOSING_BELL.size() == 4, "the closing bell has four travelers")
+	check(Rules.TRAVELERS.size() == 4 and String(Rules.TRAVELERS[0]["name"]) == "Ada Quill", "Act 1 still begins with Ada Quill")
+	check(Rules.LATE_SHIFT.size() == 4 and String(Rules.LATE_SHIFT[0]["name"]) == "Nell Parr", "the late shift still begins with Nell Parr")
+	check(String(Rules.LATE_SHIFT[3]["name"]) == "Rue Calder", "the late shift still ends with Rue Calder")
+	var closing = Rules.new_run(77, Rules.SHIFT_CLOSING)
+	check(closing.shift == Rules.SHIFT_CLOSING, "the closing bell is a separate night")
+	check(String(Rules.traveler(closing)["name"]) == "Moss Quen", "the closing bell begins with Moss Quen")
+	check(closing.hand.size() == Rules.HAND_SIZE, "the closing bell draws 5")
+	check(closing.ink == Rules.BASE_INK, "the closing bell starts at 3 ink")
+	check(closing.library.size() == Rules.STARTING_DECK.size(), "the closing bell deals the starting deck")
+	check(closing.relic_id == "", "an earlier night's relic does not carry")
+	check(closing.phase == "play", "the closing bell opens in play")
+	var dealt: Array = []
+	for iid in closing.hand:
+		dealt.append(Rules.card_id_of(closing, int(iid)))
+	var before = closing.library.size()
+	closing.progress = 4
+	closing.patience = 1
+	Rules.restart_encounter(closing)
+	check(closing.shift == Rules.SHIFT_CLOSING and closing.traveler_index == 0, "restart encounter stays on the closing bell")
+	check(closing.progress == 0 and closing.patience == int(Rules.CLOSING_BELL[0]["patience"]), "restart encounter resets Moss")
+	check(closing.library.size() == before and closing.hand.size() == 5 and closing.phase == "play", "restart keeps the closing-bell deck and deals a hand")
+	var redealt: Array = []
+	for iid in closing.hand:
+		redealt.append(Rules.card_id_of(closing, int(iid)))
+	check(redealt == dealt, "restart deals Moss the same hand")
+
+	var packed = load("res://game/main.tscn")
+	var desk = packed.instantiate()
+	root.add_child(desk)
+	if desk.state == null:
+		desk._ready()
+	check(desk.state.shift == Rules.SHIFT_FIRST, "the desk still opens on Act 1")
+	check(desk.closing_button.text == "Closing bell", "the desk offers the closing bell")
+	check(desk.shift_button.text == "Late shift", "the desk still offers the late shift")
+	desk.closing_button.pressed.emit()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_CLOSING, "the desk can open the closing bell")
+	check(String(Rules.traveler(desk.state)["name"]) == "Moss Quen", "the open desk shows Moss")
+	check(String(desk.desk_label.text).begins_with("Closing bell"), "the desk title follows the closing bell")
+	check(desk.meta_label.text.contains("Folded Band"), "the desk shows Moss's form")
+	check(desk.closing_button.text == "First bell", "the closing bell can return to the first bell")
+	check(desk.shift_button.text == "Late shift", "the late shift stays available from the closing bell")
+	desk._restart_act()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_CLOSING and String(Rules.traveler(desk.state)["name"]) == "Moss Quen", "restart act replays the closing bell")
+	desk.closing_button.pressed.emit()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_FIRST and String(Rules.traveler(desk.state)["name"]) == "Ada Quill", "the closing bell returns to Ada")
+	desk._toggle_shift()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_LATE and String(Rules.traveler(desk.state)["name"]) == "Nell Parr", "the late shift still opens from the first bell")
+	check(desk.closing_button.text == "Closing bell", "the late shift offers the closing bell")
+	desk._begin_closing_bell()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_CLOSING and String(Rules.traveler(desk.state)["name"]) == "Moss Quen", "the late shift can open the closing bell")
+	desk._toggle_shift()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_LATE and String(Rules.traveler(desk.state)["name"]) == "Nell Parr", "the closing bell can open the late shift")
+	desk._begin_first_bell()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_FIRST and String(Rules.traveler(desk.state)["name"]) == "Ada Quill", "first bell still returns to Ada")
+	root.remove_child(desk)
+	desk.free()
+
+
+func test_policy_clears_closing_bell() -> void:
+	var started = Time.get_ticks_msec()
+	var state = Rules.new_run(12345, Rules.SHIFT_CLOSING)
+	var steps = 0
+	var seen = 0
+	while state.phase != "victory":
+		steps += 1
+		if steps > 500 or state.phase == "defeat":
+			check(false, "policy lost or stalled on the closing bell, seed 12345: " + Rules.debug_summary(state))
+			return
+		var action = Policy.choose(state)
+		if not Rules.apply_action(state, action):
+			check(false, "closing-bell policy action was rejected: %s / %s" % [str(action), Rules.debug_summary(state)])
+			return
+		if state.encounters_cleared != seen:
+			seen = state.encounters_cleared
+			print("cleared closing encounter %d after %d actions" % [seen, steps])
+	var elapsed = Time.get_ticks_msec() - started
+	check(state.encounters_cleared == 4, "policy cleared all 4 closing-bell encounters on seed 12345")
+	check(state.phase == "victory", "closing bell ends in victory")
+	check(state.shift == Rules.SHIFT_CLOSING, "the clear stayed on the closing bell")
+	print("closing bell finished in %d actions, %d ms" % [steps, elapsed])
