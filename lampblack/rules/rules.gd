@@ -30,7 +30,8 @@ extends RefCounted
 ## not stop the flood and is never marked lit, so tiles past it still light. A sill stops
 ## the flood. The sill itself is lit, and tiles past it stay dark. A pane does not stop
 ## the flood and is never marked lit, so tiles past it still light. The pane itself is
-## never lit and is never dark floor, because nobody can stand on it.
+## never lit and is never dark floor, because nobody can stand on it. A curtain does not
+## stop the flood. The curtain itself is lit, and tiles past it still light.
 ##
 ## Movement
 ## Dark floor and a dark exit may be entered. A gap may be entered only while it is lit.
@@ -46,6 +47,8 @@ extends RefCounted
 ## refused, the same as other lit floor, until the lamp covering it is snuffed. Stepping
 ## onto a lit sill a guard is watching is a loss, the same as any lit floor.
 ## A pane is not floor. You cannot enter it. A guard cannot enter it.
+## A curtain is floor. A lamp lights it. An unwatched lit curtain is refused, the same
+## as other lit floor. Stepping onto a lit curtain a guard is watching is a loss.
 ##
 ## Plates
 ## The turn the player steps onto a plate calls the nearest guard, by the same rule as a
@@ -63,7 +66,8 @@ extends RefCounted
 ## still calls only the nearest guard. A plate still calls only the nearest guard.
 ## Lighting a lamp still calls nobody. A bell pulls a guard off an existing hold. A guard
 ## with no floor path to the bell is not called and keeps the rail. A grate is not a
-## floor path. A sill is not a floor path. A pane is not a floor path.
+## floor path. A sill is not a floor path. A pane is not a floor path. A curtain is a
+## floor path.
 ##
 ## Grates
 ## A grate is floor you may enter. It is never lit, even when a lamp's diamond covers
@@ -99,11 +103,30 @@ extends RefCounted
 ## through, and blocks sight because it is dark. A pane lets both the light and the
 ## sight through, and neither you nor a guard can step on it.
 ##
+## Curtains
+## A curtain is floor you may enter. A lamp lights it. An unwatched lit curtain is
+## refused, the same as unwatched lit floor. Stepping onto a curtain a guard is watching
+## is a loss. Light does not stop at a curtain: tiles past it still light. Vision does
+## stop at a curtain, even when the curtain is lit and the tile past it is lit. A guard
+## does not see through it. The lit curtain tile itself can still be watched. A guard
+## can enter a curtain. Pathing treats it as open floor, so a plate path and a bell path
+## can go through it, and a called guard can walk through it. A curtain calls nobody.
+## It is never a hold. A plate still calls only the nearest guard. A bell still calls
+## every guard who has a floor path, and a curtain counts as that path. A curtain is not
+## a wall, a sill, a grate, a pane, a plate, or a bell. A wall blocks the light and the
+## sight, and nobody can enter it. A sill is floor, is lit, stops the light, stops the
+## sight, and a guard cannot enter it. A grate stays dark, lets the light through,
+## blocks sight because it is dark, and a guard cannot enter it. A pane lets the light
+## and the sight through, and neither you nor a guard can step on it. A curtain is lit,
+## lets the light through, stops the sight, and a guard can step on it.
+##
 ## Vision
 ## Each guard watches a Manhattan diamond of their vision radius, and only on tiles that
 ## are currently lit. Walls and dark tiles block vision. A grate stays dark, so it blocks
 ## vision the same way any dark floor does. A sill blocks vision even when it is lit, so
-## a guard cannot see through it; the lit sill itself can still be watched. A pane does
+## a guard cannot see through it; the lit sill itself can still be watched. A curtain
+## blocks vision even when it is lit and the tile past it is lit, so a guard cannot see
+## through it; the lit curtain itself can still be watched. A pane does
 ## not block vision, even though the pane itself is never lit, so a guard sees lit tiles
 ## beyond it. A guard standing in the dark can still look into an adjacent lit tile. The
 ## guard's own tile is not marked watched; standing on the guard is a separate loss.
@@ -111,8 +134,8 @@ extends RefCounted
 ## Guards
 ## Alerted guards take one step along a shortest 4-neighbor path to the tile they were
 ## called to, a lamp, a plate, or a bell. Neighbors are expanded north, east, south,
-## then west, and that order breaks ties. They may walk on floor, plate, bell, and exit
-## tiles, lit or dark, but not through walls, gaps, grates, sills, or panes. When they step onto that tile
+## then west, and that order breaks ties. They may walk on floor, plate, bell, exit,
+## and curtain tiles, lit or dark, but not through walls, gaps, grates, sills, or panes. When they step onto that tile
 ## they hold there. They do not resume the rail unless a later snuff, plate, or bell calls them.
 ## A guard who is not alert and not holding patrols their rail. The rail is a list of
 ## waypoints. rail_index is the waypoint they are walking toward, and rail_dir is +1 or -1.
@@ -124,7 +147,7 @@ extends RefCounted
 ## every lamp's lit flag, and every guard's position, rail index, rail direction, alert
 ## target, and hold flag.
 
-enum Tile { WALL, FLOOR, GAP, EXIT, PLATE, BELL, GRATE, SILL, PANE }
+enum Tile { WALL, FLOOR, GAP, EXIT, PLATE, BELL, GRATE, SILL, PANE, CURTAIN }
 enum Result { OK, WIN, LOSS, ILLEGAL }
 
 const DIRS := [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]
@@ -171,6 +194,8 @@ static func build(rows: PackedStringArray, lamps: Array, guards: Array) -> Dicti
 					kind = Tile.SILL
 				"A":
 					kind = Tile.PANE
+				"C":
+					kind = Tile.CURTAIN
 				_:
 					push_error("bad tile '%s'" % ch)
 			tiles[y * width + x] = kind
@@ -298,7 +323,8 @@ static func lamp_lights(state: Dictionary, lamp: Dictionary) -> Array:
 		head += 1
 		var cell_kind := tile_at(state, cell.x, cell.y)
 		# A grate stays dark and lets the flood through. A pane does too, and the pane
-		# itself is never lit. A sill is lit, and the flood stops there.
+		# itself is never lit. A sill is lit, and the flood stops there. A curtain is
+		# lit, and the flood does not stop there, so tiles past it still light.
 		if cell_kind != Tile.GRATE and cell_kind != Tile.PANE:
 			lit.append(cell)
 		if cell_kind == Tile.SILL:
@@ -343,9 +369,11 @@ static func watched_tiles(state: Dictionary, lit: Dictionary = {}) -> Dictionary
 			if dist > 0 and lights.has(cell):
 				watched[cell] = true
 			# A sill can be watched, but vision does not pass through it.
-			# A pane is never lit, and vision does pass through it.
+			# A curtain can be watched, but vision does not pass through it, even when
+			# the curtain is lit and the tile past it is lit. A guard standing on a
+			# curtain can still look out from it. A pane is never lit, and vision passes.
 			var kind := tile_at(state, cell.x, cell.y)
-			if kind == Tile.SILL:
+			if kind == Tile.SILL or (kind == Tile.CURTAIN and dist > 0):
 				continue
 			if dist >= int(guard["vision"]):
 				continue
@@ -393,7 +421,7 @@ static func loss_reason(state: Dictionary, lit: Dictionary = {}) -> String:
 
 static func guard_walkable(state: Dictionary, x: int, y: int) -> bool:
 	var kind := tile_at(state, x, y)
-	return kind == Tile.FLOOR or kind == Tile.EXIT or kind == Tile.PLATE or kind == Tile.BELL
+	return kind == Tile.FLOOR or kind == Tile.EXIT or kind == Tile.PLATE or kind == Tile.BELL or kind == Tile.CURTAIN
 
 
 static func bfs_path(state: Dictionary, sx: int, sy: int, gx: int, gy: int) -> Dictionary:
@@ -554,7 +582,7 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 				return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "darkgap")
 		elif dest == Tile.GRATE:
 			pass
-		elif dest == Tile.FLOOR or dest == Tile.EXIT or dest == Tile.PLATE or dest == Tile.BELL or dest == Tile.SILL:
+		elif dest == Tile.FLOOR or dest == Tile.EXIT or dest == Tile.PLATE or dest == Tile.BELL or dest == Tile.SILL or dest == Tile.CURTAIN:
 			if lit.has(Vector2i(nx, ny)):
 				return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "lit")
 		else:
@@ -589,7 +617,7 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 		if absi(int(lamp["x"]) - int(player["x"])) + absi(int(lamp["y"]) - int(player["y"])) != 1:
 			return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "range")
 		var here := tile_at(st, player["x"], player["y"])
-		if here != Tile.FLOOR and here != Tile.EXIT and here != Tile.PLATE and here != Tile.BELL and here != Tile.GRATE and here != Tile.SILL:
+		if here != Tile.FLOOR and here != Tile.EXIT and here != Tile.PLATE and here != Tile.BELL and here != Tile.GRATE and here != Tile.SILL and here != Tile.CURTAIN:
 			return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "range")
 		var was_lit: bool = lamp["lit"]
 		lamp["lit"] = not was_lit

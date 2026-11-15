@@ -1,9 +1,9 @@
 extends RefCounted
 
-## Buildings 1 through 12. Directions: 0 east, 1 south, 2 west, 3 north.
+## Buildings 1 through 13. Directions: 0 east, 1 south, 2 west, 3 north.
 ## `unlocks` is the single new block this puzzle introduces, or "".
 
-const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook", "return", "pause", "chute", "shunt"]
+const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook", "return", "pause", "chute", "shunt", "bias"]
 
 
 static func all() -> Array:
@@ -1674,6 +1674,191 @@ static func all() -> Array:
 				_block("conveyor", 4, 3, 3),
 			]
 		),
+		_puzzle(
+			93, "Side Left", "bias",
+			"The dock is east of the cell north of an eastbound parcel.",
+			"",
+			"The parcel comes in facing east. The bias steps it north and leaves it facing east, so the pause sends it east onto the dock. A shunt aims south into a brick and misses the dock. A hook also steps north, then faces north, and that pause sends it north. A turn faces south. A pause in the bias cell sends it east. A chute facing east sends it east.",
+			4, 3,
+			[
+				_cell(0, 0), _cell(1, 0),
+				_cell(3, 1),
+				_cell(0, 2), _cell(1, 2), _cell(2, 2), _cell(3, 2),
+			],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 3, "y": 0},
+			[{"color": "gray"}],
+			[
+				_block("conveyor", 1, 1, 0),
+				_block("bias", 2, 1, 0),
+				_block("pause", 2, 0, 0),
+			]
+		),
+		_puzzle(
+			94, "Let Left", "",
+			"Step the eastbound parcel aside so blue reaches the dock first.",
+			"",
+			"The bias waits out the arrival tick, then steps the parcel north. It still faces east, so the pause carries it onto the dock after blue. A shunt aims south into a brick. A hook faces north, and that pause misses. A conveyor leaves on the arrival tick and red arrives first. A pause sends the parcel east along its arrival facing.",
+			8, 3,
+			[
+				_cell(0, 0), _cell(1, 0), _cell(5, 0), _cell(6, 0), _cell(7, 0),
+				_cell(5, 1), _cell(6, 1), _cell(7, 1),
+				_cell(0, 2), _cell(1, 2), _cell(2, 2),
+			],
+			[_source(0, 1, 0, ["red"]), _source(7, 2, 2, ["blue"])],
+			{"x": 4, "y": 1},
+			[{"color": "blue"}, {"color": "red"}],
+			[
+				_block("conveyor", 1, 1, 0),
+				_block("bias", 2, 1, 0),
+				_block("conveyor", 3, 1, 0),
+				_block("pause", 2, 0, 0),
+				_block("conveyor", 3, 0, 0),
+				_block("conveyor", 4, 0, 1),
+				_block("conveyor", 6, 2, 2),
+				_block("conveyor", 5, 2, 2),
+				_block("conveyor", 4, 2, 2),
+				_block("conveyor", 3, 2, 3),
+			]
+		),
+		_puzzle(
+			95, "Bias Count", "",
+			"Stamp the parcel 1. The counter is east of the side step.",
+			"",
+			"The bias steps the parcel north and leaves it facing east. The pause uses that facing to reach the counter. The delivery is count 1. A shunt aims south into a brick and misses the counter. A hook reaches the side cell facing north, so the pause misses the counter. A turn faces south. A chute facing east sends the parcel east.",
+			5, 3,
+			[
+				_cell(0, 0), _cell(1, 0),
+				_cell(3, 1), _cell(4, 1),
+				_cell(0, 2), _cell(1, 2), _cell(2, 2), _cell(3, 2), _cell(4, 2),
+			],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 4, "y": 0},
+			[{"count": 1}],
+			[
+				_block("conveyor", 1, 1, 0),
+				_block("bias", 2, 1, 0),
+				_block("pause", 2, 0, 0),
+				_block("counter", 3, 0, 0),
+			]
+		),
+		_puzzle(
+			96, "Clear the Left", "",
+			"Deliver blue, then red.",
+			"",
+			"The bias holds red one tick, then steps it north so blue takes the dock. Red still faces east, and the pause brings red in. A shunt aims south into a brick and misses. A hook steps north but faces north, so the pause misses. A pause in the bias cell sends red east ahead of blue.",
+			8, 4,
+			[
+				_cell(0, 0), _cell(1, 0), _cell(5, 0), _cell(6, 0), _cell(7, 0),
+				_cell(5, 1), _cell(6, 1),
+				_cell(0, 2), _cell(1, 2), _cell(2, 2),
+				_cell(0, 3), _cell(1, 3), _cell(2, 3), _cell(3, 3), _cell(4, 3), _cell(5, 3), _cell(6, 3), _cell(7, 3),
+			],
+			[_source(0, 1, 0, ["red"]), _source(7, 2, 2, ["blue"])],
+			{"x": 4, "y": 1},
+			[{"color": "blue"}, {"color": "red"}],
+			[
+				_block("conveyor", 1, 1, 0),
+				_block("bias", 2, 1, 0),
+				_block("conveyor", 3, 1, 0),
+				_block("pause", 2, 0, 0),
+				_block("conveyor", 3, 0, 0),
+				_block("conveyor", 4, 0, 1),
+				_block("conveyor", 6, 2, 2),
+				_block("conveyor", 5, 2, 2),
+				_block("conveyor", 4, 2, 2),
+				_block("conveyor", 3, 2, 3),
+			]
+		),
+		_puzzle(
+			97, "Two Biases", "",
+			"Deliver red, then blue. One bias has to step each parcel to its own left.",
+			"",
+			"Red arrives facing east and steps north, still facing east. Blue arrives facing west and steps south, still facing west. A shunt steps each parcel to its own right. A chute sends both east. A pause sends each straight along its arrival.",
+			6, 4,
+			[
+				_cell(0, 0), _cell(1, 0),
+				_cell(0, 2), _cell(3, 2),
+				_cell(0, 3),
+			],
+			[_source(0, 1, 0, ["red"]), _source(4, 2, 3, ["blue"])],
+			{"x": 3, "y": 0},
+			[{"color": "red"}, {"color": "blue"}],
+			[
+				_block("conveyor", 1, 1, 0),
+				_block("bias", 2, 1, 0),
+				_block("pause", 2, 0, 0),
+				_block("conveyor", 4, 1, 2),
+				_block("conveyor", 3, 1, 2),
+				_block("pause", 2, 2, 0),
+				_block("conveyor", 1, 2, 1),
+				_block("conveyor", 1, 3, 0),
+				_block("conveyor", 2, 3, 0),
+				_block("conveyor", 3, 3, 0),
+				_block("conveyor", 4, 3, 0),
+				_block("conveyor", 5, 3, 3),
+				_block("conveyor", 5, 2, 3),
+				_block("conveyor", 5, 1, 3),
+				_block("conveyor", 5, 0, 2),
+				_block("conveyor", 4, 0, 2),
+			]
+		),
+		_puzzle(
+			98, "Second Bias", "",
+			"Deliver the parcel yellow, stamped 2.",
+			"",
+			"Loop it through the counter. Paint it yellow on the way back. The bias steps the second pass north and leaves it facing east, so the pause puts it on the dock. A shunt aims south into a brick and misses the dock. A hook reaches the side cell facing north and misses the dock. A turn faces south. A pause never takes the side step.",
+			5, 3,
+			[
+				_cell(0, 0),
+				_cell(4, 1),
+				_cell(0, 2), _cell(1, 2), _cell(2, 2), _cell(3, 2), _cell(4, 2),
+			],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 4, "y": 0},
+			[{"color": "yellow", "count": 2}],
+			[
+				_block("counter", 1, 1, 0),
+				_block("splitter", 2, 1, 3),
+				_block("painter", 2, 0, 2, "yellow"),
+				_block("conveyor", 1, 0, 1),
+				_block("bias", 3, 1, 0),
+				_block("pause", 3, 0, 0),
+			]
+		),
+		_puzzle(
+			99, "Night Bias", "",
+			"Deliver red 1, yellow 2, and blue 3.",
+			"",
+			"Red takes the filter. The bias steps it north and leaves it facing east, so the pause carries it to the counter for stamp 1. Gray takes the long belt and is primed yellow. Blue keeps its color. A shunt steps south and misses. A turn faces south and misses. A pause keeps the east facing and does not step aside. A chute writes its own facing.",
+			6, 5,
+			[
+				_cell(0, 0), _cell(1, 0),
+				_cell(3, 1), _cell(5, 1),
+				_cell(0, 2), _cell(3, 2), _cell(5, 2),
+				_cell(0, 3), _cell(1, 3), _cell(3, 3), _cell(5, 3),
+				_cell(0, 4), _cell(1, 4), _cell(5, 4),
+			],
+			[_source(0, 1, 0, ["gray", "blue", "red"])],
+			{"x": 5, "y": 0},
+			[{"color": "red", "count": 1}, {"color": "yellow", "count": 2}, {"color": "blue", "count": 3}],
+			[
+				_block("filter", 1, 1, 0, "red"),
+				_block("bias", 2, 1, 0),
+				_block("pause", 2, 0, 0),
+				_block("conveyor", 3, 0, 0),
+				_block("counter", 4, 0, 0),
+				_block("conveyor", 1, 2, 0),
+				_block("conveyor", 2, 2, 1),
+				_block("conveyor", 2, 3, 1),
+				_block("primer", 2, 4, 0, "yellow"),
+				_block("conveyor", 3, 4, 0),
+				_block("conveyor", 4, 4, 3),
+				_block("conveyor", 4, 3, 3),
+				_block("conveyor", 4, 2, 3),
+				_block("conveyor", 4, 1, 3),
+			]
+		),
 	]
 
 
@@ -1703,7 +1888,7 @@ static func _puzzle(id: int, title: String, unlocks: String, brief: String, how_
 		"dock": dock,
 		"order": order,
 		"reference": reference,
-		"building": 12 if id >= 86 else 11 if id >= 79 else 10 if id >= 72 else 9 if id >= 65 else 8 if id >= 58 else 7 if id >= 51 else 6 if id >= 44 else 5 if id >= 37 else 4 if id >= 30 else 3 if id >= 23 else 2 if id >= 16 else 1,
+		"building": 13 if id >= 93 else 12 if id >= 86 else 11 if id >= 79 else 10 if id >= 72 else 9 if id >= 65 else 8 if id >= 58 else 7 if id >= 51 else 6 if id >= 44 else 5 if id >= 37 else 4 if id >= 30 else 3 if id >= 23 else 2 if id >= 16 else 1,
 	}
 
 

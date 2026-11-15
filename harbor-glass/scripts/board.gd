@@ -247,6 +247,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_sluice(at, rot)
 		"weir":
 			_draw_weir(at, rot)
+		"lintel":
+			_draw_lintel(at)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -501,6 +503,28 @@ func _draw_weir(at: Vector2i, rot: int) -> void:
 	var across := flank * half * 0.72
 	draw_line(twist - along + across, twist - across * 0.15, Palette.BEAM_RED, 2.5)
 	draw_line(twist - across * 0.15, twist + along - across, Palette.BEAM_BLUE, 2.5)
+
+func _draw_lintel(at: Vector2i) -> void:
+	# A flat stone bar with a gap under it. Not the weir's gate, spout, or
+	# twist mark. The bar does not turn: a lintel has no facing.
+	var center := _center(at)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var stone := Palette.WOOD if flooded else Palette.WOOD_DARK
+	var edge := Palette.PILE_EDGE if flooded else Palette.WOOD
+	var bar := Rect2(center + Vector2(-cell * 0.36, -cell * 0.30), Vector2(cell * 0.72, cell * 0.14))
+	draw_rect(bar, stone)
+	draw_rect(bar, edge, false, 2.0)
+	draw_line(bar.position + Vector2(5, 3), bar.position + Vector2(bar.size.x - 5, 3), Palette.LANTERN_HOT, 1.5)
+	var jamb_w := cell * 0.12
+	var gap_top := bar.end.y + cell * 0.06
+	var gap_bot := center.y + cell * 0.32
+	var jamb_h := maxf(gap_bot - gap_top, 8.0)
+	var left := Rect2(Vector2(bar.position.x, gap_top), Vector2(jamb_w, jamb_h))
+	var right := Rect2(Vector2(bar.end.x - jamb_w, gap_top), Vector2(jamb_w, jamb_h))
+	draw_rect(left, stone)
+	draw_rect(right, stone)
+	draw_rect(left, edge, false, 1.5)
+	draw_rect(right, edge, false, 1.5)
 
 func _draw_prism(at: Vector2i, rot: int, set_in_stone: bool) -> void:
 	var center := _center(at)
