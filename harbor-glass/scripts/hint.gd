@@ -6,6 +6,7 @@ class_name HintBook
 # layout. A state that already matches the solution produces no mark.
 # Mirror, tide mirror, and pane rotations are compared after normalizing
 # 180-degree repeats, so an equivalent facing is not reported as wrong.
+# A shutter has no facing. Dry stops the beam, and flooded water lets it pass.
 
 const Tracer := preload("res://scripts/beam_tracer.gd")
 

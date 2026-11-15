@@ -5,7 +5,7 @@ class_name BrineSim
 #
 # The player never selects an ant. They paint cells. Workers are simulated
 # labor that follow the paint under their feet. This slice has one scenario:
-# a wet season, a short dry season, a cart beat, a ship beat, a market beat, a yard beat, a bunk beat, then a loft beat. The full game's population cap is
+# a wet season, a short dry season, a cart beat, a ship beat, a market beat, a yard beat, a bunk beat, a loft beat, then a gate beat. The full game's population cap is
 # 200; this slice hard-caps at POP_CAP (40) and will not grow past it.
 #
 # Map
@@ -14,14 +14,16 @@ class_name BrineSim
 #   stays unwalkable, and shore rakes no longer touch water.
 # - The anthill is the fixed cell ANTHILL (14, 5). It is walkable, not
 #   paintable, and the only place workers spawn.
-# - Rows run from GRID_NORTH through GRID_H - 1. GRID_NORTH is the row north
-#   of the old shore edge, so a loft can sit one cell north of a bunk on row 0.
+# - Rows run from GRID_NORTH through GRID_H - 1. GRID_NORTH is two rows north
+#   of the old shore edge, so a loft can sit one cell north of a bunk on row 0
+#   and a gate can sit one cell north of that loft.
 # - Every other cell accepts one mark: empty, rake, stack, cover, trail, pan,
-#   crib, ship, stall, yard, bunk, or loft. A crib is not walkable until the cart beat,
+#   crib, ship, stall, yard, bunk, loft, or gate. A crib is not walkable until the cart beat,
 #   a ship is not walkable until the ship beat, a stall is not walkable until
 #   the market beat, a yard is not walkable until the yard beat, a bunk is
-#   not walkable until the bunk beat, and a loft is not walkable until the
-#   loft beat, so painting one cannot change an earlier haul.
+#   not walkable until the bunk beat, a loft is not walkable until the loft
+#   beat, and a gate is not walkable until the gate beat, so painting one
+#   cannot change an earlier haul.
 #
 # Determinism
 # - No randomness and no seed. Given the same paint map at each tick and this
@@ -35,7 +37,7 @@ class_name BrineSim
 # Seasons
 # - Wet season: tick indexes 0 .. RAIN_TICK-1. Gatherers on brine-adjacent
 #   rake cells pile loose salt. Pan cells are only ground to cross. Crib
-#   cells, ship cells, stall cells, yard cells, bunk cells, and loft cells are marks only.
+#   cells, ship cells, stall cells, yard cells, bunk cells, loft cells, and gate cells are marks only.
 # - At tick RAIN_TICK the first rain falls. Loose salt is destroyed. Stacked
 #   salt on a cover cell is hauled into the wet-season ledger and cleared
 #   from the flats. Stacked salt outside cover is destroyed. The scenario
@@ -106,10 +108,25 @@ class_name BrineSim
 #   reported. Lofting does not change the stored, carted, shipped, earned-coin,
 #   or hire totals, and it does not spend the yard remainder.
 # - At tick RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK
-#   the loft beat ends and the scenario ends. Stored salt is the ledger still
+#   the loft beat ends and the gate beat opens. The scenario does not end.
+#   Hires recorded in a loft stay there.
+# - Gate beat: the next GATE_TICK work rounds (100 ticks, 10 seconds).
+#   Every worker walks to a gate. A gate cell is the only goal, and it is
+#   walkable only now. One unit of work lets 1 hire already recorded in a
+#   loft through the gate, taking lofts in row-major order (the same order
+#   they were filled: north to south, then west to east), up to GATE_CAP
+#   hires in total. One hire moves. Nothing is rolled. The gate stops at
+#   GATE_CAP even if ticks remain. Hires past the cap stay in the loft.
+#   Rakes and pans make no salt. With no gate, the hires stay in the loft
+#   and the gate total stays 0. The hire total is still reported. Letting
+#   hires through does not change the stored, carted, shipped, earned-coin,
+#   or hire totals, and it does not spend the yard remainder.
+# - At tick RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK
+#   the gate beat ends and the scenario ends. Stored salt is the ledger still
 #   unmoved, plus covered salt still on the map, plus salt still in cribs,
 #   plus salt still on ships, plus coins still at stalls, plus coins still
-#   in yards, plus coins spent on hires. Hires moved into a loft still count.
+#   in yards, plus coins spent on hires. Hires moved into a loft, and hires
+#   let through a gate, still count.
 #
 # Tick (work rounds, then a rain at each season boundary)
 # 1. If the scenario has already ended, the tick does nothing.
@@ -123,7 +140,8 @@ class_name BrineSim
 #    every job loads a ship. During the market beat every job sells. During
 #    the yard beat every job banks the purse. During the bunk beat every job
 #    hires from the banked coins. During the loft beat every job moves those
-#    hires. The job id does not change.
+#    hires. During the gate beat every job lets those hires through. The job
+#    id does not change.
 #    The new worker acts on the tick it spawns. The starting population is
 #    INITIAL_POP, created before tick 0. Spawn refuses to exceed POP_CAP.
 # 3. Goals, from the salt map and the beat as the tick begins (later
@@ -147,21 +165,27 @@ class_name BrineSim
 #              HIRE_COST coins.
 #      Loft:   loft cell below LOFT_CAP while any hire remains at a bunk.
 #              All three jobs share that flow. One loft moves one hire.
+#      Gate:   gate cell while fewer than GATE_CAP hires have passed and any
+#              hire remains in a loft. All three jobs share that flow. One
+#              pass lets one hire through. The total stops at GATE_CAP.
 #    Trail cells are only ground to cross. They are not goals. Pan cells are
 #    not goals during the wet season. Rake cells are not goals during the
 #    dry season or any later beat. Crib cells are not goals before the cart
 #    beat. During the ship beat, the market beat, the yard beat, the bunk
-#    beat, and the loft beat they are only ground. Ship cells are not goals
-#    before the ship beat. During the market beat, the yard beat, the bunk
-#    beat, and the loft beat they are only ground, so workers can walk from
-#    the ship to the stall. Stall cells are not goals before the market beat.
-#    During the yard beat, the bunk beat, and the loft beat they are only
-#    ground, so workers can walk from the stall to the yard. Yard cells are
-#    not goals before the yard beat. During the bunk beat and the loft beat
-#    they are only ground, so workers can walk from the yard to the bunk.
-#    Bunk cells are not goals before the bunk beat. During the loft beat they
-#    are only ground, so workers can walk from the bunk to the loft. Loft
-#    cells are not goals before the loft beat.
+#    beat, the loft beat, and the gate beat they are only ground. Ship cells
+#    are not goals before the ship beat. During the market beat, the yard
+#    beat, the bunk beat, the loft beat, and the gate beat they are only
+#    ground, so workers can walk from the ship to the stall. Stall cells are
+#    not goals before the market beat. During the yard beat, the bunk beat,
+#    the loft beat, and the gate beat they are only ground, so workers can
+#    walk from the stall to the yard. Yard cells are not goals before the
+#    yard beat. During the bunk beat, the loft beat, and the gate beat they
+#    are only ground, so workers can walk from the yard to the bunk. Bunk
+#    cells are not goals before the bunk beat. During the loft beat and the
+#    gate beat they are only ground, so workers can walk from the bunk to the
+#    loft. Loft cells are not goals before the loft beat. During the gate
+#    beat they are only ground, so workers can walk from the loft to the
+#    gate. Gate cells are not goals before the gate beat.
 # 4. Each job builds a flow field: multi-source BFS from its goals through
 #    walkable cells (any painted cell, plus the anthill). A goal's next step
 #    is itself. Every other reached cell points one step toward the nearest
@@ -191,6 +215,9 @@ class_name BrineSim
 #              under HIRE_COST stays in the yard.
 #      Loft:   1 hire moves from a bunk onto this loft. Bunks are taken in
 #              row-major order (y, then x).
+#      Gate:   1 hire moves from a loft through this gate. Lofts are taken in
+#              row-major order (y, then x), the same order they were filled.
+#              The gate lets at most GATE_CAP hires through, then stops.
 # 6. If the population is above POP_CAP, the violation is counted. Spawning
 #    is the only way workers are added, and it stops at the cap.
 # 7. The tick index increases by 1. When it reaches RAIN_TICK, the first rain
@@ -207,7 +234,9 @@ class_name BrineSim
 #    RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK,
 #    the loft beat's first work round is the next tick. When it reaches
 #    RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK,
-#    the loft beat ends.
+#    the gate beat's first work round is the next tick. When it reaches
+#    RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK,
+#    the gate beat ends.
 #
 # Rain
 # - Loose salt is destroyed on every cell. Loose salt never survives a rain.
@@ -218,8 +247,9 @@ class_name BrineSim
 #   pile, and counts toward stored salt along with the ledger. The cart beat
 #   then moves that bank; the rain itself does not. The ship beat then loads
 #   a crib, the market beat then sells a ship, the yard beat then banks
-#   the coins, the bunk beat then hires from that purse, and the loft beat
-#   then moves those hires; the rain does none of those.
+#   the coins, the bunk beat then hires from that purse, the loft beat then
+#   moves those hires, and the gate beat then lets them through; the rain
+#   does none of those.
 # - Stacked or covered salt outside a cover cell is destroyed.
 # - Destruction is applied row-major. The same paint map yields the same
 #   stored-salt number.
@@ -232,14 +262,17 @@ class_name BrineSim
 #   ship, the line names the coins. If the yard banked any of those coins,
 #   the line names how much reached the yard. If the bunk hired from those
 #   coins, the line names the hires and what stayed in the yard. If the loft
-#   moved any of those hires, the line names how many reached it. A plan that
-#   paints no crib keeps the summary it had before the cart beat existed. A
-#   plan that paints no ship keeps the summary it had before the ship beat
-#   existed. A plan that paints no stall keeps the summary it had before the
-#   market beat existed. A plan that paints no yard keeps the summary it had
-#   before the yard beat existed. A plan that paints no bunk keeps the summary
-#   it had before the bunk beat existed. A plan that paints no loft keeps the
-#   summary it had before the loft beat existed.
+#   moved any of those hires, the line names how many reached it. If the gate
+#   let any of those hires through, the line names how many passed and how
+#   many stayed in the loft. A plan that paints no crib keeps the summary it
+#   had before the cart beat existed. A plan that paints no ship keeps the
+#   summary it had before the ship beat existed. A plan that paints no stall
+#   keeps the summary it had before the market beat existed. A plan that
+#   paints no yard keeps the summary it had before the yard beat existed. A
+#   plan that paints no bunk keeps the summary it had before the bunk beat
+#   existed. A plan that paints no loft keeps the summary it had before the
+#   loft beat existed. A plan that paints no gate keeps the summary it had
+#   before the gate beat existed.
 # - Stored salt == 0 and any salt was destroyed: the quota was missed because
 #   uncovered salt was destroyed. An all-rake coast does this: workers pile
 #   loose salt, nothing is stacked into cover, the first rain wrecks the
@@ -254,8 +287,9 @@ class_name BrineSim
 #   refills when the cart beat ends. The market countdown refills when the
 #   ship beat ends. The yard countdown refills when the market beat ends.
 #   The bunk countdown refills when the yard beat ends. The loft countdown
-#   refills when the bunk beat ends. The sim itself counts ticks, not
-#   wall-clock time, so a headless run is the same scenario as the window.
+#   refills when the bunk beat ends. The gate countdown refills when the loft
+#   beat ends. The sim itself counts ticks, not wall-clock time, so a
+#   headless run is the same scenario as the window.
 
 const EMPTY := 0
 const RAKE := 1
@@ -269,6 +303,7 @@ const STALL := 8
 const YARD := 9
 const BUNK := 10
 const LOFT := 11
+const GATE := 12
 
 const WET := 0
 const DRY := 1
@@ -280,11 +315,12 @@ const MARKET := 4
 const YARDING := 5
 const BUNKING := 6
 const LOFTING := 7
+const GATING := 8
 
 const GRID_W := 17
 const GRID_H := 12
 # One row north of the old edge. The bunk plans sit on row 0, so the loft is row -1.
-const GRID_NORTH := -1
+const GRID_NORTH := -2
 const COAST_X := 0
 const ANTHILL := Vector2i(14, 5)
 
@@ -300,6 +336,7 @@ const MARKET_TICK := 100
 const YARD_TICK := 100
 const BUNK_TICK := 100
 const LOFT_TICK := 100
+const GATE_TICK := 100
 const TICK_HZ := 10
 const HIRE_COST := 100
 
@@ -312,6 +349,8 @@ const STALL_CAP := 9999
 const YARD_CAP := 9999
 const BUNK_CAP := 9999
 const LOFT_CAP := 9999
+# Total hires the gate lets through. Past this the beat stops moving them.
+const GATE_CAP := 10
 
 const JOB_GATHER := 0
 const JOB_STACK := 1
@@ -330,6 +369,7 @@ var _stall: Dictionary = {}
 var _yard: Dictionary = {}
 var _bunk: Dictionary = {}
 var _loft: Dictionary = {}
+var _gate: Dictionary = {}
 var _workers: Array = []
 
 var _next_id: int = 0
@@ -367,6 +407,7 @@ func restart() -> void:
 	_yard.clear()
 	_bunk.clear()
 	_loft.clear()
+	_gate.clear()
 	_workers.clear()
 	_next_id = 0
 	_tick_index = 0
@@ -389,7 +430,7 @@ func paint_cell(x: int, y: int, mode: int) -> bool:
 		return false
 	if not _paintable(x, y):
 		return false
-	if mode < EMPTY or mode > LOFT:
+	if mode < EMPTY or mode > GATE:
 		return false
 	var cell := Vector2i(x, y)
 	if mode == EMPTY:
@@ -406,7 +447,7 @@ func get_paint(x: int, y: int) -> int:
 func tick() -> void:
 	if _rain_done:
 		return
-	var end_tick := RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK
+	var end_tick := RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK
 	if _tick_index >= end_tick:
 		_finish()
 		return
@@ -431,13 +472,15 @@ func tick() -> void:
 		_open_bunk()
 	elif _tick_index == RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK:
 		_open_loft()
+	elif _tick_index == RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK:
+		_open_gate()
 	elif _tick_index >= end_tick:
 		_finish()
 
 
 func run_until_rain() -> void:
 	var guard := 0
-	var limit := RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + 2
+	var limit := RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + 2
 	while not _rain_done and guard < limit:
 		tick()
 		guard += 1
@@ -463,7 +506,7 @@ func get_season() -> int:
 	return _season
 
 
-# WET, DRY, CART, SHIPPING, MARKET, YARDING, BUNKING, or LOFTING. Weather stays dry after the first rain.
+# WET, DRY, CART, SHIPPING, MARKET, YARDING, BUNKING, LOFTING, or GATING. Weather stays dry after the first rain.
 func get_beat() -> int:
 	return _phase
 
@@ -506,10 +549,10 @@ func get_yard_left() -> int:
 	return _sum(_yard)
 
 
-# Hires bought from banked coins, including hires later moved into a loft.
-# One hire costs HIRE_COST. Nothing is rolled.
+# Hires bought from banked coins, including hires later moved into a loft
+# and hires later let through a gate. One hire costs HIRE_COST. Nothing is rolled.
 func get_hired() -> int:
-	return _sum(_bunk) + _sum(_loft)
+	return _sum(_bunk) + _sum(_loft) + _sum(_gate)
 
 
 # Hires still sitting at a bunk. Lofting moves these one at a time.
@@ -517,9 +560,21 @@ func get_bunk_left() -> int:
 	return _sum(_bunk)
 
 
-# Hires moved into a loft. The hire total still counts these.
+# Hires moved into a loft, including hires later let through a gate.
+# The hire total still counts these.
 func get_lofted() -> int:
+	return _sum(_loft) + _sum(_gate)
+
+
+# Hires still sitting in a loft. The gate moves these one at a time.
+func get_loft_left() -> int:
 	return _sum(_loft)
+
+
+# Hires let through a gate, at most GATE_CAP. Nothing is rolled.
+# The loft total and the hire total still count these.
+func get_gated() -> int:
+	return _sum(_gate)
 
 
 func _hired_coins() -> int:
@@ -568,6 +623,8 @@ func get_ticks_until_rain() -> int:
 		horizon = RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK
 	elif _phase == LOFTING:
 		horizon = RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK
+	elif _phase == GATING:
+		horizon = RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK
 	return maxi(horizon - _tick_index, 0)
 
 
@@ -591,6 +648,7 @@ func get_cell_salt(x: int, y: int) -> Dictionary:
 		"yard": _amount(_yard, cell),
 		"bunk": _amount(_bunk, cell),
 		"loft": _amount(_loft, cell),
+		"gate": _amount(_gate, cell),
 	}
 
 
@@ -631,6 +689,8 @@ func rules_api() -> PackedStringArray:
 		"get_hired",
 		"get_bunk_left",
 		"get_lofted",
+		"get_loft_left",
+		"get_gated",
 		"get_bank_left",
 		"get_population",
 		"get_max_population",
@@ -688,21 +748,23 @@ func _walkable(x: int, y: int) -> bool:
 		return false
 	# A crib stays shut until the cart beat, a ship stays shut until the ship
 	# beat, a stall stays shut until the market beat, a yard stays shut until
-	# the yard beat, a bunk stays shut until the bunk beat, and a loft stays
-	# shut until the loft beat, so none of them can shortcut an earlier haul.
-	# Each stays open afterward so workers can walk the coins, the hires, and
-	# then the crew forward.
-	if paint == CRIB and _phase != CART and _phase != SHIPPING and _phase != MARKET and _phase != YARDING and _phase != BUNKING and _phase != LOFTING:
+	# the yard beat, a bunk stays shut until the bunk beat, a loft stays shut
+	# until the loft beat, and a gate stays shut until the gate beat, so none
+	# of them can shortcut an earlier haul. Each stays open afterward so
+	# workers can walk the coins, the hires, and then the crew forward.
+	if paint == CRIB and _phase != CART and _phase != SHIPPING and _phase != MARKET and _phase != YARDING and _phase != BUNKING and _phase != LOFTING and _phase != GATING:
 		return false
-	if paint == SHIP and _phase != SHIPPING and _phase != MARKET and _phase != YARDING and _phase != BUNKING and _phase != LOFTING:
+	if paint == SHIP and _phase != SHIPPING and _phase != MARKET and _phase != YARDING and _phase != BUNKING and _phase != LOFTING and _phase != GATING:
 		return false
-	if paint == STALL and _phase != MARKET and _phase != YARDING and _phase != BUNKING and _phase != LOFTING:
+	if paint == STALL and _phase != MARKET and _phase != YARDING and _phase != BUNKING and _phase != LOFTING and _phase != GATING:
 		return false
-	if paint == YARD and _phase != YARDING and _phase != BUNKING and _phase != LOFTING:
+	if paint == YARD and _phase != YARDING and _phase != BUNKING and _phase != LOFTING and _phase != GATING:
 		return false
-	if paint == BUNK and _phase != BUNKING and _phase != LOFTING:
+	if paint == BUNK and _phase != BUNKING and _phase != LOFTING and _phase != GATING:
 		return false
-	if paint == LOFT and _phase != LOFTING:
+	if paint == LOFT and _phase != LOFTING and _phase != GATING:
+		return false
+	if paint == GATE and _phase != GATING:
 		return false
 	return true
 
@@ -785,6 +847,13 @@ func _flows() -> Dictionary:
 			JOB_GATHER: lofting,
 			JOB_STACK: lofting,
 			JOB_COVER: lofting,
+		}
+	if _phase == GATING:
+		var passing := _build_flow(_gate_goals())
+		return {
+			JOB_GATHER: passing,
+			JOB_STACK: passing,
+			JOB_COVER: passing,
 		}
 	return {
 		JOB_GATHER: _build_flow(_gather_goals()),
@@ -902,6 +971,21 @@ func _loft_goals() -> Array:
 	return goals
 
 
+func _gate_goals() -> Array:
+	var goals: Array = []
+	if get_gated() >= GATE_CAP or get_loft_left() <= 0:
+		return goals
+	for y in range(GRID_NORTH, GRID_H):
+		for x in GRID_W:
+			var cell := Vector2i(x, y)
+			if _paint_at(cell) != GATE:
+				continue
+			if _amount(_gate, cell) >= GATE_CAP:
+				continue
+			goals.append(cell)
+	return goals
+
+
 func _stack_goals() -> Array:
 	var goals: Array = []
 	for y in range(GRID_NORTH, GRID_H):
@@ -1000,6 +1084,9 @@ func _work(worker: Worker) -> void:
 		return
 	if _phase == LOFTING:
 		_loft_hire(worker)
+		return
+	if _phase == GATING:
+		_pass_gate(worker)
 		return
 	var cell := Vector2i(worker.x, worker.y)
 	if worker.job == JOB_GATHER:
@@ -1154,6 +1241,26 @@ func _loft_hire(worker: Worker) -> void:
 			return
 
 
+func _pass_gate(worker: Worker) -> void:
+	var cell := Vector2i(worker.x, worker.y)
+	if _paint_at(cell) != GATE:
+		return
+	if get_gated() >= GATE_CAP:
+		return
+	var held := _amount(_gate, cell)
+	if held >= GATE_CAP:
+		return
+	for y in range(GRID_NORTH, GRID_H):
+		for x in GRID_W:
+			var src := Vector2i(x, y)
+			var amount := _amount(_loft, src)
+			if amount <= 0:
+				continue
+			_put(_loft, src, amount - 1)
+			_put(_gate, cell, held + 1)
+			return
+
+
 func _best_loose_neighbor(cell: Vector2i) -> Vector2i:
 	var best := Vector2i(-1, -1)
 	var best_amount := 0
@@ -1239,6 +1346,12 @@ func _open_loft() -> void:
 	_phase = LOFTING
 
 
+func _open_gate() -> void:
+	if _phase != LOFTING or _rain_done:
+		return
+	_phase = GATING
+
+
 func _finish() -> void:
 	if _rain_done:
 		return
@@ -1301,4 +1414,6 @@ func _make_summary() -> String:
 		message += " Hired %d. Left %d in the yard." % [get_hired(), get_yard_left()]
 	if get_lofted() > 0:
 		message += " Lofted %d." % get_lofted()
+	if get_gated() > 0:
+		message += " Gated %d. Left %d in the loft." % [get_gated(), get_loft_left()]
 	return message
