@@ -294,6 +294,45 @@ class_name BeamTracer
 # an astragal is blocking. A mullion cannot be turned so that it passes east.
 # A transom cannot be turned so that it passes north.
 #
+# Scotia
+# ------
+# A scotia is not an astragal, a jamb, a casement, a transom, a mullion, a
+# lintel, a weir, a sluice, a shutter, a stain, a vane, a well, or a siphon,
+# and it does not replace one. It has a facing. Rotation changes the facing.
+# Clicking cycles it: 0 north, 90 east, 180 south, 270 west.
+# While its own row is dry, the facing and the next counterclockwise direction
+# pass straight through in the same direction and the same color, and that
+# pass costs no bounce. Facing north, the open directions are north and west.
+# The other two directions stop before they enter. While that row is flooded,
+# every beam stops at the waterline.
+#
+# Torus
+# -----
+# A torus is not a scotia, an astragal, a casement, a jamb, a mullion, a
+# transom, or a lintel, and it does not replace one. It is not a weir, a
+# sluice, a shutter, a stain, a vane, a well, or a siphon either. It has a
+# facing. Rotation changes the facing. Clicking cycles it the same way a
+# scotia is rotated: 0 north, 90 east, 180 south, 270 west.
+# While its own row is dry, a beam traveling opposite the facing passes
+# straight through, and a beam traveling in the next clockwise direction from
+# the facing also passes straight through. South and east when it faces north.
+# West and south when it faces east. North and west when it faces south. East
+# and north when it faces west. Each pass keeps the same direction and the same
+# color and costs no bounce. It does not turn, it does not recolor, and it
+# does not split.
+# The other two directions stop at the edge and do not enter. A north torus
+# refuses north and west. That stopped pair is what a north scotia passes.
+# South and east, the open pair, is what a north scotia stops.
+# It does not recolor. Red stays red, blue stays blue, and white stays white.
+# While that row is flooded, every beam stops at the waterline and does not
+# enter the cell. A flooded torus does not carry the beam. It is shut under
+# water, the same way a flooded scotia is shut.
+# A north scotia passes north and west. A north astragal passes north and east.
+# A north torus passes neither of those pairs. It passes south and east.
+# A casement passes only the facing. A jamb passes both directions on its open
+# axis. A mullion passes north and south. A transom passes east and west. A
+# lintel passes every dry direction. None of those is the dry torus pair.
+#
 # Docks and boats
 # ---------------
 # A dock records every color that enters its cell. It is satisfied only when
@@ -317,6 +356,12 @@ class_name BeamTracer
 # A dry astragal does not cost a bounce when the beam is traveling with its
 # facing or the next clockwise direction. The other two directions stop
 # before the cell. A flooded astragal is not entered.
+# A dry scotia does not cost a bounce when the beam is traveling with its
+# facing or the next counterclockwise direction. The other two directions stop
+# before the cell. A flooded scotia is not entered.
+# A dry torus does not cost a bounce when the beam is traveling opposite its
+# facing or in the next clockwise direction. The other two directions stop
+# before the cell. A flooded torus is not entered.
 # A (cell, direction, color) triple is never entered twice, and each cast also
 # stops after MAX_STEPS cells. Those caps are what make a mirror loop return.
 
@@ -353,7 +398,10 @@ static func norm_rot(kind: String, rot: int) -> int:
 	# A scotia uses the same four facings. Each one is its own open pair:
 	# the facing and the next counterclockwise direction. That pair is the
 	# mirror of the astragal, so a north scotia is not a north astragal.
-	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia":
+	# A torus uses the same four facings. Each one is its own open pair:
+	# the opposite of the facing and the next clockwise direction. A north
+	# torus passes south and east, which a north scotia stops.
+	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus":
 		return posmod(rot, 360)
 	# A shutter has no facing. Dry stops the beam; flooded water lets it pass.
 	# A well has no facing either. Dry stops the beam; flooded water sends it north.
@@ -464,6 +512,16 @@ static func scotia_facing(rot: int) -> String:
 static func scotia_passes(rot: int, dir: String) -> bool:
 	var facing := scotia_facing(rot)
 	return dir == facing or dir == rotate_dir(facing, -1)
+
+static func torus_facing(rot: int) -> String:
+	# 0 north, 90 east, 180 south, 270 west. The dry pass is not this facing.
+	return rotate_dir("N", posmod(int(norm_rot("torus", rot) / 90.0), 4))
+
+static func torus_passes(rot: int, dir: String) -> bool:
+	# Opposite the facing, and the next clockwise direction from the facing.
+	# North opens south and east. That is the pair a north scotia stops.
+	var facing := torus_facing(rot)
+	return dir == rotate_dir(facing, 2) or dir == rotate_dir(facing, 1)
 
 static func sluice_facing(rot: int) -> String:
 	# 0 north, 90 east, 180 south, 270 west. The exit follows this facing.
@@ -703,6 +761,12 @@ static func _cast(
 		if _dry_scotia_blocks(occupants, cell, dir):
 			segments.append(_boundary_seg(prev, cell, color))
 			return
+		# A dry torus passes the opposite of its facing and the next clockwise
+		# direction. The other two directions stop on the edge and never enter
+		# the cell. Flooded tori already returned above.
+		if _dry_torus_blocks(occupants, cell, dir):
+			segments.append(_boundary_seg(prev, cell, color))
+			return
 		segments.append(_center_seg(prev, cell, color))
 		if not occupants.has(cell):
 			prev = cell
@@ -860,6 +924,15 @@ static func _cast(
 			prev = cell
 			cell = cell + VEC[dir]
 			continue
+		if kind == "torus":
+			# Dry opposite and the next clockwise direction pass straight, same
+			# direction and same color. That pass costs no bounce. It does not
+			# turn, it does not recolor, and it does not split. The other two
+			# dry directions never reach here. A flooded torus never reaches
+			# here either.
+			prev = cell
+			cell = cell + VEC[dir]
+			continue
 		if kind == "pane":
 			if color != pane_color(int(occ["rot"])):
 				return
@@ -892,7 +965,8 @@ static func _flood_carries(occupants: Dictionary, cell: Vector2i) -> bool:
 	# shut under water the same way, so _flood_carries stays false for it.
 	# An astragal is shut under water the same way, so _flood_carries stays
 	# false for it. A scotia is shut under water the same way, so
-	# _flood_carries stays false for it.
+	# _flood_carries stays false for it. A torus is shut under water the same
+	# way, so _flood_carries stays false for it.
 	# Every other flooded cell stops.
 	if not occupants.has(cell):
 		return false
@@ -941,6 +1015,13 @@ static func _dry_scotia_blocks(occupants: Dictionary, cell: Vector2i, dir: Strin
 	if str(occupants[cell]["kind"]) != "scotia":
 		return false
 	return not scotia_passes(int(occupants[cell]["rot"]), dir)
+
+static func _dry_torus_blocks(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "torus":
+		return false
+	return not torus_passes(int(occupants[cell]["rot"]), dir)
 
 static func _in_bounds(chart: Dictionary, cell: Vector2i) -> bool:
 	return cell.x >= 0 and cell.y >= 0 and cell.x < int(chart["cols"]) and cell.y < int(chart["rows"])
