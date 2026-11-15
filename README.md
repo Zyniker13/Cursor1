@@ -11,7 +11,7 @@ Playable slices, Godot 4. Steam packaging comes later.
 - [Lowball](lowball/) — an eight-week three-club round-robin
 - [Casework](casework/) — a six-case deduction board
 - [Lampblack](lampblack/) — turn-based museum stealth, east, west, and north wings
-- [Kiln Route](kiln-route/) — a twenty-four-room foundry puzzle
+- [Kiln Route](kiln-route/) — a thirty-two-room foundry puzzle
 
 ```bash
 godot --path harbor-glass
