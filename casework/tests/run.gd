@@ -38,6 +38,7 @@ const Finger = preload("res://scripts/finger.gd")
 const Haunch = preload("res://scripts/haunch.gd")
 const Dowel = preload("res://scripts/dowel.gd")
 const Tongue = preload("res://scripts/tongue.gd")
+const Quirk = preload("res://scripts/quirk.gd")
 const Catalog = preload("res://scripts/catalog.gd")
 const Solver = preload("res://scripts/solver.gd")
 const Verdict = preload("res://scripts/verdict.gd")
@@ -117,6 +118,8 @@ const DOWEL_TIMELINE := "Faye (dowel hand) cut the dowel in the bit at 128, seen
 const DOWEL_TRUE := {"who": "Faye", "place": "bit", "hour": "128"}
 const TONGUE_TIMELINE := "Shay (tongue hand) cut the tongue in the knife at 133, seen from the punch, so the groove would take the tongue.\nDell (groove hand) marked the groove on the scribe at 132.\nGlen (fence clerk) turned the fence in the punch.\nThe peel was hung on the scribe.\nThe punch was tallowed at 131.\nThe scribe was ground at 134.\nThe knife was hung at 135."
 const TONGUE_TRUE := {"who": "Shay", "place": "knife", "hour": "133"}
+const QUIRK_TIMELINE := "Ross (quirk hand) scratched the quirk in the scratch at 138, seen from the snib, so the ovolo would take the quirk.\nPia (ovolo hand) marked the ovolo on the veiner at 137.\nJude (snib clerk) turned the snib in the scratch.\nThe astragal was hung on the veiner.\nThe snib was oiled at 136.\nThe veiner was stoned at 139.\nThe scratch was hung at 140."
+const QUIRK_TRUE := {"who": "Ross", "place": "scratch", "hour": "138"}
 
 var _failures: Array[String] = []
 var _checks := 0
@@ -352,6 +355,12 @@ func _initialize() -> void:
 	_test_tongue_only_true_theory()
 	_test_tongue_near_misses()
 	_test_tongue_incomplete()
+	_test_quirk_file_shape()
+	_test_quirk_unique_model()
+	_test_quirk_each_exhibit_necessary()
+	_test_quirk_only_true_theory()
+	_test_quirk_near_misses()
+	_test_quirk_incomplete()
 	_test_solutions_differ()
 	_test_menu_opens_either_case()
 	print("menu interaction done")
@@ -11772,6 +11781,424 @@ func _test_tongue_incomplete() -> void:
 			_expect(message.find(phrase) == -1, "tongue incomplete used another file's slot (%s) in: %s" % [phrase, message])
 	print("tongue incomplete submissions refused with the missing slot")
 
+func _test_quirk_file_shape() -> void:
+	_expect(Quirk.EXHIBITS.size() == 9, "quirk exhibit count is %d" % Quirk.EXHIBITS.size())
+	_expect(Quirk.PEOPLE.size() == 3, "quirk cast should be three people")
+	_expect(Quirk.PLACES.size() == 3, "quirk room count is %d" % Quirk.PLACES.size())
+	_expect(Quirk.HOURS.size() == 5, "quirk hour list length is %d" % Quirk.HOURS.size())
+	_expect(Quirk.PEOPLE == ["Ross", "Pia", "Jude"], "quirk cast is %s" % str(Quirk.PEOPLE))
+	_expect(Quirk.PLACES == ["scratch", "snib", "veiner"], "quirk rooms are %s" % str(Quirk.PLACES))
+	_expect(Quirk.HOURS == ["136", "137", "138", "139", "140"], "quirk hours are %s" % str(Quirk.HOURS))
+	_expect(Quirk.AIMS == ["take_ovolo", "spare_ovolo", "set_ovolo"], "quirk aims are %s" % str(Quirk.AIMS))
+	_expect(Quirk.aim_phrase("take_ovolo") == "so the ovolo would take the quirk", "quirk aim phrase")
+	_expect(Quirk.aim_phrase("spare_ovolo") == "to spare the ovolo still waiting on the quirk", "quirk spare aim")
+	_expect(Quirk.aim_phrase("set_ovolo") == "to set the ovolo before the scratch was hung", "quirk set aim")
+	_expect(Quirk.TITLE == "The quirk", "quirk title")
+	_expect(Quirk.BLURB == "The quirk left its peg at the joiner's gelding. Name who scratched the quirk, the room they scratched it in, and the hour.", "quirk blurb")
+	_expect(Quirk.FILE_CODE == "CW-39", "quirk file code")
+	_expect(Quirk.fields() == ["taker", "place", "hour", "ovolo", "ovolo_room", "ovolo_hour", "seen_from", "snib", "aim", "snib_room", "astragal_room", "oil_hour", "stone_hour", "hang_hour"], "quirk fields are %s" % str(Quirk.fields()))
+	_expect(Quirk.PLAYER_FIELDS == ["taker", "place", "hour"], "quirk player fields")
+	_expect(Quirk.HOURS[Quirk.HOURS.size() / 2] == QUIRK_TRUE["hour"], "quirk cutting should be the middle hour")
+	_expect(Quirk.HOURS[0] != QUIRK_TRUE["hour"], "quirk cutting should not be the earliest hour")
+	_expect(Quirk.HOURS[Quirk.HOURS.size() - 1] != QUIRK_TRUE["hour"], "quirk cutting should not be the latest hour")
+	var counts := _player_pin_counts(Quirk)
+	_expect(int(counts["taker"]) == 3 and int(counts["place"]) == 3 and int(counts["hour"]) == 3, "quirk pin counts are %s" % str(counts))
+	var loose_pin: Array = [
+		[CaseData, "spare key"],
+		[Rehearsal, "rehearsal score"],
+		[Gilt, "gilt stamp"],
+		[Ferry, "ferry bell"],
+		[Weather, "weather slate"],
+		[Loom, "loom shuttle"],
+		[Hive, "hive smoker"],
+		[Glass, "glass pontil"],
+		[Press, "press proof"],
+		[Assay, "assay cup"],
+	]
+	var rhythm: Array = [
+		[Kiln, "kiln chalk"],
+		[Tide, "tide ledger"],
+		[Night, "night bell"],
+		[Salt, "salt mark"],
+		[Wick, "wick trim"],
+		[Anneal, "glass anneal"],
+		[Graft, "orchard graft"],
+		[Dye, "dye vat"],
+		[Tar, "tar kettle"],
+		[Cork, "cork press"],
+		[Net, "net loft"],
+		[Cask, "cask hoop"],
+		[Linen, "linen fold"],
+		[Dovetail, "dovetail"],
+		[Mortise, "mortise"],
+		[Rebate, "rebate"],
+		[Housing, "housing"],
+		[Tenon, "tenon"],
+		[Bridle, "bridle"],
+		[Dado, "dado"],
+		[Spline, "spline"],
+		[Mitre, "mitre"],
+		[Lap, "lap"],
+		[Scarf, "scarf"],
+		[Finger, "finger"],
+		[Haunch, "haunch"],
+		[Dowel, "dowel"],
+		[Tongue, "tongue"],
+	]
+	for row in loose_pin:
+		_expect(counts != _player_pin_counts(row[0]), "quirk copied the %s pin pattern" % row[1])
+	for row in rhythm:
+		_expect(counts == _player_pin_counts(row[0]), "quirk should keep the %s pin rhythm" % row[1])
+	var earlier: Array = []
+	earlier.append_array(loose_pin)
+	earlier.append_array(rhythm)
+	for row in earlier:
+		var book = row[0]
+		var name := str(row[1])
+		_expect(Quirk.TITLE != book.TITLE, "quirk shares a title with the %s" % name)
+		_expect(Quirk.FILE_CODE != book.FILE_CODE, "quirk shares a file code with the %s" % name)
+		_expect(_field_key(Quirk) != _field_key(book), "quirk copied the %s timeline fields" % name)
+	var seen := {}
+	var stated := {}
+	var paired_hidden := 0
+	var earlier_texts := {}
+	var earlier_sentences := {}
+	var earlier_titles := {}
+	for row in earlier:
+		for old_exhibit in row[0].EXHIBITS:
+			var old_text := str(old_exhibit["text"])
+			earlier_texts[old_text] = true
+			earlier_titles[str(old_exhibit["title"])] = true
+			for old_sentence in old_text.split(". "):
+				earlier_sentences[old_sentence.trim_suffix(".").strip_edges()] = true
+	var exhibit_titles: Array[String] = []
+	var exhibit_sources: Array[String] = []
+	for exhibit in Quirk.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		exhibit_titles.append(str(exhibit["title"]))
+		exhibit_sources.append(str(exhibit["source"]))
+		_expect(not seen.has(exhibit_id), "duplicate quirk id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(not earlier_titles.has(str(exhibit["title"])), "%s reuses an earlier title %s" % [exhibit_id, exhibit["title"]])
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		_expect(not earlier_texts.has(str(exhibit["text"])), "quirk copied an earlier exhibit")
+		for sentence in str(exhibit["text"]).split(". "):
+			var cleaned := sentence.trim_suffix(".").strip_edges()
+			_expect(not earlier_sentences.has(cleaned), "quirk copied an earlier sentence: %s" % cleaned)
+		for banned in ["tarred", "rope", "kettle", "winch", "pitch", "loft", "strand", "hook", "walk", "dipped", "skein", "indigo", "pressed", "press", "cork", "bottle", "seal", "mallet", "screw", "cellar", "bench", "neck", "plug", "dye", "vat", "mesh", "shed", "rail", "crank", "needle", "mended", "twine", "house", "cooperage", "cask", "hoop", "croze", "stave", "driver", "yard", "shop", "linen", "fold", "shears", "roller", "hem", "sheet", "crease", "drawer", "dovetail", "vise", "stile", "apron", "saw", "clamp", "peg", "mortise", "chisel", "tenon", "awl", "wedge", "bored", "ragged", "racked", "rebate", "plane", "gauge", "shoulder", "shim", "tansy", "solt", "quern", "housing", "square", "bead", "trench", "fillet", "stock", "chalk", "ewan", "maren", "hollin", "gouge", "rasp", "bevel", "guide", "harl", "neve", "luth", "nick", "bridle", "router", "scraper", "adze", "spline", "templet", "strop", "notch", "wend", "sile", "jute", "dado", "cleat", "spur", "kern", "phel", "tarn", "shavings", "mouth", "iron", "senn", "voss", "cade", "slot", "feather", "whet", "orrin", "venn", "haim", "mitre", "arris", "offcut", "saddle", "dressed", "brushed", "nye", "yew", "pry", "lap", "grain", "brad", "plough", "float", "gimlet", "cradle", "crest", "horn", "scarf", "hob", "nairn", "cole", "shaving", "blade", "spokeshave", "firmer", "paring", "drawknife", "edge", "skimmed", "film", "sole", "tang", "mare", "finger", "clem", "gale", "boyd", "pad", "badger", "jack", "socket", "catch", "chip", "burr", "flake", "buffed", "sheen", "pony", "rubbed", "face", "haunch", "cheek", "smoother", "jointer", "fore", "sliver", "pin", "rhys", "mab", "lisle", "colt", "wiped", "mote", "toe", "mist", "bed", "dowel", "bore", "auger", "bit", "brace", "curl", "chuck", "flute", "faye", "kerr", "brynn", "foal", "waxed", "honed", "speck", "gloss", "wax", "point", "shay", "dell", "glen", "tongue", "groove", "kerf", "punch", "peel", "scribe", "knife", "fence", "tallow", "tallowed", "ground", "fleck", "filly", "coat", "cutting", "grind"]:
+			_expect(str(exhibit["text"]).find(banned) == -1, "%s copies %s" % [exhibit_id, banned])
+		var states_player_pin := false
+		var states_unique := false
+		var player_literals := 0
+		var hidden_literals := 0
+		for literal in exhibit["literals"]:
+			stated[str(literal["value"])] = true
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Quirk.PLAYER_FIELDS:
+				states_player_pin = true
+				player_literals += 1
+				var expected := Quirk.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Quirk.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats >= 2, "%s states %s once" % [exhibit_id, field])
+			else:
+				hidden_literals += 1
+				var owners := 0
+				for other in Quirk.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		if hidden_literals == 2:
+			paired_hidden += 1
+		else:
+			_expect(hidden_literals == 1, "%s states %d hidden facts" % [exhibit_id, hidden_literals])
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(player_literals == 1, "%s states %d player pins" % [exhibit_id, player_literals])
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+	_expect(paired_hidden == 2, "quirk should have two slips with two hidden facts, found %d" % paired_hidden)
+	_expect(exhibit_titles == ["Ovolo chit", "Bolt sight", "Astragal bill", "Score slate", "Snib card", "Grease slip", "Quirk leaf", "Gelding note", "Whet order"], "quirk exhibit titles are %s" % str(exhibit_titles))
+	_expect(exhibit_sources == ["Pia, ovolo hand", "Snib bolt", "Veiner nose", "Scratch score", "Jude, snib clerk", "Snib tote", "Ovolo book", "Joiner's gelding", "Veiner card"], "quirk sources are %s" % str(exhibit_sources))
+	for hour in Quirk.HOURS:
+		_expect(stated.has(hour), "quirk hour %s is absent from the exhibits" % hour)
+
+
+func _test_quirk_unique_model() -> void:
+	var models := Solver.enumerate(Quirk.EXHIBITS, Quirk)
+	print("quirk models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one quirk model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Ross", "quirk taker")
+	_expect(str(model["place"]) == "scratch", "quirk place")
+	_expect(str(model["hour"]) == "138", "quirk hour")
+	_expect(str(model["ovolo"]) == "Pia", "quirk ovolo hand")
+	_expect(str(model["ovolo_room"]) == "veiner", "quirk ovolo room")
+	_expect(str(model["ovolo_hour"]) == "137", "quirk ovolo hour")
+	_expect(str(model["seen_from"]) == "snib", "quirk seen from")
+	_expect(str(model["snib"]) == "Jude", "quirk snib")
+	_expect(str(model["aim"]) == "take_ovolo", "quirk aim")
+	_expect(str(model["snib_room"]) == "scratch", "quirk snib room")
+	_expect(str(model["astragal_room"]) == "veiner", "quirk astragal room")
+	_expect(str(model["oil_hour"]) == "136", "quirk oil hour")
+	_expect(str(model["stone_hour"]) == "139", "quirk stone hour")
+	_expect(str(model["hang_hour"]) == "140", "quirk hang hour")
+	for hour in Quirk.HOURS:
+		var used := false
+		for field in Quirk.fields():
+			if str(model[field]) == hour:
+				used = true
+		_expect(used, "quirk hour %s is blank in the true timeline" % hour)
+	for place in Quirk.PLACES:
+		var place_used := false
+		for field in Quirk.fields():
+			if str(model[field]) == place:
+				place_used = true
+		_expect(place_used, "quirk room %s is blank in the true timeline" % place)
+	for person in Quirk.PEOPLE:
+		var person_used := false
+		for field in Quirk.fields():
+			if str(model[field]) == person:
+				person_used = true
+		_expect(person_used, "quirk person %s is blank in the true timeline" % person)
+	_expect(Quirk.timeline(model) == QUIRK_TIMELINE, "quirk timeline drifted:\n%s" % Quirk.timeline(model))
+	for exhibit in Quirk.EXHIBITS:
+		_expect(Quirk.holds(exhibit, model), "%s rejects the quirk timeline" % exhibit["id"])
+
+
+func _test_quirk_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Quirk.EXHIBITS, Quirk)
+	for exhibit in Quirk.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Quirk.without(exhibit_id), Quirk)
+		print("quirk without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "quirk %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Quirk.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "quirk %s removal did not admit a timeline it forbids" % exhibit_id)
+
+
+func _test_quirk_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	var snib_miss := {"who": "Pia", "place": "snib", "hour": "136"}
+	_expect(Quirk.conflicting_ids(snib_miss).size() == 9, "Pia / snib / 136 contradicts %d exhibits" % Quirk.conflicting_ids(snib_miss).size())
+	for who in Quirk.PEOPLE:
+		for place in Quirk.PLACES:
+			for hour in Quirk.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == QUIRK_TRUE["who"] and place == QUIRK_TRUE["place"] and hour == QUIRK_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Quirk)
+					print("quirk true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true quirk theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "quirk acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(QUIRK_TIMELINE) >= 0, "quirk acceptance should give the timeline")
+					_expect(str(result["message"]).find("Ross") >= 0, "quirk acceptance omits Ross")
+					_expect(str(result["message"]).find("scratch") >= 0, "quirk acceptance omits the scratch")
+					_expect(str(result["message"]).find("138") >= 0, "quirk acceptance omits 138")
+					_expect(str(result["message"]).find("so the ovolo would take the quirk") >= 0, "quirk acceptance omits the ovolo")
+					_expect(str(result["message"]).find("Ross (quirk hand) scratched the quirk in the scratch at 138") >= 0, "quirk acceptance omits the scratching")
+					_expect(Quirk.conflicting_ids(theory).is_empty(), "true quirk theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Quirk)
+					_expect(Quirk.conflicting_ids(theory).size() >= 2, "%s / %s / %s contradicts fewer than two exhibits" % [who, place, hour])
+					rejected += 1
+	for outsider in ["Shay", "Dell", "Glen", "Faye", "Kerr", "Brynn", "Rhys", "Mab", "Lisle", "Clem", "Gale", "Boyd", "Hob", "Nairn", "Cole", "Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal", "Nell"]:
+		_expect_rejected({"who": outsider, "place": "scratch", "hour": "138"}, Quirk)
+	print("quirk theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d quirk theories" % accepted)
+	_expect(rejected >= 2, "rejected %d quirk theories" % rejected)
+
+
+func _test_quirk_near_misses() -> void:
+	var misses := [
+		{"who": "Ross", "place": "scratch", "hour": "139", "titles": ["Quirk leaf", "Gelding note", "Whet order"]},
+		{"who": "Ross", "place": "scratch", "hour": "137", "titles": ["Quirk leaf", "Gelding note", "Whet order"]},
+		{"who": "Ross", "place": "snib", "hour": "138", "titles": ["Score slate", "Snib card", "Grease slip"]},
+		{"who": "Pia", "place": "scratch", "hour": "138", "titles": ["Ovolo chit", "Bolt sight", "Astragal bill"]},
+	]
+	var wrong_hour_in_bit := 0
+	var wrong_place_at_hour := 0
+	var wrong_person_in_bit := 0
+	for theory in misses:
+		_expect_rejected(theory, Quirk)
+		var result: Dictionary = Verdict.submit(theory, Quirk)
+		var message := str(result["message"])
+		_expect(Quirk.conflicting_ids(theory).size() >= 2, "near-miss should contradict at least two exhibits: %s" % message)
+		_expect(Quirk.conflicting_ids(theory).size() == 3, "near-miss should name three exhibits: %s" % message)
+		var named_at := -1
+		for title in theory["titles"]:
+			var at := message.find(str(title))
+			_expect(at >= 0, "near-miss omits %s: %s" % [title, message])
+			_expect(at > named_at, "near-miss names %s out of paper order: %s" % [title, message])
+			named_at = at
+		if str(theory["who"]) == "Ross" and str(theory["place"]) == "scratch" and str(theory["hour"]) != "138":
+			wrong_hour_in_bit += 1
+		if str(theory["who"]) == "Ross" and str(theory["place"]) != "scratch" and str(theory["hour"]) == "138":
+			wrong_place_at_hour += 1
+		if str(theory["who"]) != "Ross" and str(theory["place"]) == "scratch" and str(theory["hour"]) == "138":
+			wrong_person_in_bit += 1
+	print("quirk near-misses rejected: %d" % misses.size())
+	_expect(misses.size() == 4, "need four quirk near-misses, found %d" % misses.size())
+	_expect(wrong_hour_in_bit == 2, "two near-misses should keep Ross in the scratch at another hour")
+	_expect(wrong_place_at_hour >= 1, "a near-miss should keep Ross at 138 in another room")
+	_expect(wrong_person_in_bit >= 1, "a near-miss should keep the scratch at 138 for another person")
+
+func _test_quirk_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+		"who took the gilt stamp",
+		"where they took the stamp",
+		"at which hour they took the stamp",
+		"who took the ferry bell",
+		"where they took the bell",
+		"at which hour they took the bell",
+		"who took the weather slate",
+		"where they took the slate",
+		"at which hour they took the slate",
+		"who took the loom shuttle",
+		"where they took the shuttle",
+		"at which hour they took the shuttle",
+		"who took the hive smoker",
+		"where they took the smoker",
+		"at which hour they took the smoker",
+		"who took the glass pontil",
+		"where they took the pontil",
+		"at which hour they took the pontil",
+		"who took the press proof",
+		"where they took the proof",
+		"at which hour they took the proof",
+		"who set the assay cup",
+		"where they set the cup",
+		"at which hour they set the cup",
+		"who chalked the kiln mark",
+		"where they chalked the mark",
+		"at which hour they chalked the mark",
+		"who entered the tide ledger",
+		"where they entered the ledger",
+		"at which hour they entered the ledger",
+		"who stopped the night bell",
+		"where they stopped the bell",
+		"at which hour they stopped the bell",
+		"who scored the salt mark",
+		"where they scored the mark",
+		"at which hour they scored the mark",
+		"who trimmed the wick",
+		"where they trimmed the wick",
+		"at which hour they trimmed the wick",
+		"who annealed the gather",
+		"where they annealed the gather",
+		"at which hour they annealed the gather",
+		"who grafted the scion",
+		"where they grafted the scion",
+		"at which hour they grafted the scion",
+		"who dipped the skein",
+		"where they dipped the skein",
+		"at which hour they dipped the skein",
+		"who tarred the rope",
+		"where they tarred the rope",
+		"at which hour they tarred the rope",
+		"who pressed the cork",
+		"where they pressed the cork",
+		"at which hour they pressed the cork",
+		"who mended the net",
+		"where they mended the net",
+		"at which hour they mended the net",
+		"who drove the hoop",
+		"where they drove the hoop",
+		"at which hour they drove the hoop",
+		"who folded the linen",
+		"where they folded the linen",
+		"at which hour they folded the linen",
+		"who cut the dovetail",
+		"where they cut the dovetail",
+		"at which hour they cut the dovetail",
+		"who cut the mortise",
+		"where they cut the mortise",
+		"at which hour they cut the mortise",
+		"who cut the rebate",
+		"where they cut the rebate",
+		"at which hour they cut the rebate",
+		"who cut the housing",
+		"where they cut the housing",
+		"at which hour they cut the housing",
+		"who cut the tenon",
+		"where they cut the tenon",
+		"at which hour they cut the tenon",
+		"who cut the bridle",
+		"where they cut the bridle",
+		"at which hour they cut the bridle",
+		"who cut the dado",
+		"where they cut the dado",
+		"at which hour they cut the dado",
+		"who cut the spline",
+		"where they cut the spline",
+		"at which hour they cut the spline",
+		"who cut the mitre",
+		"where they cut the mitre",
+		"at which hour they cut the mitre",
+		"who cut the lap",
+		"where they cut the lap",
+		"at which hour they cut the lap",
+		"who cut the scarf",
+		"where they cut the scarf",
+		"at which hour they cut the scarf",
+		"who cut the finger",
+		"where they cut the finger",
+		"at which hour they cut the finger",
+		"who cut the haunch",
+		"where they cut the haunch",
+		"at which hour they cut the haunch",
+		"who cut the dowel",
+		"where they cut the dowel",
+		"at which hour they cut the dowel",
+		"who cut the tongue",
+		"where they cut the tongue",
+		"at which hour they cut the tongue",
+	]
+
+	var cases := [
+		{"theory": {"who": "", "place": "scratch", "hour": "138"}, "present": ["who scratched the quirk"], "absent": ["where they scratched the quirk", "at which hour they scratched the quirk"]},
+		{"theory": {"who": "Ross", "place": "", "hour": "138"}, "present": ["where they scratched the quirk"], "absent": ["who scratched the quirk", "at which hour they scratched the quirk"]},
+		{"theory": {"who": "Ross", "place": "scratch", "hour": ""}, "present": ["at which hour they scratched the quirk"], "absent": ["who scratched the quirk", "where they scratched the quirk"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who scratched the quirk", "where they scratched the quirk", "at which hour they scratched the quirk"], "absent": []},
+		{"theory": {}, "present": ["who scratched the quirk", "where they scratched the quirk", "at which hour they scratched the quirk"], "absent": []},
+		{"theory": {"who": "Jude", "place": "", "hour": "140"}, "present": ["where they scratched the quirk"], "absent": ["who scratched the quirk", "at which hour they scratched the quirk"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Quirk)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "quirk incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "quirk incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "quirk incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "quirk incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "quirk incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "quirk missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "quirk named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "quirk incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("quirk incomplete submissions refused with the missing slot")
+
 func _test_solutions_differ() -> void:
 	var spare := {"who": "Nell", "place": "kitchen", "hour": "7"}
 	_expect(spare["who"] != REHEARSAL_TRUE["who"], "rehearsal copied the spare-key taker")
@@ -15214,7 +15641,192 @@ func _test_solutions_differ() -> void:
 	_expect(not Tongue.HOURS.has("129"), "tongue hours must not take 129")
 	_expect(not Tongue.HOURS.has("130"), "tongue hours must not take 130")
 
-	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal", "The orchard graft", "The dye vat", "The tar kettle", "The cork press", "The net loft", "The cask hoop", "The linen fold", "The dovetail", "The mortise", "The rebate", "The housing", "The tenon", "The bridle", "The dado", "The spline", "The mitre", "The lap", "The scarf", "The finger", "The haunch", "The dowel", "The tongue"], "case list is %s" % str(titles))
+	_expect(QUIRK_TRUE["who"] == "Ross", "quirk taker")
+	_expect(QUIRK_TRUE["place"] == "scratch", "quirk room")
+	_expect(QUIRK_TRUE["hour"] == "138", "quirk hour")
+	for forbidden in ["Shay", "Dell", "Glen", "Faye", "Kerr", "Brynn", "Lisle", "Mab", "Rhys", "Clem", "Gale", "Boyd", "Hob", "Nairn", "Cole", "Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(QUIRK_TRUE["who"] != forbidden, "quirk accepted %s" % forbidden)
+	for forbidden_place in ["knife", "punch", "scribe", "bit", "auger", "brace", "jointer", "smoother", "fore", "pad", "badger", "jack", "drawknife", "spokeshave", "firmer", "plough", "float", "gimlet", "router", "scraper", "adze", "gouge", "rasp", "bevel", "saw", "square", "bead", "plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(QUIRK_TRUE["place"] != forbidden_place, "quirk accepted the %s" % forbidden_place)
+	_expect(QUIRK_TRUE["place"] != "punch", "quirk accepted the punch")
+	_expect(QUIRK_TRUE["place"] != "scribe", "quirk accepted the scribe")
+	_expect(QUIRK_TRUE["place"] != "snib", "quirk accepted the snib")
+	_expect(QUIRK_TRUE["place"] != "veiner", "quirk accepted the veiner")
+	_expect(QUIRK_TRUE["hour"] != "111", "quirk accepted 111")
+	_expect(QUIRK_TRUE["hour"] != "112", "quirk accepted 112")
+	_expect(QUIRK_TRUE["hour"] != "114", "quirk accepted 114")
+	_expect(QUIRK_TRUE["hour"] != "115", "quirk accepted 115")
+	_expect(QUIRK_TRUE["hour"] != "106", "quirk accepted 106")
+	_expect(QUIRK_TRUE["hour"] != "107", "quirk accepted 107")
+	_expect(QUIRK_TRUE["hour"] != "108", "quirk accepted 108")
+	_expect(QUIRK_TRUE["hour"] != "109", "quirk accepted 109")
+	_expect(QUIRK_TRUE["hour"] != "110", "quirk accepted 110")
+	_expect(QUIRK_TRUE["hour"] != "101", "quirk accepted 101")
+	_expect(QUIRK_TRUE["hour"] != "102", "quirk accepted 102")
+	_expect(QUIRK_TRUE["hour"] != "103", "quirk accepted 103")
+	_expect(QUIRK_TRUE["hour"] != "104", "quirk accepted 104")
+	_expect(QUIRK_TRUE["hour"] != "105", "quirk accepted 105")
+	_expect(QUIRK_TRUE["hour"] != "96", "quirk accepted 96")
+	_expect(QUIRK_TRUE["hour"] != "97", "quirk accepted 97")
+	_expect(QUIRK_TRUE["hour"] != "98", "quirk accepted 98")
+	_expect(QUIRK_TRUE["hour"] != "99", "quirk accepted 99")
+	_expect(QUIRK_TRUE["hour"] != "100", "quirk accepted 100")
+	_expect(QUIRK_TRUE["hour"] != "91", "quirk accepted 91")
+	_expect(QUIRK_TRUE["hour"] != "92", "quirk accepted 92")
+	_expect(QUIRK_TRUE["hour"] != "93", "quirk accepted 93")
+	_expect(QUIRK_TRUE["hour"] != "94", "quirk accepted 94")
+	_expect(QUIRK_TRUE["hour"] != "95", "quirk accepted 95")
+	_expect(QUIRK_TRUE["hour"] != "88", "quirk accepted 88")
+	_expect(QUIRK_TRUE["hour"] != "83", "quirk accepted 83")
+	_expect(QUIRK_TRUE["hour"] != "78", "quirk accepted 78")
+	_expect(QUIRK_TRUE["hour"] != "73", "quirk accepted 73")
+	_expect(QUIRK_TRUE["hour"] != "68", "quirk accepted 68")
+	_expect(QUIRK_TRUE["hour"] != "63", "quirk accepted 63")
+	_expect(QUIRK_TRUE["hour"] != "8", "quirk accepted 8")
+	_expect(QUIRK_TRUE["hour"] != "6", "quirk accepted 6")
+	_expect(QUIRK_TRUE["hour"] != "3", "quirk accepted 3")
+	_expect(QUIRK_TRUE["hour"] != "16", "quirk accepted 16")
+	_expect(QUIRK_TRUE["hour"] != "19", "quirk accepted 19")
+	_expect(QUIRK_TRUE["hour"] != "113", "quirk accepted 113")
+	_expect(QUIRK_TRUE["hour"] != "121", "quirk accepted 121")
+	_expect(QUIRK_TRUE["hour"] != "122", "quirk accepted 122")
+	_expect(QUIRK_TRUE["hour"] != "124", "quirk accepted 124")
+	_expect(QUIRK_TRUE["hour"] != "125", "quirk accepted 125")
+	_expect(QUIRK_TRUE["hour"] != "116", "quirk accepted 116")
+	_expect(QUIRK_TRUE["hour"] != "117", "quirk accepted 117")
+	_expect(QUIRK_TRUE["hour"] != "118", "quirk accepted 118")
+	_expect(QUIRK_TRUE["hour"] != "119", "quirk accepted 119")
+	_expect(QUIRK_TRUE["hour"] != "120", "quirk accepted 120")
+	_expect(QUIRK_TRUE["hour"] != "123", "quirk accepted 123")
+	_expect(QUIRK_TRUE["hour"] != "126", "quirk accepted 126")
+	_expect(QUIRK_TRUE["hour"] != "127", "quirk accepted 127")
+	_expect(QUIRK_TRUE["hour"] != "129", "quirk accepted 129")
+	_expect(QUIRK_TRUE["hour"] != "130", "quirk accepted 130")
+	_expect(QUIRK_TRUE["hour"] != "128", "quirk accepted 128")
+	_expect(QUIRK_TRUE["hour"] != "131", "quirk accepted 131")
+	_expect(QUIRK_TRUE["hour"] != "132", "quirk accepted 132")
+	_expect(QUIRK_TRUE["hour"] != "134", "quirk accepted 134")
+	_expect(QUIRK_TRUE["hour"] != "135", "quirk accepted 135")
+	_expect(QUIRK_TRUE["hour"] != "133", "quirk accepted 133")
+	_expect(QUIRK_TRUE["hour"] != "136", "quirk accepted 136")
+	_expect(QUIRK_TRUE["hour"] != "137", "quirk accepted 137")
+	_expect(QUIRK_TRUE["hour"] != "139", "quirk accepted 139")
+	_expect(QUIRK_TRUE["hour"] != "140", "quirk accepted 140")
+	var before_quirk: Array = before_dowel.duplicate()
+	before_quirk.append([Dowel, DOWEL_TRUE, "dowel"])
+	before_quirk.append([Tongue, TONGUE_TRUE, "tongue"])
+	for row in before_quirk:
+		var book = row[0]
+		var truth: Dictionary = row[1]
+		var name := str(row[2])
+		_expect(QUIRK_TRUE["who"] != truth["who"], "quirk copied the %s taker" % name)
+		_expect(QUIRK_TRUE["place"] != truth["place"], "quirk copied the %s room" % name)
+		_expect(QUIRK_TRUE["hour"] != str(truth["hour"]), "quirk copied the %s hour" % name)
+		_expect_rejected(QUIRK_TRUE, book)
+		_expect_rejected(truth, Quirk)
+	_expect(DOWEL_TRUE["who"] == "Faye" and DOWEL_TRUE["place"] == "bit" and DOWEL_TRUE["hour"] == "128", "the dowel should still accept Faye in the bit at 128")
+	_expect(TONGUE_TRUE["who"] == "Shay" and TONGUE_TRUE["place"] == "knife" and TONGUE_TRUE["hour"] == "133", "the tongue should still accept Shay in the knife at 133")
+	_expect(HAUNCH_TRUE["who"] == "Rhys" and HAUNCH_TRUE["place"] == "fore" and HAUNCH_TRUE["hour"] == "123", "the haunch should still accept Rhys in the fore at 123")
+	_expect(FINGER_TRUE["who"] == "Clem" and FINGER_TRUE["place"] == "pad" and FINGER_TRUE["hour"] == "118", "the finger should still accept Clem in the pad at 118")
+	for row in before_quirk:
+		var book = row[0]
+		var name := str(row[2])
+		for person in Quirk.PEOPLE:
+			_expect(not book.PEOPLE.has(person), "quirk cast repeats %s from the %s" % [person, name])
+		for place in Quirk.PLACES:
+			_expect(not book.PLACES.has(place), "quirk rooms repeat %s from the %s" % [place, name])
+		for hour in Quirk.HOURS:
+			_expect(not book.HOURS.has(hour), "quirk hours repeat %s from the %s" % [hour, name])
+	for forbidden_person in ["Shay", "Dell", "Glen", "Faye", "Kerr", "Brynn", "Lisle", "Mab", "Rhys", "Clem", "Gale", "Boyd", "Hob", "Nairn", "Cole", "Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(not Quirk.PEOPLE.has(forbidden_person), "quirk cast must not take %s" % forbidden_person)
+	_expect(Quirk.role_phrase("Ross") == "the quirk hand", "the quirk should call Ross the quirk hand")
+	_expect(Quirk.role_phrase("Pia") == "the ovolo hand", "the quirk should call Pia the ovolo hand")
+	_expect(Quirk.role_phrase("Jude") == "the snib clerk", "the quirk should call Jude the snib clerk")
+	for forbidden_place in ["knife", "punch", "scribe", "bit", "auger", "brace", "jointer", "smoother", "fore", "drawknife", "spokeshave", "firmer", "plough", "float", "gimlet", "router", "scraper", "adze", "gouge", "rasp", "bevel", "saw", "square", "bead", "plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(not Quirk.PLACES.has(forbidden_place), "quirk rooms must not take the %s" % forbidden_place)
+	_expect(not Quirk.HOURS.has("6"), "quirk hours must not take 6")
+	_expect(not Quirk.HOURS.has("7"), "quirk hours must not take 7")
+	_expect(not Quirk.HOURS.has("8"), "quirk hours must not take 8")
+	_expect(not Quirk.HOURS.has("9"), "quirk hours must not take 9")
+	_expect(not Quirk.HOURS.has("10"), "quirk hours must not take 10")
+	_expect(not Quirk.HOURS.has("60"), "quirk hours must not take 60")
+	_expect(not Quirk.HOURS.has("61"), "quirk hours must not take 61")
+	_expect(not Quirk.HOURS.has("62"), "quirk hours must not take 62")
+	_expect(not Quirk.HOURS.has("63"), "quirk hours must not take 63")
+	_expect(not Quirk.HOURS.has("64"), "quirk hours must not take 64")
+	_expect(not Quirk.HOURS.has("65"), "quirk hours must not take 65")
+	_expect(not Quirk.HOURS.has("66"), "quirk hours must not take 66")
+	_expect(not Quirk.HOURS.has("67"), "quirk hours must not take 67")
+	_expect(not Quirk.HOURS.has("68"), "quirk hours must not take 68")
+	_expect(not Quirk.HOURS.has("69"), "quirk hours must not take 69")
+	_expect(not Quirk.HOURS.has("70"), "quirk hours must not take 70")
+	_expect(not Quirk.HOURS.has("71"), "quirk hours must not take 71")
+	_expect(not Quirk.HOURS.has("72"), "quirk hours must not take 72")
+	_expect(not Quirk.HOURS.has("73"), "quirk hours must not take 73")
+	_expect(not Quirk.HOURS.has("74"), "quirk hours must not take 74")
+	_expect(not Quirk.HOURS.has("75"), "quirk hours must not take 75")
+	_expect(not Quirk.HOURS.has("76"), "quirk hours must not take 76")
+	_expect(not Quirk.HOURS.has("77"), "quirk hours must not take 77")
+	_expect(not Quirk.HOURS.has("78"), "quirk hours must not take 78")
+	_expect(not Quirk.HOURS.has("79"), "quirk hours must not take 79")
+	_expect(not Quirk.HOURS.has("80"), "quirk hours must not take 80")
+	_expect(not Quirk.HOURS.has("81"), "quirk hours must not take 81")
+	_expect(not Quirk.HOURS.has("82"), "quirk hours must not take 82")
+	_expect(not Quirk.HOURS.has("83"), "quirk hours must not take 83")
+	_expect(not Quirk.HOURS.has("84"), "quirk hours must not take 84")
+	_expect(not Quirk.HOURS.has("85"), "quirk hours must not take 85")
+	_expect(not Quirk.HOURS.has("86"), "quirk hours must not take 86")
+	_expect(not Quirk.HOURS.has("87"), "quirk hours must not take 87")
+	_expect(not Quirk.HOURS.has("88"), "quirk hours must not take 88")
+	_expect(not Quirk.HOURS.has("89"), "quirk hours must not take 89")
+	_expect(not Quirk.HOURS.has("90"), "quirk hours must not take 90")
+	_expect(not Quirk.HOURS.has("91"), "quirk hours must not take 91")
+	_expect(not Quirk.HOURS.has("92"), "quirk hours must not take 92")
+	_expect(not Quirk.HOURS.has("93"), "quirk hours must not take 93")
+	_expect(not Quirk.HOURS.has("94"), "quirk hours must not take 94")
+	_expect(not Quirk.HOURS.has("95"), "quirk hours must not take 95")
+	_expect(not Quirk.HOURS.has("96"), "quirk hours must not take 96")
+	_expect(not Quirk.HOURS.has("97"), "quirk hours must not take 97")
+	_expect(not Quirk.HOURS.has("98"), "quirk hours must not take 98")
+	_expect(not Quirk.HOURS.has("99"), "quirk hours must not take 99")
+	_expect(not Quirk.HOURS.has("100"), "quirk hours must not take 100")
+	_expect(not Quirk.HOURS.has("101"), "quirk hours must not take 101")
+	_expect(not Quirk.HOURS.has("102"), "quirk hours must not take 102")
+	_expect(not Quirk.HOURS.has("103"), "quirk hours must not take 103")
+	_expect(not Quirk.HOURS.has("104"), "quirk hours must not take 104")
+	_expect(not Quirk.HOURS.has("105"), "quirk hours must not take 105")
+	_expect(not Quirk.HOURS.has("106"), "quirk hours must not take 106")
+	_expect(not Quirk.HOURS.has("107"), "quirk hours must not take 107")
+	_expect(not Quirk.HOURS.has("108"), "quirk hours must not take 108")
+	_expect(not Quirk.HOURS.has("109"), "quirk hours must not take 109")
+	_expect(not Quirk.HOURS.has("110"), "quirk hours must not take 110")
+	_expect(not Quirk.HOURS.has("111"), "quirk hours must not take 111")
+	_expect(not Quirk.HOURS.has("112"), "quirk hours must not take 112")
+	_expect(not Quirk.HOURS.has("113"), "quirk hours must not take 113")
+	_expect(not Quirk.HOURS.has("114"), "quirk hours must not take 114")
+	_expect(not Quirk.HOURS.has("115"), "quirk hours must not take 115")
+	_expect(not Quirk.HOURS.has("116"), "quirk hours must not take 116")
+	_expect(not Quirk.HOURS.has("117"), "quirk hours must not take 117")
+	_expect(not Quirk.HOURS.has("118"), "quirk hours must not take 118")
+	_expect(not Quirk.HOURS.has("119"), "quirk hours must not take 119")
+	_expect(not Quirk.HOURS.has("120"), "quirk hours must not take 120")
+	_expect(not Quirk.HOURS.has("121"), "quirk hours must not take 121")
+	_expect(not Quirk.HOURS.has("122"), "quirk hours must not take 122")
+	_expect(not Quirk.HOURS.has("123"), "quirk hours must not take 123")
+	_expect(not Quirk.HOURS.has("124"), "quirk hours must not take 124")
+	_expect(not Quirk.HOURS.has("125"), "quirk hours must not take 125")
+	_expect(not Quirk.HOURS.has("126"), "quirk hours must not take 126")
+	_expect(not Quirk.HOURS.has("127"), "quirk hours must not take 127")
+	_expect(not Quirk.HOURS.has("128"), "quirk hours must not take 128")
+	_expect(not Quirk.HOURS.has("129"), "quirk hours must not take 129")
+	_expect(not Quirk.HOURS.has("130"), "quirk hours must not take 130")
+	_expect(not Quirk.HOURS.has("131"), "quirk hours must not take 131")
+	_expect(not Quirk.HOURS.has("132"), "quirk hours must not take 132")
+	_expect(not Quirk.HOURS.has("133"), "quirk hours must not take 133")
+	_expect(not Quirk.HOURS.has("134"), "quirk hours must not take 134")
+	_expect(not Quirk.HOURS.has("135"), "quirk hours must not take 135")
+
+	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal", "The orchard graft", "The dye vat", "The tar kettle", "The cork press", "The net loft", "The cask hoop", "The linen fold", "The dovetail", "The mortise", "The rebate", "The housing", "The tenon", "The bridle", "The dado", "The spline", "The mitre", "The lap", "The scarf", "The finger", "The haunch", "The dowel", "The tongue", "The quirk"], "case list is %s" % str(titles))
 
 
 
@@ -15228,7 +15840,7 @@ func _test_menu_opens_either_case() -> void:
 		root._ready()
 	var menu_blob := _visible_label_blob(root)
 	_expect(get_root().size == Vector2i(1280, 800), "case window is %s" % str(get_root().size))
-	_expect(menu_blob.find("Thirty-eight files") >= 0, "menu does not offer thirty-eight files: %s" % menu_blob)
+	_expect(menu_blob.find("Thirty-nine files") >= 0, "menu does not offer thirty-nine files: %s" % menu_blob)
 	_expect(menu_blob.find("CW-07") >= 0, "menu omits CW-07")
 	_expect(menu_blob.find("The hive smoker") >= 0, "menu omits The hive smoker")
 	_expect(menu_blob.find("CW-08") >= 0, "menu omits CW-08")
@@ -15293,6 +15905,8 @@ func _test_menu_opens_either_case() -> void:
 	_expect(menu_blob.find("The dowel") >= 0, "menu omits The dowel")
 	_expect(menu_blob.find("CW-38") >= 0, "menu omits CW-38")
 	_expect(menu_blob.find("The tongue") >= 0, "menu omits The tongue")
+	_expect(menu_blob.find("CW-39") >= 0, "menu omits CW-39")
+	_expect(menu_blob.find("The quirk") >= 0, "menu omits The quirk")
 	_expect(root.get_child_count() > 0, "main scene built %d children" % root.get_child_count())
 	_press(root, "How to play")
 	var howto := _visible_label_blob(root)
@@ -15334,6 +15948,7 @@ func _test_menu_opens_either_case() -> void:
 	_expect(howto.find("The haunch") >= 0, "how to play omits The haunch")
 	_expect(howto.find("The dowel") >= 0, "how to play omits The dowel")
 	_expect(howto.find("The tongue") >= 0, "how to play omits The tongue")
+	_expect(howto.find("The quirk") >= 0, "how to play omits The quirk")
 	_expect(howto.find("names that slot") >= 0, "how to play omits the empty-slot rule")
 	_press(root, "Back to the menu")
 	_expect(_find_visible_button(root, "Open The spare key") != null, "menu is missing The spare key")
@@ -15374,6 +15989,7 @@ func _test_menu_opens_either_case() -> void:
 	_expect(_find_visible_button(root, "Open The haunch") != null, "menu is missing The haunch")
 	_expect(_find_visible_button(root, "Open The dowel") != null, "menu is missing The dowel")
 	_expect(_find_visible_button(root, "Open The tongue") != null, "menu is missing The tongue")
+	_expect(_find_visible_button(root, "Open The quirk") != null, "menu is missing The quirk")
 	_press(root, "Open The rehearsal score")
 	var rehearsal_open := _visible_label_blob(root)
 	_expect(rehearsal_open.find("Cut list") >= 0, "rehearsal file did not open")
@@ -19179,6 +19795,269 @@ func _test_menu_opens_either_case() -> void:
 	_expect(dowel_again_blob.find("Groove chit") == -1, "tongue papers stayed up after returning to The dowel")
 	_expect(dowel_again_blob.find("Filly note") == -1, "tongue papers stayed up after returning to The dowel")
 	_press(root, "Menu")
+	_press(root, "Open The quirk")
+	var quirk_open := _visible_label_blob(root)
+	_expect(quirk_open.find("Ovolo chit") >= 0, "quirk file did not open")
+	_expect(quirk_open.find("Gelding note") >= 0, "quirk file did not show its exhibits")
+	_expect(quirk_open.find("CW-39") >= 0, "quirk file omits CW-39")
+	_expect(quirk_open.find("Bolt sight") >= 0, "quirk file omits Bolt sight")
+	_expect(quirk_open.find("Astragal bill") >= 0, "quirk file omits Astragal bill")
+	_expect(quirk_open.find("Score slate") >= 0, "quirk file omits Score slate")
+	_expect(quirk_open.find("Snib card") >= 0, "quirk file omits Snib card")
+	_expect(quirk_open.find("Grease slip") >= 0, "quirk file omits Grease slip")
+	_expect(quirk_open.find("Quirk leaf") >= 0, "quirk file omits Quirk leaf")
+	_expect(quirk_open.find("Whet order") >= 0, "quirk file omits Whet order")
+	_expect(quirk_open.find("Veiner card") >= 0, "quirk file omits the veiner card")
+	_expect(quirk_open.find("Complaint slip") == -1, "spare key papers showed inside The quirk")
+	_expect(quirk_open.find("Cut list") == -1, "rehearsal papers showed inside The quirk")
+	_expect(quirk_open.find("Move order") == -1, "gilt stamp papers showed inside The quirk")
+	_expect(quirk_open.find("Whistle slip") == -1, "ferry bell papers showed inside The quirk")
+	_expect(quirk_open.find("Frost note") == -1, "weather slate papers showed inside The quirk")
+	_expect(quirk_open.find("Trough tag") == -1, "loom shuttle papers showed inside The quirk")
+	_expect(quirk_open.find("Fuel line") == -1, "hive smoker papers showed inside The quirk")
+	_expect(quirk_open.find("Weight line") == -1, "glass pontil papers showed inside The quirk")
+	_expect(quirk_open.find("Lock line") == -1, "press proof papers showed inside The quirk")
+	_expect(quirk_open.find("Cup line") == -1, "assay cup papers showed inside The quirk")
+	_expect(quirk_open.find("Mark line") == -1, "kiln chalk papers showed inside The quirk")
+	_expect(quirk_open.find("Ledger line") == -1, "tide ledger papers showed inside The quirk")
+	_expect(quirk_open.find("Bell line") == -1, "night bell papers showed inside The quirk")
+	_expect(quirk_open.find("Salt line") == -1, "salt mark papers showed inside The quirk")
+	_expect(quirk_open.find("Oil note") == -1, "wick trim papers showed inside The quirk")
+	_expect(quirk_open.find("Gather note") == -1, "glass anneal papers showed inside The quirk")
+	_expect(quirk_open.find("Scion note") == -1, "orchard graft papers showed inside The quirk")
+	_expect(quirk_open.find("Winder chit") == -1, "dye vat papers showed inside The quirk")
+	_expect(quirk_open.find("Rope chit") == -1, "tar kettle papers showed inside The quirk")
+	_expect(quirk_open.find("Cutter chit") == -1, "cork press papers showed inside The quirk")
+	_expect(quirk_open.find("Mesh chit") == -1, "net loft papers showed inside The quirk")
+	_expect(quirk_open.find("Hoop chit") == -1, "cask hoop papers showed inside The quirk")
+	_expect(quirk_open.find("Shears chit") == -1, "linen fold papers showed inside The quirk")
+	_expect(quirk_open.find("Apron sight") == -1, "dovetail papers showed inside The quirk")
+	_expect(quirk_open.find("Peg hook") == -1, "dovetail papers showed inside The quirk")
+	_expect(quirk_open.find("Joint slate") == -1, "dovetail papers showed inside The quirk")
+	_expect(quirk_open.find("Clamp card") == -1, "dovetail papers showed inside The quirk")
+	_expect(quirk_open.find("Sweep slip") == -1, "dovetail papers showed inside The quirk")
+	_expect(quirk_open.find("Cut leaf") == -1, "dovetail papers showed inside The quirk")
+	_expect(quirk_open.find("Joint note") == -1, "dovetail papers showed inside The quirk")
+	_expect(quirk_open.find("Jaw order") == -1, "dovetail papers showed inside The quirk")
+	_expect(quirk_open.find("CW-24") == -1, "dovetail file code stayed up inside The quirk")
+	_expect(quirk_open.find("Chisel chit") == -1, "mortise papers stayed up inside The quirk")
+	_expect(quirk_open.find("Awl sight") == -1, "mortise papers showed inside The quirk")
+	_expect(quirk_open.find("Wedge hook") == -1, "mortise papers showed inside The quirk")
+	_expect(quirk_open.find("Tenon slate") == -1, "mortise papers showed inside The quirk")
+	_expect(quirk_open.find("Brush slip") == -1, "mortise papers showed inside The quirk")
+	_expect(quirk_open.find("Bore leaf") == -1, "mortise papers showed inside The quirk")
+	_expect(quirk_open.find("Tenon note") == -1, "mortise papers showed inside The quirk")
+	_expect(quirk_open.find("Rack order") == -1, "mortise papers showed inside The quirk")
+	_expect(quirk_open.find("CW-25") == -1, "mortise file code stayed up inside The quirk")
+	_expect(quirk_open.find("Plane chit") == -1, "rebate papers stayed up inside The quirk")
+	_expect(quirk_open.find("Gauge sight") == -1, "rebate papers showed inside The quirk")
+	_expect(quirk_open.find("Shim hook") == -1, "rebate papers showed inside The quirk")
+	_expect(quirk_open.find("Shoulder slate") == -1, "rebate papers showed inside The quirk")
+	_expect(quirk_open.find("Fence card") == -1, "rebate papers showed inside The quirk")
+	_expect(quirk_open.find("Oil slip") == -1, "rebate papers showed inside The quirk")
+	_expect(quirk_open.find("Scribe leaf") == -1, "rebate papers showed inside The quirk")
+	_expect(quirk_open.find("Shoulder note") == -1, "rebate papers showed inside The quirk")
+	_expect(quirk_open.find("CW-26") == -1, "rebate file code stayed up inside The quirk")
+	_expect(quirk_open.find("Saw chit") == -1, "housing papers stayed up inside The quirk")
+	_expect(quirk_open.find("Square sight") == -1, "housing papers showed inside The quirk")
+	_expect(quirk_open.find("Fillet hook") == -1, "housing papers showed inside The quirk")
+	_expect(quirk_open.find("Trench slate") == -1, "housing papers showed inside The quirk")
+	_expect(quirk_open.find("Stock card") == -1, "housing papers showed inside The quirk")
+	_expect(quirk_open.find("Chalk slip") == -1, "housing papers showed inside The quirk")
+	_expect(quirk_open.find("Mark leaf") == -1, "housing papers showed inside The quirk")
+	_expect(quirk_open.find("Trench note") == -1, "housing papers showed inside The quirk")
+	_expect(quirk_open.find("CW-27") == -1, "housing file code stayed up inside The quirk")
+	_expect(quirk_open.find("Gouge chit") == -1, "tenon papers stayed up inside The quirk")
+	_expect(quirk_open.find("Rasp sight") == -1, "tenon papers showed inside The quirk")
+	_expect(quirk_open.find("Dowel hook") == -1, "tenon papers showed inside The quirk")
+	_expect(quirk_open.find("Haunch slate") == -1, "tenon papers showed inside The quirk")
+	_expect(quirk_open.find("Guide card") == -1, "tenon papers showed inside The quirk")
+	_expect(quirk_open.find("Hone slip") == -1, "tenon papers showed inside The quirk")
+	_expect(quirk_open.find("Nick leaf") == -1, "tenon papers showed inside The quirk")
+	_expect(quirk_open.find("CW-28") == -1, "tenon file code stayed up inside The quirk")
+	_expect(quirk_open.find("Router chit") == -1, "bridle papers stayed up inside The quirk")
+	_expect(quirk_open.find("Scraper sight") == -1, "bridle papers showed inside The quirk")
+	_expect(quirk_open.find("Spline hook") == -1, "bridle papers showed inside The quirk")
+	_expect(quirk_open.find("Tongue slate") == -1, "bridle papers showed inside The quirk")
+	_expect(quirk_open.find("Templet card") == -1, "bridle papers showed inside The quirk")
+	_expect(quirk_open.find("Strop slip") == -1, "bridle papers showed inside The quirk")
+	_expect(quirk_open.find("Notch leaf") == -1, "bridle papers showed inside The quirk")
+	_expect(quirk_open.find("Tongue note") == -1, "bridle papers showed inside The quirk")
+	_expect(quirk_open.find("CW-29") == -1, "bridle file code stayed up inside The quirk")
+	_expect(quirk_open.find("Plough chit") == -1, "dado papers stayed up inside The quirk")
+	_expect(quirk_open.find("Float sight") == -1, "dado papers showed inside The quirk")
+	_expect(quirk_open.find("Cleat hook") == -1, "dado papers showed inside The quirk")
+	_expect(quirk_open.find("Groove slate") == -1, "dado papers showed inside The quirk")
+	_expect(quirk_open.find("Spur card") == -1, "dado papers showed inside The quirk")
+	_expect(quirk_open.find("Whet slip") == -1, "dado papers showed inside The quirk")
+	_expect(quirk_open.find("Score leaf") == -1, "dado papers showed inside The quirk")
+	_expect(quirk_open.find("Groove note") == -1, "dado papers showed inside The quirk")
+	_expect(quirk_open.find("CW-30") == -1, "dado file code stayed up inside The quirk")
+	_expect(quirk_open.find("Slot chit") == -1, "spline papers stayed up inside The quirk")
+	_expect(quirk_open.find("Rest sight") == -1, "spline papers showed inside The quirk")
+	_expect(quirk_open.find("Feather hook") == -1, "spline papers showed inside The quirk")
+	_expect(quirk_open.find("Slot slate") == -1, "spline papers showed inside The quirk")
+	_expect(quirk_open.find("Key card") == -1, "spline papers showed inside The quirk")
+	_expect(quirk_open.find("Cheek slip") == -1, "spline papers showed inside The quirk")
+	_expect(quirk_open.find("Slot leaf") == -1, "spline papers showed inside The quirk")
+	_expect(quirk_open.find("Slot note") == -1, "spline papers showed inside The quirk")
+	_expect(quirk_open.find("Dry order") == -1, "spline papers showed inside The quirk")
+	_expect(quirk_open.find("CW-31") == -1, "spline file code stayed up inside The quirk")
+	_expect(quirk_open.find("Arris chit") == -1, "mitre papers stayed up inside The quirk")
+	_expect(quirk_open.find("Horn sight") == -1, "mitre papers showed inside The quirk")
+	_expect(quirk_open.find("Offcut hook") == -1, "mitre papers showed inside The quirk")
+	_expect(quirk_open.find("Arris slate") == -1, "mitre papers showed inside The quirk")
+	_expect(quirk_open.find("Stop card") == -1, "mitre papers showed inside The quirk")
+	_expect(quirk_open.find("Dress slip") == -1, "mitre papers showed inside The quirk")
+	_expect(quirk_open.find("Arris leaf") == -1, "mitre papers showed inside The quirk")
+	_expect(quirk_open.find("Arris note") == -1, "mitre papers showed inside The quirk")
+	_expect(quirk_open.find("Brush order") == -1, "mitre papers showed inside The quirk")
+	_expect(quirk_open.find("CW-32") == -1, "mitre file code stayed up inside The quirk")
+	_expect(quirk_open.find("Grain chit") == -1, "lap papers stayed up inside The quirk")
+	_expect(quirk_open.find("Crest sight") == -1, "lap papers showed inside The quirk")
+	_expect(quirk_open.find("Paring hook") == -1, "lap papers showed inside The quirk")
+	_expect(quirk_open.find("Grain slate") == -1, "lap papers showed inside The quirk")
+	_expect(quirk_open.find("Brad card") == -1, "lap papers showed inside The quirk")
+	_expect(quirk_open.find("Skim slip") == -1, "lap papers showed inside The quirk")
+	_expect(quirk_open.find("Grain leaf") == -1, "lap papers showed inside The quirk")
+	_expect(quirk_open.find("Grain note") == -1, "lap papers showed inside The quirk")
+	_expect(quirk_open.find("Oil order") == -1, "lap papers showed inside The quirk")
+	_expect(quirk_open.find("CW-33") == -1, "lap file code stayed up inside The quirk")
+	_expect(quirk_open.find("Shoulder chit") == -1, "scarf papers stayed up inside The quirk")
+	_expect(quirk_open.find("Sole sight") == -1, "scarf papers showed inside The quirk")
+	_expect(quirk_open.find("Shaving hook") == -1, "scarf papers showed inside The quirk")
+	_expect(quirk_open.find("Edge slate") == -1, "scarf papers showed inside The quirk")
+	_expect(quirk_open.find("Wedge card") == -1, "scarf papers showed inside The quirk")
+	_expect(quirk_open.find("Film slip") == -1, "scarf papers showed inside The quirk")
+	_expect(quirk_open.find("Scarf leaf") == -1, "scarf papers showed inside The quirk")
+	_expect(quirk_open.find("Scarf note") == -1, "scarf papers showed inside The quirk")
+	_expect(quirk_open.find("Finish order") == -1, "scarf papers showed inside The quirk")
+	_expect(quirk_open.find("CW-34") == -1, "scarf file code stayed up inside The quirk")
+	_expect(quirk_open.find("Socket chit") == -1, "finger papers showed inside The quirk")
+	_expect(quirk_open.find("Burr sight") == -1, "finger papers showed inside The quirk")
+	_expect(quirk_open.find("Chip bill") == -1, "finger papers showed inside The quirk")
+	_expect(quirk_open.find("Face slate") == -1, "finger papers showed inside The quirk")
+	_expect(quirk_open.find("Catch card") == -1, "finger papers showed inside The quirk")
+	_expect(quirk_open.find("Sheen slip") == -1, "finger papers showed inside The quirk")
+	_expect(quirk_open.find("Finger leaf") == -1, "finger papers showed inside The quirk")
+	_expect(quirk_open.find("Finger note") == -1, "finger papers showed inside The quirk")
+	_expect(quirk_open.find("Rub order") == -1, "finger papers showed inside The quirk")
+	_expect(quirk_open.find("CW-35") == -1, "finger file code stayed up inside The quirk")
+	_expect(quirk_open.find("so the bevel would take the haunch") == -1, "tenon aim stayed up inside The quirk")
+	_expect(quirk_open.find("Cheek chit") == -1, "haunch papers showed inside The quirk")
+	_expect(quirk_open.find("Toe sight") == -1, "haunch papers showed inside The quirk")
+	_expect(quirk_open.find("Sliver bill") == -1, "haunch papers showed inside The quirk")
+	_expect(quirk_open.find("Bed slate") == -1, "haunch papers showed inside The quirk")
+	_expect(quirk_open.find("Pin card") == -1, "haunch papers showed inside The quirk")
+	_expect(quirk_open.find("Wipe slip") == -1, "haunch papers showed inside The quirk")
+	_expect(quirk_open.find("Haunch leaf") == -1, "haunch papers showed inside The quirk")
+	_expect(quirk_open.find("Haunch note") == -1, "haunch papers showed inside The quirk")
+	_expect(quirk_open.find("Stone order") == -1, "haunch papers showed inside The quirk")
+	_expect(quirk_open.find("CW-36") == -1, "haunch file code stayed up inside The quirk")
+	_expect(quirk_open.find("so the cheek would take the haunch") == -1, "haunch aim stayed up inside The quirk")
+	_expect(quirk_open.find("Bore chit") == -1, "dowel papers showed inside The quirk")
+	_expect(quirk_open.find("Point sight") == -1, "dowel papers showed inside The quirk")
+	_expect(quirk_open.find("Curl bill") == -1, "dowel papers showed inside The quirk")
+	_expect(quirk_open.find("Flute slate") == -1, "dowel papers showed inside The quirk")
+	_expect(quirk_open.find("Chuck card") == -1, "dowel papers showed inside The quirk")
+	_expect(quirk_open.find("Wax slip") == -1, "dowel papers showed inside The quirk")
+	_expect(quirk_open.find("Dowel leaf") == -1, "dowel papers showed inside The quirk")
+	_expect(quirk_open.find("Dowel note") == -1, "dowel papers showed inside The quirk")
+	_expect(quirk_open.find("Hone order") == -1, "dowel papers showed inside The quirk")
+	_expect(quirk_open.find("CW-37") == -1, "dowel file code stayed up inside The quirk")
+	_expect(quirk_open.find("Brace card") == -1, "dowel papers showed inside The quirk")
+	_expect(quirk_open.find("so the bore would take the dowel") == -1, "dowel aim stayed up inside The quirk")
+	_expect(quirk_open.find("Groove chit") == -1, "tongue papers showed inside The quirk")
+	_expect(quirk_open.find("Face sight") == -1, "tongue papers showed inside The quirk")
+	_expect(quirk_open.find("Peel bill") == -1, "tongue papers showed inside The quirk")
+	_expect(quirk_open.find("Kerf slate") == -1, "tongue papers showed inside The quirk")
+	_expect(quirk_open.find("Turn card") == -1, "tongue papers showed inside The quirk")
+	_expect(quirk_open.find("Tallow slip") == -1, "tongue papers showed inside The quirk")
+	_expect(quirk_open.find("Tongue leaf") == -1, "tongue papers showed inside The quirk")
+	_expect(quirk_open.find("Filly note") == -1, "tongue papers showed inside The quirk")
+	_expect(quirk_open.find("Grind order") == -1, "tongue papers showed inside The quirk")
+	_expect(quirk_open.find("Scribe card") == -1, "tongue papers showed inside The quirk")
+	_expect(quirk_open.find("CW-38") == -1, "tongue file code stayed up inside The quirk")
+	_expect(quirk_open.find("so the groove would take the tongue") == -1, "tongue aim stayed up inside The quirk")
+	_press(root, "Submit theory")
+	var empty_quirk := _verdict_text(root)
+	_expect(empty_quirk.find("who scratched the quirk") >= 0, "empty quirk board: %s" % empty_quirk)
+	_expect(empty_quirk.find("where they scratched the quirk") >= 0, "empty quirk board: %s" % empty_quirk)
+	_expect(empty_quirk.find("at which hour they scratched the quirk") >= 0, "empty quirk board: %s" % empty_quirk)
+	_expect(empty_quirk.find("who cut the tongue") == -1, "empty quirk board used a tongue slot: %s" % empty_quirk)
+	_expect(empty_quirk.find("who cut the dowel") == -1, "empty quirk board used a dowel slot: %s" % empty_quirk)
+	_expect(empty_quirk.to_lower().find("conflict") == -1, "empty quirk board talked about a conflict: %s" % empty_quirk)
+	_press(root, "Pia")
+	_press(root, "Snib")
+	_press(root, "136")
+	_press(root, "Submit theory")
+	var quirk_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(quirk_miss, Quirk, {"who": "Pia", "place": "snib", "hour": "136"})
+	_expect(Quirk.conflicting_ids({"who": "Pia", "place": "snib", "hour": "136"}).size() == 9, "Pia / snib / 136 should contradict every exhibit")
+	_expect(quirk_miss.find("Ovolo chit") >= 0, "wrong triple reply omits Ovolo chit: %s" % quirk_miss)
+	_expect(quirk_miss.find("Bolt sight") >= 0, "wrong triple reply omits Bolt sight: %s" % quirk_miss)
+	_expect(quirk_miss.find("Astragal bill") >= 0, "wrong triple reply omits Astragal bill: %s" % quirk_miss)
+	_expect(quirk_miss.find("Score slate") >= 0, "wrong triple reply omits Score slate: %s" % quirk_miss)
+	_expect(quirk_miss.find("Snib card") >= 0, "wrong triple reply omits Snib card: %s" % quirk_miss)
+	_expect(quirk_miss.find("Grease slip") >= 0, "wrong triple reply omits Grease slip: %s" % quirk_miss)
+	_expect(quirk_miss.find("Quirk leaf") >= 0, "wrong triple reply omits Quirk leaf: %s" % quirk_miss)
+	_expect(quirk_miss.find("Gelding note") >= 0, "wrong triple reply omits Gelding note: %s" % quirk_miss)
+	_expect(quirk_miss.find("Whet order") >= 0, "wrong triple reply omits Whet order: %s" % quirk_miss)
+	_press(root, "Ross")
+	_press(root, "Scratch")
+	_press(root, "138")
+	_press(root, "Submit theory")
+	var quirk_accepted := _verdict_text(root)
+	_expect(quirk_accepted.find("fits every exhibit") >= 0, "quirk board rejected the true theory: %s" % quirk_accepted)
+	_expect(quirk_accepted.find(QUIRK_TIMELINE) >= 0, "quirk board timeline: %s" % quirk_accepted)
+	_expect(quirk_accepted.find("Ross (quirk hand) scratched the quirk in the scratch at 138") >= 0, "quirk board omits Ross at 138: %s" % quirk_accepted)
+	_expect(quirk_accepted.find("in the scratch") >= 0, "quirk board omits the scratch: %s" % quirk_accepted)
+	_expect(quirk_accepted.find("so the ovolo would take the quirk") >= 0, "quirk board omits the ovolo: %s" % quirk_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var quirk_cleared := _verdict_text(root)
+	_expect(quirk_cleared.find("who scratched the quirk") >= 0, "cleared quirk board: %s" % quirk_cleared)
+	_expect(quirk_cleared.find("fits every exhibit") == -1, "cleared quirk board stayed accepted: %s" % quirk_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The tongue")
+	var tongue_from_quirk := _visible_label_blob(root)
+	_expect(tongue_from_quirk.find("Groove chit") >= 0, "could not return to The tongue from The quirk")
+	_expect(tongue_from_quirk.find("Filly note") >= 0, "tongue exhibits did not return")
+	_expect(tongue_from_quirk.find("CW-38") >= 0, "returned tongue omits CW-38")
+	_expect(tongue_from_quirk.find("Ovolo chit") == -1, "quirk papers showed inside The tongue")
+	_expect(tongue_from_quirk.find("Bolt sight") == -1, "quirk papers showed inside The tongue")
+	_expect(tongue_from_quirk.find("Astragal bill") == -1, "quirk papers showed inside The tongue")
+	_expect(tongue_from_quirk.find("Score slate") == -1, "quirk papers showed inside The tongue")
+	_expect(tongue_from_quirk.find("Snib card") == -1, "quirk papers showed inside The tongue")
+	_expect(tongue_from_quirk.find("Grease slip") == -1, "quirk papers showed inside The tongue")
+	_expect(tongue_from_quirk.find("Quirk leaf") == -1, "quirk papers showed inside The tongue")
+	_expect(tongue_from_quirk.find("Gelding note") == -1, "quirk papers showed inside The tongue")
+	_expect(tongue_from_quirk.find("Whet order") == -1, "quirk papers showed inside The tongue")
+	_expect(tongue_from_quirk.find("CW-39") == -1, "quirk file code stayed up inside The tongue")
+	_press(root, "Shay")
+	_press(root, "Knife")
+	_press(root, "133")
+	_press(root, "Submit theory")
+	var tongue_after_quirk := _verdict_text(root)
+	_expect(tongue_after_quirk.find("fits every exhibit") >= 0, "tongue board rejected the true theory after The quirk: %s" % tongue_after_quirk)
+	_expect(tongue_after_quirk.find("Shay (tongue hand) cut the tongue in the knife at 133") >= 0, "tongue board timeline after The quirk: %s" % tongue_after_quirk)
+	_press(root, "Menu")
+	_press(root, "Open The dowel")
+	var dowel_from_quirk := _visible_label_blob(root)
+	_expect(dowel_from_quirk.find("Bore chit") >= 0, "could not return to The dowel from The quirk")
+	_expect(dowel_from_quirk.find("Dowel note") >= 0, "dowel exhibits did not return from The quirk")
+	_expect(dowel_from_quirk.find("CW-37") >= 0, "returned dowel omits CW-37")
+	_expect(dowel_from_quirk.find("Ovolo chit") == -1, "quirk papers showed inside The dowel")
+	_expect(dowel_from_quirk.find("Gelding note") == -1, "quirk papers showed inside The dowel")
+	_expect(dowel_from_quirk.find("CW-39") == -1, "quirk file code stayed up inside The dowel")
+	_press(root, "Faye")
+	_press(root, "Bit")
+	_press(root, "128")
+	_press(root, "Submit theory")
+	var dowel_after_quirk := _verdict_text(root)
+	_expect(dowel_after_quirk.find("fits every exhibit") >= 0, "dowel board rejected the true theory after The quirk: %s" % dowel_after_quirk)
+	_expect(dowel_after_quirk.find("Faye (dowel hand) cut the dowel in the bit at 128") >= 0, "dowel board timeline after The quirk: %s" % dowel_after_quirk)
+	_press(root, "Menu")
 	_menu_root = root
 
 
@@ -19429,6 +20308,51 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 						_expect(tongue_rect.position.x >= 0.0 and tongue_rect.position.x + tongue_rect.size.x <= 1280.0, "Open The tongue is outside the window horizontally %s" % tongue_rect)
 						_expect(tongue_button_top >= -0.5, "Open The tongue is above the window when the file list is scrolled to the bottom (%s)" % tongue_button_top)
 						_expect(tongue_button_bottom <= tongue_page + 0.5, "Open The tongue is below the window when the file list is scrolled to the bottom (%s)" % tongue_button_bottom)
+					var quirk_button := _find_visible_button(root, "Open The quirk")
+					_expect(quirk_button != null, "file list is missing Open The quirk")
+					if quirk_button != null:
+						var quirk_rect := _content_rect(quirk_button)
+						print("file list quirk %s stride %s" % [quirk_rect, card_stride])
+						_expect(quirk_rect.size.y >= 40.0, "Open The quirk has no height")
+						_expect(tongue_rect.position.y + tongue_rect.size.y <= quirk_rect.position.y, "Open The tongue is not above Open The quirk")
+						_expect(quirk_rect.position.y == tongue_rect.position.y + card_stride, "quirk content top is %s, one stride below the tongue is %s" % [quirk_rect.position.y, tongue_rect.position.y + card_stride])
+						_expect(tongue_rect.position.y == 5751.0, "tongue content top moved to %s" % tongue_rect.position.y)
+						_expect(dowel_rect.position.y == 5604.0, "dowel content top moved to %s" % dowel_rect.position.y)
+						_expect(haunch_rect.position.y == 5457.0, "haunch content top moved to %s" % haunch_rect.position.y)
+						_expect(finger_rect.position.y == 5310.0, "finger content top moved to %s" % finger_rect.position.y)
+						_expect(scarf_rect.position.y == 5163.0, "scarf content top moved to %s" % scarf_rect.position.y)
+						_expect(lap_rect.position.y == 5016.0, "lap content top moved to %s" % lap_rect.position.y)
+						if card_stride == 147.0:
+							_expect(quirk_rect.position.y == 5898.0, "quirk content top is %s" % quirk_rect.position.y)
+							_expect(tongue_rect.position.y == 5751.0, "tongue content top is %s" % tongue_rect.position.y)
+							_expect(dowel_rect.position.y == 5604.0, "dowel content top is %s" % dowel_rect.position.y)
+						var quirk_bottom := quirk_rect.position.y + quirk_rect.size.y
+						var quirk_visible_top := quirk_bottom - window_height
+						_expect(tongue_rect.position.y >= quirk_visible_top, "Open The tongue is not fully on screen above Open The quirk")
+						_expect(tongue_rect.position.y + tongue_rect.size.y <= quirk_bottom, "Open The tongue extends past the window when Open The quirk sits at the bottom")
+						_expect(quirk_bottom > window_height, "Open The quirk already fits without scrolling")
+						var quirk_code := _find_visible_label(root, "CW-39   The quirk")
+						_expect(quirk_code != null, "file list omits the CW-39 label")
+						if quirk_code != null:
+							var quirk_page := window_height
+							var quirk_bar := scroll.get_v_scroll_bar()
+							var quirk_content_height := float(quirk_bar.max_value)
+							var quirk_max_scroll := quirk_content_height - quirk_page
+							if quirk_max_scroll < 0.0:
+								quirk_max_scroll = 0.0
+							var quirk_code_rect := _content_rect(quirk_code)
+							var quirk_code_top := quirk_code_rect.position.y - quirk_max_scroll
+							var quirk_code_bottom := quirk_code_top + quirk_code_rect.size.y
+							print("scrolled bottom CW-39 %s..%s page %s max %s" % [quirk_code_top, quirk_code_bottom, quirk_page, quirk_bar.max_value])
+							_expect(quirk_code_rect.position.x >= 0.0 and quirk_code_rect.position.x + quirk_code_rect.size.x <= 1280.0, "CW-39 is outside the window horizontally %s" % quirk_code_rect)
+							_expect(quirk_code_top >= -0.5, "CW-39 is above the window when the file list is scrolled to the bottom (%s)" % quirk_code_top)
+							_expect(quirk_code_bottom <= quirk_page + 0.5, "CW-39 is below the window when the file list is scrolled to the bottom (%s)" % quirk_code_bottom)
+							var quirk_button_top := quirk_rect.position.y - quirk_max_scroll
+							var quirk_button_bottom := quirk_button_top + quirk_rect.size.y
+							print("scrolled bottom Open The quirk %s..%s" % [quirk_button_top, quirk_button_bottom])
+							_expect(quirk_rect.position.x >= 0.0 and quirk_rect.position.x + quirk_rect.size.x <= 1280.0, "Open The quirk is outside the window horizontally %s" % quirk_rect)
+							_expect(quirk_button_top >= -0.5, "Open The quirk is above the window when the file list is scrolled to the bottom (%s)" % quirk_button_top)
+							_expect(quirk_button_bottom <= quirk_page + 0.5, "Open The quirk is below the window when the file list is scrolled to the bottom (%s)" % quirk_button_bottom)
 
 func _content_rect(control: Control) -> Rect2:
 	var rect := control.get_global_rect()
