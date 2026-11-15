@@ -71,34 +71,51 @@ func _build_hud() -> void:
 	layer.add_child(bottom_panel)
 
 	var controls := Label.new()
-	controls.text = "Arrows move    F lamp you face    Space wait    U undo    R restart    1–8 puzzles    click a neighbor or a lamp"
+	controls.text = "Arrows move    F lamp you face    Space wait    U undo    R restart    1–8 east    Shift+1–6 west    click a neighbor or a lamp"
 	controls.add_theme_font_size_override("font_size", 14)
 	controls.add_theme_color_override("font_color", MUTED)
-	controls.position = Vector2(20, 8)
+	controls.position = Vector2(20, 6)
 	bottom_panel.add_child(controls)
 
-	var row := HBoxContainer.new()
-	row.position = Vector2(16, 36)
-	row.add_theme_constant_override("separation", 8)
-	bottom_panel.add_child(row)
-	for i in Puzzles.count():
-		var button := Button.new()
-		button.text = str(i + 1)
-		button.focus_mode = Control.FOCUS_NONE
-		button.custom_minimum_size = Vector2(40, 32)
-		button.pressed.connect(_select_puzzle.bind(i))
-		row.add_child(button)
-		buttons.append(button)
-	var restart := Button.new()
-	restart.text = "Restart"
-	restart.focus_mode = Control.FOCUS_NONE
-	restart.custom_minimum_size = Vector2(88, 32)
-	restart.pressed.connect(_restart)
-	row.add_child(restart)
+	var row_y := 30.0
+	var wings: Array = Puzzles.wings()
+	for wing_i in wings.size():
+		var wing: Dictionary = wings[wing_i]
+		var row := HBoxContainer.new()
+		row.position = Vector2(16, row_y)
+		row.add_theme_constant_override("separation", 8)
+		bottom_panel.add_child(row)
+		var wing_label := Label.new()
+		wing_label.text = str(wing["name"])
+		wing_label.custom_minimum_size = Vector2(118, 32)
+		wing_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		wing_label.add_theme_font_size_override("font_size", 15)
+		wing_label.add_theme_color_override("font_color", CREAM)
+		row.add_child(wing_label)
+		var first := int(wing["first"])
+		for n in int(wing["count"]):
+			var index := first + n
+			var puzzle_info: Dictionary = Puzzles.get_puzzle(index)
+			var button := Button.new()
+			button.text = str(puzzle_info["wing_number"])
+			button.tooltip_text = str(puzzle_info["title"])
+			button.focus_mode = Control.FOCUS_NONE
+			button.custom_minimum_size = Vector2(40, 32)
+			button.pressed.connect(_select_puzzle.bind(index))
+			row.add_child(button)
+			buttons.append(button)
+		if wing_i == wings.size() - 1:
+			var restart := Button.new()
+			restart.text = "Restart"
+			restart.focus_mode = Control.FOCUS_NONE
+			restart.custom_minimum_size = Vector2(88, 32)
+			restart.pressed.connect(_restart)
+			row.add_child(restart)
+		row_y += 36.0
 
 	legend_label = Label.new()
 	legend_label.text = "Gold diamond — lamplight, you cannot walk it.    Red diamond — a guard is watching.    Arrow — that guard's next step."
-	legend_label.position = Vector2(20, 76)
+	legend_label.position = Vector2(20, 104)
 	legend_label.add_theme_font_size_override("font_size", 14)
 	legend_label.add_theme_color_override("font_color", MUTED)
 	bottom_panel.add_child(legend_label)
@@ -106,7 +123,7 @@ func _build_hud() -> void:
 	status_label = Label.new()
 	status_label.add_theme_font_size_override("font_size", 16)
 	status_label.add_theme_color_override("font_color", CREAM)
-	status_label.position = Vector2(20, 74)
+	status_label.position = Vector2(20, 104)
 	bottom_panel.add_child(status_label)
 
 	turn_label = Label.new()
@@ -137,7 +154,7 @@ func _button_style(active: bool) -> StyleBoxFlat:
 func _layout() -> void:
 	var view := get_viewport_rect().size
 	var top_h := 124.0
-	var bottom_h := 108.0
+	var bottom_h := 140.0
 	top_panel.position = Vector2.ZERO
 	top_panel.size = Vector2(view.x, top_h)
 	bottom_panel.position = Vector2(0, view.y - bottom_h)
@@ -166,7 +183,7 @@ func _select_puzzle(index: int) -> void:
 	session.reset(puzzle["rows"], puzzle["lamps"], puzzle["guards"])
 	frozen = false
 	status = ""
-	title_label.text = "LAMPBLACK    %d  %s" % [puzzle["number"], puzzle["title"]]
+	title_label.text = "LAMPBLACK    %s    %d  %s" % [puzzle["wing"], puzzle["wing_number"], puzzle["title"]]
 	lesson_label.text = puzzle["lesson"]
 	_refresh_chrome()
 	_layout()
@@ -236,6 +253,51 @@ func _undo() -> void:
 	_refresh_chrome()
 
 
+func _puzzle_index_for_key(event: InputEventKey) -> int:
+	var digit := _digit_from_key(event)
+	if digit < 0:
+		return -1
+	var shifted := event.shift_pressed or _is_shifted_digit(event.keycode)
+	if shifted:
+		if digit > 5:
+			return -1
+		return 8 + digit
+	if digit > 7:
+		return -1
+	return digit
+
+
+func _digit_from_key(event: InputEventKey) -> int:
+	var key := event.physical_keycode
+	if key >= KEY_1 and key <= KEY_8:
+		return key - KEY_1
+	if key >= KEY_KP_1 and key <= KEY_KP_8:
+		return key - KEY_KP_1
+	key = event.keycode
+	if key >= KEY_1 and key <= KEY_8:
+		return key - KEY_1
+	if key >= KEY_KP_1 and key <= KEY_KP_8:
+		return key - KEY_KP_1
+	match key:
+		KEY_EXCLAM:
+			return 0
+		KEY_AT:
+			return 1
+		KEY_NUMBERSIGN:
+			return 2
+		KEY_DOLLAR:
+			return 3
+		KEY_PERCENT:
+			return 4
+		KEY_ASCIICIRCUM:
+			return 5
+	return -1
+
+
+func _is_shifted_digit(key: Key) -> bool:
+	return key == KEY_EXCLAM or key == KEY_AT or key == KEY_NUMBERSIGN or key == KEY_DOLLAR or key == KEY_PERCENT or key == KEY_ASCIICIRCUM
+
+
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		var cell := _cell_at(event.position)
@@ -249,14 +311,10 @@ func _input(event: InputEvent) -> void:
 		return
 	var key_event := event as InputEventKey
 	var key := key_event.keycode
-	if key >= KEY_1 and key <= KEY_8:
+	var puzzle_pick := _puzzle_index_for_key(key_event)
+	if puzzle_pick >= 0:
 		if not event.echo:
-			_select_puzzle(key - KEY_1)
-		get_viewport().set_input_as_handled()
-		return
-	if key >= KEY_KP_1 and key <= KEY_KP_8:
-		if not event.echo:
-			_select_puzzle(key - KEY_KP_1)
+			_select_puzzle(puzzle_pick)
 		get_viewport().set_input_as_handled()
 		return
 	if key == KEY_U:

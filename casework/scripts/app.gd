@@ -1,6 +1,6 @@
 extends Control
 
-const CaseData = preload("res://scripts/case_data.gd")
+const Catalog = preload("res://scripts/catalog.gd")
 const Verdict = preload("res://scripts/verdict.gd")
 
 const DESK := Color("#231e1a")
@@ -18,6 +18,7 @@ const AMBER := Color("#6a4a1c")
 
 var _serif: Font
 var _sans: Font
+var _book
 var _screens := {}
 var _pins := {"who": "", "place": "", "hour": ""}
 var _pin_buttons := {}
@@ -28,6 +29,9 @@ var _verdict_panel: PanelContainer
 
 
 func _ready() -> void:
+	# The headless suite can enter the tree before the window is ready and call this by hand.
+	if not _screens.is_empty():
+		return
 	_serif = _font(["Liberation Serif", "DejaVu Serif"])
 	_sans = _font(["Inter", "Liberation Sans", "DejaVu Sans"])
 	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
@@ -38,7 +42,6 @@ func _ready() -> void:
 	add_child(desk)
 	_screens["menu"] = _build_menu()
 	_screens["howto"] = _build_howto()
-	_screens["case"] = _build_case()
 	for screen in _screens.values():
 		add_child(screen)
 	_show("menu")
@@ -99,9 +102,20 @@ func _show(screen_name: String) -> void:
 
 func _build_menu() -> Control:
 	var layer := _full_layer()
+	var scroll := ScrollContainer.new()
+	scroll.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	layer.add_child(scroll)
+	var margin := MarginContainer.new()
+	margin.size_flags_horizontal = SIZE_EXPAND_FILL
+	margin.size_flags_vertical = SIZE_EXPAND_FILL
+	for side in ["left", "top", "right", "bottom"]:
+		margin.add_theme_constant_override("margin_%s" % side, 24)
+	scroll.add_child(margin)
 	var center := CenterContainer.new()
-	center.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	layer.add_child(center)
+	center.size_flags_horizontal = SIZE_EXPAND_FILL
+	center.size_flags_vertical = SIZE_EXPAND_FILL
+	margin.add_child(center)
 	var card := PanelContainer.new()
 	card.custom_minimum_size = Vector2(560, 0)
 	card.add_theme_stylebox_override("panel", _paper_style(Color("#f7f1e4")))
@@ -109,19 +123,50 @@ func _build_menu() -> Control:
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 12)
 	card.add_child(box)
-	box.add_child(_label("FILE CW-01", 13, SEAL, _sans))
+	box.add_child(_label("FILES", 13, SEAL, _sans))
 	box.add_child(_label("Casework", 64, INK, _serif))
 	box.add_child(_rule(INK))
-	box.add_child(_wrapped("One case. Read the file, then pin a theory on the board.", 20, INK, _serif, 480))
-	box.add_child(_label("The spare key", 28, INK, _serif))
-	box.add_child(_wrapped("The spare key left its hook at the inn. Name who took it, the room they took it to, and the hour.", 18, INK, _serif, 480))
-	var open_case := _action("Open the case", true)
-	open_case.pressed.connect(func() -> void: _show("case"))
-	box.add_child(open_case)
+	box.add_child(_wrapped("Two files. Open one, then pin who, the room, and the hour.", 20, INK, _serif, 480))
+	for book in Catalog.all():
+		_add_case_offer(box, book)
 	var how_to := _action("How to play", false)
 	how_to.pressed.connect(func() -> void: _show("howto"))
 	box.add_child(how_to)
 	return layer
+
+
+func _add_case_offer(box: VBoxContainer, book) -> void:
+	var offer := VBoxContainer.new()
+	offer.add_theme_constant_override("separation", 8)
+	box.add_child(offer)
+	offer.add_child(_label("%s   %s" % [book.FILE_CODE, book.TITLE], 28, INK, _serif))
+	offer.add_child(_wrapped(str(book.BLURB), 18, INK, _serif, 480))
+	var open_case := _action("Open %s" % book.TITLE, true)
+	var chosen = book
+	open_case.pressed.connect(func() -> void: _open_case(chosen))
+	offer.add_child(open_case)
+
+
+func _open_case(book) -> void:
+	if _book == book and _screens.has("case"):
+		_show("case")
+		return
+	_book = book
+	_pins = {"who": "", "place": "", "hour": ""}
+	_pin_buttons = {}
+	_slot_titles = {}
+	_theory_line = null
+	_verdict = null
+	_verdict_panel = null
+	if _screens.has("case"):
+		var old: Node = _screens["case"]
+		_screens.erase("case")
+		remove_child(old)
+		old.queue_free()
+	var screen := _build_case()
+	_screens["case"] = screen
+	add_child(screen)
+	_show("case")
 
 
 func _build_howto() -> Control:
@@ -139,8 +184,8 @@ func _build_howto() -> Control:
 	box.add_child(_label("How to play", 36, INK, _serif))
 	box.add_child(_rule(INK))
 	var copy := (
-		"Casework keeps one true timeline. You do not see it written out until a theory fits the whole file.\n\n"
-		+ "This case asks three things: who took the spare key, the room they took it to, and the hour of that taking. The notice of the empty hook and the return log are other events. Use them as evidence.\n\n"
+		"Casework keeps one true timeline for the file you open. You do not see it written out until a theory fits every exhibit in that file.\n\n"
+		+ "Open The spare key or The rehearsal score. Each file asks three things: who, the room, and the hour. Other lines in the file are evidence. They are not extra pins.\n\n"
 		+ "Read every exhibit. Pin one person, one room, and one hour, then submit the theory.\n\n"
 		+ "The theory is accepted only when it fits every exhibit. If it does not, the reply names the exhibits and the claim they conflict with. If a slot is empty, the board names that slot. An empty slot is not called a wrong theory."
 	)
@@ -185,8 +230,8 @@ func _case_header() -> Control:
 	row.add_child(back)
 	var titles := VBoxContainer.new()
 	titles.size_flags_horizontal = SIZE_EXPAND_FILL
-	titles.add_child(_label("CASEWORK  ·  FILE CW-01", 13, MUTED, _sans))
-	titles.add_child(_label("The spare key", 32, CREAM, _serif))
+	titles.add_child(_label("CASEWORK  ·  FILE %s" % _book.FILE_CODE, 13, MUTED, _sans))
+	titles.add_child(_label(str(_book.TITLE), 32, CREAM, _serif))
 	row.add_child(titles)
 	return row
 
@@ -197,7 +242,7 @@ func _exhibit_column() -> Control:
 	column.size_flags_vertical = SIZE_EXPAND_FILL
 	column.add_theme_constant_override("separation", 8)
 	column.custom_minimum_size = Vector2(420, 0)
-	column.add_child(_label("The file  ·  seven exhibits", 16, MUTED, _sans))
+	column.add_child(_label(_book.exhibit_heading(), 16, MUTED, _sans))
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = SIZE_EXPAND_FILL
 	scroll.size_flags_horizontal = SIZE_EXPAND_FILL
@@ -217,8 +262,8 @@ func _exhibit_column() -> Control:
 		Color("#f5efe3"),
 		Color("#f7f2e6"),
 	]
-	for index in CaseData.EXHIBITS.size():
-		papers.add_child(_paper(CaseData.EXHIBITS[index], shades[index % shades.size()]))
+	for index in _book.EXHIBITS.size():
+		papers.add_child(_paper(_book.EXHIBITS[index], shades[index % shades.size()]))
 	return column
 
 
@@ -284,22 +329,16 @@ func _board() -> Control:
 	box.size_flags_vertical = SIZE_SHRINK_BEGIN
 	scroll.add_child(box)
 	box.add_child(_label("The board", 13, MUTED, _sans))
-	box.add_child(_label("Who took the spare key, where, and at which hour?", 20, FELT_INK, _serif))
-	var brief := _label("Where means the room they took the key to.", 14, MUTED, _sans)
+	box.add_child(_label(_book.board_question(), 20, FELT_INK, _serif))
+	var brief := _label(_book.board_brief(), 14, MUTED, _sans)
 	brief.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	box.add_child(brief)
-	box.add_child(_label("Nell, night cook    Moss, lodger    Ada, clerk", 14, MUTED, _sans))
+	box.add_child(_label(_book.cast_line(), 14, MUTED, _sans))
 	_theory_line = _label("", 16, CREAM, _sans)
 	box.add_child(_theory_line)
-	_add_choices(box, "who", "Who took it", CaseData.PEOPLE.map(func(person: String) -> Dictionary:
-		return {"value": person, "label": person}
-	))
-	_add_choices(box, "place", "Where they took it", CaseData.PLACES.map(func(place: String) -> Dictionary:
-		return {"value": place, "label": CaseData.place_button(place)}
-	))
-	_add_choices(box, "hour", "At which hour", CaseData.HOURS.map(func(hour: String) -> Dictionary:
-		return {"value": hour, "label": hour}
-	))
+	_add_choices(box, "who", "Who took it", _book.choices("who"))
+	_add_choices(box, "place", "Where they took it", _book.choices("place"))
+	_add_choices(box, "hour", "At which hour", _book.choices("hour"))
 	_verdict_panel = PanelContainer.new()
 	_verdict_panel.size_flags_horizontal = SIZE_EXPAND_FILL
 	box.add_child(_verdict_panel)
@@ -364,7 +403,7 @@ func _on_submit() -> void:
 		"who": _pins["who"],
 		"place": _pins["place"],
 		"hour": _pins["hour"],
-	})
+	}, _book)
 	_show_verdict(str(result["status"]), str(result["message"]))
 
 
@@ -382,14 +421,21 @@ func _refresh_pins() -> void:
 		title.add_theme_color_override("font_color", Color("#e2b15a") if missing else FELT_INK)
 	if _theory_line != null:
 		_theory_line.text = "Pinned:  %s   ·   %s   ·   %s" % [
-			_pins["who"] if _pins["who"] != "" else "—",
-			CaseData.place_button(_pins["place"]) if _pins["place"] != "" else "—",
-			_pins["hour"] if _pins["hour"] != "" else "—",
+			_pin_text("who"),
+			_pin_text("place"),
+			_pin_text("hour"),
 		]
 
 
+func _pin_text(slot: String) -> String:
+	var value := str(_pins[slot])
+	if value == "":
+		return "—"
+	return _book.choice_label(slot, value)
+
+
 func _show_ready() -> void:
-	_show_verdict("ready", "Pin who took the spare key, the room they took it to, and the hour. Then submit.")
+	_show_verdict("ready", _book.ready_line())
 
 
 func _show_verdict(status: String, message: String) -> void:
