@@ -4,8 +4,8 @@ class_name HintBook
 # Hints compare the live state to the authored solution. They return the id of
 # one wrong piece (or "tide"), never a rotation, a socket name, or the full
 # layout. A state that already matches the solution produces no mark.
-# Mirror and pane rotations are compared after normalizing 180-degree repeats,
-# so an equivalent facing is not reported as wrong.
+# Mirror, tide mirror, and pane rotations are compared after normalizing
+# 180-degree repeats, so an equivalent facing is not reported as wrong.
 
 const Tracer := preload("res://scripts/beam_tracer.gd")
 
