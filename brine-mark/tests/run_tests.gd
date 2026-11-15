@@ -12,6 +12,7 @@ func _initialize() -> void:
 	print("Brine Mark tests")
 	_test_quota(errors)
 	_test_all_rake(errors)
+	_test_dry_season(errors)
 	_test_determinism(errors)
 	_test_population(errors)
 	_test_no_select_ant(errors)
@@ -85,7 +86,7 @@ func _test_determinism(errors: Array) -> void:
 	var plans := _plans(errors)
 	if plans.is_empty():
 		return
-	for plan_name in ["winning", "all_rake"]:
+	for plan_name in ["winning", "all_rake", "dry_pans", "continued", "late_pans"]:
 		var before := errors.size()
 		var first = _run_plan(plans, plan_name, errors)
 		var second = _run_plan(plans, plan_name, errors)
@@ -98,6 +99,8 @@ func _test_determinism(errors: Array) -> void:
 		print("determinism %s stored %d and %d" % [plan_name, a, b])
 		if a != b:
 			_fail(errors, "%s runs stored %d and %d" % [plan_name, a, b])
+		if int(first.get_wet_haul()) != int(second.get_wet_haul()):
+			_fail(errors, "%s wet hauls differed" % plan_name)
 		if String(first.get_summary()) != String(second.get_summary()):
 			_fail(errors, "%s summaries differed" % plan_name)
 		_assert_pop(first, errors, plan_name + " run A")
@@ -154,6 +157,10 @@ func _test_scene_boots(errors: Array) -> void:
 	if node == null:
 		_fail(errors, "main scene failed to instantiate")
 		return
+	if not node.has_method("_ready"):
+		_fail(errors, "main scene script did not attach")
+		node.free()
+		return
 	# Ready the interface without a displayed frame. add_child during this
 	# main-loop startup defers _ready, so call it once here.
 	node._ready()
@@ -162,12 +169,26 @@ func _test_scene_boots(errors: Array) -> void:
 	node._on_key(KEY_SPACE)
 	if int(node.sim.get_paint(9, 5)) != Sim.RAKE:
 		_fail(errors, "keyboard cursor did not paint rake")
+	node._on_key(KEY_5)
+	if not String(node.mode_label.text).contains("Pan"):
+		_fail(errors, "pan mark was not named")
+	node._on_key(KEY_LEFT)
+	node._on_key(KEY_SPACE)
+	if int(node.sim.get_paint(8, 5)) != Sim.PAN:
+		_fail(errors, "keyboard cursor did not paint a pan")
+	var season = node.find_child("SeasonNote", true, false)
+	if season == null or not String(season.text).to_lower().contains("pan"):
+		_fail(errors, "season note does not mention pans")
+	if not String(node.rain_label.text).contains("Rain"):
+		_fail(errors, "rain countdown lost the rain label")
 	node._paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.TRAIL)
 	if int(node.sim.get_paint(Sim.ANTHILL.x, Sim.ANTHILL.y)) != Sim.EMPTY:
 		_fail(errors, "the anthill accepted a mark")
 	node._on_key(KEY_R)
-	if int(node.sim.get_paint(9, 5)) != Sim.EMPTY:
+	if int(node.sim.get_paint(9, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 5)) != Sim.EMPTY:
 		_fail(errors, "restart scenario did not clear the marks")
+	if int(node.sim.get_season()) != Sim.WET or int(node.sim.get_wet_haul()) != 0:
+		_fail(errors, "restart scenario did not return to the wet season")
 	if int(node.sim.get_population()) > Sim.POP_CAP:
 		_fail(errors, "restart left the population over the cap")
 	var countdown = node.find_child("RainCountdown", true, false)
@@ -192,7 +213,109 @@ func _plans(errors: Array) -> Dictionary:
 	return parsed
 
 
-func _run_plan(plans: Dictionary, plan_name: String, errors: Array):
+func _test_dry_season(errors: Array) -> void:
+	if int(Sim.DRY_TICK) >= int(Sim.RAIN_TICK) or int(Sim.DRY_TICK) < 50:
+		_fail(errors, "dry season length %s is not a short continuation after the wet season" % Sim.DRY_TICK)
+	var fresh = Sim.new()
+	if int(fresh.get_season()) != Sim.WET or int(fresh.get_wet_haul()) != 0:
+		_fail(errors, "a new scenario did not start in the wet season")
+	if not fresh.paint_cell(4, 5, Sim.PAN) or int(fresh.get_paint(4, 5)) != Sim.PAN:
+		_fail(errors, "a flat rejected the pan mark")
+	if fresh.paint_cell(Sim.COAST_X, 5, Sim.PAN):
+		_fail(errors, "the brine accepted a pan")
+	var plans := _plans(errors)
+	if plans.is_empty():
+		return
+	# dry_pans has no rakes. It meets the quota only because pans crystallize
+	# in the dry season, and its wet haul stays 0 only because pans do nothing
+	# while the brine is still in. Drop either half of the rule and this fails.
+	var dry = _run_plan(plans, "dry_pans", errors)
+	if dry == null:
+		return
+	var dry_stored := int(dry.get_stored_salt())
+	var dry_wet := int(dry.get_wet_haul())
+	print("dry_pans wet=%d stored=%d summary=%s" % [dry_wet, dry_stored, dry.get_summary()])
+	if dry_wet != 0:
+		_fail(errors, "dry_pans hauled %d before the dry season; pans must stay idle while the brine is in" % dry_wet)
+	if dry_stored < Sim.QUOTA:
+		_fail(errors, "dry_pans stored %d, quota is %d. The dry season did not crystallize a haul." % [dry_stored, Sim.QUOTA])
+	if not dry.is_over() or int(dry.get_season()) != Sim.DRY:
+		_fail(errors, "dry_pans did not finish in the dry season")
+	if String(dry.get_summary()).to_lower().contains("quota missed"):
+		_fail(errors, "dry_pans summary says the quota was missed: %s" % dry.get_summary())
+	if not String(dry.get_summary()).contains("dry season held"):
+		_fail(errors, "dry_pans summary does not name the dry season: %s" % dry.get_summary())
+	_assert_pop(dry, errors, "dry_pans")
+	# The shore line still fills the quota. Pans beside it must add another
+	# full quota after the brine pulls back, without changing the wet haul.
+	var won = _run_plan(plans, "winning", errors)
+	var continued = _run_plan(plans, "continued", errors)
+	if won == null or continued == null:
+		return
+	print("continued wet=%d stored=%d winning_wet=%d" % [
+		continued.get_wet_haul(), continued.get_stored_salt(), won.get_wet_haul(),
+	])
+	if int(continued.get_wet_haul()) != int(won.get_wet_haul()):
+		_fail(errors, "continued plan changed the wet haul (%d vs %d)" % [
+			continued.get_wet_haul(), won.get_wet_haul(),
+		])
+	var continued_dry := int(continued.get_stored_salt()) - int(continued.get_wet_haul())
+	if continued_dry < Sim.QUOTA:
+		_fail(errors, "continued dry season held %d, quota is %d" % [continued_dry, Sim.QUOTA])
+	_assert_pop(continued, errors, "continued plan")
+	# Painted after the first rain, same geometry as dry_pans, so the haul matches.
+	var late = _run_plan(plans, "late_pans", errors)
+	if late == null:
+		return
+	print("late_pans wet=%d stored=%d" % [late.get_wet_haul(), late.get_stored_salt()])
+	if int(late.get_wet_haul()) != 0:
+		_fail(errors, "late_pans hauled salt before any pan was painted")
+	if int(late.get_stored_salt()) < Sim.QUOTA:
+		_fail(errors, "late_pans stored %d after painting in the dry season" % late.get_stored_salt())
+	if int(late.get_stored_salt()) != dry_stored:
+		_fail(errors, "painting pans at the dry season (%d) did not match painting them early (%d)" % [
+			late.get_stored_salt(), dry_stored,
+		])
+	_assert_pop(late, errors, "late_pans")
+	# Winning shore has no pans. Salt must stay at the first-rain haul, and
+	# the flats must stay empty through the dry season. Extra salt here means
+	# shore rakes kept working after the brine pulled back.
+	var idle = _prepare_plan(plans, "winning", errors)
+	if idle == null:
+		return
+	var guard := 0
+	while int(idle.get_season()) == Sim.WET and not idle.is_over() and guard < int(Sim.RAIN_TICK) + 2:
+		idle.tick()
+		guard += 1
+	if int(idle.get_season()) != Sim.DRY or idle.is_over():
+		_fail(errors, "the first rain did not open a dry season")
+		return
+	if int(idle.get_ticks_until_rain()) != int(Sim.DRY_TICK):
+		_fail(errors, "dry countdown started at %d, expected %d" % [idle.get_ticks_until_rain(), Sim.DRY_TICK])
+	var haul := int(idle.get_wet_haul())
+	if haul < Sim.QUOTA or int(idle.get_stored_salt()) != haul:
+		_fail(errors, "first rain banked %d and stored %d" % [haul, idle.get_stored_salt()])
+	if int(idle.get_loose_salt()) != 0 or int(idle.get_stacked_salt()) != 0:
+		_fail(errors, "first rain left loose %d stacked %d on the flats" % [
+			idle.get_loose_salt(), idle.get_stacked_salt(),
+		])
+	for _step in 40:
+		idle.tick()
+	if int(idle.get_loose_salt()) != 0 or int(idle.get_stacked_salt()) != 0 or int(idle.get_stored_salt()) != haul:
+		_fail(errors, "shore rakes kept working in the dry season (loose %d stacked %d stored %d haul %d)" % [
+			idle.get_loose_salt(), idle.get_stacked_salt(), idle.get_stored_salt(), haul,
+		])
+	idle.run_until_rain()
+	if int(idle.get_stored_salt()) != haul:
+		_fail(errors, "winning plan stored %d after the dry season, haul was %d" % [idle.get_stored_salt(), haul])
+	if int(won.get_stored_salt()) != haul:
+		_fail(errors, "winning plan gained salt after the first rain")
+	if idle.paint_cell(4, 5, Sim.PAN):
+		_fail(errors, "the flats still accepted paint after the second rain")
+	print("rakes idle after haul %d" % haul)
+
+
+func _prepare_plan(plans: Dictionary, plan_name: String, errors: Array):
 	if not plans.has(plan_name):
 		_fail(errors, "missing plan %s" % plan_name)
 		return null
@@ -203,6 +326,35 @@ func _run_plan(plans: Dictionary, plan_name: String, errors: Array):
 	var sim = Sim.new()
 	var before := errors.size()
 	var plan: Dictionary = plans[plan_name]
+	_apply_marks(sim, plan, errors)
+	if errors.size() > before:
+		return null
+	return sim
+
+
+func _run_plan(plans: Dictionary, plan_name: String, errors: Array):
+	var sim = _prepare_plan(plans, plan_name, errors)
+	if sim == null:
+		return null
+	var plan: Dictionary = plans[plan_name]
+	if plan.has("after_first_rain"):
+		var guard := 0
+		var limit := int(Sim.RAIN_TICK) + 2
+		while int(sim.get_season()) == Sim.WET and not sim.is_over() and guard < limit:
+			sim.tick()
+			guard += 1
+		if int(sim.get_season()) != Sim.DRY or sim.is_over():
+			_fail(errors, "%s did not open a dry season after the first rain" % plan_name)
+			return null
+		var late_before := errors.size()
+		_apply_marks(sim, plan["after_first_rain"], errors)
+		if errors.size() > late_before:
+			return null
+	sim.run_until_rain()
+	return sim
+
+
+func _apply_marks(sim, plan: Dictionary, errors: Array) -> void:
 	if plan.has("rake"):
 		_apply_cells(sim, plan["rake"], Sim.RAKE, errors)
 	if plan.has("stack"):
@@ -211,12 +363,10 @@ func _run_plan(plans: Dictionary, plan_name: String, errors: Array):
 		_apply_cells(sim, plan["cover"], Sim.COVER, errors)
 	if plan.has("trail"):
 		_apply_cells(sim, plan["trail"], Sim.TRAIL, errors)
+	if plan.has("pan"):
+		_apply_cells(sim, plan["pan"], Sim.PAN, errors)
 	if plan.has("rake_rect"):
 		_apply_rect(sim, plan["rake_rect"], Sim.RAKE, errors)
-	if errors.size() > before:
-		return null
-	sim.run_until_rain()
-	return sim
 
 
 func _apply_cells(sim, cells: Array, mode: int, errors: Array) -> void:
