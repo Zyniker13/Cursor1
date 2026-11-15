@@ -35,6 +35,9 @@ class Machine:
 	var buffer := 0
 	var output_ready := false
 	var phase := 0
+	## Second lane on a bridge. -1 is empty. Other machines leave it empty.
+	var cross := -1
+	var cross_moved := false
 
 class Source:
 	var pos := Vector2i.ZERO
@@ -207,6 +210,7 @@ func step() -> void:
 	for pos in cells:
 		var machine: Machine = machines[pos]
 		machine.moved = false
+		machine.cross_moved = false
 		if machine.timer > 0:
 			machine.timer -= 1
 			if machine.timer == 0:
@@ -240,13 +244,15 @@ func debug_state() -> String:
 		])
 	for pos in _sorted_cells():
 		var machine: Machine = machines[pos]
-		lines.append("(%d,%d) %s %s hold=%d moved=%s timer=%d buf=%d ready=%s phase=%d" % [
+		lines.append("(%d,%d) %s %s hold=%d cross=%d moved=%s cross_moved=%s timer=%d buf=%d ready=%s phase=%d" % [
 			pos.x,
 			pos.y,
 			Rules.KIND_NAME[machine.kind],
 			Rules.DIR_NAME[machine.dir],
 			machine.hold,
+			machine.cross,
 			str(machine.moved),
+			str(machine.cross_moved),
 			machine.timer,
 			machine.buffer,
 			str(machine.output_ready),
@@ -272,6 +278,7 @@ func _holder(kind: int) -> bool:
 		or kind == Rules.Kind.SPLITTER
 		or kind == Rules.Kind.ROLLER
 		or kind == Rules.Kind.WEIR
+		or kind == Rules.Kind.GRATE
 	)
 
 
@@ -279,12 +286,16 @@ func _try_output(pos: Vector2i) -> bool:
 	var machine: Machine = machines[pos]
 	var mat := -1
 	var out_dir := machine.dir
+	if machine.kind == Rules.Kind.BRIDGE:
+		return _try_bridge(pos, machine)
 	if _holder(machine.kind):
 		if machine.hold < 0 or machine.moved:
 			return false
 		mat = machine.hold
 		if machine.kind == Rules.Kind.FILTER:
 			out_dir = machine.dir if mat == Rules.Mat.ORE else Rules.right(machine.dir)
+		elif machine.kind == Rules.Kind.GRATE:
+			out_dir = machine.dir if mat == Rules.Mat.PLATE else Rules.right(machine.dir)
 		elif machine.kind == Rules.Kind.SPLITTER:
 			out_dir = machine.dir if machine.phase == 0 else Rules.right(machine.dir)
 		elif machine.kind == Rules.Kind.WEIR:
@@ -328,6 +339,24 @@ func _try_weir(pos: Vector2i, machine: Machine, mat: int) -> bool:
 	return false
 
 
+## The forward lane leaves first, then the cross lane.
+## Each item stays on the lane it entered. A blocked exit does not spill.
+func _try_bridge(pos: Vector2i, machine: Machine) -> bool:
+	var sent := false
+	if machine.hold >= 0 and not machine.moved:
+		if _accept(pos + Rules.vec(machine.dir), machine.hold, machine.dir):
+			machine.hold = -1
+			machine.moved = false
+			sent = true
+	var turn := Rules.right(machine.dir)
+	if machine.cross >= 0 and not machine.cross_moved:
+		if _accept(pos + Rules.vec(turn), machine.cross, turn):
+			machine.cross = -1
+			machine.cross_moved = false
+			sent = true
+	return sent
+
+
 func _can_take(machine: Machine, mat: int, arrival: int) -> bool:
 	if machine.kind == Rules.Kind.BELT:
 		return machine.hold < 0 and arrival != Rules.opposite(machine.dir)
@@ -336,8 +365,15 @@ func _can_take(machine: Machine, mat: int, arrival: int) -> bool:
 		or machine.kind == Rules.Kind.SPLITTER
 		or machine.kind == Rules.Kind.ROLLER
 		or machine.kind == Rules.Kind.WEIR
+		or machine.kind == Rules.Kind.GRATE
 	):
 		return machine.hold < 0 and arrival == machine.dir
+	if machine.kind == Rules.Kind.BRIDGE:
+		if arrival == machine.dir:
+			return machine.hold < 0
+		if arrival == Rules.right(machine.dir):
+			return machine.cross < 0
+		return false
 	if machine.kind == Rules.Kind.KILN:
 		return (
 			mat == Rules.Mat.ORE
@@ -379,6 +415,13 @@ func _accept(dest: Vector2i, mat: int, arrival: int) -> bool:
 	if _holder(machine.kind):
 		machine.hold = mat
 		machine.moved = true
+	elif machine.kind == Rules.Kind.BRIDGE:
+		if arrival == machine.dir:
+			machine.hold = mat
+			machine.moved = true
+		else:
+			machine.cross = mat
+			machine.cross_moved = true
 	elif machine.kind == Rules.Kind.KILN:
 		machine.timer = Rules.KILN_DELAY
 	elif machine.kind == Rules.Kind.PRESS:

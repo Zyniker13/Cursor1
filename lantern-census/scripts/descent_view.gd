@@ -197,13 +197,26 @@ func _draw_view(view: Rect2) -> void:
 		var col := Color(0.58, 0.40, 0.26)
 		if state.floor.id == "cistern":
 			col = Color(0.40, 0.45, 0.44)
+		elif state.floor.id == "cloister":
+			col = Color(0.64, 0.56, 0.42)
+		elif state.floor.id == "crypt":
+			col = Color(0.40, 0.36, 0.48)
 		if glyph == "*":
 			col = Color(0.14, 0.38, 0.42)
+		elif glyph == "+":
+			col = Color(0.12, 0.24, 0.16)
+		elif glyph == "=":
+			col = Color(0.74, 0.70, 0.60)
 		col *= shade
 		if int(hit.side) == 1:
 			col *= 0.74
-		if glyph != "*" and (cell.x + cell.y) % 2 == 0:
-			col = col.lerp(Color(0.32, 0.20, 0.14), 0.22)
+		if glyph != "*" and glyph != "+" and glyph != "=" and (cell.x + cell.y) % 2 == 0:
+			if state.floor.id == "cloister":
+				col = col.lerp(Color(0.42, 0.34, 0.22), 0.22)
+			elif state.floor.id == "crypt":
+				col = col.lerp(Color(0.26, 0.22, 0.32), 0.22)
+			else:
+				col = col.lerp(Color(0.32, 0.20, 0.14), 0.22)
 		var wall_x := origin.y + dist * ray.y if int(hit.side) == 0 else origin.x + dist * ray.x
 		wall_x = wall_x - floor(wall_x)
 		if wall_x < 0.08 or wall_x > 0.92:
@@ -239,11 +252,25 @@ func _draw_sky_floor(view: Rect2) -> void:
 	var bands := 7
 	var half := view.size.y * 0.5
 	var band_h := half / float(bands)
+	var sky_hi := Color(0.05, 0.05, 0.09)
+	var sky_lo := Color(0.22, 0.13, 0.08)
+	var ground_hi := Color(0.07, 0.05, 0.04)
+	var ground_lo := Color(0.30, 0.18, 0.10)
+	if state.floor.id == "cloister":
+		sky_hi = Color(0.09, 0.07, 0.04)
+		sky_lo = Color(0.30, 0.18, 0.08)
+		ground_hi = Color(0.08, 0.07, 0.04)
+		ground_lo = Color(0.34, 0.24, 0.12)
+	elif state.floor.id == "crypt":
+		sky_hi = Color(0.05, 0.04, 0.08)
+		sky_lo = Color(0.16, 0.12, 0.22)
+		ground_hi = Color(0.05, 0.04, 0.07)
+		ground_lo = Color(0.20, 0.16, 0.24)
 	for i in bands:
 		var t := float(i) / float(bands)
-		var sky := Color(0.05, 0.05, 0.09).lerp(Color(0.22, 0.13, 0.08), t)
+		var sky := sky_hi.lerp(sky_lo, t)
 		draw_rect(Rect2(view.position + Vector2(0, i * band_h), Vector2(view.size.x, band_h + 1.0)), sky)
-		var ground := Color(0.07, 0.05, 0.04).lerp(Color(0.30, 0.18, 0.10), t)
+		var ground := ground_hi.lerp(ground_lo, t)
 		draw_rect(Rect2(view.position + Vector2(0, half + i * band_h), Vector2(view.size.x, band_h + 1.0)), ground)
 
 
@@ -281,7 +308,13 @@ func _draw_sprites(view: Rect2, origin: Vector2, dir: Vector2, plane: Vector2, z
 	items.append({"pos": Rules.enemy_pos(state.floor), "kind": "warden"})
 	items.append({"pos": Rules.telegraph_tile(state.telegraph_index, state.floor), "kind": "swing"})
 	items.append({"pos": Rules.lift_pos(state.floor), "kind": "lift"})
-	var hazard_kind := "seep" if state.floor.id == "cistern" else "hazard"
+	var hazard_kind := "hazard"
+	if state.floor.id == "cistern":
+		hazard_kind = "seep"
+	elif state.floor.id == "cloister":
+		hazard_kind = "cinder"
+	elif state.floor.id == "crypt":
+		hazard_kind = "ash"
 	for hazard in Rules.hazard_cells(state.floor):
 		items.append({"pos": hazard, "kind": hazard_kind})
 	var drawn: Array = []
@@ -347,6 +380,14 @@ func _sprite_column(view: Rect2, column: int, col_w: float, top: float, sprite_h
 			if u > 0.22 and u < 0.78:
 				slices.append([0.62, 0.70, Color(0.28, 0.72, 0.66)])
 				slices.append([0.76, 0.84, Color(0.10, 0.38, 0.42)])
+		"cinder":
+			if u > 0.22 and u < 0.78:
+				slices.append([0.62, 0.70, Color(0.86, 0.28, 0.10)])
+				slices.append([0.76, 0.84, Color(0.22, 0.10, 0.08)])
+		"ash":
+			if u > 0.22 and u < 0.78:
+				slices.append([0.62, 0.70, Color(0.78, 0.76, 0.70)])
+				slices.append([0.76, 0.84, Color(0.30, 0.26, 0.36)])
 		"hazard":
 			if u > 0.22 and u < 0.78:
 				slices.append([0.62, 0.70, Color(0.72, 0.34, 0.14)])
@@ -402,6 +443,10 @@ func _draw_sheet(sheet: Rect2) -> void:
 	var legend := "Square wall    dot corridor    triangle hazard"
 	if state.floor.id == "cistern":
 		legend = "Square wall    dot corridor    triangle seep"
+	elif state.floor.id == "cloister":
+		legend = "Square wall    dot corridor    triangle cinder"
+	elif state.floor.id == "crypt":
+		legend = "Square wall    dot corridor    triangle ash"
 	draw_string(_font, Vector2(sheet.position.x + 16, legend_y), legend, HORIZONTAL_ALIGNMENT_LEFT, sheet.size.x - 32, 14, INK)
 	var swing_note := "Ring is the swing, not ink. Hood is the warden."
 	if state.floor.id == "cistern":
@@ -471,6 +516,10 @@ func _draw_hud(hud: Rect2) -> void:
 	if Rules.tile_at(state.pos, state.floor) == Rules.Tile.HAZARD and state.end_reason == Rules.EndReason.NONE:
 		if state.floor.id == "cistern":
 			lines.append("You are standing on a seep crack.")
+		elif state.floor.id == "cloister":
+			lines.append("You are standing on a cinder crack.")
+		elif state.floor.id == "crypt":
+			lines.append("You are standing on an ash crack.")
 		else:
 			lines.append("You are standing on a hazard crack.")
 	var y := hud.position.y + 46

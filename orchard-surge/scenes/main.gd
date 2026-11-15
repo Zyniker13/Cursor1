@@ -8,7 +8,7 @@ const Tooltip = preload("res://ui/plant_tooltip.gd")
 
 const ORIGIN := Vector2(16, 76)
 const CARD_W := 352.0
-const CARD_H := 176.0
+const CARD_H := 248.0
 const CARD_GAP := 6.0
 const CARD_LEFT := 752.0
 const CARD_TOP := 72.0
@@ -19,6 +19,9 @@ const KIND_COLOR := [
 	Color(1.0, 0.784, 0.341, 1),
 	Color(0.878, 0.478, 0.184, 1),
 	Color(0.93, 0.34, 0.2, 1),
+	Color(0.737, 0.373, 0.478, 1),
+	Color(0.98, 0.86, 0.42, 1),
+	Color(0.45, 0.78, 0.86, 1),
 ]
 
 var sim = null
@@ -86,6 +89,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			selected = 3
 		elif event.is_action_pressed("plant_5"):
 			selected = 4
+		elif event.is_action_pressed("plant_6"):
+			selected = 5
+		elif event.is_action_pressed("plant_7"):
+			selected = 6
+		elif event.is_action_pressed("plant_8"):
+			selected = 7
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if sim != null and sim.outcome == Sim.OUTCOME_RUNNING and sim.phase == Sim.PHASE_PLANT:
 			var cell := _mouse_cell()
@@ -145,6 +154,9 @@ func _bind_keys() -> void:
 	_bind("plant_3", [KEY_3, KEY_KP_3])
 	_bind("plant_4", [KEY_4, KEY_KP_4])
 	_bind("plant_5", [KEY_5, KEY_KP_5])
+	_bind("plant_6", [KEY_6, KEY_KP_6])
+	_bind("plant_7", [KEY_7, KEY_KP_7])
+	_bind("plant_8", [KEY_8, KEY_KP_8])
 	_bind("restart", [KEY_R])
 
 
@@ -279,7 +291,7 @@ func _build_hud() -> void:
 	hint_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hint_box.clip_contents = true
 	layer.add_child(hint_box)
-	hint_label = _label("Move: WASD or arrows, paused while planting. Plant with 1-5, then click a tile. Only a wick burns shroud.", 13, Color("aeb8a4"))
+	hint_label = _label("Move: WASD or arrows, paused while planting. Plant with 1-8, then click a tile. Only a wick burns shroud. Only a briar cracks rind. Only a flare melts pitch. Only a hearth thaws frost.", 13, Color("aeb8a4"))
 	hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	hint_label.clip_text = true
@@ -377,7 +389,7 @@ func _refresh_hud() -> void:
 		return
 	overlay.visible = true
 	if sim.outcome == Sim.OUTCOME_WON:
-		outcome_label.text = "The surge breaks.\nFive nights passed, and the orchard still stands."
+		outcome_label.text = "The surge breaks.\nEleven nights passed, and the orchard still stands."
 	else:
 		outcome_label.text = "The lights went out.\nHealth reached zero before the orchard was clear."
 
@@ -462,11 +474,19 @@ func _draw_fog() -> void:
 			var rect := _tile_rect(tx, ty)
 			if sim.tile_burns_shroud(tx, ty):
 				draw_rect(rect, Color(0.9, 0.32, 0.12, 0.12), true)
+				if sim.tile_cracks_rind(tx, ty):
+					draw_rect(rect, Color(0.72, 0.28, 0.4, 0.08), true)
+			elif sim.tile_cracks_rind(tx, ty):
+				draw_rect(rect, Color(0.72, 0.28, 0.4, 0.12), true)
 			elif sim.tile_lit(tx, ty):
 				draw_rect(rect, Color(0.95, 0.82, 0.45, 0.07), true)
 			else:
 				var alpha := 0.7 if late else 0.58
 				draw_rect(rect, Color(0.015, 0.02, 0.035, alpha), true)
+			if sim.tile_melts_pitch(tx, ty):
+				draw_rect(rect, Color(0.95, 0.78, 0.28, 0.1), true)
+			if sim.tile_thaws_frost(tx, ty):
+				draw_rect(rect, Color(0.62, 0.86, 0.98, 0.1), true)
 
 
 func _draw_hover() -> void:
@@ -515,6 +535,44 @@ func _draw_plant(plant) -> void:
 			draw_circle(at + Vector2(0, -7), 11.0, Color(1.0, 0.32, 0.1, 0.16 + 0.1 * pulse))
 			draw_circle(at + Vector2(0, -7), 3.6, Color("ff5c32"))
 			draw_circle(at + Vector2(-0.6, -8.0), 1.4, Color("fff1e4"))
+		Catalog.BRIAR:
+			draw_line(at + Vector2(0, 16), at + Vector2(-1, -2), Color("5c3a38"), 3.0)
+			draw_line(at + Vector2(-1, 8), at + Vector2(-11, 3), Color("7a4e4a"), 2.0)
+			draw_line(at + Vector2(0, 1), at + Vector2(10, -4), Color("7a4e4a"), 2.0)
+			draw_line(at + Vector2(-1, -6), at + Vector2(-8, -14), Color("8d5c58"), 2.0)
+			draw_circle(at + Vector2(-8, -14), 3.2, Color("a33d55"))
+			draw_circle(at + Vector2(10, -4), 2.5, Color("c45a6a"))
+			draw_circle(at + Vector2(-1, -12), 2.2, Color("f0d4da"))
+		Catalog.FLARE:
+			draw_line(at + Vector2(0, 16), at + Vector2(0, 2), Color("3a2c18"), 3.2)
+			draw_rect(Rect2(at + Vector2(-5, 0), Vector2(10, 5)), Color("5c4324"), true)
+			var flare_pulse := 0.6 + 0.4 * sin(float(sim.tick) * 0.22)
+			draw_circle(at + Vector2(0, -8), 12.0, Color(1.0, 0.86, 0.4, 0.14 + 0.1 * flare_pulse))
+			draw_colored_polygon(PackedVector2Array([
+				at + Vector2(0, -18),
+				at + Vector2(5, -4),
+				at + Vector2(-5, -4),
+			]), Color("ffe28a"))
+			draw_colored_polygon(PackedVector2Array([
+				at + Vector2(0, -13),
+				at + Vector2(2.4, -5),
+				at + Vector2(-2.4, -5),
+			]), Color("fff6d4"))
+		Catalog.HEARTH:
+			draw_rect(Rect2(at + Vector2(-11, 6), Vector2(22, 8)), Color("3e4a54"), true)
+			draw_rect(Rect2(at + Vector2(-8, 4), Vector2(16, 5)), Color("6d7c88"), true)
+			var hearth_pulse := 0.55 + 0.45 * sin(float(sim.tick) * 0.16)
+			draw_circle(at + Vector2(0, -2), 10.0, Color(0.7, 0.9, 1.0, 0.14 + 0.1 * hearth_pulse))
+			draw_colored_polygon(PackedVector2Array([
+				at + Vector2(0, -14),
+				at + Vector2(4.5, 2),
+				at + Vector2(-4.5, 2),
+			]), Color("d7f2ff"))
+			draw_colored_polygon(PackedVector2Array([
+				at + Vector2(0, -9),
+				at + Vector2(2.2, 1),
+				at + Vector2(-2.2, 1),
+			]), Color("f4fcff"))
 		_:
 			draw_circle(at, 6.0, Color.WHITE)
 
@@ -532,6 +590,17 @@ func _draw_shot(shot) -> void:
 			draw_circle(at, 3.6, Color(1.0, 0.35, 0.12, 0.35))
 			draw_circle(at, 2.2, Color("ff6a3a"))
 			draw_circle(at, 1.0, Color("fff0e2"))
+		Catalog.BRIAR:
+			draw_line(at - shot.dir * 6.0, at, Color("a33d55"), 2.2)
+			draw_circle(at, 2.0, Color("f0d0d4"))
+		Catalog.FLARE:
+			draw_circle(at, 4.0, Color(1.0, 0.82, 0.32, 0.35))
+			draw_circle(at, 2.2, Color("ffe7a0"))
+			draw_circle(at, 1.0, Color("fffaf0"))
+		Catalog.HEARTH:
+			draw_circle(at, 3.6, Color(0.7, 0.9, 1.0, 0.4))
+			draw_circle(at, 2.0, Color("e7f6ff"))
+			draw_circle(at, 0.9, Color("ffffff"))
 		_:
 			draw_circle(at, 6.0, Color("ffb15a"))
 			draw_circle(at, 2.5, Color("fff0d2"))
@@ -542,13 +611,25 @@ func _draw_pest(pest) -> void:
 	var flutter := sin(float(sim.tick) * 0.45 + float(pest.id)) * 3.0
 	var wing := Color("3c3554")
 	var body := Color("2a2438")
-	if pest.shrouded:
+	if pest.shrouded and pest.rinded:
+		wing = Color("34282c")
+		body = Color("160e12")
+	elif pest.shrouded:
 		wing = Color("241820")
 		body = Color("120e14")
+	elif pest.rinded:
+		wing = Color("6a5344")
+		body = Color("3c2c22")
+	elif pest.pitched:
+		wing = Color("4a4030")
+		body = Color("241c12")
+	elif pest.frosted:
+		wing = Color("7f97a8")
+		body = Color("d5e6f0")
 	if pest.slow_ticks > 0:
 		wing = Color("2f6b58")
 		body = Color("21483c")
-		if pest.shrouded:
+		if pest.shrouded or pest.rinded or pest.pitched or pest.frosted:
 			wing = Color("2a4038")
 			body = Color("1c2c28")
 	draw_colored_polygon(PackedVector2Array([
@@ -567,11 +648,23 @@ func _draw_pest(pest) -> void:
 		at + Vector2(0, 8),
 		at + Vector2(-7, 0),
 	]), body)
-	var eye := Color("ffb080") if pest.shrouded else Color("f2e7c8")
+	var eye := Color("f2e7c8")
+	if pest.shrouded:
+		eye = Color("ffb080")
+	elif pest.frosted:
+		eye = Color("d7f4ff")
+	elif pest.pitched:
+		eye = Color("e6c56a")
 	draw_circle(at + Vector2(-2, -1), 1.3, eye)
 	draw_circle(at + Vector2(2, -1), 1.3, eye)
 	if pest.shrouded:
 		draw_arc(at, 13.0, 0.45, TAU - 0.35, 18, Color(1.0, 0.42, 0.18, 0.85), 1.3, true)
+	if pest.rinded:
+		draw_arc(at, 16.0, 0.9, TAU - 0.7, 16, Color(0.86, 0.55, 0.62, 0.9), 1.3, true)
+	if pest.pitched:
+		draw_arc(at, 19.0, 0.2, TAU - 0.85, 14, Color(0.95, 0.78, 0.32, 0.9), 1.3, true)
+	if pest.frosted:
+		draw_arc(at, 22.0, 0.15, TAU - 0.5, 16, Color(0.75, 0.92, 1.0, 0.9), 1.3, true)
 	if pest.hp < Sim.PEST_HP:
 		var width := 16.0 * clampf(float(pest.hp) / float(Sim.PEST_HP), 0.0, 1.0)
 		draw_rect(Rect2(at + Vector2(-8, -14), Vector2(16, 3)), Color(0, 0, 0, 0.45), true)

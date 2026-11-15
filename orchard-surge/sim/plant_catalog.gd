@@ -10,12 +10,18 @@ const VINE := 1
 const LANTERN := 2
 const GOURD := 3
 const WICK := 4
-const COUNT := 5
+const BRIAR := 5
+const FLARE := 6
+const HEARTH := 7
+const COUNT := 8
 
 # fire_ticks and slow_ticks are sim ticks of length DT.
 # light_radius, weapon_range, projectile_speed, and splash_radius are pixels.
 # slow_factor is the movement multiplier applied on hit (1.0 means no slow).
 # burns_shroud: this plant's light reveals shroud moths and lets shots hurt them.
+# cracks_rind: this plant's light reveals rind moths and lets shots hurt them.
+# melts_pitch: this plant's light reveals pitch moths and lets shots hurt them.
+# thaws_frost: this plant's light reveals frost moths and lets shots hurt them.
 const DEFS := [
 	{
 		"name": "Pea",
@@ -29,6 +35,9 @@ const DEFS := [
 		"slow_ticks": 0,
 		"splash_radius": 0.0,
 		"burns_shroud": false,
+		"cracks_rind": false,
+		"melts_pitch": false,
+		"thaws_frost": false,
 	},
 	{
 		"name": "Vine",
@@ -42,6 +51,9 @@ const DEFS := [
 		"slow_ticks": 60,
 		"splash_radius": 0.0,
 		"burns_shroud": false,
+		"cracks_rind": false,
+		"melts_pitch": false,
+		"thaws_frost": false,
 	},
 	{
 		"name": "Lantern",
@@ -55,6 +67,9 @@ const DEFS := [
 		"slow_ticks": 0,
 		"splash_radius": 0.0,
 		"burns_shroud": false,
+		"cracks_rind": false,
+		"melts_pitch": false,
+		"thaws_frost": false,
 	},
 	{
 		"name": "Gourd",
@@ -68,6 +83,9 @@ const DEFS := [
 		"slow_ticks": 0,
 		"splash_radius": 64.0,
 		"burns_shroud": false,
+		"cracks_rind": false,
+		"melts_pitch": false,
+		"thaws_frost": false,
 	},
 	{
 		"name": "Wick",
@@ -81,6 +99,57 @@ const DEFS := [
 		"slow_ticks": 0,
 		"splash_radius": 0.0,
 		"burns_shroud": true,
+		"cracks_rind": false,
+		"melts_pitch": false,
+		"thaws_frost": false,
+	},
+	{
+		"name": "Briar",
+		"role": "Cracks rind, short shots, tight light.",
+		"damage": 5,
+		"fire_ticks": 15,
+		"light_radius": 104.0,
+		"weapon_range": 200.0,
+		"projectile_speed": 420.0,
+		"slow_factor": 1.0,
+		"slow_ticks": 0,
+		"splash_radius": 0.0,
+		"burns_shroud": false,
+		"cracks_rind": true,
+		"melts_pitch": false,
+		"thaws_frost": false,
+	},
+	{
+		"name": "Flare",
+		"role": "Melts pitch, short shots, tight light.",
+		"damage": 6,
+		"fire_ticks": 9,
+		"light_radius": 112.0,
+		"weapon_range": 220.0,
+		"projectile_speed": 460.0,
+		"slow_factor": 1.0,
+		"slow_ticks": 0,
+		"splash_radius": 0.0,
+		"burns_shroud": false,
+		"cracks_rind": false,
+		"melts_pitch": true,
+		"thaws_frost": false,
+	},
+	{
+		"name": "Hearth",
+		"role": "Thaws frost, modest shots, tight light.",
+		"damage": 4,
+		"fire_ticks": 21,
+		"light_radius": 128.0,
+		"weapon_range": 180.0,
+		"projectile_speed": 400.0,
+		"slow_factor": 1.0,
+		"slow_ticks": 0,
+		"splash_radius": 0.0,
+		"burns_shroud": false,
+		"cracks_rind": false,
+		"melts_pitch": false,
+		"thaws_frost": true,
 	},
 ]
 

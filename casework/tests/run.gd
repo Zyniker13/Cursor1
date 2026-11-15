@@ -2,6 +2,11 @@ extends SceneTree
 
 const CaseData = preload("res://scripts/case_data.gd")
 const Rehearsal = preload("res://scripts/rehearsal_score.gd")
+const Gilt = preload("res://scripts/gilt_stamp.gd")
+const Ferry = preload("res://scripts/ferry_bell.gd")
+const Weather = preload("res://scripts/weather_slate.gd")
+const Loom = preload("res://scripts/loom_shuttle.gd")
+const Hive = preload("res://scripts/hive_smoker.gd")
 const Catalog = preload("res://scripts/catalog.gd")
 const Solver = preload("res://scripts/solver.gd")
 const Verdict = preload("res://scripts/verdict.gd")
@@ -9,6 +14,16 @@ const Verdict = preload("res://scripts/verdict.gd")
 const TIMELINE := "Nell (night cook) took the spare key at 7 from the front desk to the kitchen, to lock the pantry.\nMoss (lodger) noticed the hook empty at 8 at the front desk and wrote a complaint.\nAda (clerk) logged the key returned at 9 at the front desk."
 const REHEARSAL_TIMELINE := "Ivo (copyist) took the rehearsal score at 4 from the library to the practice room, to mark the cuts.\nNia (pianist) saw the taking from the gallery.\nBess (tuner) found the shelf empty at 5 in the library.\nThe score was logged back on the shelf at 6."
 const REHEARSAL_TRUE := {"who": "Ivo", "place": "practice_room", "hour": "4"}
+const GILT_TIMELINE := "Nessa (porter) took the gilt stamp at 1 from the store cage to the finishing bench, to lay the title edge.\nMara (binder) wrote the move order in the press room.\nTheo (gilder) signed the stamp back at 3 into the store cage.\nThe bench receipt was marked at 2."
+const GILT_TRUE := {"who": "Nessa", "place": "finishing_bench", "hour": "1"}
+const FERRY_TIMELINE := "Quill (ropehand) took the ferry bell at 15 from the ticket window to the rope loft, to call the late boat.\nWren (pilot) sounded the landing whistle in the jetty shed.\nHale (landing clerk) held the painter at 14 at the ticket window.\nThe boat answered at 16."
+const FERRY_TRUE := {"who": "Quill", "place": "rope_loft", "hour": "15"}
+const WEATHER_TIMELINE := "Pim (runner) took the weather slate at 12 from the peg room to the map alcove, to copy the frost line.\nSoren (reader) left the request at 10 on the tower stair.\nVesper (night watch) saw the carrying from the peg room.\nThe old reading was chalked at 11."
+const WEATHER_TRUE := {"who": "Pim", "place": "map_alcove", "hour": "12"}
+const LOOM_TIMELINE := "Fenn (warper) took the loom shuttle at 19 from the loom room to the pattern loft, to match the border.\nJoss (loom hand) marked the warp count at 17 in the dye house.\nRue (dyer) hung the shuttle back at 20 in the loom room."
+const LOOM_TRUE := {"who": "Fenn", "place": "pattern_loft", "hour": "19"}
+const HIVE_TIMELINE := "Tamsin (night beekeeper) took the hive smoker at 22 from the hive shed to the honey room, to quiet the late swarm.\nNed (skep hand) filled the fuel tin in the veil loft.\nIsla (veil mender) logged the sting book at 21 in the honey room.\nThe fuel was spent at 23.\nThe veil was mended at 24."
+const HIVE_TRUE := {"who": "Tamsin", "place": "honey_room", "hour": "22"}
 
 var _failures: Array[String] = []
 var _checks := 0
@@ -27,6 +42,36 @@ func _initialize() -> void:
 	_test_rehearsal_only_true_theory()
 	_test_rehearsal_near_misses()
 	_test_rehearsal_incomplete()
+	_test_gilt_file_shape()
+	_test_gilt_unique_model()
+	_test_gilt_each_exhibit_necessary()
+	_test_gilt_only_true_theory()
+	_test_gilt_near_misses()
+	_test_gilt_incomplete()
+	_test_ferry_file_shape()
+	_test_ferry_unique_model()
+	_test_ferry_each_exhibit_necessary()
+	_test_ferry_only_true_theory()
+	_test_ferry_near_misses()
+	_test_ferry_incomplete()
+	_test_weather_file_shape()
+	_test_weather_unique_model()
+	_test_weather_each_exhibit_necessary()
+	_test_weather_only_true_theory()
+	_test_weather_near_misses()
+	_test_weather_incomplete()
+	_test_loom_file_shape()
+	_test_loom_unique_model()
+	_test_loom_each_exhibit_necessary()
+	_test_loom_only_true_theory()
+	_test_loom_near_misses()
+	_test_loom_incomplete()
+	_test_hive_file_shape()
+	_test_hive_unique_model()
+	_test_hive_each_exhibit_necessary()
+	_test_hive_only_true_theory()
+	_test_hive_near_misses()
+	_test_hive_incomplete()
 	_test_solutions_differ()
 	_test_menu_opens_either_case()
 	if _failures.is_empty():
@@ -334,17 +379,1074 @@ func _test_rehearsal_incomplete() -> void:
 	print("rehearsal incomplete submissions refused with the missing slot")
 
 
+func _test_gilt_file_shape() -> void:
+	_expect(Gilt.EXHIBITS.size() >= 6 and Gilt.EXHIBITS.size() <= 8, "gilt exhibit count is %d" % Gilt.EXHIBITS.size())
+	_expect(Gilt.PEOPLE.size() == 3, "gilt cast should be three people")
+	_expect(Gilt.PLACES.size() >= 3, "gilt needs a few rooms")
+	_expect(Gilt.HOURS.size() >= 3 and Gilt.HOURS.size() <= 5, "gilt hour list length")
+	_expect(Gilt.TITLE == "The gilt stamp", "gilt title")
+	_expect(Gilt.TITLE != CaseData.TITLE and Gilt.TITLE != Rehearsal.TITLE, "gilt shares a title")
+	_expect(Gilt.FILE_CODE == "CW-03", "gilt file code")
+	_expect(Gilt.FILE_CODE != CaseData.FILE_CODE and Gilt.FILE_CODE != Rehearsal.FILE_CODE, "gilt shares a file code")
+	var seen := {}
+	for exhibit in Gilt.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		_expect(not seen.has(exhibit_id), "duplicate gilt id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		var states_player_pin := false
+		var states_unique := false
+		for literal in exhibit["literals"]:
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Gilt.PLAYER_FIELDS:
+				states_player_pin = true
+				var expected := Gilt.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Gilt.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats >= 2, "%s states %s once" % [exhibit_id, field])
+			else:
+				var owners := 0
+				for other in Gilt.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+
+
+func _test_gilt_unique_model() -> void:
+	var models := Solver.enumerate(Gilt.EXHIBITS, Gilt)
+	print("gilt models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one gilt model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Nessa", "gilt taker")
+	_expect(str(model["place"]) == "finishing_bench", "gilt place")
+	_expect(str(model["hour"]) == "1", "gilt hour")
+	_expect(str(model["orderer"]) == "Mara", "gilt orderer")
+	_expect(str(model["order_place"]) == "press_room", "gilt order place")
+	_expect(str(model["signer"]) == "Theo", "gilt signer")
+	_expect(str(model["return_place"]) == "store_cage", "gilt return place")
+	_expect(str(model["return_hour"]) == "3", "gilt return hour")
+	_expect(str(model["origin"]) == "store_cage", "gilt origin")
+	_expect(str(model["purpose"]) == "title_edge", "gilt purpose")
+	_expect(str(model["receipt_hour"]) == "2", "gilt receipt hour")
+	_expect(Gilt.timeline(model) == GILT_TIMELINE, "gilt timeline drifted:\n%s" % Gilt.timeline(model))
+	for exhibit in Gilt.EXHIBITS:
+		_expect(Gilt.holds(exhibit, model), "%s rejects the gilt timeline" % exhibit["id"])
+
+
+func _test_gilt_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Gilt.EXHIBITS, Gilt)
+	for exhibit in Gilt.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Gilt.without(exhibit_id), Gilt)
+		print("gilt without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "gilt %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Gilt.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "gilt %s removal did not admit a timeline it forbids" % exhibit_id)
+
+
+func _test_gilt_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	for who in Gilt.PEOPLE:
+		for place in Gilt.PLACES:
+			for hour in Gilt.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == GILT_TRUE["who"] and place == GILT_TRUE["place"] and hour == GILT_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Gilt)
+					print("gilt true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true gilt theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "gilt acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(GILT_TIMELINE) >= 0, "gilt acceptance should give the timeline")
+					_expect(Gilt.conflicting_ids(theory).is_empty(), "true gilt theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Gilt)
+					rejected += 1
+	print("gilt theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d gilt theories" % accepted)
+	_expect(rejected >= 2, "rejected %d gilt theories" % rejected)
+
+
+func _test_gilt_near_misses() -> void:
+	var misses := [
+		{"who": "Nessa", "place": "finishing_bench", "hour": "2"},
+		{"who": "Nessa", "place": "press_room", "hour": "1"},
+		{"who": "Mara", "place": "finishing_bench", "hour": "1"},
+	]
+	for theory in misses:
+		_expect_rejected(theory, Gilt)
+	print("gilt near-misses rejected: %d" % misses.size())
+	_expect(misses.size() >= 2, "need at least two gilt near-misses")
+
+
+func _test_gilt_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+	]
+	var cases := [
+		{"theory": {"who": "", "place": "finishing_bench", "hour": "1"}, "present": ["who took the gilt stamp"], "absent": ["where they took the stamp", "at which hour they took the stamp"]},
+		{"theory": {"who": "Nessa", "place": "", "hour": "1"}, "present": ["where they took the stamp"], "absent": ["who took the gilt stamp", "at which hour they took the stamp"]},
+		{"theory": {"who": "Nessa", "place": "finishing_bench", "hour": ""}, "present": ["at which hour they took the stamp"], "absent": ["who took the gilt stamp", "where they took the stamp"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who took the gilt stamp", "where they took the stamp", "at which hour they took the stamp"], "absent": []},
+		{"theory": {}, "present": ["who took the gilt stamp", "where they took the stamp", "at which hour they took the stamp"], "absent": []},
+		{"theory": {"who": "Theo", "place": "", "hour": "3"}, "present": ["where they took the stamp"], "absent": ["who took the gilt stamp", "at which hour they took the stamp"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Gilt)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "gilt incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "gilt incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "gilt incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "gilt incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "gilt incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "gilt missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "gilt named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "gilt incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("gilt incomplete submissions refused with the missing slot")
+
+
+func _player_pin_counts(book) -> Dictionary:
+	var counts := {"taker": 0, "place": 0, "hour": 0}
+	for exhibit in book.EXHIBITS:
+		for literal in exhibit["literals"]:
+			var field := str(literal["field"])
+			if counts.has(field):
+				counts[field] = int(counts[field]) + 1
+	return counts
+
+
+func _test_ferry_file_shape() -> void:
+	_expect(Ferry.EXHIBITS.size() >= 6 and Ferry.EXHIBITS.size() <= 8, "ferry exhibit count is %d" % Ferry.EXHIBITS.size())
+	_expect(Ferry.PEOPLE.size() == 3, "ferry cast should be three people")
+	_expect(Ferry.PLACES.size() >= 3, "ferry needs a few rooms")
+	_expect(Ferry.HOURS.size() >= 3 and Ferry.HOURS.size() <= 5, "ferry hour list length")
+	_expect(Ferry.TITLE == "The ferry bell", "ferry title")
+	_expect(Ferry.TITLE != CaseData.TITLE and Ferry.TITLE != Rehearsal.TITLE and Ferry.TITLE != Gilt.TITLE, "ferry shares a title")
+	_expect(Ferry.FILE_CODE == "CW-04", "ferry file code")
+	_expect(Ferry.FILE_CODE != CaseData.FILE_CODE and Ferry.FILE_CODE != Rehearsal.FILE_CODE and Ferry.FILE_CODE != Gilt.FILE_CODE, "ferry shares a file code")
+	var counts := _player_pin_counts(Ferry)
+	_expect(int(counts["taker"]) == 2 and int(counts["place"]) == 2 and int(counts["hour"]) == 2, "ferry pin pairs are %s" % str(counts))
+	_expect(counts != _player_pin_counts(CaseData), "ferry copied the spare-key pin pattern")
+	_expect(counts != _player_pin_counts(Rehearsal), "ferry copied the rehearsal pin pattern")
+	_expect(counts != _player_pin_counts(Gilt), "ferry copied the gilt pin pattern")
+	var seen := {}
+	for exhibit in Ferry.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		_expect(not seen.has(exhibit_id), "duplicate ferry id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		var states_player_pin := false
+		var states_unique := false
+		var player_literals := 0
+		for literal in exhibit["literals"]:
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Ferry.PLAYER_FIELDS:
+				states_player_pin = true
+				player_literals += 1
+				var expected := Ferry.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Ferry.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats == 2, "%s states %s %d times" % [exhibit_id, field, repeats])
+			else:
+				var owners := 0
+				for other in Ferry.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(player_literals == 1, "%s states %d player pins" % [exhibit_id, player_literals])
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+
+
+func _test_ferry_unique_model() -> void:
+	var models := Solver.enumerate(Ferry.EXHIBITS, Ferry)
+	print("ferry models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one ferry model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Quill", "ferry taker")
+	_expect(str(model["place"]) == "rope_loft", "ferry place")
+	_expect(str(model["hour"]) == "15", "ferry hour")
+	_expect(str(model["whistler"]) == "Wren", "ferry whistler")
+	_expect(str(model["whistle_place"]) == "jetty_shed", "ferry whistle place")
+	_expect(str(model["holder"]) == "Hale", "ferry holder")
+	_expect(str(model["hold_place"]) == "ticket_window", "ferry hold place")
+	_expect(str(model["hold_hour"]) == "14", "ferry hold hour")
+	_expect(str(model["origin"]) == "ticket_window", "ferry origin")
+	_expect(str(model["purpose"]) == "call_boat", "ferry purpose")
+	_expect(str(model["answer_hour"]) == "16", "ferry answer hour")
+	_expect(Ferry.timeline(model) == FERRY_TIMELINE, "ferry timeline drifted:\n%s" % Ferry.timeline(model))
+	for exhibit in Ferry.EXHIBITS:
+		_expect(Ferry.holds(exhibit, model), "%s rejects the ferry timeline" % exhibit["id"])
+
+
+func _test_ferry_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Ferry.EXHIBITS, Ferry)
+	for exhibit in Ferry.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Ferry.without(exhibit_id), Ferry)
+		print("ferry without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "ferry %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Ferry.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "ferry %s removal did not admit a timeline it forbids" % exhibit_id)
+
+
+func _test_ferry_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	for who in Ferry.PEOPLE:
+		for place in Ferry.PLACES:
+			for hour in Ferry.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == FERRY_TRUE["who"] and place == FERRY_TRUE["place"] and hour == FERRY_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Ferry)
+					print("ferry true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true ferry theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "ferry acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(FERRY_TIMELINE) >= 0, "ferry acceptance should give the timeline")
+					_expect(Ferry.conflicting_ids(theory).is_empty(), "true ferry theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Ferry)
+					rejected += 1
+	print("ferry theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d ferry theories" % accepted)
+	_expect(rejected >= 2, "rejected %d ferry theories" % rejected)
+
+
+func _test_ferry_near_misses() -> void:
+	var misses := [
+		{"who": "Quill", "place": "rope_loft", "hour": "16"},
+		{"who": "Quill", "place": "jetty_shed", "hour": "15"},
+		{"who": "Wren", "place": "rope_loft", "hour": "15"},
+	]
+	for theory in misses:
+		_expect_rejected(theory, Ferry)
+	print("ferry near-misses rejected: %d" % misses.size())
+	_expect(misses.size() >= 2, "need at least two ferry near-misses")
+
+
+func _test_ferry_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+		"who took the gilt stamp",
+		"where they took the stamp",
+		"at which hour they took the stamp",
+	]
+	var cases := [
+		{"theory": {"who": "", "place": "rope_loft", "hour": "15"}, "present": ["who took the ferry bell"], "absent": ["where they took the bell", "at which hour they took the bell"]},
+		{"theory": {"who": "Quill", "place": "", "hour": "15"}, "present": ["where they took the bell"], "absent": ["who took the ferry bell", "at which hour they took the bell"]},
+		{"theory": {"who": "Quill", "place": "rope_loft", "hour": ""}, "present": ["at which hour they took the bell"], "absent": ["who took the ferry bell", "where they took the bell"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who took the ferry bell", "where they took the bell", "at which hour they took the bell"], "absent": []},
+		{"theory": {}, "present": ["who took the ferry bell", "where they took the bell", "at which hour they took the bell"], "absent": []},
+		{"theory": {"who": "Hale", "place": "", "hour": "14"}, "present": ["where they took the bell"], "absent": ["who took the ferry bell", "at which hour they took the bell"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Ferry)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "ferry incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "ferry incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "ferry incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "ferry incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "ferry incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "ferry missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "ferry named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "ferry incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("ferry incomplete submissions refused with the missing slot")
+
+
+func _test_weather_file_shape() -> void:
+	_expect(Weather.EXHIBITS.size() == 8, "weather exhibit count is %d" % Weather.EXHIBITS.size())
+	_expect(Weather.PEOPLE.size() == 3, "weather cast should be three people")
+	_expect(Weather.PLACES.size() >= 3, "weather needs a few rooms")
+	_expect(Weather.HOURS.size() >= 3 and Weather.HOURS.size() <= 5, "weather hour list length")
+	_expect(Weather.TITLE == "The weather slate", "weather title")
+	_expect(Weather.TITLE != CaseData.TITLE and Weather.TITLE != Rehearsal.TITLE and Weather.TITLE != Gilt.TITLE and Weather.TITLE != Ferry.TITLE, "weather shares a title")
+	_expect(Weather.FILE_CODE == "CW-05", "weather file code")
+	_expect(Weather.FILE_CODE != CaseData.FILE_CODE and Weather.FILE_CODE != Rehearsal.FILE_CODE and Weather.FILE_CODE != Gilt.FILE_CODE and Weather.FILE_CODE != Ferry.FILE_CODE, "weather shares a file code")
+	_expect(Weather.PLACES[0] == WEATHER_TRUE["place"], "weather room should be the first room in the file")
+	_expect(Weather.HOURS[Weather.HOURS.size() - 1] == WEATHER_TRUE["hour"], "weather taking should be the latest hour")
+	var counts := _player_pin_counts(Weather)
+	_expect(int(counts["taker"]) == 3 and int(counts["place"]) == 2 and int(counts["hour"]) == 3, "weather pin counts are %s" % str(counts))
+	_expect(counts != _player_pin_counts(CaseData), "weather copied the spare-key pin pattern")
+	_expect(counts != _player_pin_counts(Rehearsal), "weather copied the rehearsal pin pattern")
+	_expect(counts != _player_pin_counts(Gilt), "weather copied the gilt pin pattern")
+	_expect(counts != _player_pin_counts(Ferry), "weather copied the ferry pin pattern")
+	var seen := {}
+	for exhibit in Weather.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		_expect(not seen.has(exhibit_id), "duplicate weather id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		var states_player_pin := false
+		var states_unique := false
+		var player_literals := 0
+		for literal in exhibit["literals"]:
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Weather.PLAYER_FIELDS:
+				states_player_pin = true
+				player_literals += 1
+				var expected := Weather.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Weather.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats >= 2, "%s states %s once" % [exhibit_id, field])
+			else:
+				var owners := 0
+				for other in Weather.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(player_literals == 1, "%s states %d player pins" % [exhibit_id, player_literals])
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+
+
+func _test_weather_unique_model() -> void:
+	var models := Solver.enumerate(Weather.EXHIBITS, Weather)
+	print("weather models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one weather model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Pim", "weather taker")
+	_expect(str(model["place"]) == "map_alcove", "weather place")
+	_expect(str(model["hour"]) == "12", "weather hour")
+	_expect(str(model["requester"]) == "Soren", "weather requester")
+	_expect(str(model["request_place"]) == "tower_stair", "weather request place")
+	_expect(str(model["request_hour"]) == "10", "weather request hour")
+	_expect(str(model["origin"]) == "peg_room", "weather origin")
+	_expect(str(model["purpose"]) == "frost_line", "weather purpose")
+	_expect(str(model["witness"]) == "Vesper", "weather witness")
+	_expect(str(model["witness_place"]) == "peg_room", "weather witness place")
+	_expect(str(model["chalk_hour"]) == "11", "weather chalk hour")
+	_expect(Weather.timeline(model) == WEATHER_TIMELINE, "weather timeline drifted:\n%s" % Weather.timeline(model))
+	for exhibit in Weather.EXHIBITS:
+		_expect(Weather.holds(exhibit, model), "%s rejects the weather timeline" % exhibit["id"])
+
+
+func _test_weather_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Weather.EXHIBITS, Weather)
+	for exhibit in Weather.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Weather.without(exhibit_id), Weather)
+		print("weather without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "weather %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Weather.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "weather %s removal did not admit a timeline it forbids" % exhibit_id)
+
+
+func _test_weather_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	for who in Weather.PEOPLE:
+		for place in Weather.PLACES:
+			for hour in Weather.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == WEATHER_TRUE["who"] and place == WEATHER_TRUE["place"] and hour == WEATHER_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Weather)
+					print("weather true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true weather theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "weather acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(WEATHER_TIMELINE) >= 0, "weather acceptance should give the timeline")
+					_expect(Weather.conflicting_ids(theory).is_empty(), "true weather theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Weather)
+					rejected += 1
+	print("weather theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d weather theories" % accepted)
+	_expect(rejected >= 2, "rejected %d weather theories" % rejected)
+
+
+func _test_weather_near_misses() -> void:
+	var misses := [
+		{"who": "Pim", "place": "map_alcove", "hour": "11"},
+		{"who": "Pim", "place": "peg_room", "hour": "12"},
+		{"who": "Soren", "place": "map_alcove", "hour": "12"},
+	]
+	for theory in misses:
+		_expect_rejected(theory, Weather)
+	print("weather near-misses rejected: %d" % misses.size())
+	_expect(misses.size() >= 2, "need at least two weather near-misses")
+
+
+func _test_weather_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+		"who took the gilt stamp",
+		"where they took the stamp",
+		"at which hour they took the stamp",
+		"who took the ferry bell",
+		"where they took the bell",
+		"at which hour they took the bell",
+	]
+	var cases := [
+		{"theory": {"who": "", "place": "map_alcove", "hour": "12"}, "present": ["who took the weather slate"], "absent": ["where they took the slate", "at which hour they took the slate"]},
+		{"theory": {"who": "Pim", "place": "", "hour": "12"}, "present": ["where they took the slate"], "absent": ["who took the weather slate", "at which hour they took the slate"]},
+		{"theory": {"who": "Pim", "place": "map_alcove", "hour": ""}, "present": ["at which hour they took the slate"], "absent": ["who took the weather slate", "where they took the slate"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who took the weather slate", "where they took the slate", "at which hour they took the slate"], "absent": []},
+		{"theory": {}, "present": ["who took the weather slate", "where they took the slate", "at which hour they took the slate"], "absent": []},
+		{"theory": {"who": "Soren", "place": "", "hour": "10"}, "present": ["where they took the slate"], "absent": ["who took the weather slate", "at which hour they took the slate"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Weather)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "weather incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "weather incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "weather incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "weather incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "weather incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "weather missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "weather named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "weather incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("weather incomplete submissions refused with the missing slot")
+
+
+func _test_loom_file_shape() -> void:
+	_expect(Loom.EXHIBITS.size() == 8, "loom exhibit count is %d" % Loom.EXHIBITS.size())
+	_expect(Loom.PEOPLE.size() == 3, "loom cast should be three people")
+	_expect(Loom.PLACES.size() >= 3, "loom needs a few rooms")
+	_expect(Loom.HOURS.size() == 4, "loom hour list length is %d" % Loom.HOURS.size())
+	_expect(Loom.TITLE == "The loom shuttle", "loom title")
+	_expect(Loom.TITLE != CaseData.TITLE and Loom.TITLE != Rehearsal.TITLE and Loom.TITLE != Gilt.TITLE and Loom.TITLE != Ferry.TITLE and Loom.TITLE != Weather.TITLE, "loom shares a title")
+	_expect(Loom.FILE_CODE == "CW-06", "loom file code")
+	_expect(Loom.FILE_CODE != CaseData.FILE_CODE and Loom.FILE_CODE != Rehearsal.FILE_CODE and Loom.FILE_CODE != Gilt.FILE_CODE and Loom.FILE_CODE != Ferry.FILE_CODE and Loom.FILE_CODE != Weather.FILE_CODE, "loom shares a file code")
+	_expect(Loom.HOURS[0] != LOOM_TRUE["hour"], "loom taking should not be the earliest hour")
+	_expect(Loom.HOURS[Loom.HOURS.size() - 1] != LOOM_TRUE["hour"], "loom taking should not be the latest hour")
+	_expect(Loom.HOURS.has("18"), "loom board is missing 18")
+	var counts := _player_pin_counts(Loom)
+	_expect(int(counts["taker"]) == 2 and int(counts["place"]) == 3 and int(counts["hour"]) == 3, "loom pin counts are %s" % str(counts))
+	_expect(counts != _player_pin_counts(CaseData), "loom copied the spare-key pin pattern")
+	_expect(counts != _player_pin_counts(Rehearsal), "loom copied the rehearsal pin pattern")
+	_expect(counts != _player_pin_counts(Gilt), "loom copied the gilt pin pattern")
+	_expect(counts != _player_pin_counts(Ferry), "loom copied the ferry pin pattern")
+	_expect(counts != _player_pin_counts(Weather), "loom copied the weather pin pattern")
+	var seen := {}
+	var states_blank := false
+	for exhibit in Loom.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		_expect(not seen.has(exhibit_id), "duplicate loom id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		var states_player_pin := false
+		var states_unique := false
+		var player_literals := 0
+		for literal in exhibit["literals"]:
+			if str(literal["value"]) == "18":
+				states_blank = true
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Loom.PLAYER_FIELDS:
+				states_player_pin = true
+				player_literals += 1
+				var expected := Loom.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Loom.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats >= 2, "%s states %s once" % [exhibit_id, field])
+			else:
+				var owners := 0
+				for other in Loom.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(player_literals == 1, "%s states %d player pins" % [exhibit_id, player_literals])
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+	_expect(not states_blank, "18 is stated by an exhibit")
+
+
+func _test_loom_unique_model() -> void:
+	var models := Solver.enumerate(Loom.EXHIBITS, Loom)
+	print("loom models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one loom model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Fenn", "loom taker")
+	_expect(str(model["place"]) == "pattern_loft", "loom place")
+	_expect(str(model["hour"]) == "19", "loom hour")
+	_expect(str(model["marker"]) == "Joss", "loom marker")
+	_expect(str(model["mark_place"]) == "dye_house", "loom mark place")
+	_expect(str(model["mark_hour"]) == "17", "loom mark hour")
+	_expect(str(model["origin"]) == "loom_room", "loom origin")
+	_expect(str(model["purpose"]) == "match_border", "loom purpose")
+	_expect(str(model["returner"]) == "Rue", "loom returner")
+	_expect(str(model["return_place"]) == "loom_room", "loom return place")
+	_expect(str(model["return_hour"]) == "20", "loom return hour")
+	for field in Loom.fields():
+		_expect(str(model[field]) != "18", "true timeline uses the blank hour for %s" % field)
+	_expect(Loom.timeline(model) == LOOM_TIMELINE, "loom timeline drifted:\n%s" % Loom.timeline(model))
+	for exhibit in Loom.EXHIBITS:
+		_expect(Loom.holds(exhibit, model), "%s rejects the loom timeline" % exhibit["id"])
+
+
+func _test_loom_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Loom.EXHIBITS, Loom)
+	for exhibit in Loom.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Loom.without(exhibit_id), Loom)
+		print("loom without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "loom %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Loom.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "loom %s removal did not admit a timeline it forbids" % exhibit_id)
+
+
+func _test_loom_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	for who in Loom.PEOPLE:
+		for place in Loom.PLACES:
+			for hour in Loom.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == LOOM_TRUE["who"] and place == LOOM_TRUE["place"] and hour == LOOM_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Loom)
+					print("loom true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true loom theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "loom acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(LOOM_TIMELINE) >= 0, "loom acceptance should give the timeline")
+					_expect(Loom.conflicting_ids(theory).is_empty(), "true loom theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Loom)
+					rejected += 1
+	print("loom theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d loom theories" % accepted)
+	_expect(rejected >= 2, "rejected %d loom theories" % rejected)
+
+
+func _test_loom_near_misses() -> void:
+	var misses := [
+		{"who": "Fenn", "place": "pattern_loft", "hour": "18"},
+		{"who": "Fenn", "place": "pattern_loft", "hour": "20"},
+		{"who": "Fenn", "place": "loom_room", "hour": "19"},
+		{"who": "Joss", "place": "pattern_loft", "hour": "19"},
+	]
+	for theory in misses:
+		_expect_rejected(theory, Loom)
+	print("loom near-misses rejected: %d" % misses.size())
+	_expect(misses.size() >= 2, "need at least two loom near-misses")
+
+
+func _test_loom_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+		"who took the gilt stamp",
+		"where they took the stamp",
+		"at which hour they took the stamp",
+		"who took the ferry bell",
+		"where they took the bell",
+		"at which hour they took the bell",
+		"who took the weather slate",
+		"where they took the slate",
+		"at which hour they took the slate",
+	]
+	var cases := [
+		{"theory": {"who": "", "place": "pattern_loft", "hour": "19"}, "present": ["who took the loom shuttle"], "absent": ["where they took the shuttle", "at which hour they took the shuttle"]},
+		{"theory": {"who": "Fenn", "place": "", "hour": "19"}, "present": ["where they took the shuttle"], "absent": ["who took the loom shuttle", "at which hour they took the shuttle"]},
+		{"theory": {"who": "Fenn", "place": "pattern_loft", "hour": ""}, "present": ["at which hour they took the shuttle"], "absent": ["who took the loom shuttle", "where they took the shuttle"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who took the loom shuttle", "where they took the shuttle", "at which hour they took the shuttle"], "absent": []},
+		{"theory": {}, "present": ["who took the loom shuttle", "where they took the shuttle", "at which hour they took the shuttle"], "absent": []},
+		{"theory": {"who": "Rue", "place": "", "hour": "18"}, "present": ["where they took the shuttle"], "absent": ["who took the loom shuttle", "at which hour they took the shuttle"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Loom)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "loom incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "loom incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "loom incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "loom incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "loom incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "loom missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "loom named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "loom incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("loom incomplete submissions refused with the missing slot")
+
+
+func _field_key(book) -> String:
+	var names := PackedStringArray()
+	for field in book.fields():
+		names.append(str(field))
+	names.sort()
+	return "|".join(names)
+
+
+func _test_hive_file_shape() -> void:
+	_expect(Hive.EXHIBITS.size() == 8, "hive exhibit count is %d" % Hive.EXHIBITS.size())
+	_expect(Hive.PEOPLE.size() == 3, "hive cast should be three people")
+	_expect(Hive.PLACES.size() >= 3, "hive needs a few rooms")
+	_expect(Hive.HOURS.size() == 4, "hive hour list length is %d" % Hive.HOURS.size())
+	_expect(Hive.TITLE == "The hive smoker", "hive title")
+	_expect(Hive.TITLE != CaseData.TITLE and Hive.TITLE != Rehearsal.TITLE and Hive.TITLE != Gilt.TITLE and Hive.TITLE != Ferry.TITLE and Hive.TITLE != Weather.TITLE and Hive.TITLE != Loom.TITLE, "hive shares a title")
+	_expect(Hive.FILE_CODE == "CW-07", "hive file code")
+	_expect(Hive.FILE_CODE != CaseData.FILE_CODE and Hive.FILE_CODE != Rehearsal.FILE_CODE and Hive.FILE_CODE != Gilt.FILE_CODE and Hive.FILE_CODE != Ferry.FILE_CODE and Hive.FILE_CODE != Weather.FILE_CODE and Hive.FILE_CODE != Loom.FILE_CODE, "hive shares a file code")
+	_expect(Hive.HOURS[1] == HIVE_TRUE["hour"], "hive taking should be the second hour")
+	_expect(Hive.HOURS[0] != HIVE_TRUE["hour"], "hive taking should not be the earliest hour")
+	_expect(Hive.HOURS[Hive.HOURS.size() - 1] != HIVE_TRUE["hour"], "hive taking should not be the latest hour")
+	var counts := _player_pin_counts(Hive)
+	_expect(int(counts["taker"]) == 3 and int(counts["place"]) == 3 and int(counts["hour"]) == 2, "hive pin counts are %s" % str(counts))
+	_expect(counts != _player_pin_counts(CaseData), "hive copied the spare-key pin pattern")
+	_expect(counts != _player_pin_counts(Rehearsal), "hive copied the rehearsal pin pattern")
+	_expect(counts != _player_pin_counts(Gilt), "hive copied the gilt pin pattern")
+	_expect(counts != _player_pin_counts(Ferry), "hive copied the ferry pin pattern")
+	_expect(counts != _player_pin_counts(Weather), "hive copied the weather pin pattern")
+	_expect(counts != _player_pin_counts(Loom), "hive copied the loom pin pattern")
+	_expect(_field_key(Hive) != _field_key(CaseData), "hive copied the spare-key timeline fields")
+	_expect(_field_key(Hive) != _field_key(Rehearsal), "hive copied the rehearsal timeline fields")
+	_expect(_field_key(Hive) != _field_key(Gilt), "hive copied the gilt timeline fields")
+	_expect(_field_key(Hive) != _field_key(Ferry), "hive copied the ferry timeline fields")
+	_expect(_field_key(Hive) != _field_key(Weather), "hive copied the weather timeline fields")
+	_expect(_field_key(Hive) != _field_key(Loom), "hive copied the loom timeline fields")
+	var seen := {}
+	var stated := {}
+	var paired_hidden := 0
+	for exhibit in Hive.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		_expect(not seen.has(exhibit_id), "duplicate hive id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		var states_player_pin := false
+		var states_unique := false
+		var player_literals := 0
+		var hidden_literals := 0
+		for literal in exhibit["literals"]:
+			stated[str(literal["value"])] = true
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Hive.PLAYER_FIELDS:
+				states_player_pin = true
+				player_literals += 1
+				var expected := Hive.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Hive.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats >= 2, "%s states %s once" % [exhibit_id, field])
+			else:
+				hidden_literals += 1
+				var owners := 0
+				for other in Hive.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		if hidden_literals == 2:
+			paired_hidden += 1
+		else:
+			_expect(hidden_literals == 1, "%s states %d hidden facts" % [exhibit_id, hidden_literals])
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(player_literals == 1, "%s states %d player pins" % [exhibit_id, player_literals])
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+	_expect(paired_hidden == 1, "hive should have one slip with two hidden facts, found %d" % paired_hidden)
+	for hour in Hive.HOURS:
+		_expect(stated.has(hour), "hive hour %s is absent from the exhibits" % hour)
+
+
+func _test_hive_unique_model() -> void:
+	var models := Solver.enumerate(Hive.EXHIBITS, Hive)
+	print("hive models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one hive model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Tamsin", "hive taker")
+	_expect(str(model["place"]) == "honey_room", "hive place")
+	_expect(str(model["hour"]) == "22", "hive hour")
+	_expect(str(model["filler"]) == "Ned", "hive filler")
+	_expect(str(model["fill_place"]) == "veil_loft", "hive fill place")
+	_expect(str(model["logger"]) == "Isla", "hive logger")
+	_expect(str(model["log_place"]) == "honey_room", "hive log place")
+	_expect(str(model["log_hour"]) == "21", "hive log hour")
+	_expect(str(model["origin"]) == "hive_shed", "hive origin")
+	_expect(str(model["purpose"]) == "quiet_swarm", "hive purpose")
+	_expect(str(model["spent_hour"]) == "23", "hive spent hour")
+	_expect(str(model["veil_hour"]) == "24", "hive veil hour")
+	for hour in Hive.HOURS:
+		var used := false
+		for field in Hive.fields():
+			if str(model[field]) == hour:
+				used = true
+		_expect(used, "hive hour %s is blank in the true timeline" % hour)
+	_expect(Hive.timeline(model) == HIVE_TIMELINE, "hive timeline drifted:\n%s" % Hive.timeline(model))
+	for exhibit in Hive.EXHIBITS:
+		_expect(Hive.holds(exhibit, model), "%s rejects the hive timeline" % exhibit["id"])
+
+
+func _test_hive_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Hive.EXHIBITS, Hive)
+	for exhibit in Hive.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Hive.without(exhibit_id), Hive)
+		print("hive without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "hive %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Hive.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "hive %s removal did not admit a timeline it forbids" % exhibit_id)
+
+
+func _test_hive_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	for who in Hive.PEOPLE:
+		for place in Hive.PLACES:
+			for hour in Hive.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == HIVE_TRUE["who"] and place == HIVE_TRUE["place"] and hour == HIVE_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Hive)
+					print("hive true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true hive theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "hive acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(HIVE_TIMELINE) >= 0, "hive acceptance should give the timeline")
+					_expect(Hive.conflicting_ids(theory).is_empty(), "true hive theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Hive)
+					rejected += 1
+	print("hive theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d hive theories" % accepted)
+	_expect(rejected >= 2, "rejected %d hive theories" % rejected)
+
+
+func _test_hive_near_misses() -> void:
+	var misses := [
+		{"who": "Tamsin", "place": "honey_room", "hour": "24"},
+		{"who": "Tamsin", "place": "honey_room", "hour": "21"},
+		{"who": "Tamsin", "place": "hive_shed", "hour": "22"},
+		{"who": "Ned", "place": "honey_room", "hour": "22"},
+	]
+	for theory in misses:
+		_expect_rejected(theory, Hive)
+	print("hive near-misses rejected: %d" % misses.size())
+	_expect(misses.size() >= 2, "need at least two hive near-misses")
+
+
+func _test_hive_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+		"who took the gilt stamp",
+		"where they took the stamp",
+		"at which hour they took the stamp",
+		"who took the ferry bell",
+		"where they took the bell",
+		"at which hour they took the bell",
+		"who took the weather slate",
+		"where they took the slate",
+		"at which hour they took the slate",
+		"who took the loom shuttle",
+		"where they took the shuttle",
+		"at which hour they took the shuttle",
+	]
+	var cases := [
+		{"theory": {"who": "", "place": "honey_room", "hour": "22"}, "present": ["who took the hive smoker"], "absent": ["where they took the smoker", "at which hour they took the smoker"]},
+		{"theory": {"who": "Tamsin", "place": "", "hour": "22"}, "present": ["where they took the smoker"], "absent": ["who took the hive smoker", "at which hour they took the smoker"]},
+		{"theory": {"who": "Tamsin", "place": "honey_room", "hour": ""}, "present": ["at which hour they took the smoker"], "absent": ["who took the hive smoker", "where they took the smoker"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who took the hive smoker", "where they took the smoker", "at which hour they took the smoker"], "absent": []},
+		{"theory": {}, "present": ["who took the hive smoker", "where they took the smoker", "at which hour they took the smoker"], "absent": []},
+		{"theory": {"who": "Isla", "place": "", "hour": "24"}, "present": ["where they took the smoker"], "absent": ["who took the hive smoker", "at which hour they took the smoker"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Hive)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "hive incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "hive incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "hive incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "hive incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "hive incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "hive missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "hive named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "hive incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("hive incomplete submissions refused with the missing slot")
+
+
 func _test_solutions_differ() -> void:
 	var spare := {"who": "Nell", "place": "kitchen", "hour": "7"}
 	_expect(spare["who"] != REHEARSAL_TRUE["who"], "rehearsal copied the spare-key taker")
 	_expect(spare["place"] != REHEARSAL_TRUE["place"], "rehearsal copied the spare-key room")
 	_expect(spare["hour"] != REHEARSAL_TRUE["hour"], "rehearsal copied the spare-key hour")
+	_expect(GILT_TRUE["who"] != spare["who"], "gilt stamp copied the spare-key taker")
+	_expect(GILT_TRUE["place"] != spare["place"], "gilt stamp copied the spare-key room")
+	_expect(GILT_TRUE["hour"] != spare["hour"], "gilt stamp copied the spare-key hour")
+	_expect(GILT_TRUE["who"] != REHEARSAL_TRUE["who"], "gilt stamp copied the rehearsal taker")
+	_expect(GILT_TRUE["place"] != REHEARSAL_TRUE["place"], "gilt stamp copied the rehearsal room")
+	_expect(GILT_TRUE["hour"] != REHEARSAL_TRUE["hour"], "gilt stamp copied the rehearsal hour")
+	_expect(FERRY_TRUE["who"] != spare["who"], "ferry bell copied the spare-key taker")
+	_expect(FERRY_TRUE["place"] != spare["place"], "ferry bell copied the spare-key room")
+	_expect(FERRY_TRUE["hour"] != spare["hour"], "ferry bell copied the spare-key hour")
+	_expect(FERRY_TRUE["who"] != REHEARSAL_TRUE["who"], "ferry bell copied the rehearsal taker")
+	_expect(FERRY_TRUE["place"] != REHEARSAL_TRUE["place"], "ferry bell copied the rehearsal room")
+	_expect(FERRY_TRUE["hour"] != REHEARSAL_TRUE["hour"], "ferry bell copied the rehearsal hour")
+	_expect(FERRY_TRUE["who"] != GILT_TRUE["who"], "ferry bell copied the gilt taker")
+	_expect(FERRY_TRUE["place"] != GILT_TRUE["place"], "ferry bell copied the gilt room")
+	_expect(FERRY_TRUE["hour"] != GILT_TRUE["hour"], "ferry bell copied the gilt hour")
+	_expect(WEATHER_TRUE["who"] != spare["who"], "weather slate copied the spare-key taker")
+	_expect(WEATHER_TRUE["place"] != spare["place"], "weather slate copied the spare-key room")
+	_expect(WEATHER_TRUE["hour"] != spare["hour"], "weather slate copied the spare-key hour")
+	_expect(WEATHER_TRUE["who"] != REHEARSAL_TRUE["who"], "weather slate copied the rehearsal taker")
+	_expect(WEATHER_TRUE["place"] != REHEARSAL_TRUE["place"], "weather slate copied the rehearsal room")
+	_expect(WEATHER_TRUE["hour"] != REHEARSAL_TRUE["hour"], "weather slate copied the rehearsal hour")
+	_expect(WEATHER_TRUE["who"] != GILT_TRUE["who"], "weather slate copied the gilt taker")
+	_expect(WEATHER_TRUE["place"] != GILT_TRUE["place"], "weather slate copied the gilt room")
+	_expect(WEATHER_TRUE["hour"] != GILT_TRUE["hour"], "weather slate copied the gilt hour")
+	_expect(WEATHER_TRUE["who"] != FERRY_TRUE["who"], "weather slate copied the ferry taker")
+	_expect(WEATHER_TRUE["place"] != FERRY_TRUE["place"], "weather slate copied the ferry room")
+	_expect(WEATHER_TRUE["hour"] != FERRY_TRUE["hour"], "weather slate copied the ferry hour")
+	_expect(LOOM_TRUE["who"] != spare["who"], "loom shuttle copied the spare-key taker")
+	_expect(LOOM_TRUE["place"] != spare["place"], "loom shuttle copied the spare-key room")
+	_expect(LOOM_TRUE["hour"] != spare["hour"], "loom shuttle copied the spare-key hour")
+	_expect(LOOM_TRUE["who"] != REHEARSAL_TRUE["who"], "loom shuttle copied the rehearsal taker")
+	_expect(LOOM_TRUE["place"] != REHEARSAL_TRUE["place"], "loom shuttle copied the rehearsal room")
+	_expect(LOOM_TRUE["hour"] != REHEARSAL_TRUE["hour"], "loom shuttle copied the rehearsal hour")
+	_expect(LOOM_TRUE["who"] != GILT_TRUE["who"], "loom shuttle copied the gilt taker")
+	_expect(LOOM_TRUE["place"] != GILT_TRUE["place"], "loom shuttle copied the gilt room")
+	_expect(LOOM_TRUE["hour"] != GILT_TRUE["hour"], "loom shuttle copied the gilt hour")
+	_expect(LOOM_TRUE["who"] != FERRY_TRUE["who"], "loom shuttle copied the ferry taker")
+	_expect(LOOM_TRUE["place"] != FERRY_TRUE["place"], "loom shuttle copied the ferry room")
+	_expect(LOOM_TRUE["hour"] != FERRY_TRUE["hour"], "loom shuttle copied the ferry hour")
+	_expect(LOOM_TRUE["who"] != WEATHER_TRUE["who"], "loom shuttle copied the weather taker")
+	_expect(LOOM_TRUE["place"] != WEATHER_TRUE["place"], "loom shuttle copied the weather room")
+	_expect(LOOM_TRUE["hour"] != WEATHER_TRUE["hour"], "loom shuttle copied the weather hour")
 	_expect_rejected(spare, Rehearsal)
 	_expect_rejected(REHEARSAL_TRUE, CaseData)
+	_expect_rejected(GILT_TRUE, CaseData)
+	_expect_rejected(GILT_TRUE, Rehearsal)
+	_expect_rejected(spare, Gilt)
+	_expect_rejected(REHEARSAL_TRUE, Gilt)
+	_expect_rejected(FERRY_TRUE, CaseData)
+	_expect_rejected(FERRY_TRUE, Rehearsal)
+	_expect_rejected(FERRY_TRUE, Gilt)
+	_expect_rejected(spare, Ferry)
+	_expect_rejected(REHEARSAL_TRUE, Ferry)
+	_expect_rejected(GILT_TRUE, Ferry)
+	_expect_rejected(WEATHER_TRUE, CaseData)
+	_expect_rejected(WEATHER_TRUE, Rehearsal)
+	_expect_rejected(WEATHER_TRUE, Gilt)
+	_expect_rejected(WEATHER_TRUE, Ferry)
+	_expect_rejected(spare, Weather)
+	_expect_rejected(REHEARSAL_TRUE, Weather)
+	_expect_rejected(GILT_TRUE, Weather)
+	_expect_rejected(FERRY_TRUE, Weather)
+	_expect_rejected(LOOM_TRUE, CaseData)
+	_expect_rejected(LOOM_TRUE, Rehearsal)
+	_expect_rejected(LOOM_TRUE, Gilt)
+	_expect_rejected(LOOM_TRUE, Ferry)
+	_expect_rejected(LOOM_TRUE, Weather)
+	_expect_rejected(spare, Loom)
+	_expect_rejected(REHEARSAL_TRUE, Loom)
+	_expect_rejected(GILT_TRUE, Loom)
+	_expect_rejected(FERRY_TRUE, Loom)
+	_expect_rejected(WEATHER_TRUE, Loom)
+	_expect_rejected(HIVE_TRUE, CaseData)
+	_expect_rejected(HIVE_TRUE, Rehearsal)
+	_expect_rejected(HIVE_TRUE, Gilt)
+	_expect_rejected(HIVE_TRUE, Ferry)
+	_expect_rejected(HIVE_TRUE, Weather)
+	_expect_rejected(HIVE_TRUE, Loom)
+	_expect_rejected(spare, Hive)
+	_expect_rejected(REHEARSAL_TRUE, Hive)
+	_expect_rejected(GILT_TRUE, Hive)
+	_expect_rejected(FERRY_TRUE, Hive)
+	_expect_rejected(WEATHER_TRUE, Hive)
+	_expect_rejected(LOOM_TRUE, Hive)
+	for person in Gilt.PEOPLE:
+		_expect(not CaseData.PEOPLE.has(person), "gilt cast repeats %s from the spare key" % person)
+		_expect(not Rehearsal.PEOPLE.has(person), "gilt cast repeats %s from the rehearsal score" % person)
+	for place in Gilt.PLACES:
+		_expect(not CaseData.PLACES.has(place), "gilt rooms repeat %s from the spare key" % place)
+		_expect(not Rehearsal.PLACES.has(place), "gilt rooms repeat %s from the rehearsal score" % place)
+	for hour in Gilt.HOURS:
+		_expect(not CaseData.HOURS.has(hour), "gilt hours repeat %s from the spare key" % hour)
+		_expect(not Rehearsal.HOURS.has(hour), "gilt hours repeat %s from the rehearsal score" % hour)
+	for person in Ferry.PEOPLE:
+		_expect(not CaseData.PEOPLE.has(person), "ferry cast repeats %s from the spare key" % person)
+		_expect(not Rehearsal.PEOPLE.has(person), "ferry cast repeats %s from the rehearsal score" % person)
+		_expect(not Gilt.PEOPLE.has(person), "ferry cast repeats %s from the gilt stamp" % person)
+	for place in Ferry.PLACES:
+		_expect(not CaseData.PLACES.has(place), "ferry rooms repeat %s from the spare key" % place)
+		_expect(not Rehearsal.PLACES.has(place), "ferry rooms repeat %s from the rehearsal score" % place)
+		_expect(not Gilt.PLACES.has(place), "ferry rooms repeat %s from the gilt stamp" % place)
+	for hour in Ferry.HOURS:
+		_expect(not CaseData.HOURS.has(hour), "ferry hours repeat %s from the spare key" % hour)
+		_expect(not Rehearsal.HOURS.has(hour), "ferry hours repeat %s from the rehearsal score" % hour)
+		_expect(not Gilt.HOURS.has(hour), "ferry hours repeat %s from the gilt stamp" % hour)
+	for person in Weather.PEOPLE:
+		_expect(not CaseData.PEOPLE.has(person), "weather cast repeats %s from the spare key" % person)
+		_expect(not Rehearsal.PEOPLE.has(person), "weather cast repeats %s from the rehearsal score" % person)
+		_expect(not Gilt.PEOPLE.has(person), "weather cast repeats %s from the gilt stamp" % person)
+		_expect(not Ferry.PEOPLE.has(person), "weather cast repeats %s from the ferry bell" % person)
+	for place in Weather.PLACES:
+		_expect(not CaseData.PLACES.has(place), "weather rooms repeat %s from the spare key" % place)
+		_expect(not Rehearsal.PLACES.has(place), "weather rooms repeat %s from the rehearsal score" % place)
+		_expect(not Gilt.PLACES.has(place), "weather rooms repeat %s from the gilt stamp" % place)
+		_expect(not Ferry.PLACES.has(place), "weather rooms repeat %s from the ferry bell" % place)
+	for hour in Weather.HOURS:
+		_expect(not CaseData.HOURS.has(hour), "weather hours repeat %s from the spare key" % hour)
+		_expect(not Rehearsal.HOURS.has(hour), "weather hours repeat %s from the rehearsal score" % hour)
+		_expect(not Gilt.HOURS.has(hour), "weather hours repeat %s from the gilt stamp" % hour)
+		_expect(not Ferry.HOURS.has(hour), "weather hours repeat %s from the ferry bell" % hour)
+	for person in Loom.PEOPLE:
+		_expect(not CaseData.PEOPLE.has(person), "loom cast repeats %s from the spare key" % person)
+		_expect(not Rehearsal.PEOPLE.has(person), "loom cast repeats %s from the rehearsal score" % person)
+		_expect(not Gilt.PEOPLE.has(person), "loom cast repeats %s from the gilt stamp" % person)
+		_expect(not Ferry.PEOPLE.has(person), "loom cast repeats %s from the ferry bell" % person)
+		_expect(not Weather.PEOPLE.has(person), "loom cast repeats %s from the weather slate" % person)
+	for place in Loom.PLACES:
+		_expect(not CaseData.PLACES.has(place), "loom rooms repeat %s from the spare key" % place)
+		_expect(not Rehearsal.PLACES.has(place), "loom rooms repeat %s from the rehearsal score" % place)
+		_expect(not Gilt.PLACES.has(place), "loom rooms repeat %s from the gilt stamp" % place)
+		_expect(not Ferry.PLACES.has(place), "loom rooms repeat %s from the ferry bell" % place)
+		_expect(not Weather.PLACES.has(place), "loom rooms repeat %s from the weather slate" % place)
+	for hour in Loom.HOURS:
+		_expect(not CaseData.HOURS.has(hour), "loom hours repeat %s from the spare key" % hour)
+		_expect(not Rehearsal.HOURS.has(hour), "loom hours repeat %s from the rehearsal score" % hour)
+		_expect(not Gilt.HOURS.has(hour), "loom hours repeat %s from the gilt stamp" % hour)
+		_expect(not Ferry.HOURS.has(hour), "loom hours repeat %s from the ferry bell" % hour)
+		_expect(not Weather.HOURS.has(hour), "loom hours repeat %s from the weather slate" % hour)
+	_expect(HIVE_TRUE["who"] != spare["who"], "hive smoker copied the spare-key taker")
+	_expect(HIVE_TRUE["place"] != spare["place"], "hive smoker copied the spare-key room")
+	_expect(HIVE_TRUE["hour"] != spare["hour"], "hive smoker copied the spare-key hour")
+	_expect(HIVE_TRUE["who"] != REHEARSAL_TRUE["who"], "hive smoker copied the rehearsal taker")
+	_expect(HIVE_TRUE["place"] != REHEARSAL_TRUE["place"], "hive smoker copied the rehearsal room")
+	_expect(HIVE_TRUE["hour"] != REHEARSAL_TRUE["hour"], "hive smoker copied the rehearsal hour")
+	_expect(HIVE_TRUE["who"] != GILT_TRUE["who"], "hive smoker copied the gilt taker")
+	_expect(HIVE_TRUE["place"] != GILT_TRUE["place"], "hive smoker copied the gilt room")
+	_expect(HIVE_TRUE["hour"] != GILT_TRUE["hour"], "hive smoker copied the gilt hour")
+	_expect(HIVE_TRUE["who"] != FERRY_TRUE["who"], "hive smoker copied the ferry taker")
+	_expect(HIVE_TRUE["place"] != FERRY_TRUE["place"], "hive smoker copied the ferry room")
+	_expect(HIVE_TRUE["hour"] != FERRY_TRUE["hour"], "hive smoker copied the ferry hour")
+	_expect(HIVE_TRUE["who"] != WEATHER_TRUE["who"], "hive smoker copied the weather taker")
+	_expect(HIVE_TRUE["place"] != WEATHER_TRUE["place"], "hive smoker copied the weather room")
+	_expect(HIVE_TRUE["hour"] != WEATHER_TRUE["hour"], "hive smoker copied the weather hour")
+	_expect(HIVE_TRUE["who"] != LOOM_TRUE["who"], "hive smoker copied the loom taker")
+	_expect(HIVE_TRUE["place"] != LOOM_TRUE["place"], "hive smoker copied the loom room")
+	_expect(HIVE_TRUE["hour"] != LOOM_TRUE["hour"], "hive smoker copied the loom hour")
+	for person in Hive.PEOPLE:
+		_expect(not CaseData.PEOPLE.has(person), "hive cast repeats %s from the spare key" % person)
+		_expect(not Rehearsal.PEOPLE.has(person), "hive cast repeats %s from the rehearsal score" % person)
+		_expect(not Gilt.PEOPLE.has(person), "hive cast repeats %s from the gilt stamp" % person)
+		_expect(not Ferry.PEOPLE.has(person), "hive cast repeats %s from the ferry bell" % person)
+		_expect(not Weather.PEOPLE.has(person), "hive cast repeats %s from the weather slate" % person)
+		_expect(not Loom.PEOPLE.has(person), "hive cast repeats %s from the loom shuttle" % person)
+	for place in Hive.PLACES:
+		_expect(not CaseData.PLACES.has(place), "hive rooms repeat %s from the spare key" % place)
+		_expect(not Rehearsal.PLACES.has(place), "hive rooms repeat %s from the rehearsal score" % place)
+		_expect(not Gilt.PLACES.has(place), "hive rooms repeat %s from the gilt stamp" % place)
+		_expect(not Ferry.PLACES.has(place), "hive rooms repeat %s from the ferry bell" % place)
+		_expect(not Weather.PLACES.has(place), "hive rooms repeat %s from the weather slate" % place)
+		_expect(not Loom.PLACES.has(place), "hive rooms repeat %s from the loom shuttle" % place)
+	for hour in Hive.HOURS:
+		_expect(not CaseData.HOURS.has(hour), "hive hours repeat %s from the spare key" % hour)
+		_expect(not Rehearsal.HOURS.has(hour), "hive hours repeat %s from the rehearsal score" % hour)
+		_expect(not Gilt.HOURS.has(hour), "hive hours repeat %s from the gilt stamp" % hour)
+		_expect(not Ferry.HOURS.has(hour), "hive hours repeat %s from the ferry bell" % hour)
+		_expect(not Weather.HOURS.has(hour), "hive hours repeat %s from the weather slate" % hour)
+		_expect(not Loom.HOURS.has(hour), "hive hours repeat %s from the loom shuttle" % hour)
 	var titles: Array[String] = []
 	for book in Catalog.all():
 		titles.append(str(book.TITLE))
-	_expect(titles == ["The spare key", "The rehearsal score"], "case list is %s" % str(titles))
+	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker"], "case list is %s" % str(titles))
 
 
 func _test_menu_opens_either_case() -> void:
@@ -355,15 +1457,29 @@ func _test_menu_opens_either_case() -> void:
 	_expect(root.get_script() != null, "main scene script did not load")
 	if root.get_child_count() == 0:
 		root._ready()
+	var menu_blob := _visible_label_blob(root)
+	_expect(menu_blob.find("Seven files") >= 0, "menu does not offer seven files: %s" % menu_blob)
+	_expect(menu_blob.find("CW-07") >= 0, "menu omits CW-07")
+	_expect(menu_blob.find("The hive smoker") >= 0, "menu omits The hive smoker")
 	_expect(root.get_child_count() > 0, "main scene built %d children" % root.get_child_count())
 	_press(root, "How to play")
 	var howto := _visible_label_blob(root)
 	_expect(howto.find("The spare key") >= 0, "how to play omits The spare key")
 	_expect(howto.find("The rehearsal score") >= 0, "how to play omits The rehearsal score")
+	_expect(howto.find("The gilt stamp") >= 0, "how to play omits The gilt stamp")
+	_expect(howto.find("The ferry bell") >= 0, "how to play omits The ferry bell")
+	_expect(howto.find("The weather slate") >= 0, "how to play omits The weather slate")
+	_expect(howto.find("The loom shuttle") >= 0, "how to play omits The loom shuttle")
+	_expect(howto.find("The hive smoker") >= 0, "how to play omits The hive smoker")
 	_expect(howto.find("names that slot") >= 0, "how to play omits the empty-slot rule")
 	_press(root, "Back to the menu")
 	_expect(_find_visible_button(root, "Open The spare key") != null, "menu is missing The spare key")
 	_expect(_find_visible_button(root, "Open The rehearsal score") != null, "menu is missing The rehearsal score")
+	_expect(_find_visible_button(root, "Open The gilt stamp") != null, "menu is missing The gilt stamp")
+	_expect(_find_visible_button(root, "Open The ferry bell") != null, "menu is missing The ferry bell")
+	_expect(_find_visible_button(root, "Open The weather slate") != null, "menu is missing The weather slate")
+	_expect(_find_visible_button(root, "Open The loom shuttle") != null, "menu is missing The loom shuttle")
+	_expect(_find_visible_button(root, "Open The hive smoker") != null, "menu is missing The hive smoker")
 	_press(root, "Open The rehearsal score")
 	var rehearsal_open := _visible_label_blob(root)
 	_expect(rehearsal_open.find("Cut list") >= 0, "rehearsal file did not open")
@@ -420,6 +1536,231 @@ func _test_menu_opens_either_case() -> void:
 	var reopened := _visible_label_blob(root)
 	_expect(reopened.find("Gallery line") >= 0, "could not return to The rehearsal score")
 	_expect(reopened.find("Complaint slip") == -1, "spare key papers stayed up after switching files")
+	_press(root, "Menu")
+	_press(root, "Open The gilt stamp")
+	var gilt_open := _visible_label_blob(root)
+	_expect(gilt_open.find("Move order") >= 0, "gilt stamp file did not open")
+	_expect(gilt_open.find("Edge note") >= 0, "gilt stamp file did not show its exhibits")
+	_expect(gilt_open.find("Complaint slip") == -1, "spare key papers showed inside The gilt stamp")
+	_expect(gilt_open.find("Cut list") == -1, "rehearsal papers showed inside The gilt stamp")
+	_press(root, "Submit theory")
+	var empty_gilt := _verdict_text(root)
+	_expect(empty_gilt.find("who took the gilt stamp") >= 0, "empty gilt board: %s" % empty_gilt)
+	_expect(empty_gilt.find("where they took the stamp") >= 0, "empty gilt board: %s" % empty_gilt)
+	_expect(empty_gilt.find("at which hour they took the stamp") >= 0, "empty gilt board: %s" % empty_gilt)
+	_expect(empty_gilt.find("who took the spare key") == -1, "empty gilt board used the spare key slot: %s" % empty_gilt)
+	_expect(empty_gilt.find("rehearsal score") == -1, "empty gilt board used a rehearsal slot: %s" % empty_gilt)
+	_expect(empty_gilt.to_lower().find("conflict") == -1, "empty gilt board talked about a conflict: %s" % empty_gilt)
+	_press(root, "Nessa")
+	_press(root, "Finishing bench")
+	_press(root, "2")
+	_press(root, "Submit theory")
+	var gilt_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(gilt_miss, Gilt, {"who": "Nessa", "place": "finishing_bench", "hour": "2"})
+	_press(root, "Press room")
+	_press(root, "1")
+	_press(root, "Submit theory")
+	var gilt_place_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(gilt_place_miss, Gilt, {"who": "Nessa", "place": "press_room", "hour": "1"})
+	_press(root, "Finishing bench")
+	_press(root, "Submit theory")
+	var gilt_accepted := _verdict_text(root)
+	_expect(gilt_accepted.find("fits every exhibit") >= 0, "gilt stamp board rejected the true theory: %s" % gilt_accepted)
+	_expect(gilt_accepted.find("Nessa (porter) took the gilt stamp at 1") >= 0, "gilt stamp board timeline: %s" % gilt_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var gilt_cleared := _verdict_text(root)
+	_expect(gilt_cleared.find("who took the gilt stamp") >= 0, "cleared gilt board: %s" % gilt_cleared)
+	_expect(gilt_cleared.find("fits every exhibit") == -1, "cleared gilt board stayed accepted: %s" % gilt_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The spare key")
+	var spare_again := _visible_label_blob(root)
+	_expect(spare_again.find("Complaint slip") >= 0, "could not return to The spare key from The gilt stamp")
+	_expect(spare_again.find("Move order") == -1, "gilt stamp papers stayed up after switching files")
+	_press(root, "Menu")
+	_press(root, "Open The ferry bell")
+	var ferry_open := _visible_label_blob(root)
+	_expect(ferry_open.find("Whistle slip") >= 0, "ferry bell file did not open")
+	_expect(ferry_open.find("Call chit") >= 0, "ferry bell file did not show its exhibits")
+	_expect(ferry_open.find("Complaint slip") == -1, "spare key papers showed inside The ferry bell")
+	_expect(ferry_open.find("Cut list") == -1, "rehearsal papers showed inside The ferry bell")
+	_expect(ferry_open.find("Move order") == -1, "gilt stamp papers showed inside The ferry bell")
+	_press(root, "Submit theory")
+	var empty_ferry := _verdict_text(root)
+	_expect(empty_ferry.find("who took the ferry bell") >= 0, "empty ferry board: %s" % empty_ferry)
+	_expect(empty_ferry.find("where they took the bell") >= 0, "empty ferry board: %s" % empty_ferry)
+	_expect(empty_ferry.find("at which hour they took the bell") >= 0, "empty ferry board: %s" % empty_ferry)
+	_expect(empty_ferry.find("who took the spare key") == -1, "empty ferry board used the spare key slot: %s" % empty_ferry)
+	_expect(empty_ferry.find("rehearsal score") == -1, "empty ferry board used a rehearsal slot: %s" % empty_ferry)
+	_expect(empty_ferry.find("gilt stamp") == -1, "empty ferry board used a gilt slot: %s" % empty_ferry)
+	_expect(empty_ferry.to_lower().find("conflict") == -1, "empty ferry board talked about a conflict: %s" % empty_ferry)
+	_press(root, "Quill")
+	_press(root, "Rope loft")
+	_press(root, "16")
+	_press(root, "Submit theory")
+	var ferry_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(ferry_miss, Ferry, {"who": "Quill", "place": "rope_loft", "hour": "16"})
+	_press(root, "Jetty shed")
+	_press(root, "15")
+	_press(root, "Submit theory")
+	var ferry_place_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(ferry_place_miss, Ferry, {"who": "Quill", "place": "jetty_shed", "hour": "15"})
+	_press(root, "Rope loft")
+	_press(root, "Submit theory")
+	var ferry_accepted := _verdict_text(root)
+	_expect(ferry_accepted.find("fits every exhibit") >= 0, "ferry bell board rejected the true theory: %s" % ferry_accepted)
+	_expect(ferry_accepted.find("Quill (ropehand) took the ferry bell at 15") >= 0, "ferry bell board timeline: %s" % ferry_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var ferry_cleared := _verdict_text(root)
+	_expect(ferry_cleared.find("who took the ferry bell") >= 0, "cleared ferry board: %s" % ferry_cleared)
+	_expect(ferry_cleared.find("fits every exhibit") == -1, "cleared ferry board stayed accepted: %s" % ferry_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The spare key")
+	var spare_from_ferry := _visible_label_blob(root)
+	_expect(spare_from_ferry.find("Complaint slip") >= 0, "could not return to The spare key from The ferry bell")
+	_expect(spare_from_ferry.find("Whistle slip") == -1, "ferry bell papers stayed up after switching files")
+	_press(root, "Menu")
+	_press(root, "Open The weather slate")
+	var weather_open := _visible_label_blob(root)
+	_expect(weather_open.find("Frost note") >= 0, "weather slate file did not open")
+	_expect(weather_open.find("Stair chit") >= 0, "weather slate file did not show its exhibits")
+	_expect(weather_open.find("Complaint slip") == -1, "spare key papers showed inside The weather slate")
+	_expect(weather_open.find("Cut list") == -1, "rehearsal papers showed inside The weather slate")
+	_expect(weather_open.find("Move order") == -1, "gilt stamp papers showed inside The weather slate")
+	_expect(weather_open.find("Whistle slip") == -1, "ferry bell papers showed inside The weather slate")
+	_press(root, "Submit theory")
+	var empty_weather := _verdict_text(root)
+	_expect(empty_weather.find("who took the weather slate") >= 0, "empty weather board: %s" % empty_weather)
+	_expect(empty_weather.find("where they took the slate") >= 0, "empty weather board: %s" % empty_weather)
+	_expect(empty_weather.find("at which hour they took the slate") >= 0, "empty weather board: %s" % empty_weather)
+	_expect(empty_weather.find("who took the spare key") == -1, "empty weather board used the spare key slot: %s" % empty_weather)
+	_expect(empty_weather.find("rehearsal score") == -1, "empty weather board used a rehearsal slot: %s" % empty_weather)
+	_expect(empty_weather.find("gilt stamp") == -1, "empty weather board used a gilt slot: %s" % empty_weather)
+	_expect(empty_weather.find("ferry bell") == -1, "empty weather board used a ferry slot: %s" % empty_weather)
+	_expect(empty_weather.to_lower().find("conflict") == -1, "empty weather board talked about a conflict: %s" % empty_weather)
+	_press(root, "Pim")
+	_press(root, "Map alcove")
+	_press(root, "11")
+	_press(root, "Submit theory")
+	var weather_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(weather_miss, Weather, {"who": "Pim", "place": "map_alcove", "hour": "11"})
+	_press(root, "Peg room")
+	_press(root, "12")
+	_press(root, "Submit theory")
+	var weather_place_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(weather_place_miss, Weather, {"who": "Pim", "place": "peg_room", "hour": "12"})
+	_press(root, "Map alcove")
+	_press(root, "Submit theory")
+	var weather_accepted := _verdict_text(root)
+	_expect(weather_accepted.find("fits every exhibit") >= 0, "weather slate board rejected the true theory: %s" % weather_accepted)
+	_expect(weather_accepted.find("Pim (runner) took the weather slate at 12") >= 0, "weather slate board timeline: %s" % weather_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var weather_cleared := _verdict_text(root)
+	_expect(weather_cleared.find("who took the weather slate") >= 0, "cleared weather board: %s" % weather_cleared)
+	_expect(weather_cleared.find("fits every exhibit") == -1, "cleared weather board stayed accepted: %s" % weather_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The ferry bell")
+	var ferry_from_weather := _visible_label_blob(root)
+	_expect(ferry_from_weather.find("Whistle slip") >= 0, "could not return to The ferry bell from The weather slate")
+	_expect(ferry_from_weather.find("Frost note") == -1, "weather slate papers stayed up after switching files")
+	_press(root, "Menu")
+	_press(root, "Open The loom shuttle")
+	var loom_open := _visible_label_blob(root)
+	_expect(loom_open.find("Trough tag") >= 0, "loom shuttle file did not open")
+	_expect(loom_open.find("Border note") >= 0, "loom shuttle file did not show its exhibits")
+	_expect(loom_open.find("Complaint slip") == -1, "spare key papers showed inside The loom shuttle")
+	_expect(loom_open.find("Cut list") == -1, "rehearsal papers showed inside The loom shuttle")
+	_expect(loom_open.find("Move order") == -1, "gilt stamp papers showed inside The loom shuttle")
+	_expect(loom_open.find("Whistle slip") == -1, "ferry bell papers showed inside The loom shuttle")
+	_expect(loom_open.find("Frost note") == -1, "weather slate papers showed inside The loom shuttle")
+	_press(root, "Submit theory")
+	var empty_loom := _verdict_text(root)
+	_expect(empty_loom.find("who took the loom shuttle") >= 0, "empty loom board: %s" % empty_loom)
+	_expect(empty_loom.find("where they took the shuttle") >= 0, "empty loom board: %s" % empty_loom)
+	_expect(empty_loom.find("at which hour they took the shuttle") >= 0, "empty loom board: %s" % empty_loom)
+	_expect(empty_loom.find("who took the spare key") == -1, "empty loom board used the spare key slot: %s" % empty_loom)
+	_expect(empty_loom.find("rehearsal score") == -1, "empty loom board used a rehearsal slot: %s" % empty_loom)
+	_expect(empty_loom.find("gilt stamp") == -1, "empty loom board used a gilt slot: %s" % empty_loom)
+	_expect(empty_loom.find("ferry bell") == -1, "empty loom board used a ferry slot: %s" % empty_loom)
+	_expect(empty_loom.find("weather slate") == -1, "empty loom board used a weather slot: %s" % empty_loom)
+	_expect(empty_loom.to_lower().find("conflict") == -1, "empty loom board talked about a conflict: %s" % empty_loom)
+	_press(root, "Fenn")
+	_press(root, "Pattern loft")
+	_press(root, "18")
+	_press(root, "Submit theory")
+	var loom_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(loom_miss, Loom, {"who": "Fenn", "place": "pattern_loft", "hour": "18"})
+	_press(root, "Loom room")
+	_press(root, "19")
+	_press(root, "Submit theory")
+	var loom_place_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(loom_place_miss, Loom, {"who": "Fenn", "place": "loom_room", "hour": "19"})
+	_press(root, "Pattern loft")
+	_press(root, "Submit theory")
+	var loom_accepted := _verdict_text(root)
+	_expect(loom_accepted.find("fits every exhibit") >= 0, "loom shuttle board rejected the true theory: %s" % loom_accepted)
+	_expect(loom_accepted.find("Fenn (warper) took the loom shuttle at 19") >= 0, "loom shuttle board timeline: %s" % loom_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var loom_cleared := _verdict_text(root)
+	_expect(loom_cleared.find("who took the loom shuttle") >= 0, "cleared loom board: %s" % loom_cleared)
+	_expect(loom_cleared.find("fits every exhibit") == -1, "cleared loom board stayed accepted: %s" % loom_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The weather slate")
+	var weather_from_loom := _visible_label_blob(root)
+	_expect(weather_from_loom.find("Frost note") >= 0, "could not return to The weather slate from The loom shuttle")
+	_expect(weather_from_loom.find("Trough tag") == -1, "loom shuttle papers stayed up after switching files")
+	_press(root, "Menu")
+	_press(root, "Open The hive smoker")
+	var hive_open := _visible_label_blob(root)
+	_expect(hive_open.find("Fuel line") >= 0, "hive smoker file did not open")
+	_expect(hive_open.find("Swarm note") >= 0, "hive smoker file did not show its exhibits")
+	_expect(hive_open.find("Complaint slip") == -1, "spare key papers showed inside The hive smoker")
+	_expect(hive_open.find("Cut list") == -1, "rehearsal papers showed inside The hive smoker")
+	_expect(hive_open.find("Move order") == -1, "gilt stamp papers showed inside The hive smoker")
+	_expect(hive_open.find("Whistle slip") == -1, "ferry bell papers showed inside The hive smoker")
+	_expect(hive_open.find("Frost note") == -1, "weather slate papers showed inside The hive smoker")
+	_expect(hive_open.find("Trough tag") == -1, "loom shuttle papers showed inside The hive smoker")
+	_press(root, "Submit theory")
+	var empty_hive := _verdict_text(root)
+	_expect(empty_hive.find("who took the hive smoker") >= 0, "empty hive board: %s" % empty_hive)
+	_expect(empty_hive.find("where they took the smoker") >= 0, "empty hive board: %s" % empty_hive)
+	_expect(empty_hive.find("at which hour they took the smoker") >= 0, "empty hive board: %s" % empty_hive)
+	_expect(empty_hive.find("who took the spare key") == -1, "empty hive board used the spare key slot: %s" % empty_hive)
+	_expect(empty_hive.find("rehearsal score") == -1, "empty hive board used a rehearsal slot: %s" % empty_hive)
+	_expect(empty_hive.find("gilt stamp") == -1, "empty hive board used a gilt slot: %s" % empty_hive)
+	_expect(empty_hive.find("ferry bell") == -1, "empty hive board used a ferry slot: %s" % empty_hive)
+	_expect(empty_hive.find("weather slate") == -1, "empty hive board used a weather slot: %s" % empty_hive)
+	_expect(empty_hive.find("loom shuttle") == -1, "empty hive board used a loom slot: %s" % empty_hive)
+	_expect(empty_hive.to_lower().find("conflict") == -1, "empty hive board talked about a conflict: %s" % empty_hive)
+	_press(root, "Tamsin")
+	_press(root, "Honey room")
+	_press(root, "24")
+	_press(root, "Submit theory")
+	var hive_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(hive_miss, Hive, {"who": "Tamsin", "place": "honey_room", "hour": "24"})
+	_press(root, "Hive shed")
+	_press(root, "22")
+	_press(root, "Submit theory")
+	var hive_place_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(hive_place_miss, Hive, {"who": "Tamsin", "place": "hive_shed", "hour": "22"})
+	_press(root, "Honey room")
+	_press(root, "Submit theory")
+	var hive_accepted := _verdict_text(root)
+	_expect(hive_accepted.find("fits every exhibit") >= 0, "hive smoker board rejected the true theory: %s" % hive_accepted)
+	_expect(hive_accepted.find("Tamsin (night beekeeper) took the hive smoker at 22") >= 0, "hive smoker board timeline: %s" % hive_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var hive_cleared := _verdict_text(root)
+	_expect(hive_cleared.find("who took the hive smoker") >= 0, "cleared hive board: %s" % hive_cleared)
+	_expect(hive_cleared.find("fits every exhibit") == -1, "cleared hive board stayed accepted: %s" % hive_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The loom shuttle")
+	var loom_from_hive := _visible_label_blob(root)
+	_expect(loom_from_hive.find("Trough tag") >= 0, "could not return to The loom shuttle from The hive smoker")
+	_expect(loom_from_hive.find("Fuel line") == -1, "hive smoker papers stayed up after switching files")
 	root.queue_free()
 
 

@@ -35,5 +35,38 @@
   "all_rake": {
     "note": "One rake region from the shore to the column beside the anthill. No stack, cover, or trail.",
     "rake_rect": [1, 0, 13, 11]
+  },
+  "no_crib": {
+    "note": "The winning shore with no crib. After the dry season the cart beat has nowhere to put the bank, so this plan misses the cart.",
+    "rake": [[1, 4], [1, 5], [1, 6]],
+    "stack": [[2, 4], [2, 5], [2, 6]],
+    "cover": [[3, 4], [3, 5], [3, 6]],
+    "trail": [[4, 5], [5, 5], [6, 5], [7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]]
+  },
+  "carted": {
+    "note": "The winning shore plus a crib north of the anthill. The crib stays shut until the cart beat, so the wet haul matches the winning plan, and then the whole bank moves into the crib.",
+    "rake": [[1, 4], [1, 5], [1, 6]],
+    "stack": [[2, 4], [2, 5], [2, 6]],
+    "cover": [[3, 4], [3, 5], [3, 6]],
+    "trail": [[4, 5], [5, 5], [6, 5], [7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]],
+    "crib": [[14, 4]]
+  },
+  "late_crib": {
+    "note": "The winning shore until the second rain. The crib is painted when the cart beat opens, the way a player answers the bank sitting still.",
+    "rake": [[1, 4], [1, 5], [1, 6]],
+    "stack": [[2, 4], [2, 5], [2, 6]],
+    "cover": [[3, 4], [3, 5], [3, 6]],
+    "trail": [[4, 5], [5, 5], [6, 5], [7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]],
+    "after_second_rain": {
+      "crib": [[14, 4]]
+    }
+  },
+  "dry_crib": {
+    "note": "The dry-pan line plus a crib north of the anthill. Wet haul stays 0. The cart beat moves the dry-season bank off the covers and into the crib.",
+    "pan": [[4, 4], [4, 5], [4, 6]],
+    "stack": [[5, 4], [5, 5], [5, 6]],
+    "cover": [[6, 4], [6, 5], [6, 6]],
+    "trail": [[7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]],
+    "crib": [[14, 4]]
   }
 }
