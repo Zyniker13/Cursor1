@@ -1,0 +1,23 @@
+; Engine configuration file.
+; Harbor Glass — South Lantern Quay. Godot 4, 2D, no imported art.
+
+config_version=5
+
+[application]
+
+config/name="Harbor Glass"
+config/description="South Lantern Quay, a tide-clock light puzzle."
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+config/icon="res://icon.svg"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
