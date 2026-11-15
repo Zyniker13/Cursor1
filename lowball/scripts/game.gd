@@ -283,7 +283,7 @@ func _build_ui() -> void:
 	office.add_child(title_row)
 	title_row.add_child(_label("LOWBALL", 32, COL_ACCENT))
 	title_row.add_child(_label(Sport.TOWN, 20, COL_TEXT))
-	week_label = _label("Week 1 of 4", 18, COL_TEXT)
+	week_label = _label("Week 1 of %d" % Sport.SERIES_WEEKS, 18, COL_TEXT)
 	title_row.add_child(week_label)
 	record_label = _label("", 16, COL_TEXT)
 	title_row.add_child(record_label)
@@ -472,7 +472,7 @@ func _build_ui() -> void:
 	board_box.add_theme_constant_override("separation", 10)
 	board_scroll.add_child(board_box)
 	board_box.add_child(_label("Board meeting", 32, COL_ACCENT))
-	board_box.add_child(_label("Four weeks in %s." % Sport.TOWN, 18, COL_TEXT))
+	board_box.add_child(_label("Eight weeks in %s." % Sport.TOWN, 18, COL_TEXT))
 	board_label = _label("", 16, COL_TEXT)
 	board_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	board_box.add_child(board_label)
