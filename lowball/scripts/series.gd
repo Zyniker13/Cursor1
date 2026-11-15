@@ -107,14 +107,15 @@ func fixture() -> Dictionary:
 	return cards[0]
 
 
-func other_fixture() -> Dictionary:
+func other_fixtures() -> Array:
 	if week >= Sport.SERIES_WEEKS:
-		return {}
+		return []
 	var mine := fixture()
+	var others: Array = []
 	for card in Sport.week_fixtures(week):
-		if int(card["home"]) != int(mine["home"]):
-			return card
-	return {}
+		if int(card["slot"]) != int(mine["slot"]):
+			others.append(card)
+	return others
 
 
 func _final_card() -> Dictionary:
@@ -274,8 +275,6 @@ func begin_match(lineup: Array, tactic: String, focus: String) -> Dictionary:
 		return {"ok": false, "error": "The series is already over."}
 	if not Sport.STATS.has(focus):
 		return {"ok": false, "error": "Pick a training focus."}
-	if not player_plays():
-		return {"ok": false, "error": "There is no match to play."}
 	if not Sport.is_legal_lineup(player_roster.size(), lineup):
 		return {"ok": false, "error": "The lineup needs four different players."}
 	if not Sport.TACTICS.has(tactic):
@@ -289,16 +288,18 @@ func _begin_week(lineup: Array, tactic: String, focus: String) -> Dictionary:
 	var cards := Sport.week_fixtures(week)
 	var focuses := _focuses_for(week, focus)
 	var player_match: Dictionary = {}
-	var other_match: Dictionary = {}
+	var others: Array = []
 	for slot in cards.size():
 		var played := _simulate_card(cards[slot], lineup, tactic, week, week, slot, focuses)
 		if bool(played["player_played"]):
 			player_match = played
 		else:
-			other_match = played
+			others.append(played)
 	if player_match.is_empty():
 		return {"ok": false, "error": "The week has no match for Lumen Reedmice."}
-	player_match["other_match"] = other_match
+	if others.size() != Sport.MATCHES_PER_WEEK - 1:
+		return {"ok": false, "error": "The week is missing a match."}
+	player_match["other_matches"] = others
 	pending = player_match
 	return player_match
 
@@ -317,7 +318,7 @@ func _begin_final(lineup: Array, tactic: String, focus: String) -> Dictionary:
 
 func _stored_regular(match: Dictionary) -> Dictionary:
 	var copy := match.duplicate(false)
-	copy.erase("other_match")
+	copy.erase("other_matches")
 	return copy
 
 
@@ -340,16 +341,17 @@ func commit_match() -> Dictionary:
 			"goal_met": goal_met() if decided else false,
 			"final": true,
 		}
-	var other: Dictionary = pending["other_match"]
-	other["training_notes"] = notes
+	var packed: Array = []
+	for _slot in Sport.MATCHES_PER_WEEK:
+		packed.append({})
 	var mine := _stored_regular(pending)
-	var away := _stored_regular(other)
-	if int(mine["slot"]) <= int(away["slot"]):
-		results.append(mine)
-		results.append(away)
-	else:
-		results.append(away)
-		results.append(mine)
+	packed[int(mine["slot"])] = mine
+	for raw_other in pending["other_matches"]:
+		var copy := _stored_regular(raw_other)
+		copy["training_notes"] = notes
+		packed[int(copy["slot"])] = copy
+	for item in packed:
+		results.append(item)
 	pending = {}
 	week += 1
 	var over := is_over()

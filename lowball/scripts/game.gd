@@ -13,6 +13,8 @@ const COL_HOME := Color("D4652F")
 const COL_AWAY := Color("2A9D8F")
 const COL_THIRD := Color("7E8CC4")
 const COL_FOURTH := Color("C46B8A")
+const COL_FIFTH := Color("9A7B4F")
+const COL_SIXTH := Color("7D9A78")
 const COL_BAD := Color("E07A6A")
 const COL_GOOD := Color("8FCB7A")
 
@@ -440,7 +442,7 @@ func _build_ui() -> void:
 	restart_button.pressed.connect(press_restart)
 	action_row.add_child(restart_button)
 
-	var help := _label("The schedule lists both matches every week. Watch and Skip play your match, and the other match is played the same week. Lineup, tactic, and training are set before each of your matches. The final is a series, and the same lineup, tactic, training, Watch, and Skip work for every final game. A tie in a final game is not a win for either side, and the series continues until one club has two wins. If Lumen Reedmice finish 3rd or 4th, the season ends on the board. Keyboard: Tab then Enter. Keys 1-4 pick a slot, Left/Right change that batter, T tactic, Y training, W watch, S skip, N continue, R restart on the office or the board.", 13, COL_MUTED)
+	var help := _label("The schedule lists all three matches every week. There is no bye. Watch and Skip play your match, and the other two matches are recorded with it. Training still drills. The final is a series, and the same lineup, tactic, training, Watch, and Skip work for every final game. A tie in a final game is not a win for either side, and the series continues until one club has two wins. If Lumen Reedmice finish 3rd, 4th, 5th, or 6th, the season ends on the board. Keyboard: Tab then Enter. Keys 1-4 pick a slot, Left/Right change that batter, T tactic, Y training, W watch, S skip, N continue, R restart on the office or the board.", 13, COL_MUTED)
 	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	office.add_child(help)
 
@@ -507,7 +509,7 @@ func _build_ui() -> void:
 	board_box.add_theme_constant_override("separation", 10)
 	board_scroll.add_child(board_box)
 	board_box.add_child(_label("Board meeting", 32, COL_ACCENT))
-	board_box.add_child(_label("Six-week double round-robin in %s, then a best-of-three final." % Sport.TOWN, 18, COL_TEXT))
+	board_box.add_child(_label("Ten-week double round-robin in %s, three matches a week, then a best-of-three final." % Sport.TOWN, 18, COL_TEXT))
 	board_label = _label("", 16, COL_TEXT)
 	board_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	board_box.add_child(board_label)
@@ -699,13 +701,13 @@ func _refresh_office() -> void:
 	var tactic_line := str(TACTIC_HELP[tactic])
 	if series.in_final():
 		tactic_help.text = "%s %s" % [tactic_line, Sport.FINAL_TIE_TEXT]
-		training_help.text = "After this final game, every %s player gains +1 %s, capped at %d. All four clubs drill after every final game. The table does not change." % [
-			Sport.PLAYER_CLUB, Sport.STAT_LABEL[training], Sport.STAT_CAP,
+		training_help.text = "After this final game, every %s player gains +1 %s, capped at %d. All %d clubs drill after every final game, including the clubs left out. The table does not change." % [
+			Sport.PLAYER_CLUB, Sport.STAT_LABEL[training], Sport.STAT_CAP, Sport.CLUB_COUNT,
 		]
 	else:
 		tactic_help.text = tactic_line
-		training_help.text = "After the week, every %s player gains +1 %s, capped at %d. All four clubs drill every week. The other match is played the same week." % [
-			Sport.PLAYER_CLUB, Sport.STAT_LABEL[training], Sport.STAT_CAP,
+		training_help.text = "After the week, every %s player gains +1 %s, capped at %d. All %d clubs drill every week. The other two matches are recorded with yours." % [
+			Sport.PLAYER_CLUB, Sport.STAT_LABEL[training], Sport.STAT_CAP, Sport.CLUB_COUNT,
 		]
 	opponent_label.text = _opponent_blurb()
 
@@ -735,6 +737,23 @@ func _place_word(place: int) -> String:
 	return "%dth" % place
 
 
+func _other_fixture_line(card: Dictionary, plan_week: int) -> String:
+	var home_i := int(card["home"])
+	var away_i := int(card["away"])
+	var home_plan: Dictionary = Sport.opponent_plan(series.rosters[home_i], plan_week, home_i)
+	var away_plan: Dictionary = Sport.opponent_plan(series.rosters[away_i], plan_week, away_i)
+	return "Other match: %s host %s. %s posted %s. Lineup: %s. %s posted %s. Lineup: %s." % [
+		str(card["home_club"]),
+		str(card["away_club"]),
+		str(card["home_club"]),
+		Sport.TACTIC_LABEL[str(home_plan["tactic"])],
+		_lineup_bits(series.rosters[home_i], home_plan["lineup"]),
+		str(card["away_club"]),
+		Sport.TACTIC_LABEL[str(away_plan["tactic"])],
+		_lineup_bits(series.rosters[away_i], away_plan["lineup"]),
+	]
+
+
 func _opponent_blurb() -> String:
 	var card: Dictionary = series.fixture()
 	var opponent_i := int(card["away"]) if int(card["home"]) == Sport.PLAYER_INDEX else int(card["home"])
@@ -746,7 +765,7 @@ func _opponent_blurb() -> String:
 	var drill_when := "the week"
 	if series.in_final():
 		var ahead := str(Sport.CLUB_NAMES[int(series.finalist_indices()[0])])
-		where = "Final game %d. %s The club ahead after week 6 was %s. That club is home for game 1 and game 3. %s" % [
+		where = "Final game %d. %s The club that led after the league was %s. That club is home for game 1 and game 3. %s" % [
 			int(card.get("final_game", 1)), where, ahead, Sport.FINAL_TIE_TEXT,
 		]
 		drill_when = "this game"
@@ -759,24 +778,10 @@ func _opponent_blurb() -> String:
 	]
 	if series.in_final():
 		return lines
-	var other: Dictionary = series.other_fixture()
-	if other.is_empty():
-		return lines
-	var other_home := int(other["home"])
-	var other_away := int(other["away"])
-	var home_plan: Dictionary = Sport.opponent_plan(series.rosters[other_home], plan_week, other_home)
-	var away_plan: Dictionary = Sport.opponent_plan(series.rosters[other_away], plan_week, other_away)
-	return "%s\nOther match: %s host %s. %s posted %s. Lineup: %s. %s posted %s. Lineup: %s." % [
-		lines,
-		str(other["home_club"]),
-		str(other["away_club"]),
-		str(other["home_club"]),
-		Sport.TACTIC_LABEL[str(home_plan["tactic"])],
-		_lineup_bits(series.rosters[other_home], home_plan["lineup"]),
-		str(other["away_club"]),
-		Sport.TACTIC_LABEL[str(away_plan["tactic"])],
-		_lineup_bits(series.rosters[other_away], away_plan["lineup"]),
-	]
+	var extras: Array = [lines]
+	for other in series.other_fixtures():
+		extras.append(_other_fixture_line(other, plan_week))
+	return "\n".join(extras)
 
 
 func _schedule_text() -> String:
@@ -1008,6 +1013,10 @@ func _enter_result() -> void:
 
 
 func _other_match_line(other: Dictionary) -> String:
+	return "Other match: %s" % _score_sentence(other)
+
+
+func _score_sentence(other: Dictionary) -> String:
 	var home_club := str(other["home_club"])
 	var away_club := str(other["away_club"])
 	var verdict := "Tie"
@@ -1015,7 +1024,7 @@ func _other_match_line(other: Dictionary) -> String:
 		verdict = "%s won" % home_club
 	elif int(other["away_score"]) > int(other["home_score"]):
 		verdict = "%s won" % away_club
-	return "Other match: %s %d, %s %d. %s." % [
+	return "%s %d, %s %d. %s." % [
 		home_club, int(other["home_score"]), away_club, int(other["away_score"]), verdict,
 	]
 
@@ -1079,8 +1088,9 @@ func _result_text(played: Dictionary) -> String:
 			Sport.TACTIC_LABEL[str(played["player_tactic"])],
 			Sport.TACTIC_LABEL[str(played["opponent_tactic"])],
 		])
-		if played.has("other_match"):
-			lines.append(_other_match_line(played["other_match"]))
+		if played.has("other_matches"):
+			for other in played["other_matches"]:
+				lines.append(_other_match_line(other))
 	var focuses: Array = played["focuses"]
 	for club_index in Sport.CLUB_COUNT:
 		var notes: Array = Sport.preview_training(series.rosters[club_index], str(focuses[club_index]))
@@ -1228,6 +1238,10 @@ func _club_color(club: String) -> Color:
 		return COL_THIRD
 	if club == str(Sport.CLUB_NAMES[3]):
 		return COL_FOURTH
+	if club == str(Sport.CLUB_NAMES[4]):
+		return COL_FIFTH
+	if club == str(Sport.CLUB_NAMES[5]):
+		return COL_SIXTH
 	return COL_MUTED
 
 

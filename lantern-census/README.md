@@ -1,6 +1,6 @@
 # Lantern Census
 
-A seven-floor Godot 4 slice. The guild pays for the map you carry out. Oil is the turn budget. The cellar is the first floor. The cistern is the next one. The cloister is the third. The crypt is the fourth. The ossuary is the fifth. The reliquary is the sixth. The undercroft is the seventh, with its own layout and its own census.
+An eight-floor Godot 4 slice. The guild pays for the map you carry out. Oil is the turn budget. The cellar is the first floor. The cistern is the next one. The cloister is the third. The crypt is the fourth. The ossuary is the fifth. The reliquary is the sixth. The undercroft is the seventh. The well house is the eighth, with its own layout and its own census.
 
 ## Play
 
@@ -35,7 +35,7 @@ Town opens the floor select. It does not drop you straight down a shaft.
 
 ## Floor select
 
-The Cellar, the Cistern, the Cloister, the Crypt, the Ossuary, the Reliquary, and the Undercroft are listed separately. Each card says what that floor asks you to record, and whether its census is still open.
+The Cellar, the Cistern, the Cloister, the Crypt, the Ossuary, the Reliquary, the Undercroft, and the Well House are listed separately. Each card says what that floor asks you to record, and whether its census is still open.
 
 The small flask can reach every lift. A finished census on any floor needs the large flask.
 
@@ -70,7 +70,7 @@ The warden stands on one tile and never moves. It telegraphs the tile it will hi
 
 A hit burns 3 oil on top of the action's 1 oil. The hit does not end the descent while any oil remains. Oil at 0 puts the lamp out, ends the descent, and the sheet pays nothing. Stepping onto the lift extracts you even when that step spends your last oil.
 
-Hazards do not burn extra oil. They are census tiles. Stepping on a blank one inks it. On the cistern those cracks are called seeps, on the cloister they are called cinders, on the crypt they are called ash cracks, on the ossuary they are called chalk cracks, on the reliquary they are called nail cracks, and on the undercroft they are called salt cracks; they use the same hazard rule.
+Hazards do not burn extra oil. They are census tiles. Stepping on a blank one inks it. On the cistern those cracks are called seeps, on the cloister they are called cinders, on the crypt they are called ash cracks, on the ossuary they are called chalk cracks, on the reliquary they are called nail cracks, on the undercroft they are called salt cracks, and on the well house they are called well cracks; they use the same hazard rule.
 
 ## Payout
 
@@ -244,14 +244,37 @@ Record every corridor, the eight salt cracks, and the undercroft ring around the
 
 The full sheet is `53 × 3 + 8 × 8 + 15 = 238` coin. The shortest path to the lift is 19 steps, so the small flask has a margin of 5. A checked route that steps on every payable tile without taking a swing, then reaches the lift, costs 95 oil. The large flask holds 120, so a careful survey fits and a wandering one can still run the lamp out.
 
+## The Well House
+
+Hand-authored, 17 by 12. `S` start, `L` lift, `H` well crack, `E` warden, `W` the shaft. The shaft is wall for the sheet and is drawn as dark water. Bumping it inks a wall. The north gallery and the east stair are open floor. The piers beside the shaft are ordinary walls.
+
+```
+#################
+#S..............#
+####.......####.#
+####.WWWWW.H###.#
+###H.WWWWW.####.#
+####.WWWWW.H###.#
+###H.WWWWW.####L#
+####.WWWWW.H#####
+###H.WWWWW.######
+####.......H#####
+######HEH########
+#################
+```
+
+Record every corridor, the nine well cracks, and the well ring around the shaft. The well cracks are `(11,3)`, `(3,4)`, `(11,5)`, `(3,6)`, `(11,7)`, `(3,8)`, `(11,9)`, `(6,10)`, and `(8,10)`. The warden stands at `(7,10)`. The ring is the 26-tile corridor cycle around the 5×6 shaft at columns 5–9 and rows 3–8: the row `(4,2)`–`(10,2)`, the sides `(4,3)` `(10,3)` `(4,4)` `(10,4)` `(4,5)` `(10,5)` `(4,6)` `(10,6)` `(4,7)` `(10,7)` `(4,8)` `(10,8)`, and the row `(4,9)`–`(10,9)`.
+
+The full sheet is `46 × 3 + 9 × 8 + 15 = 225` coin. The shortest path to the lift is 19 steps, so the small flask has a margin of 5. A checked route that steps on every payable tile without taking a swing, then reaches the lift, costs 110 oil. The large flask holds 120, so a careful survey fits and a wandering one can still run the lamp out.
+
 ## Presentation
 
-All seven floors use the same code-drawn raycaster, with billboards for the warden, the swing, the hazards, and the lift. There are no imported textures. Cistern walls are cooler, the pit is teal, and the seeps read as green cracks. Cloister walls are warm limestone, the garth is a dark garden, and the cinders read as ember cracks. Crypt walls are violet stone, the tomb is a pale slab, and the ash reads as gray cracks. Ossuary walls are dry bone-stone, the stack is aged ivory, and the chalk reads as pale cracks. Reliquary walls are lacquered timber, the case is gilt wood, and the nails read as copper cracks. Undercroft walls are damp stone, the trough is dark brine, and the salt reads as pale crystals. The sheet, the town, and the floor select are drawn in code.
+All eight floors use the same code-drawn raycaster, with billboards for the warden, the swing, the hazards, and the lift. There are no imported textures. Cistern walls are cooler, the pit is teal, and the seeps read as green cracks. Cloister walls are warm limestone, the garth is a dark garden, and the cinders read as ember cracks. Crypt walls are violet stone, the tomb is a pale slab, and the ash reads as gray cracks. Ossuary walls are dry bone-stone, the stack is aged ivory, and the chalk reads as pale cracks. Reliquary walls are lacquered timber, the case is gilt wood, and the nails read as copper cracks. Undercroft walls are damp stone, the trough is dark brine, and the salt reads as pale crystals. Well house walls are dry yard stone, the shaft is dark water, and the well cracks read as wet blue seams. The sheet, the town, and the floor select are drawn in code.
 
 ## Limitations
 
-- Seven floors, one warden on each. The warden does not patrol or chase.
+- Eight floors, one warden on each. The warden does not patrol or chase.
 - The same floor can be turned in again on a later extract. A finished census stays finished.
 - Mouse look is optional and snaps by quarter turns. There is no sound.
 - Walls are for the sheet, not for the payout.
-- The automated checks cover the rules and all seven floors, including that the undercroft's true census is accepted and a wrong, short, or swapped sheet is rejected. They do not play the window, and this slice was not given a human playtest here.
+- The automated checks cover the rules and all eight floors, including that the well house's true census is accepted and a wrong, short, or swapped sheet is rejected. They do not play the window, and this slice was not given a human playtest here.

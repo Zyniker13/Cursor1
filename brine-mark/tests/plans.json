@@ -191,5 +191,107 @@
     "ship": [[14, 3]],
     "stall": [[14, 2]],
     "yard": [[14, 1]]
+  },
+  "no_bunk": {
+    "note": "The banked shore with a full yard and no bunk. The bunk beat has nowhere to hire, so this plan fails the bunk check. It hires 0 and leaves the whole purse in the yard. The earned coins are still reported.",
+    "rake": [[1, 4], [1, 5], [1, 6]],
+    "stack": [[2, 4], [2, 5], [2, 6]],
+    "cover": [[3, 4], [3, 5], [3, 6]],
+    "trail": [[4, 5], [5, 5], [6, 5], [7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]],
+    "crib": [[14, 4]],
+    "ship": [[14, 3]],
+    "stall": [[14, 2]],
+    "yard": [[14, 1]]
+  },
+  "hired": {
+    "note": "The banked shore plus one bunk one cell north of the yard. The bunk stays shut until the bunk beat, so the wet haul, the cart, the shipment, the earned coins, and the bank match the banked plan. Workers then hire the whole purse that divides by 100 and leave the remainder in the yard.",
+    "rake": [[1, 4], [1, 5], [1, 6]],
+    "stack": [[2, 4], [2, 5], [2, 6]],
+    "cover": [[3, 4], [3, 5], [3, 6]],
+    "trail": [[4, 5], [5, 5], [6, 5], [7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]],
+    "crib": [[14, 4]],
+    "ship": [[14, 3]],
+    "stall": [[14, 2]],
+    "yard": [[14, 1]],
+    "bunk": [[14, 0]]
+  },
+  "late_hired": {
+    "note": "The banked shore until the yard beat ends. The bunk is painted when the bunk beat opens, the way a player answers a full yard.",
+    "rake": [[1, 4], [1, 5], [1, 6]],
+    "stack": [[2, 4], [2, 5], [2, 6]],
+    "cover": [[3, 4], [3, 5], [3, 6]],
+    "trail": [[4, 5], [5, 5], [6, 5], [7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]],
+    "crib": [[14, 4]],
+    "ship": [[14, 3]],
+    "stall": [[14, 2]],
+    "yard": [[14, 1]],
+    "after_yard": {
+      "bunk": [[14, 0]]
+    }
+  },
+  "dry_hired": {
+    "note": "The dry-pan line, the crib, the ship, the stall, the yard, and a bunk north of the yard. Wet haul stays 0. The bunk hires the dry-season purse that divides by 100 and leaves the remainder in the yard.",
+    "pan": [[4, 4], [4, 5], [4, 6]],
+    "stack": [[5, 4], [5, 5], [5, 6]],
+    "cover": [[6, 4], [6, 5], [6, 6]],
+    "trail": [[7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]],
+    "crib": [[14, 4]],
+    "ship": [[14, 3]],
+    "stall": [[14, 2]],
+    "yard": [[14, 1]],
+    "bunk": [[14, 0]]
+  },
+  "no_loft": {
+    "note": "The hired shore with a full bunk and no loft. The loft beat has nowhere to move the crew, so this plan fails the loft check. It lofts 0 and leaves the hires at the bunk. The hire count and the yard remainder stay put.",
+    "rake": [[1, 4], [1, 5], [1, 6]],
+    "stack": [[2, 4], [2, 5], [2, 6]],
+    "cover": [[3, 4], [3, 5], [3, 6]],
+    "trail": [[4, 5], [5, 5], [6, 5], [7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]],
+    "crib": [[14, 4]],
+    "ship": [[14, 3]],
+    "stall": [[14, 2]],
+    "yard": [[14, 1]],
+    "bunk": [[14, 0]]
+  },
+  "lofted": {
+    "note": "The hired shore plus one loft one cell north of the bunk. The loft stays shut until the loft beat, so the wet haul, the cart, the shipment, the earned coins, the bank, the hires, and the yard remainder match the hired plan. Workers then move the whole crew into the loft, one hire at a time.",
+    "rake": [[1, 4], [1, 5], [1, 6]],
+    "stack": [[2, 4], [2, 5], [2, 6]],
+    "cover": [[3, 4], [3, 5], [3, 6]],
+    "trail": [[4, 5], [5, 5], [6, 5], [7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]],
+    "crib": [[14, 4]],
+    "ship": [[14, 3]],
+    "stall": [[14, 2]],
+    "yard": [[14, 1]],
+    "bunk": [[14, 0]],
+    "loft": [[14, -1]]
+  },
+  "late_lofted": {
+    "note": "The hired shore until the bunk beat ends. The loft is painted when the loft beat opens, the way a player answers a full bunk.",
+    "rake": [[1, 4], [1, 5], [1, 6]],
+    "stack": [[2, 4], [2, 5], [2, 6]],
+    "cover": [[3, 4], [3, 5], [3, 6]],
+    "trail": [[4, 5], [5, 5], [6, 5], [7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]],
+    "crib": [[14, 4]],
+    "ship": [[14, 3]],
+    "stall": [[14, 2]],
+    "yard": [[14, 1]],
+    "bunk": [[14, 0]],
+    "after_bunk": {
+      "loft": [[14, -1]]
+    }
+  },
+  "dry_lofted": {
+    "note": "The dry-pan line, the crib, the ship, the stall, the yard, the bunk, and a loft north of the bunk. Wet haul stays 0. The loft moves the dry-season crew and leaves the yard remainder where it is.",
+    "pan": [[4, 4], [4, 5], [4, 6]],
+    "stack": [[5, 4], [5, 5], [5, 6]],
+    "cover": [[6, 4], [6, 5], [6, 6]],
+    "trail": [[7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]],
+    "crib": [[14, 4]],
+    "ship": [[14, 3]],
+    "stall": [[14, 2]],
+    "yard": [[14, 1]],
+    "bunk": [[14, 0]],
+    "loft": [[14, -1]]
   }
 }

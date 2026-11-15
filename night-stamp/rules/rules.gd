@@ -372,6 +372,129 @@
 # A refused first stamp zeros that stamp's own progress. It does not cancel
 # the retrigger, and it does not remove Hold or Exemption.
 #
+# FOLIO BELL, in desk order
+# A tenth night. The stamps, the ink, and the 3x3 form are unchanged. The
+# folio bell deals the starting deck again. Drafts and the relic from an
+# earlier night do not carry. Open it from the desk, or from a victory desk.
+# Restart act replays whichever night is on the desk.
+# - Ness Hart, lane column 1, exemption row bottom, Last Bar:
+#   "The last stamp in the queue scores 0 unless an Exemption is on the
+#   bottom row."
+#   The queue is read from the top row downward, left to right inside a row.
+#   The last filled cell in that order scores 0. An earlier stamp scores
+#   its own number, even on the bottom row. A lone stamp is last, so it
+#   scores 0. A stamp on the bottom row still counts when a later cell in
+#   that row is filled. The order the stamps were pressed does not matter.
+#   A cell later in the queue is last even when it was pressed first.
+#   A retrigger of that last cell scores 0 again. A retrigger of an earlier
+#   cell does not.
+#   Exemption on the bottom row lets the last stamp count, including a stamp
+#   that resolved earlier in the queue. An Exemption off the bottom row does not.
+# - Wynn Cress, lane column 3, exemption row middle, Center Slip:
+#   "The center stamp scores twice. Other cells score their own number."
+#   The center cell is the middle row, column 2. That stamp scores twice
+#   its own number. A top-row stamp scores its own number. A bottom-row
+#   stamp scores its own number. The rest of the middle row scores its own
+#   number. A lone center stamp scores twice. A lone stamp outside the
+#   center scores once. A retrigger of the center scores twice again. A
+#   retrigger of any other cell does not.
+#   Exemption on the middle row cancels the doubling, so the center scores
+#   its own number. An Exemption in the center is on the middle row, so it
+#   scores 1, not 2.
+# - Tam Quern, lane column 1, exemption row top, Column Bar:
+#   "A stamp in column 1 scores 0 when that column holds another stamp."
+#   Nell Parr already refuses every stamp in column 1, so Tam does not copy
+#   that rule. A lone stamp in column 1 scores its own number. A second
+#   stamp in column 1 makes every stamp in that column score 0. Columns 2
+#   and 3 score their own number, even when they touch column 1 and even
+#   when column 1 is stacked. A retrigger of a stacked column-1 stamp scores
+#   0 again. A retrigger of a lone column-1 stamp scores its own number again.
+#   Exemption on the top row lets a stacked column 1 count. An Exemption
+#   off the top row does not. An Exemption in column 1 on the top row is
+#   on the exemption row, so the column counts.
+# - Pell Sallow, lane column 3, exemption row bottom, Gap Toll:
+#   "Patience drops by 2 if two stamps have an empty cell between them."
+#   Queue order runs from the top row downward, left to right inside a row.
+#   Two filled stamps have a gap when an empty cell sits between them in
+#   that order. The drop is 2 instead of 1. Stamps that follow one another
+#   in the queue, including the last cell of a row and the first cell of
+#   the next row, keep the drop at 1. One stamp cannot leave a gap, so the
+#   drop stays 1. An empty form keeps the drop at 1. A diagonal pair still
+#   gaps when the queue cells between them are empty. The toll does not
+#   change what a stamp scores.
+#   Exemption on the bottom row keeps the drop at 1, even when a gap is
+#   open and even when the stamps are contiguous.
+#   Hold is applied before the gap toll.
+# A refused last stamp and a refused stacked column zero that stamp's own
+# progress. They do not cancel the retrigger, and they do not remove Hold
+# or Exemption.
+#
+# WICK BELL, in desk order
+# An eleventh night. The stamps, the ink, and the 3x3 form are unchanged. The
+# wick bell deals the starting deck again. Drafts and the relic from an
+# earlier night do not carry. Open it from the desk, or from a victory desk.
+# Restart act replays whichever night is on the desk.
+# - Odell Voss, lane column 2, exemption row bottom, Row Bar:
+#   "A stamp on the bottom row scores 0 when that row holds another stamp."
+#   Orla Fen refuses every bottom-row stamp, including a lone one. Lark Pym
+#   ignores a shared stamp on every row. Odell does neither. A stamp on the
+#   bottom row scores 0 only when another stamp sits on that same row. A
+#   lone bottom-row stamp scores its own number. The top row and the middle
+#   row score their own number, even when those rows are shared and even
+#   when they touch the bottom row. A second bottom-row stamp makes every
+#   bottom-row stamp score 0. Columns do not matter. A retrigger of a
+#   stacked bottom-row stamp scores 0 again. A retrigger of a lone
+#   bottom-row stamp scores its own number again.
+#   Exemption on the bottom row lets a stacked bottom row count. An
+#   Exemption off the bottom row does not. An Exemption on the bottom row
+#   is itself a stamp, so a second bottom-row stamp beside it still sits
+#   on the exemption row and the row counts.
+# - Cress Hart, lane column 1, exemption row top, First Slip:
+#   "The first stamp in the queue scores twice when a later stamp follows it."
+#   Ida Cress already doubles every first stamp, including a lone stamp, so
+#   Cress does not copy that rule. The first filled cell scores twice only
+#   when another stamp follows it in the queue. A lone stamp is both first
+#   and last, so it scores its own number. A later stamp scores its own
+#   number. The queue is read from the top row downward, left to right
+#   inside a row. The order the stamps were pressed does not matter.
+#   A retrigger of that followed first cell scores twice again. A retrigger
+#   of a later cell does not. A retrigger of a lone stamp does not.
+#   Exemption on the top row cancels the doubling.
+# - Jun Solt, lane column 3, exemption row bottom, Pair Bar:
+#   "If two stamps share a number, the later one scores 0."
+#   Ivo Pell doubles that later stamp. June Hart spends patience. Jun does
+#   neither. A number is the progress that stamp already grants, before this
+#   bar. Entry Mark is 2. Visa Dot is 3. Duty is 2, or 4 on the bottom row.
+#   Exemption and Hold are 1. Two stamps share a number when those values
+#   are equal. The same card can fail to share: a top-row Duty is 2 and a
+#   bottom-row Duty is 4. Different cards can share: a top-row Duty and an
+#   Entry Mark are both 2. A Surcharge is 2, or 5 when the cell above is
+#   filled.
+#   Later means later in the queue, not later in the order the stamps were
+#   pressed. The earlier stamp of a shared number scores its own number.
+#   Each later stamp that shares its number with any earlier stamp scores 0.
+#   One stamp cannot share, so it scores its own number. A later stamp with
+#   a different number scores its own number, even when it is the last cell.
+#   Three stamps that all share a number zero the second and the third. A
+#   gap does not block a pair. A retrigger of a later shared stamp scores 0
+#   again. A retrigger of the earlier stamp does not.
+#   Exemption on the bottom row lets the later stamp count.
+#   The bar does not change patience. Two stamps that share a number still
+#   drop patience by 1 unless a Hold delays the traveler.
+# - Ives Mire, lane column 2, exemption row top, Empty Yield:
+#   "Each empty cell adds 1 to every filled stamp's own progress."
+#   An empty cell is a cell with no stamp. The bonus is added to each filled
+#   stamp, not once for the form. One filled stamp and eight empty cells
+#   add 8. Two filled stamps and seven empty cells add 7 to each stamp.
+#   The center cell receives the bonus. A corner receives the same bonus.
+#   Cal Mire adds 3 to the frame only, so Ives does not copy that rule.
+#   A retrigger of a filled stamp adds the empty-cell bonus again.
+#   Exemption on the top row cancels the bonus, so every stamp scores its
+#   own number. An Exemption off the top row does not.
+# A refused stacked bottom row and a barred later number zero that stamp's
+# own progress. They do not cancel the retrigger, and they do not remove
+# Hold or Exemption.
+#
 # RUN
 # - A run is seeded. The shuffle and the draft offer are a pure function of the
 #   seed, the night, the traveler, and the cards owned, so restarting an
@@ -404,6 +527,8 @@ const SHIFT_VELLUM := 5
 const SHIFT_QUIRE := 6
 const SHIFT_SALT := 7
 const SHIFT_QUAY := 8
+const SHIFT_FOLIO := 9
+const SHIFT_WICK := 10
 
 const ROW_NAMES := ["top row", "middle row", "bottom row"]
 const COL_NAMES := ["column 1", "column 2", "column 3"]
@@ -899,6 +1024,102 @@ const QUAY_BELL := [
 ]
 
 
+const FOLIO_BELL := [
+	{
+		"id": "ness",
+		"name": "Ness Hart",
+		"form_name": "Last Bar",
+		"rule_text": "The last stamp in the queue scores 0 unless an Exemption is on the bottom row.",
+		"rule": "zero_last",
+		"lane": 0,
+		"exemption_row": 2,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "wynn",
+		"name": "Wynn Cress",
+		"form_name": "Center Slip",
+		"rule_text": "The center stamp scores twice. Other cells score their own number.",
+		"rule": "double_center",
+		"lane": 2,
+		"exemption_row": 1,
+		"goal": 22,
+		"patience": 5,
+	},
+	{
+		"id": "tam",
+		"name": "Tam Quern",
+		"form_name": "Column Bar",
+		"rule_text": "A stamp in column 1 scores 0 when that column holds another stamp. A lone stamp in column 1 counts.",
+		"rule": "refuse_stacked_col1",
+		"lane": 0,
+		"exemption_row": 0,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "sallow",
+		"name": "Pell Sallow",
+		"form_name": "Gap Toll",
+		"rule_text": "Patience drops by 2 if two stamps have an empty cell between them.",
+		"rule": "drop_if_queue_gap",
+		"lane": 2,
+		"exemption_row": 2,
+		"goal": 18,
+		"patience": 5,
+	},
+]
+
+
+const WICK_BELL := [
+	{
+		"id": "odell",
+		"name": "Odell Voss",
+		"form_name": "Row Bar",
+		"rule_text": "A stamp on the bottom row scores 0 when that row holds another stamp. A lone bottom-row stamp counts.",
+		"rule": "refuse_stacked_bottom",
+		"lane": 1,
+		"exemption_row": 2,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "cress",
+		"name": "Cress Hart",
+		"form_name": "First Slip",
+		"rule_text": "The first stamp in the queue scores twice when a later stamp follows it. A lone stamp scores its own number.",
+		"rule": "double_first_if_followed",
+		"lane": 0,
+		"exemption_row": 0,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "jun",
+		"name": "Jun Solt",
+		"form_name": "Pair Bar",
+		"rule_text": "If two stamps share a number, the later one scores 0. The earlier stamp scores its own number.",
+		"rule": "zero_shared_later",
+		"lane": 2,
+		"exemption_row": 2,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "ives",
+		"name": "Ives Mire",
+		"form_name": "Empty Yield",
+		"rule_text": "Each empty cell adds 1 to every filled stamp's own progress.",
+		"rule": "yield_empty",
+		"lane": 1,
+		"exemption_row": 0,
+		"goal": 22,
+		"patience": 5,
+	},
+]
+
+
 class NightState:
 	extends RefCounted
 	var seed: int = 1
@@ -958,6 +1179,10 @@ static func _canonical_shift(shift_index: int) -> int:
 		return SHIFT_SALT
 	if shift_index == SHIFT_QUAY:
 		return SHIFT_QUAY
+	if shift_index == SHIFT_FOLIO:
+		return SHIFT_FOLIO
+	if shift_index == SHIFT_WICK:
+		return SHIFT_WICK
 	return SHIFT_FIRST
 
 
@@ -973,7 +1198,11 @@ static func new_run(seed_value: int, shift_index: int = SHIFT_FIRST) -> NightSta
 	state.next_iid = 0
 	for card_id in STARTING_DECK:
 		_add_library_card(state, String(card_id))
-	if state.shift == SHIFT_QUAY:
+	if state.shift == SHIFT_WICK:
+		_log(state, "The wick bell begins. Seed %d." % state.seed)
+	elif state.shift == SHIFT_FOLIO:
+		_log(state, "The folio bell begins. Seed %d." % state.seed)
+	elif state.shift == SHIFT_QUAY:
 		_log(state, "The quay bell begins. Seed %d." % state.seed)
 	elif state.shift == SHIFT_SALT:
 		_log(state, "The salt watch begins. Seed %d." % state.seed)
@@ -1031,6 +1260,10 @@ static func restart_encounter(state: NightState) -> void:
 
 
 static func shift_label(state: NightState) -> String:
+	if state.shift == SHIFT_WICK:
+		return "Wick bell"
+	if state.shift == SHIFT_FOLIO:
+		return "Folio bell"
 	if state.shift == SHIFT_QUAY:
 		return "Quay bell"
 	if state.shift == SHIFT_SALT:
@@ -1065,6 +1298,10 @@ static func traveler(state: NightState) -> Dictionary:
 
 
 static func _roster(state: NightState) -> Array:
+	if state.shift == SHIFT_WICK:
+		return WICK_BELL
+	if state.shift == SHIFT_FOLIO:
+		return FOLIO_BELL
 	if state.shift == SHIFT_QUAY:
 		return QUAY_BELL
 	if state.shift == SHIFT_SALT:
@@ -1285,6 +1522,20 @@ static func stamp_progress(state: NightState, card_id: String, row: int, col: in
 		return amount + 3
 	if rule == "yield_corner" and _is_corner(row, col):
 		return amount + 3
+	if rule == "zero_last" and _is_queue_tail(state, row, col):
+		return 0
+	if rule == "double_center" and row == 1 and col == 1:
+		return amount * 2
+	if rule == "refuse_stacked_col1" and col == 0 and col_fill_count(state, 0) > 1:
+		return 0
+	if rule == "refuse_stacked_bottom" and row == 2 and row_fill_count(state, 2) > 1:
+		return 0
+	if rule == "double_first_if_followed" and _is_queue_head(state, row, col) and not _is_queue_tail(state, row, col):
+		return amount * 2
+	if rule == "zero_shared_later" and _shares_number_with_earlier(state, row, col):
+		return 0
+	if rule == "yield_empty":
+		return amount + _empty_cell_count(state)
 	return amount
 
 
@@ -1376,6 +1627,8 @@ static func patience_loss(state: NightState) -> int:
 		elif rule == "drop_if_shared_number" and _shares_a_number(state):
 			loss = 2
 		elif rule == "double_patience_if_center_filled" and _center_filled(state):
+			loss = 2
+		elif rule == "drop_if_queue_gap" and _queue_has_gap(state):
 			loss = 2
 	return loss
 
@@ -1542,6 +1795,14 @@ static func _resolve_stamp(state: NightState, row: int, col: int, hush: bool) ->
 				_log(state, "%s ignores %s because the row is shared." % [traveler(state)["name"], CARDS[card_id]["name"]])
 			elif rule == "zero_first" and _is_queue_head(state, row, col):
 				_log(state, "%s refuses the first stamp, %s." % [traveler(state)["name"], CARDS[card_id]["name"]])
+			elif rule == "zero_last" and _is_queue_tail(state, row, col):
+				_log(state, "%s refuses the last stamp, %s." % [traveler(state)["name"], CARDS[card_id]["name"]])
+			elif rule == "refuse_stacked_col1" and col == 0 and col_fill_count(state, 0) > 1:
+				_log(state, "%s refuses %s in a stacked column 1." % [traveler(state)["name"], CARDS[card_id]["name"]])
+			elif rule == "refuse_stacked_bottom" and row == 2 and row_fill_count(state, 2) > 1:
+				_log(state, "%s refuses %s on a stacked bottom row." % [traveler(state)["name"], CARDS[card_id]["name"]])
+			elif rule == "zero_shared_later" and _shares_number_with_earlier(state, row, col):
+				_log(state, "%s bars the later shared %s." % [traveler(state)["name"], CARDS[card_id]["name"]])
 			elif rule == "ignore_isolated":
 				_log(state, "%s ignores the lone %s." % [traveler(state)["name"], CARDS[card_id]["name"]])
 			else:
@@ -1558,6 +1819,12 @@ static func _resolve_stamp(state: NightState, row: int, col: int, hush: bool) ->
 				_log(state, "%s on the %s, %s grants %d. The outer frame yields +3." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			elif tail_rule == "yield_corner" and _is_corner(row, col) and amount > raw:
 				_log(state, "%s on the %s, %s grants %d. The corner yields +3." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_center" and row == 1 and col == 1 and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The center doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_first_if_followed" and _is_queue_head(state, row, col) and not _is_queue_tail(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. A later stamp doubles the first." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_empty" and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. Each empty cell yields +1." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			else:
 				_log(state, "%s on the %s, %s grants %d." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 	state.turn_progress += amount
@@ -1692,6 +1959,10 @@ static func _is_queue_tail(state: NightState, row: int, col: int) -> bool:
 	return true
 
 
+static func _empty_cell_count(state: NightState) -> int:
+	return 9 - _stamp_count(state)
+
+
 static func _stamp_count(state: NightState) -> int:
 	var count = 0
 	for row in 3:
@@ -1713,6 +1984,24 @@ static func _empty_row_count(state: NightState) -> int:
 		if not row_has_stamp(state, row):
 			empty_rows += 1
 	return empty_rows
+
+
+static func _queue_has_gap(state: NightState) -> bool:
+	var first := -1
+	var last := -1
+	var count := 0
+	var index := 0
+	for row in 3:
+		for col in 3:
+			if state.form[row][col] != null:
+				if first < 0:
+					first = index
+				last = index
+				count += 1
+			index += 1
+	if count < 2:
+		return false
+	return last - first + 1 > count
 
 
 static func _shares_a_number(state: NightState) -> bool:
@@ -1808,7 +2097,11 @@ static func _apply_result(state: NightState, result: Dictionary) -> void:
 		state.encounters_cleared += 1
 		if state.traveler_index >= _roster(state).size() - 1:
 			state.phase = "victory"
-			if state.shift == SHIFT_QUAY:
+			if state.shift == SHIFT_WICK:
+				_log(state, "The queue is empty. The wick bell is clear.")
+			elif state.shift == SHIFT_FOLIO:
+				_log(state, "The queue is empty. The folio bell is clear.")
+			elif state.shift == SHIFT_QUAY:
 				_log(state, "The queue is empty. The quay bell is clear.")
 			elif state.shift == SHIFT_SALT:
 				_log(state, "The queue is empty. The salt watch is clear.")
