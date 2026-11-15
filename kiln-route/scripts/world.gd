@@ -10,6 +10,7 @@ extends RefCounted
 ## A twin does not forward in step 2 on its own. When a matching item arrives,
 ## the waiter moves one cell forward inside that accept, during step 2 or step 3.
 ## The arrival stays. Neither item moves a second cell on that tick.
+## A pass is the same, except the arrival may be a different material.
 
 const Rules = preload("res://scripts/foundry.gd")
 
@@ -41,7 +42,7 @@ class Machine:
 	## Second lane on a bridge. -1 is empty. Other machines leave it empty.
 	var cross := -1
 	var cross_moved := false
-	## True while a twin is pushing its waiter forward, so a loop cannot re-enter.
+	## True while a twin or a pass is pushing its waiter forward, so a loop cannot re-enter.
 	var pairing := false
 
 class Source:
@@ -412,8 +413,8 @@ func _can_take(machine: Machine, mat: int, arrival: int) -> bool:
 	if machine.kind == Rules.Kind.DWELL:
 		# From behind only. A side entry and a head-on entry stay where they were.
 		return machine.hold < 0 and arrival == machine.dir
-	if machine.kind == Rules.Kind.TWIN:
-		# Pairing is handled in _accept. A twin may already be holding.
+	if machine.kind == Rules.Kind.TWIN or machine.kind == Rules.Kind.PASS:
+		# Pairing is handled in _accept. A twin or a pass may already be holding.
 		return false
 	if machine.kind == Rules.Kind.BRIDGE:
 		if arrival == machine.dir:
@@ -459,6 +460,8 @@ func _accept(dest: Vector2i, mat: int, arrival: int) -> bool:
 	var machine: Machine = machines[dest]
 	if machine.kind == Rules.Kind.TWIN:
 		return _accept_twin(dest, machine, mat, arrival)
+	if machine.kind == Rules.Kind.PASS:
+		return _accept_pass(dest, machine, mat, arrival)
 	if not _can_take(machine, mat, arrival):
 		return false
 	if _holder(machine.kind):
@@ -499,6 +502,31 @@ func _accept_twin(pos: Vector2i, machine: Machine, mat: int, arrival: int) -> bo
 		machine.moved = true
 		return true
 	if machine.hold != mat or machine.moved or machine.pairing:
+		return false
+	machine.pairing = true
+	var sent: bool = _accept(pos + Rules.vec(machine.dir), machine.hold, machine.dir)
+	machine.pairing = false
+	if not sent:
+		return false
+	machine.hold = mat
+	machine.moved = true
+	return true
+
+
+## Behind only. The first item waits until a later item arrives from behind.
+## That later item may be a different material. On that tick the waiter moves
+## one cell forward and the arrival becomes the new waiter. A blocked forward
+## cell refuses the arrival and leaves the waiter in place. A lone item never
+## leaves, including on the next tick and the tick after that. The pass does
+## not spill, rotate, alternate, or send left, right, or back.
+func _accept_pass(pos: Vector2i, machine: Machine, mat: int, arrival: int) -> bool:
+	if arrival != machine.dir:
+		return false
+	if machine.hold < 0:
+		machine.hold = mat
+		machine.moved = true
+		return true
+	if machine.moved or machine.pairing:
 		return false
 	machine.pairing = true
 	var sent: bool = _accept(pos + Rules.vec(machine.dir), machine.hold, machine.dir)
