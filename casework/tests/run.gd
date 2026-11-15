@@ -32,6 +32,7 @@ const Bridle = preload("res://scripts/bridle.gd")
 const Dado = preload("res://scripts/dado.gd")
 const Spline = preload("res://scripts/spline.gd")
 const Mitre = preload("res://scripts/mitre.gd")
+const Lap = preload("res://scripts/lap.gd")
 const Catalog = preload("res://scripts/catalog.gd")
 const Solver = preload("res://scripts/solver.gd")
 const Verdict = preload("res://scripts/verdict.gd")
@@ -99,6 +100,8 @@ const SPLINE_TIMELINE := "Senn (vise hand) cut the spline in the plough at 98, s
 const SPLINE_TRUE := {"who": "Senn", "place": "plough", "hour": "98"}
 const MITRE_TIMELINE := "Orrin (saddle hand) cut the mitre in the plough at 103, seen from the float, so the arris would take the mitre.\nVenn (kerf hand) marked the arris on the gimlet at 102.\nHaim (bit clerk) turned the stop in the float.\nThe offcut was hung on the gimlet.\nThe float was dressed at 101.\nThe gimlet was brushed at 104.\nThe plough was hung at 105."
 const MITRE_TRUE := {"who": "Orrin", "place": "plough", "hour": "103"}
+const LAP_TIMELINE := "Nye (cradle hand) cut the lap in the plough at 108, seen from the float, so the grain would take the lap.\nYew (grain hand) marked the grain on the gimlet at 107.\nPry (brad clerk) turned the brad in the float.\nThe paring was hung on the gimlet.\nThe float was skimmed at 106.\nThe gimlet was oiled at 109.\nThe plough was hung at 110."
+const LAP_TRUE := {"who": "Nye", "place": "plough", "hour": "108"}
 
 var _failures: Array[String] = []
 var _checks := 0
@@ -298,6 +301,12 @@ func _initialize() -> void:
 	_test_mitre_only_true_theory()
 	_test_mitre_near_misses()
 	_test_mitre_incomplete()
+	_test_lap_file_shape()
+	_test_lap_unique_model()
+	_test_lap_each_exhibit_necessary()
+	_test_lap_only_true_theory()
+	_test_lap_near_misses()
+	_test_lap_incomplete()
 	_test_solutions_differ()
 	_test_menu_opens_either_case()
 	print("menu interaction done")
@@ -9302,6 +9311,399 @@ func _test_mitre_incomplete() -> void:
 
 
 
+func _test_lap_file_shape() -> void:
+	_expect(Lap.EXHIBITS.size() == 9, "lap exhibit count is %d" % Lap.EXHIBITS.size())
+	_expect(Lap.PEOPLE.size() == 3, "lap cast should be three people")
+	_expect(Lap.PLACES.size() == 3, "lap room count is %d" % Lap.PLACES.size())
+	_expect(Lap.HOURS.size() == 5, "lap hour list length is %d" % Lap.HOURS.size())
+	_expect(Lap.PEOPLE == ["Nye", "Yew", "Pry"], "lap cast is %s" % str(Lap.PEOPLE))
+	_expect(Lap.PLACES == ["plough", "float", "gimlet"], "lap rooms are %s" % str(Lap.PLACES))
+	_expect(Lap.HOURS == ["106", "107", "108", "109", "110"], "lap hours are %s" % str(Lap.HOURS))
+	_expect(Lap.AIMS == ["take_grain", "spare_grain", "set_grain"], "lap aims are %s" % str(Lap.AIMS))
+	_expect(Lap.aim_phrase("take_grain") == "so the grain would take the lap", "lap aim phrase")
+	_expect(Lap.aim_phrase("spare_grain") == "to spare the grain still waiting on the lap", "lap spare aim")
+	_expect(Lap.aim_phrase("set_grain") == "to set the grain before the plough was hung", "lap set aim")
+	_expect(Lap.TITLE == "The lap", "lap title")
+	_expect(Lap.BLURB == "The lap left its peg at the joiner's cradle. Name who cut the lap, the room they cut it in, and the hour.", "lap blurb")
+	_expect(Lap.FILE_CODE == "CW-33", "lap file code")
+	_expect(Lap.fields() == ["taker", "place", "hour", "grainer", "grain_room", "grain_hour", "seen_from", "brad", "aim", "brad_room", "paring_room", "skim_hour", "oil_hour", "hang_hour"], "lap fields are %s" % str(Lap.fields()))
+	_expect(Lap.PLAYER_FIELDS == ["taker", "place", "hour"], "lap player fields")
+	_expect(Lap.HOURS[Lap.HOURS.size() / 2] == LAP_TRUE["hour"], "lap cutting should be the middle hour")
+	_expect(Lap.HOURS[0] != LAP_TRUE["hour"], "lap cutting should not be the earliest hour")
+	_expect(Lap.HOURS[Lap.HOURS.size() - 1] != LAP_TRUE["hour"], "lap cutting should not be the latest hour")
+	var counts := _player_pin_counts(Lap)
+	_expect(int(counts["taker"]) == 3 and int(counts["place"]) == 3 and int(counts["hour"]) == 3, "lap pin counts are %s" % str(counts))
+	var loose_pin: Array = [
+		[CaseData, "spare key"],
+		[Rehearsal, "rehearsal score"],
+		[Gilt, "gilt stamp"],
+		[Ferry, "ferry bell"],
+		[Weather, "weather slate"],
+		[Loom, "loom shuttle"],
+		[Hive, "hive smoker"],
+		[Glass, "glass pontil"],
+		[Press, "press proof"],
+		[Assay, "assay cup"],
+	]
+	var rhythm: Array = [
+		[Kiln, "kiln chalk"],
+		[Tide, "tide ledger"],
+		[Night, "night bell"],
+		[Salt, "salt mark"],
+		[Wick, "wick trim"],
+		[Anneal, "glass anneal"],
+		[Graft, "orchard graft"],
+		[Dye, "dye vat"],
+		[Tar, "tar kettle"],
+		[Cork, "cork press"],
+		[Net, "net loft"],
+		[Cask, "cask hoop"],
+		[Linen, "linen fold"],
+		[Dovetail, "dovetail"],
+		[Mortise, "mortise"],
+		[Rebate, "rebate"],
+		[Housing, "housing"],
+		[Tenon, "tenon"],
+		[Bridle, "bridle"],
+		[Dado, "dado"],
+		[Spline, "spline"],
+		[Mitre, "mitre"],
+	]
+	for row in loose_pin:
+		_expect(counts != _player_pin_counts(row[0]), "lap copied the %s pin pattern" % row[1])
+	for row in rhythm:
+		_expect(counts == _player_pin_counts(row[0]), "lap should keep the %s pin rhythm" % row[1])
+	var earlier: Array = []
+	earlier.append_array(loose_pin)
+	earlier.append_array(rhythm)
+	for row in earlier:
+		var book = row[0]
+		var name := str(row[1])
+		_expect(Lap.TITLE != book.TITLE, "lap shares a title with the %s" % name)
+		_expect(Lap.FILE_CODE != book.FILE_CODE, "lap shares a file code with the %s" % name)
+		_expect(_field_key(Lap) != _field_key(book), "lap copied the %s timeline fields" % name)
+	var seen := {}
+	var stated := {}
+	var paired_hidden := 0
+	var earlier_texts := {}
+	var earlier_sentences := {}
+	for row in earlier:
+		for old_exhibit in row[0].EXHIBITS:
+			var old_text := str(old_exhibit["text"])
+			earlier_texts[old_text] = true
+			for old_sentence in old_text.split(". "):
+				earlier_sentences[old_sentence.trim_suffix(".").strip_edges()] = true
+	var exhibit_titles: Array[String] = []
+	var exhibit_sources: Array[String] = []
+	for exhibit in Lap.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		exhibit_titles.append(str(exhibit["title"]))
+		exhibit_sources.append(str(exhibit["source"]))
+		_expect(not seen.has(exhibit_id), "duplicate lap id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		_expect(not earlier_texts.has(str(exhibit["text"])), "lap copied an earlier exhibit")
+		for sentence in str(exhibit["text"]).split(". "):
+			var cleaned := sentence.trim_suffix(".").strip_edges()
+			_expect(not earlier_sentences.has(cleaned), "lap copied an earlier sentence: %s" % cleaned)
+		for banned in ["tenon", "gouge", "rasp", "bevel", "haunch", "dowel", "hone", "guide", "harl", "neve", "luth", "nick", "housing", "saw", "square", "bead", "trench", "fillet", "stock", "chalk", "ewan", "maren", "hollin", "mortise", "chisel", "awl", "brace", "wedge", "bored", "ragged", "racked", "dovetail", "vise", "stile", "apron", "clamp", "peg", "joint", "linen", "fold", "shears", "roller", "hem", "sheet", "crease", "press", "loft", "bench", "bottle", "cork", "shop", "drawer", "seal", "screw", "cellar", "wax", "neck", "plug", "dye", "vat", "indigo", "skein", "rope", "walk", "kettle", "winch", "pitch", "mesh", "rail", "crank", "needle", "twine", "cooperage", "cask", "hoop", "croze", "stave", "rebate", "plane", "gauge", "mallet", "shoulder", "scribe", "shim", "fence", "tansy", "solt", "quern", "bridle", "router", "scraper", "adze", "templet", "strop", "notch", "wend", "sile", "jute", "dado", "groove", "cleat", "spur", "kern", "phel", "tarn", "shavings", "mouth", "iron", "senn", "voss", "cade", "slot", "feather", "whet", "cheek", "spline", "orrin", "venn", "haim", "mitre", "arris", "offcut", "saddle", "kerf", "dressed", "brushed"]:
+			_expect(str(exhibit["text"]).find(banned) == -1, "%s copies %s" % [exhibit_id, banned])
+		var states_player_pin := false
+		var states_unique := false
+		var player_literals := 0
+		var hidden_literals := 0
+		for literal in exhibit["literals"]:
+			stated[str(literal["value"])] = true
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Lap.PLAYER_FIELDS:
+				states_player_pin = true
+				player_literals += 1
+				var expected := Lap.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Lap.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats >= 2, "%s states %s once" % [exhibit_id, field])
+			else:
+				hidden_literals += 1
+				var owners := 0
+				for other in Lap.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		if hidden_literals == 2:
+			paired_hidden += 1
+		else:
+			_expect(hidden_literals == 1, "%s states %d hidden facts" % [exhibit_id, hidden_literals])
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(player_literals == 1, "%s states %d player pins" % [exhibit_id, player_literals])
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+	_expect(paired_hidden == 2, "lap should have two slips with two hidden facts, found %d" % paired_hidden)
+	_expect(exhibit_titles == ["Grain chit", "Crest sight", "Paring hook", "Grain slate", "Brad card", "Skim slip", "Grain leaf", "Grain note", "Oil order"], "lap exhibit titles are %s" % str(exhibit_titles))
+	_expect(exhibit_sources == ["Yew, grain hand", "Float crest", "Gimlet point", "Plough lip", "Pry, brad clerk", "Float board", "Grain book", "Joiner's cradle", "Gimlet card"], "lap sources are %s" % str(exhibit_sources))
+	for hour in Lap.HOURS:
+		_expect(stated.has(hour), "lap hour %s is absent from the exhibits" % hour)
+
+
+func _test_lap_unique_model() -> void:
+	var models := Solver.enumerate(Lap.EXHIBITS, Lap)
+	print("lap models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one lap model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Nye", "lap taker")
+	_expect(str(model["place"]) == "plough", "lap place")
+	_expect(str(model["hour"]) == "108", "lap hour")
+	_expect(str(model["grainer"]) == "Yew", "lap grainer")
+	_expect(str(model["grain_room"]) == "gimlet", "lap grain room")
+	_expect(str(model["grain_hour"]) == "107", "lap grain hour")
+	_expect(str(model["seen_from"]) == "float", "lap seen from")
+	_expect(str(model["brad"]) == "Pry", "lap brad")
+	_expect(str(model["aim"]) == "take_grain", "lap aim")
+	_expect(str(model["brad_room"]) == "float", "lap brad room")
+	_expect(str(model["paring_room"]) == "gimlet", "lap paring room")
+	_expect(str(model["skim_hour"]) == "106", "lap dress hour")
+	_expect(str(model["oil_hour"]) == "109", "lap brush hour")
+	_expect(str(model["hang_hour"]) == "110", "lap hang hour")
+	for hour in Lap.HOURS:
+		var used := false
+		for field in Lap.fields():
+			if str(model[field]) == hour:
+				used = true
+		_expect(used, "lap hour %s is blank in the true timeline" % hour)
+	for place in Lap.PLACES:
+		var place_used := false
+		for field in Lap.fields():
+			if str(model[field]) == place:
+				place_used = true
+		_expect(place_used, "lap room %s is blank in the true timeline" % place)
+	for person in Lap.PEOPLE:
+		var person_used := false
+		for field in Lap.fields():
+			if str(model[field]) == person:
+				person_used = true
+		_expect(person_used, "lap person %s is blank in the true timeline" % person)
+	_expect(Lap.timeline(model) == LAP_TIMELINE, "lap timeline drifted:\n%s" % Lap.timeline(model))
+	for exhibit in Lap.EXHIBITS:
+		_expect(Lap.holds(exhibit, model), "%s rejects the lap timeline" % exhibit["id"])
+
+
+func _test_lap_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Lap.EXHIBITS, Lap)
+	for exhibit in Lap.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Lap.without(exhibit_id), Lap)
+		print("lap without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "lap %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Lap.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "lap %s removal did not admit a timeline it forbids" % exhibit_id)
+
+
+func _test_lap_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	var float_miss := {"who": "Yew", "place": "float", "hour": "106"}
+	_expect(Lap.conflicting_ids(float_miss).size() == 9, "Yew / float / 106 contradicts %d exhibits" % Lap.conflicting_ids(float_miss).size())
+	for who in Lap.PEOPLE:
+		for place in Lap.PLACES:
+			for hour in Lap.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == LAP_TRUE["who"] and place == LAP_TRUE["place"] and hour == LAP_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Lap)
+					print("lap true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true lap theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "lap acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(LAP_TIMELINE) >= 0, "lap acceptance should give the timeline")
+					_expect(str(result["message"]).find("Nye") >= 0, "lap acceptance omits Nye")
+					_expect(str(result["message"]).find("plough") >= 0, "lap acceptance omits the plough")
+					_expect(str(result["message"]).find("108") >= 0, "lap acceptance omits 108")
+					_expect(str(result["message"]).find("so the grain would take the lap") >= 0, "lap acceptance omits the grain")
+					_expect(str(result["message"]).find("Nye (cradle hand) cut the lap in the plough at 108") >= 0, "lap acceptance omits the cutting")
+					_expect(Lap.conflicting_ids(theory).is_empty(), "true lap theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Lap)
+					_expect(Lap.conflicting_ids(theory).size() >= 2, "%s / %s / %s contradicts fewer than two exhibits" % [who, place, hour])
+					rejected += 1
+	for outsider in ["Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal", "Nell"]:
+		_expect_rejected({"who": outsider, "place": "plough", "hour": "108"}, Lap)
+	print("lap theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d lap theories" % accepted)
+	_expect(rejected >= 2, "rejected %d lap theories" % rejected)
+
+
+func _test_lap_near_misses() -> void:
+	var misses := [
+		{"who": "Nye", "place": "plough", "hour": "109", "titles": ["Grain leaf", "Grain note", "Oil order"]},
+		{"who": "Nye", "place": "plough", "hour": "107", "titles": ["Grain leaf", "Grain note", "Oil order"]},
+		{"who": "Nye", "place": "float", "hour": "108", "titles": ["Grain slate", "Brad card", "Skim slip"]},
+		{"who": "Yew", "place": "plough", "hour": "108", "titles": ["Grain chit", "Crest sight", "Paring hook"]},
+	]
+	var wrong_hour_in_plough := 0
+	var wrong_place_at_hour := 0
+	var wrong_person_in_plough := 0
+	for theory in misses:
+		_expect_rejected(theory, Lap)
+		var result: Dictionary = Verdict.submit(theory, Lap)
+		var message := str(result["message"])
+		_expect(Lap.conflicting_ids(theory).size() >= 2, "near-miss should contradict at least two exhibits: %s" % message)
+		_expect(Lap.conflicting_ids(theory).size() == 3, "near-miss should name three exhibits: %s" % message)
+		var named_at := -1
+		for title in theory["titles"]:
+			var at := message.find(str(title))
+			_expect(at >= 0, "near-miss omits %s: %s" % [title, message])
+			_expect(at > named_at, "near-miss names %s out of paper order: %s" % [title, message])
+			named_at = at
+		if str(theory["who"]) == "Nye" and str(theory["place"]) == "plough" and str(theory["hour"]) != "108":
+			wrong_hour_in_plough += 1
+		if str(theory["who"]) == "Nye" and str(theory["place"]) != "plough" and str(theory["hour"]) == "108":
+			wrong_place_at_hour += 1
+		if str(theory["who"]) != "Nye" and str(theory["place"]) == "plough" and str(theory["hour"]) == "108":
+			wrong_person_in_plough += 1
+	print("lap near-misses rejected: %d" % misses.size())
+	_expect(misses.size() == 4, "need four lap near-misses, found %d" % misses.size())
+	_expect(wrong_hour_in_plough == 2, "two near-misses should keep Nye in the plough at another hour")
+	_expect(wrong_place_at_hour >= 1, "a near-miss should keep Nye at 108 in another room")
+	_expect(wrong_person_in_plough >= 1, "a near-miss should keep the plough at 108 for another person")
+
+
+func _test_lap_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+		"who took the gilt stamp",
+		"where they took the stamp",
+		"at which hour they took the stamp",
+		"who took the ferry bell",
+		"where they took the bell",
+		"at which hour they took the bell",
+		"who took the weather slate",
+		"where they took the slate",
+		"at which hour they took the slate",
+		"who took the loom shuttle",
+		"where they took the shuttle",
+		"at which hour they took the shuttle",
+		"who took the hive smoker",
+		"where they took the smoker",
+		"at which hour they took the smoker",
+		"who took the glass pontil",
+		"where they took the pontil",
+		"at which hour they took the pontil",
+		"who took the press proof",
+		"where they took the proof",
+		"at which hour they took the proof",
+		"who set the assay cup",
+		"where they set the cup",
+		"at which hour they set the cup",
+		"who chalked the kiln mark",
+		"where they chalked the mark",
+		"at which hour they chalked the mark",
+		"who entered the tide ledger",
+		"where they entered the ledger",
+		"at which hour they entered the ledger",
+		"who stopped the night bell",
+		"where they stopped the bell",
+		"at which hour they stopped the bell",
+		"who scored the salt mark",
+		"where they scored the mark",
+		"at which hour they scored the mark",
+		"who trimmed the wick",
+		"where they trimmed the wick",
+		"at which hour they trimmed the wick",
+		"who annealed the gather",
+		"where they annealed the gather",
+		"at which hour they annealed the gather",
+		"who grafted the scion",
+		"where they grafted the scion",
+		"at which hour they grafted the scion",
+		"who dipped the skein",
+		"where they dipped the skein",
+		"at which hour they dipped the skein",
+		"who tarred the rope",
+		"where they tarred the rope",
+		"at which hour they tarred the rope",
+		"who pressed the cork",
+		"where they pressed the cork",
+		"at which hour they pressed the cork",
+		"who mended the net",
+		"where they mended the net",
+		"at which hour they mended the net",
+		"who drove the hoop",
+		"where they drove the hoop",
+		"at which hour they drove the hoop",
+		"who folded the linen",
+		"where they folded the linen",
+		"at which hour they folded the linen",
+		"who cut the dovetail",
+		"where they cut the dovetail",
+		"at which hour they cut the dovetail",
+		"who cut the mortise",
+		"where they cut the mortise",
+		"at which hour they cut the mortise",
+		"who cut the rebate",
+		"where they cut the rebate",
+		"at which hour they cut the rebate",
+		"who cut the housing",
+		"where they cut the housing",
+		"at which hour they cut the housing",
+		"who cut the tenon",
+		"where they cut the tenon",
+		"at which hour they cut the tenon",
+		"who cut the bridle",
+		"where they cut the bridle",
+		"at which hour they cut the bridle",
+		"who cut the dado",
+		"where they cut the dado",
+		"at which hour they cut the dado",
+		"who cut the spline",
+		"where they cut the spline",
+		"at which hour they cut the spline",
+		"who cut the mitre",
+		"where they cut the mitre",
+		"at which hour they cut the mitre",
+	]
+	var cases := [
+		{"theory": {"who": "", "place": "plough", "hour": "108"}, "present": ["who cut the lap"], "absent": ["where they cut the lap", "at which hour they cut the lap"]},
+		{"theory": {"who": "Nye", "place": "", "hour": "108"}, "present": ["where they cut the lap"], "absent": ["who cut the lap", "at which hour they cut the lap"]},
+		{"theory": {"who": "Nye", "place": "plough", "hour": ""}, "present": ["at which hour they cut the lap"], "absent": ["who cut the lap", "where they cut the lap"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who cut the lap", "where they cut the lap", "at which hour they cut the lap"], "absent": []},
+		{"theory": {}, "present": ["who cut the lap", "where they cut the lap", "at which hour they cut the lap"], "absent": []},
+		{"theory": {"who": "Pry", "place": "", "hour": "110"}, "present": ["where they cut the lap"], "absent": ["who cut the lap", "at which hour they cut the lap"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Lap)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "lap incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "lap incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "lap incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "lap incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "lap incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "lap missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "lap named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "lap incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("lap incomplete submissions refused with the missing slot")
+
+
+
 func _test_solutions_differ() -> void:
 	var spare := {"who": "Nell", "place": "kitchen", "hour": "7"}
 	_expect(spare["who"] != REHEARSAL_TRUE["who"], "rehearsal copied the spare-key taker")
@@ -11870,7 +12272,131 @@ func _test_solutions_differ() -> void:
 	_expect(not Mitre.HOURS.has("99"), "mitre hours must not take 99")
 	_expect(not Mitre.HOURS.has("100"), "mitre hours must not take 100")
 
-	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal", "The orchard graft", "The dye vat", "The tar kettle", "The cork press", "The net loft", "The cask hoop", "The linen fold", "The dovetail", "The mortise", "The rebate", "The housing", "The tenon", "The bridle", "The dado", "The spline", "The mitre"], "case list is %s" % str(titles))
+	_expect(LAP_TRUE["who"] == "Nye", "lap taker")
+	_expect(LAP_TRUE["place"] == "plough", "lap room")
+	_expect(LAP_TRUE["hour"] == "108", "lap hour")
+	for forbidden in ["Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(LAP_TRUE["who"] != forbidden, "lap accepted %s" % forbidden)
+	for forbidden_place in ["router", "scraper", "adze", "gouge", "rasp", "bevel", "saw", "square", "bead", "plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(LAP_TRUE["place"] != forbidden_place, "lap accepted the %s" % forbidden_place)
+	_expect(LAP_TRUE["place"] != "float", "lap accepted the float")
+	_expect(LAP_TRUE["place"] != "gimlet", "lap accepted the gimlet")
+	_expect(LAP_TRUE["hour"] != "101", "lap accepted 101")
+	_expect(LAP_TRUE["hour"] != "102", "lap accepted 102")
+	_expect(LAP_TRUE["hour"] != "104", "lap accepted 104")
+	_expect(LAP_TRUE["hour"] != "105", "lap accepted 105")
+	_expect(LAP_TRUE["hour"] != "106", "lap accepted 106")
+	_expect(LAP_TRUE["hour"] != "107", "lap accepted 107")
+	_expect(LAP_TRUE["hour"] != "109", "lap accepted 109")
+	_expect(LAP_TRUE["hour"] != "110", "lap accepted 110")
+	_expect(LAP_TRUE["hour"] != "96", "lap accepted 96")
+	_expect(LAP_TRUE["hour"] != "97", "lap accepted 97")
+	_expect(LAP_TRUE["hour"] != "98", "lap accepted 98")
+	_expect(LAP_TRUE["hour"] != "99", "lap accepted 99")
+	_expect(LAP_TRUE["hour"] != "100", "lap accepted 100")
+	_expect(LAP_TRUE["hour"] != "93", "lap accepted 93")
+	_expect(LAP_TRUE["hour"] != "91", "lap accepted 91")
+	_expect(LAP_TRUE["hour"] != "92", "lap accepted 92")
+	_expect(LAP_TRUE["hour"] != "94", "lap accepted 94")
+	_expect(LAP_TRUE["hour"] != "95", "lap accepted 95")
+	_expect(LAP_TRUE["hour"] != "88", "lap accepted 88")
+	_expect(LAP_TRUE["hour"] != "83", "lap accepted 83")
+	_expect(LAP_TRUE["hour"] != "78", "lap accepted 78")
+	_expect(LAP_TRUE["hour"] != "73", "lap accepted 73")
+	_expect(LAP_TRUE["hour"] != "68", "lap accepted 68")
+	_expect(LAP_TRUE["hour"] != "63", "lap accepted 63")
+	_expect(LAP_TRUE["hour"] != "8", "lap accepted 8")
+	_expect(LAP_TRUE["hour"] != "6", "lap accepted 6")
+	_expect(LAP_TRUE["hour"] != "3", "lap accepted 3")
+	_expect(LAP_TRUE["hour"] != "16", "lap accepted 16")
+	_expect(LAP_TRUE["hour"] != "19", "lap accepted 19")
+	var before_lap: Array = before_mitre.duplicate()
+	before_lap.append([Mitre, MITRE_TRUE, "mitre"])
+	for row in before_lap:
+		var book = row[0]
+		var truth: Dictionary = row[1]
+		var name := str(row[2])
+		_expect(LAP_TRUE["who"] != truth["who"], "lap copied the %s taker" % name)
+		if name == "spline" or name == "dado" or name == "mitre":
+			_expect(LAP_TRUE["place"] == truth["place"], "lap should keep the plough the %s already uses" % name)
+		else:
+			_expect(LAP_TRUE["place"] != truth["place"], "lap copied the %s room" % name)
+		_expect(LAP_TRUE["hour"] != str(truth["hour"]), "lap copied the %s hour" % name)
+		_expect_rejected(LAP_TRUE, book)
+		_expect_rejected(truth, Lap)
+	_expect(MITRE_TRUE["who"] == "Orrin" and MITRE_TRUE["place"] == "plough" and MITRE_TRUE["hour"] == "103", "the mitre should still accept Orrin in the plough at 103")
+	for row in before_lap:
+		var book = row[0]
+		var name := str(row[2])
+		for person in Lap.PEOPLE:
+			_expect(not book.PEOPLE.has(person), "lap cast repeats %s from the %s" % [person, name])
+		for place in Lap.PLACES:
+			if name == "spline" or name == "dado" or name == "mitre":
+				_expect(book.PLACES.has(place), "lap shares the %s with the %s" % [place, name])
+			else:
+				_expect(not book.PLACES.has(place), "lap rooms repeat %s from the %s" % [place, name])
+		for hour in Lap.HOURS:
+			_expect(not book.HOURS.has(hour), "lap hours repeat %s from the %s" % [hour, name])
+	for forbidden_person in ["Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(not Lap.PEOPLE.has(forbidden_person), "lap cast must not take %s" % forbidden_person)
+	_expect(Lap.role_phrase("Nye") == "the cradle hand", "the lap should call Nye the cradle hand")
+	_expect(Lap.role_phrase("Yew") == "the grain hand", "the lap should call Yew the grain hand")
+	_expect(Lap.role_phrase("Pry") == "the brad clerk", "the lap should call Pry the brad clerk")
+	for forbidden_place in ["router", "scraper", "adze", "gouge", "rasp", "bevel", "saw", "square", "bead", "plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(not Lap.PLACES.has(forbidden_place), "lap rooms must not take the %s" % forbidden_place)
+	_expect(not Lap.HOURS.has("6"), "lap hours must not take 6")
+	_expect(not Lap.HOURS.has("7"), "lap hours must not take 7")
+	_expect(not Lap.HOURS.has("8"), "lap hours must not take 8")
+	_expect(not Lap.HOURS.has("9"), "lap hours must not take 9")
+	_expect(not Lap.HOURS.has("10"), "lap hours must not take 10")
+	_expect(not Lap.HOURS.has("60"), "lap hours must not take 60")
+	_expect(not Lap.HOURS.has("61"), "lap hours must not take 61")
+	_expect(not Lap.HOURS.has("62"), "lap hours must not take 62")
+	_expect(not Lap.HOURS.has("63"), "lap hours must not take 63")
+	_expect(not Lap.HOURS.has("64"), "lap hours must not take 64")
+	_expect(not Lap.HOURS.has("65"), "lap hours must not take 65")
+	_expect(not Lap.HOURS.has("66"), "lap hours must not take 66")
+	_expect(not Lap.HOURS.has("67"), "lap hours must not take 67")
+	_expect(not Lap.HOURS.has("68"), "lap hours must not take 68")
+	_expect(not Lap.HOURS.has("69"), "lap hours must not take 69")
+	_expect(not Lap.HOURS.has("70"), "lap hours must not take 70")
+	_expect(not Lap.HOURS.has("71"), "lap hours must not take 71")
+	_expect(not Lap.HOURS.has("72"), "lap hours must not take 72")
+	_expect(not Lap.HOURS.has("73"), "lap hours must not take 73")
+	_expect(not Lap.HOURS.has("74"), "lap hours must not take 74")
+	_expect(not Lap.HOURS.has("75"), "lap hours must not take 75")
+	_expect(not Lap.HOURS.has("76"), "lap hours must not take 76")
+	_expect(not Lap.HOURS.has("77"), "lap hours must not take 77")
+	_expect(not Lap.HOURS.has("78"), "lap hours must not take 78")
+	_expect(not Lap.HOURS.has("79"), "lap hours must not take 79")
+	_expect(not Lap.HOURS.has("80"), "lap hours must not take 80")
+	_expect(not Lap.HOURS.has("81"), "lap hours must not take 81")
+	_expect(not Lap.HOURS.has("82"), "lap hours must not take 82")
+	_expect(not Lap.HOURS.has("83"), "lap hours must not take 83")
+	_expect(not Lap.HOURS.has("84"), "lap hours must not take 84")
+	_expect(not Lap.HOURS.has("85"), "lap hours must not take 85")
+	_expect(not Lap.HOURS.has("86"), "lap hours must not take 86")
+	_expect(not Lap.HOURS.has("87"), "lap hours must not take 87")
+	_expect(not Lap.HOURS.has("88"), "lap hours must not take 88")
+	_expect(not Lap.HOURS.has("89"), "lap hours must not take 89")
+	_expect(not Lap.HOURS.has("90"), "lap hours must not take 90")
+	_expect(not Lap.HOURS.has("91"), "lap hours must not take 91")
+	_expect(not Lap.HOURS.has("92"), "lap hours must not take 92")
+	_expect(not Lap.HOURS.has("93"), "lap hours must not take 93")
+	_expect(not Lap.HOURS.has("94"), "lap hours must not take 94")
+	_expect(not Lap.HOURS.has("95"), "lap hours must not take 95")
+	_expect(not Lap.HOURS.has("96"), "lap hours must not take 96")
+	_expect(not Lap.HOURS.has("97"), "lap hours must not take 97")
+	_expect(not Lap.HOURS.has("98"), "lap hours must not take 98")
+	_expect(not Lap.HOURS.has("99"), "lap hours must not take 99")
+	_expect(not Lap.HOURS.has("100"), "lap hours must not take 100")
+	_expect(not Lap.HOURS.has("101"), "lap hours must not take 101")
+	_expect(not Lap.HOURS.has("102"), "lap hours must not take 102")
+	_expect(not Lap.HOURS.has("103"), "lap hours must not take 103")
+	_expect(not Lap.HOURS.has("104"), "lap hours must not take 104")
+	_expect(not Lap.HOURS.has("105"), "lap hours must not take 105")
+
+	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal", "The orchard graft", "The dye vat", "The tar kettle", "The cork press", "The net loft", "The cask hoop", "The linen fold", "The dovetail", "The mortise", "The rebate", "The housing", "The tenon", "The bridle", "The dado", "The spline", "The mitre", "The lap"], "case list is %s" % str(titles))
 
 
 func _test_menu_opens_either_case() -> void:
@@ -11883,7 +12409,7 @@ func _test_menu_opens_either_case() -> void:
 		root._ready()
 	var menu_blob := _visible_label_blob(root)
 	_expect(get_root().size == Vector2i(1280, 800), "case window is %s" % str(get_root().size))
-	_expect(menu_blob.find("Thirty-two files") >= 0, "menu does not offer thirty-two files: %s" % menu_blob)
+	_expect(menu_blob.find("Thirty-three files") >= 0, "menu does not offer thirty-three files: %s" % menu_blob)
 	_expect(menu_blob.find("CW-07") >= 0, "menu omits CW-07")
 	_expect(menu_blob.find("The hive smoker") >= 0, "menu omits The hive smoker")
 	_expect(menu_blob.find("CW-08") >= 0, "menu omits CW-08")
@@ -11936,6 +12462,8 @@ func _test_menu_opens_either_case() -> void:
 	_expect(menu_blob.find("The spline") >= 0, "menu omits The spline")
 	_expect(menu_blob.find("CW-32") >= 0, "menu omits CW-32")
 	_expect(menu_blob.find("The mitre") >= 0, "menu omits The mitre")
+	_expect(menu_blob.find("CW-33") >= 0, "menu omits CW-33")
+	_expect(menu_blob.find("The lap") >= 0, "menu omits The lap")
 	_expect(root.get_child_count() > 0, "main scene built %d children" % root.get_child_count())
 	_press(root, "How to play")
 	var howto := _visible_label_blob(root)
@@ -11971,6 +12499,7 @@ func _test_menu_opens_either_case() -> void:
 	_expect(howto.find("The dado") >= 0, "how to play omits The dado")
 	_expect(howto.find("The spline") >= 0, "how to play omits The spline")
 	_expect(howto.find("The mitre") >= 0, "how to play omits The mitre")
+	_expect(howto.find("The lap") >= 0, "how to play omits The lap")
 	_expect(howto.find("names that slot") >= 0, "how to play omits the empty-slot rule")
 	_press(root, "Back to the menu")
 	_expect(_find_visible_button(root, "Open The spare key") != null, "menu is missing The spare key")
@@ -12005,6 +12534,7 @@ func _test_menu_opens_either_case() -> void:
 	_expect(_find_visible_button(root, "Open The dado") != null, "menu is missing The dado")
 	_expect(_find_visible_button(root, "Open The spline") != null, "menu is missing The spline")
 	_expect(_find_visible_button(root, "Open The mitre") != null, "menu is missing The mitre")
+	_expect(_find_visible_button(root, "Open The lap") != null, "menu is missing The lap")
 	_press(root, "Open The rehearsal score")
 	var rehearsal_open := _visible_label_blob(root)
 	_expect(rehearsal_open.find("Cut list") >= 0, "rehearsal file did not open")
@@ -14542,6 +15072,191 @@ func _test_menu_opens_either_case() -> void:
 	_expect(spline_again_blob.find("Arris chit") == -1, "mitre papers stayed up after returning to The spline")
 	_expect(spline_again_blob.find("Arris note") == -1, "mitre papers stayed up after returning to The spline")
 	_press(root, "Menu")
+	_press(root, "Open The lap")
+	var lap_open := _visible_label_blob(root)
+	_expect(lap_open.find("Grain chit") >= 0, "lap file did not open")
+	_expect(lap_open.find("Grain note") >= 0, "lap file did not show its exhibits")
+	_expect(lap_open.find("CW-33") >= 0, "lap file omits CW-33")
+	_expect(lap_open.find("Paring hook") >= 0, "lap file omits Paring hook")
+	_expect(lap_open.find("Skim slip") >= 0, "lap file omits Skim slip")
+	_expect(lap_open.find("Grain leaf") >= 0, "lap file omits Grain leaf")
+	_expect(lap_open.find("Oil order") >= 0, "lap file omits Oil order")
+	_expect(lap_open.find("Crest sight") >= 0, "lap file omits Crest sight")
+	_expect(lap_open.find("Brad card") >= 0, "lap file omits Brad card")
+	_expect(lap_open.find("Complaint slip") == -1, "spare key papers showed inside The lap")
+	_expect(lap_open.find("Cut list") == -1, "rehearsal papers showed inside The lap")
+	_expect(lap_open.find("Move order") == -1, "gilt stamp papers showed inside The lap")
+	_expect(lap_open.find("Whistle slip") == -1, "ferry bell papers showed inside The lap")
+	_expect(lap_open.find("Frost note") == -1, "weather slate papers showed inside The lap")
+	_expect(lap_open.find("Trough tag") == -1, "loom shuttle papers showed inside The lap")
+	_expect(lap_open.find("Fuel line") == -1, "hive smoker papers showed inside The lap")
+	_expect(lap_open.find("Weight line") == -1, "glass pontil papers showed inside The lap")
+	_expect(lap_open.find("Lock line") == -1, "press proof papers showed inside The lap")
+	_expect(lap_open.find("Cup line") == -1, "assay cup papers showed inside The lap")
+	_expect(lap_open.find("Mark line") == -1, "kiln chalk papers showed inside The lap")
+	_expect(lap_open.find("Ledger line") == -1, "tide ledger papers showed inside The lap")
+	_expect(lap_open.find("Bell line") == -1, "night bell papers showed inside The lap")
+	_expect(lap_open.find("Salt line") == -1, "salt mark papers showed inside The lap")
+	_expect(lap_open.find("Oil note") == -1, "wick trim papers showed inside The lap")
+	_expect(lap_open.find("Gather note") == -1, "glass anneal papers showed inside The lap")
+	_expect(lap_open.find("Scion note") == -1, "orchard graft papers showed inside The lap")
+	_expect(lap_open.find("Winder chit") == -1, "dye vat papers showed inside The lap")
+	_expect(lap_open.find("Rope chit") == -1, "tar kettle papers showed inside The lap")
+	_expect(lap_open.find("Cutter chit") == -1, "cork press papers showed inside The lap")
+	_expect(lap_open.find("Mesh chit") == -1, "net loft papers showed inside The lap")
+	_expect(lap_open.find("Hoop chit") == -1, "cask hoop papers showed inside The lap")
+	_expect(lap_open.find("Shears chit") == -1, "linen fold papers showed inside The lap")
+	_expect(lap_open.find("Apron sight") == -1, "dovetail papers showed inside The lap")
+	_expect(lap_open.find("Peg hook") == -1, "dovetail papers showed inside The lap")
+	_expect(lap_open.find("Joint slate") == -1, "dovetail papers showed inside The lap")
+	_expect(lap_open.find("Clamp card") == -1, "dovetail papers showed inside The lap")
+	_expect(lap_open.find("Sweep slip") == -1, "dovetail papers showed inside The lap")
+	_expect(lap_open.find("Cut leaf") == -1, "dovetail papers showed inside The lap")
+	_expect(lap_open.find("Joint note") == -1, "dovetail papers showed inside The lap")
+	_expect(lap_open.find("Jaw order") == -1, "dovetail papers showed inside The lap")
+	_expect(lap_open.find("CW-24") == -1, "dovetail file code stayed up inside The lap")
+	_expect(lap_open.find("Chisel chit") == -1, "mortise papers stayed up inside The lap")
+	_expect(lap_open.find("Awl sight") == -1, "mortise papers showed inside The lap")
+	_expect(lap_open.find("Wedge hook") == -1, "mortise papers showed inside The lap")
+	_expect(lap_open.find("Tenon slate") == -1, "mortise papers showed inside The lap")
+	_expect(lap_open.find("Brace card") == -1, "mortise papers showed inside The lap")
+	_expect(lap_open.find("Brush slip") == -1, "mortise papers showed inside The lap")
+	_expect(lap_open.find("Bore leaf") == -1, "mortise papers showed inside The lap")
+	_expect(lap_open.find("Tenon note") == -1, "mortise papers showed inside The lap")
+	_expect(lap_open.find("Rack order") == -1, "mortise papers showed inside The lap")
+	_expect(lap_open.find("CW-25") == -1, "mortise file code stayed up inside The lap")
+	_expect(lap_open.find("Plane chit") == -1, "rebate papers stayed up inside The lap")
+	_expect(lap_open.find("Gauge sight") == -1, "rebate papers showed inside The lap")
+	_expect(lap_open.find("Shim hook") == -1, "rebate papers showed inside The lap")
+	_expect(lap_open.find("Shoulder slate") == -1, "rebate papers showed inside The lap")
+	_expect(lap_open.find("Fence card") == -1, "rebate papers showed inside The lap")
+	_expect(lap_open.find("Oil slip") == -1, "rebate papers showed inside The lap")
+	_expect(lap_open.find("Scribe leaf") == -1, "rebate papers showed inside The lap")
+	_expect(lap_open.find("Shoulder note") == -1, "rebate papers showed inside The lap")
+	_expect(lap_open.find("CW-26") == -1, "rebate file code stayed up inside The lap")
+	_expect(lap_open.find("Saw chit") == -1, "housing papers stayed up inside The lap")
+	_expect(lap_open.find("Square sight") == -1, "housing papers showed inside The lap")
+	_expect(lap_open.find("Fillet hook") == -1, "housing papers showed inside The lap")
+	_expect(lap_open.find("Trench slate") == -1, "housing papers showed inside The lap")
+	_expect(lap_open.find("Stock card") == -1, "housing papers showed inside The lap")
+	_expect(lap_open.find("Chalk slip") == -1, "housing papers showed inside The lap")
+	_expect(lap_open.find("Mark leaf") == -1, "housing papers showed inside The lap")
+	_expect(lap_open.find("Trench note") == -1, "housing papers showed inside The lap")
+	_expect(lap_open.find("CW-27") == -1, "housing file code stayed up inside The lap")
+	_expect(lap_open.find("Gouge chit") == -1, "tenon papers stayed up inside The lap")
+	_expect(lap_open.find("Rasp sight") == -1, "tenon papers showed inside The lap")
+	_expect(lap_open.find("Dowel hook") == -1, "tenon papers showed inside The lap")
+	_expect(lap_open.find("Haunch slate") == -1, "tenon papers showed inside The lap")
+	_expect(lap_open.find("Guide card") == -1, "tenon papers showed inside The lap")
+	_expect(lap_open.find("Hone slip") == -1, "tenon papers showed inside The lap")
+	_expect(lap_open.find("Nick leaf") == -1, "tenon papers showed inside The lap")
+	_expect(lap_open.find("Haunch note") == -1, "tenon papers showed inside The lap")
+	_expect(lap_open.find("CW-28") == -1, "tenon file code stayed up inside The lap")
+	_expect(lap_open.find("Router chit") == -1, "bridle papers stayed up inside The lap")
+	_expect(lap_open.find("Scraper sight") == -1, "bridle papers showed inside The lap")
+	_expect(lap_open.find("Spline hook") == -1, "bridle papers showed inside The lap")
+	_expect(lap_open.find("Tongue slate") == -1, "bridle papers showed inside The lap")
+	_expect(lap_open.find("Templet card") == -1, "bridle papers showed inside The lap")
+	_expect(lap_open.find("Strop slip") == -1, "bridle papers showed inside The lap")
+	_expect(lap_open.find("Notch leaf") == -1, "bridle papers showed inside The lap")
+	_expect(lap_open.find("Tongue note") == -1, "bridle papers showed inside The lap")
+	_expect(lap_open.find("CW-29") == -1, "bridle file code stayed up inside The lap")
+	_expect(lap_open.find("Plough chit") == -1, "dado papers stayed up inside The lap")
+	_expect(lap_open.find("Float sight") == -1, "dado papers showed inside The lap")
+	_expect(lap_open.find("Cleat hook") == -1, "dado papers showed inside The lap")
+	_expect(lap_open.find("Groove slate") == -1, "dado papers showed inside The lap")
+	_expect(lap_open.find("Spur card") == -1, "dado papers showed inside The lap")
+	_expect(lap_open.find("Whet slip") == -1, "dado papers showed inside The lap")
+	_expect(lap_open.find("Score leaf") == -1, "dado papers showed inside The lap")
+	_expect(lap_open.find("Groove note") == -1, "dado papers showed inside The lap")
+	_expect(lap_open.find("CW-30") == -1, "dado file code stayed up inside The lap")
+	_expect(lap_open.find("Slot chit") == -1, "spline papers stayed up inside The lap")
+	_expect(lap_open.find("Rest sight") == -1, "spline papers showed inside The lap")
+	_expect(lap_open.find("Feather hook") == -1, "spline papers showed inside The lap")
+	_expect(lap_open.find("Slot slate") == -1, "spline papers showed inside The lap")
+	_expect(lap_open.find("Key card") == -1, "spline papers showed inside The lap")
+	_expect(lap_open.find("Cheek slip") == -1, "spline papers showed inside The lap")
+	_expect(lap_open.find("Slot leaf") == -1, "spline papers showed inside The lap")
+	_expect(lap_open.find("Slot note") == -1, "spline papers showed inside The lap")
+	_expect(lap_open.find("Dry order") == -1, "spline papers showed inside The lap")
+	_expect(lap_open.find("CW-31") == -1, "spline file code stayed up inside The lap")
+	_expect(lap_open.find("Arris chit") == -1, "mitre papers stayed up inside The lap")
+	_expect(lap_open.find("Horn sight") == -1, "mitre papers showed inside The lap")
+	_expect(lap_open.find("Offcut hook") == -1, "mitre papers showed inside The lap")
+	_expect(lap_open.find("Arris slate") == -1, "mitre papers showed inside The lap")
+	_expect(lap_open.find("Stop card") == -1, "mitre papers showed inside The lap")
+	_expect(lap_open.find("Dress slip") == -1, "mitre papers showed inside The lap")
+	_expect(lap_open.find("Arris leaf") == -1, "mitre papers showed inside The lap")
+	_expect(lap_open.find("Arris note") == -1, "mitre papers showed inside The lap")
+	_expect(lap_open.find("Brush order") == -1, "mitre papers showed inside The lap")
+	_expect(lap_open.find("CW-32") == -1, "mitre file code stayed up inside The lap")
+	_press(root, "Submit theory")
+	var empty_lap := _verdict_text(root)
+	_expect(empty_lap.find("who cut the lap") >= 0, "empty lap board: %s" % empty_lap)
+	_expect(empty_lap.find("where they cut the lap") >= 0, "empty lap board: %s" % empty_lap)
+	_expect(empty_lap.find("at which hour they cut the lap") >= 0, "empty lap board: %s" % empty_lap)
+	_expect(empty_lap.find("who took the spare key") == -1, "empty lap board used the spare key slot: %s" % empty_lap)
+	_expect(empty_lap.find("who cut the mitre") == -1, "empty lap board used a mitre slot: %s" % empty_lap)
+	_expect(empty_lap.to_lower().find("conflict") == -1, "empty lap board talked about a conflict: %s" % empty_lap)
+	_press(root, "Yew")
+	_press(root, "Float")
+	_press(root, "106")
+	_press(root, "Submit theory")
+	var lap_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(lap_miss, Lap, {"who": "Yew", "place": "float", "hour": "106"})
+	_expect(Lap.conflicting_ids({"who": "Yew", "place": "float", "hour": "106"}).size() == 9, "Yew / float / 106 should contradict every exhibit")
+	_expect(lap_miss.find("Grain chit") >= 0, "wrong triple reply omits Grain chit: %s" % lap_miss)
+	_expect(lap_miss.find("Crest sight") >= 0, "wrong triple reply omits Crest sight: %s" % lap_miss)
+	_expect(lap_miss.find("Paring hook") >= 0, "wrong triple reply omits Paring hook: %s" % lap_miss)
+	_expect(lap_miss.find("Grain slate") >= 0, "wrong triple reply omits Grain slate: %s" % lap_miss)
+	_expect(lap_miss.find("Brad card") >= 0, "wrong triple reply omits Brad card: %s" % lap_miss)
+	_expect(lap_miss.find("Skim slip") >= 0, "wrong triple reply omits Skim slip: %s" % lap_miss)
+	_expect(lap_miss.find("Grain leaf") >= 0, "wrong triple reply omits Grain leaf: %s" % lap_miss)
+	_expect(lap_miss.find("Grain note") >= 0, "wrong triple reply omits Grain note: %s" % lap_miss)
+	_expect(lap_miss.find("Oil order") >= 0, "wrong triple reply omits Oil order: %s" % lap_miss)
+	_press(root, "Nye")
+	_press(root, "Plough")
+	_press(root, "108")
+	_press(root, "Submit theory")
+	var lap_accepted := _verdict_text(root)
+	_expect(lap_accepted.find("fits every exhibit") >= 0, "lap board rejected the true theory: %s" % lap_accepted)
+	_expect(lap_accepted.find(LAP_TIMELINE) >= 0, "lap board timeline: %s" % lap_accepted)
+	_expect(lap_accepted.find("Nye (cradle hand) cut the lap in the plough at 108") >= 0, "lap board omits Nye at 108: %s" % lap_accepted)
+	_expect(lap_accepted.find("in the plough") >= 0, "lap board omits the plough: %s" % lap_accepted)
+	_expect(lap_accepted.find("so the grain would take the lap") >= 0, "lap board omits the grain: %s" % lap_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var lap_cleared := _verdict_text(root)
+	_expect(lap_cleared.find("who cut the lap") >= 0, "cleared lap board: %s" % lap_cleared)
+	_expect(lap_cleared.find("fits every exhibit") == -1, "cleared lap board stayed accepted: %s" % lap_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The mitre")
+	var mitre_from_lap := _visible_label_blob(root)
+	_expect(mitre_from_lap.find("Arris chit") >= 0, "could not return to The mitre from The lap")
+	_expect(mitre_from_lap.find("Arris note") >= 0, "mitre exhibits did not return")
+	_expect(mitre_from_lap.find("CW-32") >= 0, "returned mitre omits CW-32")
+	_expect(mitre_from_lap.find("Grain chit") == -1, "lap papers stayed up inside The mitre")
+	_expect(mitre_from_lap.find("Crest sight") == -1, "lap papers showed inside The mitre")
+	_expect(mitre_from_lap.find("Paring hook") == -1, "lap papers showed inside The mitre")
+	_expect(mitre_from_lap.find("Grain slate") == -1, "lap papers showed inside The mitre")
+	_expect(mitre_from_lap.find("Brad card") == -1, "lap papers showed inside The mitre")
+	_expect(mitre_from_lap.find("Skim slip") == -1, "lap papers showed inside The mitre")
+	_expect(mitre_from_lap.find("Grain leaf") == -1, "lap papers showed inside The mitre")
+	_expect(mitre_from_lap.find("Grain note") == -1, "lap papers showed inside The mitre")
+	_expect(mitre_from_lap.find("Oil order") == -1, "lap papers showed inside The mitre")
+	_expect(mitre_from_lap.find("CW-33") == -1, "lap file code stayed up inside The mitre")
+	_press(root, "Orrin")
+	_press(root, "Plough")
+	_press(root, "103")
+	_press(root, "Submit theory")
+	var mitre_again := _verdict_text(root)
+	_expect(mitre_again.find("fits every exhibit") >= 0, "mitre board rejected the true theory after The lap: %s" % mitre_again)
+	_expect(mitre_again.find("Orrin (saddle hand) cut the mitre in the plough at 103") >= 0, "mitre board timeline after The lap: %s" % mitre_again)
+	var mitre_again_blob := _visible_label_blob(root)
+	_expect(mitre_again_blob.find("Arris chit") >= 0, "mitre papers left after returning")
+	_expect(mitre_again_blob.find("Grain chit") == -1, "lap papers stayed up after returning to The mitre")
+	_expect(mitre_again_blob.find("Grain note") == -1, "lap papers stayed up after returning to The mitre")
+	_press(root, "Menu")
 	_menu_root = root
 
 
@@ -14558,8 +15273,9 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 	var dado := _find_visible_button(root, "Open The dado")
 	var spline := _find_visible_button(root, "Open The spline")
 	var mitre := _find_visible_button(root, "Open The mitre")
-	_expect(mortise != null and rebate != null and housing != null and tenon != null and bridle != null and dado != null and spline != null and mitre != null, "file list is missing a joiner button")
-	if mortise == null or rebate == null or housing == null or tenon == null or bridle == null or dado == null or spline == null or mitre == null:
+	var lap := _find_visible_button(root, "Open The lap")
+	_expect(mortise != null and rebate != null and housing != null and tenon != null and bridle != null and dado != null and spline != null and mitre != null and lap != null, "file list is missing a joiner button")
+	if mortise == null or rebate == null or housing == null or tenon == null or bridle == null or dado == null or spline == null or mitre == null or lap == null:
 		return
 	var mortise_rect := _content_rect(mortise)
 	var rebate_rect := _content_rect(rebate)
@@ -14569,7 +15285,8 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 	var dado_rect := _content_rect(dado)
 	var spline_rect := _content_rect(spline)
 	var mitre_rect := _content_rect(mitre)
-	print("file list mortise %s rebate %s housing %s tenon %s bridle %s dado %s spline %s mitre %s" % [mortise_rect, rebate_rect, housing_rect, tenon_rect, bridle_rect, dado_rect, spline_rect, mitre_rect])
+	var lap_rect := _content_rect(lap)
+	print("file list mortise %s rebate %s housing %s tenon %s bridle %s dado %s spline %s mitre %s lap %s" % [mortise_rect, rebate_rect, housing_rect, tenon_rect, bridle_rect, dado_rect, spline_rect, mitre_rect, lap_rect])
 	_expect(rebate_rect.size.y >= 40.0, "Open The rebate has no height")
 	_expect(housing_rect.size.y >= 40.0, "Open The housing has no height")
 	_expect(tenon_rect.size.y >= 40.0, "Open The tenon has no height")
@@ -14577,6 +15294,7 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 	_expect(dado_rect.size.y >= 40.0, "Open The dado has no height")
 	_expect(spline_rect.size.y >= 40.0, "Open The spline has no height")
 	_expect(mitre_rect.size.y >= 40.0, "Open The mitre has no height")
+	_expect(lap_rect.size.y >= 40.0, "Open The lap has no height")
 	_expect(mortise_rect.position.y + mortise_rect.size.y <= rebate_rect.position.y, "Open The mortise is not above Open The rebate")
 	_expect(rebate_rect.position.y + rebate_rect.size.y <= housing_rect.position.y, "Open The rebate is not above Open The housing")
 	_expect(housing_rect.position.y + housing_rect.size.y <= tenon_rect.position.y, "Open The housing is not above Open The tenon")
@@ -14584,12 +15302,14 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 	_expect(bridle_rect.position.y + bridle_rect.size.y <= dado_rect.position.y, "Open The bridle is not above Open The dado")
 	_expect(dado_rect.position.y + dado_rect.size.y <= spline_rect.position.y, "Open The dado is not above Open The spline")
 	_expect(spline_rect.position.y + spline_rect.size.y <= mitre_rect.position.y, "Open The spline is not above Open The mitre")
+	_expect(mitre_rect.position.y + mitre_rect.size.y <= lap_rect.position.y, "Open The mitre is not above Open The lap")
 	_expect(housing_rect.position.y == 4134.0, "housing content top is %s" % housing_rect.position.y)
 	_expect(tenon_rect.position.y == 4281.0, "tenon content top is %s" % tenon_rect.position.y)
 	_expect(bridle_rect.position.y == 4428.0, "bridle content top is %s" % bridle_rect.position.y)
 	_expect(dado_rect.position.y == 4575.0, "dado content top is %s" % dado_rect.position.y)
 	_expect(spline_rect.position.y == 4722.0, "spline content top is %s" % spline_rect.position.y)
 	_expect(mitre_rect.position.y == 4869.0, "mitre content top is %s" % mitre_rect.position.y)
+	_expect(lap_rect.position.y == 5016.0, "lap content top is %s" % lap_rect.position.y)
 	var window_height := 800.0
 	var housing_bottom := housing_rect.position.y + housing_rect.size.y
 	var visible_top := housing_bottom - window_height
@@ -14616,6 +15336,10 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 	var mitre_visible_top := mitre_bottom - window_height
 	_expect(spline_rect.position.y >= mitre_visible_top, "Open The spline is not fully on screen above Open The mitre")
 	_expect(spline_rect.position.y + spline_rect.size.y <= mitre_bottom, "Open The spline extends past the window when Open The mitre sits at the bottom")
+	var lap_bottom := lap_rect.position.y + lap_rect.size.y
+	var lap_visible_top := lap_bottom - window_height
+	_expect(mitre_rect.position.y >= lap_visible_top, "Open The mitre is not fully on screen above Open The lap")
+	_expect(mitre_rect.position.y + mitre_rect.size.y <= lap_bottom, "Open The mitre extends past the window when Open The lap sits at the bottom")
 	var scroll := _find_visible_scroll(root)
 	_expect(scroll != null, "the file list has no scroll")
 	if scroll != null:
@@ -14627,6 +15351,7 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 	_expect(dado_bottom > window_height, "Open The dado already fits without scrolling")
 	_expect(spline_bottom > window_height, "Open The spline already fits without scrolling")
 	_expect(mitre_bottom > window_height, "Open The mitre already fits without scrolling")
+	_expect(lap_bottom > window_height, "Open The lap already fits without scrolling")
 
 
 func _content_rect(control: Control) -> Rect2:
