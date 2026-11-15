@@ -28,6 +28,7 @@ const Mortise = preload("res://scripts/mortise.gd")
 const Rebate = preload("res://scripts/rebate.gd")
 const Housing = preload("res://scripts/housing.gd")
 const Tenon = preload("res://scripts/tenon.gd")
+const Bridle = preload("res://scripts/bridle.gd")
 const Catalog = preload("res://scripts/catalog.gd")
 const Solver = preload("res://scripts/solver.gd")
 const Verdict = preload("res://scripts/verdict.gd")
@@ -87,6 +88,8 @@ const HOUSING_TIMELINE := "Ewan (saw hand) cut the housing in the saw at 78, see
 const HOUSING_TRUE := {"who": "Ewan", "place": "saw", "hour": "78"}
 const TENON_TIMELINE := "Harl (gouge hand) cut the tenon in the gouge at 83, seen from the rasp, so the bevel would take the haunch.\nNeve (rasp hand) marked the haunch on the bevel at 82.\nLuth (bevel clerk) turned the guide in the rasp.\nThe dowel was hung on the bevel.\nThe rasp was honed at 81.\nThe bevel was wiped at 84.\nThe gouge was hung at 85."
 const TENON_TRUE := {"who": "Harl", "place": "gouge", "hour": "83"}
+const BRIDLE_TIMELINE := "Wend (router hand) cut the bridle in the router at 88, seen from the scraper, so the adze would take the tongue.\nSile (scraper hand) marked the tongue on the adze at 87.\nJute (adze clerk) turned the templet in the scraper.\nThe spline was hung on the adze.\nThe scraper was stropped at 86.\nThe adze was wiped at 89.\nThe router was hung at 90."
+const BRIDLE_TRUE := {"who": "Wend", "place": "router", "hour": "88"}
 
 var _failures: Array[String] = []
 var _checks := 0
@@ -262,6 +265,12 @@ func _initialize() -> void:
 	_test_tenon_only_true_theory()
 	_test_tenon_near_misses()
 	_test_tenon_incomplete()
+	_test_bridle_file_shape()
+	_test_bridle_unique_model()
+	_test_bridle_each_exhibit_necessary()
+	_test_bridle_only_true_theory()
+	_test_bridle_near_misses()
+	_test_bridle_incomplete()
 	_test_solutions_differ()
 	_test_menu_opens_either_case()
 	print("menu interaction done")
@@ -7738,6 +7747,381 @@ func _test_tenon_incomplete() -> void:
 	print("tenon incomplete submissions refused with the missing slot")
 
 
+func _test_bridle_file_shape() -> void:
+	_expect(Bridle.EXHIBITS.size() == 9, "bridle exhibit count is %d" % Bridle.EXHIBITS.size())
+	_expect(Bridle.PEOPLE.size() == 3, "bridle cast should be three people")
+	_expect(Bridle.PLACES.size() == 3, "bridle room count is %d" % Bridle.PLACES.size())
+	_expect(Bridle.HOURS.size() == 5, "bridle hour list length is %d" % Bridle.HOURS.size())
+	_expect(Bridle.PEOPLE == ["Wend", "Sile", "Jute"], "bridle cast is %s" % str(Bridle.PEOPLE))
+	_expect(Bridle.PLACES == ["router", "scraper", "adze"], "bridle rooms are %s" % str(Bridle.PLACES))
+	_expect(Bridle.HOURS == ["86", "87", "88", "89", "90"], "bridle hours are %s" % str(Bridle.HOURS))
+	_expect(Bridle.AIMS == ["take_tongue", "spare_tongue", "set_tongue"], "bridle aims are %s" % str(Bridle.AIMS))
+	_expect(Bridle.aim_phrase("take_tongue") == "so the adze would take the tongue", "bridle aim phrase")
+	_expect(Bridle.aim_phrase("spare_tongue") == "to spare the tongue still waiting on the adze", "bridle spare aim")
+	_expect(Bridle.aim_phrase("set_tongue") == "to set the tongue before the router was hung", "bridle set aim")
+	_expect(Bridle.TITLE == "The bridle", "bridle title")
+	_expect(Bridle.BLURB == "The bridle left its peg at the joiner's stool. Name who cut the bridle, the room they cut it in, and the hour.", "bridle blurb")
+	_expect(Bridle.FILE_CODE == "CW-29", "bridle file code")
+	_expect(Bridle.fields() == ["taker", "place", "hour", "notcher", "notch_room", "notch_hour", "seen_from", "templet", "aim", "templet_room", "spline_room", "strop_hour", "wipe_hour", "hang_hour"], "bridle fields are %s" % str(Bridle.fields()))
+	_expect(Bridle.PLAYER_FIELDS == ["taker", "place", "hour"], "bridle player fields")
+	_expect(Bridle.HOURS[Bridle.HOURS.size() / 2] == BRIDLE_TRUE["hour"], "bridle cutting should be the middle hour")
+	_expect(Bridle.HOURS[0] != BRIDLE_TRUE["hour"], "bridle cutting should not be the earliest hour")
+	_expect(Bridle.HOURS[Bridle.HOURS.size() - 1] != BRIDLE_TRUE["hour"], "bridle cutting should not be the latest hour")
+	var counts := _player_pin_counts(Bridle)
+	_expect(int(counts["taker"]) == 3 and int(counts["place"]) == 3 and int(counts["hour"]) == 3, "bridle pin counts are %s" % str(counts))
+	var loose_pin: Array = [
+		[CaseData, "spare key"],
+		[Rehearsal, "rehearsal score"],
+		[Gilt, "gilt stamp"],
+		[Ferry, "ferry bell"],
+		[Weather, "weather slate"],
+		[Loom, "loom shuttle"],
+		[Hive, "hive smoker"],
+		[Glass, "glass pontil"],
+		[Press, "press proof"],
+		[Assay, "assay cup"],
+	]
+	var rhythm: Array = [
+		[Kiln, "kiln chalk"],
+		[Tide, "tide ledger"],
+		[Night, "night bell"],
+		[Salt, "salt mark"],
+		[Wick, "wick trim"],
+		[Anneal, "glass anneal"],
+		[Graft, "orchard graft"],
+		[Dye, "dye vat"],
+		[Tar, "tar kettle"],
+		[Cork, "cork press"],
+		[Net, "net loft"],
+		[Cask, "cask hoop"],
+		[Linen, "linen fold"],
+		[Dovetail, "dovetail"],
+		[Mortise, "mortise"],
+		[Rebate, "rebate"],
+		[Housing, "housing"],
+		[Tenon, "tenon"],
+	]
+	for row in loose_pin:
+		_expect(counts != _player_pin_counts(row[0]), "bridle copied the %s pin pattern" % row[1])
+	for row in rhythm:
+		_expect(counts == _player_pin_counts(row[0]), "bridle should keep the %s pin rhythm" % row[1])
+	var earlier: Array = []
+	earlier.append_array(loose_pin)
+	earlier.append_array(rhythm)
+	for row in earlier:
+		var book = row[0]
+		var name := str(row[1])
+		_expect(Bridle.TITLE != book.TITLE, "bridle shares a title with the %s" % name)
+		_expect(Bridle.FILE_CODE != book.FILE_CODE, "bridle shares a file code with the %s" % name)
+		_expect(_field_key(Bridle) != _field_key(book), "bridle copied the %s timeline fields" % name)
+	var seen := {}
+	var stated := {}
+	var paired_hidden := 0
+	var earlier_texts := {}
+	var earlier_sentences := {}
+	for row in earlier:
+		for old_exhibit in row[0].EXHIBITS:
+			var old_text := str(old_exhibit["text"])
+			earlier_texts[old_text] = true
+			for old_sentence in old_text.split(". "):
+				earlier_sentences[old_sentence.trim_suffix(".").strip_edges()] = true
+	var exhibit_titles: Array[String] = []
+	var exhibit_sources: Array[String] = []
+	for exhibit in Bridle.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		exhibit_titles.append(str(exhibit["title"]))
+		exhibit_sources.append(str(exhibit["source"]))
+		_expect(not seen.has(exhibit_id), "duplicate bridle id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		_expect(not earlier_texts.has(str(exhibit["text"])), "bridle copied an earlier exhibit")
+		for sentence in str(exhibit["text"]).split(". "):
+			var cleaned := sentence.trim_suffix(".").strip_edges()
+			_expect(not earlier_sentences.has(cleaned), "bridle copied an earlier sentence: %s" % cleaned)
+		for banned in ["tenon", "gouge", "rasp", "bevel", "haunch", "dowel", "hone", "guide", "harl", "neve", "luth", "nick", "housing", "saw", "square", "bead", "trench", "fillet", "stock", "chalk", "ewan", "maren", "hollin", "mortise", "chisel", "awl", "brace", "wedge", "bored", "ragged", "racked", "dovetail", "vise", "stile", "apron", "clamp", "peg", "joint", "linen", "fold", "shears", "roller", "hem", "sheet", "crease", "press", "loft", "bench", "bottle", "cork", "shop", "drawer", "seal", "screw", "cellar", "wax", "neck", "plug", "dye", "vat", "indigo", "skein", "rope", "walk", "kettle", "winch", "pitch", "mesh", "rail", "crank", "needle", "twine", "cooperage", "cask", "hoop", "croze", "stave", "rebate", "plane", "gauge", "mallet", "shoulder", "scribe", "shim", "fence", "tansy", "solt", "quern"]:
+			_expect(str(exhibit["text"]).find(banned) == -1, "%s copies %s" % [exhibit_id, banned])
+		var states_player_pin := false
+		var states_unique := false
+		var player_literals := 0
+		var hidden_literals := 0
+		for literal in exhibit["literals"]:
+			stated[str(literal["value"])] = true
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Bridle.PLAYER_FIELDS:
+				states_player_pin = true
+				player_literals += 1
+				var expected := Bridle.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Bridle.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats >= 2, "%s states %s once" % [exhibit_id, field])
+			else:
+				hidden_literals += 1
+				var owners := 0
+				for other in Bridle.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		if hidden_literals == 2:
+			paired_hidden += 1
+		else:
+			_expect(hidden_literals == 1, "%s states %d hidden facts" % [exhibit_id, hidden_literals])
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(player_literals == 1, "%s states %d player pins" % [exhibit_id, player_literals])
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+	_expect(paired_hidden == 2, "bridle should have two slips with two hidden facts, found %d" % paired_hidden)
+	_expect(exhibit_titles == ["Router chit", "Scraper sight", "Spline hook", "Tongue slate", "Templet card", "Strop slip", "Notch leaf", "Tongue note", "Hang order"], "bridle exhibit titles are %s" % str(exhibit_titles))
+	_expect(exhibit_sources == ["Sile, scraper hand", "Scraper rail", "Adze peg", "Router jaw", "Jute, adze clerk", "Scraper book", "Notch book", "Joiner's stool", "Adze slate"], "bridle sources are %s" % str(exhibit_sources))
+	for hour in Bridle.HOURS:
+		_expect(stated.has(hour), "bridle hour %s is absent from the exhibits" % hour)
+
+
+func _test_bridle_unique_model() -> void:
+	var models := Solver.enumerate(Bridle.EXHIBITS, Bridle)
+	print("bridle models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one bridle model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Wend", "bridle taker")
+	_expect(str(model["place"]) == "router", "bridle place")
+	_expect(str(model["hour"]) == "88", "bridle hour")
+	_expect(str(model["notcher"]) == "Sile", "bridle notcher")
+	_expect(str(model["notch_room"]) == "adze", "bridle notch room")
+	_expect(str(model["notch_hour"]) == "87", "bridle notch hour")
+	_expect(str(model["seen_from"]) == "scraper", "bridle seen from")
+	_expect(str(model["templet"]) == "Jute", "bridle templet")
+	_expect(str(model["aim"]) == "take_tongue", "bridle aim")
+	_expect(str(model["templet_room"]) == "scraper", "bridle templet room")
+	_expect(str(model["spline_room"]) == "adze", "bridle spline room")
+	_expect(str(model["strop_hour"]) == "86", "bridle strop hour")
+	_expect(str(model["wipe_hour"]) == "89", "bridle wipe hour")
+	_expect(str(model["hang_hour"]) == "90", "bridle hang hour")
+	for hour in Bridle.HOURS:
+		var used := false
+		for field in Bridle.fields():
+			if str(model[field]) == hour:
+				used = true
+		_expect(used, "bridle hour %s is blank in the true timeline" % hour)
+	for place in Bridle.PLACES:
+		var place_used := false
+		for field in Bridle.fields():
+			if str(model[field]) == place:
+				place_used = true
+		_expect(place_used, "bridle room %s is blank in the true timeline" % place)
+	for person in Bridle.PEOPLE:
+		var person_used := false
+		for field in Bridle.fields():
+			if str(model[field]) == person:
+				person_used = true
+		_expect(person_used, "bridle person %s is blank in the true timeline" % person)
+	_expect(Bridle.timeline(model) == BRIDLE_TIMELINE, "bridle timeline drifted:\n%s" % Bridle.timeline(model))
+	for exhibit in Bridle.EXHIBITS:
+		_expect(Bridle.holds(exhibit, model), "%s rejects the bridle timeline" % exhibit["id"])
+
+
+func _test_bridle_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Bridle.EXHIBITS, Bridle)
+	for exhibit in Bridle.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Bridle.without(exhibit_id), Bridle)
+		print("bridle without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "bridle %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Bridle.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "bridle %s removal did not admit a timeline it forbids" % exhibit_id)
+
+
+func _test_bridle_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	var scraper_miss := {"who": "Sile", "place": "scraper", "hour": "86"}
+	_expect(Bridle.conflicting_ids(scraper_miss).size() == 9, "Sile / scraper / 86 contradicts %d exhibits" % Bridle.conflicting_ids(scraper_miss).size())
+	for who in Bridle.PEOPLE:
+		for place in Bridle.PLACES:
+			for hour in Bridle.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == BRIDLE_TRUE["who"] and place == BRIDLE_TRUE["place"] and hour == BRIDLE_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Bridle)
+					print("bridle true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true bridle theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "bridle acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(BRIDLE_TIMELINE) >= 0, "bridle acceptance should give the timeline")
+					_expect(str(result["message"]).find("Wend") >= 0, "bridle acceptance omits Wend")
+					_expect(str(result["message"]).find("router") >= 0, "bridle acceptance omits the router")
+					_expect(str(result["message"]).find("88") >= 0, "bridle acceptance omits 88")
+					_expect(str(result["message"]).find("so the adze would take the tongue") >= 0, "bridle acceptance omits the tongue")
+					_expect(str(result["message"]).find("Wend (router hand) cut the bridle in the router at 88") >= 0, "bridle acceptance omits the cutting")
+					_expect(Bridle.conflicting_ids(theory).is_empty(), "true bridle theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Bridle)
+					_expect(Bridle.conflicting_ids(theory).size() >= 2, "%s / %s / %s contradicts fewer than two exhibits" % [who, place, hour])
+					rejected += 1
+	for outsider in ["Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal", "Nell"]:
+		_expect_rejected({"who": outsider, "place": "router", "hour": "88"}, Bridle)
+	print("bridle theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d bridle theories" % accepted)
+	_expect(rejected >= 2, "rejected %d bridle theories" % rejected)
+
+
+func _test_bridle_near_misses() -> void:
+	var misses := [
+		{"who": "Wend", "place": "router", "hour": "89", "titles": ["Notch leaf", "Tongue note", "Hang order"]},
+		{"who": "Wend", "place": "router", "hour": "87", "titles": ["Notch leaf", "Tongue note", "Hang order"]},
+		{"who": "Wend", "place": "scraper", "hour": "88", "titles": ["Tongue slate", "Templet card", "Strop slip"]},
+		{"who": "Sile", "place": "router", "hour": "88", "titles": ["Router chit", "Scraper sight", "Spline hook"]},
+	]
+	var wrong_hour_in_router := 0
+	var wrong_place_at_hour := 0
+	var wrong_person_in_router := 0
+	for theory in misses:
+		_expect_rejected(theory, Bridle)
+		var result: Dictionary = Verdict.submit(theory, Bridle)
+		var message := str(result["message"])
+		_expect(Bridle.conflicting_ids(theory).size() >= 2, "near-miss should contradict at least two exhibits: %s" % message)
+		_expect(Bridle.conflicting_ids(theory).size() == 3, "near-miss should name three exhibits: %s" % message)
+		var named_at := -1
+		for title in theory["titles"]:
+			var at := message.find(str(title))
+			_expect(at >= 0, "near-miss omits %s: %s" % [title, message])
+			_expect(at > named_at, "near-miss names %s out of paper order: %s" % [title, message])
+			named_at = at
+		if str(theory["who"]) == "Wend" and str(theory["place"]) == "router" and str(theory["hour"]) != "88":
+			wrong_hour_in_router += 1
+		if str(theory["who"]) == "Wend" and str(theory["place"]) != "router" and str(theory["hour"]) == "88":
+			wrong_place_at_hour += 1
+		if str(theory["who"]) != "Wend" and str(theory["place"]) == "router" and str(theory["hour"]) == "88":
+			wrong_person_in_router += 1
+	print("bridle near-misses rejected: %d" % misses.size())
+	_expect(misses.size() == 4, "need four bridle near-misses, found %d" % misses.size())
+	_expect(wrong_hour_in_router == 2, "two near-misses should keep Wend in the router at another hour")
+	_expect(wrong_place_at_hour >= 1, "a near-miss should keep Wend at 88 in another room")
+	_expect(wrong_person_in_router >= 1, "a near-miss should keep the router at 88 for another person")
+
+
+func _test_bridle_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+		"who took the gilt stamp",
+		"where they took the stamp",
+		"at which hour they took the stamp",
+		"who took the ferry bell",
+		"where they took the bell",
+		"at which hour they took the bell",
+		"who took the weather slate",
+		"where they took the slate",
+		"at which hour they took the slate",
+		"who took the loom shuttle",
+		"where they took the shuttle",
+		"at which hour they took the shuttle",
+		"who took the hive smoker",
+		"where they took the smoker",
+		"at which hour they took the smoker",
+		"who took the glass pontil",
+		"where they took the pontil",
+		"at which hour they took the pontil",
+		"who took the press proof",
+		"where they took the proof",
+		"at which hour they took the proof",
+		"who set the assay cup",
+		"where they set the cup",
+		"at which hour they set the cup",
+		"who chalked the kiln mark",
+		"where they chalked the mark",
+		"at which hour they chalked the mark",
+		"who entered the tide ledger",
+		"where they entered the ledger",
+		"at which hour they entered the ledger",
+		"who stopped the night bell",
+		"where they stopped the bell",
+		"at which hour they stopped the bell",
+		"who scored the salt mark",
+		"where they scored the mark",
+		"at which hour they scored the mark",
+		"who trimmed the wick",
+		"where they trimmed the wick",
+		"at which hour they trimmed the wick",
+		"who annealed the gather",
+		"where they annealed the gather",
+		"at which hour they annealed the gather",
+		"who grafted the scion",
+		"where they grafted the scion",
+		"at which hour they grafted the scion",
+		"who dipped the skein",
+		"where they dipped the skein",
+		"at which hour they dipped the skein",
+		"who tarred the rope",
+		"where they tarred the rope",
+		"at which hour they tarred the rope",
+		"who pressed the cork",
+		"where they pressed the cork",
+		"at which hour they pressed the cork",
+		"who mended the net",
+		"where they mended the net",
+		"at which hour they mended the net",
+		"who drove the hoop",
+		"where they drove the hoop",
+		"at which hour they drove the hoop",
+		"who folded the linen",
+		"where they folded the linen",
+		"at which hour they folded the linen",
+		"who cut the dovetail",
+		"where they cut the dovetail",
+		"at which hour they cut the dovetail",
+		"who cut the mortise",
+		"where they cut the mortise",
+		"at which hour they cut the mortise",
+		"who cut the rebate",
+		"where they cut the rebate",
+		"at which hour they cut the rebate",
+		"who cut the housing",
+		"where they cut the housing",
+		"at which hour they cut the housing",
+		"who cut the tenon",
+		"where they cut the tenon",
+		"at which hour they cut the tenon",
+	]
+	var cases := [
+		{"theory": {"who": "", "place": "router", "hour": "88"}, "present": ["who cut the bridle"], "absent": ["where they cut the bridle", "at which hour they cut the bridle"]},
+		{"theory": {"who": "Wend", "place": "", "hour": "88"}, "present": ["where they cut the bridle"], "absent": ["who cut the bridle", "at which hour they cut the bridle"]},
+		{"theory": {"who": "Wend", "place": "router", "hour": ""}, "present": ["at which hour they cut the bridle"], "absent": ["who cut the bridle", "where they cut the bridle"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who cut the bridle", "where they cut the bridle", "at which hour they cut the bridle"], "absent": []},
+		{"theory": {}, "present": ["who cut the bridle", "where they cut the bridle", "at which hour they cut the bridle"], "absent": []},
+		{"theory": {"who": "Jute", "place": "", "hour": "90"}, "present": ["where they cut the bridle"], "absent": ["who cut the bridle", "at which hour they cut the bridle"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Bridle)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "bridle incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "bridle incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "bridle incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "bridle incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "bridle incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "bridle missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "bridle named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "bridle incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("bridle incomplete submissions refused with the missing slot")
+
 func _test_solutions_differ() -> void:
 	var spare := {"who": "Nell", "place": "kitchen", "hour": "7"}
 	_expect(spare["who"] != REHEARSAL_TRUE["who"], "rehearsal copied the spare-key taker")
@@ -9918,7 +10302,88 @@ func _test_solutions_differ() -> void:
 	_expect(not Tenon.HOURS.has("79"), "tenon hours must not take 79")
 	_expect(not Tenon.HOURS.has("80"), "tenon hours must not take 80")
 
-	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal", "The orchard graft", "The dye vat", "The tar kettle", "The cork press", "The net loft", "The cask hoop", "The linen fold", "The dovetail", "The mortise", "The rebate", "The housing", "The tenon"], "case list is %s" % str(titles))
+	_expect(BRIDLE_TRUE["who"] == "Wend", "bridle taker")
+	_expect(BRIDLE_TRUE["place"] == "router", "bridle room")
+	_expect(BRIDLE_TRUE["hour"] == "88", "bridle hour")
+	for forbidden in ["Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(BRIDLE_TRUE["who"] != forbidden, "bridle accepted %s" % forbidden)
+	for forbidden_place in ["gouge", "rasp", "bevel", "saw", "square", "bead", "plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(BRIDLE_TRUE["place"] != forbidden_place, "bridle accepted the %s" % forbidden_place)
+	_expect(BRIDLE_TRUE["hour"] != "86", "bridle accepted 86")
+	_expect(BRIDLE_TRUE["hour"] != "87", "bridle accepted 87")
+	_expect(BRIDLE_TRUE["hour"] != "89", "bridle accepted 89")
+	_expect(BRIDLE_TRUE["hour"] != "90", "bridle accepted 90")
+	_expect(BRIDLE_TRUE["hour"] != "83", "bridle accepted 83")
+	_expect(BRIDLE_TRUE["hour"] != "78", "bridle accepted 78")
+	_expect(BRIDLE_TRUE["hour"] != "73", "bridle accepted 73")
+	_expect(BRIDLE_TRUE["hour"] != "68", "bridle accepted 68")
+	_expect(BRIDLE_TRUE["hour"] != "63", "bridle accepted 63")
+	_expect(BRIDLE_TRUE["hour"] != "8", "bridle accepted 8")
+	_expect(BRIDLE_TRUE["hour"] != "6", "bridle accepted 6")
+	_expect(BRIDLE_TRUE["hour"] != "3", "bridle accepted 3")
+	_expect(BRIDLE_TRUE["hour"] != "16", "bridle accepted 16")
+	_expect(BRIDLE_TRUE["hour"] != "19", "bridle accepted 19")
+	var before_bridle: Array = before_tenon.duplicate()
+	before_bridle.append([Tenon, TENON_TRUE, "tenon"])
+	for row in before_bridle:
+		var book = row[0]
+		var truth: Dictionary = row[1]
+		var name := str(row[2])
+		_expect(BRIDLE_TRUE["who"] != truth["who"], "bridle copied the %s taker" % name)
+		_expect(BRIDLE_TRUE["place"] != truth["place"], "bridle copied the %s room" % name)
+		_expect(BRIDLE_TRUE["hour"] != str(truth["hour"]), "bridle copied the %s hour" % name)
+		_expect_rejected(BRIDLE_TRUE, book)
+		_expect_rejected(truth, Bridle)
+	_expect(TENON_TRUE["who"] == "Harl" and TENON_TRUE["place"] == "gouge" and TENON_TRUE["hour"] == "83", "the tenon should still accept Harl in the gouge at 83")
+	for row in before_bridle:
+		var book = row[0]
+		var name := str(row[2])
+		for person in Bridle.PEOPLE:
+			_expect(not book.PEOPLE.has(person), "bridle cast repeats %s from the %s" % [person, name])
+		for place in Bridle.PLACES:
+			_expect(not book.PLACES.has(place), "bridle rooms repeat %s from the %s" % [place, name])
+		for hour in Bridle.HOURS:
+			_expect(not book.HOURS.has(hour), "bridle hours repeat %s from the %s" % [hour, name])
+	for forbidden_person in ["Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(not Bridle.PEOPLE.has(forbidden_person), "bridle cast must not take %s" % forbidden_person)
+	_expect(Bridle.role_phrase("Wend") == "the router hand", "the bridle should call Wend the router hand")
+	_expect(Bridle.role_phrase("Sile") == "the scraper hand", "the bridle should call Sile the scraper hand")
+	_expect(Bridle.role_phrase("Jute") == "the adze clerk", "the bridle should call Jute the adze clerk")
+	for forbidden_place in ["gouge", "rasp", "bevel", "saw", "square", "bead", "plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "dye_house", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(not Bridle.PLACES.has(forbidden_place), "bridle rooms must not take the %s" % forbidden_place)
+	_expect(not Bridle.HOURS.has("6"), "bridle hours must not take 6")
+	_expect(not Bridle.HOURS.has("7"), "bridle hours must not take 7")
+	_expect(not Bridle.HOURS.has("8"), "bridle hours must not take 8")
+	_expect(not Bridle.HOURS.has("9"), "bridle hours must not take 9")
+	_expect(not Bridle.HOURS.has("10"), "bridle hours must not take 10")
+	_expect(not Bridle.HOURS.has("60"), "bridle hours must not take 60")
+	_expect(not Bridle.HOURS.has("61"), "bridle hours must not take 61")
+	_expect(not Bridle.HOURS.has("62"), "bridle hours must not take 62")
+	_expect(not Bridle.HOURS.has("63"), "bridle hours must not take 63")
+	_expect(not Bridle.HOURS.has("64"), "bridle hours must not take 64")
+	_expect(not Bridle.HOURS.has("65"), "bridle hours must not take 65")
+	_expect(not Bridle.HOURS.has("66"), "bridle hours must not take 66")
+	_expect(not Bridle.HOURS.has("67"), "bridle hours must not take 67")
+	_expect(not Bridle.HOURS.has("68"), "bridle hours must not take 68")
+	_expect(not Bridle.HOURS.has("69"), "bridle hours must not take 69")
+	_expect(not Bridle.HOURS.has("70"), "bridle hours must not take 70")
+	_expect(not Bridle.HOURS.has("71"), "bridle hours must not take 71")
+	_expect(not Bridle.HOURS.has("72"), "bridle hours must not take 72")
+	_expect(not Bridle.HOURS.has("73"), "bridle hours must not take 73")
+	_expect(not Bridle.HOURS.has("74"), "bridle hours must not take 74")
+	_expect(not Bridle.HOURS.has("75"), "bridle hours must not take 75")
+	_expect(not Bridle.HOURS.has("76"), "bridle hours must not take 76")
+	_expect(not Bridle.HOURS.has("77"), "bridle hours must not take 77")
+	_expect(not Bridle.HOURS.has("78"), "bridle hours must not take 78")
+	_expect(not Bridle.HOURS.has("79"), "bridle hours must not take 79")
+	_expect(not Bridle.HOURS.has("80"), "bridle hours must not take 80")
+	_expect(not Bridle.HOURS.has("81"), "bridle hours must not take 81")
+	_expect(not Bridle.HOURS.has("82"), "bridle hours must not take 82")
+	_expect(not Bridle.HOURS.has("83"), "bridle hours must not take 83")
+	_expect(not Bridle.HOURS.has("84"), "bridle hours must not take 84")
+	_expect(not Bridle.HOURS.has("85"), "bridle hours must not take 85")
+
+	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal", "The orchard graft", "The dye vat", "The tar kettle", "The cork press", "The net loft", "The cask hoop", "The linen fold", "The dovetail", "The mortise", "The rebate", "The housing", "The tenon", "The bridle"], "case list is %s" % str(titles))
 
 
 func _test_menu_opens_either_case() -> void:
@@ -9931,7 +10396,7 @@ func _test_menu_opens_either_case() -> void:
 		root._ready()
 	var menu_blob := _visible_label_blob(root)
 	_expect(get_root().size == Vector2i(1280, 800), "case window is %s" % str(get_root().size))
-	_expect(menu_blob.find("Twenty-eight files") >= 0, "menu does not offer twenty-eight files: %s" % menu_blob)
+	_expect(menu_blob.find("Twenty-nine files") >= 0, "menu does not offer twenty-nine files: %s" % menu_blob)
 	_expect(menu_blob.find("CW-07") >= 0, "menu omits CW-07")
 	_expect(menu_blob.find("The hive smoker") >= 0, "menu omits The hive smoker")
 	_expect(menu_blob.find("CW-08") >= 0, "menu omits CW-08")
@@ -9976,6 +10441,8 @@ func _test_menu_opens_either_case() -> void:
 	_expect(menu_blob.find("The housing") >= 0, "menu omits The housing")
 	_expect(menu_blob.find("CW-28") >= 0, "menu omits CW-28")
 	_expect(menu_blob.find("The tenon") >= 0, "menu omits The tenon")
+	_expect(menu_blob.find("CW-29") >= 0, "menu omits CW-29")
+	_expect(menu_blob.find("The bridle") >= 0, "menu omits The bridle")
 	_expect(root.get_child_count() > 0, "main scene built %d children" % root.get_child_count())
 	_press(root, "How to play")
 	var howto := _visible_label_blob(root)
@@ -10007,6 +10474,7 @@ func _test_menu_opens_either_case() -> void:
 	_expect(howto.find("The rebate") >= 0, "how to play omits The rebate")
 	_expect(howto.find("The housing") >= 0, "how to play omits The housing")
 	_expect(howto.find("The tenon") >= 0, "how to play omits The tenon")
+	_expect(howto.find("The bridle") >= 0, "how to play omits The bridle")
 	_expect(howto.find("names that slot") >= 0, "how to play omits the empty-slot rule")
 	_press(root, "Back to the menu")
 	_expect(_find_visible_button(root, "Open The spare key") != null, "menu is missing The spare key")
@@ -10037,6 +10505,7 @@ func _test_menu_opens_either_case() -> void:
 	_expect(_find_visible_button(root, "Open The rebate") != null, "menu is missing The rebate")
 	_expect(_find_visible_button(root, "Open The housing") != null, "menu is missing The housing")
 	_expect(_find_visible_button(root, "Open The tenon") != null, "menu is missing The tenon")
+	_expect(_find_visible_button(root, "Open The bridle") != null, "menu is missing The bridle")
 	_press(root, "Open The rehearsal score")
 	var rehearsal_open := _visible_label_blob(root)
 	_expect(rehearsal_open.find("Cut list") >= 0, "rehearsal file did not open")
@@ -11943,6 +12412,150 @@ func _test_menu_opens_either_case() -> void:
 	_expect(housing_again_blob.find("Gouge chit") == -1, "tenon papers stayed up after returning to The housing")
 	_expect(housing_again_blob.find("Haunch note") == -1, "tenon papers stayed up after returning to The housing")
 	_press(root, "Menu")
+	_press(root, "Open The bridle")
+	var bridle_open := _visible_label_blob(root)
+	_expect(bridle_open.find("Router chit") >= 0, "bridle file did not open")
+	_expect(bridle_open.find("Tongue note") >= 0, "bridle file did not show its exhibits")
+	_expect(bridle_open.find("CW-29") >= 0, "bridle file omits CW-29")
+	_expect(bridle_open.find("Spline hook") >= 0, "bridle file omits Spline hook")
+	_expect(bridle_open.find("Strop slip") >= 0, "bridle file omits Strop slip")
+	_expect(bridle_open.find("Notch leaf") >= 0, "bridle file omits Notch leaf")
+	_expect(bridle_open.find("Hang order") >= 0, "bridle file omits Hang order")
+	_expect(bridle_open.find("Complaint slip") == -1, "spare key papers showed inside The bridle")
+	_expect(bridle_open.find("Cut list") == -1, "rehearsal papers showed inside The bridle")
+	_expect(bridle_open.find("Move order") == -1, "gilt stamp papers showed inside The bridle")
+	_expect(bridle_open.find("Whistle slip") == -1, "ferry bell papers showed inside The bridle")
+	_expect(bridle_open.find("Frost note") == -1, "weather slate papers showed inside The bridle")
+	_expect(bridle_open.find("Trough tag") == -1, "loom shuttle papers showed inside The bridle")
+	_expect(bridle_open.find("Fuel line") == -1, "hive smoker papers showed inside The bridle")
+	_expect(bridle_open.find("Weight line") == -1, "glass pontil papers showed inside The bridle")
+	_expect(bridle_open.find("Lock line") == -1, "press proof papers showed inside The bridle")
+	_expect(bridle_open.find("Cup line") == -1, "assay cup papers showed inside The bridle")
+	_expect(bridle_open.find("Mark line") == -1, "kiln chalk papers showed inside The bridle")
+	_expect(bridle_open.find("Ledger line") == -1, "tide ledger papers showed inside The bridle")
+	_expect(bridle_open.find("Bell line") == -1, "night bell papers showed inside The bridle")
+	_expect(bridle_open.find("Salt line") == -1, "salt mark papers showed inside The bridle")
+	_expect(bridle_open.find("Oil note") == -1, "wick trim papers showed inside The bridle")
+	_expect(bridle_open.find("Gather note") == -1, "glass anneal papers showed inside The bridle")
+	_expect(bridle_open.find("Scion note") == -1, "orchard graft papers showed inside The bridle")
+	_expect(bridle_open.find("Winder chit") == -1, "dye vat papers showed inside The bridle")
+	_expect(bridle_open.find("Rope chit") == -1, "tar kettle papers showed inside The bridle")
+	_expect(bridle_open.find("Cutter chit") == -1, "cork press papers showed inside The bridle")
+	_expect(bridle_open.find("Mesh chit") == -1, "net loft papers showed inside The bridle")
+	_expect(bridle_open.find("Hoop chit") == -1, "cask hoop papers showed inside The bridle")
+	_expect(bridle_open.find("Shears chit") == -1, "linen fold papers showed inside The bridle")
+	_expect(bridle_open.find("Apron sight") == -1, "dovetail papers showed inside The bridle")
+	_expect(bridle_open.find("Peg hook") == -1, "dovetail papers showed inside The bridle")
+	_expect(bridle_open.find("Joint slate") == -1, "dovetail papers showed inside The bridle")
+	_expect(bridle_open.find("Clamp card") == -1, "dovetail papers showed inside The bridle")
+	_expect(bridle_open.find("Sweep slip") == -1, "dovetail papers showed inside The bridle")
+	_expect(bridle_open.find("Cut leaf") == -1, "dovetail papers showed inside The bridle")
+	_expect(bridle_open.find("Joint note") == -1, "dovetail papers showed inside The bridle")
+	_expect(bridle_open.find("Jaw order") == -1, "dovetail papers showed inside The bridle")
+	_expect(bridle_open.find("CW-24") == -1, "dovetail file code stayed up inside The bridle")
+	_expect(bridle_open.find("Chisel chit") == -1, "mortise papers stayed up inside The bridle")
+	_expect(bridle_open.find("Awl sight") == -1, "mortise papers showed inside The bridle")
+	_expect(bridle_open.find("Wedge hook") == -1, "mortise papers showed inside The bridle")
+	_expect(bridle_open.find("Tenon slate") == -1, "mortise papers showed inside The bridle")
+	_expect(bridle_open.find("Brace card") == -1, "mortise papers showed inside The bridle")
+	_expect(bridle_open.find("Brush slip") == -1, "mortise papers showed inside The bridle")
+	_expect(bridle_open.find("Bore leaf") == -1, "mortise papers showed inside The bridle")
+	_expect(bridle_open.find("Tenon note") == -1, "mortise papers showed inside The bridle")
+	_expect(bridle_open.find("Rack order") == -1, "mortise papers showed inside The bridle")
+	_expect(bridle_open.find("CW-25") == -1, "mortise file code stayed up inside The bridle")
+	_expect(bridle_open.find("Plane chit") == -1, "rebate papers stayed up inside The bridle")
+	_expect(bridle_open.find("Gauge sight") == -1, "rebate papers showed inside The bridle")
+	_expect(bridle_open.find("Shim hook") == -1, "rebate papers showed inside The bridle")
+	_expect(bridle_open.find("Shoulder slate") == -1, "rebate papers showed inside The bridle")
+	_expect(bridle_open.find("Fence card") == -1, "rebate papers showed inside The bridle")
+	_expect(bridle_open.find("Oil slip") == -1, "rebate papers showed inside The bridle")
+	_expect(bridle_open.find("Scribe leaf") == -1, "rebate papers showed inside The bridle")
+	_expect(bridle_open.find("Shoulder note") == -1, "rebate papers showed inside The bridle")
+	_expect(bridle_open.find("CW-26") == -1, "rebate file code stayed up inside The bridle")
+	_expect(bridle_open.find("Saw chit") == -1, "housing papers stayed up inside The bridle")
+	_expect(bridle_open.find("Square sight") == -1, "housing papers showed inside The bridle")
+	_expect(bridle_open.find("Fillet hook") == -1, "housing papers showed inside The bridle")
+	_expect(bridle_open.find("Trench slate") == -1, "housing papers showed inside The bridle")
+	_expect(bridle_open.find("Stock card") == -1, "housing papers showed inside The bridle")
+	_expect(bridle_open.find("Chalk slip") == -1, "housing papers showed inside The bridle")
+	_expect(bridle_open.find("Mark leaf") == -1, "housing papers showed inside The bridle")
+	_expect(bridle_open.find("Trench note") == -1, "housing papers showed inside The bridle")
+	_expect(bridle_open.find("CW-27") == -1, "housing file code stayed up inside The bridle")
+	_expect(bridle_open.find("Gouge chit") == -1, "tenon papers stayed up inside The bridle")
+	_expect(bridle_open.find("Rasp sight") == -1, "tenon papers showed inside The bridle")
+	_expect(bridle_open.find("Dowel hook") == -1, "tenon papers showed inside The bridle")
+	_expect(bridle_open.find("Haunch slate") == -1, "tenon papers showed inside The bridle")
+	_expect(bridle_open.find("Guide card") == -1, "tenon papers showed inside The bridle")
+	_expect(bridle_open.find("Hone slip") == -1, "tenon papers showed inside The bridle")
+	_expect(bridle_open.find("Nick leaf") == -1, "tenon papers showed inside The bridle")
+	_expect(bridle_open.find("Haunch note") == -1, "tenon papers showed inside The bridle")
+	_expect(bridle_open.find("CW-28") == -1, "tenon file code stayed up inside The bridle")
+	_press(root, "Submit theory")
+	var empty_bridle := _verdict_text(root)
+	_expect(empty_bridle.find("who cut the bridle") >= 0, "empty bridle board: %s" % empty_bridle)
+	_expect(empty_bridle.find("where they cut the bridle") >= 0, "empty bridle board: %s" % empty_bridle)
+	_expect(empty_bridle.find("at which hour they cut the bridle") >= 0, "empty bridle board: %s" % empty_bridle)
+	_expect(empty_bridle.find("who took the spare key") == -1, "empty bridle board used the spare key slot: %s" % empty_bridle)
+	_expect(empty_bridle.find("who cut the tenon") == -1, "empty bridle board used a tenon slot: %s" % empty_bridle)
+	_expect(empty_bridle.to_lower().find("conflict") == -1, "empty bridle board talked about a conflict: %s" % empty_bridle)
+	_press(root, "Sile")
+	_press(root, "Scraper")
+	_press(root, "86")
+	_press(root, "Submit theory")
+	var bridle_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(bridle_miss, Bridle, {"who": "Sile", "place": "scraper", "hour": "86"})
+	_expect(Bridle.conflicting_ids({"who": "Sile", "place": "scraper", "hour": "86"}).size() == 9, "Sile / scraper / 86 should contradict every exhibit")
+	_expect(bridle_miss.find("Router chit") >= 0, "wrong triple reply omits Router chit: %s" % bridle_miss)
+	_expect(bridle_miss.find("Scraper sight") >= 0, "wrong triple reply omits Scraper sight: %s" % bridle_miss)
+	_expect(bridle_miss.find("Spline hook") >= 0, "wrong triple reply omits Spline hook: %s" % bridle_miss)
+	_expect(bridle_miss.find("Tongue slate") >= 0, "wrong triple reply omits Tongue slate: %s" % bridle_miss)
+	_expect(bridle_miss.find("Templet card") >= 0, "wrong triple reply omits Templet card: %s" % bridle_miss)
+	_expect(bridle_miss.find("Strop slip") >= 0, "wrong triple reply omits Strop slip: %s" % bridle_miss)
+	_expect(bridle_miss.find("Notch leaf") >= 0, "wrong triple reply omits Notch leaf: %s" % bridle_miss)
+	_expect(bridle_miss.find("Tongue note") >= 0, "wrong triple reply omits Tongue note: %s" % bridle_miss)
+	_expect(bridle_miss.find("Hang order") >= 0, "wrong triple reply omits Hang order: %s" % bridle_miss)
+	_press(root, "Wend")
+	_press(root, "Router")
+	_press(root, "88")
+	_press(root, "Submit theory")
+	var bridle_accepted := _verdict_text(root)
+	_expect(bridle_accepted.find("fits every exhibit") >= 0, "bridle board rejected the true theory: %s" % bridle_accepted)
+	_expect(bridle_accepted.find(BRIDLE_TIMELINE) >= 0, "bridle board timeline: %s" % bridle_accepted)
+	_expect(bridle_accepted.find("Wend (router hand) cut the bridle in the router at 88") >= 0, "bridle board omits Wend at 88: %s" % bridle_accepted)
+	_expect(bridle_accepted.find("in the router") >= 0, "bridle board omits the router: %s" % bridle_accepted)
+	_expect(bridle_accepted.find("so the adze would take the tongue") >= 0, "bridle board omits the tongue: %s" % bridle_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var bridle_cleared := _verdict_text(root)
+	_expect(bridle_cleared.find("who cut the bridle") >= 0, "cleared bridle board: %s" % bridle_cleared)
+	_expect(bridle_cleared.find("fits every exhibit") == -1, "cleared bridle board stayed accepted: %s" % bridle_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The tenon")
+	var tenon_from_bridle := _visible_label_blob(root)
+	_expect(tenon_from_bridle.find("Gouge chit") >= 0, "could not return to The tenon from The bridle")
+	_expect(tenon_from_bridle.find("Haunch note") >= 0, "tenon exhibits did not return")
+	_expect(tenon_from_bridle.find("CW-28") >= 0, "returned tenon omits CW-28")
+	_expect(tenon_from_bridle.find("Router chit") == -1, "bridle papers stayed up inside The tenon")
+	_expect(tenon_from_bridle.find("Scraper sight") == -1, "bridle papers showed inside The tenon")
+	_expect(tenon_from_bridle.find("Spline hook") == -1, "bridle papers showed inside The tenon")
+	_expect(tenon_from_bridle.find("Tongue slate") == -1, "bridle papers showed inside The tenon")
+	_expect(tenon_from_bridle.find("Templet card") == -1, "bridle papers showed inside The tenon")
+	_expect(tenon_from_bridle.find("Strop slip") == -1, "bridle papers showed inside The tenon")
+	_expect(tenon_from_bridle.find("Notch leaf") == -1, "bridle papers showed inside The tenon")
+	_expect(tenon_from_bridle.find("Tongue note") == -1, "bridle papers showed inside The tenon")
+	_expect(tenon_from_bridle.find("CW-29") == -1, "bridle file code stayed up inside The tenon")
+	_press(root, "Harl")
+	_press(root, "Gouge")
+	_press(root, "83")
+	_press(root, "Submit theory")
+	var tenon_again := _verdict_text(root)
+	_expect(tenon_again.find("fits every exhibit") >= 0, "tenon board rejected the true theory after The bridle: %s" % tenon_again)
+	_expect(tenon_again.find("Harl (gouge hand) cut the tenon in the gouge at 83") >= 0, "tenon board timeline after The bridle: %s" % tenon_again)
+	var tenon_again_blob := _visible_label_blob(root)
+	_expect(tenon_again_blob.find("Gouge chit") >= 0, "tenon papers left after returning")
+	_expect(tenon_again_blob.find("Router chit") == -1, "bridle papers stayed up after returning to The tenon")
+	_expect(tenon_again_blob.find("Tongue note") == -1, "bridle papers stayed up after returning to The tenon")
+	_press(root, "Menu")
 	_menu_root = root
 
 
@@ -11955,20 +12568,27 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 	var rebate := _find_visible_button(root, "Open The rebate")
 	var housing := _find_visible_button(root, "Open The housing")
 	var tenon := _find_visible_button(root, "Open The tenon")
-	_expect(mortise != null and rebate != null and housing != null and tenon != null, "file list is missing a joiner button")
-	if mortise == null or rebate == null or housing == null or tenon == null:
+	var bridle := _find_visible_button(root, "Open The bridle")
+	_expect(mortise != null and rebate != null and housing != null and tenon != null and bridle != null, "file list is missing a joiner button")
+	if mortise == null or rebate == null or housing == null or tenon == null or bridle == null:
 		return
 	var mortise_rect := _content_rect(mortise)
 	var rebate_rect := _content_rect(rebate)
 	var housing_rect := _content_rect(housing)
 	var tenon_rect := _content_rect(tenon)
-	print("file list mortise %s rebate %s housing %s tenon %s" % [mortise_rect, rebate_rect, housing_rect, tenon_rect])
+	var bridle_rect := _content_rect(bridle)
+	print("file list mortise %s rebate %s housing %s tenon %s bridle %s" % [mortise_rect, rebate_rect, housing_rect, tenon_rect, bridle_rect])
 	_expect(rebate_rect.size.y >= 40.0, "Open The rebate has no height")
 	_expect(housing_rect.size.y >= 40.0, "Open The housing has no height")
 	_expect(tenon_rect.size.y >= 40.0, "Open The tenon has no height")
+	_expect(bridle_rect.size.y >= 40.0, "Open The bridle has no height")
 	_expect(mortise_rect.position.y + mortise_rect.size.y <= rebate_rect.position.y, "Open The mortise is not above Open The rebate")
 	_expect(rebate_rect.position.y + rebate_rect.size.y <= housing_rect.position.y, "Open The rebate is not above Open The housing")
 	_expect(housing_rect.position.y + housing_rect.size.y <= tenon_rect.position.y, "Open The housing is not above Open The tenon")
+	_expect(tenon_rect.position.y + tenon_rect.size.y <= bridle_rect.position.y, "Open The tenon is not above Open The bridle")
+	_expect(housing_rect.position.y == 4134.0, "housing content top is %s" % housing_rect.position.y)
+	_expect(tenon_rect.position.y == 4281.0, "tenon content top is %s" % tenon_rect.position.y)
+	_expect(bridle_rect.position.y == 4428.0, "bridle content top is %s" % bridle_rect.position.y)
 	var window_height := 800.0
 	var housing_bottom := housing_rect.position.y + housing_rect.size.y
 	var visible_top := housing_bottom - window_height
@@ -11979,6 +12599,10 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 	var tenon_visible_top := tenon_bottom - window_height
 	_expect(housing_rect.position.y >= tenon_visible_top, "Open The housing is not fully on screen above Open The tenon")
 	_expect(housing_rect.position.y + housing_rect.size.y <= tenon_bottom, "Open The housing extends past the window when Open The tenon sits at the bottom")
+	var bridle_bottom := bridle_rect.position.y + bridle_rect.size.y
+	var bridle_visible_top := bridle_bottom - window_height
+	_expect(tenon_rect.position.y >= bridle_visible_top, "Open The tenon is not fully on screen above Open The bridle")
+	_expect(tenon_rect.position.y + tenon_rect.size.y <= bridle_bottom, "Open The tenon extends past the window when Open The bridle sits at the bottom")
 	var scroll := _find_visible_scroll(root)
 	_expect(scroll != null, "the file list has no scroll")
 	if scroll != null:
@@ -11986,6 +12610,7 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 		print("file list scroll max %s page %s" % [bar.max_value, bar.page])
 		_expect(bar.max_value > window_height, "the file list does not scroll in an 800px window")
 	_expect(tenon_bottom > window_height, "Open The tenon already fits without scrolling")
+	_expect(bridle_bottom > window_height, "Open The bridle already fits without scrolling")
 
 
 func _content_rect(control: Control) -> Rect2:
