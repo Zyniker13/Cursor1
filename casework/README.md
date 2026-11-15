@@ -1,6 +1,6 @@
 # Casework
 
-A deduction game with thirty-four cases, **The spare key**, **The rehearsal score**, **The gilt stamp**, **The ferry bell**, **The weather slate**, **The loom shuttle**, **The hive smoker**, **The glass pontil**, **The press proof**, **The assay cup**, **The kiln chalk**, **The tide ledger**, **The night bell**, **The salt mark**, **The wick trim**, **The glass anneal**, **The orchard graft**, **The dye vat**, **The tar kettle**, **The cork press**, **The net loft**, **The cask hoop**, **The linen fold**, **The dovetail**, **The mortise**, **The rebate**, **The housing**, **The tenon**, **The bridle**, **The dado**, **The spline**, **The mitre**, **The lap**, and **The scarf**.
+A deduction game with thirty-five cases, **The spare key**, **The rehearsal score**, **The gilt stamp**, **The ferry bell**, **The weather slate**, **The loom shuttle**, **The hive smoker**, **The glass pontil**, **The press proof**, **The assay cup**, **The kiln chalk**, **The tide ledger**, **The night bell**, **The salt mark**, **The wick trim**, **The glass anneal**, **The orchard graft**, **The dye vat**, **The tar kettle**, **The cork press**, **The net loft**, **The cask hoop**, **The linen fold**, **The dovetail**, **The mortise**, **The rebate**, **The housing**, **The tenon**, **The bridle**, **The dado**, **The spline**, **The mitre**, **The lap**, **The scarf**, and **The finger**.
 
 Pick a file. That file keeps a single timeline. You read the exhibits and pin who, the room, and the hour. A theory is accepted only when it fits every exhibit. A theory that does not fit comes back naming the exhibits it contradicts. An empty pin is refused by the name of the missing slot.
 
@@ -75,6 +75,8 @@ There is no voice. The papers and the board are the whole case.
 **The lap.** The lap left its peg at the joiner's cradle. Name who cut the lap, the room they cut it in, and the hour.
 
 **The scarf.** The scarf left its peg at the joiner's mare. Name who cut the scarf, the room they cut it in, and the hour.
+
+**The finger.** The finger left its peg at the joiner's pony. Name who cut the finger, the room they cut it in, and the hour.
 
 ## Play
 
