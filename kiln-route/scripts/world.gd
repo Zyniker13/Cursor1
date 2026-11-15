@@ -27,6 +27,11 @@ extends RefCounted
 ## left and the arrival moves one cell to the right, and only if both of
 ## those cells can take them. The fork is empty after that tick. If either
 ## side refuses, neither item leaves.
+## A prong does not forward in step 2 on its own. The first item stays.
+## When a later item arrives from behind, the waiter moves one cell to the
+## right and the arrival moves one cell to the left, and only if both of
+## those cells can take them. The prong is empty after that tick. If either
+## side refuses, neither item leaves. That is the opposite of a fork.
 
 const Rules = preload("res://scripts/foundry.gd")
 
@@ -58,7 +63,7 @@ class Machine:
 	## Second lane on a bridge. -1 is empty. Other machines leave it empty.
 	var cross := -1
 	var cross_moved := false
-	## True while a twin, a pass, a slip, a shed, a rake, a hoe, a harrow, or a fork is resolving an arrival, so a loop cannot re-enter.
+	## True while a twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, or a prong is resolving an arrival, so a loop cannot re-enter.
 	var pairing := false
 
 class Source:
@@ -438,8 +443,9 @@ func _can_take(machine: Machine, mat: int, arrival: int) -> bool:
 		or machine.kind == Rules.Kind.HOE
 		or machine.kind == Rules.Kind.HARROW
 		or machine.kind == Rules.Kind.FORK
+		or machine.kind == Rules.Kind.PRONG
 	):
-		# Pairing is handled in _accept. A twin, a pass, a slip, a shed, a rake, a hoe, a harrow, or a fork may already be holding.
+		# Pairing is handled in _accept. A twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, or a prong may already be holding.
 		return false
 	if machine.kind == Rules.Kind.BRIDGE:
 		if arrival == machine.dir:
@@ -499,6 +505,8 @@ func _accept(dest: Vector2i, mat: int, arrival: int) -> bool:
 		return _accept_harrow(dest, machine, mat, arrival)
 	if machine.kind == Rules.Kind.FORK:
 		return _accept_fork(dest, machine, mat, arrival)
+	if machine.kind == Rules.Kind.PRONG:
+		return _accept_prong(dest, machine, mat, arrival)
 	if not _can_take(machine, mat, arrival):
 		return false
 	if _holder(machine.kind):
@@ -729,6 +737,41 @@ func _accept_fork(pos: Vector2i, machine: Machine, mat: int, arrival: int) -> bo
 	if left_sent:
 		right_sent = _accept(pos + Rules.vec(right_dir), mat, right_dir)
 	if not left_sent or not right_sent:
+		_restore(mark)
+		return false
+	machine.pairing = false
+	machine.hold = -1
+	machine.moved = false
+	return true
+
+
+## Behind only. The first item waits and never leaves on its own. A later item
+## from behind may be a different material. On that tick the waiter moves one
+## cell to the right and the arrival moves one cell to the left, if both cells
+## can take them. The prong is empty afterwards. If either side cell refuses,
+## neither item leaves and the arrival is not accepted. A lone item never
+## leaves, including on the next tick and the tick after that. The prong does
+## not spill, rotate, alternate, or send forward or back, and it does not send
+## only one of the two items. That is the opposite of a fork, which sends the
+## waiter left and the arrival right.
+func _accept_prong(pos: Vector2i, machine: Machine, mat: int, arrival: int) -> bool:
+	if arrival != machine.dir:
+		return false
+	if machine.hold < 0:
+		machine.hold = mat
+		machine.moved = true
+		return true
+	if machine.moved or machine.pairing:
+		return false
+	var right_dir := Rules.right(machine.dir)
+	var left_dir := Rules.left(machine.dir)
+	var mark := _checkpoint()
+	machine.pairing = true
+	var right_sent: bool = _accept(pos + Rules.vec(right_dir), machine.hold, right_dir)
+	var left_sent := false
+	if right_sent:
+		left_sent = _accept(pos + Rules.vec(left_dir), mat, left_dir)
+	if not right_sent or not left_sent:
 		_restore(mark)
 		return false
 	machine.pairing = false
