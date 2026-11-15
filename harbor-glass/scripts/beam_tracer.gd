@@ -43,6 +43,18 @@ class_name BeamTracer
 # Lanterns on a flooded cell do not emit. Mirrors, prisms, and panes there
 # are shut and do not act.
 #
+# Tide mirror
+# -----------
+# A tide mirror is not a meeting mirror and it does not replace one.
+# It has the same two facings as a mirror, and it never changes color.
+#   rot 0 and 180, drawn "/":  N->E, E->N, S->W, W->S
+#   rot 90 and 270, drawn "\": N->W, W->N, S->E, E->S
+# It reflects only while its own row is flooded. The beam may enter that
+# flooded cell. The next flooded cell that is not itself a tide mirror still
+# stops the beam at the waterline, and a flooded lantern, mirror, prism, pane,
+# dock, or hull still follows the rules above.
+# While its row is dry, a beam that hits it keeps its direction and its color.
+#
 # Docks and boats
 # ---------------
 # A dock records every color that enters its cell. It is satisfied only when
@@ -77,7 +89,7 @@ static func rotate_dir(dir: String, turns: int) -> String:
 static func norm_rot(kind: String, rot: int) -> int:
 	if kind == "prism":
 		return posmod(rot, 360)
-	# Mirrors and panes repeat every 180 degrees.
+	# Mirrors, tide mirrors, and panes repeat every 180 degrees.
 	return posmod(rot, 180)
 
 static func turn_rot(kind: String, rot: int) -> int:
@@ -275,7 +287,8 @@ static func _cast(
 		if visited.has(key):
 			return
 		visited[key] = true
-		if is_flooded(chart, state, cell):
+		var flooded := is_flooded(chart, state, cell)
+		if flooded and not _is_tide_mirror(occupants, cell):
 			segments.append(_boundary_seg(prev, cell, color))
 			return
 		segments.append(_center_seg(prev, cell, color))
@@ -299,6 +312,14 @@ static func _cast(
 			prev = cell
 			cell = cell + VEC[dir]
 			continue
+		if kind == "tide_mirror":
+			# Dry glass is open: direction and color stay as they are.
+			if flooded:
+				dir = reflect(int(occ["rot"]), dir)
+				bounces += 1
+			prev = cell
+			cell = cell + VEC[dir]
+			continue
 		if kind == "pane":
 			if color != pane_color(int(occ["rot"])):
 				return
@@ -316,6 +337,12 @@ static func _cast(
 				_cast(chart, state, occupants, cell + VEC[blue_dir], blue_dir, "blue", next_bounce, visited, dock_hits, boat_lit, segments, cell)
 			return
 		return
+
+static func _is_tide_mirror(occupants: Dictionary, cell: Vector2i) -> bool:
+	if not occupants.has(cell):
+		return false
+	var occ: Dictionary = occupants[cell]
+	return str(occ["kind"]) == "tide_mirror"
 
 static func _in_bounds(chart: Dictionary, cell: Vector2i) -> bool:
 	return cell.x >= 0 and cell.y >= 0 and cell.x < int(chart["cols"]) and cell.y < int(chart["rows"])

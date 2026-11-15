@@ -327,6 +327,74 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 		guess -= 12
 	if rule == "yield_corner" and _is_corner(row, col):
 		guess += 3
+	if rule == "zero_last":
+		var later_filled = false
+		for later_row in range(row, 3):
+			var start_col = 0
+			if later_row == row:
+				start_col = col + 1
+			for later_col in range(start_col, 3):
+				if state.form[later_row][later_col] != null:
+					later_filled = true
+		if later_filled:
+			guess += 6
+		else:
+			guess -= 10
+			if card_id == "exemption" and row == 2:
+				guess += 12
+	if rule == "double_center" and row == 1 and col == 1:
+		guess += 4
+	if rule == "refuse_stacked_col1" and col == 0 and card_id != "exemption" and card_id != "hold":
+		var stacked = false
+		for stacked_row in 3:
+			if state.form[stacked_row][0] != null:
+				stacked = true
+		if stacked:
+			guess -= 8
+	if rule == "drop_if_queue_gap" and _placement_opens_gap(state, row, col):
+		guess -= 6
+	if rule == "refuse_stacked_bottom" and row == 2 and card_id != "exemption":
+		var bottom_stacked = false
+		for bottom_col in 3:
+			if state.form[2][bottom_col] != null:
+				bottom_stacked = true
+		if bottom_stacked:
+			guess -= 12
+	if rule == "double_first_if_followed":
+		var followed_earlier = false
+		for followed_row in range(0, row + 1):
+			var followed_end = 2
+			if followed_row == row:
+				followed_end = col - 1
+			for followed_col in range(0, followed_end + 1):
+				if state.form[followed_row][followed_col] != null:
+					followed_earlier = true
+		if not followed_earlier:
+			guess += 5
+	if rule == "zero_shared_later":
+		var barred_number = _stamp_number(state, card_id, row, col)
+		var barred_earlier = false
+		for barred_row in range(0, row + 1):
+			var barred_end = 2
+			if barred_row == row:
+				barred_end = col - 1
+			for barred_col in range(0, barred_end + 1):
+				var barred_stamp = state.form[barred_row][barred_col]
+				if barred_stamp == null:
+					continue
+				if _stamp_number(state, String(barred_stamp["card_id"]), barred_row, barred_col) == barred_number:
+					barred_earlier = true
+		if barred_earlier:
+			guess -= 20
+		else:
+			guess += 3
+	if rule == "yield_empty":
+		var occupied = 0
+		for occupied_row in 3:
+			for occupied_col in 3:
+				if state.form[occupied_row][occupied_col] != null:
+					occupied += 1
+		guess += 8 - occupied
 	if rule == "double_shared_later":
 		var shared_number = _stamp_number(state, card_id, row, col)
 		var earlier_match = false
@@ -397,6 +465,24 @@ static func _stamp_number(state, card_id: String, row: int, col: int) -> int:
 			return notice
 		_:
 			return 2
+
+
+static func _placement_opens_gap(state, row: int, col: int) -> bool:
+	var first = -1
+	var last = -1
+	var count = 0
+	var index = 0
+	for scan_row in 3:
+		for scan_col in 3:
+			if state.form[scan_row][scan_col] != null or (scan_row == row and scan_col == col):
+				if first < 0:
+					first = index
+				last = index
+				count += 1
+			index += 1
+	if count < 2:
+		return false
+	return last - first + 1 > count
 
 
 static func _form_has_number(state, number: int) -> bool:
