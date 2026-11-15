@@ -48,6 +48,8 @@ func _run() -> void:
 	test_sluice_book()
 	test_weir_rule()
 	test_weir_book()
+	test_lintel_rule()
+	test_lintel_book()
 	test_chart_4_boat()
 	test_one_rotation_is_not_solved()
 	test_hint_points_at_one_piece()
@@ -207,7 +209,8 @@ func test_charts() -> void:
 	check(Charts.siphon().size() == 8, "siphon adds eight charts")
 	check(Charts.sluice().size() == 8, "sluice adds eight charts")
 	check(Charts.weir().size() == 8, "weir adds eight charts")
-	check(book.size() == 110, "one hundred ten charts")
+	check(Charts.lintel().size() == 8, "lintel adds eight charts")
+	check(book.size() == 118, "one hundred eighteen charts")
 	check(str(book[13]["id"]) == "14" and str(book[13]["title"]) == "The Holding Line", "chart 14 stays the reach capstone")
 	check(str(book[14]["title"]) == "North Light", "chart 15 opens the basin")
 	check(str(book[21]["id"]) == "22" and str(book[21]["title"]) == "The Basin Mark", "chart 22 stays the basin capstone")
@@ -232,6 +235,8 @@ func test_charts() -> void:
 	check(str(book[94]["title"]) == "The East Sluice", "chart 95 opens the sluice")
 	check(str(book[101]["id"]) == "102" and str(book[101]["title"]) == "The Sluice Mark", "chart 102 stays the sluice capstone")
 	check(str(book[102]["title"]) == "The East Weir", "chart 103 opens the weir")
+	check(str(book[109]["id"]) == "110" and str(book[109]["title"]) == "The Weir Mark", "chart 110 stays the weir capstone")
+	check(str(book[110]["title"]) == "The Dry Lintel", "chart 111 opens the lintel")
 	var seen_ids := {}
 	var seen_titles := {}
 	var quay_titles := ["First Glass", "Around the Pilings", "High Water", "Sleeping Hull", "Split the White", "The Night Mark"]
@@ -3816,6 +3821,249 @@ func test_weir_book() -> void:
 	check(str(book[7]["teach"]).to_lower().contains("also clears"), "chart 110 records the stain that also clears")
 
 
+func test_lintel_rule() -> void:
+	check(Tracer.norm_rot("lintel", 0) == 0 and Tracer.norm_rot("lintel", 90) == 0, "a lintel ignores a quarter turn")
+	check(Tracer.norm_rot("lintel", 180) == 0 and Tracer.norm_rot("lintel", 270) == 0, "a lintel ignores a half turn")
+	check(Tracer.norm_rot("lintel", 360) == 0 and Tracer.norm_rot("lintel", 450) == 0, "a lintel ignores a full turn")
+	check(Tracer.turn_rot("lintel", 0) == 0 and Tracer.turn_rot("lintel", 90) == 0, "clicking a lintel does not walk a facing")
+	var hinted: Dictionary = Charts.lintel()[0]
+	var solved_hint := Charts.make_state(hinted, true)
+	check(not Hints.wrong_pieces(hinted, solved_hint).has("N"), "a hint accepts the dry lintel")
+	for spun in [90, 180, 270, 450]:
+		var turned := Charts.duplicate_state(solved_hint)
+		turned["pieces"]["N"]["rot"] = spun
+		check(not Hints.wrong_pieces(hinted, turned).has("N"), "a hint ignores lintel rotation %d" % spun)
+
+	for color in ["red", "blue", "white"]:
+		for dir in ["E", "W", "S", "N"]:
+			var lane := _blank(5, 5)
+			var lintel_at := Vector2i(2, 2)
+			var step: Vector2i = Tracer.VEC[dir]
+			var lamp_at := lintel_at - step
+			var dock_at := lintel_at + step * 2
+			lane["lanterns"] = [_lamp("L", lamp_at.x, lamp_at.y, dir, color)]
+			lane["docks"] = [_need("D", dock_at.x, dock_at.y, color)]
+			lane["pieces"] = [_fixed_lintel("N", lintel_at.x, lintel_at.y)]
+			var sigs: Array = []
+			for rot in [0, 90, 180, 270]:
+				lane["pieces"][0]["start_rot"] = rot
+				lane["pieces"][0]["solution_rot"] = rot
+				var hit: Dictionary = Tracer.trace(lane, Charts.make_state(lane, true))
+				check(hit["docks"]["D"].has(color) and hit["docks"]["D"].size() == 1, "a dry lintel keeps %s traveling %s" % [color, dir])
+				check(_arrives_from(hit, lintel_at.x, lintel_at.y, dir, color) and _leaves(hit, lintel_at.x, lintel_at.y, dir, color), "a dry lintel passes %s straight %s" % [color, dir])
+				check(not _departs(hit, lintel_at.x, lintel_at.y, "red" if color != "red" else "blue"), "a dry lintel does not recolor %s" % color)
+				sigs.append(_trace_sig(hit))
+			check(sigs[0] == sigs[1] and sigs[1] == sigs[2] and sigs[2] == sigs[3], "rotation does not change a dry %s %s pass" % [color, dir])
+
+	var row := _lintel_row(20)
+	check(Tracer.trace(row, Charts.make_state(row, true))["docks"]["D"].has("white"), "twenty dry lintels still reach the dock")
+
+	var stopped := _blank(5, 6)
+	stopped["tide_phases"] = [2]
+	stopped["lanterns"] = [_lamp("L", 2, 2, "S", "white")]
+	stopped["docks"] = [_need("D", 2, 5, "white")]
+	var open_hit: Dictionary = Tracer.trace(stopped, Charts.make_state(stopped, true))
+	stopped["pieces"] = [_fixed_lintel("N", 2, 4)]
+	var shut_state := Charts.make_state(stopped, true)
+	check(Tracer.is_flooded(stopped, shut_state, Vector2i(2, 4)) and not Tracer.is_flooded(stopped, shut_state, Vector2i(2, 2)), "the sample lintel is under water and the lamp is dry")
+	var shut_hit: Dictionary = Tracer.trace(stopped, shut_state)
+	check(not _center_hit(shut_hit, 2, 4) and shut_hit["docks"]["D"].is_empty(), "a flooded lintel stops the beam at the waterline")
+	check(_trace_sig(shut_hit) == _trace_sig(open_hit), "a flooded lintel does not carry the beam")
+	stopped["pieces"] = [_fixed_vane("V", 2, 4, 90)]
+	check(_trace_sig(Tracer.trace(stopped, Charts.make_state(stopped, true))) == _trace_sig(shut_hit), "a flooded lintel stops the way a flooded vane stops")
+	stopped["pieces"] = [_fixed_shutter("G", 2, 4)]
+	var opened: Dictionary = Tracer.trace(stopped, Charts.make_state(stopped, true))
+	check(_center_hit(opened, 2, 4) and _departs(opened, 2, 4, "white"), "a flooded shutter passes where the lintel stops")
+	var dry := _blank(5, 3)
+	dry["lanterns"] = [_lamp("L", 0, 1, "E", "blue")]
+	dry["docks"] = [_need("D", 4, 1, "blue")]
+	dry["pieces"] = [_fixed_lintel("N", 2, 1)]
+	var dry_hit: Dictionary = Tracer.trace(dry, Charts.make_state(dry, true))
+	check(_leaves(dry_hit, 2, 1, "E", "blue") and dry_hit["docks"]["D"].has("blue"), "a dry lintel passes the beam a dry shutter would stop")
+	dry["pieces"] = [_fixed_shutter("G", 2, 1)]
+	var dry_gate: Dictionary = Tracer.trace(dry, Charts.make_state(dry, true))
+	check(_center_hit(dry_gate, 2, 1) and not _departs(dry_gate, 2, 1, "blue") and dry_gate["docks"]["D"].is_empty(), "a dry shutter stops where the lintel passes")
+	dry["pieces"] = [_fixed_stain("K", 2, 1, 0)]
+	var painted: Dictionary = Tracer.trace(dry, Charts.make_state(dry, true))
+	check(_leaves(painted, 2, 1, "E", "red") and not _leaves(painted, 2, 1, "E", "blue") and painted["docks"]["D"].has("red"), "a stain recolors the pass a lintel keeps")
+	stopped["pieces"] = [_fixed_stain("K", 2, 4, 90)]
+	var wet_paint: Dictionary = Tracer.trace(stopped, Charts.make_state(stopped, true))
+	check(_center_hit(wet_paint, 2, 4) and _departs(wet_paint, 2, 4, "blue") and not _departs(wet_paint, 2, 4, "white"), "a flooded stain still recolors and passes")
+	stopped["lanterns"] = [_lamp("L", 2, 2, "S", "red")]
+	stopped["pieces"] = [_fixed_weir("R", 2, 4, 90)]
+	stopped["docks"] = [_need("D", 3, 3, "blue")]
+	stopped["fixtures"] = [{"id": "C", "kind": "tide_mirror", "x": 3, "y": 4, "rot": 0}]
+	var gate: Dictionary = Tracer.trace(stopped, Charts.make_state(stopped, true))
+	check(_leaves(gate, 2, 4, "E", "blue") and gate["docks"]["D"].has("blue"), "a flooded weir leaves along its facing and swaps")
+	stopped["fixtures"] = []
+	stopped["docks"] = [_need("D", 2, 5, "white")]
+	stopped["pieces"] = [_fixed_lintel("N", 2, 4)]
+	check(not _center_hit(Tracer.trace(stopped, Charts.make_state(stopped, true)), 2, 4), "a flooded lintel does not leave along a facing")
+
+
+func test_lintel_book() -> void:
+	var book: Array = Charts.lintel()
+	check(book.size() == 8, "lintel book has eight charts")
+	var titles := ["The Dry Lintel", "The Wet Stop", "Color Kept", "No Turn", "Above the Flood", "Two Lintels", "The Held Lintel", "The Lintel Mark"]
+	var solution_tides := [0, 0, 0, 0, 0, 0, 1, 0]
+	for i in book.size():
+		var chart: Dictionary = book[i]
+		check(str(chart["id"]) == str(i + 111), "lintel chart %d keeps its number" % (i + 111))
+		check(str(chart["title"]) == str(titles[i]), "lintel chart %d keeps its title" % (i + 111))
+		check(str(chart["harbor"]) == Charts.LINTEL, "chart %s belongs to the lintel" % str(chart["id"]))
+		check(int(chart["solution_tide_index"]) == int(solution_tides[i]), "chart %s keeps its clearing tide" % str(chart["id"]))
+		check(str(chart["teach"]) != "" and str(chart["win"]) != "", "chart %s has a teach line and a win line" % str(chart["id"]))
+		var lintel_count := 0
+		for raw_piece in chart["pieces"]:
+			var piece: Dictionary = raw_piece
+			if str(piece["kind"]) == "lintel":
+				lintel_count += 1
+		check(lintel_count >= 1, "chart %s needs the lintel" % str(chart["id"]))
+		var tides := {}
+		for raw_clear in _clears(chart):
+			var clearing: Dictionary = raw_clear
+			tides[int(clearing["tide_index"])] = true
+		check(tides.size() == 1 and tides.has(int(solution_tides[i])), "chart %s has one clearing tide" % str(chart["id"]))
+	for raw_old in Charts.all().slice(0, 110):
+		var older: Dictionary = raw_old
+		for raw_piece in older["pieces"]:
+			var older_piece: Dictionary = raw_piece
+			check(str(older_piece["kind"]) != "lintel", "chart %s keeps its pieces" % str(older["id"]))
+		for raw_fix in older["fixtures"]:
+			var older_fix: Dictionary = raw_fix
+			check(str(older_fix["kind"]) != "lintel", "chart %s keeps its fixed glass" % str(older["id"]))
+	for i in book.size():
+		var chart_id := str(i + 111)
+		var piece_ids: Array = []
+		for raw_piece in book[i]["pieces"]:
+			var piece: Dictionary = raw_piece
+			if str(piece["kind"]) == "lintel":
+				piece_ids.append(str(piece["id"]))
+		for piece_id in piece_ids:
+			_expect_lintel_miss(i, piece_id, "stain", 0, "red stain")
+			if chart_id == "117":
+				# The threat enters from the north, so a north exit retraces into
+				# that lamp. East and west run into empty flood and stop.
+				_expect_lintel_miss(i, piece_id, "shutter", 0, "shutter")
+				_expect_lintel_miss(i, piece_id, "stain", 90, "blue stain")
+				_expect_lintel_miss(i, piece_id, "weir", 180, "weir 180")
+				_expect_lintel_miss(i, piece_id, "sluice", 180, "sluice 180")
+			elif chart_id == "112" or chart_id == "115":
+				_expect_lintel_miss(i, piece_id, "shutter", 0, "shutter")
+				_expect_lintel_miss(i, piece_id, "well", 0, "well")
+				_expect_lintel_miss(i, piece_id, "siphon", 0, "siphon")
+				_expect_lintel_miss(i, piece_id, "stain", 90, "blue stain")
+				for facing in [0, 90, 180]:
+					_expect_lintel_miss(i, piece_id, "weir", facing, "weir %d" % facing)
+					_expect_lintel_miss(i, piece_id, "sluice", facing, "sluice %d" % facing)
+			else:
+				_expect_lintel_miss(i, piece_id, "shutter", 0, "shutter")
+				_expect_lintel_miss(i, piece_id, "well", 0, "well")
+				_expect_lintel_miss(i, piece_id, "siphon", 0, "siphon")
+				_expect_lintel_miss(i, piece_id, "stain", 90, "blue stain")
+				for facing in [0, 90, 180, 270]:
+					_expect_lintel_miss(i, piece_id, "weir", facing, "weir %d" % facing)
+					_expect_lintel_miss(i, piece_id, "sluice", facing, "sluice %d" % facing)
+					_expect_lintel_miss(i, piece_id, "vane", facing, "vane %d" % facing)
+				_expect_lintel_miss(i, piece_id, "mirror", 0, "mirror /")
+				_expect_lintel_miss(i, piece_id, "mirror", 90, "mirror \\")
+
+	var dry: Dictionary = book[0]
+	var dry_hit: Dictionary = Tracer.trace(dry, Charts.make_state(dry, true))
+	check(_center_hit(dry_hit, 3, 2) and _leaves(dry_hit, 3, 2, "E", "white") and _leaves(dry_hit, 3, 2, "S", "blue"), "chart 111 passes white east and blue south")
+	check(dry_hit["docks"]["W"].has("white") and dry_hit["docks"]["Bd"].has("blue") and not bool(dry_hit["boats"]["H"]), "chart 111 lights both docks and leaves the hull dark")
+
+	var wet: Dictionary = book[1]
+	var wet_solved := Charts.make_state(wet, true)
+	var wet_hit: Dictionary = Tracer.trace(wet, wet_solved)
+	check(Tracer.is_flooded(wet, wet_solved, Vector2i(4, 4)) and not Tracer.is_flooded(wet, wet_solved, Vector2i(4, 0)), "chart 112 floods the lintel and leaves the dock dry")
+	check(not _center_hit(wet_hit, 4, 4) and wet_hit["docks"]["W"].has("white"), "chart 112 lights the dock without entering the lintel")
+	check(not bool(wet_hit["boats"]["He"]) and not bool(wet_hit["boats"]["Hw"]) and not bool(wet_hit["boats"]["Hs"]), "chart 112 leaves the hulls dark")
+	var wet_shut: Dictionary = Charts.lintel()[1]
+	_retarget(wet_shut, "N", "shutter", 0)
+	var wet_shut_hit: Dictionary = Tracer.trace(wet_shut, Charts.make_state(wet_shut, true))
+	check(_center_hit(wet_shut_hit, 4, 4) and bool(wet_shut_hit["boats"]["He"]) and not Tracer.is_cleared(wet_shut, Charts.make_state(wet_shut, true)), "a shutter on chart 112 passes and wakes a hull")
+
+	var kept: Dictionary = Charts.lintel()[2]
+	kept["lanterns"][0]["color"] = "red"
+	kept["docks"][0]["color"] = "red"
+	var kept_hit: Dictionary = Tracer.trace(kept, Charts.make_state(kept, true))
+	check(kept_hit["docks"]["W"].has("red") and kept_hit["docks"]["Bd"].has("blue") and Tracer.is_cleared(kept, Charts.make_state(kept, true)), "chart 113 keeps red as well as blue")
+
+	var turned: Dictionary = book[3]
+	var turned_hit: Dictionary = Tracer.trace(turned, Charts.make_state(turned, true))
+	check(_leaves(turned_hit, 3, 3, "E", "white") and _leaves(turned_hit, 3, 3, "S", "blue") and not _leaves(turned_hit, 3, 3, "N", "white") and not _leaves(turned_hit, 3, 3, "W", "blue"), "chart 114 does not turn either beam")
+
+	var above: Dictionary = book[4]
+	var above_solved := Charts.make_state(above, true)
+	var above_hit: Dictionary = Tracer.trace(above, above_solved)
+	check(Tracer.is_flooded(above, above_solved, Vector2i(3, 4)) and not Tracer.is_flooded(above, above_solved, Vector2i(5, 0)), "chart 115 covers the lintel and leaves the dock row dry")
+	check(not _center_hit(above_hit, 3, 4) and above_hit["docks"]["W"].has("white") and not bool(above_hit["boats"]["He"]), "chart 115 stops at the lintel and lights the dry dock")
+	var above_shut: Dictionary = Charts.lintel()[4]
+	_retarget(above_shut, "N", "shutter", 0)
+	var above_shut_hit: Dictionary = Tracer.trace(above_shut, Charts.make_state(above_shut, true))
+	check(_center_hit(above_shut_hit, 3, 4) and bool(above_shut_hit["boats"]["He"]) and not Tracer.is_cleared(above_shut, Charts.make_state(above_shut, true)), "a shutter on chart 115 carries the beam onto a dry hull")
+
+	var pair: Dictionary = book[5]
+	var pair_hit: Dictionary = Tracer.trace(pair, Charts.make_state(pair, true))
+	check(_center_hit(pair_hit, 2, 2) and _center_hit(pair_hit, 4, 2) and pair_hit["docks"]["W"].has("white"), "chart 116 passes straight through both lintels")
+	var pair_weir: Dictionary = Charts.lintel()[5]
+	_retarget(pair_weir, "N1", "weir", 90)
+	check(not Tracer.is_cleared(pair_weir, Charts.make_state(pair_weir, true)) and Tracer.trace(pair_weir, Charts.make_state(pair_weir, true))["docks"]["W"].is_empty(), "a weir in the first cell of chart 116 stops on the dry row")
+
+	var held: Dictionary = book[6]
+	var held_solved := Charts.make_state(held, true)
+	check(int(held_solved["tide_index"]) == 1 and Tracer.flood_count(held, held_solved) == 2, "chart 117 holds tide index 1 and flood 2")
+	check(Tracer.is_flooded(held, held_solved, Vector2i(3, 5)) and not Tracer.is_flooded(held, held_solved, Vector2i(4, 4)), "chart 117 flood line is y >= 5")
+	var held_hit: Dictionary = Tracer.trace(held, held_solved)
+	check(not _center_hit(held_hit, 3, 5) and held_hit["docks"]["W"].has("white") and not bool(held_hit["boats"]["Hs"]) and not bool(held_hit["boats"]["Hb"]) and not bool(held_hit["boats"]["Hm"]), "chart 117 lights the dry dock one column ahead")
+	var held_shut: Dictionary = Charts.lintel()[6]
+	_retarget(held_shut, "N", "shutter", 0)
+	var held_shut_hit: Dictionary = Tracer.trace(held_shut, Charts.make_state(held_shut, true))
+	check(bool(held_shut_hit["boats"]["Hs"]) and not Tracer.is_cleared(held_shut, Charts.make_state(held_shut, true)), "a shutter on chart 117 misses the held lintel")
+	var held_low := Charts.duplicate_state(held_solved)
+	held_low["tide_index"] = 0
+	check(bool(Tracer.trace(held, held_low)["boats"]["Hb"]) and not Tracer.is_cleared(held, held_low), "chart 117 low water wakes the south hull")
+	var held_high := Charts.duplicate_state(held_solved)
+	held_high["tide_index"] = 2
+	check(Tracer.is_flooded(held, held_high, Vector2i(4, 4)) and not Tracer.trace(held, held_high)["docks"]["W"].has("white"), "chart 117 high water covers the dock")
+
+	var mark: Dictionary = book[7]
+	var mark_start := Charts.make_state(mark, false)
+	check(str(mark_start["pieces"]["N"]["socket"]) == "side" and str(mark_start["pieces"]["G"]["socket"]) == "line", "chart 118 lintel starts in the side socket")
+	var mark_start_hit: Dictionary = Tracer.trace(mark, mark_start)
+	check(mark_start_hit["docks"]["W"].is_empty() and mark_start_hit["docks"]["Bd"].is_empty(), "chart 118 side socket misses both docks")
+	var mark_solved := Charts.make_state(mark, true)
+	check(str(mark_solved["pieces"]["N"]["socket"]) == "line" and str(mark_solved["pieces"]["G"]["socket"]) == "side", "chart 118 solution puts the lintel on the line")
+	var mark_hit: Dictionary = Tracer.trace(mark, mark_solved)
+	check(_leaves(mark_hit, 3, 3, "E", "white") and _leaves(mark_hit, 3, 3, "S", "blue") and mark_hit["docks"]["W"].has("white") and mark_hit["docks"]["Bd"].has("blue"), "chart 118 straight dry pass hits both docks")
+	var stacked := Charts.duplicate_state(mark_solved)
+	stacked["pieces"]["G"]["socket"] = "line"
+	check(not Tracer.is_cleared(mark, stacked), "chart 118 two pieces on the line do not clear")
+	var aside := Charts.duplicate_state(mark_solved)
+	aside["pieces"]["N"]["socket"] = "side"
+	aside["pieces"]["G"]["socket"] = "side"
+	check(not Tracer.is_cleared(mark, aside), "chart 118 two pieces on the side socket do not clear")
+	check(str(book[0]["teach"]).to_lower().contains("tide index 0"), "chart 111 teaches the dry tide")
+	check(str(book[1]["teach"]).to_lower().contains("shutter"), "chart 112 teaches the shutter")
+	check(str(book[2]["teach"]).to_lower().contains("red") and str(book[2]["teach"]).to_lower().contains("white"), "chart 113 teaches the kept colors")
+	check(str(book[3]["teach"]).to_lower().contains("mirror") and str(book[3]["teach"]).to_lower().contains("vane"), "chart 114 teaches the turn")
+	check(str(book[4]["teach"]).to_lower().contains("shutter"), "chart 115 teaches the shutter")
+	check(str(book[5]["teach"]).to_lower().contains("weir"), "chart 116 teaches the dry weir")
+	check(str(book[6]["teach"]).to_lower().contains("y >= 5"), "chart 117 teaches the flood line")
+	check(str(book[7]["teach"]).to_lower().contains("side socket"), "chart 118 teaches the side socket")
+
+
+func _expect_lintel_miss(index: int, piece_id: String, kind: String, rot: int, label: String) -> void:
+	var chart: Dictionary = Charts.lintel()[index]
+	_retarget(chart, piece_id, kind, rot)
+	var state := Charts.make_state(chart, true)
+	if Tracer.is_cleared(chart, state):
+		check(false, "%s clears lintel chart %d" % [label, index + 111])
+	else:
+		check(true, "%s misses lintel chart %d" % [label, index + 111])
+
+
 func test_smoke() -> void:
 	var main_script: Script = load("res://scripts/main.gd")
 	main_script.persist_progress = false
@@ -4280,7 +4528,7 @@ func test_smoke() -> void:
 	check(main.board_locked and main.unlocked[102], "holding the sluice mark opens the weir")
 	main._advance_from_win()
 	check(str(main.chart["id"]) == "103", "next chart from the sluice mark enters The East Weir")
-	check(main.weir_grid.visible and not main.sluice_grid.visible, "the weir grid opens with The East Weir")
+	check(main.weir_grid.visible and not main.sluice_grid.visible and not main.lintel_grid.visible, "the weir grid opens with The East Weir")
 	check(str(main.harbor_label.text) == Charts.WEIR, "the harbor name follows the weir")
 	check(main.raise_button.visible, "chart 103 shows the tide lever")
 	check(int(main.state["tide_index"]) == 0, "chart 103 starts at low water")
@@ -4301,21 +4549,49 @@ func test_smoke() -> void:
 	check(int(main.state["tide_index"]) == 1, "T raises the weir chart onto the flood")
 	main._on_book_pressed(13)
 	check(str(main.chart["id"]) == "103", "Weir returns to The East Weir")
-	check(main.weir_grid.visible and not main.sluice_grid.visible, "Weir shows the weir grid")
+	check(main.weir_grid.visible and not main.sluice_grid.visible and not main.lintel_grid.visible, "Weir shows the weir grid")
 	await process_frame
 	await process_frame
 	var sluice_rect: Rect2 = main.sluice_book_button.get_global_rect()
 	var weir_rect: Rect2 = main.weir_book_button.get_global_rect()
+	var lintel_rect: Rect2 = main.lintel_book_button.get_global_rect()
 	var side_rect: Rect2 = main._side.get_global_rect()
-	check(side_rect.grow(1.0).encloses(sluice_rect) and side_rect.grow(1.0).encloses(weir_rect), "the sluice and weir book buttons sit inside the side panel")
-	check(not sluice_rect.intersects(weir_rect), "the weir button does not cover the sluice button")
-	check(sluice_rect.size.x + 0.5 >= main.sluice_book_button.get_minimum_size().x and weir_rect.size.x + 0.5 >= main.weir_book_button.get_minimum_size().x, "the sluice and weir labels have room in the chart row")
+	check(side_rect.grow(1.0).encloses(sluice_rect) and side_rect.grow(1.0).encloses(weir_rect) and side_rect.grow(1.0).encloses(lintel_rect), "the sluice, weir, and lintel book buttons sit inside the side panel")
+	check(not sluice_rect.intersects(weir_rect) and not weir_rect.intersects(lintel_rect) and not sluice_rect.intersects(lintel_rect), "the lintel button does not cover the weir button")
+	check(sluice_rect.size.x + 0.5 >= main.sluice_book_button.get_minimum_size().x and weir_rect.size.x + 0.5 >= main.weir_book_button.get_minimum_size().x and lintel_rect.size.x + 0.5 >= main.lintel_book_button.get_minimum_size().x, "the sluice, weir, and lintel labels have room in the chart row")
 	main._on_book_pressed(12)
 	await process_frame
 	check(_chart_row_fits(main.sluice_grid, main._side), "the sluice chart row fits in the window")
 	main._on_book_pressed(13)
 	await process_frame
 	check(_chart_row_fits(main.weir_grid, main._side), "the weir chart row fits in the window")
+	main.unlocked[110] = false
+	main._refresh_chrome()
+	check(main.lintel_book_button.disabled, "the lintel stays locked until the weir mark is held")
+	main.unlocked[109] = true
+	check(main.select_chart(109), "chart 110 opens when unlocked")
+	check(main.lintel_book_button.disabled, "opening the weir mark does not unlock the lintel")
+	main.state = Charts.duplicate_state(Charts.make_state(main.chart, true))
+	main._refresh()
+	main.try_lock()
+	check(main.board_locked and main.unlocked[110], "holding the weir mark opens the lintel")
+	main._advance_from_win()
+	check(str(main.chart["id"]) == "111", "next chart from the weir mark enters The Dry Lintel")
+	check(main.lintel_grid.visible and not main.weir_grid.visible, "the lintel grid opens with The Dry Lintel")
+	check(str(main.harbor_label.text) == Charts.LINTEL, "the harbor name follows the lintel")
+	check(str(main.tide_readout.text).to_lower().contains("lintel"), "chart 111 names the lintel in the water readout")
+	var lintel_cell := Charts.piece_cell(main.chart, main.state, "N")
+	_click_cell(main, lintel_cell.x, lintel_cell.y, false)
+	check(str(main.selected_id) == "N", "a click selects the lintel")
+	check(int(main.state["pieces"]["N"]["rot"]) == 0, "the first click does not turn the lintel")
+	_click_cell(main, lintel_cell.x, lintel_cell.y, false)
+	check(int(main.state["pieces"]["N"]["rot"]) == 0, "a second click does not turn the lintel")
+	check(str(main.status_label.text).to_lower().contains("does not turn"), "the lintel says it does not turn")
+	main._on_book_pressed(14)
+	await process_frame
+	check(_chart_row_fits(main.lintel_grid, main._side), "the lintel chart row fits in the window")
+	main._on_book_pressed(13)
+	check(main.weir_grid.visible and not main.lintel_grid.visible, "the weir book still opens")
 	main.select_chart(0)
 	main.restart_chart()
 	var before_rot := int(main.state["pieces"]["M"]["rot"])
@@ -4398,10 +4674,11 @@ func _walk(chart: Dictionary, state: Dictionary, index: int, found: Array) -> vo
 	# A vane has four facings, the same count as a prism has faces.
 	# A sluice has four facings too. The exit follows that facing.
 	# A weir has four facings too. The exit follows that facing and swaps color.
+	# A lintel has no facing. Rotation is ignored.
 	var rots: Array = [0]
 	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir":
 		rots = [0, 90, 180, 270]
-	elif kind != "shutter" and kind != "well" and kind != "siphon":
+	elif kind != "shutter" and kind != "well" and kind != "siphon" and kind != "lintel":
 		rots = [0, 90]
 	for sock_raw in piece["sockets"]:
 		var sock: Dictionary = sock_raw
@@ -4604,6 +4881,31 @@ func _fixed_siphon(id: String, x: int, y: int) -> Dictionary:
 		"solution_socket": "a",
 		"solution_rot": 0,
 	}
+
+
+func _fixed_lintel(id: String, x: int, y: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": "Lintel",
+		"kind": "lintel",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": 0,
+		"solution_socket": "a",
+		"solution_rot": 0,
+	}
+
+
+func _lintel_row(count: int) -> Dictionary:
+	var chart := _blank(count + 2, 1)
+	chart["lanterns"] = [_lamp("L", 0, 0, "E", "white")]
+	chart["docks"] = [_need("D", count + 1, 0, "white")]
+	var pieces: Array = []
+	for x in range(1, count + 1):
+		pieces.append(_fixed_lintel("N%d" % x, x, 0))
+	chart["pieces"] = pieces
+	return chart
 
 
 func _fixed_weir(id: String, x: int, y: int, rot: int) -> Dictionary:
