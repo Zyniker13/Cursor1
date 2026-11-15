@@ -45,6 +45,7 @@ var relic_label: Label
 var encounter_label: Label
 var desk_label: Label
 var shift_button: Button
+var closing_button: Button
 var name_label: Label
 var rule_label: Label
 var meta_label: Label
@@ -176,6 +177,9 @@ func _build_traveler() -> Control:
 	shift_button = _button("Late shift")
 	shift_button.pressed.connect(_toggle_shift)
 	header.add_child(shift_button)
+	closing_button = _button("Closing bell")
+	closing_button.pressed.connect(_toggle_closing)
+	header.add_child(closing_button)
 	header.add_child(_spacer())
 	relic_label = _label("Relic: none", 16, INK)
 	header.add_child(relic_label)
@@ -379,6 +383,17 @@ func _begin_first_bell() -> void:
 	_open_shift(Rules.SHIFT_FIRST, state.seed)
 
 
+func _toggle_closing() -> void:
+	var next := Rules.SHIFT_CLOSING
+	if state.shift == Rules.SHIFT_CLOSING:
+		next = Rules.SHIFT_FIRST
+	_open_shift(next, _parse_seed())
+
+
+func _begin_closing_bell() -> void:
+	_open_shift(Rules.SHIFT_CLOSING, state.seed)
+
+
 func _open_shift(shift_index: int, seed_value: int) -> void:
 	state = Rules.new_run(seed_value, shift_index)
 	seed_edit.text = str(state.seed)
@@ -427,6 +442,7 @@ func _refresh_ui() -> void:
 	desk_label.text = "%s · border desk" % Rules.shift_label(state)
 	encounter_label.text = "Encounter %d of %d" % [int(state.traveler_index) + 1, Rules.roster_size(state)]
 	shift_button.text = "First bell" if state.shift == Rules.SHIFT_LATE else "Late shift"
+	closing_button.text = "First bell" if state.shift == Rules.SHIFT_CLOSING else "Closing bell"
 	name_label.text = String(traveler["name"])
 	rule_label.text = "\"%s\"" % traveler["rule_text"]
 	var lane := String(Rules.COL_NAMES[int(traveler["lane"])])
@@ -560,9 +576,24 @@ func _fill_modal() -> void:
 			modal_box.add_child(button)
 		_add_modal_restarts()
 	elif state.phase == "victory":
-		if state.shift == Rules.SHIFT_LATE:
+		if state.shift == Rules.SHIFT_CLOSING:
+			modal_box.add_child(_label("The closing bell is clear", 32, TEXT))
+			modal_box.add_child(_wrapped("Moss Quen, Kel Breck, Tansy Pell, and Lumen Peck passed the desk. Restart this night to run the seed again, or open another bell.", 18, MUTED))
+			var restart_closing := _button("Restart act")
+			restart_closing.pressed.connect(_restart_act)
+			modal_box.add_child(restart_closing)
+			var back_late := _button("Open the late shift")
+			back_late.pressed.connect(_begin_late_shift)
+			modal_box.add_child(back_late)
+			var back_first := _button("Open the first bell")
+			back_first.pressed.connect(_begin_first_bell)
+			modal_box.add_child(back_first)
+		elif state.shift == Rules.SHIFT_LATE:
 			modal_box.add_child(_label("The late shift is clear", 32, TEXT))
-			modal_box.add_child(_wrapped("Nell Parr, Sol Wicks, Pim Larke, and Rue Calder passed the desk. Restart this night to run the seed again, or open the first bell.", 18, MUTED))
+			modal_box.add_child(_wrapped("Nell Parr, Sol Wicks, Pim Larke, and Rue Calder passed the desk. The closing bell is a third night: the same stamps, a fresh deck, and four new forms.", 18, MUTED))
+			var closing := _button("Begin the closing bell")
+			closing.pressed.connect(_begin_closing_bell)
+			modal_box.add_child(closing)
 			var restart_night := _button("Restart act")
 			restart_night.pressed.connect(_restart_act)
 			modal_box.add_child(restart_night)
@@ -571,10 +602,13 @@ func _fill_modal() -> void:
 			modal_box.add_child(first)
 		else:
 			modal_box.add_child(_label("Act 1 is clear", 32, TEXT))
-			modal_box.add_child(_wrapped("Four travelers passed the desk. The late shift is a second night: the same stamps, a fresh deck, and four new forms.", 18, MUTED))
+			modal_box.add_child(_wrapped("Four travelers passed the desk. The late shift is a second night: the same stamps, a fresh deck, and four new forms. The closing bell is the third night.", 18, MUTED))
 			var late := _button("Begin the late shift")
 			late.pressed.connect(_begin_late_shift)
 			modal_box.add_child(late)
+			var open_closing := _button("Open the closing bell")
+			open_closing.pressed.connect(_begin_closing_bell)
+			modal_box.add_child(open_closing)
 			var button := _button("Restart act")
 			button.pressed.connect(_restart_act)
 			modal_box.add_child(button)

@@ -3,9 +3,9 @@ extends RefCounted
 # Lowball — sport model
 #
 # Lowball is an invented three-inning bat-and-ball sport. It is not baseball,
-# cricket, or any real league. This slice has two fictional clubs in the town
-# of Lumen Quay: Lumen Reedmice and Southspur Glass. Players are generated.
-# Nothing here is a real club, crest, or athlete.
+# cricket, or any real league. This slice has three fictional clubs in the town
+# of Lumen Quay: Lumen Reedmice, Southspur Glass, and Pellwick Cinders. Players
+# are generated. Nothing here is a real club, crest, or athlete.
 #
 # A match
 #   * 3 innings. Each inning has a top half and a bottom half.
@@ -32,16 +32,26 @@ extends RefCounted
 #
 # Training
 #   * Before a week the club picks one stat as the focus.
-#   * After that week's match, every player on the roster gains TRAINING_GAIN
-#     (+1) in that stat. The result is clamped to STAT_CAP. Stats never fall
-#     below STAT_FLOOR. Eight weeks means eight drills. The same focus each
-#     week takes a generated 15 to the cap of 20, and a stat already at 20
-#     stays at 20.
+#   * After the week, every player on the roster gains TRAINING_GAIN (+1) in
+#     that stat, whether or not the club played. The result is clamped to
+#     STAT_CAP. Stats never fall below STAT_FLOOR. Eight weeks means eight
+#     drills. The same focus each week takes a generated 15 to the cap of 20,
+#     and a stat already at 20 stays at 20.
 #
 # Series
-#   * Eight match weeks. The two clubs play each other once a week.
-#   * The board goal is 4 wins out of those 8 matches. GOAL_TEXT states that
-#     goal on the office screen from the start and again on the board.
+#   * Eight weeks, one match a week, three clubs. The two clubs in the fixture
+#     play. The club left out has the bye.
+#   * Weeks 1-3 are a round-robin. Weeks 4-6 are the same pairings with home
+#     reversed. Weeks 7-8 repeat the first two fixtures. ROUND_ROBIN is that
+#     list. Home is the first index and bats in the bottom half.
+#   * The office shows the whole schedule from week 1, including the bye, so
+#     the round-robin can be followed before any match is played.
+#   * The board goal is a better points-per-game than both other clubs. A win
+#     is WIN_POINTS (2) and a tie is TIE_POINTS (1). An equal rate is not
+#     ahead. GOAL_TEXT states that on the office from the start and on the board.
+#   * An AI club's tactic is TACTICS[(week + club index) % 3]. Two AI clubs
+#     in the same match therefore post different tactics. Training is still
+#     the stat with the lowest roster total.
 #
 # Tactics (one per club per match, used on offense and on defense)
 #   * Aggressive: Lash +3 and Eye -2 for the zone weights. The drive contests
@@ -90,8 +100,26 @@ extends RefCounted
 #   "c", and the closed joins were checked against a blocklist (see tests).
 
 const TOWN := "Lumen Quay"
+const CLUB_NAMES: Array = ["Lumen Reedmice", "Southspur Glass", "Pellwick Cinders"]
 const PLAYER_CLUB := "Lumen Reedmice"
 const OPPONENT_CLUB := "Southspur Glass"
+const THIRD_CLUB := "Pellwick Cinders"
+const PLAYER_INDEX := 0
+const CLUB_COUNT := 3
+
+# Home index, then away index. Home bats in the bottom half.
+# Weeks 1-3: one full round-robin. Weeks 4-6: the same pairs, home reversed.
+# Weeks 7-8: the first two fixtures again. One club has the bye each week.
+const ROUND_ROBIN: Array = [
+	[0, 1],
+	[2, 0],
+	[1, 2],
+	[1, 0],
+	[0, 2],
+	[2, 1],
+	[0, 1],
+	[2, 0],
+]
 
 const STAT_FLOOR := 1
 const STAT_CAP := 20
@@ -102,10 +130,12 @@ const ROSTER_SIZE := 6
 const LINEUP_SIZE := 4
 const INNINGS := 3
 const SERIES_WEEKS := 8
-const GOAL_WINS := 4
 const PAS_PER_MATCH := INNINGS * 2 * LINEUP_SIZE
+const WIN_POINTS := 2
+const TIE_POINTS := 1
 
-const GOAL_TEXT := "Board goal: win at least 4 of these 8 matches."
+const GOAL_TEXT := "Board goal: finish with a better points-per-game than both other clubs. A win is 2 points and a tie is 1."
+const SCHEDULE_TEXT := "Eight weeks, one match a week. Two full round-robins, then the first two weeks of a third. The club left out has the bye. Home is listed first and bats second."
 
 const STATS: Array = ["lash", "eye", "legs", "glove", "arm", "read"]
 const TACTICS: Array = ["aggressive", "patient", "field"]
@@ -241,25 +271,35 @@ static func create_clubs(series_seed: int) -> Dictionary:
 		for key in STATS:
 			stats[key] = rng.randi_range(GEN_MIN, GEN_MAX)
 		lines.append(stats)
-	var opponent_lines: Array = []
-	for stats in lines:
-		var copy := {}
-		for key in STATS:
-			copy[key] = int(stats[key])
-		opponent_lines.append(copy)
-	_shuffle(rng, opponent_lines)
+	# Every club is dealt the same stat lines. Later clubs are shuffled copies
+	# so no club is generated stronger than another, and none share objects.
+	var sheets: Array = [lines]
+	for _club in CLUB_COUNT - 1:
+		var copy_lines: Array = []
+		for stats in lines:
+			var copy := {}
+			for key in STATS:
+				copy[key] = int(stats[key])
+			copy_lines.append(copy)
+		_shuffle(rng, copy_lines)
+		sheets.append(copy_lines)
 	var used := {}
-	var player_roster: Array = []
-	var opponent_roster: Array = []
+	var rosters: Array = []
+	for _club in CLUB_COUNT:
+		rosters.append([])
 	for i in ROSTER_SIZE:
-		player_roster.append(make_player(_unique_name(rng, used), lines[i]))
-		opponent_roster.append(make_player(_unique_name(rng, used), opponent_lines[i]))
+		for club_index in CLUB_COUNT:
+			rosters[club_index].append(make_player(_unique_name(rng, used), sheets[club_index][i]))
 	return {
 		"town": TOWN,
+		"clubs": CLUB_NAMES.duplicate(),
+		"rosters": rosters,
 		"player_club": PLAYER_CLUB,
 		"opponent_club": OPPONENT_CLUB,
-		"player_roster": player_roster,
-		"opponent_roster": opponent_roster,
+		"third_club": THIRD_CLUB,
+		"player_roster": rosters[0],
+		"opponent_roster": rosters[1],
+		"third_roster": rosters[2],
 	}
 
 
@@ -345,8 +385,8 @@ static func _better_index(roster: Array, i: int, j: int, tactic: String) -> bool
 	return i < j
 
 
-static func opponent_plan(roster: Array, week: int) -> Dictionary:
-	var tactic: String = TACTICS[week % TACTICS.size()]
+static func opponent_plan(roster: Array, week: int, club_index: int = 0) -> Dictionary:
+	var tactic: String = TACTICS[(week + club_index) % TACTICS.size()]
 	var order: Array = []
 	for i in roster.size():
 		order.append(i)
@@ -371,6 +411,117 @@ static func opponent_plan(roster: Array, week: int) -> Dictionary:
 			best_sum = total
 			focus = key
 	return {"tactic": tactic, "lineup": lineup, "training": focus}
+
+
+static func fixture(week: int) -> Dictionary:
+	var pair: Array = ROUND_ROBIN[week]
+	var home := int(pair[0])
+	var away := int(pair[1])
+	var bye := -1
+	for club_index in CLUB_COUNT:
+		if club_index != home and club_index != away:
+			bye = club_index
+	return {
+		"home": home,
+		"away": away,
+		"bye": bye,
+		"home_club": str(CLUB_NAMES[home]),
+		"away_club": str(CLUB_NAMES[away]),
+		"bye_club": str(CLUB_NAMES[bye]),
+	}
+
+
+static func empty_table() -> Array:
+	var rows: Array = []
+	for club_index in CLUB_COUNT:
+		rows.append({
+			"index": club_index,
+			"club": str(CLUB_NAMES[club_index]),
+			"wins": 0,
+			"losses": 0,
+			"ties": 0,
+			"points": 0,
+			"played": 0,
+		})
+	return rows
+
+
+static func apply_result_to_table(rows: Array, home_index: int, away_index: int, home_score: int, away_score: int) -> void:
+	var home: Dictionary = rows[home_index]
+	var away: Dictionary = rows[away_index]
+	home["played"] = int(home["played"]) + 1
+	away["played"] = int(away["played"]) + 1
+	if home_score > away_score:
+		home["wins"] = int(home["wins"]) + 1
+		home["points"] = int(home["points"]) + WIN_POINTS
+		away["losses"] = int(away["losses"]) + 1
+	elif away_score > home_score:
+		away["wins"] = int(away["wins"]) + 1
+		away["points"] = int(away["points"]) + WIN_POINTS
+		home["losses"] = int(home["losses"]) + 1
+	else:
+		home["ties"] = int(home["ties"]) + 1
+		away["ties"] = int(away["ties"]) + 1
+		home["points"] = int(home["points"]) + TIE_POINTS
+		away["points"] = int(away["points"]) + TIE_POINTS
+
+
+static func table_from_results(results: Array) -> Array:
+	var rows := empty_table()
+	for result in results:
+		apply_result_to_table(
+			rows,
+			int(result["home_index"]),
+			int(result["away_index"]),
+			int(result["home_score"]),
+			int(result["away_score"])
+		)
+	return rows
+
+
+# Positive when the first row has the better points-per-game.
+# Clubs that have not played rank below clubs that have.
+static func compare_rows(a: Dictionary, b: Dictionary) -> int:
+	var a_played := int(a["played"])
+	var b_played := int(b["played"])
+	var a_points := int(a["points"])
+	var b_points := int(b["points"])
+	if a_played == 0 and b_played == 0:
+		return 0
+	if a_played == 0:
+		return -1
+	if b_played == 0:
+		return 1
+	return a_points * b_played - b_points * a_played
+
+
+static func ranks_ahead(a: Dictionary, b: Dictionary) -> bool:
+	return compare_rows(a, b) > 0
+
+
+static func sorted_table(rows: Array) -> Array:
+	var copy: Array = rows.duplicate(true)
+	for i in copy.size():
+		var best: int = i
+		for j in range(i + 1, copy.size()):
+			var cmp := compare_rows(copy[j], copy[best])
+			if cmp > 0 or (cmp == 0 and int(copy[j]["index"]) < int(copy[best]["index"])):
+				best = j
+		if best != i:
+			var tmp = copy[i]
+			copy[i] = copy[best]
+			copy[best] = tmp
+	return copy
+
+
+static func goal_reached(rows: Array) -> bool:
+	var player: Dictionary = rows[PLAYER_INDEX]
+	for club_index in CLUB_COUNT:
+		if club_index == PLAYER_INDEX:
+			continue
+		if not ranks_ahead(player, rows[club_index]):
+			return false
+	return true
 
 
 static func match_seed_for(series_seed: int, week: int) -> int:
