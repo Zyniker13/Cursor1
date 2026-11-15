@@ -7,7 +7,7 @@ const DIRS: Array[Vector2i] = [
 	Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, -1)
 ]
 const DIR_NAMES: Array[String] = ["East", "South", "West", "North"]
-const TYPES: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter"]
+const TYPES: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer"]
 const PAINTS: Array[String] = ["red", "blue", "yellow"]
 const TICK_CAP := 250
 
@@ -58,7 +58,7 @@ static func run(puzzle: Dictionary, graph: Array) -> Dictionary:
 		if walls.has(key) or source_cells.has(key) or Vector2i(x, y) == dock:
 			return _finish(false, 0, graph.size(), "invalid", 0, [], [])
 		var color := str(raw.get("color", ""))
-		if (typ == "painter" or typ == "filter") and not PAINTS.has(color):
+		if (typ == "painter" or typ == "filter" or typ == "primer") and not PAINTS.has(color):
 			return _finish(false, 0, graph.size(), "invalid", 0, [], [])
 		blocks[key] = {
 			"type": typ,
@@ -85,6 +85,8 @@ static func run(puzzle: Dictionary, graph: Array) -> Dictionary:
 			if block == null:
 				continue
 			if str(block["type"]) == "painter":
+				parcel["color"] = str(block["color"])
+			elif str(block["type"]) == "primer" and str(parcel["color"]) == "gray":
 				parcel["color"] = str(block["color"])
 			elif str(block["type"]) == "counter" and not bool(parcel["counted"]):
 				block["value"] = int(block["value"]) + 1
