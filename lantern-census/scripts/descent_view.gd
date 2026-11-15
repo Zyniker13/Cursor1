@@ -219,6 +219,10 @@ func _draw_view(view: Rect2) -> void:
 			col = Color(0.30, 0.28, 0.26)
 		elif state.floor.id == "clockroom":
 			col = Color(0.24, 0.14, 0.07)
+		elif state.floor.id == "font":
+			col = Color(0.55, 0.58, 0.50)
+		elif state.floor.id == "apse":
+			col = Color(0.72, 0.67, 0.55)
 		if glyph == "*":
 			col = Color(0.14, 0.38, 0.42)
 		elif glyph == "+":
@@ -243,10 +247,14 @@ func _draw_view(view: Rect2) -> void:
 			col = Color(0.80, 0.50, 0.22)
 		elif glyph == "K":
 			col = Color(0.93, 0.90, 0.78)
+		elif glyph == "N":
+			col = Color(0.14, 0.16, 0.15)
+		elif glyph == "A":
+			col = Color(0.93, 0.90, 0.82)
 		col *= shade
 		if int(hit.side) == 1:
 			col *= 0.74
-		if glyph != "*" and glyph != "+" and glyph != "=" and glyph != "x" and glyph != "R" and glyph != "B" and glyph != "W" and glyph != "D" and glyph != "P" and glyph != "T" and glyph != "Y" and glyph != "K" and (cell.x + cell.y) % 2 == 0:
+		if glyph != "*" and glyph != "+" and glyph != "=" and glyph != "x" and glyph != "R" and glyph != "B" and glyph != "W" and glyph != "D" and glyph != "P" and glyph != "T" and glyph != "Y" and glyph != "K" and glyph != "N" and glyph != "A" and (cell.x + cell.y) % 2 == 0:
 			if state.floor.id == "cloister":
 				col = col.lerp(Color(0.42, 0.34, 0.22), 0.22)
 			elif state.floor.id == "crypt":
@@ -269,6 +277,10 @@ func _draw_view(view: Rect2) -> void:
 				col = col.lerp(Color(0.10, 0.09, 0.08), 0.22)
 			elif state.floor.id == "clockroom":
 				col = col.lerp(Color(0.08, 0.04, 0.02), 0.22)
+			elif state.floor.id == "font":
+				col = col.lerp(Color(0.32, 0.36, 0.28), 0.22)
+			elif state.floor.id == "apse":
+				col = col.lerp(Color(0.50, 0.44, 0.34), 0.22)
 			else:
 				col = col.lerp(Color(0.32, 0.20, 0.14), 0.22)
 		var wall_x := origin.y + dist * ray.y if int(hit.side) == 0 else origin.x + dist * ray.x
@@ -365,6 +377,16 @@ func _draw_sky_floor(view: Rect2) -> void:
 		sky_lo = Color(0.28, 0.16, 0.08)
 		ground_hi = Color(0.06, 0.04, 0.02)
 		ground_lo = Color(0.22, 0.12, 0.06)
+	elif state.floor.id == "font":
+		sky_hi = Color(0.05, 0.07, 0.05)
+		sky_lo = Color(0.22, 0.26, 0.18)
+		ground_hi = Color(0.06, 0.07, 0.05)
+		ground_lo = Color(0.26, 0.28, 0.18)
+	elif state.floor.id == "apse":
+		sky_hi = Color(0.09, 0.08, 0.06)
+		sky_lo = Color(0.34, 0.30, 0.22)
+		ground_hi = Color(0.10, 0.09, 0.07)
+		ground_lo = Color(0.40, 0.36, 0.26)
 	for i in bands:
 		var t := float(i) / float(bands)
 		var sky := sky_hi.lerp(sky_lo, t)
@@ -432,6 +454,10 @@ func _draw_sprites(view: Rect2, origin: Vector2, dir: Vector2, plane: Vector2, z
 		hazard_kind = "bell"
 	elif state.floor.id == "clockroom":
 		hazard_kind = "clock"
+	elif state.floor.id == "font":
+		hazard_kind = "font"
+	elif state.floor.id == "apse":
+		hazard_kind = "apse"
 	for hazard in Rules.hazard_cells(state.floor):
 		items.append({"pos": hazard, "kind": hazard_kind})
 	var drawn: Array = []
@@ -541,6 +567,14 @@ func _sprite_column(view: Rect2, column: int, col_w: float, top: float, sprite_h
 			if u > 0.22 and u < 0.78:
 				slices.append([0.62, 0.70, Color(0.86, 0.72, 0.32)])
 				slices.append([0.76, 0.84, Color(0.52, 0.38, 0.14)])
+		"font":
+			if u > 0.22 and u < 0.78:
+				slices.append([0.62, 0.70, Color(0.80, 0.92, 0.48)])
+				slices.append([0.76, 0.84, Color(0.40, 0.52, 0.18)])
+		"apse":
+			if u > 0.22 and u < 0.78:
+				slices.append([0.62, 0.70, Color(0.98, 0.84, 0.36)])
+				slices.append([0.76, 0.84, Color(0.70, 0.48, 0.12)])
 		"hazard":
 			if u > 0.22 and u < 0.78:
 				slices.append([0.62, 0.70, Color(0.72, 0.34, 0.14)])
@@ -618,6 +652,10 @@ func _draw_sheet(sheet: Rect2) -> void:
 		legend = "Square wall    dot corridor    triangle bell"
 	elif state.floor.id == "clockroom":
 		legend = "Square wall    dot corridor    triangle clock"
+	elif state.floor.id == "font":
+		legend = "Square wall    dot corridor    triangle font"
+	elif state.floor.id == "apse":
+		legend = "Square wall    dot corridor    triangle apse"
 	draw_string(_font, Vector2(sheet.position.x + 16, legend_y), legend, HORIZONTAL_ALIGNMENT_LEFT, sheet.size.x - 32, 14, INK)
 	var swing_note := "Ring is the swing, not ink. Hood is the warden."
 	if state.floor.id == "cistern":
@@ -709,6 +747,10 @@ func _draw_hud(hud: Rect2) -> void:
 			lines.append("You are standing on a bell crack.")
 		elif state.floor.id == "clockroom":
 			lines.append("You are standing on a clock crack.")
+		elif state.floor.id == "font":
+			lines.append("You are standing on a font crack.")
+		elif state.floor.id == "apse":
+			lines.append("You are standing on an apse crack.")
 		else:
 			lines.append("You are standing on a hazard crack.")
 	var y := hud.position.y + 46
