@@ -15,6 +15,7 @@ const Tide = preload("res://scripts/tide_ledger.gd")
 const Night = preload("res://scripts/night_bell.gd")
 const Salt = preload("res://scripts/salt_mark.gd")
 const Wick = preload("res://scripts/wick_trim.gd")
+const Anneal = preload("res://scripts/glass_anneal.gd")
 const Catalog = preload("res://scripts/catalog.gd")
 const Solver = preload("res://scripts/solver.gd")
 const Verdict = preload("res://scripts/verdict.gd")
@@ -48,6 +49,8 @@ const SALT_TIMELINE := "Holt (salt hand) scored the salt mark at 19 from the cis
 const SALT_TRUE := {"who": "Holt", "place": "pan", "hour": "19"}
 const WICK_TIMELINE := "Quin (wick hand) trimmed the wick in the loft at 4, seen from the gallery, so the lamp would hold through the fog.\nMara (oil hand) filled the lamp oil at 2 in the stair.\nSable (lamp watch) kept the lamp watch at 3 in the gallery.\nThe snuffer was hung in the stair.\nThe gallery lamp was lit at 5.\nThe stair lamp was put out at 6."
 const WICK_TRUE := {"who": "Quin", "place": "loft", "hour": "4"}
+const ANNEAL_TIMELINE := "Tess (anneal hand) annealed the gather in the lehr at 10, seen from the marver, so the pane would cool without a crack.\nIvo (gatherer) gathered the glass in the pot, and the pot was charged at 8.\nWynn (marver hand) smoothed the shoulder at 9 on the marver.\nThe pontil was rested in the pot.\nThe marver was cleared at 11.\nThe lehr was latched at 12."
+const ANNEAL_TRUE := {"who": "Tess", "place": "lehr", "hour": "10"}
 
 var _failures: Array[String] = []
 var _checks := 0
@@ -144,6 +147,12 @@ func _initialize() -> void:
 	_test_wick_only_true_theory()
 	_test_wick_near_misses()
 	_test_wick_incomplete()
+	_test_anneal_file_shape()
+	_test_anneal_unique_model()
+	_test_anneal_each_exhibit_necessary()
+	_test_anneal_only_true_theory()
+	_test_anneal_near_misses()
+	_test_anneal_incomplete()
 	_test_solutions_differ()
 	_test_menu_opens_either_case()
 	if _failures.is_empty():
@@ -3365,6 +3374,291 @@ func _test_wick_incomplete() -> void:
 	print("wick incomplete submissions refused with the missing slot")
 
 
+func _test_anneal_file_shape() -> void:
+	_expect(Anneal.EXHIBITS.size() == 9, "anneal exhibit count is %d" % Anneal.EXHIBITS.size())
+	_expect(Anneal.PEOPLE.size() == 3, "anneal cast should be three people")
+	_expect(Anneal.PLACES.size() == 3, "anneal room count is %d" % Anneal.PLACES.size())
+	_expect(Anneal.HOURS.size() == 5, "anneal hour list length is %d" % Anneal.HOURS.size())
+	_expect(Anneal.TITLE == "The glass anneal", "anneal title")
+	_expect(Anneal.TITLE != CaseData.TITLE and Anneal.TITLE != Rehearsal.TITLE and Anneal.TITLE != Gilt.TITLE and Anneal.TITLE != Ferry.TITLE and Anneal.TITLE != Weather.TITLE and Anneal.TITLE != Loom.TITLE and Anneal.TITLE != Hive.TITLE and Anneal.TITLE != Glass.TITLE and Anneal.TITLE != Press.TITLE and Anneal.TITLE != Assay.TITLE and Anneal.TITLE != Kiln.TITLE and Anneal.TITLE != Tide.TITLE and Anneal.TITLE != Night.TITLE and Anneal.TITLE != Salt.TITLE and Anneal.TITLE != Wick.TITLE, "anneal shares a title")
+	_expect(Anneal.FILE_CODE == "CW-16", "anneal file code")
+	_expect(Anneal.FILE_CODE != CaseData.FILE_CODE and Anneal.FILE_CODE != Rehearsal.FILE_CODE and Anneal.FILE_CODE != Gilt.FILE_CODE and Anneal.FILE_CODE != Ferry.FILE_CODE and Anneal.FILE_CODE != Weather.FILE_CODE and Anneal.FILE_CODE != Loom.FILE_CODE and Anneal.FILE_CODE != Hive.FILE_CODE and Anneal.FILE_CODE != Glass.FILE_CODE and Anneal.FILE_CODE != Press.FILE_CODE and Anneal.FILE_CODE != Assay.FILE_CODE and Anneal.FILE_CODE != Kiln.FILE_CODE and Anneal.FILE_CODE != Tide.FILE_CODE and Anneal.FILE_CODE != Night.FILE_CODE and Anneal.FILE_CODE != Salt.FILE_CODE and Anneal.FILE_CODE != Wick.FILE_CODE, "anneal shares a file code")
+	_expect(Anneal.HOURS[Anneal.HOURS.size() / 2] == ANNEAL_TRUE["hour"], "glass anneal should be the middle hour")
+	_expect(Anneal.HOURS[0] != ANNEAL_TRUE["hour"], "glass anneal should not be the earliest hour")
+	_expect(Anneal.HOURS[Anneal.HOURS.size() - 1] != ANNEAL_TRUE["hour"], "glass anneal should not be the latest hour")
+	var counts := _player_pin_counts(Anneal)
+	_expect(int(counts["taker"]) == 3 and int(counts["place"]) == 3 and int(counts["hour"]) == 3, "anneal pin counts are %s" % str(counts))
+	_expect(counts != _player_pin_counts(CaseData), "anneal copied the spare-key pin pattern")
+	_expect(counts != _player_pin_counts(Rehearsal), "anneal copied the rehearsal pin pattern")
+	_expect(counts != _player_pin_counts(Gilt), "anneal copied the gilt pin pattern")
+	_expect(counts != _player_pin_counts(Ferry), "anneal copied the ferry pin pattern")
+	_expect(counts != _player_pin_counts(Weather), "anneal copied the weather pin pattern")
+	_expect(counts != _player_pin_counts(Loom), "anneal copied the loom pin pattern")
+	_expect(counts != _player_pin_counts(Hive), "anneal copied the hive pin pattern")
+	_expect(counts != _player_pin_counts(Glass), "anneal copied the glass pin pattern")
+	_expect(counts != _player_pin_counts(Press), "anneal copied the press pin pattern")
+	_expect(counts != _player_pin_counts(Assay), "anneal copied the assay pin pattern")
+	_expect(counts == _player_pin_counts(Kiln), "glass anneal should keep the kiln chalk pin rhythm")
+	_expect(counts == _player_pin_counts(Tide), "glass anneal should keep the tide ledger pin rhythm")
+	_expect(counts == _player_pin_counts(Night), "glass anneal should keep the night bell pin rhythm")
+	_expect(counts == _player_pin_counts(Salt), "glass anneal should keep the salt mark pin rhythm")
+	_expect(counts == _player_pin_counts(Wick), "glass anneal should keep the wick trim pin rhythm")
+	_expect(_field_key(Anneal) != _field_key(CaseData), "anneal copied the spare-key timeline fields")
+	_expect(_field_key(Anneal) != _field_key(Rehearsal), "anneal copied the rehearsal timeline fields")
+	_expect(_field_key(Anneal) != _field_key(Gilt), "anneal copied the gilt timeline fields")
+	_expect(_field_key(Anneal) != _field_key(Ferry), "anneal copied the ferry timeline fields")
+	_expect(_field_key(Anneal) != _field_key(Weather), "anneal copied the weather timeline fields")
+	_expect(_field_key(Anneal) != _field_key(Loom), "anneal copied the loom timeline fields")
+	_expect(_field_key(Anneal) != _field_key(Hive), "anneal copied the hive timeline fields")
+	_expect(_field_key(Anneal) != _field_key(Glass), "anneal copied the glass timeline fields")
+	_expect(_field_key(Anneal) != _field_key(Press), "anneal copied the press timeline fields")
+	_expect(_field_key(Anneal) != _field_key(Assay), "anneal copied the assay timeline fields")
+	_expect(_field_key(Anneal) != _field_key(Kiln), "anneal copied the kiln timeline fields")
+	_expect(_field_key(Anneal) != _field_key(Tide), "anneal copied the tide timeline fields")
+	_expect(_field_key(Anneal) != _field_key(Night), "anneal copied the night timeline fields")
+	_expect(_field_key(Anneal) != _field_key(Salt), "anneal copied the salt timeline fields")
+	_expect(_field_key(Anneal) != _field_key(Wick), "anneal copied the wick timeline fields")
+	var seen := {}
+	var stated := {}
+	var paired_hidden := 0
+	for exhibit in Anneal.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		_expect(not seen.has(exhibit_id), "duplicate anneal id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		var states_player_pin := false
+		var states_unique := false
+		var player_literals := 0
+		var hidden_literals := 0
+		for literal in exhibit["literals"]:
+			stated[str(literal["value"])] = true
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Anneal.PLAYER_FIELDS:
+				states_player_pin = true
+				player_literals += 1
+				var expected := Anneal.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Anneal.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats >= 2, "%s states %s once" % [exhibit_id, field])
+			else:
+				hidden_literals += 1
+				var owners := 0
+				for other in Anneal.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		if hidden_literals == 2:
+			paired_hidden += 1
+		else:
+			_expect(hidden_literals == 1, "%s states %d hidden facts" % [exhibit_id, hidden_literals])
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(player_literals == 1, "%s states %d player pins" % [exhibit_id, player_literals])
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+	_expect(paired_hidden == 2, "anneal should have two slips with two hidden facts, found %d" % paired_hidden)
+	for hour in Anneal.HOURS:
+		_expect(stated.has(hour), "anneal hour %s is absent from the exhibits" % hour)
+
+
+func _test_anneal_unique_model() -> void:
+	var models := Solver.enumerate(Anneal.EXHIBITS, Anneal)
+	print("anneal models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one anneal model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Tess", "anneal taker")
+	_expect(str(model["place"]) == "lehr", "anneal place")
+	_expect(str(model["hour"]) == "10", "anneal hour")
+	_expect(str(model["gatherer"]) == "Ivo", "anneal gatherer")
+	_expect(str(model["gather_place"]) == "pot", "anneal gather place")
+	_expect(str(model["charge_hour"]) == "8", "anneal charge hour")
+	_expect(str(model["smoother"]) == "Wynn", "anneal smoother")
+	_expect(str(model["smooth_hour"]) == "9", "anneal smooth hour")
+	_expect(str(model["view_place"]) == "marver", "anneal seen from")
+	_expect(str(model["purpose"]) == "cool_pane", "anneal purpose")
+	_expect(str(model["smooth_place"]) == "marver", "anneal smooth place")
+	_expect(str(model["pontil_place"]) == "pot", "anneal pontil place")
+	_expect(str(model["clear_hour"]) == "11", "anneal clear hour")
+	_expect(str(model["latch_hour"]) == "12", "anneal latch hour")
+	for hour in Anneal.HOURS:
+		var used := false
+		for field in Anneal.fields():
+			if str(model[field]) == hour:
+				used = true
+		_expect(used, "anneal hour %s is blank in the true timeline" % hour)
+	for place in Anneal.PLACES:
+		var place_used := false
+		for field in Anneal.fields():
+			if str(model[field]) == place:
+				place_used = true
+		_expect(place_used, "anneal room %s is blank in the true timeline" % place)
+	for person in Anneal.PEOPLE:
+		var person_used := false
+		for field in Anneal.fields():
+			if str(model[field]) == person:
+				person_used = true
+		_expect(person_used, "anneal person %s is blank in the true timeline" % person)
+	_expect(Anneal.timeline(model) == ANNEAL_TIMELINE, "anneal timeline drifted:\n%s" % Anneal.timeline(model))
+	for exhibit in Anneal.EXHIBITS:
+		_expect(Anneal.holds(exhibit, model), "%s rejects the anneal timeline" % exhibit["id"])
+
+
+func _test_anneal_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Anneal.EXHIBITS, Anneal)
+	for exhibit in Anneal.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Anneal.without(exhibit_id), Anneal)
+		print("anneal without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "anneal %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Anneal.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "anneal %s removal did not admit a timeline it forbids" % exhibit_id)
+
+
+func _test_anneal_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	for who in Anneal.PEOPLE:
+		for place in Anneal.PLACES:
+			for hour in Anneal.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == ANNEAL_TRUE["who"] and place == ANNEAL_TRUE["place"] and hour == ANNEAL_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Anneal)
+					print("anneal true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true anneal theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "anneal acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(ANNEAL_TIMELINE) >= 0, "anneal acceptance should give the timeline")
+					_expect(str(result["message"]).find("Tess") >= 0, "anneal acceptance omits Tess")
+					_expect(str(result["message"]).find("lehr") >= 0, "anneal acceptance omits the lehr")
+					_expect(str(result["message"]).find("10") >= 0, "anneal acceptance omits 10")
+					_expect(str(result["message"]).find("so the pane would cool without a crack") >= 0, "anneal acceptance omits the crack")
+					_expect(Anneal.conflicting_ids(theory).is_empty(), "true anneal theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Anneal)
+					rejected += 1
+	for outsider in ["Quin", "Mara", "Sable", "Holt", "Lin", "Opal", "Nell", "Nessa", "Quill", "Pim"]:
+		_expect_rejected({"who": outsider, "place": "lehr", "hour": "10"}, Anneal)
+	print("anneal theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d anneal theories" % accepted)
+	_expect(rejected >= 2, "rejected %d anneal theories" % rejected)
+
+
+func _test_anneal_near_misses() -> void:
+	var misses := [
+		{"who": "Tess", "place": "lehr", "hour": "11", "titles": ["Shoulder leaf", "Crack note", "Latch order"]},
+		{"who": "Tess", "place": "lehr", "hour": "9", "titles": ["Shoulder leaf", "Crack note", "Latch order"]},
+		{"who": "Tess", "place": "marver", "hour": "10", "titles": ["Lehr slate", "Shoulder card", "Charge slip"]},
+		{"who": "Ivo", "place": "lehr", "hour": "10", "titles": ["Gather note", "Bench pane", "Iron rest"]},
+	]
+	var wrong_hour_in_lehr := 0
+	var wrong_place_at_hour := 0
+	var wrong_person_in_lehr := 0
+	for theory in misses:
+		_expect_rejected(theory, Anneal)
+		var result: Dictionary = Verdict.submit(theory, Anneal)
+		var message := str(result["message"])
+		for title in theory["titles"]:
+			_expect(message.find(str(title)) >= 0, "near-miss omits %s: %s" % [title, message])
+		if str(theory["who"]) == "Tess" and str(theory["place"]) == "lehr" and str(theory["hour"]) != "10":
+			wrong_hour_in_lehr += 1
+		if str(theory["who"]) == "Tess" and str(theory["place"]) != "lehr" and str(theory["hour"]) == "10":
+			wrong_place_at_hour += 1
+		if str(theory["who"]) != "Tess" and str(theory["place"]) == "lehr" and str(theory["hour"]) == "10":
+			wrong_person_in_lehr += 1
+	print("anneal near-misses rejected: %d" % misses.size())
+	_expect(misses.size() == 4, "need four anneal near-misses, found %d" % misses.size())
+	_expect(wrong_hour_in_lehr == 2, "two near-misses should keep Tess in the lehr at another hour")
+	_expect(wrong_place_at_hour >= 1, "a near-miss should keep Tess at 10 in another room")
+	_expect(wrong_person_in_lehr >= 1, "a near-miss should keep the lehr at 10 for another person")
+
+
+func _test_anneal_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+		"who took the gilt stamp",
+		"where they took the stamp",
+		"at which hour they took the stamp",
+		"who took the ferry bell",
+		"where they took the bell",
+		"at which hour they took the bell",
+		"who took the weather slate",
+		"where they took the slate",
+		"at which hour they took the slate",
+		"who took the loom shuttle",
+		"where they took the shuttle",
+		"at which hour they took the shuttle",
+		"who took the hive smoker",
+		"where they took the smoker",
+		"at which hour they took the smoker",
+		"who took the glass pontil",
+		"where they took the pontil",
+		"at which hour they took the pontil",
+		"who took the press proof",
+		"where they took the proof",
+		"at which hour they took the proof",
+		"who set the assay cup",
+		"where they set the cup",
+		"at which hour they set the cup",
+		"who chalked the kiln mark",
+		"where they chalked the mark",
+		"at which hour they chalked the mark",
+		"who entered the tide ledger",
+		"where they entered the ledger",
+		"at which hour they entered the ledger",
+		"who stopped the night bell",
+		"where they stopped the bell",
+		"at which hour they stopped the bell",
+		"who scored the salt mark",
+		"where they scored the mark",
+		"at which hour they scored the mark",
+		"who trimmed the wick",
+		"where they trimmed the wick",
+		"at which hour they trimmed the wick",
+	]
+	var cases := [
+		{"theory": {"who": "", "place": "lehr", "hour": "10"}, "present": ["who annealed the gather"], "absent": ["where they annealed the gather", "at which hour they annealed the gather"]},
+		{"theory": {"who": "Tess", "place": "", "hour": "10"}, "present": ["where they annealed the gather"], "absent": ["who annealed the gather", "at which hour they annealed the gather"]},
+		{"theory": {"who": "Tess", "place": "lehr", "hour": ""}, "present": ["at which hour they annealed the gather"], "absent": ["who annealed the gather", "where they annealed the gather"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who annealed the gather", "where they annealed the gather", "at which hour they annealed the gather"], "absent": []},
+		{"theory": {}, "present": ["who annealed the gather", "where they annealed the gather", "at which hour they annealed the gather"], "absent": []},
+		{"theory": {"who": "Wynn", "place": "", "hour": "12"}, "present": ["where they annealed the gather"], "absent": ["who annealed the gather", "at which hour they annealed the gather"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Anneal)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "anneal incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "anneal incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "anneal incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "anneal incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "anneal incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "anneal missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "anneal named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "anneal incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("anneal incomplete submissions refused with the missing slot")
+
+
+
 func _test_solutions_differ() -> void:
 	var spare := {"who": "Nell", "place": "kitchen", "hour": "7"}
 	_expect(spare["who"] != REHEARSAL_TRUE["who"], "rehearsal copied the spare-key taker")
@@ -4348,7 +4642,157 @@ func _test_solutions_differ() -> void:
 	var titles: Array[String] = []
 	for book in Catalog.all():
 		titles.append(str(book.TITLE))
-	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim"], "case list is %s" % str(titles))
+	_expect(ANNEAL_TRUE["who"] == "Tess", "glass anneal taker")
+	_expect(ANNEAL_TRUE["place"] == "lehr", "glass anneal room")
+	_expect(ANNEAL_TRUE["hour"] == "10", "glass anneal hour")
+	for forbidden in ["Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(ANNEAL_TRUE["who"] != forbidden, "glass anneal accepted %s" % forbidden)
+	for forbidden_place in ["loft", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(ANNEAL_TRUE["place"] != forbidden_place, "glass anneal accepted the %s" % forbidden_place)
+	_expect(ANNEAL_TRUE["hour"] != "4", "glass anneal accepted 4")
+	_expect(ANNEAL_TRUE["hour"] != "19", "glass anneal accepted 19")
+	_expect(ANNEAL_TRUE["who"] != spare["who"], "glass anneal copied the spare-key taker")
+	_expect(ANNEAL_TRUE["place"] != spare["place"], "glass anneal copied the spare-key room")
+	_expect(ANNEAL_TRUE["hour"] != spare["hour"], "glass anneal copied the spare-key hour")
+	_expect(ANNEAL_TRUE["who"] != REHEARSAL_TRUE["who"], "glass anneal copied the rehearsal taker")
+	_expect(ANNEAL_TRUE["place"] != REHEARSAL_TRUE["place"], "glass anneal copied the rehearsal room")
+	_expect(ANNEAL_TRUE["hour"] != REHEARSAL_TRUE["hour"], "glass anneal copied the rehearsal hour")
+	_expect(ANNEAL_TRUE["who"] != GILT_TRUE["who"], "glass anneal copied the gilt taker")
+	_expect(ANNEAL_TRUE["place"] != GILT_TRUE["place"], "glass anneal copied the gilt room")
+	_expect(ANNEAL_TRUE["hour"] != GILT_TRUE["hour"], "glass anneal copied the gilt hour")
+	_expect(ANNEAL_TRUE["who"] != FERRY_TRUE["who"], "glass anneal copied the ferry taker")
+	_expect(ANNEAL_TRUE["place"] != FERRY_TRUE["place"], "glass anneal copied the ferry room")
+	_expect(ANNEAL_TRUE["hour"] != FERRY_TRUE["hour"], "glass anneal copied the ferry hour")
+	_expect(ANNEAL_TRUE["who"] != WEATHER_TRUE["who"], "glass anneal copied the weather taker")
+	_expect(ANNEAL_TRUE["place"] != WEATHER_TRUE["place"], "glass anneal copied the weather room")
+	_expect(ANNEAL_TRUE["hour"] != WEATHER_TRUE["hour"], "glass anneal copied the weather hour")
+	_expect(ANNEAL_TRUE["who"] != LOOM_TRUE["who"], "glass anneal copied the loom taker")
+	_expect(ANNEAL_TRUE["place"] != LOOM_TRUE["place"], "glass anneal copied the loom room")
+	_expect(ANNEAL_TRUE["hour"] != LOOM_TRUE["hour"], "glass anneal copied the loom hour")
+	_expect(ANNEAL_TRUE["who"] != HIVE_TRUE["who"], "glass anneal copied the hive taker")
+	_expect(ANNEAL_TRUE["place"] != HIVE_TRUE["place"], "glass anneal copied the hive room")
+	_expect(ANNEAL_TRUE["hour"] != HIVE_TRUE["hour"], "glass anneal copied the hive hour")
+	_expect(ANNEAL_TRUE["who"] != GLASS_TRUE["who"], "glass anneal copied the glass taker")
+	_expect(ANNEAL_TRUE["place"] != GLASS_TRUE["place"], "glass anneal copied the glass room")
+	_expect(ANNEAL_TRUE["hour"] != GLASS_TRUE["hour"], "glass anneal copied the glass hour")
+	_expect(ANNEAL_TRUE["who"] != PRESS_TRUE["who"], "glass anneal copied the press taker")
+	_expect(ANNEAL_TRUE["place"] != PRESS_TRUE["place"], "glass anneal copied the press room")
+	_expect(ANNEAL_TRUE["hour"] != PRESS_TRUE["hour"], "glass anneal copied the press hour")
+	_expect(ANNEAL_TRUE["who"] != ASSAY_TRUE["who"], "glass anneal copied the assay taker")
+	_expect(ANNEAL_TRUE["place"] != ASSAY_TRUE["place"], "glass anneal copied the assay room")
+	_expect(ANNEAL_TRUE["hour"] != ASSAY_TRUE["hour"], "glass anneal copied the assay hour")
+	_expect(ANNEAL_TRUE["who"] != KILN_TRUE["who"], "glass anneal copied the kiln taker")
+	_expect(ANNEAL_TRUE["place"] != KILN_TRUE["place"], "glass anneal copied the kiln room")
+	_expect(ANNEAL_TRUE["hour"] != KILN_TRUE["hour"], "glass anneal copied the kiln hour")
+	_expect(ANNEAL_TRUE["who"] != TIDE_TRUE["who"], "glass anneal copied the tide taker")
+	_expect(ANNEAL_TRUE["place"] != TIDE_TRUE["place"], "glass anneal copied the tide room")
+	_expect(ANNEAL_TRUE["hour"] != TIDE_TRUE["hour"], "glass anneal copied the tide hour")
+	_expect(ANNEAL_TRUE["who"] != NIGHT_TRUE["who"], "glass anneal copied the night taker")
+	_expect(ANNEAL_TRUE["place"] != NIGHT_TRUE["place"], "glass anneal copied the night room")
+	_expect(ANNEAL_TRUE["hour"] != NIGHT_TRUE["hour"], "glass anneal copied the night hour")
+	_expect(ANNEAL_TRUE["who"] != SALT_TRUE["who"], "glass anneal copied the salt taker")
+	_expect(ANNEAL_TRUE["place"] != SALT_TRUE["place"], "glass anneal copied the salt room")
+	_expect(ANNEAL_TRUE["hour"] != SALT_TRUE["hour"], "glass anneal copied the salt hour")
+	_expect(ANNEAL_TRUE["who"] != WICK_TRUE["who"], "glass anneal copied the wick taker")
+	_expect(ANNEAL_TRUE["place"] != WICK_TRUE["place"], "glass anneal copied the wick room")
+	_expect(ANNEAL_TRUE["hour"] != WICK_TRUE["hour"], "glass anneal copied the wick hour")
+	_expect(WICK_TRUE["who"] == "Quin" and WICK_TRUE["place"] == "loft" and WICK_TRUE["hour"] == "4", "the wick trim should still accept Quin in the loft at 4")
+	_expect_rejected(ANNEAL_TRUE, CaseData)
+	_expect_rejected(ANNEAL_TRUE, Rehearsal)
+	_expect_rejected(ANNEAL_TRUE, Gilt)
+	_expect_rejected(ANNEAL_TRUE, Ferry)
+	_expect_rejected(ANNEAL_TRUE, Weather)
+	_expect_rejected(ANNEAL_TRUE, Loom)
+	_expect_rejected(ANNEAL_TRUE, Hive)
+	_expect_rejected(ANNEAL_TRUE, Glass)
+	_expect_rejected(ANNEAL_TRUE, Press)
+	_expect_rejected(ANNEAL_TRUE, Assay)
+	_expect_rejected(ANNEAL_TRUE, Kiln)
+	_expect_rejected(ANNEAL_TRUE, Tide)
+	_expect_rejected(ANNEAL_TRUE, Night)
+	_expect_rejected(ANNEAL_TRUE, Salt)
+	_expect_rejected(ANNEAL_TRUE, Wick)
+	_expect_rejected(spare, Anneal)
+	_expect_rejected(REHEARSAL_TRUE, Anneal)
+	_expect_rejected(GILT_TRUE, Anneal)
+	_expect_rejected(FERRY_TRUE, Anneal)
+	_expect_rejected(WEATHER_TRUE, Anneal)
+	_expect_rejected(LOOM_TRUE, Anneal)
+	_expect_rejected(HIVE_TRUE, Anneal)
+	_expect_rejected(GLASS_TRUE, Anneal)
+	_expect_rejected(PRESS_TRUE, Anneal)
+	_expect_rejected(ASSAY_TRUE, Anneal)
+	_expect_rejected(KILN_TRUE, Anneal)
+	_expect_rejected(TIDE_TRUE, Anneal)
+	_expect_rejected(NIGHT_TRUE, Anneal)
+	_expect_rejected(SALT_TRUE, Anneal)
+	_expect_rejected(WICK_TRUE, Anneal)
+	for person in Anneal.PEOPLE:
+		if person == "Ivo":
+			_expect(Rehearsal.PEOPLE.has(person), "glass anneal may share Ivo with the rehearsal score")
+		else:
+			_expect(not Rehearsal.PEOPLE.has(person), "anneal cast repeats %s from the rehearsal score" % person)
+		_expect(not CaseData.PEOPLE.has(person), "anneal cast repeats %s from the spare key" % person)
+		_expect(not Gilt.PEOPLE.has(person), "anneal cast repeats %s from the gilt stamp" % person)
+		_expect(not Ferry.PEOPLE.has(person), "anneal cast repeats %s from the ferry bell" % person)
+		_expect(not Weather.PEOPLE.has(person), "anneal cast repeats %s from the weather slate" % person)
+		_expect(not Loom.PEOPLE.has(person), "anneal cast repeats %s from the loom shuttle" % person)
+		_expect(not Hive.PEOPLE.has(person), "anneal cast repeats %s from the hive smoker" % person)
+		_expect(not Glass.PEOPLE.has(person), "anneal cast repeats %s from the glass pontil" % person)
+		_expect(not Press.PEOPLE.has(person), "anneal cast repeats %s from the press proof" % person)
+		_expect(not Assay.PEOPLE.has(person), "anneal cast repeats %s from the assay cup" % person)
+		_expect(not Kiln.PEOPLE.has(person), "anneal cast repeats %s from the kiln chalk" % person)
+		_expect(not Tide.PEOPLE.has(person), "anneal cast repeats %s from the tide ledger" % person)
+		_expect(not Night.PEOPLE.has(person), "anneal cast repeats %s from the night bell" % person)
+		_expect(not Salt.PEOPLE.has(person), "anneal cast repeats %s from the salt mark" % person)
+		_expect(not Wick.PEOPLE.has(person), "anneal cast repeats %s from the wick trim" % person)
+	for forbidden_person in ["Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(not Anneal.PEOPLE.has(forbidden_person), "glass anneal cast must not take %s" % forbidden_person)
+	_expect(Anneal.role_phrase("Tess") == "the anneal hand", "the glass anneal should call Tess the anneal hand")
+	for place in Anneal.PLACES:
+		_expect(not CaseData.PLACES.has(place), "anneal rooms repeat %s from the spare key" % place)
+		_expect(not Rehearsal.PLACES.has(place), "anneal rooms repeat %s from the rehearsal score" % place)
+		_expect(not Gilt.PLACES.has(place), "anneal rooms repeat %s from the gilt stamp" % place)
+		_expect(not Ferry.PLACES.has(place), "anneal rooms repeat %s from the ferry bell" % place)
+		_expect(not Weather.PLACES.has(place), "anneal rooms repeat %s from the weather slate" % place)
+		_expect(not Loom.PLACES.has(place), "anneal rooms repeat %s from the loom shuttle" % place)
+		_expect(not Hive.PLACES.has(place), "anneal rooms repeat %s from the hive smoker" % place)
+		_expect(not Glass.PLACES.has(place), "anneal rooms repeat %s from the glass pontil" % place)
+		_expect(not Press.PLACES.has(place), "anneal rooms repeat %s from the press proof" % place)
+		_expect(not Assay.PLACES.has(place), "anneal rooms repeat %s from the assay cup" % place)
+		_expect(not Kiln.PLACES.has(place), "anneal rooms repeat %s from the kiln chalk" % place)
+		_expect(not Tide.PLACES.has(place), "anneal rooms repeat %s from the tide ledger" % place)
+		_expect(not Night.PLACES.has(place), "anneal rooms repeat %s from the night bell" % place)
+		_expect(not Salt.PLACES.has(place), "anneal rooms repeat %s from the salt mark" % place)
+		_expect(not Wick.PLACES.has(place), "anneal rooms repeat %s from the wick trim" % place)
+	for forbidden_place in ["loft", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(not Anneal.PLACES.has(forbidden_place), "glass anneal rooms must not take the %s" % forbidden_place)
+	for hour in Anneal.HOURS:
+		if hour == "8" or hour == "9":
+			_expect(CaseData.HOURS.has(hour), "glass anneal hour %s may also sit on the spare key" % hour)
+			_expect(not Weather.HOURS.has(hour), "glass anneal hours repeat %s from the weather slate" % hour)
+		elif hour == "10" or hour == "11" or hour == "12":
+			_expect(Weather.HOURS.has(hour), "glass anneal hour %s may also sit on the weather slate" % hour)
+			_expect(not CaseData.HOURS.has(hour), "glass anneal hours repeat %s from the spare key" % hour)
+		else:
+			_expect(not CaseData.HOURS.has(hour), "glass anneal hours repeat %s from the spare key" % hour)
+			_expect(not Weather.HOURS.has(hour), "glass anneal hours repeat %s from the weather slate" % hour)
+		_expect(not Rehearsal.HOURS.has(hour), "anneal hours repeat %s from the rehearsal score" % hour)
+		_expect(not Gilt.HOURS.has(hour), "anneal hours repeat %s from the gilt stamp" % hour)
+		_expect(not Ferry.HOURS.has(hour), "anneal hours repeat %s from the ferry bell" % hour)
+		_expect(not Loom.HOURS.has(hour), "anneal hours repeat %s from the loom shuttle" % hour)
+		_expect(not Hive.HOURS.has(hour), "anneal hours repeat %s from the hive smoker" % hour)
+		_expect(not Glass.HOURS.has(hour), "anneal hours repeat %s from the glass pontil" % hour)
+		_expect(not Press.HOURS.has(hour), "anneal hours repeat %s from the press proof" % hour)
+		_expect(not Assay.HOURS.has(hour), "anneal hours repeat %s from the assay cup" % hour)
+		_expect(not Kiln.HOURS.has(hour), "anneal hours repeat %s from the kiln chalk" % hour)
+		_expect(not Tide.HOURS.has(hour), "anneal hours repeat %s from the tide ledger" % hour)
+		_expect(not Night.HOURS.has(hour), "anneal hours repeat %s from the night bell" % hour)
+		_expect(not Salt.HOURS.has(hour), "anneal hours repeat %s from the salt mark" % hour)
+		_expect(not Wick.HOURS.has(hour), "anneal hours repeat %s from the wick trim" % hour)
+	_expect(not Anneal.HOURS.has("4"), "glass anneal hours must not take 4")
+	_expect(not Anneal.HOURS.has("19"), "glass anneal hours must not take 19")
+	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal"], "case list is %s" % str(titles))
 
 
 func _test_menu_opens_either_case() -> void:
@@ -4360,7 +4804,7 @@ func _test_menu_opens_either_case() -> void:
 	if root.get_child_count() == 0:
 		root._ready()
 	var menu_blob := _visible_label_blob(root)
-	_expect(menu_blob.find("Fifteen files") >= 0, "menu does not offer fifteen files: %s" % menu_blob)
+	_expect(menu_blob.find("Sixteen files") >= 0, "menu does not offer sixteen files: %s" % menu_blob)
 	_expect(menu_blob.find("CW-07") >= 0, "menu omits CW-07")
 	_expect(menu_blob.find("The hive smoker") >= 0, "menu omits The hive smoker")
 	_expect(menu_blob.find("CW-08") >= 0, "menu omits CW-08")
@@ -4379,6 +4823,8 @@ func _test_menu_opens_either_case() -> void:
 	_expect(menu_blob.find("The salt mark") >= 0, "menu omits The salt mark")
 	_expect(menu_blob.find("CW-15") >= 0, "menu omits CW-15")
 	_expect(menu_blob.find("The wick trim") >= 0, "menu omits The wick trim")
+	_expect(menu_blob.find("CW-16") >= 0, "menu omits CW-16")
+	_expect(menu_blob.find("The glass anneal") >= 0, "menu omits The glass anneal")
 	_expect(root.get_child_count() > 0, "main scene built %d children" % root.get_child_count())
 	_press(root, "How to play")
 	var howto := _visible_label_blob(root)
@@ -4397,6 +4843,7 @@ func _test_menu_opens_either_case() -> void:
 	_expect(howto.find("The night bell") >= 0, "how to play omits The night bell")
 	_expect(howto.find("The salt mark") >= 0, "how to play omits The salt mark")
 	_expect(howto.find("The wick trim") >= 0, "how to play omits The wick trim")
+	_expect(howto.find("The glass anneal") >= 0, "how to play omits The glass anneal")
 	_expect(howto.find("names that slot") >= 0, "how to play omits the empty-slot rule")
 	_press(root, "Back to the menu")
 	_expect(_find_visible_button(root, "Open The spare key") != null, "menu is missing The spare key")
@@ -4414,6 +4861,7 @@ func _test_menu_opens_either_case() -> void:
 	_expect(_find_visible_button(root, "Open The night bell") != null, "menu is missing The night bell")
 	_expect(_find_visible_button(root, "Open The salt mark") != null, "menu is missing The salt mark")
 	_expect(_find_visible_button(root, "Open The wick trim") != null, "menu is missing The wick trim")
+	_expect(_find_visible_button(root, "Open The glass anneal") != null, "menu is missing The glass anneal")
 	_press(root, "Open The rehearsal score")
 	var rehearsal_open := _visible_label_blob(root)
 	_expect(rehearsal_open.find("Cut list") >= 0, "rehearsal file did not open")
@@ -5199,6 +5647,78 @@ func _test_menu_opens_either_case() -> void:
 	var salt_from_wick := _visible_label_blob(root)
 	_expect(salt_from_wick.find("Salt line") >= 0, "could not return to The salt mark from The wick trim")
 	_expect(salt_from_wick.find("Oil note") == -1, "wick trim papers stayed up after switching files")
+	_press(root, "Menu")
+	_press(root, "Open The glass anneal")
+	var anneal_open := _visible_label_blob(root)
+	_expect(anneal_open.find("Gather note") >= 0, "glass anneal file did not open")
+	_expect(anneal_open.find("Crack note") >= 0, "glass anneal file did not show its exhibits")
+	_expect(anneal_open.find("CW-16") >= 0, "glass anneal file omits CW-16")
+	_expect(anneal_open.find("Complaint slip") == -1, "spare key papers showed inside The glass anneal")
+	_expect(anneal_open.find("Cut list") == -1, "rehearsal papers showed inside The glass anneal")
+	_expect(anneal_open.find("Move order") == -1, "gilt stamp papers showed inside The glass anneal")
+	_expect(anneal_open.find("Whistle slip") == -1, "ferry bell papers showed inside The glass anneal")
+	_expect(anneal_open.find("Frost note") == -1, "weather slate papers showed inside The glass anneal")
+	_expect(anneal_open.find("Trough tag") == -1, "loom shuttle papers showed inside The glass anneal")
+	_expect(anneal_open.find("Fuel line") == -1, "hive smoker papers showed inside The glass anneal")
+	_expect(anneal_open.find("Weight line") == -1, "glass pontil papers showed inside The glass anneal")
+	_expect(anneal_open.find("Lock line") == -1, "press proof papers showed inside The glass anneal")
+	_expect(anneal_open.find("Cup line") == -1, "assay cup papers showed inside The glass anneal")
+	_expect(anneal_open.find("Mark line") == -1, "kiln chalk papers showed inside The glass anneal")
+	_expect(anneal_open.find("Ledger line") == -1, "tide ledger papers showed inside The glass anneal")
+	_expect(anneal_open.find("Bell line") == -1, "night bell papers showed inside The glass anneal")
+	_expect(anneal_open.find("Salt line") == -1, "salt mark papers showed inside The glass anneal")
+	_expect(anneal_open.find("Oil note") == -1, "wick trim papers showed inside The glass anneal")
+	_press(root, "Submit theory")
+	var empty_anneal := _verdict_text(root)
+	_expect(empty_anneal.find("who annealed the gather") >= 0, "empty anneal board: %s" % empty_anneal)
+	_expect(empty_anneal.find("where they annealed the gather") >= 0, "empty anneal board: %s" % empty_anneal)
+	_expect(empty_anneal.find("at which hour they annealed the gather") >= 0, "empty anneal board: %s" % empty_anneal)
+	_expect(empty_anneal.find("who took the spare key") == -1, "empty anneal board used the spare key slot: %s" % empty_anneal)
+	_expect(empty_anneal.find("rehearsal score") == -1, "empty anneal board used a rehearsal slot: %s" % empty_anneal)
+	_expect(empty_anneal.find("gilt stamp") == -1, "empty anneal board used a gilt slot: %s" % empty_anneal)
+	_expect(empty_anneal.find("ferry bell") == -1, "empty anneal board used a ferry slot: %s" % empty_anneal)
+	_expect(empty_anneal.find("weather slate") == -1, "empty anneal board used a weather slot: %s" % empty_anneal)
+	_expect(empty_anneal.find("loom shuttle") == -1, "empty anneal board used a loom slot: %s" % empty_anneal)
+	_expect(empty_anneal.find("hive smoker") == -1, "empty anneal board used a hive slot: %s" % empty_anneal)
+	_expect(empty_anneal.find("glass pontil") == -1, "empty anneal board used a glass slot: %s" % empty_anneal)
+	_expect(empty_anneal.find("press proof") == -1, "empty anneal board used a press slot: %s" % empty_anneal)
+	_expect(empty_anneal.find("assay cup") == -1, "empty anneal board used an assay slot: %s" % empty_anneal)
+	_expect(empty_anneal.find("kiln mark") == -1, "empty anneal board used a kiln slot: %s" % empty_anneal)
+	_expect(empty_anneal.find("tide ledger") == -1, "empty anneal board used a tide slot: %s" % empty_anneal)
+	_expect(empty_anneal.find("night bell") == -1, "empty anneal board used a night slot: %s" % empty_anneal)
+	_expect(empty_anneal.find("salt mark") == -1, "empty anneal board used a salt slot: %s" % empty_anneal)
+	_expect(empty_anneal.find("wick") == -1, "empty anneal board used a wick slot: %s" % empty_anneal)
+	_expect(empty_anneal.to_lower().find("conflict") == -1, "empty anneal board talked about a conflict: %s" % empty_anneal)
+	_press(root, "Tess")
+	_press(root, "Lehr")
+	_press(root, "11")
+	_press(root, "Submit theory")
+	var anneal_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(anneal_miss, Anneal, {"who": "Tess", "place": "lehr", "hour": "11"})
+	_expect(anneal_miss.find("Shoulder leaf") >= 0, "wrong hour reply omits Shoulder leaf: %s" % anneal_miss)
+	_expect(anneal_miss.find("Crack note") >= 0, "wrong hour reply omits Crack note: %s" % anneal_miss)
+	_expect(anneal_miss.find("Latch order") >= 0, "wrong hour reply omits Latch order: %s" % anneal_miss)
+	_press(root, "Clear")
+	_press(root, "Tess")
+	_press(root, "Lehr")
+	_press(root, "10")
+	_press(root, "Submit theory")
+	var anneal_accepted := _verdict_text(root)
+	_expect(anneal_accepted.find("fits every exhibit") >= 0, "glass anneal board rejected the true theory: %s" % anneal_accepted)
+	_expect(anneal_accepted.find(ANNEAL_TIMELINE) >= 0, "glass anneal board timeline: %s" % anneal_accepted)
+	_expect(anneal_accepted.find("Tess (anneal hand) annealed the gather in the lehr at 10") >= 0, "glass anneal board omits Tess at 10: %s" % anneal_accepted)
+	_expect(anneal_accepted.find("in the lehr") >= 0, "glass anneal board omits the lehr: %s" % anneal_accepted)
+	_expect(anneal_accepted.find("so the pane would cool without a crack") >= 0, "glass anneal board omits the crack: %s" % anneal_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var anneal_cleared := _verdict_text(root)
+	_expect(anneal_cleared.find("who annealed the gather") >= 0, "cleared anneal board: %s" % anneal_cleared)
+	_expect(anneal_cleared.find("fits every exhibit") == -1, "cleared anneal board stayed accepted: %s" % anneal_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The wick trim")
+	var wick_from_anneal := _visible_label_blob(root)
+	_expect(wick_from_anneal.find("Oil note") >= 0, "could not return to The wick trim from The glass anneal")
+	_expect(wick_from_anneal.find("Gather note") == -1, "glass anneal papers stayed up after switching files")
 	root.queue_free()
 
 

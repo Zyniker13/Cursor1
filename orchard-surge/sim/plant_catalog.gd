@@ -18,7 +18,8 @@ const CHIME := 9
 const RASP := 10
 const MAUL := 11
 const BILL := 12
-const COUNT := 13
+const SHADE := 13
+const COUNT := 14
 
 # fire_ticks and slow_ticks are sim ticks of length DT.
 # light_radius, weapon_range, projectile_speed, and splash_radius are pixels.
@@ -32,6 +33,8 @@ const COUNT := 13
 # strips_scale: this plant's light reveals scale moths and lets shots hurt them.
 # cracks_mail: this plant's light reveals mail moths and lets shots hurt them.
 # splits_hide: this plant's light reveals hide moths and lets shots hurt them.
+# shades_dusk: this plant's radius marks tiles as shaded. It is not a light.
+# casts_light: false means the radius does not light tiles. The shade uses this.
 const DEFS := [
 	{
 		"name": "Pea",
@@ -53,6 +56,8 @@ const DEFS := [
 		"strips_scale": false,
 		"cracks_mail": false,
 		"splits_hide": false,
+		"shades_dusk": false,
+		"casts_light": true,
 	},
 	{
 		"name": "Vine",
@@ -74,6 +79,8 @@ const DEFS := [
 		"strips_scale": false,
 		"cracks_mail": false,
 		"splits_hide": false,
+		"shades_dusk": false,
+		"casts_light": true,
 	},
 	{
 		"name": "Lantern",
@@ -95,6 +102,8 @@ const DEFS := [
 		"strips_scale": false,
 		"cracks_mail": false,
 		"splits_hide": false,
+		"shades_dusk": false,
+		"casts_light": true,
 	},
 	{
 		"name": "Gourd",
@@ -116,6 +125,8 @@ const DEFS := [
 		"strips_scale": false,
 		"cracks_mail": false,
 		"splits_hide": false,
+		"shades_dusk": false,
+		"casts_light": true,
 	},
 	{
 		"name": "Wick",
@@ -137,6 +148,8 @@ const DEFS := [
 		"strips_scale": false,
 		"cracks_mail": false,
 		"splits_hide": false,
+		"shades_dusk": false,
+		"casts_light": true,
 	},
 	{
 		"name": "Briar",
@@ -158,6 +171,8 @@ const DEFS := [
 		"strips_scale": false,
 		"cracks_mail": false,
 		"splits_hide": false,
+		"shades_dusk": false,
+		"casts_light": true,
 	},
 	{
 		"name": "Flare",
@@ -179,6 +194,8 @@ const DEFS := [
 		"strips_scale": false,
 		"cracks_mail": false,
 		"splits_hide": false,
+		"shades_dusk": false,
+		"casts_light": true,
 	},
 	{
 		"name": "Hearth",
@@ -200,6 +217,8 @@ const DEFS := [
 		"strips_scale": false,
 		"cracks_mail": false,
 		"splits_hide": false,
+		"shades_dusk": false,
+		"casts_light": true,
 	},
 	{
 		"name": "Shear",
@@ -221,6 +240,8 @@ const DEFS := [
 		"strips_scale": false,
 		"cracks_mail": false,
 		"splits_hide": false,
+		"shades_dusk": false,
+		"casts_light": true,
 	},
 	{
 		"name": "Chime",
@@ -242,6 +263,8 @@ const DEFS := [
 		"strips_scale": false,
 		"cracks_mail": false,
 		"splits_hide": false,
+		"shades_dusk": false,
+		"casts_light": true,
 	},
 	{
 		"name": "Rasp",
@@ -263,6 +286,8 @@ const DEFS := [
 		"strips_scale": true,
 		"cracks_mail": false,
 		"splits_hide": false,
+		"shades_dusk": false,
+		"casts_light": true,
 	},
 	{
 		"name": "Maul",
@@ -284,6 +309,8 @@ const DEFS := [
 		"strips_scale": false,
 		"cracks_mail": true,
 		"splits_hide": false,
+		"shades_dusk": false,
+		"casts_light": true,
 	},
 	{
 		"name": "Bill",
@@ -305,6 +332,31 @@ const DEFS := [
 		"strips_scale": false,
 		"cracks_mail": false,
 		"splits_hide": true,
+		"shades_dusk": false,
+		"casts_light": true,
+	},
+	{
+		"name": "Shade",
+		"role": "Shades dusk, modest shots, no light.",
+		"damage": 4,
+		"fire_ticks": 48,
+		"light_radius": 224.0,
+		"weapon_range": 60.0,
+		"projectile_speed": 280.0,
+		"slow_factor": 1.0,
+		"slow_ticks": 0,
+		"splash_radius": 0.0,
+		"burns_shroud": false,
+		"cracks_rind": false,
+		"melts_pitch": false,
+		"thaws_frost": false,
+		"cuts_web": false,
+		"cracks_glass": false,
+		"strips_scale": false,
+		"cracks_mail": false,
+		"splits_hide": false,
+		"shades_dusk": true,
+		"casts_light": false,
 	},
 ]
 
