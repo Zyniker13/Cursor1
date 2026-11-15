@@ -338,7 +338,7 @@ func _build_ui() -> void:
 
 	var puzzles_row := HBoxContainer.new()
 	puzzles_row.name = "PuzzleRow"
-	puzzles_row.add_theme_constant_override("separation", 4)
+	puzzles_row.add_theme_constant_override("separation", 3)
 	column.add_child(puzzles_row)
 	for i in _puzzles.size():
 		var building_now := int(_puzzles[i].get("building", 1))
@@ -357,8 +357,8 @@ func _build_ui() -> void:
 		button.text = str(i + 1)
 		button.tooltip_text = str(_puzzles[i]["title"])
 		button.focus_mode = Control.FOCUS_NONE
-		button.custom_minimum_size = Vector2(26, 28)
-		button.add_theme_font_size_override("font_size", 12)
+		button.custom_minimum_size = Vector2(20, 26)
+		button.add_theme_font_size_override("font_size", 11)
 		button.pressed.connect(select_puzzle.bind(i))
 		puzzles_row.add_child(button)
 		_puzzle_buttons.append(button)
@@ -464,6 +464,8 @@ func _building_mark_name(building: int) -> String:
 			return "BuildingThreeMark"
 		4:
 			return "BuildingFourMark"
+		5:
+			return "BuildingFiveMark"
 		_:
 			return "Building%dMark" % building
 
@@ -559,6 +561,7 @@ func _rebuild_order() -> void:
 func _choose_tool(tool: String) -> void:
 	_selected = tool
 	_style_tools()
+	_sync_facing()
 
 
 func _choose_paint(color_name: String) -> void:
@@ -609,7 +612,10 @@ func _paint_button(button: Button, fill: Color, font: Color, border: Color, pad:
 
 func _sync_facing() -> void:
 	if _facing:
-		_facing.text = "Facing   %s" % Sim.DIR_NAMES[_ghost_dir]
+		if _selected == "turn":
+			_facing.text = "Facing   clockwise"
+		else:
+			_facing.text = "Facing   %s" % Sim.DIR_NAMES[_ghost_dir]
 
 
 func _sync_placed() -> void:
@@ -879,6 +885,8 @@ func _draw_block(block: Dictionary, alpha: float) -> void:
 	elif typ == "bridge":
 		_shifted_arrow(rect, dir, ink, -0.18, 0.16, 0.09)
 		_edge_arrow(rect, dir, ink, 1.2)
+	elif typ == "turn":
+		_turn_mark(rect, ink)
 	else:
 		_arrow(rect, dir, ink, 0.78)
 
@@ -899,6 +907,10 @@ func _draw_parcel(parcel: Dictionary) -> void:
 	draw_rect(tape, band)
 	if int(parcel["count"]) > 0:
 		_centered(rect, str(int(parcel["count"])), int(side * 0.55), _ink_for(fill), side * 0.08)
+	var facing := int(parcel.get("dir", 0))
+	var vec := _dir_vec(facing)
+	var mark := Color(1, 1, 1, 0.9 * alpha)
+	_tri(center + vec * side * 0.34, vec, side * 0.16, side * 0.1, mark)
 
 
 func _shown_parcels() -> Array:
@@ -923,18 +935,20 @@ func _shown_parcels() -> Array:
 		var alpha := 1.0
 		var color := str(parcel["color"])
 		var count := int(parcel["count"])
+		var facing := int(parcel.get("dir", 0))
 		if anim:
 			var ahead = next_by_id.get(int(parcel["id"]))
 			if ahead != null:
 				dest = Vector2(int(ahead["x"]), int(ahead["y"]))
 				color = str(ahead["color"])
 				count = int(ahead["count"])
+				facing = int(ahead.get("dir", facing))
 			else:
 				var dock: Dictionary = _puzzle["dock"]
 				dest = Vector2(int(dock["x"]), int(dock["y"]))
 				alpha = 1.0 - blend
 		var pos := origin.lerp(dest, blend)
-		out.append({"x": pos.x, "y": pos.y, "color": color, "count": count, "alpha": alpha})
+		out.append({"x": pos.x, "y": pos.y, "color": color, "count": count, "dir": facing, "alpha": alpha})
 	if anim:
 		var seen := {}
 		for parcel in current["parcels"]:
@@ -947,6 +961,7 @@ func _shown_parcels() -> Array:
 				"y": float(parcel["y"]),
 				"color": str(parcel["color"]),
 				"count": int(parcel["count"]),
+				"dir": int(parcel.get("dir", 0)),
 				"alpha": blend,
 			})
 	return out
@@ -1014,6 +1029,23 @@ func _filter_bar(rect: Rect2, dir: int, color: Color) -> void:
 	draw_line(center - side * rect.size.x * 0.16, center + side * rect.size.x * 0.16, color, 3.0)
 
 
+func _turn_mark(rect: Rect2, color: Color) -> void:
+	var center := rect.get_center()
+	var radius := rect.size.x * 0.2
+	var pts := PackedVector2Array()
+	var steps := 8
+	for i in steps + 1:
+		var angle := lerpf(0.0, PI * 0.5, float(i) / float(steps))
+		pts.append(center + Vector2(cos(angle), sin(angle)) * radius)
+	draw_polyline(pts, color, 2.5, true)
+	var tip: Vector2 = pts[pts.size() - 1]
+	var prev: Vector2 = pts[pts.size() - 2]
+	var vec := tip - prev
+	if vec.length_squared() < 0.001:
+		vec = Vector2(0, 1)
+	_tri(tip, vec.normalized(), rect.size.x * 0.11, rect.size.x * 0.07, color)
+
+
 func _gate(rect: Rect2, dir: int, color: Color) -> void:
 	var vec := _dir_vec(dir)
 	var side := Vector2(-vec.y, vec.x)
@@ -1067,6 +1099,8 @@ func _tool_color(tool: String) -> Color:
 			return Color("#c9844a")
 		"bridge":
 			return Color("#4f7d6a")
+		"turn":
+			return Color("#6e8bb8")
 		_:
 			return Color("#888888")
 
@@ -1107,6 +1141,8 @@ func _tool_tip(tool: String) -> String:
 			return "Paints a gray parcel, then moves it forward. A color already on the parcel stays."
 		"bridge":
 			return "Sets a parcel down two steps along its arrow, over the cell in front."
+		"turn":
+			return "Rotates a parcel one quarter clockwise and waits that tick. It leaves in the new facing on the next tick."
 		_:
 			return ""
 
