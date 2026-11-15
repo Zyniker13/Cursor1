@@ -7,7 +7,7 @@ const DIRS: Array[Vector2i] = [
 	Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, -1)
 ]
 const DIR_NAMES: Array[String] = ["East", "South", "West", "North"]
-const TYPES: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide"]
+const TYPES: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin"]
 const PAINTS: Array[String] = ["red", "blue", "yellow"]
 const TICK_CAP := 250
 
@@ -80,6 +80,13 @@ static func run(puzzle: Dictionary, graph: Array) -> Dictionary:
 	var end_tick := 0
 	for tick in range(1, TICK_CAP + 1):
 		end_tick = tick
+		var kept: Array = []
+		for parcel in parcels:
+			var stood = blocks.get(_key(int(parcel["x"]), int(parcel["y"])))
+			if stood != null and str(stood["type"]) == "bin":
+				continue
+			kept.append(parcel)
+		parcels = kept
 		for parcel in parcels:
 			var block = blocks.get(_key(int(parcel["x"]), int(parcel["y"])))
 			if block == null:
@@ -132,6 +139,8 @@ static func run(puzzle: Dictionary, graph: Array) -> Dictionary:
 					parcel["dir"] = (int(parcel["dir"]) + 1) % 4
 				else:
 					parcel["intent"] = Vector2i(int(parcel["x"]), int(parcel["y"])) + DIRS[int(parcel["dir"])]
+			elif typ == "bin":
+				pass
 			else:
 				parcel["intent"] = Vector2i(int(parcel["x"]), int(parcel["y"])) + DIRS[int(block["dir"])]
 
