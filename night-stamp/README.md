@@ -1,6 +1,6 @@
 # Night Stamp
 
-A border-desk deckbuilder across seventeen nights. Travelers arrive with a written rule. You spend ink to press stamps onto a 3×3 form. The cell matters as much as the card. When the turn ends, the form resolves from the top row downward.
+A border-desk deckbuilder across eighteen nights. Travelers arrive with a written rule. You spend ink to press stamps onto a 3×3 form. The cell matters as much as the card. When the turn ends, the form resolves from the top row downward.
 
 This folder is a Godot 4 project. It was built against Godot 4.7.2.
 
@@ -41,6 +41,7 @@ A run is seeded. The seed field decides the shuffle and the draft offers. Restar
 - Spine bell opens the fifteenth night with a fresh deck. While that night is open, the same button returns to the first bell. A victory desk can open it too.
 - Headband bell opens the sixteenth night with a fresh deck. While that night is open, the same button returns to the first bell. A victory desk can open it too.
 - Clasp bell opens the seventeenth night with a fresh deck. While that night is open, the same button returns to the first bell. A victory desk can open it too.
+- Signature bell opens the eighteenth night with a fresh deck. While that night is open, the same button returns to the first bell. A victory desk can open it too.
 - Ink is 3 at the start of a turn (4 with Deep Well). Spending the last ink ends the turn. A turn with 0 ink accepts no further stamp.
 
 The rules comment at the top of `rules/rules.gd` is the full rules text. The first bell has four travelers:
@@ -162,6 +163,13 @@ The clasp bell is a seventeenth night. Same stamps, same ink, a new deck.
 - Fenn Hart — Full Column. Goal 22. Lane column 3. Exemption row middle. A stamp scores twice only when its own column is full. A stamp in a column that is not full scores its own number. Wynn Hart already doubles a stamp only when its own row is full, so Fenn does not.
 - Rue Hart — Side Slip. Goal 18. Lane column 1. Exemption row bottom. When a stamp shares a side with an earlier stamp, the later stamp scores twice. The earlier stamp scores its own number. A corner-only touch does not count. A lone stamp scores its own number. Nim Voss already zeros that later stamp, so Rue does not.
 
+The signature bell is an eighteenth night. Same stamps, same ink, a new deck.
+
+- Dory Hart — Seven Toll. Goal 18. Lane column 3. Exemption row bottom. Patience drops by 2 when exactly seven cells are filled. Any other count, including an empty form and a form of six, keeps the drop at 1. Hold is applied first. Hugh Pell already drops for exactly six cells, Joss Pell for exactly five, Ada Hart for exactly four, and Pell Dane for exactly three, so Dory does not.
+- Lin Pell — Lone Column. Goal 20. Lane column 1. Exemption row top. A stamp scores twice only when it is the only filled stamp in its column. If that column holds another stamp, every stamp in the column scores its own number. Tam Quern already zeros a second stamp in column 1, and Fenn Hart already doubles a stamp only when its column is full, so Lin does not.
+- Opal Quill — Side Pay. Goal 22. Lane column 2. Exemption row middle. Each stamp that shares a side with another filled stamp scores +3 once. A stamp that shares two sides still scores +3 once. A corner-only touch does not count. A lone stamp scores its own number. Rue Hart already doubles the later stamp of a side pair, and Nim Voss already zeros that later stamp, so Opal does not.
+- Holt Quern — Next Fill. Goal 16. Lane column 2. Exemption row bottom. A stamp scores twice only when the queue cell immediately after it is filled. A stamp whose next cell is empty scores its own number. The bottom-right cell has no cell after it, so it does not double. Bram Solt already doubles a stamp when the next cell is empty and a later cell is filled, so Holt does not.
+
 ## Tests
 
 From this directory:
@@ -170,4 +178,4 @@ From this directory:
 godot --headless --path . -s res://tests/run_tests.gd
 ```
 
-The process exits 0 when every check passes and non-zero when one fails. The checks cover the 20-card pool, a fixed-seed clear of each night, a turn with 0 ink, the chain cap, the same card producing different numbers on two cells, and a correct stamp beside a wrong stamp for each late-shift, closing-bell, ash-watch, gutter-lamp, vellum-bell, quire-watch, salt-watch, quay-bell, folio-bell, wick-bell, margin-bell, index-bell, ledger-bell, spine-bell, headband-bell, and clasp-bell form.
+The process exits 0 when every check passes and non-zero when one fails. The checks cover the 20-card pool, a fixed-seed clear of each night, a turn with 0 ink, the chain cap, the same card producing different numbers on two cells, and a correct stamp beside a wrong stamp for each late-shift, closing-bell, ash-watch, gutter-lamp, vellum-bell, quire-watch, salt-watch, quay-bell, folio-bell, wick-bell, margin-bell, index-bell, ledger-bell, spine-bell, headband-bell, clasp-bell, and signature-bell form.
