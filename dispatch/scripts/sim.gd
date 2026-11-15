@@ -7,7 +7,7 @@ const DIRS: Array[Vector2i] = [
 	Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, -1)
 ]
 const DIR_NAMES: Array[String] = ["East", "South", "West", "North"]
-const TYPES: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook", "return", "pause"]
+const TYPES: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook", "return", "pause", "chute"]
 const PAINTS: Array[String] = ["red", "blue", "yellow"]
 const TICK_CAP := 250
 
@@ -134,17 +134,20 @@ static func run(puzzle: Dictionary, graph: Array) -> Dictionary:
 			elif typ == "slide":
 				var step: Vector2i = DIRS[int(parcel["dir"])]
 				parcel["intent"] = Vector2i(int(parcel["x"]), int(parcel["y"])) + step * 2
-			elif typ == "turn" or typ == "hook" or typ == "return" or typ == "pause":
+			elif typ == "turn" or typ == "hook" or typ == "return" or typ == "pause" or typ == "chute":
 				if int(parcel["hold"]) < 1:
-					var quarter := 0
-					if typ == "turn":
-						quarter = 1
-					elif typ == "hook":
-						quarter = 3
-					elif typ == "return":
-						quarter = 2
-					if quarter != 0:
-						parcel["dir"] = (int(parcel["dir"]) + quarter) % 4
+					if typ == "chute":
+						parcel["dir"] = int(block["dir"])
+					else:
+						var quarter := 0
+						if typ == "turn":
+							quarter = 1
+						elif typ == "hook":
+							quarter = 3
+						elif typ == "return":
+							quarter = 2
+						if quarter != 0:
+							parcel["dir"] = (int(parcel["dir"]) + quarter) % 4
 				else:
 					parcel["intent"] = Vector2i(int(parcel["x"]), int(parcel["y"])) + DIRS[int(parcel["dir"])]
 			elif typ == "bin":
@@ -265,7 +268,7 @@ static func run(puzzle: Dictionary, graph: Array) -> Dictionary:
 				ahead += DIRS[int(block["dir"])]
 				if _find_at(parcels, ahead) == null and _enterable(ahead, dock, width, height, walls, source_cells, blocks):
 					latch_pending = true
-			elif (typ == "turn" or typ == "hook" or typ == "return" or typ == "pause") and int(parcel["hold"]) >= 1:
+			elif (typ == "turn" or typ == "hook" or typ == "return" or typ == "pause" or typ == "chute") and int(parcel["hold"]) >= 1:
 				ahead += DIRS[int(parcel["dir"])]
 				if _find_at(parcels, ahead) != null or _enterable(ahead, dock, width, height, walls, source_cells, blocks):
 					turn_pending = true

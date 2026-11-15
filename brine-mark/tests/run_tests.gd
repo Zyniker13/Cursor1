@@ -27,6 +27,8 @@ func _initialize() -> void:
 	_test_bell(errors)
 	_test_horn(errors)
 	_test_flag(errors)
+	_test_banner(errors)
+	_test_pennant(errors)
 	_test_determinism(errors)
 	_test_population(errors)
 	_test_no_select_ant(errors)
@@ -100,7 +102,7 @@ func _test_determinism(errors: Array) -> void:
 	var plans := _plans(errors)
 	if plans.is_empty():
 		return
-	for plan_name in ["winning", "all_rake", "dry_pans", "continued", "late_pans", "no_crib", "carted", "late_crib", "dry_crib", "no_ship", "shipped", "late_ship", "dry_ship", "no_stall", "sold", "late_sold", "dry_sold", "no_yard", "banked", "late_banked", "dry_banked", "no_bunk", "hired", "late_hired", "dry_hired", "no_loft", "lofted", "late_lofted", "dry_lofted", "no_gate", "gated", "late_gated", "dry_gated", "no_wage", "paid", "late_paid", "dry_paid", "no_relief", "posted", "late_posted", "dry_posted", "no_watch", "stood", "late_stood", "dry_stood", "watch_only", "no_lamp", "lit", "late_lit", "dry_lit", "lamp_only", "no_bell", "rung", "late_rung", "dry_rung", "bell_only", "no_horn", "sounded", "late_sounded", "dry_sounded", "horn_only", "no_flag", "raised", "late_raised", "dry_raised", "flag_only"]:
+	for plan_name in ["winning", "all_rake", "dry_pans", "continued", "late_pans", "no_crib", "carted", "late_crib", "dry_crib", "no_ship", "shipped", "late_ship", "dry_ship", "no_stall", "sold", "late_sold", "dry_sold", "no_yard", "banked", "late_banked", "dry_banked", "no_bunk", "hired", "late_hired", "dry_hired", "no_loft", "lofted", "late_lofted", "dry_lofted", "no_gate", "gated", "late_gated", "dry_gated", "no_wage", "paid", "late_paid", "dry_paid", "no_relief", "posted", "late_posted", "dry_posted", "no_watch", "stood", "late_stood", "dry_stood", "watch_only", "no_lamp", "lit", "late_lit", "dry_lit", "lamp_only", "no_bell", "rung", "late_rung", "dry_rung", "bell_only", "no_horn", "sounded", "late_sounded", "dry_sounded", "horn_only", "no_flag", "raised", "late_raised", "dry_raised", "flag_only", "no_banner", "hoisted", "late_hoisted", "dry_hoisted", "banner_only", "no_pennant", "flown", "late_flown", "dry_flown", "pennant_only"]:
 		var before := errors.size()
 		var first = _run_plan(plans, plan_name, errors)
 		var second = _run_plan(plans, plan_name, errors)
@@ -160,6 +162,14 @@ func _test_determinism(errors: Array) -> void:
 		if int(first.get_raised()) != int(second.get_raised()) or int(first.get_horn_left()) != int(second.get_horn_left()):
 			_fail(errors, "%s flag runs differed (%d unraised %d, and %d unraised %d)" % [
 				plan_name, first.get_raised(), first.get_horn_left(), second.get_raised(), second.get_horn_left(),
+			])
+		if int(first.get_hoisted()) != int(second.get_hoisted()) or int(first.get_flag_left()) != int(second.get_flag_left()):
+			_fail(errors, "%s banner runs differed (%d unhoisted %d, and %d unhoisted %d)" % [
+				plan_name, first.get_hoisted(), first.get_flag_left(), second.get_hoisted(), second.get_flag_left(),
+			])
+		if int(first.get_flown()) != int(second.get_flown()) or int(first.get_banner_left()) != int(second.get_banner_left()):
+			_fail(errors, "%s pennant runs differed (%d unflown %d, and %d unflown %d)" % [
+				plan_name, first.get_flown(), first.get_banner_left(), second.get_flown(), second.get_banner_left(),
 			])
 		if String(first.get_summary()) != String(second.get_summary()):
 			_fail(errors, "%s summaries differed" % plan_name)
@@ -334,6 +344,31 @@ func _test_scene_boots(errors: Array) -> void:
 	node._on_key(KEY_SPACE)
 	if int(node.sim.get_paint(7, -6)) != Sim.FLAG:
 		_fail(errors, "keyboard cursor did not paint a flag")
+	node._on_key(KEY_L)
+	if not String(node.mode_label.text).contains("Banner"):
+		_fail(errors, "banner mark was not named")
+	node._on_key(KEY_UP)
+	node._on_key(KEY_SPACE)
+	if int(node.sim.get_paint(7, -7)) != Sim.BANNER:
+		_fail(errors, "keyboard cursor did not paint a banner")
+	node._on_key(KEY_M)
+	if not String(node.mode_label.text).contains("Pennant"):
+		_fail(errors, "pennant mark was not named")
+	node._on_key(KEY_UP)
+	node._on_key(KEY_SPACE)
+	if int(node.sim.get_paint(7, -8)) == Sim.PENNANT:
+		_fail(errors, "pennant painted off its cell")
+	for _step in 7:
+		node._on_key(KEY_RIGHT)
+	for _step in 3:
+		node._on_key(KEY_UP)
+	node._on_key(KEY_SPACE)
+	if int(node.sim.get_paint(14, -11)) != Sim.PENNANT:
+		_fail(errors, "keyboard cursor did not paint a pennant at 14,-11")
+	node._on_key(KEY_L)
+	node._on_key(KEY_SPACE)
+	if int(node.sim.get_paint(14, -11)) != Sim.PENNANT:
+		_fail(errors, "the pennant cell accepted a banner")
 	var season = node.find_child("SeasonNote", true, false)
 	if season == null or not String(season.text).to_lower().contains("pan"):
 		_fail(errors, "season note does not mention pans")
@@ -396,6 +431,14 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "rules text does not mention the flag")
 	if rules == null or not String(rules.text).to_lower().contains("raise one"):
 		_fail(errors, "rules text does not name the flag cap of one")
+	if rules == null or not String(rules.text).to_lower().contains("banner"):
+		_fail(errors, "rules text does not mention the banner")
+	if rules == null or not String(rules.text).to_lower().contains("hoist one"):
+		_fail(errors, "rules text does not name the banner cap of one")
+	if rules == null or not String(rules.text).to_lower().contains("pennant"):
+		_fail(errors, "rules text does not mention the pennant")
+	if rules == null or not String(rules.text).to_lower().contains("fly one"):
+		_fail(errors, "rules text does not name the pennant cap of one")
 	var hint = node.find_child("HintLine", true, false)
 	if hint == null or not String(hint.text).to_lower().contains("watch"):
 		_fail(errors, "hint line does not name the watch")
@@ -407,6 +450,12 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "hint line does not name the horn")
 	if hint == null or not String(hint.text).to_lower().contains("k flag"):
 		_fail(errors, "hint line does not name the flag")
+	if hint == null or not String(hint.text).to_lower().contains("l banner"):
+		_fail(errors, "hint line does not name the banner")
+	if hint == null or not String(hint.text).to_lower().contains("m pennant"):
+		_fail(errors, "hint line does not name the pennant")
+	if hint != null and (int(hint.position.y) != 1056 or int(hint.size.x) != 748 or not hint.clip_contents):
+		_fail(errors, "hint line left its box (y %s w %s clip %s)" % [hint.position.y, hint.size.x, hint.clip_contents])
 	if hint == null or not String(hint.text).contains("\n"):
 		_fail(errors, "hint line is still one long line")
 	var panel = node.find_child("Panel", true, false)
@@ -414,9 +463,9 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "hint line runs under the side panel")
 	if hint != null and hint.position.y + hint.size.y > 1280.0:
 		_fail(errors, "hint line continues past the window")
-	var map_bottom := 58.0 + float(Sim.GRID_H - Sim.GRID_NORTH) * 44.0
+	var map_bottom := 58.0 + float(Sim.GRID_H - Sim.GRID_NORTH) * 42.0
 	if hint != null and hint.position.y < map_bottom:
-		_fail(errors, "hint line covers the flag row")
+		_fail(errors, "hint line covers the pennant row")
 	var spun_ship := 0
 	while int(node.sim.get_beat()) != Sim.SHIPPING and not node.sim.is_over() and spun_ship < int(Sim.CART_TICK) + 2:
 		node.sim.tick()
@@ -584,10 +633,36 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "flag countdown started at %d, expected %d" % [node.sim.get_ticks_until_rain(), Sim.FLAG_TICK])
 	elif not String(node.season_label.text).to_lower().contains("flag"):
 		_fail(errors, "flag note does not mention the flag: %s" % node.season_label.text)
+	var spun_banner := 0
+	while int(node.sim.get_beat()) != Sim.BANNERING and not node.sim.is_over() and spun_banner < int(Sim.FLAG_TICK) + 2:
+		node.sim.tick()
+		spun_banner += 1
+	node._refresh()
+	if int(node.sim.get_beat()) != Sim.BANNERING or node.sim.is_over():
+		_fail(errors, "the scene did not open the banner beat")
+	elif not String(node.rain_label.text).to_lower().contains("banner"):
+		_fail(errors, "banner countdown was not named: %s" % node.rain_label.text)
+	elif int(node.sim.get_ticks_until_rain()) != int(Sim.BANNER_TICK):
+		_fail(errors, "banner countdown started at %d, expected %d" % [node.sim.get_ticks_until_rain(), Sim.BANNER_TICK])
+	elif not String(node.season_label.text).to_lower().contains("banner"):
+		_fail(errors, "banner note does not mention the banner: %s" % node.season_label.text)
+	var spun_pennant := 0
+	while int(node.sim.get_beat()) != Sim.PENNANTING and not node.sim.is_over() and spun_pennant < int(Sim.BANNER_TICK) + 2:
+		node.sim.tick()
+		spun_pennant += 1
+	node._refresh()
+	if int(node.sim.get_beat()) != Sim.PENNANTING or node.sim.is_over():
+		_fail(errors, "the scene did not open the pennant beat")
+	elif not String(node.rain_label.text).to_lower().contains("pennant"):
+		_fail(errors, "pennant countdown was not named: %s" % node.rain_label.text)
+	elif int(node.sim.get_ticks_until_rain()) != int(Sim.PENNANT_TICK):
+		_fail(errors, "pennant countdown started at %d, expected %d" % [node.sim.get_ticks_until_rain(), Sim.PENNANT_TICK])
+	elif not String(node.season_label.text).to_lower().contains("pennant"):
+		_fail(errors, "pennant note does not mention the pennant: %s" % node.season_label.text)
 	node._on_key(KEY_R)
-	if int(node.sim.get_paint(9, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 5)) != Sim.EMPTY or int(node.sim.get_paint(7, 4)) != Sim.EMPTY or int(node.sim.get_paint(7, 3)) != Sim.EMPTY or int(node.sim.get_paint(7, 2)) != Sim.EMPTY or int(node.sim.get_paint(7, 1)) != Sim.EMPTY or int(node.sim.get_paint(7, 0)) != Sim.EMPTY or int(node.sim.get_paint(7, -1)) != Sim.EMPTY or int(node.sim.get_paint(7, -2)) != Sim.EMPTY or int(node.sim.get_paint(7, -3)) != Sim.EMPTY or int(node.sim.get_paint(7, -4)) != Sim.EMPTY or int(node.sim.get_paint(7, -5)) != Sim.EMPTY or int(node.sim.get_paint(7, -6)) != Sim.EMPTY:
+	if int(node.sim.get_paint(9, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 5)) != Sim.EMPTY or int(node.sim.get_paint(7, 4)) != Sim.EMPTY or int(node.sim.get_paint(7, 3)) != Sim.EMPTY or int(node.sim.get_paint(7, 2)) != Sim.EMPTY or int(node.sim.get_paint(7, 1)) != Sim.EMPTY or int(node.sim.get_paint(7, 0)) != Sim.EMPTY or int(node.sim.get_paint(7, -1)) != Sim.EMPTY or int(node.sim.get_paint(7, -2)) != Sim.EMPTY or int(node.sim.get_paint(7, -3)) != Sim.EMPTY or int(node.sim.get_paint(7, -4)) != Sim.EMPTY or int(node.sim.get_paint(7, -5)) != Sim.EMPTY or int(node.sim.get_paint(7, -6)) != Sim.EMPTY or int(node.sim.get_paint(7, -7)) != Sim.EMPTY or int(node.sim.get_paint(14, -11)) != Sim.EMPTY:
 		_fail(errors, "restart scenario did not clear the marks")
-	if int(node.sim.get_season()) != Sim.WET or int(node.sim.get_wet_haul()) != 0 or int(node.sim.get_beat()) != Sim.WET or int(node.sim.get_carted()) != 0 or int(node.sim.get_shipped()) != 0 or int(node.sim.get_coins()) != 0 or int(node.sim.get_banked()) != 0 or int(node.sim.get_hired()) != 0 or int(node.sim.get_lofted()) != 0 or int(node.sim.get_gated()) != 0 or int(node.sim.get_paid()) != 0 or int(node.sim.get_posted()) != 0 or int(node.sim.get_stood()) != 0 or int(node.sim.get_lit()) != 0 or int(node.sim.get_rung()) != 0 or int(node.sim.get_sounded()) != 0 or int(node.sim.get_raised()) != 0:
+	if int(node.sim.get_season()) != Sim.WET or int(node.sim.get_wet_haul()) != 0 or int(node.sim.get_beat()) != Sim.WET or int(node.sim.get_carted()) != 0 or int(node.sim.get_shipped()) != 0 or int(node.sim.get_coins()) != 0 or int(node.sim.get_banked()) != 0 or int(node.sim.get_hired()) != 0 or int(node.sim.get_lofted()) != 0 or int(node.sim.get_gated()) != 0 or int(node.sim.get_paid()) != 0 or int(node.sim.get_posted()) != 0 or int(node.sim.get_stood()) != 0 or int(node.sim.get_lit()) != 0 or int(node.sim.get_rung()) != 0 or int(node.sim.get_sounded()) != 0 or int(node.sim.get_raised()) != 0 or int(node.sim.get_hoisted()) != 0 or int(node.sim.get_flown()) != 0:
 		_fail(errors, "restart scenario did not return to the wet season")
 	if int(node.sim.get_population()) > Sim.POP_CAP:
 		_fail(errors, "restart left the population over the cap")
@@ -1671,8 +1746,8 @@ func _test_gate(errors: Array) -> void:
 	var fresh = Sim.new()
 	if fresh.paint_cell(14, -2, Sim.GATE) == false or int(fresh.get_paint(14, -2)) != Sim.GATE:
 		_fail(errors, "a flat rejected the gate mark")
-	if fresh.paint_cell(14, -10, Sim.GATE):
-		_fail(errors, "the row north of the flag accepted a mark")
+	if fresh.paint_cell(14, -11, Sim.GATE):
+		_fail(errors, "the row north of the banner accepted a mark")
 	if fresh.paint_cell(Sim.COAST_X, -2, Sim.GATE):
 		_fail(errors, "the brine accepted a gate")
 	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.GATE):
@@ -1900,8 +1975,8 @@ func _test_wage(errors: Array) -> void:
 	var fresh = Sim.new()
 	if fresh.paint_cell(14, -3, Sim.WAGE) == false or int(fresh.get_paint(14, -3)) != Sim.WAGE:
 		_fail(errors, "the cell north of the gate rejected the wage mark")
-	if fresh.paint_cell(14, -10, Sim.WAGE):
-		_fail(errors, "the row north of the flag accepted a mark")
+	if fresh.paint_cell(14, -11, Sim.WAGE):
+		_fail(errors, "the row north of the banner accepted a mark")
 	if fresh.paint_cell(Sim.COAST_X, -3, Sim.WAGE):
 		_fail(errors, "the brine accepted a wage")
 	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.WAGE):
@@ -2110,8 +2185,8 @@ func _test_relief(errors: Array) -> void:
 	var fresh = Sim.new()
 	if fresh.paint_cell(14, -4, Sim.RELIEF) == false or int(fresh.get_paint(14, -4)) != Sim.RELIEF:
 		_fail(errors, "the cell north of the wage rejected the relief mark")
-	if fresh.paint_cell(14, -10, Sim.RELIEF):
-		_fail(errors, "the row north of the flag accepted a mark")
+	if fresh.paint_cell(14, -11, Sim.RELIEF):
+		_fail(errors, "the row north of the banner accepted a mark")
 	if fresh.paint_cell(Sim.COAST_X, -4, Sim.RELIEF):
 		_fail(errors, "the brine accepted a relief")
 	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.RELIEF):
@@ -2336,8 +2411,8 @@ func _test_watch(errors: Array) -> void:
 	var fresh = Sim.new()
 	if fresh.paint_cell(14, -5, Sim.WATCH) == false or int(fresh.get_paint(14, -5)) != Sim.WATCH:
 		_fail(errors, "the cell north of the relief rejected the watch mark")
-	if fresh.paint_cell(14, -10, Sim.WATCH):
-		_fail(errors, "the row north of the flag accepted a mark")
+	if fresh.paint_cell(14, -11, Sim.WATCH):
+		_fail(errors, "the row north of the banner accepted a mark")
 	if fresh.paint_cell(Sim.COAST_X, -5, Sim.WATCH):
 		_fail(errors, "the brine accepted a watch")
 	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.WATCH):
@@ -2602,8 +2677,8 @@ func _test_lamp(errors: Array) -> void:
 	var fresh = Sim.new()
 	if fresh.paint_cell(14, -6, Sim.LAMP) == false or int(fresh.get_paint(14, -6)) != Sim.LAMP:
 		_fail(errors, "the cell north of the watch rejected the lamp mark")
-	if fresh.paint_cell(14, -10, Sim.LAMP):
-		_fail(errors, "the row north of the flag accepted a mark")
+	if fresh.paint_cell(14, -11, Sim.LAMP):
+		_fail(errors, "the row north of the banner accepted a mark")
 	if fresh.paint_cell(Sim.COAST_X, -6, Sim.LAMP):
 		_fail(errors, "the brine accepted a lamp")
 	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.LAMP):
@@ -2883,12 +2958,12 @@ func _test_lamp(errors: Array) -> void:
 	])
 
 
-func _assert_chain(sim, errors: Array, label: String, wet: int, stored: int, carted: int, shipped: int, coins: int, hired: int, yard: int, paid: int, posted: int, stood: int, lit: int, rung: int, sounded: int = 0, raised: int = 0) -> void:
+func _assert_chain(sim, errors: Array, label: String, wet: int, stored: int, carted: int, shipped: int, coins: int, hired: int, yard: int, paid: int, posted: int, stood: int, lit: int, rung: int, sounded: int = 0, raised: int = 0, hoisted: int = 0, flown: int = 0) -> void:
 	if sim == null:
 		_fail(errors, "%s did not run" % label)
 		return
-	if int(sim.get_wet_haul()) != wet or int(sim.get_stored_salt()) != stored or int(sim.get_carted()) != carted or int(sim.get_shipped()) != shipped or int(sim.get_coins()) != coins or int(sim.get_hired()) != hired or int(sim.get_yard_left()) != yard or int(sim.get_paid()) != paid or int(sim.get_posted()) != posted or int(sim.get_stood()) != stood or int(sim.get_lit()) != lit or int(sim.get_rung()) != rung or int(sim.get_sounded()) != sounded or int(sim.get_raised()) != raised:
-		_fail(errors, "%s changed (wet %d stored %d carted %d shipped %d coins %d hired %d yard %d paid %d posted %d stood %d lit %d rung %d sounded %d raised %d)" % [label, sim.get_wet_haul(), sim.get_stored_salt(), sim.get_carted(), sim.get_shipped(), sim.get_coins(), sim.get_hired(), sim.get_yard_left(), sim.get_paid(), sim.get_posted(), sim.get_stood(), sim.get_lit(), sim.get_rung(), sim.get_sounded(), sim.get_raised()])
+	if int(sim.get_wet_haul()) != wet or int(sim.get_stored_salt()) != stored or int(sim.get_carted()) != carted or int(sim.get_shipped()) != shipped or int(sim.get_coins()) != coins or int(sim.get_hired()) != hired or int(sim.get_yard_left()) != yard or int(sim.get_paid()) != paid or int(sim.get_posted()) != posted or int(sim.get_stood()) != stood or int(sim.get_lit()) != lit or int(sim.get_rung()) != rung or int(sim.get_sounded()) != sounded or int(sim.get_raised()) != raised or int(sim.get_hoisted()) != hoisted or int(sim.get_flown()) != flown:
+		_fail(errors, "%s changed (wet %d stored %d carted %d shipped %d coins %d hired %d yard %d paid %d posted %d stood %d lit %d rung %d sounded %d raised %d hoisted %d flown %d)" % [label, sim.get_wet_haul(), sim.get_stored_salt(), sim.get_carted(), sim.get_shipped(), sim.get_coins(), sim.get_hired(), sim.get_yard_left(), sim.get_paid(), sim.get_posted(), sim.get_stood(), sim.get_lit(), sim.get_rung(), sim.get_sounded(), sim.get_raised(), sim.get_hoisted(), sim.get_flown()])
 
 
 func _test_bell(errors: Array) -> void:
@@ -2899,8 +2974,8 @@ func _test_bell(errors: Array) -> void:
 	var fresh = Sim.new()
 	if fresh.paint_cell(14, -7, Sim.BELL) == false or int(fresh.get_paint(14, -7)) != Sim.BELL:
 		_fail(errors, "the cell north of the lamp rejected the bell mark")
-	if fresh.paint_cell(14, -10, Sim.BELL):
-		_fail(errors, "the row north of the flag accepted a mark")
+	if fresh.paint_cell(14, -11, Sim.BELL):
+		_fail(errors, "the row north of the banner accepted a mark")
 	if fresh.paint_cell(Sim.COAST_X, -7, Sim.BELL):
 		_fail(errors, "the brine accepted a bell")
 	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.BELL):
@@ -3129,8 +3204,8 @@ func _test_horn(errors: Array) -> void:
 	var fresh = Sim.new()
 	if fresh.paint_cell(14, -8, Sim.HORN) == false or int(fresh.get_paint(14, -8)) != Sim.HORN:
 		_fail(errors, "the cell north of the bell rejected the horn mark")
-	if fresh.paint_cell(14, -10, Sim.HORN):
-		_fail(errors, "the row north of the flag accepted a mark")
+	if fresh.paint_cell(14, -11, Sim.HORN):
+		_fail(errors, "the row north of the banner accepted a mark")
 	if fresh.paint_cell(Sim.COAST_X, -8, Sim.HORN):
 		_fail(errors, "the brine accepted a horn")
 	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.HORN):
@@ -3373,8 +3448,8 @@ func _test_flag(errors: Array) -> void:
 	var fresh = Sim.new()
 	if fresh.paint_cell(14, -9, Sim.FLAG) == false or int(fresh.get_paint(14, -9)) != Sim.FLAG:
 		_fail(errors, "the cell north of the horn rejected the flag mark")
-	if fresh.paint_cell(14, -10, Sim.FLAG):
-		_fail(errors, "the row north of the flag accepted a mark")
+	if fresh.paint_cell(14, -11, Sim.FLAG):
+		_fail(errors, "the row north of the banner accepted a mark")
 	if fresh.paint_cell(Sim.COAST_X, -9, Sim.FLAG):
 		_fail(errors, "the brine accepted a flag")
 	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.FLAG):
@@ -3615,6 +3690,414 @@ func _test_flag(errors: Array) -> void:
 	if not saw_short:
 		_fail(errors, "dry flag did not stop at 1 with the horn clear (raised %d horn %d sounded %d bell %d lamp %d watch %d relief %d wage %d gate %d yard %d rung %d lit %d stood %d posted %d paid %d ticks %d)" % [short.get_raised(), short.get_horn_left(), short.get_sounded(), short.get_bell_left(), short.get_lamp_left(), short.get_watch_left(), short.get_relief_left(), short.get_wage_left(), short.get_gate_left(), short.get_yard_left(), short.get_rung(), short.get_lit(), short.get_stood(), short.get_posted(), short.get_paid(), short.get_ticks_until_rain()])
 	print("raised %d left horn %d unsounded %d unrung %d unlit %d unstood %d unposted %d unpaid %d; dry raised %d left horn %d unsounded %d unrung %d unlit %d unstood %d unposted %d unpaid %d; no flag raised %d left horn %d; flag without horn raised %d" % [raised.get_raised(), raised.get_horn_left(), raised.get_bell_left(), raised_unrung, raised_unlit, raised_unstood, raised_unposted, raised_unpaid, dry_raised.get_raised(), dry_raised.get_horn_left(), dry_raised.get_bell_left(), dry_unrung, dry_unlit, dry_unstood, dry_unposted, dry_unpaid, ignored.get_raised(), ignored.get_horn_left(), bare.get_raised()])
+
+
+func _test_banner(errors: Array) -> void:
+	if int(Sim.BANNER_TICK) != 100 or int(Sim.BANNER_TICK) != int(Sim.TICK_HZ) * 10:
+		_fail(errors, "banner beat length %s is not 100 ticks (10 seconds)" % Sim.BANNER_TICK)
+	if int(Sim.BANNER_CAP) != 1:
+		_fail(errors, "banner cap is %s, expected 1" % Sim.BANNER_CAP)
+	var fresh = Sim.new()
+	if fresh.paint_cell(14, -10, Sim.BANNER) == false or int(fresh.get_paint(14, -10)) != Sim.BANNER:
+		_fail(errors, "the cell north of the flag rejected the banner mark")
+	if fresh.paint_cell(14, -11, Sim.BANNER):
+		_fail(errors, "the row north of the banner accepted a mark")
+	if fresh.paint_cell(Sim.COAST_X, -10, Sim.BANNER):
+		_fail(errors, "the brine accepted a banner")
+	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.BANNER):
+		_fail(errors, "the anthill accepted a banner")
+	var plans := _plans(errors)
+	if plans.is_empty():
+		return
+	var won = _run_plan(plans, "winning", errors)
+	var dry = _run_plan(plans, "dry_pans", errors)
+	var parked = _run_plan(plans, "carted", errors)
+	var loaded = _run_plan(plans, "shipped", errors)
+	var sold = _run_plan(plans, "sold", errors)
+	var hired = _run_plan(plans, "hired", errors)
+	var lofted = _run_plan(plans, "lofted", errors)
+	var passed = _run_plan(plans, "gated", errors)
+	var paid = _run_plan(plans, "paid", errors)
+	var posted = _run_plan(plans, "posted", errors)
+	var stood = _run_plan(plans, "stood", errors)
+	var lit = _run_plan(plans, "lit", errors)
+	var rung = _run_plan(plans, "rung", errors)
+	var sounded = _run_plan(plans, "sounded", errors)
+	var raised = _run_plan(plans, "raised", errors)
+	var dry_raised = _run_plan(plans, "dry_raised", errors)
+	var ignored = _run_plan(plans, "no_banner", errors)
+	var bare = _run_plan(plans, "banner_only", errors)
+	var hoisted = _run_plan(plans, "hoisted", errors)
+	var hoisted_again = _run_plan(plans, "hoisted", errors)
+	var late = _run_plan(plans, "late_hoisted", errors)
+	var dry_hoisted = _run_plan(plans, "dry_hoisted", errors)
+	if won == null or dry == null or parked == null or loaded == null or sold == null or hired == null or lofted == null or passed == null or paid == null or posted == null or stood == null or lit == null or rung == null or sounded == null or raised == null or dry_raised == null or ignored == null or bare == null or hoisted == null or hoisted_again == null or late == null or dry_hoisted == null:
+		return
+	# Earlier plans keep the numbers they had before the banner existed, including a flag and no banner.
+	_assert_chain(won, errors, "winning shore", 2997, 2997, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+	_assert_chain(dry, errors, "dry pans", 0, 1032, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+	_assert_chain(parked, errors, "carted plan", 2997, 2997, 2997, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+	_assert_chain(loaded, errors, "shipped plan", 2997, 2997, 2997, 2997, 0, 0, 0, 0, 0, 0, 0, 0)
+	_assert_chain(sold, errors, "sold plan", 2997, 2997, 2997, 2997, 2997, 0, 0, 0, 0, 0, 0, 0)
+	_assert_chain(hired, errors, "hired plan", 2997, 2997, 2997, 2997, 2997, 29, 97, 0, 0, 0, 0, 0)
+	_assert_chain(lofted, errors, "lofted plan", 2997, 2997, 2997, 2997, 2997, 29, 97, 0, 0, 0, 0, 0)
+	_assert_chain(passed, errors, "gated plan", 2997, 2997, 2997, 2997, 2997, 29, 97, 0, 0, 0, 0, 0)
+	_assert_chain(paid, errors, "paid plan", 2997, 2997, 2997, 2997, 2997, 29, 57, 10, 0, 0, 0, 0)
+	_assert_chain(posted, errors, "posted plan", 2997, 2997, 2997, 2997, 2997, 29, 57, 10, 6, 0, 0, 0)
+	_assert_chain(stood, errors, "stood plan", 2997, 2997, 2997, 2997, 2997, 29, 57, 10, 6, 4, 0, 0)
+	_assert_chain(lit, errors, "lit plan", 2997, 2997, 2997, 2997, 2997, 29, 57, 10, 6, 4, 3, 0)
+	_assert_chain(rung, errors, "rung plan", 2997, 2997, 2997, 2997, 2997, 29, 57, 10, 6, 4, 3, 2)
+	_assert_chain(sounded, errors, "sounded plan", 2997, 2997, 2997, 2997, 2997, 29, 57, 10, 6, 4, 3, 2, 1)
+	_assert_chain(raised, errors, "raised plan", 2997, 2997, 2997, 2997, 2997, 29, 57, 10, 6, 4, 3, 2, 1, 1)
+	_assert_chain(dry_raised, errors, "dry flag", 0, 1032, 1032, 1032, 1032, 10, 0, 8, 6, 4, 3, 2, 1, 1)
+	if int(raised.get_hoisted()) != 0 or int(raised.get_flag_left()) != 1 or int(dry_raised.get_hoisted()) != 0 or int(dry_raised.get_flag_left()) != 1:
+		_fail(errors, "a flag with no banner hoisted someone (hoisted %d flag %d; dry hoisted %d flag %d)" % [raised.get_hoisted(), raised.get_flag_left(), dry_raised.get_hoisted(), dry_raised.get_flag_left()])
+	if String(raised.get_summary()).to_lower().contains("hoisted") or String(raised.get_summary()).to_lower().contains("banner"):
+		_fail(errors, "raised plan summary names a banner: %s" % raised.get_summary())
+	# Raised, no banner: the 1 who was raised stays on the flag.
+	var ignored_unpaid := int(ignored.get_hired()) - int(ignored.get_paid())
+	var ignored_unposted := int(ignored.get_paid()) - int(ignored.get_posted())
+	var ignored_unstood := int(ignored.get_posted()) - int(ignored.get_stood())
+	var ignored_unlit := int(ignored.get_stood()) - int(ignored.get_lit())
+	var ignored_unrung := int(ignored.get_lit()) - int(ignored.get_rung())
+	var ignored_unraised := int(ignored.get_sounded()) - int(ignored.get_raised())
+	var ignored_unhoisted := int(ignored.get_raised()) - int(ignored.get_hoisted())
+	if int(ignored.get_hoisted()) != 0 or int(ignored.get_flag_left()) != 1 or ignored_unhoisted != 1 or int(ignored.get_raised()) != 1 or ignored_unraised != 0 or int(ignored.get_horn_left()) != 0 or int(ignored.get_sounded()) != 1 or int(ignored.get_bell_left()) != 1 or int(ignored.get_rung()) != 2 or ignored_unrung != 1 or int(ignored.get_lamp_left()) != 1 or int(ignored.get_lit()) != 3 or ignored_unlit != 1 or int(ignored.get_watch_left()) != 1 or ignored_unstood != 2 or ignored_unposted != 4 or ignored_unpaid != 19 or int(ignored.get_relief_left()) != 2 or int(ignored.get_wage_left()) != 4 or int(ignored.get_loft_left()) != 19 or int(ignored.get_gate_left()) != 0 or int(ignored.get_yard_left()) != 57 or int(ignored.get_stood()) != 4 or int(ignored.get_posted()) != 6 or int(ignored.get_paid()) != 10 or int(ignored.get_hired()) != 29 or int(ignored.get_coins()) != 2997 or int(ignored.get_stored_salt()) != 2997:
+		_fail(errors, "no_banner hoisted someone (stored %d coins %d hired %d yard %d raised %d flag %d hoisted %d unpaid %d)" % [ignored.get_stored_salt(), ignored.get_coins(), ignored.get_hired(), ignored.get_yard_left(), ignored.get_raised(), ignored.get_flag_left(), ignored.get_hoisted(), ignored_unpaid])
+	if String(ignored.get_summary()) != String(raised.get_summary()):
+		_fail(errors, "no_banner summary changed: %s" % ignored.get_summary())
+	if String(ignored.get_summary()).to_lower().contains("hoisted") or String(ignored.get_summary()).to_lower().contains("banner"):
+		_fail(errors, "no_banner summary names a banner: %s" % ignored.get_summary())
+	var ignored_flag = plans["no_banner"]["flag"][0]
+	var ignored_salt: Dictionary = ignored.get_cell_salt(int(ignored_flag[0]), int(ignored_flag[1]))
+	var ignored_north: Dictionary = ignored.get_cell_salt(int(ignored_flag[0]), int(ignored_flag[1]) - 1)
+	if int(ignored_salt.get("flag", 0)) != 1 or int(ignored_north.get("banner", 0)) != 0 or int(ignored_salt.get("banner", 0)) != 0:
+		_fail(errors, "no_banner left %s at the flag and %s at a banner" % [ignored_salt.get("flag", 0), ignored_north.get("banner", 0)])
+	# A banner with nobody raised hoists nobody. The sounded hire stays on the horn.
+	var bare_unpaid := int(bare.get_hired()) - int(bare.get_paid())
+	if int(bare.get_hoisted()) != 0 or int(bare.get_raised()) != 0 or int(bare.get_flag_left()) != 0 or int(bare.get_sounded()) != 1 or int(bare.get_horn_left()) != 1 or int(bare.get_rung()) != 2 or int(bare.get_bell_left()) != 1 or int(bare.get_lit()) != 3 or int(bare.get_lamp_left()) != 1 or int(bare.get_stood()) != 4 or int(bare.get_watch_left()) != 1 or int(bare.get_posted()) != 6 or int(bare.get_relief_left()) != 2 or int(bare.get_paid()) != 10 or int(bare.get_wage_left()) != 4 or bare_unpaid != 19 or int(bare.get_loft_left()) != 19 or int(bare.get_gate_left()) != 0 or int(bare.get_yard_left()) != 57 or int(bare.get_hired()) != 29 or int(bare.get_coins()) != 2997 or int(bare.get_stored_salt()) != 2997:
+		_fail(errors, "banner without a flag hoisted someone (hoisted %d raised %d horn %d sounded %d bell %d unpaid %d loft %d yard %d)" % [bare.get_hoisted(), bare.get_raised(), bare.get_horn_left(), bare.get_sounded(), bare.get_bell_left(), bare_unpaid, bare.get_loft_left(), bare.get_yard_left()])
+	if String(bare.get_summary()) != String(sounded.get_summary()):
+		_fail(errors, "banner without a flag changed the summary: %s" % bare.get_summary())
+	if String(bare.get_summary()).to_lower().contains("hoisted") or String(bare.get_summary()).to_lower().contains("banner") or String(bare.get_summary()).to_lower().contains("raised") or String(bare.get_summary()).to_lower().contains("flag"):
+		_fail(errors, "banner without a flag names a banner: %s" % bare.get_summary())
+	var bare_banner = plans["banner_only"]["banner"][0]
+	var bare_horn = plans["banner_only"]["horn"][0]
+	var bare_banner_salt: Dictionary = bare.get_cell_salt(int(bare_banner[0]), int(bare_banner[1]))
+	var bare_horn_salt: Dictionary = bare.get_cell_salt(int(bare_horn[0]), int(bare_horn[1]))
+	if int(bare_banner_salt.get("banner", 0)) != 0 or int(bare_horn_salt.get("horn", 0)) != 1 or int(bare_banner_salt.get("flag", 0)) != 0:
+		_fail(errors, "banner without a flag holds %s, horn holds %s" % [bare_banner_salt.get("banner", 0), bare_horn_salt.get("horn", 0)])
+	var banner_cell = plans["hoisted"]["banner"][0]
+	var flag_cell = plans["hoisted"]["flag"][0]
+	var horn_cell = plans["hoisted"]["horn"][0]
+	if int(banner_cell[0]) != int(flag_cell[0]) or int(banner_cell[1]) != int(flag_cell[1]) - 1:
+		_fail(errors, "hoisted plan's banner is not one cell north of the flag")
+	if int(banner_cell[0]) != 14 or int(banner_cell[1]) != -10 or int(flag_cell[0]) != 14 or int(flag_cell[1]) != -9:
+		_fail(errors, "hoisted plan's banner is not at 14,-10 north of the flag at 14,-9")
+	_assert_chain(hoisted, errors, "hoisted plan", 2997, 2997, 2997, 2997, 2997, 29, 57, 10, 6, 4, 3, 2, 1, 1, 1)
+	var hoisted_unpaid := int(hoisted.get_hired()) - int(hoisted.get_paid())
+	var hoisted_unposted := int(hoisted.get_paid()) - int(hoisted.get_posted())
+	var hoisted_unstood := int(hoisted.get_posted()) - int(hoisted.get_stood())
+	var hoisted_unlit := int(hoisted.get_stood()) - int(hoisted.get_lit())
+	var hoisted_unrung := int(hoisted.get_lit()) - int(hoisted.get_rung())
+	var hoisted_unraised := int(hoisted.get_sounded()) - int(hoisted.get_raised())
+	var hoisted_unhoisted := int(hoisted.get_raised()) - int(hoisted.get_hoisted())
+	if int(hoisted.get_hoisted()) != 1 or int(hoisted.get_flag_left()) != 0 or hoisted_unhoisted != 0 or hoisted_unraised != 0 or int(hoisted.get_horn_left()) != 0 or int(hoisted.get_bell_left()) != 1 or hoisted_unrung != 1 or hoisted_unlit != 1 or hoisted_unstood != 2 or hoisted_unposted != 4 or hoisted_unpaid != 19 or int(hoisted.get_lamp_left()) != 1 or int(hoisted.get_watch_left()) != 1 or int(hoisted.get_relief_left()) != 2 or int(hoisted.get_wage_left()) != 4 or int(hoisted.get_loft_left()) != 19 or int(hoisted.get_gate_left()) != 0 or int(hoisted.get_yard_left()) != 57 or int(hoisted.get_raised()) != 1 or int(hoisted.get_sounded()) != 1 or int(hoisted.get_rung()) != 2 or int(hoisted.get_lit()) != 3 or int(hoisted.get_stood()) != 4 or int(hoisted.get_posted()) != 6 or int(hoisted.get_coins()) != 2997 or int(hoisted.get_hired()) != 29:
+		_fail(errors, "hoisted %d, left %d raised unhoisted, sounded unraised %d, rung unsounded %d, lit unrung %d, stood unlit %d, posted unstood %d, paid unposted %d, unpaid %d, flag %d, horn %d, yard %d, raised %d, sounded %d, rung %d, lit %d, stood %d, posted %d, coins %d, hired %d" % [hoisted.get_hoisted(), hoisted.get_flag_left(), hoisted_unraised, hoisted.get_bell_left(), hoisted_unrung, hoisted_unlit, hoisted_unstood, hoisted_unposted, hoisted_unpaid, hoisted.get_flag_left(), hoisted.get_horn_left(), hoisted.get_yard_left(), hoisted.get_raised(), hoisted.get_sounded(), hoisted.get_rung(), hoisted.get_lit(), hoisted.get_stood(), hoisted.get_posted(), hoisted.get_coins(), hoisted.get_hired()])
+	if int(hoisted.get_hoisted()) > int(Sim.BANNER_CAP):
+		_fail(errors, "banner hoisted %d, over the cap of %d" % [hoisted.get_hoisted(), Sim.BANNER_CAP])
+	var banner_salt: Dictionary = hoisted.get_cell_salt(int(banner_cell[0]), int(banner_cell[1]))
+	var flag_salt: Dictionary = hoisted.get_cell_salt(int(flag_cell[0]), int(flag_cell[1]))
+	var horn_salt: Dictionary = hoisted.get_cell_salt(int(horn_cell[0]), int(horn_cell[1]))
+	if int(banner_salt.get("banner", 0)) != 1 or int(flag_salt.get("flag", 0)) != 0 or int(horn_salt.get("horn", 0)) != 0:
+		_fail(errors, "banner cell holds %s, flag holds %s, horn holds %s" % [banner_salt.get("banner", 0), flag_salt.get("flag", 0), horn_salt.get("horn", 0)])
+	var hoisted_summary := String(hoisted.get_summary())
+	if not hoisted_summary.contains("Hoisted 1 on the banner") or not hoisted_summary.contains("Left 0 at the flag") or not hoisted_summary.contains("Raised 1 on the flag") or not hoisted_summary.contains("Left 0 at the horn") or not hoisted_summary.contains("Sounded 1 on the horn") or not hoisted_summary.contains("Coins 2997") or not hoisted_summary.contains("Hired 29") or not hoisted_summary.contains("Left 57"):
+		_fail(errors, "hoisted summary does not name the banner: %s" % hoisted_summary)
+	if int(hoisted_again.get_hoisted()) != int(hoisted.get_hoisted()) or int(hoisted_again.get_flag_left()) != int(hoisted.get_flag_left()) or int(hoisted_again.get_raised()) != int(hoisted.get_raised()) or int(hoisted_again.get_yard_left()) != int(hoisted.get_yard_left()) or int(hoisted_again.get_stored_salt()) != int(hoisted.get_stored_salt()) or String(hoisted_again.get_summary()) != String(hoisted.get_summary()):
+		_fail(errors, "repeated banner paint hoisted %d and left flag %d, then hoisted %d and left flag %d" % [hoisted.get_hoisted(), hoisted.get_flag_left(), hoisted_again.get_hoisted(), hoisted_again.get_flag_left()])
+	if int(late.get_hoisted()) != 1 or int(late.get_flag_left()) != 0 or int(late.get_raised()) != 1 or int(late.get_sounded()) != 1 or int(late.get_horn_left()) != 0 or int(late.get_rung()) != 2 or int(late.get_lit()) != 3 or int(late.get_stood()) != 4 or int(late.get_posted()) != 6 or int(late.get_yard_left()) != 57 or int(late.get_hired()) != 29 or int(late.get_coins()) != 2997 or int(late.get_stored_salt()) != 2997 or int(late.get_loft_left()) != 19 or int(late.get_wage_left()) != 4:
+		_fail(errors, "painting the banner at the banner beat (hoisted %d flag %d raised %d horn %d yard %d) did not match painting it early (hoisted %d flag %d raised %d)" % [late.get_hoisted(), late.get_flag_left(), late.get_raised(), late.get_horn_left(), late.get_yard_left(), hoisted.get_hoisted(), hoisted.get_flag_left(), hoisted.get_raised()])
+	_assert_chain(dry_hoisted, errors, "dry banner", 0, 1032, 1032, 1032, 1032, 10, 0, 8, 6, 4, 3, 2, 1, 1, 1)
+	var dry_unpaid := int(dry_hoisted.get_hired()) - int(dry_hoisted.get_paid())
+	var dry_unposted := int(dry_hoisted.get_paid()) - int(dry_hoisted.get_posted())
+	var dry_unstood := int(dry_hoisted.get_posted()) - int(dry_hoisted.get_stood())
+	var dry_unlit := int(dry_hoisted.get_stood()) - int(dry_hoisted.get_lit())
+	var dry_unrung := int(dry_hoisted.get_lit()) - int(dry_hoisted.get_rung())
+	var dry_unraised := int(dry_hoisted.get_sounded()) - int(dry_hoisted.get_raised())
+	var dry_unhoisted := int(dry_hoisted.get_raised()) - int(dry_hoisted.get_hoisted())
+	if int(dry_hoisted.get_hoisted()) != 1 or int(dry_hoisted.get_flag_left()) != 0 or dry_unhoisted != 0 or dry_unraised != 0 or int(dry_hoisted.get_horn_left()) != 0 or int(dry_hoisted.get_bell_left()) != 1 or dry_unrung != 1 or dry_unlit != 1 or dry_unstood != 2 or dry_unposted != 2 or dry_unpaid != 2 or int(dry_hoisted.get_yard_left()) != 0 or int(dry_hoisted.get_raised()) != 1 or int(dry_hoisted.get_sounded()) != 1 or int(dry_hoisted.get_rung()) != 2 or int(dry_hoisted.get_lit()) != 3 or int(dry_hoisted.get_stood()) != 4 or int(dry_hoisted.get_posted()) != 6 or int(dry_hoisted.get_wet_haul()) != 0 or int(dry_hoisted.get_gate_left()) != 2 or int(dry_hoisted.get_wage_left()) != 2 or int(dry_hoisted.get_loft_left()) != 0:
+		_fail(errors, "dry banner changed the short crew (wet %d stored %d hoisted %d flag %d raised %d sounded %d unhoisted %d unraised %d unsounded %d unrung %d unlit %d unstood %d unposted %d unpaid %d yard %d gate %d wage %d)" % [dry_hoisted.get_wet_haul(), dry_hoisted.get_stored_salt(), dry_hoisted.get_hoisted(), dry_hoisted.get_flag_left(), dry_hoisted.get_raised(), dry_hoisted.get_sounded(), dry_unhoisted, dry_unraised, dry_hoisted.get_bell_left(), dry_unrung, dry_unlit, dry_unstood, dry_unposted, dry_unpaid, dry_hoisted.get_yard_left(), dry_hoisted.get_gate_left(), dry_hoisted.get_wage_left()])
+	var dry_banner_cell = plans["dry_hoisted"]["banner"][0]
+	var dry_flag_cell = plans["dry_hoisted"]["flag"][0]
+	var dry_banner_salt: Dictionary = dry_hoisted.get_cell_salt(int(dry_banner_cell[0]), int(dry_banner_cell[1]))
+	var dry_flag_salt: Dictionary = dry_hoisted.get_cell_salt(int(dry_flag_cell[0]), int(dry_flag_cell[1]))
+	if int(dry_banner_salt.get("banner", 0)) != 1 or int(dry_flag_salt.get("flag", 0)) != 0:
+		_fail(errors, "dry banner cell holds %s, flag holds %s" % [dry_banner_salt.get("banner", 0), dry_flag_salt.get("flag", 0)])
+	if not String(dry_hoisted.get_summary()).contains("Hoisted 1 on the banner") or not String(dry_hoisted.get_summary()).contains("Left 0 at the flag") or not String(dry_hoisted.get_summary()).contains("Raised 1 on the flag") or not String(dry_hoisted.get_summary()).contains("Left 0 in the yard"):
+		_fail(errors, "dry banner summary does not name the cap: %s" % dry_hoisted.get_summary())
+	_assert_pop(hoisted, errors, "hoisted plan")
+	_assert_pop(hoisted_again, errors, "hoisted plan again")
+	_assert_pop(late, errors, "late_hoisted")
+	_assert_pop(dry_hoisted, errors, "dry_hoisted")
+	_assert_pop(ignored, errors, "no_banner")
+	_assert_pop(bare, errors, "banner_only")
+	# The cap stops the banner while ticks remain. The winning shore leaves 0 raised hires on the flag.
+	var shore = _prepare_plan(plans, "hoisted", errors)
+	if shore == null:
+		return
+	var shore_guard := 0
+	var shore_limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + int(Sim.SHIP_TICK) + int(Sim.MARKET_TICK) + int(Sim.YARD_TICK) + int(Sim.BUNK_TICK) + int(Sim.LOFT_TICK) + int(Sim.GATE_TICK) + int(Sim.WAGE_TICK) + int(Sim.RELIEF_TICK) + int(Sim.WATCH_TICK) + int(Sim.LAMP_TICK) + int(Sim.BELL_TICK) + int(Sim.HORN_TICK) + int(Sim.FLAG_TICK) + 2
+	while int(shore.get_beat()) != Sim.BANNERING and not shore.is_over() and shore_guard < shore_limit:
+		shore.tick()
+		shore_guard += 1
+	if int(shore.get_beat()) != Sim.BANNERING or shore.is_over():
+		_fail(errors, "the flag beat did not open a banner beat for the cap check")
+		return
+	if int(shore.get_ticks_until_rain()) != int(Sim.BANNER_TICK):
+		_fail(errors, "banner countdown started at %d, expected %d" % [shore.get_ticks_until_rain(), Sim.BANNER_TICK])
+	if int(shore.get_hoisted()) != 0 or int(shore.get_raised()) != 1 or int(shore.get_flag_left()) != 1 or int(shore.get_sounded()) != 1 or int(shore.get_yard_left()) != 57:
+		_fail(errors, "banner opened early (hoisted %d raised %d flag %d sounded %d yard %d)" % [shore.get_hoisted(), shore.get_raised(), shore.get_flag_left(), shore.get_sounded(), shore.get_yard_left()])
+	var saw_cap := false
+	var hoist_guard := 0
+	while not shore.is_over() and hoist_guard < int(Sim.BANNER_TICK) + 2:
+		shore.tick()
+		hoist_guard += 1
+		if int(shore.get_hoisted()) == int(Sim.BANNER_CAP) and int(shore.get_flag_left()) == 0 and int(shore.get_raised()) == 1 and int(shore.get_sounded()) == 1 and int(shore.get_horn_left()) == 0 and int(shore.get_yard_left()) == 57 and int(shore.get_coins()) == 2997 and int(shore.get_hired()) == 29 and int(shore.get_ticks_until_rain()) > 0:
+			saw_cap = true
+			var ticks_left := int(shore.get_ticks_until_rain())
+			shore.tick()
+			if int(shore.get_hoisted()) != int(Sim.BANNER_CAP) or int(shore.get_flag_left()) != 0 or int(shore.get_raised()) != 1 or int(shore.get_sounded()) != 1 or int(shore.get_yard_left()) != 57 or int(shore.get_coins()) != 2997 or int(shore.get_hired()) != 29 or int(shore.get_stored_salt()) != 2997 or int(shore.get_posted()) != 6 or int(shore.get_stood()) != 4 or int(shore.get_lit()) != 3 or int(shore.get_rung()) != 2:
+				_fail(errors, "the banner kept hoisting after the cap (hoisted %d flag %d raised %d sounded %d yard %d)" % [shore.get_hoisted(), shore.get_flag_left(), shore.get_raised(), shore.get_sounded(), shore.get_yard_left()])
+			elif not shore.is_over() and int(shore.get_ticks_until_rain()) >= ticks_left:
+				_fail(errors, "the banner beat did not spend a tick after the cap")
+			break
+	if not saw_cap:
+		_fail(errors, "the banner did not stop at %d while ticks remained (hoisted %d flag %d raised %d ticks %d)" % [Sim.BANNER_CAP, shore.get_hoisted(), shore.get_flag_left(), shore.get_raised(), shore.get_ticks_until_rain()])
+	var short = _prepare_plan(plans, "dry_hoisted", errors)
+	if short == null:
+		return
+	var short_guard := 0
+	while int(short.get_beat()) != Sim.BANNERING and not short.is_over() and short_guard < shore_limit:
+		short.tick()
+		short_guard += 1
+	if int(short.get_beat()) != Sim.BANNERING or short.is_over():
+		_fail(errors, "the flag beat did not open a banner beat for the dry cap")
+		return
+	var saw_short := false
+	var short_steps := 0
+	while not short.is_over() and short_steps < int(Sim.BANNER_TICK) + 2:
+		short.tick()
+		short_steps += 1
+		if int(short.get_hoisted()) == int(Sim.BANNER_CAP) and int(short.get_flag_left()) == 0 and int(short.get_raised()) == 1 and int(short.get_sounded()) == 1 and int(short.get_yard_left()) == 0 and int(short.get_wet_haul()) == 0 and int(short.get_ticks_until_rain()) > 0:
+			saw_short = true
+			var short_ticks := int(short.get_ticks_until_rain())
+			short.tick()
+			if int(short.get_hoisted()) != 1 or int(short.get_flag_left()) != 0 or int(short.get_raised()) != 1 or int(short.get_yard_left()) != 0 or int(short.get_posted()) != 6:
+				_fail(errors, "the banner hoisted an unraised hire or passed the cap (hoisted %d flag %d raised %d yard %d)" % [short.get_hoisted(), short.get_flag_left(), short.get_raised(), short.get_yard_left()])
+			elif not short.is_over() and int(short.get_ticks_until_rain()) >= short_ticks:
+				_fail(errors, "the banner beat did not spend a tick after the dry cap")
+			break
+	if not saw_short:
+		_fail(errors, "dry banner did not stop at 1 with the flag clear (hoisted %d flag %d raised %d yard %d ticks %d)" % [short.get_hoisted(), short.get_flag_left(), short.get_raised(), short.get_yard_left(), short.get_ticks_until_rain()])
+	print("hoisted %d left flag %d unraised %d unsounded %d unrung %d unlit %d unstood %d unposted %d unpaid %d; dry hoisted %d left flag %d unraised %d unsounded %d unrung %d unlit %d unstood %d unposted %d unpaid %d; no banner hoisted %d left flag %d; banner without flag hoisted %d" % [hoisted.get_hoisted(), hoisted.get_flag_left(), hoisted_unraised, hoisted.get_bell_left(), hoisted_unrung, hoisted_unlit, hoisted_unstood, hoisted_unposted, hoisted_unpaid, dry_hoisted.get_hoisted(), dry_hoisted.get_flag_left(), dry_unraised, dry_hoisted.get_bell_left(), dry_unrung, dry_unlit, dry_unstood, dry_unposted, dry_unpaid, ignored.get_hoisted(), ignored.get_flag_left(), bare.get_hoisted()])
+
+
+func _test_pennant(errors: Array) -> void:
+	if int(Sim.PENNANT_TICK) != 100 or int(Sim.PENNANT_TICK) != int(Sim.TICK_HZ) * 10:
+		_fail(errors, "pennant beat length %s is not 100 ticks (10 seconds)" % Sim.PENNANT_TICK)
+	if int(Sim.PENNANT_CAP) != 1:
+		_fail(errors, "pennant cap is %s, expected 1" % Sim.PENNANT_CAP)
+	var fresh = Sim.new()
+	if fresh.paint_cell(14, -11, Sim.PENNANT) == false or int(fresh.get_paint(14, -11)) != Sim.PENNANT:
+		_fail(errors, "the cell north of the banner rejected the pennant mark")
+	if fresh.paint_cell(14, -10, Sim.PENNANT):
+		_fail(errors, "the banner cell accepted a pennant")
+	if fresh.paint_cell(14, -11, Sim.BANNER):
+		_fail(errors, "the pennant cell accepted a banner")
+	if int(fresh.get_paint(14, -11)) != Sim.PENNANT:
+		_fail(errors, "a rejected banner erased the pennant")
+	if fresh.paint_cell(14, -10, Sim.BANNER) == false or int(fresh.get_paint(14, -10)) != Sim.BANNER:
+		_fail(errors, "the banner cell no longer accepts a banner")
+	if fresh.paint_cell(14, -12, Sim.PENNANT):
+		_fail(errors, "the row north of the pennant accepted a pennant")
+	if fresh.paint_cell(13, -11, Sim.PENNANT) or fresh.paint_cell(15, -11, Sim.PENNANT):
+		_fail(errors, "a neighbor of the pennant cell accepted a pennant")
+	if fresh.paint_cell(Sim.COAST_X, -11, Sim.PENNANT):
+		_fail(errors, "the brine accepted a pennant")
+	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.PENNANT):
+		_fail(errors, "the anthill accepted a pennant")
+	var plans := _plans(errors)
+	if plans.is_empty():
+		return
+	var won = _run_plan(plans, "winning", errors)
+	var dry = _run_plan(plans, "dry_pans", errors)
+	var hoisted = _run_plan(plans, "hoisted", errors)
+	var raised = _run_plan(plans, "raised", errors)
+	var ignored = _run_plan(plans, "no_pennant", errors)
+	var bare = _run_plan(plans, "pennant_only", errors)
+	var flown = _run_plan(plans, "flown", errors)
+	var flown_again = _run_plan(plans, "flown", errors)
+	var late = _run_plan(plans, "late_flown", errors)
+	var dry_flown = _run_plan(plans, "dry_flown", errors)
+	if won == null or dry == null or hoisted == null or raised == null or ignored == null or bare == null or flown == null or flown_again == null or late == null or dry_flown == null:
+		return
+	_assert_chain(won, errors, "winning shore", 2997, 2997, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+	_assert_chain(dry, errors, "dry pans", 0, 1032, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+	_assert_chain(raised, errors, "raised plan", 2997, 2997, 2997, 2997, 2997, 29, 57, 10, 6, 4, 3, 2, 1, 1)
+	_assert_chain(hoisted, errors, "hoisted plan", 2997, 2997, 2997, 2997, 2997, 29, 57, 10, 6, 4, 3, 2, 1, 1, 1, 0)
+	if int(hoisted.get_flown()) != 0 or int(hoisted.get_banner_left()) != 1:
+		_fail(errors, "a banner with no pennant flew someone (flown %d banner %d)" % [hoisted.get_flown(), hoisted.get_banner_left()])
+	# Hoisted, no pennant: the 1 who was hoisted stays on the banner.
+	var ignored_unpaid := int(ignored.get_hired()) - int(ignored.get_paid())
+	var ignored_unposted := int(ignored.get_paid()) - int(ignored.get_posted())
+	var ignored_unstood := int(ignored.get_posted()) - int(ignored.get_stood())
+	var ignored_unlit := int(ignored.get_stood()) - int(ignored.get_lit())
+	var ignored_unrung := int(ignored.get_lit()) - int(ignored.get_rung())
+	var ignored_unraised := int(ignored.get_sounded()) - int(ignored.get_raised())
+	var ignored_unhoisted := int(ignored.get_raised()) - int(ignored.get_hoisted())
+	var ignored_unflown := int(ignored.get_hoisted()) - int(ignored.get_flown())
+	if int(ignored.get_flown()) != 0 or int(ignored.get_banner_left()) != 1 or ignored_unflown != 1 or int(ignored.get_hoisted()) != 1 or ignored_unhoisted != 0 or int(ignored.get_flag_left()) != 0 or int(ignored.get_raised()) != 1 or ignored_unraised != 0 or int(ignored.get_horn_left()) != 0 or int(ignored.get_sounded()) != 1 or int(ignored.get_bell_left()) != 1 or int(ignored.get_rung()) != 2 or ignored_unrung != 1 or int(ignored.get_lamp_left()) != 1 or int(ignored.get_lit()) != 3 or ignored_unlit != 1 or int(ignored.get_watch_left()) != 1 or ignored_unstood != 2 or ignored_unposted != 4 or ignored_unpaid != 19 or int(ignored.get_relief_left()) != 2 or int(ignored.get_wage_left()) != 4 or int(ignored.get_loft_left()) != 19 or int(ignored.get_gate_left()) != 0 or int(ignored.get_yard_left()) != 57 or int(ignored.get_stood()) != 4 or int(ignored.get_posted()) != 6 or int(ignored.get_paid()) != 10 or int(ignored.get_hired()) != 29 or int(ignored.get_coins()) != 2997 or int(ignored.get_stored_salt()) != 2997:
+		_fail(errors, "no_pennant flew someone (stored %d coins %d hired %d yard %d hoisted %d banner %d flown %d unpaid %d)" % [ignored.get_stored_salt(), ignored.get_coins(), ignored.get_hired(), ignored.get_yard_left(), ignored.get_hoisted(), ignored.get_banner_left(), ignored.get_flown(), ignored_unpaid])
+	if String(ignored.get_summary()) != String(hoisted.get_summary()):
+		_fail(errors, "no_pennant summary changed: %s" % ignored.get_summary())
+	if String(ignored.get_summary()).to_lower().contains("flew") or String(ignored.get_summary()).to_lower().contains("pennant"):
+		_fail(errors, "no_pennant summary names a pennant: %s" % ignored.get_summary())
+	var ignored_banner = plans["no_pennant"]["banner"][0]
+	var ignored_salt: Dictionary = ignored.get_cell_salt(int(ignored_banner[0]), int(ignored_banner[1]))
+	var ignored_north: Dictionary = ignored.get_cell_salt(int(ignored_banner[0]), int(ignored_banner[1]) - 1)
+	if int(ignored_salt.get("banner", 0)) != 1 or int(ignored_north.get("pennant", 0)) != 0 or int(ignored_salt.get("pennant", 0)) != 0:
+		_fail(errors, "no_pennant left %s at the banner and %s at a pennant" % [ignored_salt.get("banner", 0), ignored_north.get("pennant", 0)])
+	# A pennant with nobody hoisted flies nobody. The raised hire stays on the flag.
+	var bare_unpaid := int(bare.get_hired()) - int(bare.get_paid())
+	if int(bare.get_flown()) != 0 or int(bare.get_hoisted()) != 0 or int(bare.get_banner_left()) != 0 or int(bare.get_raised()) != 1 or int(bare.get_flag_left()) != 1 or int(bare.get_sounded()) != 1 or int(bare.get_horn_left()) != 0 or int(bare.get_rung()) != 2 or int(bare.get_bell_left()) != 1 or int(bare.get_lit()) != 3 or int(bare.get_lamp_left()) != 1 or int(bare.get_stood()) != 4 or int(bare.get_watch_left()) != 1 or int(bare.get_posted()) != 6 or int(bare.get_relief_left()) != 2 or int(bare.get_paid()) != 10 or int(bare.get_wage_left()) != 4 or bare_unpaid != 19 or int(bare.get_loft_left()) != 19 or int(bare.get_gate_left()) != 0 or int(bare.get_yard_left()) != 57 or int(bare.get_hired()) != 29 or int(bare.get_coins()) != 2997 or int(bare.get_stored_salt()) != 2997:
+		_fail(errors, "pennant without a banner flew someone (flown %d hoisted %d flag %d raised %d unpaid %d loft %d yard %d)" % [bare.get_flown(), bare.get_hoisted(), bare.get_flag_left(), bare.get_raised(), bare_unpaid, bare.get_loft_left(), bare.get_yard_left()])
+	if String(bare.get_summary()) != String(raised.get_summary()):
+		_fail(errors, "pennant without a banner changed the summary: %s" % bare.get_summary())
+	if String(bare.get_summary()).to_lower().contains("flew") or String(bare.get_summary()).to_lower().contains("pennant") or String(bare.get_summary()).to_lower().contains("hoisted") or String(bare.get_summary()).to_lower().contains("banner"):
+		_fail(errors, "pennant without a banner names a pennant: %s" % bare.get_summary())
+	var bare_pennant = plans["pennant_only"]["pennant"][0]
+	var bare_flag = plans["pennant_only"]["flag"][0]
+	var bare_pennant_salt: Dictionary = bare.get_cell_salt(int(bare_pennant[0]), int(bare_pennant[1]))
+	var bare_flag_salt: Dictionary = bare.get_cell_salt(int(bare_flag[0]), int(bare_flag[1]))
+	if int(bare_pennant_salt.get("pennant", 0)) != 0 or int(bare_flag_salt.get("flag", 0)) != 1 or int(bare_pennant_salt.get("banner", 0)) != 0:
+		_fail(errors, "pennant without a banner holds %s, flag holds %s" % [bare_pennant_salt.get("pennant", 0), bare_flag_salt.get("flag", 0)])
+	var pennant_cell = plans["flown"]["pennant"][0]
+	var banner_cell = plans["flown"]["banner"][0]
+	var flag_cell = plans["flown"]["flag"][0]
+	if int(pennant_cell[0]) != int(banner_cell[0]) or int(pennant_cell[1]) != int(banner_cell[1]) - 1:
+		_fail(errors, "flown plan's pennant is not one cell north of the banner")
+	if int(pennant_cell[0]) != 14 or int(pennant_cell[1]) != -11 or int(banner_cell[0]) != 14 or int(banner_cell[1]) != -10:
+		_fail(errors, "flown plan's pennant is not at 14,-11 north of the banner at 14,-10")
+	_assert_chain(flown, errors, "flown plan", 2997, 2997, 2997, 2997, 2997, 29, 57, 10, 6, 4, 3, 2, 1, 1, 1, 1)
+	var flown_unpaid := int(flown.get_hired()) - int(flown.get_paid())
+	var flown_unposted := int(flown.get_paid()) - int(flown.get_posted())
+	var flown_unstood := int(flown.get_posted()) - int(flown.get_stood())
+	var flown_unlit := int(flown.get_stood()) - int(flown.get_lit())
+	var flown_unrung := int(flown.get_lit()) - int(flown.get_rung())
+	var flown_unraised := int(flown.get_sounded()) - int(flown.get_raised())
+	var flown_unhoisted := int(flown.get_raised()) - int(flown.get_hoisted())
+	var flown_unflown := int(flown.get_hoisted()) - int(flown.get_flown())
+	if int(flown.get_flown()) != 1 or int(flown.get_banner_left()) != 0 or flown_unflown != 0 or flown_unhoisted != 0 or flown_unraised != 0 or int(flown.get_horn_left()) != 0 or int(flown.get_bell_left()) != 1 or flown_unrung != 1 or flown_unlit != 1 or flown_unstood != 2 or flown_unposted != 4 or flown_unpaid != 19 or int(flown.get_lamp_left()) != 1 or int(flown.get_watch_left()) != 1 or int(flown.get_relief_left()) != 2 or int(flown.get_wage_left()) != 4 or int(flown.get_loft_left()) != 19 or int(flown.get_gate_left()) != 0 or int(flown.get_yard_left()) != 57 or int(flown.get_hoisted()) != 1 or int(flown.get_raised()) != 1 or int(flown.get_sounded()) != 1 or int(flown.get_rung()) != 2 or int(flown.get_lit()) != 3 or int(flown.get_stood()) != 4 or int(flown.get_posted()) != 6 or int(flown.get_coins()) != 2997 or int(flown.get_hired()) != 29:
+		_fail(errors, "flown %d, left %d hoisted unflown, raised unhoisted %d, sounded unraised %d, rung unsounded %d, lit unrung %d, stood unlit %d, posted unstood %d, paid unposted %d, unpaid %d, banner %d, flag %d, yard %d, hoisted %d, raised %d, sounded %d, rung %d, lit %d, stood %d, posted %d, coins %d, hired %d" % [flown.get_flown(), flown.get_banner_left(), flown_unhoisted, flown_unraised, flown.get_bell_left(), flown_unrung, flown_unlit, flown_unstood, flown_unposted, flown_unpaid, flown.get_banner_left(), flown.get_flag_left(), flown.get_yard_left(), flown.get_hoisted(), flown.get_raised(), flown.get_sounded(), flown.get_rung(), flown.get_lit(), flown.get_stood(), flown.get_posted(), flown.get_coins(), flown.get_hired()])
+	if int(flown.get_flown()) > int(Sim.PENNANT_CAP):
+		_fail(errors, "pennant flew %d, over the cap of %d" % [flown.get_flown(), Sim.PENNANT_CAP])
+	var pennant_salt: Dictionary = flown.get_cell_salt(int(pennant_cell[0]), int(pennant_cell[1]))
+	var banner_salt: Dictionary = flown.get_cell_salt(int(banner_cell[0]), int(banner_cell[1]))
+	var flag_salt: Dictionary = flown.get_cell_salt(int(flag_cell[0]), int(flag_cell[1]))
+	if int(pennant_salt.get("pennant", 0)) != 1 or int(banner_salt.get("banner", 0)) != 0 or int(flag_salt.get("flag", 0)) != 0:
+		_fail(errors, "pennant cell holds %s, banner holds %s, flag holds %s" % [pennant_salt.get("pennant", 0), banner_salt.get("banner", 0), flag_salt.get("flag", 0)])
+	var flown_summary := String(flown.get_summary())
+	if not flown_summary.contains("Flew 1 on the pennant") or not flown_summary.contains("Left 0 at the banner") or not flown_summary.contains("Hoisted 1 on the banner") or not flown_summary.contains("Left 0 at the flag") or not flown_summary.contains("Coins 2997") or not flown_summary.contains("Hired 29") or not flown_summary.contains("Left 57"):
+		_fail(errors, "flown summary does not name the pennant: %s" % flown_summary)
+	if int(flown_again.get_flown()) != int(flown.get_flown()) or int(flown_again.get_banner_left()) != int(flown.get_banner_left()) or int(flown_again.get_hoisted()) != int(flown.get_hoisted()) or int(flown_again.get_yard_left()) != int(flown.get_yard_left()) or int(flown_again.get_stored_salt()) != int(flown.get_stored_salt()) or String(flown_again.get_summary()) != String(flown.get_summary()):
+		_fail(errors, "repeated pennant paint flew %d and left banner %d, then flew %d and left banner %d" % [flown.get_flown(), flown.get_banner_left(), flown_again.get_flown(), flown_again.get_banner_left()])
+	if int(late.get_flown()) != 1 or int(late.get_banner_left()) != 0 or int(late.get_hoisted()) != 1 or int(late.get_raised()) != 1 or int(late.get_sounded()) != 1 or int(late.get_rung()) != 2 or int(late.get_lit()) != 3 or int(late.get_stood()) != 4 or int(late.get_posted()) != 6 or int(late.get_yard_left()) != 57 or int(late.get_hired()) != 29 or int(late.get_coins()) != 2997 or int(late.get_stored_salt()) != 2997 or int(late.get_loft_left()) != 19 or int(late.get_wage_left()) != 4:
+		_fail(errors, "painting the pennant at the pennant beat (flown %d banner %d hoisted %d yard %d) did not match painting it early (flown %d banner %d hoisted %d)" % [late.get_flown(), late.get_banner_left(), late.get_hoisted(), late.get_yard_left(), flown.get_flown(), flown.get_banner_left(), flown.get_hoisted()])
+	_assert_chain(dry_flown, errors, "dry pennant", 0, 1032, 1032, 1032, 1032, 10, 0, 8, 6, 4, 3, 2, 1, 1, 1, 1)
+	var dry_unpaid := int(dry_flown.get_hired()) - int(dry_flown.get_paid())
+	var dry_unposted := int(dry_flown.get_paid()) - int(dry_flown.get_posted())
+	var dry_unstood := int(dry_flown.get_posted()) - int(dry_flown.get_stood())
+	var dry_unlit := int(dry_flown.get_stood()) - int(dry_flown.get_lit())
+	var dry_unrung := int(dry_flown.get_lit()) - int(dry_flown.get_rung())
+	var dry_unraised := int(dry_flown.get_sounded()) - int(dry_flown.get_raised())
+	var dry_unhoisted := int(dry_flown.get_raised()) - int(dry_flown.get_hoisted())
+	var dry_unflown := int(dry_flown.get_hoisted()) - int(dry_flown.get_flown())
+	if int(dry_flown.get_flown()) != 1 or int(dry_flown.get_banner_left()) != 0 or dry_unflown != 0 or dry_unhoisted != 0 or dry_unraised != 0 or int(dry_flown.get_horn_left()) != 0 or int(dry_flown.get_bell_left()) != 1 or dry_unrung != 1 or dry_unlit != 1 or dry_unstood != 2 or dry_unposted != 2 or dry_unpaid != 2 or int(dry_flown.get_yard_left()) != 0 or int(dry_flown.get_hoisted()) != 1 or int(dry_flown.get_raised()) != 1 or int(dry_flown.get_sounded()) != 1 or int(dry_flown.get_rung()) != 2 or int(dry_flown.get_lit()) != 3 or int(dry_flown.get_stood()) != 4 or int(dry_flown.get_posted()) != 6 or int(dry_flown.get_wet_haul()) != 0 or int(dry_flown.get_stored_salt()) != 1032 or int(dry_flown.get_gate_left()) != 2 or int(dry_flown.get_wage_left()) != 2 or int(dry_flown.get_loft_left()) != 0:
+		_fail(errors, "dry pennant changed the short crew (wet %d stored %d flown %d banner %d hoisted %d raised %d unflown %d unhoisted %d unraised %d unsounded %d unrung %d unlit %d unstood %d unposted %d unpaid %d yard %d)" % [dry_flown.get_wet_haul(), dry_flown.get_stored_salt(), dry_flown.get_flown(), dry_flown.get_banner_left(), dry_flown.get_hoisted(), dry_flown.get_raised(), dry_unflown, dry_unhoisted, dry_unraised, dry_flown.get_bell_left(), dry_unrung, dry_unlit, dry_unstood, dry_unposted, dry_unpaid, dry_flown.get_yard_left()])
+	var dry_pennant_cell = plans["dry_flown"]["pennant"][0]
+	var dry_banner_cell = plans["dry_flown"]["banner"][0]
+	var dry_pennant_salt: Dictionary = dry_flown.get_cell_salt(int(dry_pennant_cell[0]), int(dry_pennant_cell[1]))
+	var dry_banner_salt: Dictionary = dry_flown.get_cell_salt(int(dry_banner_cell[0]), int(dry_banner_cell[1]))
+	if int(dry_pennant_salt.get("pennant", 0)) != 1 or int(dry_banner_salt.get("banner", 0)) != 0:
+		_fail(errors, "dry pennant cell holds %s, banner holds %s" % [dry_pennant_salt.get("pennant", 0), dry_banner_salt.get("banner", 0)])
+	if not String(dry_flown.get_summary()).contains("Flew 1 on the pennant") or not String(dry_flown.get_summary()).contains("Left 0 at the banner") or not String(dry_flown.get_summary()).contains("Hoisted 1 on the banner") or not String(dry_flown.get_summary()).contains("Left 0 in the yard"):
+		_fail(errors, "dry pennant summary does not name the cap: %s" % dry_flown.get_summary())
+	_assert_pop(flown, errors, "flown plan")
+	_assert_pop(flown_again, errors, "flown plan again")
+	_assert_pop(late, errors, "late_flown")
+	_assert_pop(dry_flown, errors, "dry_flown")
+	_assert_pop(ignored, errors, "no_pennant")
+	_assert_pop(bare, errors, "pennant_only")
+	# The cap stops the pennant while ticks remain. The winning shore leaves 0 hoisted hires on the banner.
+	var shore = _prepare_plan(plans, "flown", errors)
+	if shore == null:
+		return
+	var shore_guard := 0
+	var shore_limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + int(Sim.SHIP_TICK) + int(Sim.MARKET_TICK) + int(Sim.YARD_TICK) + int(Sim.BUNK_TICK) + int(Sim.LOFT_TICK) + int(Sim.GATE_TICK) + int(Sim.WAGE_TICK) + int(Sim.RELIEF_TICK) + int(Sim.WATCH_TICK) + int(Sim.LAMP_TICK) + int(Sim.BELL_TICK) + int(Sim.HORN_TICK) + int(Sim.FLAG_TICK) + int(Sim.BANNER_TICK) + 2
+	while int(shore.get_beat()) != Sim.PENNANTING and not shore.is_over() and shore_guard < shore_limit:
+		shore.tick()
+		shore_guard += 1
+	if int(shore.get_beat()) != Sim.PENNANTING or shore.is_over():
+		_fail(errors, "the banner beat did not open a pennant beat for the cap check")
+		return
+	if int(shore.get_ticks_until_rain()) != int(Sim.PENNANT_TICK):
+		_fail(errors, "pennant countdown started at %d, expected %d" % [shore.get_ticks_until_rain(), Sim.PENNANT_TICK])
+	if int(shore.get_flown()) != 0 or int(shore.get_hoisted()) != 1 or int(shore.get_banner_left()) != 1 or int(shore.get_raised()) != 1 or int(shore.get_yard_left()) != 57 or int(shore.get_coins()) != 2997 or int(shore.get_stored_salt()) != 2997:
+		_fail(errors, "pennant opened early (flown %d hoisted %d banner %d raised %d yard %d coins %d stored %d)" % [shore.get_flown(), shore.get_hoisted(), shore.get_banner_left(), shore.get_raised(), shore.get_yard_left(), shore.get_coins(), shore.get_stored_salt()])
+	var saw_cap := false
+	var fly_guard := 0
+	while not shore.is_over() and fly_guard < int(Sim.PENNANT_TICK) + 2:
+		shore.tick()
+		fly_guard += 1
+		if int(shore.get_flown()) == int(Sim.PENNANT_CAP) and int(shore.get_banner_left()) == 0 and int(shore.get_hoisted()) == 1 and int(shore.get_raised()) == 1 and int(shore.get_yard_left()) == 57 and int(shore.get_coins()) == 2997 and int(shore.get_hired()) == 29 and int(shore.get_ticks_until_rain()) > 0:
+			saw_cap = true
+			var ticks_left := int(shore.get_ticks_until_rain())
+			shore.tick()
+			if int(shore.get_flown()) != int(Sim.PENNANT_CAP) or int(shore.get_banner_left()) != 0 or int(shore.get_hoisted()) != 1 or int(shore.get_raised()) != 1 or int(shore.get_yard_left()) != 57 or int(shore.get_coins()) != 2997 or int(shore.get_hired()) != 29 or int(shore.get_stored_salt()) != 2997 or int(shore.get_posted()) != 6 or int(shore.get_stood()) != 4 or int(shore.get_lit()) != 3 or int(shore.get_rung()) != 2 or int(shore.get_sounded()) != 1:
+				_fail(errors, "the pennant kept flying after the cap (flown %d banner %d hoisted %d raised %d yard %d)" % [shore.get_flown(), shore.get_banner_left(), shore.get_hoisted(), shore.get_raised(), shore.get_yard_left()])
+			elif not shore.is_over() and int(shore.get_ticks_until_rain()) >= ticks_left:
+				_fail(errors, "the pennant beat did not spend a tick after the cap")
+			break
+	if not saw_cap:
+		_fail(errors, "the pennant did not stop at %d while ticks remained (flown %d banner %d hoisted %d ticks %d)" % [Sim.PENNANT_CAP, shore.get_flown(), shore.get_banner_left(), shore.get_hoisted(), shore.get_ticks_until_rain()])
+	var short = _prepare_plan(plans, "dry_flown", errors)
+	if short == null:
+		return
+	var short_guard := 0
+	while int(short.get_beat()) != Sim.PENNANTING and not short.is_over() and short_guard < shore_limit:
+		short.tick()
+		short_guard += 1
+	if int(short.get_beat()) != Sim.PENNANTING or short.is_over():
+		_fail(errors, "the banner beat did not open a pennant beat for the dry cap")
+		return
+	var saw_short := false
+	var short_steps := 0
+	while not short.is_over() and short_steps < int(Sim.PENNANT_TICK) + 2:
+		short.tick()
+		short_steps += 1
+		if int(short.get_flown()) == int(Sim.PENNANT_CAP) and int(short.get_banner_left()) == 0 and int(short.get_hoisted()) == 1 and int(short.get_raised()) == 1 and int(short.get_yard_left()) == 0 and int(short.get_wet_haul()) == 0 and int(short.get_ticks_until_rain()) > 0:
+			saw_short = true
+			var short_ticks := int(short.get_ticks_until_rain())
+			short.tick()
+			if int(short.get_flown()) != 1 or int(short.get_banner_left()) != 0 or int(short.get_hoisted()) != 1 or int(short.get_yard_left()) != 0 or int(short.get_posted()) != 6 or int(short.get_stored_salt()) != 1032:
+				_fail(errors, "the pennant flew an unhoisted hire or passed the cap (flown %d banner %d hoisted %d yard %d)" % [short.get_flown(), short.get_banner_left(), short.get_hoisted(), short.get_yard_left()])
+			elif not short.is_over() and int(short.get_ticks_until_rain()) >= short_ticks:
+				_fail(errors, "the pennant beat did not spend a tick after the dry cap")
+			break
+	if not saw_short:
+		_fail(errors, "dry pennant did not stop at 1 with the banner clear (flown %d banner %d hoisted %d yard %d ticks %d)" % [short.get_flown(), short.get_banner_left(), short.get_hoisted(), short.get_yard_left(), short.get_ticks_until_rain()])
+	print("flown %d left banner %d unhoisted %d unraised %d unsounded %d unrung %d unlit %d unstood %d unposted %d unpaid %d; dry flown %d left banner %d unhoisted %d unraised %d unsounded %d unrung %d unlit %d unstood %d unposted %d unpaid %d; no pennant flown %d left banner %d; pennant without banner flown %d" % [flown.get_flown(), flown.get_banner_left(), flown_unhoisted, flown_unraised, flown.get_bell_left(), flown_unrung, flown_unlit, flown_unstood, flown_unposted, flown_unpaid, dry_flown.get_flown(), dry_flown.get_banner_left(), dry_unhoisted, dry_unraised, dry_flown.get_bell_left(), dry_unrung, dry_unlit, dry_unstood, dry_unposted, dry_unpaid, ignored.get_flown(), ignored.get_banner_left(), bare.get_flown()])
 
 
 func _expect_yard(sim, errors: Array) -> void:
@@ -3954,6 +4437,42 @@ func _run_plan(plans: Dictionary, plan_name: String, errors: Array):
 		_apply_marks(sim, plan["after_horn"], errors)
 		if errors.size() > flag_before:
 			return null
+	if plan.has("after_flag"):
+		var banner_guard := 0
+		var banner_limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + int(Sim.SHIP_TICK) + int(Sim.MARKET_TICK) + int(Sim.YARD_TICK) + int(Sim.BUNK_TICK) + int(Sim.LOFT_TICK) + int(Sim.GATE_TICK) + int(Sim.WAGE_TICK) + int(Sim.RELIEF_TICK) + int(Sim.WATCH_TICK) + int(Sim.LAMP_TICK) + int(Sim.BELL_TICK) + int(Sim.HORN_TICK) + int(Sim.FLAG_TICK) + 2
+		while int(sim.get_beat()) != Sim.BANNERING and not sim.is_over() and banner_guard < banner_limit:
+			sim.tick()
+			banner_guard += 1
+		if int(sim.get_beat()) != Sim.BANNERING or sim.is_over():
+			_fail(errors, "%s did not open the banner beat after the flag" % plan_name)
+			return null
+		if int(sim.get_ticks_until_rain()) != int(Sim.BANNER_TICK):
+			_fail(errors, "%s banner countdown started at %d, expected %d" % [
+				plan_name, sim.get_ticks_until_rain(), Sim.BANNER_TICK,
+			])
+			return null
+		var banner_before := errors.size()
+		_apply_marks(sim, plan["after_flag"], errors)
+		if errors.size() > banner_before:
+			return null
+	if plan.has("after_banner"):
+		var pennant_guard := 0
+		var pennant_limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + int(Sim.SHIP_TICK) + int(Sim.MARKET_TICK) + int(Sim.YARD_TICK) + int(Sim.BUNK_TICK) + int(Sim.LOFT_TICK) + int(Sim.GATE_TICK) + int(Sim.WAGE_TICK) + int(Sim.RELIEF_TICK) + int(Sim.WATCH_TICK) + int(Sim.LAMP_TICK) + int(Sim.BELL_TICK) + int(Sim.HORN_TICK) + int(Sim.FLAG_TICK) + int(Sim.BANNER_TICK) + 2
+		while int(sim.get_beat()) != Sim.PENNANTING and not sim.is_over() and pennant_guard < pennant_limit:
+			sim.tick()
+			pennant_guard += 1
+		if int(sim.get_beat()) != Sim.PENNANTING or sim.is_over():
+			_fail(errors, "%s did not open the pennant beat after the banner" % plan_name)
+			return null
+		if int(sim.get_ticks_until_rain()) != int(Sim.PENNANT_TICK):
+			_fail(errors, "%s pennant countdown started at %d, expected %d" % [
+				plan_name, sim.get_ticks_until_rain(), Sim.PENNANT_TICK,
+			])
+			return null
+		var pennant_before := errors.size()
+		_apply_marks(sim, plan["after_banner"], errors)
+		if errors.size() > pennant_before:
+			return null
 	sim.run_until_rain()
 	return sim
 
@@ -3997,6 +4516,10 @@ func _apply_marks(sim, plan: Dictionary, errors: Array) -> void:
 		_apply_cells(sim, plan["horn"], Sim.HORN, errors)
 	if plan.has("flag"):
 		_apply_cells(sim, plan["flag"], Sim.FLAG, errors)
+	if plan.has("banner"):
+		_apply_cells(sim, plan["banner"], Sim.BANNER, errors)
+	if plan.has("pennant"):
+		_apply_cells(sim, plan["pennant"], Sim.PENNANT, errors)
 	if plan.has("rake_rect"):
 		_apply_rect(sim, plan["rake_rect"], Sim.RAKE, errors)
 
