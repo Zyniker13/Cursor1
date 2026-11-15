@@ -184,12 +184,12 @@ func _draw() -> void:
 		var pst: Dictionary = puzzle_state["pieces"][id]
 		_draw_kind(str(piece["kind"]), int(pst["rot"]), at, true, false)
 		_draw_sockets(piece, at)
-		if Tracer.is_flooded(chart, puzzle_state, at):
+		if str(piece["kind"]) != "tide_mirror" and Tracer.is_flooded(chart, puzzle_state, at):
 			_draw_shutters(at)
 	for raw in chart["fixtures"]:
 		var fix: Dictionary = raw
 		var at := Vector2i(int(fix["x"]), int(fix["y"]))
-		if Tracer.is_flooded(chart, puzzle_state, at):
+		if str(fix["kind"]) != "tide_mirror" and Tracer.is_flooded(chart, puzzle_state, at):
 			_draw_shutters(at)
 	for raw in chart["lanterns"]:
 		var lantern: Dictionary = raw
@@ -231,6 +231,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 	match kind:
 		"mirror":
 			_draw_mirror(at, rot, player, fixed)
+		"tide_mirror":
+			_draw_tide_mirror(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -262,6 +264,39 @@ func _draw_mirror(at: Vector2i, rot: int, player: bool, fixed: bool) -> void:
 		b = center + Vector2(r * 0.72, r * 0.72)
 	draw_line(a, b, Palette.GLASS_EDGE, 4.0)
 	draw_line(a, b, Color("7f5a32"), 1.5)
+
+func _draw_tide_mirror(at: Vector2i, rot: int) -> void:
+	var center := _center(at)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var r := cell * 0.30
+	var poly := PackedVector2Array([
+		center + Vector2(0, -r),
+		center + Vector2(r, 0),
+		center + Vector2(0, r),
+		center + Vector2(-r, 0),
+	])
+	var fill := Palette.TIDE if flooded else Palette.GLASS
+	fill.a = 0.9 if flooded else 0.22
+	draw_colored_polygon(poly, fill)
+	var rim := poly.duplicate()
+	rim.append(poly[0])
+	draw_polyline(rim, Palette.FOAM if flooded else Palette.TIDE, 2.0)
+	var slash := Tracer.norm_rot("tide_mirror", rot) == 0
+	var a := center + (Vector2(-r, r) if slash else Vector2(-r, -r)) * 0.72
+	var b := center + (Vector2(r, -r) if slash else Vector2(r, r)) * 0.72
+	if flooded:
+		draw_line(a, b, Palette.FOAM, 4.0)
+		draw_line(a, b, Palette.TIDE_DEEP, 1.5)
+	else:
+		var mid := (a + b) * 0.5
+		var gap := (b - a).normalized() * cell * 0.08
+		draw_line(a, mid - gap, Palette.TIDE, 3.0)
+		draw_line(mid + gap, b, Palette.TIDE, 3.0)
+	var wave := center.y + r * 0.62
+	var wave_col := Palette.FOAM if flooded else Palette.TIDE_DEEP
+	draw_line(Vector2(center.x - r * 0.62, wave), Vector2(center.x - r * 0.16, wave - 3.0), wave_col, 2.0)
+	draw_line(Vector2(center.x - r * 0.16, wave - 3.0), Vector2(center.x + r * 0.16, wave + 3.0), wave_col, 2.0)
+	draw_line(Vector2(center.x + r * 0.16, wave + 3.0), Vector2(center.x + r * 0.62, wave), wave_col, 2.0)
 
 func _draw_prism(at: Vector2i, rot: int, set_in_stone: bool) -> void:
 	var center := _center(at)
