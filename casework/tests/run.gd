@@ -7,6 +7,7 @@ const Ferry = preload("res://scripts/ferry_bell.gd")
 const Weather = preload("res://scripts/weather_slate.gd")
 const Loom = preload("res://scripts/loom_shuttle.gd")
 const Hive = preload("res://scripts/hive_smoker.gd")
+const Glass = preload("res://scripts/glass_pontil.gd")
 const Catalog = preload("res://scripts/catalog.gd")
 const Solver = preload("res://scripts/solver.gd")
 const Verdict = preload("res://scripts/verdict.gd")
@@ -24,6 +25,8 @@ const LOOM_TIMELINE := "Fenn (warper) took the loom shuttle at 19 from the loom 
 const LOOM_TRUE := {"who": "Fenn", "place": "pattern_loft", "hour": "19"}
 const HIVE_TIMELINE := "Tamsin (night beekeeper) took the hive smoker at 22 from the hive shed to the honey room, to quiet the late swarm.\nNed (skep hand) filled the fuel tin in the veil loft.\nIsla (veil mender) logged the sting book at 21 in the honey room.\nThe fuel was spent at 23.\nThe veil was mended at 24."
 const HIVE_TRUE := {"who": "Tamsin", "place": "honey_room", "hour": "22"}
+const GLASS_TIMELINE := "Sable (night gatherer) took the glass pontil at 27 from the glory hole to the lehr room, to crack the pontil off.\nHugh (marver hand) chalked the gather weight at 25 in the pot arch.\nOrla (annealer) opened the lehr at 26.\nThe gather was rolled at the glory hole.\nThe shoulder was sheared at 28.\nThe lehr was closed at 29."
+const GLASS_TRUE := {"who": "Sable", "place": "lehr_room", "hour": "27"}
 
 var _failures: Array[String] = []
 var _checks := 0
@@ -72,6 +75,12 @@ func _initialize() -> void:
 	_test_hive_only_true_theory()
 	_test_hive_near_misses()
 	_test_hive_incomplete()
+	_test_glass_file_shape()
+	_test_glass_unique_model()
+	_test_glass_each_exhibit_necessary()
+	_test_glass_only_true_theory()
+	_test_glass_near_misses()
+	_test_glass_incomplete()
 	_test_solutions_differ()
 	_test_menu_opens_either_case()
 	if _failures.is_empty():
@@ -1261,6 +1270,228 @@ func _test_hive_incomplete() -> void:
 	print("hive incomplete submissions refused with the missing slot")
 
 
+func _test_glass_file_shape() -> void:
+	_expect(Glass.EXHIBITS.size() == 8, "glass exhibit count is %d" % Glass.EXHIBITS.size())
+	_expect(Glass.PEOPLE.size() == 3, "glass cast should be three people")
+	_expect(Glass.PLACES.size() == 3, "glass room count is %d" % Glass.PLACES.size())
+	_expect(Glass.HOURS.size() == 5, "glass hour list length is %d" % Glass.HOURS.size())
+	_expect(Glass.TITLE == "The glass pontil", "glass title")
+	_expect(Glass.TITLE != CaseData.TITLE and Glass.TITLE != Rehearsal.TITLE and Glass.TITLE != Gilt.TITLE and Glass.TITLE != Ferry.TITLE and Glass.TITLE != Weather.TITLE and Glass.TITLE != Loom.TITLE and Glass.TITLE != Hive.TITLE, "glass shares a title")
+	_expect(Glass.FILE_CODE == "CW-08", "glass file code")
+	_expect(Glass.FILE_CODE != CaseData.FILE_CODE and Glass.FILE_CODE != Rehearsal.FILE_CODE and Glass.FILE_CODE != Gilt.FILE_CODE and Glass.FILE_CODE != Ferry.FILE_CODE and Glass.FILE_CODE != Weather.FILE_CODE and Glass.FILE_CODE != Loom.FILE_CODE and Glass.FILE_CODE != Hive.FILE_CODE, "glass shares a file code")
+	_expect(Glass.HOURS[Glass.HOURS.size() / 2] == GLASS_TRUE["hour"], "glass taking should be the middle hour")
+	_expect(Glass.HOURS[0] != GLASS_TRUE["hour"], "glass taking should not be the earliest hour")
+	_expect(Glass.HOURS[Glass.HOURS.size() - 1] != GLASS_TRUE["hour"], "glass taking should not be the latest hour")
+	var counts := _player_pin_counts(Glass)
+	_expect(int(counts["taker"]) == 2 and int(counts["place"]) == 2 and int(counts["hour"]) == 4, "glass pin counts are %s" % str(counts))
+	_expect(counts != _player_pin_counts(CaseData), "glass copied the spare-key pin pattern")
+	_expect(counts != _player_pin_counts(Rehearsal), "glass copied the rehearsal pin pattern")
+	_expect(counts != _player_pin_counts(Gilt), "glass copied the gilt pin pattern")
+	_expect(counts != _player_pin_counts(Ferry), "glass copied the ferry pin pattern")
+	_expect(counts != _player_pin_counts(Weather), "glass copied the weather pin pattern")
+	_expect(counts != _player_pin_counts(Loom), "glass copied the loom pin pattern")
+	_expect(counts != _player_pin_counts(Hive), "glass copied the hive pin pattern")
+	_expect(_field_key(Glass) != _field_key(CaseData), "glass copied the spare-key timeline fields")
+	_expect(_field_key(Glass) != _field_key(Rehearsal), "glass copied the rehearsal timeline fields")
+	_expect(_field_key(Glass) != _field_key(Gilt), "glass copied the gilt timeline fields")
+	_expect(_field_key(Glass) != _field_key(Ferry), "glass copied the ferry timeline fields")
+	_expect(_field_key(Glass) != _field_key(Weather), "glass copied the weather timeline fields")
+	_expect(_field_key(Glass) != _field_key(Loom), "glass copied the loom timeline fields")
+	_expect(_field_key(Glass) != _field_key(Hive), "glass copied the hive timeline fields")
+	var seen := {}
+	var stated := {}
+	var paired_hidden := 0
+	for exhibit in Glass.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		_expect(not seen.has(exhibit_id), "duplicate glass id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		var states_player_pin := false
+		var states_unique := false
+		var player_literals := 0
+		var hidden_literals := 0
+		for literal in exhibit["literals"]:
+			stated[str(literal["value"])] = true
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Glass.PLAYER_FIELDS:
+				states_player_pin = true
+				player_literals += 1
+				var expected := Glass.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Glass.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats >= 2, "%s states %s once" % [exhibit_id, field])
+			else:
+				hidden_literals += 1
+				var owners := 0
+				for other in Glass.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		if hidden_literals == 2:
+			paired_hidden += 1
+		else:
+			_expect(hidden_literals == 1, "%s states %d hidden facts" % [exhibit_id, hidden_literals])
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(player_literals == 1, "%s states %d player pins" % [exhibit_id, player_literals])
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+	_expect(paired_hidden == 2, "glass should have two slips with two hidden facts, found %d" % paired_hidden)
+	for hour in Glass.HOURS:
+		_expect(stated.has(hour), "glass hour %s is absent from the exhibits" % hour)
+
+
+func _test_glass_unique_model() -> void:
+	var models := Solver.enumerate(Glass.EXHIBITS, Glass)
+	print("glass models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one glass model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Sable", "glass taker")
+	_expect(str(model["place"]) == "lehr_room", "glass place")
+	_expect(str(model["hour"]) == "27", "glass hour")
+	_expect(str(model["chalker"]) == "Hugh", "glass chalker")
+	_expect(str(model["chalk_place"]) == "pot_arch", "glass chalk place")
+	_expect(str(model["chalk_hour"]) == "25", "glass chalk hour")
+	_expect(str(model["opener"]) == "Orla", "glass opener")
+	_expect(str(model["open_hour"]) == "26", "glass open hour")
+	_expect(str(model["origin"]) == "glory_hole", "glass origin")
+	_expect(str(model["purpose"]) == "crack_pontil", "glass purpose")
+	_expect(str(model["roll_place"]) == "glory_hole", "glass roll place")
+	_expect(str(model["shear_hour"]) == "28", "glass shear hour")
+	_expect(str(model["close_hour"]) == "29", "glass close hour")
+	for hour in Glass.HOURS:
+		var used := false
+		for field in Glass.fields():
+			if str(model[field]) == hour:
+				used = true
+		_expect(used, "glass hour %s is blank in the true timeline" % hour)
+	for place in Glass.PLACES:
+		var place_used := false
+		for field in Glass.fields():
+			if str(model[field]) == place:
+				place_used = true
+		_expect(place_used, "glass room %s is blank in the true timeline" % place)
+	for person in Glass.PEOPLE:
+		var person_used := false
+		for field in Glass.fields():
+			if str(model[field]) == person:
+				person_used = true
+		_expect(person_used, "glass person %s is blank in the true timeline" % person)
+	_expect(Glass.timeline(model) == GLASS_TIMELINE, "glass timeline drifted:\n%s" % Glass.timeline(model))
+	for exhibit in Glass.EXHIBITS:
+		_expect(Glass.holds(exhibit, model), "%s rejects the glass timeline" % exhibit["id"])
+
+
+func _test_glass_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Glass.EXHIBITS, Glass)
+	for exhibit in Glass.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Glass.without(exhibit_id), Glass)
+		print("glass without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "glass %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Glass.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "glass %s removal did not admit a timeline it forbids" % exhibit_id)
+
+
+func _test_glass_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	for who in Glass.PEOPLE:
+		for place in Glass.PLACES:
+			for hour in Glass.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == GLASS_TRUE["who"] and place == GLASS_TRUE["place"] and hour == GLASS_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Glass)
+					print("glass true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true glass theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "glass acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(GLASS_TIMELINE) >= 0, "glass acceptance should give the timeline")
+					_expect(Glass.conflicting_ids(theory).is_empty(), "true glass theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Glass)
+					rejected += 1
+	print("glass theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d glass theories" % accepted)
+	_expect(rejected >= 2, "rejected %d glass theories" % rejected)
+
+
+func _test_glass_near_misses() -> void:
+	var misses := [
+		{"who": "Sable", "place": "lehr_room", "hour": "28"},
+		{"who": "Sable", "place": "lehr_room", "hour": "25"},
+		{"who": "Sable", "place": "glory_hole", "hour": "27"},
+		{"who": "Hugh", "place": "lehr_room", "hour": "27"},
+	]
+	for theory in misses:
+		_expect_rejected(theory, Glass)
+	print("glass near-misses rejected: %d" % misses.size())
+	_expect(misses.size() >= 2, "need at least two glass near-misses")
+
+
+func _test_glass_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+		"who took the gilt stamp",
+		"where they took the stamp",
+		"at which hour they took the stamp",
+		"who took the ferry bell",
+		"where they took the bell",
+		"at which hour they took the bell",
+		"who took the weather slate",
+		"where they took the slate",
+		"at which hour they took the slate",
+		"who took the loom shuttle",
+		"where they took the shuttle",
+		"at which hour they took the shuttle",
+		"who took the hive smoker",
+		"where they took the smoker",
+		"at which hour they took the smoker",
+	]
+	var cases := [
+		{"theory": {"who": "", "place": "lehr_room", "hour": "27"}, "present": ["who took the glass pontil"], "absent": ["where they took the pontil", "at which hour they took the pontil"]},
+		{"theory": {"who": "Sable", "place": "", "hour": "27"}, "present": ["where they took the pontil"], "absent": ["who took the glass pontil", "at which hour they took the pontil"]},
+		{"theory": {"who": "Sable", "place": "lehr_room", "hour": ""}, "present": ["at which hour they took the pontil"], "absent": ["who took the glass pontil", "where they took the pontil"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who took the glass pontil", "where they took the pontil", "at which hour they took the pontil"], "absent": []},
+		{"theory": {}, "present": ["who took the glass pontil", "where they took the pontil", "at which hour they took the pontil"], "absent": []},
+		{"theory": {"who": "Hugh", "place": "", "hour": "29"}, "present": ["where they took the pontil"], "absent": ["who took the glass pontil", "at which hour they took the pontil"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Glass)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "glass incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "glass incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "glass incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "glass incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "glass incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "glass missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "glass named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "glass incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("glass incomplete submissions refused with the missing slot")
+
+
+
 func _test_solutions_differ() -> void:
 	var spare := {"who": "Nell", "place": "kitchen", "hour": "7"}
 	_expect(spare["who"] != REHEARSAL_TRUE["who"], "rehearsal copied the spare-key taker")
@@ -1443,10 +1674,69 @@ func _test_solutions_differ() -> void:
 		_expect(not Ferry.HOURS.has(hour), "hive hours repeat %s from the ferry bell" % hour)
 		_expect(not Weather.HOURS.has(hour), "hive hours repeat %s from the weather slate" % hour)
 		_expect(not Loom.HOURS.has(hour), "hive hours repeat %s from the loom shuttle" % hour)
+	_expect(GLASS_TRUE["who"] != spare["who"], "glass pontil copied the spare-key taker")
+	_expect(GLASS_TRUE["place"] != spare["place"], "glass pontil copied the spare-key room")
+	_expect(GLASS_TRUE["hour"] != spare["hour"], "glass pontil copied the spare-key hour")
+	_expect(GLASS_TRUE["who"] != REHEARSAL_TRUE["who"], "glass pontil copied the rehearsal taker")
+	_expect(GLASS_TRUE["place"] != REHEARSAL_TRUE["place"], "glass pontil copied the rehearsal room")
+	_expect(GLASS_TRUE["hour"] != REHEARSAL_TRUE["hour"], "glass pontil copied the rehearsal hour")
+	_expect(GLASS_TRUE["who"] != GILT_TRUE["who"], "glass pontil copied the gilt taker")
+	_expect(GLASS_TRUE["place"] != GILT_TRUE["place"], "glass pontil copied the gilt room")
+	_expect(GLASS_TRUE["hour"] != GILT_TRUE["hour"], "glass pontil copied the gilt hour")
+	_expect(GLASS_TRUE["who"] != FERRY_TRUE["who"], "glass pontil copied the ferry taker")
+	_expect(GLASS_TRUE["place"] != FERRY_TRUE["place"], "glass pontil copied the ferry room")
+	_expect(GLASS_TRUE["hour"] != FERRY_TRUE["hour"], "glass pontil copied the ferry hour")
+	_expect(GLASS_TRUE["who"] != WEATHER_TRUE["who"], "glass pontil copied the weather taker")
+	_expect(GLASS_TRUE["place"] != WEATHER_TRUE["place"], "glass pontil copied the weather room")
+	_expect(GLASS_TRUE["hour"] != WEATHER_TRUE["hour"], "glass pontil copied the weather hour")
+	_expect(GLASS_TRUE["who"] != LOOM_TRUE["who"], "glass pontil copied the loom taker")
+	_expect(GLASS_TRUE["place"] != LOOM_TRUE["place"], "glass pontil copied the loom room")
+	_expect(GLASS_TRUE["hour"] != LOOM_TRUE["hour"], "glass pontil copied the loom hour")
+	_expect(GLASS_TRUE["who"] != HIVE_TRUE["who"], "glass pontil copied the hive taker")
+	_expect(GLASS_TRUE["place"] != HIVE_TRUE["place"], "glass pontil copied the hive room")
+	_expect(GLASS_TRUE["hour"] != HIVE_TRUE["hour"], "glass pontil copied the hive hour")
+	_expect_rejected(GLASS_TRUE, CaseData)
+	_expect_rejected(GLASS_TRUE, Rehearsal)
+	_expect_rejected(GLASS_TRUE, Gilt)
+	_expect_rejected(GLASS_TRUE, Ferry)
+	_expect_rejected(GLASS_TRUE, Weather)
+	_expect_rejected(GLASS_TRUE, Loom)
+	_expect_rejected(GLASS_TRUE, Hive)
+	_expect_rejected(spare, Glass)
+	_expect_rejected(REHEARSAL_TRUE, Glass)
+	_expect_rejected(GILT_TRUE, Glass)
+	_expect_rejected(FERRY_TRUE, Glass)
+	_expect_rejected(WEATHER_TRUE, Glass)
+	_expect_rejected(LOOM_TRUE, Glass)
+	_expect_rejected(HIVE_TRUE, Glass)
+	for person in Glass.PEOPLE:
+		_expect(not CaseData.PEOPLE.has(person), "glass cast repeats %s from the spare key" % person)
+		_expect(not Rehearsal.PEOPLE.has(person), "glass cast repeats %s from the rehearsal score" % person)
+		_expect(not Gilt.PEOPLE.has(person), "glass cast repeats %s from the gilt stamp" % person)
+		_expect(not Ferry.PEOPLE.has(person), "glass cast repeats %s from the ferry bell" % person)
+		_expect(not Weather.PEOPLE.has(person), "glass cast repeats %s from the weather slate" % person)
+		_expect(not Loom.PEOPLE.has(person), "glass cast repeats %s from the loom shuttle" % person)
+		_expect(not Hive.PEOPLE.has(person), "glass cast repeats %s from the hive smoker" % person)
+	for place in Glass.PLACES:
+		_expect(not CaseData.PLACES.has(place), "glass rooms repeat %s from the spare key" % place)
+		_expect(not Rehearsal.PLACES.has(place), "glass rooms repeat %s from the rehearsal score" % place)
+		_expect(not Gilt.PLACES.has(place), "glass rooms repeat %s from the gilt stamp" % place)
+		_expect(not Ferry.PLACES.has(place), "glass rooms repeat %s from the ferry bell" % place)
+		_expect(not Weather.PLACES.has(place), "glass rooms repeat %s from the weather slate" % place)
+		_expect(not Loom.PLACES.has(place), "glass rooms repeat %s from the loom shuttle" % place)
+		_expect(not Hive.PLACES.has(place), "glass rooms repeat %s from the hive smoker" % place)
+	for hour in Glass.HOURS:
+		_expect(not CaseData.HOURS.has(hour), "glass hours repeat %s from the spare key" % hour)
+		_expect(not Rehearsal.HOURS.has(hour), "glass hours repeat %s from the rehearsal score" % hour)
+		_expect(not Gilt.HOURS.has(hour), "glass hours repeat %s from the gilt stamp" % hour)
+		_expect(not Ferry.HOURS.has(hour), "glass hours repeat %s from the ferry bell" % hour)
+		_expect(not Weather.HOURS.has(hour), "glass hours repeat %s from the weather slate" % hour)
+		_expect(not Loom.HOURS.has(hour), "glass hours repeat %s from the loom shuttle" % hour)
+		_expect(not Hive.HOURS.has(hour), "glass hours repeat %s from the hive smoker" % hour)
 	var titles: Array[String] = []
 	for book in Catalog.all():
 		titles.append(str(book.TITLE))
-	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker"], "case list is %s" % str(titles))
+	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil"], "case list is %s" % str(titles))
 
 
 func _test_menu_opens_either_case() -> void:
@@ -1458,9 +1748,11 @@ func _test_menu_opens_either_case() -> void:
 	if root.get_child_count() == 0:
 		root._ready()
 	var menu_blob := _visible_label_blob(root)
-	_expect(menu_blob.find("Seven files") >= 0, "menu does not offer seven files: %s" % menu_blob)
+	_expect(menu_blob.find("Eight files") >= 0, "menu does not offer eight files: %s" % menu_blob)
 	_expect(menu_blob.find("CW-07") >= 0, "menu omits CW-07")
 	_expect(menu_blob.find("The hive smoker") >= 0, "menu omits The hive smoker")
+	_expect(menu_blob.find("CW-08") >= 0, "menu omits CW-08")
+	_expect(menu_blob.find("The glass pontil") >= 0, "menu omits The glass pontil")
 	_expect(root.get_child_count() > 0, "main scene built %d children" % root.get_child_count())
 	_press(root, "How to play")
 	var howto := _visible_label_blob(root)
@@ -1471,6 +1763,7 @@ func _test_menu_opens_either_case() -> void:
 	_expect(howto.find("The weather slate") >= 0, "how to play omits The weather slate")
 	_expect(howto.find("The loom shuttle") >= 0, "how to play omits The loom shuttle")
 	_expect(howto.find("The hive smoker") >= 0, "how to play omits The hive smoker")
+	_expect(howto.find("The glass pontil") >= 0, "how to play omits The glass pontil")
 	_expect(howto.find("names that slot") >= 0, "how to play omits the empty-slot rule")
 	_press(root, "Back to the menu")
 	_expect(_find_visible_button(root, "Open The spare key") != null, "menu is missing The spare key")
@@ -1480,6 +1773,7 @@ func _test_menu_opens_either_case() -> void:
 	_expect(_find_visible_button(root, "Open The weather slate") != null, "menu is missing The weather slate")
 	_expect(_find_visible_button(root, "Open The loom shuttle") != null, "menu is missing The loom shuttle")
 	_expect(_find_visible_button(root, "Open The hive smoker") != null, "menu is missing The hive smoker")
+	_expect(_find_visible_button(root, "Open The glass pontil") != null, "menu is missing The glass pontil")
 	_press(root, "Open The rehearsal score")
 	var rehearsal_open := _visible_label_blob(root)
 	_expect(rehearsal_open.find("Cut list") >= 0, "rehearsal file did not open")
@@ -1761,6 +2055,57 @@ func _test_menu_opens_either_case() -> void:
 	var loom_from_hive := _visible_label_blob(root)
 	_expect(loom_from_hive.find("Trough tag") >= 0, "could not return to The loom shuttle from The hive smoker")
 	_expect(loom_from_hive.find("Fuel line") == -1, "hive smoker papers stayed up after switching files")
+	_press(root, "Menu")
+	_press(root, "Open The glass pontil")
+	var glass_open := _visible_label_blob(root)
+	_expect(glass_open.find("Weight line") >= 0, "glass pontil file did not open")
+	_expect(glass_open.find("Pontil note") >= 0, "glass pontil file did not show its exhibits")
+	_expect(glass_open.find("Complaint slip") == -1, "spare key papers showed inside The glass pontil")
+	_expect(glass_open.find("Cut list") == -1, "rehearsal papers showed inside The glass pontil")
+	_expect(glass_open.find("Move order") == -1, "gilt stamp papers showed inside The glass pontil")
+	_expect(glass_open.find("Whistle slip") == -1, "ferry bell papers showed inside The glass pontil")
+	_expect(glass_open.find("Frost note") == -1, "weather slate papers showed inside The glass pontil")
+	_expect(glass_open.find("Trough tag") == -1, "loom shuttle papers showed inside The glass pontil")
+	_expect(glass_open.find("Fuel line") == -1, "hive smoker papers showed inside The glass pontil")
+	_press(root, "Submit theory")
+	var empty_glass := _verdict_text(root)
+	_expect(empty_glass.find("who took the glass pontil") >= 0, "empty glass board: %s" % empty_glass)
+	_expect(empty_glass.find("where they took the pontil") >= 0, "empty glass board: %s" % empty_glass)
+	_expect(empty_glass.find("at which hour they took the pontil") >= 0, "empty glass board: %s" % empty_glass)
+	_expect(empty_glass.find("who took the spare key") == -1, "empty glass board used the spare key slot: %s" % empty_glass)
+	_expect(empty_glass.find("rehearsal score") == -1, "empty glass board used a rehearsal slot: %s" % empty_glass)
+	_expect(empty_glass.find("gilt stamp") == -1, "empty glass board used a gilt slot: %s" % empty_glass)
+	_expect(empty_glass.find("ferry bell") == -1, "empty glass board used a ferry slot: %s" % empty_glass)
+	_expect(empty_glass.find("weather slate") == -1, "empty glass board used a weather slot: %s" % empty_glass)
+	_expect(empty_glass.find("loom shuttle") == -1, "empty glass board used a loom slot: %s" % empty_glass)
+	_expect(empty_glass.find("hive smoker") == -1, "empty glass board used a hive slot: %s" % empty_glass)
+	_expect(empty_glass.to_lower().find("conflict") == -1, "empty glass board talked about a conflict: %s" % empty_glass)
+	_press(root, "Sable")
+	_press(root, "Lehr room")
+	_press(root, "28")
+	_press(root, "Submit theory")
+	var glass_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(glass_miss, Glass, {"who": "Sable", "place": "lehr_room", "hour": "28"})
+	_press(root, "Glory hole")
+	_press(root, "27")
+	_press(root, "Submit theory")
+	var glass_place_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(glass_place_miss, Glass, {"who": "Sable", "place": "glory_hole", "hour": "27"})
+	_press(root, "Lehr room")
+	_press(root, "Submit theory")
+	var glass_accepted := _verdict_text(root)
+	_expect(glass_accepted.find("fits every exhibit") >= 0, "glass pontil board rejected the true theory: %s" % glass_accepted)
+	_expect(glass_accepted.find("Sable (night gatherer) took the glass pontil at 27") >= 0, "glass pontil board timeline: %s" % glass_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var glass_cleared := _verdict_text(root)
+	_expect(glass_cleared.find("who took the glass pontil") >= 0, "cleared glass board: %s" % glass_cleared)
+	_expect(glass_cleared.find("fits every exhibit") == -1, "cleared glass board stayed accepted: %s" % glass_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The hive smoker")
+	var hive_from_glass := _visible_label_blob(root)
+	_expect(hive_from_glass.find("Fuel line") >= 0, "could not return to The hive smoker from The glass pontil")
+	_expect(hive_from_glass.find("Weight line") == -1, "glass pontil papers stayed up after switching files")
 	root.queue_free()
 
 
