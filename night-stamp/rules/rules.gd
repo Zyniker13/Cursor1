@@ -184,6 +184,45 @@
 # A refused spine and an ignored neighbor zero that stamp's own progress.
 # They do not cancel the retrigger, and they do not remove Hold or Exemption.
 #
+# VELLUM BELL, in desk order
+# A sixth night. The stamps, the ink, and the 3x3 form are unchanged. The
+# vellum bell deals the starting deck again. Drafts and the relic from an
+# earlier night do not carry. Open it from the desk, or from a victory desk.
+# Restart act replays whichever night is on the desk.
+# - Edda Voss, lane column 2, exemption row middle, Quiet Center:
+#   "Refuses the center cell."
+#   The center cell is the middle row, column 2. The rest of the middle row
+#   counts. The rest of column 2 counts. A top-row stamp counts. A bottom-row
+#   stamp counts.
+#   Exemption on the middle row lets the center count.
+# - Rho Tallow, lane column 1, exemption row top, Corner Meet:
+#   "Yields if two stamps meet at a corner."
+#   A corner means the two cells touch diagonally: one row apart and one
+#   column apart. That adds 4 progress after the queue, once. A longer
+#   diagonal does not meet. Two stamps that share a side do not meet at a
+#   corner. One stamp is not enough. Three stamps in one row, or in one
+#   column, are not enough. If any pair meets at a corner, the yield happens
+#   even when another pair shares a side.
+#   Exemption on the top row cancels the yield.
+# - Nessa Brin, lane column 3, exemption row bottom, Row Toll:
+#   "Patience drops once for each empty row."
+#   An empty row is a row with no stamp. Three empty rows drop patience by 3.
+#   Two empty rows drop it by 2. One empty row drops it by 1. A stamp in
+#   every row drops it by 0. Three stamps in one row still leave two rows
+#   empty.
+#   Exemption on the bottom row keeps the drop at 1, even when every row is
+#   stamped and even when two rows are empty.
+#   Hold is applied before the row toll.
+# - Lark Pym, lane column 1, exemption row middle, Solo Line:
+#   "Ignores a stamp that shares its row."
+#   A stamp scores 0 when another stamp sits in the same row. A lone stamp
+#   in a row counts. Stamps in different rows both count. Filling a row
+#   ignores every stamp in that row. A stamp directly below another is a
+#   different row, so both can count.
+#   Exemption on the middle row lets a shared row count.
+# A refused center and an ignored shared row zero that stamp's own progress.
+# They do not cancel the retrigger, and they do not remove Hold or Exemption.
+#
 # RUN
 # - A run is seeded. The shuffle and the draft offer are a pure function of the
 #   seed, the night, the traveler, and the cards owned, so restarting an
@@ -212,6 +251,7 @@ const SHIFT_LATE := 1
 const SHIFT_CLOSING := 2
 const SHIFT_ASH := 3
 const SHIFT_GUTTER := 4
+const SHIFT_VELLUM := 5
 
 const ROW_NAMES := ["top row", "middle row", "bottom row"]
 const COL_NAMES := ["column 1", "column 2", "column 3"]
@@ -515,6 +555,54 @@ const GUTTER_LAMP := [
 ]
 
 
+const VELLUM_BELL := [
+	{
+		"id": "edda",
+		"name": "Edda Voss",
+		"form_name": "Quiet Center",
+		"rule_text": "Refuses the center cell.",
+		"rule": "refuse_center",
+		"lane": 1,
+		"exemption_row": 1,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "rho",
+		"name": "Rho Tallow",
+		"form_name": "Corner Meet",
+		"rule_text": "Yields if two stamps meet at a corner.",
+		"rule": "yield_diagonal",
+		"lane": 0,
+		"exemption_row": 0,
+		"goal": 22,
+		"patience": 5,
+	},
+	{
+		"id": "nessa",
+		"name": "Nessa Brin",
+		"form_name": "Row Toll",
+		"rule_text": "Patience drops once for each empty row.",
+		"rule": "drop_per_empty_row",
+		"lane": 2,
+		"exemption_row": 2,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "lark",
+		"name": "Lark Pym",
+		"form_name": "Solo Line",
+		"rule_text": "Ignores a stamp that shares its row.",
+		"rule": "ignore_shared_row",
+		"lane": 0,
+		"exemption_row": 1,
+		"goal": 20,
+		"patience": 5,
+	},
+]
+
+
 class NightState:
 	extends RefCounted
 	var seed: int = 1
@@ -566,6 +654,8 @@ static func _canonical_shift(shift_index: int) -> int:
 		return SHIFT_ASH
 	if shift_index == SHIFT_GUTTER:
 		return SHIFT_GUTTER
+	if shift_index == SHIFT_VELLUM:
+		return SHIFT_VELLUM
 	return SHIFT_FIRST
 
 
@@ -581,7 +671,9 @@ static func new_run(seed_value: int, shift_index: int = SHIFT_FIRST) -> NightSta
 	state.next_iid = 0
 	for card_id in STARTING_DECK:
 		_add_library_card(state, String(card_id))
-	if state.shift == SHIFT_GUTTER:
+	if state.shift == SHIFT_VELLUM:
+		_log(state, "The vellum bell begins. Seed %d." % state.seed)
+	elif state.shift == SHIFT_GUTTER:
 		_log(state, "The gutter lamp begins. Seed %d." % state.seed)
 	elif state.shift == SHIFT_ASH:
 		_log(state, "The ash watch begins. Seed %d." % state.seed)
@@ -631,6 +723,8 @@ static func restart_encounter(state: NightState) -> void:
 
 
 static func shift_label(state: NightState) -> String:
+	if state.shift == SHIFT_VELLUM:
+		return "Vellum bell"
 	if state.shift == SHIFT_GUTTER:
 		return "Gutter lamp"
 	if state.shift == SHIFT_ASH:
@@ -657,6 +751,8 @@ static func traveler(state: NightState) -> Dictionary:
 
 
 static func _roster(state: NightState) -> Array:
+	if state.shift == SHIFT_VELLUM:
+		return VELLUM_BELL
 	if state.shift == SHIFT_GUTTER:
 		return GUTTER_LAMP
 	if state.shift == SHIFT_ASH:
@@ -851,6 +947,10 @@ static func stamp_progress(state: NightState, card_id: String, row: int, col: in
 		return 0
 	if rule == "ignore_adjacent" and orthogonal_count(state, row, col) > 0:
 		return 0
+	if rule == "refuse_center" and row == 1 and col == 1:
+		return 0
+	if rule == "ignore_shared_row" and row_fill_count(state, row) > 1:
+		return 0
 	if rule == "double_last" and _is_queue_tail(state, row, col):
 		return amount * 2
 	return amount
@@ -937,6 +1037,8 @@ static func patience_loss(state: NightState) -> int:
 			loss = 2
 		elif rule == "no_drop_if_every_row" and _every_row_stamped(state):
 			loss = 0
+		elif rule == "drop_per_empty_row":
+			loss = _empty_row_count(state)
 	return loss
 
 
@@ -1094,6 +1196,10 @@ static func _resolve_stamp(state: NightState, row: int, col: int, hush: bool) ->
 				_log(state, "%s ignores the covered %s." % [traveler(state)["name"], CARDS[card_id]["name"]])
 			elif rule == "ignore_adjacent" and orthogonal_count(state, row, col) > 0:
 				_log(state, "%s ignores the neighboring %s." % [traveler(state)["name"], CARDS[card_id]["name"]])
+			elif rule == "refuse_center" and row == 1 and col == 1:
+				_log(state, "%s refuses %s in the center cell." % [traveler(state)["name"], CARDS[card_id]["name"]])
+			elif rule == "ignore_shared_row" and row_fill_count(state, row) > 1:
+				_log(state, "%s ignores %s because the row is shared." % [traveler(state)["name"], CARDS[card_id]["name"]])
 			elif rule == "ignore_isolated":
 				_log(state, "%s ignores the lone %s." % [traveler(state)["name"], CARDS[card_id]["name"]])
 			else:
@@ -1163,6 +1269,10 @@ static func _apply_post_rule(state: NightState, hush: bool) -> void:
 		state.turn_progress += 4
 		if not hush:
 			_log(state, "%s yields (+4)." % traveler(state)["name"])
+	elif rule == "yield_diagonal" and _meets_at_corner(state):
+		state.turn_progress += 4
+		if not hush:
+			_log(state, "%s yields (+4)." % traveler(state)["name"])
 
 
 static func _is_corner(row: int, col: int) -> bool:
@@ -1207,6 +1317,29 @@ static func _every_column_stamped(state: NightState) -> bool:
 	return column_has_stamp(state, 0) and column_has_stamp(state, 1) and column_has_stamp(state, 2)
 
 
+static func _empty_row_count(state: NightState) -> int:
+	var empty_rows = 0
+	for row in 3:
+		if not row_has_stamp(state, row):
+			empty_rows += 1
+	return empty_rows
+
+
+static func _meets_at_corner(state: NightState) -> bool:
+	for row in 3:
+		for col in 3:
+			if state.form[row][col] == null:
+				continue
+			for delta in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+				var next_row = row + delta.x
+				var next_col = col + delta.y
+				if next_row < 0 or next_col < 0 or next_row > 2 or next_col > 2:
+					continue
+				if state.form[next_row][next_col] != null:
+					return true
+	return false
+
+
 static func orthogonal_count(state: NightState, row: int, col: int) -> int:
 	var count = 0
 	for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
@@ -1248,7 +1381,9 @@ static func _apply_result(state: NightState, result: Dictionary) -> void:
 		state.encounters_cleared += 1
 		if state.traveler_index >= _roster(state).size() - 1:
 			state.phase = "victory"
-			if state.shift == SHIFT_GUTTER:
+			if state.shift == SHIFT_VELLUM:
+				_log(state, "The queue is empty. The vellum bell is clear.")
+			elif state.shift == SHIFT_GUTTER:
 				_log(state, "The queue is empty. The gutter lamp is clear.")
 			elif state.shift == SHIFT_ASH:
 				_log(state, "The queue is empty. The ash watch is clear.")
