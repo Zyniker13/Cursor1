@@ -110,7 +110,7 @@ func _draw() -> void:
 	if sim != null and beat == Sim.DRY and not sim.is_over():
 		opening = ticks_left > Sim.DRY_TICK - Sim.TICK_HZ * 3
 	# The cart beat is clear weather. Rain shows for the season changes and the end.
-	if sim != null and beat != Sim.CART and beat != Sim.SHIPPING and beat != Sim.MARKET and (sim.is_over() or ticks_left < Sim.TICK_HZ * 3 or opening):
+	if sim != null and beat != Sim.CART and beat != Sim.SHIPPING and beat != Sim.MARKET and beat != Sim.YARDING and (sim.is_over() or ticks_left < Sim.TICK_HZ * 3 or opening):
 		_draw_rain(sim.is_over() or opening)
 
 
@@ -121,7 +121,10 @@ func _draw_bars() -> void:
 	var beat := int(sim.get_beat())
 	var span := Sim.RAIN_TICK
 	var rain_color := Color("2f7590")
-	if beat == Sim.MARKET:
+	if beat == Sim.YARDING:
+		span = Sim.YARD_TICK
+		rain_color = Color("2f6b45")
+	elif beat == Sim.MARKET:
 		span = Sim.MARKET_TICK
 		rain_color = Color("9c3d3d")
 	elif beat == Sim.SHIPPING:
@@ -135,7 +138,10 @@ func _draw_bars() -> void:
 		rain_color = Color("c47a3a")
 	var rain_frac := clampf(float(sim.get_ticks_until_rain()) / float(maxi(span, 1)), 0.0, 1.0)
 	var quota_frac := clampf(float(sim.get_stored_salt()) / float(Sim.QUOTA), 0.0, 1.0)
-	if beat == Sim.MARKET:
+	if beat == Sim.YARDING:
+		var purse_whole := int(sim.get_banked()) + int(sim.get_purse())
+		quota_frac = 0.0 if purse_whole <= 0 else clampf(float(sim.get_banked()) / float(purse_whole), 0.0, 1.0)
+	elif beat == Sim.MARKET:
 		var cargo := int(sim.get_coins()) + int(sim.get_ship_salt())
 		quota_frac = 0.0 if cargo <= 0 else clampf(float(sim.get_coins()) / float(cargo), 0.0, 1.0)
 	elif beat == Sim.SHIPPING:
@@ -174,15 +180,17 @@ func _draw_cell(x: int, y: int) -> void:
 		Sim.PAN:
 			_draw_pan(rect)
 		Sim.CRIB:
-			_draw_crib(rect, sim.get_beat() == Sim.CART or sim.get_beat() == Sim.SHIPPING or sim.get_beat() == Sim.MARKET)
+			_draw_crib(rect, sim.get_beat() == Sim.CART or sim.get_beat() == Sim.SHIPPING or sim.get_beat() == Sim.MARKET or sim.get_beat() == Sim.YARDING)
 		Sim.SHIP:
-			_draw_ship(rect, sim.get_beat() == Sim.SHIPPING or sim.get_beat() == Sim.MARKET)
+			_draw_ship(rect, sim.get_beat() == Sim.SHIPPING or sim.get_beat() == Sim.MARKET or sim.get_beat() == Sim.YARDING)
 		Sim.STALL:
-			_draw_stall(rect, sim.get_beat() == Sim.MARKET)
+			_draw_stall(rect, sim.get_beat() == Sim.MARKET or sim.get_beat() == Sim.YARDING)
+		Sim.YARD:
+			_draw_yard(rect, sim.get_beat() == Sim.YARDING)
 	if Vector2i(x, y) == Sim.ANTHILL:
 		_draw_anthill(rect)
 	var salt: Dictionary = sim.get_cell_salt(x, y)
-	_draw_salt(rect, int(salt["loose"]), int(salt["stacked"]), int(salt["covered"]), int(salt["crib"]), int(salt["ship"]), int(salt["stall"]))
+	_draw_salt(rect, int(salt["loose"]), int(salt["stacked"]), int(salt["covered"]), int(salt["crib"]), int(salt["ship"]), int(salt["stall"]), int(salt["yard"]))
 
 
 func _draw_coast(rect: Rect2, dry: bool) -> void:
@@ -264,6 +272,20 @@ func _draw_stall(rect: Rect2, open: bool) -> void:
 	draw_rect(counter, Color("e0c08a") if open else Color("c8c2b6"))
 
 
+func _draw_yard(rect: Rect2, open: bool) -> void:
+	var wall := Color("2f6b45") if open else Color("9aab9f")
+	var coin := Color("f0c14a") if open else Color("c8c2b6")
+	var wash := Color(0.18, 0.4, 0.28, 0.28) if open else Color(0.18, 0.4, 0.28, 0.12)
+	draw_rect(rect, wash)
+	var box := Rect2(rect.position + Vector2(8, 12), rect.size - Vector2(16, 18))
+	draw_rect(box, wall)
+	draw_rect(Rect2(box.position + Vector2(4, 4), box.size - Vector2(8, 8)), coin)
+	var mid_x := box.position.x + box.size.x * 0.5
+	var mid_y := box.position.y + box.size.y * 0.5
+	draw_line(Vector2(mid_x, box.position.y + 2), Vector2(mid_x, box.end.y - 2), wall, 2.0)
+	draw_line(Vector2(box.position.x + 2, mid_y), Vector2(box.end.x - 2, mid_y), wall, 2.0)
+
+
 func _draw_pan(rect: Rect2) -> void:
 	draw_rect(rect, Color(0.62, 0.74, 0.76, 0.42))
 	var basin := Rect2(rect.position + Vector2(7, 12), rect.size - Vector2(14, 18))
@@ -303,7 +325,7 @@ func _draw_anthill(rect: Rect2) -> void:
 	draw_circle(center + Vector2(1, 5), 3.0, Color("1a100c"))
 
 
-func _draw_salt(rect: Rect2, loose: int, stacked: int, covered: int, crib: int, ship: int, stall: int) -> void:
+func _draw_salt(rect: Rect2, loose: int, stacked: int, covered: int, crib: int, ship: int, stall: int, yard: int) -> void:
 	for i in mini(loose, 4):
 		var col := i % 2
 		var row := int(i / 2)
@@ -318,7 +340,9 @@ func _draw_salt(rect: Rect2, loose: int, stacked: int, covered: int, crib: int, 
 		_diamond(rect.position + Vector2(12 + i * 10, rect.size.y - 12), 4.2, Color("ffe6a8"))
 	for i in mini(stall, 3):
 		_diamond(rect.position + Vector2(12 + i * 10, rect.size.y - 12), 4.2, Color("f0c14a"))
-	var total := loose + stacked + covered + crib + ship + stall
+	for i in mini(yard, 3):
+		_diamond(rect.position + Vector2(12 + i * 10, rect.size.y - 12), 4.2, Color("fff1b8"))
+	var total := loose + stacked + covered + crib + ship + stall + yard
 	if total > 0:
 		var digits := str(total)
 		var badge := Rect2(rect.position + Vector2(2, 2), Vector2(6.0 + 7.0 * digits.length(), 13))
@@ -421,7 +445,7 @@ func _build_hud() -> void:
 	hint_a.position = Vector2(20, 628)
 	hint_a.size = Vector2(740, 20)
 	hud.add_child(hint_a)
-	var hint_b := _make_label("1 rake, 2 stack, 3 cover, 4 trail, 5 pan, 6 crib, 7 ship, 8 stall, 0 erase. Space paints. R restarts.", 14, INK)
+	var hint_b := _make_label("1 rake, 2 stack, 3 cover, 4 trail, 5 pan, 6 crib, 7 ship, 8 stall, 9 yard, 0 erase. Space paints. R restarts.", 14, INK)
 	hint_b.position = Vector2(20, 650)
 	hint_b.size = Vector2(740, 20)
 	hud.add_child(hint_b)
@@ -442,16 +466,16 @@ func _build_hud() -> void:
 	hud.add_child(panel)
 
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 6)
+	box.add_theme_constant_override("separation", 4)
 	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	box.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	panel.add_child(box)
 
 	box.add_child(_make_label("BRINE MARK", 26, PAPER))
 	box.add_child(_make_label("Salt Coast", 16, GOLD))
-	var rules := _make_label("Paint the flats. Workers follow the mark under their feet and are not selectable.\nWet season: rake the shore, stack the loose salt, cover the stacks. The first rain banks covered salt and pulls the brine back. Dry season: shore rakes go idle. Paint pans and workers crystallize salt until the second rain. Then paint a crib. Workers move the banked salt into it. Then paint a ship. Workers load that crib onto it. Then paint a stall. Workers sell that cargo, one coin a unit. Trail is how they cross.", 14, PAPER)
+	var rules := _make_label("Paint the flats. Workers follow the mark under their feet and are not selectable.\nWet season: rake the shore, stack the loose salt, cover the stacks. The first rain banks covered salt and pulls the brine back. Dry season: shore rakes go idle. Paint pans and workers crystallize salt until the second rain. Then paint a crib. Workers move the banked salt into it. Then paint a ship. Workers load that crib onto it. Then paint a stall. Workers sell that cargo, one coin a unit. Then paint a yard. Workers bank those coins, one at a time. Trail is how they cross.", 14, PAPER)
 	rules.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	rules.custom_minimum_size = Vector2(430, 188)
+	rules.custom_minimum_size = Vector2(430, 208)
 	rules.name = "RulesNote"
 	box.add_child(rules)
 
@@ -482,6 +506,7 @@ func _build_hud() -> void:
 	]))
 	box.add_child(_button_row([
 		["8  Stall", Sim.STALL, Color("c4553a")],
+		["9  Yard", Sim.YARD, Color("7dcea0")],
 		["0  Erase", Sim.EMPTY, Color("c8c2b6")],
 	]))
 
@@ -491,7 +516,7 @@ func _build_hud() -> void:
 	status_label.custom_minimum_size = Vector2(430, 36)
 	summary_label = _make_label("", 18, PAPER)
 	summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	summary_label.custom_minimum_size = Vector2(430, 64)
+	summary_label.custom_minimum_size = Vector2(430, 88)
 	box.add_child(cursor_label)
 	box.add_child(status_label)
 	box.add_child(summary_label)
@@ -565,7 +590,10 @@ func _refresh() -> void:
 		return
 	var seconds := 0.0
 	if sim.is_over():
-		if int(sim.get_coins()) > 0:
+		if int(sim.get_banked()) > 0:
+			rain_label.text = "The coins are in the yard"
+			rain_label.add_theme_color_override("font_color", Color("2f6b45"))
+		elif int(sim.get_coins()) > 0:
 			rain_label.text = "The cargo has sold"
 			rain_label.add_theme_color_override("font_color", Color("9c3d3d"))
 		elif int(sim.get_shipped()) > 0:
@@ -582,7 +610,10 @@ func _refresh() -> void:
 		if seconds < 0.0:
 			seconds = 0.0
 		var urgent := seconds < 10.0
-		if sim.get_beat() == Sim.MARKET:
+		if sim.get_beat() == Sim.YARDING:
+			rain_label.text = "Yard the coins. %.1fs" % seconds
+			rain_label.add_theme_color_override("font_color", Color("a33b2b") if urgent else Color("2f6b45"))
+		elif sim.get_beat() == Sim.MARKET:
 			rain_label.text = "Sell the cargo. %.1fs" % seconds
 			rain_label.add_theme_color_override("font_color", Color("a33b2b") if urgent else Color("9c3d3d"))
 		elif sim.get_beat() == Sim.SHIPPING:
@@ -600,6 +631,8 @@ func _refresh() -> void:
 	var season_name := "wet"
 	if sim.is_over():
 		season_name = "settled"
+	elif sim.get_beat() == Sim.YARDING:
+		season_name = "yard"
 	elif sim.get_beat() == Sim.MARKET:
 		season_name = "market"
 	elif sim.get_beat() == Sim.SHIPPING:
@@ -612,7 +645,11 @@ func _refresh() -> void:
 		season_name, sim.get_stored_salt(), Sim.QUOTA, sim.get_population(), Sim.POP_CAP,
 	]
 	covered_label.text = "Covered salt  %d / %d" % [sim.get_stored_salt(), Sim.QUOTA]
-	if sim.get_beat() == Sim.MARKET or (sim.is_over() and int(sim.get_coins()) > 0):
+	if sim.get_beat() == Sim.YARDING or (sim.is_over() and int(sim.get_banked()) > 0):
+		salt_label.text = "Loose %d    stacked %d    coins %d    banked %d" % [
+			sim.get_loose_salt(), sim.get_stacked_salt(), sim.get_coins(), sim.get_banked(),
+		]
+	elif sim.get_beat() == Sim.MARKET or (sim.is_over() and int(sim.get_coins()) > 0):
 		salt_label.text = "Loose %d    stacked %d    ship %d    coins %d" % [
 			sim.get_loose_salt(), sim.get_stacked_salt(), sim.get_ship_salt(), sim.get_coins(),
 		]
@@ -630,12 +667,18 @@ func _refresh() -> void:
 		]
 	ants_label.text = "Ants %d / %d" % [sim.get_population(), Sim.POP_CAP]
 	mode_label.text = "Mark: %s" % _mode_name(current_mode)
-	if sim.get_beat() == Sim.MARKET and not sim.is_over():
+	if sim.get_beat() == Sim.YARDING and not sim.is_over():
+		season_label.text = "Coins %d. Banked %d. Paint a yard and workers bank the purse." % [
+			sim.get_coins(), sim.get_banked(),
+		]
+	elif sim.is_over() and int(sim.get_banked()) > 0:
+		season_label.text = "Banked %d into the yard." % sim.get_banked()
+	elif sim.get_beat() == Sim.MARKET and not sim.is_over():
 		season_label.text = "Ship %d. Coins %d. Paint a stall and workers sell the cargo." % [
 			sim.get_ship_salt(), sim.get_coins(),
 		]
 	elif sim.is_over() and int(sim.get_coins()) > 0:
-		season_label.text = "Sold %d coin." % sim.get_coins()
+		season_label.text = "The purse was not banked. A yard is where workers take it."
 	elif sim.get_beat() == Sim.SHIPPING and not sim.is_over():
 		season_label.text = "Crib %d. Shipped %d. Paint a ship and workers load the crib." % [
 			sim.get_crib_salt(), sim.get_shipped(),
@@ -663,6 +706,9 @@ func _refresh() -> void:
 		var won: bool = sim.get_stored_salt() >= Sim.QUOTA
 		summary_label.add_theme_color_override("font_color", Color("b7e2c2") if won else Color("ffb4a8"))
 		status_label.text = "Restart scenario to mark the flats again."
+	elif sim.get_beat() == Sim.YARDING:
+		summary_label.text = "The market beat has ended. Paint a yard. Workers bank the coins already earned."
+		summary_label.add_theme_color_override("font_color", Color("f0d7b0"))
 	elif sim.get_beat() == Sim.MARKET:
 		summary_label.text = "The ship beat has ended. Paint a stall. Workers sell the salt on the ship."
 		summary_label.add_theme_color_override("font_color", Color("f0d7b0"))
@@ -739,6 +785,8 @@ func _on_key(keycode: Key) -> void:
 			_set_mode(Sim.SHIP)
 		KEY_8, KEY_KP_8:
 			_set_mode(Sim.STALL)
+		KEY_9, KEY_KP_9:
+			_set_mode(Sim.YARD)
 		KEY_0, KEY_KP_0:
 			_set_mode(Sim.EMPTY)
 		KEY_SPACE, KEY_ENTER, KEY_KP_ENTER:
@@ -778,6 +826,8 @@ func _mode_color(mode: int) -> Color:
 			return Color("2f5f73")
 		Sim.STALL:
 			return Color("9c3d3d")
+		Sim.YARD:
+			return Color("2f6b45")
 		_:
 			return Color("f4efe6")
 
@@ -800,5 +850,7 @@ func _mode_name(mode: int) -> String:
 			return "Ship"
 		Sim.STALL:
 			return "Stall"
+		Sim.YARD:
+			return "Yard"
 		_:
 			return "Erase"
