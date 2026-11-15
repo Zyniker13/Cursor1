@@ -57,6 +57,7 @@ var wick_button: Button
 var margin_button: Button
 var index_button: Button
 var ledger_button: Button
+var spine_button: Button
 var name_label: Label
 var rule_label: Label
 var meta_label: Label
@@ -224,6 +225,9 @@ func _build_traveler() -> Control:
 	ledger_button = _button("Ledger bell")
 	ledger_button.pressed.connect(_toggle_ledger)
 	header.add_child(ledger_button)
+	spine_button = _button("Spine bell")
+	spine_button.pressed.connect(_toggle_spine)
+	header.add_child(spine_button)
 	header.add_child(_spacer())
 	relic_label = _label("Relic: none", 16, INK)
 	header.add_child(relic_label)
@@ -559,6 +563,17 @@ func _begin_ledger_bell() -> void:
 	_open_shift(Rules.SHIFT_LEDGER, state.seed)
 
 
+func _toggle_spine() -> void:
+	var next := Rules.SHIFT_SPINE
+	if state.shift == Rules.SHIFT_SPINE:
+		next = Rules.SHIFT_FIRST
+	_open_shift(next, _parse_seed())
+
+
+func _begin_spine_bell() -> void:
+	_open_shift(Rules.SHIFT_SPINE, state.seed)
+
+
 func _open_shift(shift_index: int, seed_value: int) -> void:
 	state = Rules.new_run(seed_value, shift_index)
 	seed_edit.text = str(state.seed)
@@ -619,6 +634,7 @@ func _refresh_ui() -> void:
 	margin_button.text = "First bell" if state.shift == Rules.SHIFT_MARGIN else "Margin bell"
 	index_button.text = "First bell" if state.shift == Rules.SHIFT_INDEX else "Index bell"
 	ledger_button.text = "First bell" if state.shift == Rules.SHIFT_LEDGER else "Ledger bell"
+	spine_button.text = "First bell" if state.shift == Rules.SHIFT_SPINE else "Spine bell"
 	name_label.text = String(traveler["name"])
 	rule_label.text = "\"%s\"" % traveler["rule_text"]
 	var lane := String(Rules.COL_NAMES[int(traveler["lane"])])
@@ -752,12 +768,63 @@ func _fill_modal() -> void:
 			modal_box.add_child(button)
 		_add_modal_restarts()
 	elif state.phase == "victory":
-		if state.shift == Rules.SHIFT_LEDGER:
+		if state.shift == Rules.SHIFT_SPINE:
+			modal_box.add_child(_label("The spine bell is clear", 32, TEXT))
+			modal_box.add_child(_wrapped("Wynn Quill, Ada Hart, Bram Solt, and Sera Pell passed the desk. Restart this night to run the seed again, or open another bell.", 18, MUTED))
+			var restart_spine := _button("Restart act")
+			restart_spine.pressed.connect(_restart_act)
+			modal_box.add_child(restart_spine)
+			var spine_ledger := _button("Open the ledger bell")
+			spine_ledger.pressed.connect(_begin_ledger_bell)
+			modal_box.add_child(spine_ledger)
+			var spine_index := _button("Open the index bell")
+			spine_index.pressed.connect(_begin_index_bell)
+			modal_box.add_child(spine_index)
+			var spine_margin := _button("Open the margin bell")
+			spine_margin.pressed.connect(_begin_margin_bell)
+			modal_box.add_child(spine_margin)
+			var spine_wick := _button("Open the wick bell")
+			spine_wick.pressed.connect(_begin_wick_bell)
+			modal_box.add_child(spine_wick)
+			var spine_folio := _button("Open the folio bell")
+			spine_folio.pressed.connect(_begin_folio_bell)
+			modal_box.add_child(spine_folio)
+			var spine_quay := _button("Open the quay bell")
+			spine_quay.pressed.connect(_begin_quay_bell)
+			modal_box.add_child(spine_quay)
+			var spine_salt := _button("Open the salt watch")
+			spine_salt.pressed.connect(_begin_salt_watch)
+			modal_box.add_child(spine_salt)
+			var spine_quire := _button("Open the quire watch")
+			spine_quire.pressed.connect(_begin_quire_watch)
+			modal_box.add_child(spine_quire)
+			var spine_vellum := _button("Open the vellum bell")
+			spine_vellum.pressed.connect(_begin_vellum_bell)
+			modal_box.add_child(spine_vellum)
+			var spine_gutter := _button("Open the gutter lamp")
+			spine_gutter.pressed.connect(_begin_gutter_lamp)
+			modal_box.add_child(spine_gutter)
+			var spine_ash := _button("Open the ash watch")
+			spine_ash.pressed.connect(_begin_ash_watch)
+			modal_box.add_child(spine_ash)
+			var spine_closing := _button("Open the closing bell")
+			spine_closing.pressed.connect(_begin_closing_bell)
+			modal_box.add_child(spine_closing)
+			var spine_late := _button("Open the late shift")
+			spine_late.pressed.connect(_begin_late_shift)
+			modal_box.add_child(spine_late)
+			var spine_first := _button("Open the first bell")
+			spine_first.pressed.connect(_begin_first_bell)
+			modal_box.add_child(spine_first)
+		elif state.shift == Rules.SHIFT_LEDGER:
 			modal_box.add_child(_label("The ledger bell is clear", 32, TEXT))
 			modal_box.add_child(_wrapped("Nell Voss, Pell Dane, Ida Mire, and Sable Quern passed the desk. Restart this night to run the seed again, or open another bell.", 18, MUTED))
 			var restart_ledger := _button("Restart act")
 			restart_ledger.pressed.connect(_restart_act)
 			modal_box.add_child(restart_ledger)
+			var ledger_spine := _button("Open the spine bell")
+			ledger_spine.pressed.connect(_begin_spine_bell)
+			modal_box.add_child(ledger_spine)
 			var ledger_index := _button("Open the index bell")
 			ledger_index.pressed.connect(_begin_index_bell)
 			modal_box.add_child(ledger_index)
@@ -803,6 +870,9 @@ func _fill_modal() -> void:
 			var restart_index := _button("Restart act")
 			restart_index.pressed.connect(_restart_act)
 			modal_box.add_child(restart_index)
+			var index_spine := _button("Open the spine bell")
+			index_spine.pressed.connect(_begin_spine_bell)
+			modal_box.add_child(index_spine)
 			var index_ledger := _button("Open the ledger bell")
 			index_ledger.pressed.connect(_begin_ledger_bell)
 			modal_box.add_child(index_ledger)
@@ -848,6 +918,9 @@ func _fill_modal() -> void:
 			var restart_margin := _button("Restart act")
 			restart_margin.pressed.connect(_restart_act)
 			modal_box.add_child(restart_margin)
+			var margin_spine := _button("Open the spine bell")
+			margin_spine.pressed.connect(_begin_spine_bell)
+			modal_box.add_child(margin_spine)
 			var margin_ledger := _button("Open the ledger bell")
 			margin_ledger.pressed.connect(_begin_ledger_bell)
 			modal_box.add_child(margin_ledger)
@@ -893,6 +966,9 @@ func _fill_modal() -> void:
 			var restart_wick := _button("Restart act")
 			restart_wick.pressed.connect(_restart_act)
 			modal_box.add_child(restart_wick)
+			var wick_spine := _button("Open the spine bell")
+			wick_spine.pressed.connect(_begin_spine_bell)
+			modal_box.add_child(wick_spine)
 			var wick_ledger := _button("Open the ledger bell")
 			wick_ledger.pressed.connect(_begin_ledger_bell)
 			modal_box.add_child(wick_ledger)
@@ -938,6 +1014,9 @@ func _fill_modal() -> void:
 			var restart_folio := _button("Restart act")
 			restart_folio.pressed.connect(_restart_act)
 			modal_box.add_child(restart_folio)
+			var folio_spine := _button("Open the spine bell")
+			folio_spine.pressed.connect(_begin_spine_bell)
+			modal_box.add_child(folio_spine)
 			var folio_ledger := _button("Open the ledger bell")
 			folio_ledger.pressed.connect(_begin_ledger_bell)
 			modal_box.add_child(folio_ledger)
@@ -983,6 +1062,9 @@ func _fill_modal() -> void:
 			var restart_quay := _button("Restart act")
 			restart_quay.pressed.connect(_restart_act)
 			modal_box.add_child(restart_quay)
+			var quay_spine := _button("Open the spine bell")
+			quay_spine.pressed.connect(_begin_spine_bell)
+			modal_box.add_child(quay_spine)
 			var quay_ledger := _button("Open the ledger bell")
 			quay_ledger.pressed.connect(_begin_ledger_bell)
 			modal_box.add_child(quay_ledger)
@@ -1028,6 +1110,9 @@ func _fill_modal() -> void:
 			var restart_salt := _button("Restart act")
 			restart_salt.pressed.connect(_restart_act)
 			modal_box.add_child(restart_salt)
+			var salt_spine := _button("Open the spine bell")
+			salt_spine.pressed.connect(_begin_spine_bell)
+			modal_box.add_child(salt_spine)
 			var salt_ledger := _button("Open the ledger bell")
 			salt_ledger.pressed.connect(_begin_ledger_bell)
 			modal_box.add_child(salt_ledger)
@@ -1073,6 +1158,9 @@ func _fill_modal() -> void:
 			var restart_quire := _button("Restart act")
 			restart_quire.pressed.connect(_restart_act)
 			modal_box.add_child(restart_quire)
+			var quire_spine := _button("Open the spine bell")
+			quire_spine.pressed.connect(_begin_spine_bell)
+			modal_box.add_child(quire_spine)
 			var quire_ledger := _button("Open the ledger bell")
 			quire_ledger.pressed.connect(_begin_ledger_bell)
 			modal_box.add_child(quire_ledger)
@@ -1118,6 +1206,9 @@ func _fill_modal() -> void:
 			var restart_vellum := _button("Restart act")
 			restart_vellum.pressed.connect(_restart_act)
 			modal_box.add_child(restart_vellum)
+			var vellum_spine := _button("Open the spine bell")
+			vellum_spine.pressed.connect(_begin_spine_bell)
+			modal_box.add_child(vellum_spine)
 			var vellum_ledger := _button("Open the ledger bell")
 			vellum_ledger.pressed.connect(_begin_ledger_bell)
 			modal_box.add_child(vellum_ledger)
@@ -1163,6 +1254,9 @@ func _fill_modal() -> void:
 			var restart_gutter := _button("Restart act")
 			restart_gutter.pressed.connect(_restart_act)
 			modal_box.add_child(restart_gutter)
+			var gutter_spine := _button("Open the spine bell")
+			gutter_spine.pressed.connect(_begin_spine_bell)
+			modal_box.add_child(gutter_spine)
 			var gutter_ledger := _button("Open the ledger bell")
 			gutter_ledger.pressed.connect(_begin_ledger_bell)
 			modal_box.add_child(gutter_ledger)
@@ -1208,6 +1302,9 @@ func _fill_modal() -> void:
 			var restart_ash := _button("Restart act")
 			restart_ash.pressed.connect(_restart_act)
 			modal_box.add_child(restart_ash)
+			var ash_spine := _button("Open the spine bell")
+			ash_spine.pressed.connect(_begin_spine_bell)
+			modal_box.add_child(ash_spine)
 			var ash_ledger := _button("Open the ledger bell")
 			ash_ledger.pressed.connect(_begin_ledger_bell)
 			modal_box.add_child(ash_ledger)
@@ -1253,6 +1350,9 @@ func _fill_modal() -> void:
 			var restart_closing := _button("Restart act")
 			restart_closing.pressed.connect(_restart_act)
 			modal_box.add_child(restart_closing)
+			var closing_spine := _button("Open the spine bell")
+			closing_spine.pressed.connect(_begin_spine_bell)
+			modal_box.add_child(closing_spine)
 			var closing_ledger := _button("Open the ledger bell")
 			closing_ledger.pressed.connect(_begin_ledger_bell)
 			modal_box.add_child(closing_ledger)
@@ -1295,6 +1395,9 @@ func _fill_modal() -> void:
 		elif state.shift == Rules.SHIFT_LATE:
 			modal_box.add_child(_label("The late shift is clear", 32, TEXT))
 			modal_box.add_child(_wrapped("Nell Parr, Sol Wicks, Pim Larke, and Rue Calder passed the desk. The closing bell, the ash watch, the gutter lamp, the vellum bell, the quire watch, the salt watch, the quay bell, and the folio bell are later nights. Same stamps, a fresh deck, and four new forms.", 18, MUTED))
+			var late_spine := _button("Open the spine bell")
+			late_spine.pressed.connect(_begin_spine_bell)
+			modal_box.add_child(late_spine)
 			var late_ledger := _button("Open the ledger bell")
 			late_ledger.pressed.connect(_begin_ledger_bell)
 			modal_box.add_child(late_ledger)
@@ -1340,6 +1443,9 @@ func _fill_modal() -> void:
 		else:
 			modal_box.add_child(_label("Act 1 is clear", 32, TEXT))
 			modal_box.add_child(_wrapped("Four travelers passed the desk. Later nights use the same stamps and a fresh deck: the late shift, the closing bell, the ash watch, the gutter lamp, the vellum bell, the quire watch, the salt watch, the quay bell, and the folio bell.", 18, MUTED))
+			var act_spine := _button("Open the spine bell")
+			act_spine.pressed.connect(_begin_spine_bell)
+			modal_box.add_child(act_spine)
 			var act_ledger := _button("Open the ledger bell")
 			act_ledger.pressed.connect(_begin_ledger_bell)
 			modal_box.add_child(act_ledger)
