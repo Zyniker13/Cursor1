@@ -219,6 +219,28 @@ class_name BeamTracer
 # A dry mullion passes north and south and stops east and west. A dry lintel
 # passes every direction. A dry transom passes only east and west.
 #
+# Casement
+# --------
+# A casement is not a transom, a mullion, a lintel, a weir, a sluice, a
+# shutter, a stain, a vane, a well, or a siphon, and it does not replace one.
+# It has a facing. Rotation changes the facing. Clicking cycles it the same
+# way a vane, a sluice, and a weir are rotated: 0 north, 90 east, 180 south,
+# 270 west.
+# While its own row is dry, a beam traveling in the facing direction may enter
+# and passes straight through in that same direction and the same color. That
+# pass costs no bounce. Red stays red, blue stays blue, and white stays white.
+# It does not recolor, it does not turn, and it does not split.
+# While its own row is dry, a beam traveling any other direction, including
+# the opposite of the facing, stops at the casement and does not enter the
+# cell. It does not turn and it does not bounce.
+# While that row is flooded, every beam stops at the waterline and does not
+# enter the cell. A flooded casement does not carry the beam. It is shut under
+# water, the same way a transom, a mullion, a lintel, and a vane are shut.
+# A dry transom passes both east and west, and rotation does nothing. A dry
+# mullion passes both north and south, and rotation does nothing. A dry lintel
+# passes every direction, and rotation does nothing. A dry casement passes
+# only the one direction it faces.
+#
 # Docks and boats
 # ---------------
 # A dock records every color that enters its cell. It is satisfied only when
@@ -234,6 +256,9 @@ class_name BeamTracer
 # east-west beam does not enter it. A flooded mullion is not entered.
 # A dry transom does not cost a bounce when it passes east or west. A dry
 # north-south beam does not enter it. A flooded transom is not entered.
+# A dry casement does not cost a bounce when the beam is already traveling
+# with its facing. Every other dry direction stops before the cell. A flooded
+# casement is not entered.
 # A (cell, direction, color) triple is never entered twice, and each cast also
 # stops after MAX_STEPS cells. Those caps are what make a mirror loop return.
 
@@ -259,7 +284,9 @@ static func norm_rot(kind: String, rot: int) -> int:
 	# A prism has four faces. A vane has four facings: 0 north, 90 east,
 	# 180 south, 270 west. A sluice uses that same facing. A weir uses it too,
 	# and the exit also swaps red with blue. Opposite facings are not the same piece.
-	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir":
+	# A casement uses the same four facings. Only a beam already traveling that
+	# way passes straight through. The other three directions stop outside.
+	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement":
 		return posmod(rot, 360)
 	# A shutter has no facing. Dry stops the beam; flooded water lets it pass.
 	# A well has no facing either. Dry stops the beam; flooded water sends it north.
@@ -336,6 +363,10 @@ static func siphon_color(color: String) -> String:
 
 static func vane_facing(rot: int) -> String:
 	return rotate_dir("N", posmod(int(rot / 90.0), 4))
+
+static func casement_facing(rot: int) -> String:
+	# 0 north, 90 east, 180 south, 270 west. The dry pass follows this facing.
+	return rotate_dir("N", posmod(int(norm_rot("casement", rot) / 90.0), 4))
 
 static func sluice_facing(rot: int) -> String:
 	# 0 north, 90 east, 180 south, 270 west. The exit follows this facing.
@@ -551,6 +582,12 @@ static func _cast(
 		if _dry_transom_blocks(occupants, cell, dir):
 			segments.append(_boundary_seg(prev, cell, color))
 			return
+		# A dry casement passes only its facing. Every other direction stops
+		# on the edge and never enters the cell. Flooded casements already
+		# returned above.
+		if _dry_casement_blocks(occupants, cell, dir):
+			segments.append(_boundary_seg(prev, cell, color))
+			return
 		segments.append(_center_seg(prev, cell, color))
 		if not occupants.has(cell):
 			prev = cell
@@ -674,6 +711,14 @@ static func _cast(
 			prev = cell
 			cell = cell + VEC[dir]
 			continue
+		if kind == "casement":
+			# Dry facing passes straight, same direction and same color.
+			# That pass costs no bounce. It does not turn and it does not split.
+			# Every other dry direction never reaches here. A flooded casement
+			# never reaches here either.
+			prev = cell
+			cell = cell + VEC[dir]
+			continue
 		if kind == "pane":
 			if color != pane_color(int(occ["rot"])):
 				return
@@ -701,8 +746,9 @@ static func _flood_carries(occupants: Dictionary, cell: Vector2i) -> bool:
 	# facing, and swap red with blue. A vane is shut under water, so the beam
 	# stops at the waterline and does not enter that cell. A lintel is shut
 	# under water the same way. A mullion is shut under water the same way.
-	# A transom is shut under water the same way, so _flood_carries stays
-	# false for it. Every other flooded cell stops.
+	# A transom is shut under water the same way. A casement is shut under
+	# water the same way, so _flood_carries stays false for it. Every other
+	# flooded cell stops.
 	if not occupants.has(cell):
 		return false
 	var occ: Dictionary = occupants[cell]
@@ -722,6 +768,13 @@ static func _dry_transom_blocks(occupants: Dictionary, cell: Vector2i, dir: Stri
 	if not occupants.has(cell):
 		return false
 	return str(occupants[cell]["kind"]) == "transom"
+
+static func _dry_casement_blocks(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "casement":
+		return false
+	return dir != casement_facing(int(occupants[cell]["rot"]))
 
 static func _in_bounds(chart: Dictionary, cell: Vector2i) -> bool:
 	return cell.x >= 0 and cell.y >= 0 and cell.x < int(chart["cols"]) and cell.y < int(chart["rows"])
