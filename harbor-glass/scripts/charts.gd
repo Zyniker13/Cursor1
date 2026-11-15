@@ -7,12 +7,13 @@ class_name ChartBook
 # The Tide Mirror holds eight more. The Shutter holds eight more.
 # The Stain holds eight more. The Vane holds eight more.
 # The Well holds eight more. The Siphon holds eight more.
-# The Sluice holds the last eight.
+# The Sluice holds eight more. The Weir holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
 # 180, and 270 for north, east, south, and west. A sluice uses those same
-# four facings. A well has no facing.
+# four facings and keeps the color. A weir uses those same four facings and
+# swaps red with blue. White stays white. A well has no facing.
 # A siphon has no facing. Rotation is ignored.
 # See BeamTracer.
 #
@@ -33,6 +34,7 @@ const VANE := "The Vane"
 const WELL := "The Well"
 const SIPHON := "The Siphon"
 const SLUICE := "The Sluice"
+const WEIR := "The Weir"
 
 static func all() -> Array:
 	var book: Array = []
@@ -49,6 +51,7 @@ static func all() -> Array:
 	book.append_array(well())
 	book.append_array(siphon())
 	book.append_array(sluice())
+	book.append_array(weir())
 	return book
 
 
@@ -102,6 +105,10 @@ static func siphon() -> Array:
 
 static func sluice() -> Array:
 	return [chart_95(), chart_96(), chart_97(), chart_98(), chart_99(), chart_100(), chart_101(), chart_102()]
+
+
+static func weir() -> Array:
+	return [chart_103(), chart_104(), chart_105(), chart_106(), chart_107(), chart_108(), chart_109(), chart_110()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -3735,6 +3742,282 @@ static func chart_102() -> Dictionary:
 		],
 	}
 
+static func chart_103() -> Dictionary:
+	# Flood 2 covers the weir. White falls through the stain, which is clicked
+	# to red, and arrives traveling south. An east-facing weir swaps that red
+	# to blue and sends it east. The tide mirror lifts the exit onto the dry
+	# blue dock. An east-facing sluice keeps the red and misses that dock.
+	return {
+		"id": "103",
+		"harbor": WEIR,
+		"title": "The East Weir",
+		"teach": "Tide index 1 floods the lowest two rows. Click the stain from blue to red and face the weir east. Red arrives traveling south and leaves east as blue. The flooded glass lifts that exit onto the dry blue dock. An east-facing sluice leaves red and misses the blue dock. A north-facing weir sends it north as blue and misses. A siphon leaves north as blue. A well leaves north as red. A shutter keeps going south. Low water stops in the dry weir and lights the south hull.",
+		"win": "Blue leaves the east weir and the dock takes it.",
+		"cols": 6,
+		"rows": 6,
+		"tide_phases": [0, 2],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 2, "E", "white"),
+			_lantern("Lw", 0, 5, "E", "white"),
+		],
+		"docks": [_dock("Bd", 4, 3, "blue")],
+		"boats": [_boat("Hb", 5, 5)],
+		"fixtures": [
+			_fixture("E", "tide_mirror", 4, 4, 0),
+		],
+		"pieces": [
+			_mirror("M", "Feed mirror", 3, 2, 0, 90),
+			_stain("K", "Stain", 3, 3, 90, 0),
+			_weir("R", "Weir", 3, 4, 0, 90),
+		],
+	}
+
+static func chart_104() -> Dictionary:
+	# The only phase floods the bottom two rows. Red arrives traveling west.
+	# A south-facing weir leaves south as blue. The flooded glass carries that
+	# exit onto the dry blue dock. A sluice on the same facing leaves red.
+	return {
+		"id": "104",
+		"harbor": WEIR,
+		"title": "Side Entry",
+		"teach": "The only phase floods the lowest two rows. The beam arrives traveling west, already red. A south-facing weir leaves south as blue, and the flooded glass carries that exit onto the dry blue dock. A sluice leaves south as red and misses. A siphon leaves north as blue and lights the north hull. A well leaves north as red. A shutter keeps going west. A north-facing weir misses the dock.",
+		"win": "The side entry leaves south as blue.",
+		"cols": 6,
+		"rows": 6,
+		"tide_phases": [2],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [_lantern("L", 5, 3, "W", "red")],
+		"docks": [_dock("Bd", 1, 3, "blue")],
+		"boats": [
+			_boat("Hn", 2, 0),
+			_boat("Ht", 0, 0),
+		],
+		"fixtures": [
+			_fixture("T", "tide_mirror", 4, 4, 0),
+			_fixture("G", "shutter", 3, 4, 0),
+			_fixture("A", "tide_mirror", 2, 5, 0),
+			_fixture("B", "tide_mirror", 1, 5, 90),
+			_fixture("G14", "shutter", 1, 4, 0),
+			_fixture("R", "tide_mirror", 0, 4, 90),
+		],
+		"pieces": [
+			_mirror("M", "Feed mirror", 4, 3, 90, 0),
+			_weir("R", "Weir", 2, 4, 0, 180),
+		],
+	}
+
+static func chart_105() -> Dictionary:
+	# White through an east-facing weir stays white and reaches the east dock.
+	# An east-facing sluice keeps white on the same path and also clears.
+	return {
+		"id": "105",
+		"harbor": WEIR,
+		"title": "White Through",
+		"teach": "Flood 2. White enters an east-facing weir and leaves east still white onto the white dock. The weir does not paint white into another color. A sluice also keeps white and also clears this chart. A siphon keeps white and leaves north, missing the dock. A well leaves north as white and misses. A stain set to red misses the white dock. A north-facing weir misses.",
+		"win": "White leaves east, still white.",
+		"cols": 6,
+		"rows": 6,
+		"tide_phases": [2],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [_lantern("L", 0, 2, "E", "white")],
+		"docks": [_dock("D", 4, 3, "white")],
+		"boats": [
+			_boat("Hn", 3, 0),
+			_boat("Ht", 1, 0),
+		],
+		"fixtures": [
+			_fixture("E", "tide_mirror", 4, 4, 0),
+		],
+		"pieces": [
+			_mirror("M", "Feed mirror", 3, 2, 0, 90),
+			_weir("R", "Weir", 3, 4, 0, 90),
+		],
+	}
+
+static func chart_106() -> Dictionary:
+	# Dry is the solution. The eastbound lamp stops in the weir, short of the
+	# hull past the gate. Every dry facing stops that beam. Index 1 floods the
+	# weir and the dock, so every flooded facing fails.
+	return {
+		"id": "106",
+		"harbor": WEIR,
+		"title": "Dry Stop",
+		"teach": "Tide index 0, flood 0. The dry weir stops an eastbound beam short of the hull past the gate, and the dock mirror lights the white dock. All four dry facings clear. A dry sluice, a dry siphon, a dry well, a dry shutter, and a head-on west-facing vane also stop that dry beam and also clear. Index 1 floods the weir and covers the dock. An east-facing weir then sends the beam onto the east hull. A north-facing weir sends it north onto the north hull. South and west at that tide also fail, because the dock is under the waterline.",
+		"win": "The dry weir holds the hulls dark.",
+		"cols": 7,
+		"rows": 6,
+		"tide_phases": [0, 2],
+		"start_tide_index": 1,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ld", 3, 2, "E", "white"),
+			_lantern("Lf", 0, 2, "E", "white"),
+			_lantern("Lw", 0, 4, "E", "white"),
+		],
+		"docks": [_dock("D", 5, 4, "white")],
+		"boats": [
+			_boat("Hn", 2, 0),
+			_boat("He", 3, 3),
+			_boat("Hp", 4, 4),
+			_boat("Hs", 2, 5),
+		],
+		"fixtures": [
+			_fixture("F", "mirror", 1, 2, 90),
+			_fixture("R", "tide_mirror", 1, 4, 90),
+			_fixture("C", "tide_mirror", 3, 4, 0),
+		],
+		"pieces": [
+			_mirror("M", "Dock mirror", 5, 2, 0, 90),
+			_weir("R", "Weir", 2, 4, 90, 0),
+		],
+	}
+
+static func chart_107() -> Dictionary:
+	# Flood 3. Red enters the north-facing weir and leaves north as blue, then
+	# the east-facing weir swaps it back to red and sends it onto the dry dock.
+	# A siphon in the first cell also leaves blue, so the second weir restores
+	# red and that substitute clears. A well in the first cell keeps red, and
+	# the second weir turns it blue, so that substitute misses.
+	return {
+		"id": "107",
+		"harbor": WEIR,
+		"title": "Two Weirs",
+		"teach": "Flood 3. Red enters a north-facing weir, leaves north as blue, enters an east-facing weir, and leaves east as red onto the dry red dock. A sluice in the first cell leaves red, and the second weir turns that red blue, so the dock misses. A sluice in the second cell sends the blue east still blue and misses. A siphon in the second cell sends the beam north and misses. A well in the second cell sends it north and misses. A north-facing weir in the second cell misses the east dock. A siphon in the first cell also leaves blue, and the second weir turns that blue back to red, so that substitute also clears. A well in the first cell keeps the red, and the second weir turns it blue, so the dock misses.",
+		"win": "Two weirs restore the red and land it east.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [3],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [_lantern("L", 6, 3, "W", "red")],
+		"docks": [_dock("Rd", 4, 3, "red")],
+		"boats": [_boat("Hn", 3, 0)],
+		"fixtures": [
+			_fixture("G54", "shutter", 5, 4, 0),
+			_fixture("T55", "tide_mirror", 5, 5, 0),
+			_fixture("G45", "shutter", 4, 5, 0),
+			_fixture("E", "tide_mirror", 4, 4, 0),
+		],
+		"pieces": [
+			_mirror("M", "Feed mirror", 5, 3, 90, 0),
+			_weir("R1", "South weir", 3, 5, 90, 0),
+			_weir("R2", "East weir", 3, 4, 0, 90),
+		],
+	}
+
+static func chart_108() -> Dictionary:
+	# Flood 2 covers the weir and leaves the dock's row dry. Red leaves east
+	# as blue, and the tide mirror lifts it onto that dock. A blue stain on
+	# the same cell also paints blue and also clears.
+	return {
+		"id": "108",
+		"harbor": WEIR,
+		"title": "Above the Gate",
+		"teach": "Tide index 1, flood 2. The flood covers the weir and leaves the dock on the drier row dry. An east-facing weir turns red to blue on the east dock. A sluice keeps red and misses the blue dock. A siphon turns that red blue and sends it north. A well sends red north. Low water stops in the dry weir and wakes the south hull. A north-facing weir misses the east dock. A stain set to blue also clears. A stain set to red misses the blue dock.",
+		"win": "Blue climbs out of the flood to the east.",
+		"cols": 6,
+		"rows": 6,
+		"tide_phases": [0, 2],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 3, "E", "red"),
+			_lantern("Lw", 5, 4, "W", "white"),
+		],
+		"docks": [_dock("Bd", 4, 3, "blue")],
+		"boats": [
+			_boat("Hn", 3, 0),
+			_boat("Hs", 2, 5),
+		],
+		"fixtures": [
+			_fixture("T", "tide_mirror", 2, 4, 90),
+			_fixture("C", "tide_mirror", 4, 4, 0),
+		],
+		"pieces": [
+			_mirror("M", "Feed mirror", 2, 3, 0, 90),
+			_weir("R", "Weir", 3, 4, 0, 90),
+		],
+	}
+
+static func chart_109() -> Dictionary:
+	# Rows 7. Flood 2 covers y >= 5. The weir is flooded and the dock one
+	# column east, on the row above the flood, is dry. Flood 3 covers that dock.
+	return {
+		"id": "109",
+		"harbor": WEIR,
+		"title": "The Held Weir",
+		"teach": "Tide index 1, flood 2, with the flood line at y >= 5. The weir is flooded. The dock one column east, on the dry row above that water, is dry. An east-facing weir turns red to blue on that dock. Index 0 stops on the dry weir and wakes the south hull. Index 2 covers the dock, so the beam stops at the dock's waterline and the dock is not hit. A north-facing weir at index 1 misses the east dock. A sluice keeps red and misses the blue dock. A siphon sends red north as blue. A well sends red north. A stain set to blue also clears. A stain set to red misses the blue dock.",
+		"win": "The middle mark holds the weir.",
+		"cols": 6,
+		"rows": 7,
+		"tide_phases": [0, 2, 3],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 3, "E", "red"),
+			_lantern("Lw", 5, 5, "W", "white"),
+		],
+		"docks": [_dock("Bd", 4, 4, "blue")],
+		"boats": [
+			_boat("Hn", 3, 0),
+			_boat("Hs", 2, 6),
+		],
+		"fixtures": [
+			_fixture("K", "stain", 2, 4, 0),
+			_fixture("T", "tide_mirror", 2, 5, 90),
+			_fixture("C", "tide_mirror", 4, 5, 0),
+		],
+		"pieces": [
+			_mirror("M", "Feed mirror", 2, 3, 0, 90),
+			_weir("R", "Weir", 3, 5, 0, 90),
+		],
+	}
+
+static func chart_110() -> Dictionary:
+	# The prism must sit on the white beam. Red is turned south, then east
+	# into the weir. That red leaves east as blue. Blue dies on an empty
+	# flooded cell. A blue stain on the weir cell also clears.
+	return {
+		"id": "110",
+		"harbor": WEIR,
+		"title": "The Weir Mark",
+		"teach": "Tide index 1, flood 2. Move the prism from the side socket onto the line. Only the red port enters the east-facing weir, and that red leaves east as blue onto the blue dock. The blue port dies on an empty flooded cell. A sluice sends red east still red and misses. A siphon sends red north as blue and misses. A well sends red north and misses. Low water wakes the south hull. The side socket wakes the west hull. A stain set to blue also clears. A stain set to red misses the blue dock.",
+		"win": "The red port leaves east as blue.",
+		"cols": 7,
+		"rows": 6,
+		"tide_phases": [0, 2],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [_lantern("L", 0, 2, "E", "white")],
+		"docks": [_dock("Bd", 6, 3, "blue")],
+		"boats": [
+			_boat("Hw", 6, 2),
+			_boat("Hs", 4, 5),
+		],
+		"fixtures": [
+			_fixture("Na", "mirror", 2, 1, 0),
+			_fixture("Nb", "mirror", 4, 1, 90),
+			_fixture("T", "tide_mirror", 4, 4, 90),
+			_fixture("C", "tide_mirror", 6, 4, 0),
+		],
+		"pieces": [
+			_prism("P", "Prism", [["side", 5, 0], ["line", 2, 2]], "side", 0, "line", 90),
+			_weir("R", "Weir", 5, 4, 0, 90),
+		],
+	}
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -3870,6 +4153,20 @@ static func _stain(id: String, name: String, x: int, y: int, start_rot: int, sol
 		"id": id,
 		"name": name,
 		"kind": "stain",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _weir(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "weir",
 		"movable": false,
 		"sockets": [{"id": "a", "x": x, "y": y}],
 		"start_socket": "a",
