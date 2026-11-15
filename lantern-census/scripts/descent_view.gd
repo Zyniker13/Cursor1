@@ -229,6 +229,8 @@ func _draw_view(view: Rect2) -> void:
 			col = Color(0.28, 0.27, 0.25)
 		elif state.floor.id == "crossing":
 			col = Color(0.38, 0.36, 0.31)
+		elif state.floor.id == "transept":
+			col = Color(0.78, 0.66, 0.42)
 		if glyph == "*":
 			col = Color(0.14, 0.38, 0.42)
 		elif glyph == "+":
@@ -264,10 +266,12 @@ func _draw_view(view: Rect2) -> void:
 			col = Color(0.89, 0.74, 0.46)
 		elif glyph == "X":
 			col = Color(0.15, 0.16, 0.19)
+		elif glyph == "V":
+			col = Color(0.82, 0.84, 0.80)
 		col *= shade
 		if int(hit.side) == 1:
 			col *= 0.74
-		if glyph != "*" and glyph != "+" and glyph != "=" and glyph != "x" and glyph != "R" and glyph != "B" and glyph != "W" and glyph != "D" and glyph != "P" and glyph != "T" and glyph != "Y" and glyph != "K" and glyph != "N" and glyph != "A" and glyph != "C" and glyph != "X" and (cell.x + cell.y) % 2 == 0:
+		if glyph != "*" and glyph != "+" and glyph != "=" and glyph != "x" and glyph != "R" and glyph != "B" and glyph != "W" and glyph != "D" and glyph != "P" and glyph != "T" and glyph != "Y" and glyph != "K" and glyph != "N" and glyph != "A" and glyph != "C" and glyph != "X" and glyph != "V" and (cell.x + cell.y) % 2 == 0:
 			if state.floor.id == "cloister":
 				col = col.lerp(Color(0.42, 0.34, 0.22), 0.22)
 			elif state.floor.id == "crypt":
@@ -300,6 +304,8 @@ func _draw_view(view: Rect2) -> void:
 				col = col.lerp(Color(0.10, 0.10, 0.09), 0.22)
 			elif state.floor.id == "crossing":
 				col = col.lerp(Color(0.16, 0.15, 0.12), 0.22)
+			elif state.floor.id == "transept":
+				col = col.lerp(Color(0.52, 0.40, 0.22), 0.22)
 			else:
 				col = col.lerp(Color(0.32, 0.20, 0.14), 0.22)
 		var wall_x := origin.y + dist * ray.y if int(hit.side) == 0 else origin.x + dist * ray.x
@@ -421,6 +427,11 @@ func _draw_sky_floor(view: Rect2) -> void:
 		sky_lo = Color(0.16, 0.18, 0.16)
 		ground_hi = Color(0.05, 0.05, 0.04)
 		ground_lo = Color(0.26, 0.25, 0.20)
+	elif state.floor.id == "transept":
+		sky_hi = Color(0.10, 0.08, 0.05)
+		sky_lo = Color(0.38, 0.30, 0.16)
+		ground_hi = Color(0.12, 0.10, 0.07)
+		ground_lo = Color(0.44, 0.36, 0.22)
 	for i in bands:
 		var t := float(i) / float(bands)
 		var sky := sky_hi.lerp(sky_lo, t)
@@ -498,6 +509,8 @@ func _draw_sprites(view: Rect2, origin: Vector2, dir: Vector2, plane: Vector2, z
 		hazard_kind = "rood"
 	elif state.floor.id == "crossing":
 		hazard_kind = "crossing"
+	elif state.floor.id == "transept":
+		hazard_kind = "transept"
 	for hazard in Rules.hazard_cells(state.floor):
 		items.append({"pos": hazard, "kind": hazard_kind})
 	var drawn: Array = []
@@ -627,6 +640,10 @@ func _sprite_column(view: Rect2, column: int, col_w: float, top: float, sprite_h
 			if u > 0.22 and u < 0.78:
 				slices.append([0.62, 0.70, Color(0.58, 0.62, 0.66)])
 				slices.append([0.76, 0.84, Color(0.22, 0.24, 0.28)])
+		"transept":
+			if u > 0.22 and u < 0.78:
+				slices.append([0.62, 0.70, Color(0.95, 0.72, 0.22)])
+				slices.append([0.76, 0.84, Color(0.55, 0.36, 0.08)])
 		"hazard":
 			if u > 0.22 and u < 0.78:
 				slices.append([0.62, 0.70, Color(0.72, 0.34, 0.14)])
@@ -714,6 +731,8 @@ func _draw_sheet(sheet: Rect2) -> void:
 		legend = "Square wall    dot corridor    triangle rood"
 	elif state.floor.id == "crossing":
 		legend = "Square wall    dot corridor    triangle crossing"
+	elif state.floor.id == "transept":
+		legend = "Square wall    dot corridor    triangle transept"
 	draw_string(_font, Vector2(sheet.position.x + 16, legend_y), legend, HORIZONTAL_ALIGNMENT_LEFT, sheet.size.x - 32, 14, INK)
 	var swing_note := "Ring is the swing, not ink. Hood is the warden."
 	if state.floor.id == "cistern":
@@ -815,6 +834,8 @@ func _draw_hud(hud: Rect2) -> void:
 			lines.append("You are standing on a rood crack.")
 		elif state.floor.id == "crossing":
 			lines.append("You are standing on a crossing crack.")
+		elif state.floor.id == "transept":
+			lines.append("You are standing on a transept crack.")
 		else:
 			lines.append("You are standing on a hazard crack.")
 	var y := hud.position.y + 46
