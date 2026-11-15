@@ -7,7 +7,7 @@ const DIRS: Array[Vector2i] = [
 	Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, -1)
 ]
 const DIR_NAMES: Array[String] = ["East", "South", "West", "North"]
-const TYPES: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer"]
+const TYPES: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge"]
 const PAINTS: Array[String] = ["red", "blue", "yellow"]
 const TICK_CAP := 250
 
@@ -121,6 +121,9 @@ static func run(puzzle: Dictionary, graph: Array) -> Dictionary:
 				if str(parcel["color"]) != str(block["color"]):
 					out = (out + 1) % 4
 				parcel["intent"] = Vector2i(int(parcel["x"]), int(parcel["y"])) + DIRS[out]
+			elif typ == "bridge":
+				var step: Vector2i = DIRS[int(block["dir"])]
+				parcel["intent"] = Vector2i(int(parcel["x"]), int(parcel["y"])) + step * 2
 			else:
 				parcel["intent"] = Vector2i(int(parcel["x"]), int(parcel["y"])) + DIRS[int(block["dir"])]
 
