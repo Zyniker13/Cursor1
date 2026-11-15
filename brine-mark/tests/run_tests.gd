@@ -21,6 +21,7 @@ func _initialize() -> void:
 	_test_loft(errors)
 	_test_gate(errors)
 	_test_wage(errors)
+	_test_relief(errors)
 	_test_determinism(errors)
 	_test_population(errors)
 	_test_no_select_ant(errors)
@@ -94,7 +95,7 @@ func _test_determinism(errors: Array) -> void:
 	var plans := _plans(errors)
 	if plans.is_empty():
 		return
-	for plan_name in ["winning", "all_rake", "dry_pans", "continued", "late_pans", "no_crib", "carted", "late_crib", "dry_crib", "no_ship", "shipped", "late_ship", "dry_ship", "no_stall", "sold", "late_sold", "dry_sold", "no_yard", "banked", "late_banked", "dry_banked", "no_bunk", "hired", "late_hired", "dry_hired", "no_loft", "lofted", "late_lofted", "dry_lofted", "no_gate", "gated", "late_gated", "dry_gated", "no_wage", "paid", "late_paid", "dry_paid"]:
+	for plan_name in ["winning", "all_rake", "dry_pans", "continued", "late_pans", "no_crib", "carted", "late_crib", "dry_crib", "no_ship", "shipped", "late_ship", "dry_ship", "no_stall", "sold", "late_sold", "dry_sold", "no_yard", "banked", "late_banked", "dry_banked", "no_bunk", "hired", "late_hired", "dry_hired", "no_loft", "lofted", "late_lofted", "dry_lofted", "no_gate", "gated", "late_gated", "dry_gated", "no_wage", "paid", "late_paid", "dry_paid", "no_relief", "posted", "late_posted", "dry_posted"]:
 		var before := errors.size()
 		var first = _run_plan(plans, plan_name, errors)
 		var second = _run_plan(plans, plan_name, errors)
@@ -104,7 +105,7 @@ func _test_determinism(errors: Array) -> void:
 			return
 		var a := int(first.get_stored_salt())
 		var b := int(second.get_stored_salt())
-		print("determinism %s stored %d and %d coins %d banked %d hired %d left %d lofted %d gated %d paid %d" % [plan_name, a, b, int(first.get_coins()), int(first.get_banked()), int(first.get_hired()), int(first.get_yard_left()), int(first.get_lofted()), int(first.get_gated()), int(first.get_paid())])
+		print("determinism %s stored %d and %d coins %d banked %d hired %d left %d lofted %d gated %d paid %d posted %d" % [plan_name, a, b, int(first.get_coins()), int(first.get_banked()), int(first.get_hired()), int(first.get_yard_left()), int(first.get_lofted()), int(first.get_gated()), int(first.get_paid()), int(first.get_posted())])
 		if a != b:
 			_fail(errors, "%s runs stored %d and %d" % [plan_name, a, b])
 		if int(first.get_wet_haul()) != int(second.get_wet_haul()):
@@ -130,6 +131,10 @@ func _test_determinism(errors: Array) -> void:
 		if int(first.get_paid()) != int(second.get_paid()) or int(first.get_gate_left()) != int(second.get_gate_left()):
 			_fail(errors, "%s wage runs differed (%d unpaid %d, and %d unpaid %d)" % [
 				plan_name, first.get_paid(), first.get_gate_left(), second.get_paid(), second.get_gate_left(),
+			])
+		if int(first.get_posted()) != int(second.get_posted()) or int(first.get_wage_left()) != int(second.get_wage_left()):
+			_fail(errors, "%s relief runs differed (%d unposted %d, and %d unposted %d)" % [
+				plan_name, first.get_posted(), first.get_wage_left(), second.get_posted(), second.get_wage_left(),
 			])
 		if String(first.get_summary()) != String(second.get_summary()):
 			_fail(errors, "%s summaries differed" % plan_name)
@@ -262,6 +267,13 @@ func _test_scene_boots(errors: Array) -> void:
 	node._on_key(KEY_SPACE)
 	if int(node.sim.get_paint(7, 0)) != Sim.WAGE:
 		_fail(errors, "keyboard cursor did not paint a wage")
+	node._on_key(KEY_F)
+	if not String(node.mode_label.text).contains("Relief"):
+		_fail(errors, "relief mark was not named")
+	node._on_key(KEY_UP)
+	node._on_key(KEY_SPACE)
+	if int(node.sim.get_paint(7, -1)) != Sim.RELIEF:
+		_fail(errors, "keyboard cursor did not paint a relief")
 	var season = node.find_child("SeasonNote", true, false)
 	if season == null or not String(season.text).to_lower().contains("pan"):
 		_fail(errors, "season note does not mention pans")
@@ -300,6 +312,10 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "rules text does not mention the wage")
 	if rules == null or not String(rules.text).contains("four"):
 		_fail(errors, "rules text does not name the four-coin wage")
+	if rules == null or not String(rules.text).to_lower().contains("relief"):
+		_fail(errors, "rules text does not mention the relief")
+	if rules == null or not String(rules.text).contains("six"):
+		_fail(errors, "rules text does not name the relief cap of six")
 	var spun_ship := 0
 	while int(node.sim.get_beat()) != Sim.SHIPPING and not node.sim.is_over() and spun_ship < int(Sim.CART_TICK) + 2:
 		node.sim.tick()
@@ -389,10 +405,23 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "wage countdown started at %d, expected %d" % [node.sim.get_ticks_until_rain(), Sim.WAGE_TICK])
 	elif not String(node.season_label.text).to_lower().contains("wage"):
 		_fail(errors, "wage note does not mention the wage: %s" % node.season_label.text)
+	var spun_relief := 0
+	while int(node.sim.get_beat()) != Sim.RELIEVING and not node.sim.is_over() and spun_relief < int(Sim.WAGE_TICK) + 2:
+		node.sim.tick()
+		spun_relief += 1
+	node._refresh()
+	if int(node.sim.get_beat()) != Sim.RELIEVING or node.sim.is_over():
+		_fail(errors, "the scene did not open the relief beat")
+	elif not String(node.rain_label.text).to_lower().contains("relief"):
+		_fail(errors, "relief countdown was not named: %s" % node.rain_label.text)
+	elif int(node.sim.get_ticks_until_rain()) != int(Sim.RELIEF_TICK):
+		_fail(errors, "relief countdown started at %d, expected %d" % [node.sim.get_ticks_until_rain(), Sim.RELIEF_TICK])
+	elif not String(node.season_label.text).to_lower().contains("relief"):
+		_fail(errors, "relief note does not mention the relief: %s" % node.season_label.text)
 	node._on_key(KEY_R)
-	if int(node.sim.get_paint(9, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 5)) != Sim.EMPTY or int(node.sim.get_paint(7, 4)) != Sim.EMPTY or int(node.sim.get_paint(7, 3)) != Sim.EMPTY or int(node.sim.get_paint(7, 2)) != Sim.EMPTY or int(node.sim.get_paint(7, 1)) != Sim.EMPTY or int(node.sim.get_paint(7, 0)) != Sim.EMPTY:
+	if int(node.sim.get_paint(9, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 5)) != Sim.EMPTY or int(node.sim.get_paint(7, 4)) != Sim.EMPTY or int(node.sim.get_paint(7, 3)) != Sim.EMPTY or int(node.sim.get_paint(7, 2)) != Sim.EMPTY or int(node.sim.get_paint(7, 1)) != Sim.EMPTY or int(node.sim.get_paint(7, 0)) != Sim.EMPTY or int(node.sim.get_paint(7, -1)) != Sim.EMPTY:
 		_fail(errors, "restart scenario did not clear the marks")
-	if int(node.sim.get_season()) != Sim.WET or int(node.sim.get_wet_haul()) != 0 or int(node.sim.get_beat()) != Sim.WET or int(node.sim.get_carted()) != 0 or int(node.sim.get_shipped()) != 0 or int(node.sim.get_coins()) != 0 or int(node.sim.get_banked()) != 0 or int(node.sim.get_hired()) != 0 or int(node.sim.get_lofted()) != 0 or int(node.sim.get_gated()) != 0 or int(node.sim.get_paid()) != 0:
+	if int(node.sim.get_season()) != Sim.WET or int(node.sim.get_wet_haul()) != 0 or int(node.sim.get_beat()) != Sim.WET or int(node.sim.get_carted()) != 0 or int(node.sim.get_shipped()) != 0 or int(node.sim.get_coins()) != 0 or int(node.sim.get_banked()) != 0 or int(node.sim.get_hired()) != 0 or int(node.sim.get_lofted()) != 0 or int(node.sim.get_gated()) != 0 or int(node.sim.get_paid()) != 0 or int(node.sim.get_posted()) != 0:
 		_fail(errors, "restart scenario did not return to the wet season")
 	if int(node.sim.get_population()) > Sim.POP_CAP:
 		_fail(errors, "restart left the population over the cap")
@@ -1476,8 +1505,8 @@ func _test_gate(errors: Array) -> void:
 	var fresh = Sim.new()
 	if fresh.paint_cell(14, -2, Sim.GATE) == false or int(fresh.get_paint(14, -2)) != Sim.GATE:
 		_fail(errors, "a flat rejected the gate mark")
-	if fresh.paint_cell(14, -4, Sim.GATE):
-		_fail(errors, "the row north of the wage accepted a mark")
+	if fresh.paint_cell(14, -5, Sim.GATE):
+		_fail(errors, "the row north of the relief accepted a mark")
 	if fresh.paint_cell(Sim.COAST_X, -2, Sim.GATE):
 		_fail(errors, "the brine accepted a gate")
 	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.GATE):
@@ -1705,8 +1734,8 @@ func _test_wage(errors: Array) -> void:
 	var fresh = Sim.new()
 	if fresh.paint_cell(14, -3, Sim.WAGE) == false or int(fresh.get_paint(14, -3)) != Sim.WAGE:
 		_fail(errors, "the cell north of the gate rejected the wage mark")
-	if fresh.paint_cell(14, -4, Sim.WAGE):
-		_fail(errors, "the row north of the wage accepted a mark")
+	if fresh.paint_cell(14, -5, Sim.WAGE):
+		_fail(errors, "the row north of the relief accepted a mark")
 	if fresh.paint_cell(Sim.COAST_X, -3, Sim.WAGE):
 		_fail(errors, "the brine accepted a wage")
 	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.WAGE):
@@ -1904,6 +1933,232 @@ func _test_wage(errors: Array) -> void:
 		])
 	print("paid %d left yard %d; dry paid %d left unpaid %d yard %d; no wage left unpaid %d yard %d" % [
 		paid.get_paid(), paid.get_yard_left(), dry_paid.get_paid(), dry_paid.get_gate_left(), dry_paid.get_yard_left(), ignored.get_gate_left(), ignored.get_yard_left(),
+	])
+
+
+func _test_relief(errors: Array) -> void:
+	if int(Sim.RELIEF_TICK) != 100 or int(Sim.RELIEF_TICK) != int(Sim.TICK_HZ) * 10:
+		_fail(errors, "relief beat length %s is not 100 ticks (10 seconds)" % Sim.RELIEF_TICK)
+	if int(Sim.RELIEF_CAP) != 6:
+		_fail(errors, "relief cap is %s, expected 6" % Sim.RELIEF_CAP)
+	var fresh = Sim.new()
+	if fresh.paint_cell(14, -4, Sim.RELIEF) == false or int(fresh.get_paint(14, -4)) != Sim.RELIEF:
+		_fail(errors, "the cell north of the wage rejected the relief mark")
+	if fresh.paint_cell(14, -5, Sim.RELIEF):
+		_fail(errors, "the row north of the relief accepted a mark")
+	if fresh.paint_cell(Sim.COAST_X, -4, Sim.RELIEF):
+		_fail(errors, "the brine accepted a relief")
+	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.RELIEF):
+		_fail(errors, "the anthill accepted a relief")
+	var plans := _plans(errors)
+	if plans.is_empty():
+		return
+	var won = _run_plan(plans, "winning", errors)
+	var dry = _run_plan(plans, "dry_pans", errors)
+	var parked = _run_plan(plans, "carted", errors)
+	var loaded = _run_plan(plans, "shipped", errors)
+	var sold = _run_plan(plans, "sold", errors)
+	var hired = _run_plan(plans, "hired", errors)
+	var lofted = _run_plan(plans, "lofted", errors)
+	var passed = _run_plan(plans, "gated", errors)
+	var paid = _run_plan(plans, "paid", errors)
+	var dry_paid = _run_plan(plans, "dry_paid", errors)
+	var ignored = _run_plan(plans, "no_relief", errors)
+	var posted = _run_plan(plans, "posted", errors)
+	var posted_again = _run_plan(plans, "posted", errors)
+	var late = _run_plan(plans, "late_posted", errors)
+	var dry_posted = _run_plan(plans, "dry_posted", errors)
+	if won == null or dry == null or parked == null or loaded == null or sold == null or hired == null or lofted == null or passed == null or paid == null or dry_paid == null or ignored == null or posted == null or posted_again == null or late == null or dry_posted == null:
+		return
+	# Earlier plans keep the numbers they had before the relief existed.
+	# A plan that does not paint the relief also posts nobody.
+	if int(won.get_wet_haul()) != 2997 or int(won.get_stored_salt()) != 2997 or int(won.get_carted()) != 0 or int(won.get_shipped()) != 0 or int(won.get_coins()) != 0 or int(won.get_hired()) != 0 or int(won.get_posted()) != 0:
+		_fail(errors, "winning shore changed (wet %d stored %d carted %d shipped %d coins %d hired %d posted %d)" % [
+			won.get_wet_haul(), won.get_stored_salt(), won.get_carted(), won.get_shipped(), won.get_coins(), won.get_hired(), won.get_posted(),
+		])
+	if int(dry.get_wet_haul()) != 0 or int(dry.get_stored_salt()) != 1032 or int(dry.get_carted()) != 0 or int(dry.get_shipped()) != 0 or int(dry.get_coins()) != 0 or int(dry.get_hired()) != 0 or int(dry.get_posted()) != 0:
+		_fail(errors, "dry_pans changed (wet %d stored %d carted %d shipped %d coins %d hired %d posted %d)" % [
+			dry.get_wet_haul(), dry.get_stored_salt(), dry.get_carted(), dry.get_shipped(), dry.get_coins(), dry.get_hired(), dry.get_posted(),
+		])
+	if int(parked.get_wet_haul()) != 2997 or int(parked.get_stored_salt()) != 2997 or int(parked.get_carted()) != 2997 or int(parked.get_shipped()) != 0 or int(parked.get_coins()) != 0 or int(parked.get_posted()) != 0:
+		_fail(errors, "carted plan changed (wet %d stored %d carted %d shipped %d coins %d posted %d)" % [
+			parked.get_wet_haul(), parked.get_stored_salt(), parked.get_carted(), parked.get_shipped(), parked.get_coins(), parked.get_posted(),
+		])
+	if int(loaded.get_wet_haul()) != 2997 or int(loaded.get_stored_salt()) != 2997 or int(loaded.get_carted()) != 2997 or int(loaded.get_shipped()) != 2997 or int(loaded.get_coins()) != 0 or int(loaded.get_posted()) != 0:
+		_fail(errors, "shipped plan changed (wet %d stored %d carted %d shipped %d coins %d posted %d)" % [
+			loaded.get_wet_haul(), loaded.get_stored_salt(), loaded.get_carted(), loaded.get_shipped(), loaded.get_coins(), loaded.get_posted(),
+		])
+	if int(sold.get_wet_haul()) != 2997 or int(sold.get_stored_salt()) != 2997 or int(sold.get_carted()) != 2997 or int(sold.get_shipped()) != 2997 or int(sold.get_coins()) != 2997 or int(sold.get_posted()) != 0:
+		_fail(errors, "sold plan changed (wet %d stored %d carted %d shipped %d coins %d posted %d)" % [
+			sold.get_wet_haul(), sold.get_stored_salt(), sold.get_carted(), sold.get_shipped(), sold.get_coins(), sold.get_posted(),
+		])
+	if int(hired.get_hired()) != 29 or int(hired.get_yard_left()) != 97 or int(hired.get_coins()) != 2997 or int(hired.get_lofted()) != 0 or int(hired.get_posted()) != 0:
+		_fail(errors, "hired plan changed (coins %d hired %d left %d lofted %d posted %d)" % [
+			hired.get_coins(), hired.get_hired(), hired.get_yard_left(), hired.get_lofted(), hired.get_posted(),
+		])
+	if int(lofted.get_lofted()) != 29 or int(lofted.get_hired()) != 29 or int(lofted.get_yard_left()) != 97 or int(lofted.get_posted()) != 0 or int(lofted.get_coins()) != 2997:
+		_fail(errors, "lofted plan changed (coins %d hired %d left %d lofted %d posted %d)" % [
+			lofted.get_coins(), lofted.get_hired(), lofted.get_yard_left(), lofted.get_lofted(), lofted.get_posted(),
+		])
+	if int(passed.get_gated()) != 10 or int(passed.get_loft_left()) != 19 or int(passed.get_hired()) != 29 or int(passed.get_yard_left()) != 97 or int(passed.get_paid()) != 0 or int(passed.get_posted()) != 0 or int(passed.get_coins()) != 2997:
+		_fail(errors, "gated plan changed (coins %d hired %d left %d gated %d loft %d paid %d posted %d)" % [
+			passed.get_coins(), passed.get_hired(), passed.get_yard_left(), passed.get_gated(), passed.get_loft_left(), passed.get_paid(), passed.get_posted(),
+		])
+	if int(paid.get_paid()) != 10 or int(paid.get_gate_left()) != 0 or int(paid.get_yard_left()) != 57 or int(paid.get_loft_left()) != 19 or int(paid.get_hired()) != 29 or int(paid.get_posted()) != 0 or int(paid.get_wage_left()) != 10 or int(paid.get_coins()) != 2997 or int(paid.get_stored_salt()) != 2997 or int(paid.get_carted()) != 2997 or int(paid.get_shipped()) != 2997:
+		_fail(errors, "paid plan changed (stored %d carted %d shipped %d coins %d hired %d yard %d paid %d unpaid %d loft %d posted %d wage %d)" % [
+			paid.get_stored_salt(), paid.get_carted(), paid.get_shipped(), paid.get_coins(), paid.get_hired(), paid.get_yard_left(), paid.get_paid(), paid.get_gate_left(), paid.get_loft_left(), paid.get_posted(), paid.get_wage_left(),
+		])
+	if int(dry_paid.get_wet_haul()) != 0 or int(dry_paid.get_stored_salt()) != 1032 or int(dry_paid.get_coins()) != 1032 or int(dry_paid.get_hired()) != 10 or int(dry_paid.get_paid()) != 8 or int(dry_paid.get_gate_left()) != 2 or int(dry_paid.get_yard_left()) != 0 or int(dry_paid.get_posted()) != 0 or int(dry_paid.get_loft_left()) != 0:
+		_fail(errors, "dry wage changed (wet %d stored %d coins %d hired %d paid %d unpaid %d yard %d loft %d posted %d)" % [
+			dry_paid.get_wet_haul(), dry_paid.get_stored_salt(), dry_paid.get_coins(), dry_paid.get_hired(), dry_paid.get_paid(), dry_paid.get_gate_left(), dry_paid.get_yard_left(), dry_paid.get_loft_left(), dry_paid.get_posted(),
+		])
+	# Paid, no relief: the 10 who were paid stay unposted, and the 19 in the loft stay unpaid.
+	var ignored_unpaid := int(ignored.get_hired()) - int(ignored.get_paid())
+	if int(ignored.get_posted()) != 0 or int(ignored.get_wage_left()) != 10 or int(ignored.get_paid()) != 10 or ignored_unpaid != 19 or int(ignored.get_loft_left()) != 19 or int(ignored.get_gate_left()) != 0 or int(ignored.get_yard_left()) != 57 or int(ignored.get_hired()) != 29 or int(ignored.get_coins()) != 2997 or int(ignored.get_stored_salt()) != 2997 or int(ignored.get_carted()) != 2997 or int(ignored.get_shipped()) != 2997:
+		_fail(errors, "no_relief posted someone (stored %d carted %d shipped %d coins %d hired %d yard %d paid %d wage %d posted %d unpaid %d loft %d gate %d)" % [
+			ignored.get_stored_salt(), ignored.get_carted(), ignored.get_shipped(), ignored.get_coins(), ignored.get_hired(), ignored.get_yard_left(), ignored.get_paid(), ignored.get_wage_left(), ignored.get_posted(), ignored_unpaid, ignored.get_loft_left(), ignored.get_gate_left(),
+		])
+	if String(ignored.get_summary()) != String(paid.get_summary()):
+		_fail(errors, "no_relief summary changed: %s" % ignored.get_summary())
+	if String(ignored.get_summary()).to_lower().contains("post") or String(ignored.get_summary()).to_lower().contains("relief"):
+		_fail(errors, "no_relief summary names a relief: %s" % ignored.get_summary())
+	var ignored_wage = plans["no_relief"]["wage"][0]
+	var ignored_salt: Dictionary = ignored.get_cell_salt(int(ignored_wage[0]), int(ignored_wage[1]))
+	if int(ignored_salt.get("wage", 0)) != 10 or int(ignored_salt.get("relief", 0)) != 0:
+		_fail(errors, "no_relief left %s at the wage and %s at a relief" % [ignored_salt.get("wage", 0), ignored_salt.get("relief", 0)])
+	var relief_cell = plans["posted"]["relief"][0]
+	var wage_cell = plans["posted"]["wage"][0]
+	var gate_cell = plans["posted"]["gate"][0]
+	var loft_cell = plans["posted"]["loft"][0]
+	var yard_cell = plans["posted"]["yard"][0]
+	if int(relief_cell[0]) != int(wage_cell[0]) or int(relief_cell[1]) != int(wage_cell[1]) - 1:
+		_fail(errors, "posted plan's relief is not one cell north of the wage")
+	if int(wage_cell[0]) != int(gate_cell[0]) or int(wage_cell[1]) != int(gate_cell[1]) - 1:
+		_fail(errors, "posted plan's wage is not one cell north of the gate")
+	if int(posted.get_wet_haul()) != 2997 or int(posted.get_stored_salt()) != 2997 or int(posted.get_carted()) != 2997 or int(posted.get_shipped()) != 2997 or int(posted.get_coins()) != 2997 or int(posted.get_hired()) != 29 or int(posted.get_yard_left()) != 57 or int(posted.get_paid()) != 10 or int(posted.get_gated()) != 10 or int(posted.get_lofted()) != 29:
+		_fail(errors, "relief changed the paid shore (wet %d stored %d carted %d shipped %d coins %d hired %d yard %d paid %d gated %d lofted %d)" % [
+			posted.get_wet_haul(), posted.get_stored_salt(), posted.get_carted(), posted.get_shipped(), posted.get_coins(), posted.get_hired(), posted.get_yard_left(), posted.get_paid(), posted.get_gated(), posted.get_lofted(),
+		])
+	var posted_unpaid := int(posted.get_hired()) - int(posted.get_paid())
+	if int(posted.get_posted()) != 6 or int(posted.get_wage_left()) != 4 or posted_unpaid != 19 or int(posted.get_loft_left()) != 19 or int(posted.get_gate_left()) != 0:
+		_fail(errors, "posted %d, left %d paid unposted, unpaid %d, loft %d, gate %d; expected 6, 4, 19, 19, 0" % [
+			posted.get_posted(), posted.get_wage_left(), posted_unpaid, posted.get_loft_left(), posted.get_gate_left(),
+		])
+	if int(posted.get_posted()) > int(Sim.RELIEF_CAP):
+		_fail(errors, "relief posted %d, over the cap of %d" % [posted.get_posted(), Sim.RELIEF_CAP])
+	var relief_salt: Dictionary = posted.get_cell_salt(int(relief_cell[0]), int(relief_cell[1]))
+	var wage_salt: Dictionary = posted.get_cell_salt(int(wage_cell[0]), int(wage_cell[1]))
+	var gate_salt: Dictionary = posted.get_cell_salt(int(gate_cell[0]), int(gate_cell[1]))
+	var loft_salt: Dictionary = posted.get_cell_salt(int(loft_cell[0]), int(loft_cell[1]))
+	var yard_salt: Dictionary = posted.get_cell_salt(int(yard_cell[0]), int(yard_cell[1]))
+	if int(relief_salt.get("relief", 0)) != 6 or int(wage_salt.get("wage", 0)) != 4 or int(gate_salt.get("gate", 0)) != 0 or int(loft_salt.get("loft", 0)) != 19 or int(yard_salt.get("yard", 0)) != 57:
+		_fail(errors, "relief cell holds %s, wage holds %s, gate holds %s, loft holds %s, yard holds %s" % [
+			relief_salt.get("relief", 0), wage_salt.get("wage", 0), gate_salt.get("gate", 0), loft_salt.get("loft", 0), yard_salt.get("yard", 0),
+		])
+	var posted_summary := String(posted.get_summary())
+	if not posted_summary.contains("Posted 6") or not posted_summary.contains("Left 4 at the wage") or not posted_summary.contains("Paid 10") or not posted_summary.contains("Left 19 in the loft") or not posted_summary.contains("Left 57"):
+		_fail(errors, "posted summary does not name the relief: %s" % posted_summary)
+	if not posted_summary.contains("Coins 2997") or not posted_summary.contains("Hired 29"):
+		_fail(errors, "posted summary dropped the earlier totals: %s" % posted_summary)
+	if int(posted_again.get_posted()) != int(posted.get_posted()) or int(posted_again.get_wage_left()) != int(posted.get_wage_left()) or int(posted_again.get_yard_left()) != int(posted.get_yard_left()):
+		_fail(errors, "repeated relief paint posted %d and left wage %d, then posted %d and left wage %d" % [
+			posted.get_posted(), posted.get_wage_left(), posted_again.get_posted(), posted_again.get_wage_left(),
+		])
+	if int(late.get_posted()) != 6 or int(late.get_wage_left()) != 4 or int(late.get_paid()) != 10 or int(late.get_loft_left()) != 19 or int(late.get_yard_left()) != 57 or int(late.get_hired()) != 29 or int(late.get_coins()) != int(posted.get_coins()) or int(late.get_stored_salt()) != int(posted.get_stored_salt()):
+		_fail(errors, "painting the relief at the relief beat (posted %d wage %d paid %d loft %d yard %d hired %d coins %d stored %d) did not match painting it early (posted %d wage %d paid %d loft %d yard %d hired %d coins %d stored %d)" % [
+			late.get_posted(), late.get_wage_left(), late.get_paid(), late.get_loft_left(), late.get_yard_left(), late.get_hired(), late.get_coins(), late.get_stored_salt(), posted.get_posted(), posted.get_wage_left(), posted.get_paid(), posted.get_loft_left(), posted.get_yard_left(), posted.get_hired(), posted.get_coins(), posted.get_stored_salt(),
+		])
+	var dry_unpaid := int(dry_posted.get_hired()) - int(dry_posted.get_paid())
+	if int(dry_posted.get_wet_haul()) != 0 or int(dry_posted.get_stored_salt()) != 1032 or int(dry_posted.get_carted()) != 1032 or int(dry_posted.get_shipped()) != 1032 or int(dry_posted.get_coins()) != 1032 or int(dry_posted.get_hired()) != 10 or int(dry_posted.get_paid()) != 8 or int(dry_posted.get_posted()) != 6 or int(dry_posted.get_wage_left()) != 2 or dry_unpaid != 2 or int(dry_posted.get_gate_left()) != 2 or int(dry_posted.get_loft_left()) != 0 or int(dry_posted.get_yard_left()) != 0:
+		_fail(errors, "dry relief changed the short crew (wet %d stored %d carted %d shipped %d coins %d hired %d paid %d posted %d wage %d unpaid %d gate %d loft %d yard %d)" % [
+			dry_posted.get_wet_haul(), dry_posted.get_stored_salt(), dry_posted.get_carted(), dry_posted.get_shipped(), dry_posted.get_coins(), dry_posted.get_hired(), dry_posted.get_paid(), dry_posted.get_posted(), dry_posted.get_wage_left(), dry_unpaid, dry_posted.get_gate_left(), dry_posted.get_loft_left(), dry_posted.get_yard_left(),
+		])
+	var dry_relief_cell = plans["dry_posted"]["relief"][0]
+	var dry_wage_cell = plans["dry_posted"]["wage"][0]
+	var dry_gate_cell = plans["dry_posted"]["gate"][0]
+	var dry_relief_salt: Dictionary = dry_posted.get_cell_salt(int(dry_relief_cell[0]), int(dry_relief_cell[1]))
+	var dry_wage_salt: Dictionary = dry_posted.get_cell_salt(int(dry_wage_cell[0]), int(dry_wage_cell[1]))
+	var dry_gate_salt: Dictionary = dry_posted.get_cell_salt(int(dry_gate_cell[0]), int(dry_gate_cell[1]))
+	if int(dry_relief_salt.get("relief", 0)) != 6 or int(dry_wage_salt.get("wage", 0)) != 2 or int(dry_gate_salt.get("gate", 0)) != 2:
+		_fail(errors, "dry relief cell holds %s, wage holds %s, gate holds %s" % [
+			dry_relief_salt.get("relief", 0), dry_wage_salt.get("wage", 0), dry_gate_salt.get("gate", 0),
+		])
+	if not String(dry_posted.get_summary()).contains("Posted 6") or not String(dry_posted.get_summary()).contains("Left 2 at the wage") or not String(dry_posted.get_summary()).contains("Paid 8") or not String(dry_posted.get_summary()).contains("Left 2 unpaid") or not String(dry_posted.get_summary()).contains("Left 0 in the yard"):
+		_fail(errors, "dry relief summary does not name the cap: %s" % dry_posted.get_summary())
+	_assert_pop(posted, errors, "posted plan")
+	_assert_pop(posted_again, errors, "posted plan again")
+	_assert_pop(late, errors, "late_posted")
+	_assert_pop(dry_posted, errors, "dry_posted")
+	_assert_pop(ignored, errors, "no_relief")
+	# The cap stops the relief while ticks remain. Paid hires past 6 stay on
+	# the wage. Hires still in the loft are not posted.
+	var shore = _prepare_plan(plans, "posted", errors)
+	if shore == null:
+		return
+	var shore_guard := 0
+	var shore_limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + int(Sim.SHIP_TICK) + int(Sim.MARKET_TICK) + int(Sim.YARD_TICK) + int(Sim.BUNK_TICK) + int(Sim.LOFT_TICK) + int(Sim.GATE_TICK) + int(Sim.WAGE_TICK) + 2
+	while int(shore.get_beat()) != Sim.RELIEVING and not shore.is_over() and shore_guard < shore_limit:
+		shore.tick()
+		shore_guard += 1
+	if int(shore.get_beat()) != Sim.RELIEVING or shore.is_over():
+		_fail(errors, "the wage beat did not open a relief beat for the cap check")
+		return
+	if int(shore.get_ticks_until_rain()) != int(Sim.RELIEF_TICK):
+		_fail(errors, "relief countdown started at %d, expected %d" % [shore.get_ticks_until_rain(), Sim.RELIEF_TICK])
+	var saw_cap := false
+	var post_guard := 0
+	while not shore.is_over() and post_guard < int(Sim.RELIEF_TICK) + 2:
+		shore.tick()
+		post_guard += 1
+		if int(shore.get_posted()) == int(Sim.RELIEF_CAP) and int(shore.get_wage_left()) == 4 and int(shore.get_paid()) == 10 and int(shore.get_loft_left()) == 19 and int(shore.get_gate_left()) == 0 and int(shore.get_yard_left()) == 57 and int(shore.get_ticks_until_rain()) > 0:
+			saw_cap = true
+			var ticks_left := int(shore.get_ticks_until_rain())
+			shore.tick()
+			if int(shore.get_posted()) != int(Sim.RELIEF_CAP) or int(shore.get_wage_left()) != 4 or int(shore.get_loft_left()) != 19 or int(shore.get_gate_left()) != 0 or int(shore.get_yard_left()) != 57 or int(shore.get_paid()) != 10:
+				_fail(errors, "the relief kept posting after the cap (posted %d wage %d loft %d gate %d yard %d paid %d)" % [
+					shore.get_posted(), shore.get_wage_left(), shore.get_loft_left(), shore.get_gate_left(), shore.get_yard_left(), shore.get_paid(),
+				])
+			elif not shore.is_over() and int(shore.get_ticks_until_rain()) >= ticks_left:
+				_fail(errors, "the relief beat did not spend a tick after the cap")
+			break
+	if not saw_cap:
+		_fail(errors, "the relief did not stop at %d while ticks remained (posted %d wage %d loft %d gate %d yard %d ticks %d)" % [
+			Sim.RELIEF_CAP, shore.get_posted(), shore.get_wage_left(), shore.get_loft_left(), shore.get_gate_left(), shore.get_yard_left(), shore.get_ticks_until_rain(),
+		])
+	# Dry pans pay 8 and the cap still posts only 6. The 2 who passed and were
+	# not paid stay on the gate, and the yard stays empty.
+	var short = _prepare_plan(plans, "dry_posted", errors)
+	if short == null:
+		return
+	var short_guard := 0
+	while int(short.get_beat()) != Sim.RELIEVING and not short.is_over() and short_guard < shore_limit:
+		short.tick()
+		short_guard += 1
+	if int(short.get_beat()) != Sim.RELIEVING or short.is_over():
+		_fail(errors, "the wage beat did not open a relief beat for the dry cap")
+		return
+	var saw_short := false
+	var short_steps := 0
+	while not short.is_over() and short_steps < int(Sim.RELIEF_TICK) + 2:
+		short.tick()
+		short_steps += 1
+		if int(short.get_posted()) == int(Sim.RELIEF_CAP) and int(short.get_wage_left()) == 2 and int(short.get_gate_left()) == 2 and int(short.get_paid()) == 8 and int(short.get_yard_left()) == 0 and int(short.get_loft_left()) == 0 and int(short.get_ticks_until_rain()) > 0:
+			saw_short = true
+			var short_ticks := int(short.get_ticks_until_rain())
+			short.tick()
+			if int(short.get_posted()) != 6 or int(short.get_wage_left()) != 2 or int(short.get_gate_left()) != 2 or int(short.get_yard_left()) != 0 or int(short.get_paid()) != 8:
+				_fail(errors, "the relief posted an unpaid hire or passed the cap (posted %d wage %d gate %d yard %d paid %d)" % [
+					short.get_posted(), short.get_wage_left(), short.get_gate_left(), short.get_yard_left(), short.get_paid(),
+				])
+			elif not short.is_over() and int(short.get_ticks_until_rain()) >= short_ticks:
+				_fail(errors, "the relief beat did not spend a tick after the dry cap")
+			break
+	if not saw_short:
+		_fail(errors, "dry relief did not stop at 6 with unpaid hires left (posted %d wage %d gate %d yard %d paid %d ticks %d)" % [
+			short.get_posted(), short.get_wage_left(), short.get_gate_left(), short.get_yard_left(), short.get_paid(), short.get_ticks_until_rain(),
+		])
+	print("posted %d left wage %d unpaid %d; dry posted %d left wage %d unpaid %d; no relief posted %d left wage %d" % [
+		posted.get_posted(), posted.get_wage_left(), posted_unpaid, dry_posted.get_posted(), dry_posted.get_wage_left(), dry_unpaid, ignored.get_posted(), ignored.get_wage_left(),
 	])
 
 
@@ -2136,6 +2391,24 @@ func _run_plan(plans: Dictionary, plan_name: String, errors: Array):
 		_apply_marks(sim, plan["after_gate"], errors)
 		if errors.size() > wage_before:
 			return null
+	if plan.has("after_wage"):
+		var relief_guard := 0
+		var relief_limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + int(Sim.SHIP_TICK) + int(Sim.MARKET_TICK) + int(Sim.YARD_TICK) + int(Sim.BUNK_TICK) + int(Sim.LOFT_TICK) + int(Sim.GATE_TICK) + int(Sim.WAGE_TICK) + 2
+		while int(sim.get_beat()) != Sim.RELIEVING and not sim.is_over() and relief_guard < relief_limit:
+			sim.tick()
+			relief_guard += 1
+		if int(sim.get_beat()) != Sim.RELIEVING or sim.is_over():
+			_fail(errors, "%s did not open the relief beat after the wage" % plan_name)
+			return null
+		if int(sim.get_ticks_until_rain()) != int(Sim.RELIEF_TICK):
+			_fail(errors, "%s relief countdown started at %d, expected %d" % [
+				plan_name, sim.get_ticks_until_rain(), Sim.RELIEF_TICK,
+			])
+			return null
+		var relief_before := errors.size()
+		_apply_marks(sim, plan["after_wage"], errors)
+		if errors.size() > relief_before:
+			return null
 	sim.run_until_rain()
 	return sim
 
@@ -2167,6 +2440,8 @@ func _apply_marks(sim, plan: Dictionary, errors: Array) -> void:
 		_apply_cells(sim, plan["gate"], Sim.GATE, errors)
 	if plan.has("wage"):
 		_apply_cells(sim, plan["wage"], Sim.WAGE, errors)
+	if plan.has("relief"):
+		_apply_cells(sim, plan["relief"], Sim.RELIEF, errors)
 	if plan.has("rake_rect"):
 		_apply_rect(sim, plan["rake_rect"], Sim.RAKE, errors)
 
