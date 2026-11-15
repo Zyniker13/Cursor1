@@ -34,8 +34,10 @@ const Spline = preload("res://scripts/spline.gd")
 const Mitre = preload("res://scripts/mitre.gd")
 const Lap = preload("res://scripts/lap.gd")
 const Scarf = preload("res://scripts/scarf.gd")
+const Finger = preload("res://scripts/finger.gd")
+const Haunch = preload("res://scripts/haunch.gd")
 
-const CASES: Array = [SpareKey, RehearsalScore, GiltStamp, FerryBell, WeatherSlate, LoomShuttle, HiveSmoker, GlassPontil, PressProof, AssayCup, KilnChalk, TideLedger, NightBell, SaltMark, WickTrim, GlassAnneal, OrchardGraft, DyeVat, TarKettle, CorkPress, NetLoft, CaskHoop, LinenFold, Dovetail, Mortise, Rebate, Housing, Tenon, Bridle, Dado, Spline, Mitre, Lap, Scarf]
+const CASES: Array = [SpareKey, RehearsalScore, GiltStamp, FerryBell, WeatherSlate, LoomShuttle, HiveSmoker, GlassPontil, PressProof, AssayCup, KilnChalk, TideLedger, NightBell, SaltMark, WickTrim, GlassAnneal, OrchardGraft, DyeVat, TarKettle, CorkPress, NetLoft, CaskHoop, LinenFold, Dovetail, Mortise, Rebate, Housing, Tenon, Bridle, Dado, Spline, Mitre, Lap, Scarf, Finger, Haunch]
 
 
 static func all() -> Array:
