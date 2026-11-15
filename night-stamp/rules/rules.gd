@@ -93,6 +93,36 @@
 # A refused column and an ignored corner zero that stamp's own progress.
 # They do not cancel the retrigger, and they do not remove Hold or Exemption.
 #
+# CLOSING BELL, in desk order
+# A third night. The stamps, the ink, and the 3x3 form are unchanged. The
+# closing bell deals the starting deck again. Drafts and the relic from an
+# earlier night do not carry. Open it from a victory desk, or directly.
+# Restart act replays whichever night is on the desk.
+# - Moss Quen, lane column 3, exemption row middle, Folded Band:
+#   "Refuses stamps on the middle row."
+#   Exemption on the middle row lets the middle row count.
+# - Kel Breck, lane column 2, exemption row top, Twin Margin:
+#   "Yields if column 1 and column 3 are both stamped." Any stamp in column 1
+#   together with any stamp in column 3 adds 4 progress after the queue.
+#   One margin is not enough. Stamps in column 2 do not satisfy either margin.
+#   Exemption on the top row cancels the yield.
+# - Tansy Pell, lane column 1, exemption row bottom, Center Void:
+#   "Patience drops twice when the center cell is empty."
+#   The center cell is the middle row, column 2. The drop is 2 instead of 1.
+#   A stamp in the center keeps the drop at 1.
+#   Exemption on the bottom row keeps the drop at 1.
+#   Hold is applied before the double drop.
+# - Lumen Peck, lane column 3, exemption row bottom, Overprint Slip:
+#   "Ignores a stamp with a stamp directly above it."
+#   Directly above means the cell in the same column, one row higher.
+#   The top row has no cell above, so a top-row stamp is never ignored.
+#   A stamp still counts when the cell directly above is empty, even if the
+#   top of that column is filled.
+#   Exemption on the bottom row lets a covered stamp count.
+# A refused middle row and an ignored covered stamp zero that stamp's own
+# progress. They do not cancel the retrigger, and they do not remove Hold
+# or Exemption.
+#
 # RUN
 # - A run is seeded. The shuffle and the draft offer are a pure function of the
 #   seed, the night, the traveler, and the cards owned, so restarting an
@@ -118,6 +148,7 @@ const RELIC_DEEP_WELL := "deep_well"
 
 const SHIFT_FIRST := 0
 const SHIFT_LATE := 1
+const SHIFT_CLOSING := 2
 
 const ROW_NAMES := ["top row", "middle row", "bottom row"]
 const COL_NAMES := ["column 1", "column 2", "column 3"]
@@ -277,6 +308,54 @@ const LATE_SHIFT := [
 ]
 
 
+const CLOSING_BELL := [
+	{
+		"id": "moss",
+		"name": "Moss Quen",
+		"form_name": "Folded Band",
+		"rule_text": "Refuses stamps on the middle row.",
+		"rule": "refuse_middle",
+		"lane": 2,
+		"exemption_row": 1,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "kel",
+		"name": "Kel Breck",
+		"form_name": "Twin Margin",
+		"rule_text": "Yields if column 1 and column 3 are both stamped.",
+		"rule": "yield_both_margins",
+		"lane": 1,
+		"exemption_row": 0,
+		"goal": 22,
+		"patience": 5,
+	},
+	{
+		"id": "tansy",
+		"name": "Tansy Pell",
+		"form_name": "Center Void",
+		"rule_text": "Patience drops twice when the center cell is empty.",
+		"rule": "double_patience_if_center_empty",
+		"lane": 0,
+		"exemption_row": 2,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "lumen",
+		"name": "Lumen Peck",
+		"form_name": "Overprint Slip",
+		"rule_text": "Ignores a stamp with a stamp directly above it.",
+		"rule": "ignore_covered",
+		"lane": 2,
+		"exemption_row": 2,
+		"goal": 20,
+		"patience": 5,
+	},
+]
+
+
 class NightState:
 	extends RefCounted
 	var seed: int = 1
@@ -319,19 +398,29 @@ class NightState:
 	var last_lost: bool = false
 
 
+static func _canonical_shift(shift_index: int) -> int:
+	if shift_index == SHIFT_LATE:
+		return SHIFT_LATE
+	if shift_index == SHIFT_CLOSING:
+		return SHIFT_CLOSING
+	return SHIFT_FIRST
+
+
 static func new_run(seed_value: int, shift_index: int = SHIFT_FIRST) -> NightState:
 	var state = NightState.new()
 	state.seed = seed_value
 	state.library = []
 	state.log = []
 	state.relic_id = ""
-	state.shift = SHIFT_LATE if shift_index == SHIFT_LATE else SHIFT_FIRST
+	state.shift = _canonical_shift(shift_index)
 	state.traveler_index = 0
 	state.encounters_cleared = 0
 	state.next_iid = 0
 	for card_id in STARTING_DECK:
 		_add_library_card(state, String(card_id))
-	if state.shift == SHIFT_LATE:
+	if state.shift == SHIFT_CLOSING:
+		_log(state, "The closing bell begins. Seed %d." % state.seed)
+	elif state.shift == SHIFT_LATE:
 		_log(state, "The late shift begins. Seed %d." % state.seed)
 	else:
 		_log(state, "Night shift begins. Seed %d." % state.seed)
@@ -343,7 +432,7 @@ static func scripted_encounter(seed_value: int, traveler_index: int, hand_cards:
 	var state = NightState.new()
 	state.seed = seed_value
 	state.rng_state = 1
-	state.shift = SHIFT_LATE if shift_index == SHIFT_LATE else SHIFT_FIRST
+	state.shift = _canonical_shift(shift_index)
 	state.traveler_index = clampi(traveler_index, 0, _roster(state).size() - 1)
 	state.phase = "play"
 	state.progress = 0
@@ -375,6 +464,8 @@ static func restart_encounter(state: NightState) -> void:
 
 
 static func shift_label(state: NightState) -> String:
+	if state.shift == SHIFT_CLOSING:
+		return "Closing bell"
 	if state.shift == SHIFT_LATE:
 		return "Late shift"
 	return "Act 1"
@@ -395,6 +486,8 @@ static func traveler(state: NightState) -> Dictionary:
 
 
 static func _roster(state: NightState) -> Array:
+	if state.shift == SHIFT_CLOSING:
+		return CLOSING_BELL
 	if state.shift == SHIFT_LATE:
 		return LATE_SHIFT
 	return TRAVELERS
@@ -567,9 +660,13 @@ static func stamp_progress(state: NightState, card_id: String, row: int, col: in
 		return 0
 	if rule == "refuse_col1" and col == 0:
 		return 0
+	if rule == "refuse_middle" and row == 1:
+		return 0
 	if rule == "ignore_isolated" and orthogonal_count(state, row, col) == 0:
 		return 0
 	if rule == "ignore_corners" and _is_corner(row, col):
+		return 0
+	if rule == "ignore_covered" and _is_covered(state, row, col):
 		return 0
 	return amount
 
@@ -648,6 +745,8 @@ static func patience_loss(state: NightState) -> int:
 		if rule == "double_patience_if_bottom_empty" and not row_has_stamp(state, 2):
 			loss = 2
 		elif rule == "double_patience_if_col3_empty" and not column_has_stamp(state, 2):
+			loss = 2
+		elif rule == "double_patience_if_center_empty" and not _center_filled(state):
 			loss = 2
 	return loss
 
@@ -794,8 +893,12 @@ static func _resolve_stamp(state: NightState, row: int, col: int, hush: bool) ->
 				_log(state, "%s refuses %s on the top row." % [traveler(state)["name"], CARDS[card_id]["name"]])
 			elif rule == "refuse_col1" and col == 0:
 				_log(state, "%s refuses %s in column 1." % [traveler(state)["name"], CARDS[card_id]["name"]])
+			elif rule == "refuse_middle" and row == 1:
+				_log(state, "%s refuses %s on the middle row." % [traveler(state)["name"], CARDS[card_id]["name"]])
 			elif rule == "ignore_corners" and _is_corner(row, col):
 				_log(state, "%s ignores %s in a corner box." % [traveler(state)["name"], CARDS[card_id]["name"]])
+			elif rule == "ignore_covered" and _is_covered(state, row, col):
+				_log(state, "%s ignores the covered %s." % [traveler(state)["name"], CARDS[card_id]["name"]])
 			elif rule == "ignore_isolated":
 				_log(state, "%s ignores the lone %s." % [traveler(state)["name"], CARDS[card_id]["name"]])
 			else:
@@ -849,10 +952,22 @@ static func _apply_post_rule(state: NightState, hush: bool) -> void:
 		state.turn_progress += 4
 		if not hush:
 			_log(state, "%s yields (+4)." % traveler(state)["name"])
+	elif rule == "yield_both_margins" and column_has_stamp(state, 0) and column_has_stamp(state, 2):
+		state.turn_progress += 4
+		if not hush:
+			_log(state, "%s yields (+4)." % traveler(state)["name"])
 
 
 static func _is_corner(row: int, col: int) -> bool:
 	return (row == 0 or row == 2) and (col == 0 or col == 2)
+
+
+static func _is_covered(state: NightState, row: int, col: int) -> bool:
+	return row > 0 and state.form[row - 1][col] != null
+
+
+static func _center_filled(state: NightState) -> bool:
+	return state.form[1][1] != null
 
 
 static func orthogonal_count(state: NightState, row: int, col: int) -> int:
@@ -896,7 +1011,9 @@ static func _apply_result(state: NightState, result: Dictionary) -> void:
 		state.encounters_cleared += 1
 		if state.traveler_index >= _roster(state).size() - 1:
 			state.phase = "victory"
-			if state.shift == SHIFT_LATE:
+			if state.shift == SHIFT_CLOSING:
+				_log(state, "The queue is empty. The closing bell is clear.")
+			elif state.shift == SHIFT_LATE:
 				_log(state, "The queue is empty. The late shift is clear.")
 			else:
 				_log(state, "The queue is empty. Act 1 is clear.")

@@ -5,7 +5,7 @@ class_name BrineSim
 #
 # The player never selects an ant. They paint cells. Workers are simulated
 # labor that follow the paint under their feet. This slice has one scenario:
-# a wet season, then a short dry season. The full game's population cap is
+# a wet season, a short dry season, then a cart beat. The full game's population cap is
 # 200; this slice hard-caps at POP_CAP (40) and will not grow past it.
 #
 # Map
@@ -14,7 +14,9 @@ class_name BrineSim
 #   stays unwalkable, and shore rakes no longer touch water.
 # - The anthill is the fixed cell ANTHILL (14, 5). It is walkable, not
 #   paintable, and the only place workers spawn.
-# - Every other cell accepts one mark: empty, rake, stack, cover, trail, or pan.
+# - Every other cell accepts one mark: empty, rake, stack, cover, trail, pan,
+#   or crib. A crib is not walkable until the cart beat, so painting one
+#   cannot change the wet or dry haul.
 #
 # Determinism
 # - No randomness and no seed. Given the same paint map at each tick and this
@@ -27,7 +29,8 @@ class_name BrineSim
 #
 # Seasons
 # - Wet season: tick indexes 0 .. RAIN_TICK-1. Gatherers on brine-adjacent
-#   rake cells pile loose salt. Pan cells are only ground to cross.
+#   rake cells pile loose salt. Pan cells are only ground to cross. Crib
+#   cells are marks only.
 # - At tick RAIN_TICK the first rain falls. Loose salt is destroyed. Stacked
 #   salt on a cover cell is hauled into the wet-season ledger and cleared
 #   from the flats. Stacked salt outside cover is destroyed. The scenario
@@ -36,9 +39,19 @@ class_name BrineSim
 #   a gatherer standing on one does nothing. A pan cell is a gather goal:
 #   one unit of work crystallizes 1 loose salt, up to LOOSE_CAP, with no need
 #   to touch the brine. Stack and cover work as in the wet season.
-# - At tick RAIN_TICK + DRY_TICK the second rain falls and the scenario ends.
-#   Loose salt is destroyed again. Covered stacked salt stays on the map.
-#   Stored salt is the wet-season haul plus covered salt still on the map.
+# - At tick RAIN_TICK + DRY_TICK the second rain falls. Loose salt is destroyed
+#   again. Covered stacked salt stays on the map. The cart beat opens. The
+#   scenario does not end, and the weather season stays dry.
+# - Cart beat: the next CART_TICK work rounds. The bank is the ledger (what
+#   the first rain hauled) plus covered salt still on the flats. Every worker
+#   carries that bank. A crib cell is the only goal, and it is walkable only
+#   now. One unit of work moves 1 salt from the bank onto the crib, taking the
+#   ledger first and then covered salt in row-major order, up to CRIB_CAP.
+#   Rakes and pans make no salt. With no crib, the bank stays where it is.
+# - At tick RAIN_TICK + DRY_TICK + CART_TICK the cart beat ends and the
+#   scenario ends. Stored salt is the ledger still unmoved, plus covered salt
+#   still on the map, plus salt sitting in cribs. Moving the bank does not
+#   change that total.
 #
 # Tick (work rounds, then a rain at each season boundary)
 # 1. If the second rain has already fallen, the tick does nothing.
@@ -48,9 +61,10 @@ class_name BrineSim
 #      0 gather — rake in the wet season, pan in the dry season
 #      1 stack  — move loose salt into stacks
 #      2 cover  — move stacked salt into cover
+#    During the cart beat every job carries the bank. The job id does not change.
 #    The new worker acts on the tick it spawns. The starting population is
 #    INITIAL_POP, created before tick 0. Spawn refuses to exceed POP_CAP.
-# 3. Goals, from the salt map and the season as the tick begins (later
+# 3. Goals, from the salt map and the beat as the tick begins (later
 #    workers see salt changes, but not new paths, until the next tick):
 #      Gather, wet: rake cell in the shore column (x == 1) whose loose pile
 #              is below LOOSE_CAP. Inland rake never makes salt.
@@ -58,9 +72,11 @@ class_name BrineSim
 #      Stack:  stack cell below STACK_CAP with loose salt on a 4-neighbor.
 #      Cover:  cover cell below COVER_CAP with stacked salt on an adjacent
 #              stack cell.
+#      Cart:   crib cell below CRIB_CAP while any banked salt remains.
+#              All three jobs share that flow.
 #    Trail cells are only ground to cross. They are not goals. Pan cells are
 #    not goals during the wet season. Rake cells are not goals during the
-#    dry season.
+#    dry season or the cart beat. Crib cells are not goals before the cart.
 # 4. Each job builds a flow field: multi-source BFS from its goals through
 #    walkable cells (any painted cell, plus the anthill). A goal's next step
 #    is itself. Every other reached cell points one step toward the nearest
@@ -77,12 +93,15 @@ class_name BrineSim
 #              up to STACK_CAP.
 #      Cover:  1 stacked salt moves from the chosen adjacent stack into this
 #              cover cell, up to COVER_CAP.
+#      Cart:   1 banked salt moves onto this crib. The ledger is taken first.
+#              Covered salt is taken next, row-major (y, then x).
 # 6. If the population is above POP_CAP, the violation is counted. Spawning
 #    is the only way workers are added, and it stops at the cap.
 # 7. The tick index increases by 1. When it reaches RAIN_TICK, the first rain
 #    falls immediately (the dry season's first work round is the next tick).
-#    When it reaches RAIN_TICK + DRY_TICK, the second rain falls and the
-#    scenario ends.
+#    When it reaches RAIN_TICK + DRY_TICK, the second rain falls and the cart
+#    beat's first work round is the next tick. When it reaches
+#    RAIN_TICK + DRY_TICK + CART_TICK, the cart beat ends.
 #
 # Rain
 # - Loose salt is destroyed on every cell. Loose salt never survives a rain.
@@ -90,14 +109,17 @@ class_name BrineSim
 #   and removed from the cell. That haul counts toward stored salt. The flats
 #   start the dry season clear.
 # - Second rain: stacked salt on a cover cell stays, folded into the covered
-#   pile, and counts toward stored salt along with the ledger.
+#   pile, and counts toward stored salt along with the ledger. The cart beat
+#   then moves that bank; the rain itself does not.
 # - Stacked or covered salt outside a cover cell is destroyed.
 # - Destruction is applied row-major. The same paint map yields the same
 #   stored-salt number.
 #
 # Summary
 # - Stored salt >= QUOTA: the rains passed. The line names the first-rain
-#   haul and what the dry season held.
+#   haul and what the dry season held. If the cart moved any salt, the line
+#   also names how much reached a crib. A plan that paints no crib keeps the
+#   summary it had before the cart beat existed.
 # - Stored salt == 0 and any salt was destroyed: the quota was missed because
 #   uncovered salt was destroyed. An all-rake coast does this: workers pile
 #   loose salt, nothing is stacked into cover, the first rain wrecks the
@@ -107,9 +129,10 @@ class_name BrineSim
 #   survived. If uncovered salt was also destroyed, the summary says so.
 #
 # Clock
-# - The scene shows the current season's remaining ticks at TICK_HZ. The sim
-#   itself counts ticks, not wall-clock time, so a headless run is the same
-#   scenario as the window.
+# - The scene shows the current beat's remaining ticks at TICK_HZ. The cart
+#   countdown refills when the second rain opens the beat. The sim itself
+#   counts ticks, not wall-clock time, so a headless run is the same scenario
+#   as the window.
 
 const EMPTY := 0
 const RAKE := 1
@@ -117,9 +140,12 @@ const STACK := 2
 const COVER := 3
 const TRAIL := 4
 const PAN := 5
+const CRIB := 6
 
 const WET := 0
 const DRY := 1
+# Cart is a beat after the dry season. get_season() stays DRY through it.
+const CART := 2
 
 const GRID_W := 17
 const GRID_H := 12
@@ -132,11 +158,13 @@ const SPAWN_EVERY := 10
 const QUOTA := 12
 const RAIN_TICK := 600
 const DRY_TICK := 200
+const CART_TICK := 100
 const TICK_HZ := 10
 
 const LOOSE_CAP := 12
 const STACK_CAP := 12
 const COVER_CAP := 999
+const CRIB_CAP := 9999
 
 const JOB_GATHER := 0
 const JOB_STACK := 1
@@ -149,12 +177,15 @@ var _paint: Dictionary = {}
 var _loose: Dictionary = {}
 var _stacked: Dictionary = {}
 var _covered: Dictionary = {}
+var _crib: Dictionary = {}
 var _workers: Array = []
 
 var _next_id: int = 0
 var _tick_index: int = 0
 var _season: int = WET
+var _phase: int = WET
 var _wet_haul: int = 0
+var _ledger: int = 0
 var _rain_done: bool = false
 var _max_population: int = 0
 var _pop_cap_violations: int = 0
@@ -178,11 +209,14 @@ func restart() -> void:
 	_loose.clear()
 	_stacked.clear()
 	_covered.clear()
+	_crib.clear()
 	_workers.clear()
 	_next_id = 0
 	_tick_index = 0
 	_season = WET
+	_phase = WET
 	_wet_haul = 0
+	_ledger = 0
 	_rain_done = false
 	_max_population = 0
 	_pop_cap_violations = 0
@@ -198,7 +232,7 @@ func paint_cell(x: int, y: int, mode: int) -> bool:
 		return false
 	if not _paintable(x, y):
 		return false
-	if mode < EMPTY or mode > PAN:
+	if mode < EMPTY or mode > CRIB:
 		return false
 	var cell := Vector2i(x, y)
 	if mode == EMPTY:
@@ -215,16 +249,12 @@ func get_paint(x: int, y: int) -> int:
 func tick() -> void:
 	if _rain_done:
 		return
-	var horizon := RAIN_TICK + DRY_TICK
-	if _tick_index >= horizon:
-		_resolve_second_rain()
+	var end_tick := RAIN_TICK + DRY_TICK + CART_TICK
+	if _tick_index >= end_tick:
+		_finish()
 		return
 	_maybe_spawn()
-	var flows := {
-		JOB_GATHER: _build_flow(_gather_goals()),
-		JOB_STACK: _build_flow(_stack_goals()),
-		JOB_COVER: _build_flow(_cover_goals()),
-	}
+	var flows := _flows()
 	for worker in _workers:
 		_act(worker, flows[int(worker.job)])
 	if _workers.size() > POP_CAP:
@@ -232,20 +262,22 @@ func tick() -> void:
 	_tick_index += 1
 	if _tick_index == RAIN_TICK:
 		_resolve_first_rain()
-	elif _tick_index >= horizon:
-		_resolve_second_rain()
+	elif _tick_index == RAIN_TICK + DRY_TICK:
+		_open_cart()
+	elif _tick_index >= end_tick:
+		_finish()
 
 
 func run_until_rain() -> void:
 	var guard := 0
-	var limit := RAIN_TICK + DRY_TICK + 2
+	var limit := RAIN_TICK + DRY_TICK + CART_TICK + 2
 	while not _rain_done and guard < limit:
 		tick()
 		guard += 1
 
 
 func get_stored_salt() -> int:
-	return _wet_haul + _covered_on_map()
+	return _ledger + _covered_on_map() + _sum(_crib)
 
 
 func get_loose_salt() -> int:
@@ -262,6 +294,19 @@ func get_wet_haul() -> int:
 
 func get_season() -> int:
 	return _season
+
+
+# WET, DRY, or CART. The cart beat keeps the dry-season weather.
+func get_beat() -> int:
+	return _phase
+
+
+func get_carted() -> int:
+	return _sum(_crib)
+
+
+func get_bank_left() -> int:
+	return _ledger + _sum(_covered)
 
 
 func get_population() -> int:
@@ -287,7 +332,11 @@ func get_summary() -> String:
 func get_ticks_until_rain() -> int:
 	if _rain_done:
 		return 0
-	var horizon := RAIN_TICK + DRY_TICK if _season == DRY else RAIN_TICK
+	var horizon := RAIN_TICK
+	if _phase == DRY:
+		horizon = RAIN_TICK + DRY_TICK
+	elif _phase == CART:
+		horizon = RAIN_TICK + DRY_TICK + CART_TICK
 	return maxi(horizon - _tick_index, 0)
 
 
@@ -305,6 +354,7 @@ func get_cell_salt(x: int, y: int) -> Dictionary:
 		"loose": _amount(_loose, cell),
 		"stacked": _amount(_stacked, cell),
 		"covered": _amount(_covered, cell),
+		"crib": _amount(_crib, cell),
 	}
 
 
@@ -333,6 +383,9 @@ func rules_api() -> PackedStringArray:
 		"get_stacked_salt",
 		"get_wet_haul",
 		"get_season",
+		"get_beat",
+		"get_carted",
+		"get_bank_left",
 		"get_population",
 		"get_max_population",
 		"get_pop_cap_violations",
@@ -384,7 +437,13 @@ func _walkable(x: int, y: int) -> bool:
 		return false
 	if Vector2i(x, y) == ANTHILL:
 		return true
-	return _paint_at(Vector2i(x, y)) != EMPTY
+	var paint := _paint_at(Vector2i(x, y))
+	if paint == EMPTY:
+		return false
+	# A crib stays shut until the cart beat, so it cannot shortcut the flats.
+	if paint == CRIB and _phase != CART:
+		return false
+	return true
 
 
 func _paint_at(cell: Vector2i) -> int:
@@ -423,18 +482,50 @@ func _brine_adjacent(cell: Vector2i) -> bool:
 	return cell.x == COAST_X + 1 and cell.y >= 0 and cell.y < GRID_H
 
 
+func _flows() -> Dictionary:
+	if _phase == CART:
+		var carting := _build_flow(_crib_goals())
+		return {
+			JOB_GATHER: carting,
+			JOB_STACK: carting,
+			JOB_COVER: carting,
+		}
+	return {
+		JOB_GATHER: _build_flow(_gather_goals()),
+		JOB_STACK: _build_flow(_stack_goals()),
+		JOB_COVER: _build_flow(_cover_goals()),
+	}
+
+
 func _gather_goals() -> Array:
 	var goals: Array = []
 	for y in GRID_H:
 		for x in GRID_W:
 			var cell := Vector2i(x, y)
-			if _season == DRY:
+			if _phase == DRY:
 				if _paint_at(cell) != PAN:
 					continue
-			else:
+			elif _phase == WET:
 				if _paint_at(cell) != RAKE or not _brine_adjacent(cell):
 					continue
+			else:
+				continue
 			if _amount(_loose, cell) >= LOOSE_CAP:
+				continue
+			goals.append(cell)
+	return goals
+
+
+func _crib_goals() -> Array:
+	var goals: Array = []
+	if get_bank_left() <= 0:
+		return goals
+	for y in GRID_H:
+		for x in GRID_W:
+			var cell := Vector2i(x, y)
+			if _paint_at(cell) != CRIB:
+				continue
+			if _amount(_crib, cell) >= CRIB_CAP:
 				continue
 			goals.append(cell)
 	return goals
@@ -521,12 +612,15 @@ func _step_stranded(worker: Worker) -> void:
 
 
 func _work(worker: Worker) -> void:
+	if _phase == CART:
+		_cart(worker)
+		return
 	var cell := Vector2i(worker.x, worker.y)
 	if worker.job == JOB_GATHER:
-		if _season == DRY:
+		if _phase == DRY:
 			if _paint_at(cell) != PAN:
 				return
-		elif _paint_at(cell) != RAKE or not _brine_adjacent(cell):
+		elif _phase != WET or _paint_at(cell) != RAKE or not _brine_adjacent(cell):
 			return
 		var loose := _amount(_loose, cell)
 		if loose >= LOOSE_CAP:
@@ -554,6 +648,28 @@ func _work(worker: Worker) -> void:
 			return
 		_put(_stacked, src, _amount(_stacked, src) - 1)
 		_put(_covered, cell, covered + 1)
+
+
+func _cart(worker: Worker) -> void:
+	var cell := Vector2i(worker.x, worker.y)
+	if _paint_at(cell) != CRIB:
+		return
+	var held := _amount(_crib, cell)
+	if held >= CRIB_CAP:
+		return
+	if _ledger > 0:
+		_ledger -= 1
+		_put(_crib, cell, held + 1)
+		return
+	for y in GRID_H:
+		for x in GRID_W:
+			var src := Vector2i(x, y)
+			var amount := _amount(_covered, src)
+			if amount <= 0:
+				continue
+			_put(_covered, src, amount - 1)
+			_put(_crib, cell, held + 1)
+			return
 
 
 func _best_loose_neighbor(cell: Vector2i) -> Vector2i:
@@ -597,14 +713,23 @@ func _prefer(candidate: Vector2i, incumbent: Vector2i) -> bool:
 func _resolve_first_rain() -> void:
 	if _season != WET or _rain_done:
 		return
-	_wet_haul += _sweep_rain(true)
+	var shipped := _sweep_rain(true)
+	_wet_haul += shipped
+	_ledger += shipped
 	_season = DRY
+	_phase = DRY
 
 
-func _resolve_second_rain() -> void:
-	if _rain_done:
+func _open_cart() -> void:
+	if _phase != DRY or _rain_done:
 		return
 	_sweep_rain(false)
+	_phase = CART
+
+
+func _finish() -> void:
+	if _rain_done:
+		return
 	_rain_done = true
 	_summary = _make_summary()
 
@@ -640,13 +765,18 @@ func _sweep_rain(ship_covered: bool) -> int:
 func _make_summary() -> String:
 	var stored := get_stored_salt()
 	var dry_held := stored - _wet_haul
+	var carted := get_carted()
+	var message := ""
 	if stored >= QUOTA:
-		return "The rains passed. Covered salt held: %d (quota %d). First rain hauled %d; dry season held %d." % [stored, QUOTA, _wet_haul, dry_held]
-	if stored <= 0 and _uncovered_destroyed > 0:
-		return "Quota missed: uncovered salt was destroyed by the rain (%d). Covered salt held: 0 (quota %d). Dry season held %d." % [_uncovered_destroyed, QUOTA, dry_held]
-	if stored <= 0:
-		return "Quota missed: no salt was stored before the rain. Covered salt held: 0 (quota %d). Dry season held %d." % [QUOTA, dry_held]
-	var message := "Quota missed: not enough covered salt survived the rain. Covered salt held: %d (quota %d). First rain hauled %d; dry season held %d." % [stored, QUOTA, _wet_haul, dry_held]
-	if _uncovered_destroyed > 0:
-		message += " Uncovered salt was destroyed by the rain."
+		message = "The rains passed. Covered salt held: %d (quota %d). First rain hauled %d; dry season held %d." % [stored, QUOTA, _wet_haul, dry_held]
+	elif stored <= 0 and _uncovered_destroyed > 0:
+		message = "Quota missed: uncovered salt was destroyed by the rain (%d). Covered salt held: 0 (quota %d). Dry season held %d." % [_uncovered_destroyed, QUOTA, dry_held]
+	elif stored <= 0:
+		message = "Quota missed: no salt was stored before the rain. Covered salt held: 0 (quota %d). Dry season held %d." % [QUOTA, dry_held]
+	else:
+		message = "Quota missed: not enough covered salt survived the rain. Covered salt held: %d (quota %d). First rain hauled %d; dry season held %d." % [stored, QUOTA, _wet_haul, dry_held]
+		if _uncovered_destroyed > 0:
+			message += " Uncovered salt was destroyed by the rain."
+	if carted > 0:
+		message += " Carted %d into the crib." % carted
 	return message
