@@ -37,4 +37,8 @@ static func stat_lines(kind: int) -> PackedStringArray:
 		lines.append("Frost: thaws")
 	else:
 		lines.append("Frost: none")
+	if bool(stats["cuts_web"]):
+		lines.append("Web: cuts")
+	else:
+		lines.append("Web: none")
 	return lines

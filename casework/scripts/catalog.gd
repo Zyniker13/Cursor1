@@ -7,8 +7,9 @@ const FerryBell = preload("res://scripts/ferry_bell.gd")
 const WeatherSlate = preload("res://scripts/weather_slate.gd")
 const LoomShuttle = preload("res://scripts/loom_shuttle.gd")
 const HiveSmoker = preload("res://scripts/hive_smoker.gd")
+const GlassPontil = preload("res://scripts/glass_pontil.gd")
 
-const CASES: Array = [SpareKey, RehearsalScore, GiltStamp, FerryBell, WeatherSlate, LoomShuttle, HiveSmoker]
+const CASES: Array = [SpareKey, RehearsalScore, GiltStamp, FerryBell, WeatherSlate, LoomShuttle, HiveSmoker, GlassPontil]
 
 
 static func all() -> Array:

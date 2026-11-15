@@ -5,7 +5,7 @@ class_name BrineSim
 #
 # The player never selects an ant. They paint cells. Workers are simulated
 # labor that follow the paint under their feet. This slice has one scenario:
-# a wet season, a short dry season, then a cart beat. The full game's population cap is
+# a wet season, a short dry season, a cart beat, then a ship beat. The full game's population cap is
 # 200; this slice hard-caps at POP_CAP (40) and will not grow past it.
 #
 # Map
@@ -15,8 +15,9 @@ class_name BrineSim
 # - The anthill is the fixed cell ANTHILL (14, 5). It is walkable, not
 #   paintable, and the only place workers spawn.
 # - Every other cell accepts one mark: empty, rake, stack, cover, trail, pan,
-#   or crib. A crib is not walkable until the cart beat, so painting one
-#   cannot change the wet or dry haul.
+#   crib, or ship. A crib is not walkable until the cart beat, and a ship is
+#   not walkable until the ship beat, so painting either one cannot change
+#   an earlier haul.
 #
 # Determinism
 # - No randomness and no seed. Given the same paint map at each tick and this
@@ -30,7 +31,7 @@ class_name BrineSim
 # Seasons
 # - Wet season: tick indexes 0 .. RAIN_TICK-1. Gatherers on brine-adjacent
 #   rake cells pile loose salt. Pan cells are only ground to cross. Crib
-#   cells are marks only.
+#   cells and ship cells are marks only.
 # - At tick RAIN_TICK the first rain falls. Loose salt is destroyed. Stacked
 #   salt on a cover cell is hauled into the wet-season ledger and cleared
 #   from the flats. Stacked salt outside cover is destroyed. The scenario
@@ -48,20 +49,28 @@ class_name BrineSim
 #   now. One unit of work moves 1 salt from the bank onto the crib, taking the
 #   ledger first and then covered salt in row-major order, up to CRIB_CAP.
 #   Rakes and pans make no salt. With no crib, the bank stays where it is.
-# - At tick RAIN_TICK + DRY_TICK + CART_TICK the cart beat ends and the
-#   scenario ends. Stored salt is the ledger still unmoved, plus covered salt
-#   still on the map, plus salt sitting in cribs. Moving the bank does not
-#   change that total.
+# - At tick RAIN_TICK + DRY_TICK + CART_TICK the cart beat ends and the ship
+#   beat opens. The scenario does not end. Salt sitting in a crib stays there.
+# - Ship beat: the next SHIP_TICK work rounds. Every worker loads the crib.
+#   A ship cell is the only goal, and it is walkable only now. One unit of
+#   work moves 1 salt from a crib onto the ship, taking crib salt in row-major
+#   order, up to SHIP_CAP. Rakes and pans make no salt. With no ship, the crib
+#   stays where it is. Loading the ship does not change the stored total.
+# - At tick RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK the ship beat ends
+#   and the scenario ends. Stored salt is the ledger still unmoved, plus
+#   covered salt still on the map, plus salt still in cribs, plus salt on
+#   ships.
 #
 # Tick (work rounds, then a rain at each season boundary)
-# 1. If the second rain has already fallen, the tick does nothing.
+# 1. If the scenario has already ended, the tick does nothing.
 # 2. Spawn. On tick indexes 1, 2, ... while the index is a positive multiple
 #    of SPAWN_EVERY and the population is below POP_CAP, one worker is added
 #    at the anthill. Its job is id % 3 and never changes:
 #      0 gather — rake in the wet season, pan in the dry season
 #      1 stack  — move loose salt into stacks
 #      2 cover  — move stacked salt into cover
-#    During the cart beat every job carries the bank. The job id does not change.
+#    During the cart beat every job carries the bank. During the ship beat
+#    every job loads a ship. The job id does not change.
 #    The new worker acts on the tick it spawns. The starting population is
 #    INITIAL_POP, created before tick 0. Spawn refuses to exceed POP_CAP.
 # 3. Goals, from the salt map and the beat as the tick begins (later
@@ -74,9 +83,13 @@ class_name BrineSim
 #              stack cell.
 #      Cart:   crib cell below CRIB_CAP while any banked salt remains.
 #              All three jobs share that flow.
+#      Ship:   ship cell below SHIP_CAP while any salt remains in a crib.
+#              All three jobs share that flow.
 #    Trail cells are only ground to cross. They are not goals. Pan cells are
 #    not goals during the wet season. Rake cells are not goals during the
-#    dry season or the cart beat. Crib cells are not goals before the cart.
+#    dry season, the cart beat, or the ship beat. Crib cells are not goals
+#    before the cart beat, and during the ship beat they are only ground.
+#    Ship cells are not goals before the ship beat.
 # 4. Each job builds a flow field: multi-source BFS from its goals through
 #    walkable cells (any painted cell, plus the anthill). A goal's next step
 #    is itself. Every other reached cell points one step toward the nearest
@@ -95,13 +108,17 @@ class_name BrineSim
 #              cover cell, up to COVER_CAP.
 #      Cart:   1 banked salt moves onto this crib. The ledger is taken first.
 #              Covered salt is taken next, row-major (y, then x).
+#      Ship:   1 crib salt moves onto this ship. Cribs are taken in row-major
+#              order (y, then x).
 # 6. If the population is above POP_CAP, the violation is counted. Spawning
 #    is the only way workers are added, and it stops at the cap.
 # 7. The tick index increases by 1. When it reaches RAIN_TICK, the first rain
 #    falls immediately (the dry season's first work round is the next tick).
 #    When it reaches RAIN_TICK + DRY_TICK, the second rain falls and the cart
 #    beat's first work round is the next tick. When it reaches
-#    RAIN_TICK + DRY_TICK + CART_TICK, the cart beat ends.
+#    RAIN_TICK + DRY_TICK + CART_TICK, the ship beat's first work round is the
+#    next tick. When it reaches RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK,
+#    the ship beat ends.
 #
 # Rain
 # - Loose salt is destroyed on every cell. Loose salt never survives a rain.
@@ -110,7 +127,8 @@ class_name BrineSim
 #   start the dry season clear.
 # - Second rain: stacked salt on a cover cell stays, folded into the covered
 #   pile, and counts toward stored salt along with the ledger. The cart beat
-#   then moves that bank; the rain itself does not.
+#   then moves that bank; the rain itself does not. The ship beat then loads
+#   a crib; the rain does not.
 # - Stacked or covered salt outside a cover cell is destroyed.
 # - Destruction is applied row-major. The same paint map yields the same
 #   stored-salt number.
@@ -118,8 +136,10 @@ class_name BrineSim
 # Summary
 # - Stored salt >= QUOTA: the rains passed. The line names the first-rain
 #   haul and what the dry season held. If the cart moved any salt, the line
-#   also names how much reached a crib. A plan that paints no crib keeps the
-#   summary it had before the cart beat existed.
+#   also names how much reached a crib. If the ship beat loaded any of that
+#   crib, the line names how much left it. A plan that paints no crib keeps
+#   the summary it had before the cart beat existed. A plan that paints no
+#   ship keeps the summary it had before the ship beat existed.
 # - Stored salt == 0 and any salt was destroyed: the quota was missed because
 #   uncovered salt was destroyed. An all-rake coast does this: workers pile
 #   loose salt, nothing is stacked into cover, the first rain wrecks the
@@ -130,9 +150,9 @@ class_name BrineSim
 #
 # Clock
 # - The scene shows the current beat's remaining ticks at TICK_HZ. The cart
-#   countdown refills when the second rain opens the beat. The sim itself
-#   counts ticks, not wall-clock time, so a headless run is the same scenario
-#   as the window.
+#   countdown refills when the second rain opens the beat. The ship countdown
+#   refills when the cart beat ends. The sim itself counts ticks, not
+#   wall-clock time, so a headless run is the same scenario as the window.
 
 const EMPTY := 0
 const RAKE := 1
@@ -141,11 +161,14 @@ const COVER := 3
 const TRAIL := 4
 const PAN := 5
 const CRIB := 6
+const SHIP := 7
 
 const WET := 0
 const DRY := 1
-# Cart is a beat after the dry season. get_season() stays DRY through it.
+# Cart is a beat after the dry season. The ship beat follows the cart.
+# get_season() stays DRY through both. SHIPPING is the ship beat's phase.
 const CART := 2
+const SHIPPING := 3
 
 const GRID_W := 17
 const GRID_H := 12
@@ -159,12 +182,14 @@ const QUOTA := 12
 const RAIN_TICK := 600
 const DRY_TICK := 200
 const CART_TICK := 100
+const SHIP_TICK := 100
 const TICK_HZ := 10
 
 const LOOSE_CAP := 12
 const STACK_CAP := 12
 const COVER_CAP := 999
 const CRIB_CAP := 9999
+const SHIP_CAP := 9999
 
 const JOB_GATHER := 0
 const JOB_STACK := 1
@@ -178,6 +203,7 @@ var _loose: Dictionary = {}
 var _stacked: Dictionary = {}
 var _covered: Dictionary = {}
 var _crib: Dictionary = {}
+var _ship: Dictionary = {}
 var _workers: Array = []
 
 var _next_id: int = 0
@@ -210,6 +236,7 @@ func restart() -> void:
 	_stacked.clear()
 	_covered.clear()
 	_crib.clear()
+	_ship.clear()
 	_workers.clear()
 	_next_id = 0
 	_tick_index = 0
@@ -232,7 +259,7 @@ func paint_cell(x: int, y: int, mode: int) -> bool:
 		return false
 	if not _paintable(x, y):
 		return false
-	if mode < EMPTY or mode > CRIB:
+	if mode < EMPTY or mode > SHIP:
 		return false
 	var cell := Vector2i(x, y)
 	if mode == EMPTY:
@@ -249,7 +276,7 @@ func get_paint(x: int, y: int) -> int:
 func tick() -> void:
 	if _rain_done:
 		return
-	var end_tick := RAIN_TICK + DRY_TICK + CART_TICK
+	var end_tick := RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK
 	if _tick_index >= end_tick:
 		_finish()
 		return
@@ -264,20 +291,22 @@ func tick() -> void:
 		_resolve_first_rain()
 	elif _tick_index == RAIN_TICK + DRY_TICK:
 		_open_cart()
+	elif _tick_index == RAIN_TICK + DRY_TICK + CART_TICK:
+		_open_ship()
 	elif _tick_index >= end_tick:
 		_finish()
 
 
 func run_until_rain() -> void:
 	var guard := 0
-	var limit := RAIN_TICK + DRY_TICK + CART_TICK + 2
+	var limit := RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + 2
 	while not _rain_done and guard < limit:
 		tick()
 		guard += 1
 
 
 func get_stored_salt() -> int:
-	return _ledger + _covered_on_map() + _sum(_crib)
+	return _ledger + _covered_on_map() + _sum(_crib) + _sum(_ship)
 
 
 func get_loose_salt() -> int:
@@ -301,8 +330,17 @@ func get_beat() -> int:
 	return _phase
 
 
+# Salt that reached a crib. Salt loaded onto a ship still counts.
 func get_carted() -> int:
+	return _sum(_crib) + _sum(_ship)
+
+
+func get_crib_salt() -> int:
 	return _sum(_crib)
+
+
+func get_shipped() -> int:
+	return _sum(_ship)
 
 
 func get_bank_left() -> int:
@@ -337,6 +375,8 @@ func get_ticks_until_rain() -> int:
 		horizon = RAIN_TICK + DRY_TICK
 	elif _phase == CART:
 		horizon = RAIN_TICK + DRY_TICK + CART_TICK
+	elif _phase == SHIPPING:
+		horizon = RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK
 	return maxi(horizon - _tick_index, 0)
 
 
@@ -355,6 +395,7 @@ func get_cell_salt(x: int, y: int) -> Dictionary:
 		"stacked": _amount(_stacked, cell),
 		"covered": _amount(_covered, cell),
 		"crib": _amount(_crib, cell),
+		"ship": _amount(_ship, cell),
 	}
 
 
@@ -385,6 +426,8 @@ func rules_api() -> PackedStringArray:
 		"get_season",
 		"get_beat",
 		"get_carted",
+		"get_crib_salt",
+		"get_shipped",
 		"get_bank_left",
 		"get_population",
 		"get_max_population",
@@ -440,8 +483,12 @@ func _walkable(x: int, y: int) -> bool:
 	var paint := _paint_at(Vector2i(x, y))
 	if paint == EMPTY:
 		return false
-	# A crib stays shut until the cart beat, so it cannot shortcut the flats.
-	if paint == CRIB and _phase != CART:
+	# A crib stays shut until the cart beat, and a ship stays shut until the
+	# ship beat, so neither can shortcut an earlier haul. The crib stays open
+	# during the ship beat so workers can walk from it to the ship.
+	if paint == CRIB and _phase != CART and _phase != SHIPPING:
+		return false
+	if paint == SHIP and _phase != SHIPPING:
 		return false
 	return true
 
@@ -490,6 +537,13 @@ func _flows() -> Dictionary:
 			JOB_STACK: carting,
 			JOB_COVER: carting,
 		}
+	if _phase == SHIPPING:
+		var loading := _build_flow(_ship_goals())
+		return {
+			JOB_GATHER: loading,
+			JOB_STACK: loading,
+			JOB_COVER: loading,
+		}
 	return {
 		JOB_GATHER: _build_flow(_gather_goals()),
 		JOB_STACK: _build_flow(_stack_goals()),
@@ -526,6 +580,21 @@ func _crib_goals() -> Array:
 			if _paint_at(cell) != CRIB:
 				continue
 			if _amount(_crib, cell) >= CRIB_CAP:
+				continue
+			goals.append(cell)
+	return goals
+
+
+func _ship_goals() -> Array:
+	var goals: Array = []
+	if _sum(_crib) <= 0:
+		return goals
+	for y in GRID_H:
+		for x in GRID_W:
+			var cell := Vector2i(x, y)
+			if _paint_at(cell) != SHIP:
+				continue
+			if _amount(_ship, cell) >= SHIP_CAP:
 				continue
 			goals.append(cell)
 	return goals
@@ -615,6 +684,9 @@ func _work(worker: Worker) -> void:
 	if _phase == CART:
 		_cart(worker)
 		return
+	if _phase == SHIPPING:
+		_load_ship(worker)
+		return
 	var cell := Vector2i(worker.x, worker.y)
 	if worker.job == JOB_GATHER:
 		if _phase == DRY:
@@ -669,6 +741,24 @@ func _cart(worker: Worker) -> void:
 				continue
 			_put(_covered, src, amount - 1)
 			_put(_crib, cell, held + 1)
+			return
+
+
+func _load_ship(worker: Worker) -> void:
+	var cell := Vector2i(worker.x, worker.y)
+	if _paint_at(cell) != SHIP:
+		return
+	var held := _amount(_ship, cell)
+	if held >= SHIP_CAP:
+		return
+	for y in GRID_H:
+		for x in GRID_W:
+			var src := Vector2i(x, y)
+			var amount := _amount(_crib, src)
+			if amount <= 0:
+				continue
+			_put(_crib, src, amount - 1)
+			_put(_ship, cell, held + 1)
 			return
 
 
@@ -727,6 +817,12 @@ func _open_cart() -> void:
 	_phase = CART
 
 
+func _open_ship() -> void:
+	if _phase != CART or _rain_done:
+		return
+	_phase = SHIPPING
+
+
 func _finish() -> void:
 	if _rain_done:
 		return
@@ -779,4 +875,6 @@ func _make_summary() -> String:
 			message += " Uncovered salt was destroyed by the rain."
 	if carted > 0:
 		message += " Carted %d into the crib." % carted
+	if get_shipped() > 0:
+		message += " Shipped %d." % get_shipped()
 	return message

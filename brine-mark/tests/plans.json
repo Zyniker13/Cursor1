@@ -68,5 +68,42 @@
     "cover": [[6, 4], [6, 5], [6, 6]],
     "trail": [[7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]],
     "crib": [[14, 4]]
+  },
+  "no_ship": {
+    "note": "The carted shore with a full crib and no ship. The ship beat has nowhere to send the crib, so this plan fails the ship check and the carted numbers stay put.",
+    "rake": [[1, 4], [1, 5], [1, 6]],
+    "stack": [[2, 4], [2, 5], [2, 6]],
+    "cover": [[3, 4], [3, 5], [3, 6]],
+    "trail": [[4, 5], [5, 5], [6, 5], [7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]],
+    "crib": [[14, 4]]
+  },
+  "shipped": {
+    "note": "The carted shore, the crib north of the anthill, and one ship one cell north of that crib. The ship stays shut through the cart, so the wet haul and the cart match the carted plan. The ship beat then loads the whole crib onto the ship.",
+    "rake": [[1, 4], [1, 5], [1, 6]],
+    "stack": [[2, 4], [2, 5], [2, 6]],
+    "cover": [[3, 4], [3, 5], [3, 6]],
+    "trail": [[4, 5], [5, 5], [6, 5], [7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]],
+    "crib": [[14, 4]],
+    "ship": [[14, 3]]
+  },
+  "late_ship": {
+    "note": "The carted shore until the cart beat ends. The ship is painted when the ship beat opens, the way a player answers a full crib.",
+    "rake": [[1, 4], [1, 5], [1, 6]],
+    "stack": [[2, 4], [2, 5], [2, 6]],
+    "cover": [[3, 4], [3, 5], [3, 6]],
+    "trail": [[4, 5], [5, 5], [6, 5], [7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]],
+    "crib": [[14, 4]],
+    "after_cart": {
+      "ship": [[14, 3]]
+    }
+  },
+  "dry_ship": {
+    "note": "The dry-pan line, the crib, and a ship north of the crib. Wet haul stays 0. The cart moves the dry bank into the crib, and the ship beat loads that crib onto the ship.",
+    "pan": [[4, 4], [4, 5], [4, 6]],
+    "stack": [[5, 4], [5, 5], [5, 6]],
+    "cover": [[6, 4], [6, 5], [6, 6]],
+    "trail": [[7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]],
+    "crib": [[14, 4]],
+    "ship": [[14, 3]]
   }
 }
