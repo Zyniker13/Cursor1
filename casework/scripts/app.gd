@@ -126,7 +126,7 @@ func _build_menu() -> Control:
 	box.add_child(_label("FILES", 13, SEAL, _sans))
 	box.add_child(_label("Casework", 64, INK, _serif))
 	box.add_child(_rule(INK))
-	box.add_child(_wrapped("Nineteen files. Open one, then pin who, the room, and the hour.", 20, INK, _serif, 480))
+	box.add_child(_wrapped("Twenty files. Open one, then pin who, the room, and the hour.", 20, INK, _serif, 480))
 	for book in Catalog.all():
 		_add_case_offer(box, book)
 	var how_to := _action("How to play", false)
@@ -185,7 +185,7 @@ func _build_howto() -> Control:
 	box.add_child(_rule(INK))
 	var copy := (
 		"Casework keeps one true timeline for the file you open. You do not see it written out until a theory fits every exhibit in that file.\n\n"
-		+ "Open The spare key, The rehearsal score, The gilt stamp, The ferry bell, The weather slate, The loom shuttle, The hive smoker, The glass pontil, The press proof, The assay cup, The kiln chalk, The tide ledger, The night bell, The salt mark, The wick trim, The glass anneal, The orchard graft, The dye vat, or The tar kettle. Each file asks three things: who, the room, and the hour. Other lines in the file are evidence. They are not extra pins.\n\n"
+		+ "Open The spare key, The rehearsal score, The gilt stamp, The ferry bell, The weather slate, The loom shuttle, The hive smoker, The glass pontil, The press proof, The assay cup, The kiln chalk, The tide ledger, The night bell, The salt mark, The wick trim, The glass anneal, The orchard graft, The dye vat, The tar kettle, or The cork press. Each file asks three things: who, the room, and the hour. Other lines in the file are evidence. They are not extra pins.\n\n"
 		+ "Read every exhibit. Pin one person, one room, and one hour, then submit the theory.\n\n"
 		+ "The theory is accepted only when it fits every exhibit. If it does not, the reply names the exhibits and the claim they conflict with. If a slot is empty, the board names that slot. An empty slot is not called a wrong theory."
 	)

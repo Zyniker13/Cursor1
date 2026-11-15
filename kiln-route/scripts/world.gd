@@ -7,6 +7,9 @@ extends RefCounted
 ## 2. Deliver existing outputs. Scan cells top-to-bottom, left-to-right, repeating
 ##    until nothing moves. Each item moves at most one cell per tick.
 ## 3. Sources emit, in room order. New items do not move again until the next tick.
+## A twin does not forward in step 2 on its own. When a matching item arrives,
+## the waiter moves one cell forward inside that accept, during step 2 or step 3.
+## The arrival stays. Neither item moves a second cell on that tick.
 
 const Rules = preload("res://scripts/foundry.gd")
 
@@ -38,6 +41,8 @@ class Machine:
 	## Second lane on a bridge. -1 is empty. Other machines leave it empty.
 	var cross := -1
 	var cross_moved := false
+	## True while a twin is pushing its waiter forward, so a loop cannot re-enter.
+	var pairing := false
 
 class Source:
 	var pos := Vector2i.ZERO
@@ -407,6 +412,9 @@ func _can_take(machine: Machine, mat: int, arrival: int) -> bool:
 	if machine.kind == Rules.Kind.DWELL:
 		# From behind only. A side entry and a head-on entry stay where they were.
 		return machine.hold < 0 and arrival == machine.dir
+	if machine.kind == Rules.Kind.TWIN:
+		# Pairing is handled in _accept. A twin may already be holding.
+		return false
 	if machine.kind == Rules.Kind.BRIDGE:
 		if arrival == machine.dir:
 			return machine.hold < 0
@@ -449,6 +457,8 @@ func _accept(dest: Vector2i, mat: int, arrival: int) -> bool:
 	if not machines.has(dest):
 		return false
 	var machine: Machine = machines[dest]
+	if machine.kind == Rules.Kind.TWIN:
+		return _accept_twin(dest, machine, mat, arrival)
 	if not _can_take(machine, mat, arrival):
 		return false
 	if _holder(machine.kind):
@@ -473,6 +483,30 @@ func _accept(dest: Vector2i, mat: int, arrival: int) -> bool:
 			machine.timer = Rules.PRESS_DELAY
 	else:
 		return false
+	return true
+
+
+## Behind only. The first item waits until a later item of the same material
+## arrives. On that tick the waiter moves one cell forward and the arrival
+## becomes the new waiter. A different material is refused. A blocked forward
+## cell refuses the arrival and leaves the waiter in place. A lone item never
+## leaves, including on the next tick and the tick after that.
+func _accept_twin(pos: Vector2i, machine: Machine, mat: int, arrival: int) -> bool:
+	if arrival != machine.dir:
+		return false
+	if machine.hold < 0:
+		machine.hold = mat
+		machine.moved = true
+		return true
+	if machine.hold != mat or machine.moved or machine.pairing:
+		return false
+	machine.pairing = true
+	var sent: bool = _accept(pos + Rules.vec(machine.dir), machine.hold, machine.dir)
+	machine.pairing = false
+	if not sent:
+		return false
+	machine.hold = mat
+	machine.moved = true
 	return true
 
 

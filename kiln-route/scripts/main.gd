@@ -198,6 +198,7 @@ func _kind_for_key(code: int) -> int:
 		KEY_KP_MULTIPLY: Rules.Kind.LIFT,
 		KEY_SEMICOLON: Rules.Kind.DWELL,
 		KEY_KP_PERIOD: Rules.Kind.DWELL,
+		KEY_COMMA: Rules.Kind.TWIN,
 	}
 	if not map.has(code):
 		return -1
@@ -356,6 +357,7 @@ func _kind_order() -> Array:
 		Rules.Kind.DROP,
 		Rules.Kind.LIFT,
 		Rules.Kind.DWELL,
+		Rules.Kind.TWIN,
 	]
 
 
@@ -388,7 +390,8 @@ func _layout() -> Dictionary:
 		size = Vector2(1280, 720)
 	# Past 32 rooms, rows of ten keep each name readable.
 	# The sixth wing adds a fifth row. The seventh adds a sixth.
-	# The eighth adds a seventh. The ninth adds an eighth. Shorter tabs give that row back so the rule text keeps its space.
+	# The eighth adds a seventh. The ninth adds an eighth. The tenth fills that row.
+	# Shorter tabs give that row back so the rule text keeps its space.
 	var per_row := 8
 	var tab_h := 30.0
 	var row_gap := 4.0
@@ -481,7 +484,7 @@ func _draw() -> void:
 	var size: Vector2 = lay.size
 	draw_rect(Rect2(Vector2.ZERO, size), COL_BG)
 	_text(Vector2(24, 14), "KILN ROUTE", 28, COL_TEXT)
-	_text(Vector2(236, 26), "nine wings", 15, COL_DIM)
+	_text(Vector2(236, 26), "ten wings", 15, COL_DIM)
 	var minute := "minute  %d / %d" % [_shown_tick(), Rules.SIM_TICKS]
 	var minute_w := font.get_string_size(minute, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
 	_text(Vector2(size.x - 24 - minute_w, 26), minute, 15, COL_DIM)
@@ -491,7 +494,7 @@ func _draw() -> void:
 	_draw_grid(lay)
 	_draw_side(lay)
 	_draw_tray(lay)
-	_text(Vector2(24, size.y - 28), "1-9, 0, -, =, \\, ; select    R rotate    LMB place or pick up    RMB rotate a piece    Space run    F skip    Bksp restart", 13, COL_DIM)
+	_text(Vector2(24, size.y - 28), "1-9 0 - = \\ ; , select   R rotate   LMB place or pick up   RMB rotate   Space run   F skip   Bksp restart", 13, COL_DIM)
 
 
 func _draw_tabs(lay: Dictionary) -> void:
@@ -709,6 +712,12 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 		draw_line(back - across * body.size.x * 0.16, back + across * body.size.x * 0.16, ink, thick)
 		var rear := back - along * body.size.x * 0.14
 		draw_line(rear - across * body.size.x * 0.16, rear + across * body.size.x * 0.16, ink, thick)
+	elif kind == Rules.Kind.TWIN:
+		var along := Vector2(Rules.vec(dir))
+		var ink := Color(1, 1, 1, 0.82 * alpha)
+		var rear := center - along * body.size.x * 0.2
+		draw_circle(rear - along * body.size.x * 0.12, body.size.x * 0.075, ink)
+		draw_circle(rear + along * body.size.x * 0.08, body.size.x * 0.075, ink)
 	elif kind == Rules.Kind.GRATE:
 		var along := Vector2(Rules.vec(dir))
 		var across := Vector2(Rules.vec(Rules.right(dir)))
@@ -888,6 +897,8 @@ func _key_label(kind: int) -> String:
 		return "\\"
 	if kind == Rules.Kind.DWELL:
 		return ";"
+	if kind == Rules.Kind.TWIN:
+		return ","
 	return str(kind + 1)
 
 
@@ -920,6 +931,8 @@ func _kind_color(kind: int) -> Color:
 		return Color("2a9a78")
 	if kind == Rules.Kind.DWELL:
 		return Color("c4a35a")
+	if kind == Rules.Kind.TWIN:
+		return Color("7d6bbd")
 	return Color("c792ef")
 
 
