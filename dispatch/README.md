@@ -1,6 +1,6 @@
 # Dispatch
 
-A wiring puzzle. Route parcels across Building 1, Building 2, Building 3, Building 4, Building 5, Building 6, Building 7, and Building 8, then submit the belt. After a delivery, the game shows your cycles and block count beside par. Par is not a handwritten number: it is the result of simulating that puzzle's reference graph.
+A wiring puzzle. Route parcels across Building 1, Building 2, Building 3, Building 4, Building 5, Building 6, Building 7, Building 8, Building 9, and Building 10, then submit the belt. After a delivery, the game shows your cycles and block count beside par. Par is not a handwritten number: it is the result of simulating that puzzle's reference graph.
 
 Blocks are drawn by Godot. There is no imported art.
 
@@ -30,7 +30,7 @@ The process exits non-zero if a test fails. These were written for Godot 4.7.
 
 ## Controls
 
-Left-click an empty cell to place the selected block. Left-click a block of the same type to rotate it, or a different type to replace it. Right-click deletes. `R` rotates the block under the cursor, or the placement arrow if the cell is empty. `Delete` removes the block under the cursor. `Enter` submits. `Backspace` restarts the puzzle. Keys `1` through `8` select the first eight puzzles. `[` and `]` step to the previous or next puzzle. Puzzle 1 also prints the how-to on the board. Building 2 is routes 16 through 22, Building 3 is routes 23 through 29, Building 4 is routes 30 through 36, Building 5 is routes 37 through 43, Building 6 is routes 44 through 50, Building 7 is routes 51 through 57, and Building 8 is routes 58 through 64. Each later building is marked on the route row. Building 2 opens after route 15, Building 3 opens after route 22, Building 4 opens after route 29, Building 5 opens after route 36, Building 6 opens after route 43, Building 7 opens after route 50, and Building 8 opens after route 57.
+Left-click an empty cell to place the selected block. Left-click a block of the same type to rotate it, or a different type to replace it. Right-click deletes. `R` rotates the block under the cursor, or the placement arrow if the cell is empty. `Delete` removes the block under the cursor. `Enter` submits. `Backspace` restarts the puzzle. Keys `1` through `8` select the first eight puzzles. `[` and `]` step to the previous or next puzzle. Puzzle 1 also prints the how-to on the board. Building 2 is routes 16 through 22, Building 3 is routes 23 through 29, Building 4 is routes 30 through 36, Building 5 is routes 37 through 43, Building 6 is routes 44 through 50, Building 7 is routes 51 through 57, Building 8 is routes 58 through 64, Building 9 is routes 65 through 71, and Building 10 is routes 72 through 78. Each later building is marked on the route row. Building 2 opens after route 15, Building 3 opens after route 22, Building 4 opens after route 29, Building 5 opens after route 36, Building 6 opens after route 43, Building 7 opens after route 50, Building 8 opens after route 57, Building 9 opens after route 64, and Building 10 opens after route 71.
 
 ## Simulation
 
@@ -40,14 +40,14 @@ Each tick, in order:
 
 1. A bin removes any parcel standing on it. That parcel is not delivered and does not have to match an order line. A slide or a bridge that hops over the bin does not remove the hopping parcel, because that parcel never stands on the bin.
 2. A painter sets the color of a parcel standing on it. A primer sets the color only when that parcel is gray. A counter increments once for that parcel and stamps the new value. A parcel is stamped only on the first tick it spends on that counter.
-3. Every parcel picks a destination from the block under it. A turn or a hook that is rotating a parcel picks no destination. A bin picks none.
-4. Destinations that are illegal, contested by two parcels, or occupied by a parcel that is staying are cancelled. This repeats until it settles. Conveyors, painters, counters, splitters, filters, primers, bridges, turns, slides, and hooks may step into a cell another parcel is leaving on the same tick.
+3. Every parcel picks a destination from the block under it. A turn, a hook, or a return that is changing a parcel's facing picks no destination. A pause on the tick a parcel arrives picks no destination. A bin picks none.
+4. Destinations that are illegal, contested by two parcels, or occupied by a parcel that is staying are cancelled. This repeats until it settles. Conveyors, painters, counters, splitters, filters, primers, bridges, turns, slides, hooks, returns, and pauses may step into a cell another parcel is leaving on the same tick.
 5. The surviving moves happen together. A parcel that steps onto the dock is delivered, in order.
 6. A splitter that actually sent a parcel switches to its other output.
 7. Each source emits its next parcel into the cell it faces, if that cell is empty and in bounds.
 8. The delivered sequence is compared with the order.
 
-Cycles is the tick on which the last ordered parcel arrives. Block count is the number of blocks in the submitted graph. If a delivery does not match the next order line, the attempt fails. If nothing can move, emit, release a latch, or step off a turn or a hook, the belt is stuck and the attempt fails. A layout that keeps moving without finishing, such as a loop, stops at tick 250 and fails.
+Cycles is the tick on which the last ordered parcel arrives. Block count is the number of blocks in the submitted graph. If a delivery does not match the next order line, the attempt fails. If nothing can move, emit, release a latch, or step off a turn, a hook, a return, or a pause, the belt is stuck and the attempt fails. A layout that keeps moving without finishing, such as a loop, stops at tick 250 and fails.
 
 An order line can require a color, a count, or both. A field that is left out accepts any value. Parcels start gray with count 0 unless the chute says otherwise.
 
@@ -109,6 +109,14 @@ Removes a parcel that is standing on it at the start of the tick. The parcel doe
 ### Hook
 
 A hook is a placed block and counts toward the block total. On the tick a parcel arrives, a hook rotates that parcel's facing one quarter counterclockwise and does not move the parcel. On the next tick the parcel steps one cell in the new facing. East becomes north, north becomes west, west becomes south, and south becomes east. That step follows the same rule as a conveyor: the cell must be the dock or a block, and the hook may enter a cell another parcel is leaving. If the cell is blocked by a parcel that is staying, the hook waits and tries again without rotating a second time. Rotating the hook block does not change the quarter. A hook does not paint, stamp, filter, or skip a cell. A hook is not a turn. One turn cannot leave the way one hook leaves.
+
+### Return
+
+A return is a placed block and counts toward the block total. It has no facing. Rotating the block does not change it. On the tick a parcel arrives, a return reverses that parcel's facing and does not move the parcel. East becomes west, west becomes east, north becomes south, and south becomes north. On the next tick the parcel steps one cell in that new facing, back along the way it arrived. That step follows the same rule as a conveyor: the cell must be the dock or a block, and the return may enter a cell another parcel is leaving. If the cell is blocked by a parcel that is staying, the return waits and tries again without reversing a second time. A return does not paint, stamp, filter, or skip a cell. A return is not a hook and it is not a turn. One hook leaves the parcel a quarter turn counterclockwise. One turn leaves it a quarter turn clockwise. Neither sends the parcel back along its arrival.
+
+### Pause
+
+A pause is a placed block and counts toward the block total. It has no facing. Rotating the block does not change it. On the tick a parcel arrives, a pause does not change that parcel's facing and does not move the parcel. East stays east, west stays west, north stays north, and south stays south. On the next tick the parcel steps one cell in the facing it already had. That step follows the same rule as a conveyor: the cell must be the dock or a block, and the pause may enter a cell another parcel is leaving. If the cell is blocked by a parcel that is staying, the pause waits and tries again without changing the facing. A pause does not paint, stamp, filter, or skip a cell. A pause is not a return, a hook, or a turn. A return sends the parcel back along its arrival. A hook leaves it a quarter turn counterclockwise. A turn leaves it a quarter turn clockwise. A conveyor would have stepped on the arrival tick. The pause waits one tick and then goes on in the facing the parcel already had.
 
 ## Puzzles
 
@@ -176,7 +184,21 @@ A hook is a placed block and counts toward the block total. On the tick a parcel
 62. Two Lefts sends two parcels through one hook. They leave different ways because their facings differ. A turn sends each the other way. Par is 9 cycles and 9 blocks.
 63. Second Hook loops the parcel through a counter, paints it yellow on the way back, and hooks it onto the dock. The delivery is yellow 2. Par is 9 cycles and 5 blocks.
 64. Night Hook uses the filter, the hook, the primer, and the counter. Red hooks onto the counter for stamp 1. Gray takes the long belt, becomes yellow, and is stamped 2. Blue keeps its color and is stamped 3. Par is 11 cycles and 10 blocks.
+65. About Face introduces the return. One parcel comes in facing east. The return sends it west onto the dock. A hook sends it north. A turn sends it south. Par is 4 cycles and 2 blocks.
+66. Cut Back puts red back onto a belt ahead of a later parcel. A hook and a turn send red off that belt. Par is 6 cycles and 3 blocks.
+67. Back Count lands the return on a counter. The delivery is count 1. A hook and a turn miss the counter. Par is 5 cycles and 3 blocks.
+68. Clear Behind sends red back onto the dock. A latch holds blue so the two do not claim that dock on the same tick. A hook leaves red on the belt while blue takes the dock. A turn sends red south, and blue still takes the dock. Par is 5 cycles and 5 blocks.
+69. Two Returns sends two parcels through one return. They leave back along their own arrivals, so they go opposite ways. A hook turns both a quarter counterclockwise. A turn turns both a quarter clockwise. Par is 10 cycles and 10 blocks.
+70. Second Return loops the parcel through a counter, paints it yellow on the way back, and the return puts it on the dock. The delivery is yellow 2. Par is 10 cycles and 6 blocks.
+71. Night Return uses the filter, the return, the primer, and the counter. Red returns onto the counter for stamp 1. Gray takes the long belt, becomes yellow, and is stamped 2. Blue keeps its color and is stamped 3. Par is 11 cycles and 11 blocks.
+72. Still Step introduces the pause. One parcel comes in facing east. The pause sends it east onto the dock. A return sends it west. A hook sends it north. A turn sends it south. Par is 4 cycles and 2 blocks.
+73. Let Pass holds the first parcel one tick so a later parcel takes the dock first, then the paused parcel follows. A return sends the first parcel backward. A conveyor lets the first parcel leave on the arrival tick and the order fails. Par is 4 cycles and 4 blocks.
+74. Pause Count lands the pause on a counter. The delivery is count 1. A return and a hook miss the counter. Par is 4 cycles and 2 blocks.
+75. Clear Ahead delays red so blue takes the dock first, then red arrives. A return sends red back. A hook and a turn send red off the belt. Par is 5 cycles and 6 blocks.
+76. Two Pauses sends two parcels through one pause. They leave along the facings they arrived with. A return sends each back. A hook turns both a quarter counterclockwise. A turn turns both a quarter clockwise. Par is 11 cycles and 11 blocks.
+77. Second Pause loops the parcel through a counter, paints it yellow on the way, and the pause puts it on the dock. The delivery is yellow 2. A return sends it back the other way. Par is 9 cycles and 5 blocks.
+78. Night Pause uses the filter, the pause, the primer, and the counter. Red pauses onto the counter for stamp 1. Gray takes the long belt, becomes yellow, and is stamped 2. Blue keeps its color and is stamped 3. The pause keeps each parcel's facing. A return would reverse them. Par is 11 cycles and 10 blocks.
 
 ## Limits
 
-These are Building 1, Building 2, Building 3, Building 4, Building 5, Building 6, Building 7, and Building 8. There is no histogram, no sound, and no proof that par is the shortest possible route: par is the reference graph, and another graph can deliver the order with a different cycle count or block count. Playback of a run that hits the tick cap is shortened on screen; the simulation itself still runs to the cap.
+These are Building 1, Building 2, Building 3, Building 4, Building 5, Building 6, Building 7, Building 8, Building 9, and Building 10. There is no histogram, no sound, and no proof that par is the shortest possible route: par is the reference graph, and another graph can deliver the order with a different cycle count or block count. Playback of a run that hits the tick cap is shortened on screen; the simulation itself still runs to the cap.
