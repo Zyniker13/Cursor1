@@ -3,7 +3,7 @@ extends RefCounted
 
 const Rules = preload("res://rules/rules.gd")
 
-## Twelve wings of the closed museum. Each solution is a list of actions the rules
+## Thirteen wings of the closed museum. Each solution is a list of actions the rules
 ## accept. Tokens are R L U D, W for wait, and T0 / T1 for lamps.
 
 
@@ -81,6 +81,8 @@ static func _puzzle(number: int, title: String, lesson: String, rows: PackedStri
 		wing_number = number - 62
 	elif wing == "Oriel Wing":
 		wing_number = number - 68
+	elif wing == "Veil Wing":
+		wing_number = number - 74
 	return {
 		"number": number,
 		"wing": wing,
@@ -122,6 +124,7 @@ static func _all() -> Array:
 	puzzles.append_array(_cloister_wing())
 	puzzles.append_array(_porch_wing())
 	puzzles.append_array(_oriel_wing())
+	puzzles.append_array(_veil_wing())
 	return puzzles
 
 
@@ -1457,5 +1460,114 @@ static func _oriel_wing() -> Array:
 			[_guard(4, 3, [Vector2i(4, 3)], 2)],
 			"T1 R R W R R R R R R",
 			"Oriel Wing"
+		),
+	]
+
+
+static func _veil_wing() -> Array:
+	return [
+		_puzzle(
+			75,
+			"The First Cloth",
+			"This room is about the rule that a curtain lets the lamp light the gap beyond and stops the guard's sight.",
+			PackedStringArray([
+				"########",
+				"#S.G..X#",
+				"###C####",
+				"#......#",
+				"#......#",
+				"########",
+			]),
+			[_lamp(3, 3, "n", 2)],
+			[_guard(3, 4, [Vector2i(3, 4)], 3)],
+			"R R R R R",
+			"Veil Wing"
+		),
+		_puzzle(
+			76,
+			"The Seen Cloth",
+			"This room is about the rule that the curtain cell itself is lit, so snuff before you step onto it.",
+			PackedStringArray([
+				"########",
+				"#.SC..X#",
+				"#......#",
+				"#......#",
+				"########",
+			]),
+			[_lamp(3, 2, "n", 1)],
+			[_guard(5, 2, [Vector2i(5, 2)], 3)],
+			"L D D R R T0 U U R R R",
+			"Veil Wing"
+		),
+		_puzzle(
+			77,
+			"The Short Road",
+			"This room is about the rule that the called guard's shortest floor path goes through the curtain.",
+			PackedStringArray([
+				"########",
+				"#......#",
+				"#.####.#",
+				"#.#.S..#",
+				"#.#C...#",
+				"#.#.G..#",
+				"#...X..#",
+				"########",
+			]),
+			[_lamp(3, 3, "w", 0), _lamp(3, 5, "n", 1)],
+			[_guard(3, 6, [Vector2i(3, 6)], 4)],
+			"T0 W W W W W W D D D",
+			"Veil Wing"
+		),
+		_puzzle(
+			78,
+			"The Dark Beside",
+			"This room is about the rule that the tile beside the curtain stays dark and the tile past it is lit.",
+			PackedStringArray([
+				"########",
+				"#......#",
+				"#.S....#",
+				"#..C...#",
+				"#..G..X#",
+				"########",
+			]),
+			[_lamp(3, 2, "e", 2)],
+			[_guard(3, 1, [Vector2i(3, 1)], 3)],
+			"D D R R R R",
+			"Veil Wing"
+		),
+		_puzzle(
+			79,
+			"The Second Lamp",
+			"This room is about the rule that the room keeps its second lamp and that light has to pass the curtain.",
+			PackedStringArray([
+				"########",
+				"#X.G...#",
+				"###C...#",
+				"#..S...#",
+				"#......#",
+				"#......#",
+				"########",
+			]),
+			[_lamp(5, 2, "n", 2), _lamp(3, 3, "n", 2, false)],
+			[_guard(6, 5, [Vector2i(6, 5)], 4)],
+			"R R T0 L L U D D T1 R R R U U U L L L L L",
+			"Veil Wing"
+		),
+		_puzzle(
+			80,
+			"The Last Cloth",
+			"This room is about the rule that you leave by the gap the curtain left lit and unwatched.",
+			PackedStringArray([
+				"########",
+				"#S.G..X#",
+				"#..C...#",
+				"#......#",
+				"#......#",
+				"########",
+			]),
+			[_lamp(3, 4, "n", 3)],
+			[_guard(3, 3, [Vector2i(3, 3)], 2)],
+			"R R R R R",
+			"Veil Wing"
 		),
 	]
