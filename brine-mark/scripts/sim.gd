@@ -5,7 +5,7 @@ class_name BrineSim
 #
 # The player never selects an ant. They paint cells. Workers are simulated
 # labor that follow the paint under their feet. This slice has one scenario:
-# a wet season, a short dry season, a cart beat, a ship beat, then a market beat. The full game's population cap is
+# a wet season, a short dry season, a cart beat, a ship beat, a market beat, then a yard beat. The full game's population cap is
 # 200; this slice hard-caps at POP_CAP (40) and will not grow past it.
 #
 # Map
@@ -15,9 +15,10 @@ class_name BrineSim
 # - The anthill is the fixed cell ANTHILL (14, 5). It is walkable, not
 #   paintable, and the only place workers spawn.
 # - Every other cell accepts one mark: empty, rake, stack, cover, trail, pan,
-#   crib, ship, or stall. A crib is not walkable until the cart beat, a ship
-#   is not walkable until the ship beat, and a stall is not walkable until
-#   the market beat, so painting one cannot change an earlier haul.
+#   crib, ship, stall, or yard. A crib is not walkable until the cart beat,
+#   a ship is not walkable until the ship beat, a stall is not walkable until
+#   the market beat, and a yard is not walkable until the yard beat, so
+#   painting one cannot change an earlier haul.
 #
 # Determinism
 # - No randomness and no seed. Given the same paint map at each tick and this
@@ -31,7 +32,7 @@ class_name BrineSim
 # Seasons
 # - Wet season: tick indexes 0 .. RAIN_TICK-1. Gatherers on brine-adjacent
 #   rake cells pile loose salt. Pan cells are only ground to cross. Crib
-#   cells, ship cells, and stall cells are marks only.
+#   cells, ship cells, stall cells, and yard cells are marks only.
 # - At tick RAIN_TICK the first rain falls. Loose salt is destroyed. Stacked
 #   salt on a cover cell is hauled into the wet-season ledger and cleared
 #   from the flats. Stacked salt outside cover is destroyed. The scenario
@@ -67,9 +68,21 @@ class_name BrineSim
 #   stall, the salt stays on the ship and the coin total stays 0. Selling
 #   does not change the stored, carted, or shipped totals.
 # - At tick RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK the
-#   market beat ends and the scenario ends. Stored salt is the ledger still
+#   market beat ends and the yard beat opens. The scenario does not end.
+#   Coins earned at a stall stay there.
+# - Yard beat: the next YARD_TICK work rounds (100 ticks, 10 seconds).
+#   Every worker banks. A yard cell is the only goal, and it is walkable
+#   only now. One unit of work banks 1 coin already earned at a stall,
+#   taking stall coins in row-major order, up to YARD_CAP. One coin moves.
+#   Nothing is rolled. Rakes and pans make no salt. With no yard, the coins
+#   stay at the stall and the yard total stays 0. The earned coin total is
+#   still reported. Banking does not change the stored, carted, shipped, or
+#   earned-coin totals.
+# - At tick RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK
+#   the yard beat ends and the scenario ends. Stored salt is the ledger still
 #   unmoved, plus covered salt still on the map, plus salt still in cribs,
-#   plus salt still on ships, plus salt sold at stalls.
+#   plus salt still on ships, plus coins still at stalls, plus coins banked
+#   in yards.
 #
 # Tick (work rounds, then a rain at each season boundary)
 # 1. If the scenario has already ended, the tick does nothing.
@@ -80,8 +93,8 @@ class_name BrineSim
 #      1 stack  — move loose salt into stacks
 #      2 cover  — move stacked salt into cover
 #    During the cart beat every job carries the bank. During the ship beat
-#    every job loads a ship. During the market beat every job sells. The job
-#    id does not change.
+#    every job loads a ship. During the market beat every job sells. During
+#    the yard beat every job banks the purse. The job id does not change.
 #    The new worker acts on the tick it spawns. The starting population is
 #    INITIAL_POP, created before tick 0. Spawn refuses to exceed POP_CAP.
 # 3. Goals, from the salt map and the beat as the tick begins (later
@@ -98,13 +111,17 @@ class_name BrineSim
 #              All three jobs share that flow.
 #      Market: stall cell below STALL_CAP while any salt remains on a ship.
 #              All three jobs share that flow. One sale is one coin.
+#      Yard:   yard cell below YARD_CAP while any earned coin remains at a
+#              stall. All three jobs share that flow. One bank is one coin.
 #    Trail cells are only ground to cross. They are not goals. Pan cells are
 #    not goals during the wet season. Rake cells are not goals during the
 #    dry season or any later beat. Crib cells are not goals before the cart
-#    beat. During the ship beat and the market beat they are only ground.
-#    Ship cells are not goals before the ship beat. During the market beat
-#    they are only ground, so workers can walk from the ship to the stall.
-#    Stall cells are not goals before the market beat.
+#    beat. During the ship beat, the market beat, and the yard beat they are
+#    only ground. Ship cells are not goals before the ship beat. During the
+#    market beat and the yard beat they are only ground, so workers can walk
+#    from the ship to the stall. Stall cells are not goals before the market
+#    beat. During the yard beat they are only ground, so workers can walk
+#    from the stall to the yard. Yard cells are not goals before the yard beat.
 # 4. Each job builds a flow field: multi-source BFS from its goals through
 #    walkable cells (any painted cell, plus the anthill). A goal's next step
 #    is itself. Every other reached cell points one step toward the nearest
@@ -127,6 +144,8 @@ class_name BrineSim
 #              order (y, then x).
 #      Market: 1 ship salt is sold onto this stall for 1 coin. Ships are taken
 #              in row-major order (y, then x).
+#      Yard:   1 earned coin moves from a stall onto this yard. Stalls are
+#              taken in row-major order (y, then x).
 # 6. If the population is above POP_CAP, the violation is counted. Spawning
 #    is the only way workers are added, and it stops at the cap.
 # 7. The tick index increases by 1. When it reaches RAIN_TICK, the first rain
@@ -136,8 +155,10 @@ class_name BrineSim
 #    RAIN_TICK + DRY_TICK + CART_TICK, the ship beat's first work round is the
 #    next tick. When it reaches RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK,
 #    the market beat's first work round is the next tick. When it reaches
-#    RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK, the market
-#    beat ends.
+#    RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK, the yard
+#    beat's first work round is the next tick. When it reaches
+#    RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK,
+#    the yard beat ends.
 #
 # Rain
 # - Loose salt is destroyed on every cell. Loose salt never survives a rain.
@@ -147,7 +168,8 @@ class_name BrineSim
 # - Second rain: stacked salt on a cover cell stays, folded into the covered
 #   pile, and counts toward stored salt along with the ledger. The cart beat
 #   then moves that bank; the rain itself does not. The ship beat then loads
-#   a crib, and the market beat then sells a ship; the rain does neither.
+#   a crib, the market beat then sells a ship, and the yard beat then banks
+#   the coins; the rain does none of those.
 # - Stacked or covered salt outside a cover cell is destroyed.
 # - Destruction is applied row-major. The same paint map yields the same
 #   stored-salt number.
@@ -157,10 +179,13 @@ class_name BrineSim
 #   haul and what the dry season held. If the cart moved any salt, the line
 #   also names how much reached a crib. If the ship beat loaded any of that
 #   crib, the line names how much left it. If the market sold any of that
-#   ship, the line names the coins. A plan that paints no crib keeps the
-#   summary it had before the cart beat existed. A plan that paints no
-#   ship keeps the summary it had before the ship beat existed. A plan that
-#   paints no stall keeps the summary it had before the market beat existed.
+#   ship, the line names the coins. If the yard banked any of those coins,
+#   the line names how much reached the yard. A plan that paints no crib
+#   keeps the summary it had before the cart beat existed. A plan that paints
+#   no ship keeps the summary it had before the ship beat existed. A plan
+#   that paints no stall keeps the summary it had before the market beat
+#   existed. A plan that paints no yard keeps the summary it had before the
+#   yard beat existed.
 # - Stored salt == 0 and any salt was destroyed: the quota was missed because
 #   uncovered salt was destroyed. An all-rake coast does this: workers pile
 #   loose salt, nothing is stacked into cover, the first rain wrecks the
@@ -173,8 +198,9 @@ class_name BrineSim
 # - The scene shows the current beat's remaining ticks at TICK_HZ. The cart
 #   countdown refills when the second rain opens the beat. The ship countdown
 #   refills when the cart beat ends. The market countdown refills when the
-#   ship beat ends. The sim itself counts ticks, not
-#   wall-clock time, so a headless run is the same scenario as the window.
+#   ship beat ends. The yard countdown refills when the market beat ends.
+#   The sim itself counts ticks, not wall-clock time, so a headless run is
+#   the same scenario as the window.
 
 const EMPTY := 0
 const RAKE := 1
@@ -185,14 +211,16 @@ const PAN := 5
 const CRIB := 6
 const SHIP := 7
 const STALL := 8
+const YARD := 9
 
 const WET := 0
 const DRY := 1
 # Cart is a beat after the dry season. The ship beat follows the cart, then
-# the market. get_season() stays DRY through all three.
+# the market, then the yard. get_season() stays DRY through all of them.
 const CART := 2
 const SHIPPING := 3
 const MARKET := 4
+const YARDING := 5
 
 const GRID_W := 17
 const GRID_H := 12
@@ -208,6 +236,7 @@ const DRY_TICK := 200
 const CART_TICK := 100
 const SHIP_TICK := 100
 const MARKET_TICK := 100
+const YARD_TICK := 100
 const TICK_HZ := 10
 
 const LOOSE_CAP := 12
@@ -216,6 +245,7 @@ const COVER_CAP := 999
 const CRIB_CAP := 9999
 const SHIP_CAP := 9999
 const STALL_CAP := 9999
+const YARD_CAP := 9999
 
 const JOB_GATHER := 0
 const JOB_STACK := 1
@@ -231,6 +261,7 @@ var _covered: Dictionary = {}
 var _crib: Dictionary = {}
 var _ship: Dictionary = {}
 var _stall: Dictionary = {}
+var _yard: Dictionary = {}
 var _workers: Array = []
 
 var _next_id: int = 0
@@ -265,6 +296,7 @@ func restart() -> void:
 	_crib.clear()
 	_ship.clear()
 	_stall.clear()
+	_yard.clear()
 	_workers.clear()
 	_next_id = 0
 	_tick_index = 0
@@ -287,7 +319,7 @@ func paint_cell(x: int, y: int, mode: int) -> bool:
 		return false
 	if not _paintable(x, y):
 		return false
-	if mode < EMPTY or mode > STALL:
+	if mode < EMPTY or mode > YARD:
 		return false
 	var cell := Vector2i(x, y)
 	if mode == EMPTY:
@@ -304,7 +336,7 @@ func get_paint(x: int, y: int) -> int:
 func tick() -> void:
 	if _rain_done:
 		return
-	var end_tick := RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK
+	var end_tick := RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK
 	if _tick_index >= end_tick:
 		_finish()
 		return
@@ -323,20 +355,22 @@ func tick() -> void:
 		_open_ship()
 	elif _tick_index == RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK:
 		_open_market()
+	elif _tick_index == RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK:
+		_open_yard()
 	elif _tick_index >= end_tick:
 		_finish()
 
 
 func run_until_rain() -> void:
 	var guard := 0
-	var limit := RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + 2
+	var limit := RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + 2
 	while not _rain_done and guard < limit:
 		tick()
 		guard += 1
 
 
 func get_stored_salt() -> int:
-	return _ledger + _covered_on_map() + _sum(_crib) + _sum(_ship) + _sum(_stall)
+	return _ledger + _covered_on_map() + _sum(_crib) + _sum(_ship) + _sum(_stall) + _sum(_yard)
 
 
 func get_loose_salt() -> int:
@@ -355,32 +389,42 @@ func get_season() -> int:
 	return _season
 
 
-# WET, DRY, CART, SHIPPING, or MARKET. Weather stays dry after the first rain.
+# WET, DRY, CART, SHIPPING, MARKET, or YARDING. Weather stays dry after the first rain.
 func get_beat() -> int:
 	return _phase
 
 
-# Salt that reached a crib. Salt loaded onto a ship, and salt sold later, still counts.
+# Salt that reached a crib. Salt loaded onto a ship, salt sold later, and coins banked later, still count.
 func get_carted() -> int:
-	return _sum(_crib) + _sum(_ship) + _sum(_stall)
+	return _sum(_crib) + _sum(_ship) + _sum(_stall) + _sum(_yard)
 
 
 func get_crib_salt() -> int:
 	return _sum(_crib)
 
 
-# Salt that reached a ship. Salt sold at a stall still counts.
+# Salt that reached a ship. Salt sold at a stall, and coins banked later, still count.
 func get_shipped() -> int:
-	return _sum(_ship) + _sum(_stall)
+	return _sum(_ship) + _sum(_stall) + _sum(_yard)
 
 
 func get_ship_salt() -> int:
 	return _sum(_ship)
 
 
-# One coin per sold unit. Nothing is rolled.
+# One coin per sold unit, including coins later banked in a yard. Nothing is rolled.
 func get_coins() -> int:
+	return _sum(_stall) + _sum(_yard)
+
+
+# Coins still sitting at a stall. Banking moves these into a yard.
+func get_purse() -> int:
 	return _sum(_stall)
+
+
+# Coins moved into a yard. This is the yard total.
+func get_banked() -> int:
+	return _sum(_yard)
 
 
 func get_bank_left() -> int:
@@ -419,6 +463,8 @@ func get_ticks_until_rain() -> int:
 		horizon = RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK
 	elif _phase == MARKET:
 		horizon = RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK
+	elif _phase == YARDING:
+		horizon = RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK
 	return maxi(horizon - _tick_index, 0)
 
 
@@ -439,6 +485,7 @@ func get_cell_salt(x: int, y: int) -> Dictionary:
 		"crib": _amount(_crib, cell),
 		"ship": _amount(_ship, cell),
 		"stall": _amount(_stall, cell),
+		"yard": _amount(_yard, cell),
 	}
 
 
@@ -473,6 +520,8 @@ func rules_api() -> PackedStringArray:
 		"get_shipped",
 		"get_ship_salt",
 		"get_coins",
+		"get_purse",
+		"get_banked",
 		"get_bank_left",
 		"get_population",
 		"get_max_population",
@@ -529,14 +578,17 @@ func _walkable(x: int, y: int) -> bool:
 	if paint == EMPTY:
 		return false
 	# A crib stays shut until the cart beat, a ship stays shut until the ship
-	# beat, and a stall stays shut until the market beat, so none of them can
-	# shortcut an earlier haul. The crib stays open after the cart, and the
-	# ship stays open during the market beat, so workers can walk the salt forward.
-	if paint == CRIB and _phase != CART and _phase != SHIPPING and _phase != MARKET:
+	# beat, a stall stays shut until the market beat, and a yard stays shut
+	# until the yard beat, so none of them can shortcut an earlier haul. The
+	# crib and the ship stay open afterward, and the stall stays open during
+	# the yard beat, so workers can walk the coins forward.
+	if paint == CRIB and _phase != CART and _phase != SHIPPING and _phase != MARKET and _phase != YARDING:
 		return false
-	if paint == SHIP and _phase != SHIPPING and _phase != MARKET:
+	if paint == SHIP and _phase != SHIPPING and _phase != MARKET and _phase != YARDING:
 		return false
-	if paint == STALL and _phase != MARKET:
+	if paint == STALL and _phase != MARKET and _phase != YARDING:
+		return false
+	if paint == YARD and _phase != YARDING:
 		return false
 	return true
 
@@ -598,6 +650,13 @@ func _flows() -> Dictionary:
 			JOB_GATHER: selling,
 			JOB_STACK: selling,
 			JOB_COVER: selling,
+		}
+	if _phase == YARDING:
+		var banking := _build_flow(_yard_goals())
+		return {
+			JOB_GATHER: banking,
+			JOB_STACK: banking,
+			JOB_COVER: banking,
 		}
 	return {
 		JOB_GATHER: _build_flow(_gather_goals()),
@@ -665,6 +724,21 @@ func _stall_goals() -> Array:
 			if _paint_at(cell) != STALL:
 				continue
 			if _amount(_stall, cell) >= STALL_CAP:
+				continue
+			goals.append(cell)
+	return goals
+
+
+func _yard_goals() -> Array:
+	var goals: Array = []
+	if get_purse() <= 0:
+		return goals
+	for y in GRID_H:
+		for x in GRID_W:
+			var cell := Vector2i(x, y)
+			if _paint_at(cell) != YARD:
+				continue
+			if _amount(_yard, cell) >= YARD_CAP:
 				continue
 			goals.append(cell)
 	return goals
@@ -760,6 +834,9 @@ func _work(worker: Worker) -> void:
 	if _phase == MARKET:
 		_sell(worker)
 		return
+	if _phase == YARDING:
+		_bank(worker)
+		return
 	var cell := Vector2i(worker.x, worker.y)
 	if worker.job == JOB_GATHER:
 		if _phase == DRY:
@@ -853,6 +930,24 @@ func _sell(worker: Worker) -> void:
 			return
 
 
+func _bank(worker: Worker) -> void:
+	var cell := Vector2i(worker.x, worker.y)
+	if _paint_at(cell) != YARD:
+		return
+	var held := _amount(_yard, cell)
+	if held >= YARD_CAP:
+		return
+	for y in GRID_H:
+		for x in GRID_W:
+			var src := Vector2i(x, y)
+			var amount := _amount(_stall, src)
+			if amount <= 0:
+				continue
+			_put(_stall, src, amount - 1)
+			_put(_yard, cell, held + 1)
+			return
+
+
 func _best_loose_neighbor(cell: Vector2i) -> Vector2i:
 	var best := Vector2i(-1, -1)
 	var best_amount := 0
@@ -920,6 +1015,12 @@ func _open_market() -> void:
 	_phase = MARKET
 
 
+func _open_yard() -> void:
+	if _phase != MARKET or _rain_done:
+		return
+	_phase = YARDING
+
+
 func _finish() -> void:
 	if _rain_done:
 		return
@@ -976,4 +1077,6 @@ func _make_summary() -> String:
 		message += " Shipped %d." % get_shipped()
 	if get_coins() > 0:
 		message += " Coins %d." % get_coins()
+	if get_banked() > 0:
+		message += " Banked %d into the yard." % get_banked()
 	return message

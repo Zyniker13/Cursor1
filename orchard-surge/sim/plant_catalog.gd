@@ -14,7 +14,8 @@ const BRIAR := 5
 const FLARE := 6
 const HEARTH := 7
 const SHEAR := 8
-const COUNT := 9
+const CHIME := 9
+const COUNT := 10
 
 # fire_ticks and slow_ticks are sim ticks of length DT.
 # light_radius, weapon_range, projectile_speed, and splash_radius are pixels.
@@ -24,6 +25,7 @@ const COUNT := 9
 # melts_pitch: this plant's light reveals pitch moths and lets shots hurt them.
 # thaws_frost: this plant's light reveals frost moths and lets shots hurt them.
 # cuts_web: this plant's light reveals web moths and lets shots hurt them.
+# cracks_glass: this plant's light reveals glass moths and lets shots hurt them.
 const DEFS := [
 	{
 		"name": "Pea",
@@ -41,6 +43,7 @@ const DEFS := [
 		"melts_pitch": false,
 		"thaws_frost": false,
 		"cuts_web": false,
+		"cracks_glass": false,
 	},
 	{
 		"name": "Vine",
@@ -58,6 +61,7 @@ const DEFS := [
 		"melts_pitch": false,
 		"thaws_frost": false,
 		"cuts_web": false,
+		"cracks_glass": false,
 	},
 	{
 		"name": "Lantern",
@@ -75,6 +79,7 @@ const DEFS := [
 		"melts_pitch": false,
 		"thaws_frost": false,
 		"cuts_web": false,
+		"cracks_glass": false,
 	},
 	{
 		"name": "Gourd",
@@ -92,6 +97,7 @@ const DEFS := [
 		"melts_pitch": false,
 		"thaws_frost": false,
 		"cuts_web": false,
+		"cracks_glass": false,
 	},
 	{
 		"name": "Wick",
@@ -109,6 +115,7 @@ const DEFS := [
 		"melts_pitch": false,
 		"thaws_frost": false,
 		"cuts_web": false,
+		"cracks_glass": false,
 	},
 	{
 		"name": "Briar",
@@ -126,6 +133,7 @@ const DEFS := [
 		"melts_pitch": false,
 		"thaws_frost": false,
 		"cuts_web": false,
+		"cracks_glass": false,
 	},
 	{
 		"name": "Flare",
@@ -143,6 +151,7 @@ const DEFS := [
 		"melts_pitch": true,
 		"thaws_frost": false,
 		"cuts_web": false,
+		"cracks_glass": false,
 	},
 	{
 		"name": "Hearth",
@@ -160,6 +169,7 @@ const DEFS := [
 		"melts_pitch": false,
 		"thaws_frost": true,
 		"cuts_web": false,
+		"cracks_glass": false,
 	},
 	{
 		"name": "Shear",
@@ -177,6 +187,25 @@ const DEFS := [
 		"melts_pitch": false,
 		"thaws_frost": false,
 		"cuts_web": true,
+		"cracks_glass": false,
+	},
+	{
+		"name": "Chime",
+		"role": "Cracks glass, modest shots, tight light.",
+		"damage": 3,
+		"fire_ticks": 27,
+		"light_radius": 160.0,
+		"weapon_range": 140.0,
+		"projectile_speed": 360.0,
+		"slow_factor": 1.0,
+		"slow_ticks": 0,
+		"splash_radius": 0.0,
+		"burns_shroud": false,
+		"cracks_rind": false,
+		"melts_pitch": false,
+		"thaws_frost": false,
+		"cuts_web": false,
+		"cracks_glass": true,
 	},
 ]
 

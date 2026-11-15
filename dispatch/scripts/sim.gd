@@ -7,7 +7,7 @@ const DIRS: Array[Vector2i] = [
 	Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, -1)
 ]
 const DIR_NAMES: Array[String] = ["East", "South", "West", "North"]
-const TYPES: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge"]
+const TYPES: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn"]
 const PAINTS: Array[String] = ["red", "blue", "yellow"]
 const TICK_CAP := 250
 
@@ -124,6 +124,11 @@ static func run(puzzle: Dictionary, graph: Array) -> Dictionary:
 			elif typ == "bridge":
 				var step: Vector2i = DIRS[int(block["dir"])]
 				parcel["intent"] = Vector2i(int(parcel["x"]), int(parcel["y"])) + step * 2
+			elif typ == "turn":
+				if int(parcel["hold"]) < 1:
+					parcel["dir"] = (int(parcel["dir"]) + 1) % 4
+				else:
+					parcel["intent"] = Vector2i(int(parcel["x"]), int(parcel["y"])) + DIRS[int(parcel["dir"])]
 			else:
 				parcel["intent"] = Vector2i(int(parcel["x"]), int(parcel["y"])) + DIRS[int(block["dir"])]
 
@@ -177,6 +182,9 @@ static func run(puzzle: Dictionary, graph: Array) -> Dictionary:
 			if block != null and str(block["type"]) == "splitter":
 				ejected[_key(origin.x, origin.y)] = true
 			moved = true
+			var travel := _dir_of(dest - origin)
+			if travel >= 0:
+				parcel["dir"] = travel
 			if dest == dock:
 				delivered.append({
 					"color": str(parcel["color"]),
@@ -213,6 +221,7 @@ static func run(puzzle: Dictionary, graph: Array) -> Dictionary:
 				"hold": 0,
 				"counted": false,
 				"intent": null,
+				"dir": int(source["dir"]),
 			})
 			next_id += 1
 			emitted = true
@@ -225,16 +234,24 @@ static func run(puzzle: Dictionary, graph: Array) -> Dictionary:
 			return _finish(true, tick, graph.size(), "", end_tick, delivered, frames)
 
 		var latch_pending := false
+		var turn_pending := false
 		for parcel in parcels:
 			var block = blocks.get(_key(int(parcel["x"]), int(parcel["y"])))
-			if block == null or str(block["type"]) != "latch" or int(parcel["hold"]) < 1:
+			if block == null:
 				continue
-			var dest := Vector2i(int(parcel["x"]), int(parcel["y"])) + DIRS[int(block["dir"])]
-			if _find_at(parcels, dest) == null and _enterable(dest, dock, width, height, walls, source_cells, blocks):
-				latch_pending = true
+			var typ := str(block["type"])
+			var ahead := Vector2i(int(parcel["x"]), int(parcel["y"]))
+			if typ == "latch" and int(parcel["hold"]) >= 1:
+				ahead += DIRS[int(block["dir"])]
+				if _find_at(parcels, ahead) == null and _enterable(ahead, dock, width, height, walls, source_cells, blocks):
+					latch_pending = true
+			elif typ == "turn" and int(parcel["hold"]) >= 1:
+				ahead += DIRS[int(parcel["dir"])]
+				if _find_at(parcels, ahead) != null or _enterable(ahead, dock, width, height, walls, source_cells, blocks):
+					turn_pending = true
 		if tick >= TICK_CAP:
 			return _finish(false, 0, graph.size(), "tick_cap", end_tick, delivered, frames)
-		if not moved and not emitted and not latch_pending:
+		if not moved and not emitted and not latch_pending and not turn_pending:
 			return _finish(false, 0, graph.size(), "stuck", end_tick, delivered, frames)
 
 	return _finish(false, 0, graph.size(), "tick_cap", end_tick, delivered, frames)
@@ -261,6 +278,7 @@ static func _snapshot(tick: int, parcels: Array, delivered: Array, blocks: Dicti
 			"y": int(parcel["y"]),
 			"color": str(parcel["color"]),
 			"count": int(parcel["count"]),
+			"dir": int(parcel["dir"]),
 		})
 	var markers: Array = []
 	for key in blocks.keys():
@@ -329,6 +347,18 @@ static func _find_at(parcels: Array, pos: Vector2i):
 		if int(parcel["x"]) == pos.x and int(parcel["y"]) == pos.y:
 			return parcel
 	return null
+
+
+static func _dir_of(delta: Vector2i) -> int:
+	if delta.x > 0 and delta.y == 0:
+		return 0
+	if delta.y > 0 and delta.x == 0:
+		return 1
+	if delta.x < 0 and delta.y == 0:
+		return 2
+	if delta.y < 0 and delta.x == 0:
+		return 3
+	return -1
 
 
 static func _in_bounds(x: int, y: int, width: int, height: int) -> bool:
