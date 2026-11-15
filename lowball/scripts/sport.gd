@@ -34,8 +34,14 @@ extends RefCounted
 #   * Before a week the club picks one stat as the focus.
 #   * After that week's match, every player on the roster gains TRAINING_GAIN
 #     (+1) in that stat. The result is clamped to STAT_CAP. Stats never fall
-#     below STAT_FLOOR. Four weeks means four drills; a generated 15 can reach
-#     19, still inside the cap. A stat already at 20 stays at 20.
+#     below STAT_FLOOR. Eight weeks means eight drills. The same focus each
+#     week takes a generated 15 to the cap of 20, and a stat already at 20
+#     stays at 20.
+#
+# Series
+#   * Eight match weeks. The two clubs play each other once a week.
+#   * The board goal is 4 wins out of those 8 matches. GOAL_TEXT states that
+#     goal on the office screen from the start and again on the board.
 #
 # Tactics (one per club per match, used on offense and on defense)
 #   * Aggressive: Lash +3 and Eye -2 for the zone weights. The drive contests
@@ -95,11 +101,11 @@ const TRAINING_GAIN := 1
 const ROSTER_SIZE := 6
 const LINEUP_SIZE := 4
 const INNINGS := 3
-const SERIES_WEEKS := 4
-const GOAL_WINS := 2
+const SERIES_WEEKS := 8
+const GOAL_WINS := 4
 const PAS_PER_MATCH := INNINGS * 2 * LINEUP_SIZE
 
-const GOAL_TEXT := "Board goal: win at least 2 of these 4 matches."
+const GOAL_TEXT := "Board goal: win at least 4 of these 8 matches."
 
 const STATS: Array = ["lash", "eye", "legs", "glove", "arm", "read"]
 const TACTICS: Array = ["aggressive", "patient", "field"]
