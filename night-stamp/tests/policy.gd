@@ -204,6 +204,49 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 		guess += 4
 	if rule == "ignore_covered" and row > 0 and state.form[row - 1][col] != null and card_id != "exemption":
 		guess -= 8
+	if rule == "refuse_bottom" and row == 2 and card_id != "exemption":
+		guess -= 8
+	if rule == "yield_exact_two":
+		var filled = 0
+		for filled_row in 3:
+			for filled_col in 3:
+				if state.form[filled_row][filled_col] != null:
+					filled += 1
+		if filled == 1:
+			guess += 3
+		elif filled >= 2:
+			guess -= 5
+	if rule == "no_drop_if_every_row":
+		var row_open = true
+		for existing_col in 3:
+			if state.form[row][existing_col] != null:
+				row_open = false
+		if row_open:
+			guess += 3
+	if rule == "double_last":
+		guess += row * 2 + col
+	if rule == "refuse_col2" and col == 1 and card_id != "exemption" and card_id != "hold":
+		guess -= 8
+	if rule == "yield_every_column":
+		var column_open = true
+		for existing_row in 3:
+			if state.form[existing_row][col] != null:
+				column_open = false
+		if column_open:
+			guess += 3
+	if rule == "double_patience_if_col1_empty" and col == 0:
+		guess += 3
+	if rule == "ignore_adjacent" and card_id != "exemption":
+		var touching = 0
+		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var beside_row = row + delta.x
+			var beside_col = col + delta.y
+			if beside_row < 0 or beside_col < 0 or beside_row > 2 or beside_col > 2:
+				continue
+			if state.form[beside_row][beside_col] != null:
+				touching += 1
+		if touching > 0:
+			guess -= 8
 	if rule == "ignore_isolated":
 		var neighbors = 0
 		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
