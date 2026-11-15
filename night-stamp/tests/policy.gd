@@ -660,6 +660,67 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 					later_tied = true
 		if late_count >= 2 and not strictly_higher and not later_tied:
 			guess += late_number
+	if rule == "double_lowest_latest":
+		var low_number = _stamp_number(state, card_id, row, col)
+		var low_count = 1
+		var strictly_lower = false
+		var later_tied = false
+		for low_row in range(0, row + 1):
+			var low_end = 2
+			if low_row == row:
+				low_end = col - 1
+			for low_col in range(0, low_end + 1):
+				var low_stamp = state.form[low_row][low_col]
+				if low_stamp == null:
+					continue
+				low_count += 1
+				if _stamp_number(state, String(low_stamp["card_id"]), low_row, low_col) < low_number:
+					strictly_lower = true
+		for low_row in range(row, 3):
+			var low_start = 0
+			if low_row == row:
+				low_start = col + 1
+			for low_col in range(low_start, 3):
+				var low_stamp = state.form[low_row][low_col]
+				if low_stamp == null:
+					continue
+				low_count += 1
+				if _stamp_number(state, String(low_stamp["card_id"]), low_row, low_col) <= low_number:
+					later_tied = true
+		if low_count >= 2 and not strictly_lower and not later_tied:
+			guess += low_number
+	if rule == "drop_if_exact_six":
+		var six_filled = 0
+		for six_row in 3:
+			for six_col in 3:
+				if state.form[six_row][six_col] != null:
+					six_filled += 1
+		if six_filled == 5:
+			guess -= 6
+		elif six_filled == 6:
+			guess += 4
+	if rule == "double_full_column":
+		var column_filled = 0
+		for scan_row in 3:
+			if state.form[scan_row][col] != null:
+				column_filled += 1
+		if column_filled == 2:
+			guess += 10
+		elif column_filled == 1:
+			guess += 4
+	if rule == "double_side_later":
+		var sided = false
+		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var side_row = row + delta.x
+			var side_col = col + delta.y
+			if side_row < 0 or side_col < 0 or side_row > 2 or side_col > 2:
+				continue
+			if state.form[side_row][side_col] == null:
+				continue
+			if side_row < row or (side_row == row and side_col < col):
+				sided = true
+		if sided:
+			guess += _stamp_number(state, card_id, row, col)
 	if rule == "yield_diagonal_pair":
 		var partner_row = -1
 		var partner_col = -1
