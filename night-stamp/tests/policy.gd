@@ -247,6 +247,64 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 				touching += 1
 		if touching > 0:
 			guess -= 8
+	if rule == "refuse_center" and row == 1 and col == 1 and card_id != "exemption" and card_id != "hold":
+		guess -= 8
+	if rule == "yield_diagonal":
+		var corner = false
+		for delta in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var corner_row = row + delta.x
+			var corner_col = col + delta.y
+			if corner_row < 0 or corner_col < 0 or corner_row > 2 or corner_col > 2:
+				continue
+			if state.form[corner_row][corner_col] != null:
+				corner = true
+		if corner:
+			guess += 4
+	if rule == "drop_per_empty_row":
+		var toll_open = true
+		for toll_col in 3:
+			if state.form[row][toll_col] != null:
+				toll_open = false
+		if toll_open:
+			guess += 3
+	if rule == "ignore_shared_row" and card_id != "exemption":
+		var shared = false
+		for shared_col in 3:
+			if state.form[row][shared_col] != null:
+				shared = true
+		if shared:
+			guess -= 8
+	if rule == "refuse_col3" and col == 2 and card_id != "exemption" and card_id != "hold":
+		guess -= 8
+	if rule == "yield_side":
+		var beside = false
+		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var beside_row = row + delta.x
+			var beside_col = col + delta.y
+			if beside_row < 0 or beside_col < 0 or beside_row > 2 or beside_col > 2:
+				continue
+			if state.form[beside_row][beside_col] != null:
+				beside = true
+		if beside:
+			guess += 4
+	if rule == "drop_per_empty_column":
+		var column_open = true
+		for existing_row in 3:
+			if state.form[existing_row][col] != null:
+				column_open = false
+		if column_open:
+			guess += 3
+	if rule == "double_first":
+		var earlier = false
+		for earlier_row in range(0, row + 1):
+			var end_col = 2
+			if earlier_row == row:
+				end_col = col - 1
+			for earlier_col in range(0, end_col + 1):
+				if state.form[earlier_row][earlier_col] != null:
+					earlier = true
+		if not earlier:
+			guess += (2 - row) * 2 + (2 - col)
 	if rule == "ignore_isolated":
 		var neighbors = 0
 		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:

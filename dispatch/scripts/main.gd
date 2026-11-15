@@ -347,7 +347,7 @@ func _build_ui() -> void:
 			building_prev = int(_puzzles[i - 1].get("building", 1))
 		if building_now > 1 and building_now != building_prev:
 			var mark := Label.new()
-			mark.name = "BuildingTwoMark" if building_now == 2 else "BuildingThreeMark"
+			mark.name = _building_mark_name(building_now)
 			mark.text = "B%d" % building_now
 			mark.add_theme_color_override("font_color", AMBER)
 			mark.add_theme_font_size_override("font_size", 13)
@@ -357,8 +357,8 @@ func _build_ui() -> void:
 		button.text = str(i + 1)
 		button.tooltip_text = str(_puzzles[i]["title"])
 		button.focus_mode = Control.FOCUS_NONE
-		button.custom_minimum_size = Vector2(30, 28)
-		button.add_theme_font_size_override("font_size", 13)
+		button.custom_minimum_size = Vector2(26, 28)
+		button.add_theme_font_size_override("font_size", 12)
 		button.pressed.connect(select_puzzle.bind(i))
 		puzzles_row.add_child(button)
 		_puzzle_buttons.append(button)
@@ -454,6 +454,18 @@ func _build_ui() -> void:
 	_banner_label.custom_minimum_size = Vector2(420, 230)
 	_banner_label.add_theme_font_size_override("font_size", 28)
 	_banner.add_child(_banner_label)
+
+
+func _building_mark_name(building: int) -> String:
+	match building:
+		2:
+			return "BuildingTwoMark"
+		3:
+			return "BuildingThreeMark"
+		4:
+			return "BuildingFourMark"
+		_:
+			return "Building%dMark" % building
 
 
 func _section(text: String) -> Label:
@@ -864,6 +876,9 @@ func _draw_block(block: Dictionary, alpha: float) -> void:
 		draw_arc(rect.get_center(), _cell * 0.16, 0, TAU, 20, ink, 2.5)
 		draw_circle(rect.get_center(), _cell * 0.045, Color(0.851, 0.827, 0.780, alpha))
 		_edge_arrow(rect, dir, ink)
+	elif typ == "bridge":
+		_shifted_arrow(rect, dir, ink, -0.18, 0.16, 0.09)
+		_edge_arrow(rect, dir, ink, 1.2)
 	else:
 		_arrow(rect, dir, ink, 0.78)
 
@@ -1050,6 +1065,8 @@ func _tool_color(tool: String) -> Color:
 			return Color("#3aa89a")
 		"primer":
 			return Color("#c9844a")
+		"bridge":
+			return Color("#4f7d6a")
 		_:
 			return Color("#888888")
 
@@ -1088,6 +1105,8 @@ func _tool_tip(tool: String) -> String:
 			return "Sends its color along the arrow. Any other color turns clockwise."
 		"primer":
 			return "Paints a gray parcel, then moves it forward. A color already on the parcel stays."
+		"bridge":
+			return "Sets a parcel down two steps along its arrow, over the cell in front."
 		_:
 			return ""
 

@@ -1,9 +1,9 @@
 extends Control
 
 # South Lantern Quay, then North Glass Reach, then the Turning Basin, then the
-# Painted Lock. Pieces turn in place; a loose piece may also move between the
-# sockets authored for that chart. Lock Chart asks the beam tracer whether
-# every dock has its color and every hull is dark.
+# Painted Lock, then the West Return. Pieces turn in place; a loose piece may
+# also move between the sockets authored for that chart. Lock Chart asks the
+# beam tracer whether every dock has its color and every hull is dark.
 
 const Charts := preload("res://scripts/charts.gd")
 const Tracer := preload("res://scripts/beam_tracer.gd")
@@ -47,12 +47,14 @@ var quay_grid: GridContainer
 var reach_grid: GridContainer
 var basin_grid: GridContainer
 var paint_grid: GridContainer
+var west_grid: GridContainer
 var quay_book_button: Button
 var reach_book_button: Button
 var basin_book_button: Button
 var paint_book_button: Button
+var west_book_button: Button
 var harbor_label: Label
-var _book_place: Array[int] = [0, 0, 0, 0]
+var _book_place: Array[int] = [0, 0, 0, 0, 0]
 var tide_clock: TideClock
 var _side: Panel
 
@@ -126,22 +128,30 @@ func _build_ui() -> void:
 	paint_book_button.tooltip_text = Charts.PAINTED
 	paint_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	paint_book_button.pressed.connect(_on_book_pressed.bind(3))
+	west_book_button = _button("West")
+	west_book_button.tooltip_text = Charts.WEST
+	west_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	west_book_button.pressed.connect(_on_book_pressed.bind(4))
 	book_row.add_child(quay_book_button)
 	book_row.add_child(reach_book_button)
 	book_row.add_child(basin_book_button)
 	book_row.add_child(paint_book_button)
+	book_row.add_child(west_book_button)
 
 	quay_grid = _chart_grid()
 	reach_grid = _chart_grid()
 	basin_grid = _chart_grid()
 	paint_grid = _chart_grid()
+	west_grid = _chart_grid()
 	reach_grid.visible = false
 	basin_grid.visible = false
 	paint_grid.visible = false
+	west_grid.visible = false
 	box.add_child(quay_grid)
 	box.add_child(reach_grid)
 	box.add_child(basin_grid)
 	box.add_child(paint_grid)
+	box.add_child(west_grid)
 	var bounds: Array = _book_bounds()
 	for i in charts.size():
 		var button := _button("Chart %d" % (i + 1))
@@ -154,8 +164,10 @@ func _build_ui() -> void:
 			reach_grid.add_child(button)
 		elif i < int(bounds[3]):
 			basin_grid.add_child(button)
-		else:
+		elif i < int(bounds[4]):
 			paint_grid.add_child(button)
+		else:
+			west_grid.add_child(button)
 		chart_buttons.append(button)
 
 	title_label = _label("", 20, Palette.TEXT)
@@ -489,13 +501,16 @@ func _refresh_chrome() -> void:
 	reach_grid.visible = book == 1
 	basin_grid.visible = book == 2
 	paint_grid.visible = book == 3
+	west_grid.visible = book == 4
 	reach_book_button.disabled = not unlocked[int(bounds[1])]
 	basin_book_button.disabled = not unlocked[int(bounds[2])]
 	paint_book_button.disabled = not unlocked[int(bounds[3])]
+	west_book_button.disabled = not unlocked[int(bounds[4])]
 	_paint_button(quay_book_button, book == 0)
 	_paint_button(reach_book_button, book == 1)
 	_paint_button(basin_book_button, book == 2)
 	_paint_button(paint_book_button, book == 3)
+	_paint_button(west_book_button, book == 4)
 
 func _show_win() -> void:
 	win_body.text = str(chart["win"])
@@ -530,11 +545,14 @@ func _book_bounds() -> Array:
 	var q := Charts.quay().size()
 	var r := q + Charts.reach().size()
 	var b := r + Charts.basin().size()
-	return [0, q, r, b, charts.size()]
+	var p := b + Charts.painted().size()
+	return [0, q, r, b, p, charts.size()]
 
 
 func _book_of(index: int) -> int:
 	var bounds: Array = _book_bounds()
+	if index >= int(bounds[4]):
+		return 4
 	if index >= int(bounds[3]):
 		return 3
 	if index >= int(bounds[2]):
@@ -555,8 +573,10 @@ func _on_book_pressed(book: int) -> void:
 			status_label.text = "The reach is still locked."
 		elif book == 2:
 			status_label.text = "The basin is still locked."
-		else:
+		elif book == 3:
 			status_label.text = "The painted lock is still locked."
+		else:
+			status_label.text = "The west return is still locked."
 		return
 	_book_place[here] = chart_index
 	var last := int(bounds[book + 1])
