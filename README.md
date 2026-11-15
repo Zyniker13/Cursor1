@@ -2,16 +2,16 @@
 
 Playable slices, Godot 4. Steam packaging comes later.
 
-- [Harbor Glass](harbor-glass/) — a tide-clock light puzzle through the Turning Basin
+- [Harbor Glass](harbor-glass/) — a tide-clock light puzzle through the West Return
 - [Brine Mark](brine-mark/) — an indirect salt-flat colony sim through the cart beat
-- [Dispatch](dispatch/) — a parcel-routing puzzle through Building 2
-- [Night Stamp](night-stamp/) — a border-desk deckbuilder through the closing bell
-- [Orchard Surge](orchard-surge/) — a dark-orchard wave game through night 7
-- [Lantern Census](lantern-census/) — a two-floor map survey
-- [Lowball](lowball/) — an eight-week three-club round-robin
-- [Casework](casework/) — a five-case deduction board
-- [Lampblack](lampblack/) — turn-based museum stealth, east and west wings
-- [Kiln Route](kiln-route/) — a twenty-four-room foundry puzzle
+- [Dispatch](dispatch/) — a parcel-routing puzzle through Building 4
+- [Night Stamp](night-stamp/) — a border-desk deckbuilder through the quire watch
+- [Orchard Surge](orchard-surge/) — a dark-orchard wave game through night 11
+- [Lantern Census](lantern-census/) — a four-floor map survey
+- [Lowball](lowball/) — a six-week four-club round-robin with a final
+- [Casework](casework/) — an eight-case deduction board
+- [Lampblack](lampblack/) — turn-based museum stealth, east, west, and north wings
+- [Kiln Route](kiln-route/) — a forty-room foundry puzzle
 
 ```bash
 godot --path harbor-glass

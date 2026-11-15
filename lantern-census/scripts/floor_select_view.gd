@@ -12,6 +12,8 @@ const INK := Color(0.16, 0.11, 0.08)
 const PANEL := Color(0.15, 0.12, 0.11, 0.94)
 const CELLAR_AWNING := Color(0.50, 0.18, 0.16)
 const CISTERN_AWNING := Color(0.12, 0.36, 0.40)
+const CLOISTER_AWNING := Color(0.42, 0.30, 0.14)
+const CRYPT_AWNING := Color(0.36, 0.26, 0.46)
 
 var notice_label: Label
 var purse_label: Label
@@ -40,34 +42,37 @@ func _build() -> void:
 	notice_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(notice_label)
 
-	var hint := _label("The small flask can reach either lift. A finished census needs the large flask.", 16, Color(0.86, 0.78, 0.62))
+	var hint := _label("The small flask can reach every lift. A finished census needs the large flask.", 16, Color(0.86, 0.78, 0.62))
 	hint.position = Vector2(48, 140)
 	hint.size = Vector2(1184, 24)
 	add_child(hint)
 
-	var x := 40.0
-	for floor in Rules.floors():
-		var awning := CELLAR_AWNING if floor.id == "cellar" else CISTERN_AWNING
-		var card := _panel(Vector2(x, 176), Vector2(580, 320), awning, floor.title)
+	var floors: Array = Rules.floors()
+	var margin := 24.0
+	var gap := 16.0
+	var card_w := (1280.0 - margin * 2.0 - gap * float(floors.size() - 1)) / float(floors.size())
+	var x := margin
+	for floor in floors:
+		var card := _panel(Vector2(x, 176), Vector2(card_w, 320), _awning_for(str(floor.id)), floor.title)
 		add_child(card)
-		var record := _label(floor.record, 20, PARCHMENT)
-		record.position = Vector2(24, 68)
-		record.size = Vector2(532, 100)
+		var record := _label(floor.record, 18, PARCHMENT)
+		record.position = Vector2(20, 64)
+		record.size = Vector2(card_w - 40.0, 120)
 		record.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		card.add_child(record)
 		_record[floor.id] = record
-		var status := _label("Census open", 22, PARCHMENT)
-		status.position = Vector2(24, 176)
-		status.size = Vector2(532, 36)
+		var status := _label("Census open", 20, PARCHMENT)
+		status.position = Vector2(20, 188)
+		status.size = Vector2(card_w - 40.0, 32)
 		card.add_child(status)
 		_status[floor.id] = status
 		var button := _button("Descend")
-		button.position = Vector2(24, 228)
-		button.size = Vector2(532, 64)
+		button.position = Vector2(20, 232)
+		button.size = Vector2(card_w - 40.0, 64)
 		_bind_descend(button, floor.id)
 		card.add_child(button)
 		_descend[floor.id] = button
-		x += 620.0
+		x += card_w + gap
 
 	var paper := ColorRect.new()
 	paper.color = PARCHMENT
@@ -95,6 +100,16 @@ func _build() -> void:
 	back_button.size = Vector2(320, 64)
 	back_button.pressed.connect(func() -> void: back_pressed.emit())
 	add_child(back_button)
+
+
+func _awning_for(floor_id: String) -> Color:
+	if floor_id == "cellar":
+		return CELLAR_AWNING
+	if floor_id == "cistern":
+		return CISTERN_AWNING
+	if floor_id == "cloister":
+		return CLOISTER_AWNING
+	return CRYPT_AWNING
 
 
 func _bind_descend(button: Button, floor_id: String) -> void:

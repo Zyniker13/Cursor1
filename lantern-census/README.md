@@ -1,6 +1,6 @@
 # Lantern Census
 
-A two-floor Godot 4 slice. The guild pays for the map you carry out. Oil is the turn budget. The cellar is the first floor. The cistern is the next one, with its own layout and its own census.
+A four-floor Godot 4 slice. The guild pays for the map you carry out. Oil is the turn budget. The cellar is the first floor. The cistern is the next one. The cloister is the third. The crypt is the fourth, with its own layout and its own census.
 
 ## Play
 
@@ -25,7 +25,7 @@ Two stops sit on one street.
 - The outfitter sells one larger oil flask. The purse starts at 0, so the first descent cannot buy it and is played on the small flask.
 - The guild clerk turns in the sheet from a lift extract and shows the payout split into corridors, hazards, and that floor's ring.
 
-Restart, on the town screen, clears the purse, both censuses, and puts the small flask back.
+Restart, on the town screen, clears the purse, every census, and puts the small flask back.
 
 The single instruction line in town is:
 
@@ -35,11 +35,11 @@ Town opens the floor select. It does not drop you straight down a shaft.
 
 ## Floor select
 
-The Cellar and the Cistern are listed separately. Each card says what that floor asks you to record, and whether its census is still open.
+The Cellar, the Cistern, the Cloister, and the Crypt are listed separately. Each card says what that floor asks you to record, and whether its census is still open.
 
-The small flask can reach either lift. A finished census on either floor needs the large flask.
+The small flask can reach every lift. A finished census on any floor needs the large flask.
 
-A finished census — every payable tile marked truly, and no tile marked as something it is not — leaves the descent on **Return to floor select**. The select then says that floor's census is complete, shows the payout, and offers the other floor. **Back to town** returns to the street.
+A finished census — every payable tile marked truly, and no tile marked as something it is not — leaves the descent on **Return to floor select**. The select then says that floor's census is complete, shows the payout, and offers the other floors. **Back to town** returns to the street.
 
 A lift extract that is not a finished census, a lamp-out, or an abandon uses **Return to town**. The clerk still pays a true partial sheet, and says the census is not finished.
 
@@ -70,7 +70,7 @@ The warden stands on one tile and never moves. It telegraphs the tile it will hi
 
 A hit burns 3 oil on top of the action's 1 oil. The hit does not end the descent while any oil remains. Oil at 0 puts the lamp out, ends the descent, and the sheet pays nothing. Stepping onto the lift extracts you even when that step spends your last oil.
 
-Hazards do not burn extra oil. They are census tiles. Stepping on a blank one inks it. On the cistern those cracks are called seeps; they use the same hazard rule.
+Hazards do not burn extra oil. They are census tiles. Stepping on a blank one inks it. On the cistern those cracks are called seeps, on the cloister they are called cinders, and on the crypt they are called ash cracks; they use the same hazard rule.
 
 ## Payout
 
@@ -133,14 +133,57 @@ Record every corridor, the three seep cracks, and the cistern ring around the pi
 
 The full sheet is `83 × 3 + 3 × 8 + 15 = 288` coin. The shortest path to the lift is 19 steps, so the small flask has a margin of 5. A checked route that steps on every payable tile without taking a swing, then reaches the lift, costs 106 oil. The large flask holds 120, so a careful survey fits and a wandering one can still run the lamp out.
 
+## The Cloister
+
+Hand-authored, 16 by 10. `S` start, `L` lift, `H` cinder, `E` warden, `+` the garth. The garth is wall for the sheet and is drawn as a closed garden. Bumping it inks a wall.
+
+```
+################
+#S.............#
+#.############.#
+#.#.......####.#
+#.#.+++++.####.#
+#.#.+++++.####.#
+#.#.......####.#
+#..E..........L#
+#.H.H.H.H......#
+################
+```
+
+Record every corridor, the four cinder cracks, and the cloister walk around the garth. The cinders are `(2,8)`, `(4,8)`, `(6,8)`, and `(8,8)`. The warden stands at `(3,7)`. The walk is the 18-tile corridor cycle around the 5×2 garth at columns 4–8 and rows 4–5: the row `(3,3)`–`(9,3)`, the sides `(3,4)` `(9,4)` `(3,5)` `(9,5)`, and the row `(3,6)`–`(9,6)`.
+
+The full sheet is `65 × 3 + 4 × 8 + 15 = 242` coin. The shortest path to the lift is 19 steps, so the small flask has a margin of 5. A checked route that steps on every payable tile without taking a swing, then reaches the lift, costs 88 oil. The large flask holds 120, so a careful survey fits and a wandering one can still run the lamp out.
+
+## The Crypt
+
+Hand-authored, 15 by 11. `S` start, `L` lift, `H` ash, `E` warden, `=` the tomb. The tomb is wall for the sheet and is drawn as a pale slab. Bumping it inks a wall. The piers beside the tomb are ordinary walls.
+
+```
+###############
+#S............#
+#.............#
+#.#.====..#...#
+#.#.====..#...#
+#.#.====..#...#
+#.#.====..#...#
+#.............#
+#............L#
+#H.H.H..E..H.H#
+###############
+```
+
+Record every corridor, the five ash cracks, and the crypt ring around the tomb. The ashes are `(1,9)`, `(3,9)`, `(5,9)`, `(11,9)`, and `(13,9)`. The warden stands at `(8,9)`. The ring is the 20-tile corridor cycle around the 4×4 tomb at columns 4–7 and rows 3–6: the row `(3,2)`–`(8,2)`, the sides `(3,3)` `(8,3)` `(3,4)` `(8,4)` `(3,5)` `(8,5)` `(3,6)` `(8,6)`, and the row `(3,7)`–`(8,7)`.
+
+The full sheet is `87 × 3 + 5 × 8 + 15 = 316` coin. The shortest path to the lift is 19 steps, so the small flask has a margin of 5. A checked route that steps on every payable tile without taking a swing, then reaches the lift, costs 112 oil. The large flask holds 120, so a careful survey fits and a wandering one can still run the lamp out.
+
 ## Presentation
 
-Both floors use the same code-drawn raycaster, with billboards for the warden, the swing, the hazards, and the lift. There are no imported textures. Cistern walls are cooler, the pit is teal, and the seeps read as green cracks. The sheet, the town, and the floor select are drawn in code.
+All four floors use the same code-drawn raycaster, with billboards for the warden, the swing, the hazards, and the lift. There are no imported textures. Cistern walls are cooler, the pit is teal, and the seeps read as green cracks. Cloister walls are warm limestone, the garth is a dark garden, and the cinders read as ember cracks. Crypt walls are violet stone, the tomb is a pale slab, and the ash reads as gray cracks. The sheet, the town, and the floor select are drawn in code.
 
 ## Limitations
 
-- Two floors, one warden on each. The warden does not patrol or chase.
+- Four floors, one warden on each. The warden does not patrol or chase.
 - The same floor can be turned in again on a later extract. A finished census stays finished.
 - Mouse look is optional and snaps by quarter turns. There is no sound.
 - Walls are for the sheet, not for the payout.
-- The automated checks cover the rules and both floors, including that the cistern's true census is accepted and a wrong one is rejected. They do not play the window, and this slice was not given a human playtest here.
+- The automated checks cover the rules and all four floors, including that the crypt's true census is accepted and a wrong, short, or swapped sheet is rejected. They do not play the window, and this slice was not given a human playtest here.

@@ -1,9 +1,9 @@
 extends RefCounted
 
-## Buildings 1 and 2. Directions: 0 east, 1 south, 2 west, 3 north.
+## Buildings 1, 2, 3, and 4. Directions: 0 east, 1 south, 2 west, 3 north.
 ## `unlocks` is the single new block this puzzle introduces, or "".
 
-const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter"]
+const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge"]
 
 
 static func all() -> Array:
@@ -340,6 +340,220 @@ static func all() -> Array:
 				_block("conveyor", 3, 1, 3),
 			]
 		),
+		_puzzle(
+			23, "Spare the Red", "primer",
+			"Paint the gray parcel blue. The red parcel has to stay red.",
+			"",
+			"A primer paints gray and leaves a color that is already there.",
+			6, 3, [],
+			[_source(0, 1, 0, ["gray", "red"])],
+			{"x": 5, "y": 1},
+			[{"color": "blue"}, {"color": "red"}],
+			[
+				_block("conveyor", 1, 1, 0), _block("primer", 2, 1, 0, "blue"),
+				_block("conveyor", 3, 1, 0), _block("conveyor", 4, 1, 0),
+			]
+		),
+		_puzzle(
+			24, "Middle Yellow", "",
+			"Stamp red 1, yellow 2, and blue 3. Only the middle parcel is gray.",
+			"",
+			"Paint only the gray. The counter stamps them in chute order.",
+			6, 3, [],
+			[_source(0, 1, 0, ["red", "gray", "blue"])],
+			{"x": 5, "y": 1},
+			[{"color": "red", "count": 1}, {"color": "yellow", "count": 2}, {"color": "blue", "count": 3}],
+			[
+				_block("primer", 1, 1, 0, "yellow"), _block("counter", 2, 1, 0),
+				_block("conveyor", 3, 1, 0), _block("conveyor", 4, 1, 0),
+			]
+		),
+		_puzzle(
+			25, "Hold the South", "",
+			"Deliver red, then yellow, then blue. Blue keeps its color.",
+			"",
+			"Red takes the filter. Paint gray on the south belt, and hold that belt so red arrives first.",
+			4, 2, [],
+			[_source(0, 0, 0, ["gray", "blue", "red"])],
+			{"x": 3, "y": 0},
+			[{"color": "red"}, {"color": "yellow"}, {"color": "blue"}],
+			[
+				_block("filter", 1, 0, 0, "red"), _block("conveyor", 2, 0, 0),
+				_block("primer", 1, 1, 0, "yellow"), _block("latch", 2, 1, 0),
+				_block("conveyor", 3, 1, 3),
+			]
+		),
+		_puzzle(
+			26, "Red Ahead", "",
+			"Deliver red, then blue. The chute sends blue first.",
+			"",
+			"Prime the gray red so the filter lets it through. Blue turns off and comes up at the dock.",
+			4, 2, [],
+			[_source(0, 0, 0, ["blue", "gray"])],
+			{"x": 3, "y": 0},
+			[{"color": "red"}, {"color": "blue"}],
+			[
+				_block("primer", 1, 0, 0, "red"), _block("filter", 2, 0, 0, "red"),
+				_block("conveyor", 2, 1, 0), _block("conveyor", 3, 1, 3),
+			]
+		),
+		_puzzle(
+			27, "Shared Coat", "",
+			"Stamp red 1, then yellow 2. Red is already red.",
+			"",
+			"Hold the gray on the latch. The primer paints gray and leaves red alone.",
+			4, 3, [],
+			[_source(0, 0, 0, ["red"]), _source(0, 2, 0, ["gray"])],
+			{"x": 3, "y": 1},
+			[{"color": "red", "count": 1}, {"color": "yellow", "count": 2}],
+			[
+				_block("conveyor", 1, 0, 1), _block("latch", 1, 2, 3),
+				_block("primer", 1, 1, 0, "yellow"), _block("counter", 2, 1, 0),
+			]
+		),
+		_puzzle(
+			28, "Stamp Blue First", "",
+			"Deliver blue 1, then red 2.",
+			"",
+			"Prime gray red, then let blue through the filter into the counter. Red comes back behind it.",
+			5, 2, [],
+			[_source(0, 0, 0, ["gray", "blue"])],
+			{"x": 4, "y": 0},
+			[{"color": "blue", "count": 1}, {"color": "red", "count": 2}],
+			[
+				_block("primer", 1, 0, 0, "red"), _block("filter", 2, 0, 0, "blue"),
+				_block("counter", 3, 0, 0),
+				_block("conveyor", 2, 1, 0), _block("conveyor", 3, 1, 3),
+			]
+		),
+		_puzzle(
+			29, "Night Coat", "",
+			"Deliver red 1, yellow 2, and blue 3.",
+			"",
+			"Red takes the filter into the counter. Paint gray yellow on the south belt and hold blue behind it.",
+			5, 3, [],
+			[_source(0, 1, 0, ["gray", "blue", "red"])],
+			{"x": 4, "y": 1},
+			[{"color": "red", "count": 1}, {"color": "yellow", "count": 2}, {"color": "blue", "count": 3}],
+			[
+				_block("filter", 1, 1, 0, "red"), _block("conveyor", 2, 1, 0),
+				_block("counter", 3, 1, 0),
+				_block("conveyor", 1, 2, 0), _block("primer", 2, 2, 0, "yellow"),
+				_block("latch", 3, 2, 3),
+			]
+		),
+		_puzzle(
+			30, "Over the Brick", "bridge",
+			"The belt is bricked in. Carry the parcel over the brick to the dock.",
+			"",
+			"A bridge sets a parcel down two steps along its arrow, over the cell in front.",
+			4, 3,
+			[
+				_cell(0, 0), _cell(1, 0), _cell(2, 0), _cell(3, 0),
+				_cell(0, 2), _cell(1, 2), _cell(2, 2), _cell(3, 2),
+				_cell(2, 1),
+			],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 3, "y": 1},
+			[{"color": "gray"}],
+			[_block("bridge", 1, 1, 0)]
+		),
+		_puzzle(
+			31, "Lane Cross", "",
+			"Deliver red, then blue. Blue's belt crosses under the jump.",
+			"",
+			"Bridge red onto the dock. Blue cannot take that cell, so send blue around.",
+			4, 3,
+			[_cell(0, 0), _cell(1, 0), _cell(3, 0), _cell(0, 2), _cell(1, 2)],
+			[_source(0, 1, 0, ["red"]), _source(2, 0, 1, ["blue"])],
+			{"x": 3, "y": 1},
+			[{"color": "red"}, {"color": "blue"}],
+			[
+				_block("bridge", 1, 1, 0),
+				_block("conveyor", 2, 1, 1),
+				_block("conveyor", 2, 2, 0), _block("conveyor", 3, 2, 3),
+			]
+		),
+		_puzzle(
+			32, "Count Across", "",
+			"Stamp the two parcels 1, then 2. The counter is past the brick.",
+			"",
+			"Bridge onto the counter. It stamps a parcel on the tick after the parcel lands.",
+			6, 3,
+			[
+				_cell(0, 0), _cell(1, 0), _cell(2, 0), _cell(3, 0), _cell(4, 0), _cell(5, 0),
+				_cell(0, 1), _cell(3, 1),
+				_cell(0, 2), _cell(1, 2), _cell(2, 2), _cell(3, 2), _cell(4, 2), _cell(5, 2),
+			],
+			[_source(1, 1, 0, ["gray", "gray"])],
+			{"x": 5, "y": 1},
+			[{"count": 1}, {"count": 2}],
+			[
+				_block("bridge", 2, 1, 0),
+				_block("counter", 4, 1, 0),
+			]
+		),
+		_puzzle(
+			33, "Hold Under", "",
+			"Deliver red, then blue. Blue waits under the jump.",
+			"",
+			"Bridge red over the latch and onto the dock. Blue leaves once that dock is clear.",
+			3, 3, [],
+			[_source(1, 0, 0, ["red"]), _source(1, 1, 0, ["blue"])],
+			{"x": 2, "y": 2},
+			[{"color": "red"}, {"color": "blue"}],
+			[
+				_block("bridge", 2, 0, 1),
+				_block("latch", 2, 1, 1),
+			]
+		),
+		_puzzle(
+			34, "Skip the Coat", "",
+			"Deliver blue, then yellow. Only the gray parcel should be painted.",
+			"",
+			"Send blue over the brick. Gray turns off the splitter and takes the yellow painter.",
+			5, 2, [_cell(3, 0), _cell(0, 1)],
+			[_source(0, 0, 0, ["blue", "gray"])],
+			{"x": 4, "y": 0},
+			[{"color": "blue"}, {"color": "yellow"}],
+			[
+				_block("splitter", 1, 0, 0), _block("bridge", 2, 0, 0),
+				_block("conveyor", 1, 1, 0), _block("painter", 2, 1, 0, "yellow"),
+				_block("conveyor", 3, 1, 0), _block("conveyor", 4, 1, 3),
+			]
+		),
+		_puzzle(
+			35, "Twice Yellow", "",
+			"Deliver the parcel yellow, stamped 2. A brick sits in front of the dock.",
+			"",
+			"Loop it through the counter. Paint it on the way back, then bridge over the brick.",
+			6, 2,
+			[_cell(0, 0), _cell(3, 0), _cell(4, 0), _cell(5, 0), _cell(4, 1)],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 5, "y": 1},
+			[{"color": "yellow", "count": 2}],
+			[
+				_block("counter", 1, 1, 0), _block("splitter", 2, 1, 3),
+				_block("painter", 2, 0, 2, "yellow"), _block("conveyor", 1, 0, 1),
+				_block("bridge", 3, 1, 0),
+			]
+		),
+		_puzzle(
+			36, "Night Span", "",
+			"Deliver red 1, yellow 2, and blue 3.",
+			"",
+			"Red takes the filter and bridges the brick onto the counter. Paint gray yellow on the south belt. Blue keeps its color and follows.",
+			6, 3, [_cell(3, 1)],
+			[_source(0, 1, 0, ["gray", "blue", "red"])],
+			{"x": 5, "y": 1},
+			[{"color": "red", "count": 1}, {"color": "yellow", "count": 2}, {"color": "blue", "count": 3}],
+			[
+				_block("filter", 1, 1, 0, "red"), _block("bridge", 2, 1, 0),
+				_block("counter", 4, 1, 0),
+				_block("conveyor", 1, 2, 0), _block("primer", 2, 2, 0, "yellow"),
+				_block("conveyor", 3, 2, 0), _block("conveyor", 4, 2, 3),
+			]
+		),
 	]
 
 
@@ -369,7 +583,7 @@ static func _puzzle(id: int, title: String, unlocks: String, brief: String, how_
 		"dock": dock,
 		"order": order,
 		"reference": reference,
-		"building": 2 if id >= 16 else 1,
+		"building": 4 if id >= 30 else 3 if id >= 23 else 2 if id >= 16 else 1,
 	}
 
 
