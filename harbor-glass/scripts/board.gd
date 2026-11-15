@@ -259,6 +259,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_jamb(at, rot)
 		"astragal":
 			_draw_astragal(at, rot)
+		"scotia":
+			_draw_scotia(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -675,6 +677,71 @@ func _draw_astragal(at: Vector2i, rot: int) -> void:
 	draw_rect(clock_post, post)
 	draw_rect(face_post, edge, false, 2.0)
 	draw_rect(clock_post, edge, false, 2.0)
+
+func _draw_scotia(at: Vector2i, rot: int) -> void:
+	# Two dark posts on the facing edge and the counterclockwise edge, with a
+	# pale cove between them. A north scotia puts the posts on the north and
+	# west edges. The cove is a quarter-round of pale wood, not the astragal's
+	# square glass pocket, and the posts are dark timber rather than iron bars.
+	var center := _center(at)
+	var facing := Tracer.scotia_facing(rot)
+	var back := Tracer.rotate_dir(facing, -1)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var post := Palette.WOOD_DARK if not flooded else Palette.WOOD
+	var edge := Palette.PILE if not flooded else Palette.FOAM
+	var cove := Palette.GATE
+	cove.a = 0.55 if flooded else 0.98
+	var sx := 1.0 if facing == "E" or back == "E" else -1.0
+	var sy := 1.0 if facing == "S" or back == "S" else -1.0
+	var reach := cell * 0.42
+	var thick := cell * 0.18
+	var pocket := cell * 0.28
+	var corner := Vector2(center.x + sx * reach, center.y + sy * reach)
+	var into := Vector2(-sx, -sy)
+	var cove_poly := PackedVector2Array()
+	cove_poly.append(corner)
+	var steps := 8
+	for i in steps + 1:
+		var t := float(i) / float(steps) * PI * 0.5
+		cove_poly.append(corner + Vector2(into.x * cos(t), into.y * sin(t)) * pocket)
+	draw_colored_polygon(cove_poly, cove)
+	var groove := PackedVector2Array()
+	for i in steps + 1:
+		var t := float(i) / float(steps) * PI * 0.5
+		groove.append(corner + Vector2(into.x * cos(t), into.y * sin(t)) * pocket * 0.62)
+	draw_polyline(groove, Palette.WOOD_DARK if not flooded else Palette.FOAM, 2.0)
+	var face_post := _scotia_post(center, facing, sx, sy, reach, thick, pocket)
+	var back_post := _scotia_post(center, back, sx, sy, reach, thick, pocket)
+	draw_rect(face_post, post)
+	draw_rect(back_post, post)
+	draw_rect(face_post, edge, false, 2.5)
+	draw_rect(back_post, edge, false, 2.5)
+	_scotia_fillet(face_post, facing, flooded)
+	_scotia_fillet(back_post, back, flooded)
+
+func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
+	if dir == "N" or dir == "S":
+		var y := center.y + sy * reach - (thick if sy > 0.0 else 0.0)
+		var far := center.x - sx * reach
+		var near := center.x + sx * (reach - pocket)
+		return Rect2(Vector2(minf(far, near), y), Vector2(absf(near - far), thick))
+	var x := center.x + sx * reach - (thick if sx > 0.0 else 0.0)
+	var far_y := center.y - sy * reach
+	var near_y := center.y + sy * (reach - pocket)
+	return Rect2(Vector2(x, minf(far_y, near_y)), Vector2(thick, absf(near_y - far_y)))
+
+func _scotia_fillet(post: Rect2, dir: String, flooded: bool) -> void:
+	var fillet := Palette.GATE if not flooded else Palette.FOAM
+	fillet.a = 0.95
+	match dir:
+		"N":
+			draw_line(post.position + Vector2(3, post.size.y - 2), post.position + Vector2(post.size.x - 3, post.size.y - 2), fillet, 2.0)
+		"S":
+			draw_line(post.position + Vector2(3, 2), post.position + Vector2(post.size.x - 3, 2), fillet, 2.0)
+		"W":
+			draw_line(post.position + Vector2(post.size.x - 2, 3), post.position + Vector2(post.size.x - 2, post.size.y - 3), fillet, 2.0)
+		_:
+			draw_line(post.position + Vector2(2, 3), post.position + Vector2(2, post.size.y - 3), fillet, 2.0)
 
 func _astragal_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
 	if dir == "N" or dir == "S":
