@@ -110,7 +110,7 @@ func _draw() -> void:
 	if sim != null and beat == Sim.DRY and not sim.is_over():
 		opening = ticks_left > Sim.DRY_TICK - Sim.TICK_HZ * 3
 	# The cart beat is clear weather. Rain shows for the season changes and the end.
-	if sim != null and beat != Sim.CART and (sim.is_over() or ticks_left < Sim.TICK_HZ * 3 or opening):
+	if sim != null and beat != Sim.CART and beat != Sim.SHIPPING and beat != Sim.MARKET and (sim.is_over() or ticks_left < Sim.TICK_HZ * 3 or opening):
 		_draw_rain(sim.is_over() or opening)
 
 
@@ -121,7 +121,13 @@ func _draw_bars() -> void:
 	var beat := int(sim.get_beat())
 	var span := Sim.RAIN_TICK
 	var rain_color := Color("2f7590")
-	if beat == Sim.CART:
+	if beat == Sim.MARKET:
+		span = Sim.MARKET_TICK
+		rain_color = Color("9c3d3d")
+	elif beat == Sim.SHIPPING:
+		span = Sim.SHIP_TICK
+		rain_color = Color("2f5f73")
+	elif beat == Sim.CART:
 		span = Sim.CART_TICK
 		rain_color = Color("8a5a2b")
 	elif beat == Sim.DRY:
@@ -129,7 +135,13 @@ func _draw_bars() -> void:
 		rain_color = Color("c47a3a")
 	var rain_frac := clampf(float(sim.get_ticks_until_rain()) / float(maxi(span, 1)), 0.0, 1.0)
 	var quota_frac := clampf(float(sim.get_stored_salt()) / float(Sim.QUOTA), 0.0, 1.0)
-	if beat == Sim.CART:
+	if beat == Sim.MARKET:
+		var cargo := int(sim.get_coins()) + int(sim.get_ship_salt())
+		quota_frac = 0.0 if cargo <= 0 else clampf(float(sim.get_coins()) / float(cargo), 0.0, 1.0)
+	elif beat == Sim.SHIPPING:
+		var ship_whole := int(sim.get_shipped()) + int(sim.get_crib_salt())
+		quota_frac = 0.0 if ship_whole <= 0 else clampf(float(sim.get_shipped()) / float(ship_whole), 0.0, 1.0)
+	elif beat == Sim.CART:
 		var whole := int(sim.get_carted()) + int(sim.get_bank_left())
 		quota_frac = 0.0 if whole <= 0 else clampf(float(sim.get_carted()) / float(whole), 0.0, 1.0)
 	var bar_y := MAP_ORIGIN.y - 16.0
@@ -162,11 +174,15 @@ func _draw_cell(x: int, y: int) -> void:
 		Sim.PAN:
 			_draw_pan(rect)
 		Sim.CRIB:
-			_draw_crib(rect, sim.get_beat() == Sim.CART)
+			_draw_crib(rect, sim.get_beat() == Sim.CART or sim.get_beat() == Sim.SHIPPING or sim.get_beat() == Sim.MARKET)
+		Sim.SHIP:
+			_draw_ship(rect, sim.get_beat() == Sim.SHIPPING or sim.get_beat() == Sim.MARKET)
+		Sim.STALL:
+			_draw_stall(rect, sim.get_beat() == Sim.MARKET)
 	if Vector2i(x, y) == Sim.ANTHILL:
 		_draw_anthill(rect)
 	var salt: Dictionary = sim.get_cell_salt(x, y)
-	_draw_salt(rect, int(salt["loose"]), int(salt["stacked"]), int(salt["covered"]), int(salt["crib"]))
+	_draw_salt(rect, int(salt["loose"]), int(salt["stacked"]), int(salt["covered"]), int(salt["crib"]), int(salt["ship"]), int(salt["stall"]))
 
 
 func _draw_coast(rect: Rect2, dry: bool) -> void:
@@ -204,6 +220,48 @@ func _draw_crib(rect: Rect2, open: bool) -> void:
 		draw_line(Vector2(bin.position.x + 2, y_line), Vector2(bin.end.x - 2, y_line), slat, 2.0)
 	draw_rect(Rect2(bin.position, Vector2(3, bin.size.y)), slat)
 	draw_rect(Rect2(Vector2(bin.end.x - 3, bin.position.y), Vector2(3, bin.size.y)), slat)
+
+
+func _draw_ship(rect: Rect2, open: bool) -> void:
+	var hull := Color("2f5f73") if open else Color("8aa0a8")
+	var sail := Color("f7f4ee") if open else Color("d5d0c6")
+	var wash := Color(0.18, 0.42, 0.52, 0.28) if open else Color(0.18, 0.42, 0.52, 0.12)
+	draw_rect(rect, wash)
+	var deck := PackedVector2Array([
+		rect.position + Vector2(6, rect.size.y - 14),
+		rect.position + Vector2(rect.size.x - 6, rect.size.y - 14),
+		rect.position + Vector2(rect.size.x - 14, rect.size.y - 24),
+		rect.position + Vector2(14, rect.size.y - 24),
+	])
+	draw_colored_polygon(deck, hull)
+	var mast_x := rect.position.x + rect.size.x * 0.5
+	draw_line(Vector2(mast_x, rect.position.y + 8), Vector2(mast_x, rect.position.y + rect.size.y - 22), hull, 2.0)
+	var cloth := PackedVector2Array([
+		Vector2(mast_x, rect.position.y + 10),
+		Vector2(mast_x + 14, rect.position.y + 20),
+		Vector2(mast_x, rect.position.y + 26),
+	])
+	draw_colored_polygon(cloth, sail)
+
+
+func _draw_stall(rect: Rect2, open: bool) -> void:
+	var cloth := Color("9c3d3d") if open else Color("b7a4a4")
+	var pole := Color("6b3e24") if open else Color("8d7764")
+	var wash := Color(0.62, 0.24, 0.24, 0.28) if open else Color(0.62, 0.24, 0.24, 0.12)
+	draw_rect(rect, wash)
+	var awning := PackedVector2Array([
+		rect.position + Vector2(4, 16),
+		rect.position + Vector2(rect.size.x - 4, 16),
+		rect.position + Vector2(rect.size.x - 8, 8),
+		rect.position + Vector2(8, 8),
+	])
+	draw_colored_polygon(awning, cloth)
+	var stripe := rect.position.x + rect.size.x * 0.5
+	draw_line(Vector2(stripe, rect.position.y + 8), Vector2(stripe, rect.position.y + 16), Color("f4efe6"), 2.0)
+	draw_line(rect.position + Vector2(10, 18), rect.position + Vector2(10, rect.size.y - 8), pole, 2.0)
+	draw_line(rect.position + Vector2(rect.size.x - 10, 18), rect.position + Vector2(rect.size.x - 10, rect.size.y - 8), pole, 2.0)
+	var counter := Rect2(rect.position + Vector2(8, rect.size.y - 16), Vector2(rect.size.x - 16, 6))
+	draw_rect(counter, Color("e0c08a") if open else Color("c8c2b6"))
 
 
 func _draw_pan(rect: Rect2) -> void:
@@ -245,7 +303,7 @@ func _draw_anthill(rect: Rect2) -> void:
 	draw_circle(center + Vector2(1, 5), 3.0, Color("1a100c"))
 
 
-func _draw_salt(rect: Rect2, loose: int, stacked: int, covered: int, crib: int) -> void:
+func _draw_salt(rect: Rect2, loose: int, stacked: int, covered: int, crib: int, ship: int, stall: int) -> void:
 	for i in mini(loose, 4):
 		var col := i % 2
 		var row := int(i / 2)
@@ -256,7 +314,11 @@ func _draw_salt(rect: Rect2, loose: int, stacked: int, covered: int, crib: int) 
 		_diamond(rect.position + Vector2(12 + i * 10, rect.size.y - 12), 4.2, Color("f4f7fb"))
 	for i in mini(crib, 3):
 		_diamond(rect.position + Vector2(12 + i * 10, rect.size.y - 12), 4.2, Color("fff8e8"))
-	var total := loose + stacked + covered + crib
+	for i in mini(ship, 3):
+		_diamond(rect.position + Vector2(12 + i * 10, rect.size.y - 12), 4.2, Color("ffe6a8"))
+	for i in mini(stall, 3):
+		_diamond(rect.position + Vector2(12 + i * 10, rect.size.y - 12), 4.2, Color("f0c14a"))
+	var total := loose + stacked + covered + crib + ship + stall
 	if total > 0:
 		var digits := str(total)
 		var badge := Rect2(rect.position + Vector2(2, 2), Vector2(6.0 + 7.0 * digits.length(), 13))
@@ -359,7 +421,7 @@ func _build_hud() -> void:
 	hint_a.position = Vector2(20, 628)
 	hint_a.size = Vector2(740, 20)
 	hud.add_child(hint_a)
-	var hint_b := _make_label("1 rake, 2 stack, 3 cover, 4 trail, 5 pan, 6 crib, 0 erase. Space paints. R restarts.", 14, INK)
+	var hint_b := _make_label("1 rake, 2 stack, 3 cover, 4 trail, 5 pan, 6 crib, 7 ship, 8 stall, 0 erase. Space paints. R restarts.", 14, INK)
 	hint_b.position = Vector2(20, 650)
 	hint_b.size = Vector2(740, 20)
 	hud.add_child(hint_b)
@@ -387,9 +449,9 @@ func _build_hud() -> void:
 
 	box.add_child(_make_label("BRINE MARK", 26, PAPER))
 	box.add_child(_make_label("Salt Coast", 16, GOLD))
-	var rules := _make_label("Paint the flats. Workers follow the mark under their feet and are not selectable.\nWet season: rake the shore, stack the loose salt, cover the stacks. The first rain banks covered salt and pulls the brine back. Dry season: shore rakes go idle. Paint pans and workers crystallize salt until the second rain. Then paint a crib. Workers move the banked salt into it. Trail is how they cross.", 14, PAPER)
+	var rules := _make_label("Paint the flats. Workers follow the mark under their feet and are not selectable.\nWet season: rake the shore, stack the loose salt, cover the stacks. The first rain banks covered salt and pulls the brine back. Dry season: shore rakes go idle. Paint pans and workers crystallize salt until the second rain. Then paint a crib. Workers move the banked salt into it. Then paint a ship. Workers load that crib onto it. Then paint a stall. Workers sell that cargo, one coin a unit. Trail is how they cross.", 14, PAPER)
 	rules.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	rules.custom_minimum_size = Vector2(430, 156)
+	rules.custom_minimum_size = Vector2(430, 188)
 	rules.name = "RulesNote"
 	box.add_child(rules)
 
@@ -416,6 +478,10 @@ func _build_hud() -> void:
 		["4  Trail", Sim.TRAIL, Color("c4844a")],
 		["5  Pan", Sim.PAN, Color("b7d4d2")],
 		["6  Crib", Sim.CRIB, Color("e0c08a")],
+		["7  Ship", Sim.SHIP, Color("b7c9d4")],
+	]))
+	box.add_child(_button_row([
+		["8  Stall", Sim.STALL, Color("c4553a")],
 		["0  Erase", Sim.EMPTY, Color("c8c2b6")],
 	]))
 
@@ -499,7 +565,13 @@ func _refresh() -> void:
 		return
 	var seconds := 0.0
 	if sim.is_over():
-		if int(sim.get_carted()) > 0:
+		if int(sim.get_coins()) > 0:
+			rain_label.text = "The cargo has sold"
+			rain_label.add_theme_color_override("font_color", Color("9c3d3d"))
+		elif int(sim.get_shipped()) > 0:
+			rain_label.text = "The crib has shipped"
+			rain_label.add_theme_color_override("font_color", Color("1d4e63"))
+		elif int(sim.get_carted()) > 0:
 			rain_label.text = "The bank is in the crib"
 			rain_label.add_theme_color_override("font_color", Color("6b3e24"))
 		else:
@@ -510,7 +582,13 @@ func _refresh() -> void:
 		if seconds < 0.0:
 			seconds = 0.0
 		var urgent := seconds < 10.0
-		if sim.get_beat() == Sim.CART:
+		if sim.get_beat() == Sim.MARKET:
+			rain_label.text = "Sell the cargo. %.1fs" % seconds
+			rain_label.add_theme_color_override("font_color", Color("a33b2b") if urgent else Color("9c3d3d"))
+		elif sim.get_beat() == Sim.SHIPPING:
+			rain_label.text = "Ship the crib. %.1fs" % seconds
+			rain_label.add_theme_color_override("font_color", Color("a33b2b") if urgent else Color("1d4e63"))
+		elif sim.get_beat() == Sim.CART:
 			rain_label.text = "Cart the bank. %.1fs" % seconds
 			rain_label.add_theme_color_override("font_color", Color("a33b2b") if urgent else Color("6b3e24"))
 		elif sim.get_season() == Sim.DRY:
@@ -522,6 +600,10 @@ func _refresh() -> void:
 	var season_name := "wet"
 	if sim.is_over():
 		season_name = "settled"
+	elif sim.get_beat() == Sim.MARKET:
+		season_name = "market"
+	elif sim.get_beat() == Sim.SHIPPING:
+		season_name = "ship"
 	elif sim.get_beat() == Sim.CART:
 		season_name = "cart"
 	elif sim.get_season() == Sim.DRY:
@@ -530,7 +612,15 @@ func _refresh() -> void:
 		season_name, sim.get_stored_salt(), Sim.QUOTA, sim.get_population(), Sim.POP_CAP,
 	]
 	covered_label.text = "Covered salt  %d / %d" % [sim.get_stored_salt(), Sim.QUOTA]
-	if sim.get_beat() == Sim.CART or sim.is_over():
+	if sim.get_beat() == Sim.MARKET or (sim.is_over() and int(sim.get_coins()) > 0):
+		salt_label.text = "Loose %d    stacked %d    ship %d    coins %d" % [
+			sim.get_loose_salt(), sim.get_stacked_salt(), sim.get_ship_salt(), sim.get_coins(),
+		]
+	elif sim.get_beat() == Sim.SHIPPING or (sim.is_over() and int(sim.get_shipped()) > 0):
+		salt_label.text = "Loose %d    stacked %d    crib %d    shipped %d" % [
+			sim.get_loose_salt(), sim.get_stacked_salt(), sim.get_crib_salt(), sim.get_shipped(),
+		]
+	elif sim.get_beat() == Sim.CART or sim.is_over():
 		salt_label.text = "Loose %d    stacked %d    bank %d    carted %d" % [
 			sim.get_loose_salt(), sim.get_stacked_salt(), sim.get_bank_left(), sim.get_carted(),
 		]
@@ -540,12 +630,24 @@ func _refresh() -> void:
 		]
 	ants_label.text = "Ants %d / %d" % [sim.get_population(), Sim.POP_CAP]
 	mode_label.text = "Mark: %s" % _mode_name(current_mode)
-	if sim.get_beat() == Sim.CART and not sim.is_over():
+	if sim.get_beat() == Sim.MARKET and not sim.is_over():
+		season_label.text = "Ship %d. Coins %d. Paint a stall and workers sell the cargo." % [
+			sim.get_ship_salt(), sim.get_coins(),
+		]
+	elif sim.is_over() and int(sim.get_coins()) > 0:
+		season_label.text = "Sold %d coin." % sim.get_coins()
+	elif sim.get_beat() == Sim.SHIPPING and not sim.is_over():
+		season_label.text = "Crib %d. Shipped %d. Paint a ship and workers load the crib." % [
+			sim.get_crib_salt(), sim.get_shipped(),
+		]
+	elif sim.is_over() and int(sim.get_shipped()) > 0:
+		season_label.text = "The ship was not sold. A stall is where workers sell it."
+	elif sim.get_beat() == Sim.CART and not sim.is_over():
 		season_label.text = "Bank %d. Carted %d. Paint a crib and workers move the bank." % [
 			sim.get_bank_left(), sim.get_carted(),
 		]
 	elif sim.is_over() and int(sim.get_carted()) > 0:
-		season_label.text = "Carted %d into the crib." % sim.get_carted()
+		season_label.text = "The crib was not shipped. A ship is where workers send it."
 	elif sim.is_over() and int(sim.get_stored_salt()) >= Sim.QUOTA and int(sim.get_carted()) == 0:
 		season_label.text = "The bank was not carted. A crib is where workers move it."
 	elif sim.get_season() == Sim.DRY or sim.is_over():
@@ -561,6 +663,12 @@ func _refresh() -> void:
 		var won: bool = sim.get_stored_salt() >= Sim.QUOTA
 		summary_label.add_theme_color_override("font_color", Color("b7e2c2") if won else Color("ffb4a8"))
 		status_label.text = "Restart scenario to mark the flats again."
+	elif sim.get_beat() == Sim.MARKET:
+		summary_label.text = "The ship beat has ended. Paint a stall. Workers sell the salt on the ship."
+		summary_label.add_theme_color_override("font_color", Color("f0d7b0"))
+	elif sim.get_beat() == Sim.SHIPPING:
+		summary_label.text = "The cart beat has ended. Paint a ship. Workers load the crib onto it."
+		summary_label.add_theme_color_override("font_color", Color("f0d7b0"))
 	elif sim.get_beat() == Sim.CART:
 		summary_label.text = "The second rain has fallen. Paint a crib. Workers move the banked salt into it."
 		summary_label.add_theme_color_override("font_color", Color("f0d7b0"))
@@ -627,6 +735,10 @@ func _on_key(keycode: Key) -> void:
 			_set_mode(Sim.PAN)
 		KEY_6, KEY_KP_6:
 			_set_mode(Sim.CRIB)
+		KEY_7, KEY_KP_7:
+			_set_mode(Sim.SHIP)
+		KEY_8, KEY_KP_8:
+			_set_mode(Sim.STALL)
 		KEY_0, KEY_KP_0:
 			_set_mode(Sim.EMPTY)
 		KEY_SPACE, KEY_ENTER, KEY_KP_ENTER:
@@ -662,6 +774,10 @@ func _mode_color(mode: int) -> Color:
 			return Color("3f7f88")
 		Sim.CRIB:
 			return Color("a56b3c")
+		Sim.SHIP:
+			return Color("2f5f73")
+		Sim.STALL:
+			return Color("9c3d3d")
 		_:
 			return Color("f4efe6")
 
@@ -680,5 +796,9 @@ func _mode_name(mode: int) -> String:
 			return "Pan"
 		Sim.CRIB:
 			return "Crib"
+		Sim.SHIP:
+			return "Ship"
+		Sim.STALL:
+			return "Stall"
 		_:
 			return "Erase"

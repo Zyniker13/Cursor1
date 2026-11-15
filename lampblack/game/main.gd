@@ -72,7 +72,7 @@ func _build_hud() -> void:
 	layer.add_child(bottom_panel)
 
 	var controls := Label.new()
-	controls.text = "Arrows move    F lamp you face    Space wait    U undo    R restart    1–8 east    Shift+1–6 west    Ctrl+1–6 north    click a neighbor or a lamp"
+	controls.text = "Arrows move    F lamp you face    Space wait    U undo    R restart    1–8 east    Shift+1–6 west    Ctrl+1–6 north    Alt+1–6 south    click a neighbor or a lamp"
 	controls.add_theme_font_size_override("font_size", 14)
 	controls.add_theme_color_override("font_color", MUTED)
 	controls.position = Vector2(20, 6)
@@ -258,6 +258,14 @@ func _puzzle_index_for_key(event: InputEventKey) -> int:
 	var digit := _digit_from_key(event)
 	if digit < 0:
 		return -1
+	# Alt alone is the south wing. Alt combined with another modifier keeps the
+	# older behavior: it selects nothing, so Shift and Ctrl stay where they were.
+	if event.alt_pressed:
+		if event.ctrl_pressed or event.meta_pressed or event.shift_pressed or _is_shifted_digit(event.keycode):
+			return -1
+		if digit > 5:
+			return -1
+		return 20 + digit
 	if event.ctrl_pressed or event.meta_pressed:
 		if digit > 5:
 			return -1
@@ -312,8 +320,6 @@ func _input(event: InputEvent) -> void:
 		return
 	if not (event is InputEventKey) or not event.pressed:
 		return
-	if event.alt_pressed:
-		return
 	var key_event := event as InputEventKey
 	var key := key_event.keycode
 	var puzzle_pick := _puzzle_index_for_key(key_event)
@@ -321,6 +327,8 @@ func _input(event: InputEvent) -> void:
 		if not event.echo:
 			_select_puzzle(puzzle_pick)
 		get_viewport().set_input_as_handled()
+		return
+	if key_event.alt_pressed:
 		return
 	if key_event.ctrl_pressed or key_event.meta_pressed:
 		return
