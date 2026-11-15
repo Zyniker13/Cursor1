@@ -2,7 +2,7 @@
 
 Kiln Route is a foundry puzzle. Each room hands you a tray of machines and a quota. The route clears when the quota is met inside one simulated minute. Pieces can always be picked back up.
 
-This project is the first five wings: 40 rooms, not the full 48. Clearing room 8 unlocks room 9. Clearing room 16 unlocks room 17. Clearing room 24 unlocks room 25. Clearing room 32 unlocks room 33.
+This project is the full route: six wings, 48 rooms. Clearing room 8 unlocks room 9. Clearing room 16 unlocks room 17. Clearing room 24 unlocks room 25. Clearing room 32 unlocks room 33. Clearing room 40 unlocks room 41.
 
 Art is drawn by Godot (rects, polygons, lines, and arcs). There are no imported sprites.
 
@@ -16,7 +16,7 @@ godot --path kiln-route
 
 ## Controls
 
-- 1 belt, 2 kiln, 3 press, 4 filter, 5 splitter, 6 roller, 7 weir, 8 bridge, 9 grate, 0 hook (only pieces in the tray can be selected)
+- 1 belt, 2 kiln, 3 press, 4 filter, 5 splitter, 6 roller, 7 weir, 8 bridge, 9 grate, 0 hook, - arm (only pieces in the tray can be selected)
 - R or E rotates clockwise, Q rotates counter-clockwise. R rotates the piece under the cursor when there is one, otherwise it rotates the piece you are about to place. Right-click does the same.
 - Left-click an empty floor cell to place the selected piece. Left-click a placed piece to pick it up and return it to the tray.
 - Space or Enter runs the minute. While it is running, Space or F skips to the result. The Run button does the same.
@@ -60,6 +60,7 @@ Facing is east, south, west, or north. North is up. "Right" means 90 degrees clo
 - **Bridge.** Holds one item on each of two lanes. The forward lane accepts any material from behind and pushes it forward. The cross lane accepts any material from the left (the item is moving toward the bridge's right) and pushes it out to the right. The front and the right side are refused. One lane does not block the other, and an item never changes lanes. If both lanes can leave in the same pass, the forward item leaves first. A blocked lane waits; it does not spill onto the other lane.
 - **Grate.** Holds one item. Accepts any material, but only from behind. Plates leave forward. Ore and ingots leave to the right. If that exit cannot accept the item, the item waits. The grate does not send plates to the side or ore and ingots forward, and it does not alternate.
 - **Hook.** Holds one item. Accepts any material, but only from behind. It pushes that item to the left, 90 degrees counter-clockwise. It refuses a side entry and a head-on entry. If the left exit cannot accept the item, the item waits. The hook does not send forward, does not spill, and does not alternate.
+- **Arm.** Holds one item. Accepts any material, but only from the left (the item is moving toward the arm's right). It pushes that item forward. It refuses a rear entry, a right-side entry, and a head-on entry. If the forward exit cannot accept the item, the item waits. The arm does not send left, does not spill, and does not alternate. Its key is minus, not the hook's 0.
 
 ### Budget and clearing
 
@@ -107,6 +108,14 @@ The tray is the piece budget. Placing a piece you do not have is refused. A run 
 38. **Spate** — turn ore onto a weir and spill it into a second kiln. One kiln misses the quota.
 39. **Winnow** — the filter scraps raw ingots, and the hook turns ore left into the kiln.
 40. **Tally** — hook the ore into the kiln, then split ingots between the bin and the press. The upper plates alone miss, and pressing every ingot misses the ingot bin.
+41. **Reach** — an arm takes plates from the left and sends them forward. A belt on that cell takes the ore and the plate bin refuses it.
+42. **Feed** — the arm feeds ore to a kiln. A plate behind a belt stalls the smelt.
+43. **Clip** — one belt carries the ingots, the kiln sits against the arm, and the pit ahead of a belt is the wrong drop.
+44. **Heft** — the arm starts off the lane. Pick it up and seat it where the plates come in from the left.
+45. **Sweep** — a wall closes the straight drop. Bring plates around into the arm's left side.
+46. **Surge** — take ore from the left onto a weir and spill it into a second kiln. One kiln misses the quota.
+47. **Cull** — the filter scraps raw ingots, and the arm takes ore from the left into the kiln.
+48. **Audit** — arm the ore into the kiln, then split ingots between the bin and the press. The upper plates alone miss, and pressing every ingot misses the ingot bin.
 
 ## Tests
 
@@ -124,11 +133,11 @@ The suite checks:
 - A layout that meets the quota with an extra piece is rejected, and the tray itself refuses that extra piece.
 - Flooding one machine from different inputs (two schedules into one belt, two patterns into one splitter, two rates into one kiln) is deterministic: the same seed and state produce the same deliveries, and the different floods do not collapse to one output.
 - Pickup returns a placed belt to the tray, including a kiln the room started with, and pickup during a run does the same through the game object.
-- The documented belt, kiln, press, filter, splitter, roller, weir, bridge, grate, and hook timings, including that a blocked splitter does not flip, that a weir tries forward again after a spill, that a bridge keeps its two lanes apart, that a blocked grate does not spill onto its other exit, and that a blocked hook does not spill forward.
+- The documented belt, kiln, press, filter, splitter, roller, weir, bridge, grate, hook, and arm timings, including that a blocked splitter does not flip, that a weir tries forward again after a spill, that a bridge keeps its two lanes apart, that a blocked grate does not spill onto its other exit, that a blocked hook does not spill forward, and that a blocked arm does not send left.
 
 ## Limitations
 
-- Five wings, 40 rooms. There is no overworld and no further wing yet. The full route is still 48 rooms.
+- Six wings, 48 rooms. There is no overworld.
 - No audio, no gamepad, and no drag-paint.
 - Items wait when blocked. They are not deleted, except by a waste chute.
 - A splitter does not skip a blocked exit.
