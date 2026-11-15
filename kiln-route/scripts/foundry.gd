@@ -4,7 +4,7 @@ extends RefCounted
 ## and locked by tests/run_tests.gd.
 
 enum Mat { ORE, INGOT, PLATE }
-enum Kind { BELT, KILN, PRESS, FILTER, SPLITTER, ROLLER, WEIR, BRIDGE, GRATE }
+enum Kind { BELT, KILN, PRESS, FILTER, SPLITTER, ROLLER, WEIR, BRIDGE, GRATE, HOOK, ARM }
 enum Dir { EAST, SOUTH, WEST, NORTH }
 
 ## One simulated minute. Every room runs this many ticks.
@@ -23,7 +23,7 @@ const VEC := [
 	Vector2i(0, -1),
 ]
 
-const KIND_NAME := ["Belt", "Kiln", "Press", "Filter", "Splitter", "Roller", "Weir", "Bridge", "Grate"]
+const KIND_NAME := ["Belt", "Kiln", "Press", "Filter", "Splitter", "Roller", "Weir", "Bridge", "Grate", "Hook", "Arm"]
 const MAT_NAME := ["Ore", "Ingot", "Plate"]
 const DIR_NAME := ["East", "South", "West", "North"]
 

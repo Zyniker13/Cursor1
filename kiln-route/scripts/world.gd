@@ -279,6 +279,8 @@ func _holder(kind: int) -> bool:
 		or kind == Rules.Kind.ROLLER
 		or kind == Rules.Kind.WEIR
 		or kind == Rules.Kind.GRATE
+		or kind == Rules.Kind.HOOK
+		or kind == Rules.Kind.ARM
 	)
 
 
@@ -296,6 +298,12 @@ func _try_output(pos: Vector2i) -> bool:
 			out_dir = machine.dir if mat == Rules.Mat.ORE else Rules.right(machine.dir)
 		elif machine.kind == Rules.Kind.GRATE:
 			out_dir = machine.dir if mat == Rules.Mat.PLATE else Rules.right(machine.dir)
+		elif machine.kind == Rules.Kind.HOOK:
+			# Left only. A blocked exit waits; the item does not spill forward.
+			out_dir = Rules.left(machine.dir)
+		elif machine.kind == Rules.Kind.ARM:
+			# Forward only. A blocked exit waits; the item does not send left.
+			out_dir = machine.dir
 		elif machine.kind == Rules.Kind.SPLITTER:
 			out_dir = machine.dir if machine.phase == 0 else Rules.right(machine.dir)
 		elif machine.kind == Rules.Kind.WEIR:
@@ -366,8 +374,12 @@ func _can_take(machine: Machine, mat: int, arrival: int) -> bool:
 		or machine.kind == Rules.Kind.ROLLER
 		or machine.kind == Rules.Kind.WEIR
 		or machine.kind == Rules.Kind.GRATE
+		or machine.kind == Rules.Kind.HOOK
 	):
 		return machine.hold < 0 and arrival == machine.dir
+	if machine.kind == Rules.Kind.ARM:
+		# From the left only: the item is moving toward the arm's right.
+		return machine.hold < 0 and arrival == Rules.right(machine.dir)
 	if machine.kind == Rules.Kind.BRIDGE:
 		if arrival == machine.dir:
 			return machine.hold < 0

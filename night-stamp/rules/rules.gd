@@ -223,6 +223,94 @@
 # A refused center and an ignored shared row zero that stamp's own progress.
 # They do not cancel the retrigger, and they do not remove Hold or Exemption.
 #
+# QUIRE WATCH, in desk order
+# A seventh night. The stamps, the ink, and the 3x3 form are unchanged. The
+# quire watch deals the starting deck again. Drafts and the relic from an
+# earlier night do not carry. Open it from the desk, or from a victory desk.
+# Restart act replays whichever night is on the desk.
+# - Tess Quern, lane column 3, exemption row top, Far Margin:
+#   "Refuses stamps in column 3."
+#   Column 3 is the far margin. A stamp on the top row or the bottom row
+#   still counts when it is not in column 3. The middle of column 1 and
+#   column 2 counts.
+#   Exemption on the top row lets column 3 count.
+# - Oren Sallow, lane column 1, exemption row middle, Side Meet:
+#   "Yields if two stamps share a side."
+#   A shared side means the two cells touch orthogonally: the same row and
+#   neighboring columns, or the same column and neighboring rows. That adds
+#   4 progress after the queue, once. Two stamps that only meet at a corner
+#   do not share a side. Two stamps with a gap between them do not share a
+#   side. One stamp is not enough. A full row yields because its neighbors
+#   share sides. A full column yields for the same reason. If any pair
+#   shares a side, the yield happens even when another pair only meets at
+#   a corner.
+#   Exemption on the middle row cancels the yield.
+# - Bryn Solt, lane column 2, exemption row bottom, Column Toll:
+#   "Patience drops once for each empty column."
+#   An empty column is a column with no stamp. Three empty columns drop
+#   patience by 3. Two empty columns drop it by 2. One empty column drops
+#   it by 1. A stamp in every column drops it by 0. Three stamps in one
+#   column still leave two columns empty. One stamp in each column is
+#   enough, even when those stamps share a row.
+#   Exemption on the bottom row keeps the drop at 1, even when every column
+#   is stamped and even when two columns are empty.
+#   Hold is applied before the column toll.
+# - Ida Cress, lane column 1, exemption row top, Head Slip:
+#   "The first stamp in the queue scores twice."
+#   The queue is read from the top row downward, left to right inside a row.
+#   The first filled cell in that order scores twice. A later stamp scores
+#   its own number. A lone stamp is first, so it scores twice. A retrigger
+#   of that first cell scores twice again. A retrigger of a later cell does
+#   not.
+#   Exemption on the top row cancels the doubling.
+# A refused column zeros that stamp's own progress. It does not cancel the
+# retrigger, and it does not remove Hold or Exemption.
+#
+# SALT WATCH, in desk order
+# An eighth night. The stamps, the ink, and the 3x3 form are unchanged. The
+# salt watch deals the starting deck again. Drafts and the relic from an
+# earlier night do not carry. Open it from the desk, or from a victory desk.
+# Restart act replays whichever night is on the desk.
+# - Pell Voss, lane column 2, exemption row middle, Tide Bar:
+#   "A stamp on the middle row scores 0 unless an Exemption is also on the
+#   middle row."
+#   That is the middle-row refusal. A top-row stamp counts. A bottom-row
+#   stamp counts. Exemption on the middle row lets the middle row count,
+#   including a stamp that resolved earlier in the queue. An Exemption off
+#   the middle row does not.
+# - June Hart, lane column 3, exemption row bottom, Pair Toll:
+#   "Patience drops by 2 if two stamps share a number."
+#   A number is the progress that stamp already grants. Entry Mark is 2.
+#   Visa Dot is 3. Duty is 2, or 4 on the bottom row. Exemption and Hold
+#   are 1. Two stamps share a number when those values are equal. The same
+#   card can fail to share: a top-row Duty is 2 and a bottom-row Duty is 4.
+#   Different cards can share: a top-row Duty and an Entry Mark are both 2.
+#   One stamp cannot share, so the drop stays 1. Three stamps drop patience
+#   by 2 when any pair matches, and by 1 when every number differs. The toll
+#   does not change what a stamp scores. A Surcharge is 2, or 5 when the
+#   cell above is filled, so the cell can change its number.
+#   Exemption on the bottom row keeps the drop at 1.
+#   Hold is applied before the pair toll.
+# - Cal Mire, lane column 1, exemption row top, Edge Yield:
+#   "A stamp on the outer frame yields +3. The center cell does not."
+#   The outer frame is every cell except the center. The center is the
+#   middle row, column 2. Each frame stamp adds 3 to its own progress.
+#   Two frame stamps add 3 each. The center stamp scores its own number.
+#   A retrigger of a frame stamp yields +3 again. A retrigger of the center
+#   does not.
+#   Exemption on the top row cancels the yield, so a frame stamp scores
+#   its own number.
+# - Ned Quill, lane column 2, exemption row bottom, Last Slip:
+#   "The last stamp in the queue scores twice."
+#   The queue is read from the top row downward, left to right inside a row.
+#   The last filled cell in that order scores twice. An earlier stamp scores
+#   its own number, even on the bottom row. A lone stamp is last, so it
+#   scores twice. A retrigger of that last cell scores twice again. A
+#   retrigger of an earlier cell does not.
+#   Exemption on the bottom row cancels the doubling.
+# A refused middle row zeros that stamp's own progress. It does not cancel
+# the retrigger, and it does not remove Hold or Exemption.
+#
 # RUN
 # - A run is seeded. The shuffle and the draft offer are a pure function of the
 #   seed, the night, the traveler, and the cards owned, so restarting an
@@ -252,6 +340,8 @@ const SHIFT_CLOSING := 2
 const SHIFT_ASH := 3
 const SHIFT_GUTTER := 4
 const SHIFT_VELLUM := 5
+const SHIFT_QUIRE := 6
+const SHIFT_SALT := 7
 
 const ROW_NAMES := ["top row", "middle row", "bottom row"]
 const COL_NAMES := ["column 1", "column 2", "column 3"]
@@ -603,6 +693,102 @@ const VELLUM_BELL := [
 ]
 
 
+const QUIRE_WATCH := [
+	{
+		"id": "tess",
+		"name": "Tess Quern",
+		"form_name": "Far Margin",
+		"rule_text": "Refuses stamps in column 3.",
+		"rule": "refuse_col3",
+		"lane": 2,
+		"exemption_row": 0,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "oren",
+		"name": "Oren Sallow",
+		"form_name": "Side Meet",
+		"rule_text": "Yields if two stamps share a side.",
+		"rule": "yield_side",
+		"lane": 0,
+		"exemption_row": 1,
+		"goal": 22,
+		"patience": 5,
+	},
+	{
+		"id": "bryn",
+		"name": "Bryn Solt",
+		"form_name": "Column Toll",
+		"rule_text": "Patience drops once for each empty column.",
+		"rule": "drop_per_empty_column",
+		"lane": 1,
+		"exemption_row": 2,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "ida",
+		"name": "Ida Cress",
+		"form_name": "Head Slip",
+		"rule_text": "The first stamp in the queue scores twice.",
+		"rule": "double_first",
+		"lane": 0,
+		"exemption_row": 0,
+		"goal": 20,
+		"patience": 5,
+	},
+]
+
+
+const SALT_WATCH := [
+	{
+		"id": "pell",
+		"name": "Pell Voss",
+		"form_name": "Tide Bar",
+		"rule_text": "A stamp on the middle row scores 0 unless an Exemption is also on the middle row.",
+		"rule": "refuse_middle",
+		"lane": 1,
+		"exemption_row": 1,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "june",
+		"name": "June Hart",
+		"form_name": "Pair Toll",
+		"rule_text": "Patience drops by 2 if two stamps share a number.",
+		"rule": "drop_if_shared_number",
+		"lane": 2,
+		"exemption_row": 2,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "cal",
+		"name": "Cal Mire",
+		"form_name": "Edge Yield",
+		"rule_text": "A stamp on the outer frame yields +3. The center cell does not.",
+		"rule": "yield_frame",
+		"lane": 0,
+		"exemption_row": 0,
+		"goal": 22,
+		"patience": 5,
+	},
+	{
+		"id": "ned",
+		"name": "Ned Quill",
+		"form_name": "Last Slip",
+		"rule_text": "The last stamp in the queue scores twice.",
+		"rule": "double_last",
+		"lane": 1,
+		"exemption_row": 2,
+		"goal": 22,
+		"patience": 5,
+	},
+]
+
+
 class NightState:
 	extends RefCounted
 	var seed: int = 1
@@ -656,6 +842,10 @@ static func _canonical_shift(shift_index: int) -> int:
 		return SHIFT_GUTTER
 	if shift_index == SHIFT_VELLUM:
 		return SHIFT_VELLUM
+	if shift_index == SHIFT_QUIRE:
+		return SHIFT_QUIRE
+	if shift_index == SHIFT_SALT:
+		return SHIFT_SALT
 	return SHIFT_FIRST
 
 
@@ -671,7 +861,11 @@ static func new_run(seed_value: int, shift_index: int = SHIFT_FIRST) -> NightSta
 	state.next_iid = 0
 	for card_id in STARTING_DECK:
 		_add_library_card(state, String(card_id))
-	if state.shift == SHIFT_VELLUM:
+	if state.shift == SHIFT_SALT:
+		_log(state, "The salt watch begins. Seed %d." % state.seed)
+	elif state.shift == SHIFT_QUIRE:
+		_log(state, "The quire watch begins. Seed %d." % state.seed)
+	elif state.shift == SHIFT_VELLUM:
 		_log(state, "The vellum bell begins. Seed %d." % state.seed)
 	elif state.shift == SHIFT_GUTTER:
 		_log(state, "The gutter lamp begins. Seed %d." % state.seed)
@@ -723,6 +917,10 @@ static func restart_encounter(state: NightState) -> void:
 
 
 static func shift_label(state: NightState) -> String:
+	if state.shift == SHIFT_SALT:
+		return "Salt watch"
+	if state.shift == SHIFT_QUIRE:
+		return "Quire watch"
 	if state.shift == SHIFT_VELLUM:
 		return "Vellum bell"
 	if state.shift == SHIFT_GUTTER:
@@ -751,6 +949,10 @@ static func traveler(state: NightState) -> Dictionary:
 
 
 static func _roster(state: NightState) -> Array:
+	if state.shift == SHIFT_SALT:
+		return SALT_WATCH
+	if state.shift == SHIFT_QUIRE:
+		return QUIRE_WATCH
 	if state.shift == SHIFT_VELLUM:
 		return VELLUM_BELL
 	if state.shift == SHIFT_GUTTER:
@@ -949,10 +1151,16 @@ static func stamp_progress(state: NightState, card_id: String, row: int, col: in
 		return 0
 	if rule == "refuse_center" and row == 1 and col == 1:
 		return 0
+	if rule == "refuse_col3" and col == 2:
+		return 0
 	if rule == "ignore_shared_row" and row_fill_count(state, row) > 1:
 		return 0
 	if rule == "double_last" and _is_queue_tail(state, row, col):
 		return amount * 2
+	if rule == "double_first" and _is_queue_head(state, row, col):
+		return amount * 2
+	if rule == "yield_frame" and not (row == 1 and col == 1):
+		return amount + 3
 	return amount
 
 
@@ -1039,6 +1247,10 @@ static func patience_loss(state: NightState) -> int:
 			loss = 0
 		elif rule == "drop_per_empty_row":
 			loss = _empty_row_count(state)
+		elif rule == "drop_per_empty_column":
+			loss = _empty_column_count(state)
+		elif rule == "drop_if_shared_number" and _shares_a_number(state):
+			loss = 2
 	return loss
 
 
@@ -1198,6 +1410,8 @@ static func _resolve_stamp(state: NightState, row: int, col: int, hush: bool) ->
 				_log(state, "%s ignores the neighboring %s." % [traveler(state)["name"], CARDS[card_id]["name"]])
 			elif rule == "refuse_center" and row == 1 and col == 1:
 				_log(state, "%s refuses %s in the center cell." % [traveler(state)["name"], CARDS[card_id]["name"]])
+			elif rule == "refuse_col3" and col == 2:
+				_log(state, "%s refuses %s in column 3." % [traveler(state)["name"], CARDS[card_id]["name"]])
 			elif rule == "ignore_shared_row" and row_fill_count(state, row) > 1:
 				_log(state, "%s ignores %s because the row is shared." % [traveler(state)["name"], CARDS[card_id]["name"]])
 			elif rule == "ignore_isolated":
@@ -1208,6 +1422,10 @@ static func _resolve_stamp(state: NightState, row: int, col: int, hush: bool) ->
 			var tail_rule = String(traveler(state)["rule"])
 			if tail_rule == "double_last" and _is_queue_tail(state, row, col) and amount > raw:
 				_log(state, "%s on the %s, %s grants %d. The queue tail doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_first" and _is_queue_head(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The queue head doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_frame" and not (row == 1 and col == 1) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The outer frame yields +3." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			else:
 				_log(state, "%s on the %s, %s grants %d." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 	state.turn_progress += amount
@@ -1273,6 +1491,10 @@ static func _apply_post_rule(state: NightState, hush: bool) -> void:
 		state.turn_progress += 4
 		if not hush:
 			_log(state, "%s yields (+4)." % traveler(state)["name"])
+	elif rule == "yield_side" and _shares_a_side(state):
+		state.turn_progress += 4
+		if not hush:
+			_log(state, "%s yields (+4)." % traveler(state)["name"])
 
 
 static func _is_corner(row: int, col: int) -> bool:
@@ -1285,6 +1507,21 @@ static func _is_covered(state: NightState, row: int, col: int) -> bool:
 
 static func _center_filled(state: NightState) -> bool:
 	return state.form[1][1] != null
+
+
+static func _is_queue_head(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	for earlier_row in range(0, row + 1):
+		var end_col = 2
+		if earlier_row == row:
+			end_col = col - 1
+		for earlier_col in range(0, end_col + 1):
+			if state.form[earlier_row][earlier_col] != null:
+				return false
+	return true
 
 
 static func _is_queue_tail(state: NightState, row: int, col: int) -> bool:
@@ -1323,6 +1560,43 @@ static func _empty_row_count(state: NightState) -> int:
 		if not row_has_stamp(state, row):
 			empty_rows += 1
 	return empty_rows
+
+
+static func _shares_a_number(state: NightState) -> bool:
+	var seen: Dictionary = {}
+	for row in 3:
+		for col in 3:
+			var stamp = state.form[row][col]
+			if stamp == null:
+				continue
+			var number = raw_stamp_progress(state, String(stamp["card_id"]), row, col)
+			if seen.has(number):
+				return true
+			seen[number] = true
+	return false
+
+
+static func _empty_column_count(state: NightState) -> int:
+	var empty_columns = 0
+	for col in 3:
+		if not column_has_stamp(state, col):
+			empty_columns += 1
+	return empty_columns
+
+
+static func _shares_a_side(state: NightState) -> bool:
+	for row in 3:
+		for col in 3:
+			if state.form[row][col] == null:
+				continue
+			for delta in [Vector2i(1, 0), Vector2i(0, 1)]:
+				var next_row = row + delta.x
+				var next_col = col + delta.y
+				if next_row > 2 or next_col > 2:
+					continue
+				if state.form[next_row][next_col] != null:
+					return true
+	return false
 
 
 static func _meets_at_corner(state: NightState) -> bool:
@@ -1381,7 +1655,11 @@ static func _apply_result(state: NightState, result: Dictionary) -> void:
 		state.encounters_cleared += 1
 		if state.traveler_index >= _roster(state).size() - 1:
 			state.phase = "victory"
-			if state.shift == SHIFT_VELLUM:
+			if state.shift == SHIFT_SALT:
+				_log(state, "The queue is empty. The salt watch is clear.")
+			elif state.shift == SHIFT_QUIRE:
+				_log(state, "The queue is empty. The quire watch is clear.")
+			elif state.shift == SHIFT_VELLUM:
 				_log(state, "The queue is empty. The vellum bell is clear.")
 			elif state.shift == SHIFT_GUTTER:
 				_log(state, "The queue is empty. The gutter lamp is clear.")

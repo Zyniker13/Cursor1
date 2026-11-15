@@ -49,6 +49,8 @@ var closing_button: Button
 var ash_button: Button
 var gutter_button: Button
 var vellum_button: Button
+var quire_button: Button
+var salt_button: Button
 var name_label: Label
 var rule_label: Label
 var meta_label: Label
@@ -192,6 +194,12 @@ func _build_traveler() -> Control:
 	vellum_button = _button("Vellum bell")
 	vellum_button.pressed.connect(_toggle_vellum)
 	header.add_child(vellum_button)
+	quire_button = _button("Quire watch")
+	quire_button.pressed.connect(_toggle_quire)
+	header.add_child(quire_button)
+	salt_button = _button("Salt watch")
+	salt_button.pressed.connect(_toggle_salt)
+	header.add_child(salt_button)
 	header.add_child(_spacer())
 	relic_label = _label("Relic: none", 16, INK)
 	header.add_child(relic_label)
@@ -439,6 +447,28 @@ func _begin_vellum_bell() -> void:
 	_open_shift(Rules.SHIFT_VELLUM, state.seed)
 
 
+func _toggle_quire() -> void:
+	var next := Rules.SHIFT_QUIRE
+	if state.shift == Rules.SHIFT_QUIRE:
+		next = Rules.SHIFT_FIRST
+	_open_shift(next, _parse_seed())
+
+
+func _begin_quire_watch() -> void:
+	_open_shift(Rules.SHIFT_QUIRE, state.seed)
+
+
+func _toggle_salt() -> void:
+	var next := Rules.SHIFT_SALT
+	if state.shift == Rules.SHIFT_SALT:
+		next = Rules.SHIFT_FIRST
+	_open_shift(next, _parse_seed())
+
+
+func _begin_salt_watch() -> void:
+	_open_shift(Rules.SHIFT_SALT, state.seed)
+
+
 func _open_shift(shift_index: int, seed_value: int) -> void:
 	state = Rules.new_run(seed_value, shift_index)
 	seed_edit.text = str(state.seed)
@@ -491,6 +521,8 @@ func _refresh_ui() -> void:
 	ash_button.text = "First bell" if state.shift == Rules.SHIFT_ASH else "Ash watch"
 	gutter_button.text = "First bell" if state.shift == Rules.SHIFT_GUTTER else "Gutter lamp"
 	vellum_button.text = "First bell" if state.shift == Rules.SHIFT_VELLUM else "Vellum bell"
+	quire_button.text = "First bell" if state.shift == Rules.SHIFT_QUIRE else "Quire watch"
+	salt_button.text = "First bell" if state.shift == Rules.SHIFT_SALT else "Salt watch"
 	name_label.text = String(traveler["name"])
 	rule_label.text = "\"%s\"" % traveler["rule_text"]
 	var lane := String(Rules.COL_NAMES[int(traveler["lane"])])
@@ -624,12 +656,72 @@ func _fill_modal() -> void:
 			modal_box.add_child(button)
 		_add_modal_restarts()
 	elif state.phase == "victory":
-		if state.shift == Rules.SHIFT_VELLUM:
+		if state.shift == Rules.SHIFT_SALT:
+			modal_box.add_child(_label("The salt watch is clear", 32, TEXT))
+			modal_box.add_child(_wrapped("Pell Voss, June Hart, Cal Mire, and Ned Quill passed the desk. Restart this night to run the seed again, or open another bell.", 18, MUTED))
+			var restart_salt := _button("Restart act")
+			restart_salt.pressed.connect(_restart_act)
+			modal_box.add_child(restart_salt)
+			var salt_quire := _button("Open the quire watch")
+			salt_quire.pressed.connect(_begin_quire_watch)
+			modal_box.add_child(salt_quire)
+			var salt_vellum := _button("Open the vellum bell")
+			salt_vellum.pressed.connect(_begin_vellum_bell)
+			modal_box.add_child(salt_vellum)
+			var salt_gutter := _button("Open the gutter lamp")
+			salt_gutter.pressed.connect(_begin_gutter_lamp)
+			modal_box.add_child(salt_gutter)
+			var salt_ash := _button("Open the ash watch")
+			salt_ash.pressed.connect(_begin_ash_watch)
+			modal_box.add_child(salt_ash)
+			var salt_closing := _button("Open the closing bell")
+			salt_closing.pressed.connect(_begin_closing_bell)
+			modal_box.add_child(salt_closing)
+			var salt_late := _button("Open the late shift")
+			salt_late.pressed.connect(_begin_late_shift)
+			modal_box.add_child(salt_late)
+			var salt_first := _button("Open the first bell")
+			salt_first.pressed.connect(_begin_first_bell)
+			modal_box.add_child(salt_first)
+		elif state.shift == Rules.SHIFT_QUIRE:
+			modal_box.add_child(_label("The quire watch is clear", 32, TEXT))
+			modal_box.add_child(_wrapped("Tess Quern, Oren Sallow, Bryn Solt, and Ida Cress passed the desk. The salt watch is an eighth night. Restart this night to run the seed again, or open another bell.", 18, MUTED))
+			var restart_quire := _button("Restart act")
+			restart_quire.pressed.connect(_restart_act)
+			modal_box.add_child(restart_quire)
+			var quire_salt := _button("Open the salt watch")
+			quire_salt.pressed.connect(_begin_salt_watch)
+			modal_box.add_child(quire_salt)
+			var quire_vellum := _button("Open the vellum bell")
+			quire_vellum.pressed.connect(_begin_vellum_bell)
+			modal_box.add_child(quire_vellum)
+			var quire_gutter := _button("Open the gutter lamp")
+			quire_gutter.pressed.connect(_begin_gutter_lamp)
+			modal_box.add_child(quire_gutter)
+			var quire_ash := _button("Open the ash watch")
+			quire_ash.pressed.connect(_begin_ash_watch)
+			modal_box.add_child(quire_ash)
+			var quire_closing := _button("Open the closing bell")
+			quire_closing.pressed.connect(_begin_closing_bell)
+			modal_box.add_child(quire_closing)
+			var quire_late := _button("Open the late shift")
+			quire_late.pressed.connect(_begin_late_shift)
+			modal_box.add_child(quire_late)
+			var quire_first := _button("Open the first bell")
+			quire_first.pressed.connect(_begin_first_bell)
+			modal_box.add_child(quire_first)
+		elif state.shift == Rules.SHIFT_VELLUM:
 			modal_box.add_child(_label("The vellum bell is clear", 32, TEXT))
-			modal_box.add_child(_wrapped("Edda Voss, Rho Tallow, Nessa Brin, and Lark Pym passed the desk. Restart this night to run the seed again, or open another bell.", 18, MUTED))
+			modal_box.add_child(_wrapped("Edda Voss, Rho Tallow, Nessa Brin, and Lark Pym passed the desk. The quire watch is a seventh night, and the salt watch is an eighth. Restart this night to run the seed again, or open another bell.", 18, MUTED))
 			var restart_vellum := _button("Restart act")
 			restart_vellum.pressed.connect(_restart_act)
 			modal_box.add_child(restart_vellum)
+			var vellum_salt := _button("Open the salt watch")
+			vellum_salt.pressed.connect(_begin_salt_watch)
+			modal_box.add_child(vellum_salt)
+			var vellum_quire := _button("Open the quire watch")
+			vellum_quire.pressed.connect(_begin_quire_watch)
+			modal_box.add_child(vellum_quire)
 			var vellum_gutter := _button("Open the gutter lamp")
 			vellum_gutter.pressed.connect(_begin_gutter_lamp)
 			modal_box.add_child(vellum_gutter)
@@ -647,10 +739,16 @@ func _fill_modal() -> void:
 			modal_box.add_child(vellum_first)
 		elif state.shift == Rules.SHIFT_GUTTER:
 			modal_box.add_child(_label("The gutter lamp is clear", 32, TEXT))
-			modal_box.add_child(_wrapped("Ivo Dane, Sera Dodd, Wren Hale, and Kit Yarrow passed the desk. The vellum bell is a sixth night. Restart this night to run the seed again, or open another bell.", 18, MUTED))
+			modal_box.add_child(_wrapped("Ivo Dane, Sera Dodd, Wren Hale, and Kit Yarrow passed the desk. The vellum bell is a sixth night, the quire watch is a seventh, and the salt watch is an eighth. Restart this night to run the seed again, or open another bell.", 18, MUTED))
 			var restart_gutter := _button("Restart act")
 			restart_gutter.pressed.connect(_restart_act)
 			modal_box.add_child(restart_gutter)
+			var gutter_salt := _button("Open the salt watch")
+			gutter_salt.pressed.connect(_begin_salt_watch)
+			modal_box.add_child(gutter_salt)
+			var gutter_quire := _button("Open the quire watch")
+			gutter_quire.pressed.connect(_begin_quire_watch)
+			modal_box.add_child(gutter_quire)
 			var gutter_vellum := _button("Open the vellum bell")
 			gutter_vellum.pressed.connect(_begin_vellum_bell)
 			modal_box.add_child(gutter_vellum)
@@ -668,10 +766,16 @@ func _fill_modal() -> void:
 			modal_box.add_child(gutter_first)
 		elif state.shift == Rules.SHIFT_ASH:
 			modal_box.add_child(_label("The ash watch is clear", 32, TEXT))
-			modal_box.add_child(_wrapped("Orla Fen, Joss Mire, Vetch Rowan, and Nim Harth passed the desk. The gutter lamp is a fifth night, and the vellum bell is a sixth. Restart this night to run the seed again, or open another bell.", 18, MUTED))
+			modal_box.add_child(_wrapped("Orla Fen, Joss Mire, Vetch Rowan, and Nim Harth passed the desk. Later nights use the same stamps and a fresh deck: the gutter lamp, the vellum bell, the quire watch, and the salt watch. Restart this night to run the seed again, or open another bell.", 18, MUTED))
 			var restart_ash := _button("Restart act")
 			restart_ash.pressed.connect(_restart_act)
 			modal_box.add_child(restart_ash)
+			var ash_salt := _button("Open the salt watch")
+			ash_salt.pressed.connect(_begin_salt_watch)
+			modal_box.add_child(ash_salt)
+			var ash_quire := _button("Open the quire watch")
+			ash_quire.pressed.connect(_begin_quire_watch)
+			modal_box.add_child(ash_quire)
 			var ash_vellum := _button("Open the vellum bell")
 			ash_vellum.pressed.connect(_begin_vellum_bell)
 			modal_box.add_child(ash_vellum)
@@ -689,10 +793,16 @@ func _fill_modal() -> void:
 			modal_box.add_child(ash_first)
 		elif state.shift == Rules.SHIFT_CLOSING:
 			modal_box.add_child(_label("The closing bell is clear", 32, TEXT))
-			modal_box.add_child(_wrapped("Moss Quen, Kel Breck, Tansy Pell, and Lumen Peck passed the desk. Later nights use the same stamps and a fresh deck: the ash watch, the gutter lamp, and the vellum bell.", 18, MUTED))
+			modal_box.add_child(_wrapped("Moss Quen, Kel Breck, Tansy Pell, and Lumen Peck passed the desk. Later nights use the same stamps and a fresh deck: the ash watch, the gutter lamp, the vellum bell, the quire watch, and the salt watch.", 18, MUTED))
 			var restart_closing := _button("Restart act")
 			restart_closing.pressed.connect(_restart_act)
 			modal_box.add_child(restart_closing)
+			var closing_salt := _button("Open the salt watch")
+			closing_salt.pressed.connect(_begin_salt_watch)
+			modal_box.add_child(closing_salt)
+			var closing_quire := _button("Open the quire watch")
+			closing_quire.pressed.connect(_begin_quire_watch)
+			modal_box.add_child(closing_quire)
 			var closing_vellum := _button("Open the vellum bell")
 			closing_vellum.pressed.connect(_begin_vellum_bell)
 			modal_box.add_child(closing_vellum)
@@ -710,7 +820,7 @@ func _fill_modal() -> void:
 			modal_box.add_child(back_first)
 		elif state.shift == Rules.SHIFT_LATE:
 			modal_box.add_child(_label("The late shift is clear", 32, TEXT))
-			modal_box.add_child(_wrapped("Nell Parr, Sol Wicks, Pim Larke, and Rue Calder passed the desk. The closing bell, the ash watch, the gutter lamp, and the vellum bell are later nights. Same stamps, a fresh deck, and four new forms.", 18, MUTED))
+			modal_box.add_child(_wrapped("Nell Parr, Sol Wicks, Pim Larke, and Rue Calder passed the desk. The closing bell, the ash watch, the gutter lamp, the vellum bell, the quire watch, and the salt watch are later nights. Same stamps, a fresh deck, and four new forms.", 18, MUTED))
 			var closing := _button("Begin the closing bell")
 			closing.pressed.connect(_begin_closing_bell)
 			modal_box.add_child(closing)
@@ -723,6 +833,12 @@ func _fill_modal() -> void:
 			var late_vellum := _button("Open the vellum bell")
 			late_vellum.pressed.connect(_begin_vellum_bell)
 			modal_box.add_child(late_vellum)
+			var late_quire := _button("Open the quire watch")
+			late_quire.pressed.connect(_begin_quire_watch)
+			modal_box.add_child(late_quire)
+			var late_salt := _button("Open the salt watch")
+			late_salt.pressed.connect(_begin_salt_watch)
+			modal_box.add_child(late_salt)
 			var restart_night := _button("Restart act")
 			restart_night.pressed.connect(_restart_act)
 			modal_box.add_child(restart_night)
@@ -731,7 +847,7 @@ func _fill_modal() -> void:
 			modal_box.add_child(first)
 		else:
 			modal_box.add_child(_label("Act 1 is clear", 32, TEXT))
-			modal_box.add_child(_wrapped("Four travelers passed the desk. Later nights use the same stamps and a fresh deck: the late shift, the closing bell, the ash watch, the gutter lamp, and the vellum bell.", 18, MUTED))
+			modal_box.add_child(_wrapped("Four travelers passed the desk. Later nights use the same stamps and a fresh deck: the late shift, the closing bell, the ash watch, the gutter lamp, the vellum bell, the quire watch, and the salt watch.", 18, MUTED))
 			var late := _button("Begin the late shift")
 			late.pressed.connect(_begin_late_shift)
 			modal_box.add_child(late)
@@ -747,6 +863,12 @@ func _fill_modal() -> void:
 			var act_vellum := _button("Open the vellum bell")
 			act_vellum.pressed.connect(_begin_vellum_bell)
 			modal_box.add_child(act_vellum)
+			var act_quire := _button("Open the quire watch")
+			act_quire.pressed.connect(_begin_quire_watch)
+			modal_box.add_child(act_quire)
+			var act_salt := _button("Open the salt watch")
+			act_salt.pressed.connect(_begin_salt_watch)
+			modal_box.add_child(act_salt)
 			var button := _button("Restart act")
 			button.pressed.connect(_restart_act)
 			modal_box.add_child(button)

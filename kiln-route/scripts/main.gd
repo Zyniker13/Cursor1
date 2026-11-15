@@ -188,6 +188,10 @@ func _kind_for_key(code: int) -> int:
 		KEY_KP_8: Rules.Kind.BRIDGE,
 		KEY_9: Rules.Kind.GRATE,
 		KEY_KP_9: Rules.Kind.GRATE,
+		KEY_0: Rules.Kind.HOOK,
+		KEY_KP_0: Rules.Kind.HOOK,
+		KEY_MINUS: Rules.Kind.ARM,
+		KEY_KP_SUBTRACT: Rules.Kind.ARM,
 	}
 	if not map.has(code):
 		return -1
@@ -341,6 +345,8 @@ func _kind_order() -> Array:
 		Rules.Kind.WEIR,
 		Rules.Kind.BRIDGE,
 		Rules.Kind.GRATE,
+		Rules.Kind.HOOK,
+		Rules.Kind.ARM,
 	]
 
 
@@ -371,16 +377,27 @@ func _layout() -> Dictionary:
 	var size := get_viewport_rect().size
 	if size.x < 100.0 or size.y < 100.0:
 		size = Vector2(1280, 720)
-	# Eight tabs fit the first three wings on three rows. A fourth row crowds
-	# the rule text, so the fourth wing uses a wider row and stays on three.
-	var per_row := 11 if rooms.size() > 24 else 8
+	# Past 32 rooms, rows of ten keep each name readable.
+	# The sixth wing adds a fifth row. Shorter tabs give that row back
+	# so the rule text keeps the space it had with four.
+	var per_row := 8
+	var tab_h := 30.0
+	var row_gap := 4.0
+	if rooms.size() > 40:
+		per_row = 10
+		tab_h = 20.0
+		row_gap = 2.0
+	elif rooms.size() > 32:
+		per_row = 10
+		tab_h = 22.0
+		row_gap = 2.0
+	elif rooms.size() > 24:
+		per_row = 11
 	var rows := 1
 	if not rooms.is_empty():
 		rows = ceili(float(rooms.size()) / float(per_row))
 	var tab_y := 48.0
-	var tab_h := 30.0
 	var tab_gap := 8.0
-	var row_gap := 4.0
 	var tabs: Array = []
 	var tab_w := (size.x - 48.0 - tab_gap * float(per_row - 1)) / float(per_row)
 	for index in rooms.size():
@@ -447,7 +464,7 @@ func _draw() -> void:
 	var size: Vector2 = lay.size
 	draw_rect(Rect2(Vector2.ZERO, size), COL_BG)
 	_text(Vector2(24, 14), "KILN ROUTE", 28, COL_TEXT)
-	_text(Vector2(236, 26), "four wings", 15, COL_DIM)
+	_text(Vector2(236, 26), "six wings", 15, COL_DIM)
 	var minute := "minute  %d / %d" % [_shown_tick(), Rules.SIM_TICKS]
 	var minute_w := font.get_string_size(minute, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
 	_text(Vector2(size.x - 24 - minute_w, 26), minute, 15, COL_DIM)
@@ -457,7 +474,7 @@ func _draw() -> void:
 	_draw_grid(lay)
 	_draw_side(lay)
 	_draw_tray(lay)
-	_text(Vector2(24, size.y - 28), "1-9 select    R rotate    LMB place or pick up    RMB rotate a piece    Space run    F skip    Bksp restart", 13, COL_DIM)
+	_text(Vector2(24, size.y - 28), "1-9, 0, - select    R rotate    LMB place or pick up    RMB rotate a piece    Space run    F skip    Bksp restart", 13, COL_DIM)
 
 
 func _draw_tabs(lay: Dictionary) -> void:
@@ -484,10 +501,11 @@ func _draw_tabs(lay: Dictionary) -> void:
 		elif rooms.size() > 8:
 			tab_size = 14
 		_text_in(rect, label, tab_size, COL_TEXT if unlocked else COL_LOCK)
+		var mark := rect.position + Vector2(rect.size.x - 14, rect.size.y * 0.5)
 		if cleared.has(int(room.id)):
-			draw_circle(rect.position + Vector2(rect.size.x - 14, 14), 4.5, COL_OK)
+			draw_circle(mark, 4.0, COL_OK)
 		elif not unlocked:
-			_padlock(rect.position + Vector2(rect.size.x - 16, 18))
+			_padlock(mark)
 
 
 func _draw_grid(lay: Dictionary) -> void:
@@ -621,6 +639,26 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 	elif kind == Rules.Kind.BRIDGE:
 		var across := Vector2(Rules.vec(Rules.right(dir)))
 		draw_line(center - across * body.size.x * 0.36, center + across * body.size.x * 0.36, Color(1, 1, 1, 0.34 * alpha), maxf(2.0, body.size.x * 0.08))
+	elif kind == Rules.Kind.HOOK:
+		var along := Vector2(Rules.vec(dir))
+		var aside := Vector2(Rules.vec(Rules.left(dir)))
+		var ink := Color(1, 1, 1, 0.72 * alpha)
+		var thick := maxf(2.0, body.size.x * 0.07)
+		var tail := center - along * body.size.x * 0.28
+		var bend := center + along * body.size.x * 0.02
+		var tip := bend + aside * body.size.x * 0.28
+		draw_line(tail, bend, ink, thick)
+		draw_line(bend, tip, ink, thick)
+	elif kind == Rules.Kind.ARM:
+		var along := Vector2(Rules.vec(dir))
+		var aside := Vector2(Rules.vec(Rules.left(dir)))
+		var ink := Color(1, 1, 1, 0.72 * alpha)
+		var thick := maxf(2.0, body.size.x * 0.07)
+		var grip := center + aside * body.size.x * 0.3
+		var bend := center
+		var tip := bend + along * body.size.x * 0.24
+		draw_line(grip, bend, ink, thick)
+		draw_line(bend, tip, ink, thick)
 	elif kind == Rules.Kind.GRATE:
 		var along := Vector2(Rules.vec(dir))
 		var across := Vector2(Rules.vec(Rules.right(dir)))
@@ -640,8 +678,14 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 	var forward := light
 	if kind == Rules.Kind.GRATE:
 		forward = Color("d7dee6")
-	_arrow(front, dir, body.size.x * 0.2, body.size.x * 0.12, Color(forward.r, forward.g, forward.b, forward_alpha))
-	if kind == Rules.Kind.FILTER or kind == Rules.Kind.SPLITTER or kind == Rules.Kind.WEIR or kind == Rules.Kind.GRATE:
+	if kind != Rules.Kind.HOOK:
+		_arrow(front, dir, body.size.x * 0.2, body.size.x * 0.12, Color(forward.r, forward.g, forward.b, forward_alpha))
+	if kind == Rules.Kind.HOOK:
+		var turn := Rules.left(dir)
+		var side := center + Vector2(Rules.vec(turn)) * body.size.x * 0.2
+		var mark := Color("f4e1b5")
+		_arrow(side, turn, body.size.x * 0.16, body.size.x * 0.1, Color(mark.r, mark.g, mark.b, alpha))
+	elif kind == Rules.Kind.FILTER or kind == Rules.Kind.SPLITTER or kind == Rules.Kind.WEIR or kind == Rules.Kind.GRATE:
 		var turn := Rules.right(dir)
 		var side := center + Vector2(Rules.vec(turn)) * body.size.x * 0.18
 		var mark := light
@@ -682,7 +726,7 @@ func _draw_side(lay: Dictionary) -> void:
 	y += 8
 	_text(Vector2(x, y), "RULE", 12, COL_DIM)
 	y += 18
-	var limit := (lay.run_btn as Rect2).position.y - 56.0
+	var limit := (lay.run_btn as Rect2).position.y - 40.0
 	for line in _wrap(str(room.rule), side.size.x - 32.0, 14):
 		if y > limit:
 			break
@@ -704,7 +748,7 @@ func _draw_side(lay: Dictionary) -> void:
 		elif not last_result.budget_ok:
 			msg = "OVER BUDGET"
 			col = COL_BAD
-		_text(Vector2(x, (lay.run_btn as Rect2).position.y - 28), msg, 16, col)
+		_text(Vector2(x, (lay.run_btn as Rect2).position.y - 18), msg, 16, col)
 
 
 func _draw_tray(lay: Dictionary) -> void:
@@ -720,7 +764,7 @@ func _draw_tray(lay: Dictionary) -> void:
 		_text(Vector2(text_x, rect.position.y + 14), Rules.KIND_NAME[kind], 15, COL_TEXT)
 		var left: int = _planner().remaining(kind)
 		_text(Vector2(text_x, rect.position.y + 36), "%d left" % left, 18, COL_TEXT if left > 0 else COL_LOCK)
-		_text(Vector2(text_x, rect.position.y + 60), "key %d" % (kind + 1), 12, COL_DIM)
+		_text(Vector2(text_x, rect.position.y + 60), "key %s" % _key_label(kind), 12, COL_DIM)
 
 
 func _button(rect: Rect2, label: String, hot: bool) -> void:
@@ -773,6 +817,14 @@ func _draw_item(center: Vector2, mat: int, scale: float) -> void:
 		draw_rect(Rect2(center - size * 0.5, size), col)
 
 
+func _key_label(kind: int) -> String:
+	if kind == Rules.Kind.HOOK:
+		return "0"
+	if kind == Rules.Kind.ARM:
+		return "-"
+	return str(kind + 1)
+
+
 func _kind_color(kind: int) -> Color:
 	if kind == Rules.Kind.BELT:
 		return Color("e0a44a")
@@ -792,6 +844,10 @@ func _kind_color(kind: int) -> Color:
 		return Color("6f8f9a")
 	if kind == Rules.Kind.GRATE:
 		return Color("b56b7c")
+	if kind == Rules.Kind.HOOK:
+		return Color("3d6ea8")
+	if kind == Rules.Kind.ARM:
+		return Color("a35d3a")
 	return Color("c792ef")
 
 
