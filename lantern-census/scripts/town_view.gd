@@ -93,10 +93,10 @@ func _build() -> void:
 	rate.bbcode_enabled = false
 	rate.scroll_active = false
 	rate.fit_content = false
-	rate.position = Vector2(24, 270)
-	rate.size = Vector2(532, 112)
+	rate.position = Vector2(24, 268)
+	rate.size = Vector2(532, 116)
 	rate.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	rate.add_theme_font_size_override("normal_font_size", 16)
+	rate.add_theme_font_size_override("normal_font_size", 15)
 	rate.add_theme_color_override("default_color", Color(0.86, 0.78, 0.62))
 	clerk.add_child(rate)
 
