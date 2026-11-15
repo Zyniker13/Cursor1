@@ -16,6 +16,7 @@ const Night = preload("res://scripts/night_bell.gd")
 const Salt = preload("res://scripts/salt_mark.gd")
 const Wick = preload("res://scripts/wick_trim.gd")
 const Anneal = preload("res://scripts/glass_anneal.gd")
+const Graft = preload("res://scripts/orchard_graft.gd")
 const Catalog = preload("res://scripts/catalog.gd")
 const Solver = preload("res://scripts/solver.gd")
 const Verdict = preload("res://scripts/verdict.gd")
@@ -51,6 +52,8 @@ const WICK_TIMELINE := "Quin (wick hand) trimmed the wick in the loft at 4, seen
 const WICK_TRUE := {"who": "Quin", "place": "loft", "hour": "4"}
 const ANNEAL_TIMELINE := "Tess (anneal hand) annealed the gather in the lehr at 10, seen from the marver, so the pane would cool without a crack.\nIvo (gatherer) gathered the glass in the pot, and the pot was charged at 8.\nWynn (marver hand) smoothed the shoulder at 9 on the marver.\nThe pontil was rested in the pot.\nThe marver was cleared at 11.\nThe lehr was latched at 12."
 const ANNEAL_TRUE := {"who": "Tess", "place": "lehr", "hour": "10"}
+const GRAFT_TIMELINE := "Calder (graft hand) grafted the scion in the nursery at 16, seen from the row, so the row would take before the frost.\nNess (scion cutter) cut the scion in the row at 15.\nEdda (raffia hand) bound the union at the gate.\nThe knife was hung at the gate.\nThe row was watered at 14.\nThe gate was shut at 17.\nThe frost was chalked at 18."
+const GRAFT_TRUE := {"who": "Calder", "place": "nursery", "hour": "16"}
 
 var _failures: Array[String] = []
 var _checks := 0
@@ -153,6 +156,12 @@ func _initialize() -> void:
 	_test_anneal_only_true_theory()
 	_test_anneal_near_misses()
 	_test_anneal_incomplete()
+	_test_graft_file_shape()
+	_test_graft_unique_model()
+	_test_graft_each_exhibit_necessary()
+	_test_graft_only_true_theory()
+	_test_graft_near_misses()
+	_test_graft_incomplete()
 	_test_solutions_differ()
 	_test_menu_opens_either_case()
 	if _failures.is_empty():
@@ -3659,6 +3668,288 @@ func _test_anneal_incomplete() -> void:
 
 
 
+func _test_graft_file_shape() -> void:
+	_expect(Graft.EXHIBITS.size() == 9, "graft exhibit count is %d" % Graft.EXHIBITS.size())
+	_expect(Graft.PEOPLE.size() == 3, "graft cast should be three people")
+	_expect(Graft.PLACES.size() == 3, "graft room count is %d" % Graft.PLACES.size())
+	_expect(Graft.HOURS.size() == 5, "graft hour list length is %d" % Graft.HOURS.size())
+	_expect(Graft.TITLE == "The orchard graft", "graft title")
+	_expect(Graft.TITLE != CaseData.TITLE and Graft.TITLE != Rehearsal.TITLE and Graft.TITLE != Gilt.TITLE and Graft.TITLE != Ferry.TITLE and Graft.TITLE != Weather.TITLE and Graft.TITLE != Loom.TITLE and Graft.TITLE != Hive.TITLE and Graft.TITLE != Glass.TITLE and Graft.TITLE != Press.TITLE and Graft.TITLE != Assay.TITLE and Graft.TITLE != Kiln.TITLE and Graft.TITLE != Tide.TITLE and Graft.TITLE != Night.TITLE and Graft.TITLE != Salt.TITLE and Graft.TITLE != Wick.TITLE and Graft.TITLE != Anneal.TITLE, "graft shares a title")
+	_expect(Graft.FILE_CODE == "CW-17", "graft file code")
+	_expect(Graft.FILE_CODE != CaseData.FILE_CODE and Graft.FILE_CODE != Rehearsal.FILE_CODE and Graft.FILE_CODE != Gilt.FILE_CODE and Graft.FILE_CODE != Ferry.FILE_CODE and Graft.FILE_CODE != Weather.FILE_CODE and Graft.FILE_CODE != Loom.FILE_CODE and Graft.FILE_CODE != Hive.FILE_CODE and Graft.FILE_CODE != Glass.FILE_CODE and Graft.FILE_CODE != Press.FILE_CODE and Graft.FILE_CODE != Assay.FILE_CODE and Graft.FILE_CODE != Kiln.FILE_CODE and Graft.FILE_CODE != Tide.FILE_CODE and Graft.FILE_CODE != Night.FILE_CODE and Graft.FILE_CODE != Salt.FILE_CODE and Graft.FILE_CODE != Wick.FILE_CODE and Graft.FILE_CODE != Anneal.FILE_CODE, "graft shares a file code")
+	_expect(Graft.HOURS[Graft.HOURS.size() / 2] == GRAFT_TRUE["hour"], "orchard graft should be the middle hour")
+	_expect(Graft.HOURS[0] != GRAFT_TRUE["hour"], "orchard graft should not be the earliest hour")
+	_expect(Graft.HOURS[Graft.HOURS.size() - 1] != GRAFT_TRUE["hour"], "orchard graft should not be the latest hour")
+	var counts := _player_pin_counts(Graft)
+	_expect(int(counts["taker"]) == 3 and int(counts["place"]) == 3 and int(counts["hour"]) == 3, "graft pin counts are %s" % str(counts))
+	_expect(counts != _player_pin_counts(CaseData), "graft copied the spare-key pin pattern")
+	_expect(counts != _player_pin_counts(Rehearsal), "graft copied the rehearsal pin pattern")
+	_expect(counts != _player_pin_counts(Gilt), "graft copied the gilt pin pattern")
+	_expect(counts != _player_pin_counts(Ferry), "graft copied the ferry pin pattern")
+	_expect(counts != _player_pin_counts(Weather), "graft copied the weather pin pattern")
+	_expect(counts != _player_pin_counts(Loom), "graft copied the loom pin pattern")
+	_expect(counts != _player_pin_counts(Hive), "graft copied the hive pin pattern")
+	_expect(counts != _player_pin_counts(Glass), "graft copied the glass pin pattern")
+	_expect(counts != _player_pin_counts(Press), "graft copied the press pin pattern")
+	_expect(counts != _player_pin_counts(Assay), "graft copied the assay pin pattern")
+	_expect(counts == _player_pin_counts(Kiln), "orchard graft should keep the kiln chalk pin rhythm")
+	_expect(counts == _player_pin_counts(Tide), "orchard graft should keep the tide ledger pin rhythm")
+	_expect(counts == _player_pin_counts(Night), "orchard graft should keep the night bell pin rhythm")
+	_expect(counts == _player_pin_counts(Salt), "orchard graft should keep the salt mark pin rhythm")
+	_expect(counts == _player_pin_counts(Wick), "orchard graft should keep the wick trim pin rhythm")
+	_expect(counts == _player_pin_counts(Anneal), "orchard graft should keep the glass anneal pin rhythm")
+	_expect(_field_key(Graft) != _field_key(CaseData), "graft copied the spare-key timeline fields")
+	_expect(_field_key(Graft) != _field_key(Rehearsal), "graft copied the rehearsal timeline fields")
+	_expect(_field_key(Graft) != _field_key(Gilt), "graft copied the gilt timeline fields")
+	_expect(_field_key(Graft) != _field_key(Ferry), "graft copied the ferry timeline fields")
+	_expect(_field_key(Graft) != _field_key(Weather), "graft copied the weather timeline fields")
+	_expect(_field_key(Graft) != _field_key(Loom), "graft copied the loom timeline fields")
+	_expect(_field_key(Graft) != _field_key(Hive), "graft copied the hive timeline fields")
+	_expect(_field_key(Graft) != _field_key(Glass), "graft copied the glass timeline fields")
+	_expect(_field_key(Graft) != _field_key(Press), "graft copied the press timeline fields")
+	_expect(_field_key(Graft) != _field_key(Assay), "graft copied the assay timeline fields")
+	_expect(_field_key(Graft) != _field_key(Kiln), "graft copied the kiln timeline fields")
+	_expect(_field_key(Graft) != _field_key(Tide), "graft copied the tide timeline fields")
+	_expect(_field_key(Graft) != _field_key(Night), "graft copied the night timeline fields")
+	_expect(_field_key(Graft) != _field_key(Salt), "graft copied the salt timeline fields")
+	_expect(_field_key(Graft) != _field_key(Wick), "graft copied the wick timeline fields")
+	_expect(_field_key(Graft) != _field_key(Anneal), "graft copied the anneal timeline fields")
+	var seen := {}
+	var stated := {}
+	var paired_hidden := 0
+	for exhibit in Graft.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		_expect(not seen.has(exhibit_id), "duplicate graft id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		var states_player_pin := false
+		var states_unique := false
+		var player_literals := 0
+		var hidden_literals := 0
+		for literal in exhibit["literals"]:
+			stated[str(literal["value"])] = true
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Graft.PLAYER_FIELDS:
+				states_player_pin = true
+				player_literals += 1
+				var expected := Graft.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Graft.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats >= 2, "%s states %s once" % [exhibit_id, field])
+			else:
+				hidden_literals += 1
+				var owners := 0
+				for other in Graft.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		if hidden_literals == 2:
+			paired_hidden += 1
+		else:
+			_expect(hidden_literals == 1, "%s states %d hidden facts" % [exhibit_id, hidden_literals])
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(player_literals == 1, "%s states %d player pins" % [exhibit_id, player_literals])
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+	_expect(paired_hidden == 2, "graft should have two slips with two hidden facts, found %d" % paired_hidden)
+	for hour in Graft.HOURS:
+		_expect(stated.has(hour), "graft hour %s is absent from the exhibits" % hour)
+
+func _test_graft_unique_model() -> void:
+	var models := Solver.enumerate(Graft.EXHIBITS, Graft)
+	print("graft models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one graft model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Calder", "graft taker")
+	_expect(str(model["place"]) == "nursery", "graft place")
+	_expect(str(model["hour"]) == "16", "graft hour")
+	_expect(str(model["cutter"]) == "Ness", "graft cutter")
+	_expect(str(model["cut_place"]) == "row", "graft cut place")
+	_expect(str(model["cut_hour"]) == "15", "graft cut hour")
+	_expect(str(model["seen_place"]) == "row", "graft seen from")
+	_expect(str(model["binder"]) == "Edda", "graft binder")
+	_expect(str(model["purpose"]) == "take_row", "graft purpose")
+	_expect(str(model["tie_place"]) == "gate", "graft tie place")
+	_expect(str(model["knife_place"]) == "gate", "graft knife place")
+	_expect(str(model["water_hour"]) == "14", "graft water hour")
+	_expect(str(model["shut_hour"]) == "17", "graft shut hour")
+	_expect(str(model["frost_hour"]) == "18", "graft frost hour")
+	for hour in Graft.HOURS:
+		var used := false
+		for field in Graft.fields():
+			if str(model[field]) == hour:
+				used = true
+		_expect(used, "graft hour %s is blank in the true timeline" % hour)
+	for place in Graft.PLACES:
+		var place_used := false
+		for field in Graft.fields():
+			if str(model[field]) == place:
+				place_used = true
+		_expect(place_used, "graft room %s is blank in the true timeline" % place)
+	for person in Graft.PEOPLE:
+		var person_used := false
+		for field in Graft.fields():
+			if str(model[field]) == person:
+				person_used = true
+		_expect(person_used, "graft person %s is blank in the true timeline" % person)
+	_expect(Graft.timeline(model) == GRAFT_TIMELINE, "graft timeline drifted:\n%s" % Graft.timeline(model))
+	for exhibit in Graft.EXHIBITS:
+		_expect(Graft.holds(exhibit, model), "%s rejects the graft timeline" % exhibit["id"])
+
+func _test_graft_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Graft.EXHIBITS, Graft)
+	for exhibit in Graft.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Graft.without(exhibit_id), Graft)
+		print("graft without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "graft %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Graft.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "graft %s removal did not admit a timeline it forbids" % exhibit_id)
+
+func _test_graft_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	for who in Graft.PEOPLE:
+		for place in Graft.PLACES:
+			for hour in Graft.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == GRAFT_TRUE["who"] and place == GRAFT_TRUE["place"] and hour == GRAFT_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Graft)
+					print("graft true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true graft theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "graft acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(GRAFT_TIMELINE) >= 0, "graft acceptance should give the timeline")
+					_expect(str(result["message"]).find("Calder") >= 0, "graft acceptance omits Calder")
+					_expect(str(result["message"]).find("nursery") >= 0, "graft acceptance omits the nursery")
+					_expect(str(result["message"]).find("16") >= 0, "graft acceptance omits 16")
+					_expect(str(result["message"]).find("so the row would take before the frost") >= 0, "graft acceptance omits the frost")
+					_expect(Graft.conflicting_ids(theory).is_empty(), "true graft theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Graft)
+					rejected += 1
+	for outsider in ["Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal", "Nell"]:
+		_expect_rejected({"who": outsider, "place": "nursery", "hour": "16"}, Graft)
+	print("graft theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d graft theories" % accepted)
+	_expect(rejected >= 2, "rejected %d graft theories" % rejected)
+
+func _test_graft_near_misses() -> void:
+	var misses := [
+		{"who": "Calder", "place": "nursery", "hour": "17", "titles": ["Hour leaf", "Take note", "Shut order"]},
+		{"who": "Calder", "place": "nursery", "hour": "15", "titles": ["Hour leaf", "Take note", "Shut order"]},
+		{"who": "Calder", "place": "row", "hour": "16", "titles": ["Bench slate", "Raffia card", "Water slip"]},
+		{"who": "Ness", "place": "nursery", "hour": "16", "titles": ["Scion note", "Path sight", "Knife peg"]},
+	]
+	var wrong_hour_in_nursery := 0
+	var wrong_place_at_hour := 0
+	var wrong_person_in_nursery := 0
+	for theory in misses:
+		_expect_rejected(theory, Graft)
+		var result: Dictionary = Verdict.submit(theory, Graft)
+		var message := str(result["message"])
+		for title in theory["titles"]:
+			_expect(message.find(str(title)) >= 0, "near-miss omits %s: %s" % [title, message])
+		if str(theory["who"]) == "Calder" and str(theory["place"]) == "nursery" and str(theory["hour"]) != "16":
+			wrong_hour_in_nursery += 1
+		if str(theory["who"]) == "Calder" and str(theory["place"]) != "nursery" and str(theory["hour"]) == "16":
+			wrong_place_at_hour += 1
+		if str(theory["who"]) != "Calder" and str(theory["place"]) == "nursery" and str(theory["hour"]) == "16":
+			wrong_person_in_nursery += 1
+	print("graft near-misses rejected: %d" % misses.size())
+	_expect(misses.size() == 4, "need four graft near-misses, found %d" % misses.size())
+	_expect(wrong_hour_in_nursery == 2, "two near-misses should keep Calder in the nursery at another hour")
+	_expect(wrong_place_at_hour >= 1, "a near-miss should keep Calder at 16 in another room")
+	_expect(wrong_person_in_nursery >= 1, "a near-miss should keep the nursery at 16 for another person")
+
+func _test_graft_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+		"who took the gilt stamp",
+		"where they took the stamp",
+		"at which hour they took the stamp",
+		"who took the ferry bell",
+		"where they took the bell",
+		"at which hour they took the bell",
+		"who took the weather slate",
+		"where they took the slate",
+		"at which hour they took the slate",
+		"who took the loom shuttle",
+		"where they took the shuttle",
+		"at which hour they took the shuttle",
+		"who took the hive smoker",
+		"where they took the smoker",
+		"at which hour they took the smoker",
+		"who took the glass pontil",
+		"where they took the pontil",
+		"at which hour they took the pontil",
+		"who took the press proof",
+		"where they took the proof",
+		"at which hour they took the proof",
+		"who set the assay cup",
+		"where they set the cup",
+		"at which hour they set the cup",
+		"who chalked the kiln mark",
+		"where they chalked the mark",
+		"at which hour they chalked the mark",
+		"who entered the tide ledger",
+		"where they entered the ledger",
+		"at which hour they entered the ledger",
+		"who stopped the night bell",
+		"where they stopped the bell",
+		"at which hour they stopped the bell",
+		"who scored the salt mark",
+		"where they scored the mark",
+		"at which hour they scored the mark",
+		"who trimmed the wick",
+		"where they trimmed the wick",
+		"at which hour they trimmed the wick",
+		"who annealed the gather",
+		"where they annealed the gather",
+		"at which hour they annealed the gather",
+	]
+	var cases := [
+		{"theory": {"who": "", "place": "nursery", "hour": "16"}, "present": ["who grafted the scion"], "absent": ["where they grafted the scion", "at which hour they grafted the scion"]},
+		{"theory": {"who": "Calder", "place": "", "hour": "16"}, "present": ["where they grafted the scion"], "absent": ["who grafted the scion", "at which hour they grafted the scion"]},
+		{"theory": {"who": "Calder", "place": "nursery", "hour": ""}, "present": ["at which hour they grafted the scion"], "absent": ["who grafted the scion", "where they grafted the scion"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who grafted the scion", "where they grafted the scion", "at which hour they grafted the scion"], "absent": []},
+		{"theory": {}, "present": ["who grafted the scion", "where they grafted the scion", "at which hour they grafted the scion"], "absent": []},
+		{"theory": {"who": "Edda", "place": "", "hour": "18"}, "present": ["where they grafted the scion"], "absent": ["who grafted the scion", "at which hour they grafted the scion"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Graft)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "graft incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "graft incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "graft incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "graft incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "graft incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "graft missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "graft named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "graft incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("graft incomplete submissions refused with the missing slot")
 func _test_solutions_differ() -> void:
 	var spare := {"who": "Nell", "place": "kitchen", "hour": "7"}
 	_expect(spare["who"] != REHEARSAL_TRUE["who"], "rehearsal copied the spare-key taker")
@@ -4792,7 +5083,166 @@ func _test_solutions_differ() -> void:
 		_expect(not Wick.HOURS.has(hour), "anneal hours repeat %s from the wick trim" % hour)
 	_expect(not Anneal.HOURS.has("4"), "glass anneal hours must not take 4")
 	_expect(not Anneal.HOURS.has("19"), "glass anneal hours must not take 19")
-	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal"], "case list is %s" % str(titles))
+	_expect(GRAFT_TRUE["who"] == "Calder", "orchard graft taker")
+	_expect(GRAFT_TRUE["place"] == "nursery", "orchard graft room")
+	_expect(GRAFT_TRUE["hour"] == "16", "orchard graft hour")
+	for forbidden in ["Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(GRAFT_TRUE["who"] != forbidden, "orchard graft accepted %s" % forbidden)
+	for forbidden_place in ["lehr", "marver", "pot", "loft", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(GRAFT_TRUE["place"] != forbidden_place, "orchard graft accepted the %s" % forbidden_place)
+	_expect(GRAFT_TRUE["hour"] != "10", "orchard graft accepted 10")
+	_expect(GRAFT_TRUE["hour"] != "4", "orchard graft accepted 4")
+	_expect(GRAFT_TRUE["hour"] != "19", "orchard graft accepted 19")
+	_expect(GRAFT_TRUE["who"] != spare["who"], "orchard graft copied the spare-key taker")
+	_expect(GRAFT_TRUE["place"] != spare["place"], "orchard graft copied the spare-key room")
+	_expect(GRAFT_TRUE["hour"] != spare["hour"], "orchard graft copied the spare-key hour")
+	_expect(GRAFT_TRUE["who"] != REHEARSAL_TRUE["who"], "orchard graft copied the rehearsal taker")
+	_expect(GRAFT_TRUE["place"] != REHEARSAL_TRUE["place"], "orchard graft copied the rehearsal room")
+	_expect(GRAFT_TRUE["hour"] != REHEARSAL_TRUE["hour"], "orchard graft copied the rehearsal hour")
+	_expect(GRAFT_TRUE["who"] != GILT_TRUE["who"], "orchard graft copied the gilt taker")
+	_expect(GRAFT_TRUE["place"] != GILT_TRUE["place"], "orchard graft copied the gilt room")
+	_expect(GRAFT_TRUE["hour"] != GILT_TRUE["hour"], "orchard graft copied the gilt hour")
+	_expect(GRAFT_TRUE["who"] != FERRY_TRUE["who"], "orchard graft copied the ferry taker")
+	_expect(GRAFT_TRUE["place"] != FERRY_TRUE["place"], "orchard graft copied the ferry room")
+	_expect(GRAFT_TRUE["hour"] != FERRY_TRUE["hour"], "orchard graft copied the ferry hour")
+	_expect(GRAFT_TRUE["who"] != WEATHER_TRUE["who"], "orchard graft copied the weather taker")
+	_expect(GRAFT_TRUE["place"] != WEATHER_TRUE["place"], "orchard graft copied the weather room")
+	_expect(GRAFT_TRUE["hour"] != WEATHER_TRUE["hour"], "orchard graft copied the weather hour")
+	_expect(GRAFT_TRUE["who"] != LOOM_TRUE["who"], "orchard graft copied the loom taker")
+	_expect(GRAFT_TRUE["place"] != LOOM_TRUE["place"], "orchard graft copied the loom room")
+	_expect(GRAFT_TRUE["hour"] != LOOM_TRUE["hour"], "orchard graft copied the loom hour")
+	_expect(GRAFT_TRUE["who"] != HIVE_TRUE["who"], "orchard graft copied the hive taker")
+	_expect(GRAFT_TRUE["place"] != HIVE_TRUE["place"], "orchard graft copied the hive room")
+	_expect(GRAFT_TRUE["hour"] != HIVE_TRUE["hour"], "orchard graft copied the hive hour")
+	_expect(GRAFT_TRUE["who"] != GLASS_TRUE["who"], "orchard graft copied the glass taker")
+	_expect(GRAFT_TRUE["place"] != GLASS_TRUE["place"], "orchard graft copied the glass room")
+	_expect(GRAFT_TRUE["hour"] != GLASS_TRUE["hour"], "orchard graft copied the glass hour")
+	_expect(GRAFT_TRUE["who"] != PRESS_TRUE["who"], "orchard graft copied the press taker")
+	_expect(GRAFT_TRUE["place"] != PRESS_TRUE["place"], "orchard graft copied the press room")
+	_expect(GRAFT_TRUE["hour"] != PRESS_TRUE["hour"], "orchard graft copied the press hour")
+	_expect(GRAFT_TRUE["who"] != ASSAY_TRUE["who"], "orchard graft copied the assay taker")
+	_expect(GRAFT_TRUE["place"] != ASSAY_TRUE["place"], "orchard graft copied the assay room")
+	_expect(GRAFT_TRUE["hour"] == "16" and ASSAY_TRUE["hour"] == "16", "orchard graft keeps 16, which also sits on the assay cup")
+	_expect(GRAFT_TRUE["who"] != KILN_TRUE["who"], "orchard graft copied the kiln taker")
+	_expect(GRAFT_TRUE["place"] != KILN_TRUE["place"], "orchard graft copied the kiln room")
+	_expect(GRAFT_TRUE["hour"] != KILN_TRUE["hour"], "orchard graft copied the kiln hour")
+	_expect(GRAFT_TRUE["who"] != TIDE_TRUE["who"], "orchard graft copied the tide taker")
+	_expect(GRAFT_TRUE["place"] != TIDE_TRUE["place"], "orchard graft copied the tide room")
+	_expect(GRAFT_TRUE["hour"] != TIDE_TRUE["hour"], "orchard graft copied the tide hour")
+	_expect(GRAFT_TRUE["who"] != NIGHT_TRUE["who"], "orchard graft copied the night taker")
+	_expect(GRAFT_TRUE["place"] != NIGHT_TRUE["place"], "orchard graft copied the night room")
+	_expect(GRAFT_TRUE["hour"] != NIGHT_TRUE["hour"], "orchard graft copied the night hour")
+	_expect(GRAFT_TRUE["who"] != SALT_TRUE["who"], "orchard graft copied the salt taker")
+	_expect(GRAFT_TRUE["place"] != SALT_TRUE["place"], "orchard graft copied the salt room")
+	_expect(GRAFT_TRUE["hour"] != SALT_TRUE["hour"], "orchard graft copied the salt hour")
+	_expect(GRAFT_TRUE["who"] != WICK_TRUE["who"], "orchard graft copied the wick taker")
+	_expect(GRAFT_TRUE["place"] != WICK_TRUE["place"], "orchard graft copied the wick room")
+	_expect(GRAFT_TRUE["hour"] != WICK_TRUE["hour"], "orchard graft copied the wick hour")
+	_expect(GRAFT_TRUE["who"] != ANNEAL_TRUE["who"], "orchard graft copied the anneal taker")
+	_expect(GRAFT_TRUE["place"] != ANNEAL_TRUE["place"], "orchard graft copied the anneal room")
+	_expect(GRAFT_TRUE["hour"] != ANNEAL_TRUE["hour"], "orchard graft copied the anneal hour")
+	_expect(ANNEAL_TRUE["who"] == "Tess" and ANNEAL_TRUE["place"] == "lehr" and ANNEAL_TRUE["hour"] == "10", "the glass anneal should still accept Tess in the lehr at 10")
+	_expect_rejected(GRAFT_TRUE, CaseData)
+	_expect_rejected(GRAFT_TRUE, Rehearsal)
+	_expect_rejected(GRAFT_TRUE, Gilt)
+	_expect_rejected(GRAFT_TRUE, Ferry)
+	_expect_rejected(GRAFT_TRUE, Weather)
+	_expect_rejected(GRAFT_TRUE, Loom)
+	_expect_rejected(GRAFT_TRUE, Hive)
+	_expect_rejected(GRAFT_TRUE, Glass)
+	_expect_rejected(GRAFT_TRUE, Press)
+	_expect_rejected(GRAFT_TRUE, Assay)
+	_expect_rejected(GRAFT_TRUE, Kiln)
+	_expect_rejected(GRAFT_TRUE, Tide)
+	_expect_rejected(GRAFT_TRUE, Night)
+	_expect_rejected(GRAFT_TRUE, Salt)
+	_expect_rejected(GRAFT_TRUE, Wick)
+	_expect_rejected(GRAFT_TRUE, Anneal)
+	_expect_rejected(spare, Graft)
+	_expect_rejected(REHEARSAL_TRUE, Graft)
+	_expect_rejected(GILT_TRUE, Graft)
+	_expect_rejected(FERRY_TRUE, Graft)
+	_expect_rejected(WEATHER_TRUE, Graft)
+	_expect_rejected(LOOM_TRUE, Graft)
+	_expect_rejected(HIVE_TRUE, Graft)
+	_expect_rejected(GLASS_TRUE, Graft)
+	_expect_rejected(PRESS_TRUE, Graft)
+	_expect_rejected(ASSAY_TRUE, Graft)
+	_expect_rejected(KILN_TRUE, Graft)
+	_expect_rejected(TIDE_TRUE, Graft)
+	_expect_rejected(NIGHT_TRUE, Graft)
+	_expect_rejected(SALT_TRUE, Graft)
+	_expect_rejected(WICK_TRUE, Graft)
+	_expect_rejected(ANNEAL_TRUE, Graft)
+	for person in Graft.PEOPLE:
+		_expect(not CaseData.PEOPLE.has(person), "graft cast repeats %s from the spare key" % person)
+		_expect(not Rehearsal.PEOPLE.has(person), "graft cast repeats %s from the rehearsal score" % person)
+		_expect(not Gilt.PEOPLE.has(person), "graft cast repeats %s from the gilt stamp" % person)
+		_expect(not Ferry.PEOPLE.has(person), "graft cast repeats %s from the ferry bell" % person)
+		_expect(not Weather.PEOPLE.has(person), "graft cast repeats %s from the weather slate" % person)
+		_expect(not Loom.PEOPLE.has(person), "graft cast repeats %s from the loom shuttle" % person)
+		_expect(not Hive.PEOPLE.has(person), "graft cast repeats %s from the hive smoker" % person)
+		_expect(not Glass.PEOPLE.has(person), "graft cast repeats %s from the glass pontil" % person)
+		_expect(not Press.PEOPLE.has(person), "graft cast repeats %s from the press proof" % person)
+		_expect(not Assay.PEOPLE.has(person), "graft cast repeats %s from the assay cup" % person)
+		_expect(not Kiln.PEOPLE.has(person), "graft cast repeats %s from the kiln chalk" % person)
+		_expect(not Tide.PEOPLE.has(person), "graft cast repeats %s from the tide ledger" % person)
+		_expect(not Night.PEOPLE.has(person), "graft cast repeats %s from the night bell" % person)
+		_expect(not Salt.PEOPLE.has(person), "graft cast repeats %s from the salt mark" % person)
+		_expect(not Wick.PEOPLE.has(person), "graft cast repeats %s from the wick trim" % person)
+		_expect(not Anneal.PEOPLE.has(person), "graft cast repeats %s from the glass anneal" % person)
+	for forbidden_person in ["Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(not Graft.PEOPLE.has(forbidden_person), "orchard graft cast must not take %s" % forbidden_person)
+	_expect(Graft.role_phrase("Calder") == "the graft hand", "the orchard graft should call Calder the graft hand")
+	for place in Graft.PLACES:
+		_expect(not CaseData.PLACES.has(place), "graft rooms repeat %s from the spare key" % place)
+		_expect(not Rehearsal.PLACES.has(place), "graft rooms repeat %s from the rehearsal score" % place)
+		_expect(not Gilt.PLACES.has(place), "graft rooms repeat %s from the gilt stamp" % place)
+		_expect(not Ferry.PLACES.has(place), "graft rooms repeat %s from the ferry bell" % place)
+		_expect(not Weather.PLACES.has(place), "graft rooms repeat %s from the weather slate" % place)
+		_expect(not Loom.PLACES.has(place), "graft rooms repeat %s from the loom shuttle" % place)
+		_expect(not Hive.PLACES.has(place), "graft rooms repeat %s from the hive smoker" % place)
+		_expect(not Glass.PLACES.has(place), "graft rooms repeat %s from the glass pontil" % place)
+		_expect(not Press.PLACES.has(place), "graft rooms repeat %s from the press proof" % place)
+		_expect(not Assay.PLACES.has(place), "graft rooms repeat %s from the assay cup" % place)
+		_expect(not Kiln.PLACES.has(place), "graft rooms repeat %s from the kiln chalk" % place)
+		_expect(not Tide.PLACES.has(place), "graft rooms repeat %s from the tide ledger" % place)
+		_expect(not Night.PLACES.has(place), "graft rooms repeat %s from the night bell" % place)
+		_expect(not Salt.PLACES.has(place), "graft rooms repeat %s from the salt mark" % place)
+		_expect(not Wick.PLACES.has(place), "graft rooms repeat %s from the wick trim" % place)
+		_expect(not Anneal.PLACES.has(place), "graft rooms repeat %s from the glass anneal" % place)
+	for forbidden_place in ["lehr", "marver", "pot", "loft", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(not Graft.PLACES.has(forbidden_place), "orchard graft rooms must not take the %s" % forbidden_place)
+	for hour in Graft.HOURS:
+		_expect(Assay.HOURS.has(hour), "orchard graft hour %s may also sit on the assay cup" % hour)
+		if hour == "14" or hour == "15" or hour == "16":
+			_expect(Ferry.HOURS.has(hour), "orchard graft hour %s may also sit on the ferry bell" % hour)
+			_expect(not Loom.HOURS.has(hour), "orchard graft hours repeat %s from the loom shuttle" % hour)
+			_expect(not Salt.HOURS.has(hour), "orchard graft hours repeat %s from the salt mark" % hour)
+		elif hour == "17" or hour == "18":
+			_expect(not Ferry.HOURS.has(hour), "orchard graft hours repeat %s from the ferry bell" % hour)
+			_expect(Loom.HOURS.has(hour), "orchard graft hour %s may also sit on the loom shuttle" % hour)
+			_expect(Salt.HOURS.has(hour), "orchard graft hour %s may also sit on the salt mark" % hour)
+		else:
+			_expect(not Ferry.HOURS.has(hour), "orchard graft hours repeat %s from the ferry bell" % hour)
+			_expect(not Loom.HOURS.has(hour), "orchard graft hours repeat %s from the loom shuttle" % hour)
+			_expect(not Salt.HOURS.has(hour), "orchard graft hours repeat %s from the salt mark" % hour)
+		_expect(not CaseData.HOURS.has(hour), "graft hours repeat %s from the spare key" % hour)
+		_expect(not Rehearsal.HOURS.has(hour), "graft hours repeat %s from the rehearsal score" % hour)
+		_expect(not Gilt.HOURS.has(hour), "graft hours repeat %s from the gilt stamp" % hour)
+		_expect(not Weather.HOURS.has(hour), "graft hours repeat %s from the weather slate" % hour)
+		_expect(not Hive.HOURS.has(hour), "graft hours repeat %s from the hive smoker" % hour)
+		_expect(not Glass.HOURS.has(hour), "graft hours repeat %s from the glass pontil" % hour)
+		_expect(not Press.HOURS.has(hour), "graft hours repeat %s from the press proof" % hour)
+		_expect(not Kiln.HOURS.has(hour), "graft hours repeat %s from the kiln chalk" % hour)
+		_expect(not Tide.HOURS.has(hour), "graft hours repeat %s from the tide ledger" % hour)
+		_expect(not Night.HOURS.has(hour), "graft hours repeat %s from the night bell" % hour)
+		_expect(not Wick.HOURS.has(hour), "graft hours repeat %s from the wick trim" % hour)
+		_expect(not Anneal.HOURS.has(hour), "graft hours repeat %s from the glass anneal" % hour)
+	_expect(not Graft.HOURS.has("4"), "orchard graft hours must not take 4")
+	_expect(not Graft.HOURS.has("10"), "orchard graft hours must not take 10")
+	_expect(not Graft.HOURS.has("19"), "orchard graft hours must not take 19")
+	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal", "The orchard graft"], "case list is %s" % str(titles))
 
 
 func _test_menu_opens_either_case() -> void:
@@ -4804,7 +5254,7 @@ func _test_menu_opens_either_case() -> void:
 	if root.get_child_count() == 0:
 		root._ready()
 	var menu_blob := _visible_label_blob(root)
-	_expect(menu_blob.find("Sixteen files") >= 0, "menu does not offer sixteen files: %s" % menu_blob)
+	_expect(menu_blob.find("Seventeen files") >= 0, "menu does not offer seventeen files: %s" % menu_blob)
 	_expect(menu_blob.find("CW-07") >= 0, "menu omits CW-07")
 	_expect(menu_blob.find("The hive smoker") >= 0, "menu omits The hive smoker")
 	_expect(menu_blob.find("CW-08") >= 0, "menu omits CW-08")
@@ -4825,6 +5275,8 @@ func _test_menu_opens_either_case() -> void:
 	_expect(menu_blob.find("The wick trim") >= 0, "menu omits The wick trim")
 	_expect(menu_blob.find("CW-16") >= 0, "menu omits CW-16")
 	_expect(menu_blob.find("The glass anneal") >= 0, "menu omits The glass anneal")
+	_expect(menu_blob.find("CW-17") >= 0, "menu omits CW-17")
+	_expect(menu_blob.find("The orchard graft") >= 0, "menu omits The orchard graft")
 	_expect(root.get_child_count() > 0, "main scene built %d children" % root.get_child_count())
 	_press(root, "How to play")
 	var howto := _visible_label_blob(root)
@@ -4844,6 +5296,7 @@ func _test_menu_opens_either_case() -> void:
 	_expect(howto.find("The salt mark") >= 0, "how to play omits The salt mark")
 	_expect(howto.find("The wick trim") >= 0, "how to play omits The wick trim")
 	_expect(howto.find("The glass anneal") >= 0, "how to play omits The glass anneal")
+	_expect(howto.find("The orchard graft") >= 0, "how to play omits The orchard graft")
 	_expect(howto.find("names that slot") >= 0, "how to play omits the empty-slot rule")
 	_press(root, "Back to the menu")
 	_expect(_find_visible_button(root, "Open The spare key") != null, "menu is missing The spare key")
@@ -4862,6 +5315,7 @@ func _test_menu_opens_either_case() -> void:
 	_expect(_find_visible_button(root, "Open The salt mark") != null, "menu is missing The salt mark")
 	_expect(_find_visible_button(root, "Open The wick trim") != null, "menu is missing The wick trim")
 	_expect(_find_visible_button(root, "Open The glass anneal") != null, "menu is missing The glass anneal")
+	_expect(_find_visible_button(root, "Open The orchard graft") != null, "menu is missing The orchard graft")
 	_press(root, "Open The rehearsal score")
 	var rehearsal_open := _visible_label_blob(root)
 	_expect(rehearsal_open.find("Cut list") >= 0, "rehearsal file did not open")
@@ -5719,6 +6173,71 @@ func _test_menu_opens_either_case() -> void:
 	var wick_from_anneal := _visible_label_blob(root)
 	_expect(wick_from_anneal.find("Oil note") >= 0, "could not return to The wick trim from The glass anneal")
 	_expect(wick_from_anneal.find("Gather note") == -1, "glass anneal papers stayed up after switching files")
+	_press(root, "Menu")
+	_press(root, "Open The orchard graft")
+	var graft_open := _visible_label_blob(root)
+	_expect(graft_open.find("Scion note") >= 0, "orchard graft file did not open")
+	_expect(graft_open.find("Take note") >= 0, "orchard graft file did not show its exhibits")
+	_expect(graft_open.find("CW-17") >= 0, "orchard graft file omits CW-17")
+	_expect(graft_open.find("Complaint slip") == -1, "spare key papers showed inside The orchard graft")
+	_expect(graft_open.find("Cut list") == -1, "rehearsal papers showed inside The orchard graft")
+	_expect(graft_open.find("Move order") == -1, "gilt stamp papers showed inside The orchard graft")
+	_expect(graft_open.find("Whistle slip") == -1, "ferry bell papers showed inside The orchard graft")
+	_expect(graft_open.find("Frost note") == -1, "weather slate papers showed inside The orchard graft")
+	_expect(graft_open.find("Trough tag") == -1, "loom shuttle papers showed inside The orchard graft")
+	_expect(graft_open.find("Fuel line") == -1, "hive smoker papers showed inside The orchard graft")
+	_expect(graft_open.find("Weight line") == -1, "glass pontil papers showed inside The orchard graft")
+	_expect(graft_open.find("Lock line") == -1, "press proof papers showed inside The orchard graft")
+	_expect(graft_open.find("Cup line") == -1, "assay cup papers showed inside The orchard graft")
+	_expect(graft_open.find("Mark line") == -1, "kiln chalk papers showed inside The orchard graft")
+	_expect(graft_open.find("Ledger line") == -1, "tide ledger papers showed inside The orchard graft")
+	_expect(graft_open.find("Bell line") == -1, "night bell papers showed inside The orchard graft")
+	_expect(graft_open.find("Salt line") == -1, "salt mark papers showed inside The orchard graft")
+	_expect(graft_open.find("Oil note") == -1, "wick trim papers showed inside The orchard graft")
+	_expect(graft_open.find("Gather note") == -1, "glass anneal papers showed inside The orchard graft")
+	_press(root, "Submit theory")
+	var empty_graft := _verdict_text(root)
+	_expect(empty_graft.find("who grafted the scion") >= 0, "empty graft board: %s" % empty_graft)
+	_expect(empty_graft.find("where they grafted the scion") >= 0, "empty graft board: %s" % empty_graft)
+	_expect(empty_graft.find("at which hour they grafted the scion") >= 0, "empty graft board: %s" % empty_graft)
+	_expect(empty_graft.find("who took the spare key") == -1, "empty graft board used the spare key slot: %s" % empty_graft)
+	_expect(empty_graft.find("who annealed the gather") == -1, "empty graft board used an anneal slot: %s" % empty_graft)
+	_expect(empty_graft.to_lower().find("conflict") == -1, "empty graft board talked about a conflict: %s" % empty_graft)
+	_press(root, "Ness")
+	_press(root, "Row")
+	_press(root, "15")
+	_press(root, "Submit theory")
+	var graft_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(graft_miss, Graft, {"who": "Ness", "place": "row", "hour": "15"})
+	_expect(graft_miss.find("Scion note") >= 0, "wrong triple reply omits Scion note: %s" % graft_miss)
+	_expect(graft_miss.find("Path sight") >= 0, "wrong triple reply omits Path sight: %s" % graft_miss)
+	_expect(graft_miss.find("Knife peg") >= 0, "wrong triple reply omits Knife peg: %s" % graft_miss)
+	_expect(graft_miss.find("Bench slate") >= 0, "wrong triple reply omits Bench slate: %s" % graft_miss)
+	_expect(graft_miss.find("Raffia card") >= 0, "wrong triple reply omits Raffia card: %s" % graft_miss)
+	_expect(graft_miss.find("Water slip") >= 0, "wrong triple reply omits Water slip: %s" % graft_miss)
+	_expect(graft_miss.find("Hour leaf") >= 0, "wrong triple reply omits Hour leaf: %s" % graft_miss)
+	_expect(graft_miss.find("Take note") >= 0, "wrong triple reply omits Take note: %s" % graft_miss)
+	_expect(graft_miss.find("Shut order") >= 0, "wrong triple reply omits Shut order: %s" % graft_miss)
+	_press(root, "Calder")
+	_press(root, "Nursery")
+	_press(root, "16")
+	_press(root, "Submit theory")
+	var graft_accepted := _verdict_text(root)
+	_expect(graft_accepted.find("fits every exhibit") >= 0, "orchard graft board rejected the true theory: %s" % graft_accepted)
+	_expect(graft_accepted.find(GRAFT_TIMELINE) >= 0, "orchard graft board timeline: %s" % graft_accepted)
+	_expect(graft_accepted.find("Calder (graft hand) grafted the scion in the nursery at 16") >= 0, "orchard graft board omits Calder at 16: %s" % graft_accepted)
+	_expect(graft_accepted.find("in the nursery") >= 0, "orchard graft board omits the nursery: %s" % graft_accepted)
+	_expect(graft_accepted.find("so the row would take before the frost") >= 0, "orchard graft board omits the frost: %s" % graft_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var graft_cleared := _verdict_text(root)
+	_expect(graft_cleared.find("who grafted the scion") >= 0, "cleared graft board: %s" % graft_cleared)
+	_expect(graft_cleared.find("fits every exhibit") == -1, "cleared graft board stayed accepted: %s" % graft_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The glass anneal")
+	var anneal_from_graft := _visible_label_blob(root)
+	_expect(anneal_from_graft.find("Gather note") >= 0, "could not return to The glass anneal from The orchard graft")
+	_expect(anneal_from_graft.find("Scion note") == -1, "orchard graft papers stayed up after switching files")
 	root.queue_free()
 
 
