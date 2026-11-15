@@ -3,7 +3,7 @@ extends RefCounted
 
 const Rules = preload("res://rules/rules.gd")
 
-## Three wings of the closed museum. Each solution is a list of actions the rules
+## Four wings of the closed museum. Each solution is a list of actions the rules
 ## accept. Tokens are R L U D, W for wait, and T0 / T1 for lamps.
 
 
@@ -63,6 +63,8 @@ static func _puzzle(number: int, title: String, lesson: String, rows: PackedStri
 		wing_number = number - 8
 	elif wing == "North Wing":
 		wing_number = number - 14
+	elif wing == "South Wing":
+		wing_number = number - 20
 	return {
 		"number": number,
 		"wing": wing,
@@ -95,6 +97,7 @@ static func _all() -> Array:
 	puzzles.append_array(_east_wing())
 	puzzles.append_array(_west_wing())
 	puzzles.append_array(_north_wing())
+	puzzles.append_array(_south_wing())
 	return puzzles
 
 
@@ -439,5 +442,113 @@ static func _north_wing() -> Array:
 			[_guard(4, 3, [Vector2i(4, 3)])],
 			"D R R T0 R",
 			"North Wing"
+		),
+	]
+
+
+static func _south_wing() -> Array:
+	return [
+		_puzzle(
+			21,
+			"The Dark Half",
+			"The lamp faces north, so the whole south side of its diamond stays dark, not only the single tile behind the flame. The door sits in the lit half, and he is watching the lamp itself. Snuff it from the south. Cross that tile and take the door before he holds it.",
+			PackedStringArray([
+				"###########",
+				"#.........#",
+				"#.........#",
+				"#........X#",
+				"#S........#",
+				"###########",
+			]),
+			[_lamp(5, 3, "n", 4)],
+			[_guard(5, 1, [Vector2i(5, 1)])],
+			"R R R R T0 U R R R R",
+			"South Wing"
+		),
+		_puzzle(
+			22,
+			"The Passing Watch",
+			"The gap stays lit. He walks from the far end of his route to the near end, and only the near end puts the gap in his eyes. Step up beside it and wait while he stands there. Cross after he turns back. Step onto the gap while he is on the near end and that is a loss.",
+			PackedStringArray([
+				"###########",
+				"#S..G...X.#",
+				"#.........#",
+				"###.....###",
+				"###########",
+			]),
+			[_lamp(4, 2, "n", 1)],
+			[_guard(6, 3, [Vector2i(4, 3), Vector2i(6, 3)])],
+			"R R W R R R R R",
+			"South Wing"
+		),
+		_puzzle(
+			23,
+			"The Owed Step",
+			"He is walking the dark column toward the lamp. Snuff it while his owed step still falls short of you. That step is not replaced by the call. The arrow then points at your tile, so leave it and take the door. Wait first, and the owed step lands on you.",
+			PackedStringArray([
+				"#########",
+				"#.......#",
+				"##S...X.#",
+				"#.......#",
+				"#.......#",
+				"#.......#",
+				"#########",
+			]),
+			[_lamp(4, 2, "e", 2)],
+			[_guard(3, 5, [Vector2i(3, 1), Vector2i(3, 5)])],
+			"R T0 R R R",
+			"South Wing"
+		),
+		_puzzle(
+			24,
+			"The Fading Watch",
+			"He sees the lamp's square and not the rest of the hall. That square is a loss. The door is lit too, but he is not watching it, and lit floor is still closed. Snuff the lamp from the dark side and walk the hall. He climbs to the lamp and holds behind you.",
+			PackedStringArray([
+				"##########",
+				"#S......X#",
+				"####.#####",
+				"####.#####",
+				"####.#####",
+				"##########",
+			]),
+			[_lamp(4, 1, "e", 4)],
+			[_guard(4, 4, [Vector2i(4, 4)], 3)],
+			"R R T0 R R R R R",
+			"South Wing"
+		),
+		_puzzle(
+			25,
+			"The Covered Flame",
+			"The tile behind the door lamp is lit by the hall lamp, so you cannot touch the door until the hall is dark. Snuff the hall and walk through before the keeper holds that square. Then snuff the door. The second snuff calls him toward it. Take the dark door before he arrives.",
+			PackedStringArray([
+				"###########",
+				"#S......X.#",
+				"###.#######",
+				"#.........#",
+				"###########",
+			]),
+			[_lamp(3, 1, "e", 2), _lamp(6, 1, "e", 2)],
+			[_guard(3, 3, [Vector2i(3, 3)])],
+			"R T0 R R R T1 R R R",
+			"South Wing"
+		),
+		_puzzle(
+			26,
+			"The Far Answer",
+			"Two lamps, two keepers. The gap lamp is closer to the keeper by the door, so leave it burning and he never moves. The hall lamp is closer to the far keeper. Snuff that one, walk the hall he is about to hold, and cross the gap.",
+			PackedStringArray([
+				"############",
+				"#S......G.X#",
+				"#..........#",
+				"#..........#",
+				"############",
+			]),
+			[_lamp(4, 1, "e", 2), _lamp(8, 2, "n", 1)],
+			[
+				_guard(4, 3, [Vector2i(4, 3)]),
+				_guard(10, 3, [Vector2i(10, 3)]),
+			],
+			"R R T0 R R R R R R R",
+			"South Wing"
 		),
 	]

@@ -1,6 +1,6 @@
 # Lantern Census
 
-A four-floor Godot 4 slice. The guild pays for the map you carry out. Oil is the turn budget. The cellar is the first floor. The cistern is the next one. The cloister is the third. The crypt is the fourth, with its own layout and its own census.
+A five-floor Godot 4 slice. The guild pays for the map you carry out. Oil is the turn budget. The cellar is the first floor. The cistern is the next one. The cloister is the third. The crypt is the fourth. The ossuary is the fifth, with its own layout and its own census.
 
 ## Play
 
@@ -35,7 +35,7 @@ Town opens the floor select. It does not drop you straight down a shaft.
 
 ## Floor select
 
-The Cellar, the Cistern, the Cloister, and the Crypt are listed separately. Each card says what that floor asks you to record, and whether its census is still open.
+The Cellar, the Cistern, the Cloister, the Crypt, and the Ossuary are listed separately. Each card says what that floor asks you to record, and whether its census is still open.
 
 The small flask can reach every lift. A finished census on any floor needs the large flask.
 
@@ -70,7 +70,7 @@ The warden stands on one tile and never moves. It telegraphs the tile it will hi
 
 A hit burns 3 oil on top of the action's 1 oil. The hit does not end the descent while any oil remains. Oil at 0 puts the lamp out, ends the descent, and the sheet pays nothing. Stepping onto the lift extracts you even when that step spends your last oil.
 
-Hazards do not burn extra oil. They are census tiles. Stepping on a blank one inks it. On the cistern those cracks are called seeps, on the cloister they are called cinders, and on the crypt they are called ash cracks; they use the same hazard rule.
+Hazards do not burn extra oil. They are census tiles. Stepping on a blank one inks it. On the cistern those cracks are called seeps, on the cloister they are called cinders, on the crypt they are called ash cracks, and on the ossuary they are called chalk cracks; they use the same hazard rule.
 
 ## Payout
 
@@ -176,14 +176,35 @@ Record every corridor, the five ash cracks, and the crypt ring around the tomb. 
 
 The full sheet is `87 × 3 + 5 × 8 + 15 = 316` coin. The shortest path to the lift is 19 steps, so the small flask has a margin of 5. A checked route that steps on every payable tile without taking a swing, then reaches the lift, costs 112 oil. The large flask holds 120, so a careful survey fits and a wandering one can still run the lamp out.
 
+## The Ossuary
+
+Hand-authored, 17 by 10. `S` start, `L` lift, `H` chalk, `E` warden, `x` the stack. The stack is wall for the sheet and is drawn as aged bone. Bumping it inks a wall. The piers beside the stack are ordinary walls.
+
+```
+#################
+#S..............#
+###........####.#
+###.xxxxxx.####.#
+###.xxxxxx.####.#
+###.xxxxxx.####.#
+###........####L#
+###........####.#
+#H.H.H..E..H.H.H#
+#################
+```
+
+Record every corridor, the six chalk cracks, and the ossuary ring around the stack. The chalk cracks are `(1,8)`, `(3,8)`, `(5,8)`, `(11,8)`, `(13,8)`, and `(15,8)`. The warden stands at `(8,8)`. The ring is the 22-tile corridor cycle around the 6×3 stack at columns 4–9 and rows 3–5: the row `(3,2)`–`(10,2)`, the sides `(3,3)` `(10,3)` `(3,4)` `(10,4)` `(3,5)` `(10,5)`, and the row `(3,6)`–`(10,6)`.
+
+The full sheet is `59 × 3 + 6 × 8 + 15 = 240` coin. The shortest path to the lift is 19 steps, so the small flask has a margin of 5. A checked route that steps on every payable tile without taking a swing, then reaches the lift, costs 82 oil. The large flask holds 120, so a careful survey fits and a wandering one can still run the lamp out.
+
 ## Presentation
 
-All four floors use the same code-drawn raycaster, with billboards for the warden, the swing, the hazards, and the lift. There are no imported textures. Cistern walls are cooler, the pit is teal, and the seeps read as green cracks. Cloister walls are warm limestone, the garth is a dark garden, and the cinders read as ember cracks. Crypt walls are violet stone, the tomb is a pale slab, and the ash reads as gray cracks. The sheet, the town, and the floor select are drawn in code.
+All five floors use the same code-drawn raycaster, with billboards for the warden, the swing, the hazards, and the lift. There are no imported textures. Cistern walls are cooler, the pit is teal, and the seeps read as green cracks. Cloister walls are warm limestone, the garth is a dark garden, and the cinders read as ember cracks. Crypt walls are violet stone, the tomb is a pale slab, and the ash reads as gray cracks. Ossuary walls are dry bone-stone, the stack is aged ivory, and the chalk reads as pale cracks. The sheet, the town, and the floor select are drawn in code.
 
 ## Limitations
 
-- Four floors, one warden on each. The warden does not patrol or chase.
+- Five floors, one warden on each. The warden does not patrol or chase.
 - The same floor can be turned in again on a later extract. A finished census stays finished.
 - Mouse look is optional and snaps by quarter turns. There is no sound.
 - Walls are for the sheet, not for the payout.
-- The automated checks cover the rules and all four floors, including that the crypt's true census is accepted and a wrong, short, or swapped sheet is rejected. They do not play the window, and this slice was not given a human playtest here.
+- The automated checks cover the rules and all five floors, including that the ossuary's true census is accepted and a wrong, short, or swapped sheet is rejected. They do not play the window, and this slice was not given a human playtest here.

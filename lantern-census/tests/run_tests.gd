@@ -35,6 +35,7 @@ func _boot() -> void:
 	_check("a finished cistern census returns to the floor select", _cistern_return())
 	_check("a finished cloister census returns to the floor select", _cloister_return())
 	_check("a finished crypt census returns to the floor select", _crypt_return())
+	_check("a finished ossuary census returns to the floor select", _ossuary_return())
 	_print_summary()
 	quit(0 if _failed == 0 else 1)
 
@@ -68,6 +69,8 @@ func _run() -> int:
 	_check("cloister census accepts the true sheet and rejects a wrong one", _cloister_census())
 	_check("crypt layout, ring, and oil", _crypt_layout())
 	_check("crypt census accepts the true sheet and rejects a wrong one", _crypt_census())
+	_check("ossuary layout, ring, and oil", _ossuary_layout())
+	_check("ossuary census accepts the true sheet and rejects a wrong one", _ossuary_census())
 	if _failed > 0:
 		return 1
 	return 0
@@ -413,10 +416,10 @@ func _cistern_layout() -> String:
 	if Rules.SMALL_FLASK_OIL != 24 or Rules.LARGE_FLASK_OIL != 120 or Rules.LARGE_FLASK_COST != 40:
 		return "flask sizes changed"
 	var listed: Array = Rules.floors()
-	if listed.size() != 4:
-		return "expected the cellar, the cistern, the cloister, and the crypt, found %d" % listed.size()
-	if str(listed[0].id) != "cellar" or str(listed[1].id) != "cistern" or str(listed[2].id) != "cloister" or str(listed[3].id) != "crypt":
-		return "floor order is not cellar, cistern, cloister, then crypt"
+	if listed.size() != 5:
+		return "expected the cellar, the cistern, the cloister, the crypt, and the ossuary, found %d" % listed.size()
+	if str(listed[0].id) != "cellar" or str(listed[1].id) != "cistern" or str(listed[2].id) != "cloister" or str(listed[3].id) != "crypt" or str(listed[4].id) != "ossuary":
+		return "floor order is not cellar, cistern, cloister, crypt, then ossuary"
 	if Rules.default_floor().id != "cellar":
 		return "the default floor is no longer the cellar"
 	var floor = Rules.floor_named("cistern")
@@ -1487,6 +1490,393 @@ func _crypt_return() -> String:
 		game.free()
 		return "arrival did not say the census is complete"
 	if game.campaign.purse < 316 or game.campaign.last_outcome != "complete":
+		game.free()
+		return "the finished census was not paid"
+	game._show_town()
+	if not game.town.visible or game.floor_select.visible:
+		game.free()
+		return "Back to town did not leave the floor select"
+	if game.town.outcome_label.text.find("complete") < 0:
+		game.free()
+		return "town clerk did not keep the finished census"
+	game.free()
+	return ""
+
+
+func _ossuary_layout() -> String:
+	if Rules.CORRIDOR_VALUE != 3 or Rules.HAZARD_VALUE != 8 or Rules.LOOP_VALUE != 15:
+		return "payout rates changed"
+	if Rules.MOVE_OIL != 1 or Rules.HIT_OIL != 3:
+		return "oil costs changed"
+	if Rules.SMALL_FLASK_OIL != 24 or Rules.LARGE_FLASK_OIL != 120 or Rules.LARGE_FLASK_COST != 40:
+		return "flask sizes changed"
+	var floor = Rules.floor_named("ossuary")
+	if floor == null:
+		return "ossuary floor is missing"
+	if floor.record != Rules.OSSUARY_RECORD:
+		return "ossuary record drifted from its constant"
+	if Rules.OSSUARY_RECORD != "Record every corridor, the six chalk cracks, and the ossuary ring around the stack.":
+		return "the ossuary no longer asks for the chalk and the ring"
+	var expected := PackedStringArray([
+		"#################",
+		"#S..............#",
+		"###........####.#",
+		"###.xxxxxx.####.#",
+		"###.xxxxxx.####.#",
+		"###.xxxxxx.####.#",
+		"###........####L#",
+		"###........####.#",
+		"#H.H.H..E..H.H.H#",
+		"#################",
+	])
+	if floor.rows.size() != expected.size():
+		return "ossuary height %d" % floor.rows.size()
+	for i in expected.size():
+		if str(floor.rows[i]) != str(expected[i]):
+			return "ossuary row %d is %s" % [i, floor.rows[i]]
+	if Rules.width(floor) != 17 or Rules.height(floor) != 10:
+		return "ossuary size %dx%d" % [Rules.width(floor), Rules.height(floor)]
+	if Rules.start_pos(floor) != Vector2i(1, 1):
+		return "start %s" % Rules.start_pos(floor)
+	if Rules.lift_pos(floor) != Vector2i(15, 6):
+		return "lift %s" % Rules.lift_pos(floor)
+	if Rules.enemy_pos(floor) != Vector2i(8, 8):
+		return "warden %s" % Rules.enemy_pos(floor)
+	var hazards: Array = Rules.hazard_cells(floor)
+	var expect_h: Array = [Vector2i(1, 8), Vector2i(3, 8), Vector2i(5, 8), Vector2i(11, 8), Vector2i(13, 8), Vector2i(15, 8)]
+	if hazards.size() != expect_h.size():
+		return "hazard count %d" % hazards.size()
+	for i in hazards.size():
+		if hazards[i] != expect_h[i]:
+			return "hazard %d is %s" % [i, hazards[i]]
+	if Rules.corridor_cells(floor).size() != 59:
+		return "corridors %d" % Rules.corridor_cells(floor).size()
+	if Rules.glyph_at(Vector2i(6, 4), floor) != "x" or Rules.glyph_at(Vector2i(4, 3), floor) != "x":
+		return "the stack is not marked on the map"
+	if Rules.tile_at(Vector2i(6, 4), floor) != Rules.Tile.WALL or Rules.is_walkable(Vector2i(6, 4), floor):
+		return "the stack is not solid wall"
+	var ring_err := _ossuary_ring(floor)
+	if ring_err != "":
+		return ring_err
+	var swings: Array = Rules.swing_tiles(floor)
+	if swings.size() != 2 or swings[0] == swings[1]:
+		return "the warden should telegraph two distinct tiles"
+	for swing in swings:
+		if not Rules.is_walkable(swing, floor):
+			return "swing tile %s is not walkable" % swing
+	if Rules.is_walkable(Rules.enemy_pos(floor), floor):
+		return "the warden's own tile is walkable"
+	var steps := Rules.shortest_path_steps(floor)
+	if steps != 19:
+		return "shortest ossuary path is %d, expected 19" % steps
+	if Rules.SMALL_FLASK_OIL - steps < 4:
+		return "small flask margin slipped to %d" % (Rules.SMALL_FLASK_OIL - steps)
+	var actions: Array = Rules.scripted_safe_actions(floor)
+	if actions.is_empty():
+		return "no safe exit from the ossuary"
+	var state = Rules.new_run(Rules.SMALL_FLASK_OIL, floor)
+	for i in actions.size():
+		var result: Dictionary = Rules.step(state, actions[i])
+		if bool(result.hit):
+			return "hit on ossuary exit action %d at %s" % [i, state.pos]
+		if state.end_reason != Rules.EndReason.NONE and i != actions.size() - 1:
+			return "ossuary exit ended early at action %d" % i
+		if actions[i] != Vector2i.ZERO and not bool(result.moved):
+			return "ossuary exit step %d did not move" % i
+	if state.end_reason != Rules.EndReason.EXTRACTED or state.pos != Rules.lift_pos(floor):
+		return "ossuary exit was not an extract at the lift"
+	if state.oil != Rules.SMALL_FLASK_OIL - actions.size():
+		return "ossuary exit oil %d after %d actions" % [state.oil, actions.size()]
+	var full: int = int(Rules.payout(Rules.accurate_sheet(floor), floor).total)
+	var carried: int = int(Rules.payout(state.marks, floor).total)
+	if carried <= 0 or carried >= full:
+		return "exit sheet paid %d against full %d" % [carried, full]
+	if Rules.census_accepted(state.marks, floor):
+		return "the exit path was accepted as a finished census"
+	var cover := Rules.safe_survey_steps(floor)
+	if cover != 82:
+		return "safe survey is %d, expected 82" % cover
+	if cover > Rules.LARGE_FLASK_OIL or cover <= Rules.SMALL_FLASK_OIL:
+		return "survey oil %d does not sit between the flasks" % cover
+	print("  ossuary shortest %d  survey %d  exit pay %d  full %d" % [steps, cover, carried, full])
+	return ""
+
+
+func _ossuary_ring(floor) -> String:
+	var cells: Array = Rules.loop_cells(floor)
+	if cells.size() != 22:
+		return "ring size %d" % cells.size()
+	var have := {}
+	for cell in cells:
+		if have.has(cell):
+			return "duplicate ring tile %s" % cell
+		have[cell] = true
+		if not Rules.is_corridor_cell(cell, floor):
+			return "ring tile %s is not a corridor" % cell
+	for cell in cells:
+		var degree := 0
+		for dir in Rules.cardinals():
+			if have.has(cell + dir):
+				degree += 1
+		if degree != 2:
+			return "ring tile %s has %d neighbors in the ring" % [cell, degree]
+	if not have.has(Vector2i(6, 2)) or have.has(Vector2i(6, 3)):
+		return "the ring does not rim the stack"
+	var stacks := 0
+	for y in Rules.height(floor):
+		for x in Rules.width(floor):
+			var p := Vector2i(x, y)
+			if Rules.glyph_at(p, floor) != "x":
+				continue
+			stacks += 1
+			for dir in Rules.cardinals():
+				var n: Vector2i = p + dir
+				if Rules.is_corridor_cell(n, floor) and not have.has(n):
+					return "corridor %s touches the stack and is outside the ring" % n
+	if stacks != 18:
+		return "stack size %d" % stacks
+	if str(floor.loop_name) != "Ossuary ring":
+		return "ring name is %s" % floor.loop_name
+	return ""
+
+
+func _ossuary_census() -> String:
+	var floor = Rules.floor_named("ossuary")
+	var cellar = Rules.floor_named("cellar")
+	var cistern = Rules.floor_named("cistern")
+	var cloister = Rules.floor_named("cloister")
+	var crypt = Rules.floor_named("crypt")
+	var truth: Dictionary = Rules.accurate_sheet(floor)
+	if not Rules.census_accepted(truth, floor):
+		return "the true ossuary census was rejected"
+	var bill: Dictionary = Rules.payout(truth, floor)
+	if int(bill.corridors) != 59 or int(bill.hazards) != 6 or int(bill.loop) != 1:
+		return "true counts %s/%s loop %s" % [bill.corridors, bill.hazards, bill.loop]
+	if int(bill.corridor_pay) != 59 * Rules.CORRIDOR_VALUE:
+		return "corridor pay drifted"
+	if int(bill.hazard_pay) != 6 * Rules.HAZARD_VALUE:
+		return "hazard pay drifted"
+	if int(bill.loop_pay) != Rules.LOOP_VALUE:
+		return "ring pay drifted"
+	if int(bill.total) != 240:
+		return "true total %s" % bill.total
+	if Rules.format_bill(bill).find("Ossuary ring") < 0:
+		return "the receipt did not name the ossuary ring"
+	if Rules.census_accepted({}, floor):
+		return "an empty sheet was accepted"
+	if int(Rules.payout({}, floor).total) != 0:
+		return "an empty sheet paid out"
+	var missing_corridor: Dictionary = truth.duplicate()
+	missing_corridor.erase(Rules.start_pos(floor))
+	if Rules.census_accepted(missing_corridor, floor):
+		return "a sheet missing the start corridor was accepted"
+	var missing_bill: Dictionary = Rules.payout(missing_corridor, floor)
+	if int(missing_bill.total) >= 240 or int(missing_bill.loop) != 1:
+		return "dropping a corridor outside the ring changed the census the wrong way"
+	var chalk: Vector2i = Rules.hazard_cells(floor)[0]
+	var missing_chalk: Dictionary = truth.duplicate()
+	missing_chalk.erase(chalk)
+	if Rules.census_accepted(missing_chalk, floor):
+		return "a sheet missing a chalk crack was accepted"
+	if int(Rules.payout(missing_chalk, floor).total) >= 240:
+		return "dropping a chalk crack did not lower pay"
+	var broken_ring: Dictionary = truth.duplicate()
+	var rim: Vector2i = Rules.loop_cells(floor)[0]
+	broken_ring[rim] = Rules.Mark.WALL
+	if Rules.census_accepted(broken_ring, floor):
+		return "a broken ring was accepted"
+	var broken_bill: Dictionary = Rules.payout(broken_ring, floor)
+	if int(broken_bill.loop) != 0 or int(broken_bill.total) >= 240:
+		return "a broken ring still paid as a finished sheet"
+	var swapped: Dictionary = truth.duplicate()
+	swapped[chalk] = Rules.Mark.CORRIDOR
+	if Rules.census_accepted(swapped, floor):
+		return "a chalk crack marked as a corridor was accepted"
+	if int(Rules.payout(swapped, floor).hazard_pay) >= int(bill.hazard_pay):
+		return "mislabeling a chalk crack did not lower hazard pay"
+	if int(Rules.payout(swapped, floor).total) > 240:
+		return "mislabeling a chalk crack raised the payout"
+	var corridor: Vector2i = Rules.lift_pos(floor)
+	var swapped_corridor: Dictionary = truth.duplicate()
+	swapped_corridor[corridor] = Rules.Mark.HAZARD
+	if Rules.census_accepted(swapped_corridor, floor):
+		return "the lift marked as a hazard was accepted"
+	if int(Rules.payout(swapped_corridor, floor).total) > 240:
+		return "marking the lift as a hazard raised the payout"
+	var false_wall: Dictionary = truth.duplicate()
+	false_wall[Vector2i(0, 0)] = Rules.Mark.HAZARD
+	if Rules.census_accepted(false_wall, floor):
+		return "a hazard mark on a wall was accepted"
+	if int(Rules.payout(false_wall, floor).total) != 240 or int(Rules.payout(false_wall, floor).hazard_pay) != int(bill.hazard_pay):
+		return "a hazard mark on a wall changed the payout"
+	var stack_wall: Dictionary = truth.duplicate()
+	stack_wall[Vector2i(4, 3)] = Rules.Mark.WALL
+	if not Rules.census_accepted(stack_wall, floor):
+		return "inking the stack as a wall rejected a true census"
+	stack_wall[Vector2i(4, 3)] = Rules.Mark.HAZARD
+	if Rules.census_accepted(stack_wall, floor):
+		return "calling the stack a hazard was accepted"
+	var warden_mark: Dictionary = truth.duplicate()
+	warden_mark[Rules.enemy_pos(floor)] = Rules.Mark.CORRIDOR
+	if Rules.census_accepted(warden_mark, floor):
+		return "the warden tile was accepted as a corridor"
+	if int(Rules.payout(warden_mark, floor).total) != 240:
+		return "marking the warden changed the payout"
+	var only_ring := {}
+	for cell in Rules.loop_cells(floor):
+		only_ring[cell] = Rules.Mark.CORRIDOR
+	if Rules.census_accepted(only_ring, floor):
+		return "the ring alone was accepted as the census"
+	var ring_bill: Dictionary = Rules.payout(only_ring, floor)
+	if int(ring_bill.loop) != 1 or int(ring_bill.hazards) != 0 or int(ring_bill.total) >= 240:
+		return "the ring bonus did not stay inside the shared payout rule"
+	if Rules.census_accepted(Rules.accurate_sheet(floor), cellar):
+		return "the ossuary sheet was accepted as the cellar"
+	if Rules.census_accepted(Rules.accurate_sheet(floor), cistern):
+		return "the ossuary sheet was accepted as the cistern"
+	if Rules.census_accepted(Rules.accurate_sheet(floor), cloister):
+		return "the ossuary sheet was accepted as the cloister"
+	if Rules.census_accepted(Rules.accurate_sheet(floor), crypt):
+		return "the ossuary sheet was accepted as the crypt"
+	if Rules.census_accepted(Rules.accurate_sheet(cellar), floor):
+		return "the cellar sheet was accepted as the ossuary"
+	if Rules.census_accepted(Rules.accurate_sheet(cistern), floor):
+		return "the cistern sheet was accepted as the ossuary"
+	if Rules.census_accepted(Rules.accurate_sheet(cloister), floor):
+		return "the cloister sheet was accepted as the ossuary"
+	if Rules.census_accepted(Rules.accurate_sheet(crypt), floor):
+		return "the crypt sheet was accepted as the ossuary"
+	if not Rules.census_accepted(Rules.accurate_sheet(cellar), cellar):
+		return "the cellar's true census was rejected"
+	if not Rules.census_accepted(Rules.accurate_sheet(cistern), cistern):
+		return "the cistern's true census was rejected"
+	if not Rules.census_accepted(Rules.accurate_sheet(cloister), cloister):
+		return "the cloister's true census was rejected"
+	if not Rules.census_accepted(Rules.accurate_sheet(crypt), crypt):
+		return "the crypt's true census was rejected"
+	var cellar_bill: Dictionary = Rules.payout(Rules.accurate_sheet(cellar), cellar)
+	if int(cellar_bill.total) != 211 or str(cellar_bill.loop_name) != "East square":
+		return "the cellar payout changed"
+	var cistern_bill: Dictionary = Rules.payout(Rules.accurate_sheet(cistern), cistern)
+	if int(cistern_bill.total) != 288 or str(cistern_bill.loop_name) != "Cistern ring":
+		return "the cistern payout changed"
+	var cloister_bill: Dictionary = Rules.payout(Rules.accurate_sheet(cloister), cloister)
+	if int(cloister_bill.total) != 242 or str(cloister_bill.loop_name) != "Cloister walk":
+		return "the cloister payout changed"
+	var crypt_bill: Dictionary = Rules.payout(Rules.accurate_sheet(crypt), crypt)
+	if int(crypt_bill.total) != 316 or str(crypt_bill.loop_name) != "Crypt ring":
+		return "the crypt payout changed"
+	var approach: Vector2i = Rules.walkable_approach(chalk, floor)
+	if approach.x < 0:
+		return "chalk crack has no approach"
+	var walker = Rules.new_run(Rules.SMALL_FLASK_OIL, floor)
+	walker.pos = approach
+	walker.oil = 10
+	var before: int = walker.oil
+	var stepped: Dictionary = Rules.step(walker, chalk - approach)
+	if bool(stepped.hit):
+		return "opening chalk step was a swing"
+	if walker.oil != before - Rules.MOVE_OIL:
+		return "chalk burned extra oil"
+	if int(walker.marks.get(chalk, Rules.Mark.NONE)) != Rules.Mark.HAZARD:
+		return "chalk was not inked as a hazard"
+	return ""
+
+
+func _ossuary_return() -> String:
+	var game_script = load("res://scripts/game.gd")
+	var select_script = load("res://scripts/floor_select_view.gd")
+	if game_script == null or select_script == null:
+		return "game or floor select did not load"
+	var game = game_script.new()
+	root.add_child(game)
+	if game.town == null or game.floor_select == null or game.descent == null:
+		game.free()
+		return "the game did not build its screens"
+	if game.floor_select.record_for("ossuary") != Rules.OSSUARY_RECORD:
+		game.free()
+		return "floor select does not offer the ossuary census"
+	if game.floor_select.record_for("cellar") != Rules.CELLAR_RECORD:
+		game.free()
+		return "floor select dropped the cellar census"
+	if game.floor_select.record_for("cistern") != Rules.CISTERN_RECORD:
+		game.free()
+		return "floor select dropped the cistern census"
+	if game.floor_select.record_for("cloister") != Rules.CLOISTER_RECORD:
+		game.free()
+		return "floor select dropped the cloister census"
+	if game.floor_select.record_for("crypt") != Rules.CRYPT_RECORD:
+		game.free()
+		return "floor select dropped the crypt census"
+	if game.floor_select.status_for("ossuary") != "Census open":
+		game.free()
+		return "the ossuary card did not open"
+	game._on_descend_floor("ossuary")
+	if game.descent.state == null or game.descent.state.floor.id != "ossuary":
+		game.free()
+		return "descend did not open the ossuary"
+	var state = game.descent.state
+	var lift: Vector2i = Rules.lift_pos(state.floor)
+	var approach: Vector2i = Rules.walkable_approach(lift, state.floor)
+	state.pos = approach
+	state.oil = 5
+	var left: Dictionary = Rules.step(state, lift - approach)
+	if not bool(left.extracted):
+		game.free()
+		return "short ossuary sheet did not leave on the lift"
+	game.descent._open_return()
+	if game.descent.return_button.text != "Return to town":
+		game.free()
+		return "a short sheet offered the floor select"
+	game._on_return(state)
+	if not game.town.visible or game.floor_select.visible or game.descent.visible:
+		game.free()
+		return "a short census did not return to town"
+	if bool(game.campaign.completed.get("ossuary", false)):
+		game.free()
+		return "a short census was accepted"
+	if game.town.outcome_label.text.find("not finished") < 0:
+		game.free()
+		return "the clerk treated a short sheet as finished"
+	game._on_floors()
+	if not game.floor_select.visible or game.town.visible:
+		game.free()
+		return "floor select did not open from town"
+	game._on_descend_floor("ossuary")
+	state = game.descent.state
+	state.marks = Rules.accurate_sheet(state.floor)
+	lift = Rules.lift_pos(state.floor)
+	approach = Rules.walkable_approach(lift, state.floor)
+	state.pos = approach
+	state.oil = 5
+	var done: Dictionary = Rules.step(state, lift - approach)
+	if not bool(done.extracted) or not Rules.census_accepted(state.marks, state.floor):
+		game.free()
+		return "the finished sheet did not extract as an accepted census"
+	game.descent._open_return()
+	if game.descent.return_button.text != "Return to floor select":
+		game.free()
+		return "a finished census did not offer the floor select"
+	game._on_return(state)
+	if not game.floor_select.visible or game.town.visible or game.descent.visible:
+		game.free()
+		return "a finished census did not return to the floor select"
+	if not bool(game.campaign.completed.get("ossuary", false)):
+		game.free()
+		return "the finished census was not recorded"
+	if bool(game.campaign.completed.get("cellar", false)) or bool(game.campaign.completed.get("cistern", false)) or bool(game.campaign.completed.get("cloister", false)) or bool(game.campaign.completed.get("crypt", false)):
+		game.free()
+		return "another floor was marked complete"
+	if game.floor_select.status_for("ossuary") != "Census complete":
+		game.free()
+		return "floor select did not show the ossuary census complete"
+	if game.floor_select.status_for("cellar") != "Census open" or game.floor_select.status_for("cistern") != "Census open" or game.floor_select.status_for("cloister") != "Census open" or game.floor_select.status_for("crypt") != "Census open":
+		game.free()
+		return "another floor card was closed"
+	if game.floor_select.notice_label.text.find("complete") < 0:
+		game.free()
+		return "arrival did not say the census is complete"
+	if game.campaign.purse < 240 or game.campaign.last_outcome != "complete":
 		game.free()
 		return "the finished census was not paid"
 	game._show_town()
