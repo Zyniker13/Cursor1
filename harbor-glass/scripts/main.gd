@@ -3,7 +3,7 @@ extends Control
 # South Lantern Quay, then North Glass Reach, then the Turning Basin, then the
 # Painted Lock, then the West Return, then the Meeting Glass, then the Tide
 # Mirror, then the Shutter, then the Stain, then the Vane, then the Well,
-# then the Siphon, then the Sluice, then the Weir.
+# then the Siphon, then the Sluice, then the Weir, then the Lintel.
 # Pieces turn in place; a loose piece may also move
 # between the sockets authored for that chart. Lock Chart asks the beam tracer
 # whether every dock has its color and every hull is dark.
@@ -60,6 +60,7 @@ var well_grid: GridContainer
 var siphon_grid: GridContainer
 var sluice_grid: GridContainer
 var weir_grid: GridContainer
+var lintel_grid: GridContainer
 var quay_book_button: Button
 var reach_book_button: Button
 var basin_book_button: Button
@@ -74,8 +75,9 @@ var well_book_button: Button
 var siphon_book_button: Button
 var sluice_book_button: Button
 var weir_book_button: Button
+var lintel_book_button: Button
 var harbor_label: Label
-var _book_place: Array[int] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+var _book_place: Array[int] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 var tide_clock: TideClock
 var _side: Panel
 
@@ -201,6 +203,10 @@ func _build_ui() -> void:
 	weir_book_button.tooltip_text = Charts.WEIR
 	weir_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	weir_book_button.pressed.connect(_on_book_pressed.bind(13))
+	lintel_book_button = _button("Lintel")
+	lintel_book_button.tooltip_text = Charts.LINTEL
+	lintel_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lintel_book_button.pressed.connect(_on_book_pressed.bind(14))
 	book_row.add_child(quay_book_button)
 	book_row.add_child(reach_book_button)
 	book_row.add_child(basin_book_button)
@@ -215,7 +221,8 @@ func _build_ui() -> void:
 	book_row_c.add_child(siphon_book_button)
 	book_row_d.add_child(sluice_book_button)
 	book_row_d.add_child(weir_book_button)
-	for book_button in [quay_book_button, reach_book_button, basin_book_button, paint_book_button, west_book_button, meet_book_button, tide_book_button, shutter_book_button, stain_book_button, vane_book_button, well_book_button, siphon_book_button, sluice_book_button, weir_book_button]:
+	book_row_d.add_child(lintel_book_button)
+	for book_button in [quay_book_button, reach_book_button, basin_book_button, paint_book_button, west_book_button, meet_book_button, tide_book_button, shutter_book_button, stain_book_button, vane_book_button, well_book_button, siphon_book_button, sluice_book_button, weir_book_button, lintel_book_button]:
 		book_button.add_theme_font_size_override("font_size", 13)
 
 	quay_grid = _chart_grid()
@@ -232,6 +239,7 @@ func _build_ui() -> void:
 	siphon_grid = _chart_grid()
 	sluice_grid = _chart_grid()
 	weir_grid = _chart_grid()
+	lintel_grid = _chart_grid()
 	reach_grid.visible = false
 	basin_grid.visible = false
 	paint_grid.visible = false
@@ -245,6 +253,7 @@ func _build_ui() -> void:
 	siphon_grid.visible = false
 	sluice_grid.visible = false
 	weir_grid.visible = false
+	lintel_grid.visible = false
 	box.add_child(quay_grid)
 	box.add_child(reach_grid)
 	box.add_child(basin_grid)
@@ -259,6 +268,7 @@ func _build_ui() -> void:
 	box.add_child(siphon_grid)
 	box.add_child(sluice_grid)
 	box.add_child(weir_grid)
+	box.add_child(lintel_grid)
 	var bounds: Array = _book_bounds()
 	for i in charts.size():
 		var button := _button("Chart %d" % (i + 1))
@@ -291,8 +301,10 @@ func _build_ui() -> void:
 			siphon_grid.add_child(button)
 		elif i < int(bounds[13]):
 			sluice_grid.add_child(button)
-		else:
+		elif i < int(bounds[14]):
 			weir_grid.add_child(button)
+		else:
+			lintel_grid.add_child(button)
 		chart_buttons.append(button)
 
 	title_label = _label("", 20, Palette.TEXT)
@@ -338,7 +350,7 @@ func _build_ui() -> void:
 	status_label.custom_minimum_size = Vector2(340, 0)
 	box.add_child(status_label)
 
-	var legend := _label("Warm beam, red, and blue. A lamp may already burn one color. One mirror can take two lamps. A tide mirror reflects only while its row is flooded, and lets the beam pass while that row is dry. A shutter stops a beam while its row is dry, and lets the beam pass straight through while that row is flooded. A stain recolors a beam to its own color and lets it pass straight through, on a dry row and under water. A vane turns a beam into its facing, and a head-on beam stops. Water shuts a vane the way it shuts a mirror. A well stops a beam while its row is dry. While that row is flooded, the beam leaves north and keeps its color. A well does not turn. A siphon stops a beam while its row is dry. While that row is flooded, the beam leaves north and swaps red with blue. White stays white. A siphon does not turn. A sluice stops a beam while its row is dry. While that row is flooded, the beam leaves along the sluice's facing and keeps its color. A weir stops a beam while its row is dry. While that row is flooded, the beam leaves along the weir's facing and swaps red with blue. White stays white. Docks take only their marked color. Hulls stay dark. Water shuts the other glass it covers.", 13, Palette.MUTED)
+	var legend := _label("Warm beam, red, and blue. A lamp may already burn one color. One mirror can take two lamps. A tide mirror reflects only while its row is flooded, and lets the beam pass while that row is dry. A shutter stops a beam while its row is dry, and lets the beam pass straight through while that row is flooded. A stain recolors a beam to its own color and lets it pass straight through, on a dry row and under water. A vane turns a beam into its facing, and a head-on beam stops. Water shuts a vane the way it shuts a mirror. A well stops a beam while its row is dry. While that row is flooded, the beam leaves north and keeps its color. A well does not turn. A siphon stops a beam while its row is dry. While that row is flooded, the beam leaves north and swaps red with blue. White stays white. A siphon does not turn. A sluice stops a beam while its row is dry. While that row is flooded, the beam leaves along the sluice's facing and keeps its color. A weir stops a beam while its row is dry. While that row is flooded, the beam leaves along the weir's facing and swaps red with blue. White stays white. A lintel lets a beam pass straight through while its row is dry, and stops the beam while that row is flooded. A lintel does not turn. Docks take only their marked color. Hulls stay dark. Water shuts the other glass it covers.", 13, Palette.MUTED)
 	legend.custom_minimum_size = Vector2(360, 0)
 	box.add_child(legend)
 	var keys := _label("Arrows or Tab select. R turns. M moves a loose piece. Space locks. H hints. T raises tide, Shift+T lowers it. Backspace restarts.", 12, Palette.MUTED)
@@ -485,6 +497,10 @@ func rotate_selected() -> void:
 		state["pieces"][selected_id]["rot"] = Tracer.turn_rot("weir", weir_rot)
 		status_label.text = "The weir turns clockwise. It swaps red and blue."
 		_clear_hint_if_resolved()
+		_refresh()
+		return
+	if str(piece["kind"]) == "lintel":
+		status_label.text = "A lintel follows the tide. It does not turn."
 		_refresh()
 		return
 	var cur := int(state["pieces"][selected_id]["rot"])
@@ -657,6 +673,8 @@ func _refresh_chrome() -> void:
 		water += " A dry sluice stops the beam. A flooded sluice sends it along its facing."
 	if _has_weir():
 		water += " A dry weir stops the beam. A flooded weir sends it along its facing and swaps red with blue."
+	if _has_lintel():
+		water += " A dry lintel lets the beam pass straight through. A flooded lintel stops the beam."
 	tide_readout.text = "%s. %s" % [phase, water]
 	var phases: Array = chart["tide_phases"]
 	var multi := phases.size() > 1
@@ -698,6 +716,7 @@ func _refresh_chrome() -> void:
 	siphon_grid.visible = book == 11
 	sluice_grid.visible = book == 12
 	weir_grid.visible = book == 13
+	lintel_grid.visible = book == 14
 	reach_book_button.disabled = not unlocked[int(bounds[1])]
 	basin_book_button.disabled = not unlocked[int(bounds[2])]
 	paint_book_button.disabled = not unlocked[int(bounds[3])]
@@ -711,6 +730,7 @@ func _refresh_chrome() -> void:
 	siphon_book_button.disabled = not unlocked[int(bounds[11])]
 	sluice_book_button.disabled = not unlocked[int(bounds[12])]
 	weir_book_button.disabled = not unlocked[int(bounds[13])]
+	lintel_book_button.disabled = not unlocked[int(bounds[14])]
 	_paint_button(quay_book_button, book == 0)
 	_paint_button(reach_book_button, book == 1)
 	_paint_button(basin_book_button, book == 2)
@@ -725,6 +745,7 @@ func _refresh_chrome() -> void:
 	_paint_button(siphon_book_button, book == 11)
 	_paint_button(sluice_book_button, book == 12)
 	_paint_button(weir_book_button, book == 13)
+	_paint_button(lintel_book_button, book == 14)
 
 func _show_win() -> void:
 	win_body.text = str(chart["win"])
@@ -769,11 +790,14 @@ func _book_bounds() -> Array:
 	var well := v + Charts.well().size()
 	var siphon := well + Charts.siphon().size()
 	var sluice := siphon + Charts.sluice().size()
-	return [0, q, r, b, p, w, m, t, s, n, v, well, siphon, sluice, charts.size()]
+	var weir := sluice + Charts.weir().size()
+	return [0, q, r, b, p, w, m, t, s, n, v, well, siphon, sluice, weir, charts.size()]
 
 
 func _book_of(index: int) -> int:
 	var bounds: Array = _book_bounds()
+	if index >= int(bounds[14]):
+		return 14
 	if index >= int(bounds[13]):
 		return 13
 	if index >= int(bounds[12]):
@@ -834,8 +858,10 @@ func _on_book_pressed(book: int) -> void:
 			status_label.text = "The siphon is still locked."
 		elif book == 12:
 			status_label.text = "The sluice is still locked."
-		else:
+		elif book == 13:
 			status_label.text = "The weir is still locked."
+		else:
+			status_label.text = "The lintel is still locked."
 		return
 	_book_place[here] = chart_index
 	var last := int(bounds[book + 1])
@@ -986,6 +1012,17 @@ func _save_progress() -> void:
 		file.set_value("progress", "solved_%d" % i, solved[i])
 		file.set_value("progress", "unlocked_%d" % i, unlocked[i])
 	file.save(SAVE_PATH)
+
+func _has_lintel() -> bool:
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		if str(piece["kind"]) == "lintel":
+			return true
+	for raw in chart["fixtures"]:
+		var fix: Dictionary = raw
+		if str(fix["kind"]) == "lintel":
+			return true
+	return false
 
 func _has_weir() -> bool:
 	for raw in chart["pieces"]:

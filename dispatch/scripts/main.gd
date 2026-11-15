@@ -480,6 +480,8 @@ func _building_mark_name(building: int) -> String:
 			return "BuildingElevenMark"
 		12:
 			return "BuildingTwelveMark"
+		13:
+			return "BuildingThirteenMark"
 		_:
 			return "Building%dMark" % building
 
@@ -632,7 +634,7 @@ func _sync_facing() -> void:
 			_facing.text = "Facing   counterclockwise"
 		elif _selected == "slide":
 			_facing.text = "Facing   with the parcel"
-		elif _selected == "bin" or _selected == "return" or _selected == "pause" or _selected == "shunt":
+		elif _selected == "bin" or _selected == "return" or _selected == "pause" or _selected == "shunt" or _selected == "bias":
 			_facing.text = "Facing   none"
 		else:
 			_facing.text = "Facing   %s" % Sim.DIR_NAMES[_ghost_dir]
@@ -917,6 +919,8 @@ func _draw_block(block: Dictionary, alpha: float) -> void:
 		_chute_mark(rect, dir, ink)
 	elif typ == "shunt":
 		_shunt_mark(rect, ink)
+	elif typ == "bias":
+		_bias_mark(rect, ink)
 	elif typ == "slide":
 		_slide_mark(rect, ink)
 	elif typ == "bin":
@@ -1127,6 +1131,18 @@ func _shunt_mark(rect: Rect2, color: Color) -> void:
 	_tri(foot, Vector2(0, 1), span * 0.12, span * 0.075, color)
 
 
+func _bias_mark(rect: Rect2, color: Color) -> void:
+	var center := rect.get_center()
+	var span := rect.size.x
+	var tail := center + Vector2(-span * 0.30, 0.0)
+	var head := center + Vector2(span * 0.18, 0.0)
+	draw_line(tail, head, color, 2.5)
+	var bend := center + Vector2(-span * 0.02, 0.0)
+	var foot := bend + Vector2(0.0, -span * 0.30)
+	draw_line(bend, foot, color, 2.5)
+	_tri(foot, Vector2(0, -1), span * 0.12, span * 0.075, color)
+
+
 func _pause_mark(rect: Rect2, color: Color) -> void:
 	var center := rect.get_center()
 	var bar_w := maxf(rect.size.x * 0.12, 3.0)
@@ -1236,6 +1252,8 @@ func _tool_color(tool: String) -> Color:
 			return Color("#d4762c")
 		"shunt":
 			return Color("#2f8f78")
+		"bias":
+			return Color("#9a7424")
 		"slide":
 			return Color("#d06b86")
 		"bin":
@@ -1292,6 +1310,8 @@ func _tool_tip(tool: String) -> String:
 			return "Writes its own facing onto a parcel and waits that tick. The parcel then steps one cell that way."
 		"shunt":
 			return "Waits one tick, then steps a parcel one cell to its right. The parcel keeps the facing it arrived with."
+		"bias":
+			return "Waits one tick, then steps a parcel one cell to its left. The parcel keeps the facing it arrived with."
 		"slide":
 			return "Moves a parcel two cells in its facing and does not rotate it. The cell between can be a brick, a belt, or another parcel."
 		"bin":
