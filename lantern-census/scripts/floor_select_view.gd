@@ -17,6 +17,7 @@ const CRYPT_AWNING := Color(0.36, 0.26, 0.46)
 const OSSUARY_AWNING := Color(0.55, 0.48, 0.32)
 const RELIQUARY_AWNING := Color(0.58, 0.28, 0.18)
 const UNDERCROFT_AWNING := Color(0.18, 0.34, 0.30)
+const WELL_AWNING := Color(0.20, 0.28, 0.42)
 
 var notice_label: Label
 var purse_label: Label
@@ -76,7 +77,9 @@ func _build() -> void:
 		card.add_child(status)
 		_status[floor.id] = status
 		var button := _button("Descend")
-		if narrow:
+		if card_w < 160.0:
+			button.add_theme_font_size_override("font_size", 13)
+		elif narrow:
 			button.add_theme_font_size_override("font_size", 16)
 		button.position = Vector2(inset, 244)
 		button.size = Vector2(card_w - inset * 2.0, 56)
@@ -126,7 +129,9 @@ func _awning_for(floor_id: String) -> Color:
 		return OSSUARY_AWNING
 	if floor_id == "reliquary":
 		return RELIQUARY_AWNING
-	return UNDERCROFT_AWNING
+	if floor_id == "undercroft":
+		return UNDERCROFT_AWNING
+	return WELL_AWNING
 
 
 func _bind_descend(button: Button, floor_id: String) -> void:
@@ -186,7 +191,9 @@ func _panel(at: Vector2, panel_size: Vector2, awning: Color, title: String) -> C
 	stripe.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(stripe)
 	var title_size := 26
-	if panel_size.x < 180.0:
+	if panel_size.x < 160.0:
+		title_size = 13
+	elif panel_size.x < 180.0:
 		title_size = 15
 	elif panel_size.x < 220.0:
 		title_size = 18
