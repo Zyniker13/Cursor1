@@ -184,12 +184,12 @@ func _draw() -> void:
 		var pst: Dictionary = puzzle_state["pieces"][id]
 		_draw_kind(str(piece["kind"]), int(pst["rot"]), at, true, false)
 		_draw_sockets(piece, at)
-		if str(piece["kind"]) != "tide_mirror" and Tracer.is_flooded(chart, puzzle_state, at):
+		if not _keeps_its_face_under_water(str(piece["kind"])) and Tracer.is_flooded(chart, puzzle_state, at):
 			_draw_shutters(at)
 	for raw in chart["fixtures"]:
 		var fix: Dictionary = raw
 		var at := Vector2i(int(fix["x"]), int(fix["y"]))
-		if str(fix["kind"]) != "tide_mirror" and Tracer.is_flooded(chart, puzzle_state, at):
+		if not _keeps_its_face_under_water(str(fix["kind"])) and Tracer.is_flooded(chart, puzzle_state, at):
 			_draw_shutters(at)
 	for raw in chart["lanterns"]:
 		var lantern: Dictionary = raw
@@ -233,6 +233,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_mirror(at, rot, player, fixed)
 		"tide_mirror":
 			_draw_tide_mirror(at, rot)
+		"shutter":
+			_draw_shutter_gate(at)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -297,6 +299,32 @@ func _draw_tide_mirror(at: Vector2i, rot: int) -> void:
 	draw_line(Vector2(center.x - r * 0.62, wave), Vector2(center.x - r * 0.16, wave - 3.0), wave_col, 2.0)
 	draw_line(Vector2(center.x - r * 0.16, wave - 3.0), Vector2(center.x + r * 0.16, wave + 3.0), wave_col, 2.0)
 	draw_line(Vector2(center.x + r * 0.16, wave + 3.0), Vector2(center.x + r * 0.62, wave), wave_col, 2.0)
+
+func _keeps_its_face_under_water(kind: String) -> bool:
+	return kind == "tide_mirror" or kind == "shutter"
+
+func _draw_shutter_gate(at: Vector2i) -> void:
+	# A sluice, not a mirror. Closed bars while the row is dry. An open slot
+	# while that row is flooded, so the beam can pass straight through.
+	var center := _center(at)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var rect := Rect2(center - Vector2(cell * 0.30, cell * 0.32), Vector2(cell * 0.60, cell * 0.64))
+	var frame := Palette.GATE_IRON
+	draw_rect(rect, Color(frame.r, frame.g, frame.b, 0.55 if flooded else 0.92))
+	draw_rect(rect, Palette.GATE if flooded else Palette.GATE_IRON, false, 2.0)
+	var bar := Palette.FOAM if flooded else Palette.GATE
+	if flooded:
+		var gap := cell * 0.16
+		draw_rect(Rect2(rect.position, Vector2(rect.size.x, 5.0)), bar)
+		draw_rect(Rect2(Vector2(rect.position.x, rect.end.y - 5.0), Vector2(rect.size.x, 5.0)), bar)
+		draw_rect(Rect2(rect.position, Vector2(5.0, rect.size.y)), bar)
+		draw_rect(Rect2(Vector2(rect.end.x - 5.0, rect.position.y), Vector2(5.0, rect.size.y)), bar)
+		draw_line(Vector2(rect.position.x + 8.0, center.y), Vector2(center.x - gap, center.y), bar, 3.0)
+		draw_line(Vector2(center.x + gap, center.y), Vector2(rect.end.x - 8.0, center.y), bar, 3.0)
+	else:
+		for i in 4:
+			var y := rect.position.y + 6.0 + float(i) * (rect.size.y - 10.0) / 3.0
+			draw_line(Vector2(rect.position.x + 4.0, y), Vector2(rect.end.x - 4.0, y), bar, 3.0)
 
 func _draw_prism(at: Vector2i, rot: int, set_in_stone: bool) -> void:
 	var center := _center(at)

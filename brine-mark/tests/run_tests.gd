@@ -19,6 +19,7 @@ func _initialize() -> void:
 	_test_yard(errors)
 	_test_bunk(errors)
 	_test_loft(errors)
+	_test_gate(errors)
 	_test_determinism(errors)
 	_test_population(errors)
 	_test_no_select_ant(errors)
@@ -92,7 +93,7 @@ func _test_determinism(errors: Array) -> void:
 	var plans := _plans(errors)
 	if plans.is_empty():
 		return
-	for plan_name in ["winning", "all_rake", "dry_pans", "continued", "late_pans", "no_crib", "carted", "late_crib", "dry_crib", "no_ship", "shipped", "late_ship", "dry_ship", "no_stall", "sold", "late_sold", "dry_sold", "no_yard", "banked", "late_banked", "dry_banked", "no_bunk", "hired", "late_hired", "dry_hired", "no_loft", "lofted", "late_lofted", "dry_lofted"]:
+	for plan_name in ["winning", "all_rake", "dry_pans", "continued", "late_pans", "no_crib", "carted", "late_crib", "dry_crib", "no_ship", "shipped", "late_ship", "dry_ship", "no_stall", "sold", "late_sold", "dry_sold", "no_yard", "banked", "late_banked", "dry_banked", "no_bunk", "hired", "late_hired", "dry_hired", "no_loft", "lofted", "late_lofted", "dry_lofted", "no_gate", "gated", "late_gated", "dry_gated"]:
 		var before := errors.size()
 		var first = _run_plan(plans, plan_name, errors)
 		var second = _run_plan(plans, plan_name, errors)
@@ -102,7 +103,7 @@ func _test_determinism(errors: Array) -> void:
 			return
 		var a := int(first.get_stored_salt())
 		var b := int(second.get_stored_salt())
-		print("determinism %s stored %d and %d coins %d banked %d hired %d left %d lofted %d" % [plan_name, a, b, int(first.get_coins()), int(first.get_banked()), int(first.get_hired()), int(first.get_yard_left()), int(first.get_lofted())])
+		print("determinism %s stored %d and %d coins %d banked %d hired %d left %d lofted %d gated %d" % [plan_name, a, b, int(first.get_coins()), int(first.get_banked()), int(first.get_hired()), int(first.get_yard_left()), int(first.get_lofted()), int(first.get_gated())])
 		if a != b:
 			_fail(errors, "%s runs stored %d and %d" % [plan_name, a, b])
 		if int(first.get_wet_haul()) != int(second.get_wet_haul()):
@@ -121,6 +122,10 @@ func _test_determinism(errors: Array) -> void:
 			])
 		if int(first.get_lofted()) != int(second.get_lofted()):
 			_fail(errors, "%s loft runs differed (%d and %d)" % [plan_name, first.get_lofted(), second.get_lofted()])
+		if int(first.get_gated()) != int(second.get_gated()) or int(first.get_loft_left()) != int(second.get_loft_left()):
+			_fail(errors, "%s gate runs differed (%d left %d, and %d left %d)" % [
+				plan_name, first.get_gated(), first.get_loft_left(), second.get_gated(), second.get_loft_left(),
+			])
 		if String(first.get_summary()) != String(second.get_summary()):
 			_fail(errors, "%s summaries differed" % plan_name)
 		_assert_pop(first, errors, plan_name + " run A")
@@ -238,6 +243,13 @@ func _test_scene_boots(errors: Array) -> void:
 	node._on_key(KEY_SPACE)
 	if int(node.sim.get_paint(7, 2)) != Sim.LOFT:
 		_fail(errors, "keyboard cursor did not paint a loft")
+	node._on_key(KEY_C)
+	if not String(node.mode_label.text).contains("Gate"):
+		_fail(errors, "gate mark was not named")
+	node._on_key(KEY_UP)
+	node._on_key(KEY_SPACE)
+	if int(node.sim.get_paint(7, 1)) != Sim.GATE:
+		_fail(errors, "keyboard cursor did not paint a gate")
 	var season = node.find_child("SeasonNote", true, false)
 	if season == null or not String(season.text).to_lower().contains("pan"):
 		_fail(errors, "season note does not mention pans")
@@ -270,6 +282,8 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "rules text does not mention the bunk")
 	if rules == null or not String(rules.text).to_lower().contains("loft"):
 		_fail(errors, "rules text does not mention the loft")
+	if rules == null or not String(rules.text).to_lower().contains("gate"):
+		_fail(errors, "rules text does not mention the gate")
 	var spun_ship := 0
 	while int(node.sim.get_beat()) != Sim.SHIPPING and not node.sim.is_over() and spun_ship < int(Sim.CART_TICK) + 2:
 		node.sim.tick()
@@ -333,10 +347,23 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "loft countdown started at %d, expected %d" % [node.sim.get_ticks_until_rain(), Sim.LOFT_TICK])
 	elif not String(node.season_label.text).to_lower().contains("loft"):
 		_fail(errors, "loft note does not mention the loft: %s" % node.season_label.text)
+	var spun_gate := 0
+	while int(node.sim.get_beat()) != Sim.GATING and not node.sim.is_over() and spun_gate < int(Sim.LOFT_TICK) + 2:
+		node.sim.tick()
+		spun_gate += 1
+	node._refresh()
+	if int(node.sim.get_beat()) != Sim.GATING or node.sim.is_over():
+		_fail(errors, "the scene did not open the gate beat")
+	elif not String(node.rain_label.text).to_lower().contains("gate"):
+		_fail(errors, "gate countdown was not named: %s" % node.rain_label.text)
+	elif int(node.sim.get_ticks_until_rain()) != int(Sim.GATE_TICK):
+		_fail(errors, "gate countdown started at %d, expected %d" % [node.sim.get_ticks_until_rain(), Sim.GATE_TICK])
+	elif not String(node.season_label.text).to_lower().contains("gate"):
+		_fail(errors, "gate note does not mention the gate: %s" % node.season_label.text)
 	node._on_key(KEY_R)
-	if int(node.sim.get_paint(9, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 5)) != Sim.EMPTY or int(node.sim.get_paint(7, 4)) != Sim.EMPTY or int(node.sim.get_paint(7, 3)) != Sim.EMPTY or int(node.sim.get_paint(7, 2)) != Sim.EMPTY:
+	if int(node.sim.get_paint(9, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 5)) != Sim.EMPTY or int(node.sim.get_paint(7, 4)) != Sim.EMPTY or int(node.sim.get_paint(7, 3)) != Sim.EMPTY or int(node.sim.get_paint(7, 2)) != Sim.EMPTY or int(node.sim.get_paint(7, 1)) != Sim.EMPTY:
 		_fail(errors, "restart scenario did not clear the marks")
-	if int(node.sim.get_season()) != Sim.WET or int(node.sim.get_wet_haul()) != 0 or int(node.sim.get_beat()) != Sim.WET or int(node.sim.get_carted()) != 0 or int(node.sim.get_shipped()) != 0 or int(node.sim.get_coins()) != 0 or int(node.sim.get_banked()) != 0 or int(node.sim.get_hired()) != 0 or int(node.sim.get_lofted()) != 0:
+	if int(node.sim.get_season()) != Sim.WET or int(node.sim.get_wet_haul()) != 0 or int(node.sim.get_beat()) != Sim.WET or int(node.sim.get_carted()) != 0 or int(node.sim.get_shipped()) != 0 or int(node.sim.get_coins()) != 0 or int(node.sim.get_banked()) != 0 or int(node.sim.get_hired()) != 0 or int(node.sim.get_lofted()) != 0 or int(node.sim.get_gated()) != 0:
 		_fail(errors, "restart scenario did not return to the wet season")
 	if int(node.sim.get_population()) > Sim.POP_CAP:
 		_fail(errors, "restart left the population over the cap")
@@ -1389,8 +1416,10 @@ func _test_loft(errors: Array) -> void:
 		_fail(errors, "crew with no loft was moved (lofted %d bunk %d hired %d yard %d coins %d stored %d)" % [
 			opening.get_lofted(), opening.get_bunk_left(), opening.get_hired(), opening.get_yard_left(), opening.get_coins(), opening.get_stored_salt(),
 		])
-	if not opening.is_over():
-		_fail(errors, "loft beat did not end")
+	if int(opening.get_beat()) != Sim.GATING or opening.is_over():
+		_fail(errors, "the loft beat did not open a gate beat")
+	elif int(opening.get_ticks_until_rain()) != int(Sim.GATE_TICK):
+		_fail(errors, "gate countdown started at %d after the loft, expected %d" % [opening.get_ticks_until_rain(), Sim.GATE_TICK])
 	print("lofted %d left yard %d; dry lofted %d left yard %d; no loft left bunk %d" % [
 		moved.get_lofted(), moved.get_yard_left(), dry_moved.get_lofted(), dry_moved.get_yard_left(), ignored.get_bunk_left(),
 	])
@@ -1408,6 +1437,233 @@ func _expect_loft(sim, errors: Array) -> void:
 		_fail(errors, "bunk still holds %d after the loft" % int(sim.get_bunk_left()))
 	if int(sim.get_lofted()) != int(sim.get_hired()):
 		_fail(errors, "lofted %d of the hired %d" % [int(sim.get_lofted()), int(sim.get_hired())])
+
+
+func _test_gate(errors: Array) -> void:
+	if int(Sim.GATE_TICK) != 100 or int(Sim.GATE_TICK) != int(Sim.TICK_HZ) * 10:
+		_fail(errors, "gate beat length %s is not 100 ticks (10 seconds)" % Sim.GATE_TICK)
+	if int(Sim.GATE_CAP) != 10:
+		_fail(errors, "gate cap is %s, expected 10" % Sim.GATE_CAP)
+	var fresh = Sim.new()
+	if fresh.paint_cell(14, -2, Sim.GATE) == false or int(fresh.get_paint(14, -2)) != Sim.GATE:
+		_fail(errors, "a flat rejected the gate mark")
+	if fresh.paint_cell(14, -3, Sim.GATE):
+		_fail(errors, "the row north of the gate accepted a mark")
+	if fresh.paint_cell(Sim.COAST_X, -2, Sim.GATE):
+		_fail(errors, "the brine accepted a gate")
+	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.GATE):
+		_fail(errors, "the anthill accepted a gate")
+	var plans := _plans(errors)
+	if plans.is_empty():
+		return
+	var won = _run_plan(plans, "winning", errors)
+	var dry = _run_plan(plans, "dry_pans", errors)
+	var parked = _run_plan(plans, "carted", errors)
+	var loaded = _run_plan(plans, "shipped", errors)
+	var sold = _run_plan(plans, "sold", errors)
+	var banked = _run_plan(plans, "banked", errors)
+	var hired = _run_plan(plans, "hired", errors)
+	var lofted = _run_plan(plans, "lofted", errors)
+	var dry_lofted = _run_plan(plans, "dry_lofted", errors)
+	var ignored = _run_plan(plans, "no_gate", errors)
+	var passed = _run_plan(plans, "gated", errors)
+	var passed_again = _run_plan(plans, "gated", errors)
+	var late = _run_plan(plans, "late_gated", errors)
+	var dry_passed = _run_plan(plans, "dry_gated", errors)
+	if won == null or dry == null or parked == null or loaded == null or sold == null or banked == null or hired == null or lofted == null or dry_lofted == null or ignored == null or passed == null or passed_again == null or late == null or dry_passed == null:
+		return
+	# Earlier beats keep the numbers they had before the gate existed.
+	if int(won.get_wet_haul()) != 2997 or int(won.get_stored_salt()) != 2997 or int(won.get_carted()) != 0 or int(won.get_shipped()) != 0 or int(won.get_coins()) != 0 or int(won.get_hired()) != 0 or int(won.get_lofted()) != 0 or int(won.get_gated()) != 0:
+		_fail(errors, "winning shore changed (wet %d stored %d carted %d shipped %d coins %d hired %d lofted %d gated %d)" % [
+			won.get_wet_haul(), won.get_stored_salt(), won.get_carted(), won.get_shipped(), won.get_coins(), won.get_hired(), won.get_lofted(), won.get_gated(),
+		])
+	if int(dry.get_wet_haul()) != 0 or int(dry.get_stored_salt()) != 1032 or int(dry.get_carted()) != 0 or int(dry.get_shipped()) != 0 or int(dry.get_coins()) != 0 or int(dry.get_hired()) != 0 or int(dry.get_lofted()) != 0 or int(dry.get_gated()) != 0:
+		_fail(errors, "dry_pans changed (wet %d stored %d carted %d shipped %d coins %d hired %d lofted %d gated %d)" % [
+			dry.get_wet_haul(), dry.get_stored_salt(), dry.get_carted(), dry.get_shipped(), dry.get_coins(), dry.get_hired(), dry.get_lofted(), dry.get_gated(),
+		])
+	if int(parked.get_wet_haul()) != 2997 or int(parked.get_stored_salt()) != 2997 or int(parked.get_carted()) != 2997 or int(parked.get_shipped()) != 0 or int(parked.get_coins()) != 0 or int(parked.get_hired()) != 0 or int(parked.get_gated()) != 0:
+		_fail(errors, "carted plan changed (wet %d stored %d carted %d shipped %d coins %d hired %d gated %d)" % [
+			parked.get_wet_haul(), parked.get_stored_salt(), parked.get_carted(), parked.get_shipped(), parked.get_coins(), parked.get_hired(), parked.get_gated(),
+		])
+	if int(loaded.get_wet_haul()) != 2997 or int(loaded.get_stored_salt()) != 2997 or int(loaded.get_carted()) != 2997 or int(loaded.get_shipped()) != 2997 or int(loaded.get_coins()) != 0 or int(loaded.get_hired()) != 0 or int(loaded.get_gated()) != 0:
+		_fail(errors, "shipped plan changed (wet %d stored %d carted %d shipped %d coins %d hired %d gated %d)" % [
+			loaded.get_wet_haul(), loaded.get_stored_salt(), loaded.get_carted(), loaded.get_shipped(), loaded.get_coins(), loaded.get_hired(), loaded.get_gated(),
+		])
+	if int(sold.get_wet_haul()) != 2997 or int(sold.get_stored_salt()) != 2997 or int(sold.get_carted()) != 2997 or int(sold.get_shipped()) != 2997 or int(sold.get_coins()) != 2997 or int(sold.get_hired()) != 0 or int(sold.get_gated()) != 0:
+		_fail(errors, "sold plan changed (wet %d stored %d carted %d shipped %d coins %d hired %d gated %d)" % [
+			sold.get_wet_haul(), sold.get_stored_salt(), sold.get_carted(), sold.get_shipped(), sold.get_coins(), sold.get_hired(), sold.get_gated(),
+		])
+	if int(banked.get_wet_haul()) != 2997 or int(banked.get_stored_salt()) != 2997 or int(banked.get_carted()) != 2997 or int(banked.get_shipped()) != 2997 or int(banked.get_coins()) != 2997 or int(banked.get_banked()) != 2997 or int(banked.get_hired()) != 0 or int(banked.get_yard_left()) != 2997 or int(banked.get_gated()) != 0:
+		_fail(errors, "banked plan changed (wet %d stored %d carted %d shipped %d coins %d banked %d hired %d left %d gated %d)" % [
+			banked.get_wet_haul(), banked.get_stored_salt(), banked.get_carted(), banked.get_shipped(), banked.get_coins(), banked.get_banked(), banked.get_hired(), banked.get_yard_left(), banked.get_gated(),
+		])
+	if int(hired.get_wet_haul()) != 2997 or int(hired.get_stored_salt()) != 2997 or int(hired.get_carted()) != 2997 or int(hired.get_shipped()) != 2997 or int(hired.get_coins()) != 2997 or int(hired.get_hired()) != 29 or int(hired.get_yard_left()) != 97 or int(hired.get_lofted()) != 0 or int(hired.get_gated()) != 0:
+		_fail(errors, "hired plan changed (wet %d stored %d carted %d shipped %d coins %d hired %d left %d lofted %d gated %d)" % [
+			hired.get_wet_haul(), hired.get_stored_salt(), hired.get_carted(), hired.get_shipped(), hired.get_coins(), hired.get_hired(), hired.get_yard_left(), hired.get_lofted(), hired.get_gated(),
+		])
+	if int(lofted.get_wet_haul()) != 2997 or int(lofted.get_stored_salt()) != 2997 or int(lofted.get_carted()) != 2997 or int(lofted.get_shipped()) != 2997 or int(lofted.get_coins()) != 2997 or int(lofted.get_hired()) != 29 or int(lofted.get_yard_left()) != 97 or int(lofted.get_lofted()) != 29 or int(lofted.get_bunk_left()) != 0 or int(lofted.get_gated()) != 0 or int(lofted.get_loft_left()) != 29:
+		_fail(errors, "lofted plan changed (wet %d stored %d carted %d shipped %d coins %d hired %d left %d lofted %d bunk %d gated %d loft %d)" % [
+			lofted.get_wet_haul(), lofted.get_stored_salt(), lofted.get_carted(), lofted.get_shipped(), lofted.get_coins(), lofted.get_hired(), lofted.get_yard_left(), lofted.get_lofted(), lofted.get_bunk_left(), lofted.get_gated(), lofted.get_loft_left(),
+		])
+	if int(dry_lofted.get_wet_haul()) != 0 or int(dry_lofted.get_stored_salt()) != 1032 or int(dry_lofted.get_carted()) != 1032 or int(dry_lofted.get_shipped()) != 1032 or int(dry_lofted.get_coins()) != 1032 or int(dry_lofted.get_hired()) != 10 or int(dry_lofted.get_yard_left()) != 32 or int(dry_lofted.get_lofted()) != 10 or int(dry_lofted.get_gated()) != 0 or int(dry_lofted.get_loft_left()) != 10:
+		_fail(errors, "dry lofted plan changed (wet %d stored %d carted %d shipped %d coins %d hired %d left %d lofted %d gated %d loft %d)" % [
+			dry_lofted.get_wet_haul(), dry_lofted.get_stored_salt(), dry_lofted.get_carted(), dry_lofted.get_shipped(), dry_lofted.get_coins(), dry_lofted.get_hired(), dry_lofted.get_yard_left(), dry_lofted.get_lofted(), dry_lofted.get_gated(), dry_lofted.get_loft_left(),
+		])
+	if int(ignored.get_gated()) != 0 or int(ignored.get_loft_left()) != 29 or int(ignored.get_lofted()) != 29 or int(ignored.get_hired()) != 29 or int(ignored.get_yard_left()) != 97 or int(ignored.get_bunk_left()) != 0 or int(ignored.get_coins()) != 2997 or int(ignored.get_wet_haul()) != 2997 or int(ignored.get_stored_salt()) != 2997 or int(ignored.get_carted()) != 2997 or int(ignored.get_shipped()) != 2997:
+		_fail(errors, "no_gate changed the crew (wet %d stored %d carted %d shipped %d coins %d hired %d left %d lofted %d loft %d gated %d bunk %d)" % [
+			ignored.get_wet_haul(), ignored.get_stored_salt(), ignored.get_carted(), ignored.get_shipped(), ignored.get_coins(), ignored.get_hired(), ignored.get_yard_left(), ignored.get_lofted(), ignored.get_loft_left(), ignored.get_gated(), ignored.get_bunk_left(),
+		])
+	if String(ignored.get_summary()) != String(lofted.get_summary()):
+		_fail(errors, "no_gate summary changed: %s" % ignored.get_summary())
+	if String(ignored.get_summary()).to_lower().contains("gate"):
+		_fail(errors, "no_gate summary names a gate: %s" % ignored.get_summary())
+	var ignored_loft = plans["no_gate"]["loft"][0]
+	var ignored_salt: Dictionary = ignored.get_cell_salt(int(ignored_loft[0]), int(ignored_loft[1]))
+	if int(ignored_salt.get("loft", 0)) != 29 or int(ignored_salt.get("gate", 0)) != 0:
+		_fail(errors, "no_gate left %s in the loft and %s at a gate" % [ignored_salt.get("loft", 0), ignored_salt.get("gate", 0)])
+	var ignored_check: Array = []
+	_expect_gate(ignored, ignored_check)
+	if ignored_check.is_empty():
+		_fail(errors, "no_gate lofted the crew and ignored the gate, so the gate check should have failed")
+	else:
+		print("no_gate failed the gate check: %s" % ignored_check[0])
+	var gate_cell = plans["gated"]["gate"][0]
+	var loft_cell = plans["gated"]["loft"][0]
+	var bunk_cell = plans["gated"]["bunk"][0]
+	var yard_cell = plans["gated"]["yard"][0]
+	if int(gate_cell[0]) != int(loft_cell[0]) or int(gate_cell[1]) != int(loft_cell[1]) - 1:
+		_fail(errors, "gated plan's gate is not one cell north of the loft")
+	if int(loft_cell[0]) != int(bunk_cell[0]) or int(loft_cell[1]) != int(bunk_cell[1]) - 1:
+		_fail(errors, "gated plan's loft is not one cell north of the bunk")
+	var passed_check: Array = []
+	_expect_gate(passed, passed_check)
+	for message in passed_check:
+		_fail(errors, "gated plan: %s" % message)
+	if int(passed.get_wet_haul()) != 2997 or int(passed.get_stored_salt()) != 2997 or int(passed.get_carted()) != 2997 or int(passed.get_shipped()) != 2997 or int(passed.get_coins()) != 2997 or int(passed.get_banked()) != 2997 or int(passed.get_hired()) != 29 or int(passed.get_yard_left()) != 97 or int(passed.get_lofted()) != 29 or int(passed.get_bunk_left()) != 0:
+		_fail(errors, "gate changed the lofted shore (wet %d stored %d carted %d shipped %d coins %d banked %d hired %d left %d lofted %d bunk %d)" % [
+			passed.get_wet_haul(), passed.get_stored_salt(), passed.get_carted(), passed.get_shipped(), passed.get_coins(), passed.get_banked(), passed.get_hired(), passed.get_yard_left(), passed.get_lofted(), passed.get_bunk_left(),
+		])
+	if int(passed.get_stored_salt()) - int(passed.get_wet_haul()) != 0:
+		_fail(errors, "gated plan dry haul changed")
+	if int(passed.get_gated()) != 10 or int(passed.get_loft_left()) != 19:
+		_fail(errors, "gated %d and left %d in the loft, expected 10 and 19" % [passed.get_gated(), passed.get_loft_left()])
+	var gate_salt: Dictionary = passed.get_cell_salt(int(gate_cell[0]), int(gate_cell[1]))
+	var loft_salt: Dictionary = passed.get_cell_salt(int(loft_cell[0]), int(loft_cell[1]))
+	var bunk_salt: Dictionary = passed.get_cell_salt(int(bunk_cell[0]), int(bunk_cell[1]))
+	var yard_salt: Dictionary = passed.get_cell_salt(int(yard_cell[0]), int(yard_cell[1]))
+	if int(gate_salt.get("gate", 0)) != 10 or int(loft_salt.get("loft", 0)) != 19 or int(bunk_salt.get("bunk", 0)) != 0 or int(yard_salt.get("yard", 0)) != 97:
+		_fail(errors, "gate cell holds %s, loft holds %s, bunk holds %s, yard holds %s" % [gate_salt.get("gate", 0), loft_salt.get("loft", 0), bunk_salt.get("bunk", 0), yard_salt.get("yard", 0)])
+	var passed_summary := String(passed.get_summary())
+	if not passed_summary.contains("Gated 10") or not passed_summary.contains("Left 19 in the loft") or not passed_summary.contains("Lofted 29") or not passed_summary.contains("Hired 29") or not passed_summary.contains("Left 97"):
+		_fail(errors, "gated summary does not name the gate: %s" % passed_summary)
+	if not passed_summary.contains("Coins 2997") or not passed_summary.contains("Banked 2997"):
+		_fail(errors, "gated summary dropped the earned coins: %s" % passed_summary)
+	if passed_summary.to_lower().contains("quota missed"):
+		_fail(errors, "gated plan missed the quota: %s" % passed_summary)
+	if int(passed_again.get_gated()) != int(passed.get_gated()) or int(passed_again.get_loft_left()) != int(passed.get_loft_left()) or int(passed_again.get_hired()) != int(passed.get_hired()) or int(passed_again.get_yard_left()) != int(passed.get_yard_left()):
+		_fail(errors, "repeated gate paint let %d through and left %d, then %d and %d" % [
+			passed.get_gated(), passed.get_loft_left(), passed_again.get_gated(), passed_again.get_loft_left(),
+		])
+	if int(late.get_gated()) != 10 or int(late.get_loft_left()) != 19 or int(late.get_lofted()) != 29 or int(late.get_hired()) != 29 or int(late.get_yard_left()) != 97 or int(late.get_coins()) != int(passed.get_coins()) or int(late.get_shipped()) != int(passed.get_shipped()) or int(late.get_wet_haul()) != int(passed.get_wet_haul()):
+		_fail(errors, "painting the gate at the gate beat (gated %d loft %d hired %d left %d coins %d shipped %d wet %d) did not match painting it early (gated %d loft %d hired %d left %d coins %d shipped %d wet %d)" % [
+			late.get_gated(), late.get_loft_left(), late.get_hired(), late.get_yard_left(), late.get_coins(), late.get_shipped(), late.get_wet_haul(), passed.get_gated(), passed.get_loft_left(), passed.get_hired(), passed.get_yard_left(), passed.get_coins(), passed.get_shipped(), passed.get_wet_haul(),
+		])
+	if int(dry_passed.get_wet_haul()) != 0 or int(dry_passed.get_stored_salt()) != 1032 or int(dry_passed.get_carted()) != 1032 or int(dry_passed.get_shipped()) != 1032 or int(dry_passed.get_coins()) != 1032 or int(dry_passed.get_hired()) != 10 or int(dry_passed.get_yard_left()) != 32 or int(dry_passed.get_lofted()) != 10 or int(dry_passed.get_gated()) != 10 or int(dry_passed.get_loft_left()) != 0 or int(dry_passed.get_bunk_left()) != 0:
+		_fail(errors, "dry gate changed the dry crew (wet %d stored %d carted %d shipped %d coins %d hired %d left %d lofted %d gated %d loft %d bunk %d)" % [
+			dry_passed.get_wet_haul(), dry_passed.get_stored_salt(), dry_passed.get_carted(), dry_passed.get_shipped(), dry_passed.get_coins(), dry_passed.get_hired(), dry_passed.get_yard_left(), dry_passed.get_lofted(), dry_passed.get_gated(), dry_passed.get_loft_left(), dry_passed.get_bunk_left(),
+		])
+	var dry_gate_cell = plans["dry_gated"]["gate"][0]
+	var dry_loft_cell = plans["dry_gated"]["loft"][0]
+	var dry_yard_cell = plans["dry_gated"]["yard"][0]
+	var dry_gate_salt: Dictionary = dry_passed.get_cell_salt(int(dry_gate_cell[0]), int(dry_gate_cell[1]))
+	var dry_loft_salt: Dictionary = dry_passed.get_cell_salt(int(dry_loft_cell[0]), int(dry_loft_cell[1]))
+	var dry_yard_salt: Dictionary = dry_passed.get_cell_salt(int(dry_yard_cell[0]), int(dry_yard_cell[1]))
+	if int(dry_gate_salt.get("gate", 0)) != 10 or int(dry_loft_salt.get("loft", 0)) != 0 or int(dry_yard_salt.get("yard", 0)) != 32:
+		_fail(errors, "dry gate cell holds %s, loft holds %s, yard holds %s" % [dry_gate_salt.get("gate", 0), dry_loft_salt.get("loft", 0), dry_yard_salt.get("yard", 0)])
+	if not String(dry_passed.get_summary()).contains("Gated 10") or not String(dry_passed.get_summary()).contains("Left 0 in the loft") or not String(dry_passed.get_summary()).contains("Lofted 10") or not String(dry_passed.get_summary()).contains("Hired 10") or not String(dry_passed.get_summary()).contains("Left 32"):
+		_fail(errors, "dry gate summary does not name the gate: %s" % dry_passed.get_summary())
+	_assert_pop(passed, errors, "gated plan")
+	_assert_pop(passed_again, errors, "gated plan again")
+	_assert_pop(late, errors, "late_gated")
+	_assert_pop(dry_passed, errors, "dry_gated")
+	_assert_pop(ignored, errors, "no_gate")
+	# The cap stops the gate while the countdown still has ticks left.
+	var watch = _prepare_plan(plans, "gated", errors)
+	if watch == null:
+		return
+	var watch_guard := 0
+	var watch_limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + int(Sim.SHIP_TICK) + int(Sim.MARKET_TICK) + int(Sim.YARD_TICK) + int(Sim.BUNK_TICK) + int(Sim.LOFT_TICK) + 2
+	while int(watch.get_beat()) != Sim.GATING and not watch.is_over() and watch_guard < watch_limit:
+		watch.tick()
+		watch_guard += 1
+	if int(watch.get_beat()) != Sim.GATING or watch.is_over():
+		_fail(errors, "the loft beat did not open a gate beat for the cap check")
+		return
+	var saw_cap := false
+	var cap_guard := 0
+	while not watch.is_over() and cap_guard < int(Sim.GATE_TICK) + 2:
+		watch.tick()
+		cap_guard += 1
+		if int(watch.get_gated()) == int(Sim.GATE_CAP) and int(watch.get_ticks_until_rain()) > 0 and int(watch.get_loft_left()) == 19:
+			saw_cap = true
+			var ticks_left := int(watch.get_ticks_until_rain())
+			watch.tick()
+			if int(watch.get_gated()) != int(Sim.GATE_CAP) or int(watch.get_loft_left()) != 19:
+				_fail(errors, "the gate kept moving after the cap (gated %d loft %d)" % [watch.get_gated(), watch.get_loft_left()])
+			elif not watch.is_over() and int(watch.get_ticks_until_rain()) >= ticks_left:
+				_fail(errors, "the gate beat did not spend a tick after the cap")
+			break
+	if not saw_cap:
+		_fail(errors, "the gate did not stop at %d while ticks remained (gated %d loft %d ticks %d)" % [
+			Sim.GATE_CAP, watch.get_gated(), watch.get_loft_left(), watch.get_ticks_until_rain(),
+		])
+	# The beat opens after the loft with the crew still in the loft. No gate, nobody passes.
+	var opening = _prepare_plan(plans, "no_gate", errors)
+	if opening == null:
+		return
+	var guard := 0
+	var limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + int(Sim.SHIP_TICK) + int(Sim.MARKET_TICK) + int(Sim.YARD_TICK) + int(Sim.BUNK_TICK) + int(Sim.LOFT_TICK) + 2
+	while int(opening.get_beat()) != Sim.GATING and not opening.is_over() and guard < limit:
+		opening.tick()
+		guard += 1
+	if int(opening.get_beat()) != Sim.GATING or opening.is_over() or int(opening.get_season()) != Sim.DRY:
+		_fail(errors, "the loft beat did not open a gate beat in the dry season")
+		return
+	if int(opening.get_ticks_until_rain()) != int(Sim.GATE_TICK):
+		_fail(errors, "gate countdown started at %d, expected %d" % [opening.get_ticks_until_rain(), Sim.GATE_TICK])
+	if int(opening.get_gated()) != 0 or int(opening.get_loft_left()) != 29 or int(opening.get_lofted()) != 29 or int(opening.get_hired()) != 29 or int(opening.get_yard_left()) != 97:
+		_fail(errors, "gate opened with gated %d loft %d lofted %d hired %d yard %d" % [
+			opening.get_gated(), opening.get_loft_left(), opening.get_lofted(), opening.get_hired(), opening.get_yard_left(),
+		])
+	for _step in int(Sim.GATE_TICK):
+		opening.tick()
+	if int(opening.get_gated()) != 0 or int(opening.get_loft_left()) != 29 or int(opening.get_lofted()) != 29 or int(opening.get_hired()) != 29 or int(opening.get_yard_left()) != 97 or int(opening.get_coins()) != 2997 or int(opening.get_stored_salt()) != 2997:
+		_fail(errors, "crew with no gate was moved (gated %d loft %d lofted %d hired %d yard %d coins %d stored %d)" % [
+			opening.get_gated(), opening.get_loft_left(), opening.get_lofted(), opening.get_hired(), opening.get_yard_left(), opening.get_coins(), opening.get_stored_salt(),
+		])
+	if not opening.is_over():
+		_fail(errors, "gate beat did not end")
+	print("gated %d left loft %d; dry gated %d left loft %d; no gate left loft %d" % [
+		passed.get_gated(), passed.get_loft_left(), dry_passed.get_gated(), dry_passed.get_loft_left(), ignored.get_loft_left(),
+	])
+
+
+func _expect_gate(sim, errors: Array) -> void:
+	if sim == null:
+		_fail(errors, "gate plan did not run")
+		return
+	if not sim.is_over():
+		_fail(errors, "gate plan did not finish")
+	if int(sim.get_gated()) <= 0:
+		_fail(errors, "let %d through the gate" % int(sim.get_gated()))
+		return
+	var allowed := mini(int(sim.get_lofted()), int(Sim.GATE_CAP))
+	if int(sim.get_gated()) != allowed:
+		_fail(errors, "let %d through, cap allows %d of the lofted %d" % [int(sim.get_gated()), allowed, int(sim.get_lofted())])
+	if int(sim.get_loft_left()) != int(sim.get_lofted()) - int(sim.get_gated()):
+		_fail(errors, "loft still holds %d after letting %d of %d through" % [int(sim.get_loft_left()), int(sim.get_gated()), int(sim.get_lofted())])
+	if int(sim.get_gated()) > int(Sim.GATE_CAP):
+		_fail(errors, "gate let %d through, cap is %d" % [int(sim.get_gated()), Sim.GATE_CAP])
 
 
 func _expect_yard(sim, errors: Array) -> void:
@@ -1603,6 +1859,24 @@ func _run_plan(plans: Dictionary, plan_name: String, errors: Array):
 		_apply_marks(sim, plan["after_bunk"], errors)
 		if errors.size() > loft_before:
 			return null
+	if plan.has("after_loft"):
+		var gate_guard := 0
+		var gate_limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + int(Sim.SHIP_TICK) + int(Sim.MARKET_TICK) + int(Sim.YARD_TICK) + int(Sim.BUNK_TICK) + int(Sim.LOFT_TICK) + 2
+		while int(sim.get_beat()) != Sim.GATING and not sim.is_over() and gate_guard < gate_limit:
+			sim.tick()
+			gate_guard += 1
+		if int(sim.get_beat()) != Sim.GATING or sim.is_over():
+			_fail(errors, "%s did not open the gate beat after the loft" % plan_name)
+			return null
+		if int(sim.get_ticks_until_rain()) != int(Sim.GATE_TICK):
+			_fail(errors, "%s gate countdown started at %d, expected %d" % [
+				plan_name, sim.get_ticks_until_rain(), Sim.GATE_TICK,
+			])
+			return null
+		var gate_before := errors.size()
+		_apply_marks(sim, plan["after_loft"], errors)
+		if errors.size() > gate_before:
+			return null
 	sim.run_until_rain()
 	return sim
 
@@ -1630,6 +1904,8 @@ func _apply_marks(sim, plan: Dictionary, errors: Array) -> void:
 		_apply_cells(sim, plan["bunk"], Sim.BUNK, errors)
 	if plan.has("loft"):
 		_apply_cells(sim, plan["loft"], Sim.LOFT, errors)
+	if plan.has("gate"):
+		_apply_cells(sim, plan["gate"], Sim.GATE, errors)
 	if plan.has("rake_rect"):
 		_apply_rect(sim, plan["rake_rect"], Sim.RAKE, errors)
 
