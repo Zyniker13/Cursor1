@@ -17,6 +17,7 @@ const Salt = preload("res://scripts/salt_mark.gd")
 const Wick = preload("res://scripts/wick_trim.gd")
 const Anneal = preload("res://scripts/glass_anneal.gd")
 const Graft = preload("res://scripts/orchard_graft.gd")
+const Dye = preload("res://scripts/dye_vat.gd")
 const Catalog = preload("res://scripts/catalog.gd")
 const Solver = preload("res://scripts/solver.gd")
 const Verdict = preload("res://scripts/verdict.gd")
@@ -54,6 +55,8 @@ const ANNEAL_TIMELINE := "Tess (anneal hand) annealed the gather in the lehr at 
 const ANNEAL_TRUE := {"who": "Tess", "place": "lehr", "hour": "10"}
 const GRAFT_TIMELINE := "Calder (graft hand) grafted the scion in the nursery at 16, seen from the row, so the row would take before the frost.\nNess (scion cutter) cut the scion in the row at 15.\nEdda (raffia hand) bound the union at the gate.\nThe knife was hung at the gate.\nThe row was watered at 14.\nThe gate was shut at 17.\nThe frost was chalked at 18."
 const GRAFT_TRUE := {"who": "Calder", "place": "nursery", "hour": "16"}
+const DYE_TIMELINE := "Sera (dip hand) dipped the skein in the vat at 7, seen from the line, so the line would take the indigo.\nPim (skein winder) wound the skein in the yard at 6.\nJoss (indigo hand) stirred the indigo at the line.\nThe paddle was hung in the yard.\nThe line was stretched at 5.\nThe yard was raked at 8.\nThe vat was lidded at 9."
+const DYE_TRUE := {"who": "Sera", "place": "vat", "hour": "7"}
 
 var _failures: Array[String] = []
 var _checks := 0
@@ -162,6 +165,12 @@ func _initialize() -> void:
 	_test_graft_only_true_theory()
 	_test_graft_near_misses()
 	_test_graft_incomplete()
+	_test_dye_file_shape()
+	_test_dye_unique_model()
+	_test_dye_each_exhibit_necessary()
+	_test_dye_only_true_theory()
+	_test_dye_near_misses()
+	_test_dye_incomplete()
 	_test_solutions_differ()
 	_test_menu_opens_either_case()
 	if _failures.is_empty():
@@ -3950,6 +3959,305 @@ func _test_graft_incomplete() -> void:
 		for phrase in other_slots:
 			_expect(message.find(phrase) == -1, "graft incomplete used another file's slot (%s) in: %s" % [phrase, message])
 	print("graft incomplete submissions refused with the missing slot")
+func _test_dye_file_shape() -> void:
+	_expect(Dye.EXHIBITS.size() == 9, "dye exhibit count is %d" % Dye.EXHIBITS.size())
+	_expect(Dye.PEOPLE.size() == 3, "dye cast should be three people")
+	_expect(Dye.PLACES.size() == 3, "dye room count is %d" % Dye.PLACES.size())
+	_expect(Dye.HOURS.size() == 5, "dye hour list length is %d" % Dye.HOURS.size())
+	_expect(Dye.PEOPLE == ["Pim", "Sera", "Joss"], "dye cast is %s" % str(Dye.PEOPLE))
+	_expect(Dye.PLACES == ["vat", "line", "yard"], "dye rooms are %s" % str(Dye.PLACES))
+	_expect(Dye.HOURS == ["5", "6", "7", "8", "9"], "dye hours are %s" % str(Dye.HOURS))
+	_expect(Dye.TITLE == "The dye vat", "dye title")
+	_expect(Dye.TITLE != CaseData.TITLE and Dye.TITLE != Rehearsal.TITLE and Dye.TITLE != Gilt.TITLE and Dye.TITLE != Ferry.TITLE and Dye.TITLE != Weather.TITLE and Dye.TITLE != Loom.TITLE and Dye.TITLE != Hive.TITLE and Dye.TITLE != Glass.TITLE and Dye.TITLE != Press.TITLE and Dye.TITLE != Assay.TITLE and Dye.TITLE != Kiln.TITLE and Dye.TITLE != Tide.TITLE and Dye.TITLE != Night.TITLE and Dye.TITLE != Salt.TITLE and Dye.TITLE != Wick.TITLE and Dye.TITLE != Anneal.TITLE and Dye.TITLE != Graft.TITLE, "dye shares a title")
+	_expect(Dye.FILE_CODE == "CW-18", "dye file code")
+	_expect(Dye.FILE_CODE != CaseData.FILE_CODE and Dye.FILE_CODE != Rehearsal.FILE_CODE and Dye.FILE_CODE != Gilt.FILE_CODE and Dye.FILE_CODE != Ferry.FILE_CODE and Dye.FILE_CODE != Weather.FILE_CODE and Dye.FILE_CODE != Loom.FILE_CODE and Dye.FILE_CODE != Hive.FILE_CODE and Dye.FILE_CODE != Glass.FILE_CODE and Dye.FILE_CODE != Press.FILE_CODE and Dye.FILE_CODE != Assay.FILE_CODE and Dye.FILE_CODE != Kiln.FILE_CODE and Dye.FILE_CODE != Tide.FILE_CODE and Dye.FILE_CODE != Night.FILE_CODE and Dye.FILE_CODE != Salt.FILE_CODE and Dye.FILE_CODE != Wick.FILE_CODE and Dye.FILE_CODE != Anneal.FILE_CODE and Dye.FILE_CODE != Graft.FILE_CODE, "dye shares a file code")
+	_expect(Dye.HOURS[Dye.HOURS.size() / 2] == DYE_TRUE["hour"], "dye vat should be the middle hour")
+	_expect(Dye.HOURS[0] != DYE_TRUE["hour"], "dye vat should not be the earliest hour")
+	_expect(Dye.HOURS[Dye.HOURS.size() - 1] != DYE_TRUE["hour"], "dye vat should not be the latest hour")
+	var counts := _player_pin_counts(Dye)
+	_expect(int(counts["taker"]) == 3 and int(counts["place"]) == 3 and int(counts["hour"]) == 3, "dye pin counts are %s" % str(counts))
+	_expect(counts != _player_pin_counts(CaseData), "dye copied the spare-key pin pattern")
+	_expect(counts != _player_pin_counts(Rehearsal), "dye copied the rehearsal pin pattern")
+	_expect(counts != _player_pin_counts(Gilt), "dye copied the gilt pin pattern")
+	_expect(counts != _player_pin_counts(Ferry), "dye copied the ferry pin pattern")
+	_expect(counts != _player_pin_counts(Weather), "dye copied the weather pin pattern")
+	_expect(counts != _player_pin_counts(Loom), "dye copied the loom pin pattern")
+	_expect(counts != _player_pin_counts(Hive), "dye copied the hive pin pattern")
+	_expect(counts != _player_pin_counts(Glass), "dye copied the glass pin pattern")
+	_expect(counts != _player_pin_counts(Press), "dye copied the press pin pattern")
+	_expect(counts != _player_pin_counts(Assay), "dye copied the assay pin pattern")
+	_expect(counts == _player_pin_counts(Kiln), "dye vat should keep the kiln chalk pin rhythm")
+	_expect(counts == _player_pin_counts(Tide), "dye vat should keep the tide ledger pin rhythm")
+	_expect(counts == _player_pin_counts(Night), "dye vat should keep the night bell pin rhythm")
+	_expect(counts == _player_pin_counts(Salt), "dye vat should keep the salt mark pin rhythm")
+	_expect(counts == _player_pin_counts(Wick), "dye vat should keep the wick trim pin rhythm")
+	_expect(counts == _player_pin_counts(Anneal), "dye vat should keep the glass anneal pin rhythm")
+	_expect(counts == _player_pin_counts(Graft), "dye vat should keep the orchard graft pin rhythm")
+	_expect(_field_key(Dye) != _field_key(CaseData), "dye copied the spare-key timeline fields")
+	_expect(_field_key(Dye) != _field_key(Rehearsal), "dye copied the rehearsal timeline fields")
+	_expect(_field_key(Dye) != _field_key(Gilt), "dye copied the gilt timeline fields")
+	_expect(_field_key(Dye) != _field_key(Ferry), "dye copied the ferry timeline fields")
+	_expect(_field_key(Dye) != _field_key(Weather), "dye copied the weather timeline fields")
+	_expect(_field_key(Dye) != _field_key(Loom), "dye copied the loom timeline fields")
+	_expect(_field_key(Dye) != _field_key(Hive), "dye copied the hive timeline fields")
+	_expect(_field_key(Dye) != _field_key(Glass), "dye copied the glass timeline fields")
+	_expect(_field_key(Dye) != _field_key(Press), "dye copied the press timeline fields")
+	_expect(_field_key(Dye) != _field_key(Assay), "dye copied the assay timeline fields")
+	_expect(_field_key(Dye) != _field_key(Kiln), "dye copied the kiln timeline fields")
+	_expect(_field_key(Dye) != _field_key(Tide), "dye copied the tide timeline fields")
+	_expect(_field_key(Dye) != _field_key(Night), "dye copied the night timeline fields")
+	_expect(_field_key(Dye) != _field_key(Salt), "dye copied the salt timeline fields")
+	_expect(_field_key(Dye) != _field_key(Wick), "dye copied the wick timeline fields")
+	_expect(_field_key(Dye) != _field_key(Anneal), "dye copied the anneal timeline fields")
+	_expect(_field_key(Dye) != _field_key(Graft), "dye copied the graft timeline fields")
+	var seen := {}
+	var stated := {}
+	var paired_hidden := 0
+	var graft_texts := {}
+	for old_exhibit in Graft.EXHIBITS:
+		graft_texts[str(old_exhibit["text"])] = true
+	for exhibit in Dye.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		_expect(not seen.has(exhibit_id), "duplicate dye id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		_expect(not graft_texts.has(str(exhibit["text"])), "dye vat copied a graft sentence")
+		_expect(str(exhibit["text"]).find("grafted") == -1, "%s copies a graft verb" % exhibit_id)
+		_expect(str(exhibit["text"]).find("scion") == -1, "%s copies the scion" % exhibit_id)
+		_expect(str(exhibit["text"]).find("frost") == -1, "%s copies the frost" % exhibit_id)
+		var states_player_pin := false
+		var states_unique := false
+		var player_literals := 0
+		var hidden_literals := 0
+		for literal in exhibit["literals"]:
+			stated[str(literal["value"])] = true
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Dye.PLAYER_FIELDS:
+				states_player_pin = true
+				player_literals += 1
+				var expected := Dye.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Dye.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats >= 2, "%s states %s once" % [exhibit_id, field])
+			else:
+				hidden_literals += 1
+				var owners := 0
+				for other in Dye.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		if hidden_literals == 2:
+			paired_hidden += 1
+		else:
+			_expect(hidden_literals == 1, "%s states %d hidden facts" % [exhibit_id, hidden_literals])
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(player_literals == 1, "%s states %d player pins" % [exhibit_id, player_literals])
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+	_expect(paired_hidden == 2, "dye should have two slips with two hidden facts, found %d" % paired_hidden)
+	for hour in Dye.HOURS:
+		_expect(stated.has(hour), "dye hour %s is absent from the exhibits" % hour)
+
+func _test_dye_unique_model() -> void:
+	var models := Solver.enumerate(Dye.EXHIBITS, Dye)
+	print("dye models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one dye model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Sera", "dye taker")
+	_expect(str(model["place"]) == "vat", "dye place")
+	_expect(str(model["hour"]) == "7", "dye hour")
+	_expect(str(model["winder"]) == "Pim", "dye winder")
+	_expect(str(model["wind_place"]) == "yard", "dye wind place")
+	_expect(str(model["wind_hour"]) == "6", "dye wind hour")
+	_expect(str(model["sight_place"]) == "line", "dye seen from")
+	_expect(str(model["stirrer"]) == "Joss", "dye stirrer")
+	_expect(str(model["purpose"]) == "take_indigo", "dye purpose")
+	_expect(str(model["stir_place"]) == "line", "dye stir place")
+	_expect(str(model["paddle_place"]) == "yard", "dye paddle place")
+	_expect(str(model["stretch_hour"]) == "5", "dye stretch hour")
+	_expect(str(model["rake_hour"]) == "8", "dye rake hour")
+	_expect(str(model["lid_hour"]) == "9", "dye lid hour")
+	for hour in Dye.HOURS:
+		var used := false
+		for field in Dye.fields():
+			if str(model[field]) == hour:
+				used = true
+		_expect(used, "dye hour %s is blank in the true timeline" % hour)
+	for place in Dye.PLACES:
+		var place_used := false
+		for field in Dye.fields():
+			if str(model[field]) == place:
+				place_used = true
+		_expect(place_used, "dye room %s is blank in the true timeline" % place)
+	for person in Dye.PEOPLE:
+		var person_used := false
+		for field in Dye.fields():
+			if str(model[field]) == person:
+				person_used = true
+		_expect(person_used, "dye person %s is blank in the true timeline" % person)
+	_expect(Dye.timeline(model) == DYE_TIMELINE, "dye timeline drifted:\n%s" % Dye.timeline(model))
+	for exhibit in Dye.EXHIBITS:
+		_expect(Dye.holds(exhibit, model), "%s rejects the dye timeline" % exhibit["id"])
+
+func _test_dye_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Dye.EXHIBITS, Dye)
+	for exhibit in Dye.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Dye.without(exhibit_id), Dye)
+		print("dye without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "dye %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Dye.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "dye %s removal did not admit a timeline it forbids" % exhibit_id)
+
+func _test_dye_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	for who in Dye.PEOPLE:
+		for place in Dye.PLACES:
+			for hour in Dye.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == DYE_TRUE["who"] and place == DYE_TRUE["place"] and hour == DYE_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Dye)
+					print("dye true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true dye theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "dye acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(DYE_TIMELINE) >= 0, "dye acceptance should give the timeline")
+					_expect(str(result["message"]).find("Sera") >= 0, "dye acceptance omits Sera")
+					_expect(str(result["message"]).find("vat") >= 0, "dye acceptance omits the vat")
+					_expect(str(result["message"]).find("7") >= 0, "dye acceptance omits 7")
+					_expect(str(result["message"]).find("so the line would take the indigo") >= 0, "dye acceptance omits the indigo")
+					_expect(str(result["message"]).find("Sera (dip hand) dipped the skein in the vat at 7") >= 0, "dye acceptance omits the dip")
+					_expect(Dye.conflicting_ids(theory).is_empty(), "true dye theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Dye)
+					_expect(Dye.conflicting_ids(theory).size() >= 2, "%s / %s / %s contradicts fewer than two exhibits" % [who, place, hour])
+					rejected += 1
+	for outsider in ["Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal", "Nell"]:
+		_expect_rejected({"who": outsider, "place": "vat", "hour": "7"}, Dye)
+	print("dye theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d dye theories" % accepted)
+	_expect(rejected >= 2, "rejected %d dye theories" % rejected)
+
+func _test_dye_near_misses() -> void:
+	var misses := [
+		{"who": "Sera", "place": "vat", "hour": "8", "titles": ["Dip leaf", "Color note", "Rake order"]},
+		{"who": "Sera", "place": "vat", "hour": "6", "titles": ["Dip leaf", "Color note", "Rake order"]},
+		{"who": "Sera", "place": "line", "hour": "7", "titles": ["Vat slate", "Indigo card", "Stretch slip"]},
+		{"who": "Pim", "place": "vat", "hour": "7", "titles": ["Winder chit", "Line sight", "Paddle peg"]},
+	]
+	var wrong_hour_in_vat := 0
+	var wrong_place_at_hour := 0
+	var wrong_person_in_vat := 0
+	for theory in misses:
+		_expect_rejected(theory, Dye)
+		var result: Dictionary = Verdict.submit(theory, Dye)
+		var message := str(result["message"])
+		for title in theory["titles"]:
+			_expect(message.find(str(title)) >= 0, "near-miss omits %s: %s" % [title, message])
+		if str(theory["who"]) == "Sera" and str(theory["place"]) == "vat" and str(theory["hour"]) != "7":
+			wrong_hour_in_vat += 1
+		if str(theory["who"]) == "Sera" and str(theory["place"]) != "vat" and str(theory["hour"]) == "7":
+			wrong_place_at_hour += 1
+		if str(theory["who"]) != "Sera" and str(theory["place"]) == "vat" and str(theory["hour"]) == "7":
+			wrong_person_in_vat += 1
+	print("dye near-misses rejected: %d" % misses.size())
+	_expect(misses.size() == 4, "need four dye near-misses, found %d" % misses.size())
+	_expect(wrong_hour_in_vat == 2, "two near-misses should keep Sera in the vat at another hour")
+	_expect(wrong_place_at_hour >= 1, "a near-miss should keep Sera at 7 in another room")
+	_expect(wrong_person_in_vat >= 1, "a near-miss should keep the vat at 7 for another person")
+
+func _test_dye_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+		"who took the gilt stamp",
+		"where they took the stamp",
+		"at which hour they took the stamp",
+		"who took the ferry bell",
+		"where they took the bell",
+		"at which hour they took the bell",
+		"who took the weather slate",
+		"where they took the slate",
+		"at which hour they took the slate",
+		"who took the loom shuttle",
+		"where they took the shuttle",
+		"at which hour they took the shuttle",
+		"who took the hive smoker",
+		"where they took the smoker",
+		"at which hour they took the smoker",
+		"who took the glass pontil",
+		"where they took the pontil",
+		"at which hour they took the pontil",
+		"who took the press proof",
+		"where they took the proof",
+		"at which hour they took the proof",
+		"who set the assay cup",
+		"where they set the cup",
+		"at which hour they set the cup",
+		"who chalked the kiln mark",
+		"where they chalked the mark",
+		"at which hour they chalked the mark",
+		"who entered the tide ledger",
+		"where they entered the ledger",
+		"at which hour they entered the ledger",
+		"who stopped the night bell",
+		"where they stopped the bell",
+		"at which hour they stopped the bell",
+		"who scored the salt mark",
+		"where they scored the mark",
+		"at which hour they scored the mark",
+		"who trimmed the wick",
+		"where they trimmed the wick",
+		"at which hour they trimmed the wick",
+		"who annealed the gather",
+		"where they annealed the gather",
+		"at which hour they annealed the gather",
+		"who grafted the scion",
+		"where they grafted the scion",
+		"at which hour they grafted the scion",
+	]
+	var cases := [
+		{"theory": {"who": "", "place": "vat", "hour": "7"}, "present": ["who dipped the skein"], "absent": ["where they dipped the skein", "at which hour they dipped the skein"]},
+		{"theory": {"who": "Sera", "place": "", "hour": "7"}, "present": ["where they dipped the skein"], "absent": ["who dipped the skein", "at which hour they dipped the skein"]},
+		{"theory": {"who": "Sera", "place": "vat", "hour": ""}, "present": ["at which hour they dipped the skein"], "absent": ["who dipped the skein", "where they dipped the skein"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who dipped the skein", "where they dipped the skein", "at which hour they dipped the skein"], "absent": []},
+		{"theory": {}, "present": ["who dipped the skein", "where they dipped the skein", "at which hour they dipped the skein"], "absent": []},
+		{"theory": {"who": "Joss", "place": "", "hour": "9"}, "present": ["where they dipped the skein"], "absent": ["who dipped the skein", "at which hour they dipped the skein"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Dye)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "dye incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "dye incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "dye incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "dye incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "dye incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "dye missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "dye named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "dye incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("dye incomplete submissions refused with the missing slot")
 func _test_solutions_differ() -> void:
 	var spare := {"who": "Nell", "place": "kitchen", "hour": "7"}
 	_expect(spare["who"] != REHEARSAL_TRUE["who"], "rehearsal copied the spare-key taker")
@@ -5242,7 +5550,93 @@ func _test_solutions_differ() -> void:
 	_expect(not Graft.HOURS.has("4"), "orchard graft hours must not take 4")
 	_expect(not Graft.HOURS.has("10"), "orchard graft hours must not take 10")
 	_expect(not Graft.HOURS.has("19"), "orchard graft hours must not take 19")
-	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal", "The orchard graft"], "case list is %s" % str(titles))
+
+	_expect(DYE_TRUE["who"] == "Sera", "dye vat taker")
+	_expect(DYE_TRUE["place"] == "vat", "dye vat room")
+	_expect(DYE_TRUE["hour"] == "7", "dye vat hour")
+	for forbidden in ["Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(DYE_TRUE["who"] != forbidden, "dye vat accepted %s" % forbidden)
+	for forbidden_place in ["nursery", "row", "gate", "lehr", "marver", "pot", "loft", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(DYE_TRUE["place"] != forbidden_place, "dye vat accepted the %s" % forbidden_place)
+	_expect(DYE_TRUE["hour"] != "16", "dye vat accepted 16")
+	_expect(DYE_TRUE["hour"] != "10", "dye vat accepted 10")
+	_expect(DYE_TRUE["hour"] != "4", "dye vat accepted 4")
+	_expect(DYE_TRUE["hour"] != "19", "dye vat accepted 19")
+	var earlier := [
+		[CaseData, spare, "spare key"],
+		[Rehearsal, REHEARSAL_TRUE, "rehearsal"],
+		[Gilt, GILT_TRUE, "gilt stamp"],
+		[Ferry, FERRY_TRUE, "ferry bell"],
+		[Weather, WEATHER_TRUE, "weather slate"],
+		[Loom, LOOM_TRUE, "loom shuttle"],
+		[Hive, HIVE_TRUE, "hive smoker"],
+		[Glass, GLASS_TRUE, "glass pontil"],
+		[Press, PRESS_TRUE, "press proof"],
+		[Assay, ASSAY_TRUE, "assay cup"],
+		[Kiln, KILN_TRUE, "kiln chalk"],
+		[Tide, TIDE_TRUE, "tide ledger"],
+		[Night, NIGHT_TRUE, "night bell"],
+		[Salt, SALT_TRUE, "salt mark"],
+		[Wick, WICK_TRUE, "wick trim"],
+		[Anneal, ANNEAL_TRUE, "glass anneal"],
+		[Graft, GRAFT_TRUE, "orchard graft"],
+	]
+	for row in earlier:
+		var book = row[0]
+		var truth: Dictionary = row[1]
+		var name := str(row[2])
+		_expect(DYE_TRUE["who"] != truth["who"], "dye vat copied the %s taker" % name)
+		_expect(DYE_TRUE["place"] != truth["place"], "dye vat copied the %s room" % name)
+		if name == "spare key":
+			_expect(DYE_TRUE["hour"] == str(truth["hour"]), "dye vat keeps 7, which also sits on the spare key")
+		else:
+			_expect(DYE_TRUE["hour"] != str(truth["hour"]), "dye vat copied the %s hour" % name)
+		_expect_rejected(DYE_TRUE, book)
+		_expect_rejected(truth, Dye)
+	_expect(GRAFT_TRUE["who"] == "Calder" and GRAFT_TRUE["place"] == "nursery" and GRAFT_TRUE["hour"] == "16", "the orchard graft should still accept Calder in the nursery at 16")
+	for row in earlier:
+		var book = row[0]
+		var name := str(row[2])
+		for person in Dye.PEOPLE:
+			if person == "Pim" and name == "weather slate":
+				_expect(book.PEOPLE.has(person), "dye vat may share Pim with the weather slate")
+			elif person == "Joss" and name == "loom shuttle":
+				_expect(book.PEOPLE.has(person), "dye vat may share Joss with the loom shuttle")
+			else:
+				_expect(not book.PEOPLE.has(person), "dye cast repeats %s from the %s" % [person, name])
+		for place in Dye.PLACES:
+			_expect(not book.PLACES.has(place), "dye rooms repeat %s from the %s" % [place, name])
+	for forbidden_person in ["Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(not Dye.PEOPLE.has(forbidden_person), "dye vat cast must not take %s" % forbidden_person)
+	_expect(Dye.role_phrase("Sera") == "the dip hand", "the dye vat should call Sera the dip hand")
+	for forbidden_place in ["nursery", "row", "gate", "lehr", "marver", "pot", "loft", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(not Dye.PLACES.has(forbidden_place), "dye vat rooms must not take the %s" % forbidden_place)
+	var quiet_hours := [Gilt, Ferry, Weather, Loom, Hive, Glass, Press, Assay, Kiln, Tide, Night, Salt, Graft]
+	for hour in Dye.HOURS:
+		if hour == "5" or hour == "6":
+			_expect(Rehearsal.HOURS.has(hour), "dye vat hour %s may also sit on the rehearsal score" % hour)
+			_expect(Wick.HOURS.has(hour), "dye vat hour %s may also sit on the wick trim" % hour)
+			_expect(not CaseData.HOURS.has(hour), "dye hours repeat %s from the spare key" % hour)
+			_expect(not Anneal.HOURS.has(hour), "dye hours repeat %s from the glass anneal" % hour)
+		elif hour == "7":
+			_expect(CaseData.HOURS.has(hour), "dye vat hour %s may also sit on the spare key" % hour)
+			_expect(not Rehearsal.HOURS.has(hour), "dye hours repeat %s from the rehearsal score" % hour)
+			_expect(not Wick.HOURS.has(hour), "dye hours repeat %s from the wick trim" % hour)
+			_expect(not Anneal.HOURS.has(hour), "dye hours repeat %s from the glass anneal" % hour)
+		elif hour == "8" or hour == "9":
+			_expect(CaseData.HOURS.has(hour), "dye vat hour %s may also sit on the spare key" % hour)
+			_expect(Anneal.HOURS.has(hour), "dye vat hour %s may also sit on the glass anneal" % hour)
+			_expect(not Rehearsal.HOURS.has(hour), "dye hours repeat %s from the rehearsal score" % hour)
+			_expect(not Wick.HOURS.has(hour), "dye hours repeat %s from the wick trim" % hour)
+		else:
+			_expect(false, "unexpected dye hour %s" % hour)
+		for book in quiet_hours:
+			_expect(not book.HOURS.has(hour), "dye hours repeat %s" % hour)
+	_expect(not Dye.HOURS.has("4"), "dye vat hours must not take 4")
+	_expect(not Dye.HOURS.has("10"), "dye vat hours must not take 10")
+	_expect(not Dye.HOURS.has("16"), "dye vat hours must not take 16")
+	_expect(not Dye.HOURS.has("19"), "dye vat hours must not take 19")
+	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal", "The orchard graft", "The dye vat"], "case list is %s" % str(titles))
 
 
 func _test_menu_opens_either_case() -> void:
@@ -5254,7 +5648,7 @@ func _test_menu_opens_either_case() -> void:
 	if root.get_child_count() == 0:
 		root._ready()
 	var menu_blob := _visible_label_blob(root)
-	_expect(menu_blob.find("Seventeen files") >= 0, "menu does not offer seventeen files: %s" % menu_blob)
+	_expect(menu_blob.find("Eighteen files") >= 0, "menu does not offer eighteen files: %s" % menu_blob)
 	_expect(menu_blob.find("CW-07") >= 0, "menu omits CW-07")
 	_expect(menu_blob.find("The hive smoker") >= 0, "menu omits The hive smoker")
 	_expect(menu_blob.find("CW-08") >= 0, "menu omits CW-08")
@@ -5277,6 +5671,8 @@ func _test_menu_opens_either_case() -> void:
 	_expect(menu_blob.find("The glass anneal") >= 0, "menu omits The glass anneal")
 	_expect(menu_blob.find("CW-17") >= 0, "menu omits CW-17")
 	_expect(menu_blob.find("The orchard graft") >= 0, "menu omits The orchard graft")
+	_expect(menu_blob.find("CW-18") >= 0, "menu omits CW-18")
+	_expect(menu_blob.find("The dye vat") >= 0, "menu omits The dye vat")
 	_expect(root.get_child_count() > 0, "main scene built %d children" % root.get_child_count())
 	_press(root, "How to play")
 	var howto := _visible_label_blob(root)
@@ -5297,6 +5693,7 @@ func _test_menu_opens_either_case() -> void:
 	_expect(howto.find("The wick trim") >= 0, "how to play omits The wick trim")
 	_expect(howto.find("The glass anneal") >= 0, "how to play omits The glass anneal")
 	_expect(howto.find("The orchard graft") >= 0, "how to play omits The orchard graft")
+	_expect(howto.find("The dye vat") >= 0, "how to play omits The dye vat")
 	_expect(howto.find("names that slot") >= 0, "how to play omits the empty-slot rule")
 	_press(root, "Back to the menu")
 	_expect(_find_visible_button(root, "Open The spare key") != null, "menu is missing The spare key")
@@ -5316,6 +5713,7 @@ func _test_menu_opens_either_case() -> void:
 	_expect(_find_visible_button(root, "Open The wick trim") != null, "menu is missing The wick trim")
 	_expect(_find_visible_button(root, "Open The glass anneal") != null, "menu is missing The glass anneal")
 	_expect(_find_visible_button(root, "Open The orchard graft") != null, "menu is missing The orchard graft")
+	_expect(_find_visible_button(root, "Open The dye vat") != null, "menu is missing The dye vat")
 	_press(root, "Open The rehearsal score")
 	var rehearsal_open := _visible_label_blob(root)
 	_expect(rehearsal_open.find("Cut list") >= 0, "rehearsal file did not open")
@@ -6238,6 +6636,73 @@ func _test_menu_opens_either_case() -> void:
 	var anneal_from_graft := _visible_label_blob(root)
 	_expect(anneal_from_graft.find("Gather note") >= 0, "could not return to The glass anneal from The orchard graft")
 	_expect(anneal_from_graft.find("Scion note") == -1, "orchard graft papers stayed up after switching files")
+
+	_press(root, "Menu")
+	_press(root, "Open The dye vat")
+	var dye_open := _visible_label_blob(root)
+	_expect(dye_open.find("Winder chit") >= 0, "dye vat file did not open")
+	_expect(dye_open.find("Color note") >= 0, "dye vat file did not show its exhibits")
+	_expect(dye_open.find("CW-18") >= 0, "dye vat file omits CW-18")
+	_expect(dye_open.find("Complaint slip") == -1, "spare key papers showed inside The dye vat")
+	_expect(dye_open.find("Cut list") == -1, "rehearsal papers showed inside The dye vat")
+	_expect(dye_open.find("Move order") == -1, "gilt stamp papers showed inside The dye vat")
+	_expect(dye_open.find("Whistle slip") == -1, "ferry bell papers showed inside The dye vat")
+	_expect(dye_open.find("Frost note") == -1, "weather slate papers showed inside The dye vat")
+	_expect(dye_open.find("Trough tag") == -1, "loom shuttle papers showed inside The dye vat")
+	_expect(dye_open.find("Fuel line") == -1, "hive smoker papers showed inside The dye vat")
+	_expect(dye_open.find("Weight line") == -1, "glass pontil papers showed inside The dye vat")
+	_expect(dye_open.find("Lock line") == -1, "press proof papers showed inside The dye vat")
+	_expect(dye_open.find("Cup line") == -1, "assay cup papers showed inside The dye vat")
+	_expect(dye_open.find("Mark line") == -1, "kiln chalk papers showed inside The dye vat")
+	_expect(dye_open.find("Ledger line") == -1, "tide ledger papers showed inside The dye vat")
+	_expect(dye_open.find("Bell line") == -1, "night bell papers showed inside The dye vat")
+	_expect(dye_open.find("Salt line") == -1, "salt mark papers showed inside The dye vat")
+	_expect(dye_open.find("Oil note") == -1, "wick trim papers showed inside The dye vat")
+	_expect(dye_open.find("Gather note") == -1, "glass anneal papers showed inside The dye vat")
+	_expect(dye_open.find("Scion note") == -1, "orchard graft papers showed inside The dye vat")
+	_press(root, "Submit theory")
+	var empty_dye := _verdict_text(root)
+	_expect(empty_dye.find("who dipped the skein") >= 0, "empty dye board: %s" % empty_dye)
+	_expect(empty_dye.find("where they dipped the skein") >= 0, "empty dye board: %s" % empty_dye)
+	_expect(empty_dye.find("at which hour they dipped the skein") >= 0, "empty dye board: %s" % empty_dye)
+	_expect(empty_dye.find("who took the spare key") == -1, "empty dye board used the spare key slot: %s" % empty_dye)
+	_expect(empty_dye.find("who grafted the scion") == -1, "empty dye board used a graft slot: %s" % empty_dye)
+	_expect(empty_dye.to_lower().find("conflict") == -1, "empty dye board talked about a conflict: %s" % empty_dye)
+	_press(root, "Pim")
+	_press(root, "Line")
+	_press(root, "6")
+	_press(root, "Submit theory")
+	var dye_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(dye_miss, Dye, {"who": "Pim", "place": "line", "hour": "6"})
+	_expect(dye_miss.find("Winder chit") >= 0, "wrong triple reply omits Winder chit: %s" % dye_miss)
+	_expect(dye_miss.find("Line sight") >= 0, "wrong triple reply omits Line sight: %s" % dye_miss)
+	_expect(dye_miss.find("Paddle peg") >= 0, "wrong triple reply omits Paddle peg: %s" % dye_miss)
+	_expect(dye_miss.find("Vat slate") >= 0, "wrong triple reply omits Vat slate: %s" % dye_miss)
+	_expect(dye_miss.find("Indigo card") >= 0, "wrong triple reply omits Indigo card: %s" % dye_miss)
+	_expect(dye_miss.find("Stretch slip") >= 0, "wrong triple reply omits Stretch slip: %s" % dye_miss)
+	_expect(dye_miss.find("Dip leaf") >= 0, "wrong triple reply omits Dip leaf: %s" % dye_miss)
+	_expect(dye_miss.find("Color note") >= 0, "wrong triple reply omits Color note: %s" % dye_miss)
+	_expect(dye_miss.find("Rake order") >= 0, "wrong triple reply omits Rake order: %s" % dye_miss)
+	_press(root, "Sera")
+	_press(root, "Vat")
+	_press(root, "7")
+	_press(root, "Submit theory")
+	var dye_accepted := _verdict_text(root)
+	_expect(dye_accepted.find("fits every exhibit") >= 0, "dye vat board rejected the true theory: %s" % dye_accepted)
+	_expect(dye_accepted.find(DYE_TIMELINE) >= 0, "dye vat board timeline: %s" % dye_accepted)
+	_expect(dye_accepted.find("Sera (dip hand) dipped the skein in the vat at 7") >= 0, "dye vat board omits Sera at 7: %s" % dye_accepted)
+	_expect(dye_accepted.find("in the vat") >= 0, "dye vat board omits the vat: %s" % dye_accepted)
+	_expect(dye_accepted.find("so the line would take the indigo") >= 0, "dye vat board omits the indigo: %s" % dye_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var dye_cleared := _verdict_text(root)
+	_expect(dye_cleared.find("who dipped the skein") >= 0, "cleared dye board: %s" % dye_cleared)
+	_expect(dye_cleared.find("fits every exhibit") == -1, "cleared dye board stayed accepted: %s" % dye_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The orchard graft")
+	var graft_from_dye := _visible_label_blob(root)
+	_expect(graft_from_dye.find("Scion note") >= 0, "could not return to The orchard graft from The dye vat")
+	_expect(graft_from_dye.find("Winder chit") == -1, "dye vat papers stayed up after switching files")
 	root.queue_free()
 
 
