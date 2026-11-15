@@ -7,7 +7,7 @@ const DIRS: Array[Vector2i] = [
 	Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, -1)
 ]
 const DIR_NAMES: Array[String] = ["East", "South", "West", "North"]
-const TYPES: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook"]
+const TYPES: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook", "return"]
 const PAINTS: Array[String] = ["red", "blue", "yellow"]
 const TICK_CAP := 250
 
@@ -134,9 +134,13 @@ static func run(puzzle: Dictionary, graph: Array) -> Dictionary:
 			elif typ == "slide":
 				var step: Vector2i = DIRS[int(parcel["dir"])]
 				parcel["intent"] = Vector2i(int(parcel["x"]), int(parcel["y"])) + step * 2
-			elif typ == "turn" or typ == "hook":
+			elif typ == "turn" or typ == "hook" or typ == "return":
 				if int(parcel["hold"]) < 1:
-					var quarter := 1 if typ == "turn" else 3
+					var quarter := 1
+					if typ == "hook":
+						quarter = 3
+					elif typ == "return":
+						quarter = 2
 					parcel["dir"] = (int(parcel["dir"]) + quarter) % 4
 				else:
 					parcel["intent"] = Vector2i(int(parcel["x"]), int(parcel["y"])) + DIRS[int(parcel["dir"])]
@@ -258,7 +262,7 @@ static func run(puzzle: Dictionary, graph: Array) -> Dictionary:
 				ahead += DIRS[int(block["dir"])]
 				if _find_at(parcels, ahead) == null and _enterable(ahead, dock, width, height, walls, source_cells, blocks):
 					latch_pending = true
-			elif (typ == "turn" or typ == "hook") and int(parcel["hold"]) >= 1:
+			elif (typ == "turn" or typ == "hook" or typ == "return") and int(parcel["hold"]) >= 1:
 				ahead += DIRS[int(parcel["dir"])]
 				if _find_at(parcels, ahead) != null or _enterable(ahead, dock, width, height, walls, source_cells, blocks):
 					turn_pending = true
