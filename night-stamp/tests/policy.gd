@@ -721,6 +721,51 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 				sided = true
 		if sided:
 			guess += _stamp_number(state, card_id, row, col)
+	if rule == "drop_if_exact_seven":
+		var seven_filled = 0
+		for seven_row in 3:
+			for seven_col in 3:
+				if state.form[seven_row][seven_col] != null:
+					seven_filled += 1
+		if seven_filled == 6:
+			guess -= 6
+		elif seven_filled == 7:
+			guess += 4
+	if rule == "double_lone_column":
+		var lone_filled = 0
+		for lone_row in 3:
+			if state.form[lone_row][col] != null:
+				lone_filled += 1
+		if lone_filled == 0:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+	if rule == "yield_side_pay":
+		var side_pay = 0
+		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var pay_row = row + delta.x
+			var pay_col = col + delta.y
+			if pay_row < 0 or pay_col < 0 or pay_row > 2 or pay_col > 2:
+				continue
+			if state.form[pay_row][pay_col] != null:
+				side_pay += 1
+		if side_pay > 0:
+			guess += 3
+	if rule == "double_next_filled":
+		var filled_next_row = row
+		var filled_next_col = col + 1
+		if filled_next_col > 2:
+			filled_next_row = row + 1
+			filled_next_col = 0
+		if filled_next_row <= 2 and state.form[filled_next_row][filled_next_col] != null:
+			guess += _stamp_number(state, card_id, row, col)
+		var filled_prev_row = row
+		var filled_prev_col = col - 1
+		if filled_prev_col < 0:
+			filled_prev_row = row - 1
+			filled_prev_col = 2
+		if filled_prev_row >= 0 and state.form[filled_prev_row][filled_prev_col] != null:
+			guess += 2
 	if rule == "yield_diagonal_pair":
 		var partner_row = -1
 		var partner_col = -1
