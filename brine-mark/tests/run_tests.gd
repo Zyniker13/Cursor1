@@ -17,6 +17,7 @@ func _initialize() -> void:
 	_test_ship(errors)
 	_test_market(errors)
 	_test_yard(errors)
+	_test_bunk(errors)
 	_test_determinism(errors)
 	_test_population(errors)
 	_test_no_select_ant(errors)
@@ -90,7 +91,7 @@ func _test_determinism(errors: Array) -> void:
 	var plans := _plans(errors)
 	if plans.is_empty():
 		return
-	for plan_name in ["winning", "all_rake", "dry_pans", "continued", "late_pans", "no_crib", "carted", "late_crib", "dry_crib", "no_ship", "shipped", "late_ship", "dry_ship", "no_stall", "sold", "late_sold", "dry_sold", "no_yard", "banked", "late_banked", "dry_banked"]:
+	for plan_name in ["winning", "all_rake", "dry_pans", "continued", "late_pans", "no_crib", "carted", "late_crib", "dry_crib", "no_ship", "shipped", "late_ship", "dry_ship", "no_stall", "sold", "late_sold", "dry_sold", "no_yard", "banked", "late_banked", "dry_banked", "no_bunk", "hired", "late_hired", "dry_hired"]:
 		var before := errors.size()
 		var first = _run_plan(plans, plan_name, errors)
 		var second = _run_plan(plans, plan_name, errors)
@@ -100,7 +101,7 @@ func _test_determinism(errors: Array) -> void:
 			return
 		var a := int(first.get_stored_salt())
 		var b := int(second.get_stored_salt())
-		print("determinism %s stored %d and %d coins %d banked %d" % [plan_name, a, b, int(first.get_coins()), int(first.get_banked())])
+		print("determinism %s stored %d and %d coins %d banked %d hired %d left %d" % [plan_name, a, b, int(first.get_coins()), int(first.get_banked()), int(first.get_hired()), int(first.get_yard_left())])
 		if a != b:
 			_fail(errors, "%s runs stored %d and %d" % [plan_name, a, b])
 		if int(first.get_wet_haul()) != int(second.get_wet_haul()):
@@ -113,6 +114,10 @@ func _test_determinism(errors: Array) -> void:
 			_fail(errors, "%s coin totals differed" % plan_name)
 		if int(first.get_banked()) != int(second.get_banked()):
 			_fail(errors, "%s banked totals differed" % plan_name)
+		if int(first.get_hired()) != int(second.get_hired()) or int(first.get_yard_left()) != int(second.get_yard_left()):
+			_fail(errors, "%s hire runs differed (%d left %d, and %d left %d)" % [
+				plan_name, first.get_hired(), first.get_yard_left(), second.get_hired(), second.get_yard_left(),
+			])
 		if String(first.get_summary()) != String(second.get_summary()):
 			_fail(errors, "%s summaries differed" % plan_name)
 		_assert_pop(first, errors, plan_name + " run A")
@@ -216,6 +221,13 @@ func _test_scene_boots(errors: Array) -> void:
 	node._on_key(KEY_SPACE)
 	if int(node.sim.get_paint(7, 4)) != Sim.YARD:
 		_fail(errors, "keyboard cursor did not paint a yard")
+	node._on_key(KEY_0)
+	if not String(node.mode_label.text).contains("Bunk"):
+		_fail(errors, "bunk mark was not named")
+	node._on_key(KEY_UP)
+	node._on_key(KEY_SPACE)
+	if int(node.sim.get_paint(7, 3)) != Sim.BUNK:
+		_fail(errors, "keyboard cursor did not paint a bunk")
 	var season = node.find_child("SeasonNote", true, false)
 	if season == null or not String(season.text).to_lower().contains("pan"):
 		_fail(errors, "season note does not mention pans")
@@ -244,6 +256,8 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "rules text does not mention the stall")
 	if rules == null or not String(rules.text).to_lower().contains("yard"):
 		_fail(errors, "rules text does not mention the yard")
+	if rules == null or not String(rules.text).to_lower().contains("bunk"):
+		_fail(errors, "rules text does not mention the bunk")
 	var spun_ship := 0
 	while int(node.sim.get_beat()) != Sim.SHIPPING and not node.sim.is_over() and spun_ship < int(Sim.CART_TICK) + 2:
 		node.sim.tick()
@@ -281,10 +295,23 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "yard countdown started at %d, expected %d" % [node.sim.get_ticks_until_rain(), Sim.YARD_TICK])
 	elif not String(node.season_label.text).to_lower().contains("yard"):
 		_fail(errors, "yard note does not mention the yard: %s" % node.season_label.text)
+	var spun_bunk := 0
+	while int(node.sim.get_beat()) != Sim.BUNKING and not node.sim.is_over() and spun_bunk < int(Sim.YARD_TICK) + 2:
+		node.sim.tick()
+		spun_bunk += 1
+	node._refresh()
+	if int(node.sim.get_beat()) != Sim.BUNKING or node.sim.is_over():
+		_fail(errors, "the scene did not open the bunk beat")
+	elif not String(node.rain_label.text).to_lower().contains("bunk"):
+		_fail(errors, "bunk countdown was not named: %s" % node.rain_label.text)
+	elif int(node.sim.get_ticks_until_rain()) != int(Sim.BUNK_TICK):
+		_fail(errors, "bunk countdown started at %d, expected %d" % [node.sim.get_ticks_until_rain(), Sim.BUNK_TICK])
+	elif not String(node.season_label.text).to_lower().contains("bunk"):
+		_fail(errors, "bunk note does not mention the bunk: %s" % node.season_label.text)
 	node._on_key(KEY_R)
-	if int(node.sim.get_paint(9, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 5)) != Sim.EMPTY or int(node.sim.get_paint(7, 4)) != Sim.EMPTY:
+	if int(node.sim.get_paint(9, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 5)) != Sim.EMPTY or int(node.sim.get_paint(7, 4)) != Sim.EMPTY or int(node.sim.get_paint(7, 3)) != Sim.EMPTY:
 		_fail(errors, "restart scenario did not clear the marks")
-	if int(node.sim.get_season()) != Sim.WET or int(node.sim.get_wet_haul()) != 0 or int(node.sim.get_beat()) != Sim.WET or int(node.sim.get_carted()) != 0 or int(node.sim.get_shipped()) != 0 or int(node.sim.get_coins()) != 0 or int(node.sim.get_banked()) != 0:
+	if int(node.sim.get_season()) != Sim.WET or int(node.sim.get_wet_haul()) != 0 or int(node.sim.get_beat()) != Sim.WET or int(node.sim.get_carted()) != 0 or int(node.sim.get_shipped()) != 0 or int(node.sim.get_coins()) != 0 or int(node.sim.get_banked()) != 0 or int(node.sim.get_hired()) != 0:
 		_fail(errors, "restart scenario did not return to the wet season")
 	if int(node.sim.get_population()) > Sim.POP_CAP:
 		_fail(errors, "restart left the population over the cap")
@@ -975,11 +1002,202 @@ func _test_yard(errors: Array) -> void:
 		_fail(errors, "purse with no yard was banked (banked %d purse %d coins %d shipped %d stored %d)" % [
 			opening.get_banked(), opening.get_purse(), opening.get_coins(), opening.get_shipped(), opening.get_stored_salt(),
 		])
-	if not opening.is_over():
-		_fail(errors, "yard beat did not end")
+	if int(opening.get_beat()) != Sim.BUNKING or opening.is_over():
+		_fail(errors, "the yard beat did not open a bunk beat")
+	elif int(opening.get_ticks_until_rain()) != int(Sim.BUNK_TICK):
+		_fail(errors, "bunk countdown started at %d after the yard, expected %d" % [opening.get_ticks_until_rain(), Sim.BUNK_TICK])
 	print("banked %d; dry banked %d; no yard left coins %d" % [
 		banked.get_banked(), dry_banked.get_banked(), ignored.get_coins(),
 	])
+
+
+func _test_bunk(errors: Array) -> void:
+	if int(Sim.BUNK_TICK) != 100 or int(Sim.BUNK_TICK) != int(Sim.TICK_HZ) * 10:
+		_fail(errors, "bunk beat length %s is not 100 ticks (10 seconds)" % Sim.BUNK_TICK)
+	if int(Sim.HIRE_COST) != 100:
+		_fail(errors, "a hire costs %s, expected 100 coins" % Sim.HIRE_COST)
+	var fresh = Sim.new()
+	if fresh.paint_cell(14, 0, Sim.BUNK) == false or int(fresh.get_paint(14, 0)) != Sim.BUNK:
+		_fail(errors, "a flat rejected the bunk mark")
+	if fresh.paint_cell(Sim.COAST_X, 0, Sim.BUNK):
+		_fail(errors, "the brine accepted a bunk")
+	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.BUNK):
+		_fail(errors, "the anthill accepted a bunk")
+	var plans := _plans(errors)
+	if plans.is_empty():
+		return
+	var won = _run_plan(plans, "winning", errors)
+	var dry = _run_plan(plans, "dry_pans", errors)
+	var parked = _run_plan(plans, "carted", errors)
+	var loaded = _run_plan(plans, "shipped", errors)
+	var sold = _run_plan(plans, "sold", errors)
+	var banked = _run_plan(plans, "banked", errors)
+	var ignored = _run_plan(plans, "no_bunk", errors)
+	var hired = _run_plan(plans, "hired", errors)
+	var hired_again = _run_plan(plans, "hired", errors)
+	var late = _run_plan(plans, "late_hired", errors)
+	var dry_hired = _run_plan(plans, "dry_hired", errors)
+	if won == null or dry == null or parked == null or loaded == null or sold == null or banked == null or ignored == null or hired == null or hired_again == null or late == null or dry_hired == null:
+		return
+	# Earlier beats keep the numbers they had before the bunk existed.
+	if int(won.get_wet_haul()) != 2997 or int(won.get_stored_salt()) != 2997 or int(won.get_carted()) != 0 or int(won.get_shipped()) != 0 or int(won.get_coins()) != 0 or int(won.get_hired()) != 0:
+		_fail(errors, "winning shore changed (wet %d stored %d carted %d shipped %d coins %d hired %d)" % [
+			won.get_wet_haul(), won.get_stored_salt(), won.get_carted(), won.get_shipped(), won.get_coins(), won.get_hired(),
+		])
+	if int(won.get_stored_salt()) - int(won.get_wet_haul()) != 0:
+		_fail(errors, "winning dry haul changed")
+	if int(dry.get_wet_haul()) != 0 or int(dry.get_stored_salt()) != 1032 or int(dry.get_carted()) != 0 or int(dry.get_shipped()) != 0 or int(dry.get_coins()) != 0 or int(dry.get_hired()) != 0:
+		_fail(errors, "dry_pans changed (wet %d stored %d carted %d shipped %d coins %d hired %d)" % [
+			dry.get_wet_haul(), dry.get_stored_salt(), dry.get_carted(), dry.get_shipped(), dry.get_coins(), dry.get_hired(),
+		])
+	if int(dry.get_stored_salt()) - int(dry.get_wet_haul()) != 1032:
+		_fail(errors, "dry_pans dry haul changed")
+	if int(parked.get_wet_haul()) != 2997 or int(parked.get_stored_salt()) != 2997 or int(parked.get_carted()) != 2997 or int(parked.get_shipped()) != 0 or int(parked.get_coins()) != 0 or int(parked.get_hired()) != 0:
+		_fail(errors, "carted plan changed (wet %d stored %d carted %d shipped %d coins %d hired %d)" % [
+			parked.get_wet_haul(), parked.get_stored_salt(), parked.get_carted(), parked.get_shipped(), parked.get_coins(), parked.get_hired(),
+		])
+	if int(loaded.get_wet_haul()) != 2997 or int(loaded.get_stored_salt()) != 2997 or int(loaded.get_carted()) != 2997 or int(loaded.get_shipped()) != 2997 or int(loaded.get_coins()) != 0 or int(loaded.get_hired()) != 0:
+		_fail(errors, "shipped plan changed (wet %d stored %d carted %d shipped %d coins %d hired %d)" % [
+			loaded.get_wet_haul(), loaded.get_stored_salt(), loaded.get_carted(), loaded.get_shipped(), loaded.get_coins(), loaded.get_hired(),
+		])
+	if int(sold.get_wet_haul()) != 2997 or int(sold.get_stored_salt()) != 2997 or int(sold.get_carted()) != 2997 or int(sold.get_shipped()) != 2997 or int(sold.get_coins()) != 2997 or int(sold.get_hired()) != 0 or int(sold.get_banked()) != 0:
+		_fail(errors, "sold plan changed (wet %d stored %d carted %d shipped %d coins %d banked %d hired %d)" % [
+			sold.get_wet_haul(), sold.get_stored_salt(), sold.get_carted(), sold.get_shipped(), sold.get_coins(), sold.get_banked(), sold.get_hired(),
+		])
+	if int(banked.get_wet_haul()) != 2997 or int(banked.get_stored_salt()) != 2997 or int(banked.get_carted()) != 2997 or int(banked.get_shipped()) != 2997 or int(banked.get_coins()) != 2997 or int(banked.get_banked()) != 2997 or int(banked.get_hired()) != 0 or int(banked.get_yard_left()) != 2997:
+		_fail(errors, "banked plan with no bunk changed (wet %d stored %d carted %d shipped %d coins %d banked %d hired %d left %d)" % [
+			banked.get_wet_haul(), banked.get_stored_salt(), banked.get_carted(), banked.get_shipped(), banked.get_coins(), banked.get_banked(), banked.get_hired(), banked.get_yard_left(),
+		])
+	if int(ignored.get_wet_haul()) != 2997 or int(ignored.get_stored_salt()) != 2997 or int(ignored.get_carted()) != 2997 or int(ignored.get_shipped()) != 2997 or int(ignored.get_coins()) != 2997 or int(ignored.get_banked()) != 2997 or int(ignored.get_hired()) != 0 or int(ignored.get_yard_left()) != 2997:
+		_fail(errors, "no_bunk changed the purse (wet %d stored %d carted %d shipped %d coins %d banked %d hired %d left %d)" % [
+			ignored.get_wet_haul(), ignored.get_stored_salt(), ignored.get_carted(), ignored.get_shipped(), ignored.get_coins(), ignored.get_banked(), ignored.get_hired(), ignored.get_yard_left(),
+		])
+	if String(ignored.get_summary()) != String(banked.get_summary()):
+		_fail(errors, "no_bunk summary changed: %s" % ignored.get_summary())
+	if not String(ignored.get_summary()).contains("Coins 2997") or not String(ignored.get_summary()).contains("Banked 2997"):
+		_fail(errors, "no_bunk summary dropped the earned coins: %s" % ignored.get_summary())
+	if String(ignored.get_summary()).contains("Hired"):
+		_fail(errors, "no_bunk summary names a hire: %s" % ignored.get_summary())
+	var ignored_yard = plans["no_bunk"]["yard"][0]
+	var ignored_salt: Dictionary = ignored.get_cell_salt(int(ignored_yard[0]), int(ignored_yard[1]))
+	if int(ignored_salt.get("yard", 0)) != 2997:
+		_fail(errors, "no_bunk left %s in the yard" % ignored_salt.get("yard", 0))
+	# This plan banked the coins and painted no bunk. The bunk check must fail.
+	var ignored_check: Array = []
+	_expect_bunk(ignored, ignored_check)
+	if ignored_check.is_empty():
+		_fail(errors, "no_bunk banked the coins and ignored the bunk, so the bunk check should have failed")
+	else:
+		print("no_bunk failed the bunk check: %s" % ignored_check[0])
+	var bunk_cell = plans["hired"]["bunk"][0]
+	var yard_cell = plans["hired"]["yard"][0]
+	if int(bunk_cell[0]) != int(yard_cell[0]) or int(bunk_cell[1]) != int(yard_cell[1]) - 1:
+		_fail(errors, "hired plan's bunk is not one cell north of the yard")
+	var hired_check: Array = []
+	_expect_bunk(hired, hired_check)
+	for message in hired_check:
+		_fail(errors, "hired plan: %s" % message)
+	if int(hired.get_wet_haul()) != 2997 or int(hired.get_stored_salt()) != 2997 or int(hired.get_carted()) != 2997 or int(hired.get_shipped()) != 2997 or int(hired.get_coins()) != 2997 or int(hired.get_banked()) != 2997:
+		_fail(errors, "bunk changed the banked shore (wet %d stored %d carted %d shipped %d coins %d banked %d)" % [
+			hired.get_wet_haul(), hired.get_stored_salt(), hired.get_carted(), hired.get_shipped(), hired.get_coins(), hired.get_banked(),
+		])
+	if int(hired.get_stored_salt()) - int(hired.get_wet_haul()) != 0:
+		_fail(errors, "hired plan dry haul changed")
+	if int(hired.get_hired()) != 29 or int(hired.get_yard_left()) != 97:
+		_fail(errors, "hired %d and left %d, expected 29 and 97" % [hired.get_hired(), hired.get_yard_left()])
+	var bunk_salt: Dictionary = hired.get_cell_salt(int(bunk_cell[0]), int(bunk_cell[1]))
+	if int(bunk_salt.get("bunk", 0)) != 29 or int(bunk_salt.get("bunk", 0)) != int(hired.get_hired()):
+		_fail(errors, "bunk cell holds %s hires, hired %d" % [bunk_salt.get("bunk", 0), hired.get_hired()])
+	var hired_yard: Dictionary = hired.get_cell_salt(int(yard_cell[0]), int(yard_cell[1]))
+	if int(hired_yard.get("yard", 0)) != 97:
+		_fail(errors, "bunk left %s in the yard" % hired_yard.get("yard", 0))
+	var hired_summary := String(hired.get_summary())
+	if not hired_summary.contains("Hired 29") or not hired_summary.contains("Left 97"):
+		_fail(errors, "hired summary does not name the hires: %s" % hired_summary)
+	if not hired_summary.contains("Coins 2997") or not hired_summary.contains("Banked 2997"):
+		_fail(errors, "hired summary dropped the earned coins: %s" % hired_summary)
+	if hired_summary.to_lower().contains("quota missed"):
+		_fail(errors, "hired plan missed the quota: %s" % hired_summary)
+	if int(hired_again.get_hired()) != int(hired.get_hired()) or int(hired_again.get_yard_left()) != int(hired.get_yard_left()) or int(hired_again.get_coins()) != int(hired.get_coins()):
+		_fail(errors, "repeated hired paint hired %d left %d, then %d left %d" % [
+			hired.get_hired(), hired.get_yard_left(), hired_again.get_hired(), hired_again.get_yard_left(),
+		])
+	if int(late.get_hired()) != 29 or int(late.get_yard_left()) != 97 or int(late.get_coins()) != int(hired.get_coins()) or int(late.get_shipped()) != int(hired.get_shipped()) or int(late.get_wet_haul()) != int(hired.get_wet_haul()) or int(late.get_banked()) != int(hired.get_banked()):
+		_fail(errors, "painting the bunk at the bunk beat (hired %d left %d coins %d shipped %d wet %d) did not match painting it early (hired %d left %d coins %d shipped %d wet %d)" % [
+			late.get_hired(), late.get_yard_left(), late.get_coins(), late.get_shipped(), late.get_wet_haul(), hired.get_hired(), hired.get_yard_left(), hired.get_coins(), hired.get_shipped(), hired.get_wet_haul(),
+		])
+	if int(dry_hired.get_wet_haul()) != 0 or int(dry_hired.get_stored_salt()) != 1032 or int(dry_hired.get_carted()) != 1032 or int(dry_hired.get_shipped()) != 1032 or int(dry_hired.get_coins()) != 1032 or int(dry_hired.get_banked()) != 1032:
+		_fail(errors, "dry bunk changed the dry purse (wet %d stored %d carted %d shipped %d coins %d banked %d)" % [
+			dry_hired.get_wet_haul(), dry_hired.get_stored_salt(), dry_hired.get_carted(), dry_hired.get_shipped(), dry_hired.get_coins(), dry_hired.get_banked(),
+		])
+	if int(dry_hired.get_stored_salt()) - int(dry_hired.get_wet_haul()) != 1032:
+		_fail(errors, "dry bunk dry haul changed")
+	if int(dry_hired.get_hired()) != 10 or int(dry_hired.get_yard_left()) != 32:
+		_fail(errors, "dry bunk hired %d and left %d, expected 10 and 32" % [dry_hired.get_hired(), dry_hired.get_yard_left()])
+	var dry_bunk_cell = plans["dry_hired"]["bunk"][0]
+	var dry_yard_cell = plans["dry_hired"]["yard"][0]
+	var dry_bunk_salt: Dictionary = dry_hired.get_cell_salt(int(dry_bunk_cell[0]), int(dry_bunk_cell[1]))
+	var dry_yard_salt: Dictionary = dry_hired.get_cell_salt(int(dry_yard_cell[0]), int(dry_yard_cell[1]))
+	if int(dry_bunk_salt.get("bunk", 0)) != 10 or int(dry_yard_salt.get("yard", 0)) != 32:
+		_fail(errors, "dry bunk cell holds %s and yard holds %s" % [dry_bunk_salt.get("bunk", 0), dry_yard_salt.get("yard", 0)])
+	if not String(dry_hired.get_summary()).contains("Hired 10") or not String(dry_hired.get_summary()).contains("Left 32"):
+		_fail(errors, "dry bunk summary does not name the hires: %s" % dry_hired.get_summary())
+	if not String(dry_hired.get_summary()).contains("Coins 1032"):
+		_fail(errors, "dry bunk summary dropped the earned coins: %s" % dry_hired.get_summary())
+	_assert_pop(hired, errors, "hired plan")
+	_assert_pop(hired_again, errors, "hired plan again")
+	_assert_pop(late, errors, "late_hired")
+	_assert_pop(dry_hired, errors, "dry_hired")
+	_assert_pop(ignored, errors, "no_bunk")
+	# The beat opens after the yard with the purse still in the yard. No bunk, no hire.
+	var opening = _prepare_plan(plans, "no_bunk", errors)
+	if opening == null:
+		return
+	var guard := 0
+	var limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + int(Sim.SHIP_TICK) + int(Sim.MARKET_TICK) + int(Sim.YARD_TICK) + 2
+	while int(opening.get_beat()) != Sim.BUNKING and not opening.is_over() and guard < limit:
+		opening.tick()
+		guard += 1
+	if int(opening.get_beat()) != Sim.BUNKING or opening.is_over() or int(opening.get_season()) != Sim.DRY:
+		_fail(errors, "the yard beat did not open a bunk beat in the dry season")
+		return
+	if int(opening.get_ticks_until_rain()) != int(Sim.BUNK_TICK):
+		_fail(errors, "bunk countdown started at %d, expected %d" % [opening.get_ticks_until_rain(), Sim.BUNK_TICK])
+	var left := int(opening.get_yard_left())
+	if int(opening.get_hired()) != 0 or left != 2997 or int(opening.get_banked()) != left or int(opening.get_coins()) != left:
+		_fail(errors, "bunk opened with hired %d yard %d banked %d coins %d" % [
+			opening.get_hired(), left, opening.get_banked(), opening.get_coins(),
+		])
+	for _step in int(Sim.BUNK_TICK):
+		opening.tick()
+	if int(opening.get_hired()) != 0 or int(opening.get_yard_left()) != left or int(opening.get_banked()) != left or int(opening.get_coins()) != left or int(opening.get_shipped()) != 2997 or int(opening.get_stored_salt()) != 2997:
+		_fail(errors, "purse with no bunk was hired (hired %d yard %d banked %d coins %d shipped %d stored %d)" % [
+			opening.get_hired(), opening.get_yard_left(), opening.get_banked(), opening.get_coins(), opening.get_shipped(), opening.get_stored_salt(),
+		])
+	if not opening.is_over():
+		_fail(errors, "bunk beat did not end")
+	print("hired %d left %d; dry hired %d left %d; no bunk left %d" % [
+		hired.get_hired(), hired.get_yard_left(), dry_hired.get_hired(), dry_hired.get_yard_left(), ignored.get_yard_left(),
+	])
+
+
+func _expect_bunk(sim, errors: Array) -> void:
+	if sim == null:
+		_fail(errors, "bunk plan did not run")
+		return
+	if not sim.is_over():
+		_fail(errors, "bunk plan did not finish")
+	if int(sim.get_hired()) <= 0:
+		_fail(errors, "hired %d" % int(sim.get_hired()))
+	var banked := int(sim.get_banked())
+	var hired_count := int(sim.get_hired())
+	var left := int(sim.get_yard_left())
+	if hired_count * int(Sim.HIRE_COST) + left != banked:
+		_fail(errors, "hired %d and left %d, which is not the banked %d" % [hired_count, left, banked])
+	if left != banked % int(Sim.HIRE_COST):
+		_fail(errors, "yard remainder %d is not the banked %d modulo %d" % [left, banked, Sim.HIRE_COST])
+	if hired_count != int(banked / int(Sim.HIRE_COST)):
+		_fail(errors, "hired %d of the %d the purse divides into" % [hired_count, int(banked / int(Sim.HIRE_COST))])
 
 
 func _expect_yard(sim, errors: Array) -> void:
@@ -1139,6 +1357,24 @@ func _run_plan(plans: Dictionary, plan_name: String, errors: Array):
 		_apply_marks(sim, plan["after_market"], errors)
 		if errors.size() > yard_before:
 			return null
+	if plan.has("after_yard"):
+		var bunk_guard := 0
+		var bunk_limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + int(Sim.SHIP_TICK) + int(Sim.MARKET_TICK) + int(Sim.YARD_TICK) + 2
+		while int(sim.get_beat()) != Sim.BUNKING and not sim.is_over() and bunk_guard < bunk_limit:
+			sim.tick()
+			bunk_guard += 1
+		if int(sim.get_beat()) != Sim.BUNKING or sim.is_over():
+			_fail(errors, "%s did not open the bunk beat after the yard" % plan_name)
+			return null
+		if int(sim.get_ticks_until_rain()) != int(Sim.BUNK_TICK):
+			_fail(errors, "%s bunk countdown started at %d, expected %d" % [
+				plan_name, sim.get_ticks_until_rain(), Sim.BUNK_TICK,
+			])
+			return null
+		var bunk_before := errors.size()
+		_apply_marks(sim, plan["after_yard"], errors)
+		if errors.size() > bunk_before:
+			return null
 	sim.run_until_rain()
 	return sim
 
@@ -1162,6 +1398,8 @@ func _apply_marks(sim, plan: Dictionary, errors: Array) -> void:
 		_apply_cells(sim, plan["stall"], Sim.STALL, errors)
 	if plan.has("yard"):
 		_apply_cells(sim, plan["yard"], Sim.YARD, errors)
+	if plan.has("bunk"):
+		_apply_cells(sim, plan["bunk"], Sim.BUNK, errors)
 	if plan.has("rake_rect"):
 		_apply_rect(sim, plan["rake_rect"], Sim.RAKE, errors)
 
