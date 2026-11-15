@@ -8,7 +8,7 @@ Playable slices, Godot 4. Steam packaging comes later.
 - [Night Stamp](night-stamp/) — a border-desk deckbuilder through the title-page bell
 - [Orchard Surge](orchard-surge/) — a dark-orchard wave game through night 39
 - [Lantern Census](lantern-census/) — a twenty-one-floor map survey through the Chevet
-- [Lowball](lowball/) — a thirty-four-week seventeen-club circle through Millfen Ruffs
+- [Lowball](lowball/) — a thirty-four-week eighteen-club circle through Wickfen Dunlins
 - [Casework](casework/) — a thirty-two-case deduction board through the mitre
 - [Lampblack](lampblack/) — turn-based museum stealth through the veil
 - [Kiln Route](kiln-route/) — a hundred-and-thirty-six-room foundry puzzle through the fork
