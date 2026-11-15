@@ -62,6 +62,9 @@ func _run() -> void:
 	_test_drop_sends_right()
 	_test_drop_refuses_left_and_behind()
 	_test_drop_blocked_exit_does_not_send_forward()
+	_test_lift_sends_back()
+	_test_lift_refuses_above_and_front()
+	_test_lift_blocked_exit_does_not_send_right()
 	_test_rooms()
 	_test_over_budget()
 	_test_pickup()
@@ -76,6 +79,7 @@ func _run() -> void:
 	_test_wing5_lessons()
 	_test_wing6_lessons()
 	_test_wing7_lessons()
+	_test_wing8_lessons()
 	_test_game_object()
 
 
@@ -736,6 +740,153 @@ func _test_drop_blocked_exit_does_not_send_forward() -> void:
 	check(arm_world.discarded == 1 and arm_world.machines[Vector2i(1, 1)].hold < 0, "the same cell lets an arm send forward into the chute")
 
 
+func _test_lift_sends_back() -> void:
+	var room := _lift_lane([Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE])
+	var placed := [Rooms.piece(Rules.Kind.LIFT, 1, 1, Rules.Dir.EAST)]
+	var result := World.simulate(room, placed, 7)
+	var again := World.simulate(room, placed, 7)
+	var expected := "2:0,1:0|3:0,1:1|4:0,1:2|5:0,1:0|6:0,1:1|7:0,1:2"
+	check(_trace(result) == expected, "lift sends every material back, got %s" % _trace(result))
+	check(_same(result, again), "the same lift lane is deterministic (seed %d)" % result.seed)
+	check(int(result.world.machines[Vector2i(1, 1)].phase) == 0, "a lift does not keep a splitter phase")
+	check(_trace(result).find(":2,1:") < 0, "a lift does not send forward, got %s" % _trace(result))
+	check(_trace(result).find(":1,2:") < 0, "a lift does not send right, got %s" % _trace(result))
+	var drop := World.simulate(room, [Rooms.piece(Rules.Kind.DROP, 1, 1, Rules.Dir.EAST)], 7)
+	check(drop.trace.is_empty(), "a drop on the lift cell does not take a load from below, got %s" % _trace(drop))
+	check(int(drop.world.sources[0].pending) == Rules.Mat.ORE, "the refused below load stays on the source")
+	var belt := World.simulate(room, [Rooms.piece(Rules.Kind.BELT, 1, 1, Rules.Dir.WEST)], 4)
+	check(_trace(belt).begins_with("2:0,1:0"), "a belt can carry that same below load back, got %s" % _trace(belt))
+	var plates := _lift_lane([Rules.Mat.PLATE])
+	var plate_run := World.simulate(plates, placed, 7)
+	var plate_again := World.simulate(plates, placed, 7)
+	check(_same(plate_run, plate_again), "a lift fed only plates is deterministic")
+	check(not _same(result, plate_run), "different lift inputs do not collapse to one output")
+
+
+func _test_lift_refuses_above_and_front() -> void:
+	var room := {
+		"id": 0,
+		"name": "lift refuse",
+		"blurb": "",
+		"rule": "",
+		"w": 3,
+		"h": 3,
+		"sources": [
+			Rooms.source(1, 0, Rules.Dir.SOUTH, [Rules.Mat.PLATE], 1),
+			Rooms.source(1, 2, Rules.Dir.NORTH, [Rules.Mat.ORE], 1),
+			Rooms.source(2, 1, Rules.Dir.WEST, [Rules.Mat.INGOT], 1),
+		],
+		"sinks": [Rooms.sink(0, 1, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE])],
+		"chutes": [],
+		"walls": [],
+		"budget": Rooms.kv([Rules.Kind.LIFT, 1, Rules.Kind.BELT, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [],
+		"solution": [],
+	}
+	var placed := [Rooms.piece(Rules.Kind.LIFT, 1, 1, Rules.Dir.EAST)]
+	var result := World.simulate(room, placed, 5)
+	check(_trace(result) == "2:0,1:0|3:0,1:0|4:0,1:0|5:0,1:0", "lift passes ore from below, got %s" % _trace(result))
+	check(int(result.counts[Rules.Mat.PLATE]) == 0 and int(result.world.sources[0].pending) == Rules.Mat.PLATE, "lift refuses a plate from above")
+	check(int(result.counts[Rules.Mat.INGOT]) == 0 and int(result.world.sources[2].pending) == Rules.Mat.INGOT, "lift refuses a head-on ingot")
+	var belt := World.simulate(room, [Rooms.piece(Rules.Kind.BELT, 1, 1, Rules.Dir.WEST)], 4)
+	check(int(belt.counts[Rules.Mat.PLATE]) > 0, "a belt takes the plate the lift refused, got %s" % _trace(belt))
+	var behind := {
+		"id": 0,
+		"name": "lift behind",
+		"blurb": "",
+		"rule": "",
+		"w": 3,
+		"h": 3,
+		"sources": [
+			Rooms.source(0, 1, Rules.Dir.EAST, [Rules.Mat.INGOT], 1),
+			Rooms.source(1, 2, Rules.Dir.NORTH, [Rules.Mat.ORE], 1),
+		],
+		"sinks": [
+			Rooms.sink(1, 0, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+			Rooms.sink(2, 1, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [],
+		"budget": Rooms.kv([Rules.Kind.LIFT, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [],
+		"solution": [],
+	}
+	var blocked := World.simulate(behind, placed, 5)
+	var lift = blocked.world.machines[Vector2i(1, 1)]
+	check(int(blocked.counts[Rules.Mat.INGOT]) == 0 and int(blocked.world.sources[0].pending) == Rules.Mat.INGOT, "lift refuses an ingot from behind")
+	check(lift.hold == Rules.Mat.ORE, "the below load stays on the lift while the back is blocked")
+	check(blocked.trace.is_empty(), "a blocked back exit does not send the ore right, got %s" % _trace(blocked))
+
+
+func _test_lift_blocked_exit_does_not_send_right() -> void:
+	var room := _lift_lane([Rules.Mat.ORE])
+	room.walls = [Rooms.cell(0, 1)]
+	var placed := [Rooms.piece(Rules.Kind.LIFT, 1, 1, Rules.Dir.EAST)]
+	var held := World.simulate(room, placed, 6)
+	var lift = held.world.machines[Vector2i(1, 1)]
+	check(held.trace.is_empty(), "a blocked lift does not deliver, got %s" % _trace(held))
+	check(int(held.counts[Rules.Mat.ORE]) == 0, "a blocked lift delivers no ore")
+	check(lift.hold == Rules.Mat.ORE, "blocked ore stays on the lift")
+	check(int(lift.phase) == 0, "a blocked lift does not advance a phase")
+	check(int(held.discarded) == 0, "a blocked lift does not discard")
+	var boxed := {
+		"id": 0,
+		"name": "lift boxed",
+		"blurb": "",
+		"rule": "",
+		"w": 3,
+		"h": 3,
+		"sources": [],
+		"sinks": [
+			Rooms.sink(1, 0, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+			Rooms.sink(2, 1, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+		],
+		"chutes": [Rooms.cell(1, 2)],
+		"walls": [Rooms.cell(0, 1)],
+		"budget": Rooms.kv([Rules.Kind.LIFT, 1, Rules.Kind.DROP, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [],
+		"solution": [],
+	}
+	var lift_world = World.new()
+	lift_world.setup(boxed, [Rooms.piece(Rules.Kind.LIFT, 1, 1, Rules.Dir.EAST)])
+	lift_world.machines[Vector2i(1, 1)].hold = Rules.Mat.ORE
+	lift_world.step()
+	check(lift_world.error == "" and lift_world.discarded == 0 and lift_world.trace.is_empty(), "a blocked lift does not send right into the chute")
+	check(lift_world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "the lift still holds the ore")
+	check(int(lift_world.counts[Rules.Mat.ORE]) == 0, "the blocked lift did not reach a side sink")
+	var drop_world = World.new()
+	drop_world.setup(boxed, [Rooms.piece(Rules.Kind.DROP, 1, 1, Rules.Dir.EAST)])
+	drop_world.machines[Vector2i(1, 1)].hold = Rules.Mat.ORE
+	drop_world.step()
+	check(drop_world.discarded == 1 and drop_world.machines[Vector2i(1, 1)].hold < 0, "the same cell lets a drop send right into the chute")
+
+
+func _lift_lane(pattern: Array) -> Dictionary:
+	return {
+		"id": 0,
+		"name": "lift",
+		"blurb": "",
+		"rule": "",
+		"w": 3,
+		"h": 3,
+		"sources": [Rooms.source(1, 2, Rules.Dir.NORTH, pattern, 1)],
+		"sinks": [
+			Rooms.sink(0, 1, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+			Rooms.sink(2, 1, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+			Rooms.sink(1, 0, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [],
+		"budget": Rooms.kv([Rules.Kind.LIFT, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [],
+		"solution": [],
+	}
+
+
 func _drop_lane(pattern: Array) -> Dictionary:
 	return {
 		"id": 0,
@@ -782,7 +933,7 @@ func _arm_lane(pattern: Array) -> Dictionary:
 
 func _test_rooms() -> void:
 	var catalog := Rooms.all()
-	check(catalog.size() == 56, "seven wings have 56 rooms")
+	check(catalog.size() == 64, "eight wings have 64 rooms")
 	check(catalog[0].name == "Haul" and catalog[7].name == "Two Orders", "rooms 1 through 8 stay the first wing")
 	check(catalog[8].name == "Straight" and catalog[15].name == "Balance", "rooms 9 through 16 are the second wing")
 	check(catalog[16].name == "Span" and catalog[23].name == "Ledger", "rooms 17 through 24 are the third wing")
@@ -790,38 +941,50 @@ func _test_rooms() -> void:
 	check(catalog[32].name == "Veer" and catalog[39].name == "Tally", "rooms 33 through 40 are the fifth wing")
 	check(catalog[40].name == "Reach" and catalog[47].name == "Audit", "rooms 41 through 48 are the sixth wing")
 	check(catalog[48].name == "Fall" and catalog[55].name == "Yield", "rooms 49 through 56 are the seventh wing")
+	check(catalog[56].name == "Hoist" and catalog[63].name == "Remit", "rooms 57 through 64 are the eighth wing")
 	for index in catalog.size():
 		var bridge_count := int(catalog[index].budget.get(Rules.Kind.BRIDGE, 0))
 		var grate_count := int(catalog[index].budget.get(Rules.Kind.GRATE, 0))
 		var hook_count := int(catalog[index].budget.get(Rules.Kind.HOOK, 0))
 		var arm_count := int(catalog[index].budget.get(Rules.Kind.ARM, 0))
 		var drop_count := int(catalog[index].budget.get(Rules.Kind.DROP, 0))
+		var lift_count := int(catalog[index].budget.get(Rules.Kind.LIFT, 0))
 		if index < 16:
 			check(bridge_count == 0, "room %d does not use the bridge" % (index + 1))
 			check(grate_count == 0, "room %d does not use the grate" % (index + 1))
 			check(hook_count == 0, "room %d does not use the hook" % (index + 1))
 			check(arm_count == 0, "room %d does not use the arm" % (index + 1))
 			check(drop_count == 0, "room %d does not use the drop" % (index + 1))
+			check(lift_count == 0, "room %d does not use the lift" % (index + 1))
 		elif index < 24:
 			check(bridge_count >= 1, "room %d depends on the bridge" % (index + 1))
 			check(grate_count == 0, "room %d does not use the grate" % (index + 1))
 			check(hook_count == 0, "room %d does not use the hook" % (index + 1))
 			check(arm_count == 0, "room %d does not use the arm" % (index + 1))
 			check(drop_count == 0, "room %d does not use the drop" % (index + 1))
+			check(lift_count == 0, "room %d does not use the lift" % (index + 1))
 		elif index < 32:
 			check(grate_count >= 1, "room %d depends on the grate" % (index + 1))
 			check(hook_count == 0, "room %d does not use the hook" % (index + 1))
 			check(arm_count == 0, "room %d does not use the arm" % (index + 1))
 			check(drop_count == 0, "room %d does not use the drop" % (index + 1))
+			check(lift_count == 0, "room %d does not use the lift" % (index + 1))
 		elif index < 40:
 			check(hook_count >= 1, "room %d depends on the hook" % (index + 1))
 			check(arm_count == 0, "room %d does not use the arm" % (index + 1))
 			check(drop_count == 0, "room %d does not use the drop" % (index + 1))
+			check(lift_count == 0, "room %d does not use the lift" % (index + 1))
 		elif index < 48:
 			check(arm_count >= 1, "room %d depends on the arm" % (index + 1))
 			check(drop_count == 0, "room %d does not use the drop" % (index + 1))
-		else:
+			check(lift_count == 0, "room %d does not use the lift" % (index + 1))
+		elif index < 56:
 			check(drop_count >= 1, "room %d depends on the drop" % (index + 1))
+			check(arm_count == 0, "room %d does not use the arm" % (index + 1))
+			check(lift_count == 0, "room %d does not use the lift" % (index + 1))
+		else:
+			check(lift_count >= 1, "room %d depends on the lift" % (index + 1))
+			check(drop_count == 0, "room %d does not use the drop" % (index + 1))
 			check(arm_count == 0, "room %d does not use the arm" % (index + 1))
 	check(not ("\n" in str(catalog[0].blurb)), "room 1 instruction is one line")
 	for index in catalog.size():
@@ -916,6 +1079,12 @@ func _test_pickup() -> void:
 	check(seated.pickup(0, 1), "pickup lifts the pre-placed drop")
 	check(seated.at(0, 1) == null and seated.remaining(Rules.Kind.DROP) == 1, "pre-placed drop returns to the tray")
 	check(seated.place(Rules.Kind.DROP, 3, 1, Rules.Dir.NORTH), "the returned drop can be seated on the lane")
+	var sling: Dictionary = Rooms.all()[59]
+	var slung = Planner.new(sling)
+	check(slung.at(0, 1) != null and slung.remaining(Rules.Kind.LIFT) == 0, "sling starts with the lift off the tray")
+	check(slung.pickup(0, 1), "pickup lifts the pre-placed lift")
+	check(slung.at(0, 1) == null and slung.remaining(Rules.Kind.LIFT) == 1, "pre-placed lift returns to the tray")
+	check(slung.place(Rules.Kind.LIFT, 3, 1, Rules.Dir.EAST), "the returned lift can be seated on the lane")
 
 
 func _test_room7_tempting() -> void:
@@ -1835,6 +2004,148 @@ func _test_wing7_lessons() -> void:
 	check(not undropped.success, "a belt in place of the yield drop does not clear")
 
 
+func _test_wing8_lessons() -> void:
+	var hoist: Dictionary = Rooms.all()[56]
+	var hoist_belt: Array = [
+		Rooms.piece(Rules.Kind.BELT, 1, 2, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 2, 1, Rules.Dir.WEST),
+		Rooms.piece(Rules.Kind.LIFT, 0, 0, Rules.Dir.EAST),
+	]
+	var hoist_run: Dictionary = World.simulate(hoist, hoist_belt)
+	check(World.budget_met(hoist_belt, hoist.budget), "belt on the hoist lane stays inside the tray")
+	check(int(hoist_run.counts[Rules.Mat.PLATE]) == 0, "belt on the hoist lane delivers no plate (%s)" % hoist_run.text)
+	check(not hoist_run.quota_ok, "belt on the hoist lane misses the quota")
+	var raise_room: Dictionary = Rooms.all()[57]
+	var raise_belt: Array = [
+		Rooms.piece(Rules.Kind.BELT, 2, 1, Rules.Dir.WEST),
+		Rooms.piece(Rules.Kind.KILN, 3, 1, Rules.Dir.WEST),
+		Rooms.piece(Rules.Kind.BELT, 4, 1, Rules.Dir.WEST),
+		Rooms.piece(Rules.Kind.LIFT, 0, 0, Rules.Dir.EAST),
+	]
+	var raise_run: Dictionary = World.simulate(raise_room, raise_belt)
+	check(World.budget_met(raise_belt, raise_room.budget), "belt on the raise lane stays inside the tray")
+	check(int(raise_run.counts[Rules.Mat.INGOT]) == 0, "belt on the raise lane delivers no ingot (%s)" % raise_run.text)
+	check(not raise_run.success, "a plate against the raise kiln misses")
+	var cinch: Dictionary = Rooms.all()[58]
+	var dumped_pieces: Array = [
+		Rooms.piece(Rules.Kind.BELT, 3, 1, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.KILN, 2, 1, Rules.Dir.WEST),
+		Rooms.piece(Rules.Kind.LIFT, 0, 2, Rules.Dir.EAST),
+	]
+	var dumped: Dictionary = World.simulate(cinch, dumped_pieces)
+	var cinched: Dictionary = World.simulate(cinch, cinch.solution)
+	check(World.budget_met(dumped_pieces, cinch.budget), "cinch's belt on the lift cell stays inside the tray")
+	check(int(dumped.counts[Rules.Mat.INGOT]) == 0 and int(dumped.discarded) > 0, "cinch's pit eats the ore (%s discarded %d)" % [dumped.text, dumped.discarded])
+	check(not dumped.success, "ore in the pit misses cinch")
+	check(int(cinched.counts[Rules.Mat.INGOT]) >= int(cinch.quota[Rules.Mat.INGOT]) and int(cinched.discarded) == 0, "cinch's lift keeps the ore out of the pit (%s discarded %d)" % [cinched.text, cinched.discarded])
+	var sling: Dictionary = Rooms.all()[59]
+	var parked: Array = sling.initial.duplicate(true)
+	parked.append(Rooms.piece(Rules.Kind.BELT, 1, 2, Rules.Dir.EAST))
+	parked.append(Rooms.piece(Rules.Kind.BELT, 2, 2, Rules.Dir.EAST))
+	parked.append(Rooms.piece(Rules.Kind.BELT, 3, 1, Rules.Dir.WEST))
+	var gap: Dictionary = World.simulate(sling, parked)
+	check(World.budget_met(parked, sling.budget), "leaving the sling lift parked stays inside the tray")
+	check(int(gap.counts[Rules.Mat.PLATE]) == 0 and not gap.quota_ok, "a parked lift leaves the lane to a belt and misses (%s)" % gap.text)
+	var flank: Dictionary = Rooms.all()[60]
+	var into_wall: Dictionary = World.simulate(flank, [
+		Rooms.piece(Rules.Kind.BELT, 1, 3, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 2, 3, Rules.Dir.NORTH),
+	])
+	check(int(into_wall.counts[Rules.Mat.PLATE]) == 0, "flank belts that run into the wall deliver nothing")
+	var swapped_pieces: Array = [
+		Rooms.piece(Rules.Kind.BELT, 1, 3, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 2, 3, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 3, 3, Rules.Dir.NORTH),
+		Rooms.piece(Rules.Kind.BELT, 3, 1, Rules.Dir.WEST),
+		Rooms.piece(Rules.Kind.LIFT, 4, 2, Rules.Dir.EAST),
+	]
+	var swapped: Dictionary = World.simulate(flank, swapped_pieces)
+	check(World.budget_met(swapped_pieces, flank.budget), "flank's belt on the lift cell stays inside the tray")
+	check(int(swapped.counts[Rules.Mat.PLATE]) == 0, "a belt on the flank lane delivers no plate (%s)" % swapped.text)
+	var spurt: Dictionary = Rooms.all()[61]
+	var one_kiln: Dictionary = World.simulate(spurt, [
+		Rooms.piece(Rules.Kind.BELT, 4, 2, Rules.Dir.NORTH),
+		Rooms.piece(Rules.Kind.LIFT, 4, 1, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.WEIR, 3, 1, Rules.Dir.WEST),
+		Rooms.piece(Rules.Kind.KILN, 2, 1, Rules.Dir.WEST),
+		Rooms.piece(Rules.Kind.BELT, 1, 1, Rules.Dir.WEST),
+	])
+	var both: Dictionary = World.simulate(spurt, spurt.solution)
+	var spurt_quota := int(spurt.quota[Rules.Mat.INGOT])
+	check(int(one_kiln.counts[Rules.Mat.INGOT]) < spurt_quota, "one spurt kiln misses %d (%s)" % [spurt_quota, one_kiln.text])
+	check(int(both.counts[Rules.Mat.INGOT]) >= spurt_quota, "both spurt kilns reach the quota (%s)" % both.text)
+	check(int(both.counts[Rules.Mat.INGOT]) > int(one_kiln.counts[Rules.Mat.INGOT]), "the spurt spill kiln adds ingots")
+	var clogged_pieces: Array = [
+		Rooms.piece(Rules.Kind.BELT, 4, 2, Rules.Dir.NORTH),
+		Rooms.piece(Rules.Kind.BELT, 4, 1, Rules.Dir.WEST),
+		Rooms.piece(Rules.Kind.WEIR, 3, 1, Rules.Dir.WEST),
+		Rooms.piece(Rules.Kind.KILN, 2, 1, Rules.Dir.WEST),
+		Rooms.piece(Rules.Kind.BELT, 1, 1, Rules.Dir.WEST),
+	]
+	var clogged: Dictionary = World.simulate(spurt, clogged_pieces)
+	check(World.budget_met(clogged_pieces, spurt.budget), "spurt's belt in place of the lift stays inside the tray")
+	check(int(clogged.counts[Rules.Mat.INGOT]) == 0, "spurt without a lift delivers nothing (%s)" % clogged.text)
+	var glean: Dictionary = Rooms.all()[62]
+	var gleaned: Dictionary = World.simulate(glean, glean.solution)
+	check(int(gleaned.counts[Rules.Mat.INGOT]) >= int(glean.quota[Rules.Mat.INGOT]) and int(gleaned.discarded) > 0, "glean counts kiln ingots and discards the raw ones (%s discarded %d)" % [gleaned.text, gleaned.discarded])
+	var no_filter: Dictionary = World.simulate(glean, [
+		Rooms.piece(Rules.Kind.BELT, 1, 3, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 2, 3, Rules.Dir.NORTH),
+		Rooms.piece(Rules.Kind.BELT, 2, 2, Rules.Dir.NORTH),
+		Rooms.piece(Rules.Kind.LIFT, 2, 1, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.KILN, 1, 1, Rules.Dir.WEST),
+	])
+	check(int(no_filter.counts[Rules.Mat.INGOT]) < int(glean.quota[Rules.Mat.INGOT]), "glean without a filter misses (%s)" % no_filter.text)
+	var no_lift_pieces: Array = [
+		Rooms.piece(Rules.Kind.FILTER, 1, 3, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 2, 3, Rules.Dir.NORTH),
+		Rooms.piece(Rules.Kind.BELT, 2, 1, Rules.Dir.WEST),
+		Rooms.piece(Rules.Kind.KILN, 1, 1, Rules.Dir.WEST),
+	]
+	var no_lift: Dictionary = World.simulate(glean, no_lift_pieces)
+	check(World.budget_met(no_lift_pieces, glean.budget), "glean's belt on the lift cell stays inside the tray")
+	check(int(no_lift.counts[Rules.Mat.INGOT]) == 0, "a belt on the glean lane delivers no ingot (%s)" % no_lift.text)
+	var no_kiln: Dictionary = World.simulate(glean, [
+		Rooms.piece(Rules.Kind.FILTER, 1, 3, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 2, 3, Rules.Dir.NORTH),
+		Rooms.piece(Rules.Kind.BELT, 2, 2, Rules.Dir.NORTH),
+		Rooms.piece(Rules.Kind.LIFT, 2, 1, Rules.Dir.EAST),
+	])
+	check(int(no_kiln.counts[Rules.Mat.INGOT]) == 0, "glean without a kiln delivers no ingot (%s)" % no_kiln.text)
+	var remit: Dictionary = Rooms.all()[63]
+	var solved: Dictionary = World.simulate(remit, remit.solution)
+	check(int(solved.counts[Rules.Mat.INGOT]) >= int(remit.quota[Rules.Mat.INGOT]) and int(solved.counts[Rules.Mat.PLATE]) >= int(remit.quota[Rules.Mat.PLATE]), "remit hits both quotas (%s)" % solved.text)
+	var plates_only: Dictionary = World.simulate(remit, [
+		Rooms.piece(Rules.Kind.BELT, 1, 0, Rules.Dir.WEST),
+		Rooms.piece(Rules.Kind.BELT, 2, 0, Rules.Dir.WEST),
+	])
+	check(int(plates_only.counts[Rules.Mat.INGOT]) == 0 and int(plates_only.counts[Rules.Mat.PLATE]) < int(remit.quota[Rules.Mat.PLATE]), "remit's upper plates alone miss (%s)" % plates_only.text)
+	check(not plates_only.success, "upper plates alone miss remit")
+	var pressed: Dictionary = World.simulate(remit, [
+		Rooms.piece(Rules.Kind.BELT, 1, 0, Rules.Dir.WEST),
+		Rooms.piece(Rules.Kind.BELT, 2, 0, Rules.Dir.WEST),
+		Rooms.piece(Rules.Kind.LIFT, 4, 2, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.KILN, 3, 2, Rules.Dir.WEST),
+		Rooms.piece(Rules.Kind.BELT, 2, 2, Rules.Dir.NORTH),
+		Rooms.piece(Rules.Kind.BELT, 2, 1, Rules.Dir.WEST),
+		Rooms.piece(Rules.Kind.PRESS, 1, 1, Rules.Dir.WEST),
+	])
+	check(int(pressed.counts[Rules.Mat.INGOT]) == 0 and int(pressed.counts[Rules.Mat.PLATE]) > 0, "remit without the splitter is plates only (%s)" % pressed.text)
+	check(not pressed.success, "plates alone miss remit")
+	var unlifted_pieces: Array = [
+		Rooms.piece(Rules.Kind.BELT, 1, 0, Rules.Dir.WEST),
+		Rooms.piece(Rules.Kind.BELT, 2, 0, Rules.Dir.WEST),
+		Rooms.piece(Rules.Kind.BELT, 4, 2, Rules.Dir.WEST),
+		Rooms.piece(Rules.Kind.KILN, 3, 2, Rules.Dir.WEST),
+		Rooms.piece(Rules.Kind.SPLITTER, 2, 2, Rules.Dir.WEST),
+		Rooms.piece(Rules.Kind.BELT, 1, 2, Rules.Dir.WEST),
+	]
+	var unlifted: Dictionary = World.simulate(remit, unlifted_pieces)
+	check(World.budget_met(unlifted_pieces, remit.budget), "remit's belt in place of the lift stays inside the tray")
+	check(int(unlifted.counts[Rules.Mat.INGOT]) < int(remit.quota[Rules.Mat.INGOT]) and int(unlifted.counts[Rules.Mat.PLATE]) < int(remit.quota[Rules.Mat.PLATE]), "a belt in place of the remit lift misses (%s)" % unlifted.text)
+	check(not unlifted.success, "a belt in place of the remit lift does not clear")
+
+
 func _test_game_object() -> void:
 	var packed: PackedScene = load("res://scenes/main.tscn")
 	var main = packed.instantiate()
@@ -1858,6 +2169,14 @@ func _test_game_object() -> void:
 	check(main._key_label(Rules.Kind.DROP) != "0", "drop does not reuse the hook key")
 	check(main._key_label(Rules.Kind.DROP) != "-", "drop does not reuse the arm key")
 	check(main._kind_for_key(KEY_0) == Rules.Kind.HOOK, "hook stays on key 0 beside the drop")
+	check(main._kind_for_key(KEY_BACKSLASH) == Rules.Kind.LIFT, "backslash selects the lift")
+	check(main._kind_for_key(KEY_KP_MULTIPLY) == Rules.Kind.LIFT, "keypad multiply selects the lift")
+	check(main._key_label(Rules.Kind.LIFT) == "\\", "lift key is backslash")
+	check(main._key_label(Rules.Kind.LIFT) != "0", "lift does not reuse the hook key")
+	check(main._key_label(Rules.Kind.LIFT) != "-", "lift does not reuse the arm key")
+	check(main._key_label(Rules.Kind.LIFT) != "=", "lift does not reuse the drop key")
+	check(main._kind_for_key(KEY_MINUS) == Rules.Kind.ARM, "minus stays on the arm beside the lift")
+	check(main._kind_for_key(KEY_EQUAL) == Rules.Kind.DROP, "equals stays on the drop beside the lift")
 	var catalog := Rooms.all()
 	check(not main.is_unlocked(9), "room 9 stays locked until room 8 is cleared")
 	check(not main.is_unlocked(17), "room 17 stays locked until room 16 is cleared")
@@ -1865,6 +2184,7 @@ func _test_game_object() -> void:
 	check(not main.is_unlocked(33), "room 33 stays locked until room 32 is cleared")
 	check(not main.is_unlocked(41), "room 41 stays locked until room 40 is cleared")
 	check(not main.is_unlocked(49), "room 49 stays locked until room 48 is cleared")
+	check(not main.is_unlocked(57), "room 57 stays locked until room 56 is cleared")
 	check(not main.testing_select(8), "locked room 9 cannot be selected")
 	check(main.testing_select(0), "room 1 can be selected")
 	var before: int = main.testing_tray(Rules.Kind.BELT)
@@ -1901,7 +2221,10 @@ func _test_game_object() -> void:
 		if index == 47:
 			check(main.is_unlocked(49), "clearing room 48 unlocks room 49")
 			check(not main.is_unlocked(50), "room 50 stays locked until room 49 is cleared")
-	check(not main.is_unlocked(57), "there is no room 57 to unlock")
+		if index == 55:
+			check(main.is_unlocked(57), "clearing room 56 unlocks room 57")
+			check(not main.is_unlocked(58), "room 58 stays locked until room 57 is cleared")
+	check(not main.is_unlocked(65), "there is no room 65 to unlock")
 	check(not main.testing_select(99), "room select rejects an unknown room")
 	main.queue_free()
 
