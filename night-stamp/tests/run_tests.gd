@@ -54,6 +54,8 @@ func _init() -> void:
 	test_catchword_bell_opens()
 	test_colophon_bell_rules()
 	test_colophon_bell_opens()
+	test_errata_bell_rules()
+	test_errata_bell_opens()
 	test_reward_flow_and_restart()
 	test_policy_clears_act()
 	test_policy_clears_late_shift()
@@ -75,6 +77,7 @@ func _init() -> void:
 	test_policy_clears_signature_bell()
 	test_policy_clears_catchword_bell()
 	test_policy_clears_colophon_bell()
+	test_policy_clears_errata_bell()
 	if failures.is_empty():
 		print("ALL TESTS PASSED")
 		quit(0)
@@ -9716,3 +9719,705 @@ func test_policy_clears_colophon_bell() -> void:
 	check(state.shift == Rules.SHIFT_COLOPHON, "the clear stayed on the colophon bell")
 	check(steps == 21, "seed 12345 clears the colophon bell in 21 actions")
 	print("colophon bell finished in %d actions, %d ms" % [steps, elapsed])
+
+
+func test_errata_bell_rules() -> void:
+	var una = Rules.scripted_encounter(201, 0, ["entry_mark", "entry_mark", "entry_mark"], 3, Rules.SHIFT_ERRATA)
+	check(String(Rules.traveler(una)["name"]) == "Una Pell", "the errata bell's first form is Una Pell")
+	check(String(Rules.traveler(una)["form_name"]) == "Odd Toll", "Una brings the Odd Toll")
+	check(String(Rules.traveler(una)["rule_text"]) == "Patience drops by 2 when the number of filled cells is odd.", "Una's form states the odd toll")
+	check(String(Rules.traveler(una)["rule"]) == "drop_if_odd_count", "Una's rule is the odd toll")
+	check(int(Rules.traveler(una)["lane"]) == 0 and int(Rules.traveler(una)["exemption_row"]) == 0, "Una waits in column 1 and exempts the top row")
+	check(int(Rules.traveler(una)["goal"]) == 18, "Una's goal is 18")
+	check(Rules.preview_progress(una, "duty", 2, 2) == 4, "preview leaves a duty at its own number")
+	check(play_named(una, "entry_mark", 0, 0), "the first stamp leaves Una's turn open")
+	check(una.phase == "play", "Una's first stamp does not end the turn")
+	check(play_named(una, "entry_mark", 0, 1), "the stamp beside it, the correct stamp")
+	check(una.phase == "play", "an even pair does not end Una's turn")
+	check(play_named(una, "entry_mark", 0, 2), "the stamp that makes the count odd, the wrong stamp")
+	check(una.last_progress_gained == 6, "three stamps score their own numbers (%d)" % una.last_progress_gained)
+	check(una.last_patience_loss == 2 and una.patience == 3, "an odd count of three drops patience by 2")
+
+	var una_even = Rules.scripted_encounter(201, 0, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_ERRATA)
+	check(play_named(una_even, "entry_mark", 0, 0), "the first of an even pair")
+	check(play_named(una_even, "entry_mark", 0, 1), "Una receives the second stamp, the correct stamp")
+	check(una_even.last_progress_gained == 4, "two stamps score their own numbers (%d)" % una_even.last_progress_gained)
+	check(una_even.last_patience_loss == 1 and una_even.patience == 4, "an even count of two keeps the drop at 1")
+
+	var una_one = Rules.scripted_encounter(201, 0, ["duty"], 1, Rules.SHIFT_ERRATA)
+	check(play_named(una_one, "duty", 2, 2), "Una receives one bottom-row duty, the wrong stamp")
+	check(una_one.last_progress_gained == 4, "one stamp scores its own number (%d)" % una_one.last_progress_gained)
+	check(una_one.last_patience_loss == 2, "a single filled cell drops patience by 2")
+
+	var una_four = Rules.scripted_encounter(201, 0, ["entry_mark", "entry_mark", "entry_mark", "entry_mark"], 4, Rules.SHIFT_ERRATA)
+	check(play_named(una_four, "entry_mark", 0, 0), "the first of four")
+	check(play_named(una_four, "entry_mark", 0, 1), "the second of four")
+	check(play_named(una_four, "entry_mark", 0, 2), "the third of four")
+	check(play_named(una_four, "entry_mark", 1, 0), "Una receives the fourth stamp, the correct stamp")
+	check(una_four.last_progress_gained == 8, "four stamps score their own numbers (%d)" % una_four.last_progress_gained)
+	check(una_four.last_patience_loss == 1, "a form of four keeps the drop at 1")
+
+	var una_five = Rules.scripted_encounter(201, 0, ["entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 5, Rules.SHIFT_ERRATA)
+	check(play_named(una_five, "entry_mark", 0, 0), "the first of five")
+	check(play_named(una_five, "entry_mark", 0, 1), "the second of five")
+	check(play_named(una_five, "entry_mark", 0, 2), "the third of five")
+	check(play_named(una_five, "entry_mark", 1, 0), "the fourth of five")
+	check(play_named(una_five, "entry_mark", 1, 1), "Una receives the fifth stamp, the wrong stamp")
+	check(una_five.last_patience_loss == 2, "a form of five drops patience by 2")
+
+	var una_six = Rules.scripted_encounter(201, 0, ["entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 6, Rules.SHIFT_ERRATA)
+	check(play_named(una_six, "entry_mark", 0, 0), "the first of six")
+	check(play_named(una_six, "entry_mark", 0, 1), "the second of six")
+	check(play_named(una_six, "entry_mark", 0, 2), "the third of six")
+	check(play_named(una_six, "entry_mark", 1, 0), "the fourth of six")
+	check(play_named(una_six, "entry_mark", 1, 1), "the fifth of six")
+	check(play_named(una_six, "entry_mark", 1, 2), "Una receives the sixth stamp, the correct stamp")
+	check(una_six.last_patience_loss == 1, "a form of six keeps the drop at 1")
+
+	var una_seven = Rules.scripted_encounter(201, 0, ["entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 7, Rules.SHIFT_ERRATA)
+	check(play_named(una_seven, "entry_mark", 0, 0), "the first of seven")
+	check(play_named(una_seven, "entry_mark", 0, 1), "the second of seven")
+	check(play_named(una_seven, "entry_mark", 0, 2), "the third of seven")
+	check(play_named(una_seven, "entry_mark", 1, 0), "the fourth of seven")
+	check(play_named(una_seven, "entry_mark", 1, 1), "the fifth of seven")
+	check(play_named(una_seven, "entry_mark", 1, 2), "the sixth of seven")
+	check(play_named(una_seven, "entry_mark", 2, 0), "Una receives the seventh stamp, the wrong stamp")
+	check(una_seven.last_patience_loss == 2, "a form of seven drops patience by 2")
+
+	var una_eight = Rules.scripted_encounter(201, 0, ["entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 8, Rules.SHIFT_ERRATA)
+	check(play_named(una_eight, "entry_mark", 0, 0), "the first of eight")
+	check(play_named(una_eight, "entry_mark", 0, 1), "the second of eight")
+	check(play_named(una_eight, "entry_mark", 0, 2), "the third of eight")
+	check(play_named(una_eight, "entry_mark", 1, 0), "the fourth of eight")
+	check(play_named(una_eight, "entry_mark", 1, 1), "the fifth of eight")
+	check(play_named(una_eight, "entry_mark", 1, 2), "the sixth of eight")
+	check(play_named(una_eight, "entry_mark", 2, 0), "the seventh of eight")
+	check(play_named(una_eight, "entry_mark", 2, 1), "Una receives the eighth stamp, the correct stamp")
+	check(una_eight.last_progress_gained == 16, "eight stamps score their own numbers (%d)" % una_eight.last_progress_gained)
+	check(una_eight.last_patience_loss == 1, "a form of eight keeps the drop at 1")
+
+	var una_nine = Rules.scripted_encounter(201, 0, ["entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "exemption"], 9, Rules.SHIFT_ERRATA)
+	check(play_named(una_nine, "entry_mark", 0, 0), "the first of nine")
+	check(play_named(una_nine, "entry_mark", 0, 1), "the second of nine")
+	check(play_named(una_nine, "entry_mark", 0, 2), "the third of nine")
+	check(play_named(una_nine, "entry_mark", 1, 0), "the fourth of nine")
+	check(play_named(una_nine, "entry_mark", 1, 2), "the fifth of nine")
+	check(play_named(una_nine, "entry_mark", 2, 0), "the sixth of nine")
+	check(play_named(una_nine, "entry_mark", 2, 1), "the seventh of nine")
+	check(play_named(una_nine, "entry_mark", 2, 2), "the eighth of nine")
+	check(play_named(una_nine, "exemption", 1, 1), "Una receives the ninth stamp off the top row, the wrong stamp")
+	check(una_nine.last_progress_gained == 17, "nine stamps score their own numbers (%d)" % una_nine.last_progress_gained)
+	check(una_nine.last_patience_loss == 2, "a full form of nine drops patience by 2")
+
+	var una_empty = Rules.scripted_encounter(201, 0, ["entry_mark"], 3, Rules.SHIFT_ERRATA)
+	Rules.end_turn(una_empty)
+	check(una_empty.last_progress_gained == 0, "an empty form scores nothing")
+	check(una_empty.last_patience_loss == 1, "an empty form keeps the drop at 1")
+
+	var una_held = Rules.scripted_encounter(201, 0, ["hold", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 9, Rules.SHIFT_ERRATA)
+	check(play_named(una_held, "entry_mark", 0, 1), "a stamp outside the lane")
+	check(play_named(una_held, "entry_mark", 0, 2), "a second stamp")
+	check(play_named(una_held, "entry_mark", 1, 0), "a third stamp")
+	check(play_named(una_held, "entry_mark", 1, 1), "a fourth stamp")
+	check(play_named(una_held, "entry_mark", 1, 2), "a fifth stamp")
+	check(play_named(una_held, "entry_mark", 2, 0), "a sixth stamp")
+	check(play_named(una_held, "entry_mark", 2, 1), "a seventh stamp")
+	check(play_named(una_held, "entry_mark", 2, 2), "an eighth stamp")
+	check(play_named(una_held, "hold", 0, 0), "hold in Una's column")
+	check(una_held.last_progress_gained == 17, "the held turn still scores the stamps (%d)" % una_held.last_progress_gained)
+	check(una_held.last_patience_loss == 0 and una_held.patience == 5, "hold is applied before the odd toll")
+
+	var una_missed = Rules.scripted_encounter(201, 0, ["hold", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 9, Rules.SHIFT_ERRATA)
+	check(play_named(una_missed, "hold", 0, 1), "hold outside Una's column")
+	check(play_named(una_missed, "entry_mark", 0, 0), "a stamp")
+	check(play_named(una_missed, "entry_mark", 0, 2), "a second stamp")
+	check(play_named(una_missed, "entry_mark", 1, 0), "a third stamp")
+	check(play_named(una_missed, "entry_mark", 1, 1), "a fourth stamp")
+	check(play_named(una_missed, "entry_mark", 1, 2), "a fifth stamp")
+	check(play_named(una_missed, "entry_mark", 2, 0), "a sixth stamp")
+	check(play_named(una_missed, "entry_mark", 2, 1), "a seventh stamp")
+	check(play_named(una_missed, "entry_mark", 2, 2), "the ninth stamp")
+	check(una_missed.last_progress_gained == 17, "the outside hold still scores 1 (%d)" % una_missed.last_progress_gained)
+	check(una_missed.last_patience_loss == 2, "hold in another column does not stop the odd toll")
+
+	var una_spared = Rules.scripted_encounter(201, 0, ["exemption", "entry_mark", "entry_mark"], 3, Rules.SHIFT_ERRATA)
+	check(play_named(una_spared, "exemption", 0, 0), "exemption is placed on Una's top row")
+	check(play_named(una_spared, "entry_mark", 1, 0), "a stamp")
+	check(play_named(una_spared, "entry_mark", 1, 1), "a third stamp")
+	check(una_spared.last_progress_gained == 5, "the exempted stamps still score (%d)" % una_spared.last_progress_gained)
+	check(una_spared.last_patience_loss == 1, "exemption on the top row keeps the drop at 1")
+
+	var una_open = Rules.scripted_encounter(201, 0, ["exemption", "entry_mark", "entry_mark"], 3, Rules.SHIFT_ERRATA)
+	check(play_named(una_open, "entry_mark", 0, 0), "a stamp")
+	check(play_named(una_open, "entry_mark", 0, 1), "a second stamp")
+	check(play_named(una_open, "exemption", 1, 0), "exemption sits off Una's top row")
+	check(una_open.last_progress_gained == 5, "the off-row exemption still scores (%d)" % una_open.last_progress_gained)
+	check(una_open.last_patience_loss == 2, "an exemption off the top row leaves the drop at 2")
+
+	var pell_one = Rules.scripted_encounter(132, 1, ["duty"], 1, Rules.SHIFT_LEDGER)
+	check(String(Rules.traveler(pell_one)["rule"]) == "drop_if_exact_three", "Pell Dane still tolls exactly three stamps")
+	check(play_named(pell_one, "duty", 2, 2), "Pell receives one stamp")
+	check(pell_one.last_patience_loss == 1, "the ledger bell keeps the drop at 1 for a single filled cell")
+
+	var pell_three = Rules.scripted_encounter(132, 1, ["entry_mark", "entry_mark", "entry_mark"], 3, Rules.SHIFT_LEDGER)
+	check(play_named(pell_three, "entry_mark", 0, 0), "Pell's first stamp")
+	check(play_named(pell_three, "entry_mark", 0, 1), "Pell's second stamp")
+	check(play_named(pell_three, "entry_mark", 0, 2), "Pell's third stamp")
+	check(pell_three.last_patience_loss == 2, "the ledger bell still drops patience by 2 for exactly three cells")
+
+	var joss_one = Rules.scripted_encounter(152, 1, ["duty"], 1, Rules.SHIFT_HEADBAND)
+	check(String(Rules.traveler(joss_one)["rule"]) == "drop_if_exact_five", "Joss Pell still tolls exactly five stamps")
+	check(play_named(joss_one, "duty", 2, 2), "Joss receives one stamp")
+	check(joss_one.last_patience_loss == 1, "the headband bell keeps the drop at 1 for a single filled cell")
+
+	var joss_five = Rules.scripted_encounter(152, 1, ["entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 5, Rules.SHIFT_HEADBAND)
+	check(play_named(joss_five, "entry_mark", 0, 0), "Joss's first of five")
+	check(play_named(joss_five, "entry_mark", 0, 1), "Joss's second of five")
+	check(play_named(joss_five, "entry_mark", 0, 2), "Joss's third of five")
+	check(play_named(joss_five, "entry_mark", 1, 0), "Joss's fourth of five")
+	check(play_named(joss_five, "entry_mark", 1, 1), "Joss's fifth stamp")
+	check(joss_five.last_patience_loss == 2, "the headband bell still drops patience by 2 for exactly five cells")
+
+	var dory_one = Rules.scripted_encounter(171, 0, ["duty"], 1, Rules.SHIFT_SIGNATURE)
+	check(String(Rules.traveler(dory_one)["rule"]) == "drop_if_exact_seven", "Dory Hart still tolls exactly seven stamps")
+	check(play_named(dory_one, "duty", 2, 2), "Dory receives one stamp")
+	check(dory_one.last_patience_loss == 1, "the signature bell keeps the drop at 1 for a single filled cell")
+
+	var dory_seven = Rules.scripted_encounter(171, 0, ["entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 7, Rules.SHIFT_SIGNATURE)
+	check(play_named(dory_seven, "entry_mark", 0, 0), "Dory's first of seven")
+	check(play_named(dory_seven, "entry_mark", 0, 1), "Dory's second of seven")
+	check(play_named(dory_seven, "entry_mark", 0, 2), "Dory's third of seven")
+	check(play_named(dory_seven, "entry_mark", 1, 0), "Dory's fourth of seven")
+	check(play_named(dory_seven, "entry_mark", 1, 1), "Dory's fifth of seven")
+	check(play_named(dory_seven, "entry_mark", 1, 2), "Dory's sixth of seven")
+	check(play_named(dory_seven, "entry_mark", 2, 0), "Dory's seventh stamp")
+	check(dory_seven.last_patience_loss == 2, "the signature bell still drops patience by 2 for exactly seven cells")
+
+	var nia_one = Rules.scripted_encounter(191, 0, ["duty"], 1, Rules.SHIFT_COLOPHON)
+	check(String(Rules.traveler(nia_one)["rule"]) == "drop_if_exact_nine", "Nia Soren still tolls exactly nine stamps")
+	check(play_named(nia_one, "duty", 2, 2), "Nia receives one stamp")
+	check(nia_one.last_patience_loss == 1, "the colophon bell keeps the drop at 1 for a single filled cell")
+
+	var ada_four = Rules.scripted_encounter(142, 1, ["entry_mark", "entry_mark", "entry_mark", "entry_mark"], 4, Rules.SHIFT_SPINE)
+	check(String(Rules.traveler(ada_four)["rule"]) == "drop_if_exact_four", "Ada Hart still tolls exactly four stamps")
+	check(play_named(ada_four, "entry_mark", 0, 0), "Ada's first of four")
+	check(play_named(ada_four, "entry_mark", 0, 1), "Ada's second of four")
+	check(play_named(ada_four, "entry_mark", 0, 2), "Ada's third of four")
+	check(play_named(ada_four, "entry_mark", 1, 0), "Ada's fourth stamp")
+	check(ada_four.last_patience_loss == 2, "the spine bell still drops patience by 2 for exactly four cells")
+
+	var hugh_six = Rules.scripted_encounter(162, 1, ["entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 6, Rules.SHIFT_CLASP)
+	check(String(Rules.traveler(hugh_six)["rule"]) == "drop_if_exact_six", "Hugh Pell still tolls exactly six stamps")
+	check(play_named(hugh_six, "entry_mark", 0, 0), "Hugh's first of six")
+	check(play_named(hugh_six, "entry_mark", 0, 1), "Hugh's second of six")
+	check(play_named(hugh_six, "entry_mark", 0, 2), "Hugh's third of six")
+	check(play_named(hugh_six, "entry_mark", 1, 0), "Hugh's fourth of six")
+	check(play_named(hugh_six, "entry_mark", 1, 1), "Hugh's fifth of six")
+	check(play_named(hugh_six, "entry_mark", 1, 2), "Hugh's sixth stamp")
+	check(hugh_six.last_patience_loss == 2, "the clasp bell still drops patience by 2 for exactly six cells")
+
+	var gwyn_eight = Rules.scripted_encounter(181, 0, ["entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "exemption"], 8, Rules.SHIFT_CATCHWORD)
+	check(String(Rules.traveler(gwyn_eight)["rule"]) == "drop_if_exact_eight", "Gwyn Brant still tolls exactly eight stamps")
+	check(play_named(gwyn_eight, "entry_mark", 0, 0), "Gwyn's first of eight")
+	check(play_named(gwyn_eight, "entry_mark", 0, 1), "Gwyn's second of eight")
+	check(play_named(gwyn_eight, "entry_mark", 0, 2), "Gwyn's third of eight")
+	check(play_named(gwyn_eight, "entry_mark", 1, 0), "Gwyn's fourth of eight")
+	check(play_named(gwyn_eight, "entry_mark", 1, 1), "Gwyn's fifth of eight")
+	check(play_named(gwyn_eight, "entry_mark", 1, 2), "Gwyn's sixth of eight")
+	check(play_named(gwyn_eight, "entry_mark", 2, 0), "Gwyn's seventh of eight")
+	check(play_named(gwyn_eight, "exemption", 2, 1), "Gwyn's eighth stamp")
+	check(gwyn_eight.last_patience_loss == 2, "the catchword bell still drops patience by 2 for exactly eight cells")
+
+	var orin = Rules.scripted_encounter(202, 1, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_ERRATA)
+	check(String(Rules.traveler(orin)["name"]) == "Orin Keel", "the errata bell's second form is Orin Keel")
+	check(String(Rules.traveler(orin)["form_name"]) == "Next Blank", "Orin brings the Next Blank")
+	check(String(Rules.traveler(orin)["rule_text"]) == "A stamp scores twice only when the queue cell immediately after it is empty. A stamp whose next cell is filled scores its own number. The bottom-right cell has no cell after it, so it does not double.", "Orin's form states the next blank")
+	check(String(Rules.traveler(orin)["rule"]) == "double_next_empty", "Orin's rule is the next blank")
+	check(int(Rules.traveler(orin)["lane"]) == 2 and int(Rules.traveler(orin)["exemption_row"]) == 2, "Orin waits in column 3 and exempts the bottom row")
+	check(int(Rules.traveler(orin)["goal"]) == 20, "Orin's goal is 20")
+	check(Rules.preview_progress(orin, "entry_mark", 0, 0) == 4, "preview doubles a stamp whose next cell is empty, the correct stamp")
+	check(play_named(orin, "entry_mark", 0, 0), "the first stamp leaves Orin's turn open")
+	check(orin.phase == "play", "Orin's first stamp does not end the turn")
+	check(Rules.preview_progress(orin, "entry_mark", 0, 1) == 4, "preview doubles the later stamp while its own next cell is empty")
+	check(play_named(orin, "entry_mark", 0, 1), "Orin receives the stamp whose next cell is empty, the correct stamp")
+	check(orin.last_progress_gained == 6, "the stamp before a filled cell scores its own number and the stamp before an empty cell scores twice (%d)" % orin.last_progress_gained)
+	check(orin.last_patience_loss == 1, "a next blank does not change patience")
+
+	var orin_end = Rules.scripted_encounter(202, 1, ["entry_mark"], 1, Rules.SHIFT_ERRATA)
+	check(play_named(orin_end, "entry_mark", 2, 2), "Orin receives the bottom-right stamp, the wrong stamp")
+	check(orin_end.last_progress_gained == 2, "the bottom-right cell has no cell after it, so it does not double (%d)" % orin_end.last_progress_gained)
+
+	var orin_tail = Rules.scripted_encounter(202, 1, ["entry_mark"], 1, Rules.SHIFT_ERRATA)
+	check(play_named(orin_tail, "entry_mark", 2, 1), "Orin receives a stamp followed only by empty cells, the correct stamp")
+	check(orin_tail.last_progress_gained == 4, "a stamp followed only by empty cells scores twice (%d)" % orin_tail.last_progress_gained)
+
+	var orin_row = Rules.scripted_encounter(202, 1, ["entry_mark", "entry_mark", "entry_mark"], 3, Rules.SHIFT_ERRATA)
+	check(play_named(orin_row, "entry_mark", 0, 0), "the first of a full row, the wrong stamp")
+	check(play_named(orin_row, "entry_mark", 0, 1), "the second of a full row, the wrong stamp")
+	check(play_named(orin_row, "entry_mark", 0, 2), "the end of that row, the correct stamp")
+	check(orin_row.last_progress_gained == 8, "only the stamp whose next cell is empty scores twice (%d)" % orin_row.last_progress_gained)
+
+	var orin_gap = Rules.scripted_encounter(202, 1, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_ERRATA)
+	check(play_named(orin_gap, "entry_mark", 0, 0), "a stamp before an empty cell, the correct stamp")
+	check(play_named(orin_gap, "entry_mark", 0, 2), "a later stamp whose own next cell is empty, the correct stamp")
+	check(orin_gap.last_progress_gained == 8, "both stamps before an empty cell score twice (%d)" % orin_gap.last_progress_gained)
+
+	var orin_muted = Rules.scripted_encounter(202, 1, ["exemption", "entry_mark"], 2, Rules.SHIFT_ERRATA)
+	check(play_named(orin_muted, "entry_mark", 0, 0), "a stamp followed by an empty cell")
+	check(play_named(orin_muted, "exemption", 2, 0), "exemption is placed on Orin's bottom row")
+	check(orin_muted.last_progress_gained == 3, "exemption on the bottom row cancels the doubling (%d)" % orin_muted.last_progress_gained)
+
+	var orin_kept = Rules.scripted_encounter(202, 1, ["exemption", "entry_mark"], 2, Rules.SHIFT_ERRATA)
+	check(play_named(orin_kept, "exemption", 0, 0), "exemption is followed by an empty cell and sits off the bottom row")
+	check(play_named(orin_kept, "entry_mark", 1, 0), "a stamp whose next cell is empty")
+	check(orin_kept.last_progress_gained == 6, "an exemption off the bottom row still doubles (%d)" % orin_kept.last_progress_gained)
+
+	var orin_echo = Rules.scripted_encounter(202, 1, ["echo", "entry_mark"], 2, Rules.SHIFT_ERRATA)
+	check(play_named(orin_echo, "echo", 0, 0), "an echo whose next cell is empty")
+	check(play_named(orin_echo, "entry_mark", 1, 0), "the stamp below, whose next cell is empty")
+	check(orin_echo.last_chain_count == 1, "the echo still retriggers")
+	check(orin_echo.last_progress_gained == 10, "a retrigger of a stamp whose next cell is empty scores twice again (%d)" % orin_echo.last_progress_gained)
+
+	var orin_filled = Rules.scripted_encounter(202, 1, ["echo", "entry_mark", "entry_mark"], 3, Rules.SHIFT_ERRATA)
+	check(play_named(orin_filled, "echo", 0, 1), "an echo above a filled next cell")
+	check(play_named(orin_filled, "entry_mark", 1, 1), "the retriggered stamp, the wrong stamp")
+	check(play_named(orin_filled, "entry_mark", 1, 2), "the stamp that fills the cell after the retrigger")
+	check(orin_filled.last_chain_count == 1, "the echo still retriggers a filled next cell")
+	check(orin_filled.last_progress_gained == 10, "a retrigger of a stamp whose next cell is filled does not double (%d)" % orin_filled.last_progress_gained)
+
+	var orin_held = Rules.scripted_encounter(202, 1, ["hold", "entry_mark"], 2, Rules.SHIFT_ERRATA)
+	check(play_named(orin_held, "hold", 2, 2), "hold in Orin's column")
+	check(play_named(orin_held, "entry_mark", 0, 0), "a stamp whose next cell is empty")
+	check(orin_held.last_progress_gained == 5, "the held next blank still doubles")
+	check(orin_held.last_patience_loss == 0 and orin_held.patience == 5, "hold delays Orin")
+
+	var orin_missed = Rules.scripted_encounter(202, 1, ["hold", "entry_mark"], 2, Rules.SHIFT_ERRATA)
+	check(play_named(orin_missed, "hold", 0, 1), "hold outside Orin's column")
+	check(play_named(orin_missed, "entry_mark", 2, 2), "the bottom-right stamp")
+	check(orin_missed.last_progress_gained == 4, "the outside hold doubles because its next cell is empty (%d)" % orin_missed.last_progress_gained)
+	check(orin_missed.last_patience_loss == 1, "hold in another column does not delay Orin")
+
+	var orin_clear = Rules.scripted_encounter(202, 1, ["visa_dot", "visa_dot", "visa_dot", "visa_dot"], 4, Rules.SHIFT_ERRATA)
+	check(play_named(orin_clear, "visa_dot", 0, 0), "a visa before an empty cell")
+	check(play_named(orin_clear, "visa_dot", 0, 2), "a second visa before an empty cell")
+	check(play_named(orin_clear, "visa_dot", 1, 1), "a third visa before an empty cell")
+	check(play_named(orin_clear, "visa_dot", 2, 0), "a fourth visa before an empty cell")
+	check(orin_clear.last_progress_gained == 24, "each visa before an empty cell scores twice (%d)" % orin_clear.last_progress_gained)
+	check(orin_clear.last_won and orin_clear.phase == "relic", "the next blank clears Orin")
+	check(orin_clear.last_patience_loss == 0 and orin_clear.patience == 5, "reaching the goal keeps patience")
+
+	var holt_blank = Rules.scripted_encounter(173, 3, ["entry_mark"], 1, Rules.SHIFT_SIGNATURE)
+	check(String(Rules.traveler(holt_blank)["rule"]) == "double_next_filled", "Holt Quern still doubles a stamp only when the next cell is filled")
+	check(play_named(holt_blank, "entry_mark", 0, 0), "Holt receives a stamp before an empty cell")
+	check(holt_blank.last_progress_gained == 2, "the signature bell leaves a stamp before an empty cell at its own number (%d)" % holt_blank.last_progress_gained)
+
+	var holt_row = Rules.scripted_encounter(173, 3, ["entry_mark", "entry_mark", "entry_mark"], 3, Rules.SHIFT_SIGNATURE)
+	check(play_named(holt_row, "entry_mark", 0, 0), "Holt's first of a full row")
+	check(play_named(holt_row, "entry_mark", 0, 1), "Holt's second of a full row")
+	check(play_named(holt_row, "entry_mark", 0, 2), "Holt's third of a full row")
+	check(holt_row.last_progress_gained == 10, "the signature bell still doubles a stamp whose next cell is filled (%d)" % holt_row.last_progress_gained)
+
+	var bram_tail = Rules.scripted_encounter(143, 2, ["entry_mark"], 1, Rules.SHIFT_SPINE)
+	check(String(Rules.traveler(bram_tail)["rule"]) == "double_before_gap", "Bram Solt still doubles a stamp only when a later cell is filled")
+	check(play_named(bram_tail, "entry_mark", 2, 1), "Bram receives a stamp followed only by empty cells")
+	check(bram_tail.last_progress_gained == 2, "the spine bell leaves a stamp followed only by empty cells at its own number (%d)" % bram_tail.last_progress_gained)
+
+	var bram_gap = Rules.scripted_encounter(143, 2, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_SPINE)
+	check(play_named(bram_gap, "entry_mark", 0, 0), "Bram's stamp before the gap")
+	check(play_named(bram_gap, "entry_mark", 0, 2), "Bram's later stamp")
+	check(bram_gap.last_progress_gained == 6, "the spine bell doubles only the stamp that has a later filled cell (%d)" % bram_gap.last_progress_gained)
+
+	var hester_row = Rules.scripted_encounter(182, 1, ["entry_mark", "entry_mark", "entry_mark"], 3, Rules.SHIFT_CATCHWORD)
+	check(String(Rules.traveler(hester_row)["rule"]) == "double_prior_filled", "Hester Keel still doubles a stamp only when the previous cell is filled")
+	check(play_named(hester_row, "entry_mark", 0, 0), "Hester's first stamp")
+	check(play_named(hester_row, "entry_mark", 0, 1), "Hester's second stamp")
+	check(play_named(hester_row, "entry_mark", 0, 2), "Hester's third stamp")
+	check(hester_row.last_progress_gained == 10, "the catchword bell still doubles a stamp whose previous cell is filled (%d)" % hester_row.last_progress_gained)
+
+	var vesper = Rules.scripted_encounter(203, 2, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_ERRATA)
+	check(String(Rules.traveler(vesper)["name"]) == "Vesper Okell", "the errata bell's third form is Vesper Okell")
+	check(String(Rules.traveler(vesper)["form_name"]) == "Corner Mark", "Vesper brings the Corner Mark")
+	check(String(Rules.traveler(vesper)["rule_text"]) == "A stamp scores twice only when it sits in a corner cell. The center and the edge-middle cells score their own number.", "Vesper's form states the corner mark")
+	check(String(Rules.traveler(vesper)["rule"]) == "double_corner_cell", "Vesper's rule is the corner mark")
+	check(int(Rules.traveler(vesper)["lane"]) == 1 and int(Rules.traveler(vesper)["exemption_row"]) == 1, "Vesper waits in column 2 and exempts the middle row")
+	check(int(Rules.traveler(vesper)["goal"]) == 16, "Vesper's goal is 16")
+	check(Rules.preview_progress(vesper, "entry_mark", 0, 0) == 4, "preview doubles a corner stamp, the correct stamp")
+	check(Rules.preview_progress(vesper, "entry_mark", 0, 1) == 2, "preview leaves an edge-middle stamp at its own number, the wrong stamp")
+	check(play_named(vesper, "entry_mark", 0, 0), "the corner stamp leaves Vesper's turn open")
+	check(vesper.phase == "play", "Vesper's first stamp does not end the turn")
+	check(play_named(vesper, "entry_mark", 0, 1), "Vesper receives the edge-middle stamp beside it, the wrong stamp")
+	check(vesper.last_progress_gained == 6, "the corner scores twice and the edge-middle scores its own number (%d)" % vesper.last_progress_gained)
+	check(vesper.last_patience_loss == 1, "a corner mark does not change patience")
+
+	var vesper_center = Rules.scripted_encounter(203, 2, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_ERRATA)
+	check(play_named(vesper_center, "entry_mark", 0, 0), "a filled corner")
+	check(play_named(vesper_center, "entry_mark", 1, 1), "the center beside that corner, the wrong stamp")
+	check(vesper_center.last_progress_gained == 6, "the center scores its own number even when a corner is filled (%d)" % vesper_center.last_progress_gained)
+
+	var vesper_lone = Rules.scripted_encounter(203, 2, ["duty"], 1, Rules.SHIFT_ERRATA)
+	check(play_named(vesper_lone, "duty", 0, 0), "Vesper receives a lone corner duty, the correct stamp")
+	check(vesper_lone.last_progress_gained == 4, "a corner doubles even when its neighbors are empty (%d)" % vesper_lone.last_progress_gained)
+
+	var vesper_middle = Rules.scripted_encounter(203, 2, ["duty"], 1, Rules.SHIFT_ERRATA)
+	check(play_named(vesper_middle, "duty", 1, 1), "Vesper receives a lone center duty, the wrong stamp")
+	check(vesper_middle.last_progress_gained == 2, "a lone center scores its own number (%d)" % vesper_middle.last_progress_gained)
+
+	var vesper_edge = Rules.scripted_encounter(203, 2, ["duty"], 1, Rules.SHIFT_ERRATA)
+	check(play_named(vesper_edge, "duty", 2, 1), "Vesper receives a bottom edge-middle duty, the wrong stamp")
+	check(vesper_edge.last_progress_gained == 4, "an edge-middle cell scores its own number (%d)" % vesper_edge.last_progress_gained)
+
+	var vesper_once = Rules.scripted_encounter(203, 2, ["entry_mark", "entry_mark", "entry_mark"], 3, Rules.SHIFT_ERRATA)
+	check(play_named(vesper_once, "entry_mark", 0, 1), "one neighbor of a corner")
+	check(play_named(vesper_once, "entry_mark", 0, 0), "the corner with neighbors filled, the correct stamp")
+	check(play_named(vesper_once, "entry_mark", 1, 0), "the other neighbor of that corner")
+	check(vesper_once.last_progress_gained == 8, "a corner still doubles only once when its neighbors are filled (%d)" % vesper_once.last_progress_gained)
+
+	var vesper_echo = Rules.scripted_encounter(203, 2, ["echo", "entry_mark"], 2, Rules.SHIFT_ERRATA)
+	check(play_named(vesper_echo, "echo", 1, 0), "an echo on an edge-middle cell")
+	check(play_named(vesper_echo, "entry_mark", 2, 0), "the corner below it, the correct stamp")
+	check(vesper_echo.last_chain_count == 1, "the echo still retriggers")
+	check(vesper_echo.last_progress_gained == 9, "a retrigger of a corner stamp scores twice again (%d)" % vesper_echo.last_progress_gained)
+
+	var vesper_edge_echo = Rules.scripted_encounter(203, 2, ["echo", "entry_mark"], 2, Rules.SHIFT_ERRATA)
+	check(play_named(vesper_edge_echo, "echo", 0, 0), "an echo in a corner")
+	check(play_named(vesper_edge_echo, "entry_mark", 1, 0), "the edge-middle stamp below it, the wrong stamp")
+	check(vesper_edge_echo.last_chain_count == 1, "the echo still retriggers an edge-middle stamp")
+	check(vesper_edge_echo.last_progress_gained == 6, "a retrigger of an edge-middle stamp scores its own number (%d)" % vesper_edge_echo.last_progress_gained)
+
+	var vesper_reply = Rules.scripted_encounter(203, 2, ["reply", "entry_mark"], 2, Rules.SHIFT_ERRATA)
+	check(play_named(vesper_reply, "entry_mark", 1, 1), "the center stamp, the wrong stamp")
+	check(play_named(vesper_reply, "reply", 2, 1), "a reply on the edge below the center")
+	check(vesper_reply.last_chain_count == 1, "the reply still retriggers the center")
+	check(vesper_reply.last_progress_gained == 5, "a retrigger of the center scores its own number (%d)" % vesper_reply.last_progress_gained)
+
+	var vesper_muted = Rules.scripted_encounter(203, 2, ["exemption", "entry_mark"], 2, Rules.SHIFT_ERRATA)
+	check(play_named(vesper_muted, "exemption", 1, 1), "exemption is placed on Vesper's middle row")
+	check(play_named(vesper_muted, "entry_mark", 0, 0), "a corner stamp")
+	check(vesper_muted.last_progress_gained == 3, "exemption on the middle row cancels the doubling (%d)" % vesper_muted.last_progress_gained)
+
+	var vesper_kept = Rules.scripted_encounter(203, 2, ["exemption", "entry_mark"], 2, Rules.SHIFT_ERRATA)
+	check(play_named(vesper_kept, "exemption", 0, 0), "exemption sits in a corner and off the middle row")
+	check(play_named(vesper_kept, "entry_mark", 0, 1), "an edge-middle stamp")
+	check(vesper_kept.last_progress_gained == 4, "an exemption in a corner and off the middle row scores twice (%d)" % vesper_kept.last_progress_gained)
+
+	var vesper_held = Rules.scripted_encounter(203, 2, ["hold", "entry_mark"], 2, Rules.SHIFT_ERRATA)
+	check(play_named(vesper_held, "hold", 0, 1), "hold in Vesper's column")
+	check(play_named(vesper_held, "entry_mark", 0, 0), "a corner stamp")
+	check(vesper_held.last_progress_gained == 5, "the held corner still scores twice")
+	check(vesper_held.last_patience_loss == 0 and vesper_held.patience == 5, "hold delays Vesper")
+
+	var vesper_missed = Rules.scripted_encounter(203, 2, ["hold", "entry_mark"], 2, Rules.SHIFT_ERRATA)
+	check(play_named(vesper_missed, "hold", 0, 0), "hold outside Vesper's column")
+	check(play_named(vesper_missed, "entry_mark", 2, 2), "another corner stamp")
+	check(vesper_missed.last_progress_gained == 6, "the outside hold still doubles because it sits in a corner")
+	check(vesper_missed.last_patience_loss == 1, "hold in another column does not delay Vesper")
+
+	var vesper_clear = Rules.scripted_encounter(203, 2, ["visa_dot", "visa_dot", "visa_dot", "visa_dot"], 4, Rules.SHIFT_ERRATA)
+	check(play_named(vesper_clear, "visa_dot", 0, 0), "the top-left visa")
+	check(play_named(vesper_clear, "visa_dot", 0, 2), "the top-right visa")
+	check(play_named(vesper_clear, "visa_dot", 2, 0), "the bottom-left visa")
+	check(play_named(vesper_clear, "visa_dot", 2, 2), "the bottom-right visa")
+	check(vesper_clear.last_progress_gained == 24, "each corner visa scores twice (%d)" % vesper_clear.last_progress_gained)
+	check(vesper_clear.last_won and vesper_clear.phase == "draft", "the corner mark clears Vesper")
+	check(vesper_clear.last_patience_loss == 0 and vesper_clear.patience == 5, "reaching the goal keeps patience")
+
+	var bram_frame = Rules.scripted_encounter(113, 2, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_MARGIN)
+	check(String(Rules.traveler(bram_frame)["rule"]) == "double_frame_if_center", "Bram Hart still doubles the frame only when the center is filled")
+	check(play_named(bram_frame, "entry_mark", 1, 1), "Bram's center stamp")
+	check(play_named(bram_frame, "entry_mark", 0, 1), "Bram's edge-middle stamp")
+	check(bram_frame.last_progress_gained == 6, "the margin bell still doubles an edge-middle stamp when the center is filled (%d)" % bram_frame.last_progress_gained)
+
+	var bram_corner = Rules.scripted_encounter(113, 2, ["entry_mark"], 1, Rules.SHIFT_MARGIN)
+	check(play_named(bram_corner, "entry_mark", 0, 0), "Bram receives a lone corner")
+	check(bram_corner.last_progress_gained == 2, "the margin bell leaves a corner at its own number when the center is empty (%d)" % bram_corner.last_progress_gained)
+
+	var maeve_corners = Rules.scripted_encounter(194, 3, ["entry_mark", "entry_mark", "entry_mark"], 3, Rules.SHIFT_COLOPHON)
+	check(String(Rules.traveler(maeve_corners)["rule"]) == "double_corner_later", "Maeve Okell still doubles the later stamp of a diagonal pair")
+	check(play_named(maeve_corners, "entry_mark", 0, 0), "Maeve's first corner")
+	check(play_named(maeve_corners, "entry_mark", 0, 2), "Maeve's other corner on that row")
+	check(play_named(maeve_corners, "entry_mark", 1, 1), "Maeve's later center")
+	check(maeve_corners.last_progress_gained == 8, "the colophon bell doubles the later center and leaves the corners at their own numbers (%d)" % maeve_corners.last_progress_gained)
+
+	var idris_corner = Rules.scripted_encounter(183, 2, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_CATCHWORD)
+	check(String(Rules.traveler(idris_corner)["rule"]) == "yield_corner_pay", "Idris Reed still adds 3 for a diagonal neighbor")
+	check(play_named(idris_corner, "entry_mark", 0, 0), "Idris's earlier stamp")
+	check(play_named(idris_corner, "entry_mark", 1, 1), "Idris's diagonal neighbor")
+	check(idris_corner.last_progress_gained == 10, "the catchword bell still adds 3 to each stamp with a diagonal neighbor (%d)" % idris_corner.last_progress_gained)
+
+	var rho_corner = Rules.scripted_encounter(51, 1, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_VELLUM)
+	check(String(Rules.traveler(rho_corner)["rule"]) == "yield_diagonal", "Rho Tallow still yields when two stamps meet at a corner")
+	check(play_named(rho_corner, "entry_mark", 0, 0), "Rho's first stamp")
+	check(play_named(rho_corner, "entry_mark", 1, 1), "Rho's corner meeting")
+	check(rho_corner.last_progress_gained == 8, "the vellum bell still yields once for a corner meeting (%d)" % rho_corner.last_progress_gained)
+
+	var weske = Rules.scripted_encounter(204, 3, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_ERRATA)
+	check(String(Rules.traveler(weske)["name"]) == "Weske Brant", "the errata bell's fourth form is Weske Brant")
+	check(String(Rules.traveler(weske)["form_name"]) == "Middle Pay", "Weske brings the Middle Pay")
+	check(String(Rules.traveler(weske)["rule_text"]) == "Each stamp in the middle row scores +2 once. A stamp on the top row or the bottom row scores its own number.", "Weske's form states the middle pay")
+	check(String(Rules.traveler(weske)["rule"]) == "yield_middle_pay", "Weske's rule is the middle pay")
+	check(int(Rules.traveler(weske)["lane"]) == 0 and int(Rules.traveler(weske)["exemption_row"]) == 2, "Weske waits in column 1 and exempts the bottom row")
+	check(int(Rules.traveler(weske)["goal"]) == 22, "Weske's goal is 22")
+	check(Rules.preview_progress(weske, "entry_mark", 1, 0) == 4, "preview adds 2 to a middle-row stamp, the correct stamp")
+	check(Rules.preview_progress(weske, "entry_mark", 0, 0) == 2, "preview leaves a top-row stamp at its own number, the wrong stamp")
+	check(play_named(weske, "entry_mark", 1, 0), "the middle-row stamp leaves Weske's turn open")
+	check(weske.phase == "play", "Weske's first stamp does not end the turn")
+	check(play_named(weske, "entry_mark", 0, 0), "Weske receives the top-row stamp beside it, the wrong stamp")
+	check(weske.last_progress_gained == 6, "the middle row scores +2 and the top row scores its own number (%d)" % weske.last_progress_gained)
+	check(weske.last_patience_loss == 1, "a middle pay does not change patience")
+
+	var weske_center = Rules.scripted_encounter(204, 3, ["entry_mark"], 1, Rules.SHIFT_ERRATA)
+	check(play_named(weske_center, "entry_mark", 1, 1), "Weske receives the center, the correct stamp")
+	check(weske_center.last_progress_gained == 4, "the center is in the middle row, so it scores +2 (%d)" % weske_center.last_progress_gained)
+
+	var weske_edge = Rules.scripted_encounter(204, 3, ["entry_mark"], 1, Rules.SHIFT_ERRATA)
+	check(play_named(weske_edge, "entry_mark", 1, 2), "Weske receives a lone middle-row edge, the correct stamp")
+	check(weske_edge.last_progress_gained == 4, "a lone middle-row stamp still scores +2 (%d)" % weske_edge.last_progress_gained)
+
+	var weske_bottom = Rules.scripted_encounter(204, 3, ["duty"], 1, Rules.SHIFT_ERRATA)
+	check(play_named(weske_bottom, "duty", 2, 1), "Weske receives a bottom-row duty, the wrong stamp")
+	check(weske_bottom.last_progress_gained == 4, "a bottom-row stamp scores its own number (%d)" % weske_bottom.last_progress_gained)
+
+	var weske_row = Rules.scripted_encounter(204, 3, ["entry_mark", "entry_mark", "entry_mark"], 3, Rules.SHIFT_ERRATA)
+	check(play_named(weske_row, "entry_mark", 1, 0), "the first of the middle row")
+	check(play_named(weske_row, "entry_mark", 1, 1), "the center with two neighbors")
+	check(play_named(weske_row, "entry_mark", 1, 2), "the other edge of the middle row")
+	check(weske_row.last_progress_gained == 12, "two neighbors still add 2 once, not 4 (%d)" % weske_row.last_progress_gained)
+
+	var weske_echo = Rules.scripted_encounter(204, 3, ["echo", "entry_mark"], 2, Rules.SHIFT_ERRATA)
+	check(play_named(weske_echo, "echo", 0, 1), "an echo on the top row")
+	check(play_named(weske_echo, "entry_mark", 1, 1), "the middle-row stamp below it")
+	check(weske_echo.last_chain_count == 1, "the echo still retriggers")
+	check(weske_echo.last_progress_gained == 9, "a retrigger of a middle-row stamp adds 2 again (%d)" % weske_echo.last_progress_gained)
+
+	var weske_reply = Rules.scripted_encounter(204, 3, ["reply", "entry_mark"], 2, Rules.SHIFT_ERRATA)
+	check(play_named(weske_reply, "entry_mark", 0, 1), "a top-row stamp, the wrong stamp")
+	check(play_named(weske_reply, "reply", 1, 1), "a reply on the middle row")
+	check(weske_reply.last_chain_count == 1, "the reply still retriggers the top stamp")
+	check(weske_reply.last_progress_gained == 7, "a retrigger of a top stamp does not add 2 (%d)" % weske_reply.last_progress_gained)
+
+	var weske_below = Rules.scripted_encounter(204, 3, ["echo", "entry_mark"], 2, Rules.SHIFT_ERRATA)
+	check(play_named(weske_below, "echo", 1, 0), "an echo on the middle row")
+	check(play_named(weske_below, "entry_mark", 2, 0), "the bottom stamp below it, the wrong stamp")
+	check(weske_below.last_chain_count == 1, "the echo still retriggers a bottom stamp")
+	check(weske_below.last_progress_gained == 7, "a retrigger of a bottom stamp does not add 2 (%d)" % weske_below.last_progress_gained)
+
+	var weske_muted = Rules.scripted_encounter(204, 3, ["exemption", "entry_mark"], 2, Rules.SHIFT_ERRATA)
+	check(play_named(weske_muted, "exemption", 2, 0), "exemption is placed on Weske's bottom row")
+	check(play_named(weske_muted, "entry_mark", 1, 0), "a middle-row stamp")
+	check(weske_muted.last_progress_gained == 3, "exemption on the bottom row cancels the bonus (%d)" % weske_muted.last_progress_gained)
+
+	var weske_kept = Rules.scripted_encounter(204, 3, ["exemption", "entry_mark"], 2, Rules.SHIFT_ERRATA)
+	check(play_named(weske_kept, "exemption", 1, 1), "exemption sits in the middle row")
+	check(play_named(weske_kept, "entry_mark", 0, 0), "a top-row stamp")
+	check(weske_kept.last_progress_gained == 5, "an exemption in the middle row still adds 2 (%d)" % weske_kept.last_progress_gained)
+
+	var weske_held = Rules.scripted_encounter(204, 3, ["hold", "entry_mark"], 2, Rules.SHIFT_ERRATA)
+	check(play_named(weske_held, "hold", 0, 0), "hold in Weske's column")
+	check(play_named(weske_held, "entry_mark", 1, 1), "a middle-row stamp")
+	check(weske_held.last_progress_gained == 5, "the held middle row still scores +2")
+	check(weske_held.last_patience_loss == 0 and weske_held.patience == 5, "hold delays Weske")
+
+	var weske_missed = Rules.scripted_encounter(204, 3, ["hold", "entry_mark"], 2, Rules.SHIFT_ERRATA)
+	check(play_named(weske_missed, "hold", 0, 1), "hold outside Weske's column")
+	check(play_named(weske_missed, "entry_mark", 1, 1), "a middle-row stamp")
+	check(weske_missed.last_progress_gained == 5, "the outside hold still leaves the middle row at +2")
+	check(weske_missed.last_patience_loss == 1, "hold in another column does not delay Weske")
+
+	var weske_clear = Rules.scripted_encounter(204, 3, ["visa_dot", "visa_dot", "visa_dot", "duty", "visa_dot"], 5, Rules.SHIFT_ERRATA)
+	check(play_named(weske_clear, "visa_dot", 1, 0), "the first middle visa")
+	check(play_named(weske_clear, "visa_dot", 1, 1), "the center visa")
+	check(play_named(weske_clear, "visa_dot", 1, 2), "the other middle visa")
+	check(play_named(weske_clear, "duty", 2, 1), "a bottom-row duty")
+	check(play_named(weske_clear, "visa_dot", 0, 1), "a top-row visa")
+	check(weske_clear.last_progress_gained == 22, "the middle row scores +2 and the other rows score their own numbers (%d)" % weske_clear.last_progress_gained)
+	check(weske_clear.last_won and weske_clear.phase == "victory", "the middle pay clears Weske")
+	check(weske_clear.last_patience_loss == 0 and weske_clear.patience == 5, "reaching the goal keeps patience")
+
+	var opal_lone = Rules.scripted_encounter(172, 2, ["entry_mark"], 1, Rules.SHIFT_SIGNATURE)
+	check(String(Rules.traveler(opal_lone)["rule"]) == "yield_side_pay", "Opal Quill still adds 3 for a side share")
+	check(play_named(opal_lone, "entry_mark", 1, 1), "Opal receives a lone middle stamp")
+	check(opal_lone.last_progress_gained == 2, "the signature bell leaves a lone middle stamp at its own number (%d)" % opal_lone.last_progress_gained)
+
+	var opal_side = Rules.scripted_encounter(172, 2, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_SIGNATURE)
+	check(play_named(opal_side, "entry_mark", 0, 0), "Opal's first top-row stamp")
+	check(play_named(opal_side, "entry_mark", 0, 1), "Opal's second top-row stamp")
+	check(opal_side.last_progress_gained == 10, "the signature bell still adds 3 for a side share (%d)" % opal_side.last_progress_gained)
+
+	var idris_pay = Rules.scripted_encounter(183, 2, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_CATCHWORD)
+	check(play_named(idris_pay, "entry_mark", 0, 0), "Idris's corner stamp")
+	check(play_named(idris_pay, "entry_mark", 1, 1), "Idris's center stamp")
+	check(idris_pay.last_progress_gained == 10, "the catchword bell still adds 3 for a diagonal neighbor (%d)" % idris_pay.last_progress_gained)
+
+	var wynn_center = Rules.scripted_encounter(92, 1, ["entry_mark", "entry_mark", "entry_mark"], 3, Rules.SHIFT_FOLIO)
+	check(String(Rules.traveler(wynn_center)["rule"]) == "double_center", "Wynn Cress still doubles only the center")
+	check(play_named(wynn_center, "entry_mark", 1, 0), "Wynn's first middle-row stamp")
+	check(play_named(wynn_center, "entry_mark", 1, 1), "Wynn's center stamp")
+	check(play_named(wynn_center, "entry_mark", 1, 2), "Wynn's other middle-row stamp")
+	check(wynn_center.last_progress_gained == 8, "the folio bell doubles the center and leaves the rest of the middle row at its own number (%d)" % wynn_center.last_progress_gained)
+
+
+func test_errata_bell_opens() -> void:
+	check(Rules.ERRATA_BELL.size() == 4, "the errata bell has four travelers")
+	check(String(Rules.ERRATA_BELL[0]["name"]) == "Una Pell", "the errata bell begins with Una Pell")
+	check(String(Rules.ERRATA_BELL[1]["name"]) == "Orin Keel", "the errata bell's second traveler is Orin Keel")
+	check(String(Rules.ERRATA_BELL[2]["name"]) == "Vesper Okell", "the errata bell's third traveler is Vesper Okell")
+	check(String(Rules.ERRATA_BELL[3]["name"]) == "Weske Brant", "the errata bell ends with Weske Brant")
+	check(Rules.COLOPHON_BELL.size() == 4 and String(Rules.COLOPHON_BELL[0]["name"]) == "Nia Soren", "the colophon bell still begins with Nia Soren")
+	check(String(Rules.COLOPHON_BELL[3]["name"]) == "Maeve Okell", "the colophon bell still ends with Maeve Okell")
+	check(Rules.TRAVELERS.size() == 4 and String(Rules.TRAVELERS[0]["name"]) == "Ada Quill", "Act 1 still begins with Ada Quill")
+	var errata_run = Rules.new_run(87, Rules.SHIFT_ERRATA)
+	check(errata_run.shift == Rules.SHIFT_ERRATA, "the errata bell is a separate night")
+	check(String(Rules.traveler(errata_run)["name"]) == "Una Pell", "the errata bell begins with Una Pell")
+	check(errata_run.hand.size() == Rules.HAND_SIZE, "the errata bell draws 5")
+	check(errata_run.ink == Rules.BASE_INK, "the errata bell starts at 3 ink")
+	check(errata_run.library.size() == Rules.STARTING_DECK.size(), "the errata bell deals the starting deck")
+	check(errata_run.relic_id == "", "an earlier night's relic does not carry")
+	check(errata_run.phase == "play", "the errata bell opens in play")
+	var dealt: Array = []
+	for iid in errata_run.hand:
+		dealt.append(Rules.card_id_of(errata_run, int(iid)))
+	var before = errata_run.library.size()
+	errata_run.progress = 4
+	errata_run.patience = 1
+	Rules.restart_encounter(errata_run)
+	check(errata_run.shift == Rules.SHIFT_ERRATA and errata_run.traveler_index == 0, "restart encounter stays on the errata bell")
+	check(errata_run.progress == 0 and errata_run.patience == int(Rules.ERRATA_BELL[0]["patience"]), "restart encounter resets Una")
+	check(errata_run.library.size() == before and errata_run.hand.size() == 5 and errata_run.phase == "play", "restart keeps the errata-bell deck and deals a hand")
+	var redealt: Array = []
+	for iid in errata_run.hand:
+		redealt.append(Rules.card_id_of(errata_run, int(iid)))
+	check(redealt == dealt, "restart deals Una the same hand")
+
+	var packed = load("res://game/main.tscn")
+	var desk = packed.instantiate()
+	root.add_child(desk)
+	if desk.state == null:
+		desk._ready()
+	check(desk.state.shift == Rules.SHIFT_FIRST, "the desk still opens on Act 1")
+	check(desk.errata_button.text == "Errata bell", "the desk offers the errata bell")
+	check(desk.colophon_button.text == "Colophon bell", "the desk still offers the colophon bell")
+	desk.errata_button.pressed.emit()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_ERRATA, "the desk can open the errata bell")
+	check(String(Rules.traveler(desk.state)["name"]) == "Una Pell", "the open desk shows Una")
+	check(String(desk.desk_label.text).begins_with("Errata bell"), "the desk title follows the errata bell")
+	check(desk.meta_label.text.contains("Odd Toll"), "the desk shows Una's form")
+	check(desk.errata_button.text == "First bell", "the errata bell can return to the first bell")
+	check(desk.colophon_button.text == "Colophon bell", "the colophon bell stays available from the errata bell")
+	check(desk.shift_button.text == "Late shift", "the late shift stays available from the errata bell")
+	desk._restart_act()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_ERRATA and String(Rules.traveler(desk.state)["name"]) == "Una Pell", "restart act replays the errata bell")
+	desk.errata_button.pressed.emit()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_FIRST and String(Rules.traveler(desk.state)["name"]) == "Ada Quill", "the errata bell returns to Ada")
+	var doors = [
+		["_begin_late_shift", "Nell Parr", "the late shift"],
+		["_begin_closing_bell", "Moss Quen", "the closing bell"],
+		["_begin_ash_watch", "Orla Fen", "the ash watch"],
+		["_begin_gutter_lamp", "Ivo Dane", "the gutter lamp"],
+		["_begin_vellum_bell", "Edda Voss", "the vellum bell"],
+		["_begin_quire_watch", "Tess Quern", "the quire watch"],
+		["_begin_salt_watch", "Pell Voss", "the salt watch"],
+		["_begin_quay_bell", "Mara Quill", "the quay bell"],
+		["_begin_folio_bell", "Ness Hart", "the folio bell"],
+		["_begin_wick_bell", "Odell Voss", "the wick bell"],
+		["_begin_margin_bell", "Nim Voss", "the margin bell"],
+		["_begin_index_bell", "Len Quill", "the index bell"],
+		["_begin_ledger_bell", "Nell Voss", "the ledger bell"],
+		["_begin_spine_bell", "Wynn Quill", "the spine bell"],
+		["_begin_headband_bell", "Len Hart", "the headband bell"],
+		["_begin_clasp_bell", "Noll Hart", "the clasp bell"],
+		["_begin_signature_bell", "Dory Hart", "the signature bell"],
+		["_begin_catchword_bell", "Gwyn Brant", "the catchword bell"],
+		["_begin_colophon_bell", "Nia Soren", "the colophon bell"],
+	]
+	for door in doors:
+		desk.call(String(door[0]))
+		desk._refresh_ui()
+		check(desk.state.shift != Rules.SHIFT_ERRATA and String(Rules.traveler(desk.state)["name"]) == String(door[1]), "%s still opens" % String(door[2]))
+		check(desk.errata_button.text == "Errata bell", "%s offers the errata bell" % String(door[2]))
+		desk._begin_errata_bell()
+		desk._refresh_ui()
+		check(desk.state.shift == Rules.SHIFT_ERRATA and String(Rules.traveler(desk.state)["name"]) == "Una Pell", "%s can open the errata bell" % String(door[2]))
+	desk._begin_first_bell()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_FIRST and String(Rules.traveler(desk.state)["name"]) == "Ada Quill", "first bell still returns to Ada")
+	var victories = [
+		[Rules.SHIFT_FIRST, "Act 1"],
+		[Rules.SHIFT_LATE, "the late shift"],
+		[Rules.SHIFT_CLOSING, "the closing bell"],
+		[Rules.SHIFT_ASH, "the ash watch"],
+		[Rules.SHIFT_GUTTER, "the gutter lamp"],
+		[Rules.SHIFT_VELLUM, "the vellum bell"],
+		[Rules.SHIFT_QUIRE, "the quire watch"],
+		[Rules.SHIFT_SALT, "the salt watch"],
+		[Rules.SHIFT_QUAY, "the quay bell"],
+		[Rules.SHIFT_FOLIO, "the folio bell"],
+		[Rules.SHIFT_WICK, "the wick bell"],
+		[Rules.SHIFT_MARGIN, "the margin bell"],
+		[Rules.SHIFT_INDEX, "the index bell"],
+		[Rules.SHIFT_LEDGER, "the ledger bell"],
+		[Rules.SHIFT_SPINE, "the spine bell"],
+		[Rules.SHIFT_HEADBAND, "the headband bell"],
+		[Rules.SHIFT_CLASP, "the clasp bell"],
+		[Rules.SHIFT_SIGNATURE, "the signature bell"],
+		[Rules.SHIFT_CATCHWORD, "the catchword bell"],
+		[Rules.SHIFT_COLOPHON, "the colophon bell"],
+	]
+	for victory in victories:
+		desk._open_shift(int(victory[0]), desk.state.seed)
+		desk._refresh_ui()
+		desk.state.phase = "victory"
+		desk._refresh_ui()
+		var victory_errata = _button_named(desk, "Open the errata bell")
+		check(victory_errata != null, "%s's victory desk offers the errata bell" % String(victory[1]))
+		if victory_errata != null:
+			victory_errata.pressed.emit()
+			desk._refresh_ui()
+			check(desk.state.shift == Rules.SHIFT_ERRATA and String(Rules.traveler(desk.state)["name"]) == "Una Pell", "%s's victory desk opens the errata bell" % String(victory[1]))
+	desk.state.phase = "victory"
+	desk._refresh_ui()
+	var victory_first = _button_named(desk, "Open the first bell")
+	check(victory_first != null, "the errata bell victory desk offers the first bell")
+	if victory_first != null:
+		victory_first.pressed.emit()
+		desk._refresh_ui()
+		check(desk.state.shift == Rules.SHIFT_FIRST and String(Rules.traveler(desk.state)["name"]) == "Ada Quill", "the errata bell victory desk opens the first bell")
+	desk._begin_errata_bell()
+	desk._refresh_ui()
+	desk.state.phase = "victory"
+	desk._refresh_ui()
+	var victory_colophon = _button_named(desk, "Open the colophon bell")
+	check(victory_colophon != null, "the errata bell victory desk offers the colophon bell")
+	if victory_colophon != null:
+		victory_colophon.pressed.emit()
+		desk._refresh_ui()
+		check(desk.state.shift == Rules.SHIFT_COLOPHON and String(Rules.traveler(desk.state)["name"]) == "Nia Soren", "the errata bell victory desk opens the colophon bell")
+	root.remove_child(desk)
+	desk.free()
+
+
+func test_policy_clears_errata_bell() -> void:
+	var started = Time.get_ticks_msec()
+	var state = Rules.new_run(12345, Rules.SHIFT_ERRATA)
+	var steps = 0
+	var seen = 0
+	while state.phase != "victory":
+		steps += 1
+		if steps > 500 or state.phase == "defeat":
+			check(false, "policy lost or stalled on the errata bell, seed 12345: " + Rules.debug_summary(state))
+			return
+		var action = Policy.choose(state)
+		if not Rules.apply_action(state, action):
+			check(false, "errata-bell policy action was rejected: %s / %s" % [str(action), Rules.debug_summary(state)])
+			return
+		if state.encounters_cleared != seen:
+			seen = state.encounters_cleared
+			print("cleared errata encounter %d after %d actions" % [seen, steps])
+	var elapsed = Time.get_ticks_msec() - started
+	check(state.encounters_cleared == 4, "policy cleared all 4 errata-bell encounters on seed 12345")
+	check(state.phase == "victory", "errata bell ends in victory")
+	check(state.shift == Rules.SHIFT_ERRATA, "the clear stayed on the errata bell")
+	check(steps == 25, "seed 12345 clears the errata bell in 25 actions")
+	print("errata bell finished in %d actions, %d ms" % [steps, elapsed])
