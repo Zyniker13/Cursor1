@@ -26,6 +26,8 @@ const Linen = preload("res://scripts/linen_fold.gd")
 const Dovetail = preload("res://scripts/dovetail.gd")
 const Mortise = preload("res://scripts/mortise.gd")
 const Rebate = preload("res://scripts/rebate.gd")
+const Housing = preload("res://scripts/housing.gd")
+const Tenon = preload("res://scripts/tenon.gd")
 const Catalog = preload("res://scripts/catalog.gd")
 const Solver = preload("res://scripts/solver.gd")
 const Verdict = preload("res://scripts/verdict.gd")
@@ -81,9 +83,14 @@ const MORTISE_TIMELINE := "Arlo (chisel hand) cut the mortise in the chisel at 6
 const MORTISE_TRUE := {"who": "Arlo", "place": "chisel", "hour": "68"}
 const REBATE_TIMELINE := "Tansy (plane hand) cut the rebate in the plane at 73, seen from the gauge, so the mallet would take the shoulder.\nSolt (gauge hand) scribed the line on the mallet at 72.\nQuern (mallet clerk) turned the fence in the gauge.\nThe shim was hung on the mallet.\nThe gauge was oiled at 71.\nThe mallet was wiped at 74.\nThe plane was hung at 75."
 const REBATE_TRUE := {"who": "Tansy", "place": "plane", "hour": "73"}
+const HOUSING_TIMELINE := "Ewan (saw hand) cut the housing in the saw at 78, seen from the square, so the bead would take the trench.\nMaren (square hand) marked the trench on the bead at 77.\nHollin (bead clerk) turned the stock in the square.\nThe fillet was hung on the bead.\nThe square was chalked at 76.\nThe bead was wiped at 79.\nThe saw was hung at 80."
+const HOUSING_TRUE := {"who": "Ewan", "place": "saw", "hour": "78"}
+const TENON_TIMELINE := "Harl (gouge hand) cut the tenon in the gouge at 83, seen from the rasp, so the bevel would take the haunch.\nNeve (rasp hand) marked the haunch on the bevel at 82.\nLuth (bevel clerk) turned the guide in the rasp.\nThe dowel was hung on the bevel.\nThe rasp was honed at 81.\nThe bevel was wiped at 84.\nThe gouge was hung at 85."
+const TENON_TRUE := {"who": "Harl", "place": "gouge", "hour": "83"}
 
 var _failures: Array[String] = []
 var _checks := 0
+var _menu_root: Node
 
 
 func _initialize() -> void:
@@ -243,8 +250,30 @@ func _initialize() -> void:
 	_test_rebate_only_true_theory()
 	_test_rebate_near_misses()
 	_test_rebate_incomplete()
+	_test_housing_file_shape()
+	_test_housing_unique_model()
+	_test_housing_each_exhibit_necessary()
+	_test_housing_only_true_theory()
+	_test_housing_near_misses()
+	_test_housing_incomplete()
+	_test_tenon_file_shape()
+	_test_tenon_unique_model()
+	_test_tenon_each_exhibit_necessary()
+	_test_tenon_only_true_theory()
+	_test_tenon_near_misses()
+	_test_tenon_incomplete()
 	_test_solutions_differ()
 	_test_menu_opens_either_case()
+	print("menu interaction done")
+	await process_frame
+	await process_frame
+	_expect_open_buttons_fit_the_case_window()
+	if _menu_root != null:
+		_menu_root.queue_free()
+	_finish_suite()
+
+
+func _finish_suite() -> void:
 	if _failures.is_empty():
 		print("ALL PASS (%d checks)" % _checks)
 		quit(0)
@@ -6980,6 +7009,735 @@ func _test_rebate_incomplete() -> void:
 	print("rebate incomplete submissions refused with the missing slot")
 
 
+func _test_housing_file_shape() -> void:
+	_expect(Housing.EXHIBITS.size() == 9, "housing exhibit count is %d" % Housing.EXHIBITS.size())
+	_expect(Housing.PEOPLE.size() == 3, "housing cast should be three people")
+	_expect(Housing.PLACES.size() == 3, "housing room count is %d" % Housing.PLACES.size())
+	_expect(Housing.HOURS.size() == 5, "housing hour list length is %d" % Housing.HOURS.size())
+	_expect(Housing.PEOPLE == ["Ewan", "Maren", "Hollin"], "housing cast is %s" % str(Housing.PEOPLE))
+	_expect(Housing.PLACES == ["saw", "square", "bead"], "housing rooms are %s" % str(Housing.PLACES))
+	_expect(Housing.HOURS == ["76", "77", "78", "79", "80"], "housing hours are %s" % str(Housing.HOURS))
+	_expect(Housing.AIMS == ["take_trench", "spare_trench", "set_trench"], "housing aims are %s" % str(Housing.AIMS))
+	_expect(Housing.aim_phrase("take_trench") == "so the bead would take the trench", "housing aim phrase")
+	_expect(Housing.aim_phrase("spare_trench") == "to spare the trench still waiting on the bead", "housing spare aim")
+	_expect(Housing.aim_phrase("set_trench") == "to set the trench before the saw was hung", "housing set aim")
+	_expect(Housing.TITLE == "The housing", "housing title")
+	_expect(Housing.BLURB == "The housing left its peg at the joiner's horse. Name who cut the housing, the room they cut it in, and the hour.", "housing blurb")
+	_expect(Housing.FILE_CODE == "CW-27", "housing file code")
+	_expect(Housing.fields() == ["taker", "place", "hour", "marker", "mark_room", "mark_hour", "seen_from", "stock", "aim", "stock_room", "fillet_room", "chalk_hour", "wipe_hour", "hang_hour"], "housing fields are %s" % str(Housing.fields()))
+	_expect(Housing.PLAYER_FIELDS == ["taker", "place", "hour"], "housing player fields")
+	_expect(Housing.HOURS[Housing.HOURS.size() / 2] == HOUSING_TRUE["hour"], "housing cutting should be the middle hour")
+	_expect(Housing.HOURS[0] != HOUSING_TRUE["hour"], "housing cutting should not be the earliest hour")
+	_expect(Housing.HOURS[Housing.HOURS.size() - 1] != HOUSING_TRUE["hour"], "housing cutting should not be the latest hour")
+	var counts := _player_pin_counts(Housing)
+	_expect(int(counts["taker"]) == 3 and int(counts["place"]) == 3 and int(counts["hour"]) == 3, "housing pin counts are %s" % str(counts))
+	var loose_pin: Array = [
+		[CaseData, "spare key"],
+		[Rehearsal, "rehearsal score"],
+		[Gilt, "gilt stamp"],
+		[Ferry, "ferry bell"],
+		[Weather, "weather slate"],
+		[Loom, "loom shuttle"],
+		[Hive, "hive smoker"],
+		[Glass, "glass pontil"],
+		[Press, "press proof"],
+		[Assay, "assay cup"],
+	]
+	var rhythm: Array = [
+		[Kiln, "kiln chalk"],
+		[Tide, "tide ledger"],
+		[Night, "night bell"],
+		[Salt, "salt mark"],
+		[Wick, "wick trim"],
+		[Anneal, "glass anneal"],
+		[Graft, "orchard graft"],
+		[Dye, "dye vat"],
+		[Tar, "tar kettle"],
+		[Cork, "cork press"],
+		[Net, "net loft"],
+		[Cask, "cask hoop"],
+		[Linen, "linen fold"],
+		[Dovetail, "dovetail"],
+		[Mortise, "mortise"],
+		[Rebate, "rebate"],
+	]
+	for row in loose_pin:
+		_expect(counts != _player_pin_counts(row[0]), "housing copied the %s pin pattern" % row[1])
+	for row in rhythm:
+		_expect(counts == _player_pin_counts(row[0]), "housing should keep the %s pin rhythm" % row[1])
+	var earlier: Array = []
+	earlier.append_array(loose_pin)
+	earlier.append_array(rhythm)
+	for row in earlier:
+		var book = row[0]
+		var name := str(row[1])
+		_expect(Housing.TITLE != book.TITLE, "housing shares a title with the %s" % name)
+		_expect(Housing.FILE_CODE != book.FILE_CODE, "housing shares a file code with the %s" % name)
+		_expect(_field_key(Housing) != _field_key(book), "housing copied the %s timeline fields" % name)
+	var seen := {}
+	var stated := {}
+	var paired_hidden := 0
+	var earlier_texts := {}
+	var earlier_sentences := {}
+	for row in earlier:
+		for old_exhibit in row[0].EXHIBITS:
+			var old_text := str(old_exhibit["text"])
+			earlier_texts[old_text] = true
+			for old_sentence in old_text.split(". "):
+				earlier_sentences[old_sentence.trim_suffix(".").strip_edges()] = true
+	var exhibit_titles: Array[String] = []
+	var exhibit_sources: Array[String] = []
+	for exhibit in Housing.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		exhibit_titles.append(str(exhibit["title"]))
+		exhibit_sources.append(str(exhibit["source"]))
+		_expect(not seen.has(exhibit_id), "duplicate housing id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		_expect(not earlier_texts.has(str(exhibit["text"])), "housing copied an earlier exhibit")
+		for sentence in str(exhibit["text"]).split(". "):
+			var cleaned := sentence.trim_suffix(".").strip_edges()
+			_expect(not earlier_sentences.has(cleaned), "housing copied an earlier sentence: %s" % cleaned)
+		for banned in ["mortise", "chisel", "tenon", "awl", "brace", "wedge", "bored", "ragged", "racked", "dovetail", "vise", "stile", "apron", "clamp", "peg", "joint", "linen", "fold", "shears", "roller", "hem", "sheet", "crease", "press", "loft", "bench", "bottle", "cork", "shop", "drawer", "seal", "screw", "cellar", "wax", "neck", "plug", "dye", "vat", "indigo", "skein", "rope", "walk", "kettle", "winch", "pitch", "mesh", "rail", "crank", "needle", "twine", "cooperage", "cask", "hoop", "croze", "stave", "rebate", "plane", "gauge", "mallet", "shoulder", "scribe", "shim", "fence", "tansy", "solt", "quern"]:
+			_expect(str(exhibit["text"]).find(banned) == -1, "%s copies %s" % [exhibit_id, banned])
+		var states_player_pin := false
+		var states_unique := false
+		var player_literals := 0
+		var hidden_literals := 0
+		for literal in exhibit["literals"]:
+			stated[str(literal["value"])] = true
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Housing.PLAYER_FIELDS:
+				states_player_pin = true
+				player_literals += 1
+				var expected := Housing.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Housing.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats >= 2, "%s states %s once" % [exhibit_id, field])
+			else:
+				hidden_literals += 1
+				var owners := 0
+				for other in Housing.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		if hidden_literals == 2:
+			paired_hidden += 1
+		else:
+			_expect(hidden_literals == 1, "%s states %d hidden facts" % [exhibit_id, hidden_literals])
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(player_literals == 1, "%s states %d player pins" % [exhibit_id, player_literals])
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+	_expect(paired_hidden == 2, "housing should have two slips with two hidden facts, found %d" % paired_hidden)
+	_expect(exhibit_titles == ["Saw chit", "Square sight", "Fillet hook", "Trench slate", "Stock card", "Chalk slip", "Mark leaf", "Trench note", "Hang order"], "housing exhibit titles are %s" % str(exhibit_titles))
+	_expect(exhibit_sources == ["Maren, square hand", "Square rail", "Bead peg", "Saw jaw", "Hollin, bead clerk", "Square book", "Mark book", "Joiner's horse", "Bead slate"], "housing sources are %s" % str(exhibit_sources))
+	for hour in Housing.HOURS:
+		_expect(stated.has(hour), "housing hour %s is absent from the exhibits" % hour)
+
+func _test_housing_unique_model() -> void:
+	var models := Solver.enumerate(Housing.EXHIBITS, Housing)
+	print("housing models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one housing model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Ewan", "housing taker")
+	_expect(str(model["place"]) == "saw", "housing place")
+	_expect(str(model["hour"]) == "78", "housing hour")
+	_expect(str(model["marker"]) == "Maren", "housing marker")
+	_expect(str(model["mark_room"]) == "bead", "housing marker room")
+	_expect(str(model["mark_hour"]) == "77", "housing marker hour")
+	_expect(str(model["seen_from"]) == "square", "housing seen from")
+	_expect(str(model["stock"]) == "Hollin", "housing stock")
+	_expect(str(model["aim"]) == "take_trench", "housing aim")
+	_expect(str(model["stock_room"]) == "square", "housing stock room")
+	_expect(str(model["fillet_room"]) == "bead", "housing fillet room")
+	_expect(str(model["chalk_hour"]) == "76", "housing chalk hour")
+	_expect(str(model["wipe_hour"]) == "79", "housing wipe hour")
+	_expect(str(model["hang_hour"]) == "80", "housing hang hour")
+	for hour in Housing.HOURS:
+		var used := false
+		for field in Housing.fields():
+			if str(model[field]) == hour:
+				used = true
+		_expect(used, "housing hour %s is blank in the true timeline" % hour)
+	for place in Housing.PLACES:
+		var place_used := false
+		for field in Housing.fields():
+			if str(model[field]) == place:
+				place_used = true
+		_expect(place_used, "housing room %s is blank in the true timeline" % place)
+	for person in Housing.PEOPLE:
+		var person_used := false
+		for field in Housing.fields():
+			if str(model[field]) == person:
+				person_used = true
+		_expect(person_used, "housing person %s is blank in the true timeline" % person)
+	_expect(Housing.timeline(model) == HOUSING_TIMELINE, "housing timeline drifted:\n%s" % Housing.timeline(model))
+	for exhibit in Housing.EXHIBITS:
+		_expect(Housing.holds(exhibit, model), "%s rejects the housing timeline" % exhibit["id"])
+
+func _test_housing_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Housing.EXHIBITS, Housing)
+	for exhibit in Housing.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Housing.without(exhibit_id), Housing)
+		print("housing without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "housing %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Housing.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "housing %s removal did not admit a timeline it forbids" % exhibit_id)
+
+func _test_housing_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	var square_miss := {"who": "Maren", "place": "square", "hour": "76"}
+	_expect(Housing.conflicting_ids(square_miss).size() == 9, "Maren / square / 76 contradicts %d exhibits" % Housing.conflicting_ids(square_miss).size())
+	for who in Housing.PEOPLE:
+		for place in Housing.PLACES:
+			for hour in Housing.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == HOUSING_TRUE["who"] and place == HOUSING_TRUE["place"] and hour == HOUSING_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Housing)
+					print("housing true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true housing theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "housing acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(HOUSING_TIMELINE) >= 0, "housing acceptance should give the timeline")
+					_expect(str(result["message"]).find("Ewan") >= 0, "housing acceptance omits Ewan")
+					_expect(str(result["message"]).find("saw") >= 0, "housing acceptance omits the saw")
+					_expect(str(result["message"]).find("78") >= 0, "housing acceptance omits 78")
+					_expect(str(result["message"]).find("so the bead would take the trench") >= 0, "housing acceptance omits the trench")
+					_expect(str(result["message"]).find("Ewan (saw hand) cut the housing in the saw at 78") >= 0, "housing acceptance omits the cutting")
+					_expect(Housing.conflicting_ids(theory).is_empty(), "true housing theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Housing)
+					_expect(Housing.conflicting_ids(theory).size() >= 2, "%s / %s / %s contradicts fewer than two exhibits" % [who, place, hour])
+					rejected += 1
+	for outsider in ["Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal", "Nell"]:
+		_expect_rejected({"who": outsider, "place": "saw", "hour": "78"}, Housing)
+	print("housing theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d housing theories" % accepted)
+	_expect(rejected >= 2, "rejected %d housing theories" % rejected)
+
+func _test_housing_near_misses() -> void:
+	var misses := [
+		{"who": "Ewan", "place": "saw", "hour": "79", "titles": ["Mark leaf", "Trench note", "Hang order"]},
+		{"who": "Ewan", "place": "saw", "hour": "77", "titles": ["Mark leaf", "Trench note", "Hang order"]},
+		{"who": "Ewan", "place": "square", "hour": "78", "titles": ["Trench slate", "Stock card", "Chalk slip"]},
+		{"who": "Maren", "place": "saw", "hour": "78", "titles": ["Saw chit", "Square sight", "Fillet hook"]},
+	]
+	var wrong_hour_in_saw := 0
+	var wrong_place_at_hour := 0
+	var wrong_person_in_saw := 0
+	for theory in misses:
+		_expect_rejected(theory, Housing)
+		var result: Dictionary = Verdict.submit(theory, Housing)
+		var message := str(result["message"])
+		_expect(Housing.conflicting_ids(theory).size() == 3, "near-miss should name three exhibits: %s" % message)
+		var named_at := -1
+		for title in theory["titles"]:
+			var at := message.find(str(title))
+			_expect(at >= 0, "near-miss omits %s: %s" % [title, message])
+			_expect(at > named_at, "near-miss names %s out of paper order: %s" % [title, message])
+			named_at = at
+		if str(theory["who"]) == "Ewan" and str(theory["place"]) == "saw" and str(theory["hour"]) != "78":
+			wrong_hour_in_saw += 1
+		if str(theory["who"]) == "Ewan" and str(theory["place"]) != "saw" and str(theory["hour"]) == "78":
+			wrong_place_at_hour += 1
+		if str(theory["who"]) != "Ewan" and str(theory["place"]) == "saw" and str(theory["hour"]) == "78":
+			wrong_person_in_saw += 1
+	print("housing near-misses rejected: %d" % misses.size())
+	_expect(misses.size() == 4, "need four housing near-misses, found %d" % misses.size())
+	_expect(wrong_hour_in_saw == 2, "two near-misses should keep Ewan in the saw at another hour")
+	_expect(wrong_place_at_hour >= 1, "a near-miss should keep Ewan at 78 in another room")
+	_expect(wrong_person_in_saw >= 1, "a near-miss should keep the saw at 78 for another person")
+
+func _test_housing_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+		"who took the gilt stamp",
+		"where they took the stamp",
+		"at which hour they took the stamp",
+		"who took the ferry bell",
+		"where they took the bell",
+		"at which hour they took the bell",
+		"who took the weather slate",
+		"where they took the slate",
+		"at which hour they took the slate",
+		"who took the loom shuttle",
+		"where they took the shuttle",
+		"at which hour they took the shuttle",
+		"who took the hive smoker",
+		"where they took the smoker",
+		"at which hour they took the smoker",
+		"who took the glass pontil",
+		"where they took the pontil",
+		"at which hour they took the pontil",
+		"who took the press proof",
+		"where they took the proof",
+		"at which hour they took the proof",
+		"who set the assay cup",
+		"where they set the cup",
+		"at which hour they set the cup",
+		"who chalked the kiln mark",
+		"where they chalked the mark",
+		"at which hour they chalked the mark",
+		"who entered the tide ledger",
+		"where they entered the ledger",
+		"at which hour they entered the ledger",
+		"who stopped the night bell",
+		"where they stopped the bell",
+		"at which hour they stopped the bell",
+		"who scored the salt mark",
+		"where they scored the mark",
+		"at which hour they scored the mark",
+		"who trimmed the wick",
+		"where they trimmed the wick",
+		"at which hour they trimmed the wick",
+		"who annealed the gather",
+		"where they annealed the gather",
+		"at which hour they annealed the gather",
+		"who grafted the scion",
+		"where they grafted the scion",
+		"at which hour they grafted the scion",
+		"who dipped the skein",
+		"where they dipped the skein",
+		"at which hour they dipped the skein",
+		"who tarred the rope",
+		"where they tarred the rope",
+		"at which hour they tarred the rope",
+		"who pressed the cork",
+		"where they pressed the cork",
+		"at which hour they pressed the cork",
+		"who mended the net",
+		"where they mended the net",
+		"at which hour they mended the net",
+		"who drove the hoop",
+		"where they drove the hoop",
+		"at which hour they drove the hoop",
+		"who folded the linen",
+		"where they folded the linen",
+		"at which hour they folded the linen",
+		"who cut the dovetail",
+		"where they cut the dovetail",
+		"at which hour they cut the dovetail",
+		"who cut the mortise",
+		"where they cut the mortise",
+		"at which hour they cut the mortise",
+		"who cut the rebate",
+		"where they cut the rebate",
+		"at which hour they cut the rebate",
+	]
+	var cases := [
+		{"theory": {"who": "", "place": "saw", "hour": "78"}, "present": ["who cut the housing"], "absent": ["where they cut the housing", "at which hour they cut the housing"]},
+		{"theory": {"who": "Ewan", "place": "", "hour": "78"}, "present": ["where they cut the housing"], "absent": ["who cut the housing", "at which hour they cut the housing"]},
+		{"theory": {"who": "Ewan", "place": "saw", "hour": ""}, "present": ["at which hour they cut the housing"], "absent": ["who cut the housing", "where they cut the housing"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who cut the housing", "where they cut the housing", "at which hour they cut the housing"], "absent": []},
+		{"theory": {}, "present": ["who cut the housing", "where they cut the housing", "at which hour they cut the housing"], "absent": []},
+		{"theory": {"who": "Hollin", "place": "", "hour": "80"}, "present": ["where they cut the housing"], "absent": ["who cut the housing", "at which hour they cut the housing"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Housing)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "housing incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "housing incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "housing incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "housing incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "housing incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "housing missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "housing named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "housing incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("housing incomplete submissions refused with the missing slot")
+
+
+func _test_tenon_file_shape() -> void:
+	_expect(Tenon.EXHIBITS.size() == 9, "tenon exhibit count is %d" % Tenon.EXHIBITS.size())
+	_expect(Tenon.PEOPLE.size() == 3, "tenon cast should be three people")
+	_expect(Tenon.PLACES.size() == 3, "tenon room count is %d" % Tenon.PLACES.size())
+	_expect(Tenon.HOURS.size() == 5, "tenon hour list length is %d" % Tenon.HOURS.size())
+	_expect(Tenon.PEOPLE == ["Harl", "Neve", "Luth"], "tenon cast is %s" % str(Tenon.PEOPLE))
+	_expect(Tenon.PLACES == ["gouge", "rasp", "bevel"], "tenon rooms are %s" % str(Tenon.PLACES))
+	_expect(Tenon.HOURS == ["81", "82", "83", "84", "85"], "tenon hours are %s" % str(Tenon.HOURS))
+	_expect(Tenon.AIMS == ["take_haunch", "spare_haunch", "set_haunch"], "tenon aims are %s" % str(Tenon.AIMS))
+	_expect(Tenon.aim_phrase("take_haunch") == "so the bevel would take the haunch", "tenon aim phrase")
+	_expect(Tenon.aim_phrase("spare_haunch") == "to spare the haunch still waiting on the bevel", "tenon spare aim")
+	_expect(Tenon.aim_phrase("set_haunch") == "to set the haunch before the gouge was hung", "tenon set aim")
+	_expect(Tenon.TITLE == "The tenon", "tenon title")
+	_expect(Tenon.BLURB == "The tenon left its peg at the joiner's bench. Name who cut the tenon, the room they cut it in, and the hour.", "tenon blurb")
+	_expect(Tenon.FILE_CODE == "CW-28", "tenon file code")
+	_expect(Tenon.fields() == ["taker", "place", "hour", "nicker", "nick_room", "nick_hour", "seen_from", "guide", "aim", "guide_room", "dowel_room", "hone_hour", "wipe_hour", "hang_hour"], "tenon fields are %s" % str(Tenon.fields()))
+	_expect(Tenon.PLAYER_FIELDS == ["taker", "place", "hour"], "tenon player fields")
+	_expect(Tenon.HOURS[Tenon.HOURS.size() / 2] == TENON_TRUE["hour"], "tenon cutting should be the middle hour")
+	_expect(Tenon.HOURS[0] != TENON_TRUE["hour"], "tenon cutting should not be the earliest hour")
+	_expect(Tenon.HOURS[Tenon.HOURS.size() - 1] != TENON_TRUE["hour"], "tenon cutting should not be the latest hour")
+	var counts := _player_pin_counts(Tenon)
+	_expect(int(counts["taker"]) == 3 and int(counts["place"]) == 3 and int(counts["hour"]) == 3, "tenon pin counts are %s" % str(counts))
+	var loose_pin: Array = [
+		[CaseData, "spare key"],
+		[Rehearsal, "rehearsal score"],
+		[Gilt, "gilt stamp"],
+		[Ferry, "ferry bell"],
+		[Weather, "weather slate"],
+		[Loom, "loom shuttle"],
+		[Hive, "hive smoker"],
+		[Glass, "glass pontil"],
+		[Press, "press proof"],
+		[Assay, "assay cup"],
+	]
+	var rhythm: Array = [
+		[Kiln, "kiln chalk"],
+		[Tide, "tide ledger"],
+		[Night, "night bell"],
+		[Salt, "salt mark"],
+		[Wick, "wick trim"],
+		[Anneal, "glass anneal"],
+		[Graft, "orchard graft"],
+		[Dye, "dye vat"],
+		[Tar, "tar kettle"],
+		[Cork, "cork press"],
+		[Net, "net loft"],
+		[Cask, "cask hoop"],
+		[Linen, "linen fold"],
+		[Dovetail, "dovetail"],
+		[Mortise, "mortise"],
+		[Rebate, "rebate"],
+		[Housing, "housing"],
+	]
+	for row in loose_pin:
+		_expect(counts != _player_pin_counts(row[0]), "tenon copied the %s pin pattern" % row[1])
+	for row in rhythm:
+		_expect(counts == _player_pin_counts(row[0]), "tenon should keep the %s pin rhythm" % row[1])
+	var earlier: Array = []
+	earlier.append_array(loose_pin)
+	earlier.append_array(rhythm)
+	for row in earlier:
+		var book = row[0]
+		var name := str(row[1])
+		_expect(Tenon.TITLE != book.TITLE, "tenon shares a title with the %s" % name)
+		_expect(Tenon.FILE_CODE != book.FILE_CODE, "tenon shares a file code with the %s" % name)
+		_expect(_field_key(Tenon) != _field_key(book), "tenon copied the %s timeline fields" % name)
+	var seen := {}
+	var stated := {}
+	var paired_hidden := 0
+	var earlier_texts := {}
+	var earlier_sentences := {}
+	for row in earlier:
+		for old_exhibit in row[0].EXHIBITS:
+			var old_text := str(old_exhibit["text"])
+			earlier_texts[old_text] = true
+			for old_sentence in old_text.split(". "):
+				earlier_sentences[old_sentence.trim_suffix(".").strip_edges()] = true
+	var exhibit_titles: Array[String] = []
+	var exhibit_sources: Array[String] = []
+	for exhibit in Tenon.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		exhibit_titles.append(str(exhibit["title"]))
+		exhibit_sources.append(str(exhibit["source"]))
+		_expect(not seen.has(exhibit_id), "duplicate tenon id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		_expect(not earlier_texts.has(str(exhibit["text"])), "tenon copied an earlier exhibit")
+		for sentence in str(exhibit["text"]).split(". "):
+			var cleaned := sentence.trim_suffix(".").strip_edges()
+			_expect(not earlier_sentences.has(cleaned), "tenon copied an earlier sentence: %s" % cleaned)
+		for banned in ["housing", "saw", "square", "bead", "trench", "fillet", "stock", "chalk", "ewan", "maren", "hollin", "mortise", "chisel", "awl", "brace", "wedge", "bored", "ragged", "racked", "dovetail", "vise", "stile", "apron", "clamp", "peg", "joint", "linen", "fold", "shears", "roller", "hem", "sheet", "crease", "press", "loft", "bench", "bottle", "cork", "shop", "drawer", "seal", "screw", "cellar", "wax", "neck", "plug", "dye", "vat", "indigo", "skein", "rope", "walk", "kettle", "winch", "pitch", "mesh", "rail", "crank", "needle", "twine", "cooperage", "cask", "hoop", "croze", "stave", "rebate", "plane", "gauge", "mallet", "shoulder", "scribe", "shim", "fence", "tansy", "solt", "quern"]:
+			_expect(str(exhibit["text"]).find(banned) == -1, "%s copies %s" % [exhibit_id, banned])
+		var states_player_pin := false
+		var states_unique := false
+		var player_literals := 0
+		var hidden_literals := 0
+		for literal in exhibit["literals"]:
+			stated[str(literal["value"])] = true
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Tenon.PLAYER_FIELDS:
+				states_player_pin = true
+				player_literals += 1
+				var expected := Tenon.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Tenon.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats >= 2, "%s states %s once" % [exhibit_id, field])
+			else:
+				hidden_literals += 1
+				var owners := 0
+				for other in Tenon.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		if hidden_literals == 2:
+			paired_hidden += 1
+		else:
+			_expect(hidden_literals == 1, "%s states %d hidden facts" % [exhibit_id, hidden_literals])
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(player_literals == 1, "%s states %d player pins" % [exhibit_id, player_literals])
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+	_expect(paired_hidden == 2, "tenon should have two slips with two hidden facts, found %d" % paired_hidden)
+	_expect(exhibit_titles == ["Gouge chit", "Rasp sight", "Dowel hook", "Haunch slate", "Guide card", "Hone slip", "Nick leaf", "Haunch note", "Hang order"], "tenon exhibit titles are %s" % str(exhibit_titles))
+	_expect(exhibit_sources == ["Neve, rasp hand", "Rasp rail", "Bevel peg", "Gouge jaw", "Luth, bevel clerk", "Rasp book", "Nick book", "Joiner's bench", "Bevel slate"], "tenon sources are %s" % str(exhibit_sources))
+	for hour in Tenon.HOURS:
+		_expect(stated.has(hour), "tenon hour %s is absent from the exhibits" % hour)
+
+func _test_tenon_unique_model() -> void:
+	var models := Solver.enumerate(Tenon.EXHIBITS, Tenon)
+	print("tenon models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one tenon model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Harl", "tenon taker")
+	_expect(str(model["place"]) == "gouge", "tenon place")
+	_expect(str(model["hour"]) == "83", "tenon hour")
+	_expect(str(model["nicker"]) == "Neve", "tenon nicker")
+	_expect(str(model["nick_room"]) == "bevel", "tenon nick room")
+	_expect(str(model["nick_hour"]) == "82", "tenon nick hour")
+	_expect(str(model["seen_from"]) == "rasp", "tenon seen from")
+	_expect(str(model["guide"]) == "Luth", "tenon guide")
+	_expect(str(model["aim"]) == "take_haunch", "tenon aim")
+	_expect(str(model["guide_room"]) == "rasp", "tenon guide room")
+	_expect(str(model["dowel_room"]) == "bevel", "tenon dowel room")
+	_expect(str(model["hone_hour"]) == "81", "tenon hone hour")
+	_expect(str(model["wipe_hour"]) == "84", "tenon wipe hour")
+	_expect(str(model["hang_hour"]) == "85", "tenon hang hour")
+	for hour in Tenon.HOURS:
+		var used := false
+		for field in Tenon.fields():
+			if str(model[field]) == hour:
+				used = true
+		_expect(used, "tenon hour %s is blank in the true timeline" % hour)
+	for place in Tenon.PLACES:
+		var place_used := false
+		for field in Tenon.fields():
+			if str(model[field]) == place:
+				place_used = true
+		_expect(place_used, "tenon room %s is blank in the true timeline" % place)
+	for person in Tenon.PEOPLE:
+		var person_used := false
+		for field in Tenon.fields():
+			if str(model[field]) == person:
+				person_used = true
+		_expect(person_used, "tenon person %s is blank in the true timeline" % person)
+	_expect(Tenon.timeline(model) == TENON_TIMELINE, "tenon timeline drifted:\n%s" % Tenon.timeline(model))
+	for exhibit in Tenon.EXHIBITS:
+		_expect(Tenon.holds(exhibit, model), "%s rejects the tenon timeline" % exhibit["id"])
+
+func _test_tenon_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Tenon.EXHIBITS, Tenon)
+	for exhibit in Tenon.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Tenon.without(exhibit_id), Tenon)
+		print("tenon without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "tenon %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Tenon.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "tenon %s removal did not admit a timeline it forbids" % exhibit_id)
+
+func _test_tenon_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	var bevel_miss := {"who": "Neve", "place": "rasp", "hour": "81"}
+	_expect(Tenon.conflicting_ids(bevel_miss).size() == 9, "Neve / rasp / 81 contradicts %d exhibits" % Tenon.conflicting_ids(bevel_miss).size())
+	for who in Tenon.PEOPLE:
+		for place in Tenon.PLACES:
+			for hour in Tenon.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == TENON_TRUE["who"] and place == TENON_TRUE["place"] and hour == TENON_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Tenon)
+					print("tenon true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true tenon theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "tenon acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(TENON_TIMELINE) >= 0, "tenon acceptance should give the timeline")
+					_expect(str(result["message"]).find("Harl") >= 0, "tenon acceptance omits Harl")
+					_expect(str(result["message"]).find("gouge") >= 0, "tenon acceptance omits the gouge")
+					_expect(str(result["message"]).find("83") >= 0, "tenon acceptance omits 83")
+					_expect(str(result["message"]).find("so the bevel would take the haunch") >= 0, "tenon acceptance omits the haunch")
+					_expect(str(result["message"]).find("Harl (gouge hand) cut the tenon in the gouge at 83") >= 0, "tenon acceptance omits the cutting")
+					_expect(Tenon.conflicting_ids(theory).is_empty(), "true tenon theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Tenon)
+					_expect(Tenon.conflicting_ids(theory).size() >= 2, "%s / %s / %s contradicts fewer than two exhibits" % [who, place, hour])
+					rejected += 1
+	for outsider in ["Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal", "Nell"]:
+		_expect_rejected({"who": outsider, "place": "gouge", "hour": "83"}, Tenon)
+	print("tenon theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d tenon theories" % accepted)
+	_expect(rejected >= 2, "rejected %d tenon theories" % rejected)
+
+func _test_tenon_near_misses() -> void:
+	var misses := [
+		{"who": "Harl", "place": "gouge", "hour": "84", "titles": ["Nick leaf", "Haunch note", "Hang order"]},
+		{"who": "Harl", "place": "gouge", "hour": "82", "titles": ["Nick leaf", "Haunch note", "Hang order"]},
+		{"who": "Harl", "place": "rasp", "hour": "83", "titles": ["Haunch slate", "Guide card", "Hone slip"]},
+		{"who": "Neve", "place": "gouge", "hour": "83", "titles": ["Gouge chit", "Rasp sight", "Dowel hook"]},
+	]
+	var wrong_hour_in_gouge := 0
+	var wrong_place_at_hour := 0
+	var wrong_person_in_gouge := 0
+	for theory in misses:
+		_expect_rejected(theory, Tenon)
+		var result: Dictionary = Verdict.submit(theory, Tenon)
+		var message := str(result["message"])
+		_expect(Tenon.conflicting_ids(theory).size() >= 2, "near-miss should contradict at least two exhibits: %s" % message)
+		_expect(Tenon.conflicting_ids(theory).size() == 3, "near-miss should name three exhibits: %s" % message)
+		var named_at := -1
+		for title in theory["titles"]:
+			var at := message.find(str(title))
+			_expect(at >= 0, "near-miss omits %s: %s" % [title, message])
+			_expect(at > named_at, "near-miss names %s out of paper order: %s" % [title, message])
+			named_at = at
+		if str(theory["who"]) == "Harl" and str(theory["place"]) == "gouge" and str(theory["hour"]) != "83":
+			wrong_hour_in_gouge += 1
+		if str(theory["who"]) == "Harl" and str(theory["place"]) != "gouge" and str(theory["hour"]) == "83":
+			wrong_place_at_hour += 1
+		if str(theory["who"]) != "Harl" and str(theory["place"]) == "gouge" and str(theory["hour"]) == "83":
+			wrong_person_in_gouge += 1
+	print("tenon near-misses rejected: %d" % misses.size())
+	_expect(misses.size() == 4, "need four tenon near-misses, found %d" % misses.size())
+	_expect(wrong_hour_in_gouge == 2, "two near-misses should keep Harl in the gouge at another hour")
+	_expect(wrong_place_at_hour >= 1, "a near-miss should keep Harl at 83 in another room")
+	_expect(wrong_person_in_gouge >= 1, "a near-miss should keep the gouge at 83 for another person")
+
+func _test_tenon_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+		"who took the gilt stamp",
+		"where they took the stamp",
+		"at which hour they took the stamp",
+		"who took the ferry bell",
+		"where they took the bell",
+		"at which hour they took the bell",
+		"who took the weather slate",
+		"where they took the slate",
+		"at which hour they took the slate",
+		"who took the loom shuttle",
+		"where they took the shuttle",
+		"at which hour they took the shuttle",
+		"who took the hive smoker",
+		"where they took the smoker",
+		"at which hour they took the smoker",
+		"who took the glass pontil",
+		"where they took the pontil",
+		"at which hour they took the pontil",
+		"who took the press proof",
+		"where they took the proof",
+		"at which hour they took the proof",
+		"who set the assay cup",
+		"where they set the cup",
+		"at which hour they set the cup",
+		"who chalked the kiln mark",
+		"where they chalked the mark",
+		"at which hour they chalked the mark",
+		"who entered the tide ledger",
+		"where they entered the ledger",
+		"at which hour they entered the ledger",
+		"who stopped the night bell",
+		"where they stopped the bell",
+		"at which hour they stopped the bell",
+		"who scored the salt mark",
+		"where they scored the mark",
+		"at which hour they scored the mark",
+		"who trimmed the wick",
+		"where they trimmed the wick",
+		"at which hour they trimmed the wick",
+		"who annealed the gather",
+		"where they annealed the gather",
+		"at which hour they annealed the gather",
+		"who grafted the scion",
+		"where they grafted the scion",
+		"at which hour they grafted the scion",
+		"who dipped the skein",
+		"where they dipped the skein",
+		"at which hour they dipped the skein",
+		"who tarred the rope",
+		"where they tarred the rope",
+		"at which hour they tarred the rope",
+		"who pressed the cork",
+		"where they pressed the cork",
+		"at which hour they pressed the cork",
+		"who mended the net",
+		"where they mended the net",
+		"at which hour they mended the net",
+		"who drove the hoop",
+		"where they drove the hoop",
+		"at which hour they drove the hoop",
+		"who folded the linen",
+		"where they folded the linen",
+		"at which hour they folded the linen",
+		"who cut the dovetail",
+		"where they cut the dovetail",
+		"at which hour they cut the dovetail",
+		"who cut the mortise",
+		"where they cut the mortise",
+		"at which hour they cut the mortise",
+		"who cut the rebate",
+		"where they cut the rebate",
+		"at which hour they cut the rebate",
+		"who cut the housing",
+		"where they cut the housing",
+		"at which hour they cut the housing",
+	]
+	var cases := [
+		{"theory": {"who": "", "place": "gouge", "hour": "83"}, "present": ["who cut the tenon"], "absent": ["where they cut the tenon", "at which hour they cut the tenon"]},
+		{"theory": {"who": "Harl", "place": "", "hour": "83"}, "present": ["where they cut the tenon"], "absent": ["who cut the tenon", "at which hour they cut the tenon"]},
+		{"theory": {"who": "Harl", "place": "gouge", "hour": ""}, "present": ["at which hour they cut the tenon"], "absent": ["who cut the tenon", "where they cut the tenon"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who cut the tenon", "where they cut the tenon", "at which hour they cut the tenon"], "absent": []},
+		{"theory": {}, "present": ["who cut the tenon", "where they cut the tenon", "at which hour they cut the tenon"], "absent": []},
+		{"theory": {"who": "Luth", "place": "", "hour": "85"}, "present": ["where they cut the tenon"], "absent": ["who cut the tenon", "at which hour they cut the tenon"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Tenon)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "tenon incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "tenon incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "tenon incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "tenon incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "tenon incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "tenon missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "tenon named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "tenon incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("tenon incomplete submissions refused with the missing slot")
+
+
 func _test_solutions_differ() -> void:
 	var spare := {"who": "Nell", "place": "kitchen", "hour": "7"}
 	_expect(spare["who"] != REHEARSAL_TRUE["who"], "rehearsal copied the spare-key taker")
@@ -9015,7 +9773,152 @@ func _test_solutions_differ() -> void:
 	_expect(not Rebate.HOURS.has("69"), "rebate hours must not take 69")
 	_expect(not Rebate.HOURS.has("70"), "rebate hours must not take 70")
 
-	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal", "The orchard graft", "The dye vat", "The tar kettle", "The cork press", "The net loft", "The cask hoop", "The linen fold", "The dovetail", "The mortise", "The rebate"], "case list is %s" % str(titles))
+
+	_expect(HOUSING_TRUE["who"] == "Ewan", "housing taker")
+	_expect(HOUSING_TRUE["place"] == "saw", "housing room")
+	_expect(HOUSING_TRUE["hour"] == "78", "housing hour")
+	for forbidden in ["Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(HOUSING_TRUE["who"] != forbidden, "housing accepted %s" % forbidden)
+	for forbidden_place in ["plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(HOUSING_TRUE["place"] != forbidden_place, "housing accepted the %s" % forbidden_place)
+	_expect(HOUSING_TRUE["hour"] != "76", "housing accepted 76")
+	_expect(HOUSING_TRUE["hour"] != "77", "housing accepted 77")
+	_expect(HOUSING_TRUE["hour"] != "79", "housing accepted 79")
+	_expect(HOUSING_TRUE["hour"] != "80", "housing accepted 80")
+	_expect(HOUSING_TRUE["hour"] != "73", "housing accepted 73")
+	_expect(HOUSING_TRUE["hour"] != "68", "housing accepted 68")
+	_expect(HOUSING_TRUE["hour"] != "63", "housing accepted 63")
+	_expect(HOUSING_TRUE["hour"] != "8", "housing accepted 8")
+	_expect(HOUSING_TRUE["hour"] != "6", "housing accepted 6")
+	_expect(HOUSING_TRUE["hour"] != "3", "housing accepted 3")
+	_expect(HOUSING_TRUE["hour"] != "16", "housing accepted 16")
+	_expect(HOUSING_TRUE["hour"] != "19", "housing accepted 19")
+	var before_housing: Array = before_rebate.duplicate()
+	before_housing.append([Rebate, REBATE_TRUE, "rebate"])
+	for row in before_housing:
+		var book = row[0]
+		var truth: Dictionary = row[1]
+		var name := str(row[2])
+		_expect(HOUSING_TRUE["who"] != truth["who"], "housing copied the %s taker" % name)
+		_expect(HOUSING_TRUE["place"] != truth["place"], "housing copied the %s room" % name)
+		_expect(HOUSING_TRUE["hour"] != str(truth["hour"]), "housing copied the %s hour" % name)
+		_expect_rejected(HOUSING_TRUE, book)
+		_expect_rejected(truth, Housing)
+	_expect(REBATE_TRUE["who"] == "Tansy" and REBATE_TRUE["place"] == "plane" and REBATE_TRUE["hour"] == "73", "the rebate should still accept Tansy in the plane at 73")
+	for row in before_housing:
+		var book = row[0]
+		var name := str(row[2])
+		for person in Housing.PEOPLE:
+			_expect(not book.PEOPLE.has(person), "housing cast repeats %s from the %s" % [person, name])
+		for place in Housing.PLACES:
+			_expect(not book.PLACES.has(place), "housing rooms repeat %s from the %s" % [place, name])
+		for hour in Housing.HOURS:
+			_expect(not book.HOURS.has(hour), "housing hours repeat %s from the %s" % [hour, name])
+	for forbidden_person in ["Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(not Housing.PEOPLE.has(forbidden_person), "housing cast must not take %s" % forbidden_person)
+	_expect(Housing.role_phrase("Ewan") == "the saw hand", "the housing should call Ewan the saw hand")
+	_expect(Housing.role_phrase("Maren") == "the square hand", "the housing should call Maren the square hand")
+	_expect(Housing.role_phrase("Hollin") == "the bead clerk", "the housing should call Hollin the bead clerk")
+	for forbidden_place in ["plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "dye_house", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(not Housing.PLACES.has(forbidden_place), "housing rooms must not take the %s" % forbidden_place)
+	_expect(not Housing.HOURS.has("6"), "housing hours must not take 6")
+	_expect(not Housing.HOURS.has("7"), "housing hours must not take 7")
+	_expect(not Housing.HOURS.has("8"), "housing hours must not take 8")
+	_expect(not Housing.HOURS.has("9"), "housing hours must not take 9")
+	_expect(not Housing.HOURS.has("10"), "housing hours must not take 10")
+	_expect(not Housing.HOURS.has("60"), "housing hours must not take 60")
+	_expect(not Housing.HOURS.has("61"), "housing hours must not take 61")
+	_expect(not Housing.HOURS.has("62"), "housing hours must not take 62")
+	_expect(not Housing.HOURS.has("63"), "housing hours must not take 63")
+	_expect(not Housing.HOURS.has("64"), "housing hours must not take 64")
+	_expect(not Housing.HOURS.has("65"), "housing hours must not take 65")
+	_expect(not Housing.HOURS.has("66"), "housing hours must not take 66")
+	_expect(not Housing.HOURS.has("67"), "housing hours must not take 67")
+	_expect(not Housing.HOURS.has("68"), "housing hours must not take 68")
+	_expect(not Housing.HOURS.has("69"), "housing hours must not take 69")
+	_expect(not Housing.HOURS.has("70"), "housing hours must not take 70")
+	_expect(not Housing.HOURS.has("71"), "housing hours must not take 71")
+	_expect(not Housing.HOURS.has("72"), "housing hours must not take 72")
+	_expect(not Housing.HOURS.has("73"), "housing hours must not take 73")
+	_expect(not Housing.HOURS.has("74"), "housing hours must not take 74")
+	_expect(not Housing.HOURS.has("75"), "housing hours must not take 75")
+
+	_expect(TENON_TRUE["who"] == "Harl", "tenon taker")
+	_expect(TENON_TRUE["place"] == "gouge", "tenon room")
+	_expect(TENON_TRUE["hour"] == "83", "tenon hour")
+	for forbidden in ["Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(TENON_TRUE["who"] != forbidden, "tenon accepted %s" % forbidden)
+	for forbidden_place in ["saw", "square", "bead", "plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(TENON_TRUE["place"] != forbidden_place, "tenon accepted the %s" % forbidden_place)
+	_expect(TENON_TRUE["hour"] != "81", "tenon accepted 81")
+	_expect(TENON_TRUE["hour"] != "82", "tenon accepted 82")
+	_expect(TENON_TRUE["hour"] != "84", "tenon accepted 84")
+	_expect(TENON_TRUE["hour"] != "85", "tenon accepted 85")
+	_expect(TENON_TRUE["hour"] != "78", "tenon accepted 78")
+	_expect(TENON_TRUE["hour"] != "73", "tenon accepted 73")
+	_expect(TENON_TRUE["hour"] != "68", "tenon accepted 68")
+	_expect(TENON_TRUE["hour"] != "63", "tenon accepted 63")
+	_expect(TENON_TRUE["hour"] != "8", "tenon accepted 8")
+	_expect(TENON_TRUE["hour"] != "6", "tenon accepted 6")
+	_expect(TENON_TRUE["hour"] != "3", "tenon accepted 3")
+	_expect(TENON_TRUE["hour"] != "16", "tenon accepted 16")
+	_expect(TENON_TRUE["hour"] != "19", "tenon accepted 19")
+	var before_tenon: Array = before_housing.duplicate()
+	before_tenon.append([Housing, HOUSING_TRUE, "housing"])
+	for row in before_tenon:
+		var book = row[0]
+		var truth: Dictionary = row[1]
+		var name := str(row[2])
+		_expect(TENON_TRUE["who"] != truth["who"], "tenon copied the %s taker" % name)
+		_expect(TENON_TRUE["place"] != truth["place"], "tenon copied the %s room" % name)
+		_expect(TENON_TRUE["hour"] != str(truth["hour"]), "tenon copied the %s hour" % name)
+		_expect_rejected(TENON_TRUE, book)
+		_expect_rejected(truth, Tenon)
+	_expect(HOUSING_TRUE["who"] == "Ewan" and HOUSING_TRUE["place"] == "saw" and HOUSING_TRUE["hour"] == "78", "the housing should still accept Ewan in the saw at 78")
+	for row in before_tenon:
+		var book = row[0]
+		var name := str(row[2])
+		for person in Tenon.PEOPLE:
+			_expect(not book.PEOPLE.has(person), "tenon cast repeats %s from the %s" % [person, name])
+		for place in Tenon.PLACES:
+			_expect(not book.PLACES.has(place), "tenon rooms repeat %s from the %s" % [place, name])
+		for hour in Tenon.HOURS:
+			_expect(not book.HOURS.has(hour), "tenon hours repeat %s from the %s" % [hour, name])
+	for forbidden_person in ["Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(not Tenon.PEOPLE.has(forbidden_person), "tenon cast must not take %s" % forbidden_person)
+	_expect(Tenon.role_phrase("Harl") == "the gouge hand", "the tenon should call Harl the gouge hand")
+	_expect(Tenon.role_phrase("Neve") == "the rasp hand", "the tenon should call Neve the rasp hand")
+	_expect(Tenon.role_phrase("Luth") == "the bevel clerk", "the tenon should call Luth the bevel clerk")
+	for forbidden_place in ["saw", "square", "bead", "plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "dye_house", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(not Tenon.PLACES.has(forbidden_place), "tenon rooms must not take the %s" % forbidden_place)
+	_expect(not Tenon.HOURS.has("6"), "tenon hours must not take 6")
+	_expect(not Tenon.HOURS.has("7"), "tenon hours must not take 7")
+	_expect(not Tenon.HOURS.has("8"), "tenon hours must not take 8")
+	_expect(not Tenon.HOURS.has("9"), "tenon hours must not take 9")
+	_expect(not Tenon.HOURS.has("10"), "tenon hours must not take 10")
+	_expect(not Tenon.HOURS.has("60"), "tenon hours must not take 60")
+	_expect(not Tenon.HOURS.has("61"), "tenon hours must not take 61")
+	_expect(not Tenon.HOURS.has("62"), "tenon hours must not take 62")
+	_expect(not Tenon.HOURS.has("63"), "tenon hours must not take 63")
+	_expect(not Tenon.HOURS.has("64"), "tenon hours must not take 64")
+	_expect(not Tenon.HOURS.has("65"), "tenon hours must not take 65")
+	_expect(not Tenon.HOURS.has("66"), "tenon hours must not take 66")
+	_expect(not Tenon.HOURS.has("67"), "tenon hours must not take 67")
+	_expect(not Tenon.HOURS.has("68"), "tenon hours must not take 68")
+	_expect(not Tenon.HOURS.has("69"), "tenon hours must not take 69")
+	_expect(not Tenon.HOURS.has("70"), "tenon hours must not take 70")
+	_expect(not Tenon.HOURS.has("71"), "tenon hours must not take 71")
+	_expect(not Tenon.HOURS.has("72"), "tenon hours must not take 72")
+	_expect(not Tenon.HOURS.has("73"), "tenon hours must not take 73")
+	_expect(not Tenon.HOURS.has("74"), "tenon hours must not take 74")
+	_expect(not Tenon.HOURS.has("75"), "tenon hours must not take 75")
+	_expect(not Tenon.HOURS.has("76"), "tenon hours must not take 76")
+	_expect(not Tenon.HOURS.has("77"), "tenon hours must not take 77")
+	_expect(not Tenon.HOURS.has("78"), "tenon hours must not take 78")
+	_expect(not Tenon.HOURS.has("79"), "tenon hours must not take 79")
+	_expect(not Tenon.HOURS.has("80"), "tenon hours must not take 80")
+
+	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal", "The orchard graft", "The dye vat", "The tar kettle", "The cork press", "The net loft", "The cask hoop", "The linen fold", "The dovetail", "The mortise", "The rebate", "The housing", "The tenon"], "case list is %s" % str(titles))
 
 
 func _test_menu_opens_either_case() -> void:
@@ -9027,7 +9930,8 @@ func _test_menu_opens_either_case() -> void:
 	if root.get_child_count() == 0:
 		root._ready()
 	var menu_blob := _visible_label_blob(root)
-	_expect(menu_blob.find("Twenty-six files") >= 0, "menu does not offer twenty-six files: %s" % menu_blob)
+	_expect(get_root().size == Vector2i(1280, 800), "case window is %s" % str(get_root().size))
+	_expect(menu_blob.find("Twenty-eight files") >= 0, "menu does not offer twenty-eight files: %s" % menu_blob)
 	_expect(menu_blob.find("CW-07") >= 0, "menu omits CW-07")
 	_expect(menu_blob.find("The hive smoker") >= 0, "menu omits The hive smoker")
 	_expect(menu_blob.find("CW-08") >= 0, "menu omits CW-08")
@@ -9068,6 +9972,10 @@ func _test_menu_opens_either_case() -> void:
 	_expect(menu_blob.find("The mortise") >= 0, "menu omits The mortise")
 	_expect(menu_blob.find("CW-26") >= 0, "menu omits CW-26")
 	_expect(menu_blob.find("The rebate") >= 0, "menu omits The rebate")
+	_expect(menu_blob.find("CW-27") >= 0, "menu omits CW-27")
+	_expect(menu_blob.find("The housing") >= 0, "menu omits The housing")
+	_expect(menu_blob.find("CW-28") >= 0, "menu omits CW-28")
+	_expect(menu_blob.find("The tenon") >= 0, "menu omits The tenon")
 	_expect(root.get_child_count() > 0, "main scene built %d children" % root.get_child_count())
 	_press(root, "How to play")
 	var howto := _visible_label_blob(root)
@@ -9097,6 +10005,8 @@ func _test_menu_opens_either_case() -> void:
 	_expect(howto.find("The dovetail") >= 0, "how to play omits The dovetail")
 	_expect(howto.find("The mortise") >= 0, "how to play omits The mortise")
 	_expect(howto.find("The rebate") >= 0, "how to play omits The rebate")
+	_expect(howto.find("The housing") >= 0, "how to play omits The housing")
+	_expect(howto.find("The tenon") >= 0, "how to play omits The tenon")
 	_expect(howto.find("names that slot") >= 0, "how to play omits the empty-slot rule")
 	_press(root, "Back to the menu")
 	_expect(_find_visible_button(root, "Open The spare key") != null, "menu is missing The spare key")
@@ -9125,6 +10035,8 @@ func _test_menu_opens_either_case() -> void:
 	_expect(_find_visible_button(root, "Open The dovetail") != null, "menu is missing The dovetail")
 	_expect(_find_visible_button(root, "Open The mortise") != null, "menu is missing The mortise")
 	_expect(_find_visible_button(root, "Open The rebate") != null, "menu is missing The rebate")
+	_expect(_find_visible_button(root, "Open The housing") != null, "menu is missing The housing")
+	_expect(_find_visible_button(root, "Open The tenon") != null, "menu is missing The tenon")
 	_press(root, "Open The rehearsal score")
 	var rehearsal_open := _visible_label_blob(root)
 	_expect(rehearsal_open.find("Cut list") >= 0, "rehearsal file did not open")
@@ -10773,8 +11685,332 @@ func _test_menu_opens_either_case() -> void:
 	_expect(mortise_again_blob.find("Chisel chit") >= 0, "mortise papers left after returning")
 	_expect(mortise_again_blob.find("Plane chit") == -1, "rebate papers stayed up after returning to The mortise")
 
-	root.queue_free()
+	_press(root, "Menu")
+	_press(root, "Open The housing")
+	var housing_open := _visible_label_blob(root)
+	_expect(housing_open.find("Saw chit") >= 0, "housing file did not open")
+	_expect(housing_open.find("Trench note") >= 0, "housing file did not show its exhibits")
+	_expect(housing_open.find("CW-27") >= 0, "housing file omits CW-27")
+	_expect(housing_open.find("Fillet hook") >= 0, "housing file omits Fillet hook")
+	_expect(housing_open.find("Chalk slip") >= 0, "housing file omits Chalk slip")
+	_expect(housing_open.find("Mark leaf") >= 0, "housing file omits Mark leaf")
+	_expect(housing_open.find("Hang order") >= 0, "housing file omits Hang order")
+	_expect(housing_open.find("Complaint slip") == -1, "spare key papers showed inside The housing")
+	_expect(housing_open.find("Cut list") == -1, "rehearsal papers showed inside The housing")
+	_expect(housing_open.find("Move order") == -1, "gilt stamp papers showed inside The housing")
+	_expect(housing_open.find("Whistle slip") == -1, "ferry bell papers showed inside The housing")
+	_expect(housing_open.find("Frost note") == -1, "weather slate papers showed inside The housing")
+	_expect(housing_open.find("Trough tag") == -1, "loom shuttle papers showed inside The housing")
+	_expect(housing_open.find("Fuel line") == -1, "hive smoker papers showed inside The housing")
+	_expect(housing_open.find("Weight line") == -1, "glass pontil papers showed inside The housing")
+	_expect(housing_open.find("Lock line") == -1, "press proof papers showed inside The housing")
+	_expect(housing_open.find("Cup line") == -1, "assay cup papers showed inside The housing")
+	_expect(housing_open.find("Mark line") == -1, "kiln chalk papers showed inside The housing")
+	_expect(housing_open.find("Ledger line") == -1, "tide ledger papers showed inside The housing")
+	_expect(housing_open.find("Bell line") == -1, "night bell papers showed inside The housing")
+	_expect(housing_open.find("Salt line") == -1, "salt mark papers showed inside The housing")
+	_expect(housing_open.find("Oil note") == -1, "wick trim papers showed inside The housing")
+	_expect(housing_open.find("Gather note") == -1, "glass anneal papers showed inside The housing")
+	_expect(housing_open.find("Scion note") == -1, "orchard graft papers showed inside The housing")
+	_expect(housing_open.find("Winder chit") == -1, "dye vat papers showed inside The housing")
+	_expect(housing_open.find("Rope chit") == -1, "tar kettle papers showed inside The housing")
+	_expect(housing_open.find("Cutter chit") == -1, "cork press papers showed inside The housing")
+	_expect(housing_open.find("Mesh chit") == -1, "net loft papers showed inside The housing")
+	_expect(housing_open.find("Hoop chit") == -1, "cask hoop papers showed inside The housing")
+	_expect(housing_open.find("Shears chit") == -1, "linen fold papers showed inside The housing")
+	_expect(housing_open.find("Apron sight") == -1, "dovetail papers showed inside The housing")
+	_expect(housing_open.find("Peg hook") == -1, "dovetail papers showed inside The housing")
+	_expect(housing_open.find("Joint slate") == -1, "dovetail papers showed inside The housing")
+	_expect(housing_open.find("Clamp card") == -1, "dovetail papers showed inside The housing")
+	_expect(housing_open.find("Sweep slip") == -1, "dovetail papers showed inside The housing")
+	_expect(housing_open.find("Cut leaf") == -1, "dovetail papers showed inside The housing")
+	_expect(housing_open.find("Joint note") == -1, "dovetail papers showed inside The housing")
+	_expect(housing_open.find("Jaw order") == -1, "dovetail papers showed inside The housing")
+	_expect(housing_open.find("CW-24") == -1, "dovetail file code stayed up inside The housing")
+	_expect(housing_open.find("Chisel chit") == -1, "mortise papers stayed up inside The housing")
+	_expect(housing_open.find("Awl sight") == -1, "mortise papers showed inside The housing")
+	_expect(housing_open.find("Wedge hook") == -1, "mortise papers showed inside The housing")
+	_expect(housing_open.find("Tenon slate") == -1, "mortise papers showed inside The housing")
+	_expect(housing_open.find("Brace card") == -1, "mortise papers showed inside The housing")
+	_expect(housing_open.find("Brush slip") == -1, "mortise papers showed inside The housing")
+	_expect(housing_open.find("Bore leaf") == -1, "mortise papers showed inside The housing")
+	_expect(housing_open.find("Tenon note") == -1, "mortise papers showed inside The housing")
+	_expect(housing_open.find("Rack order") == -1, "mortise papers showed inside The housing")
+	_expect(housing_open.find("CW-25") == -1, "mortise file code stayed up inside The housing")
+	_expect(housing_open.find("Plane chit") == -1, "rebate papers stayed up inside The housing")
+	_expect(housing_open.find("Gauge sight") == -1, "rebate papers showed inside The housing")
+	_expect(housing_open.find("Shim hook") == -1, "rebate papers showed inside The housing")
+	_expect(housing_open.find("Shoulder slate") == -1, "rebate papers showed inside The housing")
+	_expect(housing_open.find("Fence card") == -1, "rebate papers showed inside The housing")
+	_expect(housing_open.find("Oil slip") == -1, "rebate papers showed inside The housing")
+	_expect(housing_open.find("Scribe leaf") == -1, "rebate papers showed inside The housing")
+	_expect(housing_open.find("Shoulder note") == -1, "rebate papers showed inside The housing")
+	_expect(housing_open.find("CW-26") == -1, "rebate file code stayed up inside The housing")
+	_press(root, "Submit theory")
+	var empty_housing := _verdict_text(root)
+	_expect(empty_housing.find("who cut the housing") >= 0, "empty housing board: %s" % empty_housing)
+	_expect(empty_housing.find("where they cut the housing") >= 0, "empty housing board: %s" % empty_housing)
+	_expect(empty_housing.find("at which hour they cut the housing") >= 0, "empty housing board: %s" % empty_housing)
+	_expect(empty_housing.find("who took the spare key") == -1, "empty housing board used the spare key slot: %s" % empty_housing)
+	_expect(empty_housing.find("who cut the rebate") == -1, "empty housing board used a rebate slot: %s" % empty_housing)
+	_expect(empty_housing.to_lower().find("conflict") == -1, "empty housing board talked about a conflict: %s" % empty_housing)
+	_press(root, "Maren")
+	_press(root, "Square")
+	_press(root, "76")
+	_press(root, "Submit theory")
+	var housing_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(housing_miss, Housing, {"who": "Maren", "place": "square", "hour": "76"})
+	_expect(housing_miss.find("Saw chit") >= 0, "wrong triple reply omits Saw chit: %s" % housing_miss)
+	_expect(housing_miss.find("Square sight") >= 0, "wrong triple reply omits Square sight: %s" % housing_miss)
+	_expect(housing_miss.find("Fillet hook") >= 0, "wrong triple reply omits Fillet hook: %s" % housing_miss)
+	_expect(housing_miss.find("Trench slate") >= 0, "wrong triple reply omits Trench slate: %s" % housing_miss)
+	_expect(housing_miss.find("Stock card") >= 0, "wrong triple reply omits Stock card: %s" % housing_miss)
+	_expect(housing_miss.find("Chalk slip") >= 0, "wrong triple reply omits Chalk slip: %s" % housing_miss)
+	_expect(housing_miss.find("Mark leaf") >= 0, "wrong triple reply omits Mark leaf: %s" % housing_miss)
+	_expect(housing_miss.find("Trench note") >= 0, "wrong triple reply omits Trench note: %s" % housing_miss)
+	_expect(housing_miss.find("Hang order") >= 0, "wrong triple reply omits Hang order: %s" % housing_miss)
+	_press(root, "Ewan")
+	_press(root, "Saw")
+	_press(root, "78")
+	_press(root, "Submit theory")
+	var housing_accepted := _verdict_text(root)
+	_expect(housing_accepted.find("fits every exhibit") >= 0, "housing board rejected the true theory: %s" % housing_accepted)
+	_expect(housing_accepted.find(HOUSING_TIMELINE) >= 0, "housing board timeline: %s" % housing_accepted)
+	_expect(housing_accepted.find("Ewan (saw hand) cut the housing in the saw at 78") >= 0, "housing board omits Ewan at 78: %s" % housing_accepted)
+	_expect(housing_accepted.find("in the saw") >= 0, "housing board omits the saw: %s" % housing_accepted)
+	_expect(housing_accepted.find("so the bead would take the trench") >= 0, "housing board omits the trench: %s" % housing_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var housing_cleared := _verdict_text(root)
+	_expect(housing_cleared.find("who cut the housing") >= 0, "cleared housing board: %s" % housing_cleared)
+	_expect(housing_cleared.find("fits every exhibit") == -1, "cleared housing board stayed accepted: %s" % housing_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The rebate")
+	var rebate_from_housing := _visible_label_blob(root)
+	_expect(rebate_from_housing.find("Plane chit") >= 0, "could not return to The rebate from The housing")
+	_expect(rebate_from_housing.find("Shoulder note") >= 0, "rebate exhibits did not return")
+	_expect(rebate_from_housing.find("CW-26") >= 0, "returned rebate omits CW-26")
+	_expect(rebate_from_housing.find("Saw chit") == -1, "housing papers stayed up inside The rebate")
+	_expect(rebate_from_housing.find("Square sight") == -1, "housing papers showed inside The rebate")
+	_expect(rebate_from_housing.find("Fillet hook") == -1, "housing papers showed inside The rebate")
+	_expect(rebate_from_housing.find("Trench slate") == -1, "housing papers showed inside The rebate")
+	_expect(rebate_from_housing.find("Stock card") == -1, "housing papers showed inside The rebate")
+	_expect(rebate_from_housing.find("Chalk slip") == -1, "housing papers showed inside The rebate")
+	_expect(rebate_from_housing.find("Mark leaf") == -1, "housing papers showed inside The rebate")
+	_expect(rebate_from_housing.find("Trench note") == -1, "housing papers showed inside The rebate")
+	_expect(rebate_from_housing.find("CW-27") == -1, "housing file code stayed up inside The rebate")
+	_press(root, "Tansy")
+	_press(root, "Plane")
+	_press(root, "73")
+	_press(root, "Submit theory")
+	var rebate_again := _verdict_text(root)
+	_expect(rebate_again.find("fits every exhibit") >= 0, "rebate board rejected the true theory after The housing: %s" % rebate_again)
+	_expect(rebate_again.find("Tansy (plane hand) cut the rebate in the plane at 73") >= 0, "rebate board timeline after The housing: %s" % rebate_again)
+	var rebate_again_blob := _visible_label_blob(root)
+	_expect(rebate_again_blob.find("Plane chit") >= 0, "rebate papers left after returning")
+	_expect(rebate_again_blob.find("Saw chit") == -1, "housing papers stayed up after returning to The rebate")
+	_expect(rebate_again_blob.find("Trench note") == -1, "housing papers stayed up after returning to The rebate")
+	_press(root, "Menu")
+	_press(root, "Open The tenon")
+	var tenon_open := _visible_label_blob(root)
+	_expect(tenon_open.find("Gouge chit") >= 0, "tenon file did not open")
+	_expect(tenon_open.find("Haunch note") >= 0, "tenon file did not show its exhibits")
+	_expect(tenon_open.find("CW-28") >= 0, "tenon file omits CW-28")
+	_expect(tenon_open.find("Dowel hook") >= 0, "tenon file omits Dowel hook")
+	_expect(tenon_open.find("Complaint slip") == -1, "spare key papers showed inside The tenon")
+	_expect(tenon_open.find("Cut list") == -1, "rehearsal papers showed inside The tenon")
+	_expect(tenon_open.find("Move order") == -1, "gilt stamp papers showed inside The tenon")
+	_expect(tenon_open.find("Whistle slip") == -1, "ferry bell papers showed inside The tenon")
+	_expect(tenon_open.find("Frost note") == -1, "weather slate papers showed inside The tenon")
+	_expect(tenon_open.find("Trough tag") == -1, "loom shuttle papers showed inside The tenon")
+	_expect(tenon_open.find("Fuel line") == -1, "hive smoker papers showed inside The tenon")
+	_expect(tenon_open.find("Weight line") == -1, "glass pontil papers showed inside The tenon")
+	_expect(tenon_open.find("Lock line") == -1, "press proof papers showed inside The tenon")
+	_expect(tenon_open.find("Cup line") == -1, "assay cup papers showed inside The tenon")
+	_expect(tenon_open.find("Mark line") == -1, "kiln chalk papers showed inside The tenon")
+	_expect(tenon_open.find("Ledger line") == -1, "tide ledger papers showed inside The tenon")
+	_expect(tenon_open.find("Bell line") == -1, "night bell papers showed inside The tenon")
+	_expect(tenon_open.find("Salt line") == -1, "salt mark papers showed inside The tenon")
+	_expect(tenon_open.find("Oil note") == -1, "wick trim papers showed inside The tenon")
+	_expect(tenon_open.find("Gather note") == -1, "glass anneal papers showed inside The tenon")
+	_expect(tenon_open.find("Scion note") == -1, "orchard graft papers showed inside The tenon")
+	_expect(tenon_open.find("Winder chit") == -1, "dye vat papers showed inside The tenon")
+	_expect(tenon_open.find("Rope chit") == -1, "tar kettle papers showed inside The tenon")
+	_expect(tenon_open.find("Cutter chit") == -1, "cork press papers showed inside The tenon")
+	_expect(tenon_open.find("Mesh chit") == -1, "net loft papers showed inside The tenon")
+	_expect(tenon_open.find("Hoop chit") == -1, "cask hoop papers showed inside The tenon")
+	_expect(tenon_open.find("Shears chit") == -1, "linen fold papers showed inside The tenon")
+	_expect(tenon_open.find("Apron sight") == -1, "dovetail papers showed inside The tenon")
+	_expect(tenon_open.find("Peg hook") == -1, "dovetail papers showed inside The tenon")
+	_expect(tenon_open.find("Joint slate") == -1, "dovetail papers showed inside The tenon")
+	_expect(tenon_open.find("Clamp card") == -1, "dovetail papers showed inside The tenon")
+	_expect(tenon_open.find("Sweep slip") == -1, "dovetail papers showed inside The tenon")
+	_expect(tenon_open.find("Cut leaf") == -1, "dovetail papers showed inside The tenon")
+	_expect(tenon_open.find("Joint note") == -1, "dovetail papers showed inside The tenon")
+	_expect(tenon_open.find("Jaw order") == -1, "dovetail papers showed inside The tenon")
+	_expect(tenon_open.find("CW-24") == -1, "dovetail file code stayed up inside The tenon")
+	_expect(tenon_open.find("Chisel chit") == -1, "mortise papers stayed up inside The tenon")
+	_expect(tenon_open.find("Awl sight") == -1, "mortise papers showed inside The tenon")
+	_expect(tenon_open.find("Wedge hook") == -1, "mortise papers showed inside The tenon")
+	_expect(tenon_open.find("Tenon slate") == -1, "mortise papers showed inside The tenon")
+	_expect(tenon_open.find("Brace card") == -1, "mortise papers showed inside The tenon")
+	_expect(tenon_open.find("Brush slip") == -1, "mortise papers showed inside The tenon")
+	_expect(tenon_open.find("Bore leaf") == -1, "mortise papers showed inside The tenon")
+	_expect(tenon_open.find("Tenon note") == -1, "mortise papers showed inside The tenon")
+	_expect(tenon_open.find("Rack order") == -1, "mortise papers showed inside The tenon")
+	_expect(tenon_open.find("CW-25") == -1, "mortise file code stayed up inside The tenon")
+	_expect(tenon_open.find("Plane chit") == -1, "rebate papers stayed up inside The tenon")
+	_expect(tenon_open.find("Gauge sight") == -1, "rebate papers showed inside The tenon")
+	_expect(tenon_open.find("Shim hook") == -1, "rebate papers showed inside The tenon")
+	_expect(tenon_open.find("Shoulder slate") == -1, "rebate papers showed inside The tenon")
+	_expect(tenon_open.find("Fence card") == -1, "rebate papers showed inside The tenon")
+	_expect(tenon_open.find("Oil slip") == -1, "rebate papers showed inside The tenon")
+	_expect(tenon_open.find("Scribe leaf") == -1, "rebate papers showed inside The tenon")
+	_expect(tenon_open.find("Shoulder note") == -1, "rebate papers showed inside The tenon")
+	_expect(tenon_open.find("CW-26") == -1, "rebate file code stayed up inside The tenon")
+	_expect(tenon_open.find("Saw chit") == -1, "housing papers stayed up inside The tenon")
+	_expect(tenon_open.find("Square sight") == -1, "housing papers showed inside The tenon")
+	_expect(tenon_open.find("Fillet hook") == -1, "housing papers showed inside The tenon")
+	_expect(tenon_open.find("Trench slate") == -1, "housing papers showed inside The tenon")
+	_expect(tenon_open.find("Stock card") == -1, "housing papers showed inside The tenon")
+	_expect(tenon_open.find("Chalk slip") == -1, "housing papers showed inside The tenon")
+	_expect(tenon_open.find("Mark leaf") == -1, "housing papers showed inside The tenon")
+	_expect(tenon_open.find("Trench note") == -1, "housing papers showed inside The tenon")
+	_expect(tenon_open.find("CW-27") == -1, "housing file code stayed up inside The tenon")
+	_press(root, "Submit theory")
+	var empty_tenon := _verdict_text(root)
+	_expect(empty_tenon.find("who cut the tenon") >= 0, "empty tenon board: %s" % empty_tenon)
+	_expect(empty_tenon.find("where they cut the tenon") >= 0, "empty tenon board: %s" % empty_tenon)
+	_expect(empty_tenon.find("at which hour they cut the tenon") >= 0, "empty tenon board: %s" % empty_tenon)
+	_expect(empty_tenon.find("who took the spare key") == -1, "empty tenon board used the spare key slot: %s" % empty_tenon)
+	_expect(empty_tenon.find("who cut the housing") == -1, "empty tenon board used a housing slot: %s" % empty_tenon)
+	_expect(empty_tenon.to_lower().find("conflict") == -1, "empty tenon board talked about a conflict: %s" % empty_tenon)
+	_press(root, "Neve")
+	_press(root, "Rasp")
+	_press(root, "81")
+	_press(root, "Submit theory")
+	var tenon_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(tenon_miss, Tenon, {"who": "Neve", "place": "rasp", "hour": "81"})
+	_expect(Tenon.conflicting_ids({"who": "Neve", "place": "rasp", "hour": "81"}).size() == 9, "Neve / rasp / 81 should contradict every exhibit")
+	_expect(tenon_miss.find("Gouge chit") >= 0, "wrong triple reply omits Gouge chit: %s" % tenon_miss)
+	_expect(tenon_miss.find("Rasp sight") >= 0, "wrong triple reply omits Rasp sight: %s" % tenon_miss)
+	_expect(tenon_miss.find("Dowel hook") >= 0, "wrong triple reply omits Dowel hook: %s" % tenon_miss)
+	_expect(tenon_miss.find("Haunch slate") >= 0, "wrong triple reply omits Haunch slate: %s" % tenon_miss)
+	_expect(tenon_miss.find("Guide card") >= 0, "wrong triple reply omits Guide card: %s" % tenon_miss)
+	_expect(tenon_miss.find("Hone slip") >= 0, "wrong triple reply omits Hone slip: %s" % tenon_miss)
+	_expect(tenon_miss.find("Nick leaf") >= 0, "wrong triple reply omits Nick leaf: %s" % tenon_miss)
+	_expect(tenon_miss.find("Haunch note") >= 0, "wrong triple reply omits Haunch note: %s" % tenon_miss)
+	_expect(tenon_miss.find("Hang order") >= 0, "wrong triple reply omits Hang order: %s" % tenon_miss)
+	_press(root, "Harl")
+	_press(root, "Gouge")
+	_press(root, "83")
+	_press(root, "Submit theory")
+	var tenon_accepted := _verdict_text(root)
+	_expect(tenon_accepted.find("fits every exhibit") >= 0, "tenon board rejected the true theory: %s" % tenon_accepted)
+	_expect(tenon_accepted.find(TENON_TIMELINE) >= 0, "tenon board timeline: %s" % tenon_accepted)
+	_expect(tenon_accepted.find("Harl (gouge hand) cut the tenon in the gouge at 83") >= 0, "tenon board omits Harl at 83: %s" % tenon_accepted)
+	_expect(tenon_accepted.find("in the gouge") >= 0, "tenon board omits the gouge: %s" % tenon_accepted)
+	_expect(tenon_accepted.find("so the bevel would take the haunch") >= 0, "tenon board omits the haunch: %s" % tenon_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var tenon_cleared := _verdict_text(root)
+	_expect(tenon_cleared.find("who cut the tenon") >= 0, "cleared tenon board: %s" % tenon_cleared)
+	_expect(tenon_cleared.find("fits every exhibit") == -1, "cleared tenon board stayed accepted: %s" % tenon_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The housing")
+	var housing_from_tenon := _visible_label_blob(root)
+	_expect(housing_from_tenon.find("Saw chit") >= 0, "could not return to The housing from The tenon")
+	_expect(housing_from_tenon.find("Trench note") >= 0, "housing exhibits did not return")
+	_expect(housing_from_tenon.find("CW-27") >= 0, "returned housing omits CW-27")
+	_expect(housing_from_tenon.find("Gouge chit") == -1, "tenon papers stayed up inside The housing")
+	_expect(housing_from_tenon.find("Rasp sight") == -1, "tenon papers showed inside The housing")
+	_expect(housing_from_tenon.find("Dowel hook") == -1, "tenon papers showed inside The housing")
+	_expect(housing_from_tenon.find("Haunch slate") == -1, "tenon papers showed inside The housing")
+	_expect(housing_from_tenon.find("Guide card") == -1, "tenon papers showed inside The housing")
+	_expect(housing_from_tenon.find("Hone slip") == -1, "tenon papers showed inside The housing")
+	_expect(housing_from_tenon.find("Nick leaf") == -1, "tenon papers showed inside The housing")
+	_expect(housing_from_tenon.find("Haunch note") == -1, "tenon papers showed inside The housing")
+	_expect(housing_from_tenon.find("CW-28") == -1, "tenon file code stayed up inside The housing")
+	_press(root, "Ewan")
+	_press(root, "Saw")
+	_press(root, "78")
+	_press(root, "Submit theory")
+	var housing_again := _verdict_text(root)
+	_expect(housing_again.find("fits every exhibit") >= 0, "housing board rejected the true theory after The tenon: %s" % housing_again)
+	_expect(housing_again.find("Ewan (saw hand) cut the housing in the saw at 78") >= 0, "housing board timeline after The tenon: %s" % housing_again)
+	var housing_again_blob := _visible_label_blob(root)
+	_expect(housing_again_blob.find("Saw chit") >= 0, "housing papers left after returning")
+	_expect(housing_again_blob.find("Gouge chit") == -1, "tenon papers stayed up after returning to The housing")
+	_expect(housing_again_blob.find("Haunch note") == -1, "tenon papers stayed up after returning to The housing")
+	_press(root, "Menu")
+	_menu_root = root
 
+
+func _expect_open_buttons_fit_the_case_window() -> void:
+	var root := _menu_root
+	_expect(root != null, "menu root was not kept for the file list")
+	if root == null:
+		return
+	var mortise := _find_visible_button(root, "Open The mortise")
+	var rebate := _find_visible_button(root, "Open The rebate")
+	var housing := _find_visible_button(root, "Open The housing")
+	var tenon := _find_visible_button(root, "Open The tenon")
+	_expect(mortise != null and rebate != null and housing != null and tenon != null, "file list is missing a joiner button")
+	if mortise == null or rebate == null or housing == null or tenon == null:
+		return
+	var mortise_rect := _content_rect(mortise)
+	var rebate_rect := _content_rect(rebate)
+	var housing_rect := _content_rect(housing)
+	var tenon_rect := _content_rect(tenon)
+	print("file list mortise %s rebate %s housing %s tenon %s" % [mortise_rect, rebate_rect, housing_rect, tenon_rect])
+	_expect(rebate_rect.size.y >= 40.0, "Open The rebate has no height")
+	_expect(housing_rect.size.y >= 40.0, "Open The housing has no height")
+	_expect(tenon_rect.size.y >= 40.0, "Open The tenon has no height")
+	_expect(mortise_rect.position.y + mortise_rect.size.y <= rebate_rect.position.y, "Open The mortise is not above Open The rebate")
+	_expect(rebate_rect.position.y + rebate_rect.size.y <= housing_rect.position.y, "Open The rebate is not above Open The housing")
+	_expect(housing_rect.position.y + housing_rect.size.y <= tenon_rect.position.y, "Open The housing is not above Open The tenon")
+	var window_height := 800.0
+	var housing_bottom := housing_rect.position.y + housing_rect.size.y
+	var visible_top := housing_bottom - window_height
+	_expect(rebate_rect.position.y >= visible_top, "Open The rebate is not fully on screen above Open The housing")
+	var rebate_bottom := rebate_rect.position.y + rebate_rect.size.y
+	_expect(mortise_rect.position.y >= rebate_bottom - window_height, "Open The mortise is not fully on screen above Open The rebate")
+	var tenon_bottom := tenon_rect.position.y + tenon_rect.size.y
+	var tenon_visible_top := tenon_bottom - window_height
+	_expect(housing_rect.position.y >= tenon_visible_top, "Open The housing is not fully on screen above Open The tenon")
+	_expect(housing_rect.position.y + housing_rect.size.y <= tenon_bottom, "Open The housing extends past the window when Open The tenon sits at the bottom")
+	var scroll := _find_visible_scroll(root)
+	_expect(scroll != null, "the file list has no scroll")
+	if scroll != null:
+		var bar := scroll.get_v_scroll_bar()
+		print("file list scroll max %s page %s" % [bar.max_value, bar.page])
+		_expect(bar.max_value > window_height, "the file list does not scroll in an 800px window")
+	_expect(tenon_bottom > window_height, "Open The tenon already fits without scrolling")
+
+
+func _content_rect(control: Control) -> Rect2:
+	var rect := control.get_global_rect()
+	var node: Node = control
+	while node != null:
+		if node is ScrollContainer:
+			var scroll := node as ScrollContainer
+			rect.position.y += float(scroll.scroll_vertical)
+			rect.position.x += float(scroll.scroll_horizontal)
+			break
+		node = node.get_parent()
+	return rect
+
+
+func _find_visible_scroll(node: Node) -> ScrollContainer:
+	if node == null or not node.visible:
+		return null
+	if node is ScrollContainer:
+		return node
+	for child in node.get_children():
+		var found := _find_visible_scroll(child)
+		if found != null:
+			return found
+	return null
 
 func _expect_reply_names_conflicts(message: String, book, theory: Dictionary) -> void:
 	var label := "%s / %s / %s" % [theory["who"], theory["place"], theory["hour"]]
