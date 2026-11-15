@@ -2,8 +2,8 @@ extends RefCounted
 
 ## Kiln Route rooms. Wing 1 is the first eight. Wing 2 is rooms 9-16.
 ## Wing 3 is rooms 17-24. Wing 4 is rooms 25-32. Wing 5 is rooms 33-40.
-## Wing 6 is rooms 41-48. Wing 7 is rooms 49-56.
-## The roller, the weir, the bridge, the grate, the hook, the arm, and the drop are taught before a later room depends on them.
+## Wing 6 is rooms 41-48. Wing 7 is rooms 49-56. Wing 8 is rooms 57-64.
+## The roller, the weir, the bridge, the grate, the hook, the arm, the drop, and the lift are taught before a later room depends on them.
 ## Each solution is a full layout, not a delta from the initial pieces.
 ## Quotas are minimums inside SIM_TICKS.
 
@@ -68,6 +68,14 @@ static func all() -> Array:
 		gush(),
 		rake(),
 		yield_room(),
+		hoist(),
+		raise_room(),
+		cinch(),
+		sling(),
+		flank(),
+		spurt(),
+		glean(),
+		remit(),
 	]
 
 
@@ -1964,5 +1972,277 @@ static func yield_room() -> Dictionary:
 			piece(rules.Kind.BELT, 4, 2, rules.Dir.EAST),
 			piece(rules.Kind.BELT, 3, 3, rules.Dir.EAST),
 			piece(rules.Kind.PRESS, 4, 3, rules.Dir.EAST),
+		],
+	}
+
+
+static func hoist() -> Dictionary:
+	var rules = Rules
+	# Plates rise into an east-facing lift and leave back to the west.
+	# Ore pushes down from above. A belt takes that ore, and the plate bin refuses it.
+	return {
+		"id": 57,
+		"name": "Hoist",
+		"blurb": "The lift takes plates from below and sends them back. A belt on that cell takes the ore and stalls.",
+		"rule": "A lift holds one item and takes it only from below. Pointed east, below is the south cell, and it sends that item back to the west. It does not take the ore from above and it does not send right. A belt on that cell takes the ore, and the plate bin refuses it.",
+		"w": 3,
+		"h": 3,
+		"sources": [
+			source(0, 2, rules.Dir.EAST, [rules.Mat.PLATE], 2),
+			source(2, 0, rules.Dir.SOUTH, [rules.Mat.ORE], 2),
+		],
+		"sinks": [sink(1, 1, [rules.Mat.PLATE])],
+		"chutes": [],
+		"walls": [],
+		"budget": kv([rules.Kind.BELT, 2, rules.Kind.LIFT, 1]),
+		"quota": kv([rules.Mat.PLATE, 40]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.BELT, 1, 2, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 2, 2, rules.Dir.NORTH),
+			piece(rules.Kind.LIFT, 2, 1, rules.Dir.EAST),
+		],
+	}
+
+
+static func raise_room() -> Dictionary:
+	var rules = Rules
+	# Ore rises into the lift and leaves back into the kiln. The plate from above stalls a belt.
+	return {
+		"id": 58,
+		"name": "Raise",
+		"blurb": "Take the ore from below into the kiln. A belt on that cell lets the plate stall the smelt.",
+		"rule": "The lift takes ore from below and sends it back into the kiln. It refuses the plate from above. A belt facing the kiln takes that plate, and the kiln will not smelt it.",
+		"w": 5,
+		"h": 3,
+		"sources": [
+			source(4, 0, rules.Dir.SOUTH, [rules.Mat.PLATE], 2),
+			source(4, 2, rules.Dir.NORTH, [rules.Mat.ORE], 2),
+		],
+		"sinks": [sink(0, 1, [rules.Mat.INGOT])],
+		"chutes": [],
+		"walls": [],
+		"budget": kv([rules.Kind.BELT, 2, rules.Kind.LIFT, 1, rules.Kind.KILN, 1]),
+		"quota": kv([rules.Mat.INGOT, 28]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.BELT, 1, 1, rules.Dir.WEST),
+			piece(rules.Kind.BELT, 2, 1, rules.Dir.WEST),
+			piece(rules.Kind.KILN, 3, 1, rules.Dir.WEST),
+			piece(rules.Kind.LIFT, 4, 1, rules.Dir.EAST),
+		],
+	}
+
+
+static func cinch() -> Dictionary:
+	var rules = Rules
+	# One belt. It has to sit between the kiln and the bin. A belt on the
+	# lift's cell runs ore east into the pit, and the plate from above stalls a turn.
+	return {
+		"id": 59,
+		"name": "Cinch",
+		"blurb": "The tray has one belt. Spend it after the kiln, and take the ore into the lift from below.",
+		"rule": "The lift takes ore from below and sends it back into the kiln. It refuses the plate from above. Spend the one belt between the kiln and the bin. A belt on the lift's cell dumps the ore into the pit.",
+		"w": 5,
+		"h": 3,
+		"sources": [
+			source(3, 0, rules.Dir.SOUTH, [rules.Mat.PLATE], 2),
+			source(3, 2, rules.Dir.NORTH, [rules.Mat.ORE], 2),
+		],
+		"sinks": [sink(0, 1, [rules.Mat.INGOT])],
+		"chutes": [cell(4, 1)],
+		"walls": [],
+		"budget": kv([rules.Kind.BELT, 1, rules.Kind.LIFT, 1, rules.Kind.KILN, 1]),
+		"quota": kv([rules.Mat.INGOT, 28]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.BELT, 1, 1, rules.Dir.WEST),
+			piece(rules.Kind.KILN, 2, 1, rules.Dir.WEST),
+			piece(rules.Kind.LIFT, 3, 1, rules.Dir.EAST),
+		],
+	}
+
+
+static func sling() -> Dictionary:
+	var rules = Rules
+	# The only lift starts off the lane, aimed the wrong way. The route has no spare cell for it.
+	return {
+		"id": 60,
+		"name": "Sling",
+		"blurb": "That lift is off the lane. Pick it up, point it east, and seat it where the plates come in from below.",
+		"rule": "Pickup puts this lift back on the tray. Point it east so plates come in from below and leave back to the west. A belt on that cell takes the ore. It starts off the route.",
+		"w": 4,
+		"h": 3,
+		"sources": [
+			source(3, 0, rules.Dir.SOUTH, [rules.Mat.ORE], 2),
+			source(0, 2, rules.Dir.EAST, [rules.Mat.PLATE], 2),
+		],
+		"sinks": [sink(2, 1, [rules.Mat.PLATE])],
+		"chutes": [],
+		"walls": [],
+		"budget": kv([rules.Kind.BELT, 3, rules.Kind.LIFT, 1]),
+		"quota": kv([rules.Mat.PLATE, 40]),
+		"initial": [
+			piece(rules.Kind.LIFT, 0, 1, rules.Dir.NORTH),
+		],
+		"solution": [
+			piece(rules.Kind.BELT, 1, 2, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 2, 2, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 3, 2, rules.Dir.NORTH),
+			piece(rules.Kind.LIFT, 3, 1, rules.Dir.EAST),
+		],
+	}
+
+
+static func flank() -> Dictionary:
+	var rules = Rules
+	# The straight north run is walled. Plates come around under the lift,
+	# and the lift sends them back. Ore from above stalls a belt.
+	return {
+		"id": 61,
+		"name": "Flank",
+		"blurb": "A wall closes the straight lane. Bring the plates in from below the lift.",
+		"rule": "The wall blocks a straight lane. Bring the plates around to the south side of the lift. It sends them back and refuses the ore from above. A belt that turns north into the wall delivers nothing. A belt on the lift's cell takes the ore.",
+		"w": 5,
+		"h": 4,
+		"sources": [
+			source(0, 3, rules.Dir.EAST, [rules.Mat.PLATE], 2),
+			source(3, 0, rules.Dir.SOUTH, [rules.Mat.ORE], 2),
+		],
+		"sinks": [sink(2, 1, [rules.Mat.PLATE])],
+		"chutes": [],
+		"walls": [cell(0, 2), cell(1, 2), cell(2, 2)],
+		"budget": kv([rules.Kind.BELT, 4, rules.Kind.LIFT, 1]),
+		"quota": kv([rules.Mat.PLATE, 36]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.BELT, 1, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 2, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 3, 3, rules.Dir.NORTH),
+			piece(rules.Kind.BELT, 3, 2, rules.Dir.NORTH),
+			piece(rules.Kind.LIFT, 3, 1, rules.Dir.EAST),
+		],
+	}
+
+
+static func spurt() -> Dictionary:
+	var rules = Rules
+	# Period 1 ore is faster than one kiln. The lift takes it from below
+	# and sends it back onto the weir. The plate from above stalls a belt.
+	return {
+		"id": 62,
+		"name": "Spurt",
+		"blurb": "Take the ore from below onto the weir, then spill the extra into a second kiln.",
+		"rule": "The lift takes ore from below and sends it back onto the weir. It refuses the plate from above. The weir fills the forward kiln and spills the rest to its right. One kiln cannot reach the quota. A belt on the lift's cell takes the plate.",
+		"w": 5,
+		"h": 4,
+		"sources": [
+			source(4, 0, rules.Dir.SOUTH, [rules.Mat.PLATE], 2),
+			source(4, 3, rules.Dir.NORTH, [rules.Mat.ORE], 1),
+		],
+		"sinks": [
+			sink(0, 0, [rules.Mat.INGOT]),
+			sink(0, 1, [rules.Mat.INGOT]),
+		],
+		"chutes": [],
+		"walls": [],
+		"budget": kv([
+			rules.Kind.BELT, 4,
+			rules.Kind.LIFT, 1,
+			rules.Kind.WEIR, 1,
+			rules.Kind.KILN, 2,
+		]),
+		"quota": kv([rules.Mat.INGOT, 70]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.BELT, 1, 0, rules.Dir.WEST),
+			piece(rules.Kind.KILN, 2, 0, rules.Dir.WEST),
+			piece(rules.Kind.BELT, 3, 0, rules.Dir.WEST),
+			piece(rules.Kind.BELT, 1, 1, rules.Dir.WEST),
+			piece(rules.Kind.KILN, 2, 1, rules.Dir.WEST),
+			piece(rules.Kind.WEIR, 3, 1, rules.Dir.WEST),
+			piece(rules.Kind.LIFT, 4, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 4, 2, rules.Dir.NORTH),
+		],
+	}
+
+
+static func glean() -> Dictionary:
+	var rules = Rules
+	# The filter scraps ingots. Ore turns north into the lift from below
+	# and goes back into the kiln. A plate from above stalls a belt.
+	return {
+		"id": 63,
+		"name": "Glean",
+		"blurb": "Scrap the raw ingots, then take the ore from below into the kiln.",
+		"rule": "Ore leaves the filter forward and ingots fall into the pit. The lift takes that ore from below and sends it back into the kiln. It refuses the plate from above. A belt on that cell takes the plate, and the kiln will not smelt it.",
+		"w": 4,
+		"h": 5,
+		"sources": [
+			source(2, 0, rules.Dir.SOUTH, [rules.Mat.PLATE], 2),
+			source(0, 3, rules.Dir.EAST, [rules.Mat.ORE, rules.Mat.INGOT], 2),
+		],
+		"sinks": [sink(0, 1, [rules.Mat.INGOT])],
+		"chutes": [cell(1, 4)],
+		"walls": [],
+		"budget": kv([
+			rules.Kind.BELT, 2,
+			rules.Kind.FILTER, 1,
+			rules.Kind.LIFT, 1,
+			rules.Kind.KILN, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 18]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.FILTER, 1, 3, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 2, 3, rules.Dir.NORTH),
+			piece(rules.Kind.BELT, 2, 2, rules.Dir.NORTH),
+			piece(rules.Kind.LIFT, 2, 1, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 1, 1, rules.Dir.WEST),
+		],
+	}
+
+
+static func remit() -> Dictionary:
+	var rules = Rules
+	# Upper plates are short of the plate quota. Pressing every ingot misses
+	# the ingot bin. The lift is what gets ore into the kiln without the plate.
+	return {
+		"id": 64,
+		"name": "Remit",
+		"blurb": "Take the ore from below into the kiln, then split ingots between the bin and the press.",
+		"rule": "The lift takes ore from below and sends it back into the kiln. It refuses the plate from above. The upper plates are not enough alone. Split the ingots between the bin and the press. Pressing every ingot misses the ingot bin.",
+		"w": 5,
+		"h": 4,
+		"sources": [
+			source(3, 0, rules.Dir.WEST, [rules.Mat.PLATE], 4),
+			source(4, 1, rules.Dir.SOUTH, [rules.Mat.PLATE], 2),
+			source(4, 3, rules.Dir.NORTH, [rules.Mat.ORE], 2),
+		],
+		"sinks": [
+			sink(0, 0, [rules.Mat.PLATE]),
+			sink(0, 1, [rules.Mat.PLATE]),
+			sink(0, 2, [rules.Mat.INGOT]),
+		],
+		"chutes": [],
+		"walls": [],
+		"budget": kv([
+			rules.Kind.BELT, 4,
+			rules.Kind.LIFT, 1,
+			rules.Kind.KILN, 1,
+			rules.Kind.SPLITTER, 1,
+			rules.Kind.PRESS, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 12, rules.Mat.PLATE, 36]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.BELT, 1, 0, rules.Dir.WEST),
+			piece(rules.Kind.BELT, 2, 0, rules.Dir.WEST),
+			piece(rules.Kind.PRESS, 1, 1, rules.Dir.WEST),
+			piece(rules.Kind.BELT, 2, 1, rules.Dir.WEST),
+			piece(rules.Kind.BELT, 1, 2, rules.Dir.WEST),
+			piece(rules.Kind.SPLITTER, 2, 2, rules.Dir.WEST),
+			piece(rules.Kind.KILN, 3, 2, rules.Dir.WEST),
+			piece(rules.Kind.LIFT, 4, 2, rules.Dir.EAST),
 		],
 	}

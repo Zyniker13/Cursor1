@@ -282,6 +282,7 @@ func _holder(kind: int) -> bool:
 		or kind == Rules.Kind.HOOK
 		or kind == Rules.Kind.ARM
 		or kind == Rules.Kind.DROP
+		or kind == Rules.Kind.LIFT
 	)
 
 
@@ -308,6 +309,9 @@ func _try_output(pos: Vector2i) -> bool:
 		elif machine.kind == Rules.Kind.DROP:
 			# Right only. A blocked exit waits; the item does not send forward.
 			out_dir = Rules.right(machine.dir)
+		elif machine.kind == Rules.Kind.LIFT:
+			# Back only. A blocked exit waits; the item does not send right.
+			out_dir = Rules.opposite(machine.dir)
 		elif machine.kind == Rules.Kind.SPLITTER:
 			out_dir = machine.dir if machine.phase == 0 else Rules.right(machine.dir)
 		elif machine.kind == Rules.Kind.WEIR:
@@ -387,6 +391,10 @@ func _can_take(machine: Machine, mat: int, arrival: int) -> bool:
 	if machine.kind == Rules.Kind.DROP:
 		# From above only: the front, the item moving against the facing.
 		return machine.hold < 0 and arrival == Rules.opposite(machine.dir)
+	if machine.kind == Rules.Kind.LIFT:
+		# From below only: the right side, the item moving toward the lift's left.
+		# Pointed east, that cell is south. Pointed north, the right side is east.
+		return machine.hold < 0 and arrival == Rules.left(machine.dir)
 	if machine.kind == Rules.Kind.BRIDGE:
 		if arrival == machine.dir:
 			return machine.hold < 0
