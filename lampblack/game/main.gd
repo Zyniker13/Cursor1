@@ -72,7 +72,7 @@ func _build_hud() -> void:
 	layer.add_child(bottom_panel)
 
 	var controls := Label.new()
-	controls.text = "Arrows move    F lamp you face    Space wait    U undo    R restart    1–8 east    Shift+1–6 west    Ctrl+1–6 north    Alt+1–6 south    F1–F6 attic    F7–F12 cellar    Keypad 1–6 gallery    click a neighbor or a lamp"
+	controls.text = "Arrows move    F lamp you face    Space wait    U undo    R restart    1–8 east    Shift+1–6 west    Ctrl+1–6 north    Alt+1–6 south    F1–F6 attic    F7–F12 cellar    Keypad 1–6 gallery    Shift+F1–F6 court    click a neighbor or a lamp"
 	controls.add_theme_font_size_override("font_size", 14)
 	controls.add_theme_color_override("font_color", MUTED)
 	controls.position = Vector2(20, 6)
@@ -115,7 +115,7 @@ func _build_hud() -> void:
 		row_y += 36.0
 
 	legend_label = Label.new()
-	legend_label.text = "Gold diamond — lamplight, you cannot walk it.    Red diamond — a guard is watching.    Arrow — that guard's next step."
+	legend_label.text = "Gold diamond — lamplight, you cannot walk it.    Red diamond — a guard is watching.    Arrow — that guard's next step.    Brass disc — a plate. Step on it in the dark and the nearest guard is called."
 	legend_label.position = Vector2(20, row_y + 2.0)
 	legend_label.add_theme_font_size_override("font_size", 14)
 	legend_label.add_theme_color_override("font_color", MUTED)
@@ -258,6 +258,9 @@ func _puzzle_index_for_key(event: InputEventKey) -> int:
 	var gallery := _gallery_index(event)
 	if gallery >= 0:
 		return 38 + gallery
+	var court := _court_index(event)
+	if court >= 0:
+		return 44 + court
 	var attic := _attic_index(event)
 	if attic >= 0:
 		return 26 + attic
@@ -287,6 +290,17 @@ func _puzzle_index_for_key(event: InputEventKey) -> int:
 	if digit > 7:
 		return -1
 	return digit
+
+
+func _court_index(event: InputEventKey) -> int:
+	if not event.shift_pressed:
+		return -1
+	var key := event.physical_keycode
+	if key < KEY_F1 or key > KEY_F6:
+		key = event.keycode
+	if key < KEY_F1 or key > KEY_F6:
+		return -1
+	return int(key) - int(KEY_F1)
 
 
 func _gallery_index(event: InputEventKey) -> int:
@@ -521,6 +535,8 @@ func _draw_tile(state: Dictionary, x: int, y: int, lit: Dictionary, watched: Dic
 	var center := rect.get_center()
 	if lit.has(cell):
 		draw_colored_polygon(_diamond(center, tile * 0.34, tile * 0.34), LIGHT)
+	if kind == Rules.Tile.PLATE:
+		_draw_plate(center)
 	if watched.has(cell):
 		draw_colored_polygon(_diamond(center, tile * 0.26, tile * 0.26), WATCH)
 		draw_polyline(_diamond_loop(center, tile * 0.3, tile * 0.3), Color(1, 0.55, 0.45, 0.9), 1.5)
@@ -536,6 +552,21 @@ func _draw_plan(state: Dictionary, index: int) -> void:
 	if step == here:
 		return
 	_arrow(_center(here), _center(step), ARROW)
+
+
+func _draw_plate(center: Vector2) -> void:
+	var radius := tile * 0.32
+	draw_circle(center, radius, Color("5c4524"))
+	draw_circle(center, radius * 0.78, Color("c6a15a"))
+	draw_circle(center, radius * 0.78, Color("3a2c16"), false, maxf(1.5, tile * 0.035))
+	var rivet := maxf(1.4, tile * 0.035)
+	for corner in [Vector2(-1, -1), Vector2(1, -1), Vector2(1, 1), Vector2(-1, 1)]:
+		var spot: Vector2 = center + corner * radius * 0.46
+		draw_circle(spot, rivet, Color("3a2c16"))
+		draw_circle(spot, rivet * 0.45, Color("e7d3a1"))
+	draw_rect(Rect2(center + Vector2(-tile * 0.07, -tile * 0.018), Vector2(tile * 0.14, tile * 0.036)), Color("3a2c16"))
+	draw_circle(center, tile * 0.045, Color("8d7344"))
+	draw_circle(center, tile * 0.02, Color("3a2c16"))
 
 
 func _draw_lamp(lamp: Dictionary) -> void:
