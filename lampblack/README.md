@@ -1,6 +1,6 @@
 # Lampblack
 
-Turn-based stealth in a closed museum. The east wing has eight puzzles, the west wing has six, the north wing has six, and the south wing has six. You walk dark tiles, guards watch the lit ones, and there is no combat.
+Turn-based stealth in a closed museum. The east wing has eight puzzles, the west wing has six, the north wing has six, the south wing has six, the attic has six, and the cellar has six. You walk dark tiles, guards watch the lit ones, and there is no combat.
 
 ## Play
 
@@ -18,7 +18,7 @@ godot --path lampblack
 - `Space` waits. Click your own tile to wait.
 - `U` undoes the last turn, including after a loss or a win. Undo restores your position and facing, every lamp, and every guard.
 - `R` restarts the puzzle.
-- `1` through `8` select an east-wing puzzle. `Shift` plus `1` through `6` selects a west-wing puzzle. `Ctrl` plus `1` through `6` selects a north-wing puzzle. `Alt` plus `1` through `6` selects a south-wing puzzle. The buttons along the bottom do the same, grouped by wing.
+- `1` through `8` select an east-wing puzzle. `Shift` plus `1` through `6` selects a west-wing puzzle. `Ctrl` plus `1` through `6` selects a north-wing puzzle. `Alt` plus `1` through `6` selects a south-wing puzzle. `F1` through `F6` select an attic puzzle. `F7` through `F12` select a cellar puzzle. The buttons along the bottom do the same, grouped by wing.
 
 Puzzle 1 states the rules in the banner. Gold diamonds are lamplight. Red diamonds are tiles a guard is watching. An arrow is that guard's next step.
 
@@ -41,7 +41,7 @@ From the repository root:
 godot --headless --path lampblack -s res://tests/run_tests.gd
 ```
 
-The process exits `0` when every check passes and `1` when any check fails. The suite plays each puzzle's scripted solution, rejects a watched step, checks undo, and checks the tile the guard called in puzzle 3 will step to. West-wing, north-wing, and south-wing checks also play each new solution, undo it back to the start, and step onto a watched lit tile to confirm that step still loses.
+The process exits `0` when every check passes and `1` when any check fails. The suite plays each puzzle's scripted solution, rejects a watched step, checks undo, and checks the tile the guard called in puzzle 3 will step to. West-wing, north-wing, south-wing, attic, and cellar checks also play each new solution, undo it back to the start, and step onto a watched lit tile to confirm that step still loses.
 
 ## The east wing
 
@@ -81,6 +81,24 @@ The process exits `0` when every check passes and `1` when any check fails. The 
 25. The Covered Flame — the hall lamp lights the tile behind the door lamp. Snuff the hall, then the door, and take the door before he arrives.
 26. The Far Answer — the far keeper is closer to the hall lamp, so he answers. Leave the gap lamp, which would call the keeper by the door.
 
+## The attic
+
+27. The Unlit Watch — a guard watches only lit tiles. The dark hall is inside his reach, and the lit doorway is a loss.
+28. The Blind Wall — walls block vision. The gap beyond the wall is lit and in reach, but he cannot see it.
+29. The Barred Gap — a called guard cannot cross a gap, so he takes the longer floor road.
+30. The North Step — when two roads are the same length, he breaks the tie north, then east, then south, then west.
+31. The Dark Eye — a guard standing in the dark can still look into an adjacent lit tile.
+32. The Early Threshold — reaching the exit wins before the guards move.
+
+## The cellar
+
+33. The Open Corner — a lit lamp fills a Manhattan diamond. The door sits on the diagonal, outside that diamond, so it stays dark.
+34. The Brick Shade — walls block light. The door is inside the diamond, and the wall between them keeps it dark.
+35. The Quiet Wick — lighting a lamp does not call a guard. Light the wick, then cross the gap he never starts toward.
+36. The Earlier Keeper — a distance tie calls the lower number. The south keeper answers. The east keeper never moves.
+37. The Dim Lane — dark tiles block vision. The gap is lit and in reach, and the dark square between him and the gap cuts his sight.
+38. The Still Post — a called guard holds on the lamp and does not resume his rail. Snuff the west wick, wait until he holds, then cross the gap.
+
 ## Limits
 
-There is no sound and no combat. A called guard holds on the lamp until a later snuff calls him again. Squares are drawn with Godot primitives; there is no art pack. The headless suite is the checked playthrough of all twenty-six solutions.
+There is no sound and no combat. A called guard holds on the lamp until a later snuff calls him again. Squares are drawn with Godot primitives; there is no art pack. The headless suite is the checked playthrough of all thirty-eight solutions.

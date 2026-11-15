@@ -72,7 +72,7 @@ func _build_hud() -> void:
 	layer.add_child(bottom_panel)
 
 	var controls := Label.new()
-	controls.text = "Arrows move    F lamp you face    Space wait    U undo    R restart    1–8 east    Shift+1–6 west    Ctrl+1–6 north    Alt+1–6 south    click a neighbor or a lamp"
+	controls.text = "Arrows move    F lamp you face    Space wait    U undo    R restart    1–8 east    Shift+1–6 west    Ctrl+1–6 north    Alt+1–6 south    F1–F6 attic    F7–F12 cellar    click a neighbor or a lamp"
 	controls.add_theme_font_size_override("font_size", 14)
 	controls.add_theme_color_override("font_color", MUTED)
 	controls.position = Vector2(20, 6)
@@ -255,6 +255,12 @@ func _undo() -> void:
 
 
 func _puzzle_index_for_key(event: InputEventKey) -> int:
+	var attic := _attic_index(event)
+	if attic >= 0:
+		return 26 + attic
+	var cellar := _cellar_index(event)
+	if cellar >= 0:
+		return 32 + cellar
 	var digit := _digit_from_key(event)
 	if digit < 0:
 		return -1
@@ -278,6 +284,24 @@ func _puzzle_index_for_key(event: InputEventKey) -> int:
 	if digit > 7:
 		return -1
 	return digit
+
+
+func _attic_index(event: InputEventKey) -> int:
+	var key := event.physical_keycode
+	if key < KEY_F1 or key > KEY_F6:
+		key = event.keycode
+	if key < KEY_F1 or key > KEY_F6:
+		return -1
+	return int(key) - int(KEY_F1)
+
+
+func _cellar_index(event: InputEventKey) -> int:
+	var key := event.physical_keycode
+	if key < KEY_F7 or key > KEY_F12:
+		key = event.keycode
+	if key < KEY_F7 or key > KEY_F12:
+		return -1
+	return int(key) - int(KEY_F7)
 
 
 func _digit_from_key(event: InputEventKey) -> int:

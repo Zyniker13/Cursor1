@@ -8,7 +8,9 @@ extends RefCounted
 ## Pitch moths stay hidden until a flare melts their tile.
 ## Frost moths stay hidden until a hearth thaws their tile.
 ## Web moths stay hidden until a shear cuts their tile.
-## Glass moths stay hidden until a chime cracks their tile. A moth can carry more than one lock.
+## Glass moths stay hidden until a chime cracks their tile.
+## Scale moths stay hidden until a rasp strips their tile.
+## Mail moths stay hidden until a maul cracks their tile. A moth can carry more than one lock.
 
 const Catalog = preload("res://sim/plant_catalog.gd")
 
@@ -31,9 +33,9 @@ const HURT_TICKS := 12
 const PEST_HP := 12
 const PEST_SPEED := 42.0
 const PEST_RADIUS := 11.0
-const START_SEEDS := 8
+const START_SEEDS := 10
 const PLANT_TICKS := 240
-const WAVE_COUNT := 15
+const WAVE_COUNT := 19
 const START_CELL := Vector2i(7, 5)
 const PROJECTILE_RADIUS := 4.0
 const PROJECTILE_LIFE := 75
@@ -44,23 +46,29 @@ const PROJECTILE_LIFE := 75
 # Nights 10 and 11 bring frost moths. Night 11 sends frost, pitch, rind, and shroud together.
 # Nights 12 and 13 bring web moths. Night 13 sends web, frost, pitch, rind, and shroud together.
 # Nights 14 and 15 bring glass moths. Night 15 sends glass, web, frost, pitch, rind, and shroud together.
-# shroud_every / rind_every / pitch_every / frost_every / web_every / glass_every 0: none. 1: every spawn. N: every Nth spawn, the Nth included.
+# Nights 16 and 17 bring scale moths. Night 17 sends scale, glass, web, frost, pitch, rind, and shroud together.
+# Nights 18 and 19 bring mail moths. Night 19 sends mail, scale, glass, web, frost, pitch, rind, and shroud together.
+# shroud_every / rind_every / pitch_every / frost_every / web_every / glass_every / scale_every / mail_every 0: none. 1: every spawn. N: every Nth spawn, the Nth included.
 const WAVES := [
-	{"count": 8, "interval": 72, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "name": ""},
-	{"count": 12, "interval": 66, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "name": ""},
-	{"count": 22, "interval": 60, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "name": ""},
-	{"count": 8, "interval": 78, "shroud_every": 1, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "name": "Shroud"},
-	{"count": 16, "interval": 54, "shroud_every": 2, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "name": "Ash"},
-	{"count": 10, "interval": 72, "shroud_every": 0, "rind_every": 1, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "name": "Rind"},
-	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "name": "Gall"},
-	{"count": 10, "interval": 72, "shroud_every": 0, "rind_every": 0, "pitch_every": 1, "frost_every": 0, "web_every": 0, "glass_every": 0, "name": "Pitch"},
-	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 0, "web_every": 0, "glass_every": 0, "name": "Tar"},
-	{"count": 10, "interval": 72, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 1, "web_every": 0, "glass_every": 0, "name": "Frost"},
-	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 0, "glass_every": 0, "name": "Rime"},
-	{"count": 10, "interval": 72, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 1, "glass_every": 0, "name": "Web"},
-	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 0, "name": "Snare"},
-	{"count": 10, "interval": 72, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 1, "name": "Glass"},
-	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 1, "name": "Pane"},
+	{"count": 8, "interval": 72, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "name": ""},
+	{"count": 12, "interval": 66, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "name": ""},
+	{"count": 22, "interval": 60, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "name": ""},
+	{"count": 8, "interval": 78, "shroud_every": 1, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "name": "Shroud"},
+	{"count": 16, "interval": 54, "shroud_every": 2, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "name": "Ash"},
+	{"count": 10, "interval": 72, "shroud_every": 0, "rind_every": 1, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "name": "Rind"},
+	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "name": "Gall"},
+	{"count": 10, "interval": 72, "shroud_every": 0, "rind_every": 0, "pitch_every": 1, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "name": "Pitch"},
+	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "name": "Tar"},
+	{"count": 10, "interval": 72, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 1, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "name": "Frost"},
+	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "name": "Rime"},
+	{"count": 10, "interval": 72, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 1, "glass_every": 0, "scale_every": 0, "mail_every": 0, "name": "Web"},
+	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 0, "scale_every": 0, "mail_every": 0, "name": "Snare"},
+	{"count": 10, "interval": 72, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 1, "scale_every": 0, "mail_every": 0, "name": "Glass"},
+	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 1, "scale_every": 0, "mail_every": 0, "name": "Pane"},
+	{"count": 10, "interval": 72, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 1, "mail_every": 0, "name": "Scale"},
+	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 1, "scale_every": 1, "mail_every": 0, "name": "Plate"},
+	{"count": 10, "interval": 72, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 1, "name": "Mail"},
+	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 1, "scale_every": 1, "mail_every": 1, "name": "Armor"},
 ]
 
 
@@ -91,6 +99,8 @@ class Plant:
 	var thaws_frost: bool = false
 	var cuts_web: bool = false
 	var cracks_glass: bool = false
+	var strips_scale: bool = false
+	var cracks_mail: bool = false
 
 
 class Pest:
@@ -105,6 +115,8 @@ class Pest:
 	var frosted: bool = false
 	var webbed: bool = false
 	var glassed: bool = false
+	var scaled: bool = false
+	var mailed: bool = false
 	var speed: float = 0.0
 	var slow_factor: float = 1.0
 	var slow_ticks: int = 0
@@ -150,6 +162,10 @@ var webs_spawned: int = 0
 var webs_killed: int = 0
 var glasses_spawned: int = 0
 var glasses_killed: int = 0
+var scales_spawned: int = 0
+var scales_killed: int = 0
+var mails_spawned: int = 0
+var mails_killed: int = 0
 var plants: Array = []
 var pests: Array = []
 var projectiles: Array = []
@@ -205,34 +221,42 @@ func cell_of(pos: Vector2) -> Vector2i:
 
 
 func tile_lit(tx: int, ty: int) -> bool:
-	return _tile_in_light(tx, ty, false, false, false, false, false, false)
+	return _tile_in_light(tx, ty, false, false, false, false, false, false, false, false)
 
 
 func tile_burns_shroud(tx: int, ty: int) -> bool:
-	return _tile_in_light(tx, ty, true, false, false, false, false, false)
+	return _tile_in_light(tx, ty, true, false, false, false, false, false, false, false)
 
 
 func tile_cracks_rind(tx: int, ty: int) -> bool:
-	return _tile_in_light(tx, ty, false, true, false, false, false, false)
+	return _tile_in_light(tx, ty, false, true, false, false, false, false, false, false)
 
 
 func tile_melts_pitch(tx: int, ty: int) -> bool:
-	return _tile_in_light(tx, ty, false, false, true, false, false, false)
+	return _tile_in_light(tx, ty, false, false, true, false, false, false, false, false)
 
 
 func tile_thaws_frost(tx: int, ty: int) -> bool:
-	return _tile_in_light(tx, ty, false, false, false, true, false, false)
+	return _tile_in_light(tx, ty, false, false, false, true, false, false, false, false)
 
 
 func tile_cuts_web(tx: int, ty: int) -> bool:
-	return _tile_in_light(tx, ty, false, false, false, false, true, false)
+	return _tile_in_light(tx, ty, false, false, false, false, true, false, false, false)
 
 
 func tile_cracks_glass(tx: int, ty: int) -> bool:
-	return _tile_in_light(tx, ty, false, false, false, false, false, true)
+	return _tile_in_light(tx, ty, false, false, false, false, false, true, false, false)
 
 
-func _tile_in_light(tx: int, ty: int, shroud_only: bool, rind_only: bool, pitch_only: bool, frost_only: bool, web_only: bool, glass_only: bool) -> bool:
+func tile_strips_scale(tx: int, ty: int) -> bool:
+	return _tile_in_light(tx, ty, false, false, false, false, false, false, true, false)
+
+
+func tile_cracks_mail(tx: int, ty: int) -> bool:
+	return _tile_in_light(tx, ty, false, false, false, false, false, false, false, true)
+
+
+func _tile_in_light(tx: int, ty: int, shroud_only: bool, rind_only: bool, pitch_only: bool, frost_only: bool, web_only: bool, glass_only: bool, scale_only: bool, mail_only: bool) -> bool:
 	if tx < 0 or ty < 0 or tx >= MAP_W or ty >= MAP_H:
 		return false
 	var rect_min := Vector2(float(tx) * TILE, float(ty) * TILE)
@@ -252,6 +276,10 @@ func _tile_in_light(tx: int, ty: int, shroud_only: bool, rind_only: bool, pitch_
 		if web_only and not grown.cuts_web:
 			continue
 		if glass_only and not grown.cracks_glass:
+			continue
+		if scale_only and not grown.strips_scale:
+			continue
+		if mail_only and not grown.cracks_mail:
 			continue
 		var source: Vector2 = grown.pos
 		var closest := Vector2(
@@ -328,7 +356,7 @@ func _night_suffix(index: int) -> String:
 
 
 ## Shared entry for wave spawns and the visibility test. Does not alter damage or health.
-func spawn_pest(pos: Vector2, shrouded: bool = false, rinded: bool = false, pitched: bool = false, frosted: bool = false, webbed: bool = false, glassed: bool = false):
+func spawn_pest(pos: Vector2, shrouded: bool = false, rinded: bool = false, pitched: bool = false, frosted: bool = false, webbed: bool = false, glassed: bool = false, scaled: bool = false, mailed: bool = false):
 	var pest := Pest.new()
 	pest.id = _next_pest_id
 	_next_pest_id += 1
@@ -344,6 +372,8 @@ func spawn_pest(pos: Vector2, shrouded: bool = false, rinded: bool = false, pitc
 	pest.frosted = frosted
 	pest.webbed = webbed
 	pest.glassed = glassed
+	pest.scaled = scaled
+	pest.mailed = mailed
 	if shrouded:
 		shrouds_spawned += 1
 	if rinded:
@@ -356,6 +386,10 @@ func spawn_pest(pos: Vector2, shrouded: bool = false, rinded: bool = false, pitc
 		webs_spawned += 1
 	if glassed:
 		glasses_spawned += 1
+	if scaled:
+		scales_spawned += 1
+	if mailed:
+		mails_spawned += 1
 	_apply_visibility(pest)
 	pests.append(pest)
 	return pest
@@ -413,6 +447,8 @@ func _try_plant(cmd: Command) -> void:
 	plant.thaws_frost = bool(stats["thaws_frost"])
 	plant.cuts_web = bool(stats["cuts_web"])
 	plant.cracks_glass = bool(stats["cracks_glass"])
+	plant.strips_scale = bool(stats["strips_scale"])
+	plant.cracks_mail = bool(stats["cracks_mail"])
 	plants.append(plant)
 	seeds -= 1
 	events.append({"type": "planted", "kind": kind, "x": cmd.tile.x, "y": cmd.tile.y})
@@ -453,6 +489,8 @@ func _wave_spawns() -> void:
 	var frost_every := int(spec.get("frost_every", 0))
 	var web_every := int(spec.get("web_every", 0))
 	var glass_every := int(spec.get("glass_every", 0))
+	var scale_every := int(spec.get("scale_every", 0))
+	var mail_every := int(spec.get("mail_every", 0))
 	var index := int(spec["count"]) - spawns_left
 	var shrouded := shroud_every > 0 and index % shroud_every == shroud_every - 1
 	var rinded := rind_every > 0 and index % rind_every == rind_every - 1
@@ -460,7 +498,9 @@ func _wave_spawns() -> void:
 	var frosted := frost_every > 0 and index % frost_every == frost_every - 1
 	var webbed := web_every > 0 and index % web_every == web_every - 1
 	var glassed := glass_every > 0 and index % glass_every == glass_every - 1
-	spawn_pest(tile_center(cell.x, cell.y), shrouded, rinded, pitched, frosted, webbed, glassed)
+	var scaled := scale_every > 0 and index % scale_every == scale_every - 1
+	var mailed := mail_every > 0 and index % mail_every == mail_every - 1
+	spawn_pest(tile_center(cell.x, cell.y), shrouded, rinded, pitched, frosted, webbed, glassed, scaled, mailed)
 	spawns_left -= 1
 	spawn_wait = spawn_interval
 
@@ -495,7 +535,7 @@ func _apply_visibility(pest: Pest) -> void:
 		pest.hidden = true
 		return
 	var cell := cell_of(pest.pos)
-	if pest.shrouded or pest.rinded or pest.pitched or pest.frosted or pest.webbed or pest.glassed:
+	if pest.shrouded or pest.rinded or pest.pitched or pest.frosted or pest.webbed or pest.glassed or pest.scaled or pest.mailed:
 		var open := true
 		if pest.shrouded:
 			open = open and tile_burns_shroud(cell.x, cell.y)
@@ -509,6 +549,10 @@ func _apply_visibility(pest: Pest) -> void:
 			open = open and tile_cuts_web(cell.x, cell.y)
 		if pest.glassed:
 			open = open and tile_cracks_glass(cell.x, cell.y)
+		if pest.scaled:
+			open = open and tile_strips_scale(cell.x, cell.y)
+		if pest.mailed:
+			open = open and tile_cracks_mail(cell.x, cell.y)
 		pest.hidden = not open
 	else:
 		pest.hidden = not tile_lit(cell.x, cell.y)
@@ -554,6 +598,20 @@ func _glass_up(pest: Pest) -> bool:
 		return false
 	var cell := cell_of(pest.pos)
 	return not tile_cracks_glass(cell.x, cell.y)
+
+
+func _scale_up(pest: Pest) -> bool:
+	if not pest.scaled:
+		return false
+	var cell := cell_of(pest.pos)
+	return not tile_strips_scale(cell.x, cell.y)
+
+
+func _mail_up(pest: Pest) -> bool:
+	if not pest.mailed:
+		return false
+	var cell := cell_of(pest.pos)
+	return not tile_cracks_mail(cell.x, cell.y)
 
 
 func _plants_fire() -> void:
@@ -641,7 +699,7 @@ func _impact(shot: Projectile, target: Pest) -> void:
 
 
 func _damage_pest(pest: Pest, shot: Projectile) -> void:
-	if _shroud_up(pest) or _rind_up(pest) or _pitch_up(pest) or _frost_up(pest) or _web_up(pest) or _glass_up(pest):
+	if _shroud_up(pest) or _rind_up(pest) or _pitch_up(pest) or _frost_up(pest) or _web_up(pest) or _glass_up(pest) or _scale_up(pest) or _mail_up(pest):
 		return
 	pest.hp -= shot.damage
 	if shot.slow_ticks > 0:
@@ -670,6 +728,10 @@ func _damage_pest(pest: Pest, shot: Projectile) -> void:
 			webs_killed += 1
 		if pest.glassed:
 			glasses_killed += 1
+		if pest.scaled:
+			scales_killed += 1
+		if pest.mailed:
+			mails_killed += 1
 		events.append({
 			"type": "died",
 			"x": pest.pos.x,

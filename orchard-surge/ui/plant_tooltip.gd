@@ -45,4 +45,12 @@ static func stat_lines(kind: int) -> PackedStringArray:
 		lines.append("Glass: cracks")
 	else:
 		lines.append("Glass: none")
+	if bool(stats["strips_scale"]):
+		lines.append("Scale: strips")
+	else:
+		lines.append("Scale: none")
+	if bool(stats["cracks_mail"]):
+		lines.append("Mail: cracks")
+	else:
+		lines.append("Mail: none")
 	return lines
