@@ -11,7 +11,7 @@ Playable slices, Godot 4. Steam packaging comes later.
 - [Lowball](lowball/) — a thirty-eight-week twenty-club circle through Quaywharf Godwits
 - [Casework](casework/) — a thirty-eight-case deduction board through the tongue
 - [Lampblack](lampblack/) — turn-based museum stealth through the glaze
-- [Kiln Route](kiln-route/) — a hundred-and-sixty-eight-room foundry puzzle through the moldboard
+- [Kiln Route](kiln-route/) — a hundred-and-seventy-six-room foundry puzzle through the landside
 
 ```bash
 godot --path harbor-glass
