@@ -31,7 +31,8 @@ extends RefCounted
 ## the flood. The sill itself is lit, and tiles past it stay dark. A pane does not stop
 ## the flood and is never marked lit, so tiles past it still light. The pane itself is
 ## never lit and is never dark floor, because nobody can stand on it. A curtain does not
-## stop the flood. The curtain itself is lit, and tiles past it still light.
+## stop the flood. The curtain itself is lit, and tiles past it still light. A shade
+## stops the flood. The shade itself is never lit, and tiles past it stay dark.
 ##
 ## Movement
 ## Dark floor and a dark exit may be entered. A gap may be entered only while it is lit.
@@ -49,6 +50,8 @@ extends RefCounted
 ## A pane is not floor. You cannot enter it. A guard cannot enter it.
 ## A curtain is floor. A lamp lights it. An unwatched lit curtain is refused, the same
 ## as other lit floor. Stepping onto a lit curtain a guard is watching is a loss.
+## A shade is floor you may enter. It stays dark even when a lamp's diamond covers its
+## tile, so standing on it is not a loss. A lit floor tile beside a shade is still refused.
 ##
 ## Plates
 ## The turn the player steps onto a plate calls the nearest guard, by the same rule as a
@@ -67,7 +70,7 @@ extends RefCounted
 ## Lighting a lamp still calls nobody. A bell pulls a guard off an existing hold. A guard
 ## with no floor path to the bell is not called and keeps the rail. A grate is not a
 ## floor path. A sill is not a floor path. A pane is not a floor path. A curtain is a
-## floor path.
+## floor path. A shade is not a floor path.
 ##
 ## Grates
 ## A grate is floor you may enter. It is never lit, even when a lamp's diamond covers
@@ -120,10 +123,27 @@ extends RefCounted
 ## and the sight through, and neither you nor a guard can step on it. A curtain is lit,
 ## lets the light through, stops the sight, and a guard can step on it.
 ##
+## Shades
+## A shade is floor you may enter. It is never lit, even when a lamp's diamond covers
+## its tile. Standing on it is not a loss, because it stays dark. Light stops at a
+## shade: tiles past it stay dark even when the lamp's diamond would have reached them.
+## Vision stops there the same way any dark floor stops vision. A guard cannot enter a
+## shade. Pathing treats it as closed, the same as a wall, so a called guard walks
+## around it. A shade calls nobody. It is never a hold. A plate still calls only the
+## nearest guard. A bell still calls every guard who has a floor path, and a shade is
+## not that path. A shade is not a wall, a sill, a grate, a pane, a plate, a bell, or
+## a curtain. A curtain is lit, lets the light through, stops the sight, and a guard
+## can step on it. A grate stays dark, lets the light through, and a guard cannot enter
+## it. A sill is lit, stops the light, stops the sight, and a guard cannot enter it. A
+## pane lets the light and the sight through, and nobody can step on it. A wall blocks
+## the light and the sight, and nobody can step on it. A shade stays dark, stops the
+## light, stops the sight, and you can step on it. A guard cannot.
+##
 ## Vision
 ## Each guard watches a Manhattan diamond of their vision radius, and only on tiles that
 ## are currently lit. Walls and dark tiles block vision. A grate stays dark, so it blocks
-## vision the same way any dark floor does. A sill blocks vision even when it is lit, so
+## vision the same way any dark floor does. A shade stays dark, so it blocks vision the
+## same way any dark floor does. A sill blocks vision even when it is lit, so
 ## a guard cannot see through it; the lit sill itself can still be watched. A curtain
 ## blocks vision even when it is lit and the tile past it is lit, so a guard cannot see
 ## through it; the lit curtain itself can still be watched. A pane does
@@ -135,7 +155,7 @@ extends RefCounted
 ## Alerted guards take one step along a shortest 4-neighbor path to the tile they were
 ## called to, a lamp, a plate, or a bell. Neighbors are expanded north, east, south,
 ## then west, and that order breaks ties. They may walk on floor, plate, bell, exit,
-## and curtain tiles, lit or dark, but not through walls, gaps, grates, sills, or panes. When they step onto that tile
+## and curtain tiles, lit or dark, but not through walls, gaps, grates, sills, panes, or shades. When they step onto that tile
 ## they hold there. They do not resume the rail unless a later snuff, plate, or bell calls them.
 ## A guard who is not alert and not holding patrols their rail. The rail is a list of
 ## waypoints. rail_index is the waypoint they are walking toward, and rail_dir is +1 or -1.
@@ -147,7 +167,7 @@ extends RefCounted
 ## every lamp's lit flag, and every guard's position, rail index, rail direction, alert
 ## target, and hold flag.
 
-enum Tile { WALL, FLOOR, GAP, EXIT, PLATE, BELL, GRATE, SILL, PANE, CURTAIN }
+enum Tile { WALL, FLOOR, GAP, EXIT, PLATE, BELL, GRATE, SILL, PANE, CURTAIN, SHADE }
 enum Result { OK, WIN, LOSS, ILLEGAL }
 
 const DIRS := [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]
@@ -196,6 +216,8 @@ static func build(rows: PackedStringArray, lamps: Array, guards: Array) -> Dicti
 					kind = Tile.PANE
 				"C":
 					kind = Tile.CURTAIN
+				"H":
+					kind = Tile.SHADE
 				_:
 					push_error("bad tile '%s'" % ch)
 			tiles[y * width + x] = kind
@@ -303,9 +325,9 @@ static func lamp_lights(state: Dictionary, lamp: Dictionary) -> Array:
 	if origin_kind != Tile.WALL and origin_kind != -1 and in_diamond(lamp, origin.x, origin.y):
 		seen[origin] = true
 		queue.append(origin)
-	# A lamp standing on a sill does not shine past that sill. Every other lamp
-	# still seeds its neighbors. A grate and a pane let the flood through.
-	if origin_kind != Tile.SILL:
+	# A lamp standing on a sill or a shade does not shine past that tile. Every
+	# other lamp still seeds its neighbors. A grate and a pane let the flood through.
+	if origin_kind != Tile.SILL and origin_kind != Tile.SHADE:
 		for dir in DIRS:
 			var nxt: Vector2i = origin + dir
 			var seed_kind := tile_at(state, nxt.x, nxt.y)
@@ -324,10 +346,11 @@ static func lamp_lights(state: Dictionary, lamp: Dictionary) -> Array:
 		var cell_kind := tile_at(state, cell.x, cell.y)
 		# A grate stays dark and lets the flood through. A pane does too, and the pane
 		# itself is never lit. A sill is lit, and the flood stops there. A curtain is
-		# lit, and the flood does not stop there, so tiles past it still light.
-		if cell_kind != Tile.GRATE and cell_kind != Tile.PANE:
+		# lit, and the flood does not stop there, so tiles past it still light. A shade
+		# stays dark, and the flood stops there, so tiles past it stay dark.
+		if cell_kind != Tile.GRATE and cell_kind != Tile.PANE and cell_kind != Tile.SHADE:
 			lit.append(cell)
-		if cell_kind == Tile.SILL:
+		if cell_kind == Tile.SILL or cell_kind == Tile.SHADE:
 			continue
 		for dir in DIRS:
 			var nxt: Vector2i = cell + dir
@@ -580,7 +603,7 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 		if dest == Tile.GAP:
 			if not lit.has(Vector2i(nx, ny)):
 				return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "darkgap")
-		elif dest == Tile.GRATE:
+		elif dest == Tile.GRATE or dest == Tile.SHADE:
 			pass
 		elif dest == Tile.FLOOR or dest == Tile.EXIT or dest == Tile.PLATE or dest == Tile.BELL or dest == Tile.SILL or dest == Tile.CURTAIN:
 			if lit.has(Vector2i(nx, ny)):
@@ -617,7 +640,7 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 		if absi(int(lamp["x"]) - int(player["x"])) + absi(int(lamp["y"]) - int(player["y"])) != 1:
 			return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "range")
 		var here := tile_at(st, player["x"], player["y"])
-		if here != Tile.FLOOR and here != Tile.EXIT and here != Tile.PLATE and here != Tile.BELL and here != Tile.GRATE and here != Tile.SILL and here != Tile.CURTAIN:
+		if here != Tile.FLOOR and here != Tile.EXIT and here != Tile.PLATE and here != Tile.BELL and here != Tile.GRATE and here != Tile.SILL and here != Tile.CURTAIN and here != Tile.SHADE:
 			return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "range")
 		var was_lit: bool = lamp["lit"]
 		lamp["lit"] = not was_lit
