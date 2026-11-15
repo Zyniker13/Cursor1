@@ -120,6 +120,112 @@ static func all() -> Array:
 				_block("latch", 6, 2, 3),
 			]
 		),
+		_puzzle(
+			9, "Second Stamp", "",
+			"Send the parcel around so the counter stamps it twice.",
+			"",
+			"Point the splitter up the return. The next send faces the dock, and the counter stamps 2.",
+			4, 2, [],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 3, "y": 1},
+			[{"count": 2}],
+			[
+				_block("counter", 1, 1, 0), _block("splitter", 2, 1, 3),
+				_block("conveyor", 2, 0, 2), _block("conveyor", 1, 0, 1),
+			]
+		),
+		_puzzle(
+			10, "Fresh Coat", "",
+			"The chute sends red. Bring it back yellow, stamped 2.",
+			"",
+			"Paint on the way back. The new color replaces red.",
+			4, 2, [],
+			[_source(3, 0, 2, ["red"])],
+			{"x": 0, "y": 0},
+			[{"color": "yellow", "count": 2}],
+			[
+				_block("counter", 2, 0, 2), _block("splitter", 1, 0, 1),
+				_block("conveyor", 1, 1, 0), _block("painter", 2, 1, 3, "yellow"),
+			]
+		),
+		_puzzle(
+			11, "One Then Three", "",
+			"Deliver counts 1 and 3.",
+			"",
+			"Let the first parcel leave. Send the next one around the counter.",
+			4, 2, [],
+			[_source(0, 0, 0, ["gray", "gray"])],
+			{"x": 3, "y": 0},
+			[{"count": 1}, {"count": 3}],
+			[
+				_block("counter", 1, 0, 0), _block("splitter", 2, 0, 0),
+				_block("conveyor", 2, 1, 2), _block("conveyor", 1, 1, 3),
+			]
+		),
+		_puzzle(
+			12, "Blue Then Red", "",
+			"Paint the north parcel blue. Stamp blue 1, then the reds 2 and 3.",
+			"",
+			"Hold the reds on a latch so they follow blue through the counter.",
+			3, 3, [],
+			[_source(0, 0, 0, ["gray"]), _source(0, 2, 0, ["red", "red"])],
+			{"x": 2, "y": 1},
+			[{"color": "blue", "count": 1}, {"color": "red", "count": 2}, {"color": "red", "count": 3}],
+			[
+				_block("painter", 1, 0, 1, "blue"),
+				_block("counter", 1, 1, 0),
+				_block("latch", 1, 2, 3),
+			]
+		),
+		_puzzle(
+			13, "The Long Way", "",
+			"The top is bricked in. Bring the parcel around yellow, stamped 2.",
+			"",
+			"Come back under the bricks. The second pass is the one that reaches the dock.",
+			4, 4,
+			[_cell(0, 0), _cell(1, 0), _cell(2, 0), _cell(3, 0)],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 2, "y": 2},
+			[{"color": "yellow", "count": 2}],
+			[
+				_block("counter", 1, 1, 0), _block("splitter", 2, 1, 0),
+				_block("conveyor", 3, 1, 1), _block("conveyor", 3, 2, 1),
+				_block("conveyor", 3, 3, 2), _block("conveyor", 2, 3, 2),
+				_block("conveyor", 1, 3, 3), _block("painter", 1, 2, 3, "yellow"),
+			]
+		),
+		_puzzle(
+			14, "Blue After", "",
+			"Deliver red 1, then blue 3.",
+			"",
+			"Paint red before the split. Paint blue on the loop, over the red.",
+			5, 2, [],
+			[_source(0, 0, 0, ["gray", "gray"])],
+			{"x": 4, "y": 0},
+			[{"color": "red", "count": 1}, {"color": "blue", "count": 3}],
+			[
+				_block("painter", 1, 0, 0, "red"), _block("counter", 2, 0, 0),
+				_block("splitter", 3, 0, 0),
+				_block("painter", 3, 1, 2, "blue"), _block("conveyor", 2, 1, 3),
+			]
+		),
+		_puzzle(
+			15, "Night Desk", "",
+			"Deliver red 1, yellow 2, and blue 3.",
+			"",
+			"Hold yellow until red has left the counter. Blue follows yellow in.",
+			5, 3, [],
+			[_source(0, 1, 0, ["gray", "gray"]), _source(1, 0, 0, ["gray"])],
+			{"x": 4, "y": 1},
+			[{"color": "red", "count": 1}, {"color": "yellow", "count": 2}, {"color": "blue", "count": 3}],
+			[
+				_block("splitter", 1, 1, 0), _block("painter", 2, 1, 0, "red"),
+				_block("counter", 3, 1, 0),
+				_block("painter", 2, 0, 0, "yellow"), _block("latch", 3, 0, 1),
+				_block("conveyor", 1, 2, 0), _block("painter", 2, 2, 0, "blue"),
+				_block("conveyor", 3, 2, 3),
+			]
+		),
 	]
 
 
