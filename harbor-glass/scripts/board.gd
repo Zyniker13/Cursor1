@@ -255,6 +255,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_transom(at)
 		"casement":
 			_draw_casement(at, rot)
+		"jamb":
+			_draw_jamb(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -600,6 +602,44 @@ func _draw_casement(at: Vector2i, rot: int) -> void:
 	draw_circle(hinge_a, 4.2, Palette.WOOD_DARK)
 	draw_circle(hinge_b, 4.2, Palette.WOOD_DARK)
 	draw_circle(hinge_a.lerp(hinge_b, 0.5), 3.2, Palette.GATE_IRON)
+
+func _draw_jamb(at: Vector2i, rot: int) -> void:
+	# Two dark posts on the edges of the open axis, with a pale gap between
+	# them. North or south puts the posts on the north and south edges. East
+	# or west puts them on the east and west edges. Not one hinge, not one
+	# bar, and not one shaft.
+	var center := _center(at)
+	var facing := Tracer.jamb_facing(rot)
+	var north_south := facing == "N" or facing == "S"
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var post := Palette.WOOD_DARK if not flooded else Palette.WOOD
+	var edge := Palette.PILE_EDGE if not flooded else Palette.FOAM
+	var gap := Palette.GLASS
+	gap.a = 0.42 if flooded else 0.96
+	if north_south:
+		var post_w := cell * 0.70
+		var post_h := cell * 0.13
+		var north := Rect2(center + Vector2(-post_w * 0.5, -cell * 0.42), Vector2(post_w, post_h))
+		var south := Rect2(center + Vector2(-post_w * 0.5, cell * 0.42 - post_h), Vector2(post_w, post_h))
+		var opening := Rect2(center + Vector2(-cell * 0.11, -cell * 0.24), Vector2(cell * 0.22, cell * 0.48))
+		draw_rect(opening, gap)
+		draw_rect(opening, Palette.GLASS_EDGE, false, 1.5)
+		draw_rect(north, post)
+		draw_rect(south, post)
+		draw_rect(north, edge, false, 2.0)
+		draw_rect(south, edge, false, 2.0)
+	else:
+		var post_w := cell * 0.13
+		var post_h := cell * 0.70
+		var west := Rect2(center + Vector2(-cell * 0.42, -post_h * 0.5), Vector2(post_w, post_h))
+		var east := Rect2(center + Vector2(cell * 0.42 - post_w, -post_h * 0.5), Vector2(post_w, post_h))
+		var opening := Rect2(center + Vector2(-cell * 0.24, -cell * 0.11), Vector2(cell * 0.48, cell * 0.22))
+		draw_rect(opening, gap)
+		draw_rect(opening, Palette.GLASS_EDGE, false, 1.5)
+		draw_rect(west, post)
+		draw_rect(east, post)
+		draw_rect(west, edge, false, 2.0)
+		draw_rect(east, edge, false, 2.0)
 
 func _draw_prism(at: Vector2i, rot: int, set_in_stone: bool) -> void:
 	var center := _center(at)
