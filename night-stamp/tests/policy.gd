@@ -766,6 +766,51 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 			filled_prev_col = 2
 		if filled_prev_row >= 0 and state.form[filled_prev_row][filled_prev_col] != null:
 			guess += 2
+	if rule == "drop_if_exact_eight":
+		var eight_filled = 0
+		for eight_row in 3:
+			for eight_col in 3:
+				if state.form[eight_row][eight_col] != null:
+					eight_filled += 1
+		if eight_filled == 7:
+			guess -= 6
+		elif eight_filled == 8:
+			guess += 4
+	if rule == "double_prior_filled":
+		var prior_row = row
+		var prior_col = col - 1
+		if prior_col < 0:
+			prior_row = row - 1
+			prior_col = 2
+		if prior_row >= 0 and state.form[prior_row][prior_col] != null:
+			guess += _stamp_number(state, card_id, row, col)
+		var prior_next_row = row
+		var prior_next_col = col + 1
+		if prior_next_col > 2:
+			prior_next_row = row + 1
+			prior_next_col = 0
+		if prior_next_row <= 2 and state.form[prior_next_row][prior_next_col] != null:
+			guess += 4
+	if rule == "yield_corner_pay":
+		var corner_pay = 0
+		for delta in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var corner_row = row + delta.x
+			var corner_col = col + delta.y
+			if corner_row < 0 or corner_col < 0 or corner_row > 2 or corner_col > 2:
+				continue
+			if state.form[corner_row][corner_col] != null:
+				corner_pay += 1
+		if corner_pay > 0:
+			guess += 8
+	if rule == "double_short_row":
+		var short_filled = 0
+		for short_col in 3:
+			if state.form[row][short_col] != null:
+				short_filled += 1
+		if short_filled == 1:
+			guess += _stamp_number(state, card_id, row, col) + 4
+		elif short_filled == 2:
+			guess -= 8
 	if rule == "yield_diagonal_pair":
 		var partner_row = -1
 		var partner_col = -1

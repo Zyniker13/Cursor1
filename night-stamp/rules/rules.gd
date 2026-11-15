@@ -1113,6 +1113,92 @@
 # The lone-column doubling, the side pay, and the next-fill doubling do not
 # remove Hold or Exemption, and they do not cancel a retrigger.
 #
+# CATCHWORD BELL, in desk order
+# A nineteenth night. The stamps, the ink, and the 3x3 form are unchanged.
+# The catchword bell deals the starting deck again. Drafts and the relic
+# from an earlier night do not carry. Open it from the desk, or from a
+# victory desk. Restart act replays whichever night is on the desk.
+# - Gwyn Brant, lane column 3, exemption row top, Eight Toll:
+#   "Patience drops by 2 when exactly eight cells are filled."
+#   Dory Hart drops patience by 2 when the form holds exactly seven stamps.
+#   Hugh Pell drops patience by 2 when the form holds exactly six. Joss Pell
+#   drops patience by 2 when the form holds exactly five. Ada Hart drops
+#   patience by 2 when the form holds exactly four. Pell Dane drops patience
+#   by 2 when the form holds exactly three. Gwyn does none of those. The
+#   drop is 2 instead of 1 when the form holds exactly eight stamps. An
+#   empty form keeps the drop at 1. One stamp keeps the drop at 1. Two
+#   stamps keep the drop at 1. Three stamps keep the drop at 1. Four stamps
+#   keep the drop at 1. Five stamps keep the drop at 1. Six stamps keep the
+#   drop at 1. Seven stamps keep the drop at 1. Nine stamps keep the drop
+#   at 1. Any other count keeps the drop at 1. The toll does not change
+#   what a stamp scores.
+#   Exemption on the top row keeps the drop at 1, even when exactly eight
+#   cells are filled and even when the count is anything else. An Exemption
+#   off the top row does not.
+#   Hold is applied before the eight toll.
+# - Hester Keel, lane column 1, exemption row bottom, Prior Fill:
+#   "A stamp scores twice only when the queue cell immediately before it
+#   is filled."
+#   The queue is read from the top row downward, left to right inside a
+#   row, the same order Holt Quern uses. The cell immediately before a
+#   stamp is the previous cell in that order. The cell before the left end
+#   of a row is the right end of the previous row. The top-left cell has
+#   no cell before it, so it scores its own number. A stamp whose previous
+#   cell is empty scores its own number, even when an earlier cell is
+#   filled. A gap means the stamp after the gap does not double. Holt Quern
+#   doubles a stamp when the next cell is filled. Bram Solt doubles a stamp
+#   when the next cell is empty and some later cell is filled. Sable Quern
+#   doubles a stamp when the previous cell is empty and some earlier cell
+#   is filled. Hester does none of those. A contiguous pair doubles the
+#   later stamp and leaves the earlier stamp at its own number when that
+#   earlier stamp has no filled cell before it. A retrigger of a stamp
+#   whose previous cell is filled scores twice again. A retrigger of a
+#   stamp whose previous cell is empty does not. A retrigger of the
+#   top-left cell does not.
+#   Exemption on the bottom row cancels the doubling, so every stamp scores
+#   its own number. An Exemption off the bottom row does not.
+#   The slip does not change patience.
+# - Idris Reed, lane column 2, exemption row middle, Corner Pay:
+#   "Each stamp that has at least one filled diagonal neighbor scores +3
+#   once."
+#   A diagonal neighbor is one of the four corner-touching cells: one row
+#   apart and one column apart. An orthogonal neighbor does not count. The
+#   cell above, below, left, or right is not a diagonal neighbor. A stamp
+#   with two or more diagonal neighbors still scores +3 once, not +3 for
+#   each. A stamp that only has orthogonal neighbors scores its own number.
+#   A lone stamp scores its own number. Two stamps that only share a side
+#   both score their own number. Two stamps that meet at a corner each
+#   score +3. Opal Quill adds 3 for a side share. Rho Tallow yields once
+#   after the queue when two stamps meet at a corner. Idris does neither.
+#   A longer diagonal, two cells apart, does not pay either stamp. A gap in
+#   a row does not pay either stamp. Queue order does not choose who is
+#   paid. A retrigger of a stamp that has a filled diagonal neighbor adds 3
+#   again. A retrigger of a stamp that does not have a filled diagonal
+#   neighbor does not.
+#   Exemption on the middle row cancels the bonus, so every stamp scores
+#   its own number. An Exemption off the middle row does not. An Exemption
+#   that has a filled diagonal neighbor and sits off the middle row still
+#   adds 3.
+#   The pay does not change patience.
+# - Colm Brigg, lane column 1, exemption row top, Short Row:
+#   "A stamp scores twice only when its own row holds exactly two filled
+#   stamps."
+#   Both stamps in that row score twice. A row with one stamp scores that
+#   stamp's own number. A full row of three scores each stamp's own number.
+#   Other rows are independent. A pair in one row still doubles when
+#   another row is full, and a full row still scores its own numbers when
+#   another row holds a pair. Wynn Hart doubles a stamp only when its own
+#   row is full. Colm does not. A lone stamp on the form is the only stamp
+#   in its row, so it scores its own number. A retrigger of a stamp in a
+#   two-stamp row scores twice again. A retrigger of a stamp in a row of
+#   one or three does not.
+#   Exemption on the top row cancels the doubling, so every stamp scores
+#   its own number. An Exemption off the top row does not. An Exemption in
+#   a two-stamp row that sits off the top row scores twice.
+#   The slip does not change patience.
+# The prior-fill doubling, the corner pay, and the short-row doubling do
+# not remove Hold or Exemption, and they do not cancel a retrigger.
+#
 # RUN
 # - A run is seeded. The shuffle and the draft offer are a pure function of the
 #   seed, the night, the traveler, and the cards owned, so restarting an
@@ -1154,6 +1240,7 @@ const SHIFT_SPINE := 14
 const SHIFT_HEADBAND := 15
 const SHIFT_CLASP := 16
 const SHIFT_SIGNATURE := 17
+const SHIFT_CATCHWORD := 18
 
 const ROW_NAMES := ["top row", "middle row", "bottom row"]
 const COL_NAMES := ["column 1", "column 2", "column 3"]
@@ -2081,6 +2168,54 @@ const SIGNATURE_BELL := [
 ]
 
 
+const CATCHWORD_BELL := [
+	{
+		"id": "gwyn_brant",
+		"name": "Gwyn Brant",
+		"form_name": "Eight Toll",
+		"rule_text": "Patience drops by 2 when exactly eight cells are filled.",
+		"rule": "drop_if_exact_eight",
+		"lane": 2,
+		"exemption_row": 0,
+		"goal": 16,
+		"patience": 5,
+	},
+	{
+		"id": "hester_keel",
+		"name": "Hester Keel",
+		"form_name": "Prior Fill",
+		"rule_text": "A stamp scores twice only when the queue cell immediately before it is filled. A stamp whose previous cell is empty scores its own number. The top-left cell has no cell before it, so it does not double.",
+		"rule": "double_prior_filled",
+		"lane": 0,
+		"exemption_row": 2,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "idris_reed",
+		"name": "Idris Reed",
+		"form_name": "Corner Pay",
+		"rule_text": "Each stamp that has at least one filled diagonal neighbor scores +3 once. A stamp with two or more diagonal neighbors still scores +3 once. An orthogonal neighbor does not count. A lone stamp scores its own number.",
+		"rule": "yield_corner_pay",
+		"lane": 1,
+		"exemption_row": 1,
+		"goal": 22,
+		"patience": 5,
+	},
+	{
+		"id": "colm_brigg",
+		"name": "Colm Brigg",
+		"form_name": "Short Row",
+		"rule_text": "A stamp scores twice only when its own row holds exactly two filled stamps. Both stamps in that row double. A row with one stamp scores that stamp's own number. A full row of three scores each stamp's own number.",
+		"rule": "double_short_row",
+		"lane": 0,
+		"exemption_row": 0,
+		"goal": 18,
+		"patience": 5,
+	},
+]
+
+
 class NightState:
 	extends RefCounted
 	var seed: int = 1
@@ -2158,6 +2293,8 @@ static func _canonical_shift(shift_index: int) -> int:
 		return SHIFT_CLASP
 	if shift_index == SHIFT_SIGNATURE:
 		return SHIFT_SIGNATURE
+	if shift_index == SHIFT_CATCHWORD:
+		return SHIFT_CATCHWORD
 	return SHIFT_FIRST
 
 
@@ -2173,7 +2310,9 @@ static func new_run(seed_value: int, shift_index: int = SHIFT_FIRST) -> NightSta
 	state.next_iid = 0
 	for card_id in STARTING_DECK:
 		_add_library_card(state, String(card_id))
-	if state.shift == SHIFT_SIGNATURE:
+	if state.shift == SHIFT_CATCHWORD:
+		_log(state, "The catchword bell begins. Seed %d." % state.seed)
+	elif state.shift == SHIFT_SIGNATURE:
 		_log(state, "The signature bell begins. Seed %d." % state.seed)
 	elif state.shift == SHIFT_CLASP:
 		_log(state, "The clasp bell begins. Seed %d." % state.seed)
@@ -2249,6 +2388,8 @@ static func restart_encounter(state: NightState) -> void:
 
 
 static func shift_label(state: NightState) -> String:
+	if state.shift == SHIFT_CATCHWORD:
+		return "Catchword bell"
 	if state.shift == SHIFT_SIGNATURE:
 		return "Signature bell"
 	if state.shift == SHIFT_CLASP:
@@ -2301,6 +2442,8 @@ static func traveler(state: NightState) -> Dictionary:
 
 
 static func _roster(state: NightState) -> Array:
+	if state.shift == SHIFT_CATCHWORD:
+		return CATCHWORD_BELL
 	if state.shift == SHIFT_SIGNATURE:
 		return SIGNATURE_BELL
 	if state.shift == SHIFT_CLASP:
@@ -2595,6 +2738,12 @@ static func stamp_progress(state: NightState, card_id: String, row: int, col: in
 		return amount + 3
 	if rule == "double_next_filled" and _next_cell_filled(state, row, col):
 		return amount * 2
+	if rule == "double_prior_filled" and _prev_cell_filled(state, row, col):
+		return amount * 2
+	if rule == "yield_corner_pay" and _diagonal_count(state, row, col) > 0:
+		return amount + 3
+	if rule == "double_short_row" and row_fill_count(state, row) == 2:
+		return amount * 2
 	return amount
 
 
@@ -2702,6 +2851,8 @@ static func patience_loss(state: NightState) -> int:
 		elif rule == "drop_if_exact_six" and _stamp_count(state) == 6:
 			loss = 2
 		elif rule == "drop_if_exact_seven" and _stamp_count(state) == 7:
+			loss = 2
+		elif rule == "drop_if_exact_eight" and _stamp_count(state) == 8:
 			loss = 2
 	return loss
 
@@ -2940,6 +3091,12 @@ static func _resolve_stamp(state: NightState, row: int, col: int, hush: bool) ->
 				_log(state, "%s on the %s, %s grants %d. A shared side yields +3." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			elif tail_rule == "double_next_filled" and _next_cell_filled(state, row, col) and amount > raw:
 				_log(state, "%s on the %s, %s grants %d. The filled cell after it doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_prior_filled" and _prev_cell_filled(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The filled cell before it doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_corner_pay" and _diagonal_count(state, row, col) > 0 and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. A diagonal neighbor yields +3." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_short_row" and row_fill_count(state, row) == 2 and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The short row doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			else:
 				_log(state, "%s on the %s, %s grants %d." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 	state.turn_progress += amount
@@ -3245,6 +3402,33 @@ static func _next_cell_filled(state: NightState, row: int, col: int) -> bool:
 	return state.form[next_row][next_col] != null
 
 
+static func _prev_cell_filled(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var prev_row := row
+	var prev_col := col - 1
+	if prev_col < 0:
+		prev_row = row - 1
+		prev_col = 2
+	if prev_row < 0:
+		return false
+	return state.form[prev_row][prev_col] != null
+
+
+static func _diagonal_count(state: NightState, row: int, col: int) -> int:
+	var count := 0
+	for delta in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+		var next_row = row + delta.x
+		var next_col = col + delta.y
+		if next_row < 0 or next_col < 0 or next_row > 2 or next_col > 2:
+			continue
+		if state.form[next_row][next_col] != null:
+			count += 1
+	return count
+
+
 static func _precedes_filled_gap(state: NightState, row: int, col: int) -> bool:
 	if row < 0 or col < 0 or row > 2 or col > 2:
 		return false
@@ -3513,7 +3697,9 @@ static func _apply_result(state: NightState, result: Dictionary) -> void:
 		state.encounters_cleared += 1
 		if state.traveler_index >= _roster(state).size() - 1:
 			state.phase = "victory"
-			if state.shift == SHIFT_SIGNATURE:
+			if state.shift == SHIFT_CATCHWORD:
+				_log(state, "The queue is empty. The catchword bell is clear.")
+			elif state.shift == SHIFT_SIGNATURE:
 				_log(state, "The queue is empty. The signature bell is clear.")
 			elif state.shift == SHIFT_CLASP:
 				_log(state, "The queue is empty. The clasp bell is clear.")
