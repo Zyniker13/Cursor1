@@ -237,6 +237,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_shutter_gate(at)
 		"stain":
 			_draw_stain(at, rot)
+		"vane":
+			_draw_vane(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -348,6 +350,30 @@ func _draw_stain(at: Vector2i, rot: int) -> void:
 	_label(center + Vector2(-14, 4), tint, 12, Color.WHITE)
 	if flooded:
 		draw_arc(center, cell * 0.34, 0, TAU, 24, Palette.FOAM, 1.5, true)
+
+func _draw_vane(at: Vector2i, rot: int) -> void:
+	# A weather vane cut from the quay glass. The arrow is the facing.
+	# Head-on light meets the tip and stops. Light from the tail or either
+	# flank leaves along the arrow.
+	var center := _center(at)
+	var facing := Tracer.vane_facing(rot)
+	var dir := _dir_vec(facing)
+	var flank := Vector2(-dir.y, dir.x)
+	var r := cell * 0.30
+	draw_circle(center, r, Color(Palette.GLASS.r, Palette.GLASS.g, Palette.GLASS.b, 0.34))
+	draw_arc(center, r, 0, TAU, 28, Palette.GLASS_EDGE, 2.0, true)
+	var tail := center - dir * r * 0.72
+	draw_line(center, tail, Palette.GATE, 4.0)
+	draw_line(tail + flank * 7.0, tail - flank * 7.0, Palette.GATE, 3.0)
+	var tip := center + dir * r * 0.88
+	var head := PackedVector2Array([
+		tip,
+		center + dir * r * 0.16 + flank * r * 0.46,
+		center + dir * r * 0.16 - flank * r * 0.46,
+	])
+	draw_colored_polygon(head, Palette.LANTERN)
+	draw_line(center - dir * r * 0.08, center + dir * r * 0.2, Palette.LANTERN, 4.0)
+	draw_circle(center, 3.5, Palette.WOOD_DARK)
 
 func _draw_prism(at: Vector2i, rot: int, set_in_stone: bool) -> void:
 	var center := _center(at)

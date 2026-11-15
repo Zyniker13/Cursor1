@@ -540,6 +540,153 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 							earlier_filled = true
 				if earlier_filled:
 					guess += _stamp_number(state, card_id, row, col)
+	if rule == "double_highest_earliest":
+		var high_number = _stamp_number(state, card_id, row, col)
+		var high_count = 1
+		var earlier_higher = false
+		var later_higher = false
+		for high_row in range(0, row + 1):
+			var high_end = 2
+			if high_row == row:
+				high_end = col - 1
+			for high_col in range(0, high_end + 1):
+				var high_stamp = state.form[high_row][high_col]
+				if high_stamp == null:
+					continue
+				high_count += 1
+				if _stamp_number(state, String(high_stamp["card_id"]), high_row, high_col) >= high_number:
+					earlier_higher = true
+		for high_row in range(row, 3):
+			var high_start = 0
+			if high_row == row:
+				high_start = col + 1
+			for high_col in range(high_start, 3):
+				var high_stamp = state.form[high_row][high_col]
+				if high_stamp == null:
+					continue
+				high_count += 1
+				if _stamp_number(state, String(high_stamp["card_id"]), high_row, high_col) > high_number:
+					later_higher = true
+		if high_count >= 2 and not earlier_higher and not later_higher:
+			guess += high_number
+	if rule == "drop_if_exact_four":
+		var four_filled = 0
+		for four_row in 3:
+			for four_col in 3:
+				if state.form[four_row][four_col] != null:
+					four_filled += 1
+		if four_filled == 3:
+			guess -= 6
+		elif four_filled == 4:
+			guess += 4
+	if rule == "double_before_gap":
+		if row == 2 and col == 2:
+			guess -= 1
+		else:
+			var after_row = row
+			var after_col = col + 1
+			if after_col > 2:
+				after_row = row + 1
+				after_col = 0
+			if state.form[after_row][after_col] == null:
+				var later_filled = false
+				for scan_row in range(after_row, 3):
+					var scan_start = 0
+					if scan_row == after_row:
+						scan_start = after_col + 1
+					for scan_col in range(scan_start, 3):
+						if state.form[scan_row][scan_col] != null:
+							later_filled = true
+				if later_filled:
+					guess += _stamp_number(state, card_id, row, col)
+	if rule == "yield_column_pair":
+		if row == 0 or row == 2:
+			var other_end = 2 if row == 0 else 0
+			if state.form[other_end][col] != null and state.form[1][col] == null:
+				guess += 6
+			elif state.form[1][col] == null:
+				guess += 2
+		elif row == 1 and (state.form[0][col] != null or state.form[2][col] != null):
+			guess -= 4
+	if rule == "yield_open_wing":
+		if col == 0 or col == 2:
+			var other_wing = 2 if col == 0 else 0
+			if state.form[row][other_wing] != null and state.form[row][1] == null:
+				guess += 6
+			elif state.form[row][1] != null:
+				guess -= 2
+			else:
+				guess += 2
+		elif state.form[row][0] != null and state.form[row][2] != null:
+			guess -= 6
+		elif state.form[row][0] != null or state.form[row][2] != null:
+			guess -= 2
+	if rule == "drop_if_exact_five":
+		var five_filled = 0
+		for five_row in 3:
+			for five_col in 3:
+				if state.form[five_row][five_col] != null:
+					five_filled += 1
+		if five_filled == 4:
+			guess -= 6
+		elif five_filled == 5:
+			guess += 4
+	if rule == "double_highest_latest":
+		var late_number = _stamp_number(state, card_id, row, col)
+		var late_count = 1
+		var strictly_higher = false
+		var later_tied = false
+		for late_row in range(0, row + 1):
+			var late_end = 2
+			if late_row == row:
+				late_end = col - 1
+			for late_col in range(0, late_end + 1):
+				var late_stamp = state.form[late_row][late_col]
+				if late_stamp == null:
+					continue
+				late_count += 1
+				if _stamp_number(state, String(late_stamp["card_id"]), late_row, late_col) > late_number:
+					strictly_higher = true
+		for late_row in range(row, 3):
+			var late_start = 0
+			if late_row == row:
+				late_start = col + 1
+			for late_col in range(late_start, 3):
+				var late_stamp = state.form[late_row][late_col]
+				if late_stamp == null:
+					continue
+				late_count += 1
+				if _stamp_number(state, String(late_stamp["card_id"]), late_row, late_col) >= late_number:
+					later_tied = true
+		if late_count >= 2 and not strictly_higher and not later_tied:
+			guess += late_number
+	if rule == "yield_diagonal_pair":
+		var partner_row = -1
+		var partner_col = -1
+		if row == 0 and col == 0:
+			partner_row = 2
+			partner_col = 2
+		elif row == 2 and col == 2:
+			partner_row = 0
+			partner_col = 0
+		elif row == 0 and col == 2:
+			partner_row = 2
+			partner_col = 0
+		elif row == 2 and col == 0:
+			partner_row = 0
+			partner_col = 2
+		if partner_row >= 0:
+			if state.form[1][1] == null and state.form[partner_row][partner_col] != null:
+				guess += 6
+			elif state.form[1][1] == null:
+				guess += 2
+		elif row == 1 and col == 1:
+			var main_pair = state.form[0][0] != null and state.form[2][2] != null
+			var anti_pair = state.form[0][2] != null and state.form[2][0] != null
+			if main_pair or anti_pair:
+				guess -= 6
+			else:
+				guess -= 2
 	if rule == "yield_end_match":
 		var first_number = -1
 		var last_number = -1

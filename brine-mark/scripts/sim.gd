@@ -5,7 +5,7 @@ class_name BrineSim
 #
 # The player never selects an ant. They paint cells. Workers are simulated
 # labor that follow the paint under their feet. This slice has one scenario:
-# a wet season, a short dry season, a cart beat, a ship beat, a market beat, a yard beat, a bunk beat, a loft beat, a gate beat, then a wage beat. The full game's population cap is
+# a wet season, a short dry season, a cart beat, a ship beat, a market beat, a yard beat, a bunk beat, a loft beat, a gate beat, a wage beat, a relief beat, then a watch beat. The full game's population cap is
 # 200; this slice hard-caps at POP_CAP (40) and will not grow past it.
 #
 # Map
@@ -14,17 +14,20 @@ class_name BrineSim
 #   stays unwalkable, and shore rakes no longer touch water.
 # - The anthill is the fixed cell ANTHILL (14, 5). It is walkable, not
 #   paintable, and the only place workers spawn.
-# - Rows run from GRID_NORTH through GRID_H - 1. GRID_NORTH is three rows north
+# - Rows run from GRID_NORTH through GRID_H - 1. GRID_NORTH is five rows north
 #   of the old shore edge, so a loft can sit one cell north of a bunk on row 0,
-#   a gate can sit one cell north of that loft, and a wage can sit one cell
-#   north of that gate.
+#   a gate can sit one cell north of that loft, a wage can sit one cell
+#   north of that gate, a relief can sit one cell north of that wage, and a
+#   watch can sit one cell north of that relief.
 # - Every other cell accepts one mark: empty, rake, stack, cover, trail, pan,
-#   crib, ship, stall, yard, bunk, loft, gate, or wage. A crib is not walkable until the cart beat,
+#   crib, ship, stall, yard, bunk, loft, gate, wage, relief, or watch. A crib is not walkable until the cart beat,
 #   a ship is not walkable until the ship beat, a stall is not walkable until
 #   the market beat, a yard is not walkable until the yard beat, a bunk is
 #   not walkable until the bunk beat, a loft is not walkable until the loft
-#   beat, a gate is not walkable until the gate beat, and a wage is not
-#   walkable until the wage beat, so painting one cannot change an earlier haul.
+#   beat, a gate is not walkable until the gate beat, a wage is not
+#   walkable until the wage beat, a relief is not walkable until the
+#   relief beat, and a watch is not walkable until the watch beat, so
+#   painting one cannot change an earlier haul.
 #
 # Determinism
 # - No randomness and no seed. Given the same paint map at each tick and this
@@ -38,7 +41,7 @@ class_name BrineSim
 # Seasons
 # - Wet season: tick indexes 0 .. RAIN_TICK-1. Gatherers on brine-adjacent
 #   rake cells pile loose salt. Pan cells are only ground to cross. Crib
-#   cells, ship cells, stall cells, yard cells, bunk cells, loft cells, gate cells, and wage cells are marks only.
+#   cells, ship cells, stall cells, yard cells, bunk cells, loft cells, gate cells, wage cells, relief cells, and watch cells are marks only.
 # - At tick RAIN_TICK the first rain falls. Loose salt is destroyed. Stacked
 #   salt on a cover cell is hauled into the wet-season ledger and cleared
 #   from the flats. Stacked salt outside cover is destroyed. The scenario
@@ -138,12 +141,45 @@ class_name BrineSim
 #   The hire total is still reported. Paying does not change the stored,
 #   carted, shipped, or earned-coin totals. It does spend the yard remainder.
 # - At tick RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK
-#   the wage beat ends and the scenario ends. Stored salt is the ledger still
+#   the wage beat ends and the relief beat opens. The scenario does not end.
+#   Hires who were paid stay on the wage until they are posted.
+# - Relief beat: the next RELIEF_TICK work rounds (100 ticks, 10 seconds).
+#   Every worker walks to a relief. A relief cell is the only goal, and it
+#   is walkable only now. One unit of work posts 1 hire who was already
+#   paid, taking wages in row-major order (the same order they were paid:
+#   north to south, then west to east), up to RELIEF_CAP hires in total.
+#   One hire moves. Nothing is rolled. The relief stops at RELIEF_CAP even
+#   if ticks remain and paid hires remain. Hires who were not paid are not
+#   posted. That includes hires still in a loft and hires who passed a gate
+#   but were not paid. Rakes and pans make no salt. With no relief, the
+#   paid hires stay on the wage and the posted total stays 0. The hire
+#   total is still reported. Posting does not change the stored, carted,
+#   shipped, or earned-coin totals, the hire count, or the coins left in
+#   the yard.
+# - At tick RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK
+#   the relief beat ends and the watch beat opens. The scenario does not end.
+#   Hires who were posted stay on the relief until they are stood.
+# - Watch beat: the next WATCH_TICK work rounds (100 ticks, 10 seconds).
+#   Every worker walks to a watch. A watch cell is the only goal, and it
+#   is walkable only now. One unit of work stands 1 hire who was already
+#   posted, taking reliefs in row-major order (the same order they were
+#   posted: north to south, then west to east), up to WATCH_CAP hires in
+#   total. One hire moves. Nothing is rolled. The watch stops at WATCH_CAP
+#   even if ticks remain and posted hires remain. Hires who were not posted
+#   are not stood. That includes hires still in a loft, hires who passed a
+#   gate but were not paid, and hires who were paid but were not posted.
+#   Rakes and pans make no salt. With no watch, the posted hires stay on
+#   the relief and the stood total stays 0. With nobody posted, the stood
+#   total stays 0. The hire total and the posted total are still reported.
+#   Standing does not change the stored, carted, shipped, or earned-coin
+#   totals, the hire count, the coins left in the yard, or the posted count.
+# - At tick RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK
+#   the watch beat ends and the scenario ends. Stored salt is the ledger still
 #   unmoved, plus covered salt still on the map, plus salt still in cribs,
 #   plus salt still on ships, plus coins still at stalls, plus coins still
 #   in yards, plus coins spent on hires, plus coins spent on wages. Hires
-#   moved into a loft, hires let through a gate, and hires paid a wage,
-#   still count.
+#   moved into a loft, hires let through a gate, hires paid a wage, hires
+#   posted to a relief, and hires stood on a watch, still count.
 #
 # Tick (work rounds, then a rain at each season boundary)
 # 1. If the scenario has already ended, the tick does nothing.
@@ -158,7 +194,9 @@ class_name BrineSim
 #    the yard beat every job banks the purse. During the bunk beat every job
 #    hires from the banked coins. During the loft beat every job moves those
 #    hires. During the gate beat every job lets those hires through. During
-#    the wage beat every job pays those hires. The job id does not change.
+#    the wage beat every job pays those hires. During the relief beat every
+#    job posts those hires. During the watch beat every job stands those
+#    hires. The job id does not change.
 #    The new worker acts on the tick it spawns. The starting population is
 #    INITIAL_POP, created before tick 0. Spawn refuses to exceed POP_CAP.
 # 3. Goals, from the salt map and the beat as the tick begins (later
@@ -189,27 +227,43 @@ class_name BrineSim
 #              still unpaid and at least WAGE_COST coins remain in a yard.
 #              All three jobs share that flow. One payment pays one hire.
 #              A short yard stops the beat from paying anyone else.
+#      Relief: relief cell while fewer than RELIEF_CAP hires have been posted
+#              and any paid hire is still on a wage. All three jobs share
+#              that flow. One post moves one paid hire. The total stops at
+#              RELIEF_CAP. Unpaid hires are not goals and are not posted.
+#      Watch:  watch cell while fewer than WATCH_CAP hires have been stood
+#              and any posted hire is still on a relief. All three jobs share
+#              that flow. One stand moves one posted hire. The total stops at
+#              WATCH_CAP. Hires who were not posted are not goals and are not
+#              stood.
 #    Trail cells are only ground to cross. They are not goals. Pan cells are
 #    not goals during the wet season. Rake cells are not goals during the
 #    dry season or any later beat. Crib cells are not goals before the cart
 #    beat. During the ship beat, the market beat, the yard beat, the bunk
-#    beat, the loft beat, the gate beat, and the wage beat they are only
-#    ground. Ship cells are not goals before the ship beat. During the market
-#    beat, the yard beat, the bunk beat, the loft beat, the gate beat, and
-#    the wage beat they are only ground, so workers can walk from the ship to
-#    the stall. Stall cells are not goals before the market beat. During the
-#    yard beat, the bunk beat, the loft beat, the gate beat, and the wage beat
-#    they are only ground, so workers can walk from the stall to the yard.
-#    Yard cells are not goals before the yard beat. During the bunk beat, the
-#    loft beat, the gate beat, and the wage beat they are only ground, so
-#    workers can walk from the yard to the bunk. Bunk cells are not goals
-#    before the bunk beat. During the loft beat, the gate beat, and the wage
-#    beat they are only ground, so workers can walk from the bunk to the loft.
-#    Loft cells are not goals before the loft beat. During the gate beat and
-#    the wage beat they are only ground, so workers can walk from the loft to
-#    the gate. Gate cells are not goals before the gate beat. During the wage
-#    beat they are only ground, so workers can walk from the gate to the wage.
-#    Wage cells are not goals before the wage beat.
+#    beat, the loft beat, the gate beat, the wage beat, the relief beat, and
+#    the watch beat they are only ground. Ship cells are not goals before the
+#    ship beat. During the market beat, the yard beat, the bunk beat, the loft
+#    beat, the gate beat, the wage beat, the relief beat, and the watch beat
+#    they are only ground, so workers can walk from the ship to the stall.
+#    Stall cells are not goals before the market beat. During the yard beat,
+#    the bunk beat, the loft beat, the gate beat, the wage beat, the relief
+#    beat, and the watch beat they are only ground, so workers can walk from
+#    the stall to the yard. Yard cells are not goals before the yard beat.
+#    During the bunk beat, the loft beat, the gate beat, the wage beat, the
+#    relief beat, and the watch beat they are only ground, so workers can walk
+#    from the yard to the bunk. Bunk cells are not goals before the bunk beat.
+#    During the loft beat, the gate beat, the wage beat, the relief beat, and
+#    the watch beat they are only ground, so workers can walk from the bunk to
+#    the loft. Loft cells are not goals before the loft beat. During the gate
+#    beat, the wage beat, the relief beat, and the watch beat they are only
+#    ground, so workers can walk from the loft to the gate. Gate cells are not
+#    goals before the gate beat. During the wage beat, the relief beat, and
+#    the watch beat they are only ground, so workers can walk from the gate to
+#    the wage. Wage cells are not goals before the wage beat. During the relief
+#    beat and the watch beat they are only ground, so workers can walk from the
+#    wage to the relief. Relief cells are not goals before the relief beat.
+#    During the watch beat they are only ground, so workers can walk from the
+#    relief to the watch. Watch cells are not goals before the watch beat.
 # 4. Each job builds a flow field: multi-source BFS from its goals through
 #    walkable cells (any painted cell, plus the anthill). A goal's next step
 #    is itself. Every other reached cell points one step toward the nearest
@@ -247,6 +301,15 @@ class_name BrineSim
 #              same order the hires passed. The remainder under WAGE_COST stays
 #              in the yard, and that hire stays unpaid. Hires still in a loft
 #              are not paid.
+#      Relief: 1 hire moves from a wage onto this relief. Wages are taken in
+#              row-major order (y, then x), the same order the hires were
+#              paid. The relief posts at most RELIEF_CAP hires, then stops.
+#              Hires still on a gate and hires still in a loft are not posted.
+#      Watch:  1 hire moves from a relief onto this watch. Reliefs are taken
+#              in row-major order (y, then x), the same order the hires were
+#              posted. The watch stands at most WATCH_CAP hires, then stops.
+#              Hires still on a wage, hires still on a gate, and hires still
+#              in a loft are not stood.
 # 6. If the population is above POP_CAP, the violation is counted. Spawning
 #    is the only way workers are added, and it stops at the cap.
 # 7. The tick index increases by 1. When it reaches RAIN_TICK, the first rain
@@ -267,7 +330,11 @@ class_name BrineSim
 #    RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK,
 #    the wage beat's first work round is the next tick. When it reaches
 #    RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK,
-#    the wage beat ends.
+#    the relief beat's first work round is the next tick. When it reaches
+#    RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK,
+#    the watch beat's first work round is the next tick. When it reaches
+#    RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK,
+#    the watch beat ends.
 #
 # Rain
 # - Loose salt is destroyed on every cell. Loose salt never survives a rain.
@@ -279,8 +346,9 @@ class_name BrineSim
 #   then moves that bank; the rain itself does not. The ship beat then loads
 #   a crib, the market beat then sells a ship, the yard beat then banks
 #   the coins, the bunk beat then hires from that purse, the loft beat then
-#   moves those hires, the gate beat then lets them through, and the wage
-#   beat then pays them; the rain does none of those.
+#   moves those hires, the gate beat then lets them through, the wage beat
+#   then pays them, the relief beat then posts them, and the watch beat then
+#   stands them; the rain does none of those.
 # - Stacked or covered salt outside a cover cell is destroyed.
 # - Destruction is applied row-major. The same paint map yields the same
 #   stored-salt number.
@@ -296,7 +364,11 @@ class_name BrineSim
 #   moved any of those hires, the line names how many reached it. If the gate
 #   let any of those hires through, the line names how many passed and how
 #   many stayed in the loft. If the wage paid any of those hires, the line
-#   names how many were paid and how many who passed are still unpaid. A plan
+#   names how many were paid and how many who passed are still unpaid. If
+#   the relief posted any of those paid hires, the line names how many were
+#   posted and how many paid hires stayed on the wage. If the watch stood any
+#   of those posted hires, the line names the watch, how many were stood, and
+#   how many posted hires stayed on the relief. A plan
 #   that paints no crib keeps the summary it had before the cart beat existed.
 #   A plan that paints no ship keeps the summary it had before the ship beat
 #   existed. A plan that paints no stall keeps the summary it had before the
@@ -305,7 +377,10 @@ class_name BrineSim
 #   it had before the bunk beat existed. A plan that paints no loft keeps the
 #   summary it had before the loft beat existed. A plan that paints no gate
 #   keeps the summary it had before the gate beat existed. A plan that paints
-#   no wage keeps the summary it had before the wage beat existed.
+#   no wage keeps the summary it had before the wage beat existed. A plan
+#   that paints no relief keeps the summary it had before the relief beat
+#   existed. A plan that paints no watch keeps the summary it had before the
+#   watch beat existed.
 # - Stored salt == 0 and any salt was destroyed: the quota was missed because
 #   uncovered salt was destroyed. An all-rake coast does this: workers pile
 #   loose salt, nothing is stacked into cover, the first rain wrecks the
@@ -321,9 +396,10 @@ class_name BrineSim
 #   ship beat ends. The yard countdown refills when the market beat ends.
 #   The bunk countdown refills when the yard beat ends. The loft countdown
 #   refills when the bunk beat ends. The gate countdown refills when the loft
-#   beat ends. The wage countdown refills when the gate beat ends. The sim
-#   itself counts ticks, not wall-clock time, so a headless run is the same
-#   scenario as the window.
+#   beat ends. The wage countdown refills when the gate beat ends. The relief
+#   countdown refills when the wage beat ends. The watch countdown refills
+#   when the relief beat ends. The sim itself counts ticks,
+#   not wall-clock time, so a headless run is the same scenario as the window.
 
 const EMPTY := 0
 const RAKE := 1
@@ -339,12 +415,14 @@ const BUNK := 10
 const LOFT := 11
 const GATE := 12
 const WAGE := 13
+const RELIEF := 14
+const WATCH := 15
 
 const WET := 0
 const DRY := 1
 # Cart is a beat after the dry season. The ship beat follows the cart, then
-# the market, then the yard, then the bunk, then the loft, then the gate, then the wage.
-# get_season() stays DRY through all of them.
+# the market, then the yard, then the bunk, then the loft, then the gate,
+# then the wage, then the relief, then the watch. get_season() stays DRY through all of them.
 const CART := 2
 const SHIPPING := 3
 const MARKET := 4
@@ -353,12 +431,15 @@ const BUNKING := 6
 const LOFTING := 7
 const GATING := 8
 const WAGING := 9
+const RELIEVING := 10
+const WATCHING := 11
 
 const GRID_W := 17
 const GRID_H := 12
-# Three rows north of the old edge. The bunk plans sit on row 0, so the loft is
-# row -1, the gate is row -2, and the wage is row -3.
-const GRID_NORTH := -3
+# Five rows north of the old edge. The bunk plans sit on row 0, so the loft is
+# row -1, the gate is row -2, the wage is row -3, the relief is row -4, and
+# the watch is row -5.
+const GRID_NORTH := -5
 const COAST_X := 0
 const ANTHILL := Vector2i(14, 5)
 
@@ -376,6 +457,8 @@ const BUNK_TICK := 100
 const LOFT_TICK := 100
 const GATE_TICK := 100
 const WAGE_TICK := 100
+const RELIEF_TICK := 100
+const WATCH_TICK := 100
 const TICK_HZ := 10
 const HIRE_COST := 100
 # Coins one payment takes from the yard. A shorter purse pays nobody.
@@ -393,6 +476,10 @@ const LOFT_CAP := 9999
 # Total hires the gate lets through. Past this the beat stops moving them.
 const GATE_CAP := 10
 const WAGE_CAP := 9999
+# Total paid hires the relief posts. Past this the beat stops moving them.
+const RELIEF_CAP := 6
+# Total posted hires the watch stands. Past this the beat stops moving them.
+const WATCH_CAP := 4
 
 const JOB_GATHER := 0
 const JOB_STACK := 1
@@ -413,6 +500,8 @@ var _bunk: Dictionary = {}
 var _loft: Dictionary = {}
 var _gate: Dictionary = {}
 var _wage: Dictionary = {}
+var _relief: Dictionary = {}
+var _watch: Dictionary = {}
 var _workers: Array = []
 
 var _next_id: int = 0
@@ -452,6 +541,8 @@ func restart() -> void:
 	_loft.clear()
 	_gate.clear()
 	_wage.clear()
+	_relief.clear()
+	_watch.clear()
 	_workers.clear()
 	_next_id = 0
 	_tick_index = 0
@@ -474,7 +565,7 @@ func paint_cell(x: int, y: int, mode: int) -> bool:
 		return false
 	if not _paintable(x, y):
 		return false
-	if mode < EMPTY or mode > WAGE:
+	if mode < EMPTY or mode > WATCH:
 		return false
 	var cell := Vector2i(x, y)
 	if mode == EMPTY:
@@ -491,7 +582,7 @@ func get_paint(x: int, y: int) -> int:
 func tick() -> void:
 	if _rain_done:
 		return
-	var end_tick := RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK
+	var end_tick := RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK
 	if _tick_index >= end_tick:
 		_finish()
 		return
@@ -520,13 +611,17 @@ func tick() -> void:
 		_open_gate()
 	elif _tick_index == RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK:
 		_open_wage()
+	elif _tick_index == RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK:
+		_open_relief()
+	elif _tick_index == RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK:
+		_open_watch()
 	elif _tick_index >= end_tick:
 		_finish()
 
 
 func run_until_rain() -> void:
 	var guard := 0
-	var limit := RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + 2
+	var limit := RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + 2
 	while not _rain_done and guard < limit:
 		tick()
 		guard += 1
@@ -552,7 +647,7 @@ func get_season() -> int:
 	return _season
 
 
-# WET, DRY, CART, SHIPPING, MARKET, YARDING, BUNKING, LOFTING, GATING, or WAGING. Weather stays dry after the first rain.
+# WET, DRY, CART, SHIPPING, MARKET, YARDING, BUNKING, LOFTING, GATING, WAGING, RELIEVING, or WATCHING. Weather stays dry after the first rain.
 func get_beat() -> int:
 	return _phase
 
@@ -597,10 +692,11 @@ func get_yard_left() -> int:
 
 
 # Hires bought from banked coins, including hires later moved into a loft,
-# hires later let through a gate, and hires later paid a wage.
-# One hire costs HIRE_COST. Nothing is rolled.
+# hires later let through a gate, hires later paid a wage, and hires later
+# posted to a relief, and hires later stood on a watch. One hire costs
+# HIRE_COST. Nothing is rolled.
 func get_hired() -> int:
-	return _sum(_bunk) + _sum(_loft) + _sum(_gate) + _sum(_wage)
+	return _sum(_bunk) + _sum(_loft) + _sum(_gate) + _sum(_wage) + _sum(_relief) + _sum(_watch)
 
 
 # Hires still sitting at a bunk. Lofting moves these one at a time.
@@ -608,10 +704,10 @@ func get_bunk_left() -> int:
 	return _sum(_bunk)
 
 
-# Hires moved into a loft, including hires later let through a gate
-# and hires later paid a wage. The hire total still counts these.
+# Hires moved into a loft, including hires later let through a gate,
+# hires later paid a wage, hires later posted, and hires later stood. The hire total still counts these.
 func get_lofted() -> int:
-	return _sum(_loft) + _sum(_gate) + _sum(_wage)
+	return _sum(_loft) + _sum(_gate) + _sum(_wage) + _sum(_relief) + _sum(_watch)
 
 
 # Hires still sitting in a loft. The gate moves these one at a time.
@@ -619,10 +715,11 @@ func get_loft_left() -> int:
 	return _sum(_loft)
 
 
-# Hires let through a gate, at most GATE_CAP, including hires later paid.
-# Nothing is rolled. The loft total and the hire total still count these.
+# Hires let through a gate, at most GATE_CAP, including hires later paid,
+# hires later posted, and hires later stood. Nothing is rolled. The loft
+# total and the hire total still count these.
 func get_gated() -> int:
-	return _sum(_gate) + _sum(_wage)
+	return _sum(_gate) + _sum(_wage) + _sum(_relief) + _sum(_watch)
 
 
 # Hires who passed a gate and have not been paid. The wage pays these one at a time.
@@ -630,10 +727,35 @@ func get_gate_left() -> int:
 	return _sum(_gate)
 
 
-# Hires paid a wage. Pay is WAGE_COST coins from the yard. Nothing is rolled.
-# The gate total and the hire total still count these.
+# Hires paid a wage, including hires later posted and hires later stood.
+# Pay is WAGE_COST coins from the yard. Nothing is rolled. The gate total
+# and the hire total still count these.
 func get_paid() -> int:
+	return _sum(_wage) + _sum(_relief) + _sum(_watch)
+
+
+# Hires who were paid and have not been posted. The relief posts these one at a time.
+func get_wage_left() -> int:
 	return _sum(_wage)
+
+
+# Hires posted to a relief, at most RELIEF_CAP, including hires later stood
+# on a watch. Nothing is rolled. The paid total and the hire total still
+# count these. Posting spends no coins.
+func get_posted() -> int:
+	return _sum(_relief) + _sum(_watch)
+
+
+# Hires who were posted and have not been stood. The watch stands these one at a time.
+func get_relief_left() -> int:
+	return _sum(_relief)
+
+
+# Hires stood on a watch, at most WATCH_CAP. Nothing is rolled.
+# The posted total and the hire total still count these. Standing spends no
+# coins and does not change the posted count.
+func get_stood() -> int:
+	return _sum(_watch)
 
 
 func _hired_coins() -> int:
@@ -690,6 +812,10 @@ func get_ticks_until_rain() -> int:
 		horizon = RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK
 	elif _phase == WAGING:
 		horizon = RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK
+	elif _phase == RELIEVING:
+		horizon = RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK
+	elif _phase == WATCHING:
+		horizon = RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK
 	return maxi(horizon - _tick_index, 0)
 
 
@@ -715,6 +841,8 @@ func get_cell_salt(x: int, y: int) -> Dictionary:
 		"loft": _amount(_loft, cell),
 		"gate": _amount(_gate, cell),
 		"wage": _amount(_wage, cell),
+		"relief": _amount(_relief, cell),
+		"watch": _amount(_watch, cell),
 	}
 
 
@@ -759,6 +887,10 @@ func rules_api() -> PackedStringArray:
 		"get_gated",
 		"get_gate_left",
 		"get_paid",
+		"get_wage_left",
+		"get_posted",
+		"get_relief_left",
+		"get_stood",
 		"get_bank_left",
 		"get_population",
 		"get_max_population",
@@ -817,25 +949,32 @@ func _walkable(x: int, y: int) -> bool:
 	# A crib stays shut until the cart beat, a ship stays shut until the ship
 	# beat, a stall stays shut until the market beat, a yard stays shut until
 	# the yard beat, a bunk stays shut until the bunk beat, a loft stays shut
-	# until the loft beat, a gate stays shut until the gate beat, and a wage
-	# stays shut until the wage beat, so none of them can shortcut an earlier
-	# haul. Each stays open afterward so workers can walk the coins, the
-	# hires, the crew, and then the pay forward.
-	if paint == CRIB and _phase != CART and _phase != SHIPPING and _phase != MARKET and _phase != YARDING and _phase != BUNKING and _phase != LOFTING and _phase != GATING and _phase != WAGING:
+	# until the loft beat, a gate stays shut until the gate beat, a wage
+	# stays shut until the wage beat, a relief stays shut until the relief
+	# beat, and a watch stays shut until the watch beat, so none of them can
+	# shortcut an earlier haul. Each stays open afterward so workers can walk
+	# the coins, the hires, the crew, the pay, the posting, and then the
+	# standing forward. Phase numbers increase in that order, so a mark is
+	# open from its own beat on.
+	if paint == CRIB and _phase < CART:
 		return false
-	if paint == SHIP and _phase != SHIPPING and _phase != MARKET and _phase != YARDING and _phase != BUNKING and _phase != LOFTING and _phase != GATING and _phase != WAGING:
+	if paint == SHIP and _phase < SHIPPING:
 		return false
-	if paint == STALL and _phase != MARKET and _phase != YARDING and _phase != BUNKING and _phase != LOFTING and _phase != GATING and _phase != WAGING:
+	if paint == STALL and _phase < MARKET:
 		return false
-	if paint == YARD and _phase != YARDING and _phase != BUNKING and _phase != LOFTING and _phase != GATING and _phase != WAGING:
+	if paint == YARD and _phase < YARDING:
 		return false
-	if paint == BUNK and _phase != BUNKING and _phase != LOFTING and _phase != GATING and _phase != WAGING:
+	if paint == BUNK and _phase < BUNKING:
 		return false
-	if paint == LOFT and _phase != LOFTING and _phase != GATING and _phase != WAGING:
+	if paint == LOFT and _phase < LOFTING:
 		return false
-	if paint == GATE and _phase != GATING and _phase != WAGING:
+	if paint == GATE and _phase < GATING:
 		return false
-	if paint == WAGE and _phase != WAGING:
+	if paint == WAGE and _phase < WAGING:
+		return false
+	if paint == RELIEF and _phase < RELIEVING:
+		return false
+	if paint == WATCH and _phase < WATCHING:
 		return false
 	return true
 
@@ -932,6 +1071,20 @@ func _flows() -> Dictionary:
 			JOB_GATHER: paying,
 			JOB_STACK: paying,
 			JOB_COVER: paying,
+		}
+	if _phase == RELIEVING:
+		var posting := _build_flow(_relief_goals())
+		return {
+			JOB_GATHER: posting,
+			JOB_STACK: posting,
+			JOB_COVER: posting,
+		}
+	if _phase == WATCHING:
+		var standing := _build_flow(_watch_goals())
+		return {
+			JOB_GATHER: standing,
+			JOB_STACK: standing,
+			JOB_COVER: standing,
 		}
 	return {
 		JOB_GATHER: _build_flow(_gather_goals()),
@@ -1079,6 +1232,36 @@ func _wage_goals() -> Array:
 	return goals
 
 
+func _relief_goals() -> Array:
+	var goals: Array = []
+	if get_posted() >= RELIEF_CAP or get_wage_left() <= 0:
+		return goals
+	for y in range(GRID_NORTH, GRID_H):
+		for x in GRID_W:
+			var cell := Vector2i(x, y)
+			if _paint_at(cell) != RELIEF:
+				continue
+			if _amount(_relief, cell) >= RELIEF_CAP:
+				continue
+			goals.append(cell)
+	return goals
+
+
+func _watch_goals() -> Array:
+	var goals: Array = []
+	if get_stood() >= WATCH_CAP or get_relief_left() <= 0:
+		return goals
+	for y in range(GRID_NORTH, GRID_H):
+		for x in GRID_W:
+			var cell := Vector2i(x, y)
+			if _paint_at(cell) != WATCH:
+				continue
+			if _amount(_watch, cell) >= WATCH_CAP:
+				continue
+			goals.append(cell)
+	return goals
+
+
 func _stack_goals() -> Array:
 	var goals: Array = []
 	for y in range(GRID_NORTH, GRID_H):
@@ -1183,6 +1366,12 @@ func _work(worker: Worker) -> void:
 		return
 	if _phase == WAGING:
 		_pay_wage(worker)
+		return
+	if _phase == RELIEVING:
+		_post_relief(worker)
+		return
+	if _phase == WATCHING:
+		_stand_watch(worker)
 		return
 	var cell := Vector2i(worker.x, worker.y)
 	if worker.job == JOB_GATHER:
@@ -1394,6 +1583,46 @@ func _pay_wage(worker: Worker) -> void:
 				return
 
 
+func _post_relief(worker: Worker) -> void:
+	var cell := Vector2i(worker.x, worker.y)
+	if _paint_at(cell) != RELIEF:
+		return
+	if get_posted() >= RELIEF_CAP:
+		return
+	var held := _amount(_relief, cell)
+	if held >= RELIEF_CAP:
+		return
+	for y in range(GRID_NORTH, GRID_H):
+		for x in GRID_W:
+			var src := Vector2i(x, y)
+			var amount := _amount(_wage, src)
+			if amount <= 0:
+				continue
+			_put(_wage, src, amount - 1)
+			_put(_relief, cell, held + 1)
+			return
+
+
+func _stand_watch(worker: Worker) -> void:
+	var cell := Vector2i(worker.x, worker.y)
+	if _paint_at(cell) != WATCH:
+		return
+	if get_stood() >= WATCH_CAP:
+		return
+	var held := _amount(_watch, cell)
+	if held >= WATCH_CAP:
+		return
+	for y in range(GRID_NORTH, GRID_H):
+		for x in GRID_W:
+			var src := Vector2i(x, y)
+			var amount := _amount(_relief, src)
+			if amount <= 0:
+				continue
+			_put(_relief, src, amount - 1)
+			_put(_watch, cell, held + 1)
+			return
+
+
 func _best_loose_neighbor(cell: Vector2i) -> Vector2i:
 	var best := Vector2i(-1, -1)
 	var best_amount := 0
@@ -1491,6 +1720,18 @@ func _open_wage() -> void:
 	_phase = WAGING
 
 
+func _open_relief() -> void:
+	if _phase != WAGING or _rain_done:
+		return
+	_phase = RELIEVING
+
+
+func _open_watch() -> void:
+	if _phase != RELIEVING or _rain_done:
+		return
+	_phase = WATCHING
+
+
 func _finish() -> void:
 	if _rain_done:
 		return
@@ -1557,4 +1798,8 @@ func _make_summary() -> String:
 		message += " Gated %d. Left %d in the loft." % [get_gated(), get_loft_left()]
 	if get_paid() > 0:
 		message += " Paid %d. Left %d unpaid." % [get_paid(), get_gate_left()]
+	if get_posted() > 0:
+		message += " Posted %d. Left %d at the wage." % [get_posted(), get_wage_left()]
+	if get_stood() > 0:
+		message += " Stood %d on the watch. Left %d at the relief." % [get_stood(), get_relief_left()]
 	return message

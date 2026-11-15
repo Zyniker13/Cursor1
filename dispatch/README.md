@@ -1,6 +1,6 @@
 # Dispatch
 
-A wiring puzzle. Route parcels across Building 1, Building 2, Building 3, Building 4, Building 5, and Building 6, then submit the belt. After a delivery, the game shows your cycles and block count beside par. Par is not a handwritten number: it is the result of simulating that puzzle's reference graph.
+A wiring puzzle. Route parcels across Building 1, Building 2, Building 3, Building 4, Building 5, Building 6, and Building 7, then submit the belt. After a delivery, the game shows your cycles and block count beside par. Par is not a handwritten number: it is the result of simulating that puzzle's reference graph.
 
 Blocks are drawn by Godot. There is no imported art.
 
@@ -30,7 +30,7 @@ The process exits non-zero if a test fails. These were written for Godot 4.7.
 
 ## Controls
 
-Left-click an empty cell to place the selected block. Left-click a block of the same type to rotate it, or a different type to replace it. Right-click deletes. `R` rotates the block under the cursor, or the placement arrow if the cell is empty. `Delete` removes the block under the cursor. `Enter` submits. `Backspace` restarts the puzzle. Keys `1` through `8` select the first eight puzzles. `[` and `]` step to the previous or next puzzle. Puzzle 1 also prints the how-to on the board. Building 2 is routes 16 through 22, Building 3 is routes 23 through 29, Building 4 is routes 30 through 36, Building 5 is routes 37 through 43, and Building 6 is routes 44 through 50. Each later building is marked on the route row. Building 2 opens after route 15, Building 3 opens after route 22, Building 4 opens after route 29, Building 5 opens after route 36, and Building 6 opens after route 43.
+Left-click an empty cell to place the selected block. Left-click a block of the same type to rotate it, or a different type to replace it. Right-click deletes. `R` rotates the block under the cursor, or the placement arrow if the cell is empty. `Delete` removes the block under the cursor. `Enter` submits. `Backspace` restarts the puzzle. Keys `1` through `8` select the first eight puzzles. `[` and `]` step to the previous or next puzzle. Puzzle 1 also prints the how-to on the board. Building 2 is routes 16 through 22, Building 3 is routes 23 through 29, Building 4 is routes 30 through 36, Building 5 is routes 37 through 43, Building 6 is routes 44 through 50, and Building 7 is routes 51 through 57. Each later building is marked on the route row. Building 2 opens after route 15, Building 3 opens after route 22, Building 4 opens after route 29, Building 5 opens after route 36, Building 6 opens after route 43, and Building 7 opens after route 50.
 
 ## Simulation
 
@@ -38,13 +38,14 @@ Ticks are deterministic. A parcel sits on at most one cell. Sources and the dock
 
 Each tick, in order:
 
-1. A painter sets the color of a parcel standing on it. A primer sets the color only when that parcel is gray. A counter increments once for that parcel and stamps the new value. A parcel is stamped only on the first tick it spends on that counter.
-2. Every parcel picks a destination from the block under it. A turn that is rotating a parcel picks no destination.
-3. Destinations that are illegal, contested by two parcels, or occupied by a parcel that is staying are cancelled. This repeats until it settles. Conveyors, painters, counters, splitters, filters, primers, bridges, turns, and slides may step into a cell another parcel is leaving on the same tick.
-4. The surviving moves happen together. A parcel that steps onto the dock is delivered, in order.
-5. A splitter that actually sent a parcel switches to its other output.
-6. Each source emits its next parcel into the cell it faces, if that cell is empty and in bounds.
-7. The delivered sequence is compared with the order.
+1. A bin removes any parcel standing on it. That parcel is not delivered and does not have to match an order line. A slide or a bridge that hops over the bin does not remove the hopping parcel, because that parcel never stands on the bin.
+2. A painter sets the color of a parcel standing on it. A primer sets the color only when that parcel is gray. A counter increments once for that parcel and stamps the new value. A parcel is stamped only on the first tick it spends on that counter.
+3. Every parcel picks a destination from the block under it. A turn that is rotating a parcel picks no destination. A bin picks none.
+4. Destinations that are illegal, contested by two parcels, or occupied by a parcel that is staying are cancelled. This repeats until it settles. Conveyors, painters, counters, splitters, filters, primers, bridges, turns, and slides may step into a cell another parcel is leaving on the same tick.
+5. The surviving moves happen together. A parcel that steps onto the dock is delivered, in order.
+6. A splitter that actually sent a parcel switches to its other output.
+7. Each source emits its next parcel into the cell it faces, if that cell is empty and in bounds.
+8. The delivered sequence is compared with the order.
 
 Cycles is the tick on which the last ordered parcel arrives. Block count is the number of blocks in the submitted graph. If a delivery does not match the next order line, the attempt fails. If nothing can move, emit, release a latch, or step off a turn, the belt is stuck and the attempt fails. A layout that keeps moving without finishing, such as a loop, stops at tick 250 and fails.
 
@@ -101,6 +102,10 @@ Moves a parcel two cells in the parcel's current facing on the tick the parcel i
 
 A slide is not a bridge. A bridge lands two cells along the block's arrow. A slide lands two cells along the parcel's facing, so a turn before a slide changes where it lands, and rotating the slide block does not. A slide does not paint, stamp, or filter.
 
+### Bin
+
+Removes a parcel that is standing on it at the start of the tick. The parcel does not move, and it is not delivered. It does not have to match an order line. The bin does not paint, stamp, rotate, or filter, and rotating the block does not change it. A parcel that only hops across the cell, on a slide or a bridge, never stands on the bin, so it is not removed. A parcel that walks onto the bin is removed on the next tick. A bin is a placed block and counts toward the block total. Sources and the dock stay fixtures. An extra parcel that reaches the dock still fails the attempt. Scrapping a parcel the order needs leaves the order short: the belt sticks, or the attempt hits the tick cap.
+
 ## Puzzles
 
 1. First Mile introduces the conveyor. Send the parcel straight to the dock.
@@ -153,7 +158,14 @@ A slide is not a bridge. A bridge lands two cells along the block's arrow. A sli
 48. Two Spans sends blue and red through one slide. Blue is facing west and reaches the blue filter. Red is facing east and reaches the red filter, then the long belt. One bridge arrow cannot feed both filters.
 49. Second Slide loops the parcel through the counter, paints it yellow on the way back, and slides it over the brick. The delivery is yellow 2.
 50. Night Slide uses the filter, the turn, the slide, the latch, the primer, and the counter. Red turns south and slides over the brick onto the counter for stamp 1. The latch holds the south belt. Gray becomes yellow and is stamped 2. Blue keeps its color and is stamped 3.
+51. Drop the Spare introduces the bin. Two parcels leave. Blue is due. Red goes into the bin. Delivering red fails the order.
+52. Red Away sends blue along the filter's arrow and turns red aside. Red still needs a bin, or it reaches the dock. With nowhere to stand, red stays on the filter and blue never moves.
+53. Skip the Middle bins the blue between two reds before the counter. The reds leave stamped 1 and 2. If blue is stamped, the dock sees red 1 and then blue 2.
+54. Over the Bin slides blue across the bin onto the belt. Blue never stands on the bin, so the hop does not scrap it. Red walks onto the bin and is removed. Carrying red onward delivers red first.
+55. After the Latch holds red, then bins it. Without the bin, red stays on the splitter and blue never leaves. A belt, slide, or bridge in that cell carries red to the dock first.
+56. Keep the Coat bins blue. Gray is primed yellow and stamped 1. Blue never takes that coat or that stamp.
+57. Night Bin uses the filter, the primer, the counter, the latch, and the bin. Red is stamped 1. Gray is primed yellow and stamped 2. Blue is binned and must not arrive.
 
 ## Limits
 
-These are Building 1, Building 2, Building 3, Building 4, Building 5, and Building 6. There is no histogram, no sound, and no proof that par is the shortest possible route: par is the reference graph, and another graph can deliver the order with a different cycle count or block count. Playback of a run that hits the tick cap is shortened on screen; the simulation itself still runs to the cap.
+These are Building 1, Building 2, Building 3, Building 4, Building 5, Building 6, and Building 7. There is no histogram, no sound, and no proof that par is the shortest possible route: par is the reference graph, and another graph can deliver the order with a different cycle count or block count. Playback of a run that hits the tick cap is shortened on screen; the simulation itself still runs to the cap.
