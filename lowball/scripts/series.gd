@@ -287,21 +287,30 @@ func begin_match(lineup: Array, tactic: String, focus: String) -> Dictionary:
 func _begin_week(lineup: Array, tactic: String, focus: String) -> Dictionary:
 	var cards := Sport.week_fixtures(week)
 	var focuses := _focuses_for(week, focus)
-	var player_match: Dictionary = {}
+	var follow_slot := 0
+	for card in cards:
+		if int(card["home"]) == Sport.PLAYER_INDEX or int(card["away"]) == Sport.PLAYER_INDEX:
+			follow_slot = int(card["slot"])
+	var bye := int(cards[0]["bye"])
+	var watched: Dictionary = {}
 	var others: Array = []
 	for slot in cards.size():
 		var played := _simulate_card(cards[slot], lineup, tactic, week, week, slot, focuses)
-		if bool(played["player_played"]):
-			player_match = played
+		played["bye_index"] = bye
+		played["bye_club"] = str(cards[0]["bye_club"])
+		if slot == follow_slot:
+			watched = played
 		else:
 			others.append(played)
-	if player_match.is_empty():
-		return {"ok": false, "error": "The week has no match for Lumen Reedmice."}
+	if watched.is_empty():
+		return {"ok": false, "error": "The week is missing a match."}
 	if others.size() != Sport.MATCHES_PER_WEEK - 1:
 		return {"ok": false, "error": "The week is missing a match."}
-	player_match["other_matches"] = others
-	pending = player_match
-	return player_match
+	if not bool(watched["player_played"]):
+		watched["player_result"] = "bye"
+	watched["other_matches"] = others
+	pending = watched
+	return watched
 
 
 func _begin_final(lineup: Array, tactic: String, focus: String) -> Dictionary:
