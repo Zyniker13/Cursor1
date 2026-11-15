@@ -5,10 +5,11 @@ class_name ChartBook
 # The Turning Basin holds the next eight. The Painted Lock holds eight more.
 # The West Return holds eight more. The Meeting Glass holds eight more.
 # The Tide Mirror holds eight more. The Shutter holds eight more.
-# The Stain holds the last eight.
+# The Stain holds eight more. The Vane holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
-# 90 for blue, and that number is a color, not a facing. See BeamTracer.
+# 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
+# 180, and 270 for north, east, south, and west. See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
 # or both. Tide index picks an entry of tide_phases, which is the count of
@@ -23,6 +24,7 @@ const MEET := "The Meeting Glass"
 const TIDE := "The Tide Mirror"
 const SHUTTER := "The Shutter"
 const STAIN := "The Stain"
+const VANE := "The Vane"
 
 static func all() -> Array:
 	var book: Array = []
@@ -35,6 +37,7 @@ static func all() -> Array:
 	book.append_array(tide())
 	book.append_array(shutter())
 	book.append_array(stain())
+	book.append_array(vane())
 	return book
 
 
@@ -72,6 +75,10 @@ static func shutter() -> Array:
 
 static func stain() -> Array:
 	return [chart_63(), chart_64(), chart_65(), chart_66(), chart_67(), chart_68(), chart_69(), chart_70()]
+
+
+static func vane() -> Array:
+	return [chart_71(), chart_72(), chart_73(), chart_74(), chart_75(), chart_76(), chart_77(), chart_78()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -2622,6 +2629,257 @@ static func chart_70() -> Dictionary:
 		],
 	}
 
+static func chart_71() -> Dictionary:
+	# A northbound beam meets the vane. East sends it onto the dock.
+	# North passes straight into the upper hull. West sends it into the
+	# side hull. South is head-on, so the beam stops. A stain would keep
+	# going north and would not make the east turn.
+	return {
+		"id": "71",
+		"harbor": VANE,
+		"title": "The East Vane",
+		"teach": "A vane has a facing: east, south, west, or north. Click it and the facing turns clockwise. It does not recolor, and it does not split. A beam going north hits this vane faced east and leaves east onto the dock, still white. Faced north, the same beam passes north and wakes the hull. Faced west, it leaves west and wakes the other hull. Faced south, the beam is head-on and stops. A stain cannot replace it, because a stain does not turn the beam.",
+		"win": "The east vane lands the beam.",
+		"cols": 5,
+		"rows": 4,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [_lantern("L", 2, 3, "N", "white")],
+		"docks": [_dock("D", 4, 2, "white")],
+		"boats": [
+			_boat("Hn", 2, 0),
+			_boat("Hw", 0, 2),
+		],
+		"fixtures": [],
+		"pieces": [
+			_vane("V", "Vane", 2, 2, 0, 90),
+		],
+	}
+
+static func chart_72() -> Dictionary:
+	# The stain must be red. The vane then turns that red beam north.
+	# Left facing east, the vane is aligned with the beam and the dock
+	# stays dark. Left facing south, the beam wakes the hull.
+	return {
+		"id": "72",
+		"harbor": VANE,
+		"title": "After the Color",
+		"teach": "A stain turns the white beam red, then the vane turns that red beam north onto the red dock. The color stays red. Leaving the vane unrotated, faced east, the beam passes straight and misses the dock. Faced south, it wakes the hull.",
+		"win": "Red leaves the vane and the dock takes it.",
+		"cols": 5,
+		"rows": 5,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [_lantern("L", 0, 2, "E", "white")],
+		"docks": [_dock("Rd", 3, 0, "red")],
+		"boats": [_boat("Hs", 3, 4)],
+		"fixtures": [],
+		"pieces": [
+			_stain("K", "Stain", 2, 2, 90, 0),
+			_vane("V", "Vane", 3, 2, 90, 0),
+		],
+	}
+
+static func chart_73() -> Dictionary:
+	# Dry is the solution. The southbound beam turns east onto the dock.
+	# Flood covers the vane's row, so the beam stops at the waterline.
+	# A shutter in that cell would stop while dry and open under water.
+	return {
+		"id": "73",
+		"harbor": VANE,
+		"title": "Dry Turn",
+		"teach": "The vane turns the beam on the dry phase, and that dry phase is the solution. The beam comes south, the vane faces east, and the dock takes it. Flood shuts the vane: the beam stops at the waterline and does not enter the cell. A shutter cannot replace it. A shutter does not turn the beam, so while the row is dry it stops, and under water it opens and lets the beam pass. The vane stays shut under water.",
+		"win": "The dry turn holds.",
+		"cols": 5,
+		"rows": 5,
+		"tide_phases": [0, 2],
+		"start_tide_index": 1,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [_lantern("L", 2, 1, "S", "white")],
+		"docks": [_dock("D", 4, 3, "white")],
+		"boats": [_boat("Hs", 2, 4)],
+		"fixtures": [],
+		"pieces": [
+			_vane("V", "Vane", 2, 3, 0, 90),
+		],
+	}
+
+static func chart_74() -> Dictionary:
+	# Two side entries must both leave east. A mirror sends them opposite
+	# ways, so one of them wakes the west hull no matter which way it faces.
+	# The vane starts on west. Quarter turns walk it to north, then east.
+	return {
+		"id": "74",
+		"harbor": VANE,
+		"title": "The Quarter",
+		"teach": "The vane starts facing west. Click it until it faces east. The unclicked vane sends both beams into the hull. A beam from the south and a beam from the north both leave east: the entry does not pick the exit, the facing does. A mirror cannot replace it. A mirror's exit depends on the entry, and a mirror has only two facings, so each mirror facing turns one of these beams into the hull.",
+		"win": "Both beams leave east.",
+		"cols": 5,
+		"rows": 5,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ls", 2, 4, "N", "white"),
+			_lantern("Ln", 2, 0, "S", "white"),
+		],
+		"docks": [_dock("D", 4, 2, "white")],
+		"boats": [_boat("Hw", 0, 2)],
+		"fixtures": [],
+		"pieces": [
+			_vane("V", "Vane", 2, 2, 270, 90),
+		],
+	}
+
+static func chart_75() -> Dictionary:
+	# The straight shot wakes the hull. South, then east, walks the beam
+	# under the hull and into the dock. Either vane left on its start
+	# facing misses.
+	return {
+		"id": "75",
+		"harbor": VANE,
+		"title": "Two Bends",
+		"teach": "Two vanes turn one beam around the hull and into the dock. The first faces south. The second faces east. Either vane left unrotated misses: the first, left facing east, wakes the hull, and the second, left facing north, stops the beam.",
+		"win": "The beam clears the hull.",
+		"cols": 6,
+		"rows": 5,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [_lantern("L", 0, 2, "E", "white")],
+		"docks": [_dock("D", 5, 4, "white")],
+		"boats": [_boat("H", 4, 2)],
+		"fixtures": [],
+		"pieces": [
+			_vane("V1", "First vane", 2, 2, 90, 180),
+			_vane("V2", "Second vane", 2, 4, 0, 90),
+		],
+	}
+
+static func chart_76() -> Dictionary:
+	# Flood 2 opens the shutters and the tide mirrors. The vane sits on the
+	# dry row above that water and turns the climb east. Low water stops on
+	# the dry shutter, and the lower lamp wakes the hull. A vane moved onto
+	# the flooded climb would be shut.
+	return {
+		"id": "76",
+		"harbor": VANE,
+		"title": "Above the Gate",
+		"teach": "A shutter stops the beam while its row is dry. Raise the tide and the shutter lets the beam through. A vane on the dry row above the water turns that beam onto the dock. A vane placed on the flooded row would be shut, and the beam would stop at the waterline. The other bend of the feed mirror wakes a hull. While the row is dry the shutter stops the beam and the lower lamp wakes the hull. Leaving the vane facing north wakes the hull above it.",
+		"win": "The gate opens, and the vane above it turns the beam.",
+		"cols": 6,
+		"rows": 6,
+		"tide_phases": [0, 2],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 2, "E", "white"),
+			_lantern("S", 0, 5, "E", "white"),
+		],
+		"docks": [_dock("D", 5, 3, "white")],
+		"boats": [
+			_boat("Hm", 2, 0),
+			_boat("Ha", 3, 0),
+			_boat("Hb", 5, 5),
+		],
+		"fixtures": [],
+		"pieces": [
+			_mirror("M", "Feed mirror", 2, 2, 0, 90),
+			_shutter("G", "Shutter", 2, 4),
+			_tide_mirror("T", "Tide mirror", 2, 5, 0, 90),
+			_tide_mirror("B", "East tide mirror", 3, 5, 90, 0),
+			_shutter("U", "Upper shutter", 3, 4),
+			_vane("V", "Vane", 3, 3, 0, 90),
+		],
+	}
+
+static func chart_77() -> Dictionary:
+	# Phases 0, 2, and 3. Flood 2 leaves row 4 dry, so the vane there still
+	# turns. Flood 3 covers that row and the dock. Flood 0 stops on the dry
+	# shutter and the lower lamp wakes the hull.
+	return {
+		"id": "77",
+		"harbor": VANE,
+		"title": "The Held Vane",
+		"teach": "Phases are low water, the middle mark, and high water. The solution is the middle mark. Low water is the wrong tide: the shutter is dry, the beam stops, and the lower lamp wakes the hull. High water covers the dock. The vane on the dry row still turns the beam at the middle mark. Leaving it facing north wakes the hull. The other bend of the feed mirror wakes a hull. Hold the middle mark.",
+		"win": "The middle mark holds, and the vane still turns the beam.",
+		"cols": 6,
+		"rows": 7,
+		"tide_phases": [0, 2, 3],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 2, "E", "white"),
+			_lantern("S", 0, 6, "E", "white"),
+		],
+		"docks": [_dock("D", 5, 4, "white")],
+		"boats": [
+			_boat("Hm", 2, 0),
+			_boat("Ha", 3, 0),
+			_boat("Hb", 5, 6),
+		],
+		"fixtures": [],
+		"pieces": [
+			_mirror("M", "Feed mirror", 2, 2, 0, 90),
+			_shutter("G", "Shutter", 2, 5),
+			_tide_mirror("T", "Tide mirror", 2, 6, 0, 90),
+			_tide_mirror("B", "East tide mirror", 3, 6, 90, 0),
+			_shutter("U", "Upper shutter", 3, 5),
+			_vane("V", "Vane", 3, 4, 0, 90),
+		],
+	}
+
+static func chart_78() -> Dictionary:
+	# The side socket lets white wake the hull. On the line, the prism
+	# splits. Red climbs. Blue falls through the gate, the stain turns it
+	# red, and the vane on the last dry row turns that red onto the dock.
+	# Only the middle mark opens the gate and leaves the dock dry.
+	return {
+		"id": "78",
+		"harbor": VANE,
+		"title": "The Vane Mark",
+		"teach": "Move the prism onto the white beam so red climbs and blue falls through the shutter. Click the stain so that blue becomes red. Rotate the vane so the red beam turns onto the lower dock. The other socket lets white wake the hull. The other faces of the prism absorb the beam. Leaving the vane facing north wakes the hull. Low water is the wrong tide: the shutter is dry and the lower lamp wakes the hull. High water covers the lower dock. Hold the middle mark.",
+		"win": "Prism, stain, vane, and the middle mark. The turn holds.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0, 2, 3],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 2, "E", "white"),
+			_lantern("S", 0, 6, "E", "white"),
+		],
+		"docks": [
+			_dock("Rn", 2, 0, "red"),
+			_dock("Rs", 6, 4, "red"),
+		],
+		"boats": [
+			_boat("Hw", 6, 2),
+			_boat("Hb", 6, 6),
+			_boat("Ha", 4, 0),
+		],
+		"fixtures": [],
+		"pieces": [
+			_prism("P", "Prism", [["side", 5, 0], ["line", 2, 2]], "side", 0, "line", 90),
+			_shutter("G", "Shutter", 2, 5),
+			_tide_mirror("T", "Tide mirror", 2, 6, 0, 90),
+			_stain("K", "Stain", 3, 6, 90, 0),
+			_tide_mirror("B", "East tide mirror", 4, 6, 90, 0),
+			_shutter("U", "Upper shutter", 4, 5),
+			_vane("V", "Vane", 4, 4, 0, 90),
+		],
+	}
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -2757,6 +3015,20 @@ static func _stain(id: String, name: String, x: int, y: int, start_rot: int, sol
 		"id": id,
 		"name": name,
 		"kind": "stain",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _vane(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "vane",
 		"movable": false,
 		"sockets": [{"id": "a", "x": x, "y": y}],
 		"start_socket": "a",
