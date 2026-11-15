@@ -29,6 +29,7 @@ func _initialize() -> void:
 	_test_flag(errors)
 	_test_banner(errors)
 	_test_pennant(errors)
+	_test_standard(errors)
 	_test_determinism(errors)
 	_test_population(errors)
 	_test_no_select_ant(errors)
@@ -102,7 +103,7 @@ func _test_determinism(errors: Array) -> void:
 	var plans := _plans(errors)
 	if plans.is_empty():
 		return
-	for plan_name in ["winning", "all_rake", "dry_pans", "continued", "late_pans", "no_crib", "carted", "late_crib", "dry_crib", "no_ship", "shipped", "late_ship", "dry_ship", "no_stall", "sold", "late_sold", "dry_sold", "no_yard", "banked", "late_banked", "dry_banked", "no_bunk", "hired", "late_hired", "dry_hired", "no_loft", "lofted", "late_lofted", "dry_lofted", "no_gate", "gated", "late_gated", "dry_gated", "no_wage", "paid", "late_paid", "dry_paid", "no_relief", "posted", "late_posted", "dry_posted", "no_watch", "stood", "late_stood", "dry_stood", "watch_only", "no_lamp", "lit", "late_lit", "dry_lit", "lamp_only", "no_bell", "rung", "late_rung", "dry_rung", "bell_only", "no_horn", "sounded", "late_sounded", "dry_sounded", "horn_only", "no_flag", "raised", "late_raised", "dry_raised", "flag_only", "no_banner", "hoisted", "late_hoisted", "dry_hoisted", "banner_only", "no_pennant", "flown", "late_flown", "dry_flown", "pennant_only"]:
+	for plan_name in ["winning", "all_rake", "dry_pans", "continued", "late_pans", "no_crib", "carted", "late_crib", "dry_crib", "no_ship", "shipped", "late_ship", "dry_ship", "no_stall", "sold", "late_sold", "dry_sold", "no_yard", "banked", "late_banked", "dry_banked", "no_bunk", "hired", "late_hired", "dry_hired", "no_loft", "lofted", "late_lofted", "dry_lofted", "no_gate", "gated", "late_gated", "dry_gated", "no_wage", "paid", "late_paid", "dry_paid", "no_relief", "posted", "late_posted", "dry_posted", "no_watch", "stood", "late_stood", "dry_stood", "watch_only", "no_lamp", "lit", "late_lit", "dry_lit", "lamp_only", "no_bell", "rung", "late_rung", "dry_rung", "bell_only", "no_horn", "sounded", "late_sounded", "dry_sounded", "horn_only", "no_flag", "raised", "late_raised", "dry_raised", "flag_only", "no_banner", "hoisted", "late_hoisted", "dry_hoisted", "banner_only", "no_pennant", "flown", "late_flown", "dry_flown", "pennant_only", "no_standard", "carried", "late_carried", "dry_carried", "standard_only"]:
 		var before := errors.size()
 		var first = _run_plan(plans, plan_name, errors)
 		var second = _run_plan(plans, plan_name, errors)
@@ -170,6 +171,10 @@ func _test_determinism(errors: Array) -> void:
 		if int(first.get_flown()) != int(second.get_flown()) or int(first.get_banner_left()) != int(second.get_banner_left()):
 			_fail(errors, "%s pennant runs differed (%d unflown %d, and %d unflown %d)" % [
 				plan_name, first.get_flown(), first.get_banner_left(), second.get_flown(), second.get_banner_left(),
+			])
+		if int(first.get_carried()) != int(second.get_carried()) or int(first.get_pennant_left()) != int(second.get_pennant_left()):
+			_fail(errors, "%s standard runs differed (%d uncarried %d, and %d uncarried %d)" % [
+				plan_name, first.get_carried(), first.get_pennant_left(), second.get_carried(), second.get_pennant_left(),
 			])
 		if String(first.get_summary()) != String(second.get_summary()):
 			_fail(errors, "%s summaries differed" % plan_name)
@@ -369,6 +374,17 @@ func _test_scene_boots(errors: Array) -> void:
 	node._on_key(KEY_SPACE)
 	if int(node.sim.get_paint(14, -11)) != Sim.PENNANT:
 		_fail(errors, "the pennant cell accepted a banner")
+	node._on_key(KEY_N)
+	if not String(node.mode_label.text).contains("Standard"):
+		_fail(errors, "standard mark was not named")
+	node._on_key(KEY_UP)
+	node._on_key(KEY_SPACE)
+	if int(node.sim.get_paint(14, -12)) != Sim.STANDARD:
+		_fail(errors, "keyboard cursor did not paint a standard at 14,-12")
+	node._on_key(KEY_M)
+	node._on_key(KEY_SPACE)
+	if int(node.sim.get_paint(14, -12)) != Sim.STANDARD:
+		_fail(errors, "the standard cell accepted a pennant")
 	var season = node.find_child("SeasonNote", true, false)
 	if season == null or not String(season.text).to_lower().contains("pan"):
 		_fail(errors, "season note does not mention pans")
@@ -439,6 +455,10 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "rules text does not mention the pennant")
 	if rules == null or not String(rules.text).to_lower().contains("fly one"):
 		_fail(errors, "rules text does not name the pennant cap of one")
+	if rules == null or not String(rules.text).to_lower().contains("standard"):
+		_fail(errors, "rules text does not mention the standard")
+	if rules == null or not String(rules.text).to_lower().contains("carry one"):
+		_fail(errors, "rules text does not name the standard cap of one")
 	var hint = node.find_child("HintLine", true, false)
 	if hint == null or not String(hint.text).to_lower().contains("watch"):
 		_fail(errors, "hint line does not name the watch")
@@ -454,7 +474,13 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "hint line does not name the banner")
 	if hint == null or not String(hint.text).to_lower().contains("m pennant"):
 		_fail(errors, "hint line does not name the pennant")
-	if hint != null and (int(hint.position.y) != 1056 or int(hint.size.x) != 748 or not hint.clip_contents):
+	if hint == null or not String(hint.text).to_lower().contains("n standard"):
+		_fail(errors, "hint line does not name the standard")
+	var hint_lines: PackedStringArray = String(hint.text).split("\n") if hint != null else PackedStringArray()
+	var hint_last := hint_lines[hint_lines.size() - 1].to_lower() if hint_lines.size() > 0 else ""
+	if hint_last.find("n standard") < hint_last.find("m pennant") or not hint_last.contains("n standard"):
+		_fail(errors, "hint's last line does not name the standard after the pennant: %s" % hint_last)
+	if hint != null and (int(hint.position.y) != 1098 or int(hint.size.x) != 748 or not hint.clip_contents):
 		_fail(errors, "hint line left its box (y %s w %s clip %s)" % [hint.position.y, hint.size.x, hint.clip_contents])
 	if hint == null or not String(hint.text).contains("\n"):
 		_fail(errors, "hint line is still one long line")
@@ -465,7 +491,7 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "hint line continues past the window")
 	var map_bottom := 58.0 + float(Sim.GRID_H - Sim.GRID_NORTH) * 42.0
 	if hint != null and hint.position.y < map_bottom:
-		_fail(errors, "hint line covers the pennant row")
+		_fail(errors, "hint line covers the standard row")
 	var spun_ship := 0
 	while int(node.sim.get_beat()) != Sim.SHIPPING and not node.sim.is_over() and spun_ship < int(Sim.CART_TICK) + 2:
 		node.sim.tick()
@@ -659,10 +685,23 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "pennant countdown started at %d, expected %d" % [node.sim.get_ticks_until_rain(), Sim.PENNANT_TICK])
 	elif not String(node.season_label.text).to_lower().contains("pennant"):
 		_fail(errors, "pennant note does not mention the pennant: %s" % node.season_label.text)
+	var spun_standard := 0
+	while int(node.sim.get_beat()) != Sim.STANDARDING and not node.sim.is_over() and spun_standard < int(Sim.PENNANT_TICK) + 2:
+		node.sim.tick()
+		spun_standard += 1
+	node._refresh()
+	if int(node.sim.get_beat()) != Sim.STANDARDING or node.sim.is_over():
+		_fail(errors, "the scene did not open the standard beat")
+	elif not String(node.rain_label.text).to_lower().contains("standard"):
+		_fail(errors, "standard countdown was not named: %s" % node.rain_label.text)
+	elif int(node.sim.get_ticks_until_rain()) != int(Sim.STANDARD_TICK):
+		_fail(errors, "standard countdown started at %d, expected %d" % [node.sim.get_ticks_until_rain(), Sim.STANDARD_TICK])
+	elif not String(node.season_label.text).to_lower().contains("standard"):
+		_fail(errors, "standard note does not mention the standard: %s" % node.season_label.text)
 	node._on_key(KEY_R)
-	if int(node.sim.get_paint(9, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 5)) != Sim.EMPTY or int(node.sim.get_paint(7, 4)) != Sim.EMPTY or int(node.sim.get_paint(7, 3)) != Sim.EMPTY or int(node.sim.get_paint(7, 2)) != Sim.EMPTY or int(node.sim.get_paint(7, 1)) != Sim.EMPTY or int(node.sim.get_paint(7, 0)) != Sim.EMPTY or int(node.sim.get_paint(7, -1)) != Sim.EMPTY or int(node.sim.get_paint(7, -2)) != Sim.EMPTY or int(node.sim.get_paint(7, -3)) != Sim.EMPTY or int(node.sim.get_paint(7, -4)) != Sim.EMPTY or int(node.sim.get_paint(7, -5)) != Sim.EMPTY or int(node.sim.get_paint(7, -6)) != Sim.EMPTY or int(node.sim.get_paint(7, -7)) != Sim.EMPTY or int(node.sim.get_paint(14, -11)) != Sim.EMPTY:
+	if int(node.sim.get_paint(9, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 5)) != Sim.EMPTY or int(node.sim.get_paint(7, 4)) != Sim.EMPTY or int(node.sim.get_paint(7, 3)) != Sim.EMPTY or int(node.sim.get_paint(7, 2)) != Sim.EMPTY or int(node.sim.get_paint(7, 1)) != Sim.EMPTY or int(node.sim.get_paint(7, 0)) != Sim.EMPTY or int(node.sim.get_paint(7, -1)) != Sim.EMPTY or int(node.sim.get_paint(7, -2)) != Sim.EMPTY or int(node.sim.get_paint(7, -3)) != Sim.EMPTY or int(node.sim.get_paint(7, -4)) != Sim.EMPTY or int(node.sim.get_paint(7, -5)) != Sim.EMPTY or int(node.sim.get_paint(7, -6)) != Sim.EMPTY or int(node.sim.get_paint(7, -7)) != Sim.EMPTY or int(node.sim.get_paint(14, -11)) != Sim.EMPTY or int(node.sim.get_paint(14, -12)) != Sim.EMPTY:
 		_fail(errors, "restart scenario did not clear the marks")
-	if int(node.sim.get_season()) != Sim.WET or int(node.sim.get_wet_haul()) != 0 or int(node.sim.get_beat()) != Sim.WET or int(node.sim.get_carted()) != 0 or int(node.sim.get_shipped()) != 0 or int(node.sim.get_coins()) != 0 or int(node.sim.get_banked()) != 0 or int(node.sim.get_hired()) != 0 or int(node.sim.get_lofted()) != 0 or int(node.sim.get_gated()) != 0 or int(node.sim.get_paid()) != 0 or int(node.sim.get_posted()) != 0 or int(node.sim.get_stood()) != 0 or int(node.sim.get_lit()) != 0 or int(node.sim.get_rung()) != 0 or int(node.sim.get_sounded()) != 0 or int(node.sim.get_raised()) != 0 or int(node.sim.get_hoisted()) != 0 or int(node.sim.get_flown()) != 0:
+	if int(node.sim.get_season()) != Sim.WET or int(node.sim.get_wet_haul()) != 0 or int(node.sim.get_beat()) != Sim.WET or int(node.sim.get_carted()) != 0 or int(node.sim.get_shipped()) != 0 or int(node.sim.get_coins()) != 0 or int(node.sim.get_banked()) != 0 or int(node.sim.get_hired()) != 0 or int(node.sim.get_lofted()) != 0 or int(node.sim.get_gated()) != 0 or int(node.sim.get_paid()) != 0 or int(node.sim.get_posted()) != 0 or int(node.sim.get_stood()) != 0 or int(node.sim.get_lit()) != 0 or int(node.sim.get_rung()) != 0 or int(node.sim.get_sounded()) != 0 or int(node.sim.get_raised()) != 0 or int(node.sim.get_hoisted()) != 0 or int(node.sim.get_flown()) != 0 or int(node.sim.get_carried()) != 0:
 		_fail(errors, "restart scenario did not return to the wet season")
 	if int(node.sim.get_population()) > Sim.POP_CAP:
 		_fail(errors, "restart left the population over the cap")
@@ -2958,12 +2997,12 @@ func _test_lamp(errors: Array) -> void:
 	])
 
 
-func _assert_chain(sim, errors: Array, label: String, wet: int, stored: int, carted: int, shipped: int, coins: int, hired: int, yard: int, paid: int, posted: int, stood: int, lit: int, rung: int, sounded: int = 0, raised: int = 0, hoisted: int = 0, flown: int = 0) -> void:
+func _assert_chain(sim, errors: Array, label: String, wet: int, stored: int, carted: int, shipped: int, coins: int, hired: int, yard: int, paid: int, posted: int, stood: int, lit: int, rung: int, sounded: int = 0, raised: int = 0, hoisted: int = 0, flown: int = 0, carried: int = 0) -> void:
 	if sim == null:
 		_fail(errors, "%s did not run" % label)
 		return
-	if int(sim.get_wet_haul()) != wet or int(sim.get_stored_salt()) != stored or int(sim.get_carted()) != carted or int(sim.get_shipped()) != shipped or int(sim.get_coins()) != coins or int(sim.get_hired()) != hired or int(sim.get_yard_left()) != yard or int(sim.get_paid()) != paid or int(sim.get_posted()) != posted or int(sim.get_stood()) != stood or int(sim.get_lit()) != lit or int(sim.get_rung()) != rung or int(sim.get_sounded()) != sounded or int(sim.get_raised()) != raised or int(sim.get_hoisted()) != hoisted or int(sim.get_flown()) != flown:
-		_fail(errors, "%s changed (wet %d stored %d carted %d shipped %d coins %d hired %d yard %d paid %d posted %d stood %d lit %d rung %d sounded %d raised %d hoisted %d flown %d)" % [label, sim.get_wet_haul(), sim.get_stored_salt(), sim.get_carted(), sim.get_shipped(), sim.get_coins(), sim.get_hired(), sim.get_yard_left(), sim.get_paid(), sim.get_posted(), sim.get_stood(), sim.get_lit(), sim.get_rung(), sim.get_sounded(), sim.get_raised(), sim.get_hoisted(), sim.get_flown()])
+	if int(sim.get_wet_haul()) != wet or int(sim.get_stored_salt()) != stored or int(sim.get_carted()) != carted or int(sim.get_shipped()) != shipped or int(sim.get_coins()) != coins or int(sim.get_hired()) != hired or int(sim.get_yard_left()) != yard or int(sim.get_paid()) != paid or int(sim.get_posted()) != posted or int(sim.get_stood()) != stood or int(sim.get_lit()) != lit or int(sim.get_rung()) != rung or int(sim.get_sounded()) != sounded or int(sim.get_raised()) != raised or int(sim.get_hoisted()) != hoisted or int(sim.get_flown()) != flown or int(sim.get_carried()) != carried:
+		_fail(errors, "%s changed (wet %d stored %d carted %d shipped %d coins %d hired %d yard %d paid %d posted %d stood %d lit %d rung %d sounded %d raised %d hoisted %d flown %d carried %d)" % [label, sim.get_wet_haul(), sim.get_stored_salt(), sim.get_carted(), sim.get_shipped(), sim.get_coins(), sim.get_hired(), sim.get_yard_left(), sim.get_paid(), sim.get_posted(), sim.get_stood(), sim.get_lit(), sim.get_rung(), sim.get_sounded(), sim.get_raised(), sim.get_hoisted(), sim.get_flown(), sim.get_carried()])
 
 
 func _test_bell(errors: Array) -> void:
@@ -4167,6 +4206,212 @@ func _prepare_plan(plans: Dictionary, plan_name: String, errors: Array):
 	return sim
 
 
+func _test_standard(errors: Array) -> void:
+	if int(Sim.STANDARD_TICK) != 100 or int(Sim.STANDARD_TICK) != int(Sim.TICK_HZ) * 10:
+		_fail(errors, "standard beat length %s is not 100 ticks (10 seconds)" % Sim.STANDARD_TICK)
+	if int(Sim.STANDARD_CAP) != 1:
+		_fail(errors, "standard cap is %s, expected 1" % Sim.STANDARD_CAP)
+	if int(Sim.GRID_NORTH) != -12 or int(Sim.STANDARD_CELL.y) != -12 or int(Sim.STANDARD_CELL.x) != 14:
+		_fail(errors, "the standard cell is not at 14,-12 on the north row")
+	if int(Sim.PENNANT_CELL.x) != 14 or int(Sim.PENNANT_CELL.y) != -11:
+		_fail(errors, "the pennant moved off 14,-11")
+	var fresh = Sim.new()
+	if fresh.paint_cell(14, -12, Sim.STANDARD) == false or int(fresh.get_paint(14, -12)) != Sim.STANDARD:
+		_fail(errors, "the cell north of the pennant rejected the standard mark")
+	if fresh.paint_cell(14, -11, Sim.STANDARD):
+		_fail(errors, "the pennant cell accepted a standard")
+	if fresh.paint_cell(14, -12, Sim.PENNANT):
+		_fail(errors, "the standard cell accepted a pennant")
+	if int(fresh.get_paint(14, -12)) != Sim.STANDARD:
+		_fail(errors, "a rejected pennant erased the standard")
+	if fresh.paint_cell(14, -11, Sim.PENNANT) == false or int(fresh.get_paint(14, -11)) != Sim.PENNANT:
+		_fail(errors, "the pennant cell no longer accepts a pennant")
+	if fresh.paint_cell(14, -10, Sim.BANNER) == false or int(fresh.get_paint(14, -10)) != Sim.BANNER:
+		_fail(errors, "the banner cell no longer accepts a banner")
+	if fresh.paint_cell(14, -13, Sim.STANDARD):
+		_fail(errors, "the row north of the standard accepted a standard")
+	if fresh.paint_cell(13, -12, Sim.STANDARD) or fresh.paint_cell(15, -12, Sim.STANDARD):
+		_fail(errors, "a neighbor of the standard cell accepted a standard")
+	if fresh.paint_cell(Sim.COAST_X, -12, Sim.STANDARD):
+		_fail(errors, "the brine accepted a standard")
+	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.STANDARD):
+		_fail(errors, "the anthill accepted a standard")
+	var plans := _plans(errors)
+	if plans.is_empty():
+		return
+	var won = _run_plan(plans, "winning", errors)
+	var dry = _run_plan(plans, "dry_pans", errors)
+	var flown = _run_plan(plans, "flown", errors)
+	var hoisted = _run_plan(plans, "hoisted", errors)
+	var ignored = _run_plan(plans, "no_standard", errors)
+	var bare = _run_plan(plans, "standard_only", errors)
+	var carried = _run_plan(plans, "carried", errors)
+	var carried_again = _run_plan(plans, "carried", errors)
+	var late = _run_plan(plans, "late_carried", errors)
+	var dry_carried = _run_plan(plans, "dry_carried", errors)
+	if won == null or dry == null or flown == null or hoisted == null or ignored == null or bare == null or carried == null or carried_again == null or late == null or dry_carried == null:
+		return
+	_assert_chain(won, errors, "winning shore", 2997, 2997, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+	_assert_chain(dry, errors, "dry pans", 0, 1032, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+	_assert_chain(flown, errors, "flown plan", 2997, 2997, 2997, 2997, 2997, 29, 57, 10, 6, 4, 3, 2, 1, 1, 1, 1, 0)
+	if int(flown.get_carried()) != 0 or int(flown.get_pennant_left()) != 1 or int(flown.get_flown()) != 1:
+		_fail(errors, "a pennant with no standard carried someone (carried %d pennant %d flown %d)" % [flown.get_carried(), flown.get_pennant_left(), flown.get_flown()])
+	if String(flown.get_summary()).to_lower().contains("carried") or String(flown.get_summary()).to_lower().contains("standard"):
+		_fail(errors, "a pennant with no standard names a standard: %s" % flown.get_summary())
+	var ignored_unpaid := int(ignored.get_hired()) - int(ignored.get_paid())
+	var ignored_unposted := int(ignored.get_paid()) - int(ignored.get_posted())
+	var ignored_unstood := int(ignored.get_posted()) - int(ignored.get_stood())
+	var ignored_unlit := int(ignored.get_stood()) - int(ignored.get_lit())
+	var ignored_unrung := int(ignored.get_lit()) - int(ignored.get_rung())
+	var ignored_unraised := int(ignored.get_sounded()) - int(ignored.get_raised())
+	var ignored_unhoisted := int(ignored.get_raised()) - int(ignored.get_hoisted())
+	var ignored_unflown := int(ignored.get_hoisted()) - int(ignored.get_flown())
+	var ignored_uncarried := int(ignored.get_flown()) - int(ignored.get_carried())
+	if int(ignored.get_carried()) != 0 or int(ignored.get_pennant_left()) != 1 or ignored_uncarried != 1 or int(ignored.get_flown()) != 1 or ignored_unflown != 0 or int(ignored.get_banner_left()) != 0 or int(ignored.get_hoisted()) != 1 or ignored_unhoisted != 0 or int(ignored.get_flag_left()) != 0 or int(ignored.get_raised()) != 1 or ignored_unraised != 0 or int(ignored.get_horn_left()) != 0 or int(ignored.get_sounded()) != 1 or int(ignored.get_bell_left()) != 1 or int(ignored.get_rung()) != 2 or ignored_unrung != 1 or int(ignored.get_lamp_left()) != 1 or int(ignored.get_lit()) != 3 or ignored_unlit != 1 or int(ignored.get_watch_left()) != 1 or ignored_unstood != 2 or ignored_unposted != 4 or ignored_unpaid != 19 or int(ignored.get_relief_left()) != 2 or int(ignored.get_wage_left()) != 4 or int(ignored.get_loft_left()) != 19 or int(ignored.get_gate_left()) != 0 or int(ignored.get_yard_left()) != 57 or int(ignored.get_stood()) != 4 or int(ignored.get_posted()) != 6 or int(ignored.get_paid()) != 10 or int(ignored.get_hired()) != 29 or int(ignored.get_coins()) != 2997 or int(ignored.get_stored_salt()) != 2997:
+		_fail(errors, "no_standard carried someone (stored %d coins %d hired %d yard %d flown %d pennant %d carried %d unpaid %d)" % [ignored.get_stored_salt(), ignored.get_coins(), ignored.get_hired(), ignored.get_yard_left(), ignored.get_flown(), ignored.get_pennant_left(), ignored.get_carried(), ignored_unpaid])
+	if String(ignored.get_summary()) != String(flown.get_summary()):
+		_fail(errors, "no_standard summary changed: %s" % ignored.get_summary())
+	if String(ignored.get_summary()).to_lower().contains("carried") or String(ignored.get_summary()).to_lower().contains("standard"):
+		_fail(errors, "no_standard summary names a standard: %s" % ignored.get_summary())
+	var ignored_pennant = plans["no_standard"]["pennant"][0]
+	var ignored_salt: Dictionary = ignored.get_cell_salt(int(ignored_pennant[0]), int(ignored_pennant[1]))
+	var ignored_north: Dictionary = ignored.get_cell_salt(int(ignored_pennant[0]), int(ignored_pennant[1]) - 1)
+	if int(ignored_salt.get("pennant", 0)) != 1 or int(ignored_north.get("standard", 0)) != 0 or int(ignored_salt.get("standard", 0)) != 0:
+		_fail(errors, "no_standard left %s at the pennant and %s at a standard" % [ignored_salt.get("pennant", 0), ignored_north.get("standard", 0)])
+	var bare_unpaid := int(bare.get_hired()) - int(bare.get_paid())
+	if int(bare.get_carried()) != 0 or int(bare.get_flown()) != 0 or int(bare.get_pennant_left()) != 0 or int(bare.get_hoisted()) != 1 or int(bare.get_banner_left()) != 1 or int(bare.get_raised()) != 1 or int(bare.get_flag_left()) != 0 or int(bare.get_sounded()) != 1 or int(bare.get_horn_left()) != 0 or int(bare.get_rung()) != 2 or int(bare.get_bell_left()) != 1 or int(bare.get_lit()) != 3 or int(bare.get_lamp_left()) != 1 or int(bare.get_stood()) != 4 or int(bare.get_watch_left()) != 1 or int(bare.get_posted()) != 6 or int(bare.get_relief_left()) != 2 or int(bare.get_paid()) != 10 or int(bare.get_wage_left()) != 4 or bare_unpaid != 19 or int(bare.get_loft_left()) != 19 or int(bare.get_gate_left()) != 0 or int(bare.get_yard_left()) != 57 or int(bare.get_hired()) != 29 or int(bare.get_coins()) != 2997 or int(bare.get_stored_salt()) != 2997:
+		_fail(errors, "standard without a pennant carried someone (carried %d flown %d banner %d hoisted %d unpaid %d loft %d yard %d)" % [bare.get_carried(), bare.get_flown(), bare.get_banner_left(), bare.get_hoisted(), bare_unpaid, bare.get_loft_left(), bare.get_yard_left()])
+	if String(bare.get_summary()) != String(hoisted.get_summary()):
+		_fail(errors, "standard without a pennant changed the summary: %s" % bare.get_summary())
+	if String(bare.get_summary()).to_lower().contains("carried") or String(bare.get_summary()).to_lower().contains("standard") or String(bare.get_summary()).to_lower().contains("flew") or String(bare.get_summary()).to_lower().contains("pennant"):
+		_fail(errors, "standard without a pennant names a standard: %s" % bare.get_summary())
+	var bare_standard = plans["standard_only"]["standard"][0]
+	var bare_banner = plans["standard_only"]["banner"][0]
+	var bare_standard_salt: Dictionary = bare.get_cell_salt(int(bare_standard[0]), int(bare_standard[1]))
+	var bare_banner_salt: Dictionary = bare.get_cell_salt(int(bare_banner[0]), int(bare_banner[1]))
+	if int(bare_standard_salt.get("standard", 0)) != 0 or int(bare_banner_salt.get("banner", 0)) != 1 or int(bare_standard_salt.get("pennant", 0)) != 0:
+		_fail(errors, "standard without a pennant holds %s, banner holds %s" % [bare_standard_salt.get("standard", 0), bare_banner_salt.get("banner", 0)])
+	var standard_cell = plans["carried"]["standard"][0]
+	var pennant_cell = plans["carried"]["pennant"][0]
+	var banner_cell = plans["carried"]["banner"][0]
+	var flag_cell = plans["carried"]["flag"][0]
+	if int(standard_cell[0]) != int(pennant_cell[0]) or int(standard_cell[1]) != int(pennant_cell[1]) - 1:
+		_fail(errors, "carried plan's standard is not one cell north of the pennant")
+	if int(standard_cell[0]) != 14 or int(standard_cell[1]) != -12 or int(pennant_cell[0]) != 14 or int(pennant_cell[1]) != -11 or int(banner_cell[0]) != 14 or int(banner_cell[1]) != -10:
+		_fail(errors, "carried plan's standard is not at 14,-12 north of the pennant at 14,-11")
+	_assert_chain(carried, errors, "carried plan", 2997, 2997, 2997, 2997, 2997, 29, 57, 10, 6, 4, 3, 2, 1, 1, 1, 1, 1)
+	var carried_unpaid := int(carried.get_hired()) - int(carried.get_paid())
+	var carried_unposted := int(carried.get_paid()) - int(carried.get_posted())
+	var carried_unstood := int(carried.get_posted()) - int(carried.get_stood())
+	var carried_unlit := int(carried.get_stood()) - int(carried.get_lit())
+	var carried_unrung := int(carried.get_lit()) - int(carried.get_rung())
+	var carried_unraised := int(carried.get_sounded()) - int(carried.get_raised())
+	var carried_unhoisted := int(carried.get_raised()) - int(carried.get_hoisted())
+	var carried_unflown := int(carried.get_hoisted()) - int(carried.get_flown())
+	var carried_uncarried := int(carried.get_flown()) - int(carried.get_carried())
+	if int(carried.get_carried()) != 1 or int(carried.get_pennant_left()) != 0 or carried_uncarried != 0 or int(carried.get_flown()) != 1 or carried_unflown != 0 or carried_unhoisted != 0 or carried_unraised != 0 or int(carried.get_horn_left()) != 0 or int(carried.get_bell_left()) != 1 or carried_unrung != 1 or carried_unlit != 1 or carried_unstood != 2 or carried_unposted != 4 or carried_unpaid != 19 or int(carried.get_lamp_left()) != 1 or int(carried.get_watch_left()) != 1 or int(carried.get_relief_left()) != 2 or int(carried.get_wage_left()) != 4 or int(carried.get_loft_left()) != 19 or int(carried.get_gate_left()) != 0 or int(carried.get_yard_left()) != 57 or int(carried.get_hoisted()) != 1 or int(carried.get_raised()) != 1 or int(carried.get_sounded()) != 1 or int(carried.get_rung()) != 2 or int(carried.get_lit()) != 3 or int(carried.get_stood()) != 4 or int(carried.get_posted()) != 6 or int(carried.get_coins()) != 2997 or int(carried.get_hired()) != 29:
+		_fail(errors, "carried %d, left %d flown uncarried, hoisted unflown %d, raised unhoisted %d, sounded unraised %d, rung unsounded %d, lit unrung %d, stood unlit %d, posted unstood %d, paid unposted %d, unpaid %d, pennant %d, yard %d, flown %d, hoisted %d, raised %d, sounded %d, rung %d, lit %d, stood %d, posted %d, coins %d, hired %d" % [carried.get_carried(), carried.get_pennant_left(), carried_unflown, carried_unhoisted, carried_unraised, carried.get_bell_left(), carried_unrung, carried_unlit, carried_unstood, carried_unposted, carried_unpaid, carried.get_pennant_left(), carried.get_yard_left(), carried.get_flown(), carried.get_hoisted(), carried.get_raised(), carried.get_sounded(), carried.get_rung(), carried.get_lit(), carried.get_stood(), carried.get_posted(), carried.get_coins(), carried.get_hired()])
+	if int(carried.get_carried()) > int(Sim.STANDARD_CAP):
+		_fail(errors, "standard carried %d, over the cap of %d" % [carried.get_carried(), Sim.STANDARD_CAP])
+	var standard_salt: Dictionary = carried.get_cell_salt(int(standard_cell[0]), int(standard_cell[1]))
+	var pennant_salt: Dictionary = carried.get_cell_salt(int(pennant_cell[0]), int(pennant_cell[1]))
+	var banner_salt: Dictionary = carried.get_cell_salt(int(banner_cell[0]), int(banner_cell[1]))
+	var flag_salt: Dictionary = carried.get_cell_salt(int(flag_cell[0]), int(flag_cell[1]))
+	if int(standard_salt.get("standard", 0)) != 1 or int(pennant_salt.get("pennant", 0)) != 0 or int(banner_salt.get("banner", 0)) != 0 or int(flag_salt.get("flag", 0)) != 0:
+		_fail(errors, "standard cell holds %s, pennant holds %s, banner holds %s, flag holds %s" % [standard_salt.get("standard", 0), pennant_salt.get("pennant", 0), banner_salt.get("banner", 0), flag_salt.get("flag", 0)])
+	var carried_summary := String(carried.get_summary())
+	if not carried_summary.contains("Carried 1 on the standard") or not carried_summary.contains("Left 0 at the pennant") or not carried_summary.contains("Flew 1 on the pennant") or not carried_summary.contains("Left 0 at the banner") or not carried_summary.contains("Coins 2997") or not carried_summary.contains("Hired 29") or not carried_summary.contains("Left 57"):
+		_fail(errors, "carried summary does not name the standard: %s" % carried_summary)
+	if int(carried_again.get_carried()) != int(carried.get_carried()) or int(carried_again.get_pennant_left()) != int(carried.get_pennant_left()) or int(carried_again.get_flown()) != int(carried.get_flown()) or int(carried_again.get_yard_left()) != int(carried.get_yard_left()) or int(carried_again.get_stored_salt()) != int(carried.get_stored_salt()) or String(carried_again.get_summary()) != String(carried.get_summary()):
+		_fail(errors, "repeated standard paint carried %d and left pennant %d, then carried %d and left pennant %d" % [carried.get_carried(), carried.get_pennant_left(), carried_again.get_carried(), carried_again.get_pennant_left()])
+	if int(late.get_carried()) != 1 or int(late.get_pennant_left()) != 0 or int(late.get_flown()) != 1 or int(late.get_hoisted()) != 1 or int(late.get_raised()) != 1 or int(late.get_sounded()) != 1 or int(late.get_rung()) != 2 or int(late.get_lit()) != 3 or int(late.get_stood()) != 4 or int(late.get_posted()) != 6 or int(late.get_yard_left()) != 57 or int(late.get_hired()) != 29 or int(late.get_coins()) != 2997 or int(late.get_stored_salt()) != 2997 or int(late.get_loft_left()) != 19 or int(late.get_wage_left()) != 4:
+		_fail(errors, "painting the standard at the standard beat (carried %d pennant %d flown %d yard %d) did not match painting it early (carried %d pennant %d flown %d)" % [late.get_carried(), late.get_pennant_left(), late.get_flown(), late.get_yard_left(), carried.get_carried(), carried.get_pennant_left(), carried.get_flown()])
+	_assert_chain(dry_carried, errors, "dry standard", 0, 1032, 1032, 1032, 1032, 10, 0, 8, 6, 4, 3, 2, 1, 1, 1, 1, 1)
+	var dry_unpaid := int(dry_carried.get_hired()) - int(dry_carried.get_paid())
+	var dry_unposted := int(dry_carried.get_paid()) - int(dry_carried.get_posted())
+	var dry_unstood := int(dry_carried.get_posted()) - int(dry_carried.get_stood())
+	var dry_unlit := int(dry_carried.get_stood()) - int(dry_carried.get_lit())
+	var dry_unrung := int(dry_carried.get_lit()) - int(dry_carried.get_rung())
+	var dry_unraised := int(dry_carried.get_sounded()) - int(dry_carried.get_raised())
+	var dry_unhoisted := int(dry_carried.get_raised()) - int(dry_carried.get_hoisted())
+	var dry_unflown := int(dry_carried.get_hoisted()) - int(dry_carried.get_flown())
+	var dry_uncarried := int(dry_carried.get_flown()) - int(dry_carried.get_carried())
+	if int(dry_carried.get_carried()) != 1 or int(dry_carried.get_pennant_left()) != 0 or dry_uncarried != 0 or int(dry_carried.get_flown()) != 1 or dry_unflown != 0 or dry_unhoisted != 0 or dry_unraised != 0 or int(dry_carried.get_horn_left()) != 0 or int(dry_carried.get_bell_left()) != 1 or dry_unrung != 1 or dry_unlit != 1 or dry_unstood != 2 or dry_unposted != 2 or dry_unpaid != 2 or int(dry_carried.get_yard_left()) != 0 or int(dry_carried.get_hoisted()) != 1 or int(dry_carried.get_raised()) != 1 or int(dry_carried.get_sounded()) != 1 or int(dry_carried.get_rung()) != 2 or int(dry_carried.get_lit()) != 3 or int(dry_carried.get_stood()) != 4 or int(dry_carried.get_posted()) != 6 or int(dry_carried.get_wet_haul()) != 0 or int(dry_carried.get_stored_salt()) != 1032 or int(dry_carried.get_gate_left()) != 2 or int(dry_carried.get_wage_left()) != 2 or int(dry_carried.get_loft_left()) != 0:
+		_fail(errors, "dry standard changed the short crew (wet %d stored %d carried %d pennant %d flown %d banner %d hoisted %d uncarried %d unflown %d unhoisted %d unraised %d unsounded %d unrung %d unlit %d unstood %d unposted %d unpaid %d yard %d)" % [dry_carried.get_wet_haul(), dry_carried.get_stored_salt(), dry_carried.get_carried(), dry_carried.get_pennant_left(), dry_carried.get_flown(), dry_carried.get_banner_left(), dry_carried.get_hoisted(), dry_uncarried, dry_unflown, dry_unhoisted, dry_unraised, dry_carried.get_bell_left(), dry_unrung, dry_unlit, dry_unstood, dry_unposted, dry_unpaid, dry_carried.get_yard_left()])
+	var dry_standard_cell = plans["dry_carried"]["standard"][0]
+	var dry_pennant_cell = plans["dry_carried"]["pennant"][0]
+	var dry_standard_salt: Dictionary = dry_carried.get_cell_salt(int(dry_standard_cell[0]), int(dry_standard_cell[1]))
+	var dry_pennant_salt: Dictionary = dry_carried.get_cell_salt(int(dry_pennant_cell[0]), int(dry_pennant_cell[1]))
+	if int(dry_standard_salt.get("standard", 0)) != 1 or int(dry_pennant_salt.get("pennant", 0)) != 0:
+		_fail(errors, "dry standard cell holds %s, pennant holds %s" % [dry_standard_salt.get("standard", 0), dry_pennant_salt.get("pennant", 0)])
+	if not String(dry_carried.get_summary()).contains("Carried 1 on the standard") or not String(dry_carried.get_summary()).contains("Left 0 at the pennant") or not String(dry_carried.get_summary()).contains("Flew 1 on the pennant") or not String(dry_carried.get_summary()).contains("Left 0 in the yard"):
+		_fail(errors, "dry standard summary does not name the cap: %s" % dry_carried.get_summary())
+	_assert_pop(carried, errors, "carried plan")
+	_assert_pop(carried_again, errors, "carried plan again")
+	_assert_pop(late, errors, "late_carried")
+	_assert_pop(dry_carried, errors, "dry_carried")
+	_assert_pop(ignored, errors, "no_standard")
+	_assert_pop(bare, errors, "standard_only")
+	var shore = _prepare_plan(plans, "carried", errors)
+	if shore == null:
+		return
+	var shore_guard := 0
+	var shore_limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + int(Sim.SHIP_TICK) + int(Sim.MARKET_TICK) + int(Sim.YARD_TICK) + int(Sim.BUNK_TICK) + int(Sim.LOFT_TICK) + int(Sim.GATE_TICK) + int(Sim.WAGE_TICK) + int(Sim.RELIEF_TICK) + int(Sim.WATCH_TICK) + int(Sim.LAMP_TICK) + int(Sim.BELL_TICK) + int(Sim.HORN_TICK) + int(Sim.FLAG_TICK) + int(Sim.BANNER_TICK) + int(Sim.PENNANT_TICK) + 2
+	while int(shore.get_beat()) != Sim.STANDARDING and not shore.is_over() and shore_guard < shore_limit:
+		shore.tick()
+		shore_guard += 1
+	if int(shore.get_beat()) != Sim.STANDARDING or shore.is_over():
+		_fail(errors, "the pennant beat did not open a standard beat for the cap check")
+		return
+	if int(shore.get_ticks_until_rain()) != int(Sim.STANDARD_TICK):
+		_fail(errors, "standard countdown started at %d, expected %d" % [shore.get_ticks_until_rain(), Sim.STANDARD_TICK])
+	if int(shore.get_carried()) != 0 or int(shore.get_flown()) != 1 or int(shore.get_pennant_left()) != 1 or int(shore.get_hoisted()) != 1 or int(shore.get_yard_left()) != 57 or int(shore.get_coins()) != 2997 or int(shore.get_stored_salt()) != 2997:
+		_fail(errors, "standard opened early (carried %d flown %d pennant %d hoisted %d yard %d coins %d stored %d)" % [shore.get_carried(), shore.get_flown(), shore.get_pennant_left(), shore.get_hoisted(), shore.get_yard_left(), shore.get_coins(), shore.get_stored_salt()])
+	var saw_cap := false
+	var carry_guard := 0
+	while not shore.is_over() and carry_guard < int(Sim.STANDARD_TICK) + 2:
+		shore.tick()
+		carry_guard += 1
+		if int(shore.get_carried()) == int(Sim.STANDARD_CAP) and int(shore.get_pennant_left()) == 0 and int(shore.get_flown()) == 1 and int(shore.get_hoisted()) == 1 and int(shore.get_yard_left()) == 57 and int(shore.get_coins()) == 2997 and int(shore.get_hired()) == 29 and int(shore.get_ticks_until_rain()) > 0:
+			saw_cap = true
+			var ticks_left := int(shore.get_ticks_until_rain())
+			shore.tick()
+			if int(shore.get_carried()) != int(Sim.STANDARD_CAP) or int(shore.get_pennant_left()) != 0 or int(shore.get_flown()) != 1 or int(shore.get_hoisted()) != 1 or int(shore.get_raised()) != 1 or int(shore.get_yard_left()) != 57 or int(shore.get_coins()) != 2997 or int(shore.get_hired()) != 29 or int(shore.get_stored_salt()) != 2997 or int(shore.get_posted()) != 6 or int(shore.get_stood()) != 4 or int(shore.get_lit()) != 3 or int(shore.get_rung()) != 2 or int(shore.get_sounded()) != 1:
+				_fail(errors, "the standard kept carrying after the cap (carried %d pennant %d flown %d hoisted %d yard %d)" % [shore.get_carried(), shore.get_pennant_left(), shore.get_flown(), shore.get_hoisted(), shore.get_yard_left()])
+			elif not shore.is_over() and int(shore.get_ticks_until_rain()) >= ticks_left:
+				_fail(errors, "the standard beat did not spend a tick after the cap")
+			break
+	if not saw_cap:
+		_fail(errors, "the standard did not stop at %d while ticks remained (carried %d pennant %d flown %d ticks %d)" % [Sim.STANDARD_CAP, shore.get_carried(), shore.get_pennant_left(), shore.get_flown(), shore.get_ticks_until_rain()])
+	var short = _prepare_plan(plans, "dry_carried", errors)
+	if short == null:
+		return
+	var short_guard := 0
+	while int(short.get_beat()) != Sim.STANDARDING and not short.is_over() and short_guard < shore_limit:
+		short.tick()
+		short_guard += 1
+	if int(short.get_beat()) != Sim.STANDARDING or short.is_over():
+		_fail(errors, "the pennant beat did not open a standard beat for the dry cap")
+		return
+	var saw_short := false
+	var short_steps := 0
+	while not short.is_over() and short_steps < int(Sim.STANDARD_TICK) + 2:
+		short.tick()
+		short_steps += 1
+		if int(short.get_carried()) == int(Sim.STANDARD_CAP) and int(short.get_pennant_left()) == 0 and int(short.get_flown()) == 1 and int(short.get_hoisted()) == 1 and int(short.get_yard_left()) == 0 and int(short.get_wet_haul()) == 0 and int(short.get_ticks_until_rain()) > 0:
+			saw_short = true
+			var short_ticks := int(short.get_ticks_until_rain())
+			short.tick()
+			if int(short.get_carried()) != 1 or int(short.get_pennant_left()) != 0 or int(short.get_flown()) != 1 or int(short.get_yard_left()) != 0 or int(short.get_posted()) != 6 or int(short.get_stored_salt()) != 1032:
+				_fail(errors, "the standard carried an unflown hire or passed the cap (carried %d pennant %d flown %d yard %d)" % [short.get_carried(), short.get_pennant_left(), short.get_flown(), short.get_yard_left()])
+			elif not short.is_over() and int(short.get_ticks_until_rain()) >= short_ticks:
+				_fail(errors, "the standard beat did not spend a tick after the dry cap")
+			break
+	if not saw_short:
+		_fail(errors, "dry standard did not stop at 1 with the pennant clear (carried %d pennant %d flown %d yard %d ticks %d)" % [short.get_carried(), short.get_pennant_left(), short.get_flown(), short.get_yard_left(), short.get_ticks_until_rain()])
+	print("carried %d left pennant %d unflown %d unhoisted %d unraised %d unsounded %d unrung %d unlit %d unstood %d unposted %d unpaid %d; dry carried %d left pennant %d unflown %d unhoisted %d unraised %d unsounded %d unrung %d unlit %d unstood %d unposted %d unpaid %d; no standard carried %d left pennant %d; standard without pennant carried %d" % [carried.get_carried(), carried.get_pennant_left(), carried_unflown, carried_unhoisted, carried_unraised, carried.get_bell_left(), carried_unrung, carried_unlit, carried_unstood, carried_unposted, carried_unpaid, dry_carried.get_carried(), dry_carried.get_pennant_left(), dry_unflown, dry_unhoisted, dry_unraised, dry_carried.get_bell_left(), dry_unrung, dry_unlit, dry_unstood, dry_unposted, dry_unpaid, ignored.get_carried(), ignored.get_pennant_left(), bare.get_carried()])
+
+
 func _run_plan(plans: Dictionary, plan_name: String, errors: Array):
 	var sim = _prepare_plan(plans, plan_name, errors)
 	if sim == null:
@@ -4473,6 +4718,24 @@ func _run_plan(plans: Dictionary, plan_name: String, errors: Array):
 		_apply_marks(sim, plan["after_banner"], errors)
 		if errors.size() > pennant_before:
 			return null
+	if plan.has("after_pennant"):
+		var standard_guard := 0
+		var standard_limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + int(Sim.SHIP_TICK) + int(Sim.MARKET_TICK) + int(Sim.YARD_TICK) + int(Sim.BUNK_TICK) + int(Sim.LOFT_TICK) + int(Sim.GATE_TICK) + int(Sim.WAGE_TICK) + int(Sim.RELIEF_TICK) + int(Sim.WATCH_TICK) + int(Sim.LAMP_TICK) + int(Sim.BELL_TICK) + int(Sim.HORN_TICK) + int(Sim.FLAG_TICK) + int(Sim.BANNER_TICK) + int(Sim.PENNANT_TICK) + 2
+		while int(sim.get_beat()) != Sim.STANDARDING and not sim.is_over() and standard_guard < standard_limit:
+			sim.tick()
+			standard_guard += 1
+		if int(sim.get_beat()) != Sim.STANDARDING or sim.is_over():
+			_fail(errors, "%s did not open the standard beat after the pennant" % plan_name)
+			return null
+		if int(sim.get_ticks_until_rain()) != int(Sim.STANDARD_TICK):
+			_fail(errors, "%s standard countdown started at %d, expected %d" % [
+				plan_name, sim.get_ticks_until_rain(), Sim.STANDARD_TICK,
+			])
+			return null
+		var standard_before := errors.size()
+		_apply_marks(sim, plan["after_pennant"], errors)
+		if errors.size() > standard_before:
+			return null
 	sim.run_until_rain()
 	return sim
 
@@ -4520,6 +4783,8 @@ func _apply_marks(sim, plan: Dictionary, errors: Array) -> void:
 		_apply_cells(sim, plan["banner"], Sim.BANNER, errors)
 	if plan.has("pennant"):
 		_apply_cells(sim, plan["pennant"], Sim.PENNANT, errors)
+	if plan.has("standard"):
+		_apply_cells(sim, plan["standard"], Sim.STANDARD, errors)
 	if plan.has("rake_rect"):
 		_apply_rect(sim, plan["rake_rect"], Sim.RAKE, errors)
 

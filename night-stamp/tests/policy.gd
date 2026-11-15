@@ -1066,6 +1066,47 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 			guess += 6
 		else:
 			guess -= 1
+	if rule == "drop_if_triad_count":
+		var triad_filled = 0
+		for triad_row in 3:
+			for triad_col in 3:
+				if state.form[triad_row][triad_col] != null:
+					triad_filled += 1
+		var triad_next = triad_filled + 1
+		if triad_next % 3 == 0:
+			guess -= 2
+		elif triad_filled % 3 == 0:
+			guess += 2
+	if rule == "double_skip_blank":
+		var skip_back_row = row
+		var skip_back_col = col - 2
+		if skip_back_col < 0:
+			skip_back_row = row - 1
+			skip_back_col += 3
+		if skip_back_row < 0:
+			guess -= 4
+		elif state.form[skip_back_row][skip_back_col] == null:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+		var skip_ahead_row = row
+		var skip_ahead_col = col + 2
+		if skip_ahead_col > 2:
+			skip_ahead_row = row + 1
+			skip_ahead_col -= 3
+		if skip_ahead_row <= 2 and state.form[skip_ahead_row][skip_ahead_col] != null:
+			var skip_spoiled = state.form[skip_ahead_row][skip_ahead_col]
+			guess -= _stamp_number(state, String(skip_spoiled["card_id"]), skip_ahead_row, skip_ahead_col)
+	if rule == "yield_wing_pay":
+		if row == 1 and col != 1:
+			guess += 6
+		else:
+			guess -= 1
+	if rule == "yield_gutter_pay":
+		if col == 0:
+			guess += 6
+		else:
+			guess -= 1
 	if rule == "ignore_isolated":
 		var neighbors = 0
 		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
