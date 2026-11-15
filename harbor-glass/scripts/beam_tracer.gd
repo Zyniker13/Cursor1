@@ -38,10 +38,11 @@ class_name BeamTracer
 # Tide
 # ----
 # tide_phases[tide_index] is how many rows, counting up from the bottom, are
-# under water. A cell is flooded when y >= rows - flood_count. Flooded cells
-# do not carry light: a beam that would enter one stops at the waterline.
-# Lanterns on a flooded cell do not emit. Mirrors, prisms, panes, and vanes
-# there are shut and do not act.
+# under water. A cell is flooded when y >= rows - flood_count. A flooded cell
+# stops a beam at the waterline unless it is a tide mirror, a shutter, a
+# stain, a well, or a siphon. Lanterns on a flooded cell do not emit. Mirrors,
+# prisms, panes, and vanes there are shut and do not act. A well is not shut.
+# A siphon is not shut.
 #
 # Tide mirror
 # -----------
@@ -51,8 +52,9 @@ class_name BeamTracer
 #   rot 90 and 270, drawn "\": N->W, W->N, S->E, E->S
 # It reflects only while its own row is flooded. The beam may enter that
 # flooded cell. The next flooded cell that is not itself a tide mirror, a
-# shutter, or a stain still stops the beam at the waterline, and a flooded
-# lantern, mirror, prism, pane, vane, dock, or hull still follows the rules above.
+# shutter, a stain, a well, or a siphon still stops the beam at the waterline,
+# and a flooded lantern, mirror, prism, pane, vane, dock, or hull still follows
+# its own rule. A flooded vane does not enter.
 # While its row is dry, a beam that hits it keeps its direction and its color.
 #
 # Shutter
@@ -62,8 +64,8 @@ class_name BeamTracer
 # While its own row is dry, a beam that hits it stops.
 # While that row is flooded, the beam may enter the cell and passes straight
 # through in the same direction and the same color.
-# The next flooded cell that is not itself a shutter, a tide mirror, or a
-# stain still stops the beam at the waterline.
+# The next flooded cell that is not itself a shutter, a tide mirror, a stain,
+# a well, or a siphon still stops the beam at the waterline.
 #
 # Stain
 # -----
@@ -76,8 +78,8 @@ class_name BeamTracer
 # and it does not reflect. Clicking swaps red and blue. It does not rotate.
 # It does this on a dry row and on a flooded row. On a flooded row the beam
 # may enter that cell, the same way it may enter a shutter, and it leaves
-# recolored. The next flooded cell that is not itself a stain, a shutter, or
-# a tide mirror still stops the beam.
+# recolored. The next flooded cell that is not itself a stain, a shutter, a
+# tide mirror, a well, or a siphon still stops the beam.
 #
 # Vane
 # ----
@@ -91,7 +93,39 @@ class_name BeamTracer
 # A beam traveling against the facing is head-on. It stops.
 # On a flooded row the vane is shut, the same way a mirror is shut. The beam
 # stops at the waterline and does not enter the cell. Flood does not let it
-# through: a vane is not a shutter, a tide mirror, or a stain.
+# through: a vane is not a shutter, a tide mirror, a stain, a well, or a siphon.
+#
+# Well
+# ----
+# A well is not a vane, a shutter, a stain, or a tide mirror, and it does not
+# replace one. It has no facing. Rotation is ignored. Clicking does nothing.
+# It does not split and it does not recolor.
+# While its own row is dry, a beam that hits it stops. It does not pass.
+# While that row is flooded, the beam may enter the cell and leaves traveling
+# north, keeping its color, no matter which way it arrived. The arrival
+# direction does not pick the exit.
+# The next flooded cell that is not itself a well, a siphon, a shutter, a tide
+# mirror, or a stain still stops the beam at the waterline. A flooded vane,
+# mirror, prism, pane, dock, or hull still follows its own rule. A flooded
+# vane does not enter. A well does.
+# A well costs a bounce when it sends the beam on, the same way a vane does.
+#
+# Siphon
+# ------
+# A siphon is not a well, a vane, a shutter, a stain, or a tide mirror, and it
+# does not replace one. It has no facing. Rotation is ignored. Clicking does
+# nothing. It does not split.
+# While its own row is dry, a beam that hits it stops. It does not pass.
+# While that row is flooded, the beam may enter the cell and always leaves
+# north, keeping no memory of the arrival direction. The arrival direction
+# does not pick the exit. That exit costs a bounce.
+# On that north exit the color flips: red becomes blue, and blue becomes red.
+# White stays white. The siphon does not paint white into another color.
+# It is a flood carrier, the same way a well is. The next flooded cell that is
+# not itself a siphon, a well, a shutter, a tide mirror, or a stain still stops
+# the beam at the waterline. A flooded vane does not enter. A siphon does.
+# A well keeps the color. A siphon swaps red and blue. A stain sets one chosen
+# color and goes straight, dry or flooded. A shutter keeps the arrival direction.
 #
 # Docks and boats
 # ---------------
@@ -102,7 +136,7 @@ class_name BeamTracer
 #
 # Loops
 # -----
-# Each mirror, prism, pane, and vane costs a bounce. Past MAX_BOUNCES the beam stops.
+# Each mirror, prism, pane, vane, well, and siphon costs a bounce. Past MAX_BOUNCES the beam stops.
 # A (cell, direction, color) triple is never entered twice, and each cast also
 # stops after MAX_STEPS cells. Those caps are what make a mirror loop return.
 
@@ -130,7 +164,10 @@ static func norm_rot(kind: String, rot: int) -> int:
 	if kind == "prism" or kind == "vane":
 		return posmod(rot, 360)
 	# A shutter has no facing. Dry stops the beam; flooded water lets it pass.
-	if kind == "shutter":
+	# A well has no facing either. Dry stops the beam; flooded water sends it north.
+	# A siphon has no facing either. Dry stops the beam; flooded water sends it
+	# north and swaps red with blue. White stays white.
+	if kind == "shutter" or kind == "well" or kind == "siphon":
 		return 0
 	# A stain has no facing. 0 is red and 90 is blue; 180 and 270 repeat them.
 	if kind == "stain":
@@ -139,7 +176,7 @@ static func norm_rot(kind: String, rot: int) -> int:
 	return posmod(rot, 180)
 
 static func turn_rot(kind: String, rot: int) -> int:
-	if kind == "shutter":
+	if kind == "shutter" or kind == "well" or kind == "siphon":
 		return 0
 	# Clicking swaps the color. It does not walk through a facing.
 	if kind == "stain":
@@ -184,6 +221,14 @@ static func pane_color(rot: int) -> String:
 
 static func stain_color(rot: int) -> String:
 	return "red" if norm_rot("stain", rot) == 0 else "blue"
+
+static func siphon_color(color: String) -> String:
+	# The north exit swaps the two lantern colors. White is not painted.
+	if color == "red":
+		return "blue"
+	if color == "blue":
+		return "red"
+	return color
 
 static func vane_facing(rot: int) -> String:
 	return rotate_dir("N", posmod(int(rot / 90.0), 4))
@@ -400,6 +445,26 @@ static func _cast(
 			prev = cell
 			cell = cell + VEC[dir]
 			continue
+		if kind == "well":
+			# Dry mouth stops the beam. A flooded mouth always leaves north.
+			if not flooded:
+				return
+			dir = "N"
+			bounces += 1
+			prev = cell
+			cell = cell + VEC[dir]
+			continue
+		if kind == "siphon":
+			# Dry tube stops the beam. A flooded tube always leaves north, and
+			# that exit swaps red with blue. White stays white.
+			if not flooded:
+				return
+			dir = "N"
+			color = siphon_color(color)
+			bounces += 1
+			prev = cell
+			cell = cell + VEC[dir]
+			continue
 		if kind == "pane":
 			if color != pane_color(int(occ["rot"])):
 				return
@@ -420,14 +485,15 @@ static func _cast(
 
 static func _flood_carries(occupants: Dictionary, cell: Vector2i) -> bool:
 	# Tide mirrors reflect under water. Shutters pass straight through it.
-	# A stain recolors and lets the beam leave. A vane is shut under water,
-	# so the beam stops at the waterline and does not enter that cell.
-	# Every other flooded cell stops too.
+	# A stain recolors and lets the beam leave. A well lets the beam enter
+	# and leave north. A siphon lets the beam enter, leave north, and swap
+	# red with blue. A vane is shut under water, so the beam stops at the
+	# waterline and does not enter that cell. Every other flooded cell stops.
 	if not occupants.has(cell):
 		return false
 	var occ: Dictionary = occupants[cell]
 	var kind := str(occ["kind"])
-	return kind == "tide_mirror" or kind == "shutter" or kind == "stain"
+	return kind == "tide_mirror" or kind == "shutter" or kind == "stain" or kind == "well" or kind == "siphon"
 
 static func _in_bounds(chart: Dictionary, cell: Vector2i) -> bool:
 	return cell.x >= 0 and cell.y >= 0 and cell.x < int(chart["cols"]) and cell.y < int(chart["rows"])

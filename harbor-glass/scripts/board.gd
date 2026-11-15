@@ -239,6 +239,10 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_stain(at, rot)
 		"vane":
 			_draw_vane(at, rot)
+		"well":
+			_draw_well(at)
+		"siphon":
+			_draw_siphon(at)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -306,7 +310,7 @@ func _draw_tide_mirror(at: Vector2i, rot: int) -> void:
 
 func _keeps_its_face_under_water(kind: String) -> bool:
 	# These still act under water, so the closed bars are not drawn over them.
-	return kind == "tide_mirror" or kind == "shutter" or kind == "stain"
+	return kind == "tide_mirror" or kind == "shutter" or kind == "stain" or kind == "well" or kind == "siphon"
 
 func _draw_shutter_gate(at: Vector2i) -> void:
 	# A sluice, not a mirror. Closed bars while the row is dry. An open slot
@@ -374,6 +378,59 @@ func _draw_vane(at: Vector2i, rot: int) -> void:
 	draw_colored_polygon(head, Palette.LANTERN)
 	draw_line(center - dir * r * 0.08, center + dir * r * 0.2, Palette.LANTERN, 4.0)
 	draw_circle(center, 3.5, Palette.WOOD_DARK)
+
+func _draw_well(at: Vector2i) -> void:
+	# A round dark mouth, separate from the vane's arrow. Dry boards lie
+	# across the mouth. Flooded water leaves it open.
+	var center := _center(at)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var outer := cell * 0.30
+	var mouth := cell * 0.16
+	draw_circle(center, outer, Color(Palette.WOOD_DARK.r, Palette.WOOD_DARK.g, Palette.WOOD_DARK.b, 0.96))
+	draw_arc(center, outer, 0, TAU, 32, Palette.WOOD, 3.0, true)
+	draw_circle(center, mouth, Color("07090d"))
+	draw_arc(center, mouth, 0, TAU, 28, Palette.HULL_EDGE, 1.5, true)
+	if flooded:
+		draw_arc(center, mouth * 0.62, 0.35, PI - 0.35, 14, Palette.FOAM, 1.5, true)
+		draw_circle(center + Vector2(-mouth * 0.28, -mouth * 0.2), 2.2, Color(Palette.FOAM.r, Palette.FOAM.g, Palette.FOAM.b, 0.85))
+	else:
+		draw_line(center + Vector2(-mouth * 0.92, -2.0), center + Vector2(mouth * 0.92, -2.0), Palette.WOOD, 2.5)
+		draw_line(center + Vector2(-mouth * 0.68, 4.0), center + Vector2(mouth * 0.68, 4.0), Palette.PILE_EDGE, 2.0)
+
+func _draw_siphon(at: Vector2i) -> void:
+	# A bent tube with a north spout. The silhouette is an arch and two legs,
+	# not the well's round mouth. Dry bars close the tube. Flood opens the
+	# spout and shows the red/blue swap.
+	var center := _center(at)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var metal := Palette.TIDE if flooded else Palette.GATE_IRON
+	var arch_c := center + Vector2(0, -cell * 0.04)
+	var radius := cell * 0.18
+	draw_arc(arch_c, radius, PI, TAU, 20, metal, 5.0, true)
+	var west_top := arch_c + Vector2(-radius, 0)
+	var west_foot := west_top + Vector2(0, cell * 0.30)
+	draw_line(west_top, west_foot, metal, 5.0)
+	var east_top := arch_c + Vector2(radius, 0)
+	var spout := center + Vector2(cell * 0.06, -cell * 0.36)
+	draw_line(east_top, spout, metal, 5.0)
+	var tip := spout + Vector2(0, -cell * 0.10)
+	var flank := cell * 0.07
+	var head := PackedVector2Array([
+		tip,
+		spout + Vector2(-flank, cell * 0.02),
+		spout + Vector2(flank, cell * 0.02),
+	])
+	draw_colored_polygon(head, Palette.LANTERN if flooded else Palette.GATE)
+	var red_at := center + Vector2(-cell * 0.08, cell * 0.06)
+	var blue_at := center + Vector2(cell * 0.08, cell * 0.00)
+	draw_rect(Rect2(red_at, Vector2(8, 8)), Palette.BEAM_RED)
+	draw_rect(Rect2(blue_at, Vector2(8, 8)), Palette.BEAM_BLUE)
+	draw_line(red_at + Vector2(8, 4), blue_at + Vector2(0, 4), Palette.GLASS_EDGE, 1.5)
+	if flooded:
+		draw_arc(arch_c, radius * 0.55, PI + 0.35, TAU - 0.35, 12, Palette.FOAM, 2.0, true)
+	else:
+		draw_line(west_top + Vector2(-6, cell * 0.12), west_top + Vector2(6, cell * 0.12), Palette.WOOD, 3.0)
+		draw_line(east_top + Vector2(-4, cell * 0.08), east_top + Vector2(8, cell * 0.12), Palette.WOOD, 3.0)
 
 func _draw_prism(at: Vector2i, rot: int, set_in_stone: bool) -> void:
 	var center := _center(at)
