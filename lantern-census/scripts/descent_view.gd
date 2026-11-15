@@ -1,0 +1,515 @@
+extends Control
+
+const Rules := preload("res://scripts/census_rules.gd")
+
+signal run_finished(state)
+
+const INK := Color(0.15, 0.10, 0.07)
+const PARCHMENT := Color(0.90, 0.82, 0.64)
+const PARCHMENT_DARK := Color(0.78, 0.68, 0.48)
+const AMBER := Color(0.93, 0.68, 0.28)
+const NIGHT := Color(0.06, 0.05, 0.08)
+
+var state: Rules.RunState
+var last_message := ""
+var flash := 0.0
+var return_button: Button
+var _closed := false
+var _mouse_x := 0.0
+var _font: Font
+
+
+func _ready() -> void:
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_font = ThemeDB.fallback_font
+	return_button = Button.new()
+	return_button.text = "Return to town"
+	return_button.visible = false
+	return_button.focus_mode = Control.FOCUS_NONE
+	return_button.position = Vector2(928, 640)
+	return_button.size = Vector2(328, 52)
+	return_button.pressed.connect(_finish)
+	_style_return(return_button)
+	add_child(return_button)
+
+
+func begin(next_state: Rules.RunState) -> void:
+	state = next_state
+	_closed = false
+	flash = 0.0
+	_mouse_x = 0.0
+	last_message = "The square under your boots is already inked."
+	return_button.text = "Return to town"
+	return_button.visible = false
+	queue_redraw()
+
+
+func _process(delta: float) -> void:
+	if not visible or state == null:
+		return
+	if flash > 0.0:
+		flash = maxf(0.0, flash - delta * 1.5)
+	queue_redraw()
+
+
+func _input(event: InputEvent) -> void:
+	if not visible or state == null:
+		return
+	if event is InputEventMouseMotion and state.end_reason == Rules.EndReason.NONE:
+		if Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
+			_turn_from_mouse(event.relative.x)
+			get_viewport().set_input_as_handled()
+		return
+	if event is InputEventKey and event.pressed and not event.echo:
+		if _on_key(event):
+			get_viewport().set_input_as_handled()
+
+
+func _turn_from_mouse(dx: float) -> void:
+	_mouse_x += dx
+	while _mouse_x >= 56.0:
+		_mouse_x -= 56.0
+		_apply(Rules.Action.TURN_RIGHT)
+	while _mouse_x <= -56.0:
+		_mouse_x += 56.0
+		_apply(Rules.Action.TURN_LEFT)
+
+
+func _on_key(event: InputEventKey) -> bool:
+	var key := event.physical_keycode
+	if key == 0:
+		key = event.keycode
+	if state.end_reason != Rules.EndReason.NONE:
+		if key == KEY_ENTER or key == KEY_KP_ENTER or key == KEY_SPACE or key == KEY_ESCAPE:
+			_finish()
+		return true
+	match key:
+		KEY_LEFT, KEY_A:
+			_apply(Rules.Action.TURN_LEFT)
+		KEY_RIGHT, KEY_D:
+			_apply(Rules.Action.TURN_RIGHT)
+		KEY_UP, KEY_W:
+			_apply(Rules.Action.FORWARD)
+		KEY_DOWN, KEY_S:
+			_apply(Rules.Action.BACK)
+		KEY_Q:
+			_apply(Rules.Action.STRAFE_LEFT)
+		KEY_E:
+			_apply(Rules.Action.STRAFE_RIGHT)
+		KEY_SPACE, KEY_PERIOD:
+			_apply(Rules.Action.WAIT)
+		KEY_M:
+			_apply(Rules.Action.MARK)
+		KEY_ESCAPE:
+			Rules.abandon(state)
+			last_message = "You leave the sheet in the dark."
+			_open_return()
+		_:
+			return false
+	return true
+
+
+func _apply(action: int) -> void:
+	if state == null or state.end_reason != Rules.EndReason.NONE:
+		return
+	var result := Rules.act(state, action)
+	last_message = String(result.message)
+	if bool(result.hit):
+		flash = 1.0
+	if state.end_reason != Rules.EndReason.NONE:
+		_open_return()
+
+
+func _open_return() -> void:
+	return_button.text = _return_caption()
+	return_button.visible = true
+
+
+func _return_caption() -> String:
+	if state != null and state.end_reason == Rules.EndReason.EXTRACTED and Rules.census_accepted(state.marks, state.floor):
+		return "Return to floor select"
+	return "Return to town"
+
+
+func _finish() -> void:
+	if _closed or state == null:
+		return
+	_closed = true
+	return_button.visible = false
+	run_finished.emit(state)
+
+
+func _draw() -> void:
+	if _font == null:
+		_font = ThemeDB.fallback_font
+	var layout := _layout()
+	draw_rect(Rect2(Vector2.ZERO, size if size.x > 32.0 else Vector2(1280, 720)), NIGHT)
+	if state == null or state.floor == null:
+		return
+	_draw_view(layout.view)
+	_draw_sheet(layout.sheet)
+	_draw_hud(layout.hud)
+
+
+func _layout() -> Dictionary:
+	var vp := size
+	if vp.x < 200.0:
+		vp = Vector2(1280, 720)
+	var margin := 16.0
+	var hud_h := 200.0
+	var sheet_w := minf(488.0, vp.x * 0.38)
+	var view := Rect2(margin, margin, vp.x - sheet_w - margin * 3.0, vp.y - hud_h - margin)
+	var sheet := Rect2(vp.x - sheet_w - margin, margin, sheet_w, view.size.y)
+	var hud := Rect2(margin, view.position.y + view.size.y + 8.0, vp.x - margin * 2.0, vp.y - (view.position.y + view.size.y + 8.0) - 8.0)
+	return {"view": view, "sheet": sheet, "hud": hud}
+
+
+func _draw_view(view: Rect2) -> void:
+	draw_rect(view.grow(4), Color(0.32, 0.22, 0.12))
+	_draw_sky_floor(view)
+	var cols := maxi(80, int(view.size.x / 3.0))
+	var col_w := view.size.x / float(cols)
+	var origin := Vector2(state.pos.x + 0.5, state.pos.y + 0.5)
+	var angle := _facing_angle(state.facing)
+	var dir := Vector2(cos(angle), sin(angle))
+	var plane := Vector2(-sin(angle), cos(angle)) * tan(deg_to_rad(66.0) * 0.5)
+	var zbuf := PackedFloat32Array()
+	zbuf.resize(cols)
+	for c in cols:
+		var camera_x := 2.0 * float(c) / float(cols) - 1.0
+		var ray := dir + plane * camera_x
+		var hit := _cast(origin, ray)
+		var dist: float = hit.dist
+		if dist < 0.0001:
+			dist = 0.0001
+		zbuf[c] = dist
+		var line_h := view.size.y / dist
+		var y0 := view.position.y + (view.size.y - line_h) * 0.5
+		var y1 := y0 + line_h
+		var clip0 := maxf(y0, view.position.y)
+		var clip1 := minf(y1, view.position.y + view.size.y)
+		if clip1 <= clip0:
+			continue
+		var shade := clampf(1.15 - dist / 8.0, 0.08, 1.0)
+		var cell: Vector2i = hit.cell
+		var glyph := Rules.glyph_at(cell, state.floor)
+		var col := Color(0.58, 0.40, 0.26)
+		if state.floor.id == "cistern":
+			col = Color(0.40, 0.45, 0.44)
+		if glyph == "*":
+			col = Color(0.14, 0.38, 0.42)
+		col *= shade
+		if int(hit.side) == 1:
+			col *= 0.74
+		if glyph != "*" and (cell.x + cell.y) % 2 == 0:
+			col = col.lerp(Color(0.32, 0.20, 0.14), 0.22)
+		var wall_x := origin.y + dist * ray.y if int(hit.side) == 0 else origin.x + dist * ray.x
+		wall_x = wall_x - floor(wall_x)
+		if wall_x < 0.08 or wall_x > 0.92:
+			col = col.darkened(0.38)
+		if state.oil <= 2:
+			col *= 0.45
+		elif state.oil <= 4:
+			col *= 0.7
+		draw_rect(Rect2(view.position.x + float(c) * col_w, clip0, col_w + 0.75, clip1 - clip0), col)
+	_draw_sprites(view, origin, dir, plane, zbuf, cols, col_w)
+	if state.oil <= 4:
+		var gloom := 0.28 if state.oil <= 2 else 0.14
+		draw_rect(view, Color(0.02, 0.01, 0.03, gloom))
+	if flash > 0.0:
+		draw_rect(view, Color(0.90, 0.32, 0.12, 0.33 * flash))
+	var mid := view.position + view.size * 0.5
+	draw_line(mid + Vector2(-10, 0), mid + Vector2(-3, 0), AMBER, 2.0)
+	draw_line(mid + Vector2(3, 0), mid + Vector2(10, 0), AMBER, 2.0)
+	draw_line(mid + Vector2(0, -10), mid + Vector2(0, -3), AMBER, 2.0)
+	draw_line(mid + Vector2(0, 3), mid + Vector2(0, 10), AMBER, 2.0)
+	draw_string(_font, view.position + Vector2(18, 28), state.floor.title, HORIZONTAL_ALIGNMENT_LEFT, view.size.x * 0.55, 20, AMBER)
+	var lamp := view.position + Vector2(view.size.x * 0.82, view.size.y * 0.9)
+	draw_circle(lamp, 34, Color(0.95, 0.62, 0.18, 0.10))
+	draw_circle(lamp, 14, Color(0.98, 0.82, 0.40, 0.95))
+	draw_rect(Rect2(lamp + Vector2(-4, 12), Vector2(8, 16)), Color(0.35, 0.24, 0.12))
+	if state.end_reason != Rules.EndReason.NONE:
+		var box := Rect2(view.position + Vector2(18, view.size.y * 0.40), Vector2(view.size.x - 36, 78))
+		draw_rect(box, Color(0.08, 0.06, 0.05, 0.9))
+		draw_string(_font, box.position + Vector2(16, 46), _banner(), HORIZONTAL_ALIGNMENT_LEFT, box.size.x - 32, 22, PARCHMENT)
+
+
+func _draw_sky_floor(view: Rect2) -> void:
+	var bands := 7
+	var half := view.size.y * 0.5
+	var band_h := half / float(bands)
+	for i in bands:
+		var t := float(i) / float(bands)
+		var sky := Color(0.05, 0.05, 0.09).lerp(Color(0.22, 0.13, 0.08), t)
+		draw_rect(Rect2(view.position + Vector2(0, i * band_h), Vector2(view.size.x, band_h + 1.0)), sky)
+		var ground := Color(0.07, 0.05, 0.04).lerp(Color(0.30, 0.18, 0.10), t)
+		draw_rect(Rect2(view.position + Vector2(0, half + i * band_h), Vector2(view.size.x, band_h + 1.0)), ground)
+
+
+func _cast(origin: Vector2, ray_dir: Vector2) -> Dictionary:
+	var map_x := int(floor(origin.x))
+	var map_y := int(floor(origin.y))
+	var delta_x := 1e30 if is_zero_approx(ray_dir.x) else absf(1.0 / ray_dir.x)
+	var delta_y := 1e30 if is_zero_approx(ray_dir.y) else absf(1.0 / ray_dir.y)
+	var step_x := 1 if ray_dir.x >= 0.0 else -1
+	var step_y := 1 if ray_dir.y >= 0.0 else -1
+	var side_x := (float(map_x + 1) - origin.x) * delta_x if step_x > 0 else (origin.x - float(map_x)) * delta_x
+	var side_y := (float(map_y + 1) - origin.y) * delta_y if step_y > 0 else (origin.y - float(map_y)) * delta_y
+	var side := 0
+	var hit := false
+	for _i in 64:
+		if side_x < side_y:
+			side_x += delta_x
+			map_x += step_x
+			side = 0
+		else:
+			side_y += delta_y
+			map_y += step_y
+			side = 1
+		if Rules.tile_at(Vector2i(map_x, map_y), state.floor) == Rules.Tile.WALL:
+			hit = true
+			break
+	var perp := (side_x - delta_x) if side == 0 else (side_y - delta_y)
+	if not hit:
+		perp = 24.0
+	return {"dist": perp, "side": side, "cell": Vector2i(map_x, map_y)}
+
+
+func _draw_sprites(view: Rect2, origin: Vector2, dir: Vector2, plane: Vector2, zbuf: PackedFloat32Array, cols: int, col_w: float) -> void:
+	var items: Array = []
+	items.append({"pos": Rules.enemy_pos(state.floor), "kind": "warden"})
+	items.append({"pos": Rules.telegraph_tile(state.telegraph_index, state.floor), "kind": "swing"})
+	items.append({"pos": Rules.lift_pos(state.floor), "kind": "lift"})
+	var hazard_kind := "seep" if state.floor.id == "cistern" else "hazard"
+	for hazard in Rules.hazard_cells(state.floor):
+		items.append({"pos": hazard, "kind": hazard_kind})
+	var drawn: Array = []
+	for item in items:
+		var cell: Vector2i = item.pos
+		if cell == state.pos:
+			continue
+		var world := Vector2(cell.x + 0.5, cell.y + 0.5)
+		var proj := _project(origin, dir, plane, world)
+		if not bool(proj.ok):
+			continue
+		proj["kind"] = item.kind
+		drawn.append(proj)
+	drawn.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return float(a.depth) > float(b.depth))
+	for spr in drawn:
+		_blit_sprite(view, spr, zbuf, cols, col_w)
+
+
+func _project(origin: Vector2, dir: Vector2, plane: Vector2, world: Vector2) -> Dictionary:
+	var spr := world - origin
+	var denom := plane.x * dir.y - dir.x * plane.y
+	if absf(denom) < 0.00001:
+		return {"ok": false, "depth": 0.0, "x": 0.0}
+	var inv := 1.0 / denom
+	var tx := inv * (dir.y * spr.x - dir.x * spr.y)
+	var ty := inv * (-plane.y * spr.x + plane.x * spr.y)
+	return {"ok": ty > 0.12, "depth": ty, "x": tx}
+
+
+func _blit_sprite(view: Rect2, spr: Dictionary, zbuf: PackedFloat32Array, cols: int, col_w: float) -> void:
+	var depth := float(spr.depth)
+	var sprite_h := absf(view.size.y / depth)
+	var screen_x := (float(cols) * 0.5) * (1.0 + float(spr.x) / depth)
+	var width_cols := maxf(sprite_h / col_w, 1.0)
+	var start_c := int(floor(screen_x - width_cols * 0.5))
+	var end_c := int(ceil(screen_x + width_cols * 0.5))
+	var top := view.position.y + (view.size.y - sprite_h) * 0.5
+	var fog := clampf(1.05 - depth / 9.0, 0.2, 1.0)
+	for c in range(maxi(0, start_c), mini(cols, end_c)):
+		if depth >= zbuf[c] - 0.02:
+			continue
+		var u := float(c - start_c) / maxf(1.0, float(end_c - start_c))
+		_sprite_column(view, c, col_w, top, sprite_h, u, String(spr.kind), fog)
+
+
+func _sprite_column(view: Rect2, column: int, col_w: float, top: float, sprite_h: float, u: float, kind: String, fog: float) -> void:
+	var x := view.position.x + float(column) * col_w
+	var slices: Array = []
+	match kind:
+		"warden":
+			if u > 0.30 and u < 0.70:
+				slices.append([0.38, 0.92, Color(0.17, 0.15, 0.24)])
+			if u > 0.38 and u < 0.62:
+				slices.append([0.20, 0.42, Color(0.10, 0.09, 0.14)])
+			if u > 0.60 and u < 0.84:
+				slices.append([0.48, 0.66, Color(0.97, 0.78, 0.32)])
+		"swing":
+			var half := absf(u - 0.5) * 2.0
+			if half < 1.0:
+				var thick := (1.0 - half) * 0.16
+				slices.append([0.78 - thick, 0.78 + thick, Color(0.95, 0.42, 0.18)])
+		"seep":
+			if u > 0.22 and u < 0.78:
+				slices.append([0.62, 0.70, Color(0.28, 0.72, 0.66)])
+				slices.append([0.76, 0.84, Color(0.10, 0.38, 0.42)])
+		"hazard":
+			if u > 0.22 and u < 0.78:
+				slices.append([0.62, 0.70, Color(0.72, 0.34, 0.14)])
+				slices.append([0.76, 0.84, Color(0.55, 0.24, 0.10)])
+		"lift":
+			if u > 0.28 and u < 0.72:
+				slices.append([0.22, 0.88, Color(0.72, 0.58, 0.28)])
+			if u > 0.36 and u < 0.64:
+				slices.append([0.46, 0.54, Color(0.18, 0.12, 0.08)])
+	for slice in slices:
+		var y0 := top + sprite_h * float(slice[0])
+		var y1 := top + sprite_h * float(slice[1])
+		var clip0 := maxf(y0, view.position.y)
+		var clip1 := minf(y1, view.position.y + view.size.y)
+		if clip1 <= clip0:
+			continue
+		var color: Color = slice[2]
+		draw_rect(Rect2(x, clip0, col_w + 0.75, clip1 - clip0), color * fog)
+
+
+func _draw_sheet(sheet: Rect2) -> void:
+	draw_rect(sheet.grow(3), Color(0.28, 0.18, 0.10))
+	draw_rect(sheet, PARCHMENT)
+	draw_rect(sheet.grow(-6), PARCHMENT_DARK, false, 2.0)
+	draw_string(_font, sheet.position + Vector2(16, 24), "FIELD SHEET", HORIZONTAL_ALIGNMENT_LEFT, sheet.size.x - 64, 18, INK)
+	draw_string(_font, sheet.position + Vector2(16, 44), state.floor.title, HORIZONTAL_ALIGNMENT_LEFT, sheet.size.x - 64, 16, INK)
+	var cols := Rules.width(state.floor)
+	var rows := Rules.height(state.floor)
+	var grid := Rect2(sheet.position + Vector2(16, 56), Vector2(sheet.size.x - 32, sheet.size.y - 140))
+	var cell := minf(grid.size.x / float(cols), grid.size.y / float(rows))
+	var origin := grid.position + Vector2(
+		(grid.size.x - cell * cols) * 0.5,
+		(grid.size.y - cell * rows) * 0.5
+	)
+	for y in rows:
+		for x in cols:
+			var rect := Rect2(origin + Vector2(x, y) * cell, Vector2(cell, cell))
+			draw_rect(rect, Color(0.84, 0.75, 0.56, 0.35), false, 1.0)
+			var p := Vector2i(x, y)
+			_draw_mark(rect, int(state.marks.get(p, Rules.Mark.NONE)), Rules.tile_at(p, state.floor))
+	var faced := state.pos + Rules.dir_vector(state.facing)
+	if Rules.in_bounds(faced, state.floor):
+		var faced_rect := Rect2(origin + Vector2(faced) * cell, Vector2(cell, cell))
+		draw_rect(faced_rect.grow(-1), AMBER, false, 2.0)
+	var pulse := 0.5 + 0.5 * sin(float(Time.get_ticks_msec()) / 180.0)
+	var swing := Rules.telegraph_tile(state.telegraph_index, state.floor)
+	if Rules.in_bounds(swing, state.floor):
+		var center := origin + Vector2(swing) * cell + Vector2(cell, cell) * 0.5
+		draw_arc(center, cell * (0.30 + 0.05 * pulse), 0, TAU, 18, Color(0.75, 0.22, 0.12), 2.0, true)
+	_draw_warden_token(origin + Vector2(Rules.enemy_pos(state.floor)) * cell, cell)
+	_draw_player_token(origin + Vector2(state.pos) * cell, cell, Rules.dir_vector(state.facing))
+	var legend_y := sheet.position.y + sheet.size.y - 56
+	var legend := "Square wall    dot corridor    triangle hazard"
+	if state.floor.id == "cistern":
+		legend = "Square wall    dot corridor    triangle seep"
+	draw_string(_font, Vector2(sheet.position.x + 16, legend_y), legend, HORIZONTAL_ALIGNMENT_LEFT, sheet.size.x - 32, 14, INK)
+	var swing_note := "Ring is the swing, not ink. Hood is the warden."
+	if state.floor.id == "cistern":
+		swing_note = "Red ring is the swing, not ink. Hood is the warden."
+	draw_string(_font, Vector2(sheet.position.x + 16, legend_y + 20), swing_note, HORIZONTAL_ALIGNMENT_LEFT, sheet.size.x - 32, 14, INK)
+	draw_circle(sheet.position + Vector2(sheet.size.x - 36, 28), 12, Color(0.62, 0.16, 0.14))
+
+
+func _draw_mark(rect: Rect2, mark: int, tile: int) -> void:
+	var center := rect.position + rect.size * 0.5
+	var radius := rect.size.x * 0.28
+	if mark == Rules.Mark.WALL:
+		draw_rect(rect.grow(-3), Color(0.24, 0.17, 0.13))
+	elif mark == Rules.Mark.HAZARD:
+		var tip := center + Vector2(0, -radius)
+		var left := center + Vector2(-radius, radius * 0.85)
+		var right := center + Vector2(radius, radius * 0.85)
+		draw_colored_polygon(PackedVector2Array([tip, right, left]), Color(0.70, 0.32, 0.12))
+	elif mark == Rules.Mark.CORRIDOR and tile == Rules.Tile.LIFT:
+		draw_rect(Rect2(center - Vector2(radius * 0.7, radius), Vector2(radius * 1.4, radius * 1.7)), Color(0.62, 0.48, 0.18))
+	elif mark == Rules.Mark.CORRIDOR:
+		draw_circle(center, maxf(2.0, rect.size.x * 0.12), INK)
+
+
+func _draw_player_token(rect_pos: Vector2, cell: float, direction: Vector2i) -> void:
+	var center := rect_pos + Vector2(cell, cell) * 0.5
+	var fwd := Vector2(direction.x, direction.y)
+	if fwd.length() < 0.1:
+		fwd = Vector2.RIGHT
+	var side := Vector2(-fwd.y, fwd.x)
+	var tip := center + fwd * cell * 0.34
+	var a := center - fwd * cell * 0.2 + side * cell * 0.18
+	var b := center - fwd * cell * 0.2 - side * cell * 0.18
+	draw_colored_polygon(PackedVector2Array([tip, a, b]), Color(0.10, 0.07, 0.05))
+
+
+func _draw_warden_token(rect_pos: Vector2, cell: float) -> void:
+	var center := rect_pos + Vector2(cell, cell) * 0.5
+	draw_rect(Rect2(center + Vector2(-cell * 0.12, -cell * 0.02), Vector2(cell * 0.24, cell * 0.28)), Color(0.20, 0.16, 0.30))
+	draw_circle(center + Vector2(0, -cell * 0.12), cell * 0.12, Color(0.12, 0.10, 0.16))
+	draw_circle(center + Vector2(cell * 0.12, 0.0), cell * 0.06, Color(0.95, 0.75, 0.28))
+
+
+func _draw_hud(hud: Rect2) -> void:
+	draw_rect(hud, Color(0.10, 0.08, 0.07, 0.92))
+	var cap := maxi(1, state.flask_capacity)
+	var ratio := clampf(float(state.oil) / float(cap), 0.0, 1.0)
+	var bar := Rect2(hud.position + Vector2(16, 14), Vector2(280, 16))
+	draw_rect(bar, Color(0.20, 0.15, 0.10))
+	draw_rect(Rect2(bar.position, Vector2(bar.size.x * ratio, bar.size.y)), AMBER if state.oil > 4 else Color(0.75, 0.28, 0.16))
+	var oil_text := "Oil %d/%d" % [state.oil, cap]
+	if state.oil <= 4 and state.end_reason == Rules.EndReason.NONE:
+		oil_text += "   The lamp is guttering."
+	draw_string(_font, hud.position + Vector2(308, 28), oil_text, HORIZONTAL_ALIGNMENT_LEFT, 420, 18, PARCHMENT)
+	var faced := state.pos + Rules.dir_vector(state.facing)
+	var faced_mark := Rules.Mark.NONE
+	if Rules.in_bounds(faced, state.floor):
+		faced_mark = int(state.marks.get(faced, Rules.Mark.NONE))
+	var lines := PackedStringArray([
+		state.floor.record,
+		Rules.strike_line(state),
+		Rules.ahead_line(state),
+		"Faced ink: %s. M cycles wall, hazard, corridor, clear." % Rules.mark_name(faced_mark),
+		last_message,
+		"Arrows or WASD move. Q and E strafe. Space waits. Esc leaves unpaid.",
+	])
+	if Rules.tile_at(state.pos, state.floor) == Rules.Tile.HAZARD and state.end_reason == Rules.EndReason.NONE:
+		if state.floor.id == "cistern":
+			lines.append("You are standing on a seep crack.")
+		else:
+			lines.append("You are standing on a hazard crack.")
+	var y := hud.position.y + 46
+	for line in lines:
+		draw_string(_font, Vector2(hud.position.x + 16, y), line, HORIZONTAL_ALIGNMENT_LEFT, hud.size.x - 32, 16, PARCHMENT)
+		y += 18
+
+func _banner() -> String:
+	if state.end_reason == Rules.EndReason.EXTRACTED and Rules.census_accepted(state.marks, state.floor):
+		return "Census complete. Return to the floor select."
+	match state.end_reason:
+		Rules.EndReason.EXTRACTED:
+			return "The lift is open. The census is still short. Return to town."
+		Rules.EndReason.LAMP_OUT:
+			return "The lamp is out. The sheet does not come back."
+		_:
+			return "You left the floor. The sheet pays nothing."
+
+func _facing_angle(facing: int) -> float:
+	match posmod(facing, 4):
+		0:
+			return -PI / 2.0
+		1:
+			return 0.0
+		2:
+			return PI / 2.0
+		_:
+			return PI
+
+
+func _style_return(button: Button) -> void:
+	button.add_theme_font_size_override("font_size", 18)
+	button.add_theme_color_override("font_color", INK)
+	button.add_theme_color_override("font_hover_color", INK)
+	var box := StyleBoxFlat.new()
+	box.bg_color = AMBER
+	box.set_corner_radius_all(3)
+	button.add_theme_stylebox_override("normal", box)
+	var hover := box.duplicate()
+	hover.bg_color = Color(0.98, 0.78, 0.42)
+	button.add_theme_stylebox_override("hover", hover)
+	button.add_theme_stylebox_override("pressed", hover)
