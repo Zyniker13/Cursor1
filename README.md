@@ -9,6 +9,7 @@ Playable slices, Godot 4. Steam packaging comes later.
 - [Orchard Surge](orchard-surge/) — a dark-orchard wave game
 - [Lantern Census](lantern-census/) — a one-floor map survey
 - [Lowball](lowball/) — a four-week fictional sports season
+- [Casework](casework/) — a one-case deduction board
 
 ```bash
 godot --path harbor-glass
@@ -25,4 +26,6 @@ godot --path lantern-census
 godot --headless --path lantern-census -s res://tests/run_tests.gd
 godot --path lowball
 godot --headless --path lowball -s res://scripts/tests.gd
+godot --path casework
+godot --headless --path casework -s res://tests/run.gd
 ```
