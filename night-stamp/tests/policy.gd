@@ -1008,6 +1008,105 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 			guess += 6
 		else:
 			guess -= 1
+	if rule == "drop_if_square_count":
+		var square_filled = 0
+		for square_row in 3:
+			for square_col in 3:
+				if state.form[square_row][square_col] != null:
+					square_filled += 1
+		var square_next = square_filled + 1
+		if square_next == 1 or square_next == 4 or square_next == 9:
+			guess -= 2
+		elif square_filled == 0 or square_filled == 1 or square_filled == 4 or square_filled == 9:
+			guess += 2
+	if rule == "double_end_blank":
+		var end_prev_row = row
+		var end_prev_col = col - 1
+		if end_prev_col < 0:
+			end_prev_row = row - 1
+			end_prev_col = 2
+		var end_next_row = row
+		var end_next_col = col + 1
+		if end_next_col > 2:
+			end_next_row = row + 1
+			end_next_col = 0
+		var end_prev_filled = end_prev_row >= 0 and state.form[end_prev_row][end_prev_col] != null
+		var end_next_filled = end_next_row <= 2 and state.form[end_next_row][end_next_col] != null
+		if not end_prev_filled and not end_next_filled:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+		if end_prev_filled:
+			var spoil_prev_row = end_prev_row
+			var spoil_prev_col = end_prev_col - 1
+			if spoil_prev_col < 0:
+				spoil_prev_row = end_prev_row - 1
+				spoil_prev_col = 2
+			var spoil_prev_filled = spoil_prev_row >= 0 and state.form[spoil_prev_row][spoil_prev_col] != null
+			if not spoil_prev_filled:
+				var spoiled_prev = state.form[end_prev_row][end_prev_col]
+				guess -= _stamp_number(state, String(spoiled_prev["card_id"]), end_prev_row, end_prev_col)
+		if end_next_filled:
+			var spoil_next_row = end_next_row
+			var spoil_next_col = end_next_col + 1
+			if spoil_next_col > 2:
+				spoil_next_row = end_next_row + 1
+				spoil_next_col = 0
+			var spoil_next_filled = spoil_next_row <= 2 and state.form[spoil_next_row][spoil_next_col] != null
+			if not spoil_next_filled:
+				var spoiled_next = state.form[end_next_row][end_next_col]
+				guess -= _stamp_number(state, String(spoiled_next["card_id"]), end_next_row, end_next_col)
+	if rule == "yield_frame_pay":
+		if (row == 0 or row == 2) and (col == 0 or col == 2):
+			guess += 6
+		else:
+			guess -= 1
+	if rule == "yield_lane_pay":
+		if col == 1:
+			guess += 6
+		else:
+			guess -= 1
+	if rule == "drop_if_triad_count":
+		var triad_filled = 0
+		for triad_row in 3:
+			for triad_col in 3:
+				if state.form[triad_row][triad_col] != null:
+					triad_filled += 1
+		var triad_next = triad_filled + 1
+		if triad_next % 3 == 0:
+			guess -= 2
+		elif triad_filled % 3 == 0:
+			guess += 2
+	if rule == "double_skip_blank":
+		var skip_back_row = row
+		var skip_back_col = col - 2
+		if skip_back_col < 0:
+			skip_back_row = row - 1
+			skip_back_col += 3
+		if skip_back_row < 0:
+			guess -= 4
+		elif state.form[skip_back_row][skip_back_col] == null:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+		var skip_ahead_row = row
+		var skip_ahead_col = col + 2
+		if skip_ahead_col > 2:
+			skip_ahead_row = row + 1
+			skip_ahead_col -= 3
+		if skip_ahead_row <= 2 and state.form[skip_ahead_row][skip_ahead_col] != null:
+			var skip_spoiled = state.form[skip_ahead_row][skip_ahead_col]
+			guess -= _stamp_number(state, String(skip_spoiled["card_id"]), skip_ahead_row, skip_ahead_col)
+	if rule == "yield_wing_pay":
+		if row == 1 and col != 1:
+			guess += 6
+		else:
+			guess -= 1
+	if rule == "yield_gutter_pay":
+		if col == 0:
+			guess += 6
+		else:
+			guess -= 1
 	if rule == "ignore_isolated":
 		var neighbors = 0
 		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:

@@ -28,6 +28,9 @@ const APSE_AWNING := Color(0.78, 0.66, 0.38)
 const CHOIR_AWNING := Color(0.58, 0.40, 0.18)
 const ROOD_AWNING := Color(0.38, 0.40, 0.44)
 const CROSSING_AWNING := Color(0.32, 0.34, 0.28)
+const TRANSEPT_AWNING := Color(0.74, 0.68, 0.52)
+const AMBULATORY_AWNING := Color(0.62, 0.70, 0.74)
+const WINDOW_W := 1366.0
 
 var notice_label: Label
 var purse_label: Label
@@ -64,7 +67,7 @@ func _build() -> void:
 	var floors: Array = Rules.floors()
 	var margin := 12.0
 	var gap := 8.0
-	var card_w := (1280.0 - margin * 2.0 - gap * float(floors.size() - 1)) / float(floors.size())
+	var card_w := (WINDOW_W - margin * 2.0 - gap * float(floors.size() - 1)) / float(floors.size())
 	var x := margin
 	var narrow := card_w < 220.0
 	var inset := 4.0 if card_w < 90.0 else (6.0 if card_w < 112.0 else (8.0 if card_w < 150.0 else (12.0 if narrow else 20.0)))
@@ -169,6 +172,10 @@ func _awning_for(floor_id: String) -> Color:
 		return ROOD_AWNING
 	if floor_id == "crossing":
 		return CROSSING_AWNING
+	if floor_id == "transept":
+		return TRANSEPT_AWNING
+	if floor_id == "ambulatory":
+		return AMBULATORY_AWNING
 	return CHART_AWNING
 
 
@@ -200,7 +207,7 @@ func record_for(id: String) -> String:
 
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, size if size.x > 32.0 else Vector2(1280, 720)), NIGHT)
+	draw_rect(Rect2(Vector2.ZERO, size if size.x > 32.0 else Vector2(WINDOW_W, 720)), NIGHT)
 	for i in 8:
 		var t := float(i) / 8.0
 		var band := Color(0.07, 0.10, 0.12).lerp(Color(0.16, 0.20, 0.18), t)
