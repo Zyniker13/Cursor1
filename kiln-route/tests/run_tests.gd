@@ -86,6 +86,9 @@ func _run() -> void:
 	_test_hoe_sends_the_waiter()
 	_test_hoe_refuses_side_and_front()
 	_test_hoe_blocked_does_not_spill()
+	_test_harrow_keeps_the_first()
+	_test_harrow_refuses_side_and_front()
+	_test_harrow_blocked_does_not_spill()
 	_test_rooms()
 	_test_over_budget()
 	_test_pickup()
@@ -108,6 +111,7 @@ func _run() -> void:
 	_test_wing13_lessons()
 	_test_wing14_lessons()
 	_test_wing15_lessons()
+	_test_wing16_lessons()
 	_test_game_object()
 
 
@@ -962,7 +966,7 @@ func _arm_lane(pattern: Array) -> Dictionary:
 
 func _test_rooms() -> void:
 	var catalog := Rooms.all()
-	check(catalog.size() == 120, "fifteen wings have 120 rooms")
+	check(catalog.size() == 128, "sixteen wings have 128 rooms")
 	check(catalog[0].name == "Haul" and catalog[7].name == "Two Orders", "rooms 1 through 8 stay the first wing")
 	check(catalog[8].name == "Straight" and catalog[15].name == "Balance", "rooms 9 through 16 are the second wing")
 	check(catalog[16].name == "Span" and catalog[23].name == "Ledger", "rooms 17 through 24 are the third wing")
@@ -978,6 +982,7 @@ func _test_rooms() -> void:
 	check(catalog[96].name == "Aside" and catalog[103].name == "Side Bin", "rooms 97 through 104 are the thirteenth wing")
 	check(catalog[104].name == "Draw Left" and catalog[111].name == "Side Bin", "rooms 105 through 112 are the fourteenth wing")
 	check(catalog[112].name == "Draw Right" and catalog[119].name == "Side Bin", "rooms 113 through 120 are the fifteenth wing")
+	check(catalog[120].name == "Late Draw" and catalog[127].name == "Late Bin", "rooms 121 through 128 are the sixteenth wing")
 	for index in catalog.size():
 		var bridge_count := int(catalog[index].budget.get(Rules.Kind.BRIDGE, 0))
 		var grate_count := int(catalog[index].budget.get(Rules.Kind.GRATE, 0))
@@ -992,6 +997,9 @@ func _test_rooms() -> void:
 		var shed_count := int(catalog[index].budget.get(Rules.Kind.SHED, 0))
 		var rake_count := int(catalog[index].budget.get(Rules.Kind.RAKE, 0))
 		var hoe_count := int(catalog[index].budget.get(Rules.Kind.HOE, 0))
+		var harrow_count := int(catalog[index].budget.get(Rules.Kind.HARROW, 0))
+		if index < 120:
+			check(harrow_count == 0, "room %d does not use the harrow" % (index + 1))
 		if index < 112:
 			check(hoe_count == 0, "room %d does not use the hoe" % (index + 1))
 		if index < 104:
@@ -1095,8 +1103,22 @@ func _test_rooms() -> void:
 			check(drop_count == 0, "room %d does not use the drop" % (index + 1))
 			check(arm_count == 0, "room %d does not use the arm" % (index + 1))
 			check(hook_count == 0, "room %d does not use the hook" % (index + 1))
-		else:
+		elif index < 120:
 			check(hoe_count >= 1, "room %d depends on the hoe" % (index + 1))
+			check(harrow_count == 0, "room %d does not use the harrow" % (index + 1))
+			check(rake_count == 0, "room %d does not use the rake" % (index + 1))
+			check(shed_count == 0, "room %d does not use the shed" % (index + 1))
+			check(slip_count == 0, "room %d does not use the slip" % (index + 1))
+			check(pass_count == 0, "room %d does not use the pass" % (index + 1))
+			check(twin_count == 0, "room %d does not use the twin" % (index + 1))
+			check(dwell_count == 0, "room %d does not use the dwell" % (index + 1))
+			check(lift_count == 0, "room %d does not use the lift" % (index + 1))
+			check(drop_count == 0, "room %d does not use the drop" % (index + 1))
+			check(arm_count == 0, "room %d does not use the arm" % (index + 1))
+			check(hook_count == 0, "room %d does not use the hook" % (index + 1))
+		else:
+			check(harrow_count >= 1, "room %d depends on the harrow" % (index + 1))
+			check(hoe_count == 0, "room %d does not use the hoe" % (index + 1))
 			check(rake_count == 0, "room %d does not use the rake" % (index + 1))
 			check(shed_count == 0, "room %d does not use the shed" % (index + 1))
 			check(slip_count == 0, "room %d does not use the slip" % (index + 1))
@@ -3310,6 +3332,35 @@ func _test_game_object() -> void:
 	check(main._kind_for_key(KEY_BACKSPACE) == -1, "Backspace stays a control beside the hoe")
 	check(main._kind_for_key(KEY_BRACKETLEFT) == -1, "[ stays a control beside the hoe")
 	check(main._kind_for_key(KEY_BRACKETRIGHT) == -1, "] stays a control beside the hoe")
+	check(main._kind_for_key(KEY_U) == Rules.Kind.HARROW, "U selects the harrow")
+	check(main._key_label(Rules.Kind.HARROW) == "u", "harrow key is U")
+	check(main._key_label(Rules.Kind.HARROW) != "y", "harrow does not reuse the hoe key")
+	check(main._key_label(Rules.Kind.HARROW) != "`", "harrow does not reuse the rake key")
+	check(main._key_label(Rules.Kind.HARROW) != "/", "harrow does not reuse the shed key")
+	check(main._key_label(Rules.Kind.HARROW) != ".", "harrow does not reuse the slip key")
+	check(main._key_label(Rules.Kind.HARROW) != "'", "harrow does not reuse the pass key")
+	check(main._key_label(Rules.Kind.HARROW) != "0", "harrow does not reuse the hook key")
+	check(main._key_label(Rules.Kind.HARROW) != "-", "harrow does not reuse the arm key")
+	check(main._key_label(Rules.Kind.HARROW) != "=", "harrow does not reuse the drop key")
+	check(main._key_label(Rules.Kind.HARROW) != "\\", "harrow does not reuse the lift key")
+	check(main._key_label(Rules.Kind.HARROW) != ";", "harrow does not reuse the dwell key")
+	check(main._key_label(Rules.Kind.HARROW) != ",", "harrow does not reuse the twin key")
+	check(main._kind_for_key(KEY_Y) == Rules.Kind.HOE, "Y stays on the hoe beside the harrow")
+	check(main._kind_for_key(KEY_QUOTELEFT) == Rules.Kind.RAKE, "backtick stays on the rake beside the harrow")
+	check(main._kind_for_key(KEY_SLASH) == Rules.Kind.SHED, "slash stays on the shed beside the harrow")
+	check(main._kind_for_key(KEY_PERIOD) == Rules.Kind.SLIP, "period stays on the slip beside the harrow")
+	check(main._kind_for_key(KEY_KP_PERIOD) == Rules.Kind.DWELL, "keypad period stays on the dwell beside the harrow")
+	check(main._kind_for_key(KEY_KP_DIVIDE) == Rules.Kind.PASS, "keypad divide stays on the pass beside the harrow")
+	check(main._kind_for_key(KEY_KP_0) == Rules.Kind.HOOK, "keypad 0 stays on the hook beside the harrow")
+	check(main._kind_for_key(KEY_0) == Rules.Kind.HOOK, "0 stays on the hook beside the harrow")
+	check(main._kind_for_key(KEY_Q) == -1, "Q stays a control beside the harrow")
+	check(main._kind_for_key(KEY_E) == -1, "E stays a control beside the harrow")
+	check(main._kind_for_key(KEY_R) == -1, "R stays a control beside the harrow")
+	check(main._kind_for_key(KEY_F) == -1, "F stays a control beside the harrow")
+	check(main._kind_for_key(KEY_KP_ADD) == Rules.Kind.DROP, "keypad plus stays on the drop beside the harrow")
+	check(main._kind_for_key(KEY_KP_SUBTRACT) == Rules.Kind.ARM, "keypad minus stays on the arm beside the harrow")
+	check(main._kind_for_key(KEY_KP_MULTIPLY) == Rules.Kind.LIFT, "keypad multiply stays on the lift beside the harrow")
+	check(main._kind_for_key(KEY_KP_ENTER) == -1, "keypad enter is not a harrow key")
 	check(main._kind_for_key(KEY_COMMA) == Rules.Kind.TWIN, "comma stays on the twin beside the pass")
 	check(main._kind_for_key(KEY_MINUS) == Rules.Kind.ARM, "minus stays on the arm beside the pass")
 	check(main._kind_for_key(KEY_EQUAL) == Rules.Kind.DROP, "equals stays on the drop beside the pass")
@@ -3340,6 +3391,7 @@ func _test_game_object() -> void:
 	check(not main.is_unlocked(97), "room 97 stays locked until room 96 is cleared")
 	check(not main.is_unlocked(105), "room 105 stays locked until room 104 is cleared")
 	check(not main.is_unlocked(113), "room 113 stays locked until room 112 is cleared")
+	check(not main.is_unlocked(121), "room 121 stays locked until room 120 is cleared")
 	check(not main.testing_select(8), "locked room 9 cannot be selected")
 	check(main.testing_select(0), "room 1 can be selected")
 	var before: int = main.testing_tray(Rules.Kind.BELT)
@@ -3400,6 +3452,9 @@ func _test_game_object() -> void:
 		if index == 111:
 			check(main.is_unlocked(113), "clearing room 112 unlocks room 113")
 			check(not main.is_unlocked(114), "room 114 stays locked until room 113 is cleared")
+		if index == 119:
+			check(main.is_unlocked(121), "clearing room 120 unlocks room 121")
+			check(not main.is_unlocked(122), "room 122 stays locked until room 121 is cleared")
 	check(main.is_unlocked(72), "clearing room 71 unlocks room 72")
 	check(main.is_unlocked(80), "clearing room 79 unlocks room 80")
 	check(main.is_unlocked(88), "clearing room 87 unlocks room 88")
@@ -3407,8 +3462,10 @@ func _test_game_object() -> void:
 	check(main.is_unlocked(104), "clearing room 103 unlocks room 104")
 	check(main.is_unlocked(112), "clearing room 111 unlocks room 112")
 	check(main.is_unlocked(120), "clearing room 119 unlocks room 120")
-	check(not main.is_unlocked(121), "there is no room 121 to unlock")
-	check(not main.testing_select(120), "room select rejects an unknown room")
+	check(main.is_unlocked(121), "clearing room 120 unlocks room 121")
+	check(main.is_unlocked(128), "clearing room 127 unlocks room 128")
+	check(not main.is_unlocked(129), "there is no room 129 to unlock")
+	check(not main.testing_select(128), "room select rejects an unknown room")
 	_check_window(main)
 	main.queue_free()
 
@@ -4130,7 +4187,13 @@ func _check_window(main) -> void:
 	var hoe_tab: Rect2 = hoe_lay.tabs[119]
 	check(hoe_tab.position.y + hoe_tab.size.y < (hoe_lay.play as Rect2).position.y, "the hoe room tab stays above the board")
 	check(shed_tab.position.y + shed_tab.size.y < (hoe_lay.play as Rect2).position.y, "the twelfth room row still leaves the shed tab above the board")
-	var footer := "1-9 0 - = \\ ; , ' . / ` y select   R rotate   LMB place or pick up   RMB rotate   Space run   F skip   Bksp restart"
+	check(main.testing_select(127), "select the harrow late bin to measure the window")
+	var harrow_lay: Dictionary = main._layout()
+	_check_tray_fits(harrow_lay, "harrow late bin")
+	var harrow_tab: Rect2 = harrow_lay.tabs[127]
+	check(harrow_tab.position.y + harrow_tab.size.y < (harrow_lay.play as Rect2).position.y, "the harrow room tab stays above the board")
+	check(hoe_tab.position.y + hoe_tab.size.y < (harrow_lay.play as Rect2).position.y, "the hoe room tab stays above the board beside the harrow")
+	var footer := "1-9 0 - = \\ ; , ' . / ` y u select   R rotate   LMB place or pick up   RMB rotate   Space run   F skip   Bksp restart"
 	var footer_size: Vector2 = main.font.get_string_size(footer, HORIZONTAL_ALIGNMENT_LEFT, -1, 13)
 	var footer_w := footer_size.x
 	check(footer_w <= size.x - 48.0, "the footer fits the window (%s px)" % footer_w)
@@ -4156,6 +4219,7 @@ func _check_tray_fits(lay: Dictionary, label: String) -> void:
 	var saw_shed := false
 	var saw_rake := false
 	var saw_hoe := false
+	var saw_harrow := false
 	for slot in lay.tray:
 		var rect: Rect2 = slot.rect
 		check(rect.position.x >= 0.0 and rect.position.y >= play.position.y + play.size.y, "%s tray stays below the board" % label)
@@ -4166,10 +4230,14 @@ func _check_tray_fits(lay: Dictionary, label: String) -> void:
 			saw_rake = true
 		if int(slot.kind) == Rules.Kind.HOE:
 			saw_hoe = true
+		if int(slot.kind) == Rules.Kind.HARROW:
+			saw_harrow = true
 	if label.begins_with("shed"):
 		check(saw_shed, "the shed tray slot is on the shed room")
 	elif label.begins_with("hoe"):
 		check(saw_hoe, "the hoe tray slot is on the hoe room")
+	elif label.begins_with("harrow"):
+		check(saw_harrow, "the harrow tray slot is on the harrow room")
 	else:
 		check(saw_rake, "the rake tray slot is on the rake room")
 
@@ -4853,3 +4921,351 @@ func _test_wing15_lessons() -> void:
 	for kind in wrong_kinds:
 		var missed: Dictionary = World.simulate(side_hoe, _swap_kind(side_hoe.solution, Rules.Kind.HOE, int(kind)))
 		check(int(missed.counts[Rules.Mat.INGOT]) < int(side_hoe.quota[Rules.Mat.INGOT]) and int(missed.counts[Rules.Mat.PLATE]) < int(side_hoe.quota[Rules.Mat.PLATE]), "%s in place of the side-bin hoe misses both quotas (%s)" % [Rules.KIND_NAME[int(kind)], missed.text])
+
+
+func _test_harrow_keeps_the_first() -> void:
+	var ore := _harrow_right([Rules.Mat.ORE], 4)
+	var placed := [Rooms.piece(Rules.Kind.HARROW, 1, 1, Rules.Dir.EAST)]
+	var early := World.simulate(ore, placed, 4)
+	var mid := World.simulate(ore, placed, 8)
+	var result := World.simulate(ore, placed, 12)
+	var again := World.simulate(ore, placed, 12)
+	check(_trace(early) == "" and early.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "a lone ore is still in the harrow after the belt tick and the dwell tick")
+	check(_trace(mid) == "5:1,2:0" and mid.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "the next ore leaves right and the first ore stays, got %s" % _trace(mid))
+	check(_trace(result) == "5:1,2:0|9:1,2:0", "later ore keeps leaving the harrow to the right, got %s" % _trace(result))
+	check(result.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "the first ore of the run stays in the harrow")
+	check(int(result.counts[Rules.Mat.ORE]) == 2, "two ores leave right and the first waits")
+	check(not ("2,1:" in _trace(result)), "a harrow does not send the arrival forward")
+	check(not ("1,0:" in _trace(result)), "a harrow does not send the arrival left")
+	check(_same(result, again), "the same harrow lane is deterministic (seed %d)" % result.seed)
+	var belt := World.simulate(ore, [Rooms.piece(Rules.Kind.BELT, 1, 1, Rules.Dir.EAST)], 12)
+	var dwell := World.simulate(ore, [Rooms.piece(Rules.Kind.DWELL, 1, 1, Rules.Dir.EAST)], 12)
+	check(_trace(belt) == "2:2,1:0|6:2,1:0|10:2,1:0", "a belt on that cell sends forward on the next tick, got %s" % _trace(belt))
+	check(_trace(dwell) == "3:2,1:0|7:2,1:0|11:2,1:0", "a dwell on that cell sends forward one tick after a belt, got %s" % _trace(dwell))
+	var hook := World.simulate(ore, [Rooms.piece(Rules.Kind.HOOK, 1, 1, Rules.Dir.EAST)], 12)
+	check(_trace(hook) == "2:1,0:0|6:1,0:0|10:1,0:0", "a hook sends its one item left and does not keep the first, got %s" % _trace(hook))
+	check(hook.world.machines[Vector2i(1, 1)].hold < 0, "a hook does not keep a first item in place")
+	var as_hoe := World.simulate(ore, [Rooms.piece(Rules.Kind.HOE, 1, 1, Rules.Dir.EAST)], 12)
+	check(_trace(as_hoe) == "5:1,2:0|9:1,2:0", "a hoe on the harrow lane sends the waiter right, got %s" % _trace(as_hoe))
+	for mat in [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]:
+		var lane := _harrow_right([mat], 80)
+		var lone := World.simulate(lane, placed, 15)
+		check(_trace(lone) == "" and lone.world.machines[Vector2i(1, 1)].hold == mat, "a lone %s never leaves a harrow" % Rules.MAT_NAME[mat])
+	var mixed := _harrow_right([Rules.Mat.ORE, Rules.Mat.INGOT], 4)
+	var held := World.simulate(mixed, placed, 4)
+	var pushed := World.simulate(mixed, placed, 8)
+	var later := World.simulate(mixed, placed, 12)
+	check(_trace(held) == "" and held.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "a harrow does not release before the different material arrives")
+	check(_trace(pushed) == "5:1,2:1", "a later item of a different material leaves right, got %s" % _trace(pushed))
+	check(pushed.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "the first item stays when a different material leaves right")
+	check(_trace(later) == "5:1,2:1|9:1,2:0" and later.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "the first ore is still the waiting item after the next ore leaves right, got %s" % _trace(later))
+	check(int(pushed.world.machines[Vector2i(1, 1)].phase) == 0, "a harrow does not rotate or alternate")
+	var as_slip := World.simulate(mixed, [Rooms.piece(Rules.Kind.SLIP, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_slip) == "5:2,1:1" and as_slip.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "a slip sends that arrival forward and keeps the first, got %s" % _trace(as_slip))
+	var as_pass := World.simulate(mixed, [Rooms.piece(Rules.Kind.PASS, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_pass) == "5:2,1:0" and as_pass.world.machines[Vector2i(1, 1)].hold == Rules.Mat.INGOT, "a pass sends the waiter forward and keeps the arrival, got %s" % _trace(as_pass))
+	var as_twin := World.simulate(mixed, [Rooms.piece(Rules.Kind.TWIN, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_twin) == "" and as_twin.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "a twin refuses that different material")
+	check(int(as_twin.world.sources[0].pending) == Rules.Mat.INGOT, "the twin leaves the different material on the previous piece")
+	var as_shed := World.simulate(mixed, [Rooms.piece(Rules.Kind.SHED, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_shed) == "5:1,0:1" and as_shed.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "a shed sends the arrival left and keeps the waiter, got %s" % _trace(as_shed))
+	var as_rake := World.simulate(mixed, [Rooms.piece(Rules.Kind.RAKE, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_rake) == "5:1,0:0" and as_rake.world.machines[Vector2i(1, 1)].hold == Rules.Mat.INGOT, "a rake sends the waiter left and keeps the arrival, got %s" % _trace(as_rake))
+	var hoe_mixed := World.simulate(mixed, [Rooms.piece(Rules.Kind.HOE, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(hoe_mixed) == "5:1,2:0" and hoe_mixed.world.machines[Vector2i(1, 1)].hold == Rules.Mat.INGOT, "a hoe sends the waiter right and keeps the arrival, got %s" % _trace(hoe_mixed))
+	var as_drop := World.simulate(mixed, [Rooms.piece(Rules.Kind.DROP, 1, 1, Rules.Dir.NORTH)], 8)
+	check(as_drop.trace.is_empty(), "a drop on the harrow cell does not take the load from behind, got %s" % _trace(as_drop))
+	var south := {
+		"id": 0,
+		"name": "harrow south",
+		"blurb": "",
+		"rule": "",
+		"w": 3,
+		"h": 3,
+		"sources": [Rooms.source(1, 0, Rules.Dir.SOUTH, [Rules.Mat.ORE, Rules.Mat.INGOT], 4)],
+		"sinks": [
+			Rooms.sink(0, 1, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+			Rooms.sink(2, 1, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+			Rooms.sink(1, 2, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [],
+		"budget": Rooms.kv([Rules.Kind.HARROW, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [],
+		"solution": [],
+	}
+	var turned := World.simulate(south, [Rooms.piece(Rules.Kind.HARROW, 1, 1, Rules.Dir.SOUTH)], 8)
+	check(_trace(turned) == "5:0,1:1" and turned.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "a south-facing harrow sends the arrival west and keeps the first, got %s" % _trace(turned))
+	var hoed := World.simulate(south, [Rooms.piece(Rules.Kind.HOE, 1, 1, Rules.Dir.SOUTH)], 8)
+	check(_trace(hoed) == "5:0,1:0" and hoed.world.machines[Vector2i(1, 1)].hold == Rules.Mat.INGOT, "a south-facing hoe sends that waiter west, got %s" % _trace(hoed))
+
+
+func _test_harrow_refuses_side_and_front() -> void:
+	var room := {
+		"id": 0,
+		"name": "harrow refuse",
+		"blurb": "",
+		"rule": "",
+		"w": 3,
+		"h": 3,
+		"sources": [
+			Rooms.source(0, 1, Rules.Dir.EAST, [Rules.Mat.ORE, Rules.Mat.INGOT], 4),
+			Rooms.source(1, 0, Rules.Dir.SOUTH, [Rules.Mat.INGOT], 1),
+			Rooms.source(2, 1, Rules.Dir.WEST, [Rules.Mat.PLATE], 1),
+		],
+		"sinks": [Rooms.sink(1, 2, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE])],
+		"chutes": [],
+		"walls": [],
+		"budget": Rooms.kv([Rules.Kind.HARROW, 1, Rules.Kind.BELT, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [],
+		"solution": [],
+	}
+	var placed := [Rooms.piece(Rules.Kind.HARROW, 1, 1, Rules.Dir.EAST)]
+	var result := World.simulate(room, placed, 8)
+	check(_trace(result) == "5:1,2:1", "harrow sends the arriving ingot right and keeps the ore, got %s" % _trace(result))
+	check(result.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "the first ore stays in the harrow")
+	check(int(result.world.sources[1].pending) == Rules.Mat.INGOT, "harrow refuses an ingot from the side")
+	check(int(result.world.sources[2].pending) == Rules.Mat.PLATE, "harrow refuses a head-on plate")
+	check(int(result.world.machines[Vector2i(1, 1)].phase) == 0, "a harrow does not rotate or alternate")
+	var side_only := {
+		"id": 0,
+		"name": "harrow side",
+		"blurb": "",
+		"rule": "",
+		"w": 3,
+		"h": 3,
+		"sources": [Rooms.source(1, 0, Rules.Dir.SOUTH, [Rules.Mat.PLATE], 1)],
+		"sinks": [Rooms.sink(2, 1, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE])],
+		"chutes": [],
+		"walls": [],
+		"budget": Rooms.kv([Rules.Kind.HARROW, 1, Rules.Kind.BELT, 1]),
+		"quota": Rooms.kv([Rules.Mat.PLATE, 1]),
+		"initial": [],
+		"solution": [],
+	}
+	var belt := World.simulate(side_only, [Rooms.piece(Rules.Kind.BELT, 1, 1, Rules.Dir.EAST)], 4)
+	var harrow_side := World.simulate(side_only, placed, 4)
+	check(_trace(belt) == "2:2,1:2|3:2,1:2|4:2,1:2", "a belt takes a plate from the side, got %s" % _trace(belt))
+	check(int(harrow_side.counts[Rules.Mat.PLATE]) == 0 and int(harrow_side.world.sources[0].pending) == Rules.Mat.PLATE, "a harrow refuses that same side plate")
+	var front := {
+		"id": 0,
+		"name": "harrow front",
+		"blurb": "",
+		"rule": "",
+		"w": 3,
+		"h": 1,
+		"sources": [
+			Rooms.source(0, 0, Rules.Dir.EAST, [Rules.Mat.ORE], 4),
+			Rooms.source(2, 0, Rules.Dir.WEST, [Rules.Mat.INGOT], 1),
+		],
+		"sinks": [],
+		"chutes": [],
+		"walls": [],
+		"budget": Rooms.kv([Rules.Kind.HARROW, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [],
+		"solution": [],
+	}
+	var blocked := World.simulate(front, [Rooms.piece(Rules.Kind.HARROW, 1, 0, Rules.Dir.EAST)], 6)
+	var machine = blocked.world.machines[Vector2i(1, 0)]
+	check(int(blocked.world.sources[1].pending) == Rules.Mat.INGOT, "harrow refuses a head-on ingot")
+	check(machine.hold == Rules.Mat.ORE, "the rear load stays on the harrow")
+	check(blocked.trace.is_empty(), "a head-on entry does not leave the harrow, got %s" % _trace(blocked))
+	check(int(machine.phase) == 0, "a head-on entry does not rotate the harrow")
+
+
+func _test_harrow_blocked_does_not_spill() -> void:
+	var boxed := {
+		"id": 0,
+		"name": "harrow boxed",
+		"blurb": "",
+		"rule": "",
+		"w": 3,
+		"h": 3,
+		"sources": [Rooms.source(0, 1, Rules.Dir.EAST, [Rules.Mat.ORE, Rules.Mat.PLATE], 1)],
+		"sinks": [
+			Rooms.sink(1, 0, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+		],
+		"chutes": [Rooms.cell(0, 0), Rooms.cell(2, 0), Rooms.cell(0, 2), Rooms.cell(2, 2)],
+		"walls": [Rooms.cell(1, 2), Rooms.cell(2, 1)],
+		"budget": Rooms.kv([Rules.Kind.HARROW, 1, Rules.Kind.HOOK, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [],
+		"solution": [],
+	}
+	var held := World.simulate(boxed, [Rooms.piece(Rules.Kind.HARROW, 1, 1, Rules.Dir.EAST)], 6)
+	check(held.error == "" and held.discarded == 0 and held.trace.is_empty(), "a blocked harrow does not spill forward, left, or back")
+	check(held.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "blocked ore stays on the harrow")
+	check(int(held.world.sources[0].pending) == Rules.Mat.PLATE, "the later item is not accepted while the right cell refuses")
+	check(int(held.counts[Rules.Mat.ORE]) == 0 and int(held.counts[Rules.Mat.PLATE]) == 0, "the blocked harrow did not reach a forward or left sink")
+	check(int(held.world.machines[Vector2i(1, 1)].phase) == 0, "a harrow does not rotate or alternate when blocked")
+	var hook := World.simulate(boxed, [Rooms.piece(Rules.Kind.HOOK, 1, 1, Rules.Dir.EAST)], 4)
+	check(int(hook.counts[Rules.Mat.ORE]) >= 1, "the same cell lets a hook send left into the sink")
+
+
+func _harrow_right(pattern: Array, period: int) -> Dictionary:
+	return {
+		"id": 0,
+		"name": "harrow",
+		"blurb": "",
+		"rule": "",
+		"w": 3,
+		"h": 3,
+		"sources": [Rooms.source(0, 1, Rules.Dir.EAST, pattern, period)],
+		"sinks": [
+			Rooms.sink(1, 2, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+			Rooms.sink(2, 1, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+			Rooms.sink(1, 0, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [],
+		"budget": Rooms.kv([Rules.Kind.HARROW, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [],
+		"solution": [],
+	}
+
+
+func _test_wing16_lessons() -> void:
+	var wrong_kinds: Array = [
+		Rules.Kind.BELT,
+		Rules.Kind.DWELL,
+		Rules.Kind.TWIN,
+		Rules.Kind.PASS,
+		Rules.Kind.SLIP,
+		Rules.Kind.SHED,
+		Rules.Kind.HOOK,
+		Rules.Kind.RAKE,
+		Rules.Kind.HOE,
+	]
+	for index in range(120, 128):
+		var room: Dictionary = Rooms.all()[index]
+		for kind in wrong_kinds:
+			var swapped := _swap_kind(room.solution, Rules.Kind.HARROW, int(kind))
+			var run: Dictionary = World.simulate(room, swapped)
+			check(run.error == "", "%s in place of the room %d harrow simulates (%s)" % [Rules.KIND_NAME[int(kind)], room.id, run.error])
+			check(not run.quota_ok, "%s in place of the room %d harrow misses the quota (%s)" % [Rules.KIND_NAME[int(kind)], room.id, run.text])
+			check(not run.success, "%s in place of the room %d harrow does not clear" % [Rules.KIND_NAME[int(kind)], room.id])
+			if int(kind) != Rules.Kind.BELT:
+				check(int(room.budget.get(int(kind), 0)) == 0, "room %d does not budget a %s" % [room.id, Rules.KIND_NAME[int(kind)]])
+		var planner = Planner.new(room)
+		for piece in room.initial:
+			check(planner.pickup(int(piece.x), int(piece.y)), "room %d picks up its starting piece" % room.id)
+		for piece in room.solution:
+			check(planner.place(int(piece.kind), int(piece.x), int(piece.y), int(piece.dir)), "room %d places its solution from the tray" % room.id)
+		var spare := _spare_cell(room)
+		check(spare.x >= 0, "room %d has an empty cell for an extra piece" % room.id)
+		check(not planner.place(Rules.Kind.BELT, spare.x, spare.y, Rules.Dir.EAST), "room %d rejects a belt past the tray" % room.id)
+		var extra: Array = room.solution.duplicate(true)
+		extra.append(Rooms.piece(Rules.Kind.BELT, spare.x, spare.y, Rules.Dir.EAST))
+		var over: Dictionary = World.simulate(room, extra)
+		check(over.quota_ok and not over.budget_ok and not over.success, "room %d extra belt meets the quota and is rejected (%s)" % [room.id, over.text])
+	var draw: Dictionary = Rooms.all()[120]
+	var drawn: Dictionary = World.simulate(draw, draw.solution)
+	check(drawn.world.machines[Vector2i(1, 3)].hold == Rules.Mat.PLATE, "late draw keeps the first plate")
+	check(int(drawn.counts[Rules.Mat.PLATE]) == int(draw.quota[Rules.Mat.PLATE]), "late draw delivers the later plates (%s)" % drawn.text)
+	var draw_hoe: Dictionary = World.simulate(draw, _swap_kind(draw.solution, Rules.Kind.HARROW, Rules.Kind.HOE))
+	check(int(draw_hoe.counts[Rules.Mat.PLATE]) == 0 and int(draw_hoe.discarded) > 0, "late draw's hoe sends the first plate right and misses (%s)" % draw_hoe.text)
+	var ore: Dictionary = Rooms.all()[121]
+	var smelted: Dictionary = World.simulate(ore, ore.solution)
+	check(smelted.world.machines[Vector2i(1, 3)].hold == Rules.Mat.PLATE, "second ore keeps the first plate")
+	check(int(smelted.counts[Rules.Mat.INGOT]) == int(ore.quota[Rules.Mat.INGOT]), "second ore feeds the kiln (%s)" % smelted.text)
+	var ore_hoe: Dictionary = World.simulate(ore, _swap_kind(ore.solution, Rules.Kind.HARROW, Rules.Kind.HOE))
+	check(int(ore_hoe.counts[Rules.Mat.INGOT]) == 0, "second ore's hoe sends the plate and the ingot quota misses (%s hold %s)" % [ore_hoe.text, ore_hoe.world.machines[Vector2i(1, 3)].hold])
+	var still: Dictionary = Rooms.all()[122]
+	var stilled: Dictionary = World.simulate(still, still.solution)
+	check(int(still.budget[Rules.Kind.BELT]) == 1, "still harrow budgets one belt")
+	check(stilled.world.machines[Vector2i(1, 3)].hold == Rules.Mat.ORE, "still harrow keeps the first ore")
+	check(int(stilled.counts[Rules.Mat.INGOT]) == int(still.quota[Rules.Mat.INGOT]), "still harrow's later ore reaches the kiln (%s)" % stilled.text)
+	var still_hoe: Dictionary = World.simulate(still, _swap_kind(still.solution, Rules.Kind.HARROW, Rules.Kind.HOE))
+	check(int(still_hoe.counts[Rules.Mat.INGOT]) == 0, "still harrow's hoe sends the first item right and misses (%s)" % still_hoe.text)
+	var seat: Dictionary = Rooms.all()[123]
+	var parked: Array = seat.initial.duplicate(true)
+	parked.append(Rooms.piece(Rules.Kind.WEIR, 2, 3, Rules.Dir.EAST))
+	parked.append(Rooms.piece(Rules.Kind.BELT, 3, 1, Rules.Dir.SOUTH))
+	parked.append(Rooms.piece(Rules.Kind.BELT, 3, 2, Rules.Dir.SOUTH))
+	parked.append(Rooms.piece(Rules.Kind.BELT, 3, 3, Rules.Dir.EAST))
+	parked.append(Rooms.piece(Rules.Kind.GRATE, 4, 3, Rules.Dir.EAST))
+	var gap: Dictionary = World.simulate(seat, parked)
+	check(World.budget_met(parked, seat.budget), "leaving the seat harrow parked stays inside the tray")
+	check(int(gap.counts[Rules.Mat.PLATE]) == 0 and not gap.quota_ok, "a parked harrow leaves a gap and misses (%s)" % gap.text)
+	var seat_planner = Planner.new(seat)
+	check(seat_planner.at(0, 4) != null and seat_planner.remaining(Rules.Kind.HARROW) == 0, "seat starts with the harrow off the tray")
+	check(seat_planner.pickup(0, 4), "pickup lifts the pre-placed harrow")
+	check(seat_planner.at(0, 4) == null and seat_planner.remaining(Rules.Kind.HARROW) == 1, "pre-placed harrow returns to the tray")
+	check(seat_planner.place(Rules.Kind.HARROW, 1, 3, Rules.Dir.NORTH), "the returned harrow can be seated on the lane")
+	var seated_hoe: Dictionary = World.simulate(seat, _swap_kind(seat.solution, Rules.Kind.HARROW, Rules.Kind.HOE))
+	check(int(seated_hoe.counts[Rules.Mat.PLATE]) == 0, "a hoe seated on the harrow lane misses (%s)" % seated_hoe.text)
+	var corner: Dictionary = Rooms.all()[124]
+	var into_wall: Dictionary = World.simulate(corner, [
+		Rooms.piece(Rules.Kind.BELT, 2, 4, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 3, 4, Rules.Dir.EAST),
+	])
+	check(int(into_wall.counts[Rules.Mat.PLATE]) == 0, "corner belts that run into the wall deliver nothing")
+	var cornered: Dictionary = World.simulate(corner, corner.solution)
+	check(cornered.world.machines[Vector2i(3, 3)].hold == Rules.Mat.INGOT, "corner keeps the first ingot in the harrow")
+	check(int(cornered.counts[Rules.Mat.PLATE]) == int(corner.quota[Rules.Mat.PLATE]), "corner delivers the later plates (%s)" % cornered.text)
+	var corner_hoe: Dictionary = World.simulate(corner, _swap_kind(corner.solution, Rules.Kind.HARROW, Rules.Kind.HOE))
+	check(int(corner_hoe.counts[Rules.Mat.PLATE]) < int(corner.quota[Rules.Mat.PLATE]), "corner's hoe sends the first item right and misses (%s)" % corner_hoe.text)
+	var heat: Dictionary = Rooms.all()[125]
+	var one_kiln_pieces: Array = []
+	for piece in heat.solution:
+		if int(piece.x) == 3 and int(piece.y) >= 2:
+			continue
+		one_kiln_pieces.append(piece)
+	var one_kiln: Dictionary = World.simulate(heat, one_kiln_pieces)
+	var both: Dictionary = World.simulate(heat, heat.solution)
+	var heat_quota := int(heat.quota[Rules.Mat.INGOT])
+	check(int(one_kiln.counts[Rules.Mat.INGOT]) < heat_quota, "one arrival-heat kiln misses %d (%s)" % [heat_quota, one_kiln.text])
+	check(int(both.counts[Rules.Mat.INGOT]) == heat_quota, "arrival heat reaches the quota (%s)" % both.text)
+	check(int(both.counts[Rules.Mat.INGOT]) > int(one_kiln.counts[Rules.Mat.INGOT]), "the arrival-heat spill kiln adds ingots")
+	check(both.world.machines[Vector2i(1, 1)].hold == Rules.Mat.PLATE, "arrival heat keeps the first plate")
+	var heat_hoe: Dictionary = World.simulate(heat, _swap_kind(heat.solution, Rules.Kind.HARROW, Rules.Kind.HOE))
+	check(int(heat_hoe.counts[Rules.Mat.INGOT]) < heat_quota, "arrival heat's hoe feeds the kilns with the waiter and misses (%s)" % heat_hoe.text)
+	var scrap: Dictionary = Rooms.all()[126]
+	var scraped: Dictionary = World.simulate(scrap, scrap.solution)
+	check(int(scraped.counts[Rules.Mat.INGOT]) == int(scrap.quota[Rules.Mat.INGOT]) and int(scraped.discarded) > 0, "after the stay counts kiln ingots and discards the scrap (%s discarded %d)" % [scraped.text, scraped.discarded])
+	check(scraped.world.machines[Vector2i(1, 3)].hold == Rules.Mat.ORE, "after the stay keeps the first ore")
+	var scrap_hoe: Dictionary = World.simulate(scrap, _swap_kind(scrap.solution, Rules.Kind.HARROW, Rules.Kind.HOE))
+	check(int(scrap_hoe.counts[Rules.Mat.INGOT]) == 0, "after the stay's hoe sends the first item right and misses (%s)" % scrap_hoe.text)
+	var no_filter: Dictionary = World.simulate(scrap, [
+		Rooms.piece(Rules.Kind.HARROW, 1, 3, Rules.Dir.NORTH),
+		Rooms.piece(Rules.Kind.WEIR, 2, 3, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 3, 1, Rules.Dir.SOUTH),
+		Rooms.piece(Rules.Kind.BELT, 3, 2, Rules.Dir.SOUTH),
+		Rooms.piece(Rules.Kind.BELT, 3, 3, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 4, 3, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.KILN, 5, 3, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 6, 3, Rules.Dir.EAST),
+	])
+	check(int(no_filter.counts[Rules.Mat.INGOT]) < int(scrap.quota[Rules.Mat.INGOT]), "after the stay without a filter misses (%s)" % no_filter.text)
+	var late: Dictionary = Rooms.all()[127]
+	var solved: Dictionary = World.simulate(late, late.solution)
+	check(int(solved.counts[Rules.Mat.INGOT]) == int(late.quota[Rules.Mat.INGOT]) and int(solved.counts[Rules.Mat.PLATE]) == int(late.quota[Rules.Mat.PLATE]), "late bin hits both quotas (%s)" % solved.text)
+	check(solved.world.machines[Vector2i(1, 3)].hold == Rules.Mat.PLATE, "late bin keeps the first plate")
+	var plates_only: Dictionary = World.simulate(late, [
+		Rooms.piece(Rules.Kind.BELT, 1, 5, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 2, 5, Rules.Dir.EAST),
+	])
+	check(int(plates_only.counts[Rules.Mat.INGOT]) == 0 and int(plates_only.counts[Rules.Mat.PLATE]) < int(late.quota[Rules.Mat.PLATE]), "late bin's lower plates alone miss (%s)" % plates_only.text)
+	var pressed: Dictionary = World.simulate(late, [
+		Rooms.piece(Rules.Kind.BELT, 1, 5, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 2, 5, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 3, 1, Rules.Dir.SOUTH),
+		Rooms.piece(Rules.Kind.BELT, 3, 2, Rules.Dir.SOUTH),
+		Rooms.piece(Rules.Kind.HARROW, 1, 3, Rules.Dir.NORTH),
+		Rooms.piece(Rules.Kind.WEIR, 2, 3, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 3, 3, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.FILTER, 4, 3, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.KILN, 5, 3, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 6, 3, Rules.Dir.SOUTH),
+		Rooms.piece(Rules.Kind.BELT, 6, 4, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.PRESS, 7, 4, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 8, 4, Rules.Dir.EAST),
+	])
+	check(int(pressed.counts[Rules.Mat.INGOT]) == 0 and not pressed.success, "pressing every ingot misses the late bin (%s)" % pressed.text)
+	for kind in wrong_kinds:
+		var missed: Dictionary = World.simulate(late, _swap_kind(late.solution, Rules.Kind.HARROW, int(kind)))
+		check(int(missed.counts[Rules.Mat.INGOT]) < int(late.quota[Rules.Mat.INGOT]) and int(missed.counts[Rules.Mat.PLATE]) < int(late.quota[Rules.Mat.PLATE]), "%s in place of the late-bin harrow misses both quotas (%s)" % [Rules.KIND_NAME[int(kind)], missed.text])
