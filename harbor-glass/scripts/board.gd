@@ -249,6 +249,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_weir(at, rot)
 		"lintel":
 			_draw_lintel(at)
+		"mullion":
+			_draw_mullion(at)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -526,6 +528,29 @@ func _draw_lintel(at: Vector2i) -> void:
 	draw_rect(left, edge, false, 1.5)
 	draw_rect(right, edge, false, 1.5)
 
+func _draw_mullion(at: Vector2i) -> void:
+	# A vertical stone bar. Not the lintel's horizontal bar, and not a shutter slat.
+	# The bar does not turn: a mullion has no facing.
+	var center := _center(at)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var stone := Palette.WOOD if flooded else Palette.WOOD_DARK
+	var edge := Palette.PILE_EDGE if flooded else Palette.WOOD
+	var cap_w := cell * 0.30
+	var cap_h := cell * 0.10
+	var shaft_w := cell * 0.16
+	var top := center.y - cell * 0.38
+	var bot := center.y + cell * 0.38
+	var top_cap := Rect2(Vector2(center.x - cap_w * 0.5, top), Vector2(cap_w, cap_h))
+	var bot_cap := Rect2(Vector2(center.x - cap_w * 0.5, bot - cap_h), Vector2(cap_w, cap_h))
+	var shaft := Rect2(Vector2(center.x - shaft_w * 0.5, top_cap.end.y), Vector2(shaft_w, bot_cap.position.y - top_cap.end.y))
+	draw_rect(top_cap, stone)
+	draw_rect(bot_cap, stone)
+	draw_rect(shaft, stone)
+	draw_rect(top_cap, edge, false, 1.5)
+	draw_rect(bot_cap, edge, false, 1.5)
+	draw_rect(shaft, edge, false, 2.0)
+	draw_line(Vector2(center.x, shaft.position.y + 4.0), Vector2(center.x, shaft.end.y - 4.0), Palette.LANTERN_HOT, 1.5)
+
 func _draw_prism(at: Vector2i, rot: int, set_in_stone: bool) -> void:
 	var center := _center(at)
 	var r := cell * 0.32
@@ -587,11 +612,17 @@ func _draw_dock(dock: Dictionary) -> void:
 	for i in 3:
 		var y := wood.position.y + 6.0 + float(i) * (wood.size.y / 3.5)
 		draw_line(Vector2(wood.position.x + 3, y), Vector2(wood.position.x + wood.size.x - 3, y), Palette.WOOD_DARK, 1.5)
-	var required := str(dock["color"])
+	if bool(dock.get("pass_other", false)):
+		var slot := Rect2(wood.position.x + wood.size.x * 0.42, wood.position.y + 2.0, wood.size.x * 0.16, wood.size.y - 4.0)
+		draw_rect(slot, Color(Palette.NIGHT.r, Palette.NIGHT.g, Palette.NIGHT.b, 0.55))
+	var keep_dark := bool(dock.get("keep_dark", false))
+	var required := "dark" if keep_dark else str(dock["color"])
 	var hits: Array = trace.get("docks", {}).get(str(dock["id"]), [])
 	var lamp := Palette.beam(required)
 	lamp = lamp.darkened(0.55)
-	if hits.has(required):
+	if keep_dark:
+		lamp = Color("243140") if hits.is_empty() else Palette.WARN
+	elif hits.has(required):
 		lamp = Palette.beam(required)
 	elif not hits.is_empty():
 		lamp = Palette.beam(str(hits[0])).darkened(0.15)
