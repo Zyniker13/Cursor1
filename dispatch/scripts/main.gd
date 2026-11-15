@@ -470,6 +470,8 @@ func _building_mark_name(building: int) -> String:
 			return "BuildingSixMark"
 		7:
 			return "BuildingSevenMark"
+		8:
+			return "BuildingEightMark"
 		_:
 			return "Building%dMark" % building
 
@@ -618,6 +620,8 @@ func _sync_facing() -> void:
 	if _facing:
 		if _selected == "turn":
 			_facing.text = "Facing   clockwise"
+		elif _selected == "hook":
+			_facing.text = "Facing   counterclockwise"
 		elif _selected == "slide":
 			_facing.text = "Facing   with the parcel"
 		elif _selected == "bin":
@@ -895,6 +899,8 @@ func _draw_block(block: Dictionary, alpha: float) -> void:
 		_edge_arrow(rect, dir, ink, 1.2)
 	elif typ == "turn":
 		_turn_mark(rect, ink)
+	elif typ == "hook":
+		_hook_mark(rect, ink)
 	elif typ == "slide":
 		_slide_mark(rect, ink)
 	elif typ == "bin":
@@ -1062,6 +1068,23 @@ func _bin_mark(rect: Rect2, color: Color, alpha: float) -> void:
 	draw_line(Vector2(right, top), Vector2(left, bottom), color, 3.0)
 
 
+func _hook_mark(rect: Rect2, color: Color) -> void:
+	var center := rect.get_center()
+	var radius := rect.size.x * 0.2
+	var pts := PackedVector2Array()
+	var steps := 8
+	for i in steps + 1:
+		var angle := lerpf(0.0, -PI * 0.5, float(i) / float(steps))
+		pts.append(center + Vector2(cos(angle), sin(angle)) * radius)
+	draw_polyline(pts, color, 2.5, true)
+	var tip: Vector2 = pts[pts.size() - 1]
+	var prev: Vector2 = pts[pts.size() - 2]
+	var vec := tip - prev
+	if vec.length_squared() < 0.001:
+		vec = Vector2(0, -1)
+	_tri(tip, vec.normalized(), rect.size.x * 0.11, rect.size.x * 0.07, color)
+
+
 func _turn_mark(rect: Rect2, color: Color) -> void:
 	var center := rect.get_center()
 	var radius := rect.size.x * 0.2
@@ -1134,6 +1157,8 @@ func _tool_color(tool: String) -> Color:
 			return Color("#4f7d6a")
 		"turn":
 			return Color("#6e8bb8")
+		"hook":
+			return Color("#6d4c9a")
 		"slide":
 			return Color("#d06b86")
 		"bin":
@@ -1180,6 +1205,8 @@ func _tool_tip(tool: String) -> String:
 			return "Sets a parcel down two steps along its arrow, over the cell in front."
 		"turn":
 			return "Rotates a parcel one quarter clockwise and waits that tick. It leaves in the new facing on the next tick."
+		"hook":
+			return "Rotates a parcel one quarter counterclockwise and waits that tick. It leaves in the new facing on the next tick."
 		"slide":
 			return "Moves a parcel two cells in its facing and does not rotate it. The cell between can be a brick, a belt, or another parcel."
 		"bin":
