@@ -395,6 +395,251 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 				if state.form[occupied_row][occupied_col] != null:
 					occupied += 1
 		guess += 8 - occupied
+	if rule == "zero_side_later" and card_id != "exemption":
+		var side = false
+		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var side_row = row + delta.x
+			var side_col = col + delta.y
+			if side_row < 0 or side_col < 0 or side_row > 2 or side_col > 2:
+				continue
+			if state.form[side_row][side_col] != null:
+				side = true
+		if side:
+			guess -= 10
+	if rule == "double_patience_if_last_col3":
+		var tail_row = -1
+		var tail_col = -1
+		for scan_row in range(2, -1, -1):
+			for scan_col in range(2, -1, -1):
+				if state.form[scan_row][scan_col] != null:
+					tail_row = scan_row
+					tail_col = scan_col
+					break
+			if tail_row >= 0:
+				break
+		var becomes_tail = tail_row < 0 or row > tail_row or (row == tail_row and col > tail_col)
+		if becomes_tail and col == 2:
+			guess -= 12
+		elif becomes_tail and tail_col == 2:
+			guess += 6
+	if rule == "double_frame_if_center":
+		if row == 1 and col == 1:
+			guess += 4
+		elif state.form[1][1] != null:
+			guess += 4
+	if rule == "yield_queue_gap" and _placement_opens_gap(state, row, col):
+		guess += 4
+	if rule == "zero_corner_later":
+		var corner_spared = card_id == "exemption" and row == int(Rules.traveler(state)["exemption_row"])
+		if not corner_spared:
+			var exempt_row = int(Rules.traveler(state)["exemption_row"])
+			for scan_col in 3:
+				var scan_stamp = state.form[exempt_row][scan_col]
+				if scan_stamp != null and String(scan_stamp["card_id"]) == "exemption":
+					corner_spared = true
+		if not corner_spared:
+			var cornered = false
+			for delta in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+				var corner_row = row + delta.x
+				var corner_col = col + delta.y
+				if corner_row < 0 or corner_col < 0 or corner_row > 2 or corner_col > 2:
+					continue
+				if state.form[corner_row][corner_col] == null:
+					continue
+				if corner_row < row or (corner_row == row and corner_col < col):
+					cornered = true
+			if cornered:
+				guess -= 12
+	if rule == "double_patience_if_first_col1":
+		var head_row = -1
+		var head_col = -1
+		for scan_row in 3:
+			for scan_col in 3:
+				if state.form[scan_row][scan_col] != null:
+					head_row = scan_row
+					head_col = scan_col
+					break
+			if head_row >= 0:
+				break
+		var becomes_head = head_row < 0 or row < head_row or (row == head_row and col < head_col)
+		if becomes_head and col == 0:
+			guess -= 12
+		elif becomes_head and head_col == 0:
+			guess += 6
+	if rule == "double_full_row":
+		var row_filled = 0
+		for scan_col in 3:
+			if state.form[row][scan_col] != null:
+				row_filled += 1
+		if row_filled == 2:
+			guess += 10
+		elif row_filled == 1:
+			guess += 4
+	if rule == "yield_row_wings" and (col == 0 or col == 2):
+		var other_wing = 2 if col == 0 else 0
+		if state.form[row][other_wing] != null:
+			guess += 6
+		else:
+			guess += 2
+	if rule == "drop_if_exact_three":
+		var toll_filled = 0
+		for toll_row in 3:
+			for toll_col in 3:
+				if state.form[toll_row][toll_col] != null:
+					toll_filled += 1
+		if toll_filled == 2:
+			guess -= 6
+		elif toll_filled == 3:
+			guess += 4
+	if rule == "double_lowest_earliest":
+		var low_number = _stamp_number(state, card_id, row, col)
+		var low_count = 1
+		var earlier_lower = false
+		var later_lower = false
+		for low_row in range(0, row + 1):
+			var low_end = 2
+			if low_row == row:
+				low_end = col - 1
+			for low_col in range(0, low_end + 1):
+				var low_stamp = state.form[low_row][low_col]
+				if low_stamp == null:
+					continue
+				low_count += 1
+				if _stamp_number(state, String(low_stamp["card_id"]), low_row, low_col) <= low_number:
+					earlier_lower = true
+		for low_row in range(row, 3):
+			var low_start = 0
+			if low_row == row:
+				low_start = col + 1
+			for low_col in range(low_start, 3):
+				var low_stamp = state.form[low_row][low_col]
+				if low_stamp == null:
+					continue
+				low_count += 1
+				if _stamp_number(state, String(low_stamp["card_id"]), low_row, low_col) < low_number:
+					later_lower = true
+		if low_count >= 2 and not earlier_lower and not later_lower:
+			guess += low_number
+	if rule == "double_after_gap":
+		if row == 0 and col == 0:
+			guess += 2
+		else:
+			var before_row = row
+			var before_col = col - 1
+			if before_col < 0:
+				before_row = row - 1
+				before_col = 2
+			if state.form[before_row][before_col] == null:
+				var earlier_filled = false
+				for scan_row in range(0, before_row + 1):
+					var scan_end = 2
+					if scan_row == before_row:
+						scan_end = before_col - 1
+					for scan_col in range(0, scan_end + 1):
+						if state.form[scan_row][scan_col] != null:
+							earlier_filled = true
+				if earlier_filled:
+					guess += _stamp_number(state, card_id, row, col)
+	if rule == "double_highest_earliest":
+		var high_number = _stamp_number(state, card_id, row, col)
+		var high_count = 1
+		var earlier_higher = false
+		var later_higher = false
+		for high_row in range(0, row + 1):
+			var high_end = 2
+			if high_row == row:
+				high_end = col - 1
+			for high_col in range(0, high_end + 1):
+				var high_stamp = state.form[high_row][high_col]
+				if high_stamp == null:
+					continue
+				high_count += 1
+				if _stamp_number(state, String(high_stamp["card_id"]), high_row, high_col) >= high_number:
+					earlier_higher = true
+		for high_row in range(row, 3):
+			var high_start = 0
+			if high_row == row:
+				high_start = col + 1
+			for high_col in range(high_start, 3):
+				var high_stamp = state.form[high_row][high_col]
+				if high_stamp == null:
+					continue
+				high_count += 1
+				if _stamp_number(state, String(high_stamp["card_id"]), high_row, high_col) > high_number:
+					later_higher = true
+		if high_count >= 2 and not earlier_higher and not later_higher:
+			guess += high_number
+	if rule == "drop_if_exact_four":
+		var four_filled = 0
+		for four_row in 3:
+			for four_col in 3:
+				if state.form[four_row][four_col] != null:
+					four_filled += 1
+		if four_filled == 3:
+			guess -= 6
+		elif four_filled == 4:
+			guess += 4
+	if rule == "double_before_gap":
+		if row == 2 and col == 2:
+			guess -= 1
+		else:
+			var after_row = row
+			var after_col = col + 1
+			if after_col > 2:
+				after_row = row + 1
+				after_col = 0
+			if state.form[after_row][after_col] == null:
+				var later_filled = false
+				for scan_row in range(after_row, 3):
+					var scan_start = 0
+					if scan_row == after_row:
+						scan_start = after_col + 1
+					for scan_col in range(scan_start, 3):
+						if state.form[scan_row][scan_col] != null:
+							later_filled = true
+				if later_filled:
+					guess += _stamp_number(state, card_id, row, col)
+	if rule == "yield_column_pair":
+		if row == 0 or row == 2:
+			var other_end = 2 if row == 0 else 0
+			if state.form[other_end][col] != null and state.form[1][col] == null:
+				guess += 6
+			elif state.form[1][col] == null:
+				guess += 2
+		elif row == 1 and (state.form[0][col] != null or state.form[2][col] != null):
+			guess -= 4
+	if rule == "yield_end_match":
+		var first_number = -1
+		var last_number = -1
+		var filled = 0
+		var match_head_row = -1
+		var match_head_col = -1
+		var match_tail_row = -1
+		var match_tail_col = -1
+		for scan_row in 3:
+			for scan_col in 3:
+				var scan_stamp = state.form[scan_row][scan_col]
+				if scan_stamp == null:
+					continue
+				var scan_number = _stamp_number(state, String(scan_stamp["card_id"]), scan_row, scan_col)
+				if filled == 0:
+					first_number = scan_number
+					match_head_row = scan_row
+					match_head_col = scan_col
+				last_number = scan_number
+				match_tail_row = scan_row
+				match_tail_col = scan_col
+				filled += 1
+		if filled >= 1:
+			var mine = _stamp_number(state, card_id, row, col)
+			var becomes_match_head = row < match_head_row or (row == match_head_row and col < match_head_col)
+			var becomes_match_tail = row > match_tail_row or (row == match_tail_row and col > match_tail_col)
+			var new_first = mine if becomes_match_head else first_number
+			var new_last = mine if becomes_match_tail else last_number
+			if new_first == new_last:
+				guess += 4 + filled
+			elif filled >= 2 and first_number == last_number:
+				guess -= 6
 	if rule == "double_shared_later":
 		var shared_number = _stamp_number(state, card_id, row, col)
 		var earlier_match = false
