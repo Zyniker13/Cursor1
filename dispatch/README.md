@@ -1,6 +1,6 @@
 # Dispatch
 
-A wiring puzzle. Route parcels across Building 1, Building 2, Building 3, and Building 4, then submit the belt. After a delivery, the game shows your cycles and block count beside par. Par is not a handwritten number: it is the result of simulating that puzzle's reference graph.
+A wiring puzzle. Route parcels across Building 1, Building 2, Building 3, Building 4, and Building 5, then submit the belt. After a delivery, the game shows your cycles and block count beside par. Par is not a handwritten number: it is the result of simulating that puzzle's reference graph.
 
 Blocks are drawn by Godot. There is no imported art.
 
@@ -30,7 +30,7 @@ The process exits non-zero if a test fails. These were written for Godot 4.7.
 
 ## Controls
 
-Left-click an empty cell to place the selected block. Left-click a block of the same type to rotate it, or a different type to replace it. Right-click deletes. `R` rotates the block under the cursor, or the placement arrow if the cell is empty. `Delete` removes the block under the cursor. `Enter` submits. `Backspace` restarts the puzzle. Keys `1` through `8` select the first eight puzzles. `[` and `]` step to the previous or next puzzle. Puzzle 1 also prints the how-to on the board. Building 2 is routes 16 through 22, Building 3 is routes 23 through 29, and Building 4 is routes 30 through 36. Each later building is marked on the route row. Building 2 opens after route 15, Building 3 opens after route 22, and Building 4 opens after route 29.
+Left-click an empty cell to place the selected block. Left-click a block of the same type to rotate it, or a different type to replace it. Right-click deletes. `R` rotates the block under the cursor, or the placement arrow if the cell is empty. `Delete` removes the block under the cursor. `Enter` submits. `Backspace` restarts the puzzle. Keys `1` through `8` select the first eight puzzles. `[` and `]` step to the previous or next puzzle. Puzzle 1 also prints the how-to on the board. Building 2 is routes 16 through 22, Building 3 is routes 23 through 29, Building 4 is routes 30 through 36, and Building 5 is routes 37 through 43. Each later building is marked on the route row. Building 2 opens after route 15, Building 3 opens after route 22, Building 4 opens after route 29, and Building 5 opens after route 36.
 
 ## Simulation
 
@@ -39,14 +39,14 @@ Ticks are deterministic. A parcel sits on at most one cell. Sources and the dock
 Each tick, in order:
 
 1. A painter sets the color of a parcel standing on it. A primer sets the color only when that parcel is gray. A counter increments once for that parcel and stamps the new value. A parcel is stamped only on the first tick it spends on that counter.
-2. Every parcel picks a destination from the block under it.
-3. Destinations that are illegal, contested by two parcels, or occupied by a parcel that is staying are cancelled. This repeats until it settles. Conveyors, painters, counters, splitters, filters, primers, and bridges may step into a cell another parcel is leaving on the same tick.
+2. Every parcel picks a destination from the block under it. A turn that is rotating a parcel picks no destination.
+3. Destinations that are illegal, contested by two parcels, or occupied by a parcel that is staying are cancelled. This repeats until it settles. Conveyors, painters, counters, splitters, filters, primers, bridges, and turns may step into a cell another parcel is leaving on the same tick.
 4. The surviving moves happen together. A parcel that steps onto the dock is delivered, in order.
 5. A splitter that actually sent a parcel switches to its other output.
 6. Each source emits its next parcel into the cell it faces, if that cell is empty and in bounds.
 7. The delivered sequence is compared with the order.
 
-Cycles is the tick on which the last ordered parcel arrives. Block count is the number of blocks in the submitted graph. If a delivery does not match the next order line, the attempt fails. If nothing can move, emit, or release, the belt is stuck and the attempt fails. A layout that keeps moving without finishing, such as a loop, stops at tick 250 and fails.
+Cycles is the tick on which the last ordered parcel arrives. Block count is the number of blocks in the submitted graph. If a delivery does not match the next order line, the attempt fails. If nothing can move, emit, release a latch, or step off a turn, the belt is stuck and the attempt fails. A layout that keeps moving without finishing, such as a loop, stops at tick 250 and fails.
 
 An order line can require a color, a count, or both. A field that is left out accepts any value. Parcels start gray with count 0 unless the chute says otherwise.
 
@@ -89,6 +89,12 @@ Paints a gray parcel its color, then moves the parcel forward with the same rule
 
 Sets a parcel down two steps along its arrow. The cell in between is not entered, so it can be a brick, a belt, or a parcel. The far cell follows the same rule as a conveyor: it must be the dock or a block, and a bridge may land in a cell another parcel is leaving.
 
+### Turn
+
+A parcel remembers the direction it is facing. It is born facing the chute that emitted it, and a block that moves it sets its facing to the direction of that move.
+
+On the tick a parcel arrives, a turn rotates that facing one quarter clockwise and does not move the parcel. On the next tick the parcel steps one cell in the new facing. That step follows the same rule as a conveyor: the cell must be the dock or a block, and the turn may enter a cell another parcel is leaving. If the cell is blocked by a parcel that is staying, the turn waits and tries again without rotating a second time. Rotating the block does not change the quarter. A turn does not paint, stamp, or filter, and it does not skip a cell.
+
 ## Puzzles
 
 1. First Mile introduces the conveyor. Send the parcel straight to the dock.
@@ -127,7 +133,14 @@ Sets a parcel down two steps along its arrow. The cell in between is not entered
 34. Skip the Coat sends blue over the brick. Gray turns off the splitter and takes the yellow painter. A coat on the bridge path would paint blue too.
 35. Twice Yellow loops the parcel through the counter, paints it yellow on the way back, and bridges the brick in front of the dock. The delivery is yellow 2.
 36. Night Span uses the filter, the bridge, the primer, and the counter. Red hops the brick onto the counter for stamp 1. Gray becomes yellow on the south belt and is stamped 2. Blue keeps its color and is stamped 3.
+37. Quarter Turn introduces the turn. The parcel rotates one quarter clockwise and stays put on that tick, then steps onto the dock.
+38. Cut In turns red onto the blue belt as a parcel leaves, so red arrives ahead of the last blue. A latch misses the gap because the chute refills the cell.
+39. Bend Stamp turns the parcel onto the counter. The stamp is the tick after it lands, and the delivery is count 1.
+40. Clear the Dock turns red onto the dock. A latch holds blue so the two do not claim that dock on the same tick.
+41. Two Rights sends blue and red through one turn. Blue is facing west and leaves north. Red is facing east and leaves south.
+42. Second Bend loops the parcel through the counter, paints it yellow on the way back, and turns it onto the dock. The delivery is yellow 2.
+43. Night Turn uses the filter, the turn, the primer, and the counter. Red turns south onto the counter for stamp 1. Gray takes the long belt, becomes yellow, and is stamped 2. Blue keeps its color and is stamped 3.
 
 ## Limits
 
-These are Building 1, Building 2, Building 3, and Building 4. There is no histogram, no sound, and no proof that par is the shortest possible route: par is the reference graph, and another graph can deliver the order with a different cycle count or block count. Playback of a run that hits the tick cap is shortened on screen; the simulation itself still runs to the cap.
+These are Building 1, Building 2, Building 3, Building 4, and Building 5. There is no histogram, no sound, and no proof that par is the shortest possible route: par is the reference graph, and another graph can deliver the order with a different cycle count or block count. Playback of a run that hits the tick cap is shortened on screen; the simulation itself still runs to the cap.
