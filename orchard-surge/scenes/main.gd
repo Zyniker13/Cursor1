@@ -8,7 +8,7 @@ const Tooltip = preload("res://ui/plant_tooltip.gd")
 
 const ORIGIN := Vector2(16, 76)
 const CARD_W := 352.0
-const CARD_H := 216.0
+const CARD_H := 248.0
 const CARD_GAP := 6.0
 const CARD_LEFT := 752.0
 const CARD_TOP := 72.0
@@ -21,6 +21,7 @@ const KIND_COLOR := [
 	Color(0.93, 0.34, 0.2, 1),
 	Color(0.737, 0.373, 0.478, 1),
 	Color(0.98, 0.86, 0.42, 1),
+	Color(0.45, 0.78, 0.86, 1),
 ]
 
 var sim = null
@@ -92,6 +93,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			selected = 5
 		elif event.is_action_pressed("plant_7"):
 			selected = 6
+		elif event.is_action_pressed("plant_8"):
+			selected = 7
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if sim != null and sim.outcome == Sim.OUTCOME_RUNNING and sim.phase == Sim.PHASE_PLANT:
 			var cell := _mouse_cell()
@@ -153,6 +156,7 @@ func _bind_keys() -> void:
 	_bind("plant_5", [KEY_5, KEY_KP_5])
 	_bind("plant_6", [KEY_6, KEY_KP_6])
 	_bind("plant_7", [KEY_7, KEY_KP_7])
+	_bind("plant_8", [KEY_8, KEY_KP_8])
 	_bind("restart", [KEY_R])
 
 
@@ -287,7 +291,7 @@ func _build_hud() -> void:
 	hint_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hint_box.clip_contents = true
 	layer.add_child(hint_box)
-	hint_label = _label("Move: WASD or arrows, paused while planting. Plant with 1-7, then click a tile. Only a wick burns shroud. Only a briar cracks rind. Only a flare melts pitch.", 13, Color("aeb8a4"))
+	hint_label = _label("Move: WASD or arrows, paused while planting. Plant with 1-8, then click a tile. Only a wick burns shroud. Only a briar cracks rind. Only a flare melts pitch. Only a hearth thaws frost.", 13, Color("aeb8a4"))
 	hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	hint_label.clip_text = true
@@ -385,7 +389,7 @@ func _refresh_hud() -> void:
 		return
 	overlay.visible = true
 	if sim.outcome == Sim.OUTCOME_WON:
-		outcome_label.text = "The surge breaks.\nNine nights passed, and the orchard still stands."
+		outcome_label.text = "The surge breaks.\nEleven nights passed, and the orchard still stands."
 	else:
 		outcome_label.text = "The lights went out.\nHealth reached zero before the orchard was clear."
 
@@ -481,6 +485,8 @@ func _draw_fog() -> void:
 				draw_rect(rect, Color(0.015, 0.02, 0.035, alpha), true)
 			if sim.tile_melts_pitch(tx, ty):
 				draw_rect(rect, Color(0.95, 0.78, 0.28, 0.1), true)
+			if sim.tile_thaws_frost(tx, ty):
+				draw_rect(rect, Color(0.62, 0.86, 0.98, 0.1), true)
 
 
 func _draw_hover() -> void:
@@ -552,6 +558,21 @@ func _draw_plant(plant) -> void:
 				at + Vector2(2.4, -5),
 				at + Vector2(-2.4, -5),
 			]), Color("fff6d4"))
+		Catalog.HEARTH:
+			draw_rect(Rect2(at + Vector2(-11, 6), Vector2(22, 8)), Color("3e4a54"), true)
+			draw_rect(Rect2(at + Vector2(-8, 4), Vector2(16, 5)), Color("6d7c88"), true)
+			var hearth_pulse := 0.55 + 0.45 * sin(float(sim.tick) * 0.16)
+			draw_circle(at + Vector2(0, -2), 10.0, Color(0.7, 0.9, 1.0, 0.14 + 0.1 * hearth_pulse))
+			draw_colored_polygon(PackedVector2Array([
+				at + Vector2(0, -14),
+				at + Vector2(4.5, 2),
+				at + Vector2(-4.5, 2),
+			]), Color("d7f2ff"))
+			draw_colored_polygon(PackedVector2Array([
+				at + Vector2(0, -9),
+				at + Vector2(2.2, 1),
+				at + Vector2(-2.2, 1),
+			]), Color("f4fcff"))
 		_:
 			draw_circle(at, 6.0, Color.WHITE)
 
@@ -576,6 +597,10 @@ func _draw_shot(shot) -> void:
 			draw_circle(at, 4.0, Color(1.0, 0.82, 0.32, 0.35))
 			draw_circle(at, 2.2, Color("ffe7a0"))
 			draw_circle(at, 1.0, Color("fffaf0"))
+		Catalog.HEARTH:
+			draw_circle(at, 3.6, Color(0.7, 0.9, 1.0, 0.4))
+			draw_circle(at, 2.0, Color("e7f6ff"))
+			draw_circle(at, 0.9, Color("ffffff"))
 		_:
 			draw_circle(at, 6.0, Color("ffb15a"))
 			draw_circle(at, 2.5, Color("fff0d2"))
@@ -598,10 +623,13 @@ func _draw_pest(pest) -> void:
 	elif pest.pitched:
 		wing = Color("4a4030")
 		body = Color("241c12")
+	elif pest.frosted:
+		wing = Color("7f97a8")
+		body = Color("d5e6f0")
 	if pest.slow_ticks > 0:
 		wing = Color("2f6b58")
 		body = Color("21483c")
-		if pest.shrouded or pest.rinded or pest.pitched:
+		if pest.shrouded or pest.rinded or pest.pitched or pest.frosted:
 			wing = Color("2a4038")
 			body = Color("1c2c28")
 	draw_colored_polygon(PackedVector2Array([
@@ -623,6 +651,8 @@ func _draw_pest(pest) -> void:
 	var eye := Color("f2e7c8")
 	if pest.shrouded:
 		eye = Color("ffb080")
+	elif pest.frosted:
+		eye = Color("d7f4ff")
 	elif pest.pitched:
 		eye = Color("e6c56a")
 	draw_circle(at + Vector2(-2, -1), 1.3, eye)
@@ -633,6 +663,8 @@ func _draw_pest(pest) -> void:
 		draw_arc(at, 16.0, 0.9, TAU - 0.7, 16, Color(0.86, 0.55, 0.62, 0.9), 1.3, true)
 	if pest.pitched:
 		draw_arc(at, 19.0, 0.2, TAU - 0.85, 14, Color(0.95, 0.78, 0.32, 0.9), 1.3, true)
+	if pest.frosted:
+		draw_arc(at, 22.0, 0.15, TAU - 0.5, 16, Color(0.75, 0.92, 1.0, 0.9), 1.3, true)
 	if pest.hp < Sim.PEST_HP:
 		var width := 16.0 * clampf(float(pest.hp) / float(Sim.PEST_HP), 0.0, 1.0)
 		draw_rect(Rect2(at + Vector2(-8, -14), Vector2(16, 3)), Color(0, 0, 0, 0.45), true)
