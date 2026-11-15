@@ -6,11 +6,12 @@ class_name ChartBook
 # The West Return holds eight more. The Meeting Glass holds eight more.
 # The Tide Mirror holds eight more. The Shutter holds eight more.
 # The Stain holds eight more. The Vane holds eight more.
-# The Well holds the last eight.
+# The Well holds eight more. The Siphon holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
 # 180, and 270 for north, east, south, and west. A well has no facing.
+# A siphon has no facing. Rotation is ignored.
 # See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
@@ -28,6 +29,7 @@ const SHUTTER := "The Shutter"
 const STAIN := "The Stain"
 const VANE := "The Vane"
 const WELL := "The Well"
+const SIPHON := "The Siphon"
 
 static func all() -> Array:
 	var book: Array = []
@@ -42,6 +44,7 @@ static func all() -> Array:
 	book.append_array(stain())
 	book.append_array(vane())
 	book.append_array(well())
+	book.append_array(siphon())
 	return book
 
 
@@ -87,6 +90,10 @@ static func vane() -> Array:
 
 static func well() -> Array:
 	return [chart_79(), chart_80(), chart_81(), chart_82(), chart_83(), chart_84(), chart_85(), chart_86()]
+
+
+static func siphon() -> Array:
+	return [chart_87(), chart_88(), chart_89(), chart_90(), chart_91(), chart_92(), chart_93(), chart_94()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -3160,6 +3167,286 @@ static func chart_86() -> Dictionary:
 		],
 	}
 
+static func chart_87() -> Dictionary:
+	# Flood 2 covers the siphon's row. The stain is clicked from blue to red.
+	# The siphon flips that red to blue and sends it north onto the blue dock.
+	# Low water lets the feed fall through the dry tide mirror into the hull,
+	# and the lower lamp stops in the dry siphon.
+	return {
+		"id": "87",
+		"harbor": SIPHON,
+		"title": "The North Siphon",
+		"teach": "Click the stain from blue to red. A flooded siphon flips that red to blue and sends it north onto the blue dock. It does not split. While that row is dry, a beam that hits the siphon stops, and low water lights a hull. A well in that cell keeps the red and does not satisfy the blue dock. A shutter keeps the arrival direction. A vane stops at the waterline.",
+		"win": "Red climbs north as blue.",
+		"cols": 6,
+		"rows": 6,
+		"tide_phases": [0, 2],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 5, 3, "W", "white"),
+			_lantern("Lw", 0, 4, "E", "white"),
+		],
+		"docks": [_dock("Bd", 2, 0, "blue")],
+		"boats": [
+			_boat("Hn", 4, 0),
+			_boat("Hs", 4, 5),
+		],
+		"fixtures": [
+			_fixture("T", "tide_mirror", 4, 4, 0),
+		],
+		"pieces": [
+			_mirror("M", "Feed mirror", 4, 3, 90, 0),
+			_stain("K", "Stain", 3, 4, 90, 0),
+			_siphon("S", "Siphon", 2, 4),
+		],
+	}
+
+static func chart_88() -> Dictionary:
+	# The only phase floods the bottom two rows. Red arrives from the east,
+	# traveling west, and the siphon still leaves north as blue.
+	return {
+		"id": "88",
+		"harbor": SIPHON,
+		"title": "Side Entry",
+		"teach": "The beam arrives traveling west, already red, and still leaves north as blue. The arrival direction does not pick the exit. A shutter keeps going west as red and misses the dock. A well keeps the red. A vane is shut by the flood and the beam stops at the waterline.",
+		"win": "The side entry leaves north as blue.",
+		"cols": 6,
+		"rows": 6,
+		"tide_phases": [2],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [_lantern("L", 5, 3, "W", "red")],
+		"docks": [_dock("Bd", 2, 0, "blue")],
+		"boats": [
+			_boat("Hn", 4, 0),
+			_boat("Ht", 1, 0),
+		],
+		"fixtures": [
+			_fixture("T", "tide_mirror", 4, 4, 0),
+			_fixture("G", "shutter", 3, 4, 0),
+			_fixture("R", "tide_mirror", 1, 4, 90),
+		],
+		"pieces": [
+			_mirror("M", "Feed mirror", 4, 3, 90, 0),
+			_siphon("S", "Siphon", 2, 4),
+		],
+	}
+
+static func chart_89() -> Dictionary:
+	# White through the siphon stays white. A well keeps white too, so a well
+	# in this cell also clears. A shutter misses north. A red stain fails.
+	return {
+		"id": "89",
+		"harbor": SIPHON,
+		"title": "White Through",
+		"teach": "White enters the siphon and leaves north still white onto the white dock. The siphon does not paint white into another color. A well also keeps white and also clears this chart. A shutter misses north. A stain set to red fails the white dock.",
+		"win": "White climbs north, still white.",
+		"cols": 6,
+		"rows": 6,
+		"tide_phases": [2],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [_lantern("L", 5, 3, "W", "white")],
+		"docks": [_dock("D", 2, 0, "white")],
+		"boats": [
+			_boat("Hn", 4, 0),
+			_boat("Ht", 1, 0),
+		],
+		"fixtures": [
+			_fixture("T", "tide_mirror", 4, 4, 0),
+			_fixture("G", "shutter", 3, 4, 0),
+			_fixture("R", "tide_mirror", 1, 4, 90),
+		],
+		"pieces": [
+			_mirror("M", "Feed mirror", 4, 3, 90, 0),
+			_siphon("S", "Siphon", 2, 4),
+		],
+	}
+
+static func chart_90() -> Dictionary:
+	# Dry is the solution. The eastbound lamp stops in the siphon, short of
+	# the eastern hull. Flood turns the southbound feed west into the siphon,
+	# and the siphon lifts that beam onto the northern hull. Any color lights
+	# a hull, so the flip does not save the flood.
+	return {
+		"id": "90",
+		"harbor": SIPHON,
+		"title": "Dry Stop",
+		"teach": "The solution is the dry phase. The dry siphon stops an eastbound beam short of a hull. It does not pass. The flood lifts a beam north onto a hull, and any color lights a hull, so the flood fails. A dry shutter and a head-on vane also stop that dry beam. A stain lets the dry beam pass and lights the hull. A well stops that same dry beam.",
+		"win": "The dry siphon holds the hull dark.",
+		"cols": 7,
+		"rows": 6,
+		"tide_phases": [0, 2],
+		"start_tide_index": 1,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ld", 0, 1, "E", "white"),
+			_lantern("Lf", 4, 2, "S", "white"),
+			_lantern("Lw", 0, 4, "E", "white"),
+		],
+		"docks": [_dock("D", 6, 0, "white")],
+		"boats": [
+			_boat("Hn", 2, 0),
+			_boat("Ht", 1, 0),
+			_boat("He", 5, 4),
+			_boat("Hs", 2, 5),
+			_boat("Hm", 6, 5),
+		],
+		"fixtures": [
+			_fixture("T", "tide_mirror", 4, 4, 0),
+			_fixture("K", "stain", 3, 4, 0),
+			_fixture("R", "tide_mirror", 1, 4, 90),
+		],
+		"pieces": [
+			_mirror("M", "Dock mirror", 6, 1, 90, 0),
+			_siphon("S", "Siphon", 2, 4),
+		],
+	}
+
+static func chart_91() -> Dictionary:
+	# Flood 3 covers y >= 4. Red enters the south siphon and leaves north as
+	# blue. A tide mirror turns that climb east into the north siphon, which
+	# leaves north as red onto the dry dock. One flip leaves blue on that dock.
+	return {
+		"id": "91",
+		"harbor": SIPHON,
+		"title": "Two Siphons",
+		"teach": "Red enters the south siphon, leaves north as blue, enters the north siphon, and leaves north as red onto the dry red dock. One siphon alone leaves the wrong color on that dock. Replacing either siphon with a well fails. A shutter keeps the arrival direction. A vane is shut by the flood. A stain does not turn the beam north.",
+		"win": "Two siphons restore the red.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [3],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [_lantern("L", 6, 3, "W", "red")],
+		"docks": [_dock("Rd", 4, 3, "red")],
+		"boats": [_boat("Hn", 5, 0)],
+		"fixtures": [
+			_fixture("G54", "shutter", 5, 4, 0),
+			_fixture("T55", "tide_mirror", 5, 5, 0),
+			_fixture("G45", "shutter", 4, 5, 0),
+			_fixture("G35", "shutter", 3, 5, 0),
+			_fixture("T24", "tide_mirror", 2, 4, 0),
+			_fixture("G34", "shutter", 3, 4, 0),
+		],
+		"pieces": [
+			_mirror("M", "Feed mirror", 5, 3, 90, 0),
+			_siphon("S1", "South siphon", 2, 5),
+			_siphon("S2", "North siphon", 4, 4),
+		],
+	}
+
+static func chart_92() -> Dictionary:
+	# Flood 2 covers the siphon and leaves the dock's row dry. Red climbs out
+	# of the water as blue. Low water stops the lower lamp in the dry siphon
+	# and drops the feed into the hull.
+	return {
+		"id": "92",
+		"harbor": SIPHON,
+		"title": "Above the Gate",
+		"teach": "The flood covers the siphon and leaves the dock on the drier row dry. Red becomes blue on that dock. Low water stops in the dry siphon. A well keeps the red. A shutter passes in the arrival direction. A vane stops at the waterline.",
+		"win": "Blue climbs out of the flood.",
+		"cols": 6,
+		"rows": 6,
+		"tide_phases": [0, 2],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 3, "E", "red"),
+			_lantern("Lw", 5, 4, "W", "white"),
+		],
+		"docks": [_dock("Bd", 3, 2, "blue")],
+		"boats": [
+			_boat("Hn", 2, 0),
+			_boat("Hs", 2, 5),
+		],
+		"fixtures": [
+			_fixture("T", "tide_mirror", 2, 4, 90),
+		],
+		"pieces": [
+			_mirror("M", "Feed mirror", 2, 3, 0, 90),
+			_siphon("S", "Siphon", 3, 4),
+		],
+	}
+
+static func chart_93() -> Dictionary:
+	# Phases flood 0, 2, and 3 rows on a 7-row quay. Flood 2 covers the siphon
+	# (y >= 5) and leaves the dock one row north dry. Flood 3 covers that dock.
+	# The stain on the row between the mirror and the tide mirror lets high
+	# water still reach the siphon, so the stop is the dock's waterline.
+	return {
+		"id": "93",
+		"harbor": SIPHON,
+		"title": "The Held Siphon",
+		"teach": "Three tide phases. Only the middle flood clears. The siphon is flooded and the dock one row north is dry. Red flips to blue onto that dock. Low water stops on the dry siphon, and the falling beam wakes the hull. High water covers the dock, so the beam stops at the waterline and the dock is not hit. A well keeps the red. A shutter does not send the beam north. A vane is shut when the siphon's row is flooded.",
+		"win": "The middle mark holds the siphon.",
+		"cols": 6,
+		"rows": 7,
+		"tide_phases": [0, 2, 3],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 3, "E", "red"),
+			_lantern("Lw", 5, 5, "W", "white"),
+		],
+		"docks": [_dock("Bd", 3, 4, "blue")],
+		"boats": [
+			_boat("Hn", 2, 0),
+			_boat("Hs", 2, 6),
+		],
+		"fixtures": [
+			_fixture("K", "stain", 2, 4, 0),
+			_fixture("T", "tide_mirror", 2, 5, 90),
+		],
+		"pieces": [
+			_mirror("M", "Feed mirror", 2, 3, 0, 90),
+			_siphon("S", "Siphon", 3, 5),
+		],
+	}
+
+static func chart_94() -> Dictionary:
+	# The prism must sit on the white beam, facing the east entry. Red leaves
+	# north, is turned east and then south, and a flooded tide mirror turns it
+	# west into the siphon. That red leaves north as blue. Blue leaves south
+	# and dies on the waterline of an empty flooded cell. It does not enter
+	# the siphon.
+	return {
+		"id": "94",
+		"harbor": SIPHON,
+		"title": "The Siphon Mark",
+		"teach": "Move the prism from the side socket onto the line. Only the red port enters the siphon. That red leaves north as blue onto the blue dock. The blue port does not enter the siphon. The siphon does not split. Low water is the wrong tide. A well in the siphon cell carries red and misses the blue dock. A shutter keeps the arrival direction. A vane stops at the waterline.",
+		"win": "The red port climbs north as blue.",
+		"cols": 7,
+		"rows": 6,
+		"tide_phases": [0, 2],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [_lantern("L", 0, 2, "E", "white")],
+		"docks": [_dock("Bd", 3, 0, "blue")],
+		"boats": [
+			_boat("Hw", 6, 2),
+			_boat("Hs", 4, 5),
+		],
+		"fixtures": [
+			_fixture("Na", "mirror", 2, 1, 0),
+			_fixture("Nb", "mirror", 4, 1, 90),
+			_fixture("T", "tide_mirror", 4, 4, 0),
+		],
+		"pieces": [
+			_prism("P", "Prism", [["side", 5, 0], ["line", 2, 2]], "side", 0, "line", 90),
+			_siphon("S", "Siphon", 3, 4),
+		],
+	}
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -3301,6 +3588,20 @@ static func _stain(id: String, name: String, x: int, y: int, start_rot: int, sol
 		"start_rot": start_rot,
 		"solution_socket": "a",
 		"solution_rot": sol_rot,
+	}
+
+
+static func _siphon(id: String, name: String, x: int, y: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "siphon",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": 0,
+		"solution_socket": "a",
+		"solution_rot": 0,
 	}
 
 

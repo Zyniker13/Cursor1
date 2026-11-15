@@ -474,6 +474,8 @@ func _building_mark_name(building: int) -> String:
 			return "BuildingEightMark"
 		9:
 			return "BuildingNineMark"
+		10:
+			return "BuildingTenMark"
 		_:
 			return "Building%dMark" % building
 
@@ -626,7 +628,7 @@ func _sync_facing() -> void:
 			_facing.text = "Facing   counterclockwise"
 		elif _selected == "slide":
 			_facing.text = "Facing   with the parcel"
-		elif _selected == "bin" or _selected == "return":
+		elif _selected == "bin" or _selected == "return" or _selected == "pause":
 			_facing.text = "Facing   none"
 		else:
 			_facing.text = "Facing   %s" % Sim.DIR_NAMES[_ghost_dir]
@@ -905,6 +907,8 @@ func _draw_block(block: Dictionary, alpha: float) -> void:
 		_hook_mark(rect, ink)
 	elif typ == "return":
 		_return_mark(rect, ink)
+	elif typ == "pause":
+		_pause_mark(rect, ink)
 	elif typ == "slide":
 		_slide_mark(rect, ink)
 	elif typ == "bin":
@@ -1089,6 +1093,16 @@ func _hook_mark(rect: Rect2, color: Color) -> void:
 	_tri(tip, vec.normalized(), rect.size.x * 0.11, rect.size.x * 0.07, color)
 
 
+func _pause_mark(rect: Rect2, color: Color) -> void:
+	var center := rect.get_center()
+	var bar_w := maxf(rect.size.x * 0.12, 3.0)
+	var bar_h := rect.size.y * 0.46
+	var gap := rect.size.x * 0.08
+	var top := center.y - bar_h * 0.5
+	draw_rect(Rect2(center.x - gap - bar_w, top, bar_w, bar_h), color)
+	draw_rect(Rect2(center.x + gap, top, bar_w, bar_h), color)
+
+
 func _return_mark(rect: Rect2, color: Color) -> void:
 	var center := rect.get_center()
 	var radius := rect.size.x * 0.22
@@ -1182,6 +1196,8 @@ func _tool_color(tool: String) -> Color:
 			return Color("#6d4c9a")
 		"return":
 			return Color("#9a3d55")
+		"pause":
+			return Color("#3f6f8a")
 		"slide":
 			return Color("#d06b86")
 		"bin":
@@ -1232,6 +1248,8 @@ func _tool_tip(tool: String) -> String:
 			return "Rotates a parcel one quarter counterclockwise and waits that tick. It leaves in the new facing on the next tick."
 		"return":
 			return "Reverses a parcel's facing and waits that tick. It steps back along that facing on the next tick."
+		"pause":
+			return "Waits one tick without turning the parcel. It then steps one cell in the facing the parcel already had."
 		"slide":
 			return "Moves a parcel two cells in its facing and does not rotate it. The cell between can be a brick, a belt, or another parcel."
 		"bin":
