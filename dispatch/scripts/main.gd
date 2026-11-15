@@ -486,6 +486,8 @@ func _building_mark_name(building: int) -> String:
 			return "BuildingFourteenMark"
 		15:
 			return "BuildingFifteenMark"
+		16:
+			return "BuildingSixteenMark"
 		_:
 			return "Building%dMark" % building
 
@@ -638,7 +640,7 @@ func _sync_facing() -> void:
 			_facing.text = "Facing   counterclockwise"
 		elif _selected == "slide":
 			_facing.text = "Facing   with the parcel"
-		elif _selected == "bin" or _selected == "return" or _selected == "pause" or _selected == "shunt" or _selected == "bias" or _selected == "vault" or _selected == "sling":
+		elif _selected == "bin" or _selected == "return" or _selected == "pause" or _selected == "shunt" or _selected == "bias" or _selected == "vault" or _selected == "sling" or _selected == "cant":
 			_facing.text = "Facing   none"
 		else:
 			_facing.text = "Facing   %s" % Sim.DIR_NAMES[_ghost_dir]
@@ -929,6 +931,8 @@ func _draw_block(block: Dictionary, alpha: float) -> void:
 		_vault_mark(rect, ink)
 	elif typ == "sling":
 		_sling_mark(rect, ink)
+	elif typ == "cant":
+		_cant_mark(rect, ink)
 	elif typ == "slide":
 		_slide_mark(rect, ink)
 	elif typ == "bin":
@@ -1170,6 +1174,16 @@ func _sling_mark(rect: Rect2, color: Color) -> void:
 	draw_line(right, tip, color, 2.5)
 
 
+func _cant_mark(rect: Rect2, color: Color) -> void:
+	var center := rect.get_center()
+	var span := rect.size.x
+	var tip := center + Vector2(0.0, -span * 0.26)
+	var left := tip + Vector2(-span * 0.30, span * 0.42)
+	var right := tip + Vector2(span * 0.30, span * 0.42)
+	draw_line(left, tip, color, 2.5)
+	draw_line(right, tip, color, 2.5)
+
+
 func _pause_mark(rect: Rect2, color: Color) -> void:
 	var center := rect.get_center()
 	var bar_w := maxf(rect.size.x * 0.12, 3.0)
@@ -1285,6 +1299,8 @@ func _tool_color(tool: String) -> Color:
 			return Color("#7c5cbf")
 		"sling":
 			return Color("#6b8f3a")
+		"cant":
+			return Color("#8a4e6a")
 		"slide":
 			return Color("#d06b86")
 		"bin":
@@ -1347,6 +1363,8 @@ func _tool_tip(tool: String) -> String:
 			return "Waits one tick, then jumps a parcel two cells in the facing it already had. The cell in front is not entered, and the parcel keeps that facing."
 		"sling":
 			return "Waits one tick, then jumps a parcel two cells to its right. The cell beside it is not entered, and the parcel keeps the facing it arrived with."
+		"cant":
+			return "Waits one tick, then jumps a parcel two cells to its left. The cell beside it is not entered, and the parcel keeps the facing it arrived with."
 		"slide":
 			return "Moves a parcel two cells in its facing and does not rotate it. The cell between can be a brick, a belt, or another parcel."
 		"bin":
