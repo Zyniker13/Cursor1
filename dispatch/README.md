@@ -30,7 +30,7 @@ The process exits non-zero if a test fails. These were written for Godot 4.7.
 
 ## Controls
 
-Left-click an empty cell to place the selected block. Left-click a block of the same type to rotate it, or a different type to replace it. Right-click deletes. `R` rotates the block under the cursor, or the placement arrow if the cell is empty. `Delete` removes the block under the cursor. `Enter` submits. `Backspace` restarts the puzzle. Keys `1` through `8` select puzzles. Puzzle 1 also prints the how-to on the board.
+Left-click an empty cell to place the selected block. Left-click a block of the same type to rotate it, or a different type to replace it. Right-click deletes. `R` rotates the block under the cursor, or the placement arrow if the cell is empty. `Delete` removes the block under the cursor. `Enter` submits. `Backspace` restarts the puzzle. Keys `1` through `8` select the first eight puzzles. `[` and `]` step to the previous or next puzzle. Puzzle 1 also prints the how-to on the board.
 
 ## Simulation
 
@@ -75,7 +75,7 @@ Sets the parcel's color, then moves it forward with the same rule as a conveyor.
 
 ### Counter
 
-On the first tick a parcel spends on a counter, the counter adds one and writes that number onto the parcel, then moves the parcel forward like a conveyor.
+On the first tick a parcel spends on a counter, the counter adds one and writes that number onto the parcel, then moves the parcel forward like a conveyor. If that parcel leaves and later comes back, the counter stamps the next number over the old one.
 
 ## Puzzles
 
@@ -87,6 +87,13 @@ On the first tick a parcel spends on a counter, the counter adds one and writes 
 6. Blue Tag introduces the painter. Paint the parcel blue.
 7. Counted Three introduces the counter. Stamp counts 1, 2, and 3.
 8. Night Sort uses the whole set. Paint one red and one blue, stamp them 1 then 2, and keep the merge clear.
+9. Second Stamp sends a parcel around a counter so the second pass is stamped 2.
+10. Fresh Coat sends red around and brings it back yellow, stamped 2.
+11. One Then Three lets the first parcel leave as 1 and sends the next around to be stamped 3.
+12. Blue Then Red paints the north parcel blue and holds the two reds so the stamps run 1, 2, 3.
+13. The Long Way bricks in the top row. The parcel goes around the bottom and arrives yellow, stamped 2.
+14. Blue After paints red before the split and blue on the loop, then delivers red 1 and blue 3.
+15. Night Desk uses the whole set again. Deliver red 1, yellow 2, and blue 3.
 
 ## Limits
 

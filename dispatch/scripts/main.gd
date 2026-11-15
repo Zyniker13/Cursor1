@@ -143,6 +143,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			_restart()
 		elif key.keycode >= KEY_1 and key.keycode <= KEY_8:
 			select_puzzle(int(key.keycode) - int(KEY_1))
+		elif key.keycode == KEY_BRACKETLEFT:
+			select_puzzle(_index - 1)
+		elif key.keycode == KEY_BRACKETRIGHT:
+			select_puzzle(_index + 1)
 
 
 func _on_resized() -> void:
@@ -336,6 +340,7 @@ func _build_ui() -> void:
 	for i in _puzzles.size():
 		var button := Button.new()
 		button.text = str(i + 1)
+		button.tooltip_text = str(_puzzles[i]["title"])
 		button.focus_mode = Control.FOCUS_NONE
 		button.custom_minimum_size = Vector2(40, 32)
 		button.pressed.connect(select_puzzle.bind(i))
@@ -413,7 +418,8 @@ func _build_ui() -> void:
 	restart.pressed.connect(_restart)
 	stack.add_child(restart)
 	var keys := Label.new()
-	keys.text = "R rotate    Delete remove    1-8 puzzle"
+	keys.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	keys.text = "R rotate    Delete remove\n1-8 puzzle    [ ] step"
 	keys.add_theme_font_size_override("font_size", 13)
 	keys.add_theme_color_override("font_color", MUTED)
 	stack.add_child(keys)

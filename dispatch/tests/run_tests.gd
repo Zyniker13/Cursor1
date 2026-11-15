@@ -21,6 +21,7 @@ func _run() -> void:
 	_latch_rules()
 	_teaching_blocks_matter()
 	_tick_cap()
+	_return_routes()
 	_ui_uses_simulated_par()
 	if _failures.is_empty():
 		print("ALL TESTS PASSED")
@@ -221,6 +222,51 @@ func _teaching_blocks_matter() -> void:
 	_check(not bool(Sim.run(counter_puzzle, uncounted)["success"]), "puzzle 7 fails without the counter")
 
 
+func _return_routes() -> void:
+	print("return routes")
+	var puzzles := Puzzles.all()
+	_check(puzzles.size() == 15, "seven return routes follow the first eight")
+	for puzzle in puzzles:
+		if int(puzzle["id"]) < 9:
+			continue
+		var result: Dictionary = Sim.run(puzzle, puzzle["reference"])
+		var par: Dictionary = Scoring.compute_par(puzzle)
+		_check(bool(result["success"]), "return route %d delivers" % int(puzzle["id"]))
+		_check(int(result["cycles"]) <= int(par["cycles"]), "return route %d cycles are at or under par" % int(puzzle["id"]))
+		_check(int(result["blocks"]) <= int(par["blocks"]), "return route %d blocks are at or under par" % int(puzzle["id"]))
+		_check(str(puzzle.get("unlocks", "")) == "", "return puzzle %d adds no new block" % int(puzzle["id"]))
+	_check(Puzzles.unlocked_at(puzzles.size() - 1).size() == 5, "return routes keep every block")
+
+	var second: Dictionary = _by_id(9)
+	var straight := [
+		{"type": "counter", "x": 1, "y": 1, "dir": 0},
+		{"type": "conveyor", "x": 2, "y": 1, "dir": 0},
+	]
+	var once: Dictionary = Sim.run(second, straight)
+	_check(not bool(once["success"]), "puzzle 9 fails if the parcel crosses the counter once")
+
+	var merged: Dictionary = _by_id(12)
+	var rushed: Array = merged["reference"].duplicate(true)
+	for block in rushed:
+		if str(block["type"]) == "latch":
+			block["type"] = "conveyor"
+	_check(not bool(Sim.run(merged, rushed)["success"]), "puzzle 12 jams if the latch is a conveyor")
+
+	var desk: Dictionary = _by_id(15)
+	var unlatched: Array = desk["reference"].duplicate(true)
+	for block in unlatched:
+		if str(block["type"]) == "latch":
+			block["type"] = "conveyor"
+	_check(not bool(Sim.run(desk, unlatched)["success"]), "puzzle 15 jams if yellow is not held")
+
+
+func _by_id(id: int) -> Dictionary:
+	for puzzle in Puzzles.all():
+		if int(puzzle["id"]) == id:
+			return puzzle
+	return {}
+
+
 func _tick_cap() -> void:
 	print("tick cap")
 	var loop := {
@@ -249,7 +295,7 @@ func _ui_uses_simulated_par() -> void:
 		return
 	var node = scene.instantiate()
 	root.add_child(node)
-	for index in [0, 6]:
+	for index in [0, 6, Puzzles.all().size() - 1]:
 		node.select_puzzle(index)
 		var puzzle: Dictionary = node.get_puzzle()
 		var result: Dictionary = Sim.run(puzzle, puzzle["reference"])
