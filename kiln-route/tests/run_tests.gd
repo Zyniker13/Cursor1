@@ -83,6 +83,9 @@ func _run() -> void:
 	_test_rake_sends_the_waiter()
 	_test_rake_refuses_side_and_front()
 	_test_rake_blocked_does_not_spill()
+	_test_hoe_sends_the_waiter()
+	_test_hoe_refuses_side_and_front()
+	_test_hoe_blocked_does_not_spill()
 	_test_rooms()
 	_test_over_budget()
 	_test_pickup()
@@ -104,6 +107,7 @@ func _run() -> void:
 	_test_wing12_lessons()
 	_test_wing13_lessons()
 	_test_wing14_lessons()
+	_test_wing15_lessons()
 	_test_game_object()
 
 
@@ -958,7 +962,7 @@ func _arm_lane(pattern: Array) -> Dictionary:
 
 func _test_rooms() -> void:
 	var catalog := Rooms.all()
-	check(catalog.size() == 112, "fourteen wings have 112 rooms")
+	check(catalog.size() == 120, "fifteen wings have 120 rooms")
 	check(catalog[0].name == "Haul" and catalog[7].name == "Two Orders", "rooms 1 through 8 stay the first wing")
 	check(catalog[8].name == "Straight" and catalog[15].name == "Balance", "rooms 9 through 16 are the second wing")
 	check(catalog[16].name == "Span" and catalog[23].name == "Ledger", "rooms 17 through 24 are the third wing")
@@ -973,6 +977,7 @@ func _test_rooms() -> void:
 	check(catalog[88].name == "Hold" and catalog[95].name == "One Bin", "rooms 89 through 96 are the twelfth wing")
 	check(catalog[96].name == "Aside" and catalog[103].name == "Side Bin", "rooms 97 through 104 are the thirteenth wing")
 	check(catalog[104].name == "Draw Left" and catalog[111].name == "Side Bin", "rooms 105 through 112 are the fourteenth wing")
+	check(catalog[112].name == "Draw Right" and catalog[119].name == "Side Bin", "rooms 113 through 120 are the fifteenth wing")
 	for index in catalog.size():
 		var bridge_count := int(catalog[index].budget.get(Rules.Kind.BRIDGE, 0))
 		var grate_count := int(catalog[index].budget.get(Rules.Kind.GRATE, 0))
@@ -986,6 +991,9 @@ func _test_rooms() -> void:
 		var slip_count := int(catalog[index].budget.get(Rules.Kind.SLIP, 0))
 		var shed_count := int(catalog[index].budget.get(Rules.Kind.SHED, 0))
 		var rake_count := int(catalog[index].budget.get(Rules.Kind.RAKE, 0))
+		var hoe_count := int(catalog[index].budget.get(Rules.Kind.HOE, 0))
+		if index < 112:
+			check(hoe_count == 0, "room %d does not use the hoe" % (index + 1))
 		if index < 104:
 			check(rake_count == 0, "room %d does not use the rake" % (index + 1))
 		if index < 96:
@@ -1075,8 +1083,21 @@ func _test_rooms() -> void:
 			check(drop_count == 0, "room %d does not use the drop" % (index + 1))
 			check(arm_count == 0, "room %d does not use the arm" % (index + 1))
 			check(hook_count == 0, "room %d does not use the hook" % (index + 1))
-		else:
+		elif index < 112:
 			check(rake_count >= 1, "room %d depends on the rake" % (index + 1))
+			check(hoe_count == 0, "room %d does not use the hoe" % (index + 1))
+			check(shed_count == 0, "room %d does not use the shed" % (index + 1))
+			check(slip_count == 0, "room %d does not use the slip" % (index + 1))
+			check(pass_count == 0, "room %d does not use the pass" % (index + 1))
+			check(twin_count == 0, "room %d does not use the twin" % (index + 1))
+			check(dwell_count == 0, "room %d does not use the dwell" % (index + 1))
+			check(lift_count == 0, "room %d does not use the lift" % (index + 1))
+			check(drop_count == 0, "room %d does not use the drop" % (index + 1))
+			check(arm_count == 0, "room %d does not use the arm" % (index + 1))
+			check(hook_count == 0, "room %d does not use the hook" % (index + 1))
+		else:
+			check(hoe_count >= 1, "room %d depends on the hoe" % (index + 1))
+			check(rake_count == 0, "room %d does not use the rake" % (index + 1))
 			check(shed_count == 0, "room %d does not use the shed" % (index + 1))
 			check(slip_count == 0, "room %d does not use the slip" % (index + 1))
 			check(pass_count == 0, "room %d does not use the pass" % (index + 1))
@@ -3261,6 +3282,34 @@ func _test_game_object() -> void:
 	check(main._kind_for_key(KEY_KP_ADD) == Rules.Kind.DROP, "keypad plus stays on the drop beside the rake")
 	check(main._kind_for_key(KEY_KP_SUBTRACT) == Rules.Kind.ARM, "keypad minus stays on the arm beside the rake")
 	check(main._kind_for_key(KEY_KP_ENTER) == -1, "keypad enter is not a rake key")
+	check(main._kind_for_key(KEY_Y) == Rules.Kind.HOE, "Y selects the hoe")
+	check(main._key_label(Rules.Kind.HOE) == "y", "hoe key is Y")
+	check(main._key_label(Rules.Kind.HOE) != "`", "hoe does not reuse the rake key")
+	check(main._key_label(Rules.Kind.HOE) != "/", "hoe does not reuse the shed key")
+	check(main._key_label(Rules.Kind.HOE) != ".", "hoe does not reuse the slip key")
+	check(main._key_label(Rules.Kind.HOE) != "'", "hoe does not reuse the pass key")
+	check(main._key_label(Rules.Kind.HOE) != "0", "hoe does not reuse the hook key")
+	check(main._key_label(Rules.Kind.HOE) != "-", "hoe does not reuse the arm key")
+	check(main._key_label(Rules.Kind.HOE) != "=", "hoe does not reuse the drop key")
+	check(main._key_label(Rules.Kind.HOE) != "\\", "hoe does not reuse the lift key")
+	check(main._key_label(Rules.Kind.HOE) != ";", "hoe does not reuse the dwell key")
+	check(main._key_label(Rules.Kind.HOE) != ",", "hoe does not reuse the twin key")
+	check(main._kind_for_key(KEY_QUOTELEFT) == Rules.Kind.RAKE, "backtick stays on the rake beside the hoe")
+	check(main._kind_for_key(KEY_SLASH) == Rules.Kind.SHED, "slash stays on the shed beside the hoe")
+	check(main._kind_for_key(KEY_PERIOD) == Rules.Kind.SLIP, "period stays on the slip beside the hoe")
+	check(main._kind_for_key(KEY_KP_PERIOD) == Rules.Kind.DWELL, "keypad period stays on the dwell beside the hoe")
+	check(main._kind_for_key(KEY_KP_DIVIDE) == Rules.Kind.PASS, "keypad divide stays on the pass beside the hoe")
+	check(main._kind_for_key(KEY_KP_0) == Rules.Kind.HOOK, "keypad 0 stays on the hook beside the hoe")
+	check(main._kind_for_key(KEY_0) == Rules.Kind.HOOK, "0 stays on the hook beside the hoe")
+	check(main._kind_for_key(KEY_Q) == -1, "Q stays a control beside the hoe")
+	check(main._kind_for_key(KEY_E) == -1, "E stays a control beside the hoe")
+	check(main._kind_for_key(KEY_R) == -1, "R stays a control beside the hoe")
+	check(main._kind_for_key(KEY_F) == -1, "F stays a control beside the hoe")
+	check(main._kind_for_key(KEY_SPACE) == -1, "Space stays a control beside the hoe")
+	check(main._kind_for_key(KEY_ENTER) == -1, "Enter stays a control beside the hoe")
+	check(main._kind_for_key(KEY_BACKSPACE) == -1, "Backspace stays a control beside the hoe")
+	check(main._kind_for_key(KEY_BRACKETLEFT) == -1, "[ stays a control beside the hoe")
+	check(main._kind_for_key(KEY_BRACKETRIGHT) == -1, "] stays a control beside the hoe")
 	check(main._kind_for_key(KEY_COMMA) == Rules.Kind.TWIN, "comma stays on the twin beside the pass")
 	check(main._kind_for_key(KEY_MINUS) == Rules.Kind.ARM, "minus stays on the arm beside the pass")
 	check(main._kind_for_key(KEY_EQUAL) == Rules.Kind.DROP, "equals stays on the drop beside the pass")
@@ -3290,6 +3339,7 @@ func _test_game_object() -> void:
 	check(not main.is_unlocked(89), "room 89 stays locked until room 88 is cleared")
 	check(not main.is_unlocked(97), "room 97 stays locked until room 96 is cleared")
 	check(not main.is_unlocked(105), "room 105 stays locked until room 104 is cleared")
+	check(not main.is_unlocked(113), "room 113 stays locked until room 112 is cleared")
 	check(not main.testing_select(8), "locked room 9 cannot be selected")
 	check(main.testing_select(0), "room 1 can be selected")
 	var before: int = main.testing_tray(Rules.Kind.BELT)
@@ -3347,14 +3397,18 @@ func _test_game_object() -> void:
 		if index == 103:
 			check(main.is_unlocked(105), "clearing room 104 unlocks room 105")
 			check(not main.is_unlocked(106), "room 106 stays locked until room 105 is cleared")
+		if index == 111:
+			check(main.is_unlocked(113), "clearing room 112 unlocks room 113")
+			check(not main.is_unlocked(114), "room 114 stays locked until room 113 is cleared")
 	check(main.is_unlocked(72), "clearing room 71 unlocks room 72")
 	check(main.is_unlocked(80), "clearing room 79 unlocks room 80")
 	check(main.is_unlocked(88), "clearing room 87 unlocks room 88")
 	check(main.is_unlocked(96), "clearing room 95 unlocks room 96")
 	check(main.is_unlocked(104), "clearing room 103 unlocks room 104")
 	check(main.is_unlocked(112), "clearing room 111 unlocks room 112")
-	check(not main.is_unlocked(113), "there is no room 113 to unlock")
-	check(not main.testing_select(112), "room select rejects an unknown room")
+	check(main.is_unlocked(120), "clearing room 119 unlocks room 120")
+	check(not main.is_unlocked(121), "there is no room 121 to unlock")
+	check(not main.testing_select(120), "room select rejects an unknown room")
 	_check_window(main)
 	main.queue_free()
 
@@ -4068,11 +4122,21 @@ func _check_window(main) -> void:
 	check(main.testing_select(111), "select the rake side bin to measure the window")
 	var rake_lay: Dictionary = main._layout()
 	_check_tray_fits(rake_lay, "rake side bin")
-	var footer := "1-9 0 - = \\ ; , ' . / ` select   R rotate   LMB place or pick up   RMB rotate   Space run   F skip   Bksp restart"
+	var rake_tab: Rect2 = rake_lay.tabs[111]
+	check(rake_tab.position.y + rake_tab.size.y < (rake_lay.play as Rect2).position.y, "the rake room tab stays above the board")
+	check(main.testing_select(119), "select the hoe side bin to measure the window")
+	var hoe_lay: Dictionary = main._layout()
+	_check_tray_fits(hoe_lay, "hoe side bin")
+	var hoe_tab: Rect2 = hoe_lay.tabs[119]
+	check(hoe_tab.position.y + hoe_tab.size.y < (hoe_lay.play as Rect2).position.y, "the hoe room tab stays above the board")
+	check(shed_tab.position.y + shed_tab.size.y < (hoe_lay.play as Rect2).position.y, "the twelfth room row still leaves the shed tab above the board")
+	var footer := "1-9 0 - = \\ ; , ' . / ` y select   R rotate   LMB place or pick up   RMB rotate   Space run   F skip   Bksp restart"
 	var footer_size: Vector2 = main.font.get_string_size(footer, HORIZONTAL_ALIGNMENT_LEFT, -1, 13)
 	var footer_w := footer_size.x
 	check(footer_w <= size.x - 48.0, "the footer fits the window (%s px)" % footer_w)
+	check(footer_w > 600.0, "the footer stays readable (%s px)" % footer_w)
 	var tab_w: float = shed_lay.tabs[0].size.x
+	check(absf(tab_w - 116.0) < 0.01, "the room tab stays 116 px wide (%s)" % tab_w)
 	var worst := ""
 	var worst_w := 0.0
 	for room in Rooms.all():
@@ -4091,6 +4155,7 @@ func _check_tray_fits(lay: Dictionary, label: String) -> void:
 	check(play.size.x > 0.0 and play.size.y > 0.0 and float(lay.cell) >= 24.0, "%s board still has room to draw (%s)" % [label, lay.cell])
 	var saw_shed := false
 	var saw_rake := false
+	var saw_hoe := false
 	for slot in lay.tray:
 		var rect: Rect2 = slot.rect
 		check(rect.position.x >= 0.0 and rect.position.y >= play.position.y + play.size.y, "%s tray stays below the board" % label)
@@ -4099,8 +4164,12 @@ func _check_tray_fits(lay: Dictionary, label: String) -> void:
 			saw_shed = true
 		if int(slot.kind) == Rules.Kind.RAKE:
 			saw_rake = true
+		if int(slot.kind) == Rules.Kind.HOE:
+			saw_hoe = true
 	if label.begins_with("shed"):
 		check(saw_shed, "the shed tray slot is on the shed room")
+	elif label.begins_with("hoe"):
+		check(saw_hoe, "the hoe tray slot is on the hoe room")
 	else:
 		check(saw_rake, "the rake tray slot is on the rake room")
 
@@ -4438,3 +4507,349 @@ func _test_wing14_lessons() -> void:
 		check(int(missed.counts[Rules.Mat.INGOT]) < int(side_rake.quota[Rules.Mat.INGOT]) and int(missed.counts[Rules.Mat.PLATE]) < int(side_rake.quota[Rules.Mat.PLATE]), "%s in place of the side-bin rake misses both quotas (%s)" % [Rules.KIND_NAME[int(kind)], missed.text])
 	var side_hook: Dictionary = World.simulate(side_rake, _swap_kind(side_rake.solution, Rules.Kind.RAKE, Rules.Kind.HOOK))
 	check(int(side_hook.counts[Rules.Mat.INGOT]) >= int(side_rake.quota[Rules.Mat.INGOT]) and int(side_hook.counts[Rules.Mat.PLATE]) >= int(side_rake.quota[Rules.Mat.PLATE]) and not side_hook.success, "a hook in place of the side-bin rake meets both counts and is not in the tray (%s)" % side_hook.text)
+
+
+func _test_hoe_sends_the_waiter() -> void:
+	var ore := _hoe_right([Rules.Mat.ORE], 4)
+	var placed := [Rooms.piece(Rules.Kind.HOE, 1, 1, Rules.Dir.EAST)]
+	var early := World.simulate(ore, placed, 4)
+	var mid := World.simulate(ore, placed, 8)
+	var result := World.simulate(ore, placed, 12)
+	var again := World.simulate(ore, placed, 12)
+	check(_trace(early) == "" and early.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "a lone ore is still in the hoe after the belt tick and the dwell tick")
+	check(_trace(mid) == "5:1,2:0" and mid.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "the first ore leaves right and the next ore waits, got %s" % _trace(mid))
+	check(_trace(result) == "5:1,2:0|9:1,2:0", "later ore keeps leaving the hoe to the right, got %s" % _trace(result))
+	check(result.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "the latest ore of the run stays in the hoe")
+	check(int(result.counts[Rules.Mat.ORE]) == 2, "two ores leave right and the latest waits")
+	check(not ("2,1:" in _trace(result)), "a hoe does not send the waiter forward")
+	check(not ("1,0:" in _trace(result)), "a hoe does not send the waiter left")
+	check(_same(result, again), "the same hoe lane is deterministic (seed %d)" % result.seed)
+	var belt := World.simulate(ore, [Rooms.piece(Rules.Kind.BELT, 1, 1, Rules.Dir.EAST)], 12)
+	var dwell := World.simulate(ore, [Rooms.piece(Rules.Kind.DWELL, 1, 1, Rules.Dir.EAST)], 12)
+	check(_trace(belt) == "2:2,1:0|6:2,1:0|10:2,1:0", "a belt on that cell sends forward on the next tick, got %s" % _trace(belt))
+	check(_trace(dwell) == "3:2,1:0|7:2,1:0|11:2,1:0", "a dwell on that cell sends forward one tick after a belt, got %s" % _trace(dwell))
+	var hook := World.simulate(ore, [Rooms.piece(Rules.Kind.HOOK, 1, 1, Rules.Dir.EAST)], 12)
+	check(_trace(hook) == "2:1,0:0|6:1,0:0|10:1,0:0", "a hook sends its one item left and does not keep a last item, got %s" % _trace(hook))
+	check(hook.world.machines[Vector2i(1, 1)].hold < 0, "a hook does not keep an item in place")
+	var as_rake := World.simulate(ore, [Rooms.piece(Rules.Kind.RAKE, 1, 1, Rules.Dir.EAST)], 12)
+	check(_trace(as_rake) == "5:1,0:0|9:1,0:0", "a rake on the hoe lane sends the waiter left, got %s" % _trace(as_rake))
+	for mat in [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]:
+		var lane := _hoe_right([mat], 80)
+		var lone := World.simulate(lane, placed, 15)
+		check(_trace(lone) == "" and lone.world.machines[Vector2i(1, 1)].hold == mat, "a lone %s never leaves a hoe" % Rules.MAT_NAME[mat])
+	var mixed := _hoe_right([Rules.Mat.ORE, Rules.Mat.INGOT], 4)
+	var held := World.simulate(mixed, placed, 4)
+	var pushed := World.simulate(mixed, placed, 8)
+	var later := World.simulate(mixed, placed, 12)
+	check(_trace(held) == "" and held.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "a hoe does not release before the different material arrives")
+	check(_trace(pushed) == "5:1,2:0", "the waiting ore leaves right when a different material arrives, got %s" % _trace(pushed))
+	check(pushed.world.machines[Vector2i(1, 1)].hold == Rules.Mat.INGOT, "the arrival stays when the waiter leaves right")
+	check(_trace(later) == "5:1,2:0|9:1,2:1" and later.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "the next arrival becomes the waiting item, got %s" % _trace(later))
+	check(int(pushed.world.machines[Vector2i(1, 1)].phase) == 0, "a hoe does not rotate or alternate")
+	var as_slip := World.simulate(mixed, [Rooms.piece(Rules.Kind.SLIP, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_slip) == "5:2,1:1" and as_slip.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "a slip sends that arrival forward and keeps the first, got %s" % _trace(as_slip))
+	var as_pass := World.simulate(mixed, [Rooms.piece(Rules.Kind.PASS, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_pass) == "5:2,1:0" and as_pass.world.machines[Vector2i(1, 1)].hold == Rules.Mat.INGOT, "a pass sends the waiter forward and keeps the arrival, got %s" % _trace(as_pass))
+	var as_twin := World.simulate(mixed, [Rooms.piece(Rules.Kind.TWIN, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_twin) == "" and as_twin.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "a twin refuses that different material")
+	check(int(as_twin.world.sources[0].pending) == Rules.Mat.INGOT, "the twin leaves the different material on the previous piece")
+	var as_shed := World.simulate(mixed, [Rooms.piece(Rules.Kind.SHED, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_shed) == "5:1,0:1" and as_shed.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "a shed sends the arrival left and keeps the waiter, got %s" % _trace(as_shed))
+	var as_drop := World.simulate(mixed, [Rooms.piece(Rules.Kind.DROP, 1, 1, Rules.Dir.NORTH)], 8)
+	check(as_drop.trace.is_empty(), "a drop on the hoe cell does not take the load from behind, got %s" % _trace(as_drop))
+	var south := {
+		"id": 0,
+		"name": "hoe south",
+		"blurb": "",
+		"rule": "",
+		"w": 3,
+		"h": 3,
+		"sources": [Rooms.source(1, 0, Rules.Dir.SOUTH, [Rules.Mat.ORE, Rules.Mat.INGOT], 4)],
+		"sinks": [
+			Rooms.sink(0, 1, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+			Rooms.sink(2, 1, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+			Rooms.sink(1, 2, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [],
+		"budget": Rooms.kv([Rules.Kind.HOE, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [],
+		"solution": [],
+	}
+	var turned := World.simulate(south, [Rooms.piece(Rules.Kind.HOE, 1, 1, Rules.Dir.SOUTH)], 8)
+	check(_trace(turned) == "5:0,1:0" and turned.world.machines[Vector2i(1, 1)].hold == Rules.Mat.INGOT, "a south-facing hoe sends the waiter west and keeps the arrival, got %s" % _trace(turned))
+	var raked := World.simulate(south, [Rooms.piece(Rules.Kind.RAKE, 1, 1, Rules.Dir.SOUTH)], 8)
+	check(_trace(raked) == "5:2,1:0", "a south-facing rake sends that waiter east, got %s" % _trace(raked))
+
+
+func _test_hoe_refuses_side_and_front() -> void:
+	var room := {
+		"id": 0,
+		"name": "hoe refuse",
+		"blurb": "",
+		"rule": "",
+		"w": 3,
+		"h": 3,
+		"sources": [
+			Rooms.source(0, 1, Rules.Dir.EAST, [Rules.Mat.ORE, Rules.Mat.INGOT], 4),
+			Rooms.source(1, 0, Rules.Dir.SOUTH, [Rules.Mat.INGOT], 1),
+			Rooms.source(2, 1, Rules.Dir.WEST, [Rules.Mat.PLATE], 1),
+		],
+		"sinks": [Rooms.sink(1, 2, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE])],
+		"chutes": [],
+		"walls": [],
+		"budget": Rooms.kv([Rules.Kind.HOE, 1, Rules.Kind.BELT, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [],
+		"solution": [],
+	}
+	var placed := [Rooms.piece(Rules.Kind.HOE, 1, 1, Rules.Dir.EAST)]
+	var result := World.simulate(room, placed, 8)
+	check(_trace(result) == "5:1,2:0", "hoe sends the waiting ore right and keeps the ingot, got %s" % _trace(result))
+	check(result.world.machines[Vector2i(1, 1)].hold == Rules.Mat.INGOT, "the arrival stays in the hoe")
+	check(int(result.world.sources[1].pending) == Rules.Mat.INGOT, "hoe refuses an ingot from the side")
+	check(int(result.world.sources[2].pending) == Rules.Mat.PLATE, "hoe refuses a head-on plate")
+	check(int(result.world.machines[Vector2i(1, 1)].phase) == 0, "a hoe does not rotate or alternate")
+	var side_only := {
+		"id": 0,
+		"name": "hoe side",
+		"blurb": "",
+		"rule": "",
+		"w": 3,
+		"h": 3,
+		"sources": [Rooms.source(1, 0, Rules.Dir.SOUTH, [Rules.Mat.PLATE], 1)],
+		"sinks": [Rooms.sink(2, 1, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE])],
+		"chutes": [],
+		"walls": [],
+		"budget": Rooms.kv([Rules.Kind.HOE, 1, Rules.Kind.BELT, 1]),
+		"quota": Rooms.kv([Rules.Mat.PLATE, 1]),
+		"initial": [],
+		"solution": [],
+	}
+	var belt := World.simulate(side_only, [Rooms.piece(Rules.Kind.BELT, 1, 1, Rules.Dir.EAST)], 4)
+	var hoe_side := World.simulate(side_only, placed, 4)
+	check(_trace(belt) == "2:2,1:2|3:2,1:2|4:2,1:2", "a belt takes a plate from the side, got %s" % _trace(belt))
+	check(int(hoe_side.counts[Rules.Mat.PLATE]) == 0 and int(hoe_side.world.sources[0].pending) == Rules.Mat.PLATE, "a hoe refuses that same side plate")
+	var front := {
+		"id": 0,
+		"name": "hoe front",
+		"blurb": "",
+		"rule": "",
+		"w": 3,
+		"h": 1,
+		"sources": [
+			Rooms.source(0, 0, Rules.Dir.EAST, [Rules.Mat.ORE], 4),
+			Rooms.source(2, 0, Rules.Dir.WEST, [Rules.Mat.INGOT], 1),
+		],
+		"sinks": [],
+		"chutes": [],
+		"walls": [],
+		"budget": Rooms.kv([Rules.Kind.HOE, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [],
+		"solution": [],
+	}
+	var blocked := World.simulate(front, [Rooms.piece(Rules.Kind.HOE, 1, 0, Rules.Dir.EAST)], 6)
+	var machine = blocked.world.machines[Vector2i(1, 0)]
+	check(int(blocked.world.sources[1].pending) == Rules.Mat.INGOT, "hoe refuses a head-on ingot")
+	check(machine.hold == Rules.Mat.ORE, "the rear load stays on the hoe")
+	check(blocked.trace.is_empty(), "a head-on entry does not leave the hoe, got %s" % _trace(blocked))
+	check(int(machine.phase) == 0, "a head-on entry does not rotate the hoe")
+
+
+func _test_hoe_blocked_does_not_spill() -> void:
+	var boxed := {
+		"id": 0,
+		"name": "hoe boxed",
+		"blurb": "",
+		"rule": "",
+		"w": 3,
+		"h": 3,
+		"sources": [Rooms.source(0, 1, Rules.Dir.EAST, [Rules.Mat.ORE, Rules.Mat.PLATE], 1)],
+		"sinks": [
+			Rooms.sink(1, 0, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+		],
+		"chutes": [Rooms.cell(0, 0), Rooms.cell(2, 0), Rooms.cell(0, 2), Rooms.cell(2, 2)],
+		"walls": [Rooms.cell(1, 2), Rooms.cell(2, 1)],
+		"budget": Rooms.kv([Rules.Kind.HOE, 1, Rules.Kind.HOOK, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [],
+		"solution": [],
+	}
+	var held := World.simulate(boxed, [Rooms.piece(Rules.Kind.HOE, 1, 1, Rules.Dir.EAST)], 6)
+	check(held.error == "" and held.discarded == 0 and held.trace.is_empty(), "a blocked hoe does not spill forward, left, or back")
+	check(held.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "blocked ore stays on the hoe")
+	check(int(held.world.sources[0].pending) == Rules.Mat.PLATE, "the later item is not accepted while the right cell refuses")
+	check(int(held.counts[Rules.Mat.ORE]) == 0 and int(held.counts[Rules.Mat.PLATE]) == 0, "the blocked hoe did not reach a forward or left sink")
+	check(int(held.world.machines[Vector2i(1, 1)].phase) == 0, "a hoe does not rotate or alternate when blocked")
+	var hook := World.simulate(boxed, [Rooms.piece(Rules.Kind.HOOK, 1, 1, Rules.Dir.EAST)], 4)
+	check(int(hook.counts[Rules.Mat.ORE]) >= 1, "the same cell lets a hook send left into the sink")
+
+
+func _hoe_right(pattern: Array, period: int) -> Dictionary:
+	return {
+		"id": 0,
+		"name": "hoe",
+		"blurb": "",
+		"rule": "",
+		"w": 3,
+		"h": 3,
+		"sources": [Rooms.source(0, 1, Rules.Dir.EAST, pattern, period)],
+		"sinks": [
+			Rooms.sink(1, 2, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+			Rooms.sink(2, 1, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+			Rooms.sink(1, 0, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [],
+		"budget": Rooms.kv([Rules.Kind.HOE, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [],
+		"solution": [],
+	}
+
+
+func _test_wing15_lessons() -> void:
+	var wrong_kinds: Array = [
+		Rules.Kind.BELT,
+		Rules.Kind.DWELL,
+		Rules.Kind.TWIN,
+		Rules.Kind.PASS,
+		Rules.Kind.SLIP,
+		Rules.Kind.SHED,
+		Rules.Kind.HOOK,
+		Rules.Kind.RAKE,
+	]
+	for index in range(112, 120):
+		var room: Dictionary = Rooms.all()[index]
+		for kind in wrong_kinds:
+			var swapped := _swap_kind(room.solution, Rules.Kind.HOE, int(kind))
+			var run: Dictionary = World.simulate(room, swapped)
+			check(run.error == "", "%s in place of the room %d hoe simulates (%s)" % [Rules.KIND_NAME[int(kind)], room.id, run.error])
+			check(not run.quota_ok, "%s in place of the room %d hoe misses the quota (%s)" % [Rules.KIND_NAME[int(kind)], room.id, run.text])
+			check(not run.success, "%s in place of the room %d hoe does not clear" % [Rules.KIND_NAME[int(kind)], room.id])
+		var planner = Planner.new(room)
+		for piece in room.initial:
+			check(planner.pickup(int(piece.x), int(piece.y)), "room %d picks up its starting piece" % room.id)
+		for piece in room.solution:
+			check(planner.place(int(piece.kind), int(piece.x), int(piece.y), int(piece.dir)), "room %d places its solution from the tray" % room.id)
+		var spare := _spare_cell(room)
+		check(spare.x >= 0, "room %d has an empty cell for an extra piece" % room.id)
+		check(not planner.place(Rules.Kind.BELT, spare.x, spare.y, Rules.Dir.EAST), "room %d rejects a belt past the tray" % room.id)
+		var extra: Array = room.solution.duplicate(true)
+		extra.append(Rooms.piece(Rules.Kind.BELT, spare.x, spare.y, Rules.Dir.EAST))
+		var over: Dictionary = World.simulate(room, extra)
+		check(over.quota_ok and not over.budget_ok and not over.success, "room %d extra belt meets the quota and is rejected (%s)" % [room.id, over.text])
+	var draw: Dictionary = Rooms.all()[112]
+	var drawn: Dictionary = World.simulate(draw, draw.solution)
+	check(drawn.world.machines[Vector2i(1, 3)].hold == Rules.Mat.INGOT, "draw right keeps the last ingot")
+	check(int(drawn.counts[Rules.Mat.PLATE]) >= int(draw.quota[Rules.Mat.PLATE]), "draw right delivers the waiting plates (%s)" % drawn.text)
+	var draw_rake: Dictionary = World.simulate(draw, _swap_kind(draw.solution, Rules.Kind.HOE, Rules.Kind.RAKE))
+	check(int(draw_rake.counts[Rules.Mat.PLATE]) == 0 and int(draw_rake.discarded) > 0, "draw right's rake sends the plate left into the pit (%s)" % draw_rake.text)
+	var draw_shed: Dictionary = World.simulate(draw, _swap_kind(draw.solution, Rules.Kind.HOE, Rules.Kind.SHED))
+	check(int(draw_shed.counts[Rules.Mat.PLATE]) == 0 and draw_shed.world.machines[Vector2i(1, 3)].hold == Rules.Mat.PLATE, "draw right's shed keeps the first plate (%s)" % draw_shed.text)
+	var draw_belt: Dictionary = World.simulate(draw, _swap_kind(draw.solution, Rules.Kind.HOE, Rules.Kind.BELT))
+	var draw_twin: Dictionary = World.simulate(draw, _swap_kind(draw.solution, Rules.Kind.HOE, Rules.Kind.TWIN))
+	check(int(draw_belt.counts[Rules.Mat.PLATE]) == 0 and int(draw_belt.discarded) > 0, "draw right's belt sends the plate into the pit (%s)" % draw_belt.text)
+	check(int(draw_twin.counts[Rules.Mat.PLATE]) == 0 and draw_twin.world.machines[Vector2i(1, 3)].hold == Rules.Mat.PLATE, "draw right's twin refuses the other material (%s)" % draw_twin.text)
+	var push: Dictionary = Rooms.all()[113]
+	var pushed: Dictionary = World.simulate(push, push.solution)
+	check(pushed.world.machines[Vector2i(1, 3)].hold == Rules.Mat.PLATE, "push ore holds the last plate")
+	check(int(pushed.counts[Rules.Mat.INGOT]) >= int(push.quota[Rules.Mat.INGOT]), "push ore feeds the kiln (%s)" % pushed.text)
+	var push_rake: Dictionary = World.simulate(push, _swap_kind(push.solution, Rules.Kind.HOE, Rules.Kind.RAKE))
+	check(int(push_rake.counts[Rules.Mat.INGOT]) == 0, "push ore's rake sends the ore left and the kiln stays empty (%s)" % push_rake.text)
+	var still: Dictionary = Rooms.all()[114]
+	var stilled: Dictionary = World.simulate(still, still.solution)
+	check(int(still.budget[Rules.Kind.BELT]) == 1, "still hoe budgets one belt")
+	check(stilled.world.machines[Vector2i(1, 3)].hold == Rules.Mat.PLATE, "still hoe keeps the last plate")
+	check(int(stilled.counts[Rules.Mat.INGOT]) >= int(still.quota[Rules.Mat.INGOT]), "still hoe's waiting ore reaches the kiln (%s)" % stilled.text)
+	var still_rake: Dictionary = World.simulate(still, _swap_kind(still.solution, Rules.Kind.HOE, Rules.Kind.RAKE))
+	check(int(still_rake.counts[Rules.Mat.INGOT]) == 0, "still hoe's rake sends the ore into the pit (%s)" % still_rake.text)
+	var seat: Dictionary = Rooms.all()[115]
+	var parked: Array = seat.initial.duplicate(true)
+	parked.append(Rooms.piece(Rules.Kind.WEIR, 2, 3, Rules.Dir.EAST))
+	parked.append(Rooms.piece(Rules.Kind.BELT, 3, 1, Rules.Dir.SOUTH))
+	parked.append(Rooms.piece(Rules.Kind.BELT, 3, 2, Rules.Dir.SOUTH))
+	parked.append(Rooms.piece(Rules.Kind.BELT, 3, 3, Rules.Dir.EAST))
+	parked.append(Rooms.piece(Rules.Kind.GRATE, 4, 3, Rules.Dir.EAST))
+	var gap: Dictionary = World.simulate(seat, parked)
+	check(World.budget_met(parked, seat.budget), "leaving the seat hoe parked stays inside the tray")
+	check(int(gap.counts[Rules.Mat.PLATE]) == 0 and not gap.quota_ok, "a parked hoe leaves a gap and misses (%s)" % gap.text)
+	var seat_planner = Planner.new(seat)
+	check(seat_planner.at(0, 4) != null and seat_planner.remaining(Rules.Kind.HOE) == 0, "seat starts with the hoe off the tray")
+	check(seat_planner.pickup(0, 4), "pickup lifts the pre-placed hoe")
+	check(seat_planner.at(0, 4) == null and seat_planner.remaining(Rules.Kind.HOE) == 1, "pre-placed hoe returns to the tray")
+	check(seat_planner.place(Rules.Kind.HOE, 1, 3, Rules.Dir.NORTH), "the returned hoe can be seated on the lane")
+	var corner: Dictionary = Rooms.all()[116]
+	var into_wall: Dictionary = World.simulate(corner, [
+		Rooms.piece(Rules.Kind.BELT, 2, 4, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 3, 4, Rules.Dir.EAST),
+	])
+	check(int(into_wall.counts[Rules.Mat.PLATE]) == 0, "corner belts that run into the wall deliver nothing")
+	check(World.simulate(corner, corner.solution).world.machines[Vector2i(3, 3)].hold == Rules.Mat.INGOT, "corner keeps the last ingot in the hoe")
+	var heat: Dictionary = Rooms.all()[117]
+	var one_kiln_pieces: Array = []
+	var no_left: Array = []
+	for piece in heat.solution:
+		if not (int(piece.x) == 3 and int(piece.y) >= 2):
+			one_kiln_pieces.append(piece)
+		if int(piece.x) != 0:
+			no_left.append(piece)
+	var one_kiln: Dictionary = World.simulate(heat, one_kiln_pieces)
+	var left_only: Dictionary = World.simulate(heat, no_left)
+	var both: Dictionary = World.simulate(heat, heat.solution)
+	var heat_quota := int(heat.quota[Rules.Mat.INGOT])
+	check(int(one_kiln.counts[Rules.Mat.INGOT]) < heat_quota, "one right-heat kiln misses %d (%s)" % [heat_quota, one_kiln.text])
+	check(int(left_only.counts[Rules.Mat.INGOT]) < heat_quota, "the right kilns without the left lane miss %d (%s)" % [heat_quota, left_only.text])
+	check(int(both.counts[Rules.Mat.INGOT]) >= heat_quota, "right heat reaches the quota (%s)" % both.text)
+	check(int(both.counts[Rules.Mat.INGOT]) > int(one_kiln.counts[Rules.Mat.INGOT]), "the right-heat spill kiln adds ingots")
+	var heat_rake: Dictionary = World.simulate(heat, _swap_kind(heat.solution, Rules.Kind.HOE, Rules.Kind.RAKE))
+	check(int(heat_rake.counts[Rules.Mat.INGOT]) < heat_quota, "right heat's rake feeds the left lane and misses (%s)" % heat_rake.text)
+	var heat_hook: Dictionary = World.simulate(heat, _swap_kind(heat.solution, Rules.Kind.HOE, Rules.Kind.HOOK))
+	check(int(heat_hook.counts[Rules.Mat.INGOT]) < heat_quota and not heat_hook.success, "right heat's hook misses and is not in the tray (%s)" % heat_hook.text)
+	var scrap: Dictionary = Rooms.all()[118]
+	var scraped: Dictionary = World.simulate(scrap, scrap.solution)
+	check(int(scraped.counts[Rules.Mat.INGOT]) >= int(scrap.quota[Rules.Mat.INGOT]) and int(scraped.discarded) > 0, "after the push counts kiln ingots and discards the scrap (%s discarded %d)" % [scraped.text, scraped.discarded])
+	check(scraped.world.machines[Vector2i(1, 3)].hold == Rules.Mat.PLATE, "after the push keeps the last plate")
+	var scrap_rake: Dictionary = World.simulate(scrap, _swap_kind(scrap.solution, Rules.Kind.HOE, Rules.Kind.RAKE))
+	check(int(scrap_rake.counts[Rules.Mat.INGOT]) == 0, "after the push's rake sends the first ore into the scrap (%s)" % scrap_rake.text)
+	var no_filter: Dictionary = World.simulate(scrap, [
+		Rooms.piece(Rules.Kind.HOE, 1, 3, Rules.Dir.NORTH),
+		Rooms.piece(Rules.Kind.WEIR, 2, 3, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 3, 1, Rules.Dir.SOUTH),
+		Rooms.piece(Rules.Kind.BELT, 3, 2, Rules.Dir.SOUTH),
+		Rooms.piece(Rules.Kind.BELT, 3, 3, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 4, 3, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.KILN, 5, 3, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 6, 3, Rules.Dir.EAST),
+	])
+	check(int(no_filter.counts[Rules.Mat.INGOT]) < int(scrap.quota[Rules.Mat.INGOT]), "after the push without a filter misses (%s)" % no_filter.text)
+	var side_hoe: Dictionary = Rooms.all()[119]
+	var solved: Dictionary = World.simulate(side_hoe, side_hoe.solution)
+	check(int(solved.counts[Rules.Mat.INGOT]) >= int(side_hoe.quota[Rules.Mat.INGOT]) and int(solved.counts[Rules.Mat.PLATE]) >= int(side_hoe.quota[Rules.Mat.PLATE]), "side bin hits both quotas (%s)" % solved.text)
+	check(solved.world.machines[Vector2i(1, 3)].hold == Rules.Mat.ORE, "side bin keeps the last ore")
+	var plates_only: Dictionary = World.simulate(side_hoe, [
+		Rooms.piece(Rules.Kind.BELT, 1, 5, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 2, 5, Rules.Dir.EAST),
+	])
+	check(int(plates_only.counts[Rules.Mat.INGOT]) == 0 and int(plates_only.counts[Rules.Mat.PLATE]) < int(side_hoe.quota[Rules.Mat.PLATE]), "side bin's lower plates alone miss (%s)" % plates_only.text)
+	var pressed: Dictionary = World.simulate(side_hoe, [
+		Rooms.piece(Rules.Kind.BELT, 1, 5, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 2, 5, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 3, 1, Rules.Dir.SOUTH),
+		Rooms.piece(Rules.Kind.BELT, 3, 2, Rules.Dir.SOUTH),
+		Rooms.piece(Rules.Kind.HOE, 1, 3, Rules.Dir.NORTH),
+		Rooms.piece(Rules.Kind.WEIR, 2, 3, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 3, 3, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.FILTER, 4, 3, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.KILN, 5, 3, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 6, 3, Rules.Dir.SOUTH),
+		Rooms.piece(Rules.Kind.BELT, 6, 4, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.PRESS, 7, 4, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 8, 4, Rules.Dir.EAST),
+	])
+	check(int(pressed.counts[Rules.Mat.INGOT]) == 0 and not pressed.success, "pressing every ingot misses the hoe side bin (%s)" % pressed.text)
+	for kind in wrong_kinds:
+		var missed: Dictionary = World.simulate(side_hoe, _swap_kind(side_hoe.solution, Rules.Kind.HOE, int(kind)))
+		check(int(missed.counts[Rules.Mat.INGOT]) < int(side_hoe.quota[Rules.Mat.INGOT]) and int(missed.counts[Rules.Mat.PLATE]) < int(side_hoe.quota[Rules.Mat.PLATE]), "%s in place of the side-bin hoe misses both quotas (%s)" % [Rules.KIND_NAME[int(kind)], missed.text])
