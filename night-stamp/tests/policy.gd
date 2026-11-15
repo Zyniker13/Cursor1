@@ -1156,6 +1156,68 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 			guess += 4
 		else:
 			guess -= 1
+	if rule == "drop_if_low_count":
+		var low_filled = 0
+		for low_row in 3:
+			for low_col in 3:
+				if state.form[low_row][low_col] != null:
+					low_filled += 1
+		var low_next = low_filled + 1
+		if low_next <= 2:
+			guess -= 4
+		elif low_filled <= 2:
+			guess += 5
+	if rule == "double_skip_gap":
+		var gap_ahead_row = row
+		var gap_ahead_col = col + 2
+		if gap_ahead_col > 2:
+			gap_ahead_row = row + 1
+			gap_ahead_col -= 3
+		if gap_ahead_row > 2:
+			guess -= 4
+		elif state.form[gap_ahead_row][gap_ahead_col] == null:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+		var gap_back_row = row
+		var gap_back_col = col - 2
+		if gap_back_col < 0:
+			gap_back_row = row - 1
+			gap_back_col += 3
+		if gap_back_row >= 0 and state.form[gap_back_row][gap_back_col] != null:
+			var gap_spoiled = state.form[gap_back_row][gap_back_col]
+			guess -= _stamp_number(state, String(gap_spoiled["card_id"]), gap_back_row, gap_back_col)
+	if rule == "yield_crown_pay":
+		if row == 0 and col == 1:
+			guess += 6
+		else:
+			guess -= 1
+	if rule == "yield_void_pay":
+		var void_neighbors = 0
+		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var void_row = row + delta.x
+			var void_col = col + delta.y
+			if void_row < 0 or void_col < 0 or void_row > 2 or void_col > 2:
+				continue
+			if state.form[void_row][void_col] == null:
+				continue
+			void_neighbors += 1
+			var neighbor_sides = 0
+			for neighbor_delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+				var neighbor_row = void_row + neighbor_delta.x
+				var neighbor_col = void_col + neighbor_delta.y
+				if neighbor_row < 0 or neighbor_col < 0 or neighbor_row > 2 or neighbor_col > 2:
+					continue
+				if neighbor_row == row and neighbor_col == col:
+					continue
+				if state.form[neighbor_row][neighbor_col] != null:
+					neighbor_sides += 1
+			if neighbor_sides == 0:
+				guess -= 2
+		if void_neighbors == 0:
+			guess += 4
+		else:
+			guess -= 1
 	if rule == "ignore_isolated":
 		var neighbors = 0
 		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
