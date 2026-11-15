@@ -25,6 +25,7 @@ const Cask = preload("res://scripts/cask_hoop.gd")
 const Linen = preload("res://scripts/linen_fold.gd")
 const Dovetail = preload("res://scripts/dovetail.gd")
 const Mortise = preload("res://scripts/mortise.gd")
+const Rebate = preload("res://scripts/rebate.gd")
 const Catalog = preload("res://scripts/catalog.gd")
 const Solver = preload("res://scripts/solver.gd")
 const Verdict = preload("res://scripts/verdict.gd")
@@ -78,6 +79,8 @@ const DOVETAIL_TIMELINE := "Doss (saw hand) cut the dovetail in the vise at 63, 
 const DOVETAIL_TRUE := {"who": "Doss", "place": "vise", "hour": "63"}
 const MORTISE_TIMELINE := "Arlo (chisel hand) cut the mortise in the chisel at 68, seen from the awl, so the last would take the tenon.\nKeel (awl hand) bored the hole on the last at 67.\nWeske (last clerk) turned the brace in the awl.\nThe wedge was hung on the last.\nThe awl was brushed at 66.\nThe last was ragged at 69.\nThe chisel was racked at 70."
 const MORTISE_TRUE := {"who": "Arlo", "place": "chisel", "hour": "68"}
+const REBATE_TIMELINE := "Tansy (plane hand) cut the rebate in the plane at 73, seen from the gauge, so the mallet would take the shoulder.\nSolt (gauge hand) scribed the line on the mallet at 72.\nQuern (mallet clerk) turned the fence in the gauge.\nThe shim was hung on the mallet.\nThe gauge was oiled at 71.\nThe mallet was wiped at 74.\nThe plane was hung at 75."
+const REBATE_TRUE := {"who": "Tansy", "place": "plane", "hour": "73"}
 
 var _failures: Array[String] = []
 var _checks := 0
@@ -234,6 +237,12 @@ func _initialize() -> void:
 	_test_mortise_only_true_theory()
 	_test_mortise_near_misses()
 	_test_mortise_incomplete()
+	_test_rebate_file_shape()
+	_test_rebate_unique_model()
+	_test_rebate_each_exhibit_necessary()
+	_test_rebate_only_true_theory()
+	_test_rebate_near_misses()
+	_test_rebate_incomplete()
 	_test_solutions_differ()
 	_test_menu_opens_either_case()
 	if _failures.is_empty():
@@ -6617,6 +6626,360 @@ func _test_mortise_incomplete() -> void:
 	print("mortise incomplete submissions refused with the missing slot")
 
 
+func _test_rebate_file_shape() -> void:
+	_expect(Rebate.EXHIBITS.size() == 9, "rebate exhibit count is %d" % Rebate.EXHIBITS.size())
+	_expect(Rebate.PEOPLE.size() == 3, "rebate cast should be three people")
+	_expect(Rebate.PLACES.size() == 3, "rebate room count is %d" % Rebate.PLACES.size())
+	_expect(Rebate.HOURS.size() == 5, "rebate hour list length is %d" % Rebate.HOURS.size())
+	_expect(Rebate.PEOPLE == ["Tansy", "Solt", "Quern"], "rebate cast is %s" % str(Rebate.PEOPLE))
+	_expect(Rebate.PLACES == ["plane", "gauge", "mallet"], "rebate rooms are %s" % str(Rebate.PLACES))
+	_expect(Rebate.HOURS == ["71", "72", "73", "74", "75"], "rebate hours are %s" % str(Rebate.HOURS))
+	_expect(Rebate.AIMS == ["take_shoulder", "spare_shoulder", "set_shoulder"], "rebate aims are %s" % str(Rebate.AIMS))
+	_expect(Rebate.aim_phrase("take_shoulder") == "so the mallet would take the shoulder", "rebate aim phrase")
+	_expect(Rebate.aim_phrase("spare_shoulder") == "to spare the shoulder still waiting on the mallet", "rebate spare aim")
+	_expect(Rebate.aim_phrase("set_shoulder") == "to set the shoulder before the plane was hung", "rebate set aim")
+	_expect(Rebate.TITLE == "The rebate", "rebate title")
+	_expect(Rebate.BLURB == "The rebate left its peg at the joiner's wall. Name who cut the rebate, the room they cut it in, and the hour.", "rebate blurb")
+	_expect(Rebate.FILE_CODE == "CW-26", "rebate file code")
+	_expect(Rebate.fields() == ["taker", "place", "hour", "scribe", "scribe_room", "scribe_hour", "seen_from", "fence", "aim", "fence_room", "shim_room", "oil_hour", "wipe_hour", "hang_hour"], "rebate fields are %s" % str(Rebate.fields()))
+	_expect(Rebate.PLAYER_FIELDS == ["taker", "place", "hour"], "rebate player fields")
+	_expect(Rebate.HOURS[Rebate.HOURS.size() / 2] == REBATE_TRUE["hour"], "rebate cutting should be the middle hour")
+	_expect(Rebate.HOURS[0] != REBATE_TRUE["hour"], "rebate cutting should not be the earliest hour")
+	_expect(Rebate.HOURS[Rebate.HOURS.size() - 1] != REBATE_TRUE["hour"], "rebate cutting should not be the latest hour")
+	var counts := _player_pin_counts(Rebate)
+	_expect(int(counts["taker"]) == 3 and int(counts["place"]) == 3 and int(counts["hour"]) == 3, "rebate pin counts are %s" % str(counts))
+	var loose_pin: Array = [
+		[CaseData, "spare key"],
+		[Rehearsal, "rehearsal score"],
+		[Gilt, "gilt stamp"],
+		[Ferry, "ferry bell"],
+		[Weather, "weather slate"],
+		[Loom, "loom shuttle"],
+		[Hive, "hive smoker"],
+		[Glass, "glass pontil"],
+		[Press, "press proof"],
+		[Assay, "assay cup"],
+	]
+	var rhythm: Array = [
+		[Kiln, "kiln chalk"],
+		[Tide, "tide ledger"],
+		[Night, "night bell"],
+		[Salt, "salt mark"],
+		[Wick, "wick trim"],
+		[Anneal, "glass anneal"],
+		[Graft, "orchard graft"],
+		[Dye, "dye vat"],
+		[Tar, "tar kettle"],
+		[Cork, "cork press"],
+		[Net, "net loft"],
+		[Cask, "cask hoop"],
+		[Linen, "linen fold"],
+		[Dovetail, "dovetail"],
+		[Mortise, "mortise"],
+	]
+	for row in loose_pin:
+		_expect(counts != _player_pin_counts(row[0]), "rebate copied the %s pin pattern" % row[1])
+	for row in rhythm:
+		_expect(counts == _player_pin_counts(row[0]), "rebate should keep the %s pin rhythm" % row[1])
+	var earlier: Array = []
+	earlier.append_array(loose_pin)
+	earlier.append_array(rhythm)
+	for row in earlier:
+		var book = row[0]
+		var name := str(row[1])
+		_expect(Rebate.TITLE != book.TITLE, "rebate shares a title with the %s" % name)
+		_expect(Rebate.FILE_CODE != book.FILE_CODE, "rebate shares a file code with the %s" % name)
+		_expect(_field_key(Rebate) != _field_key(book), "rebate copied the %s timeline fields" % name)
+	var seen := {}
+	var stated := {}
+	var paired_hidden := 0
+	var earlier_texts := {}
+	var earlier_sentences := {}
+	for row in earlier:
+		for old_exhibit in row[0].EXHIBITS:
+			var old_text := str(old_exhibit["text"])
+			earlier_texts[old_text] = true
+			for old_sentence in old_text.split(". "):
+				earlier_sentences[old_sentence.trim_suffix(".").strip_edges()] = true
+	var exhibit_titles: Array[String] = []
+	var exhibit_sources: Array[String] = []
+	for exhibit in Rebate.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		exhibit_titles.append(str(exhibit["title"]))
+		exhibit_sources.append(str(exhibit["source"]))
+		_expect(not seen.has(exhibit_id), "duplicate rebate id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		_expect(not earlier_texts.has(str(exhibit["text"])), "rebate copied an earlier exhibit")
+		for sentence in str(exhibit["text"]).split(". "):
+			var cleaned := sentence.trim_suffix(".").strip_edges()
+			_expect(not earlier_sentences.has(cleaned), "rebate copied an earlier sentence: %s" % cleaned)
+		for banned in ["mortise", "chisel", "tenon", "awl", "brace", "wedge", "bored", "ragged", "racked", "dovetail", "vise", "stile", "apron", "saw", "clamp", "peg", "joint", "linen", "fold", "shears", "roller", "hem", "sheet", "crease", "press", "loft", "bench", "bottle", "cork", "shop", "drawer", "seal", "screw", "cellar", "wax", "neck", "plug", "dye", "vat", "indigo", "skein", "rope", "walk", "kettle", "winch", "pitch", "mesh", "rail", "crank", "needle", "twine", "cooperage", "cask", "hoop", "croze", "stave"]:
+			_expect(str(exhibit["text"]).find(banned) == -1, "%s copies %s" % [exhibit_id, banned])
+		var states_player_pin := false
+		var states_unique := false
+		var player_literals := 0
+		var hidden_literals := 0
+		for literal in exhibit["literals"]:
+			stated[str(literal["value"])] = true
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Rebate.PLAYER_FIELDS:
+				states_player_pin = true
+				player_literals += 1
+				var expected := Rebate.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Rebate.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats >= 2, "%s states %s once" % [exhibit_id, field])
+			else:
+				hidden_literals += 1
+				var owners := 0
+				for other in Rebate.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		if hidden_literals == 2:
+			paired_hidden += 1
+		else:
+			_expect(hidden_literals == 1, "%s states %d hidden facts" % [exhibit_id, hidden_literals])
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(player_literals == 1, "%s states %d player pins" % [exhibit_id, player_literals])
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+	_expect(paired_hidden == 2, "rebate should have two slips with two hidden facts, found %d" % paired_hidden)
+	_expect(exhibit_titles == ["Plane chit", "Gauge sight", "Shim hook", "Shoulder slate", "Fence card", "Oil slip", "Scribe leaf", "Shoulder note", "Hang order"], "rebate exhibit titles are %s" % str(exhibit_titles))
+	_expect(exhibit_sources == ["Solt, gauge hand", "Gauge rail", "Mallet peg", "Plane jaw", "Quern, mallet clerk", "Gauge book", "Scribe book", "Joiner's wall", "Mallet slate"], "rebate sources are %s" % str(exhibit_sources))
+	for hour in Rebate.HOURS:
+		_expect(stated.has(hour), "rebate hour %s is absent from the exhibits" % hour)
+
+func _test_rebate_unique_model() -> void:
+	var models := Solver.enumerate(Rebate.EXHIBITS, Rebate)
+	print("rebate models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one rebate model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Tansy", "rebate taker")
+	_expect(str(model["place"]) == "plane", "rebate place")
+	_expect(str(model["hour"]) == "73", "rebate hour")
+	_expect(str(model["scribe"]) == "Solt", "rebate scribe")
+	_expect(str(model["scribe_room"]) == "mallet", "rebate scribe room")
+	_expect(str(model["scribe_hour"]) == "72", "rebate scribe hour")
+	_expect(str(model["seen_from"]) == "gauge", "rebate seen from")
+	_expect(str(model["fence"]) == "Quern", "rebate fence")
+	_expect(str(model["aim"]) == "take_shoulder", "rebate aim")
+	_expect(str(model["fence_room"]) == "gauge", "rebate fence room")
+	_expect(str(model["shim_room"]) == "mallet", "rebate shim room")
+	_expect(str(model["oil_hour"]) == "71", "rebate oil hour")
+	_expect(str(model["wipe_hour"]) == "74", "rebate wipe hour")
+	_expect(str(model["hang_hour"]) == "75", "rebate hang hour")
+	for hour in Rebate.HOURS:
+		var used := false
+		for field in Rebate.fields():
+			if str(model[field]) == hour:
+				used = true
+		_expect(used, "rebate hour %s is blank in the true timeline" % hour)
+	for place in Rebate.PLACES:
+		var place_used := false
+		for field in Rebate.fields():
+			if str(model[field]) == place:
+				place_used = true
+		_expect(place_used, "rebate room %s is blank in the true timeline" % place)
+	for person in Rebate.PEOPLE:
+		var person_used := false
+		for field in Rebate.fields():
+			if str(model[field]) == person:
+				person_used = true
+		_expect(person_used, "rebate person %s is blank in the true timeline" % person)
+	_expect(Rebate.timeline(model) == REBATE_TIMELINE, "rebate timeline drifted:\n%s" % Rebate.timeline(model))
+	for exhibit in Rebate.EXHIBITS:
+		_expect(Rebate.holds(exhibit, model), "%s rejects the rebate timeline" % exhibit["id"])
+
+func _test_rebate_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Rebate.EXHIBITS, Rebate)
+	for exhibit in Rebate.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Rebate.without(exhibit_id), Rebate)
+		print("rebate without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "rebate %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Rebate.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "rebate %s removal did not admit a timeline it forbids" % exhibit_id)
+
+func _test_rebate_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	var gauge_miss := {"who": "Solt", "place": "gauge", "hour": "71"}
+	_expect(Rebate.conflicting_ids(gauge_miss).size() == 9, "Solt / gauge / 71 contradicts %d exhibits" % Rebate.conflicting_ids(gauge_miss).size())
+	for who in Rebate.PEOPLE:
+		for place in Rebate.PLACES:
+			for hour in Rebate.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == REBATE_TRUE["who"] and place == REBATE_TRUE["place"] and hour == REBATE_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Rebate)
+					print("rebate true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true rebate theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "rebate acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(REBATE_TIMELINE) >= 0, "rebate acceptance should give the timeline")
+					_expect(str(result["message"]).find("Tansy") >= 0, "rebate acceptance omits Tansy")
+					_expect(str(result["message"]).find("plane") >= 0, "rebate acceptance omits the plane")
+					_expect(str(result["message"]).find("73") >= 0, "rebate acceptance omits 73")
+					_expect(str(result["message"]).find("so the mallet would take the shoulder") >= 0, "rebate acceptance omits the shoulder")
+					_expect(str(result["message"]).find("Tansy (plane hand) cut the rebate in the plane at 73") >= 0, "rebate acceptance omits the cutting")
+					_expect(Rebate.conflicting_ids(theory).is_empty(), "true rebate theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Rebate)
+					_expect(Rebate.conflicting_ids(theory).size() >= 2, "%s / %s / %s contradicts fewer than two exhibits" % [who, place, hour])
+					rejected += 1
+	for outsider in ["Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal", "Nell"]:
+		_expect_rejected({"who": outsider, "place": "plane", "hour": "73"}, Rebate)
+	print("rebate theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d rebate theories" % accepted)
+	_expect(rejected >= 2, "rejected %d rebate theories" % rejected)
+
+func _test_rebate_near_misses() -> void:
+	var misses := [
+		{"who": "Tansy", "place": "plane", "hour": "74", "titles": ["Scribe leaf", "Shoulder note", "Hang order"]},
+		{"who": "Tansy", "place": "plane", "hour": "72", "titles": ["Scribe leaf", "Shoulder note", "Hang order"]},
+		{"who": "Tansy", "place": "gauge", "hour": "73", "titles": ["Shoulder slate", "Fence card", "Oil slip"]},
+		{"who": "Solt", "place": "plane", "hour": "73", "titles": ["Plane chit", "Gauge sight", "Shim hook"]},
+	]
+	var wrong_hour_in_plane := 0
+	var wrong_place_at_hour := 0
+	var wrong_person_in_plane := 0
+	for theory in misses:
+		_expect_rejected(theory, Rebate)
+		var result: Dictionary = Verdict.submit(theory, Rebate)
+		var message := str(result["message"])
+		_expect(Rebate.conflicting_ids(theory).size() == 3, "near-miss should name three exhibits: %s" % message)
+		for title in theory["titles"]:
+			_expect(message.find(str(title)) >= 0, "near-miss omits %s: %s" % [title, message])
+		if str(theory["who"]) == "Tansy" and str(theory["place"]) == "plane" and str(theory["hour"]) != "73":
+			wrong_hour_in_plane += 1
+		if str(theory["who"]) == "Tansy" and str(theory["place"]) != "plane" and str(theory["hour"]) == "73":
+			wrong_place_at_hour += 1
+		if str(theory["who"]) != "Tansy" and str(theory["place"]) == "plane" and str(theory["hour"]) == "73":
+			wrong_person_in_plane += 1
+	print("rebate near-misses rejected: %d" % misses.size())
+	_expect(misses.size() == 4, "need four rebate near-misses, found %d" % misses.size())
+	_expect(wrong_hour_in_plane == 2, "two near-misses should keep Tansy in the plane at another hour")
+	_expect(wrong_place_at_hour >= 1, "a near-miss should keep Tansy at 73 in another room")
+	_expect(wrong_person_in_plane >= 1, "a near-miss should keep the plane at 73 for another person")
+
+func _test_rebate_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+		"who took the gilt stamp",
+		"where they took the stamp",
+		"at which hour they took the stamp",
+		"who took the ferry bell",
+		"where they took the bell",
+		"at which hour they took the bell",
+		"who took the weather slate",
+		"where they took the slate",
+		"at which hour they took the slate",
+		"who took the loom shuttle",
+		"where they took the shuttle",
+		"at which hour they took the shuttle",
+		"who took the hive smoker",
+		"where they took the smoker",
+		"at which hour they took the smoker",
+		"who took the glass pontil",
+		"where they took the pontil",
+		"at which hour they took the pontil",
+		"who took the press proof",
+		"where they took the proof",
+		"at which hour they took the proof",
+		"who set the assay cup",
+		"where they set the cup",
+		"at which hour they set the cup",
+		"who chalked the kiln mark",
+		"where they chalked the mark",
+		"at which hour they chalked the mark",
+		"who entered the tide ledger",
+		"where they entered the ledger",
+		"at which hour they entered the ledger",
+		"who stopped the night bell",
+		"where they stopped the bell",
+		"at which hour they stopped the bell",
+		"who scored the salt mark",
+		"where they scored the mark",
+		"at which hour they scored the mark",
+		"who trimmed the wick",
+		"where they trimmed the wick",
+		"at which hour they trimmed the wick",
+		"who annealed the gather",
+		"where they annealed the gather",
+		"at which hour they annealed the gather",
+		"who grafted the scion",
+		"where they grafted the scion",
+		"at which hour they grafted the scion",
+		"who dipped the skein",
+		"where they dipped the skein",
+		"at which hour they dipped the skein",
+		"who tarred the rope",
+		"where they tarred the rope",
+		"at which hour they tarred the rope",
+		"who pressed the cork",
+		"where they pressed the cork",
+		"at which hour they pressed the cork",
+		"who mended the net",
+		"where they mended the net",
+		"at which hour they mended the net",
+		"who drove the hoop",
+		"where they drove the hoop",
+		"at which hour they drove the hoop",
+		"who folded the linen",
+		"where they folded the linen",
+		"at which hour they folded the linen",
+		"who cut the dovetail",
+		"where they cut the dovetail",
+		"at which hour they cut the dovetail",
+		"who cut the mortise",
+		"where they cut the mortise",
+		"at which hour they cut the mortise",
+	]
+	var cases := [
+		{"theory": {"who": "", "place": "plane", "hour": "73"}, "present": ["who cut the rebate"], "absent": ["where they cut the rebate", "at which hour they cut the rebate"]},
+		{"theory": {"who": "Tansy", "place": "", "hour": "73"}, "present": ["where they cut the rebate"], "absent": ["who cut the rebate", "at which hour they cut the rebate"]},
+		{"theory": {"who": "Tansy", "place": "plane", "hour": ""}, "present": ["at which hour they cut the rebate"], "absent": ["who cut the rebate", "where they cut the rebate"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who cut the rebate", "where they cut the rebate", "at which hour they cut the rebate"], "absent": []},
+		{"theory": {}, "present": ["who cut the rebate", "where they cut the rebate", "at which hour they cut the rebate"], "absent": []},
+		{"theory": {"who": "Quern", "place": "", "hour": "75"}, "present": ["where they cut the rebate"], "absent": ["who cut the rebate", "at which hour they cut the rebate"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Rebate)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "rebate incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "rebate incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "rebate incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "rebate incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "rebate incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "rebate missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "rebate named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "rebate incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("rebate incomplete submissions refused with the missing slot")
+
+
 func _test_solutions_differ() -> void:
 	var spare := {"who": "Nell", "place": "kitchen", "hour": "7"}
 	_expect(spare["who"] != REHEARSAL_TRUE["who"], "rehearsal copied the spare-key taker")
@@ -8589,7 +8952,70 @@ func _test_solutions_differ() -> void:
 	_expect(not Mortise.HOURS.has("64"), "mortise hours must not take 64")
 	_expect(not Mortise.HOURS.has("65"), "mortise hours must not take 65")
 
-	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal", "The orchard graft", "The dye vat", "The tar kettle", "The cork press", "The net loft", "The cask hoop", "The linen fold", "The dovetail", "The mortise"], "case list is %s" % str(titles))
+	_expect(REBATE_TRUE["who"] == "Tansy", "rebate taker")
+	_expect(REBATE_TRUE["place"] == "plane", "rebate room")
+	_expect(REBATE_TRUE["hour"] == "73", "rebate hour")
+	for forbidden in ["Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(REBATE_TRUE["who"] != forbidden, "rebate accepted %s" % forbidden)
+	for forbidden_place in ["chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(REBATE_TRUE["place"] != forbidden_place, "rebate accepted the %s" % forbidden_place)
+	_expect(REBATE_TRUE["hour"] != "71", "rebate accepted 71")
+	_expect(REBATE_TRUE["hour"] != "72", "rebate accepted 72")
+	_expect(REBATE_TRUE["hour"] != "74", "rebate accepted 74")
+	_expect(REBATE_TRUE["hour"] != "75", "rebate accepted 75")
+	_expect(REBATE_TRUE["hour"] != "68", "rebate accepted 68")
+	_expect(REBATE_TRUE["hour"] != "63", "rebate accepted 63")
+	_expect(REBATE_TRUE["hour"] != "8", "rebate accepted 8")
+	_expect(REBATE_TRUE["hour"] != "6", "rebate accepted 6")
+	_expect(REBATE_TRUE["hour"] != "3", "rebate accepted 3")
+	_expect(REBATE_TRUE["hour"] != "16", "rebate accepted 16")
+	_expect(REBATE_TRUE["hour"] != "19", "rebate accepted 19")
+	var before_rebate: Array = before_mortise.duplicate()
+	before_rebate.append([Mortise, MORTISE_TRUE, "mortise"])
+	for row in before_rebate:
+		var book = row[0]
+		var truth: Dictionary = row[1]
+		var name := str(row[2])
+		_expect(REBATE_TRUE["who"] != truth["who"], "rebate copied the %s taker" % name)
+		_expect(REBATE_TRUE["place"] != truth["place"], "rebate copied the %s room" % name)
+		_expect(REBATE_TRUE["hour"] != str(truth["hour"]), "rebate copied the %s hour" % name)
+		_expect_rejected(REBATE_TRUE, book)
+		_expect_rejected(truth, Rebate)
+	_expect(MORTISE_TRUE["who"] == "Arlo" and MORTISE_TRUE["place"] == "chisel" and MORTISE_TRUE["hour"] == "68", "the mortise should still accept Arlo in the chisel at 68")
+	for row in before_rebate:
+		var book = row[0]
+		var name := str(row[2])
+		for person in Rebate.PEOPLE:
+			_expect(not book.PEOPLE.has(person), "rebate cast repeats %s from the %s" % [person, name])
+		for place in Rebate.PLACES:
+			_expect(not book.PLACES.has(place), "rebate rooms repeat %s from the %s" % [place, name])
+		for hour in Rebate.HOURS:
+			_expect(not book.HOURS.has(hour), "rebate hours repeat %s from the %s" % [hour, name])
+	for forbidden_person in ["Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(not Rebate.PEOPLE.has(forbidden_person), "rebate cast must not take %s" % forbidden_person)
+	_expect(Rebate.role_phrase("Tansy") == "the plane hand", "the rebate should call Tansy the plane hand")
+	_expect(Rebate.role_phrase("Solt") == "the gauge hand", "the rebate should call Solt the gauge hand")
+	_expect(Rebate.role_phrase("Quern") == "the mallet clerk", "the rebate should call Quern the mallet clerk")
+	for forbidden_place in ["chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "dye_house", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(not Rebate.PLACES.has(forbidden_place), "rebate rooms must not take the %s" % forbidden_place)
+	_expect(not Rebate.HOURS.has("6"), "rebate hours must not take 6")
+	_expect(not Rebate.HOURS.has("7"), "rebate hours must not take 7")
+	_expect(not Rebate.HOURS.has("8"), "rebate hours must not take 8")
+	_expect(not Rebate.HOURS.has("9"), "rebate hours must not take 9")
+	_expect(not Rebate.HOURS.has("10"), "rebate hours must not take 10")
+	_expect(not Rebate.HOURS.has("60"), "rebate hours must not take 60")
+	_expect(not Rebate.HOURS.has("61"), "rebate hours must not take 61")
+	_expect(not Rebate.HOURS.has("62"), "rebate hours must not take 62")
+	_expect(not Rebate.HOURS.has("63"), "rebate hours must not take 63")
+	_expect(not Rebate.HOURS.has("64"), "rebate hours must not take 64")
+	_expect(not Rebate.HOURS.has("65"), "rebate hours must not take 65")
+	_expect(not Rebate.HOURS.has("66"), "rebate hours must not take 66")
+	_expect(not Rebate.HOURS.has("67"), "rebate hours must not take 67")
+	_expect(not Rebate.HOURS.has("68"), "rebate hours must not take 68")
+	_expect(not Rebate.HOURS.has("69"), "rebate hours must not take 69")
+	_expect(not Rebate.HOURS.has("70"), "rebate hours must not take 70")
+
+	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal", "The orchard graft", "The dye vat", "The tar kettle", "The cork press", "The net loft", "The cask hoop", "The linen fold", "The dovetail", "The mortise", "The rebate"], "case list is %s" % str(titles))
 
 
 func _test_menu_opens_either_case() -> void:
@@ -8601,7 +9027,7 @@ func _test_menu_opens_either_case() -> void:
 	if root.get_child_count() == 0:
 		root._ready()
 	var menu_blob := _visible_label_blob(root)
-	_expect(menu_blob.find("Twenty-five files") >= 0, "menu does not offer twenty-five files: %s" % menu_blob)
+	_expect(menu_blob.find("Twenty-six files") >= 0, "menu does not offer twenty-six files: %s" % menu_blob)
 	_expect(menu_blob.find("CW-07") >= 0, "menu omits CW-07")
 	_expect(menu_blob.find("The hive smoker") >= 0, "menu omits The hive smoker")
 	_expect(menu_blob.find("CW-08") >= 0, "menu omits CW-08")
@@ -8640,6 +9066,8 @@ func _test_menu_opens_either_case() -> void:
 	_expect(menu_blob.find("The dovetail") >= 0, "menu omits The dovetail")
 	_expect(menu_blob.find("CW-25") >= 0, "menu omits CW-25")
 	_expect(menu_blob.find("The mortise") >= 0, "menu omits The mortise")
+	_expect(menu_blob.find("CW-26") >= 0, "menu omits CW-26")
+	_expect(menu_blob.find("The rebate") >= 0, "menu omits The rebate")
 	_expect(root.get_child_count() > 0, "main scene built %d children" % root.get_child_count())
 	_press(root, "How to play")
 	var howto := _visible_label_blob(root)
@@ -8668,6 +9096,7 @@ func _test_menu_opens_either_case() -> void:
 	_expect(howto.find("The linen fold") >= 0, "how to play omits The linen fold")
 	_expect(howto.find("The dovetail") >= 0, "how to play omits The dovetail")
 	_expect(howto.find("The mortise") >= 0, "how to play omits The mortise")
+	_expect(howto.find("The rebate") >= 0, "how to play omits The rebate")
 	_expect(howto.find("names that slot") >= 0, "how to play omits the empty-slot rule")
 	_press(root, "Back to the menu")
 	_expect(_find_visible_button(root, "Open The spare key") != null, "menu is missing The spare key")
@@ -8695,6 +9124,7 @@ func _test_menu_opens_either_case() -> void:
 	_expect(_find_visible_button(root, "Open The linen fold") != null, "menu is missing The linen fold")
 	_expect(_find_visible_button(root, "Open The dovetail") != null, "menu is missing The dovetail")
 	_expect(_find_visible_button(root, "Open The mortise") != null, "menu is missing The mortise")
+	_expect(_find_visible_button(root, "Open The rebate") != null, "menu is missing The rebate")
 	_press(root, "Open The rehearsal score")
 	var rehearsal_open := _visible_label_blob(root)
 	_expect(rehearsal_open.find("Cut list") >= 0, "rehearsal file did not open")
@@ -10228,6 +10658,120 @@ func _test_menu_opens_either_case() -> void:
 	var dovetail_again_blob := _visible_label_blob(root)
 	_expect(dovetail_again_blob.find("Saw chit") >= 0, "dovetail papers left after returning")
 	_expect(dovetail_again_blob.find("Chisel chit") == -1, "mortise papers stayed up after returning to The dovetail")
+
+	_press(root, "Menu")
+	_press(root, "Open The rebate")
+	var rebate_open := _visible_label_blob(root)
+	_expect(rebate_open.find("Plane chit") >= 0, "rebate file did not open")
+	_expect(rebate_open.find("Shoulder note") >= 0, "rebate file did not show its exhibits")
+	_expect(rebate_open.find("CW-26") >= 0, "rebate file omits CW-26")
+	_expect(rebate_open.find("Complaint slip") == -1, "spare key papers showed inside The rebate")
+	_expect(rebate_open.find("Cut list") == -1, "rehearsal papers showed inside The rebate")
+	_expect(rebate_open.find("Move order") == -1, "gilt stamp papers showed inside The rebate")
+	_expect(rebate_open.find("Whistle slip") == -1, "ferry bell papers showed inside The rebate")
+	_expect(rebate_open.find("Frost note") == -1, "weather slate papers showed inside The rebate")
+	_expect(rebate_open.find("Trough tag") == -1, "loom shuttle papers showed inside The rebate")
+	_expect(rebate_open.find("Fuel line") == -1, "hive smoker papers showed inside The rebate")
+	_expect(rebate_open.find("Weight line") == -1, "glass pontil papers showed inside The rebate")
+	_expect(rebate_open.find("Lock line") == -1, "press proof papers showed inside The rebate")
+	_expect(rebate_open.find("Cup line") == -1, "assay cup papers showed inside The rebate")
+	_expect(rebate_open.find("Mark line") == -1, "kiln chalk papers showed inside The rebate")
+	_expect(rebate_open.find("Ledger line") == -1, "tide ledger papers showed inside The rebate")
+	_expect(rebate_open.find("Bell line") == -1, "night bell papers showed inside The rebate")
+	_expect(rebate_open.find("Salt line") == -1, "salt mark papers showed inside The rebate")
+	_expect(rebate_open.find("Oil note") == -1, "wick trim papers showed inside The rebate")
+	_expect(rebate_open.find("Gather note") == -1, "glass anneal papers showed inside The rebate")
+	_expect(rebate_open.find("Scion note") == -1, "orchard graft papers showed inside The rebate")
+	_expect(rebate_open.find("Winder chit") == -1, "dye vat papers showed inside The rebate")
+	_expect(rebate_open.find("Rope chit") == -1, "tar kettle papers showed inside The rebate")
+	_expect(rebate_open.find("Cutter chit") == -1, "cork press papers showed inside The rebate")
+	_expect(rebate_open.find("Mesh chit") == -1, "net loft papers showed inside The rebate")
+	_expect(rebate_open.find("Hoop chit") == -1, "cask hoop papers showed inside The rebate")
+	_expect(rebate_open.find("Shears chit") == -1, "linen fold papers showed inside The rebate")
+	_expect(rebate_open.find("Saw chit") == -1, "dovetail papers stayed up inside The rebate")
+	_expect(rebate_open.find("Apron sight") == -1, "dovetail papers showed inside The rebate")
+	_expect(rebate_open.find("Peg hook") == -1, "dovetail papers showed inside The rebate")
+	_expect(rebate_open.find("Joint slate") == -1, "dovetail papers showed inside The rebate")
+	_expect(rebate_open.find("Clamp card") == -1, "dovetail papers showed inside The rebate")
+	_expect(rebate_open.find("Sweep slip") == -1, "dovetail papers showed inside The rebate")
+	_expect(rebate_open.find("Cut leaf") == -1, "dovetail papers showed inside The rebate")
+	_expect(rebate_open.find("Joint note") == -1, "dovetail papers showed inside The rebate")
+	_expect(rebate_open.find("Jaw order") == -1, "dovetail papers showed inside The rebate")
+	_expect(rebate_open.find("CW-24") == -1, "dovetail file code stayed up inside The rebate")
+	_expect(rebate_open.find("Chisel chit") == -1, "mortise papers stayed up inside The rebate")
+	_expect(rebate_open.find("Awl sight") == -1, "mortise papers showed inside The rebate")
+	_expect(rebate_open.find("Wedge hook") == -1, "mortise papers showed inside The rebate")
+	_expect(rebate_open.find("Tenon slate") == -1, "mortise papers showed inside The rebate")
+	_expect(rebate_open.find("Brace card") == -1, "mortise papers showed inside The rebate")
+	_expect(rebate_open.find("Brush slip") == -1, "mortise papers showed inside The rebate")
+	_expect(rebate_open.find("Bore leaf") == -1, "mortise papers showed inside The rebate")
+	_expect(rebate_open.find("Tenon note") == -1, "mortise papers showed inside The rebate")
+	_expect(rebate_open.find("Rack order") == -1, "mortise papers showed inside The rebate")
+	_expect(rebate_open.find("CW-25") == -1, "mortise file code stayed up inside The rebate")
+	_press(root, "Submit theory")
+	var empty_rebate := _verdict_text(root)
+	_expect(empty_rebate.find("who cut the rebate") >= 0, "empty rebate board: %s" % empty_rebate)
+	_expect(empty_rebate.find("where they cut the rebate") >= 0, "empty rebate board: %s" % empty_rebate)
+	_expect(empty_rebate.find("at which hour they cut the rebate") >= 0, "empty rebate board: %s" % empty_rebate)
+	_expect(empty_rebate.find("who took the spare key") == -1, "empty rebate board used the spare key slot: %s" % empty_rebate)
+	_expect(empty_rebate.find("who cut the mortise") == -1, "empty rebate board used a mortise slot: %s" % empty_rebate)
+	_expect(empty_rebate.to_lower().find("conflict") == -1, "empty rebate board talked about a conflict: %s" % empty_rebate)
+	_press(root, "Solt")
+	_press(root, "Gauge")
+	_press(root, "71")
+	_press(root, "Submit theory")
+	var rebate_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(rebate_miss, Rebate, {"who": "Solt", "place": "gauge", "hour": "71"})
+	_expect(rebate_miss.find("Plane chit") >= 0, "wrong triple reply omits Plane chit: %s" % rebate_miss)
+	_expect(rebate_miss.find("Gauge sight") >= 0, "wrong triple reply omits Gauge sight: %s" % rebate_miss)
+	_expect(rebate_miss.find("Shim hook") >= 0, "wrong triple reply omits Shim hook: %s" % rebate_miss)
+	_expect(rebate_miss.find("Shoulder slate") >= 0, "wrong triple reply omits Shoulder slate: %s" % rebate_miss)
+	_expect(rebate_miss.find("Fence card") >= 0, "wrong triple reply omits Fence card: %s" % rebate_miss)
+	_expect(rebate_miss.find("Oil slip") >= 0, "wrong triple reply omits Oil slip: %s" % rebate_miss)
+	_expect(rebate_miss.find("Scribe leaf") >= 0, "wrong triple reply omits Scribe leaf: %s" % rebate_miss)
+	_expect(rebate_miss.find("Shoulder note") >= 0, "wrong triple reply omits Shoulder note: %s" % rebate_miss)
+	_expect(rebate_miss.find("Hang order") >= 0, "wrong triple reply omits Hang order: %s" % rebate_miss)
+	_press(root, "Tansy")
+	_press(root, "Plane")
+	_press(root, "73")
+	_press(root, "Submit theory")
+	var rebate_accepted := _verdict_text(root)
+	_expect(rebate_accepted.find("fits every exhibit") >= 0, "rebate board rejected the true theory: %s" % rebate_accepted)
+	_expect(rebate_accepted.find(REBATE_TIMELINE) >= 0, "rebate board timeline: %s" % rebate_accepted)
+	_expect(rebate_accepted.find("Tansy (plane hand) cut the rebate in the plane at 73") >= 0, "rebate board omits Tansy at 73: %s" % rebate_accepted)
+	_expect(rebate_accepted.find("in the plane") >= 0, "rebate board omits the plane: %s" % rebate_accepted)
+	_expect(rebate_accepted.find("so the mallet would take the shoulder") >= 0, "rebate board omits the shoulder: %s" % rebate_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var rebate_cleared := _verdict_text(root)
+	_expect(rebate_cleared.find("who cut the rebate") >= 0, "cleared rebate board: %s" % rebate_cleared)
+	_expect(rebate_cleared.find("fits every exhibit") == -1, "cleared rebate board stayed accepted: %s" % rebate_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The mortise")
+	var mortise_from_rebate := _visible_label_blob(root)
+	_expect(mortise_from_rebate.find("Chisel chit") >= 0, "could not return to The mortise from The rebate")
+	_expect(mortise_from_rebate.find("Tenon note") >= 0, "mortise exhibits did not return")
+	_expect(mortise_from_rebate.find("CW-25") >= 0, "returned mortise omits CW-25")
+	_expect(mortise_from_rebate.find("Plane chit") == -1, "rebate papers stayed up inside The mortise")
+	_expect(mortise_from_rebate.find("Gauge sight") == -1, "rebate papers showed inside The mortise")
+	_expect(mortise_from_rebate.find("Shim hook") == -1, "rebate papers showed inside The mortise")
+	_expect(mortise_from_rebate.find("Shoulder slate") == -1, "rebate papers showed inside The mortise")
+	_expect(mortise_from_rebate.find("Fence card") == -1, "rebate papers showed inside The mortise")
+	_expect(mortise_from_rebate.find("Oil slip") == -1, "rebate papers showed inside The mortise")
+	_expect(mortise_from_rebate.find("Scribe leaf") == -1, "rebate papers showed inside The mortise")
+	_expect(mortise_from_rebate.find("Shoulder note") == -1, "rebate papers showed inside The mortise")
+	_expect(mortise_from_rebate.find("Hang order") == -1, "rebate papers showed inside The mortise")
+	_expect(mortise_from_rebate.find("CW-26") == -1, "rebate file code stayed up inside The mortise")
+	_press(root, "Arlo")
+	_press(root, "Chisel")
+	_press(root, "68")
+	_press(root, "Submit theory")
+	var mortise_again := _verdict_text(root)
+	_expect(mortise_again.find("fits every exhibit") >= 0, "mortise board rejected the true theory after The rebate: %s" % mortise_again)
+	_expect(mortise_again.find("Arlo (chisel hand) cut the mortise in the chisel at 68") >= 0, "mortise board timeline after The rebate: %s" % mortise_again)
+	var mortise_again_blob := _visible_label_blob(root)
+	_expect(mortise_again_blob.find("Chisel chit") >= 0, "mortise papers left after returning")
+	_expect(mortise_again_blob.find("Plane chit") == -1, "rebate papers stayed up after returning to The mortise")
 
 	root.queue_free()
 
