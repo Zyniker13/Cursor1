@@ -239,6 +239,9 @@ func _simulate_card(
 	played["focuses"] = focuses.duplicate()
 	played["is_final"] = bool(card.get("is_final", false))
 	played["final_game"] = int(card.get("final_game", 0))
+	if card.has("bye"):
+		played["bye_index"] = int(card["bye"])
+		played["bye_club"] = str(card["bye_club"])
 	if playing:
 		var opponent_i := away_i if home_i == Sport.PLAYER_INDEX else home_i
 		played["opponent_index"] = opponent_i
@@ -274,15 +277,33 @@ func begin_match(lineup: Array, tactic: String, focus: String) -> Dictionary:
 		return {"ok": false, "error": "The series is already over."}
 	if not Sport.STATS.has(focus):
 		return {"ok": false, "error": "Pick a training focus."}
-	if not player_plays():
-		return {"ok": false, "error": "There is no match to play."}
-	if not Sport.is_legal_lineup(player_roster.size(), lineup):
-		return {"ok": false, "error": "The lineup needs four different players."}
-	if not Sport.TACTICS.has(tactic):
-		return {"ok": false, "error": "Pick a tactic."}
+	var playing := player_plays()
+	if playing or week >= Sport.SERIES_WEEKS:
+		if not Sport.is_legal_lineup(player_roster.size(), lineup):
+			return {"ok": false, "error": "The lineup needs four different players."}
+		if not Sport.TACTICS.has(tactic):
+			return {"ok": false, "error": "Pick a tactic."}
 	if week >= Sport.SERIES_WEEKS:
 		return _begin_final(lineup, tactic, focus)
-	return _begin_week(lineup, tactic, focus)
+	if playing:
+		return _begin_week(lineup, tactic, focus)
+	return _begin_bye(lineup, tactic, focus)
+
+
+func _begin_bye(lineup: Array, tactic: String, focus: String) -> Dictionary:
+	var cards := Sport.week_fixtures(week)
+	var focuses := _focuses_for(week, focus)
+	var played_cards: Array = []
+	for slot in cards.size():
+		var played := _simulate_card(cards[slot], lineup, tactic, week, week, slot, focuses)
+		played["player_result"] = "bye"
+		played_cards.append(played)
+	if played_cards.size() < Sport.MATCHES_PER_WEEK:
+		return {"ok": false, "error": "The bye week is missing a match."}
+	var first: Dictionary = played_cards[0]
+	first["other_match"] = played_cards[1]
+	pending = first
+	return first
 
 
 func _begin_week(lineup: Array, tactic: String, focus: String) -> Dictionary:
