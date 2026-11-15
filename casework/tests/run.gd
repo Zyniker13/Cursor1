@@ -2,6 +2,8 @@ extends SceneTree
 
 const CaseData = preload("res://scripts/case_data.gd")
 const Rehearsal = preload("res://scripts/rehearsal_score.gd")
+const Gilt = preload("res://scripts/gilt_stamp.gd")
+const Ferry = preload("res://scripts/ferry_bell.gd")
 const Catalog = preload("res://scripts/catalog.gd")
 const Solver = preload("res://scripts/solver.gd")
 const Verdict = preload("res://scripts/verdict.gd")
@@ -9,6 +11,10 @@ const Verdict = preload("res://scripts/verdict.gd")
 const TIMELINE := "Nell (night cook) took the spare key at 7 from the front desk to the kitchen, to lock the pantry.\nMoss (lodger) noticed the hook empty at 8 at the front desk and wrote a complaint.\nAda (clerk) logged the key returned at 9 at the front desk."
 const REHEARSAL_TIMELINE := "Ivo (copyist) took the rehearsal score at 4 from the library to the practice room, to mark the cuts.\nNia (pianist) saw the taking from the gallery.\nBess (tuner) found the shelf empty at 5 in the library.\nThe score was logged back on the shelf at 6."
 const REHEARSAL_TRUE := {"who": "Ivo", "place": "practice_room", "hour": "4"}
+const GILT_TIMELINE := "Nessa (porter) took the gilt stamp at 1 from the store cage to the finishing bench, to lay the title edge.\nMara (binder) wrote the move order in the press room.\nTheo (gilder) signed the stamp back at 3 into the store cage.\nThe bench receipt was marked at 2."
+const GILT_TRUE := {"who": "Nessa", "place": "finishing_bench", "hour": "1"}
+const FERRY_TIMELINE := "Quill (ropehand) took the ferry bell at 15 from the ticket window to the rope loft, to call the late boat.\nWren (pilot) sounded the landing whistle in the jetty shed.\nHale (landing clerk) held the painter at 14 at the ticket window.\nThe boat answered at 16."
+const FERRY_TRUE := {"who": "Quill", "place": "rope_loft", "hour": "15"}
 
 var _failures: Array[String] = []
 var _checks := 0
@@ -27,6 +33,18 @@ func _initialize() -> void:
 	_test_rehearsal_only_true_theory()
 	_test_rehearsal_near_misses()
 	_test_rehearsal_incomplete()
+	_test_gilt_file_shape()
+	_test_gilt_unique_model()
+	_test_gilt_each_exhibit_necessary()
+	_test_gilt_only_true_theory()
+	_test_gilt_near_misses()
+	_test_gilt_incomplete()
+	_test_ferry_file_shape()
+	_test_ferry_unique_model()
+	_test_ferry_each_exhibit_necessary()
+	_test_ferry_only_true_theory()
+	_test_ferry_near_misses()
+	_test_ferry_incomplete()
 	_test_solutions_differ()
 	_test_menu_opens_either_case()
 	if _failures.is_empty():
@@ -334,17 +352,386 @@ func _test_rehearsal_incomplete() -> void:
 	print("rehearsal incomplete submissions refused with the missing slot")
 
 
+func _test_gilt_file_shape() -> void:
+	_expect(Gilt.EXHIBITS.size() >= 6 and Gilt.EXHIBITS.size() <= 8, "gilt exhibit count is %d" % Gilt.EXHIBITS.size())
+	_expect(Gilt.PEOPLE.size() == 3, "gilt cast should be three people")
+	_expect(Gilt.PLACES.size() >= 3, "gilt needs a few rooms")
+	_expect(Gilt.HOURS.size() >= 3 and Gilt.HOURS.size() <= 5, "gilt hour list length")
+	_expect(Gilt.TITLE == "The gilt stamp", "gilt title")
+	_expect(Gilt.TITLE != CaseData.TITLE and Gilt.TITLE != Rehearsal.TITLE, "gilt shares a title")
+	_expect(Gilt.FILE_CODE == "CW-03", "gilt file code")
+	_expect(Gilt.FILE_CODE != CaseData.FILE_CODE and Gilt.FILE_CODE != Rehearsal.FILE_CODE, "gilt shares a file code")
+	var seen := {}
+	for exhibit in Gilt.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		_expect(not seen.has(exhibit_id), "duplicate gilt id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		var states_player_pin := false
+		var states_unique := false
+		for literal in exhibit["literals"]:
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Gilt.PLAYER_FIELDS:
+				states_player_pin = true
+				var expected := Gilt.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Gilt.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats >= 2, "%s states %s once" % [exhibit_id, field])
+			else:
+				var owners := 0
+				for other in Gilt.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+
+
+func _test_gilt_unique_model() -> void:
+	var models := Solver.enumerate(Gilt.EXHIBITS, Gilt)
+	print("gilt models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one gilt model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Nessa", "gilt taker")
+	_expect(str(model["place"]) == "finishing_bench", "gilt place")
+	_expect(str(model["hour"]) == "1", "gilt hour")
+	_expect(str(model["orderer"]) == "Mara", "gilt orderer")
+	_expect(str(model["order_place"]) == "press_room", "gilt order place")
+	_expect(str(model["signer"]) == "Theo", "gilt signer")
+	_expect(str(model["return_place"]) == "store_cage", "gilt return place")
+	_expect(str(model["return_hour"]) == "3", "gilt return hour")
+	_expect(str(model["origin"]) == "store_cage", "gilt origin")
+	_expect(str(model["purpose"]) == "title_edge", "gilt purpose")
+	_expect(str(model["receipt_hour"]) == "2", "gilt receipt hour")
+	_expect(Gilt.timeline(model) == GILT_TIMELINE, "gilt timeline drifted:\n%s" % Gilt.timeline(model))
+	for exhibit in Gilt.EXHIBITS:
+		_expect(Gilt.holds(exhibit, model), "%s rejects the gilt timeline" % exhibit["id"])
+
+
+func _test_gilt_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Gilt.EXHIBITS, Gilt)
+	for exhibit in Gilt.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Gilt.without(exhibit_id), Gilt)
+		print("gilt without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "gilt %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Gilt.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "gilt %s removal did not admit a timeline it forbids" % exhibit_id)
+
+
+func _test_gilt_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	for who in Gilt.PEOPLE:
+		for place in Gilt.PLACES:
+			for hour in Gilt.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == GILT_TRUE["who"] and place == GILT_TRUE["place"] and hour == GILT_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Gilt)
+					print("gilt true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true gilt theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "gilt acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(GILT_TIMELINE) >= 0, "gilt acceptance should give the timeline")
+					_expect(Gilt.conflicting_ids(theory).is_empty(), "true gilt theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Gilt)
+					rejected += 1
+	print("gilt theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d gilt theories" % accepted)
+	_expect(rejected >= 2, "rejected %d gilt theories" % rejected)
+
+
+func _test_gilt_near_misses() -> void:
+	var misses := [
+		{"who": "Nessa", "place": "finishing_bench", "hour": "2"},
+		{"who": "Nessa", "place": "press_room", "hour": "1"},
+		{"who": "Mara", "place": "finishing_bench", "hour": "1"},
+	]
+	for theory in misses:
+		_expect_rejected(theory, Gilt)
+	print("gilt near-misses rejected: %d" % misses.size())
+	_expect(misses.size() >= 2, "need at least two gilt near-misses")
+
+
+func _test_gilt_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+	]
+	var cases := [
+		{"theory": {"who": "", "place": "finishing_bench", "hour": "1"}, "present": ["who took the gilt stamp"], "absent": ["where they took the stamp", "at which hour they took the stamp"]},
+		{"theory": {"who": "Nessa", "place": "", "hour": "1"}, "present": ["where they took the stamp"], "absent": ["who took the gilt stamp", "at which hour they took the stamp"]},
+		{"theory": {"who": "Nessa", "place": "finishing_bench", "hour": ""}, "present": ["at which hour they took the stamp"], "absent": ["who took the gilt stamp", "where they took the stamp"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who took the gilt stamp", "where they took the stamp", "at which hour they took the stamp"], "absent": []},
+		{"theory": {}, "present": ["who took the gilt stamp", "where they took the stamp", "at which hour they took the stamp"], "absent": []},
+		{"theory": {"who": "Theo", "place": "", "hour": "3"}, "present": ["where they took the stamp"], "absent": ["who took the gilt stamp", "at which hour they took the stamp"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Gilt)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "gilt incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "gilt incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "gilt incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "gilt incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "gilt incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "gilt missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "gilt named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "gilt incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("gilt incomplete submissions refused with the missing slot")
+
+
+func _player_pin_counts(book) -> Dictionary:
+	var counts := {"taker": 0, "place": 0, "hour": 0}
+	for exhibit in book.EXHIBITS:
+		for literal in exhibit["literals"]:
+			var field := str(literal["field"])
+			if counts.has(field):
+				counts[field] = int(counts[field]) + 1
+	return counts
+
+
+func _test_ferry_file_shape() -> void:
+	_expect(Ferry.EXHIBITS.size() >= 6 and Ferry.EXHIBITS.size() <= 8, "ferry exhibit count is %d" % Ferry.EXHIBITS.size())
+	_expect(Ferry.PEOPLE.size() == 3, "ferry cast should be three people")
+	_expect(Ferry.PLACES.size() >= 3, "ferry needs a few rooms")
+	_expect(Ferry.HOURS.size() >= 3 and Ferry.HOURS.size() <= 5, "ferry hour list length")
+	_expect(Ferry.TITLE == "The ferry bell", "ferry title")
+	_expect(Ferry.TITLE != CaseData.TITLE and Ferry.TITLE != Rehearsal.TITLE and Ferry.TITLE != Gilt.TITLE, "ferry shares a title")
+	_expect(Ferry.FILE_CODE == "CW-04", "ferry file code")
+	_expect(Ferry.FILE_CODE != CaseData.FILE_CODE and Ferry.FILE_CODE != Rehearsal.FILE_CODE and Ferry.FILE_CODE != Gilt.FILE_CODE, "ferry shares a file code")
+	var counts := _player_pin_counts(Ferry)
+	_expect(int(counts["taker"]) == 2 and int(counts["place"]) == 2 and int(counts["hour"]) == 2, "ferry pin pairs are %s" % str(counts))
+	_expect(counts != _player_pin_counts(CaseData), "ferry copied the spare-key pin pattern")
+	_expect(counts != _player_pin_counts(Rehearsal), "ferry copied the rehearsal pin pattern")
+	_expect(counts != _player_pin_counts(Gilt), "ferry copied the gilt pin pattern")
+	var seen := {}
+	for exhibit in Ferry.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		_expect(not seen.has(exhibit_id), "duplicate ferry id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		var states_player_pin := false
+		var states_unique := false
+		var player_literals := 0
+		for literal in exhibit["literals"]:
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Ferry.PLAYER_FIELDS:
+				states_player_pin = true
+				player_literals += 1
+				var expected := Ferry.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Ferry.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats == 2, "%s states %s %d times" % [exhibit_id, field, repeats])
+			else:
+				var owners := 0
+				for other in Ferry.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(player_literals == 1, "%s states %d player pins" % [exhibit_id, player_literals])
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+
+
+func _test_ferry_unique_model() -> void:
+	var models := Solver.enumerate(Ferry.EXHIBITS, Ferry)
+	print("ferry models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one ferry model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Quill", "ferry taker")
+	_expect(str(model["place"]) == "rope_loft", "ferry place")
+	_expect(str(model["hour"]) == "15", "ferry hour")
+	_expect(str(model["whistler"]) == "Wren", "ferry whistler")
+	_expect(str(model["whistle_place"]) == "jetty_shed", "ferry whistle place")
+	_expect(str(model["holder"]) == "Hale", "ferry holder")
+	_expect(str(model["hold_place"]) == "ticket_window", "ferry hold place")
+	_expect(str(model["hold_hour"]) == "14", "ferry hold hour")
+	_expect(str(model["origin"]) == "ticket_window", "ferry origin")
+	_expect(str(model["purpose"]) == "call_boat", "ferry purpose")
+	_expect(str(model["answer_hour"]) == "16", "ferry answer hour")
+	_expect(Ferry.timeline(model) == FERRY_TIMELINE, "ferry timeline drifted:\n%s" % Ferry.timeline(model))
+	for exhibit in Ferry.EXHIBITS:
+		_expect(Ferry.holds(exhibit, model), "%s rejects the ferry timeline" % exhibit["id"])
+
+
+func _test_ferry_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Ferry.EXHIBITS, Ferry)
+	for exhibit in Ferry.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Ferry.without(exhibit_id), Ferry)
+		print("ferry without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "ferry %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Ferry.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "ferry %s removal did not admit a timeline it forbids" % exhibit_id)
+
+
+func _test_ferry_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	for who in Ferry.PEOPLE:
+		for place in Ferry.PLACES:
+			for hour in Ferry.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == FERRY_TRUE["who"] and place == FERRY_TRUE["place"] and hour == FERRY_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Ferry)
+					print("ferry true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true ferry theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "ferry acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(FERRY_TIMELINE) >= 0, "ferry acceptance should give the timeline")
+					_expect(Ferry.conflicting_ids(theory).is_empty(), "true ferry theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Ferry)
+					rejected += 1
+	print("ferry theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d ferry theories" % accepted)
+	_expect(rejected >= 2, "rejected %d ferry theories" % rejected)
+
+
+func _test_ferry_near_misses() -> void:
+	var misses := [
+		{"who": "Quill", "place": "rope_loft", "hour": "16"},
+		{"who": "Quill", "place": "jetty_shed", "hour": "15"},
+		{"who": "Wren", "place": "rope_loft", "hour": "15"},
+	]
+	for theory in misses:
+		_expect_rejected(theory, Ferry)
+	print("ferry near-misses rejected: %d" % misses.size())
+	_expect(misses.size() >= 2, "need at least two ferry near-misses")
+
+
+func _test_ferry_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+		"who took the gilt stamp",
+		"where they took the stamp",
+		"at which hour they took the stamp",
+	]
+	var cases := [
+		{"theory": {"who": "", "place": "rope_loft", "hour": "15"}, "present": ["who took the ferry bell"], "absent": ["where they took the bell", "at which hour they took the bell"]},
+		{"theory": {"who": "Quill", "place": "", "hour": "15"}, "present": ["where they took the bell"], "absent": ["who took the ferry bell", "at which hour they took the bell"]},
+		{"theory": {"who": "Quill", "place": "rope_loft", "hour": ""}, "present": ["at which hour they took the bell"], "absent": ["who took the ferry bell", "where they took the bell"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who took the ferry bell", "where they took the bell", "at which hour they took the bell"], "absent": []},
+		{"theory": {}, "present": ["who took the ferry bell", "where they took the bell", "at which hour they took the bell"], "absent": []},
+		{"theory": {"who": "Hale", "place": "", "hour": "14"}, "present": ["where they took the bell"], "absent": ["who took the ferry bell", "at which hour they took the bell"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Ferry)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "ferry incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "ferry incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "ferry incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "ferry incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "ferry incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "ferry missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "ferry named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "ferry incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("ferry incomplete submissions refused with the missing slot")
+
+
 func _test_solutions_differ() -> void:
 	var spare := {"who": "Nell", "place": "kitchen", "hour": "7"}
 	_expect(spare["who"] != REHEARSAL_TRUE["who"], "rehearsal copied the spare-key taker")
 	_expect(spare["place"] != REHEARSAL_TRUE["place"], "rehearsal copied the spare-key room")
 	_expect(spare["hour"] != REHEARSAL_TRUE["hour"], "rehearsal copied the spare-key hour")
+	_expect(GILT_TRUE["who"] != spare["who"], "gilt stamp copied the spare-key taker")
+	_expect(GILT_TRUE["place"] != spare["place"], "gilt stamp copied the spare-key room")
+	_expect(GILT_TRUE["hour"] != spare["hour"], "gilt stamp copied the spare-key hour")
+	_expect(GILT_TRUE["who"] != REHEARSAL_TRUE["who"], "gilt stamp copied the rehearsal taker")
+	_expect(GILT_TRUE["place"] != REHEARSAL_TRUE["place"], "gilt stamp copied the rehearsal room")
+	_expect(GILT_TRUE["hour"] != REHEARSAL_TRUE["hour"], "gilt stamp copied the rehearsal hour")
+	_expect(FERRY_TRUE["who"] != spare["who"], "ferry bell copied the spare-key taker")
+	_expect(FERRY_TRUE["place"] != spare["place"], "ferry bell copied the spare-key room")
+	_expect(FERRY_TRUE["hour"] != spare["hour"], "ferry bell copied the spare-key hour")
+	_expect(FERRY_TRUE["who"] != REHEARSAL_TRUE["who"], "ferry bell copied the rehearsal taker")
+	_expect(FERRY_TRUE["place"] != REHEARSAL_TRUE["place"], "ferry bell copied the rehearsal room")
+	_expect(FERRY_TRUE["hour"] != REHEARSAL_TRUE["hour"], "ferry bell copied the rehearsal hour")
+	_expect(FERRY_TRUE["who"] != GILT_TRUE["who"], "ferry bell copied the gilt taker")
+	_expect(FERRY_TRUE["place"] != GILT_TRUE["place"], "ferry bell copied the gilt room")
+	_expect(FERRY_TRUE["hour"] != GILT_TRUE["hour"], "ferry bell copied the gilt hour")
 	_expect_rejected(spare, Rehearsal)
 	_expect_rejected(REHEARSAL_TRUE, CaseData)
+	_expect_rejected(GILT_TRUE, CaseData)
+	_expect_rejected(GILT_TRUE, Rehearsal)
+	_expect_rejected(spare, Gilt)
+	_expect_rejected(REHEARSAL_TRUE, Gilt)
+	_expect_rejected(FERRY_TRUE, CaseData)
+	_expect_rejected(FERRY_TRUE, Rehearsal)
+	_expect_rejected(FERRY_TRUE, Gilt)
+	_expect_rejected(spare, Ferry)
+	_expect_rejected(REHEARSAL_TRUE, Ferry)
+	_expect_rejected(GILT_TRUE, Ferry)
+	for person in Gilt.PEOPLE:
+		_expect(not CaseData.PEOPLE.has(person), "gilt cast repeats %s from the spare key" % person)
+		_expect(not Rehearsal.PEOPLE.has(person), "gilt cast repeats %s from the rehearsal score" % person)
+	for place in Gilt.PLACES:
+		_expect(not CaseData.PLACES.has(place), "gilt rooms repeat %s from the spare key" % place)
+		_expect(not Rehearsal.PLACES.has(place), "gilt rooms repeat %s from the rehearsal score" % place)
+	for hour in Gilt.HOURS:
+		_expect(not CaseData.HOURS.has(hour), "gilt hours repeat %s from the spare key" % hour)
+		_expect(not Rehearsal.HOURS.has(hour), "gilt hours repeat %s from the rehearsal score" % hour)
+	for person in Ferry.PEOPLE:
+		_expect(not CaseData.PEOPLE.has(person), "ferry cast repeats %s from the spare key" % person)
+		_expect(not Rehearsal.PEOPLE.has(person), "ferry cast repeats %s from the rehearsal score" % person)
+		_expect(not Gilt.PEOPLE.has(person), "ferry cast repeats %s from the gilt stamp" % person)
+	for place in Ferry.PLACES:
+		_expect(not CaseData.PLACES.has(place), "ferry rooms repeat %s from the spare key" % place)
+		_expect(not Rehearsal.PLACES.has(place), "ferry rooms repeat %s from the rehearsal score" % place)
+		_expect(not Gilt.PLACES.has(place), "ferry rooms repeat %s from the gilt stamp" % place)
+	for hour in Ferry.HOURS:
+		_expect(not CaseData.HOURS.has(hour), "ferry hours repeat %s from the spare key" % hour)
+		_expect(not Rehearsal.HOURS.has(hour), "ferry hours repeat %s from the rehearsal score" % hour)
+		_expect(not Gilt.HOURS.has(hour), "ferry hours repeat %s from the gilt stamp" % hour)
 	var titles: Array[String] = []
 	for book in Catalog.all():
 		titles.append(str(book.TITLE))
-	_expect(titles == ["The spare key", "The rehearsal score"], "case list is %s" % str(titles))
+	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell"], "case list is %s" % str(titles))
 
 
 func _test_menu_opens_either_case() -> void:
@@ -360,10 +747,14 @@ func _test_menu_opens_either_case() -> void:
 	var howto := _visible_label_blob(root)
 	_expect(howto.find("The spare key") >= 0, "how to play omits The spare key")
 	_expect(howto.find("The rehearsal score") >= 0, "how to play omits The rehearsal score")
+	_expect(howto.find("The gilt stamp") >= 0, "how to play omits The gilt stamp")
+	_expect(howto.find("The ferry bell") >= 0, "how to play omits The ferry bell")
 	_expect(howto.find("names that slot") >= 0, "how to play omits the empty-slot rule")
 	_press(root, "Back to the menu")
 	_expect(_find_visible_button(root, "Open The spare key") != null, "menu is missing The spare key")
 	_expect(_find_visible_button(root, "Open The rehearsal score") != null, "menu is missing The rehearsal score")
+	_expect(_find_visible_button(root, "Open The gilt stamp") != null, "menu is missing The gilt stamp")
+	_expect(_find_visible_button(root, "Open The ferry bell") != null, "menu is missing The ferry bell")
 	_press(root, "Open The rehearsal score")
 	var rehearsal_open := _visible_label_blob(root)
 	_expect(rehearsal_open.find("Cut list") >= 0, "rehearsal file did not open")
@@ -420,6 +811,90 @@ func _test_menu_opens_either_case() -> void:
 	var reopened := _visible_label_blob(root)
 	_expect(reopened.find("Gallery line") >= 0, "could not return to The rehearsal score")
 	_expect(reopened.find("Complaint slip") == -1, "spare key papers stayed up after switching files")
+	_press(root, "Menu")
+	_press(root, "Open The gilt stamp")
+	var gilt_open := _visible_label_blob(root)
+	_expect(gilt_open.find("Move order") >= 0, "gilt stamp file did not open")
+	_expect(gilt_open.find("Edge note") >= 0, "gilt stamp file did not show its exhibits")
+	_expect(gilt_open.find("Complaint slip") == -1, "spare key papers showed inside The gilt stamp")
+	_expect(gilt_open.find("Cut list") == -1, "rehearsal papers showed inside The gilt stamp")
+	_press(root, "Submit theory")
+	var empty_gilt := _verdict_text(root)
+	_expect(empty_gilt.find("who took the gilt stamp") >= 0, "empty gilt board: %s" % empty_gilt)
+	_expect(empty_gilt.find("where they took the stamp") >= 0, "empty gilt board: %s" % empty_gilt)
+	_expect(empty_gilt.find("at which hour they took the stamp") >= 0, "empty gilt board: %s" % empty_gilt)
+	_expect(empty_gilt.find("who took the spare key") == -1, "empty gilt board used the spare key slot: %s" % empty_gilt)
+	_expect(empty_gilt.find("rehearsal score") == -1, "empty gilt board used a rehearsal slot: %s" % empty_gilt)
+	_expect(empty_gilt.to_lower().find("conflict") == -1, "empty gilt board talked about a conflict: %s" % empty_gilt)
+	_press(root, "Nessa")
+	_press(root, "Finishing bench")
+	_press(root, "2")
+	_press(root, "Submit theory")
+	var gilt_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(gilt_miss, Gilt, {"who": "Nessa", "place": "finishing_bench", "hour": "2"})
+	_press(root, "Press room")
+	_press(root, "1")
+	_press(root, "Submit theory")
+	var gilt_place_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(gilt_place_miss, Gilt, {"who": "Nessa", "place": "press_room", "hour": "1"})
+	_press(root, "Finishing bench")
+	_press(root, "Submit theory")
+	var gilt_accepted := _verdict_text(root)
+	_expect(gilt_accepted.find("fits every exhibit") >= 0, "gilt stamp board rejected the true theory: %s" % gilt_accepted)
+	_expect(gilt_accepted.find("Nessa (porter) took the gilt stamp at 1") >= 0, "gilt stamp board timeline: %s" % gilt_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var gilt_cleared := _verdict_text(root)
+	_expect(gilt_cleared.find("who took the gilt stamp") >= 0, "cleared gilt board: %s" % gilt_cleared)
+	_expect(gilt_cleared.find("fits every exhibit") == -1, "cleared gilt board stayed accepted: %s" % gilt_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The spare key")
+	var spare_again := _visible_label_blob(root)
+	_expect(spare_again.find("Complaint slip") >= 0, "could not return to The spare key from The gilt stamp")
+	_expect(spare_again.find("Move order") == -1, "gilt stamp papers stayed up after switching files")
+	_press(root, "Menu")
+	_press(root, "Open The ferry bell")
+	var ferry_open := _visible_label_blob(root)
+	_expect(ferry_open.find("Whistle slip") >= 0, "ferry bell file did not open")
+	_expect(ferry_open.find("Call chit") >= 0, "ferry bell file did not show its exhibits")
+	_expect(ferry_open.find("Complaint slip") == -1, "spare key papers showed inside The ferry bell")
+	_expect(ferry_open.find("Cut list") == -1, "rehearsal papers showed inside The ferry bell")
+	_expect(ferry_open.find("Move order") == -1, "gilt stamp papers showed inside The ferry bell")
+	_press(root, "Submit theory")
+	var empty_ferry := _verdict_text(root)
+	_expect(empty_ferry.find("who took the ferry bell") >= 0, "empty ferry board: %s" % empty_ferry)
+	_expect(empty_ferry.find("where they took the bell") >= 0, "empty ferry board: %s" % empty_ferry)
+	_expect(empty_ferry.find("at which hour they took the bell") >= 0, "empty ferry board: %s" % empty_ferry)
+	_expect(empty_ferry.find("who took the spare key") == -1, "empty ferry board used the spare key slot: %s" % empty_ferry)
+	_expect(empty_ferry.find("rehearsal score") == -1, "empty ferry board used a rehearsal slot: %s" % empty_ferry)
+	_expect(empty_ferry.find("gilt stamp") == -1, "empty ferry board used a gilt slot: %s" % empty_ferry)
+	_expect(empty_ferry.to_lower().find("conflict") == -1, "empty ferry board talked about a conflict: %s" % empty_ferry)
+	_press(root, "Quill")
+	_press(root, "Rope loft")
+	_press(root, "16")
+	_press(root, "Submit theory")
+	var ferry_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(ferry_miss, Ferry, {"who": "Quill", "place": "rope_loft", "hour": "16"})
+	_press(root, "Jetty shed")
+	_press(root, "15")
+	_press(root, "Submit theory")
+	var ferry_place_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(ferry_place_miss, Ferry, {"who": "Quill", "place": "jetty_shed", "hour": "15"})
+	_press(root, "Rope loft")
+	_press(root, "Submit theory")
+	var ferry_accepted := _verdict_text(root)
+	_expect(ferry_accepted.find("fits every exhibit") >= 0, "ferry bell board rejected the true theory: %s" % ferry_accepted)
+	_expect(ferry_accepted.find("Quill (ropehand) took the ferry bell at 15") >= 0, "ferry bell board timeline: %s" % ferry_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var ferry_cleared := _verdict_text(root)
+	_expect(ferry_cleared.find("who took the ferry bell") >= 0, "cleared ferry board: %s" % ferry_cleared)
+	_expect(ferry_cleared.find("fits every exhibit") == -1, "cleared ferry board stayed accepted: %s" % ferry_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The spare key")
+	var spare_from_ferry := _visible_label_blob(root)
+	_expect(spare_from_ferry.find("Complaint slip") >= 0, "could not return to The spare key from The ferry bell")
+	_expect(spare_from_ferry.find("Whistle slip") == -1, "ferry bell papers stayed up after switching files")
 	root.queue_free()
 
 
