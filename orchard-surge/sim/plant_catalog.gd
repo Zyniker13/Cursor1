@@ -29,7 +29,8 @@ const MANTLE := 20
 const TIPPET := 21
 const WIMPLE := 22
 const ALB := 23
-const COUNT := 24
+const AMICE := 24
+const COUNT := 25
 
 # fire_ticks and slow_ticks are sim ticks of length DT.
 # light_radius, weapon_range, projectile_speed, and splash_radius are pixels.
@@ -54,7 +55,8 @@ const COUNT := 24
 # tippets_rot: this plant's radius marks tiles as rotted. It is not a light.
 # wimples_mildew: this plant's radius marks tiles as wimpled. It is not a light.
 # albs_rust: this plant's radius marks tiles as albed. It is not a light.
-# casts_light: false means the radius does not light tiles. The shade, the cowl, the hood, the cloak, the cape, the shawl, the stole, the mantle, the tippet, the wimple, and the alb use this.
+# amices_scab: this plant's radius marks tiles as amiced. It is not a light.
+# casts_light: false means the radius does not light tiles. The shade, the cowl, the hood, the cloak, the cape, the shawl, the stole, the mantle, the tippet, the wimple, the alb, and the amice use this.
 const DEFS := [
 	{
 		"name": "Pea",
@@ -87,6 +89,7 @@ const DEFS := [
 		"tippets_rot": false,
 		"wimples_mildew": false,
 		"albs_rust": false,
+		"amices_scab": false,
 		"casts_light": true,
 	},
 	{
@@ -120,6 +123,7 @@ const DEFS := [
 		"tippets_rot": false,
 		"wimples_mildew": false,
 		"albs_rust": false,
+		"amices_scab": false,
 		"casts_light": true,
 	},
 	{
@@ -153,6 +157,7 @@ const DEFS := [
 		"tippets_rot": false,
 		"wimples_mildew": false,
 		"albs_rust": false,
+		"amices_scab": false,
 		"casts_light": true,
 	},
 	{
@@ -186,6 +191,7 @@ const DEFS := [
 		"tippets_rot": false,
 		"wimples_mildew": false,
 		"albs_rust": false,
+		"amices_scab": false,
 		"casts_light": true,
 	},
 	{
@@ -219,6 +225,7 @@ const DEFS := [
 		"tippets_rot": false,
 		"wimples_mildew": false,
 		"albs_rust": false,
+		"amices_scab": false,
 		"casts_light": true,
 	},
 	{
@@ -252,6 +259,7 @@ const DEFS := [
 		"tippets_rot": false,
 		"wimples_mildew": false,
 		"albs_rust": false,
+		"amices_scab": false,
 		"casts_light": true,
 	},
 	{
@@ -285,6 +293,7 @@ const DEFS := [
 		"tippets_rot": false,
 		"wimples_mildew": false,
 		"albs_rust": false,
+		"amices_scab": false,
 		"casts_light": true,
 	},
 	{
@@ -318,6 +327,7 @@ const DEFS := [
 		"tippets_rot": false,
 		"wimples_mildew": false,
 		"albs_rust": false,
+		"amices_scab": false,
 		"casts_light": true,
 	},
 	{
@@ -351,6 +361,7 @@ const DEFS := [
 		"tippets_rot": false,
 		"wimples_mildew": false,
 		"albs_rust": false,
+		"amices_scab": false,
 		"casts_light": true,
 	},
 	{
@@ -384,6 +395,7 @@ const DEFS := [
 		"tippets_rot": false,
 		"wimples_mildew": false,
 		"albs_rust": false,
+		"amices_scab": false,
 		"casts_light": true,
 	},
 	{
@@ -417,6 +429,7 @@ const DEFS := [
 		"tippets_rot": false,
 		"wimples_mildew": false,
 		"albs_rust": false,
+		"amices_scab": false,
 		"casts_light": true,
 	},
 	{
@@ -450,6 +463,7 @@ const DEFS := [
 		"tippets_rot": false,
 		"wimples_mildew": false,
 		"albs_rust": false,
+		"amices_scab": false,
 		"casts_light": true,
 	},
 	{
@@ -483,6 +497,7 @@ const DEFS := [
 		"tippets_rot": false,
 		"wimples_mildew": false,
 		"albs_rust": false,
+		"amices_scab": false,
 		"casts_light": true,
 	},
 	{
@@ -516,6 +531,7 @@ const DEFS := [
 		"tippets_rot": false,
 		"wimples_mildew": false,
 		"albs_rust": false,
+		"amices_scab": false,
 		"casts_light": false,
 	},
 	{
@@ -549,6 +565,7 @@ const DEFS := [
 		"tippets_rot": false,
 		"wimples_mildew": false,
 		"albs_rust": false,
+		"amices_scab": false,
 		"casts_light": false,
 	},
 	{
@@ -582,6 +599,7 @@ const DEFS := [
 		"tippets_rot": false,
 		"wimples_mildew": false,
 		"albs_rust": false,
+		"amices_scab": false,
 		"casts_light": false,
 	},
 	{
@@ -615,6 +633,7 @@ const DEFS := [
 		"tippets_rot": false,
 		"wimples_mildew": false,
 		"albs_rust": false,
+		"amices_scab": false,
 		"casts_light": false,
 	},
 	{
@@ -648,6 +667,7 @@ const DEFS := [
 		"tippets_rot": false,
 		"wimples_mildew": false,
 		"albs_rust": false,
+		"amices_scab": false,
 		"casts_light": false,
 	},
 	{
@@ -681,6 +701,7 @@ const DEFS := [
 		"tippets_rot": false,
 		"wimples_mildew": false,
 		"albs_rust": false,
+		"amices_scab": false,
 		"casts_light": false,
 	},
 	{
@@ -714,6 +735,7 @@ const DEFS := [
 		"tippets_rot": false,
 		"wimples_mildew": false,
 		"albs_rust": false,
+		"amices_scab": false,
 		"casts_light": false,
 	},
 	{
@@ -747,6 +769,7 @@ const DEFS := [
 		"tippets_rot": false,
 		"wimples_mildew": false,
 		"albs_rust": false,
+		"amices_scab": false,
 		"casts_light": false,
 	},
 	{
@@ -780,6 +803,7 @@ const DEFS := [
 		"tippets_rot": true,
 		"wimples_mildew": false,
 		"albs_rust": false,
+		"amices_scab": false,
 		"casts_light": false,
 	},
 	{
@@ -813,6 +837,7 @@ const DEFS := [
 		"tippets_rot": false,
 		"wimples_mildew": true,
 		"albs_rust": false,
+		"amices_scab": false,
 		"casts_light": false,
 	},
 	{
@@ -846,6 +871,41 @@ const DEFS := [
 		"tippets_rot": false,
 		"wimples_mildew": false,
 		"albs_rust": true,
+		"amices_scab": false,
+		"casts_light": false,
+	},
+	{
+		"name": "Amice",
+		"role": "Amices scab, modest shots, no light.",
+		"damage": 2,
+		"fire_ticks": 102,
+		"light_radius": 400.0,
+		"weapon_range": 12.0,
+		"projectile_speed": 100.0,
+		"slow_factor": 1.0,
+		"slow_ticks": 0,
+		"splash_radius": 0.0,
+		"burns_shroud": false,
+		"cracks_rind": false,
+		"melts_pitch": false,
+		"thaws_frost": false,
+		"cuts_web": false,
+		"cracks_glass": false,
+		"strips_scale": false,
+		"cracks_mail": false,
+		"splits_hide": false,
+		"shades_dusk": false,
+		"cowls_veil": false,
+		"hoods_pall": false,
+		"cloaks_gloom": false,
+		"capes_murk": false,
+		"shawls_dread": false,
+		"stoles_woe": false,
+		"mantles_blight": false,
+		"tippets_rot": false,
+		"wimples_mildew": false,
+		"albs_rust": false,
+		"amices_scab": true,
 		"casts_light": false,
 	},
 ]
