@@ -54,6 +54,8 @@ func _run() -> void:
 	test_mullion_book()
 	test_transom_rule()
 	test_transom_book()
+	test_casement_rule()
+	test_casement_book()
 	test_chart_4_boat()
 	test_one_rotation_is_not_solved()
 	test_hint_points_at_one_piece()
@@ -216,7 +218,8 @@ func test_charts() -> void:
 	check(Charts.lintel().size() == 8, "lintel adds eight charts")
 	check(Charts.mullion().size() == 8, "mullion adds eight charts")
 	check(Charts.transom().size() == 8, "transom adds eight charts")
-	check(book.size() == 134, "one hundred thirty-four charts")
+	check(Charts.casement().size() == 8, "casement adds eight charts")
+	check(book.size() == 142, "one hundred forty-two charts")
 	check(str(book[13]["id"]) == "14" and str(book[13]["title"]) == "The Holding Line", "chart 14 stays the reach capstone")
 	check(str(book[14]["title"]) == "North Light", "chart 15 opens the basin")
 	check(str(book[21]["id"]) == "22" and str(book[21]["title"]) == "The Basin Mark", "chart 22 stays the basin capstone")
@@ -247,6 +250,8 @@ func test_charts() -> void:
 	check(str(book[118]["title"]) == "The Dry Mullion", "chart 119 opens the mullion")
 	check(str(book[125]["id"]) == "126" and str(book[125]["title"]) == "The Mullion Mark", "chart 126 stays the mullion capstone")
 	check(str(book[126]["title"]) == "The Dry Transom", "chart 127 opens the transom")
+	check(str(book[133]["id"]) == "134" and str(book[133]["title"]) == "The Transom Mark", "chart 134 stays the transom capstone")
+	check(str(book[134]["title"]) == "The Dry Casement", "chart 135 opens the casement")
 	var seen_ids := {}
 	var seen_titles := {}
 	var quay_titles := ["First Glass", "Around the Pilings", "High Water", "Sleeping Hull", "Split the White", "The Night Mark"]
@@ -258,7 +263,7 @@ func test_charts() -> void:
 		var title := str(chart["title"])
 		check(not seen_ids.has(id), "chart id %s is unique" % id)
 		if seen_titles.has(title):
-			var echoed := (title == "After the Color" and id == "81") or (title == "Above the Gate" and (id == "84" or id == "92" or id == "100" or id == "108")) or (title == "Side Entry" and (id == "88" or id == "96" or id == "104")) or (title == "White Through" and (id == "97" or id == "105")) or (title == "Dry Stop" and (id == "90" or id == "98" or id == "106")) or (title == "The Wet Stop" and (id == "120" or id == "128")) or (title == "Color Kept" and (id == "121" or id == "129")) or (title == "No Turn" and (id == "122" or id == "130")) or (title == "Beside the Flood" and id == "131")
+			var echoed := (title == "After the Color" and id == "81") or (title == "Above the Gate" and (id == "84" or id == "92" or id == "100" or id == "108")) or (title == "Side Entry" and (id == "88" or id == "96" or id == "104")) or (title == "White Through" and (id == "97" or id == "105")) or (title == "Dry Stop" and (id == "90" or id == "98" or id == "106")) or (title == "The Wet Stop" and (id == "120" or id == "128" or id == "136")) or (title == "Color Kept" and (id == "121" or id == "129" or id == "137")) or (title == "No Turn" and (id == "122" or id == "130" or id == "138")) or (title == "Beside the Flood" and (id == "131" or id == "139"))
 			check(echoed, "chart title %s is unique" % title)
 		else:
 			check(true, "chart title %s is unique" % title)
@@ -4780,6 +4785,259 @@ func _expect_transom_clear(index: int, piece_id: String, kind: String, rot: int,
 		check(false, "%s still clears transom chart %d notes=%s" % [label, index + 127, str(Tracer.failure_notes(chart, state))])
 
 
+func test_casement_rule() -> void:
+	check(Tracer.norm_rot("casement", 0) == 0 and Tracer.norm_rot("casement", 90) == 90, "a casement keeps a quarter turn")
+	check(Tracer.norm_rot("casement", 180) == 180 and Tracer.norm_rot("casement", 270) == 270, "a casement keeps a half turn")
+	check(Tracer.norm_rot("casement", 360) == 0 and Tracer.norm_rot("casement", 450) == 90, "a casement wraps a full turn")
+	check(Tracer.turn_rot("casement", 0) == 90 and Tracer.turn_rot("casement", 90) == 180, "clicking a casement walks the facing")
+	check(Tracer.turn_rot("casement", 180) == 270 and Tracer.turn_rot("casement", 270) == 0, "clicking a casement returns to north")
+	check(Tracer.casement_facing(0) == "N" and Tracer.casement_facing(90) == "E" and Tracer.casement_facing(180) == "S" and Tracer.casement_facing(270) == "W", "casement facing follows the quarter turn")
+	var hinted: Dictionary = Charts.casement()[0]
+	var solved_hint := Charts.make_state(hinted, true)
+	check(not Hints.wrong_pieces(hinted, solved_hint).has("C"), "a hint accepts the east casement")
+	for spun in [0, 180, 270]:
+		var turned := Charts.duplicate_state(solved_hint)
+		turned["pieces"]["C"]["rot"] = spun
+		check(Hints.wrong_pieces(hinted, turned).has("C"), "a hint rejects casement rotation %d" % spun)
+	var carried := {}
+	carried[Vector2i(0, 0)] = {"kind": "casement", "rot": 90}
+	check(not Tracer._flood_carries(carried, Vector2i(0, 0)), "a flooded casement does not carry the beam")
+	var facings := {"N": 0, "E": 90, "S": 180, "W": 270}
+	for color in ["red", "blue", "white"]:
+		for facing in ["N", "E", "S", "W"]:
+			var rot: int = int(facings[facing])
+			var pass_lane := _blank(5, 5)
+			var pass_at := Vector2i(2, 2)
+			var pass_step: Vector2i = Tracer.VEC[facing]
+			var pass_lamp := pass_at - pass_step
+			var pass_dock := pass_at + pass_step * 2
+			pass_lane["lanterns"] = [_lamp("L", pass_lamp.x, pass_lamp.y, facing, color)]
+			pass_lane["docks"] = [_need("D", pass_dock.x, pass_dock.y, color)]
+			pass_lane["pieces"] = [_fixed_casement("C", pass_at.x, pass_at.y, rot)]
+			var pass_hit: Dictionary = Tracer.trace(pass_lane, Charts.make_state(pass_lane, true))
+			check(pass_hit["docks"]["D"].has(color) and pass_hit["docks"]["D"].size() == 1, "a dry casement keeps %s traveling %s" % [color, facing])
+			check(_arrives_from(pass_hit, pass_at.x, pass_at.y, facing, color) and _leaves(pass_hit, pass_at.x, pass_at.y, facing, color), "a dry casement passes %s straight %s" % [color, facing])
+			var other_color := "red" if color != "red" else "blue"
+			check(not _departs(pass_hit, pass_at.x, pass_at.y, other_color), "a dry casement does not recolor %s traveling %s" % [color, facing])
+			for other in ["N", "E", "S", "W"]:
+				if other == facing:
+					continue
+				var stop_lane := _blank(5, 5)
+				var stop_at := Vector2i(2, 2)
+				var stop_step: Vector2i = Tracer.VEC[other]
+				var stop_lamp := stop_at - stop_step
+				var stop_dock := stop_at + stop_step * 2
+				stop_lane["lanterns"] = [_lamp("L", stop_lamp.x, stop_lamp.y, other, color)]
+				stop_lane["docks"] = [_need("D", stop_dock.x, stop_dock.y, color)]
+				stop_lane["pieces"] = [_fixed_casement("C", stop_at.x, stop_at.y, rot)]
+				var stop_hit: Dictionary = Tracer.trace(stop_lane, Charts.make_state(stop_lane, true))
+				check(not _center_hit(stop_hit, stop_at.x, stop_at.y) and not _leaves(stop_hit, stop_at.x, stop_at.y, other, color) and stop_hit["docks"]["D"].is_empty(), "a dry casement facing %s stops %s traveling %s before the cell" % [facing, color, other])
+	var row := _casement_row(20)
+	check(Tracer.trace(row, Charts.make_state(row, true))["docks"]["D"].has("white"), "twenty dry casements still reach the dock")
+	var blocked := _blank(5, 1)
+	blocked["lanterns"] = [_lamp("L", 0, 0, "E", "white")]
+	blocked["docks"] = [_need("D", 4, 0, "white")]
+	blocked["pieces"] = [_fixed_casement("C", 2, 0, 0)]
+	var blocked_hit: Dictionary = Tracer.trace(blocked, Charts.make_state(blocked, true))
+	check(not _center_hit(blocked_hit, 2, 0) and blocked_hit["docks"]["D"].is_empty(), "one north casement stops an eastbound beam")
+	var east_flood := _blank(5, 4)
+	east_flood["tide_phases"] = [2]
+	east_flood["lanterns"] = [_lamp("L", 0, 1, "S", "white")]
+	east_flood["fixtures"] = [
+		{"id": "S0", "kind": "shutter", "x": 0, "y": 2, "rot": 0},
+		{"id": "T0", "kind": "tide_mirror", "x": 0, "y": 3, "rot": 90},
+		{"id": "S1", "kind": "shutter", "x": 1, "y": 3, "rot": 0},
+	]
+	east_flood["pieces"] = [_fixed_casement("C", 2, 3, 90)]
+	var east_state := Charts.make_state(east_flood, true)
+	var east_flood_hit: Dictionary = Tracer.trace(east_flood, east_state)
+	check(Tracer.is_flooded(east_flood, east_state, Vector2i(2, 3)) and not _center_hit(east_flood_hit, 2, 3) and not _arrives_from(east_flood_hit, 2, 3, "E", "white"), "a flooded casement stops an eastbound beam before the cell")
+	east_flood["pieces"] = [_fixed_vane("V", 2, 3, 90)]
+	check(_trace_sig(Tracer.trace(east_flood, Charts.make_state(east_flood, true))) == _trace_sig(east_flood_hit), "a flooded casement stops the way a flooded vane stops")
+	east_flood["pieces"] = [_fixed_shutter("G", 2, 3)]
+	var east_open: Dictionary = Tracer.trace(east_flood, Charts.make_state(east_flood, true))
+	check(_center_hit(east_open, 2, 3) and _departs(east_open, 2, 3, "white"), "a flooded shutter passes the eastbound beam a casement stops")
+	var dry := _blank(5, 1)
+	dry["lanterns"] = [_lamp("L", 0, 0, "E", "blue")]
+	dry["docks"] = [_need("D", 4, 0, "blue")]
+	dry["pieces"] = [_fixed_casement("C", 2, 0, 90)]
+	var dry_hit: Dictionary = Tracer.trace(dry, Charts.make_state(dry, true))
+	check(_leaves(dry_hit, 2, 0, "E", "blue") and dry_hit["docks"]["D"].has("blue") and not _departs(dry_hit, 2, 0, "red"), "a dry casement passes blue straight east")
+	dry["pieces"] = [_fixed_shutter("G", 2, 0)]
+	var dry_gate: Dictionary = Tracer.trace(dry, Charts.make_state(dry, true))
+	check(_center_hit(dry_gate, 2, 0) and not _departs(dry_gate, 2, 0, "blue") and dry_gate["docks"]["D"].is_empty(), "a dry shutter stops where the casement passes")
+	dry["pieces"] = [_fixed_stain("K", 2, 0, 0)]
+	var painted: Dictionary = Tracer.trace(dry, Charts.make_state(dry, true))
+	check(_leaves(painted, 2, 0, "E", "red") and not _leaves(painted, 2, 0, "E", "blue") and painted["docks"]["D"].has("red"), "a stain recolors the pass a casement keeps")
+	var opposite := _blank(5, 1)
+	opposite["lanterns"] = [_lamp("L", 4, 0, "W", "white")]
+	opposite["docks"] = [_need("D", 0, 0, "white")]
+	opposite["pieces"] = [_fixed_casement("C", 2, 0, 90)]
+	var opposite_hit: Dictionary = Tracer.trace(opposite, Charts.make_state(opposite, true))
+	check(not _center_hit(opposite_hit, 2, 0) and opposite_hit["docks"]["D"].is_empty(), "a dry east casement stops the westbound beam a transom would pass")
+	opposite["pieces"] = [_fixed_transom("O", 2, 0)]
+	check(_leaves(Tracer.trace(opposite, Charts.make_state(opposite, true)), 2, 0, "W", "white"), "a dry transom passes the opposite beam a casement stops")
+	var along := _blank(5, 1)
+	along["lanterns"] = [_lamp("L", 0, 0, "E", "white")]
+	along["docks"] = [_need("D", 4, 0, "white")]
+	along["pieces"] = [_fixed_mullion("U", 2, 0)]
+	check(not _center_hit(Tracer.trace(along, Charts.make_state(along, true)), 2, 0), "a dry mullion stops the eastbound beam a casement passes")
+	along["pieces"] = [_fixed_casement("C", 2, 0, 90)]
+	check(_leaves(Tracer.trace(along, Charts.make_state(along, true)), 2, 0, "E", "white"), "a dry casement passes the eastbound beam a mullion stops")
+	dry["pieces"] = [_fixed_casement("C", 2, 0, 90)]
+	dry["lanterns"] = [_lamp("L", 0, 0, "E", "red")]
+	dry["docks"] = [_need("D", 4, 0, "red")]
+	var red_kept: Dictionary = Tracer.trace(dry, Charts.make_state(dry, true))
+	check(_leaves(red_kept, 2, 0, "E", "red") and red_kept["docks"]["D"].size() == 1 and red_kept["docks"]["D"].has("red"), "a dry casement keeps red")
+	dry["lanterns"] = [_lamp("L", 0, 0, "E", "white")]
+	dry["docks"] = [_need("D", 4, 0, "white")]
+	var white_kept: Dictionary = Tracer.trace(dry, Charts.make_state(dry, true))
+	check(_leaves(white_kept, 2, 0, "E", "white") and white_kept["docks"]["D"].size() == 1 and not _departs(white_kept, 2, 0, "red") and not _departs(white_kept, 2, 0, "blue"), "a dry casement keeps white")
+
+
+func test_casement_book() -> void:
+	var book: Array = Charts.casement()
+	check(book.size() == 8, "casement book has eight charts")
+	var titles := ["The Dry Casement", "The Wet Stop", "Color Kept", "No Turn", "Beside the Flood", "Two Casements", "The Held Casement", "The Casement Mark"]
+	for i in book.size():
+		var chart: Dictionary = book[i]
+		check(str(chart["id"]) == str(i + 135), "casement chart %d keeps its number" % (i + 135))
+		check(str(chart["title"]) == str(titles[i]), "casement chart %d keeps its title" % (i + 135))
+		check(str(chart["harbor"]) == Charts.CASEMENT, "chart %s belongs to the casement" % str(chart["id"]))
+		var casement_count := 0
+		for raw_piece in chart["pieces"]:
+			var piece: Dictionary = raw_piece
+			if str(piece["kind"]) == "casement":
+				casement_count += 1
+		check(casement_count >= 1, "chart %s needs the casement" % str(chart["id"]))
+	for older in Charts.all().slice(0, 134):
+		for raw_piece in older["pieces"]:
+			var older_piece: Dictionary = raw_piece
+			check(str(older_piece["kind"]) != "casement", "chart %s keeps its pieces" % str(older["id"]))
+		for raw_fix in older["fixtures"]:
+			var older_fix: Dictionary = raw_fix
+			check(str(older_fix["kind"]) != "casement", "chart %s keeps its fixed glass" % str(older["id"]))
+	for i in book.size():
+		var piece_ids: Array = []
+		for raw_piece in book[i]["pieces"]:
+			var piece: Dictionary = raw_piece
+			if str(piece["kind"]) == "casement":
+				piece_ids.append(str(piece["id"]))
+		for piece_id in piece_ids:
+			_expect_casement_miss(i, piece_id, "transom", 0, "transom")
+			_expect_casement_miss(i, piece_id, "mullion", 0, "mullion")
+			_expect_casement_miss(i, piece_id, "lintel", 0, "lintel")
+			_expect_casement_miss(i, piece_id, "shutter", 0, "shutter")
+			_expect_casement_miss(i, piece_id, "well", 0, "well")
+			_expect_casement_miss(i, piece_id, "siphon", 0, "siphon")
+			_expect_casement_miss(i, piece_id, "stain", 0, "red stain")
+			_expect_casement_miss(i, piece_id, "stain", 90, "blue stain")
+			_expect_casement_miss(i, piece_id, "mirror", 0, "mirror")
+			_expect_casement_miss(i, piece_id, "mirror", 90, "turned mirror")
+			for facing in [0, 90, 180, 270]:
+				_expect_casement_miss(i, piece_id, "vane", facing, "vane %d" % facing)
+				_expect_casement_miss(i, piece_id, "weir", facing, "weir %d" % facing)
+				_expect_casement_miss(i, piece_id, "sluice", facing, "sluice %d" % facing)
+				_expect_casement_miss(i, piece_id, "prism", facing, "prism %d" % facing)
+	var dry: Dictionary = book[0]
+	check(int(dry["tide_phases"][0]) == 0 and int(dry["solution_tide_index"]) == 0, "chart 135 is tide index 0 and flood 0")
+	var dry_hit: Dictionary = Tracer.trace(dry, Charts.make_state(dry, true))
+	check(_leaves(dry_hit, 3, 3, "E", "white") and dry_hit["docks"]["Wd"].has("white") and dry_hit["docks"]["Wd"].size() == 1, "chart 135 passes white east onto its dock")
+	check(_arrives_from(dry_hit, 3, 3, "E", "white") and _center_hit(dry_hit, 3, 3), "chart 135 lets the eastbound beam enter")
+	check(not _arrives_from(dry_hit, 3, 3, "W", "blue") and not _leaves(dry_hit, 3, 3, "W", "blue") and not dry_hit["docks"]["Wd"].has("blue"), "chart 135 stops the westbound beam")
+	check(not _departs(dry_hit, 3, 3, "red") and not _departs(dry_hit, 3, 3, "blue"), "chart 135 keeps white white and does not pass blue")
+	var west_face := Charts.duplicate_state(Charts.make_state(dry, true))
+	west_face["pieces"]["C"]["rot"] = 270
+	check(Tracer.trace(dry, west_face)["docks"]["Kb"].has("blue") and not Tracer.is_cleared(dry, west_face), "chart 135 facing west lets the westbound beam onto the wrong dock")
+	var wet: Dictionary = book[1]
+	check(int(wet["start_tide_index"]) == 1 and int(wet["solution_tide_index"]) == 0 and int(wet["tide_phases"][1]) == 2, "chart 136 opens under water and solves dry")
+	var wet_start: Dictionary = Tracer.trace(wet, Charts.make_state(wet, false))
+	check(wet_start["docks"]["Wd"].is_empty() and not _center_hit(wet_start, 3, 5), "chart 136 flooded row stops every beam outside the cell")
+	var wet_solved: Dictionary = Tracer.trace(wet, Charts.make_state(wet, true))
+	check(_leaves(wet_solved, 3, 5, "E", "white") and wet_solved["docks"]["Wd"].has("white") and not _arrives_from(wet_solved, 3, 5, "W", "blue"), "chart 136 dry tide passes only the facing beam")
+	var wet_west := Charts.duplicate_state(Charts.make_state(wet, true))
+	wet_west["pieces"]["C"]["rot"] = 270
+	check(Tracer.trace(wet, wet_west)["docks"]["Kb"].has("blue") and not Tracer.is_cleared(wet, wet_west), "chart 136 a dry casement facing west passes that beam onto the wrong dock")
+	var kept: Dictionary = Charts.casement()[2]
+	var kept_hit: Dictionary = Tracer.trace(kept, Charts.make_state(kept, true))
+	check(_leaves(kept_hit, 3, 3, "E", "white") and kept_hit["docks"]["Wd"].has("white") and kept_hit["docks"]["Wd"].size() == 1, "chart 137 keeps white")
+	var red_pass: Dictionary = Charts.casement()[2]
+	red_pass["lanterns"][0]["color"] = "red"
+	red_pass["docks"][0]["color"] = "red"
+	var red_hit: Dictionary = Tracer.trace(red_pass, Charts.make_state(red_pass, true))
+	check(_leaves(red_hit, 3, 3, "E", "red") and red_hit["docks"]["Wd"].has("red") and red_hit["docks"]["Wd"].size() == 1 and Tracer.is_cleared(red_pass, Charts.make_state(red_pass, true)), "chart 137 keeps red")
+	var blue_pass: Dictionary = Charts.casement()[2]
+	blue_pass["lanterns"][0]["color"] = "blue"
+	blue_pass["docks"][0]["color"] = "blue"
+	for raw_dock in blue_pass["docks"]:
+		var dock: Dictionary = raw_dock
+		if str(dock["id"]) == "Kb":
+			dock["color"] = "red"
+	var blue_hit: Dictionary = Tracer.trace(blue_pass, Charts.make_state(blue_pass, true))
+	check(_leaves(blue_hit, 3, 3, "E", "blue") and blue_hit["docks"]["Wd"].has("blue") and blue_hit["docks"]["Wd"].size() == 1 and Tracer.is_cleared(blue_pass, Charts.make_state(blue_pass, true)), "chart 137 keeps blue")
+	var straight: Dictionary = book[3]
+	var straight_hit: Dictionary = Tracer.trace(straight, Charts.make_state(straight, true))
+	check(_leaves(straight_hit, 3, 3, "E", "white") and not _leaves(straight_hit, 3, 3, "N", "white") and not _leaves(straight_hit, 3, 3, "S", "white") and straight_hit["docks"]["Wd"].has("white"), "chart 138 goes straight and does not turn")
+	var beside: Dictionary = book[4]
+	check(int(beside["tide_phases"][0]) == 2, "chart 139 holds a flooded neighbor")
+	var beside_state := Charts.make_state(beside, true)
+	check(not Tracer.is_flooded(beside, beside_state, Vector2i(3, 3)) and Tracer.is_flooded(beside, beside_state, Vector2i(6, 4)), "chart 139 casement row is dry and the next row is flooded")
+	var beside_hit: Dictionary = Tracer.trace(beside, beside_state)
+	check(_leaves(beside_hit, 3, 3, "E", "white") and beside_hit["docks"]["Wd"].has("white") and not _center_hit(beside_hit, 6, 4), "chart 139 facing beam passes and the flood beam stops at the waterline")
+	var pair: Dictionary = book[5]
+	var pair_hit: Dictionary = Tracer.trace(pair, Charts.make_state(pair, true))
+	check(_leaves(pair_hit, 3, 5, "E", "white") and _leaves(pair_hit, 2, 4, "N", "white") and pair_hit["docks"]["Wd"].has("white") and pair_hit["docks"]["Nd"].has("white"), "chart 140 each casement passes only its facing")
+	check(not _arrives_from(pair_hit, 3, 5, "W", "blue") and not _arrives_from(pair_hit, 2, 4, "S", "blue"), "chart 140 stops both opposite beams")
+	var north_bar: Dictionary = Charts.casement()[5]
+	_retarget(north_bar, "N", "transom", 0)
+	var north_bar_hit: Dictionary = Tracer.trace(north_bar, Charts.make_state(north_bar, true))
+	check(north_bar_hit["docks"]["Wd"].has("white") and north_bar_hit["docks"]["Nd"].is_empty(), "chart 140 a transom passes east and stops north")
+	var east_post: Dictionary = Charts.casement()[5]
+	_retarget(east_post, "E", "mullion", 0)
+	var east_post_hit: Dictionary = Tracer.trace(east_post, Charts.make_state(east_post, true))
+	check(east_post_hit["docks"]["Nd"].has("white") and east_post_hit["docks"]["Wd"].is_empty(), "chart 140 a mullion passes north and stops east")
+	var held: Dictionary = book[6]
+	check(int(held["tide_phases"][0]) == 0 and int(held["tide_phases"][1]) == 1 and int(held["tide_phases"][2]) == 4 and int(held["solution_tide_index"]) == 1, "chart 141 follows the held tide marks")
+	var held_solved := Charts.make_state(held, true)
+	var held_hit: Dictionary = Tracer.trace(held, held_solved)
+	check(int(held_solved["pieces"]["C"]["rot"]) == 90 and _leaves(held_hit, 4, 3, "E", "white") and held_hit["docks"]["Wd"].has("white") and not _arrives_from(held_hit, 4, 3, "W", "blue") and not bool(held_hit["boats"]["Hb"]), "chart 141 passes only the east facing")
+	var held_low := Charts.duplicate_state(held_solved)
+	held_low["tide_index"] = 0
+	check(bool(Tracer.trace(held, held_low)["boats"]["Hb"]) and not Tracer.is_cleared(held, held_low), "chart 141 low water wakes the south hull")
+	var held_high := Charts.duplicate_state(held_solved)
+	held_high["tide_index"] = 2
+	var held_high_hit: Dictionary = Tracer.trace(held, held_high)
+	check(held_high_hit["docks"]["Wd"].is_empty() and not _center_hit(held_high_hit, 4, 3) and not Tracer.is_cleared(held, held_high), "chart 141 high water stops the beam outside the casement")
+	var mark: Dictionary = book[7]
+	var mark_solved := Charts.make_state(mark, true)
+	check(str(mark_solved["pieces"]["C"]["socket"]) == "line" and int(mark_solved["pieces"]["C"]["rot"]) == 270 and str(mark_solved["pieces"]["G"]["socket"]) == "side", "chart 142 puts the west casement on the line")
+	var mark_hit: Dictionary = Tracer.trace(mark, mark_solved)
+	check(_leaves(mark_hit, 3, 3, "W", "white") and _center_hit(mark_hit, 3, 3) and mark_hit["docks"]["Wd"].has("white") and mark_hit["docks"]["Wd"].size() == 1, "chart 142 the facing beam enters")
+	check(not _arrives_from(mark_hit, 3, 3, "E", "blue") and not mark_hit["docks"]["Wd"].has("blue") and mark_hit["docks"]["Kd"].is_empty() and mark_hit["docks"]["Ke"].is_empty(), "chart 142 the opposite beam does not count")
+	var mark_transom: Dictionary = Charts.casement()[7]
+	_retarget(mark_transom, "C", "transom", 0)
+	var mark_transom_hit: Dictionary = Tracer.trace(mark_transom, Charts.make_state(mark_transom, true))
+	check(mark_transom_hit["docks"]["Ke"].has("blue") and not Tracer.is_cleared(mark_transom, Charts.make_state(mark_transom, true)), "chart 142 a transom lets the opposite beam in")
+	check(str(book[0]["teach"]).to_lower().contains("tide index 0") and str(book[0]["teach"]).to_lower().contains("transom") and str(book[0]["teach"]).to_lower().contains("mullion") and str(book[0]["teach"]).to_lower().contains("lintel"), "chart 135 teaches the dry casement")
+	check(str(book[1]["teach"]).to_lower().contains("outside the cell") and str(book[1]["teach"]).to_lower().contains("transom") and str(book[1]["teach"]).to_lower().contains("opposite"), "chart 136 teaches the wet stop")
+	check(str(book[2]["teach"]).to_lower().contains("red stays red") and str(book[2]["teach"]).to_lower().contains("stain"), "chart 137 teaches the kept color")
+	check(str(book[3]["teach"]).to_lower().contains("does not turn") and str(book[3]["teach"]).to_lower().contains("vane") and str(book[3]["teach"]).to_lower().contains("mirror") and str(book[3]["teach"]).to_lower().contains("prism"), "chart 138 teaches the straight pass")
+	check(str(book[4]["teach"]).to_lower().contains("waterline") and str(book[4]["teach"]).to_lower().contains("transom"), "chart 139 teaches the dry row beside the flood")
+	check(str(book[5]["teach"]).to_lower().contains("north") and str(book[5]["teach"]).to_lower().contains("lintel"), "chart 140 teaches both casements")
+	check(str(book[6]["teach"]).to_lower().contains("opposite") and str(book[6]["teach"]).to_lower().contains("mullion"), "chart 141 teaches the held casement")
+	check(str(book[7]["teach"]).to_lower().contains("opposite") and str(book[7]["teach"]).to_lower().contains("transom"), "chart 142 teaches the casement mark")
+
+
+func _expect_casement_miss(index: int, piece_id: String, kind: String, rot: int, label: String) -> void:
+	var chart: Dictionary = Charts.casement()[index]
+	_retarget(chart, piece_id, kind, rot)
+	var state := Charts.make_state(chart, true)
+	if Tracer.is_cleared(chart, state):
+		check(false, "%s clears casement chart %d" % [label, index + 135])
+	else:
+		check(true, "%s misses casement chart %d" % [label, index + 135])
+
+
 func test_smoke() -> void:
 	var main_script: Script = load("res://scripts/main.gd")
 	main_script.persist_progress = false
@@ -5273,10 +5531,11 @@ func test_smoke() -> void:
 	var lintel_rect: Rect2 = main.lintel_book_button.get_global_rect()
 	var mullion_rect: Rect2 = main.mullion_book_button.get_global_rect()
 	var transom_rect: Rect2 = main.transom_book_button.get_global_rect()
+	var casement_rect: Rect2 = main.casement_book_button.get_global_rect()
 	var side_rect: Rect2 = main._side.get_global_rect()
-	check(side_rect.grow(1.0).encloses(sluice_rect) and side_rect.grow(1.0).encloses(weir_rect) and side_rect.grow(1.0).encloses(lintel_rect) and side_rect.grow(1.0).encloses(mullion_rect) and side_rect.grow(1.0).encloses(transom_rect), "the sluice, weir, lintel, mullion, and transom book buttons sit inside the side panel")
-	check(not sluice_rect.intersects(weir_rect) and not weir_rect.intersects(lintel_rect) and not lintel_rect.intersects(mullion_rect) and not mullion_rect.intersects(transom_rect) and not sluice_rect.intersects(lintel_rect), "the transom button sits with the mullion button")
-	check(sluice_rect.size.x + 0.5 >= main.sluice_book_button.get_minimum_size().x and weir_rect.size.x + 0.5 >= main.weir_book_button.get_minimum_size().x and lintel_rect.size.x + 0.5 >= main.lintel_book_button.get_minimum_size().x and mullion_rect.size.x + 0.5 >= main.mullion_book_button.get_minimum_size().x and transom_rect.size.x + 0.5 >= main.transom_book_button.get_minimum_size().x, "the sluice, weir, lintel, mullion, and transom labels have room in the chart row")
+	check(side_rect.grow(1.0).encloses(sluice_rect) and side_rect.grow(1.0).encloses(weir_rect) and side_rect.grow(1.0).encloses(lintel_rect) and side_rect.grow(1.0).encloses(mullion_rect) and side_rect.grow(1.0).encloses(transom_rect) and side_rect.grow(1.0).encloses(casement_rect), "the sluice, weir, lintel, mullion, transom, and casement book buttons sit inside the side panel")
+	check(not sluice_rect.intersects(weir_rect) and not weir_rect.intersects(lintel_rect) and not lintel_rect.intersects(mullion_rect) and not mullion_rect.intersects(transom_rect) and not transom_rect.intersects(casement_rect) and not sluice_rect.intersects(lintel_rect), "the transom button stays beside the mullion button, with the casement button")
+	check(sluice_rect.size.x + 0.5 >= main.sluice_book_button.get_minimum_size().x and weir_rect.size.x + 0.5 >= main.weir_book_button.get_minimum_size().x and lintel_rect.size.x + 0.5 >= main.lintel_book_button.get_minimum_size().x and mullion_rect.size.x + 0.5 >= main.mullion_book_button.get_minimum_size().x and transom_rect.size.x + 0.5 >= main.transom_book_button.get_minimum_size().x and casement_rect.size.x + 0.5 >= main.casement_book_button.get_minimum_size().x, "the sluice, weir, lintel, mullion, transom, and casement labels have room in the chart row")
 	var window_w := int(ProjectSettings.get_setting("display/window/size/viewport_width"))
 	var window_h := int(ProjectSettings.get_setting("display/window/size/viewport_height"))
 	check(window_w == 1280 and window_h == 720, "the window stays 1280 by 720")
@@ -5348,7 +5607,7 @@ func test_smoke() -> void:
 	check(main.board_locked and main.unlocked[126], "holding the mullion mark opens the transom")
 	main._advance_from_win()
 	check(str(main.chart["id"]) == "127", "next chart from the mullion mark enters The Dry Transom")
-	check(main.transom_grid.visible and not main.mullion_grid.visible, "the transom grid opens with The Dry Transom")
+	check(main.transom_grid.visible and not main.mullion_grid.visible and not main.casement_grid.visible, "the transom grid opens with The Dry Transom")
 	check(str(main.harbor_label.text) == Charts.TRANSOM, "the harbor name follows the transom")
 	check(str(main.tide_readout.text).to_lower().contains("transom"), "chart 127 names the transom in the water readout")
 	var transom_cell := Charts.piece_cell(main.chart, main.state, "O")
@@ -5361,8 +5620,34 @@ func test_smoke() -> void:
 	main._on_book_pressed(16)
 	await process_frame
 	check(_chart_row_fits(main.transom_grid, main._side), "the transom chart row fits in the window")
+	main.unlocked[134] = false
+	main._refresh_chrome()
+	check(main.casement_book_button.disabled, "the casement stays locked until the transom mark is held")
+	main.unlocked[133] = true
+	check(main.select_chart(133), "chart 134 opens when unlocked")
+	check(main.casement_book_button.disabled, "opening the transom mark does not unlock the casement")
+	main.state = Charts.duplicate_state(Charts.make_state(main.chart, true))
+	main._refresh()
+	main.try_lock()
+	check(main.board_locked and main.unlocked[134], "holding the transom mark opens the casement")
+	main._advance_from_win()
+	check(str(main.chart["id"]) == "135", "next chart from the transom mark enters The Dry Casement")
+	check(main.casement_grid.visible and not main.transom_grid.visible and not main.mullion_grid.visible, "the casement grid opens with The Dry Casement")
+	check(str(main.harbor_label.text) == Charts.CASEMENT, "the harbor name follows the casement")
+	check(str(main.tide_readout.text).to_lower().contains("casement"), "chart 135 names the casement in the water readout")
+	var casement_cell := Charts.piece_cell(main.chart, main.state, "C")
+	_click_cell(main, casement_cell.x, casement_cell.y, false)
+	check(str(main.selected_id) == "C", "a click selects the casement")
+	check(int(main.state["pieces"]["C"]["rot"]) == 0, "the first click does not turn the casement")
+	_click_cell(main, casement_cell.x, casement_cell.y, false)
+	check(int(main.state["pieces"]["C"]["rot"]) == 90, "a second click turns the casement from north to east")
+	check(str(main.status_label.text).to_lower().contains("clockwise") and str(main.status_label.text).to_lower().contains("facing"), "the casement says it turns and passes its facing")
+	main._on_book_pressed(17)
+	await process_frame
+	check(str(main.chart["id"]) == "135", "Casement returns to The Dry Casement")
+	check(_chart_row_fits(main.casement_grid, main._side), "the casement chart row fits in the window")
 	main._on_book_pressed(13)
-	check(main.weir_grid.visible and not main.lintel_grid.visible and not main.mullion_grid.visible and not main.transom_grid.visible, "the weir book still opens")
+	check(main.weir_grid.visible and not main.lintel_grid.visible and not main.mullion_grid.visible and not main.transom_grid.visible and not main.casement_grid.visible, "the weir book still opens")
 	main.select_chart(0)
 	main.restart_chart()
 	var before_rot := int(main.state["pieces"]["M"]["rot"])
@@ -5448,8 +5733,9 @@ func _walk(chart: Dictionary, state: Dictionary, index: int, found: Array) -> vo
 	# A lintel has no facing. Rotation is ignored.
 	# A mullion has no facing. Rotation is ignored.
 	# A transom has no facing. Rotation is ignored.
+	# A casement has four facings. Only one of them passes a beam.
 	var rots: Array = [0]
-	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir":
+	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement":
 		rots = [0, 90, 180, 270]
 	elif kind != "shutter" and kind != "well" and kind != "siphon" and kind != "lintel" and kind != "mullion" and kind != "transom":
 		rots = [0, 90]
@@ -5654,6 +5940,31 @@ func _fixed_siphon(id: String, x: int, y: int) -> Dictionary:
 		"solution_socket": "a",
 		"solution_rot": 0,
 	}
+
+
+func _fixed_casement(id: String, x: int, y: int, rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": "Casement",
+		"kind": "casement",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": rot,
+		"solution_socket": "a",
+		"solution_rot": rot,
+	}
+
+
+func _casement_row(count: int) -> Dictionary:
+	var chart := _blank(count + 2, 1)
+	chart["lanterns"] = [_lamp("L", 0, 0, "E", "white")]
+	chart["docks"] = [_need("D", count + 1, 0, "white")]
+	var pieces: Array = []
+	for x in range(1, count + 1):
+		pieces.append(_fixed_casement("C%d" % x, x, 0, 90))
+	chart["pieces"] = pieces
+	return chart
 
 
 func _fixed_transom(id: String, x: int, y: int) -> Dictionary:
