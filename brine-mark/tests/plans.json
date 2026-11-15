@@ -350,5 +350,66 @@
     "bunk": [[14, 0]],
     "loft": [[14, -1]],
     "gate": [[14, -2]]
+  },
+  "no_wage": {
+    "note": "The gated shore with 10 hires through the gate and no wage. The wage beat has nowhere to pay them, so this plan fails to pay. It pays 0, leaves all 10 who passed unpaid, and leaves 97 in the yard. Hires still in the loft stay unpaid. Stored salt, the cart, the shipment, the earned coins, and the hire count stay put.",
+    "rake": [[1, 4], [1, 5], [1, 6]],
+    "stack": [[2, 4], [2, 5], [2, 6]],
+    "cover": [[3, 4], [3, 5], [3, 6]],
+    "trail": [[4, 5], [5, 5], [6, 5], [7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]],
+    "crib": [[14, 4]],
+    "ship": [[14, 3]],
+    "stall": [[14, 2]],
+    "yard": [[14, 1]],
+    "bunk": [[14, 0]],
+    "loft": [[14, -1]],
+    "gate": [[14, -2]]
+  },
+  "paid": {
+    "note": "The gated shore plus one wage one cell north of the gate. The wage stays shut until the wage beat, so the wet haul, the cart, the shipment, the earned coins, the hires, the loft, and the gate match the gated plan. Workers then pay the 10 hires who passed, at 4 coins each, and leave 57 in the yard. The 19 hires still in the loft stay unpaid.",
+    "rake": [[1, 4], [1, 5], [1, 6]],
+    "stack": [[2, 4], [2, 5], [2, 6]],
+    "cover": [[3, 4], [3, 5], [3, 6]],
+    "trail": [[4, 5], [5, 5], [6, 5], [7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]],
+    "crib": [[14, 4]],
+    "ship": [[14, 3]],
+    "stall": [[14, 2]],
+    "yard": [[14, 1]],
+    "bunk": [[14, 0]],
+    "loft": [[14, -1]],
+    "gate": [[14, -2]],
+    "wage": [[14, -3]]
+  },
+  "late_paid": {
+    "note": "The gated shore until the gate beat ends. The wage is painted when the wage beat opens, the way a player answers a crew that has passed the gate.",
+    "rake": [[1, 4], [1, 5], [1, 6]],
+    "stack": [[2, 4], [2, 5], [2, 6]],
+    "cover": [[3, 4], [3, 5], [3, 6]],
+    "trail": [[4, 5], [5, 5], [6, 5], [7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]],
+    "crib": [[14, 4]],
+    "ship": [[14, 3]],
+    "stall": [[14, 2]],
+    "yard": [[14, 1]],
+    "bunk": [[14, 0]],
+    "loft": [[14, -1]],
+    "gate": [[14, -2]],
+    "after_gate": {
+      "wage": [[14, -3]]
+    }
+  },
+  "dry_paid": {
+    "note": "The dry-pan line through the gate, plus a wage north of the gate. Wet haul stays 0. The yard holds 32 coins, which pays 8 of the 10 who passed at 4 coins each and leaves 0. The other 2 stay unpaid because the yard is short of 4.",
+    "pan": [[4, 4], [4, 5], [4, 6]],
+    "stack": [[5, 4], [5, 5], [5, 6]],
+    "cover": [[6, 4], [6, 5], [6, 6]],
+    "trail": [[7, 5], [8, 5], [9, 5], [10, 5], [11, 5], [12, 5], [13, 5]],
+    "crib": [[14, 4]],
+    "ship": [[14, 3]],
+    "stall": [[14, 2]],
+    "yard": [[14, 1]],
+    "bunk": [[14, 0]],
+    "loft": [[14, -1]],
+    "gate": [[14, -2]],
+    "wage": [[14, -3]]
   }
 }
