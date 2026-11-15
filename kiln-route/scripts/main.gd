@@ -205,6 +205,7 @@ func _kind_for_key(code: int) -> int:
 		KEY_SLASH: Rules.Kind.SHED,
 		KEY_QUOTELEFT: Rules.Kind.RAKE,
 		KEY_Y: Rules.Kind.HOE,
+		KEY_U: Rules.Kind.HARROW,
 	}
 	if not map.has(code):
 		return -1
@@ -369,6 +370,7 @@ func _kind_order() -> Array:
 		Rules.Kind.SHED,
 		Rules.Kind.RAKE,
 		Rules.Kind.HOE,
+		Rules.Kind.HARROW,
 	]
 
 
@@ -497,7 +499,7 @@ func _draw() -> void:
 	var size: Vector2 = lay.size
 	draw_rect(Rect2(Vector2.ZERO, size), COL_BG)
 	_text(Vector2(24, 14), "KILN ROUTE", 28, COL_TEXT)
-	_text(Vector2(236, 26), "fifteen wings", 15, COL_DIM)
+	_text(Vector2(236, 26), "sixteen wings", 15, COL_DIM)
 	var minute := "minute  %d / %d" % [_shown_tick(), Rules.SIM_TICKS]
 	var minute_w := font.get_string_size(minute, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
 	_text(Vector2(size.x - 24 - minute_w, 26), minute, 15, COL_DIM)
@@ -507,7 +509,7 @@ func _draw() -> void:
 	_draw_grid(lay)
 	_draw_side(lay)
 	_draw_tray(lay)
-	_text(Vector2(24, size.y - 28), "1-9 0 - = \\ ; , ' . / ` y select   R rotate   LMB place or pick up   RMB rotate   Space run   F skip   Bksp restart", 13, COL_DIM)
+	_text(Vector2(24, size.y - 28), "1-9 0 - = \\ ; , ' . / ` y u select   R rotate   LMB place or pick up   RMB rotate   Space run   F skip   Bksp restart", 13, COL_DIM)
 
 
 func _draw_tabs(lay: Dictionary) -> void:
@@ -788,6 +790,20 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 		var root := seat + right_dir * half
 		var tip := root + right_dir * body.size.x * 0.28
 		draw_line(root, tip, ink, thick)
+	elif kind == Rules.Kind.HARROW:
+		# A row of teeth across the bar. The hoe is a square with one spur to the right.
+		var along := Vector2(Rules.vec(dir))
+		var across := Vector2(Rules.vec(Rules.right(dir)))
+		var ink := Color(1, 1, 1, 0.92 * alpha)
+		var thick := maxf(2.0, body.size.x * 0.055)
+		var bar := center - along * body.size.x * 0.08
+		var span := body.size.x * 0.32
+		draw_line(bar - across * span, bar + across * span, ink, thick)
+		var tooth := along * body.size.x * 0.26
+		var tooth_at: Array[float] = [-0.28, -0.14, 0.0, 0.14, 0.28]
+		for offset in tooth_at:
+			var root := bar + across * body.size.x * offset
+			draw_line(root, root + tooth, ink, thick)
 	elif kind == Rules.Kind.GRATE:
 		var along := Vector2(Rules.vec(dir))
 		var across := Vector2(Rules.vec(Rules.right(dir)))
@@ -807,7 +823,7 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 	var forward := light
 	if kind == Rules.Kind.GRATE:
 		forward = Color("d7dee6")
-	if kind != Rules.Kind.HOOK and kind != Rules.Kind.DROP and kind != Rules.Kind.LIFT and kind != Rules.Kind.SHED and kind != Rules.Kind.RAKE and kind != Rules.Kind.HOE:
+	if kind != Rules.Kind.HOOK and kind != Rules.Kind.DROP and kind != Rules.Kind.LIFT and kind != Rules.Kind.SHED and kind != Rules.Kind.RAKE and kind != Rules.Kind.HOE and kind != Rules.Kind.HARROW:
 		_arrow(front, dir, body.size.x * 0.2, body.size.x * 0.12, Color(forward.r, forward.g, forward.b, forward_alpha))
 	if kind == Rules.Kind.HOOK:
 		var turn := Rules.left(dir)
@@ -828,6 +844,11 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 		var turn := Rules.right(dir)
 		var side := center + Vector2(Rules.vec(turn)) * body.size.x * 0.3
 		var mark := Color("d5f0c2")
+		_arrow(side, turn, body.size.x * 0.16, body.size.x * 0.1, Color(mark.r, mark.g, mark.b, alpha))
+	elif kind == Rules.Kind.HARROW:
+		var turn := Rules.right(dir)
+		var side := center + Vector2(Rules.vec(turn)) * body.size.x * 0.3
+		var mark := Color("efe6c4")
 		_arrow(side, turn, body.size.x * 0.16, body.size.x * 0.1, Color(mark.r, mark.g, mark.b, alpha))
 	elif kind == Rules.Kind.DROP:
 		var turn := Rules.right(dir)
@@ -994,6 +1015,8 @@ func _key_label(kind: int) -> String:
 		return "`"
 	if kind == Rules.Kind.HOE:
 		return "y"
+	if kind == Rules.Kind.HARROW:
+		return "u"
 	return str(kind + 1)
 
 
@@ -1038,6 +1061,8 @@ func _kind_color(kind: int) -> Color:
 		return Color("5c4e86")
 	if kind == Rules.Kind.HOE:
 		return Color("c46a2f")
+	if kind == Rules.Kind.HARROW:
+		return Color("6e7a48")
 	return Color("c792ef")
 
 
