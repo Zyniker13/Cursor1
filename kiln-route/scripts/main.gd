@@ -202,6 +202,8 @@ func _kind_for_key(code: int) -> int:
 		KEY_APOSTROPHE: Rules.Kind.PASS,
 		KEY_KP_DIVIDE: Rules.Kind.PASS,
 		KEY_PERIOD: Rules.Kind.SLIP,
+		KEY_SLASH: Rules.Kind.SHED,
+		KEY_QUOTELEFT: Rules.Kind.RAKE,
 	}
 	if not map.has(code):
 		return -1
@@ -363,6 +365,8 @@ func _kind_order() -> Array:
 		Rules.Kind.TWIN,
 		Rules.Kind.PASS,
 		Rules.Kind.SLIP,
+		Rules.Kind.SHED,
+		Rules.Kind.RAKE,
 	]
 
 
@@ -390,9 +394,11 @@ func _counts_now() -> Dictionary:
 
 
 func _layout() -> Dictionary:
-	var size := get_viewport_rect().size
-	if size.x < 100.0 or size.y < 100.0:
-		size = Vector2(1280, 720)
+	var size := Vector2(1280, 720)
+	if is_inside_tree():
+		var view := get_viewport_rect().size
+		if view.x >= 100.0 and view.y >= 100.0:
+			size = view
 	# Past 32 rooms, rows of ten keep each name readable.
 	# The sixth wing adds a fifth row. The seventh adds a sixth.
 	# The eighth adds a seventh. The ninth adds an eighth. The tenth fills that row.
@@ -489,7 +495,7 @@ func _draw() -> void:
 	var size: Vector2 = lay.size
 	draw_rect(Rect2(Vector2.ZERO, size), COL_BG)
 	_text(Vector2(24, 14), "KILN ROUTE", 28, COL_TEXT)
-	_text(Vector2(236, 26), "twelve wings", 15, COL_DIM)
+	_text(Vector2(236, 26), "fourteen wings", 15, COL_DIM)
 	var minute := "minute  %d / %d" % [_shown_tick(), Rules.SIM_TICKS]
 	var minute_w := font.get_string_size(minute, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
 	_text(Vector2(size.x - 24 - minute_w, 26), minute, 15, COL_DIM)
@@ -499,7 +505,7 @@ func _draw() -> void:
 	_draw_grid(lay)
 	_draw_side(lay)
 	_draw_tray(lay)
-	_text(Vector2(24, size.y - 28), "1-9 0 - = \\ ; , ' . select   R rotate   LMB place or pick up   RMB rotate   Space run   F skip   Bksp restart", 13, COL_DIM)
+	_text(Vector2(24, size.y - 28), "1-9 0 - = \\ ; , ' . / ` select   R rotate   LMB place or pick up   RMB rotate   Space run   F skip   Bksp restart", 13, COL_DIM)
 
 
 func _draw_tabs(lay: Dictionary) -> void:
@@ -742,6 +748,30 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 		var tail := center + across * body.size.x * 0.22 - along * body.size.x * 0.02
 		var tip := center - across * body.size.x * 0.16 + along * body.size.x * 0.28
 		draw_line(tail, tip, ink, thick)
+	elif kind == Rules.Kind.SHED:
+		var along := Vector2(Rules.vec(dir))
+		var left := Vector2(Rules.vec(Rules.left(dir)))
+		var ink := Color(1, 1, 1, 0.88 * alpha)
+		var thick := maxf(2.0, body.size.x * 0.08)
+		var seat := center - along * body.size.x * 0.22
+		var half := body.size.x * 0.11
+		draw_rect(Rect2(seat - Vector2(half, half), Vector2(half * 2.0, half * 2.0)), ink)
+		var root := center + along * body.size.x * 0.02
+		var tip := root + left * body.size.x * 0.36
+		draw_line(root, tip, ink, thick)
+	elif kind == Rules.Kind.RAKE:
+		# The square is the waiting item. The spur leaves that square and runs left.
+		# A shed's spur starts ahead of its square, at the arrival.
+		var along := Vector2(Rules.vec(dir))
+		var left := Vector2(Rules.vec(Rules.left(dir)))
+		var ink := Color(1, 1, 1, 0.92 * alpha)
+		var thick := maxf(2.0, body.size.x * 0.08)
+		var seat := center - along * body.size.x * 0.02
+		var half := body.size.x * 0.13
+		draw_rect(Rect2(seat - Vector2(half, half), Vector2(half * 2.0, half * 2.0)), ink)
+		var root := seat + left * half
+		var tip := root + left * body.size.x * 0.28
+		draw_line(root, tip, ink, thick)
 	elif kind == Rules.Kind.GRATE:
 		var along := Vector2(Rules.vec(dir))
 		var across := Vector2(Rules.vec(Rules.right(dir)))
@@ -761,12 +791,22 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 	var forward := light
 	if kind == Rules.Kind.GRATE:
 		forward = Color("d7dee6")
-	if kind != Rules.Kind.HOOK and kind != Rules.Kind.DROP and kind != Rules.Kind.LIFT:
+	if kind != Rules.Kind.HOOK and kind != Rules.Kind.DROP and kind != Rules.Kind.LIFT and kind != Rules.Kind.SHED and kind != Rules.Kind.RAKE:
 		_arrow(front, dir, body.size.x * 0.2, body.size.x * 0.12, Color(forward.r, forward.g, forward.b, forward_alpha))
 	if kind == Rules.Kind.HOOK:
 		var turn := Rules.left(dir)
 		var side := center + Vector2(Rules.vec(turn)) * body.size.x * 0.2
 		var mark := Color("f4e1b5")
+		_arrow(side, turn, body.size.x * 0.16, body.size.x * 0.1, Color(mark.r, mark.g, mark.b, alpha))
+	elif kind == Rules.Kind.SHED:
+		var turn := Rules.left(dir)
+		var side := center + Vector2(Rules.vec(turn)) * body.size.x * 0.22
+		var mark := Color("f0d2b8")
+		_arrow(side, turn, body.size.x * 0.16, body.size.x * 0.1, Color(mark.r, mark.g, mark.b, alpha))
+	elif kind == Rules.Kind.RAKE:
+		var turn := Rules.left(dir)
+		var side := center + Vector2(Rules.vec(turn)) * body.size.x * 0.3
+		var mark := Color("e7d9f6")
 		_arrow(side, turn, body.size.x * 0.16, body.size.x * 0.1, Color(mark.r, mark.g, mark.b, alpha))
 	elif kind == Rules.Kind.DROP:
 		var turn := Rules.right(dir)
@@ -927,6 +967,10 @@ func _key_label(kind: int) -> String:
 		return "'"
 	if kind == Rules.Kind.SLIP:
 		return "."
+	if kind == Rules.Kind.SHED:
+		return "/"
+	if kind == Rules.Kind.RAKE:
+		return "`"
 	return str(kind + 1)
 
 
@@ -965,6 +1009,10 @@ func _kind_color(kind: int) -> Color:
 		return Color("d07a8c")
 	if kind == Rules.Kind.SLIP:
 		return Color("3f6f78")
+	if kind == Rules.Kind.SHED:
+		return Color("a34b3c")
+	if kind == Rules.Kind.RAKE:
+		return Color("5c4e86")
 	return Color("c792ef")
 
 
