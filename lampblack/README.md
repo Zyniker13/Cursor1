@@ -1,6 +1,6 @@
 # Lampblack
 
-Turn-based stealth in a closed museum. This is the east wing: eight puzzles. You walk dark tiles, guards watch the lit ones, and there is no combat.
+Turn-based stealth in a closed museum. The east wing has eight puzzles and the west wing has six. You walk dark tiles, guards watch the lit ones, and there is no combat.
 
 ## Play
 
@@ -18,7 +18,7 @@ godot --path lampblack
 - `Space` waits. Click your own tile to wait.
 - `U` undoes the last turn, including after a loss or a win. Undo restores your position and facing, every lamp, and every guard.
 - `R` restarts the puzzle.
-- `1` through `8` select a puzzle. The buttons along the bottom do the same.
+- `1` through `8` select an east-wing puzzle. `Shift` plus `1` through `6` selects a west-wing puzzle. The buttons along the bottom do the same, grouped by wing.
 
 Puzzle 1 states the rules in the banner. Gold diamonds are lamplight. Red diamonds are tiles a guard is watching. An arrow is that guard's next step.
 
@@ -41,9 +41,9 @@ From the repository root:
 godot --headless --path lampblack -s res://tests/run_tests.gd
 ```
 
-The process exits `0` when every check passes and `1` when any check fails. The suite plays each puzzle's scripted solution, rejects a watched step, checks undo, and checks the tile the guard called in puzzle 3 will step to.
+The process exits `0` when every check passes and `1` when any check fails. The suite plays each puzzle's scripted solution, rejects a watched step, checks undo, and checks the tile the guard called in puzzle 3 will step to. West-wing checks also play each new solution, undo it back to the start, and step onto a watched lit tile to confirm that step still loses.
 
-## The wing
+## The east wing
 
 1. East Cloister — a dark corridor, no guards, walk to the exit.
 2. The Lamp Hall — one lamp's diamond blocks the hall until you snuff it.
@@ -54,6 +54,15 @@ The process exits `0` when every check passes and `1` when any check fails. The 
 7. The Arrow — the guard's next step is the whole puzzle.
 8. The West Door — snuff, wait in the alcove, then cross the lit gap.
 
+## The west wing
+
+9. The Lit Door — the exit itself is lit. Cross the gap, snuff the door lamp, and step through before the called guard arrives.
+10. The Lower Seal — two keepers stand the same distance from the lamp. The lower number answers; the other never steps down.
+11. The Broken Sightline — snuff the lamp in the middle of a guard's view so a still-lit gap goes dark to him.
+12. The Second Wick — snuff a lamp to cross its floor, then relight that same lamp so the gap opens. Lighting does not call a guard.
+13. The Cellar Pace — a patrol keeps the lit hall shut. Snuff it and he still takes the step he owed, then leaves the rail and holds.
+14. The Second Call — the first snuff makes him hold on the road. The second snuff calls him off it.
+
 ## Limits
 
-This is the first wing only. There is no sound and no combat. A called guard holds on the lamp instead of resuming a patrol. Squares are drawn with Godot primitives; there is no art pack. The headless suite is the checked playthrough of the eight solutions.
+There is no sound and no combat. A called guard holds on the lamp until a later snuff calls him again. Squares are drawn with Godot primitives; there is no art pack. The headless suite is the checked playthrough of all fourteen solutions.

@@ -27,8 +27,8 @@ func _ready() -> void:
 	return_button.text = "Return to town"
 	return_button.visible = false
 	return_button.focus_mode = Control.FOCUS_NONE
-	return_button.position = Vector2(968, 652)
-	return_button.size = Vector2(280, 52)
+	return_button.position = Vector2(928, 640)
+	return_button.size = Vector2(328, 52)
 	return_button.pressed.connect(_finish)
 	_style_return(return_button)
 	add_child(return_button)
@@ -40,6 +40,7 @@ func begin(next_state: Rules.RunState) -> void:
 	flash = 0.0
 	_mouse_x = 0.0
 	last_message = "The square under your boots is already inked."
+	return_button.text = "Return to town"
 	return_button.visible = false
 	queue_redraw()
 
@@ -121,7 +122,14 @@ func _apply(action: int) -> void:
 
 
 func _open_return() -> void:
+	return_button.text = _return_caption()
 	return_button.visible = true
+
+
+func _return_caption() -> String:
+	if state != null and state.end_reason == Rules.EndReason.EXTRACTED and Rules.census_accepted(state.marks, state.floor):
+		return "Return to floor select"
+	return "Return to town"
 
 
 func _finish() -> void:
@@ -137,7 +145,7 @@ func _draw() -> void:
 		_font = ThemeDB.fallback_font
 	var layout := _layout()
 	draw_rect(Rect2(Vector2.ZERO, size if size.x > 32.0 else Vector2(1280, 720)), NIGHT)
-	if state == null:
+	if state == null or state.floor == null:
 		return
 	_draw_view(layout.view)
 	_draw_sheet(layout.sheet)
@@ -149,7 +157,7 @@ func _layout() -> Dictionary:
 	if vp.x < 200.0:
 		vp = Vector2(1280, 720)
 	var margin := 16.0
-	var hud_h := 164.0
+	var hud_h := 200.0
 	var sheet_w := minf(488.0, vp.x * 0.38)
 	var view := Rect2(margin, margin, vp.x - sheet_w - margin * 3.0, vp.y - hud_h - margin)
 	var sheet := Rect2(vp.x - sheet_w - margin, margin, sheet_w, view.size.y)
@@ -184,11 +192,17 @@ func _draw_view(view: Rect2) -> void:
 		if clip1 <= clip0:
 			continue
 		var shade := clampf(1.15 - dist / 8.0, 0.08, 1.0)
-		var col := Color(0.58, 0.40, 0.26) * shade
+		var cell: Vector2i = hit.cell
+		var glyph := Rules.glyph_at(cell, state.floor)
+		var col := Color(0.58, 0.40, 0.26)
+		if state.floor.id == "cistern":
+			col = Color(0.40, 0.45, 0.44)
+		if glyph == "*":
+			col = Color(0.14, 0.38, 0.42)
+		col *= shade
 		if int(hit.side) == 1:
 			col *= 0.74
-		var cell: Vector2i = hit.cell
-		if (cell.x + cell.y) % 2 == 0:
+		if glyph != "*" and (cell.x + cell.y) % 2 == 0:
 			col = col.lerp(Color(0.32, 0.20, 0.14), 0.22)
 		var wall_x := origin.y + dist * ray.y if int(hit.side) == 0 else origin.x + dist * ray.x
 		wall_x = wall_x - floor(wall_x)
@@ -210,6 +224,7 @@ func _draw_view(view: Rect2) -> void:
 	draw_line(mid + Vector2(3, 0), mid + Vector2(10, 0), AMBER, 2.0)
 	draw_line(mid + Vector2(0, -10), mid + Vector2(0, -3), AMBER, 2.0)
 	draw_line(mid + Vector2(0, 3), mid + Vector2(0, 10), AMBER, 2.0)
+	draw_string(_font, view.position + Vector2(18, 28), state.floor.title, HORIZONTAL_ALIGNMENT_LEFT, view.size.x * 0.55, 20, AMBER)
 	var lamp := view.position + Vector2(view.size.x * 0.82, view.size.y * 0.9)
 	draw_circle(lamp, 34, Color(0.95, 0.62, 0.18, 0.10))
 	draw_circle(lamp, 14, Color(0.98, 0.82, 0.40, 0.95))
@@ -252,7 +267,7 @@ func _cast(origin: Vector2, ray_dir: Vector2) -> Dictionary:
 			side_y += delta_y
 			map_y += step_y
 			side = 1
-		if Rules.tile_at(Vector2i(map_x, map_y)) == Rules.Tile.WALL:
+		if Rules.tile_at(Vector2i(map_x, map_y), state.floor) == Rules.Tile.WALL:
 			hit = true
 			break
 	var perp := (side_x - delta_x) if side == 0 else (side_y - delta_y)
@@ -263,11 +278,12 @@ func _cast(origin: Vector2, ray_dir: Vector2) -> Dictionary:
 
 func _draw_sprites(view: Rect2, origin: Vector2, dir: Vector2, plane: Vector2, zbuf: PackedFloat32Array, cols: int, col_w: float) -> void:
 	var items: Array = []
-	items.append({"pos": Rules.enemy_pos(), "kind": "warden"})
-	items.append({"pos": Rules.telegraph_tile(state.telegraph_index), "kind": "swing"})
-	items.append({"pos": Rules.lift_pos(), "kind": "lift"})
-	for hazard in Rules.hazard_cells():
-		items.append({"pos": hazard, "kind": "hazard"})
+	items.append({"pos": Rules.enemy_pos(state.floor), "kind": "warden"})
+	items.append({"pos": Rules.telegraph_tile(state.telegraph_index, state.floor), "kind": "swing"})
+	items.append({"pos": Rules.lift_pos(state.floor), "kind": "lift"})
+	var hazard_kind := "seep" if state.floor.id == "cistern" else "hazard"
+	for hazard in Rules.hazard_cells(state.floor):
+		items.append({"pos": hazard, "kind": hazard_kind})
 	var drawn: Array = []
 	for item in items:
 		var cell: Vector2i = item.pos
@@ -327,6 +343,10 @@ func _sprite_column(view: Rect2, column: int, col_w: float, top: float, sprite_h
 			if half < 1.0:
 				var thick := (1.0 - half) * 0.16
 				slices.append([0.78 - thick, 0.78 + thick, Color(0.95, 0.42, 0.18)])
+		"seep":
+			if u > 0.22 and u < 0.78:
+				slices.append([0.62, 0.70, Color(0.28, 0.72, 0.66)])
+				slices.append([0.76, 0.84, Color(0.10, 0.38, 0.42)])
 		"hazard":
 			if u > 0.22 and u < 0.78:
 				slices.append([0.62, 0.70, Color(0.72, 0.34, 0.14)])
@@ -351,10 +371,11 @@ func _draw_sheet(sheet: Rect2) -> void:
 	draw_rect(sheet.grow(3), Color(0.28, 0.18, 0.10))
 	draw_rect(sheet, PARCHMENT)
 	draw_rect(sheet.grow(-6), PARCHMENT_DARK, false, 2.0)
-	draw_string(_font, sheet.position + Vector2(16, 28), "FIELD SHEET", HORIZONTAL_ALIGNMENT_LEFT, sheet.size.x - 32, 22, INK)
-	var cols := Rules.width()
-	var rows := Rules.height()
-	var grid := Rect2(sheet.position + Vector2(16, 40), Vector2(sheet.size.x - 32, sheet.size.y - 108))
+	draw_string(_font, sheet.position + Vector2(16, 24), "FIELD SHEET", HORIZONTAL_ALIGNMENT_LEFT, sheet.size.x - 64, 18, INK)
+	draw_string(_font, sheet.position + Vector2(16, 44), state.floor.title, HORIZONTAL_ALIGNMENT_LEFT, sheet.size.x - 64, 16, INK)
+	var cols := Rules.width(state.floor)
+	var rows := Rules.height(state.floor)
+	var grid := Rect2(sheet.position + Vector2(16, 56), Vector2(sheet.size.x - 32, sheet.size.y - 140))
 	var cell := minf(grid.size.x / float(cols), grid.size.y / float(rows))
 	var origin := grid.position + Vector2(
 		(grid.size.x - cell * cols) * 0.5,
@@ -365,21 +386,27 @@ func _draw_sheet(sheet: Rect2) -> void:
 			var rect := Rect2(origin + Vector2(x, y) * cell, Vector2(cell, cell))
 			draw_rect(rect, Color(0.84, 0.75, 0.56, 0.35), false, 1.0)
 			var p := Vector2i(x, y)
-			_draw_mark(rect, int(state.marks.get(p, Rules.Mark.NONE)), Rules.tile_at(p))
+			_draw_mark(rect, int(state.marks.get(p, Rules.Mark.NONE)), Rules.tile_at(p, state.floor))
 	var faced := state.pos + Rules.dir_vector(state.facing)
-	if Rules.in_bounds(faced):
+	if Rules.in_bounds(faced, state.floor):
 		var faced_rect := Rect2(origin + Vector2(faced) * cell, Vector2(cell, cell))
 		draw_rect(faced_rect.grow(-1), AMBER, false, 2.0)
 	var pulse := 0.5 + 0.5 * sin(float(Time.get_ticks_msec()) / 180.0)
-	var swing := Rules.telegraph_tile(state.telegraph_index)
-	if Rules.in_bounds(swing):
+	var swing := Rules.telegraph_tile(state.telegraph_index, state.floor)
+	if Rules.in_bounds(swing, state.floor):
 		var center := origin + Vector2(swing) * cell + Vector2(cell, cell) * 0.5
 		draw_arc(center, cell * (0.30 + 0.05 * pulse), 0, TAU, 18, Color(0.75, 0.22, 0.12), 2.0, true)
-	_draw_warden_token(origin + Vector2(Rules.enemy_pos()) * cell, cell)
+	_draw_warden_token(origin + Vector2(Rules.enemy_pos(state.floor)) * cell, cell)
 	_draw_player_token(origin + Vector2(state.pos) * cell, cell, Rules.dir_vector(state.facing))
-	var legend_y := sheet.position.y + sheet.size.y - 58
-	draw_string(_font, Vector2(sheet.position.x + 16, legend_y), "Square wall    dot corridor    triangle hazard", HORIZONTAL_ALIGNMENT_LEFT, sheet.size.x - 32, 14, INK)
-	draw_string(_font, Vector2(sheet.position.x + 16, legend_y + 20), "Ring is the swing, not ink. Hood is the warden.", HORIZONTAL_ALIGNMENT_LEFT, sheet.size.x - 32, 14, INK)
+	var legend_y := sheet.position.y + sheet.size.y - 56
+	var legend := "Square wall    dot corridor    triangle hazard"
+	if state.floor.id == "cistern":
+		legend = "Square wall    dot corridor    triangle seep"
+	draw_string(_font, Vector2(sheet.position.x + 16, legend_y), legend, HORIZONTAL_ALIGNMENT_LEFT, sheet.size.x - 32, 14, INK)
+	var swing_note := "Ring is the swing, not ink. Hood is the warden."
+	if state.floor.id == "cistern":
+		swing_note = "Red ring is the swing, not ink. Hood is the warden."
+	draw_string(_font, Vector2(sheet.position.x + 16, legend_y + 20), swing_note, HORIZONTAL_ALIGNMENT_LEFT, sheet.size.x - 32, 14, INK)
 	draw_circle(sheet.position + Vector2(sheet.size.x - 36, 28), 12, Color(0.62, 0.16, 0.14))
 
 
@@ -431,32 +458,36 @@ func _draw_hud(hud: Rect2) -> void:
 	draw_string(_font, hud.position + Vector2(308, 28), oil_text, HORIZONTAL_ALIGNMENT_LEFT, 420, 18, PARCHMENT)
 	var faced := state.pos + Rules.dir_vector(state.facing)
 	var faced_mark := Rules.Mark.NONE
-	if Rules.in_bounds(faced):
+	if Rules.in_bounds(faced, state.floor):
 		faced_mark = int(state.marks.get(faced, Rules.Mark.NONE))
 	var lines := PackedStringArray([
+		state.floor.record,
 		Rules.strike_line(state),
 		Rules.ahead_line(state),
 		"Faced ink: %s. M cycles wall, hazard, corridor, clear." % Rules.mark_name(faced_mark),
 		last_message,
-		"Tap arrows or WASD. Q and E strafe. Space waits. Esc leaves unpaid. Hold right mouse to turn.",
+		"Arrows or WASD move. Q and E strafe. Space waits. Esc leaves unpaid.",
 	])
-	if Rules.tile_at(state.pos) == Rules.Tile.HAZARD and state.end_reason == Rules.EndReason.NONE:
-		lines.append("You are standing on a hazard crack.")
-	var y := hud.position.y + 52
+	if Rules.tile_at(state.pos, state.floor) == Rules.Tile.HAZARD and state.end_reason == Rules.EndReason.NONE:
+		if state.floor.id == "cistern":
+			lines.append("You are standing on a seep crack.")
+		else:
+			lines.append("You are standing on a hazard crack.")
+	var y := hud.position.y + 46
 	for line in lines:
 		draw_string(_font, Vector2(hud.position.x + 16, y), line, HORIZONTAL_ALIGNMENT_LEFT, hud.size.x - 32, 16, PARCHMENT)
-		y += 20
-
+		y += 18
 
 func _banner() -> String:
+	if state.end_reason == Rules.EndReason.EXTRACTED and Rules.census_accepted(state.marks, state.floor):
+		return "Census complete. Return to the floor select."
 	match state.end_reason:
 		Rules.EndReason.EXTRACTED:
-			return "The lift is open. Return and turn the sheet in."
+			return "The lift is open. The census is still short. Return to town."
 		Rules.EndReason.LAMP_OUT:
 			return "The lamp is out. The sheet does not come back."
 		_:
 			return "You left the floor. The sheet pays nothing."
-
 
 func _facing_angle(facing: int) -> float:
 	match posmod(facing, 4):

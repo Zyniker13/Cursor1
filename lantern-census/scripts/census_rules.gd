@@ -1,7 +1,7 @@
 class_name CensusRules
 extends RefCounted
 
-## Rules for one hand-authored floor of Lantern Census.
+## Shared rules for the hand-authored floors of Lantern Census.
 ##
 ## Oil is the turn budget. A successful step, strafe, or wait drinks MOVE_OIL.
 ## Turning and marking are free and do not advance the warden.
@@ -12,13 +12,17 @@ extends RefCounted
 ## Oil at 0 ends the descent (the lamp goes out) and the sheet pays nothing.
 ## Stepping onto the lift extracts you even if that step spends the last oil.
 ##
-## Payout, only after a lift extract:
+## Payout, only after a lift extract, is the same on every floor:
 ##   corridor_pay = CORRIDOR_VALUE * true corridor tiles marked corridor
 ##   hazard_pay   = HAZARD_VALUE   * true hazard tiles marked hazard
-##   loop_pay     = LOOP_VALUE if every east-square tile is marked corridor, else 0
+##   loop_pay     = LOOP_VALUE if every tile of that floor's ring is marked corridor, else 0
 ##   total        = corridor_pay + hazard_pay + loop_pay
 ## A mark that does not match the floor adds nothing. A false hazard mark
 ## does not increase hazard pay or the total.
+##
+## The cellar's ring is the east square. The cistern's ring is the walk
+## around the pit. A census is accepted only when every corridor and hazard
+## is marked truly and no tile is marked as something it is not.
 
 const SMALL_FLASK_OIL := 24
 const LARGE_FLASK_OIL := 120
@@ -30,9 +34,12 @@ const HAZARD_VALUE := 8
 const LOOP_VALUE := 15
 
 const TOWN_LINE := "Arrows turn and step, Q and E strafe, M marks the tile you face, and Space waits out the warden's swing."
-const RATE_CARD := "A true corridor pays 3. A true hazard pays 8. The east square pays 15 only when all four of its tiles are marked corridor. A false mark pays nothing."
+const RATE_CARD := "A true corridor pays 3. A true hazard pays 8. The cellar's east square and the cistern ring each pay 15 only when every tile of that ring is marked corridor. A false mark pays nothing."
 
-const ROWS: PackedStringArray = [
+const CELLAR_RECORD := "Record every corridor, both hazard cracks, and the east square."
+const CISTERN_RECORD := "Record every corridor, the three seep cracks, and the cistern ring around the pit."
+
+const CELLAR_ROWS: PackedStringArray = [
 	"#############",
 	"#S...#......#",
 	"#.##.#.####.#",
@@ -46,12 +53,37 @@ const ROWS: PackedStringArray = [
 	"#############",
 ]
 
+# The pit is the 3x3 block of '*' at columns 4-6, rows 4-6.
+# The paid ring is the 16-tile corridor cycle around that pit.
+const CISTERN_ROWS: PackedStringArray = [
+	"###############",
+	"#S............#",
+	"#.###########.#",
+	"#.#.........#.#",
+	"#.#.***.....#.#",
+	"#.#.***.....#.#",
+	"#.#.***.....#.#",
+	"#.#.........#.#",
+	"#............L#",
+	"#..E..H..H.H..#",
+	"###############",
+]
+
 enum Tile { WALL, FLOOR, HAZARD, LIFT }
 enum Mark { NONE, CORRIDOR, WALL, HAZARD }
 enum EndReason { NONE, EXTRACTED, LAMP_OUT, ABANDONED }
 enum Action { TURN_LEFT, TURN_RIGHT, FORWARD, BACK, STRAFE_LEFT, STRAFE_RIGHT, WAIT, MARK }
 
+class Floor extends RefCounted:
+	var id: String
+	var title: String
+	var rows: PackedStringArray
+	var loop_name: String
+	var loop: Array
+	var record: String
+
 class RunState extends RefCounted:
+	var floor: Floor
 	var pos: Vector2i
 	var facing: int
 	var oil: int
@@ -68,59 +100,118 @@ class Campaign extends RefCounted:
 	var upgraded: bool
 	var last_bill: Dictionary
 	var last_outcome: String
+	var last_floor_id: String
+	var completed: Dictionary
 
 
-static func width() -> int:
-	return ROWS[0].length()
+static var _floor_list: Array = []
 
 
-static func height() -> int:
-	return ROWS.size()
+static func floors() -> Array:
+	if _floor_list.is_empty():
+		_floor_list = [_make_cellar(), _make_cistern()]
+	return _floor_list
 
 
-static func in_bounds(p: Vector2i) -> bool:
-	return p.y >= 0 and p.y < ROWS.size() and p.x >= 0 and p.x < ROWS[p.y].length()
+static func default_floor() -> Floor:
+	return floors()[0]
 
 
-static func tile_at(p: Vector2i) -> int:
-	if not in_bounds(p):
+static func floor_named(id: String) -> Floor:
+	for floor in floors():
+		if floor.id == id:
+			return floor
+	return null
+
+
+static func _use(floor: Floor) -> Floor:
+	if floor == null:
+		return default_floor()
+	return floor
+
+
+static func _make_cellar() -> Floor:
+	var floor := Floor.new()
+	floor.id = "cellar"
+	floor.title = "The Cellar"
+	floor.rows = CELLAR_ROWS
+	floor.loop_name = "East square"
+	floor.loop = [Vector2i(8, 3), Vector2i(9, 3), Vector2i(9, 4), Vector2i(8, 4)]
+	floor.record = CELLAR_RECORD
+	return floor
+
+
+static func _make_cistern() -> Floor:
+	var floor := Floor.new()
+	floor.id = "cistern"
+	floor.title = "The Cistern"
+	floor.rows = CISTERN_ROWS
+	floor.loop_name = "Cistern ring"
+	var ring: Array = []
+	for x in range(3, 8):
+		ring.append(Vector2i(x, 3))
+	for y in range(4, 7):
+		ring.append(Vector2i(3, y))
+		ring.append(Vector2i(7, y))
+	for x in range(3, 8):
+		ring.append(Vector2i(x, 7))
+	floor.loop = ring
+	floor.record = CISTERN_RECORD
+	return floor
+
+
+static func width(floor: Floor = null) -> int:
+	return _use(floor).rows[0].length()
+
+
+static func height(floor: Floor = null) -> int:
+	return _use(floor).rows.size()
+
+
+static func in_bounds(p: Vector2i, floor: Floor = null) -> bool:
+	var rows := _use(floor).rows
+	return p.y >= 0 and p.y < rows.size() and p.x >= 0 and p.x < rows[p.y].length()
+
+
+static func glyph_at(p: Vector2i, floor: Floor = null) -> String:
+	var plan := _use(floor)
+	if not in_bounds(p, plan):
+		return "#"
+	return plan.rows[p.y][p.x]
+
+
+static func tile_at(p: Vector2i, floor: Floor = null) -> int:
+	var ch := glyph_at(p, floor)
+	if ch == "#" or ch == "*":
 		return Tile.WALL
-	var ch := ROWS[p.y][p.x]
-	match ch:
-		"#":
-			return Tile.WALL
-		"H":
-			return Tile.HAZARD
-		"L":
-			return Tile.LIFT
-		".":
-			return Tile.FLOOR
-		"S":
-			return Tile.FLOOR
-		"E":
-			return Tile.FLOOR
-		_:
-			return Tile.WALL
+	if ch == "H":
+		return Tile.HAZARD
+	if ch == "L":
+		return Tile.LIFT
+	if ch == "." or ch == "S" or ch == "E":
+		return Tile.FLOOR
+	return Tile.WALL
 
 
-static func find_char(ch: String) -> Vector2i:
-	for y in ROWS.size():
-		var x := ROWS[y].find(ch)
+static func find_char(ch: String, floor: Floor = null) -> Vector2i:
+	var rows := _use(floor).rows
+	for y in rows.size():
+		var x := rows[y].find(ch)
 		if x >= 0:
 			return Vector2i(x, y)
 	return Vector2i(-1, -1)
 
 
-static func start_pos() -> Vector2i:
-	return find_char("S")
+static func start_pos(floor: Floor = null) -> Vector2i:
+	return find_char("S", floor)
 
 
-static func lift_pos() -> Vector2i:
-	return find_char("L")
+static func lift_pos(floor: Floor = null) -> Vector2i:
+	return find_char("L", floor)
 
 
-static func enemy_pos() -> Vector2i:
-	return find_char("E")
+static func enemy_pos(floor: Floor = null) -> Vector2i:
+	return find_char("E", floor)
 
 
 static func cardinals() -> Array:
@@ -149,59 +240,63 @@ static func facing_from_vector(d: Vector2i) -> int:
 	return 3
 
 
-static func swing_tiles() -> Array:
-	var enemy := enemy_pos()
+static func swing_tiles(floor: Floor = null) -> Array:
+	var enemy := enemy_pos(floor)
 	return [enemy + Vector2i(1, 0), enemy + Vector2i(-1, 0)]
 
 
-static func telegraph_tile(index: int) -> Vector2i:
-	var swings := swing_tiles()
+static func telegraph_tile(index: int, floor: Floor = null) -> Vector2i:
+	var swings := swing_tiles(floor)
 	return swings[posmod(index, swings.size())]
 
 
-static func loop_cells() -> Array:
-	# East square, the only closed loop the clerk pays for.
-	return [Vector2i(8, 3), Vector2i(9, 3), Vector2i(9, 4), Vector2i(8, 4)]
+static func loop_cells(floor: Floor = null) -> Array:
+	return _use(floor).loop.duplicate()
 
 
-static func is_walkable(p: Vector2i) -> bool:
-	if p == enemy_pos():
+static func is_walkable(p: Vector2i, floor: Floor = null) -> bool:
+	var plan := _use(floor)
+	if p == enemy_pos(plan):
 		return false
-	var t := tile_at(p)
+	var t := tile_at(p, plan)
 	return t == Tile.FLOOR or t == Tile.HAZARD or t == Tile.LIFT
 
 
-static func is_corridor_cell(p: Vector2i) -> bool:
-	if p == enemy_pos():
+static func is_corridor_cell(p: Vector2i, floor: Floor = null) -> bool:
+	var plan := _use(floor)
+	if p == enemy_pos(plan):
 		return false
-	var t := tile_at(p)
+	var t := tile_at(p, plan)
 	return t == Tile.FLOOR or t == Tile.LIFT
 
 
-static func corridor_cells() -> Array:
+static func corridor_cells(floor: Floor = null) -> Array:
+	var plan := _use(floor)
 	var cells: Array = []
-	for y in height():
-		for x in width():
+	for y in height(plan):
+		for x in width(plan):
 			var p := Vector2i(x, y)
-			if is_corridor_cell(p):
+			if is_corridor_cell(p, plan):
 				cells.append(p)
 	return cells
 
 
-static func hazard_cells() -> Array:
+static func hazard_cells(floor: Floor = null) -> Array:
+	var plan := _use(floor)
 	var cells: Array = []
-	for y in height():
-		for x in width():
+	for y in height(plan):
+		for x in width(plan):
 			var p := Vector2i(x, y)
-			if tile_at(p) == Tile.HAZARD:
+			if tile_at(p, plan) == Tile.HAZARD:
 				cells.append(p)
 	return cells
 
 
-static func walkable_approach(tile: Vector2i) -> Vector2i:
+static func walkable_approach(tile: Vector2i, floor: Floor = null) -> Vector2i:
+	var plan := _use(floor)
 	for d in cardinals():
 		var n: Vector2i = tile + d
-		if is_walkable(n):
+		if is_walkable(n, plan):
 			return n
 	return Vector2i(-1, -1)
 
@@ -212,6 +307,8 @@ static func new_campaign() -> Campaign:
 	c.flask_oil = SMALL_FLASK_OIL
 	c.upgraded = false
 	c.last_outcome = "fresh"
+	c.last_floor_id = ""
+	c.completed = {}
 	c.last_bill = payout({})
 	return c
 
@@ -229,9 +326,11 @@ static func buy_flask(c: Campaign) -> bool:
 	return true
 
 
-static func new_run(flask_oil: int) -> RunState:
+static func new_run(flask_oil: int, floor: Floor = null) -> RunState:
+	var plan := _use(floor)
 	var state := RunState.new()
-	state.pos = start_pos()
+	state.floor = plan
+	state.pos = start_pos(plan)
 	state.facing = facing_from_vector(Vector2i(1, 0))
 	state.oil = flask_oil
 	state.flask_capacity = flask_oil
@@ -244,18 +343,56 @@ static func new_run(flask_oil: int) -> RunState:
 	return state
 
 
-static func accurate_sheet() -> Dictionary:
+static func accurate_sheet(floor: Floor = null) -> Dictionary:
+	var plan := _use(floor)
 	var marks := {}
-	for cell in corridor_cells():
+	for cell in corridor_cells(plan):
 		marks[cell] = Mark.CORRIDOR
-	for cell in hazard_cells():
+	for cell in hazard_cells(plan):
 		marks[cell] = Mark.HAZARD
 	return marks
 
 
-static func payout(marks: Dictionary) -> Dictionary:
-	var corridor_total := corridor_cells()
-	var hazard_total := hazard_cells()
+static func true_mark(p: Vector2i, floor: Floor = null) -> int:
+	var plan := _use(floor)
+	if p == enemy_pos(plan):
+		return Mark.NONE
+	match tile_at(p, plan):
+		Tile.HAZARD:
+			return Mark.HAZARD
+		Tile.FLOOR, Tile.LIFT:
+			return Mark.CORRIDOR
+		_:
+			return Mark.WALL
+
+
+static func census_accepted(marks: Dictionary, floor: Floor = null) -> bool:
+	var plan := _use(floor)
+	for cell in corridor_cells(plan):
+		if int(marks.get(cell, Mark.NONE)) != Mark.CORRIDOR:
+			return false
+	for cell in hazard_cells(plan):
+		if int(marks.get(cell, Mark.NONE)) != Mark.HAZARD:
+			return false
+	for key in marks.keys():
+		var p: Vector2i = key
+		if not in_bounds(p, plan):
+			return false
+		var mark := int(marks[key])
+		if mark == Mark.NONE:
+			continue
+		if mark != true_mark(p, plan):
+			return false
+	for cell in loop_cells(plan):
+		if int(marks.get(cell, Mark.NONE)) != Mark.CORRIDOR:
+			return false
+	return true
+
+
+static func payout(marks: Dictionary, floor: Floor = null) -> Dictionary:
+	var plan := _use(floor)
+	var corridor_total := corridor_cells(plan)
+	var hazard_total := hazard_cells(plan)
 	var corridors := 0
 	for cell in corridor_total:
 		if int(marks.get(cell, Mark.NONE)) == Mark.CORRIDOR:
@@ -265,7 +402,7 @@ static func payout(marks: Dictionary) -> Dictionary:
 		if int(marks.get(cell, Mark.NONE)) == Mark.HAZARD:
 			hazards += 1
 	var loop_complete := true
-	for cell in loop_cells():
+	for cell in loop_cells(plan):
 		if int(marks.get(cell, Mark.NONE)) != Mark.CORRIDOR:
 			loop_complete = false
 			break
@@ -282,7 +419,7 @@ static func payout(marks: Dictionary) -> Dictionary:
 		"hazard_rate": HAZARD_VALUE,
 		"hazard_pay": hazard_pay,
 		"loop": 1 if loop_complete else 0,
-		"loop_name": "East square",
+		"loop_name": plan.loop_name,
 		"loop_rate": LOOP_VALUE,
 		"loop_pay": loop_pay,
 		"total": corridor_pay + hazard_pay + loop_pay,
@@ -293,22 +430,49 @@ static func format_bill(bill: Dictionary) -> String:
 	var lines := PackedStringArray()
 	lines.append("Corridors    %d/%d    %d" % [bill.corridors, bill.corridor_total, bill.corridor_pay])
 	lines.append("Hazards      %d/%d     %d" % [bill.hazards, bill.hazard_total, bill.hazard_pay])
-	lines.append("East square  %d/1     %d" % [bill.loop, bill.loop_pay])
+	lines.append("%s  %d/1     %d" % [bill.loop_name, bill.loop, bill.loop_pay])
 	lines.append("Total              %d" % bill.total)
 	return "\n".join(lines)
+
+
+static func outcome_line(campaign: Campaign) -> String:
+	var title := ""
+	if campaign.last_floor_id != "":
+		var floor := floor_named(campaign.last_floor_id)
+		if floor != null:
+			title = floor.title
+	match campaign.last_outcome:
+		"complete":
+			return "%s census is complete. The payout below was added to your purse." % title
+		"paid":
+			if title == "":
+				return "Sheet turned in. The payout below was added to your purse."
+			return "%s sheet was turned in. The payout below was added to your purse. That census is not finished." % title
+		"dark":
+			return "The lamp went out. A lost sheet pays nothing."
+		"abandoned":
+			return "You came back without the lift. The clerk pays nothing."
+		_:
+			return "No sheet has been turned in yet."
 
 
 static func settle(campaign: Campaign, state: RunState) -> Dictionary:
 	if state.settled:
 		return campaign.last_bill
 	state.settled = true
+	if state.floor != null:
+		campaign.last_floor_id = state.floor.id
 	if state.end_reason == EndReason.EXTRACTED:
-		var paid := payout(state.marks)
+		var paid := payout(state.marks, state.floor)
 		campaign.purse += int(paid.total)
 		campaign.last_bill = paid
-		campaign.last_outcome = "paid"
+		if census_accepted(state.marks, state.floor):
+			campaign.completed[state.floor.id] = true
+			campaign.last_outcome = "complete"
+		else:
+			campaign.last_outcome = "paid"
 		return paid
-	var lost := payout({})
+	var lost := payout({}, state.floor)
 	campaign.last_bill = lost
 	if state.end_reason == EndReason.ABANDONED:
 		campaign.last_outcome = "abandoned"
@@ -342,7 +506,7 @@ static func cycle_mark(current: int) -> int:
 
 
 static func strike_line(state: RunState) -> String:
-	var delta := telegraph_tile(state.telegraph_index) - state.pos
+	var delta := telegraph_tile(state.telegraph_index, state.floor) - state.pos
 	var fwd := dir_vector(state.facing)
 	var back := dir_vector(state.facing + 2)
 	var right := dir_vector(state.facing + 1)
@@ -357,19 +521,24 @@ static func strike_line(state: RunState) -> String:
 		return "The warden's swing will hit the tile to your left."
 	if delta == right:
 		return "The warden's swing will hit the tile to your right."
-	return "The warden's swing is the ring on your sheet. The ring is live light, not ink."
+	return "The warden's swing is the red ring on your sheet. It is live light, not ink."
 
 
 static func ahead_line(state: RunState) -> String:
+	var plan := state.floor
 	var n: Vector2i = state.pos + dir_vector(state.facing)
-	if n == enemy_pos():
+	if n == enemy_pos(plan):
 		return "Ahead: the warden blocks that tile."
-	if n == telegraph_tile(state.telegraph_index) and is_walkable(n):
+	if n == telegraph_tile(state.telegraph_index, plan) and is_walkable(n, plan):
 		return "Ahead: the telegraphed swing. Stepping in burns %d extra oil." % HIT_OIL
-	match tile_at(n):
+	match tile_at(n, plan):
 		Tile.WALL:
+			if glyph_at(n, plan) == "*":
+				return "Ahead: the cistern pit. It inks as a wall."
 			return "Ahead: wall."
 		Tile.HAZARD:
+			if plan != null and plan.id == "cistern":
+				return "Ahead: a seep crack. Stepping inks it and costs no extra oil."
 			return "Ahead: a hazard crack. Stepping inks it and costs no extra oil."
 		Tile.LIFT:
 			return "Ahead: the lift. Stepping on carries the sheet out."
@@ -407,7 +576,7 @@ static func mark_faced(state: RunState) -> Dictionary:
 	if state.end_reason != EndReason.NONE:
 		return _pack(state, false, false, false, 0, false, "The descent is over.")
 	var target := state.pos + dir_vector(state.facing)
-	if not in_bounds(target):
+	if not in_bounds(target, state.floor):
 		return _pack(state, false, false, false, 0, false, "Nothing there to mark.")
 	var current := int(state.marks.get(target, Mark.NONE))
 	var nxt := cycle_mark(current)
@@ -419,6 +588,7 @@ static func mark_faced(state: RunState) -> Dictionary:
 
 
 static func step(state: RunState, dir: Vector2i) -> Dictionary:
+	var plan := state.floor
 	if state.end_reason != EndReason.NONE:
 		return _pack(state, false, false, false, 0, false, "The descent is over.")
 	if state.oil <= 0:
@@ -439,18 +609,20 @@ static func step(state: RunState, dir: Vector2i) -> Dictionary:
 		return _pack(state, true, false, waited_hit, MOVE_OIL + (HIT_OIL if waited_hit else 0), false, wait_message)
 
 	var target := state.pos + dir
-	if not is_walkable(target):
-		if tile_at(target) == Tile.WALL:
+	if not is_walkable(target, plan):
+		if tile_at(target, plan) == Tile.WALL:
 			_observe(state, target)
+			if glyph_at(target, plan) == "*":
+				return _pack(state, false, false, false, 0, true, "You tap the cistern pit and ink it if the square was blank.")
 			return _pack(state, false, false, false, 0, true, "You tap a wall and ink it if the square was blank.")
-		if target == enemy_pos():
+		if target == enemy_pos(plan):
 			return _pack(state, false, false, false, 0, true, "The warden occupies that tile.")
 		return _pack(state, false, false, false, 0, true, "You cannot step there.")
 
 	state.pos = target
 	state.oil -= MOVE_OIL
 	_observe(state, target)
-	var on_lift := tile_at(target) == Tile.LIFT
+	var on_lift := tile_at(target, plan) == Tile.LIFT
 	var hit := _resolve_strike(state)
 	_finish_if_dark(state, on_lift)
 	var message := "You step."
@@ -462,8 +634,11 @@ static func step(state: RunState, dir: Vector2i) -> Dictionary:
 		message = "The swing catches the lamp."
 	elif state.end_reason == EndReason.LAMP_OUT:
 		message = "The lamp drinks the last of its oil."
-	elif tile_at(target) == Tile.HAZARD:
-		message = "You cross a hazard crack. It is inked if the square was blank."
+	elif tile_at(target, plan) == Tile.HAZARD:
+		if plan != null and plan.id == "cistern":
+			message = "You cross a seep crack. It is inked if the square was blank."
+		else:
+			message = "You cross a hazard crack. It is inked if the square was blank."
 	return _pack(state, true, true, hit, MOVE_OIL + (HIT_OIL if hit else 0), false, message)
 
 
@@ -472,9 +647,10 @@ static func abandon(state: RunState) -> void:
 		state.end_reason = EndReason.ABANDONED
 
 
-static func shortest_path_cells() -> Array:
-	var start := start_pos()
-	var goal := lift_pos()
+static func shortest_path_cells(floor: Floor = null) -> Array:
+	var plan := _use(floor)
+	var start := start_pos(plan)
+	var goal := lift_pos(plan)
 	var q: Array = [start]
 	var head := 0
 	var parent := {}
@@ -486,7 +662,7 @@ static func shortest_path_cells() -> Array:
 			break
 		for d in cardinals():
 			var nxt: Vector2i = pos + d
-			if parent.has(nxt) or not is_walkable(nxt):
+			if parent.has(nxt) or not is_walkable(nxt, plan):
 				continue
 			parent[nxt] = pos
 			q.append(nxt)
@@ -502,29 +678,31 @@ static func shortest_path_cells() -> Array:
 	return cells
 
 
-static func shortest_path_steps() -> int:
-	var cells := shortest_path_cells()
+static func shortest_path_steps(floor: Floor = null) -> int:
+	var cells := shortest_path_cells(floor)
 	if cells.is_empty():
 		return -1
 	return cells.size() - 1
 
 
-static func scripted_safe_actions() -> Array:
+static func scripted_safe_actions(floor: Floor = null) -> Array:
+	var plan := _use(floor)
 	var goals := {}
-	goals[lift_pos()] = true
-	var found: Dictionary = search_safe(start_pos(), 0, goals)
+	goals[lift_pos(plan)] = true
+	var found: Dictionary = search_safe(start_pos(plan), 0, goals, plan)
 	if not bool(found.get("ok", false)):
 		return []
 	return found.actions
 
 
-static func safe_survey_steps() -> int:
+static func safe_survey_steps(floor: Floor = null) -> int:
+	var plan := _use(floor)
 	var needed := {}
-	for cell in corridor_cells():
+	for cell in corridor_cells(plan):
 		needed[cell] = true
-	for cell in hazard_cells():
+	for cell in hazard_cells(plan):
 		needed[cell] = true
-	var pos := start_pos()
+	var pos := start_pos(plan)
 	var ti := 0
 	needed.erase(pos)
 	var steps := 0
@@ -533,29 +711,30 @@ static func safe_survey_steps() -> int:
 		guard += 1
 		if guard > 400:
 			return -1
-		var found: Dictionary = search_safe(pos, ti, needed)
+		var found: Dictionary = search_safe(pos, ti, needed, plan)
 		if not bool(found.get("ok", false)):
 			return -1
-		var walked: Dictionary = _apply_actions(pos, ti, found.actions)
+		var walked: Dictionary = _apply_actions(pos, ti, found.actions, plan)
 		pos = walked.pos
 		ti = int(walked.ti)
 		steps += int(walked.steps)
 		for cell in walked.visited:
 			needed.erase(cell)
-	if pos != lift_pos():
+	if pos != lift_pos(plan):
 		var goals := {}
-		goals[lift_pos()] = true
-		var home: Dictionary = search_safe(pos, ti, goals)
+		goals[lift_pos(plan)] = true
+		var home: Dictionary = search_safe(pos, ti, goals, plan)
 		if not bool(home.get("ok", false)):
 			return -1
 		steps += home.actions.size()
 	return steps
 
 
-static func search_safe(start: Vector2i, ti: int, goals: Dictionary) -> Dictionary:
+static func search_safe(start: Vector2i, ti: int, goals: Dictionary, floor: Floor = null) -> Dictionary:
+	var plan := _use(floor)
 	if goals.has(start):
 		return {"ok": true, "actions": [], "pos": start, "ti": ti}
-	var swings := swing_tiles()
+	var swings := swing_tiles(plan)
 	var start_key := Vector3i(start.x, start.y, ti)
 	var q: Array = [start_key]
 	var head := 0
@@ -572,7 +751,7 @@ static func search_safe(start: Vector2i, ti: int, goals: Dictionary) -> Dictiona
 		options.append(Vector2i.ZERO)
 		for d in options:
 			var nxt: Vector2i = pos if d == Vector2i.ZERO else pos + d
-			if d != Vector2i.ZERO and not is_walkable(nxt):
+			if d != Vector2i.ZERO and not is_walkable(nxt, plan):
 				continue
 			if nxt == tele:
 				continue
@@ -603,9 +782,9 @@ static func _reconstruct(goal_key: Vector3i, parent: Dictionary, action_for: Dic
 	return actions
 
 
-static func _apply_actions(pos: Vector2i, ti: int, actions: Array) -> Dictionary:
+static func _apply_actions(pos: Vector2i, ti: int, actions: Array, floor: Floor = null) -> Dictionary:
 	var visited: Array = []
-	var swings := swing_tiles()
+	var swings := swing_tiles(floor)
 	for d in actions:
 		if d != Vector2i.ZERO:
 			pos += d
@@ -617,7 +796,7 @@ static func _apply_actions(pos: Vector2i, ti: int, actions: Array) -> Dictionary
 static func _observe(state: RunState, p: Vector2i) -> void:
 	if int(state.marks.get(p, Mark.NONE)) != Mark.NONE:
 		return
-	match tile_at(p):
+	match tile_at(p, state.floor):
 		Tile.HAZARD:
 			state.marks[p] = Mark.HAZARD
 		Tile.FLOOR, Tile.LIFT:
@@ -627,13 +806,13 @@ static func _observe(state: RunState, p: Vector2i) -> void:
 
 
 static func _resolve_strike(state: RunState) -> bool:
-	var hit := state.pos == telegraph_tile(state.telegraph_index)
+	var hit := state.pos == telegraph_tile(state.telegraph_index, state.floor)
 	state.last_hit = hit
 	if hit:
 		state.oil -= HIT_OIL
 		if state.oil < 0:
 			state.oil = 0
-	var swings := swing_tiles()
+	var swings := swing_tiles(state.floor)
 	state.telegraph_index = (state.telegraph_index + 1) % swings.size()
 	return hit
 

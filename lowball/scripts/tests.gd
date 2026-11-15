@@ -14,6 +14,7 @@ func _run() -> void:
 	_failures = []
 	_test_names()
 	_test_determinism()
+	_test_week_eight()
 	_test_fairness_and_cap()
 	await _test_game_flow()
 	if _failures.is_empty():
@@ -134,10 +135,44 @@ func _test_determinism() -> void:
 	_check(_score_matches_runs(first), "runs do not add up to the score")
 	var left_scores := _scripted_scores(11)
 	var right_scores := _scripted_scores(11)
-	_check(left_scores.size() == 4 and right_scores.size() == 4, "scripted series did not play four weeks")
+	_check(left_scores.size() == 8 and right_scores.size() == 8, "week 8 was not played")
+	_check(left_scores.size() == Sport.SERIES_WEEKS and right_scores.size() == Sport.SERIES_WEEKS, "scripted series length drifted from the series constant")
 	for i in left_scores.size():
 		_check(int(left_scores[i][0]) == int(right_scores[i][0]), "series player score drifted in week %d" % i)
 		_check(int(left_scores[i][1]) == int(right_scores[i][1]), "series opponent score drifted in week %d" % i)
+
+
+func _test_week_eight() -> void:
+	print("TEST week 8 is played")
+	_check(Sport.SERIES_WEEKS == 8, "series is not 8 match weeks")
+	_check(Sport.GOAL_WINS == 4, "board goal is not 4 wins")
+	_check(
+		Sport.GOAL_TEXT == "Board goal: win at least 4 of these 8 matches.",
+		"goal text does not state the eight-week board goal"
+	)
+	var played := SeriesScript.new(11)
+	for week_index in 7:
+		var started: Dictionary = played.begin_match([0, 1, 2, 3], "aggressive", "lash")
+		_check(bool(started.get("ok", false)), "week %d did not start" % (week_index + 1))
+		_check(int(started.get("week", -1)) == week_index, "week %d was not the match that was played" % (week_index + 1))
+		var committed: Dictionary = played.commit_match()
+		_check(bool(committed.get("ok", false)), "week %d did not record" % (week_index + 1))
+		_check(not played.is_over(), "series ended before week 8")
+		_check(int(played.week) == week_index + 1, "week counter skipped ahead of week 8")
+	var eighth: Dictionary = played.begin_match([0, 1, 2, 3], "patient", "eye")
+	_check(bool(eighth.get("ok", false)), "week 8 did not start")
+	_check(int(eighth.get("week", -1)) == 7, "week 8 match is not the eighth week")
+	_check(eighth.has("player_score") and eighth.has("opponent_score"), "week 8 did not produce a score")
+	_check((eighth["plate_appearances"] as Array).size() == Sport.PAS_PER_MATCH, "week 8 did not play a full match")
+	var done: Dictionary = played.commit_match()
+	_check(bool(done.get("ok", false)), "week 8 did not record")
+	_check(bool(done.get("over", false)), "series did not end when week 8 was recorded")
+	_check(played.is_over(), "series is still open after week 8")
+	_check(int(played.week) == 8, "week counter is not 8 after week 8")
+	_check(played.results.size() == 8, "week 8 result was not stored")
+	_check(int(played.results[7]["week"]) == 7, "stored week 8 is not the eighth match")
+	var blocked: Dictionary = played.begin_match([0, 1, 2, 3], "field", "arm")
+	_check(not bool(blocked.get("ok", false)), "a match after week 8 was allowed")
 
 
 func _scripted_scores(series_seed: int) -> Array:
@@ -183,7 +218,7 @@ func _test_fairness_and_cap() -> void:
 		rng.seed = 5000 + series_index
 		var player_roster: Array = clubs["player_roster"]
 		var opponent_roster: Array = clubs["opponent_roster"]
-		for week in 4:
+		for week in Sport.SERIES_WEEKS:
 			var player_line: Array = Sport.random_lineup(rng, player_roster.size())
 			var opponent_line: Array = Sport.random_lineup(rng, opponent_roster.size())
 			_check(Sport.is_legal_lineup(player_roster.size(), player_line), "illegal player lineup")
@@ -316,9 +351,16 @@ func _test_game_flow() -> void:
 	root.add_child(game)
 	await process_frame
 	_check(game.phase == "office", "game did not open on the office")
+	_check(game.office_panel.visible, "office is hidden when the game opens")
+	_check(game.goal_label.visible, "goal label is hidden when the game opens")
+	_check(str(game.goal_label.text).contains("win at least 4 of these 8 matches"), "new board goal is not on screen from the start")
 
 	game.start_new_series(42)
 	await process_frame
+	_check(game.office_panel.visible, "office is hidden at the start")
+	_check(game.goal_label.visible, "goal label is hidden at the start")
+	_check(str(game.goal_label.text).contains("win at least 4 of these 8 matches"), "new board goal is not on screen from the start")
+	_check(str(game.week_label.text) == "Week 1 of 8", "office does not open on an eight-week series")
 	_check(str(game.tactic) == "aggressive", "default tactic is not aggressive")
 	_check(str(game.training) == "lash", "default training is not lash")
 	_check(is_equal_approx(float(game.ticker.wait_time), 1.0), "watch is not one plate appearance per second")
@@ -342,26 +384,32 @@ func _test_game_flow() -> void:
 	_check(str(game.log_label.text).contains(str(game.watch_log[appearances.size() - 1])), "on-screen watch log is missing the last line")
 
 	game.start_new_series(7)
-	for week in 4:
-		_check(game.phase == "office", "week %d did not return to the office" % week)
+	_check(str(game.goal_label.text).contains("win at least 4 of these 8 matches"), "board goal left the office")
+	for week in 8:
+		_check(game.phase == "office", "week %d did not return to the office" % (week + 1))
+		_check(int(game.series.week) == week, "office week counter is not %d before that match" % (week + 1))
 		game.skip_button.pressed.emit()
-		_check(game.phase == "result", "skip did not reach the result in week %d" % week)
-		_check(game.watch_log.size() == Sport.PAS_PER_MATCH, "skip log length in week %d" % week)
+		_check(game.phase == "result", "skip did not reach the result in week %d" % (week + 1))
+		_check(game.watch_log.size() == Sport.PAS_PER_MATCH, "skip log length in week %d" % (week + 1))
 		game.continue_button.pressed.emit()
-	_check(game.phase == "board", "four-week series did not reach the board")
+		if week < 7:
+			_check(game.phase == "office", "series reached the board before week 8 was played")
+	_check(game.phase == "board", "eight-week series did not reach the board")
 	_check(game.board_panel.visible, "board screen is hidden")
 	_check(not game.office_panel.visible, "office still visible on the board")
 	_check(not game.match_panel.visible, "match still visible on the board")
 	var board_text := str(game.board_label.text)
-	_check(board_text.contains("Board goal"), "board screen is missing the goal")
+	_check(board_text.contains("win at least 4 of these 8 matches"), "board screen is missing the raised goal")
 	_check(board_text.contains("Result: MET") or board_text.contains("Result: MISSED"), "board screen is missing the verdict")
 	_check(board_text.contains("Week 1:"), "board screen is missing week 1")
-	_check(board_text.contains("Week 4:"), "board screen is missing week 4")
+	_check(board_text.contains("Week 8:"), "week 8 was not played")
 	var wins := 0
 	for result in game.series.results:
 		if str(result["player_result"]) == "win":
 			wins += 1
-	_check(game.series.results.size() == 4, "series did not store four results")
+	_check(game.series.results.size() == 8, "series did not store the week 8 result")
+	_check(int(game.series.results[7]["week"]) == 7, "week 8 result is missing from the series")
+	_check(int(game.series.week) == 8, "week counter did not finish on week 8")
 	if wins >= Sport.GOAL_WINS:
 		_check(board_text.contains("Result: MET"), "goal should be MET")
 		_check(not board_text.contains("Result: MISSED"), "goal text contradicts MET")
