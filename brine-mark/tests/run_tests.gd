@@ -14,6 +14,8 @@ func _initialize() -> void:
 	_test_all_rake(errors)
 	_test_dry_season(errors)
 	_test_cart(errors)
+	_test_ship(errors)
+	_test_market(errors)
 	_test_determinism(errors)
 	_test_population(errors)
 	_test_no_select_ant(errors)
@@ -87,7 +89,7 @@ func _test_determinism(errors: Array) -> void:
 	var plans := _plans(errors)
 	if plans.is_empty():
 		return
-	for plan_name in ["winning", "all_rake", "dry_pans", "continued", "late_pans", "no_crib", "carted", "late_crib", "dry_crib"]:
+	for plan_name in ["winning", "all_rake", "dry_pans", "continued", "late_pans", "no_crib", "carted", "late_crib", "dry_crib", "no_ship", "shipped", "late_ship", "dry_ship", "no_stall", "sold", "late_sold", "dry_sold"]:
 		var before := errors.size()
 		var first = _run_plan(plans, plan_name, errors)
 		var second = _run_plan(plans, plan_name, errors)
@@ -97,13 +99,17 @@ func _test_determinism(errors: Array) -> void:
 			return
 		var a := int(first.get_stored_salt())
 		var b := int(second.get_stored_salt())
-		print("determinism %s stored %d and %d" % [plan_name, a, b])
+		print("determinism %s stored %d and %d coins %d" % [plan_name, a, b, int(first.get_coins())])
 		if a != b:
 			_fail(errors, "%s runs stored %d and %d" % [plan_name, a, b])
 		if int(first.get_wet_haul()) != int(second.get_wet_haul()):
 			_fail(errors, "%s wet hauls differed" % plan_name)
 		if int(first.get_carted()) != int(second.get_carted()):
 			_fail(errors, "%s cart totals differed" % plan_name)
+		if int(first.get_shipped()) != int(second.get_shipped()):
+			_fail(errors, "%s ship totals differed" % plan_name)
+		if int(first.get_coins()) != int(second.get_coins()):
+			_fail(errors, "%s coin totals differed" % plan_name)
 		if String(first.get_summary()) != String(second.get_summary()):
 			_fail(errors, "%s summaries differed" % plan_name)
 		_assert_pop(first, errors, plan_name + " run A")
@@ -186,6 +192,20 @@ func _test_scene_boots(errors: Array) -> void:
 	node._on_key(KEY_SPACE)
 	if int(node.sim.get_paint(8, 6)) != Sim.CRIB:
 		_fail(errors, "keyboard cursor did not paint a crib")
+	node._on_key(KEY_7)
+	if not String(node.mode_label.text).contains("Ship"):
+		_fail(errors, "ship mark was not named")
+	node._on_key(KEY_LEFT)
+	node._on_key(KEY_SPACE)
+	if int(node.sim.get_paint(7, 6)) != Sim.SHIP:
+		_fail(errors, "keyboard cursor did not paint a ship")
+	node._on_key(KEY_8)
+	if not String(node.mode_label.text).contains("Stall"):
+		_fail(errors, "stall mark was not named")
+	node._on_key(KEY_UP)
+	node._on_key(KEY_SPACE)
+	if int(node.sim.get_paint(7, 5)) != Sim.STALL:
+		_fail(errors, "keyboard cursor did not paint a stall")
 	var season = node.find_child("SeasonNote", true, false)
 	if season == null or not String(season.text).to_lower().contains("pan"):
 		_fail(errors, "season note does not mention pans")
@@ -208,10 +228,38 @@ func _test_scene_boots(errors: Array) -> void:
 	var rules = node.find_child("RulesNote", true, false)
 	if rules == null or not String(rules.text).to_lower().contains("crib"):
 		_fail(errors, "rules text does not mention the crib")
+	if rules == null or not String(rules.text).to_lower().contains("ship"):
+		_fail(errors, "rules text does not mention the ship")
+	if rules == null or not String(rules.text).to_lower().contains("stall"):
+		_fail(errors, "rules text does not mention the stall")
+	var spun_ship := 0
+	while int(node.sim.get_beat()) != Sim.SHIPPING and not node.sim.is_over() and spun_ship < int(Sim.CART_TICK) + 2:
+		node.sim.tick()
+		spun_ship += 1
+	node._refresh()
+	if int(node.sim.get_beat()) != Sim.SHIPPING or node.sim.is_over():
+		_fail(errors, "the scene did not open the ship beat")
+	elif not String(node.rain_label.text).to_lower().contains("ship"):
+		_fail(errors, "ship countdown was not named: %s" % node.rain_label.text)
+	elif not String(node.season_label.text).to_lower().contains("ship"):
+		_fail(errors, "ship note does not mention the ship: %s" % node.season_label.text)
+	var spun_market := 0
+	while int(node.sim.get_beat()) != Sim.MARKET and not node.sim.is_over() and spun_market < int(Sim.SHIP_TICK) + 2:
+		node.sim.tick()
+		spun_market += 1
+	node._refresh()
+	if int(node.sim.get_beat()) != Sim.MARKET or node.sim.is_over():
+		_fail(errors, "the scene did not open the market beat")
+	elif not String(node.rain_label.text).to_lower().contains("sell"):
+		_fail(errors, "market countdown was not named: %s" % node.rain_label.text)
+	elif int(node.sim.get_ticks_until_rain()) != int(Sim.MARKET_TICK):
+		_fail(errors, "market countdown started at %d, expected %d" % [node.sim.get_ticks_until_rain(), Sim.MARKET_TICK])
+	elif not String(node.season_label.text).to_lower().contains("stall"):
+		_fail(errors, "market note does not mention the stall: %s" % node.season_label.text)
 	node._on_key(KEY_R)
-	if int(node.sim.get_paint(9, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 6)) != Sim.EMPTY:
+	if int(node.sim.get_paint(9, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 5)) != Sim.EMPTY:
 		_fail(errors, "restart scenario did not clear the marks")
-	if int(node.sim.get_season()) != Sim.WET or int(node.sim.get_wet_haul()) != 0 or int(node.sim.get_beat()) != Sim.WET or int(node.sim.get_carted()) != 0:
+	if int(node.sim.get_season()) != Sim.WET or int(node.sim.get_wet_haul()) != 0 or int(node.sim.get_beat()) != Sim.WET or int(node.sim.get_carted()) != 0 or int(node.sim.get_shipped()) != 0 or int(node.sim.get_coins()) != 0:
 		_fail(errors, "restart scenario did not return to the wet season")
 	if int(node.sim.get_population()) > Sim.POP_CAP:
 		_fail(errors, "restart left the population over the cap")
@@ -458,6 +506,293 @@ func _test_cart(errors: Array) -> void:
 	print("cart moved %d; no crib left the bank" % moved.get_carted())
 
 
+func _test_ship(errors: Array) -> void:
+	if int(Sim.SHIP_TICK) <= 0 or int(Sim.SHIP_TICK) >= int(Sim.RAIN_TICK):
+		_fail(errors, "ship beat length %s is not a short beat after the cart" % Sim.SHIP_TICK)
+	var fresh = Sim.new()
+	if fresh.paint_cell(14, 3, Sim.SHIP) == false or int(fresh.get_paint(14, 3)) != Sim.SHIP:
+		_fail(errors, "a flat rejected the ship mark")
+	if fresh.paint_cell(Sim.COAST_X, 3, Sim.SHIP):
+		_fail(errors, "the brine accepted a ship")
+	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.SHIP):
+		_fail(errors, "the anthill accepted a ship")
+	var plans := _plans(errors)
+	if plans.is_empty():
+		return
+	var won = _run_plan(plans, "winning", errors)
+	var dry = _run_plan(plans, "dry_pans", errors)
+	var parked = _run_plan(plans, "carted", errors)
+	var ignored = _run_plan(plans, "no_ship", errors)
+	var loaded = _run_plan(plans, "shipped", errors)
+	var late = _run_plan(plans, "late_ship", errors)
+	var dry_loaded = _run_plan(plans, "dry_ship", errors)
+	if won == null or dry == null or parked == null or ignored == null or loaded == null or late == null or dry_loaded == null:
+		return
+	# Winning shore, dry pans, and the cart still report the same numbers.
+	if int(won.get_wet_haul()) != 2997 or int(won.get_stored_salt()) != 2997 or int(won.get_carted()) != 0 or int(won.get_shipped()) != 0:
+		_fail(errors, "winning shore changed (wet %d stored %d carted %d shipped %d)" % [
+			won.get_wet_haul(), won.get_stored_salt(), won.get_carted(), won.get_shipped(),
+		])
+	if int(won.get_stored_salt()) - int(won.get_wet_haul()) != 0:
+		_fail(errors, "winning dry haul changed")
+	if int(dry.get_wet_haul()) != 0 or int(dry.get_stored_salt()) != 1032 or int(dry.get_carted()) != 0 or int(dry.get_shipped()) != 0:
+		_fail(errors, "dry_pans changed (wet %d stored %d carted %d shipped %d)" % [
+			dry.get_wet_haul(), dry.get_stored_salt(), dry.get_carted(), dry.get_shipped(),
+		])
+	if int(dry.get_stored_salt()) - int(dry.get_wet_haul()) != 1032:
+		_fail(errors, "dry_pans dry haul changed")
+	if int(parked.get_wet_haul()) != 2997 or int(parked.get_stored_salt()) != 2997 or int(parked.get_carted()) != 2997 or int(parked.get_shipped()) != 0:
+		_fail(errors, "carted plan changed (wet %d stored %d carted %d shipped %d)" % [
+			parked.get_wet_haul(), parked.get_stored_salt(), parked.get_carted(), parked.get_shipped(),
+		])
+	if int(parked.get_stored_salt()) - int(parked.get_wet_haul()) != 0:
+		_fail(errors, "carted plan dry haul changed")
+	var parked_crib: Dictionary = parked.get_cell_salt(14, 4)
+	if int(parked_crib.get("crib", 0)) != 2997:
+		_fail(errors, "carted crib holds %s" % parked_crib.get("crib", 0))
+	if int(ignored.get_wet_haul()) != int(parked.get_wet_haul()) or int(ignored.get_stored_salt()) != int(parked.get_stored_salt()) or int(ignored.get_carted()) != int(parked.get_carted()) or int(ignored.get_shipped()) != 0:
+		_fail(errors, "no_ship changed the cart result (wet %d stored %d carted %d shipped %d)" % [
+			ignored.get_wet_haul(), ignored.get_stored_salt(), ignored.get_carted(), ignored.get_shipped(),
+		])
+	if String(ignored.get_summary()) != String(parked.get_summary()):
+		_fail(errors, "no_ship summary changed: %s" % ignored.get_summary())
+	if String(ignored.get_summary()).to_lower().contains("ship"):
+		_fail(errors, "no_ship summary names a ship: %s" % ignored.get_summary())
+	# This plan filled the crib and painted no ship. The ship check must fail.
+	var ignored_check: Array = []
+	_expect_ship(ignored, ignored_check)
+	if ignored_check.is_empty():
+		_fail(errors, "no_ship filled the crib and ignored the ship beat, so the ship check should have failed")
+	else:
+		print("no_ship failed the ship check: %s" % ignored_check[0])
+	var ship_cell = plans["shipped"]["ship"][0]
+	var crib_cell = plans["shipped"]["crib"][0]
+	if int(ship_cell[0]) != int(crib_cell[0]) or int(ship_cell[1]) != int(crib_cell[1]) - 1:
+		_fail(errors, "shipped plan's ship is not one cell north of the crib")
+	var loaded_check: Array = []
+	_expect_ship(loaded, loaded_check)
+	for message in loaded_check:
+		_fail(errors, "shipped plan: %s" % message)
+	if int(loaded.get_wet_haul()) != 2997 or int(loaded.get_stored_salt()) != 2997 or int(loaded.get_carted()) != 2997:
+		_fail(errors, "ship changed the carted shore (wet %d stored %d carted %d)" % [
+			loaded.get_wet_haul(), loaded.get_stored_salt(), loaded.get_carted(),
+		])
+	if int(loaded.get_stored_salt()) - int(loaded.get_wet_haul()) != 0:
+		_fail(errors, "shipped plan dry haul changed")
+	if int(loaded.get_shipped()) != 2997 or int(loaded.get_crib_salt()) != 0:
+		_fail(errors, "shipped %d with %d left in the crib" % [loaded.get_shipped(), loaded.get_crib_salt()])
+	var ship_salt: Dictionary = loaded.get_cell_salt(int(ship_cell[0]), int(ship_cell[1]))
+	if int(ship_salt.get("ship", 0)) != int(loaded.get_shipped()):
+		_fail(errors, "ship cell holds %s, shipped %d" % [ship_salt.get("ship", 0), loaded.get_shipped()])
+	var loaded_crib: Dictionary = loaded.get_cell_salt(int(crib_cell[0]), int(crib_cell[1]))
+	if int(loaded_crib.get("crib", 0)) != 0:
+		_fail(errors, "ship left %s in the crib" % loaded_crib.get("crib", 0))
+	var loaded_summary := String(loaded.get_summary())
+	if not loaded_summary.to_lower().contains("ship"):
+		_fail(errors, "ship summary does not name the ship: %s" % loaded_summary)
+	if loaded_summary.to_lower().contains("quota missed"):
+		_fail(errors, "shipped plan missed the quota: %s" % loaded_summary)
+	if int(late.get_shipped()) != int(loaded.get_shipped()) or int(late.get_wet_haul()) != int(loaded.get_wet_haul()) or int(late.get_carted()) != int(loaded.get_carted()) or int(late.get_stored_salt()) != int(loaded.get_stored_salt()):
+		_fail(errors, "painting the ship at the ship beat (shipped %d wet %d carted %d) did not match painting it early (shipped %d wet %d carted %d)" % [
+			late.get_shipped(), late.get_wet_haul(), late.get_carted(), loaded.get_shipped(), loaded.get_wet_haul(), loaded.get_carted(),
+		])
+	if int(dry_loaded.get_wet_haul()) != 0 or int(dry_loaded.get_stored_salt()) != 1032 or int(dry_loaded.get_carted()) != 1032:
+		_fail(errors, "dry ship changed the dry cart (wet %d stored %d carted %d)" % [
+			dry_loaded.get_wet_haul(), dry_loaded.get_stored_salt(), dry_loaded.get_carted(),
+		])
+	if int(dry_loaded.get_shipped()) != 1032 or int(dry_loaded.get_crib_salt()) != 0:
+		_fail(errors, "dry ship shipped %d, crib left %d" % [dry_loaded.get_shipped(), dry_loaded.get_crib_salt()])
+	var dry_cover_left := 0
+	for pair in plans["dry_ship"]["cover"]:
+		var salt: Dictionary = dry_loaded.get_cell_salt(int(pair[0]), int(pair[1]))
+		dry_cover_left += int(salt.get("covered", 0)) + int(salt.get("stacked", 0))
+	if dry_cover_left != 0:
+		_fail(errors, "dry ship left %d salt on the covers" % dry_cover_left)
+	if not String(dry_loaded.get_summary()).to_lower().contains("ship"):
+		_fail(errors, "dry ship summary does not name the ship: %s" % dry_loaded.get_summary())
+	_assert_pop(loaded, errors, "shipped plan")
+	_assert_pop(late, errors, "late_ship")
+	_assert_pop(dry_loaded, errors, "dry_ship")
+	_assert_pop(ignored, errors, "no_ship")
+	# The beat opens after the cart with the crib still full. No ship, no movement.
+	var opening = _prepare_plan(plans, "no_ship", errors)
+	if opening == null:
+		return
+	var guard := 0
+	var limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + 2
+	while int(opening.get_beat()) != Sim.SHIPPING and not opening.is_over() and guard < limit:
+		opening.tick()
+		guard += 1
+	if int(opening.get_beat()) != Sim.SHIPPING or opening.is_over() or int(opening.get_season()) != Sim.DRY:
+		_fail(errors, "the cart beat did not open a ship beat in the dry season")
+		return
+	if int(opening.get_ticks_until_rain()) != int(Sim.SHIP_TICK):
+		_fail(errors, "ship countdown started at %d, expected %d" % [opening.get_ticks_until_rain(), Sim.SHIP_TICK])
+	var crib_held := int(opening.get_crib_salt())
+	if int(opening.get_shipped()) != 0 or crib_held != int(opening.get_carted()) or crib_held != 2997:
+		_fail(errors, "ship opened with shipped %d crib %d carted %d" % [
+			opening.get_shipped(), crib_held, opening.get_carted(),
+		])
+	for _step in int(Sim.SHIP_TICK):
+		opening.tick()
+	if int(opening.get_shipped()) != 0 or int(opening.get_crib_salt()) != crib_held or int(opening.get_carted()) != crib_held or int(opening.get_stored_salt()) != 2997:
+		_fail(errors, "crib with no ship moved salt during the ship beat (shipped %d crib %d carted %d stored %d)" % [
+			opening.get_shipped(), opening.get_crib_salt(), opening.get_carted(), opening.get_stored_salt(),
+		])
+	if int(opening.get_beat()) != Sim.MARKET or opening.is_over():
+		_fail(errors, "the ship beat did not open a market beat")
+	elif int(opening.get_ticks_until_rain()) != int(Sim.MARKET_TICK):
+		_fail(errors, "market countdown started at %d after the ship, expected %d" % [opening.get_ticks_until_rain(), Sim.MARKET_TICK])
+	print("ship loaded %d; winning wet %d carted %d; dry stored %d; carted %d" % [
+		loaded.get_shipped(), won.get_wet_haul(), parked.get_carted(), dry.get_stored_salt(), parked.get_carted(),
+	])
+
+
+func _test_market(errors: Array) -> void:
+	if int(Sim.MARKET_TICK) != 100 or int(Sim.MARKET_TICK) != int(Sim.TICK_HZ) * 10:
+		_fail(errors, "market beat length %s is not 100 ticks (10 seconds)" % Sim.MARKET_TICK)
+	var fresh = Sim.new()
+	if fresh.paint_cell(14, 2, Sim.STALL) == false or int(fresh.get_paint(14, 2)) != Sim.STALL:
+		_fail(errors, "a flat rejected the stall mark")
+	if fresh.paint_cell(Sim.COAST_X, 2, Sim.STALL):
+		_fail(errors, "the brine accepted a stall")
+	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.STALL):
+		_fail(errors, "the anthill accepted a stall")
+	var plans := _plans(errors)
+	if plans.is_empty():
+		return
+	var won = _run_plan(plans, "winning", errors)
+	var dry = _run_plan(plans, "dry_pans", errors)
+	var parked = _run_plan(plans, "carted", errors)
+	var loaded = _run_plan(plans, "shipped", errors)
+	var ignored = _run_plan(plans, "no_stall", errors)
+	var sold = _run_plan(plans, "sold", errors)
+	var late = _run_plan(plans, "late_sold", errors)
+	var dry_sold = _run_plan(plans, "dry_sold", errors)
+	if won == null or dry == null or parked == null or loaded == null or ignored == null or sold == null or late == null or dry_sold == null:
+		return
+	# The shore, the dry pans, the cart, and the ship still report the same numbers.
+	if int(won.get_wet_haul()) != 2997 or int(won.get_stored_salt()) != 2997 or int(won.get_carted()) != 0 or int(won.get_shipped()) != 0 or int(won.get_coins()) != 0:
+		_fail(errors, "winning shore changed (wet %d stored %d carted %d shipped %d coins %d)" % [
+			won.get_wet_haul(), won.get_stored_salt(), won.get_carted(), won.get_shipped(), won.get_coins(),
+		])
+	if int(won.get_stored_salt()) - int(won.get_wet_haul()) != 0:
+		_fail(errors, "winning dry haul changed")
+	if int(dry.get_wet_haul()) != 0 or int(dry.get_stored_salt()) != 1032 or int(dry.get_carted()) != 0 or int(dry.get_shipped()) != 0 or int(dry.get_coins()) != 0:
+		_fail(errors, "dry_pans changed (wet %d stored %d carted %d shipped %d coins %d)" % [
+			dry.get_wet_haul(), dry.get_stored_salt(), dry.get_carted(), dry.get_shipped(), dry.get_coins(),
+		])
+	if int(dry.get_stored_salt()) - int(dry.get_wet_haul()) != 1032:
+		_fail(errors, "dry_pans dry haul changed")
+	if int(parked.get_wet_haul()) != 2997 or int(parked.get_stored_salt()) != 2997 or int(parked.get_carted()) != 2997 or int(parked.get_shipped()) != 0 or int(parked.get_coins()) != 0:
+		_fail(errors, "carted plan changed (wet %d stored %d carted %d shipped %d coins %d)" % [
+			parked.get_wet_haul(), parked.get_stored_salt(), parked.get_carted(), parked.get_shipped(), parked.get_coins(),
+		])
+	if int(parked.get_stored_salt()) - int(parked.get_wet_haul()) != 0:
+		_fail(errors, "carted plan dry haul changed")
+	if int(loaded.get_wet_haul()) != 2997 or int(loaded.get_stored_salt()) != 2997 or int(loaded.get_carted()) != 2997 or int(loaded.get_shipped()) != 2997 or int(loaded.get_coins()) != 0 or int(loaded.get_ship_salt()) != 2997:
+		_fail(errors, "shipped plan changed (wet %d stored %d carted %d shipped %d ship %d coins %d)" % [
+			loaded.get_wet_haul(), loaded.get_stored_salt(), loaded.get_carted(), loaded.get_shipped(), loaded.get_ship_salt(), loaded.get_coins(),
+		])
+	if int(loaded.get_stored_salt()) - int(loaded.get_wet_haul()) != 0:
+		_fail(errors, "shipped plan dry haul changed")
+	if int(ignored.get_wet_haul()) != 2997 or int(ignored.get_stored_salt()) != 2997 or int(ignored.get_carted()) != 2997 or int(ignored.get_shipped()) != 2997 or int(ignored.get_coins()) != 0 or int(ignored.get_ship_salt()) != 2997:
+		_fail(errors, "no_stall changed the shipment (wet %d stored %d carted %d shipped %d ship %d coins %d)" % [
+			ignored.get_wet_haul(), ignored.get_stored_salt(), ignored.get_carted(), ignored.get_shipped(), ignored.get_ship_salt(), ignored.get_coins(),
+		])
+	if String(ignored.get_summary()) != String(loaded.get_summary()):
+		_fail(errors, "no_stall summary changed: %s" % ignored.get_summary())
+	if String(ignored.get_summary()).to_lower().contains("coin") or String(ignored.get_summary()).to_lower().contains("stall"):
+		_fail(errors, "no_stall summary names a sale: %s" % ignored.get_summary())
+	var ignored_ship: Dictionary = ignored.get_cell_salt(14, 3)
+	if int(ignored_ship.get("ship", 0)) != 2997:
+		_fail(errors, "no_stall left %s on the ship" % ignored_ship.get("ship", 0))
+	# This plan shipped the salt and painted no stall. The market check must fail.
+	var ignored_check: Array = []
+	_expect_market(ignored, ignored_check)
+	if ignored_check.is_empty():
+		_fail(errors, "no_stall shipped the salt and ignored the market, so the market check should have failed")
+	else:
+		print("no_stall failed the market check: %s" % ignored_check[0])
+	var stall_cell = plans["sold"]["stall"][0]
+	var ship_cell = plans["sold"]["ship"][0]
+	if int(stall_cell[0]) != int(ship_cell[0]) or int(stall_cell[1]) != int(ship_cell[1]) - 1:
+		_fail(errors, "sold plan's stall is not one cell north of the ship")
+	var sold_check: Array = []
+	_expect_market(sold, sold_check)
+	for message in sold_check:
+		_fail(errors, "sold plan: %s" % message)
+	if int(sold.get_wet_haul()) != 2997 or int(sold.get_stored_salt()) != 2997 or int(sold.get_carted()) != 2997 or int(sold.get_shipped()) != 2997:
+		_fail(errors, "stall changed the shipped shore (wet %d stored %d carted %d shipped %d)" % [
+			sold.get_wet_haul(), sold.get_stored_salt(), sold.get_carted(), sold.get_shipped(),
+		])
+	if int(sold.get_stored_salt()) - int(sold.get_wet_haul()) != 0:
+		_fail(errors, "sold plan dry haul changed")
+	if int(sold.get_coins()) != 2997 or int(sold.get_ship_salt()) != 0:
+		_fail(errors, "sold %d coin with %d left on the ship" % [sold.get_coins(), sold.get_ship_salt()])
+	var stall_salt: Dictionary = sold.get_cell_salt(int(stall_cell[0]), int(stall_cell[1]))
+	if int(stall_salt.get("stall", 0)) != 2997 or int(stall_salt.get("stall", 0)) != int(sold.get_coins()):
+		_fail(errors, "stall cell holds %s, coins %d" % [stall_salt.get("stall", 0), sold.get_coins()])
+	var sold_ship: Dictionary = sold.get_cell_salt(int(ship_cell[0]), int(ship_cell[1]))
+	if int(sold_ship.get("ship", 0)) != 0:
+		_fail(errors, "stall left %s on the ship" % sold_ship.get("ship", 0))
+	var sold_summary := String(sold.get_summary())
+	if not sold_summary.to_lower().contains("coin"):
+		_fail(errors, "sold summary does not name the coins: %s" % sold_summary)
+	if sold_summary.to_lower().contains("quota missed"):
+		_fail(errors, "sold plan missed the quota: %s" % sold_summary)
+	if int(late.get_coins()) != 2997 or int(late.get_shipped()) != int(sold.get_shipped()) or int(late.get_wet_haul()) != int(sold.get_wet_haul()) or int(late.get_carted()) != int(sold.get_carted()) or int(late.get_ship_salt()) != 0:
+		_fail(errors, "painting the stall at the market beat (coins %d shipped %d wet %d) did not match painting it early (coins %d shipped %d wet %d)" % [
+			late.get_coins(), late.get_shipped(), late.get_wet_haul(), sold.get_coins(), sold.get_shipped(), sold.get_wet_haul(),
+		])
+	if int(dry_sold.get_wet_haul()) != 0 or int(dry_sold.get_stored_salt()) != 1032 or int(dry_sold.get_carted()) != 1032 or int(dry_sold.get_shipped()) != 1032:
+		_fail(errors, "dry stall changed the dry ship (wet %d stored %d carted %d shipped %d)" % [
+			dry_sold.get_wet_haul(), dry_sold.get_stored_salt(), dry_sold.get_carted(), dry_sold.get_shipped(),
+		])
+	if int(dry_sold.get_stored_salt()) - int(dry_sold.get_wet_haul()) != 1032:
+		_fail(errors, "dry stall dry haul changed")
+	if int(dry_sold.get_coins()) != 1032 or int(dry_sold.get_ship_salt()) != 0:
+		_fail(errors, "dry stall coined %d, ship left %d" % [dry_sold.get_coins(), dry_sold.get_ship_salt()])
+	var dry_stall_cell = plans["dry_sold"]["stall"][0]
+	var dry_stall_salt: Dictionary = dry_sold.get_cell_salt(int(dry_stall_cell[0]), int(dry_stall_cell[1]))
+	if int(dry_stall_salt.get("stall", 0)) != 1032:
+		_fail(errors, "dry stall cell holds %s" % dry_stall_salt.get("stall", 0))
+	if not String(dry_sold.get_summary()).to_lower().contains("coin"):
+		_fail(errors, "dry stall summary does not name the coins: %s" % dry_sold.get_summary())
+	_assert_pop(sold, errors, "sold plan")
+	_assert_pop(late, errors, "late_sold")
+	_assert_pop(dry_sold, errors, "dry_sold")
+	_assert_pop(ignored, errors, "no_stall")
+	# The beat opens after the ship with the cargo still aboard. No stall, no sale.
+	var opening = _prepare_plan(plans, "no_stall", errors)
+	if opening == null:
+		return
+	var guard := 0
+	var limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + int(Sim.SHIP_TICK) + 2
+	while int(opening.get_beat()) != Sim.MARKET and not opening.is_over() and guard < limit:
+		opening.tick()
+		guard += 1
+	if int(opening.get_beat()) != Sim.MARKET or opening.is_over() or int(opening.get_season()) != Sim.DRY:
+		_fail(errors, "the ship beat did not open a market beat in the dry season")
+		return
+	if int(opening.get_ticks_until_rain()) != int(Sim.MARKET_TICK):
+		_fail(errors, "market countdown started at %d, expected %d" % [opening.get_ticks_until_rain(), Sim.MARKET_TICK])
+	var aboard := int(opening.get_ship_salt())
+	if int(opening.get_coins()) != 0 or aboard != 2997 or int(opening.get_shipped()) != aboard:
+		_fail(errors, "market opened with coins %d ship %d shipped %d" % [
+			opening.get_coins(), aboard, opening.get_shipped(),
+		])
+	for _step in int(Sim.MARKET_TICK):
+		opening.tick()
+	if int(opening.get_coins()) != 0 or int(opening.get_ship_salt()) != aboard or int(opening.get_shipped()) != aboard or int(opening.get_stored_salt()) != 2997:
+		_fail(errors, "ship with no stall sold salt during the market (coins %d ship %d shipped %d stored %d)" % [
+			opening.get_coins(), opening.get_ship_salt(), opening.get_shipped(), opening.get_stored_salt(),
+		])
+	if not opening.is_over():
+		_fail(errors, "market beat did not end")
+	print("sold %d coin; dry sold %d coin; no stall left %d on the ship" % [
+		sold.get_coins(), dry_sold.get_coins(), ignored.get_ship_salt(),
+	])
 func _expect_cart(sim, errors: Array) -> void:
 	if sim == null:
 		_fail(errors, "cart plan did not run")
@@ -470,6 +805,30 @@ func _expect_cart(sim, errors: Array) -> void:
 		_fail(errors, "bank left %d after the cart" % int(sim.get_bank_left()))
 
 
+func _expect_ship(sim, errors: Array) -> void:
+	if sim == null:
+		_fail(errors, "ship plan did not run")
+		return
+	if not sim.is_over():
+		_fail(errors, "ship plan did not finish")
+	if int(sim.get_shipped()) < Sim.QUOTA:
+		_fail(errors, "shipped %d, quota is %d" % [int(sim.get_shipped()), Sim.QUOTA])
+	if int(sim.get_crib_salt()) != 0:
+		_fail(errors, "crib still holds %d after the ship beat" % int(sim.get_crib_salt()))
+	if int(sim.get_shipped()) != int(sim.get_carted()):
+		_fail(errors, "shipped %d of the carted %d" % [int(sim.get_shipped()), int(sim.get_carted())])
+func _expect_market(sim, errors: Array) -> void:
+	if sim == null:
+		_fail(errors, "market plan did not run")
+		return
+	if not sim.is_over():
+		_fail(errors, "market plan did not finish")
+	if int(sim.get_coins()) < Sim.QUOTA:
+		_fail(errors, "coined %d, quota is %d" % [int(sim.get_coins()), Sim.QUOTA])
+	if int(sim.get_ship_salt()) != 0:
+		_fail(errors, "ship still holds %d after the market" % int(sim.get_ship_salt()))
+	if int(sim.get_coins()) != int(sim.get_shipped()):
+		_fail(errors, "coined %d of the shipped %d" % [int(sim.get_coins()), int(sim.get_shipped())])
 func _prepare_plan(plans: Dictionary, plan_name: String, errors: Array):
 	if not plans.has(plan_name):
 		_fail(errors, "missing plan %s" % plan_name)
@@ -523,6 +882,42 @@ func _run_plan(plans: Dictionary, plan_name: String, errors: Array):
 		_apply_marks(sim, plan["after_second_rain"], errors)
 		if errors.size() > cart_before:
 			return null
+	if plan.has("after_cart"):
+		var ship_guard := 0
+		var ship_limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + 2
+		while int(sim.get_beat()) != Sim.SHIPPING and not sim.is_over() and ship_guard < ship_limit:
+			sim.tick()
+			ship_guard += 1
+		if int(sim.get_beat()) != Sim.SHIPPING or sim.is_over():
+			_fail(errors, "%s did not open the ship beat after the cart" % plan_name)
+			return null
+		if int(sim.get_ticks_until_rain()) != int(Sim.SHIP_TICK):
+			_fail(errors, "%s ship countdown started at %d, expected %d" % [
+				plan_name, sim.get_ticks_until_rain(), Sim.SHIP_TICK,
+			])
+			return null
+		var ship_before := errors.size()
+		_apply_marks(sim, plan["after_cart"], errors)
+		if errors.size() > ship_before:
+			return null
+	if plan.has("after_ship"):
+		var market_guard := 0
+		var market_limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + int(Sim.SHIP_TICK) + 2
+		while int(sim.get_beat()) != Sim.MARKET and not sim.is_over() and market_guard < market_limit:
+			sim.tick()
+			market_guard += 1
+		if int(sim.get_beat()) != Sim.MARKET or sim.is_over():
+			_fail(errors, "%s did not open the market beat after the ship" % plan_name)
+			return null
+		if int(sim.get_ticks_until_rain()) != int(Sim.MARKET_TICK):
+			_fail(errors, "%s market countdown started at %d, expected %d" % [
+				plan_name, sim.get_ticks_until_rain(), Sim.MARKET_TICK,
+			])
+			return null
+		var market_before := errors.size()
+		_apply_marks(sim, plan["after_ship"], errors)
+		if errors.size() > market_before:
+			return null
 	sim.run_until_rain()
 	return sim
 
@@ -540,6 +935,10 @@ func _apply_marks(sim, plan: Dictionary, errors: Array) -> void:
 		_apply_cells(sim, plan["pan"], Sim.PAN, errors)
 	if plan.has("crib"):
 		_apply_cells(sim, plan["crib"], Sim.CRIB, errors)
+	if plan.has("ship"):
+		_apply_cells(sim, plan["ship"], Sim.SHIP, errors)
+	if plan.has("stall"):
+		_apply_cells(sim, plan["stall"], Sim.STALL, errors)
 	if plan.has("rake_rect"):
 		_apply_rect(sim, plan["rake_rect"], Sim.RAKE, errors)
 

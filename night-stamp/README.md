@@ -1,6 +1,6 @@
 # Night Stamp
 
-A border-desk deckbuilder across seven nights. Travelers arrive with a written rule. You spend ink to press stamps onto a 3×3 form. The cell matters as much as the card. When the turn ends, the form resolves from the top row downward.
+A border-desk deckbuilder across eight nights. Travelers arrive with a written rule. You spend ink to press stamps onto a 3×3 form. The cell matters as much as the card. When the turn ends, the form resolves from the top row downward.
 
 This folder is a Godot 4 project. It was built against Godot 4.7.2.
 
@@ -30,7 +30,8 @@ A run is seeded. The seed field decides the shuffle and the draft offers. Restar
 - Ash watch opens the fourth night with a fresh deck. While that night is open, the same button returns to the first bell.
 - Gutter lamp opens the fifth night with a fresh deck. While that night is open, the same button returns to the first bell.
 - Vellum bell opens the sixth night with a fresh deck. While that night is open, the same button returns to the first bell.
-- Quire watch opens the seventh night with a fresh deck. While that night is open, the same button returns to the first bell. A victory desk can open any later night.
+- Quire watch opens the seventh night with a fresh deck. While that night is open, the same button returns to the first bell.
+- Salt watch opens the eighth night with a fresh deck. While that night is open, the same button returns to the first bell. A victory desk can open any later night.
 - Ink is 3 at the start of a turn (4 with Deep Well). Spending the last ink ends the turn. A turn with 0 ink accepts no further stamp.
 
 The rules comment at the top of `rules/rules.gd` is the full rules text. The first bell has four travelers:
@@ -82,6 +83,13 @@ The quire watch is a seventh night. Same stamps, same ink, a new deck.
 - Bryn Solt — Column Toll. Patience drops once for each empty column.
 - Ida Cress — Head Slip. The first stamp in the queue scores twice.
 
+The salt watch is an eighth night. Same stamps, same ink, a new deck.
+
+- Pell Voss — Tide Bar. A stamp on the middle row scores 0 unless an Exemption is also on the middle row.
+- June Hart — Pair Toll. Patience drops by 2 if two stamps share a number. A number is the progress that stamp already grants.
+- Cal Mire — Edge Yield. A stamp on the outer frame yields +3. The center cell does not.
+- Ned Quill — Last Slip. The last stamp in the queue scores twice.
+
 ## Tests
 
 From this directory:
@@ -90,4 +98,4 @@ From this directory:
 godot --headless --path . -s res://tests/run_tests.gd
 ```
 
-The process exits 0 when every check passes and non-zero when one fails. The checks cover the 20-card pool, a fixed-seed clear of each night, a turn with 0 ink, the chain cap, the same card producing different numbers on two cells, and a correct stamp beside a wrong stamp for each late-shift, closing-bell, ash-watch, gutter-lamp, vellum-bell, and quire-watch form.
+The process exits 0 when every check passes and non-zero when one fails. The checks cover the 20-card pool, a fixed-seed clear of each night, a turn with 0 ink, the chain cap, the same card producing different numbers on two cells, and a correct stamp beside a wrong stamp for each late-shift, closing-bell, ash-watch, gutter-lamp, vellum-bell, quire-watch, and salt-watch form.
