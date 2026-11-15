@@ -6,11 +6,13 @@ class_name ChartBook
 # The West Return holds eight more. The Meeting Glass holds eight more.
 # The Tide Mirror holds eight more. The Shutter holds eight more.
 # The Stain holds eight more. The Vane holds eight more.
-# The Well holds eight more. The Siphon holds the last eight.
+# The Well holds eight more. The Siphon holds eight more.
+# The Sluice holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
-# 180, and 270 for north, east, south, and west. A well has no facing.
+# 180, and 270 for north, east, south, and west. A sluice uses those same
+# four facings. A well has no facing.
 # A siphon has no facing. Rotation is ignored.
 # See BeamTracer.
 #
@@ -30,6 +32,7 @@ const STAIN := "The Stain"
 const VANE := "The Vane"
 const WELL := "The Well"
 const SIPHON := "The Siphon"
+const SLUICE := "The Sluice"
 
 static func all() -> Array:
 	var book: Array = []
@@ -45,6 +48,7 @@ static func all() -> Array:
 	book.append_array(vane())
 	book.append_array(well())
 	book.append_array(siphon())
+	book.append_array(sluice())
 	return book
 
 
@@ -94,6 +98,10 @@ static func well() -> Array:
 
 static func siphon() -> Array:
 	return [chart_87(), chart_88(), chart_89(), chart_90(), chart_91(), chart_92(), chart_93(), chart_94()]
+
+
+static func sluice() -> Array:
+	return [chart_95(), chart_96(), chart_97(), chart_98(), chart_99(), chart_100(), chart_101(), chart_102()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -3447,6 +3455,286 @@ static func chart_94() -> Dictionary:
 		],
 	}
 
+static func chart_95() -> Dictionary:
+	# Flood 2 covers the sluice. White falls through the stain, which is
+	# clicked to red, and arrives traveling south. An east-facing sluice
+	# keeps that red and sends it east. The tide mirror on that cell turns
+	# the exit north onto the dry red dock. A north-facing sluice sends the
+	# beam back up the column and misses the dock. Low water stops in the
+	# dry gate, and the lower lamp wakes the south hull.
+	return {
+		"id": "95",
+		"harbor": SLUICE,
+		"title": "The East Sluice",
+		"teach": "Tide index 1 floods the lowest two rows. Click the stain from blue to red and face the sluice east. Red enters traveling south and leaves east still red. The flooded glass turns that exit onto the red dock. A north-facing sluice sends it north and misses that dock. A siphon sends it north as blue. A well sends it north as red. A shutter keeps going south. While the row is dry the sluice stops, and the lower lamp wakes the hull.",
+		"win": "Red leaves the east sluice and the dock takes it.",
+		"cols": 6,
+		"rows": 6,
+		"tide_phases": [0, 2],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 2, "E", "white"),
+			_lantern("Lw", 0, 5, "E", "white"),
+		],
+		"docks": [_dock("Rd", 4, 3, "red")],
+		"boats": [_boat("Hb", 5, 5)],
+		"fixtures": [
+			_fixture("E", "tide_mirror", 4, 4, 0),
+		],
+		"pieces": [
+			_mirror("M", "Feed mirror", 3, 2, 0, 90),
+			_stain("K", "Stain", 3, 3, 90, 0),
+			_sluice("U", "Sluice", 3, 4, 0, 90),
+		],
+	}
+
+static func chart_96() -> Dictionary:
+	# The only phase floods the bottom two rows. Red arrives traveling west.
+	# A south-facing sluice still leaves south as red. The flooded glass turns
+	# that south exit onto the dry red dock. A north exit misses it.
+	return {
+		"id": "96",
+		"harbor": SLUICE,
+		"title": "Side Entry",
+		"teach": "The only phase floods the lowest two rows. The beam arrives traveling west, already red. A south-facing sluice still leaves south as red, and the flooded glass carries that exit onto the red dock. The arrival direction does not pick the exit. A siphon leaves north as blue. A well leaves north as red. A north-facing sluice misses the dock. A shutter keeps going west.",
+		"win": "The side entry leaves south as red.",
+		"cols": 6,
+		"rows": 6,
+		"tide_phases": [2],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [_lantern("L", 5, 3, "W", "red")],
+		"docks": [_dock("Rd", 1, 3, "red")],
+		"boats": [
+			_boat("Hn", 2, 0),
+			_boat("Ht", 0, 0),
+		],
+		"fixtures": [
+			_fixture("T", "tide_mirror", 4, 4, 0),
+			_fixture("G", "shutter", 3, 4, 0),
+			_fixture("A", "tide_mirror", 2, 5, 0),
+			_fixture("B", "tide_mirror", 1, 5, 90),
+			_fixture("G14", "shutter", 1, 4, 0),
+			_fixture("R", "tide_mirror", 0, 4, 90),
+		],
+		"pieces": [
+			_mirror("M", "Feed mirror", 4, 3, 90, 0),
+			_sluice("U", "Sluice", 2, 4, 0, 180),
+		],
+	}
+
+static func chart_97() -> Dictionary:
+	# White through an east-facing sluice stays white and reaches the east
+	# dock. A siphon keeps white but leaves north. A red stain fails the dock.
+	return {
+		"id": "97",
+		"harbor": SLUICE,
+		"title": "White Through",
+		"teach": "Flood 2. White enters an east-facing sluice and leaves east still white onto the white dock. The sluice does not paint white into another color. A siphon keeps white but leaves north and misses the east dock. A well leaves north as white and misses that dock. A stain set to red fails the white dock. A shutter keeps the arrival direction.",
+		"win": "White leaves east, still white.",
+		"cols": 6,
+		"rows": 6,
+		"tide_phases": [2],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [_lantern("L", 0, 2, "E", "white")],
+		"docks": [_dock("D", 4, 3, "white")],
+		"boats": [
+			_boat("Hn", 3, 0),
+			_boat("Ht", 1, 0),
+		],
+		"fixtures": [
+			_fixture("E", "tide_mirror", 4, 4, 0),
+		],
+		"pieces": [
+			_mirror("M", "Feed mirror", 3, 2, 0, 90),
+			_sluice("U", "Sluice", 3, 4, 0, 90),
+		],
+	}
+
+static func chart_98() -> Dictionary:
+	# Dry is the solution. The eastbound lamp stops in the sluice, short of
+	# the route that would reach the east hull. The dock mirror sends another
+	# beam south onto a dock on the bottom rows. Every dry facing stops the
+	# eastbound beam, so each of them clears. Index 1 floods the sluice and
+	# covers that dock: the dock beam dies on the waterline. East still wakes
+	# the east hull. North still wakes the north hull.
+	return {
+		"id": "98",
+		"harbor": SLUICE,
+		"title": "Dry Stop",
+		"teach": "The solution is low water, flood 0. The dry sluice stops an eastbound beam short of the east hull, and the dock mirror lights the white dock. Rotating the dry sluice still stops that beam. Index 1 floods the gate and covers the dock, so the flood fails. An east-facing sluice then sends the beam east onto the east hull. A north-facing sluice at that tide sends it north instead. Any color lights a hull. A dry siphon, a dry well, and a dry shutter stop that same beam and also clear. A head-on vane also stops it. A stain lets the dry beam pass and wakes the hull past the gate.",
+		"win": "The dry sluice holds the hulls dark.",
+		"cols": 7,
+		"rows": 6,
+		"tide_phases": [0, 2],
+		"start_tide_index": 1,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ld", 3, 2, "E", "white"),
+			_lantern("Lf", 0, 2, "E", "white"),
+			_lantern("Lw", 0, 4, "E", "white"),
+		],
+		"docks": [_dock("D", 5, 4, "white")],
+		"boats": [
+			_boat("Hn", 2, 0),
+			_boat("He", 3, 3),
+			_boat("Hp", 4, 4),
+			_boat("Hs", 2, 5),
+		],
+		"fixtures": [
+			_fixture("F", "mirror", 1, 2, 90),
+			_fixture("R", "tide_mirror", 1, 4, 90),
+			_fixture("C", "tide_mirror", 3, 4, 0),
+		],
+		"pieces": [
+			_mirror("M", "Dock mirror", 5, 2, 0, 90),
+			_sluice("U", "Sluice", 2, 4, 90, 0),
+		],
+	}
+
+static func chart_99() -> Dictionary:
+	# Flood 3. Red enters the south sluice and leaves north still red, then
+	# enters the east-facing sluice and leaves east still red onto the dry dock.
+	return {
+		"id": "99",
+		"harbor": SLUICE,
+		"title": "Two Sluices",
+		"teach": "Flood 3. Red enters a north-facing sluice, leaves north still red, enters an east-facing sluice, and leaves east still red onto the dry red dock. A siphon in the first cell leaves blue on the dock. A siphon in the second cell turns the kept red into blue and sends it north, missing the east dock. A well in the second cell sends red north and misses the east dock. A well in the first cell keeps the red and also clears. A north-facing sluice in the second cell misses the east dock.",
+		"win": "Two sluices keep the red and land it east.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [3],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [_lantern("L", 6, 3, "W", "red")],
+		"docks": [_dock("Rd", 4, 3, "red")],
+		"boats": [_boat("Hn", 3, 0)],
+		"fixtures": [
+			_fixture("G54", "shutter", 5, 4, 0),
+			_fixture("T55", "tide_mirror", 5, 5, 0),
+			_fixture("G45", "shutter", 4, 5, 0),
+			_fixture("E", "tide_mirror", 4, 4, 0),
+		],
+		"pieces": [
+			_mirror("M", "Feed mirror", 5, 3, 90, 0),
+			_sluice("U1", "South sluice", 3, 5, 90, 0),
+			_sluice("U2", "East sluice", 3, 4, 0, 90),
+		],
+	}
+
+static func chart_100() -> Dictionary:
+	# Flood 2 covers the sluice and leaves the dock's row dry. Red leaves
+	# east and the tide mirror lifts it onto that dock. Low water falls
+	# through the dry tide mirror into the south hull, and the lower lamp
+	# stops in the dry sluice.
+	return {
+		"id": "100",
+		"harbor": SLUICE,
+		"title": "Above the Gate",
+		"teach": "Tide index 1, flood 2. The flood covers the sluice and leaves the dock on the drier row dry. An east-facing sluice keeps red on the east dock. A siphon turns that red blue and sends it north. Low water stops in the dry sluice and wakes the south hull. A north-facing sluice misses the east dock. A well sends the red north. A shutter keeps going east and also clears. A stain set to red also clears. A stain set to blue misses the red dock.",
+		"win": "Red climbs out of the flood to the east.",
+		"cols": 6,
+		"rows": 6,
+		"tide_phases": [0, 2],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 3, "E", "red"),
+			_lantern("Lw", 5, 4, "W", "white"),
+		],
+		"docks": [_dock("Rd", 4, 3, "red")],
+		"boats": [
+			_boat("Hn", 3, 0),
+			_boat("Hs", 2, 5),
+		],
+		"fixtures": [
+			_fixture("T", "tide_mirror", 2, 4, 90),
+			_fixture("C", "tide_mirror", 4, 4, 0),
+		],
+		"pieces": [
+			_mirror("M", "Feed mirror", 2, 3, 0, 90),
+			_sluice("U", "Sluice", 3, 4, 0, 90),
+		],
+	}
+
+static func chart_101() -> Dictionary:
+	# Rows 7. Flood 2 covers y >= 5. The sluice is flooded and the dock one
+	# column east, on the row above the flood, is dry. Flood 3 covers that dock.
+	return {
+		"id": "101",
+		"harbor": SLUICE,
+		"title": "The Held Sluice",
+		"teach": "Tide index 1, flood 2, with the flood line at y >= 5. The sluice is flooded and the dock one column east, on the dry row above that water, is dry. An east-facing sluice keeps red on that dry dock. Index 0 stops on the dry sluice and wakes the south hull. Index 2 covers the dock, so the beam stops at the dock's waterline and the dock is not hit. A north-facing sluice at index 1 misses the east dock. A siphon sends the red north as blue. A well sends it north as red. A shutter keeps going east and also clears. A stain set to red also clears. A stain set to blue misses the red dock.",
+		"win": "The middle mark holds the sluice.",
+		"cols": 6,
+		"rows": 7,
+		"tide_phases": [0, 2, 3],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 3, "E", "red"),
+			_lantern("Lw", 5, 5, "W", "white"),
+		],
+		"docks": [_dock("Rd", 4, 4, "red")],
+		"boats": [
+			_boat("Hn", 3, 0),
+			_boat("Hs", 2, 6),
+		],
+		"fixtures": [
+			_fixture("K", "stain", 2, 4, 0),
+			_fixture("T", "tide_mirror", 2, 5, 90),
+			_fixture("C", "tide_mirror", 4, 5, 0),
+		],
+		"pieces": [
+			_mirror("M", "Feed mirror", 2, 3, 0, 90),
+			_sluice("U", "Sluice", 3, 5, 0, 90),
+		],
+	}
+
+static func chart_102() -> Dictionary:
+	# The prism must sit on the white beam. Red is turned south, then east
+	# into the sluice. That red leaves east still red. The tide mirror on the
+	# east cell lifts it onto the dry red dock. Blue dies on an empty flooded
+	# cell and never enters the sluice.
+	return {
+		"id": "102",
+		"harbor": SLUICE,
+		"title": "The Sluice Mark",
+		"teach": "Tide index 1, flood 2. Move the prism from the side socket onto the line. Only the red port enters the east-facing sluice. That red leaves east still red onto the red dock. The blue port dies on an empty flooded cell and does not enter. A siphon in that cell sends red north as blue and misses the red dock. A well sends red north and misses the red dock. Low water is the wrong tide. The sluice does not split. A shutter keeps going east and also clears. A stain set to red also clears. A stain set to blue misses the red dock.",
+		"win": "The red port leaves east, still red.",
+		"cols": 7,
+		"rows": 6,
+		"tide_phases": [0, 2],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [_lantern("L", 0, 2, "E", "white")],
+		"docks": [_dock("Rd", 6, 3, "red")],
+		"boats": [
+			_boat("Hw", 6, 2),
+			_boat("Hs", 4, 5),
+		],
+		"fixtures": [
+			_fixture("Na", "mirror", 2, 1, 0),
+			_fixture("Nb", "mirror", 4, 1, 90),
+			_fixture("T", "tide_mirror", 4, 4, 90),
+			_fixture("C", "tide_mirror", 6, 4, 0),
+		],
+		"pieces": [
+			_prism("P", "Prism", [["side", 5, 0], ["line", 2, 2]], "side", 0, "line", 90),
+			_sluice("U", "Sluice", 5, 4, 0, 90),
+		],
+	}
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -3582,6 +3870,20 @@ static func _stain(id: String, name: String, x: int, y: int, start_rot: int, sol
 		"id": id,
 		"name": name,
 		"kind": "stain",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _sluice(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "sluice",
 		"movable": false,
 		"sockets": [{"id": "a", "x": x, "y": y}],
 		"start_socket": "a",

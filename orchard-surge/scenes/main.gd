@@ -32,6 +32,7 @@ const KIND_COLOR := [
 	Color(0.64, 0.50, 0.38, 1),
 	Color(0.42, 0.36, 0.58, 1),
 	Color(0.28, 0.52, 0.46, 1),
+	Color(0.62, 0.36, 0.52, 1),
 ]
 
 var sim = null
@@ -125,6 +126,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			selected = Catalog.CLOAK
 		elif event.is_action_pressed("plant_j"):
 			selected = Catalog.CAPE
+		elif event.is_action_pressed("plant_k"):
+			selected = Catalog.SHAWL
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if sim != null and sim.outcome == Sim.OUTCOME_RUNNING and sim.phase == Sim.PHASE_PLANT:
 			var cell := _mouse_cell()
@@ -197,6 +200,7 @@ func _bind_keys() -> void:
 	_bind("plant_h", [KEY_H])
 	_bind("plant_i", [KEY_I])
 	_bind("plant_j", [KEY_J])
+	_bind("plant_k", [KEY_K])
 	_bind("restart", [KEY_R])
 
 
@@ -307,7 +311,7 @@ func _build_hud() -> void:
 	hp_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(hp_fill)
 
-	seeds_label = _label("Seeds 15", 15, Color("e7d7a4"))
+	seeds_label = _label("Seeds 16", 15, Color("e7d7a4"))
 	seeds_label.position = Vector2(704, 40)
 	seeds_label.size = Vector2(110, 24)
 	layer.add_child(seeds_label)
@@ -331,7 +335,7 @@ func _build_hud() -> void:
 	hint_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hint_box.clip_contents = true
 	layer.add_child(hint_box)
-	hint_label = _label("Move: WASD or arrows, paused while planting. Plant with 1-9, 0, B, C, E, F, G, H, I, or J, then click a tile. Only a wick burns shroud. Only a briar cracks rind. Only a flare melts pitch. Only a hearth thaws frost. Only a shear cuts web. Only a chime cracks glass. Only a rasp strips scale. Only a maul cracks mail. Only a bill splits hide. Only a shade shades dusk. Only a cowl cowls veil. Only a hood hoods pall. Only a cloak cloaks gloom. Only a cape capes murk.", 13, Color("aeb8a4"))
+	hint_label = _label("Move: WASD or arrows, paused while planting. Plant with 1-9, 0, B, C, E, F, G, H, I, J, or K, then click a tile. Only a wick burns shroud. Only a briar cracks rind. Only a flare melts pitch. Only a hearth thaws frost. Only a shear cuts web. Only a chime cracks glass. Only a rasp strips scale. Only a maul cracks mail. Only a bill splits hide. Only a shade shades dusk. Only a cowl cowls veil. Only a hood hoods pall. Only a cloak cloaks gloom. Only a cape capes murk. Only a shawl shawls dread.", 13, Color("aeb8a4"))
 	hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	hint_label.clip_text = true
@@ -344,7 +348,7 @@ func _build_hud() -> void:
 
 	for kind in Catalog.COUNT:
 		var panel := PanelContainer.new()
-		panel.position = Vector2(CARD_LEFT, CARD_TOP + float(kind) * (CARD_H + CARD_GAP))
+		panel.position = Vector2(CARD_LEFT, _card_top_for(kind))
 		panel.size = Vector2(CARD_W, CARD_H)
 		panel.custom_minimum_size = Vector2(CARD_W, CARD_H)
 		panel.clip_contents = true
@@ -429,7 +433,7 @@ func _refresh_hud() -> void:
 		return
 	overlay.visible = true
 	if sim.outcome == Sim.OUTCOME_WON:
-		outcome_label.text = "The surge breaks.\nThirty-one nights passed, and the orchard still stands."
+		outcome_label.text = "The surge breaks.\nThirty-three nights passed, and the orchard still stands."
 	else:
 		outcome_label.text = "The lights went out.\nHealth reached zero before the orchard was clear."
 
@@ -453,7 +457,17 @@ func _hotkey_text(kind: int) -> String:
 		return "I"
 	if kind == Catalog.CAPE:
 		return "J"
+	if kind == Catalog.SHAWL:
+		return "K"
 	return str(kind + 1)
+
+
+func _card_top_for(kind: int) -> float:
+	var y := CARD_TOP + float(kind) * (CARD_H + CARD_GAP)
+	# The shawl card starts on the cape card's bottom, y 6294–6634, so the 6700 window keeps a 66px spare.
+	if kind >= Catalog.SHAWL:
+		y -= CARD_GAP
+	return y
 
 
 func _label(text: String, size: int, color: Color) -> Label:
@@ -474,8 +488,8 @@ func _panel_style(bg: Color, border: Color) -> StyleBoxFlat:
 	style.set_corner_radius_all(6)
 	style.content_margin_left = 10
 	style.content_margin_right = 10
-	style.content_margin_top = 6
-	style.content_margin_bottom = 6
+	style.content_margin_top = 4
+	style.content_margin_bottom = 4
 	return style
 
 
@@ -567,6 +581,8 @@ func _draw_fog() -> void:
 				draw_rect(rect, Color(0.36, 0.30, 0.52, 0.16), true)
 			if sim.tile_capes_murk(tx, ty):
 				draw_rect(rect, Color(0.22, 0.42, 0.38, 0.16), true)
+			if sim.tile_shawls_dread(tx, ty):
+				draw_rect(rect, Color(0.62, 0.32, 0.48, 0.16), true)
 			if sim.tile_splits_hide(tx, ty):
 				draw_rect(rect, Color(0.86, 0.7, 0.42, 0.1), true)
 
@@ -789,6 +805,30 @@ func _draw_plant(plant) -> void:
 			draw_line(at + Vector2(14, 8), at + Vector2(10, 17), Color("6a8a80"), 1.6)
 			var cape_pulse := 0.55 + 0.45 * sin(float(sim.tick) * 0.08)
 			draw_arc(at + Vector2(0, -1), 16.0, 0.35, TAU - 0.5, 18, Color(0.28, 0.52, 0.46, 0.35 + 0.3 * cape_pulse), 1.6, true)
+		Catalog.SHAWL:
+			# Folded cloth: overlapping creased panels, not a hanging cape.
+			draw_colored_polygon(PackedVector2Array([
+				at + Vector2(-15, 8),
+				at + Vector2(-4, -6),
+				at + Vector2(12, -2),
+				at + Vector2(6, 12),
+			]), Color("6a3a56"))
+			draw_colored_polygon(PackedVector2Array([
+				at + Vector2(-8, 4),
+				at + Vector2(4, -12),
+				at + Vector2(16, 2),
+				at + Vector2(2, 10),
+			]), Color("c9a0b4"))
+			draw_colored_polygon(PackedVector2Array([
+				at + Vector2(-2, 6),
+				at + Vector2(6, -4),
+				at + Vector2(14, 6),
+				at + Vector2(4, 14),
+			]), Color("8d5872"))
+			draw_line(at + Vector2(-4, -6), at + Vector2(6, 12), Color("3a2432"), 1.5)
+			draw_line(at + Vector2(4, -12), at + Vector2(2, 10), Color("f3e4ea"), 1.2)
+			var shawl_pulse := 0.55 + 0.45 * sin(float(sim.tick) * 0.07)
+			draw_arc(at + Vector2(1, 2), 15.0, 1.15, TAU - 1.05, 16, Color(0.72, 0.4, 0.58, 0.35 + 0.3 * shawl_pulse), 1.6, true)
 		_:
 			draw_circle(at, 6.0, Color.WHITE)
 
@@ -848,6 +888,14 @@ func _draw_shot(shot) -> void:
 		Catalog.CAPE:
 			draw_circle(at, 3.0, Color(0.28, 0.52, 0.46, 0.5))
 			draw_arc(at, 5.0, 0.35, TAU - 0.5, 12, Color("9ec8bc"), 1.3, true)
+		Catalog.SHAWL:
+			draw_colored_polygon(PackedVector2Array([
+				at + Vector2(-4, 1),
+				at + Vector2(-1, -4),
+				at + Vector2(4, -1),
+				at + Vector2(1, 4),
+			]), Color("e7c9d6"))
+			draw_line(at + Vector2(-1, -4), at + Vector2(1, 4), Color("6a3a56"), 1.3)
 		_:
 			draw_circle(at, 6.0, Color("ffb15a"))
 			draw_circle(at, 2.5, Color("fff0d2"))
@@ -856,6 +904,9 @@ func _draw_shot(shot) -> void:
 func _draw_pest(pest) -> void:
 	var at := _screen(pest.pos)
 	var flutter := sin(float(sim.tick) * 0.45 + float(pest.id)) * 3.0
+	if _dread_only(pest):
+		_draw_dread_moth(at, pest, flutter)
+		return
 	var wing := Color("3c3554")
 	var body := Color("2a2438")
 	if pest.shrouded and pest.rinded:
@@ -906,7 +957,7 @@ func _draw_pest(pest) -> void:
 	if pest.slow_ticks > 0:
 		wing = Color("2f6b58")
 		body = Color("21483c")
-		if pest.shrouded or pest.rinded or pest.pitched or pest.frosted or pest.webbed or pest.glassed or pest.scaled or pest.mailed or pest.hided or pest.dusked or pest.veiled or pest.palled or pest.gloomed or pest.murked:
+		if pest.shrouded or pest.rinded or pest.pitched or pest.frosted or pest.webbed or pest.glassed or pest.scaled or pest.mailed or pest.hided or pest.dusked or pest.veiled or pest.palled or pest.gloomed or pest.murked or pest.dreaded:
 			wing = Color("2a4038")
 			body = Color("1c2c28")
 	draw_colored_polygon(PackedVector2Array([
@@ -982,10 +1033,58 @@ func _draw_pest(pest) -> void:
 		draw_arc(at, 49.0, 0.55, TAU - 0.75, 18, Color(0.42, 0.36, 0.58, 0.9), 1.3, true)
 	if pest.murked:
 		draw_arc(at, 52.0, 0.25, TAU - 0.5, 18, Color(0.32, 0.62, 0.52, 0.9), 1.3, true)
+	if pest.dreaded:
+		draw_arc(at, 55.0, 1.05, TAU - 1.2, 16, Color(0.82, 0.36, 0.44, 0.9), 1.3, true)
 	if pest.hp < Sim.PEST_HP:
 		var width := 16.0 * clampf(float(pest.hp) / float(Sim.PEST_HP), 0.0, 1.0)
 		draw_rect(Rect2(at + Vector2(-8, -14), Vector2(16, 3)), Color(0, 0, 0, 0.45), true)
 		draw_rect(Rect2(at + Vector2(-8, -14), Vector2(width, 3)), Color("e0c48a"), true)
+
+
+func _dread_only(pest) -> bool:
+	return pest.dreaded and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked
+
+
+func _draw_dread_moth(at: Vector2, pest, flutter: float) -> void:
+	# A split shard and torn wings. Not the murk moth's diamond and green ring.
+	var wing := Color("4a3040")
+	var shard := Color("f3e6d4")
+	var crack := Color("2a1820")
+	if pest.slow_ticks > 0:
+		wing = Color("3a4038")
+		shard = Color("d7d2c4")
+	draw_colored_polygon(PackedVector2Array([
+		at + Vector2(-18, flutter - 4),
+		at + Vector2(-6, -2),
+		at + Vector2(-13, 3),
+		at + Vector2(-16, 7),
+	]), wing)
+	draw_colored_polygon(PackedVector2Array([
+		at + Vector2(17, -flutter + 3),
+		at + Vector2(6, -1),
+		at + Vector2(14, 5),
+		at + Vector2(12, 9),
+	]), wing)
+	draw_colored_polygon(PackedVector2Array([
+		at + Vector2(-1, -12),
+		at + Vector2(-8, -1),
+		at + Vector2(-2, 11),
+		at + Vector2(-1, 0),
+	]), shard)
+	draw_colored_polygon(PackedVector2Array([
+		at + Vector2(3, -10),
+		at + Vector2(10, 1),
+		at + Vector2(3, 12),
+		at + Vector2(2, 1),
+	]), shard)
+	draw_line(at + Vector2(-1, -10), at + Vector2(2, 11), crack, 1.6)
+	draw_circle(at + Vector2(-3, -2), 1.2, Color("ffd2c8"))
+	draw_circle(at + Vector2(4, -1), 1.2, Color("ffd2c8"))
+	draw_arc(at, 55.0, 1.05, TAU - 1.2, 16, Color(0.82, 0.36, 0.44, 0.9), 1.3, true)
+	if pest.hp < Sim.PEST_HP:
+		var width := 16.0 * clampf(float(pest.hp) / float(Sim.PEST_HP), 0.0, 1.0)
+		draw_rect(Rect2(at + Vector2(-8, -16), Vector2(16, 3)), Color(0, 0, 0, 0.45), true)
+		draw_rect(Rect2(at + Vector2(-8, -16), Vector2(width, 3)), Color("e0c48a"), true)
 
 
 func _draw_motes() -> void:
