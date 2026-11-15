@@ -1,6 +1,6 @@
 # Casework
 
-A deduction game with twenty cases, **The spare key**, **The rehearsal score**, **The gilt stamp**, **The ferry bell**, **The weather slate**, **The loom shuttle**, **The hive smoker**, **The glass pontil**, **The press proof**, **The assay cup**, **The kiln chalk**, **The tide ledger**, **The night bell**, **The salt mark**, **The wick trim**, **The glass anneal**, **The orchard graft**, **The dye vat**, **The tar kettle**, and **The cork press**.
+A deduction game with twenty-one cases, **The spare key**, **The rehearsal score**, **The gilt stamp**, **The ferry bell**, **The weather slate**, **The loom shuttle**, **The hive smoker**, **The glass pontil**, **The press proof**, **The assay cup**, **The kiln chalk**, **The tide ledger**, **The night bell**, **The salt mark**, **The wick trim**, **The glass anneal**, **The orchard graft**, **The dye vat**, **The tar kettle**, **The cork press**, and **The net loft**.
 
 Pick a file. That file keeps a single timeline. You read the exhibits and pin who, the room, and the hour. A theory is accepted only when it fits every exhibit. A theory that does not fit comes back naming the exhibits it contradicts. An empty pin is refused by the name of the missing slot.
 
@@ -47,6 +47,8 @@ There is no voice. The papers and the board are the whole case.
 **The tar kettle.** The tar kettle left its peg at the rope walk. Name who tarred the rope, the room they tarred it in, and the hour.
 
 **The cork press.** The cork press left its peg at the bottle house. Name who pressed the cork, the room they pressed it in, and the hour.
+
+**The net loft.** The net loft left its peg at the drying shed. Name who mended the net, the room they mended it in, and the hour.
 
 ## Play
 
