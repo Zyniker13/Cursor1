@@ -232,9 +232,9 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 		"mirror":
 			_draw_mirror(at, rot, player, fixed)
 		"prism":
-			_draw_prism(at, rot)
+			_draw_prism(at, rot, fixed)
 		"pane":
-			_draw_pane(at, rot)
+			_draw_pane(at, rot, fixed)
 		_:
 			pass
 
@@ -263,7 +263,7 @@ func _draw_mirror(at: Vector2i, rot: int, player: bool, fixed: bool) -> void:
 	draw_line(a, b, Palette.GLASS_EDGE, 4.0)
 	draw_line(a, b, Color("7f5a32"), 1.5)
 
-func _draw_prism(at: Vector2i, rot: int) -> void:
+func _draw_prism(at: Vector2i, rot: int, set_in_stone: bool) -> void:
 	var center := _center(at)
 	var r := cell * 0.32
 	var poly := PackedVector2Array([
@@ -271,7 +271,8 @@ func _draw_prism(at: Vector2i, rot: int) -> void:
 		center + Vector2(r * 0.9, r * 0.7),
 		center + Vector2(-r * 0.9, r * 0.7),
 	])
-	draw_colored_polygon(poly, Color(Palette.GLASS.r, Palette.GLASS.g, Palette.GLASS.b, 0.78))
+	var glass := Palette.SET_GLASS if set_in_stone else Palette.GLASS
+	draw_colored_polygon(poly, Color(glass.r, glass.g, glass.b, 0.78))
 	var ports := Tracer.prism_ports(rot)
 	var red_at := center + _dir_vec(str(ports["red"])) * r * 0.62
 	var blue_at := center + _dir_vec(str(ports["blue"])) * r * 0.62
@@ -280,13 +281,13 @@ func _draw_prism(at: Vector2i, rot: int) -> void:
 	_label(red_at + Vector2(6, 4), "R", 12, Color("2a060c"))
 	_label(blue_at + Vector2(6, 4), "B", 12, Color("041424"))
 
-func _draw_pane(at: Vector2i, rot: int) -> void:
+func _draw_pane(at: Vector2i, rot: int, set_in_stone: bool) -> void:
 	var center := _center(at)
 	var tint := Tracer.pane_color(rot)
 	var col := Palette.BEAM_RED if tint == "red" else Palette.BEAM_BLUE
 	var rect := Rect2(center - Vector2(cell * 0.22, cell * 0.30), Vector2(cell * 0.44, cell * 0.60))
 	var fill := col
-	fill.a = 0.55
+	fill.a = 0.38 if set_in_stone else 0.55
 	draw_rect(rect, fill)
 	draw_rect(rect, Palette.GLASS_EDGE, false, 2.0)
 	draw_line(rect.position + Vector2(4, 6), rect.position + Vector2(rect.size.x - 8, 6), Color(1, 1, 1, 0.55), 2.0)

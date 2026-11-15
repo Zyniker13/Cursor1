@@ -1,8 +1,8 @@
 extends Control
 
-# South Lantern Quay. Pieces turn in place; a loose piece may also move
-# between the sockets authored for that chart. Lock Chart asks the beam
-# tracer whether every dock has its color and every hull is dark.
+# South Lantern Quay, then North Glass Reach. Pieces turn in place; a loose
+# piece may also move between the sockets authored for that chart. Lock Chart
+# asks the beam tracer whether every dock has its color and every hull is dark.
 
 const Charts := preload("res://scripts/charts.gd")
 const Tracer := preload("res://scripts/beam_tracer.gd")
@@ -20,8 +20,8 @@ var charts: Array = []
 var chart: Dictionary = {}
 var state: Dictionary = {}
 var chart_index := 0
-var unlocked: Array[bool] = [true, false, false, false, false, false]
-var solved: Array[bool] = [false, false, false, false, false, false]
+var unlocked: Array[bool] = []
+var solved: Array[bool] = []
 var selected_id := ""
 var hint_highlight := ""
 var hints_left := HINTS_PER_CHART
@@ -42,12 +42,21 @@ var win_layer: Control
 var win_body: Label
 var win_next: Button
 var chart_buttons: Array[Button] = []
+var quay_grid: GridContainer
+var reach_grid: GridContainer
+var quay_book_button: Button
+var reach_book_button: Button
+var harbor_label: Label
+var _book_place: Array[int] = [0, 0]
 var tide_clock: TideClock
 var _side: Panel
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	charts = Charts.all()
+	unlocked.resize(charts.size())
+	solved.resize(charts.size())
+	unlocked[0] = true
 	_build_ui()
 	_load_progress()
 	select_chart(0)
@@ -70,33 +79,58 @@ func _build_ui() -> void:
 	_side.add_theme_stylebox_override("panel", _style(Palette.PANEL, Palette.PANEL_EDGE, 10))
 	add_child(_side)
 
+	var scroll := ScrollContainer.new()
+	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scroll.offset_left = 14
+	scroll.offset_top = 10
+	scroll.offset_right = -12
+	scroll.offset_bottom = -10
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_side.add_child(scroll)
+
 	var box := VBoxContainer.new()
-	box.set_anchors_preset(Control.PRESET_FULL_RECT)
-	box.offset_left = 14
-	box.offset_top = 10
-	box.offset_right = -12
-	box.offset_bottom = -10
-	box.add_theme_constant_override("separation", 4)
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	box.add_theme_constant_override("separation", 3)
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_side.add_child(box)
+	scroll.add_child(box)
 
 	var harbor := _label("Harbor Glass", 26, Palette.LANTERN)
 	harbor.autowrap_mode = TextServer.AUTOWRAP_OFF
 	box.add_child(harbor)
-	var quay := _label(Charts.HARBOR, 14, Palette.MUTED)
-	quay.autowrap_mode = TextServer.AUTOWRAP_OFF
-	box.add_child(quay)
+	harbor_label = _label(Charts.HARBOR, 14, Palette.MUTED)
+	harbor_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	box.add_child(harbor_label)
 
-	var grid := GridContainer.new()
-	grid.columns = 3
-	grid.add_theme_constant_override("h_separation", 6)
-	grid.add_theme_constant_override("v_separation", 6)
-	box.add_child(grid)
+	var book_row := HBoxContainer.new()
+	book_row.add_theme_constant_override("separation", 6)
+	box.add_child(book_row)
+	quay_book_button = _button("Quay")
+	quay_book_button.tooltip_text = Charts.HARBOR
+	quay_book_button.custom_minimum_size = Vector2(120, 26)
+	quay_book_button.pressed.connect(_on_book_pressed.bind(0))
+	reach_book_button = _button("Reach")
+	reach_book_button.tooltip_text = Charts.REACH
+	reach_book_button.custom_minimum_size = Vector2(120, 26)
+	reach_book_button.pressed.connect(_on_book_pressed.bind(1))
+	book_row.add_child(quay_book_button)
+	book_row.add_child(reach_book_button)
+
+	quay_grid = _chart_grid()
+	reach_grid = _chart_grid()
+	reach_grid.visible = false
+	box.add_child(quay_grid)
+	box.add_child(reach_grid)
+	var quay_n := Charts.quay().size()
 	for i in charts.size():
 		var button := _button("Chart %d" % (i + 1))
-		button.custom_minimum_size = Vector2(112, 32)
+		button.custom_minimum_size = Vector2(0, 26)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.pressed.connect(_on_chart_pressed.bind(i))
-		grid.add_child(button)
+		if i < quay_n:
+			quay_grid.add_child(button)
+		else:
+			reach_grid.add_child(button)
 		chart_buttons.append(button)
 
 	title_label = _label("", 20, Palette.TEXT)
@@ -108,7 +142,7 @@ func _build_ui() -> void:
 	box.add_child(selected_label)
 
 	tide_clock = TideClock.new()
-	tide_clock.custom_minimum_size = Vector2(340, 92)
+	tide_clock.custom_minimum_size = Vector2(340, 56)
 	box.add_child(tide_clock)
 	tide_readout = _label("", 13, Palette.MUTED)
 	box.add_child(tide_readout)
@@ -118,7 +152,7 @@ func _build_ui() -> void:
 	box.add_child(tide_row)
 	raise_button = _button("Raise tide (T)")
 	raise_button.pressed.connect(raise_tide)
-	lower_button = _button("Lower tide")
+	lower_button = _button("Lower (Shift+T)")
 	lower_button.pressed.connect(lower_tide)
 	tide_row.add_child(raise_button)
 	tide_row.add_child(lower_button)
@@ -145,7 +179,7 @@ func _build_ui() -> void:
 	var legend := _label("Warm beam, red, and blue. Docks take only their marked color. Hulls stay dark. Water shuts the glass it covers.", 13, Palette.MUTED)
 	legend.custom_minimum_size = Vector2(360, 0)
 	box.add_child(legend)
-	var keys := _label("Arrows or Tab select. R turns. M moves a loose piece. Space locks. H hints. T raises tide. Backspace restarts.", 12, Palette.MUTED)
+	var keys := _label("Arrows or Tab select. R turns. M moves a loose piece. Space locks. H hints. T raises tide, Shift+T lowers it. Backspace restarts.", 12, Palette.MUTED)
 	keys.custom_minimum_size = Vector2(360, 0)
 	box.add_child(keys)
 
@@ -230,6 +264,9 @@ func select_chart(index: int) -> bool:
 			status_label.text = "That chart is still locked."
 		return false
 	chart_index = index
+	var quay_n := Charts.quay().size()
+	var book := 0 if chart_index < quay_n else 1
+	_book_place[book] = chart_index
 	chart = charts[index]
 	state = Charts.make_state(chart, false)
 	hints_left = HINTS_PER_CHART
@@ -385,6 +422,7 @@ func _refresh_board() -> void:
 	board.present(chart, state, traced, selected_id, hint_highlight)
 
 func _refresh_chrome() -> void:
+	harbor_label.text = str(chart.get("harbor", Charts.HARBOR))
 	title_label.text = "Chart %s  ·  %s" % [str(chart["id"]), str(chart["title"])]
 	teach_label.text = str(chart["teach"])
 	var piece := Charts.piece_def(chart, selected_id)
@@ -420,10 +458,14 @@ func _refresh_chrome() -> void:
 		else:
 			button.disabled = false
 			button.text = "Held %d" % (i + 1) if solved[i] else "Chart %d" % (i + 1)
-		var border := Palette.LANTERN if i == chart_index else Palette.PANEL_EDGE
-		var bg := Color("2c2618") if i == chart_index else Color("1a2836")
-		button.add_theme_stylebox_override("normal", _style(bg, border))
-		button.add_theme_stylebox_override("hover", _style(bg.lightened(0.08), Palette.LANTERN))
+		_paint_button(button, i == chart_index)
+	var quay_n := Charts.quay().size()
+	var on_reach := chart_index >= quay_n
+	quay_grid.visible = not on_reach
+	reach_grid.visible = on_reach
+	reach_book_button.disabled = not unlocked[quay_n]
+	_paint_button(quay_book_button, not on_reach)
+	_paint_button(reach_book_button, on_reach)
 
 func _show_win() -> void:
 	win_body.text = str(chart["win"])
@@ -453,6 +495,42 @@ func _stay_on_chart() -> void:
 func _on_chart_pressed(index: int) -> void:
 	select_chart(index)
 
+
+func _on_book_pressed(book: int) -> void:
+	var quay_n := Charts.quay().size()
+	var here := 0 if chart_index < quay_n else 1
+	if book == here:
+		return
+	if book == 1 and not unlocked[quay_n]:
+		status_label.text = "The reach is still locked."
+		return
+	_book_place[here] = chart_index
+	var first := 0 if book == 0 else quay_n
+	var last := quay_n if book == 0 else charts.size()
+	var target := _book_place[book]
+	if target < first or target >= last or not unlocked[target]:
+		target = first
+		for i in range(first, last):
+			if unlocked[i]:
+				target = i
+				break
+	select_chart(target)
+
+
+func _chart_grid() -> GridContainer:
+	var grid := GridContainer.new()
+	grid.columns = 4
+	grid.add_theme_constant_override("h_separation", 6)
+	grid.add_theme_constant_override("v_separation", 6)
+	return grid
+
+
+func _paint_button(button: Button, current: bool) -> void:
+	var border := Palette.LANTERN if current else Palette.PANEL_EDGE
+	var bg := Color("2c2618") if current else Color("1a2836")
+	button.add_theme_stylebox_override("normal", _style(bg, border))
+	button.add_theme_stylebox_override("hover", _style(bg.lightened(0.08), Palette.LANTERN))
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mouse := event as InputEventMouseButton
@@ -473,7 +551,10 @@ func _on_key(key: InputEventKey) -> void:
 	elif code == KEY_H:
 		try_hint()
 	elif code == KEY_T:
-		raise_tide()
+		if key.shift_pressed:
+			lower_tide()
+		else:
+			raise_tide()
 	elif code == KEY_BACKSPACE:
 		restart_chart()
 	elif code == KEY_ESCAPE:
@@ -607,7 +688,7 @@ func _button(text: String) -> Button:
 	button.add_theme_stylebox_override("hover", _style(Color("243848"), Palette.LANTERN))
 	button.add_theme_stylebox_override("pressed", _style(Color("101820"), Palette.LANTERN))
 	button.add_theme_stylebox_override("disabled", _style(Color("12181e"), Color("243038")))
-	button.custom_minimum_size = Vector2(0, 32)
+	button.custom_minimum_size = Vector2(0, 26)
 	return button
 
 func _style(bg: Color, border: Color, radius: int = 6) -> StyleBoxFlat:
