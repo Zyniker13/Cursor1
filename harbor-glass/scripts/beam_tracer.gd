@@ -350,7 +350,10 @@ static func norm_rot(kind: String, rot: int) -> int:
 	# An astragal uses the same four facings. Each one is its own open pair:
 	# the facing and the next clockwise direction. Opposite facings are not
 	# the same piece.
-	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal":
+	# A scotia uses the same four facings. Each one is its own open pair:
+	# the facing and the next counterclockwise direction. That pair is the
+	# mirror of the astragal, so a north scotia is not a north astragal.
+	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia":
 		return posmod(rot, 360)
 	# A shutter has no facing. Dry stops the beam; flooded water lets it pass.
 	# A well has no facing either. Dry stops the beam; flooded water sends it north.
@@ -452,6 +455,15 @@ static func astragal_facing(rot: int) -> String:
 static func astragal_passes(rot: int, dir: String) -> bool:
 	var facing := astragal_facing(rot)
 	return dir == facing or dir == rotate_dir(facing, 1)
+
+static func scotia_facing(rot: int) -> String:
+	# 0 north, 90 east, 180 south, 270 west. The dry pass follows this facing
+	# and the next counterclockwise direction.
+	return rotate_dir("N", posmod(int(norm_rot("scotia", rot) / 90.0), 4))
+
+static func scotia_passes(rot: int, dir: String) -> bool:
+	var facing := scotia_facing(rot)
+	return dir == facing or dir == rotate_dir(facing, -1)
 
 static func sluice_facing(rot: int) -> String:
 	# 0 north, 90 east, 180 south, 270 west. The exit follows this facing.
@@ -685,6 +697,12 @@ static func _cast(
 		if _dry_astragal_blocks(occupants, cell, dir):
 			segments.append(_boundary_seg(prev, cell, color))
 			return
+		# A dry scotia passes its facing and the next counterclockwise
+		# direction. The other two directions stop on the edge and never enter
+		# the cell. Flooded scotias already returned above.
+		if _dry_scotia_blocks(occupants, cell, dir):
+			segments.append(_boundary_seg(prev, cell, color))
+			return
 		segments.append(_center_seg(prev, cell, color))
 		if not occupants.has(cell):
 			prev = cell
@@ -833,6 +851,15 @@ static func _cast(
 			prev = cell
 			cell = cell + VEC[dir]
 			continue
+		if kind == "scotia":
+			# Dry facing and the next counterclockwise direction pass straight,
+			# same direction and same color. That pass costs no bounce. It does
+			# not turn, it does not recolor, and it does not split. The other
+			# two dry directions never reach here. A flooded scotia never
+			# reaches here either.
+			prev = cell
+			cell = cell + VEC[dir]
+			continue
 		if kind == "pane":
 			if color != pane_color(int(occ["rot"])):
 				return
@@ -864,7 +891,8 @@ static func _flood_carries(occupants: Dictionary, cell: Vector2i) -> bool:
 	# water the same way, so _flood_carries stays false for it. A jamb is
 	# shut under water the same way, so _flood_carries stays false for it.
 	# An astragal is shut under water the same way, so _flood_carries stays
-	# false for it.
+	# false for it. A scotia is shut under water the same way, so
+	# _flood_carries stays false for it.
 	# Every other flooded cell stops.
 	if not occupants.has(cell):
 		return false
@@ -906,6 +934,13 @@ static func _dry_astragal_blocks(occupants: Dictionary, cell: Vector2i, dir: Str
 	if str(occupants[cell]["kind"]) != "astragal":
 		return false
 	return not astragal_passes(int(occupants[cell]["rot"]), dir)
+
+static func _dry_scotia_blocks(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "scotia":
+		return false
+	return not scotia_passes(int(occupants[cell]["rot"]), dir)
 
 static func _in_bounds(chart: Dictionary, cell: Vector2i) -> bool:
 	return cell.x >= 0 and cell.y >= 0 and cell.x < int(chart["cols"]) and cell.y < int(chart["rows"])
