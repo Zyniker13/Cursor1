@@ -73,15 +73,15 @@ func _build_hud() -> void:
 	layer.add_child(bottom_panel)
 
 	controls_label = Label.new()
-	controls_label.text = "Arrows move    F lamp you face    Space wait    U undo    R restart    click a neighbor or a lamp\n1–8 east    Shift+1–6 west    Ctrl+1–6 north    Alt+1–6 south    F1–F6 attic    F7–F12 cellar    Keypad 1–6 gallery\nShift+F1–F6 court    Alt+F1–F6 nave    Ctrl+F1–F6 cloister    Ctrl+Shift+F1–F6 porch    Alt+Shift+F1–F6 oriel    Alt+Shift+1–6 veil    Ctrl+Alt+1–6 shade    Ctrl+Shift+1–6 screen"
+	controls_label.text = "Arrows move    F lamp you face    Space wait    U undo    R restart    click a neighbor or a lamp\n1–8 east    Shift+1–6 west    Ctrl+1–6 north    Alt+1–6 south    F1–F6 attic    F7–F12 cellar    Keypad 1–6 gallery\nShift+F1–F6 court    Alt+F1–F6 nave    Ctrl+F1–F6 cloister    Ctrl+Shift+F1–F6 porch    Alt+Shift+F1–F6 oriel    Alt+Shift+1–6 veil    Ctrl+Alt+1–6 shade    Ctrl+Shift+1–6 screen    Ctrl+Alt+Shift+1–6 glaze"
 	controls_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	controls_label.add_theme_font_size_override("font_size", 14)
 	controls_label.add_theme_color_override("font_color", MUTED)
 	controls_label.position = Vector2(20, 4)
-	controls_label.size = Vector2(1240, 84)
+	controls_label.size = Vector2(1240, 89)
 	bottom_panel.add_child(controls_label)
 
-	var row_y := 90.0
+	var row_y := 95.0
 	var wings: Array = Puzzles.wings()
 	for wing_i in wings.size():
 		var wing: Dictionary = wings[wing_i]
@@ -118,10 +118,10 @@ func _build_hud() -> void:
 		row_y += 36.0
 
 	legend_label = Label.new()
-	legend_label.text = "Gold diamond — lamplight, you cannot walk it.    Red diamond — a guard is watching.    Arrow — that guard's next step.    Brass disc — a plate. Step on it in the dark and the nearest guard is called.    Iron cup — a bell. Step on it in the dark and every guard who can reach it is called.    Iron bars — a grate. It stays dark, you may enter it, and a guard cannot.    Stone sill — a lamp lights it, light stops there, and a guard cannot enter or see through it.    Pale sheet — a pane. Light and sight pass through it, and neither you nor a guard can step on it.    Dark cloth — a curtain. A lamp lights it, light passes, sight stops, and a guard can step on it.    Dark louver — a shade. It stays dark, light stops, sight stops, you may step on it, and a guard cannot.    Pale lattice — a screen. A lamp lights it, light passes, sight stops, you may step on it, and a guard cannot."
+	legend_label.text = "Gold diamond — lamplight, you cannot walk it.    Red diamond — a guard is watching.    Arrow — that guard's next step.    Brass disc — a plate. Step on it in the dark and the nearest guard is called.    Iron cup — a bell. Step on it in the dark and every guard who can reach it is called.    Iron bars — a grate. It stays dark, you may enter it, and a guard cannot.    Stone sill — a lamp lights it, light stops there, and a guard cannot enter or see through it.    Pale sheet — a pane. Light and sight pass through it, and neither you nor a guard can step on it.    Dark cloth — a curtain. A lamp lights it, light passes, sight stops, and a guard can step on it.    Dark louver — a shade. It stays dark, light stops, sight stops, you may step on it, and a guard cannot.    Pale lattice — a screen. A lamp lights it, light passes, sight stops, you may step on it, and a guard cannot.    Ivory sheet, bright cross — a glaze. A lamp lights it, light passes, sight passes while it is lit, you may step on it, and a guard cannot."
 	legend_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	legend_label.position = Vector2(20, row_y + 2.0)
-	legend_label.size = Vector2(1240, 112)
+	legend_label.size = Vector2(1240, 135)
 	legend_label.add_theme_font_size_override("font_size", 14)
 	legend_label.add_theme_color_override("font_color", MUTED)
 	bottom_panel.add_child(legend_label)
@@ -133,7 +133,7 @@ func _build_hud() -> void:
 	status_label.position = Vector2(20, row_y + 2.0)
 	status_label.size = Vector2(1240, 52)
 	bottom_panel.add_child(status_label)
-	bottom_h = row_y + 122.0
+	bottom_h = row_y + 145.0
 
 	turn_label = Label.new()
 	turn_label.add_theme_font_size_override("font_size", 16)
@@ -168,9 +168,9 @@ func _layout() -> void:
 	bottom_panel.position = Vector2(0, view.y - bottom_h)
 	bottom_panel.size = Vector2(view.x, bottom_h)
 	if controls_label:
-		controls_label.size = Vector2(maxf(200.0, view.x - 40.0), 84)
+		controls_label.size = Vector2(maxf(200.0, view.x - 40.0), 89)
 	if legend_label:
-		legend_label.size = Vector2(maxf(200.0, view.x - 40.0), 112)
+		legend_label.size = Vector2(maxf(200.0, view.x - 40.0), 135)
 	if status_label:
 		status_label.size = Vector2(maxf(200.0, view.x - 40.0), 52)
 	title_label.position = Vector2(24, 16)
@@ -295,6 +295,11 @@ func _puzzle_index_for_key(event: InputEventKey) -> int:
 	var digit := _digit_from_key(event)
 	if digit < 0:
 		return -1
+	# Ctrl+Alt+Shift on a digit is the glaze, and only when Meta is not held.
+	# That chord has to be claimed before Alt combined with Ctrl selects nothing.
+	var glaze := _glaze_index(event)
+	if glaze >= 0:
+		return 92 + glaze
 	# Ctrl+Alt on a digit is the shade, and only when Shift and Meta are not held.
 	# That chord has to be claimed before Alt combined with Ctrl selects nothing.
 	var shade := _shade_index(event)
@@ -328,6 +333,15 @@ func _puzzle_index_for_key(event: InputEventKey) -> int:
 			return -1
 		return 8 + digit
 	if digit > 7:
+		return -1
+	return digit
+
+
+func _glaze_index(event: InputEventKey) -> int:
+	if not event.ctrl_pressed or not event.alt_pressed or not event.shift_pressed or event.meta_pressed:
+		return -1
+	var digit := _digit_from_key(event)
+	if digit < 0 or digit > 5:
 		return -1
 	return digit
 
@@ -645,6 +659,8 @@ func _draw_tile(state: Dictionary, x: int, y: int, lit: Dictionary, watched: Dic
 	if lit.has(cell) and kind != Rules.Tile.GRATE and kind != Rules.Tile.SHADE:
 		floor_color = LIT
 	draw_rect(inset, floor_color)
+	if kind == Rules.Tile.GLAZE:
+		_draw_glaze_sheet(inset)
 	if kind == Rules.Tile.SILL:
 		_draw_sill(inset)
 	if kind == Rules.Tile.CURTAIN:
@@ -676,6 +692,8 @@ func _draw_tile(state: Dictionary, x: int, y: int, lit: Dictionary, watched: Dic
 	if watched.has(cell):
 		draw_colored_polygon(_diamond(center, tile * 0.26, tile * 0.26), WATCH)
 		draw_polyline(_diamond_loop(center, tile * 0.3, tile * 0.3), Color(1, 0.55, 0.45, 0.9), 1.5)
+	if kind == Rules.Tile.GLAZE:
+		_draw_glaze_cross(inset)
 	if hover == cell:
 		draw_rect(inset, Color(1, 1, 1, 0.08), false, 2.0)
 
@@ -703,6 +721,20 @@ func _draw_plate(center: Vector2) -> void:
 	draw_rect(Rect2(center + Vector2(-tile * 0.07, -tile * 0.018), Vector2(tile * 0.14, tile * 0.036)), Color("3a2c16"))
 	draw_circle(center, tile * 0.045, Color("8d7344"))
 	draw_circle(center, tile * 0.02, Color("3a2c16"))
+
+
+func _draw_glaze_sheet(inset: Rect2) -> void:
+	# Ivory, not the pane's blue sheet and not the screen's bone lattice.
+	draw_rect(inset, Color("e7f3ea"))
+
+
+func _draw_glaze_cross(inset: Rect2) -> void:
+	var bright := Color("fff6a8")
+	var arm := maxf(1.6, tile * 0.03)
+	var cx := inset.position.x + inset.size.x * 0.5
+	var cy := inset.position.y + inset.size.y * 0.5
+	draw_rect(Rect2(Vector2(inset.position.x + inset.size.x * 0.06, cy - arm * 0.5), Vector2(inset.size.x * 0.88, arm)), bright)
+	draw_rect(Rect2(Vector2(cx - arm * 0.5, inset.position.y + inset.size.y * 0.06), Vector2(arm, inset.size.y * 0.88)), bright)
 
 
 func _draw_screen(inset: Rect2) -> void:

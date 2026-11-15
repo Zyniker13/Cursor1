@@ -20,6 +20,8 @@ class_name HintBook
 # A mullion has no facing, so rotation is ignored: while its row is dry a north-south beam passes straight through in the same direction and color without a bounce, an east-west beam stops before the cell, and while that row is flooded every beam stops at the waterline.
 # A transom has no facing, so rotation is ignored: while its row is dry an east-west beam passes straight through in the same direction and color without a bounce, a north-south beam stops before the cell, and while that row is flooded every beam stops at the waterline.
 # A casement has four facings. North, east, south, and west are different pieces. While its row is dry, only a beam already traveling that way passes straight through in the same direction and color without a bounce. Every other direction stops before the cell. While that row is flooded, every beam stops at the waterline.
+# A jamb has four facings. North, east, south, and west are different pieces. While its row is dry, north or south passes both north and south, and east or west passes both east and west, in the same direction and color without a bounce. The other axis stops before the cell. While that row is flooded, every beam stops at the waterline.
+# An astragal has four facings. North, east, south, and west are different pieces. While its row is dry, the facing and the next clockwise direction pass straight through in the same direction and color without a bounce. The other two directions stop before the cell. While that row is flooded, every beam stops at the waterline.
 
 const Tracer := preload("res://scripts/beam_tracer.gd")
 
