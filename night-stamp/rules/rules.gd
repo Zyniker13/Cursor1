@@ -1384,6 +1384,85 @@
 # The next-blank doubling, the corner mark, and the middle pay do not
 # remove Hold or Exemption, and they do not cancel a retrigger.
 #
+# FRONTISPIECE BELL, in desk order
+# A twenty-second night. The stamps, the ink, and the 3x3 form are unchanged.
+# The frontispiece bell deals the starting deck again. Drafts and the relic
+# from an earlier night do not carry. Open it from the desk, or from a
+# victory desk. Restart act replays whichever night is on the desk.
+# - Soren Hale, lane column 3, exemption row middle, Even Toll:
+#   "Patience drops by 2 when the number of filled cells is even."
+#   Una Pell drops patience by 2 when the number of filled cells is odd,
+#   and keeps the drop at 1 for every even count. Ada Hart drops patience
+#   by 2 when the form holds exactly four stamps. Hugh Pell drops patience
+#   by 2 when the form holds exactly six. Gwyn Brant drops patience by 2
+#   when the form holds exactly eight. Soren does none of those. The drop
+#   is 2 instead of 1 when the number of filled cells is even: zero, two,
+#   four, six, or eight. An empty form drops patience by 2. Exactly two
+#   stamps drop patience by 2. A single filled cell keeps the drop at 1.
+#   Three, five, seven, and a full form of nine keep the drop at 1. The
+#   toll does not change what a stamp scores.
+#   Exemption on the middle row keeps the drop at 1, even when the count
+#   is even and even when the count is anything else. An Exemption off the
+#   middle row does not.
+#   Hold is applied before the even toll.
+# - Brigg Marsh, lane column 2, exemption row top, Prior Blank:
+#   "A stamp scores twice only when the queue cell immediately before it
+#   is empty."
+#   The queue is read from the top row downward, left to right inside a
+#   row, the same order Holt Quern, Hester Keel, and Orin Keel use. The
+#   cell immediately before a stamp is the previous cell in that order.
+#   The cell before the left end of a row is the right end of the previous
+#   row. A stamp whose previous cell is filled scores its own number. The
+#   top-left cell has no cell before it, so it scores its own number. A
+#   stamp whose previous cell is empty scores twice even when no earlier
+#   cell is filled. Hester Keel doubles a stamp when the previous cell is
+#   filled. Sable Quern doubles a stamp when the previous cell is empty
+#   and some earlier cell is filled, so a stamp that follows an empty cell
+#   at the start of the queue does not double for Sable. Orin Keel doubles
+#   a stamp when the next cell is empty, and does not look at the previous
+#   cell. Brigg does none of those. A contiguous pair leaves both stamps
+#   at their own numbers. A retrigger of a stamp whose previous cell is
+#   empty scores twice again. A retrigger of a stamp whose previous cell
+#   is filled does not. A retrigger of the top-left cell does not.
+#   Exemption on the top row cancels the doubling, so every stamp scores
+#   its own number. An Exemption off the top row does not. An Exemption
+#   that follows an empty cell and sits off the top row scores twice.
+#   The slip does not change patience.
+# - Tallow Keel, lane column 1, exemption row bottom, Edge Mark:
+#   "A stamp scores twice only when it sits in an edge-middle cell."
+#   The edge-middle cells are the top middle, the left middle, the right
+#   middle, and the bottom middle. The four corners score their own
+#   number. The center scores its own number. An edge-middle stamp doubles
+#   even when its neighbors are empty. An edge-middle stamp still doubles
+#   only once when its neighbors are filled. Filling an edge-middle cell
+#   does not double a corner or the center. Vesper Okell doubles the four
+#   corners and does not double an edge middle. Bram Hart doubles every
+#   frame stamp, including the edge-middle cells and the corners, only
+#   when the center is filled. Tallow does neither. A lone edge-middle
+#   stamp scores twice. A lone corner scores its own number. A lone center
+#   scores its own number. A retrigger of an edge-middle stamp scores
+#   twice again. A retrigger of a corner or the center scores its own
+#   number again.
+#   Exemption on the bottom row cancels the doubling, so every stamp
+#   scores its own number. An Exemption off the bottom row does not. An
+#   Exemption on an edge-middle cell and off the bottom row scores twice.
+#   The mark does not change patience.
+# - Yarrow Fen, lane column 2, exemption row middle, Top Pay:
+#   "Each stamp in the top row scores +2 once."
+#   A stamp in the middle row scores its own number. A stamp on the bottom
+#   row scores its own number. Neighbors do not change the bonus. A stamp
+#   with two neighbors still scores +2 once, not +4. A lone top-row stamp
+#   still scores +2. Weske Brant adds 2 to the middle row and does not add
+#   2 to the top row. Opal Quill adds 3 for a side share and does not pay
+#   a lone stamp. Yarrow does neither. A retrigger of a top-row stamp adds
+#   2 again. A retrigger of a middle stamp or a bottom stamp does not.
+#   Exemption on the middle row cancels the bonus, so every stamp scores
+#   its own number. An Exemption off the middle row does not. An Exemption
+#   in the top row still adds 2, because the top row is not the middle row.
+#   The pay does not change patience.
+# The prior-blank doubling, the edge mark, and the top pay do not remove
+# Hold or Exemption, and they do not cancel a retrigger.
+#
 # RUN
 # - A run is seeded. The shuffle and the draft offer are a pure function of the
 #   seed, the night, the traveler, and the cards owned, so restarting an
@@ -1428,6 +1507,7 @@ const SHIFT_SIGNATURE := 17
 const SHIFT_CATCHWORD := 18
 const SHIFT_COLOPHON := 19
 const SHIFT_ERRATA := 20
+const SHIFT_FRONTISPIECE := 21
 
 const ROW_NAMES := ["top row", "middle row", "bottom row"]
 const COL_NAMES := ["column 1", "column 2", "column 3"]
@@ -2499,6 +2579,54 @@ const ERRATA_BELL := [
 ]
 
 
+const FRONTISPIECE_BELL := [
+	{
+		"id": "soren_hale",
+		"name": "Soren Hale",
+		"form_name": "Even Toll",
+		"rule_text": "Patience drops by 2 when the number of filled cells is even.",
+		"rule": "drop_if_even_count",
+		"lane": 2,
+		"exemption_row": 1,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "brigg_marsh",
+		"name": "Brigg Marsh",
+		"form_name": "Prior Blank",
+		"rule_text": "A stamp scores twice only when the queue cell immediately before it is empty. A stamp whose previous cell is filled scores its own number. The top-left cell has no cell before it, so it does not double.",
+		"rule": "double_prior_empty",
+		"lane": 1,
+		"exemption_row": 0,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "tallow_keel",
+		"name": "Tallow Keel",
+		"form_name": "Edge Mark",
+		"rule_text": "A stamp scores twice only when it sits in an edge-middle cell. The four corners and the center score their own number.",
+		"rule": "double_edge_middle",
+		"lane": 0,
+		"exemption_row": 2,
+		"goal": 16,
+		"patience": 5,
+	},
+	{
+		"id": "yarrow_fen",
+		"name": "Yarrow Fen",
+		"form_name": "Top Pay",
+		"rule_text": "Each stamp in the top row scores +2 once. A stamp in the middle row or the bottom row scores its own number.",
+		"rule": "yield_top_pay",
+		"lane": 1,
+		"exemption_row": 1,
+		"goal": 22,
+		"patience": 5,
+	},
+]
+
+
 class NightState:
 	extends RefCounted
 	var seed: int = 1
@@ -2582,6 +2710,8 @@ static func _canonical_shift(shift_index: int) -> int:
 		return SHIFT_COLOPHON
 	if shift_index == SHIFT_ERRATA:
 		return SHIFT_ERRATA
+	if shift_index == SHIFT_FRONTISPIECE:
+		return SHIFT_FRONTISPIECE
 	return SHIFT_FIRST
 
 
@@ -2597,7 +2727,9 @@ static func new_run(seed_value: int, shift_index: int = SHIFT_FIRST) -> NightSta
 	state.next_iid = 0
 	for card_id in STARTING_DECK:
 		_add_library_card(state, String(card_id))
-	if state.shift == SHIFT_ERRATA:
+	if state.shift == SHIFT_FRONTISPIECE:
+		_log(state, "The frontispiece bell begins. Seed %d." % state.seed)
+	elif state.shift == SHIFT_ERRATA:
 		_log(state, "The errata bell begins. Seed %d." % state.seed)
 	elif state.shift == SHIFT_COLOPHON:
 		_log(state, "The colophon bell begins. Seed %d." % state.seed)
@@ -2679,6 +2811,8 @@ static func restart_encounter(state: NightState) -> void:
 
 
 static func shift_label(state: NightState) -> String:
+	if state.shift == SHIFT_FRONTISPIECE:
+		return "Frontispiece bell"
 	if state.shift == SHIFT_ERRATA:
 		return "Errata bell"
 	if state.shift == SHIFT_COLOPHON:
@@ -2737,6 +2871,8 @@ static func traveler(state: NightState) -> Dictionary:
 
 
 static func _roster(state: NightState) -> Array:
+	if state.shift == SHIFT_FRONTISPIECE:
+		return FRONTISPIECE_BELL
 	if state.shift == SHIFT_ERRATA:
 		return ERRATA_BELL
 	if state.shift == SHIFT_COLOPHON:
@@ -3055,6 +3191,12 @@ static func stamp_progress(state: NightState, card_id: String, row: int, col: in
 		return amount * 2
 	if rule == "yield_middle_pay" and row == 1:
 		return amount + 2
+	if rule == "double_prior_empty" and _prev_cell_empty(state, row, col):
+		return amount * 2
+	if rule == "double_edge_middle" and _is_edge_middle(row, col):
+		return amount * 2
+	if rule == "yield_top_pay" and row == 0:
+		return amount + 2
 	return amount
 
 
@@ -3168,6 +3310,8 @@ static func patience_loss(state: NightState) -> int:
 		elif rule == "drop_if_exact_nine" and _stamp_count(state) == 9:
 			loss = 2
 		elif rule == "drop_if_odd_count" and _stamp_count(state) % 2 == 1:
+			loss = 2
+		elif rule == "drop_if_even_count" and _stamp_count(state) % 2 == 0:
 			loss = 2
 	return loss
 
@@ -3424,6 +3568,12 @@ static func _resolve_stamp(state: NightState, row: int, col: int, hush: bool) ->
 				_log(state, "%s on the %s, %s grants %d. The corner cell doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			elif tail_rule == "yield_middle_pay" and row == 1 and amount > raw:
 				_log(state, "%s on the %s, %s grants %d. The middle row pays +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_prior_empty" and _prev_cell_empty(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The blank cell before it doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_edge_middle" and _is_edge_middle(row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The edge-middle cell doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_top_pay" and row == 0 and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The top row pays +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			else:
 				_log(state, "%s on the %s, %s grants %d." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 	state.turn_progress += amount
@@ -3497,6 +3647,14 @@ static func _apply_post_rule(state: NightState, hush: bool) -> void:
 
 static func _is_corner(row: int, col: int) -> bool:
 	return (row == 0 or row == 2) and (col == 0 or col == 2)
+
+
+static func _is_edge_middle(row: int, col: int) -> bool:
+	if row == 1 and col != 1:
+		return true
+	if col == 1 and row != 1:
+		return true
+	return false
 
 
 static func _is_covered(state: NightState, row: int, col: int) -> bool:
@@ -3757,6 +3915,21 @@ static func _prev_cell_filled(state: NightState, row: int, col: int) -> bool:
 	if prev_row < 0:
 		return false
 	return state.form[prev_row][prev_col] != null
+
+
+static func _prev_cell_empty(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var prev_row := row
+	var prev_col := col - 1
+	if prev_col < 0:
+		prev_row = row - 1
+		prev_col = 2
+	if prev_row < 0:
+		return false
+	return state.form[prev_row][prev_col] == null
 
 
 static func _diagonal_count(state: NightState, row: int, col: int) -> int:
@@ -4039,7 +4212,9 @@ static func _apply_result(state: NightState, result: Dictionary) -> void:
 		state.encounters_cleared += 1
 		if state.traveler_index >= _roster(state).size() - 1:
 			state.phase = "victory"
-			if state.shift == SHIFT_ERRATA:
+			if state.shift == SHIFT_FRONTISPIECE:
+				_log(state, "The queue is empty. The frontispiece bell is clear.")
+			elif state.shift == SHIFT_ERRATA:
 				_log(state, "The queue is empty. The errata bell is clear.")
 			elif state.shift == SHIFT_COLOPHON:
 				_log(state, "The queue is empty. The colophon bell is clear.")
