@@ -7,7 +7,8 @@ class_name ChartBook
 # The Tide Mirror holds eight more. The Shutter holds eight more.
 # The Stain holds eight more. The Vane holds eight more.
 # The Well holds eight more. The Siphon holds eight more.
-# The Sluice holds eight more. The Weir holds the last eight.
+# The Sluice holds eight more. The Weir holds eight more.
+# The Lintel holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
@@ -15,6 +16,10 @@ class_name ChartBook
 # four facings and keeps the color. A weir uses those same four facings and
 # swaps red with blue. White stays white. A well has no facing.
 # A siphon has no facing. Rotation is ignored.
+# A lintel has no facing. Rotation is ignored. While its row is dry, a beam
+# passes straight through in the same direction and the same color, and that
+# pass costs no bounce. While that row is flooded, the beam stops at the
+# waterline and does not enter.
 # See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
@@ -35,6 +40,7 @@ const WELL := "The Well"
 const SIPHON := "The Siphon"
 const SLUICE := "The Sluice"
 const WEIR := "The Weir"
+const LINTEL := "The Lintel"
 
 static func all() -> Array:
 	var book: Array = []
@@ -52,6 +58,7 @@ static func all() -> Array:
 	book.append_array(siphon())
 	book.append_array(sluice())
 	book.append_array(weir())
+	book.append_array(lintel())
 	return book
 
 
@@ -109,6 +116,10 @@ static func sluice() -> Array:
 
 static func weir() -> Array:
 	return [chart_103(), chart_104(), chart_105(), chart_106(), chart_107(), chart_108(), chart_109(), chart_110()]
+
+
+static func lintel() -> Array:
+	return [chart_111(), chart_112(), chart_113(), chart_114(), chart_115(), chart_116(), chart_117(), chart_118()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -4018,6 +4029,301 @@ static func chart_110() -> Dictionary:
 		],
 	}
 
+static func chart_111() -> Dictionary:
+	# Tide index 0, flood 0. White travels east and blue travels south. Both
+	# pass straight through the dry lintel onto the matching dock. A dry
+	# shutter, weir, sluice, well, or siphon stops in that cell.
+	return {
+		"id": "111",
+		"harbor": LINTEL,
+		"title": "The Dry Lintel",
+		"teach": "Tide index 0, flood 0. A beam passes straight through the dry lintel onto the matching dock. White stays white and blue stays blue. A shutter, a weir, a sluice, a well, or a siphon in that cell stops and misses the dock. A stain changes the color and misses the dock.",
+		"win": "The dry lintel lets both colors pass straight.",
+		"cols": 6,
+		"rows": 6,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 2, "E", "white"),
+			_lantern("B", 3, 0, "S", "blue"),
+			_lantern("T", 0, 5, "E", "white"),
+		],
+		"docks": [
+			_dock("W", 5, 2, "white"),
+			_dock("Bd", 3, 4, "blue"),
+		],
+		"boats": [_boat("H", 2, 1)],
+		"fixtures": [],
+		"pieces": [
+			_mirror("M", "Side mirror", 2, 5, 0, 90),
+			_lintel("N", "Lintel", 3, 2),
+		],
+	}
+
+
+static func chart_112() -> Dictionary:
+	# Flood 2. The dock lamp never enters the lintel. The south lamp stops
+	# on the lintel's waterline. A shutter there passes and wakes a hull.
+	return {
+		"id": "112",
+		"harbor": LINTEL,
+		"title": "The Wet Stop",
+		"teach": "The lintel's row is flooded. The beam stops there and does not enter. The dock that must light is reached without entering that cell. A shutter in that cell passes and the chart fails.",
+		"win": "The dock is lit, and the flooded lintel holds the beam.",
+		"cols": 7,
+		"rows": 6,
+		"tide_phases": [2],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 1, "E", "white"),
+			_lantern("B", 0, 3, "E", "white"),
+		],
+		"docks": [_dock("W", 4, 0, "white")],
+		"boats": [
+			_boat("He", 5, 3),
+			_boat("Hw", 6, 1),
+			_boat("Hs", 6, 3),
+		],
+		"fixtures": [
+			_fixture("F", "mirror", 2, 3, 90),
+			_fixture("T", "tide_mirror", 2, 4, 90),
+			_fixture("G", "shutter", 3, 4, 0),
+			_fixture("E", "tide_mirror", 5, 4, 0),
+			_fixture("S", "tide_mirror", 4, 5, 90),
+			_fixture("Gs", "shutter", 5, 5, 0),
+			_fixture("S2", "tide_mirror", 6, 5, 0),
+			_fixture("Gn", "shutter", 6, 4, 0),
+		],
+		"pieces": [
+			_mirror("M", "Dock mirror", 4, 1, 90, 0),
+			_lintel("N", "Lintel", 4, 4),
+		],
+	}
+
+
+static func chart_113() -> Dictionary:
+	# White and blue pass straight through one dry lintel. A stain paints
+	# both and misses the dock that wanted the other color. Red is the same
+	# pass: the rule test recolors the white lamp.
+	return {
+		"id": "113",
+		"harbor": LINTEL,
+		"title": "Color Kept",
+		"teach": "The dry lintel keeps red, blue, and white. White and blue pass straight onto their docks. A stain in that cell changes the color and misses the dock.",
+		"win": "Both colors come through unchanged.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 3, "E", "white"),
+			_lantern("B", 4, 0, "S", "blue"),
+			_lantern("T", 0, 6, "E", "white"),
+		],
+		"docks": [
+			_dock("W", 6, 3, "white"),
+			_dock("Bd", 4, 6, "blue"),
+		],
+		"boats": [_boat("H", 2, 2)],
+		"fixtures": [],
+		"pieces": [
+			_mirror("M", "Side mirror", 2, 6, 0, 90),
+			_lintel("N", "Lintel", 4, 3),
+		],
+	}
+
+
+static func chart_114() -> Dictionary:
+	# Two straight passes. A mirror turns both aside. A vane can keep only
+	# one direction, so the other dock goes dark.
+	return {
+		"id": "114",
+		"harbor": LINTEL,
+		"title": "No Turn",
+		"teach": "The dry lintel does not change direction. White goes straight east and blue goes straight south. A mirror or a vane in that cell turns the beam and misses the dock straight ahead.",
+		"win": "Both beams leave the lintel the way they entered.",
+		"cols": 6,
+		"rows": 6,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 3, "E", "white"),
+			_lantern("B", 3, 0, "S", "blue"),
+			_lantern("T", 0, 1, "E", "white"),
+		],
+		"docks": [
+			_dock("W", 5, 3, "white"),
+			_dock("Bd", 3, 5, "blue"),
+		],
+		"boats": [_boat("H", 5, 2)],
+		"fixtures": [],
+		"pieces": [
+			_mirror("M", "Side mirror", 5, 1, 90, 0),
+			_lintel("N", "Lintel", 3, 3),
+		],
+	}
+
+
+static func chart_115() -> Dictionary:
+	# Flood 2 covers y >= 4. The lintel is on that line. The dock is on a
+	# dry row and is lit by the high lamp. A shutter would carry the low
+	# beam onto a dry hull.
+	return {
+		"id": "115",
+		"harbor": LINTEL,
+		"title": "Above the Flood",
+		"teach": "The flood covers the lintel and leaves the dock's row dry. The beam stops at the lintel. The dock is lit without entering that cell. A shutter would carry the beam onto a hull on the dry row, and that hull must stay dark.",
+		"win": "The high dock is lit, and the flooded lintel stops the low beam.",
+		"cols": 7,
+		"rows": 6,
+		"tide_phases": [2],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 1, "E", "white"),
+			_lantern("B", 0, 3, "E", "white"),
+		],
+		"docks": [_dock("W", 5, 0, "white")],
+		"boats": [
+			_boat("He", 4, 3),
+			_boat("Hn", 3, 3),
+			_boat("Hs", 5, 3),
+		],
+		"fixtures": [
+			_fixture("F", "mirror", 1, 3, 90),
+			_fixture("T", "tide_mirror", 1, 4, 90),
+			_fixture("G", "shutter", 2, 4, 0),
+			_fixture("Te", "tide_mirror", 4, 4, 0),
+			_fixture("Ss", "tide_mirror", 3, 5, 90),
+			_fixture("Gs", "shutter", 4, 5, 0),
+			_fixture("S2", "tide_mirror", 5, 5, 0),
+			_fixture("Gn", "shutter", 5, 4, 0),
+		],
+		"pieces": [
+			_mirror("M", "Dock mirror", 5, 1, 90, 0),
+			_lintel("N", "Lintel", 3, 4),
+		],
+	}
+
+
+static func chart_116() -> Dictionary:
+	# Both lintels are dry. The eastbound beam passes through both. A weir
+	# in the first cell stops because that row is dry.
+	return {
+		"id": "116",
+		"harbor": LINTEL,
+		"title": "Two Lintels",
+		"teach": "Both lintels are dry. The beam passes straight through both onto the dock. A weir in the first cell stops, because that row is dry, and the chart fails.",
+		"win": "The beam walks through both dry lintels.",
+		"cols": 7,
+		"rows": 6,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 2, "E", "white"),
+			_lantern("Ba", 2, 0, "S", "blue"),
+			_lantern("Bb", 4, 0, "S", "blue"),
+			_lantern("T", 0, 1, "E", "white"),
+		],
+		"docks": [
+			_dock("W", 6, 2, "white"),
+			_dock("Da", 2, 5, "blue"),
+			_dock("Db", 4, 5, "blue"),
+		],
+		"boats": [_boat("H", 5, 0)],
+		"fixtures": [],
+		"pieces": [
+			_mirror("M", "Side mirror", 5, 1, 0, 90),
+			_lintel("N1", "First lintel", 2, 2),
+			_lintel("N2", "Second lintel", 4, 2),
+		],
+	}
+
+
+static func chart_117() -> Dictionary:
+	# Rows 7. Index 1 floods y >= 5. The lintel is on that line. The dock
+	# one column east sits on the dry row and is lit by the high lamp.
+	return {
+		"id": "117",
+		"harbor": LINTEL,
+		"title": "The Held Lintel",
+		"teach": "Tide index 1, flood 2, with the flood line at y >= 5. The lintel is flooded. The dock one column ahead, on the dry row, is lit without entering the lintel. A shutter in that cell misses it and wakes the hull. Index 0 wakes the south hull. Index 2 covers the dock.",
+		"win": "The middle mark holds the lintel and the dry dock.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0, 2, 3],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ld", 0, 4, "E", "white"),
+			_lantern("Lt", 3, 3, "S", "white"),
+			_lantern("Lb", 0, 6, "E", "white"),
+			_lantern("Lm", 0, 0, "E", "white"),
+		],
+		"docks": [_dock("W", 4, 4, "white")],
+		"boats": [
+			_boat("Hs", 5, 4),
+			_boat("Hb", 2, 6),
+			_boat("Hm", 2, 1),
+		],
+		"fixtures": [
+			_fixture("T1", "tide_mirror", 3, 6, 90),
+			_fixture("G1", "shutter", 4, 6, 0),
+			_fixture("T2", "tide_mirror", 5, 6, 0),
+			_fixture("G2", "shutter", 5, 5, 0),
+		],
+		"pieces": [
+			_mirror("M", "North mirror", 2, 0, 90, 0),
+			_lintel("N", "Lintel", 3, 5),
+		],
+	}
+
+
+static func chart_118() -> Dictionary:
+	# The lintel and the shutter trade places. The shutter starts on the
+	# line and stops the beam. On the line, the dry lintel passes straight.
+	# Stacking both pieces on one cell does not clear.
+	return {
+		"id": "118",
+		"harbor": LINTEL,
+		"title": "The Lintel Mark",
+		"teach": "Move the lintel from the side socket onto the line, and move the shutter off that line. Only the straight dry pass hits the dock. The socket it starts in does not. A shutter left on the line stops the beam.",
+		"win": "The lintel stands on the line, and both colors pass.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 3, "E", "white"),
+			_lantern("B", 3, 0, "S", "blue"),
+		],
+		"docks": [
+			_dock("W", 6, 3, "white"),
+			_dock("Bd", 3, 6, "blue"),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_movable("N", "Lintel", "lintel", [["side", 5, 0], ["line", 3, 3]], "side", "line"),
+			_movable("G", "Line shutter", "shutter", [["line", 3, 3], ["side", 5, 0]], "line", "side"),
+		],
+	}
+
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -4159,6 +4465,38 @@ static func _stain(id: String, name: String, x: int, y: int, start_rot: int, sol
 		"start_rot": start_rot,
 		"solution_socket": "a",
 		"solution_rot": sol_rot,
+	}
+
+
+static func _lintel(id: String, name: String, x: int, y: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "lintel",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": 0,
+		"solution_socket": "a",
+		"solution_rot": 0,
+	}
+
+
+static func _movable(id: String, name: String, kind: String, sockets: Array, start_socket: String, sol_socket: String) -> Dictionary:
+	var packed: Array = []
+	for raw in sockets:
+		var spec: Array = raw
+		packed.append({"id": str(spec[0]), "x": int(spec[1]), "y": int(spec[2])})
+	return {
+		"id": id,
+		"name": name,
+		"kind": kind,
+		"movable": packed.size() > 1,
+		"sockets": packed,
+		"start_socket": start_socket,
+		"start_rot": 0,
+		"solution_socket": sol_socket,
+		"solution_rot": 0,
 	}
 
 

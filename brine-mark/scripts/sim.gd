@@ -5,7 +5,7 @@ class_name BrineSim
 #
 # The player never selects an ant. They paint cells. Workers are simulated
 # labor that follow the paint under their feet. This slice has one scenario:
-# a wet season, a short dry season, a cart beat, a ship beat, a market beat, a yard beat, a bunk beat, a loft beat, a gate beat, a wage beat, a relief beat, a watch beat, a lamp beat, a bell beat, a horn beat, a flag beat, a banner beat, then a pennant beat. The full game's population cap is
+# a wet season, a short dry season, a cart beat, a ship beat, a market beat, a yard beat, a bunk beat, a loft beat, a gate beat, a wage beat, a relief beat, a watch beat, a lamp beat, a bell beat, a horn beat, a flag beat, a banner beat, a pennant beat, a standard beat, then a jack beat. The full game's population cap is
 # 200; this slice hard-caps at POP_CAP (40) and will not grow past it.
 #
 # Map
@@ -14,17 +14,19 @@ class_name BrineSim
 #   stays unwalkable, and shore rakes no longer touch water.
 # - The anthill is the fixed cell ANTHILL (14, 5). It is walkable, not
 #   paintable, and the only place workers spawn.
-# - Rows run from GRID_NORTH through GRID_H - 1. GRID_NORTH is eleven rows north
+# - Rows run from GRID_NORTH through GRID_H - 1. GRID_NORTH is thirteen rows north
 #   of the old shore edge, so a loft can sit one cell north of a bunk on row 0,
 #   a gate can sit one cell north of that loft, a wage can sit one cell
 #   north of that gate, a relief can sit one cell north of that wage, a
 #   watch can sit one cell north of that relief, a lamp can sit one cell
 #   north of that watch, a bell can sit one cell north of that lamp, a
 #   horn can sit one cell north of that bell, a flag can sit one cell
-#   north of that horn, a banner can sit one cell north of that flag, and
-#   a pennant can sit one cell north of that banner.
+#   north of that horn, a banner can sit one cell north of that flag, a
+#   pennant can sit one cell north of that banner, a standard can sit
+#   one cell north of that pennant, and a jack can sit one cell north of
+#   that standard.
 # - Every other cell accepts one mark: empty, rake, stack, cover, trail, pan,
-#   crib, ship, stall, yard, bunk, loft, gate, wage, relief, watch, lamp, bell, horn, flag, banner, or pennant. A pennant is accepted only at (14, -11). That cell rejects a banner. The banner cell (14, -10) still accepts a banner and rejects a pennant. A crib is not walkable until the cart beat,
+#   crib, ship, stall, yard, bunk, loft, gate, wage, relief, watch, lamp, bell, horn, flag, banner, pennant, standard, or jack. A pennant is accepted only at (14, -11). That cell rejects a banner, a standard, and a jack. The banner cell (14, -10) still accepts a banner and rejects a pennant. A standard is accepted only at (14, -12). That cell rejects a pennant and a jack. A jack is accepted only at (14, -13). That cell rejects a standard. A crib is not walkable until the cart beat,
 #   a ship is not walkable until the ship beat, a stall is not walkable until
 #   the market beat, a yard is not walkable until the yard beat, a bunk is
 #   not walkable until the bunk beat, a loft is not walkable until the loft
@@ -34,7 +36,9 @@ class_name BrineSim
 #   not walkable until the lamp beat, a bell is not walkable until the
 #   bell beat, a horn is not walkable until the horn beat, a flag is
 #   not walkable until the flag beat, a banner is not walkable until
-#   the banner beat, and a pennant is not walkable until the pennant beat,
+#   the banner beat, a pennant is not walkable until the pennant beat,
+#   a standard is not walkable until the standard beat, and a jack is not
+#   walkable until the jack beat,
 #   so painting one cannot change an earlier haul.
 #
 # Determinism
@@ -49,7 +53,7 @@ class_name BrineSim
 # Seasons
 # - Wet season: tick indexes 0 .. RAIN_TICK-1. Gatherers on brine-adjacent
 #   rake cells pile loose salt. Pan cells are only ground to cross. Crib
-#   cells, ship cells, stall cells, yard cells, bunk cells, loft cells, gate cells, wage cells, relief cells, watch cells, lamp cells, bell cells, horn cells, flag cells, banner cells, and pennant cells are marks only.
+#   cells, ship cells, stall cells, yard cells, bunk cells, loft cells, gate cells, wage cells, relief cells, watch cells, lamp cells, bell cells, horn cells, flag cells, banner cells, pennant cells, standard cells, and jack cells are marks only.
 # - At tick RAIN_TICK the first rain falls. Loose salt is destroyed. Stacked
 #   salt on a cover cell is hauled into the wet-season ledger and cleared
 #   from the flats. Stacked salt outside cover is destroyed. The scenario
@@ -310,14 +314,68 @@ class_name BrineSim
 #   count, or the hoisted count. The hoisted total still counts a hire who was
 #   later flown.
 # - At tick RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK
-#   the pennant beat ends and the scenario ends. Stored salt is the ledger still
+#   the pennant beat ends and the standard beat opens. The scenario does not end.
+#   Hires who were flown stay on the pennant until they are carried.
+# - Standard beat: the next STANDARD_TICK work rounds (100 ticks, 10 seconds).
+#   Every worker walks to a standard. A standard cell is the only goal, and it
+#   is walkable only now. One unit of work carries 1 hire who was already
+#   flown, taking pennants in row-major order (the same order they were
+#   flown: north to south, then west to east), up to STANDARD_CAP hires in
+#   total. One hire moves. Nothing is rolled. The standard stops at STANDARD_CAP
+#   even if ticks remain and flown hires remain. Hires who were not
+#   flown are not carried. That includes hires still in a loft, hires who
+#   passed a gate but were not paid, hires who were paid but were not posted,
+#   hires who were posted but were not stood, hires who were stood but were
+#   not lit, hires who were lit but were not rung, hires who were rung but
+#   were not sounded, hires who were sounded but were not raised, hires
+#   who were raised but were not hoisted, and hires who were hoisted but
+#   were not flown. Rakes and pans make no salt. With no standard, the flown
+#   hires stay on the pennant and the carried total stays 0. With nobody
+#   flown, the carried total stays 0. The hire total, the posted total, the
+#   stood total, the lit total, the rung total, the sounded total, the raised
+#   total, the hoisted total, and the flown total are still reported. Carrying
+#   spends no coins and does not change the stored, carted, shipped, or
+#   earned-coin totals, the hire count, the coins left in the yard, the posted
+#   count, the stood count, the lit count, the rung count, the sounded count,
+#   the raised count, the hoisted count, or the flown count. The flown total
+#   still counts a hire who was later carried.
+# - At tick RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK
+#   the standard beat ends and the jack beat opens. The scenario does not end.
+#   Hires who were carried stay on the standard until they are shown.
+# - Jack beat: the next JACK_TICK work rounds (100 ticks, 10 seconds).
+#   Every worker walks to a jack. A jack cell is the only goal, and it
+#   is walkable only now. One unit of work shows 1 hire who was already
+#   carried, taking standards in row-major order (the same order they were
+#   carried: north to south, then west to east), up to JACK_CAP hires in
+#   total. One hire moves. Nothing is rolled. The jack stops at JACK_CAP
+#   even if ticks remain and carried hires remain. Hires who were not
+#   carried are not shown. That includes hires still in a loft, hires who
+#   passed a gate but were not paid, hires who were paid but were not posted,
+#   hires who were posted but were not stood, hires who were stood but were
+#   not lit, hires who were lit but were not rung, hires who were rung but
+#   were not sounded, hires who were sounded but were not raised, hires
+#   who were raised but were not hoisted, hires who were hoisted but were
+#   not flown, and hires who were flown but were not carried. Rakes and pans
+#   make no salt. With no jack, the carried hires stay on the standard and
+#   the shown total stays 0. With nobody carried, the shown total stays 0.
+#   The hire total, the posted total, the stood total, the lit total, the
+#   rung total, the sounded total, the raised total, the hoisted total, the
+#   flown total, and the carried total are still reported. Showing spends no
+#   coins and does not change the stored, carted, shipped, or earned-coin
+#   totals, the hire count, the coins left in the yard, the posted count, the
+#   stood count, the lit count, the rung count, the sounded count, the raised
+#   count, the hoisted count, the flown count, or the carried count. The
+#   carried total still counts a hire who was later shown.
+# - At tick RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK
+#   the jack beat ends and the scenario ends. Stored salt is the ledger still
 #   unmoved, plus covered salt still on the map, plus salt still in cribs,
 #   plus salt still on ships, plus coins still at stalls, plus coins still
 #   in yards, plus coins spent on hires, plus coins spent on wages. Hires
 #   moved into a loft, hires let through a gate, hires paid a wage, hires
 #   posted to a relief, hires stood on a watch, hires lit by a lamp, hires
 #   rung on a bell, hires sounded on a horn, hires raised on a flag, hires
-#   hoisted on a banner, and hires flown on a pennant, still count.
+#   hoisted on a banner, hires flown on a pennant, hires carried on a
+#   standard, and hires shown on a jack, still count.
 #
 # Tick (work rounds, then a rain at each season boundary)
 # 1. If the scenario has already ended, the tick does nothing.
@@ -338,7 +396,8 @@ class_name BrineSim
 #    bell beat every job rings those hires. During the horn beat every job
 #    sounds those hires. During the flag beat every job raises those hires.
 #    During the banner beat every job hoists those hires. During the pennant
-#    beat every job flies those hires.
+#    beat every job flies those hires. During the standard beat every job
+#    carries those hires. During the jack beat every job shows those hires.
 #    The job id does not change.
 #    The new worker acts on the tick it spawns. The starting population is
 #    INITIAL_POP, created before tick 0. Spawn refuses to exceed POP_CAP.
@@ -409,6 +468,16 @@ class_name BrineSim
 #              that flow. One flight moves one hoisted hire. The total stops at
 #              PENNANT_CAP. Hires who were not hoisted are not goals and are not
 #              flown.
+#      Standard: standard cell while fewer than STANDARD_CAP hires have been
+#              carried and any flown hire is still on a pennant. All three jobs
+#              share that flow. One carry moves one flown hire. The total stops
+#              at STANDARD_CAP. Hires who were not flown are not goals and are
+#              not carried.
+#      Jack:   jack cell while fewer than JACK_CAP hires have been shown and
+#              any carried hire is still on a standard. All three jobs share
+#              that flow. One show moves one carried hire. The total stops at
+#              JACK_CAP. Hires who were not carried are not goals and are not
+#              shown.
 #    Trail cells are only ground to cross. They are not goals. Pan cells are
 #    not goals during the wet season. Rake cells are not goals during the
 #    dry season or any later beat. Crib cells are not goals before the cart
@@ -449,6 +518,10 @@ class_name BrineSim
 #    flag to the banner. Banner cells are not goals before the banner beat.
 #    During the pennant beat they are only ground, so workers can walk from the
 #    banner to the pennant. Pennant cells are not goals before the pennant beat.
+#    During the standard beat they are only ground, so workers can walk from the
+#    pennant to the standard. Standard cells are not goals before the standard beat.
+#    During the jack beat they are only ground, so workers can walk from the
+#    standard to the jack. Jack cells are not goals before the jack beat.
 # 4. Each job builds a flow field: multi-source BFS from its goals through
 #    walkable cells (any painted cell, plus the anthill). A goal's next step
 #    is itself. Every other reached cell points one step toward the nearest
@@ -532,6 +605,22 @@ class_name BrineSim
 #              bell, hires still on a lamp, hires still on a watch, hires still
 #              on a relief, hires still on a wage, hires still on a gate, and
 #              hires still in a loft are not flown.
+#      Standard: 1 hire moves from a pennant onto this standard. Pennants are
+#              taken in row-major order (y, then x), the same order the hires
+#              were flown. The standard carries at most STANDARD_CAP hires, then
+#              stops. Hires still on a banner, hires still on a flag, hires
+#              still on a horn, hires still on a bell, hires still on a lamp,
+#              hires still on a watch, hires still on a relief, hires still on
+#              a wage, hires still on a gate, and hires still in a loft are not
+#              carried.
+#      Jack:   1 hire moves from a standard onto this jack. Standards are
+#              taken in row-major order (y, then x), the same order the hires
+#              were carried. The jack shows at most JACK_CAP hires, then
+#              stops. Hires still on a pennant, hires still on a banner, hires
+#              still on a flag, hires still on a horn, hires still on a bell,
+#              hires still on a lamp, hires still on a watch, hires still on a
+#              relief, hires still on a wage, hires still on a gate, and hires
+#              still in a loft are not shown.
 # 6. If the population is above POP_CAP, the violation is counted. Spawning
 #    is the only way workers are added, and it stops at the cap.
 # 7. The tick index increases by 1. When it reaches RAIN_TICK, the first rain
@@ -568,7 +657,11 @@ class_name BrineSim
 #    RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK,
 #    the pennant beat's first work round is the next tick. When it reaches
 #    RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK,
-#    the pennant beat ends.
+#    the standard beat's first work round is the next tick. When it reaches
+#    RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK,
+#    the jack beat's first work round is the next tick. When it reaches
+#    RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK,
+#    the jack beat ends.
 #
 # Rain
 # - Loose salt is destroyed on every cell. Loose salt never survives a rain.
@@ -582,7 +675,7 @@ class_name BrineSim
 #   the coins, the bunk beat then hires from that purse, the loft beat then
 #   moves those hires, the gate beat then lets them through, the wage beat
 #   then pays them, the relief beat then posts them, the watch beat then
-#   stands them, the lamp beat then lights them, the bell beat then rings them, the horn beat then sounds them, the flag beat then raises them, the banner beat then hoists them, and the pennant beat then flies them; the rain does none of those.
+#   stands them, the lamp beat then lights them, the bell beat then rings them, the horn beat then sounds them, the flag beat then raises them, the banner beat then hoists them, the pennant beat then flies them, the standard beat then carries them, and the jack beat then shows them; the rain does none of those.
 # - Stacked or covered salt outside a cover cell is destroyed.
 # - Destruction is applied row-major. The same paint map yields the same
 #   stored-salt number.
@@ -614,7 +707,11 @@ class_name BrineSim
 #   raised hires, the line names the banner, how many were hoisted, and how
 #   many raised hires stayed on the flag. If the pennant flew any of those
 #   hoisted hires, the line names the pennant, how many were flown, and how
-#   many hoisted hires stayed on the banner. A plan
+#   many hoisted hires stayed on the banner. If the standard carried any of
+#   those flown hires, the line names the standard, how many were carried, and
+#   how many flown hires stayed on the pennant. If the jack showed any of
+#   those carried hires, the line names the jack, how many were shown, and
+#   how many carried hires stayed on the standard. A plan
 #   that paints no crib keeps the summary it had before the cart beat existed.
 #   A plan that paints no ship keeps the summary it had before the ship beat
 #   existed. A plan that paints no stall keeps the summary it had before the
@@ -633,7 +730,9 @@ class_name BrineSim
 #   keeps the summary it had before the flag beat existed. A plan that paints
 #   no banner keeps the summary it had before the banner beat existed. A plan
 #   that paints no pennant keeps the summary it had before the pennant beat
-#   existed.
+#   existed. A plan that paints no standard keeps the summary it had before
+#   the standard beat existed. A plan that paints no jack keeps the summary
+#   it had before the jack beat existed.
 # - Stored salt == 0 and any salt was destroyed: the quota was missed because
 #   uncovered salt was destroyed. An all-rake coast does this: workers pile
 #   loose salt, nothing is stacked into cover, the first rain wrecks the
@@ -652,7 +751,7 @@ class_name BrineSim
 #   beat ends. The wage countdown refills when the gate beat ends. The relief
 #   countdown refills when the wage beat ends. The watch countdown refills
 #   when the relief beat ends. The lamp countdown refills when the watch beat
-#   ends. The bell countdown refills when the lamp beat ends. The horn countdown refills when the bell beat ends. The flag countdown refills when the horn beat ends. The banner countdown refills when the flag beat ends. The pennant countdown refills when the banner beat ends. The sim itself counts ticks,
+#   ends. The bell countdown refills when the lamp beat ends. The horn countdown refills when the bell beat ends. The flag countdown refills when the horn beat ends. The banner countdown refills when the flag beat ends. The pennant countdown refills when the banner beat ends. The standard countdown refills when the pennant beat ends. The jack countdown refills when the standard beat ends. The sim itself counts ticks,
 #   not wall-clock time, so a headless run is the same scenario as the window.
 
 const EMPTY := 0
@@ -677,12 +776,14 @@ const HORN := 18
 const FLAG := 19
 const BANNER := 20
 const PENNANT := 21
+const STANDARD := 22
+const JACK := 23
 
 const WET := 0
 const DRY := 1
 # Cart is a beat after the dry season. The ship beat follows the cart, then
 # the market, then the yard, then the bunk, then the loft, then the gate,
-# then the wage, then the relief, then the watch, then the lamp, then the bell, then the horn, then the flag, then the banner, then the pennant. get_season() stays DRY through all of them.
+# then the wage, then the relief, then the watch, then the lamp, then the bell, then the horn, then the flag, then the banner, then the pennant, then the standard, then the jack. get_season() stays DRY through all of them.
 const CART := 2
 const SHIPPING := 3
 const MARKET := 4
@@ -699,16 +800,23 @@ const HORNING := 14
 const FLAGGING := 15
 const BANNERING := 16
 const PENNANTING := 17
+const STANDARDING := 18
+const JACKING := 19
 
 const GRID_W := 17
 const GRID_H := 12
-# Eleven rows north of the old edge. The bunk plans sit on row 0, so the loft is
+# Thirteen rows north of the old edge. The bunk plans sit on row 0, so the loft is
 # row -1, the gate is row -2, the wage is row -3, the relief is row -4, the
 # watch is row -5, the lamp is row -6, the bell is row -7, the horn is row -8,
-# the flag is row -9, the banner is row -10, and the pennant is row -11.
-const GRID_NORTH := -11
+# the flag is row -9, the banner is row -10, the pennant is row -11, the
+# standard is row -12, and the jack is row -13.
+const GRID_NORTH := -13
 # The only cell that accepts a pennant. One cell north of the banner at (14, -10).
 const PENNANT_CELL := Vector2i(14, -11)
+# The only cell that accepts a standard. One cell north of the pennant.
+const STANDARD_CELL := Vector2i(14, -12)
+# The only cell that accepts a jack. One cell north of the standard.
+const JACK_CELL := Vector2i(14, -13)
 const COAST_X := 0
 const ANTHILL := Vector2i(14, 5)
 
@@ -734,6 +842,8 @@ const HORN_TICK := 100
 const FLAG_TICK := 100
 const BANNER_TICK := 100
 const PENNANT_TICK := 100
+const STANDARD_TICK := 100
+const JACK_TICK := 100
 const TICK_HZ := 10
 const HIRE_COST := 100
 # Coins one payment takes from the yard. A shorter purse pays nobody.
@@ -767,6 +877,10 @@ const FLAG_CAP := 1
 const BANNER_CAP := 1
 # Total hoisted hires the pennant flies. Past this the beat stops moving them.
 const PENNANT_CAP := 1
+# Total flown hires the standard carries. Past this the beat stops moving them.
+const STANDARD_CAP := 1
+# Total carried hires the jack shows. Past this the beat stops moving them.
+const JACK_CAP := 1
 
 const JOB_GATHER := 0
 const JOB_STACK := 1
@@ -795,6 +909,8 @@ var _horn: Dictionary = {}
 var _flag: Dictionary = {}
 var _banner: Dictionary = {}
 var _pennant: Dictionary = {}
+var _standard: Dictionary = {}
+var _jack: Dictionary = {}
 var _workers: Array = []
 
 var _next_id: int = 0
@@ -842,6 +958,8 @@ func restart() -> void:
 	_flag.clear()
 	_banner.clear()
 	_pennant.clear()
+	_standard.clear()
+	_jack.clear()
 	_workers.clear()
 	_next_id = 0
 	_tick_index = 0
@@ -864,13 +982,23 @@ func paint_cell(x: int, y: int, mode: int) -> bool:
 		return false
 	if not _paintable(x, y):
 		return false
-	if mode < EMPTY or mode > PENNANT:
+	if mode < EMPTY or mode > JACK:
 		return false
 	# The pennant row accepts a pennant only at PENNANT_CELL. A banner stays
-	# one cell south, and that cell rejects a pennant.
+	# one cell south, and that cell rejects a pennant. The standard row accepts
+	# a standard only at STANDARD_CELL, one cell north of the pennant. The jack
+	# row accepts a jack only at JACK_CELL, one cell north of the standard.
 	if mode == PENNANT and Vector2i(x, y) != PENNANT_CELL:
 		return false
 	if y == PENNANT_CELL.y and mode != PENNANT and mode != EMPTY:
+		return false
+	if mode == STANDARD and Vector2i(x, y) != STANDARD_CELL:
+		return false
+	if y == STANDARD_CELL.y and mode != STANDARD and mode != EMPTY:
+		return false
+	if mode == JACK and Vector2i(x, y) != JACK_CELL:
+		return false
+	if y == JACK_CELL.y and mode != JACK and mode != EMPTY:
 		return false
 	var cell := Vector2i(x, y)
 	if mode == EMPTY:
@@ -887,7 +1015,7 @@ func get_paint(x: int, y: int) -> int:
 func tick() -> void:
 	if _rain_done:
 		return
-	var end_tick := RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK
+	var end_tick := RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK
 	if _tick_index >= end_tick:
 		_finish()
 		return
@@ -932,13 +1060,17 @@ func tick() -> void:
 		_open_banner()
 	elif _tick_index == RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK:
 		_open_pennant()
+	elif _tick_index == RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK:
+		_open_standard()
+	elif _tick_index == RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK:
+		_open_jack()
 	elif _tick_index >= end_tick:
 		_finish()
 
 
 func run_until_rain() -> void:
 	var guard := 0
-	var limit := RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + 2
+	var limit := RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + 2
 	while not _rain_done and guard < limit:
 		tick()
 		guard += 1
@@ -964,7 +1096,7 @@ func get_season() -> int:
 	return _season
 
 
-# WET, DRY, CART, SHIPPING, MARKET, YARDING, BUNKING, LOFTING, GATING, WAGING, RELIEVING, WATCHING, LAMPING, BELLING, HORNING, FLAGGING, BANNERING, or PENNANTING. Weather stays dry after the first rain.
+# WET, DRY, CART, SHIPPING, MARKET, YARDING, BUNKING, LOFTING, GATING, WAGING, RELIEVING, WATCHING, LAMPING, BELLING, HORNING, FLAGGING, BANNERING, PENNANTING, STANDARDING, or JACKING. Weather stays dry after the first rain.
 func get_beat() -> int:
 	return _phase
 
@@ -1013,7 +1145,7 @@ func get_yard_left() -> int:
 # posted to a relief, hires later stood on a watch, and hires later lit
 # by a lamp. One hire costs HIRE_COST. Nothing is rolled.
 func get_hired() -> int:
-	return _sum(_bunk) + _sum(_loft) + _sum(_gate) + _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant)
+	return _sum(_bunk) + _sum(_loft) + _sum(_gate) + _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack)
 
 
 # Hires still sitting at a bunk. Lofting moves these one at a time.
@@ -1025,7 +1157,7 @@ func get_bunk_left() -> int:
 # hires later paid a wage, hires later posted, hires later stood, and hires
 # later lit. The hire total still counts these.
 func get_lofted() -> int:
-	return _sum(_loft) + _sum(_gate) + _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant)
+	return _sum(_loft) + _sum(_gate) + _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack)
 
 
 # Hires still sitting in a loft. The gate moves these one at a time.
@@ -1037,7 +1169,7 @@ func get_loft_left() -> int:
 # hires later posted, hires later stood, and hires later lit. Nothing is
 # rolled. The loft total and the hire total still count these.
 func get_gated() -> int:
-	return _sum(_gate) + _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant)
+	return _sum(_gate) + _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack)
 
 
 # Hires who passed a gate and have not been paid. The wage pays these one at a time.
@@ -1049,7 +1181,7 @@ func get_gate_left() -> int:
 # hires later lit. Pay is WAGE_COST coins from the yard. Nothing is rolled.
 # The gate total and the hire total still count these.
 func get_paid() -> int:
-	return _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant)
+	return _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack)
 
 
 # Hires who were paid and have not been posted. The relief posts these one at a time.
@@ -1061,7 +1193,7 @@ func get_wage_left() -> int:
 # on a watch and hires later lit by a lamp. Nothing is rolled. The paid
 # total and the hire total still count these. Posting spends no coins.
 func get_posted() -> int:
-	return _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant)
+	return _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack)
 
 
 # Hires who were posted and have not been stood. The watch stands these one at a time.
@@ -1073,7 +1205,7 @@ func get_relief_left() -> int:
 # lamp. Nothing is rolled. The posted total and the hire total still count
 # these. Standing spends no coins and does not change the posted count.
 func get_stood() -> int:
-	return _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant)
+	return _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack)
 
 
 # Hires who were stood and have not been lit. The lamp lights these one at a time.
@@ -1086,7 +1218,7 @@ func get_watch_left() -> int:
 # and the hire total still count these. Lighting spends no coins and does not
 # change the stood count or the posted count.
 func get_lit() -> int:
-	return _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant)
+	return _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack)
 
 
 # Hires who were lit and have not been rung. The bell rings these one at a time.
@@ -1099,7 +1231,7 @@ func get_lamp_left() -> int:
 # Ringing spends no coins and does not change the lit count, the stood count,
 # or the posted count.
 func get_rung() -> int:
-	return _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant)
+	return _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack)
 
 
 # Hires who were rung and have not been sounded. The horn sounds these one at a time.
@@ -1113,7 +1245,7 @@ func get_bell_left() -> int:
 # does not change the rung count, the lit count, the stood count, or the
 # posted count.
 func get_sounded() -> int:
-	return _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant)
+	return _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack)
 
 
 # Hires who were sounded and have not been raised. The flag raises these one at a time.
@@ -1127,7 +1259,7 @@ func get_horn_left() -> int:
 # the rung count, the lit count, the stood count, or the posted count.
 # The raised total still counts a hire who was later hoisted.
 func get_raised() -> int:
-	return _sum(_flag) + _sum(_banner) + _sum(_pennant)
+	return _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack)
 
 
 # Hires who were raised and have not been hoisted. The banner hoists these one at a time.
@@ -1141,7 +1273,7 @@ func get_flag_left() -> int:
 # the sounded count, the rung count, the lit count, the stood count, or the
 # posted count. The hoisted total still counts a hire who was later flown.
 func get_hoisted() -> int:
-	return _sum(_banner) + _sum(_pennant)
+	return _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack)
 
 
 # Hires who were hoisted and have not been flown. The pennant flies these one at a time.
@@ -1149,12 +1281,43 @@ func get_banner_left() -> int:
 	return _sum(_banner)
 
 
-# Hires flown on a pennant, at most PENNANT_CAP. Nothing is rolled.
-# The hoisted total and the hire total still count these. Flying spends no
-# coins and does not change the hoisted count, the raised count, the sounded
-# count, the rung count, the lit count, the stood count, or the posted count.
+# Hires flown on a pennant, at most PENNANT_CAP, including hires later carried
+# on a standard. Nothing is rolled. The hoisted total and the hire total still
+# count these. Flying spends no coins and does not change the hoisted count,
+# the raised count, the sounded count, the rung count, the lit count, the stood
+# count, or the posted count. The flown total still counts a hire who was later
+# carried.
 func get_flown() -> int:
+	return _sum(_pennant) + _sum(_standard) + _sum(_jack)
+
+
+# Hires who were flown and have not been carried. The standard carries these one at a time.
+func get_pennant_left() -> int:
 	return _sum(_pennant)
+
+
+# Hires carried on a standard, at most STANDARD_CAP, including hires later
+# shown on a jack. Nothing is rolled. The flown total and the hire total still
+# count these. Carrying spends no coins and does not change the flown count,
+# the hoisted count, the raised count, the sounded count, the rung count, the
+# lit count, the stood count, or the posted count. The carried total still
+# counts a hire who was later shown.
+func get_carried() -> int:
+	return _sum(_standard) + _sum(_jack)
+
+
+# Hires who were carried and have not been shown. The jack shows these one at a time.
+func get_standard_left() -> int:
+	return _sum(_standard)
+
+
+# Hires shown on a jack, at most JACK_CAP. Nothing is rolled. The carried
+# total and the hire total still count these. Showing spends no coins and
+# does not change the carried count, the flown count, the hoisted count, the
+# raised count, the sounded count, the rung count, the lit count, the stood
+# count, or the posted count.
+func get_shown() -> int:
+	return _sum(_jack)
 
 
 func _hired_coins() -> int:
@@ -1227,6 +1390,10 @@ func get_ticks_until_rain() -> int:
 		horizon = RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK
 	elif _phase == PENNANTING:
 		horizon = RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK
+	elif _phase == STANDARDING:
+		horizon = RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK
+	elif _phase == JACKING:
+		horizon = RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK
 	return maxi(horizon - _tick_index, 0)
 
 
@@ -1260,6 +1427,8 @@ func get_cell_salt(x: int, y: int) -> Dictionary:
 		"flag": _amount(_flag, cell),
 		"banner": _amount(_banner, cell),
 		"pennant": _amount(_pennant, cell),
+		"standard": _amount(_standard, cell),
+		"jack": _amount(_jack, cell),
 	}
 
 
@@ -1320,6 +1489,10 @@ func rules_api() -> PackedStringArray:
 		"get_hoisted",
 		"get_banner_left",
 		"get_flown",
+		"get_pennant_left",
+		"get_carried",
+		"get_standard_left",
+		"get_shown",
 		"get_bank_left",
 		"get_population",
 		"get_max_population",
@@ -1383,12 +1556,13 @@ func _walkable(x: int, y: int) -> bool:
 	# beat, a watch stays shut until the watch beat, and a lamp stays shut
 	# until the lamp beat, and a bell stays shut until the bell beat, and a
 	# horn stays shut until the horn beat, a flag stays shut until the
-	# flag beat, a banner stays shut until the banner beat, and a pennant
-	# stays shut until the pennant beat, so none of
+	# flag beat, a banner stays shut until the banner beat, a pennant
+	# stays shut until the pennant beat, a standard stays shut until the
+	# standard beat, and a jack stays shut until the jack beat, so none of
 	# them can shortcut an earlier haul. Each stays
 	# open afterward so workers can walk the coins, the hires, the crew, the
 	# pay, the posting, the standing, the lighting, the ringing, the sounding,
-	# the raising, the hoisting, and then the flying forward.
+	# the raising, the hoisting, the flying, the carrying, and then the showing forward.
 	# Phase numbers increase in that order, so a mark is open from its own beat on.
 	if paint == CRIB and _phase < CART:
 		return false
@@ -1421,6 +1595,10 @@ func _walkable(x: int, y: int) -> bool:
 	if paint == BANNER and _phase < BANNERING:
 		return false
 	if paint == PENNANT and _phase < PENNANTING:
+		return false
+	if paint == STANDARD and _phase < STANDARDING:
+		return false
+	if paint == JACK and _phase < JACKING:
 		return false
 	return true
 
@@ -1573,6 +1751,20 @@ func _flows() -> Dictionary:
 			JOB_GATHER: flying,
 			JOB_STACK: flying,
 			JOB_COVER: flying,
+		}
+	if _phase == STANDARDING:
+		var carrying := _build_flow(_standard_goals())
+		return {
+			JOB_GATHER: carrying,
+			JOB_STACK: carrying,
+			JOB_COVER: carrying,
+		}
+	if _phase == JACKING:
+		var showing := _build_flow(_jack_goals())
+		return {
+			JOB_GATHER: showing,
+			JOB_STACK: showing,
+			JOB_COVER: showing,
 		}
 	return {
 		JOB_GATHER: _build_flow(_gather_goals()),
@@ -1825,6 +2017,36 @@ func _pennant_goals() -> Array:
 	return goals
 
 
+func _standard_goals() -> Array:
+	var goals: Array = []
+	if get_carried() >= STANDARD_CAP or get_pennant_left() <= 0:
+		return goals
+	for y in range(GRID_NORTH, GRID_H):
+		for x in GRID_W:
+			var cell := Vector2i(x, y)
+			if _paint_at(cell) != STANDARD:
+				continue
+			if _amount(_standard, cell) >= STANDARD_CAP:
+				continue
+			goals.append(cell)
+	return goals
+
+
+func _jack_goals() -> Array:
+	var goals: Array = []
+	if get_shown() >= JACK_CAP or get_standard_left() <= 0:
+		return goals
+	for y in range(GRID_NORTH, GRID_H):
+		for x in GRID_W:
+			var cell := Vector2i(x, y)
+			if _paint_at(cell) != JACK:
+				continue
+			if _amount(_jack, cell) >= JACK_CAP:
+				continue
+			goals.append(cell)
+	return goals
+
+
 func _lamp_goals() -> Array:
 	var goals: Array = []
 	if get_lit() >= LAMP_CAP or get_watch_left() <= 0:
@@ -1968,6 +2190,12 @@ func _work(worker: Worker) -> void:
 		return
 	if _phase == PENNANTING:
 		_fly_pennant(worker)
+		return
+	if _phase == STANDARDING:
+		_carry_standard(worker)
+		return
+	if _phase == JACKING:
+		_show_jack(worker)
 		return
 	var cell := Vector2i(worker.x, worker.y)
 	if worker.job == JOB_GATHER:
@@ -2319,6 +2547,46 @@ func _hoist_banner(worker: Worker) -> void:
 			return
 
 
+func _show_jack(worker: Worker) -> void:
+	var cell := Vector2i(worker.x, worker.y)
+	if _paint_at(cell) != JACK:
+		return
+	if get_shown() >= JACK_CAP:
+		return
+	var held := _amount(_jack, cell)
+	if held >= JACK_CAP:
+		return
+	for y in range(GRID_NORTH, GRID_H):
+		for x in GRID_W:
+			var src := Vector2i(x, y)
+			var amount := _amount(_standard, src)
+			if amount <= 0:
+				continue
+			_put(_standard, src, amount - 1)
+			_put(_jack, cell, held + 1)
+			return
+
+
+func _carry_standard(worker: Worker) -> void:
+	var cell := Vector2i(worker.x, worker.y)
+	if _paint_at(cell) != STANDARD:
+		return
+	if get_carried() >= STANDARD_CAP:
+		return
+	var held := _amount(_standard, cell)
+	if held >= STANDARD_CAP:
+		return
+	for y in range(GRID_NORTH, GRID_H):
+		for x in GRID_W:
+			var src := Vector2i(x, y)
+			var amount := _amount(_pennant, src)
+			if amount <= 0:
+				continue
+			_put(_pennant, src, amount - 1)
+			_put(_standard, cell, held + 1)
+			return
+
+
 func _fly_pennant(worker: Worker) -> void:
 	var cell := Vector2i(worker.x, worker.y)
 	if _paint_at(cell) != PENNANT:
@@ -2484,6 +2752,18 @@ func _open_pennant() -> void:
 	_phase = PENNANTING
 
 
+func _open_standard() -> void:
+	if _phase != PENNANTING or _rain_done:
+		return
+	_phase = STANDARDING
+
+
+func _open_jack() -> void:
+	if _phase != STANDARDING or _rain_done:
+		return
+	_phase = JACKING
+
+
 func _finish() -> void:
 	if _rain_done:
 		return
@@ -2566,4 +2846,8 @@ func _make_summary() -> String:
 		message += " Hoisted %d on the banner. Left %d at the flag." % [get_hoisted(), get_flag_left()]
 	if get_flown() > 0:
 		message += " Flew %d on the pennant. Left %d at the banner." % [get_flown(), get_banner_left()]
+	if get_carried() > 0:
+		message += " Carried %d on the standard. Left %d at the pennant." % [get_carried(), get_pennant_left()]
+	if get_shown() > 0:
+		message += " Showed %d on the jack. Left %d at the standard." % [get_shown(), get_standard_left()]
 	return message
