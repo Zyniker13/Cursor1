@@ -8,7 +8,7 @@ class_name ChartBook
 # The Stain holds eight more. The Vane holds eight more.
 # The Well holds eight more. The Siphon holds eight more.
 # The Sluice holds eight more. The Weir holds eight more.
-# The Lintel holds the last eight.
+# The Lintel holds eight more. The Mullion holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
@@ -20,6 +20,10 @@ class_name ChartBook
 # passes straight through in the same direction and the same color, and that
 # pass costs no bounce. While that row is flooded, the beam stops at the
 # waterline and does not enter.
+# A mullion has no facing. Rotation is ignored. While its row is dry, a
+# north-south beam passes straight through in the same direction and the same
+# color, and that pass costs no bounce. An east-west beam stops and does not
+# enter. While that row is flooded, every beam stops at the waterline.
 # See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
@@ -41,6 +45,7 @@ const SIPHON := "The Siphon"
 const SLUICE := "The Sluice"
 const WEIR := "The Weir"
 const LINTEL := "The Lintel"
+const MULLION := "The Mullion"
 
 static func all() -> Array:
 	var book: Array = []
@@ -59,6 +64,7 @@ static func all() -> Array:
 	book.append_array(sluice())
 	book.append_array(weir())
 	book.append_array(lintel())
+	book.append_array(mullion())
 	return book
 
 
@@ -120,6 +126,10 @@ static func weir() -> Array:
 
 static func lintel() -> Array:
 	return [chart_111(), chart_112(), chart_113(), chart_114(), chart_115(), chart_116(), chart_117(), chart_118()]
+
+
+static func mullion() -> Array:
+	return [chart_119(), chart_120(), chart_121(), chart_122(), chart_123(), chart_124(), chart_125(), chart_126()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -4324,6 +4334,311 @@ static func chart_118() -> Dictionary:
 	}
 
 
+static func chart_119() -> Dictionary:
+	# Tide index 0, flood 0. White travels south through the dry mullion.
+	# Blue travels east and stops on the edge. The dock catches only white,
+	# so a vane that turns blue south runs on into the hull.
+	return {
+		"id": "119",
+		"harbor": MULLION,
+		"title": "The Dry Mullion",
+		"teach": "Tide index 0, flood 0. A north-south beam passes straight through the dry mullion onto its dock, and an east-west beam stops. White stays white and blue stays blue. A lintel lets the east-west beam through and misses. A shutter, weir, sluice, well, siphon, stain, mirror, or vane in that cell also misses.",
+		"win": "The dry mullion passes white south and stops blue.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("W", 3, 0, "S", "white"),
+			_lantern("B", 0, 2, "E", "blue"),
+			_lantern("T", 0, 6, "E", "white"),
+		],
+		"docks": [_dock("Wd", 3, 4, "white", true)],
+		"boats": [
+			_boat("Hs", 3, 6),
+			_boat("He", 6, 2),
+			_boat("Hn", 2, 1),
+		],
+		"fixtures": [],
+		"pieces": [
+			_mirror("M", "Side mirror", 2, 6, 0, 90),
+			_mullion("U", "Mullion", 3, 2),
+		],
+	}
+
+
+static func chart_120() -> Dictionary:
+	# Rows 7, flood 2, so y >= 5 is under water. The mullion is on that line.
+	# The low beam arrives from the south, traveling north, and stops. The
+	# high lamp lights the dock without entering the mullion.
+	return {
+		"id": "120",
+		"harbor": MULLION,
+		"title": "The Wet Stop",
+		"teach": "The mullion's row is flooded. The north-south beam stops there and does not enter. The dock that must light is reached without entering that cell. A shutter in that cell passes and the chart fails. A flooded lintel, vane, or mirror still stops at the waterline and still clears. A south-facing weir or sluice retraces into the lamp and still clears.",
+		"win": "The dock is lit, and the flooded mullion holds the northbound beam.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [2],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("H", 0, 1, "E", "white"),
+			_lantern("L", 0, 4, "S", "white"),
+		],
+		"docks": [_dock("W", 4, 0, "white")],
+		"boats": [
+			_boat("Hn", 3, 4),
+			_boat("He", 4, 4),
+			_boat("Hw", 2, 4),
+		],
+		"fixtures": [
+			_fixture("S0", "shutter", 0, 5, 0),
+			_fixture("T0", "tide_mirror", 0, 6, 90),
+			_fixture("S1", "shutter", 1, 6, 0),
+			_fixture("S2", "shutter", 2, 6, 0),
+			_fixture("T1", "tide_mirror", 3, 6, 0),
+			_fixture("Te", "tide_mirror", 4, 5, 0),
+			_fixture("Tw", "tide_mirror", 2, 5, 90),
+		],
+		"pieces": [
+			_mirror("M", "Dock mirror", 4, 1, 90, 0),
+			_mullion("U", "Mullion", 3, 5),
+		],
+	}
+
+
+static func chart_121() -> Dictionary:
+	# White travels south and blue travels north through one dry mullion.
+	# Each dock keeps its own color and lets the other color through, so the
+	# two beams can cross. Red travels east and stops.
+	return {
+		"id": "121",
+		"harbor": MULLION,
+		"title": "Color Kept",
+		"teach": "The dry mullion keeps red, blue, and white. The north-south beams pass straight onto their docks. The east-west beam stops. A stain changes the color and misses. A lintel lets the east-west beam through and misses. Each dock holds its own color and lets the other color through.",
+		"win": "White and blue come through unchanged, and red stops.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("W", 3, 0, "S", "white"),
+			_lantern("B", 3, 6, "N", "blue"),
+			_lantern("R", 0, 3, "E", "red"),
+			_lantern("T", 0, 2, "E", "white"),
+		],
+		"docks": [
+			_dock("Bd", 3, 1, "blue", true),
+			_dock("Wd", 3, 5, "white", true),
+		],
+		"boats": [
+			_boat("He", 6, 3),
+			_boat("Hn", 5, 0),
+		],
+		"fixtures": [],
+		"pieces": [
+			_mirror("M", "Side mirror", 5, 2, 0, 90),
+			_mullion("U", "Mullion", 3, 3),
+		],
+	}
+
+
+static func chart_122() -> Dictionary:
+	# White goes straight south. Blue stops instead of turning. A mirror or a
+	# vane swings a beam off the dock that the stop is holding.
+	return {
+		"id": "122",
+		"harbor": MULLION,
+		"title": "No Turn",
+		"teach": "The dry mullion does not change direction. The north-south beam goes straight. The east-west beam stops instead of turning. A mirror or a vane in that cell turns a beam and misses the dock that depends on the stop. A lintel lets the east-west beam through and misses.",
+		"win": "White goes straight, and blue stops.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("W", 3, 1, "S", "white"),
+			_lantern("B", 0, 3, "E", "blue"),
+			_lantern("T", 0, 0, "E", "white"),
+		],
+		"docks": [
+			_dock("Wd", 3, 5, "white", true),
+			_dock("Kd", 6, 3, "dark", false, true),
+		],
+		"boats": [
+			_boat("Hs", 3, 6),
+			_boat("Hn", 5, 6),
+		],
+		"fixtures": [],
+		"pieces": [
+			_mirror("M", "Side mirror", 5, 0, 90, 0),
+			_mullion("U", "Mullion", 3, 3),
+		],
+	}
+
+
+static func chart_123() -> Dictionary:
+	# Flood 2 covers y >= 4. The mullion is on that line. The dock is on a
+	# dry row. A shutter would carry the low beam onto a dry hull.
+	return {
+		"id": "123",
+		"harbor": MULLION,
+		"title": "Beside the Flood",
+		"teach": "The flood covers the mullion and leaves the dock's row dry. The beam stops at the mullion. The dock is lit without entering that cell. A shutter would carry the beam onto a hull on the dry row, and that hull must stay dark. A flooded lintel, vane, or mirror still stops at the waterline and still clears. A west-facing weir or sluice retraces into the lamp and still clears.",
+		"win": "The high dock is lit, and the flooded mullion stops the low beam.",
+		"cols": 7,
+		"rows": 6,
+		"tide_phases": [2],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("L", 0, 1, "E", "white"),
+			_lantern("B", 0, 3, "E", "white"),
+		],
+		"docks": [_dock("W", 5, 0, "white")],
+		"boats": [
+			_boat("He", 4, 3),
+			_boat("Hn", 3, 3),
+			_boat("Hs", 5, 3),
+		],
+		"fixtures": [
+			_fixture("F", "mirror", 1, 3, 90),
+			_fixture("T", "tide_mirror", 1, 4, 90),
+			_fixture("G", "shutter", 2, 4, 0),
+			_fixture("Te", "tide_mirror", 4, 4, 0),
+			_fixture("Ss", "tide_mirror", 3, 5, 90),
+			_fixture("Gs", "shutter", 4, 5, 0),
+			_fixture("S2", "tide_mirror", 5, 5, 0),
+			_fixture("Gn", "shutter", 5, 4, 0),
+		],
+		"pieces": [
+			_mirror("M", "Dock mirror", 5, 1, 90, 0),
+			_mullion("U", "Mullion", 3, 4),
+		],
+	}
+
+
+static func chart_124() -> Dictionary:
+	# Both mullions are dry and share a column. White passes south through
+	# both. Blue stops on the first row and red stops on the second.
+	return {
+		"id": "124",
+		"harbor": MULLION,
+		"title": "Two Mullions",
+		"teach": "Both mullions are dry. The north-south beam passes straight through both onto the dock. An east-west beam stops at the first mullion. A lintel in the first cell lets that east-west beam through and the chart fails. A weir in the first cell also fails, because that row is dry.",
+		"win": "White walks through both dry mullions, and the cross beams stop.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("W", 3, 0, "S", "white"),
+			_lantern("B", 0, 2, "E", "blue"),
+			_lantern("R", 0, 4, "E", "red"),
+			_lantern("T", 0, 1, "E", "white"),
+		],
+		"docks": [_dock("Wd", 3, 5, "white", true)],
+		"boats": [
+			_boat("Hs", 3, 6),
+			_boat("He", 6, 2),
+			_boat("Hr", 6, 4),
+			_boat("Hn", 5, 0),
+		],
+		"fixtures": [],
+		"pieces": [
+			_mirror("M", "Side mirror", 5, 1, 0, 90),
+			_mullion("U1", "First mullion", 3, 2),
+			_mullion("U2", "Second mullion", 3, 4),
+		],
+	}
+
+
+static func chart_125() -> Dictionary:
+	# Rows 7. Index 1 floods y >= 5. The mullion is on that line. The lit
+	# dock is on the dry row. A shutter carries the south beam onto the dock
+	# that has to stay dark.
+	return {
+		"id": "125",
+		"harbor": MULLION,
+		"title": "The Held Mullion",
+		"teach": "The mullion's row is flooded. The beam stops. The dock that must stay dark is the one a shutter would light. A shutter fails. A flooded lintel, vane, or mirror still stops at the waterline and still clears. A well, a siphon, or a weir or sluice facing north, east, or west retraces into the lamp or stops in empty water, and still clears. Tide index 1, flood 2, with the flood line at y >= 5. The dock one column ahead, on the dry row, is lit without entering the mullion. Index 0 wakes the south hull. Index 2 covers the lit dock.",
+		"win": "The middle mark holds the mullion, the lit dock, and the dark dock.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0, 2, 3],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ld", 0, 4, "E", "white"),
+			_lantern("Lt", 3, 3, "S", "white"),
+			_lantern("Lb", 0, 6, "E", "white"),
+			_lantern("Lm", 0, 0, "E", "white"),
+		],
+		"docks": [
+			_dock("W", 4, 4, "white"),
+			_dock("Kd", 5, 4, "dark", false, true),
+		],
+		"boats": [
+			_boat("Hb", 2, 6),
+			_boat("Hm", 2, 1),
+		],
+		"fixtures": [
+			_fixture("T1", "tide_mirror", 3, 6, 90),
+			_fixture("G1", "shutter", 4, 6, 0),
+			_fixture("T2", "tide_mirror", 5, 6, 0),
+			_fixture("G2", "shutter", 5, 5, 0),
+		],
+		"pieces": [
+			_mirror("M", "North mirror", 2, 0, 90, 0),
+			_mullion("U", "Mullion", 3, 5),
+		],
+	}
+
+
+static func chart_126() -> Dictionary:
+	# The mullion and the shutter trade places. On the line, the dry mullion
+	# passes south and stops east. The dark dock is the east landing.
+	return {
+		"id": "126",
+		"harbor": MULLION,
+		"title": "The Mullion Mark",
+		"teach": "One dry mullion, two docks. Move the mullion from the side socket onto the line, and move the shutter off that line. The solved socket passes the north-south beam onto one dock and stops the east-west beam so the other dock stays dark. The side socket misses both docks. Stacking both pieces on one cell does not clear. A lintel in the solved cell lets the east-west beam through and misses.",
+		"win": "The mullion stands on the line. One dock is lit and the other stays dark.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("W", 3, 0, "S", "white"),
+			_lantern("B", 0, 3, "E", "blue"),
+		],
+		"docks": [
+			_dock("Wd", 3, 5, "white", true),
+			_dock("Kd", 6, 3, "dark", false, true),
+		],
+		"boats": [_boat("Hs", 3, 6)],
+		"fixtures": [],
+		"pieces": [
+			_movable("U", "Mullion", "mullion", [["side", 5, 1], ["line", 3, 3]], "side", "line"),
+			_movable("G", "Line shutter", "shutter", [["line", 3, 3], ["side", 5, 1]], "line", "side"),
+		],
+	}
+
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -4418,8 +4733,13 @@ static func _socket_cell(piece: Dictionary, socket_id: String) -> Vector2i:
 static func _lantern(id: String, x: int, y: int, dir: String, color: String) -> Dictionary:
 	return {"id": id, "x": x, "y": y, "dir": dir, "color": color}
 
-static func _dock(id: String, x: int, y: int, color: String) -> Dictionary:
-	return {"id": id, "x": x, "y": y, "color": color}
+static func _dock(id: String, x: int, y: int, color: String, pass_other := false, keep_dark := false) -> Dictionary:
+	var dock := {"id": id, "x": x, "y": y, "color": color}
+	if pass_other:
+		dock["pass_other"] = true
+	if keep_dark:
+		dock["keep_dark"] = true
+	return dock
 
 static func _boat(id: String, x: int, y: int) -> Dictionary:
 	return {"id": id, "x": x, "y": y}
@@ -4473,6 +4793,20 @@ static func _lintel(id: String, name: String, x: int, y: int) -> Dictionary:
 		"id": id,
 		"name": name,
 		"kind": "lintel",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": 0,
+		"solution_socket": "a",
+		"solution_rot": 0,
+	}
+
+
+static func _mullion(id: String, name: String, x: int, y: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "mullion",
 		"movable": false,
 		"sockets": [{"id": "a", "x": x, "y": y}],
 		"start_socket": "a",
