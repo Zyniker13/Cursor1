@@ -24,7 +24,8 @@ const HOOD := 15
 const CLOAK := 16
 const CAPE := 17
 const SHAWL := 18
-const COUNT := 19
+const STOLE := 19
+const COUNT := 20
 
 # fire_ticks and slow_ticks are sim ticks of length DT.
 # light_radius, weapon_range, projectile_speed, and splash_radius are pixels.
@@ -44,7 +45,8 @@ const COUNT := 19
 # cloaks_gloom: this plant's radius marks tiles as cloaked. It is not a light.
 # capes_murk: this plant's radius marks tiles as caped. It is not a light.
 # shawls_dread: this plant's radius marks tiles as shawled. It is not a light.
-# casts_light: false means the radius does not light tiles. The shade, the cowl, the hood, the cloak, the cape, and the shawl use this.
+# stoles_woe: this plant's radius marks tiles as stoled. It is not a light.
+# casts_light: false means the radius does not light tiles. The shade, the cowl, the hood, the cloak, the cape, the shawl, and the stole use this.
 const DEFS := [
 	{
 		"name": "Pea",
@@ -72,6 +74,7 @@ const DEFS := [
 		"cloaks_gloom": false,
 		"capes_murk": false,
 		"shawls_dread": false,
+		"stoles_woe": false,
 		"casts_light": true,
 	},
 	{
@@ -100,6 +103,7 @@ const DEFS := [
 		"cloaks_gloom": false,
 		"capes_murk": false,
 		"shawls_dread": false,
+		"stoles_woe": false,
 		"casts_light": true,
 	},
 	{
@@ -128,6 +132,7 @@ const DEFS := [
 		"cloaks_gloom": false,
 		"capes_murk": false,
 		"shawls_dread": false,
+		"stoles_woe": false,
 		"casts_light": true,
 	},
 	{
@@ -156,6 +161,7 @@ const DEFS := [
 		"cloaks_gloom": false,
 		"capes_murk": false,
 		"shawls_dread": false,
+		"stoles_woe": false,
 		"casts_light": true,
 	},
 	{
@@ -184,6 +190,7 @@ const DEFS := [
 		"cloaks_gloom": false,
 		"capes_murk": false,
 		"shawls_dread": false,
+		"stoles_woe": false,
 		"casts_light": true,
 	},
 	{
@@ -212,6 +219,7 @@ const DEFS := [
 		"cloaks_gloom": false,
 		"capes_murk": false,
 		"shawls_dread": false,
+		"stoles_woe": false,
 		"casts_light": true,
 	},
 	{
@@ -240,6 +248,7 @@ const DEFS := [
 		"cloaks_gloom": false,
 		"capes_murk": false,
 		"shawls_dread": false,
+		"stoles_woe": false,
 		"casts_light": true,
 	},
 	{
@@ -268,6 +277,7 @@ const DEFS := [
 		"cloaks_gloom": false,
 		"capes_murk": false,
 		"shawls_dread": false,
+		"stoles_woe": false,
 		"casts_light": true,
 	},
 	{
@@ -296,6 +306,7 @@ const DEFS := [
 		"cloaks_gloom": false,
 		"capes_murk": false,
 		"shawls_dread": false,
+		"stoles_woe": false,
 		"casts_light": true,
 	},
 	{
@@ -324,6 +335,7 @@ const DEFS := [
 		"cloaks_gloom": false,
 		"capes_murk": false,
 		"shawls_dread": false,
+		"stoles_woe": false,
 		"casts_light": true,
 	},
 	{
@@ -352,6 +364,7 @@ const DEFS := [
 		"cloaks_gloom": false,
 		"capes_murk": false,
 		"shawls_dread": false,
+		"stoles_woe": false,
 		"casts_light": true,
 	},
 	{
@@ -380,6 +393,7 @@ const DEFS := [
 		"cloaks_gloom": false,
 		"capes_murk": false,
 		"shawls_dread": false,
+		"stoles_woe": false,
 		"casts_light": true,
 	},
 	{
@@ -408,6 +422,7 @@ const DEFS := [
 		"cloaks_gloom": false,
 		"capes_murk": false,
 		"shawls_dread": false,
+		"stoles_woe": false,
 		"casts_light": true,
 	},
 	{
@@ -436,6 +451,7 @@ const DEFS := [
 		"cloaks_gloom": false,
 		"capes_murk": false,
 		"shawls_dread": false,
+		"stoles_woe": false,
 		"casts_light": false,
 	},
 	{
@@ -464,6 +480,7 @@ const DEFS := [
 		"cloaks_gloom": false,
 		"capes_murk": false,
 		"shawls_dread": false,
+		"stoles_woe": false,
 		"casts_light": false,
 	},
 	{
@@ -492,6 +509,7 @@ const DEFS := [
 		"cloaks_gloom": false,
 		"capes_murk": false,
 		"shawls_dread": false,
+		"stoles_woe": false,
 		"casts_light": false,
 	},
 	{
@@ -520,6 +538,7 @@ const DEFS := [
 		"cloaks_gloom": true,
 		"capes_murk": false,
 		"shawls_dread": false,
+		"stoles_woe": false,
 		"casts_light": false,
 	},
 	{
@@ -548,6 +567,7 @@ const DEFS := [
 		"cloaks_gloom": false,
 		"capes_murk": true,
 		"shawls_dread": false,
+		"stoles_woe": false,
 		"casts_light": false,
 	},
 	{
@@ -576,6 +596,36 @@ const DEFS := [
 		"cloaks_gloom": false,
 		"capes_murk": false,
 		"shawls_dread": true,
+		"stoles_woe": false,
+		"casts_light": false,
+	},
+	{
+		"name": "Stole",
+		"role": "Stoles woe, modest shots, no light.",
+		"damage": 2,
+		"fire_ticks": 72,
+		"light_radius": 320.0,
+		"weapon_range": 12.0,
+		"projectile_speed": 200.0,
+		"slow_factor": 1.0,
+		"slow_ticks": 0,
+		"splash_radius": 0.0,
+		"burns_shroud": false,
+		"cracks_rind": false,
+		"melts_pitch": false,
+		"thaws_frost": false,
+		"cuts_web": false,
+		"cracks_glass": false,
+		"strips_scale": false,
+		"cracks_mail": false,
+		"splits_hide": false,
+		"shades_dusk": false,
+		"cowls_veil": false,
+		"hoods_pall": false,
+		"cloaks_gloom": false,
+		"capes_murk": false,
+		"shawls_dread": false,
+		"stoles_woe": true,
 		"casts_light": false,
 	},
 ]

@@ -33,6 +33,7 @@ const KIND_COLOR := [
 	Color(0.42, 0.36, 0.58, 1),
 	Color(0.28, 0.52, 0.46, 1),
 	Color(0.62, 0.36, 0.52, 1),
+	Color(0.86, 0.82, 0.70, 1),
 ]
 
 var sim = null
@@ -128,6 +129,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			selected = Catalog.CAPE
 		elif event.is_action_pressed("plant_k"):
 			selected = Catalog.SHAWL
+		elif event.is_action_pressed("plant_l"):
+			selected = Catalog.STOLE
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if sim != null and sim.outcome == Sim.OUTCOME_RUNNING and sim.phase == Sim.PHASE_PLANT:
 			var cell := _mouse_cell()
@@ -201,6 +204,7 @@ func _bind_keys() -> void:
 	_bind("plant_i", [KEY_I])
 	_bind("plant_j", [KEY_J])
 	_bind("plant_k", [KEY_K])
+	_bind("plant_l", [KEY_L])
 	_bind("restart", [KEY_R])
 
 
@@ -311,7 +315,7 @@ func _build_hud() -> void:
 	hp_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(hp_fill)
 
-	seeds_label = _label("Seeds 16", 15, Color("e7d7a4"))
+	seeds_label = _label("Seeds 17", 15, Color("e7d7a4"))
 	seeds_label.position = Vector2(704, 40)
 	seeds_label.size = Vector2(110, 24)
 	layer.add_child(seeds_label)
@@ -335,7 +339,7 @@ func _build_hud() -> void:
 	hint_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hint_box.clip_contents = true
 	layer.add_child(hint_box)
-	hint_label = _label("Move: WASD or arrows, paused while planting. Plant with 1-9, 0, B, C, E, F, G, H, I, J, or K, then click a tile. Only a wick burns shroud. Only a briar cracks rind. Only a flare melts pitch. Only a hearth thaws frost. Only a shear cuts web. Only a chime cracks glass. Only a rasp strips scale. Only a maul cracks mail. Only a bill splits hide. Only a shade shades dusk. Only a cowl cowls veil. Only a hood hoods pall. Only a cloak cloaks gloom. Only a cape capes murk. Only a shawl shawls dread.", 13, Color("aeb8a4"))
+	hint_label = _label("Move: WASD or arrows, paused while planting. Plant with 1-9, 0, B, C, E, F, G, H, I, J, K, or L, then click a tile. Only a wick burns shroud. Only a briar cracks rind. Only a flare melts pitch. Only a hearth thaws frost. Only a shear cuts web. Only a chime cracks glass. Only a rasp strips scale. Only a maul cracks mail. Only a bill splits hide. Only a shade shades dusk. Only a cowl cowls veil. Only a hood hoods pall. Only a cloak cloaks gloom. Only a cape capes murk. Only a shawl shawls dread. Only a stole stoles woe.", 13, Color("aeb8a4"))
 	hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	hint_label.clip_text = true
@@ -364,15 +368,18 @@ func _build_hud() -> void:
 		var box := VBoxContainer.new()
 		box.name = "Box"
 		box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		box.add_theme_constant_override("separation", 0)
+		# One more lock line still has to fit the locked 340px card, margins included.
+		box.add_theme_constant_override("separation", -1)
 		panel.add_child(box)
 		var hotkey := _label(_hotkey_text(kind), 11, KIND_COLOR[kind])
+		hotkey.add_theme_constant_override("line_spacing", 0)
 		hotkey.name = "Hotkey"
 		hotkey.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		box.add_child(hotkey)
 		var index := 0
 		for line in Tooltip.stat_lines(kind):
 			var row := _label(line, 10 if index > 0 else 14, Color("f4f0e4") if index == 0 else Color("d5d0c4"))
+			row.add_theme_constant_override("line_spacing", 0)
 			row.name = "Stat%d" % index
 			row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			box.add_child(row)
@@ -433,7 +440,7 @@ func _refresh_hud() -> void:
 		return
 	overlay.visible = true
 	if sim.outcome == Sim.OUTCOME_WON:
-		outcome_label.text = "The surge breaks.\nThirty-three nights passed, and the orchard still stands."
+		outcome_label.text = "The surge breaks.\nThirty-five nights passed, and the orchard still stands."
 	else:
 		outcome_label.text = "The lights went out.\nHealth reached zero before the orchard was clear."
 
@@ -459,13 +466,17 @@ func _hotkey_text(kind: int) -> String:
 		return "J"
 	if kind == Catalog.SHAWL:
 		return "K"
+	if kind == Catalog.STOLE:
+		return "L"
 	return str(kind + 1)
 
 
 func _card_top_for(kind: int) -> float:
 	var y := CARD_TOP + float(kind) * (CARD_H + CARD_GAP)
-	# The shawl card starts on the cape card's bottom, y 6294–6634, so the 6700 window keeps a 66px spare.
-	if kind >= Catalog.SHAWL:
+	# Shawl stays y 6294–6634. The stole card starts on that bottom, y 6634–6974, so the 7040 window keeps a 66px spare.
+	if kind >= Catalog.STOLE:
+		y -= CARD_GAP * 2.0
+	elif kind >= Catalog.SHAWL:
 		y -= CARD_GAP
 	return y
 
@@ -583,6 +594,8 @@ func _draw_fog() -> void:
 				draw_rect(rect, Color(0.22, 0.42, 0.38, 0.16), true)
 			if sim.tile_shawls_dread(tx, ty):
 				draw_rect(rect, Color(0.62, 0.32, 0.48, 0.16), true)
+			if sim.tile_stoles_woe(tx, ty):
+				draw_rect(rect, Color(0.86, 0.84, 0.74, 0.16), true)
 			if sim.tile_splits_hide(tx, ty):
 				draw_rect(rect, Color(0.86, 0.7, 0.42, 0.1), true)
 
@@ -829,6 +842,18 @@ func _draw_plant(plant) -> void:
 			draw_line(at + Vector2(4, -12), at + Vector2(2, 10), Color("f3e4ea"), 1.2)
 			var shawl_pulse := 0.55 + 0.45 * sin(float(sim.tick) * 0.07)
 			draw_arc(at + Vector2(1, 2), 15.0, 1.15, TAU - 1.05, 16, Color(0.72, 0.4, 0.58, 0.35 + 0.3 * shawl_pulse), 1.6, true)
+		Catalog.STOLE:
+			# A long pale strip. Not the shawl's folded cloth.
+			draw_colored_polygon(PackedVector2Array([
+				at + Vector2(-22, -1),
+				at + Vector2(22, -5),
+				at + Vector2(22, 1),
+				at + Vector2(-22, 5),
+			]), Color("efe8d6"))
+			draw_line(at + Vector2(-22, 2), at + Vector2(22, -2), Color("b7b09e"), 1.4)
+			draw_line(at + Vector2(-18, -2), at + Vector2(18, -4), Color("f8f4ea"), 1.0)
+			var stole_pulse := 0.55 + 0.45 * sin(float(sim.tick) * 0.06)
+			draw_arc(at, 16.0, 2.15, TAU - 0.35, 18, Color(0.86, 0.82, 0.7, 0.35 + 0.3 * stole_pulse), 1.6, true)
 		_:
 			draw_circle(at, 6.0, Color.WHITE)
 
@@ -896,6 +921,9 @@ func _draw_shot(shot) -> void:
 				at + Vector2(1, 4),
 			]), Color("e7c9d6"))
 			draw_line(at + Vector2(-1, -4), at + Vector2(1, 4), Color("6a3a56"), 1.3)
+		Catalog.STOLE:
+			draw_line(at - shot.dir * 6.0, at, Color("efe8d6"), 2.2)
+			draw_line(at - shot.dir * 3.0, at, Color("8a8478"), 1.1)
 		_:
 			draw_circle(at, 6.0, Color("ffb15a"))
 			draw_circle(at, 2.5, Color("fff0d2"))
@@ -904,6 +932,9 @@ func _draw_shot(shot) -> void:
 func _draw_pest(pest) -> void:
 	var at := _screen(pest.pos)
 	var flutter := sin(float(sim.tick) * 0.45 + float(pest.id)) * 3.0
+	if _woe_only(pest):
+		_draw_woe_moth(at, pest, flutter)
+		return
 	if _dread_only(pest):
 		_draw_dread_moth(at, pest, flutter)
 		return
@@ -957,7 +988,7 @@ func _draw_pest(pest) -> void:
 	if pest.slow_ticks > 0:
 		wing = Color("2f6b58")
 		body = Color("21483c")
-		if pest.shrouded or pest.rinded or pest.pitched or pest.frosted or pest.webbed or pest.glassed or pest.scaled or pest.mailed or pest.hided or pest.dusked or pest.veiled or pest.palled or pest.gloomed or pest.murked or pest.dreaded:
+		if pest.shrouded or pest.rinded or pest.pitched or pest.frosted or pest.webbed or pest.glassed or pest.scaled or pest.mailed or pest.hided or pest.dusked or pest.veiled or pest.palled or pest.gloomed or pest.murked or pest.dreaded or pest.woed:
 			wing = Color("2a4038")
 			body = Color("1c2c28")
 	draw_colored_polygon(PackedVector2Array([
@@ -1035,6 +1066,8 @@ func _draw_pest(pest) -> void:
 		draw_arc(at, 52.0, 0.25, TAU - 0.5, 18, Color(0.32, 0.62, 0.52, 0.9), 1.3, true)
 	if pest.dreaded:
 		draw_arc(at, 55.0, 1.05, TAU - 1.2, 16, Color(0.82, 0.36, 0.44, 0.9), 1.3, true)
+	if pest.woed:
+		draw_arc(at, 58.0, 2.2, TAU - 0.45, 14, Color(0.22, 0.2, 0.18, 0.95), 2.0, true)
 	if pest.hp < Sim.PEST_HP:
 		var width := 16.0 * clampf(float(pest.hp) / float(Sim.PEST_HP), 0.0, 1.0)
 		draw_rect(Rect2(at + Vector2(-8, -14), Vector2(16, 3)), Color(0, 0, 0, 0.45), true)
@@ -1042,7 +1075,44 @@ func _draw_pest(pest) -> void:
 
 
 func _dread_only(pest) -> bool:
-	return pest.dreaded and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked
+	return pest.dreaded and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.woed
+
+
+func _woe_only(pest) -> bool:
+	return pest.woed and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded
+
+
+func _draw_woe_moth(at: Vector2, pest, flutter: float) -> void:
+	# An ash body and a broken coal ring. Not the dread moth's split shard.
+	var ash := Color("8d8882")
+	var coal := Color("1c1916")
+	if pest.slow_ticks > 0:
+		ash = Color("6e746c")
+	draw_colored_polygon(PackedVector2Array([
+		at + Vector2(-12, flutter * 0.4),
+		at + Vector2(-3, -1),
+		at + Vector2(-10, 6),
+	]), Color("5c5854"))
+	draw_colored_polygon(PackedVector2Array([
+		at + Vector2(12, -flutter * 0.4),
+		at + Vector2(3, -1),
+		at + Vector2(10, 6),
+	]), Color("5c5854"))
+	draw_colored_polygon(PackedVector2Array([
+		at + Vector2(0, -11),
+		at + Vector2(5, -2),
+		at + Vector2(4, 10),
+		at + Vector2(-4, 10),
+		at + Vector2(-5, -2),
+	]), ash)
+	draw_line(at + Vector2(-3, -6), at + Vector2(2, 8), Color("d9d4cc"), 1.1)
+	draw_circle(at + Vector2(-2, -2), 1.1, Color("2a2622"))
+	draw_circle(at + Vector2(2, -2), 1.1, Color("2a2622"))
+	draw_arc(at, 15.0, 0.7, TAU - 1.35, 14, coal, 2.2, true)
+	if pest.hp < Sim.PEST_HP:
+		var width := 16.0 * clampf(float(pest.hp) / float(Sim.PEST_HP), 0.0, 1.0)
+		draw_rect(Rect2(at + Vector2(-8, -16), Vector2(16, 3)), Color(0, 0, 0, 0.45), true)
+		draw_rect(Rect2(at + Vector2(-8, -16), Vector2(width, 3)), Color("e0c48a"), true)
 
 
 func _draw_dread_moth(at: Vector2, pest, flutter: float) -> void:
