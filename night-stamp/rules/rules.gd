@@ -1875,6 +1875,85 @@
 # The skip-gap doubling, the crown pay, and the void pay do not remove
 # Hold or Exemption, and they do not cancel a retrigger.
 #
+# DEDICATION BELL, in desk order
+# A twenty-eighth night. The stamps, the ink, and the 3x3 form are unchanged.
+# The dedication bell deals the starting deck again. Drafts and the relic
+# from an earlier night do not carry. Open it from the desk, or from a
+# victory desk. Restart act replays whichever night is on the desk.
+# Petra Hale already stands on the endpaper bell with Frame Pay, so this
+# night's cube toll is Maud Hale. Cube Toll itself was free.
+# - Maud Hale, lane column 3, exemption row bottom, Cube Toll:
+#   "Patience drops by 2 when the number of filled cells is 1 or 8."
+#   Counts of zero, two, three, four, five, six, seven, and nine keep the
+#   drop at 1. Gwyn Brant drops only for eight, and keeps the drop at 1
+#   for one. Merrick Hale drops for zero, one, and two, so he also drops
+#   for zero and for two, and keeps the drop at 1 for eight. Isla Voss
+#   drops for the squares zero, one, four, and nine, so she also drops for
+#   zero, four, and nine, and keeps the drop at 1 for eight. Una Pell drops
+#   for every odd count, one, three, five, seven, and nine, and keeps the
+#   drop at 1 for eight. Maud does none of those. The drop is 2 instead of
+#   1 only when the number of filled cells is one or eight. The toll does
+#   not change what a stamp scores.
+#   Exemption on the bottom row keeps the drop at 1, even on one or eight.
+#   An Exemption off the bottom row does not.
+#   Hold is applied before the cube toll.
+# - Colm Voss, lane column 2, exemption row top, Far Blank:
+#   "A stamp scores twice only when the queue cell three places after it is
+#   empty."
+#   The queue is read from the top row downward, left to right inside a
+#   row, the same order Oren Voss uses. Three places after a stamp is the
+#   cell in the same column on the next row. The bottom-left cell has no
+#   cell three places after it, so it scores its own number. The
+#   bottom-middle cell has no cell three places after it, so it scores its
+#   own number. The bottom-right cell has no cell three places after it, so
+#   it scores its own number. The cell one place after a stamp and the cell
+#   two places after it do not matter. A filled cell three ahead means the
+#   stamp scores its own number, even when the cells one ahead and two
+#   ahead are empty. An empty cell three ahead means the stamp scores
+#   twice, even when the cell one ahead or the cell two ahead is filled.
+#   Oren Voss doubles a stamp only when the cell two ahead is empty, and
+#   does not look three ahead. Orin Keel doubles a stamp only when the
+#   immediate next cell is empty. Ned Keel doubles a stamp only when the
+#   cell two back is filled. Colm does none of those. A retrigger of a
+#   stamp whose cell three ahead is empty scores twice again. A retrigger
+#   of any other stamp does not.
+#   Exemption on the top row cancels the doubling, so every stamp scores
+#   its own number. An Exemption off the top row does not. An Exemption
+#   that qualifies and sits off the top row scores twice.
+#   The blank does not change patience.
+# - Sibley Brant, lane column 1, exemption row middle, Heart Pay:
+#   "Each stamp in the center cell scores +2 once."
+#   Every other cell scores its own number. Neighbors do not change the
+#   bonus. A center stamp with two neighbors still scores +2 once, not +4.
+#   A lone center stamp still scores +2. Nim Brant adds 2 only to the top
+#   middle, and the center scores its own number for Nim. Colin Fen adds 2
+#   to all of column 2, including the top middle and the bottom middle, and
+#   not only the center. Weske Brant adds 2 to the whole middle row,
+#   including the left middle and the right middle. Wynn Cress doubles the
+#   center and does not add 2. Sibley does none of those. A retrigger of
+#   the center adds 2 again. A retrigger of any other cell does not.
+#   Exemption on the middle row cancels the bonus, so every stamp scores
+#   its own number. The center is on the middle row, so an Exemption in the
+#   center cancels the bonus. An Exemption off the middle row does not. An
+#   Exemption off the middle row leaves the center's +2.
+#   The pay does not change patience.
+# - Orrin Okell, lane column 3, exemption row top, Short Toll:
+#   "Patience drops by 2 when the number of filled cells is 1 or 2."
+#   A count of zero keeps the drop at 1, and so do counts of three through
+#   nine. Merrick Hale drops for zero, one, and two, so he also drops for
+#   zero. Hollin Voss drops for the primes two, three, five, and seven, so
+#   he also drops for three, five, and seven, and keeps the drop at 1 for
+#   one. Una Pell drops for every odd count, including one, and also for
+#   three, five, seven, and nine, and keeps the drop at 1 for two. Orrin
+#   does none of those. The drop is 2 instead of 1 only when the number of
+#   filled cells is one or two. The toll does not change what a stamp
+#   scores.
+#   Exemption on the top row keeps the drop at 1, even on one or two. An
+#   Exemption off the top row does not.
+#   Hold is applied before the short toll.
+# The far-blank doubling and the heart pay do not remove Hold or Exemption,
+# and they do not cancel a retrigger.
+#
 # RUN
 # - A run is seeded. The shuffle and the draft offer are a pure function of the
 #   seed, the night, the traveler, and the cards owned, so restarting an
@@ -1925,6 +2004,7 @@ const SHIFT_ENDPAPER := 23
 const SHIFT_HALFTITLE := 24
 const SHIFT_TITLEPAGE := 25
 const SHIFT_COPYRIGHT := 26
+const SHIFT_DEDICATION := 27
 
 const ROW_NAMES := ["top row", "middle row", "bottom row"]
 const COL_NAMES := ["column 1", "column 2", "column 3"]
@@ -3281,6 +3361,54 @@ const COPYRIGHT_BELL := [
 ]
 
 
+const DEDICATION_BELL := [
+	{
+		"id": "maud_hale",
+		"name": "Maud Hale",
+		"form_name": "Cube Toll",
+		"rule_text": "Patience drops by 2 when the number of filled cells is 1 or 8.",
+		"rule": "drop_if_cube_count",
+		"lane": 2,
+		"exemption_row": 2,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "colm_voss",
+		"name": "Colm Voss",
+		"form_name": "Far Blank",
+		"rule_text": "A stamp scores twice only when the queue cell three places after it is empty. The bottom-left cell has no cell three places after it, so it does not double. The bottom-middle cell has no cell three places after it, so it does not double. The bottom-right cell has no cell three places after it, so it does not double.",
+		"rule": "double_far_blank",
+		"lane": 1,
+		"exemption_row": 0,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "sibley_brant",
+		"name": "Sibley Brant",
+		"form_name": "Heart Pay",
+		"rule_text": "Each stamp in the center cell scores +2 once. Every other cell scores its own number.",
+		"rule": "yield_heart_pay",
+		"lane": 0,
+		"exemption_row": 1,
+		"goal": 16,
+		"patience": 5,
+	},
+	{
+		"id": "orrin_okell",
+		"name": "Orrin Okell",
+		"form_name": "Short Toll",
+		"rule_text": "Patience drops by 2 when the number of filled cells is 1 or 2.",
+		"rule": "drop_if_short_count",
+		"lane": 2,
+		"exemption_row": 0,
+		"goal": 22,
+		"patience": 5,
+	},
+]
+
+
 
 class NightState:
 	extends RefCounted
@@ -3377,6 +3505,8 @@ static func _canonical_shift(shift_index: int) -> int:
 		return SHIFT_TITLEPAGE
 	if shift_index == SHIFT_COPYRIGHT:
 		return SHIFT_COPYRIGHT
+	if shift_index == SHIFT_DEDICATION:
+		return SHIFT_DEDICATION
 	return SHIFT_FIRST
 
 
@@ -3392,7 +3522,9 @@ static func new_run(seed_value: int, shift_index: int = SHIFT_FIRST) -> NightSta
 	state.next_iid = 0
 	for card_id in STARTING_DECK:
 		_add_library_card(state, String(card_id))
-	if state.shift == SHIFT_COPYRIGHT:
+	if state.shift == SHIFT_DEDICATION:
+		_log(state, "The dedication bell begins. Seed %d." % state.seed)
+	elif state.shift == SHIFT_COPYRIGHT:
 		_log(state, "The copyright bell begins. Seed %d." % state.seed)
 	elif state.shift == SHIFT_TITLEPAGE:
 		_log(state, "The title-page bell begins. Seed %d." % state.seed)
@@ -3486,6 +3618,8 @@ static func restart_encounter(state: NightState) -> void:
 
 
 static func shift_label(state: NightState) -> String:
+	if state.shift == SHIFT_DEDICATION:
+		return "Dedication bell"
 	if state.shift == SHIFT_COPYRIGHT:
 		return "Copyright bell"
 	if state.shift == SHIFT_TITLEPAGE:
@@ -3556,6 +3690,8 @@ static func traveler(state: NightState) -> Dictionary:
 
 
 static func _roster(state: NightState) -> Array:
+	if state.shift == SHIFT_DEDICATION:
+		return DEDICATION_BELL
 	if state.shift == SHIFT_COPYRIGHT:
 		return COPYRIGHT_BELL
 	if state.shift == SHIFT_TITLEPAGE:
@@ -3922,6 +4058,10 @@ static func stamp_progress(state: NightState, card_id: String, row: int, col: in
 		return amount + 2
 	if rule == "yield_void_pay" and orthogonal_count(state, row, col) == 0:
 		return amount + 2
+	if rule == "double_far_blank" and _far_blank(state, row, col):
+		return amount * 2
+	if rule == "yield_heart_pay" and row == 1 and col == 1:
+		return amount + 2
 	return amount
 
 
@@ -4047,6 +4187,10 @@ static func patience_loss(state: NightState) -> int:
 		elif rule == "drop_if_high_count" and _is_high_count(_stamp_count(state)):
 			loss = 2
 		elif rule == "drop_if_low_count" and _is_low_count(_stamp_count(state)):
+			loss = 2
+		elif rule == "drop_if_cube_count" and _is_cube_count(_stamp_count(state)):
+			loss = 2
+		elif rule == "drop_if_short_count" and _is_short_count(_stamp_count(state)):
 			loss = 2
 	return loss
 
@@ -4339,6 +4483,10 @@ static func _resolve_stamp(state: NightState, row: int, col: int, hush: bool) ->
 				_log(state, "%s on the %s, %s grants %d. The top middle pays +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			elif tail_rule == "yield_void_pay" and orthogonal_count(state, row, col) == 0 and amount > raw:
 				_log(state, "%s on the %s, %s grants %d. No shared side pays +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_far_blank" and _far_blank(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The empty cell three places after it doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_heart_pay" and row == 1 and col == 1 and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The center pays +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			else:
 				_log(state, "%s on the %s, %s grants %d." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 	state.turn_progress += amount
@@ -4447,6 +4595,29 @@ static func _is_high_count(count: int) -> bool:
 
 static func _is_low_count(count: int) -> bool:
 	return count <= 2
+
+
+static func _is_cube_count(count: int) -> bool:
+	return count == 1 or count == 8
+
+
+static func _is_short_count(count: int) -> bool:
+	return count == 1 or count == 2
+
+
+static func _far_blank(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var ahead_row := row
+	var ahead_col := col + 3
+	if ahead_col > 2:
+		ahead_row += 1
+		ahead_col -= 3
+	if ahead_row > 2:
+		return false
+	return state.form[ahead_row][ahead_col] == null
 
 
 static func _skip_gap(state: NightState, row: int, col: int) -> bool:
@@ -5058,7 +5229,9 @@ static func _apply_result(state: NightState, result: Dictionary) -> void:
 		state.encounters_cleared += 1
 		if state.traveler_index >= _roster(state).size() - 1:
 			state.phase = "victory"
-			if state.shift == SHIFT_COPYRIGHT:
+			if state.shift == SHIFT_DEDICATION:
+				_log(state, "The queue is empty. The dedication bell is clear.")
+			elif state.shift == SHIFT_COPYRIGHT:
 				_log(state, "The queue is empty. The copyright bell is clear.")
 			elif state.shift == SHIFT_TITLEPAGE:
 				_log(state, "The queue is empty. The title-page bell is clear.")
