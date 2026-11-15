@@ -30,7 +30,8 @@ const ROOD_AWNING := Color(0.38, 0.40, 0.44)
 const CROSSING_AWNING := Color(0.32, 0.34, 0.28)
 const TRANSEPT_AWNING := Color(0.74, 0.68, 0.52)
 const AMBULATORY_AWNING := Color(0.62, 0.70, 0.74)
-const WINDOW_W := 1366.0
+const CHEVET_AWNING := Color(0.22, 0.16, 0.40)
+const WINDOW_W := 1434.0
 
 var notice_label: Label
 var purse_label: Label
@@ -176,6 +177,8 @@ func _awning_for(floor_id: String) -> Color:
 		return TRANSEPT_AWNING
 	if floor_id == "ambulatory":
 		return AMBULATORY_AWNING
+	if floor_id == "chevet":
+		return CHEVET_AWNING
 	return CHART_AWNING
 
 

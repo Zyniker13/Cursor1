@@ -25,6 +25,8 @@ const COL_THIRTEENTH := Color("9C5A3C")
 const COL_FOURTEENTH := Color("4E7C8A")
 const COL_FIFTEENTH := Color("A34B6B")
 const COL_SIXTEENTH := Color("6E8B3D")
+const COL_SEVENTEENTH := Color("6B4E8A")
+const COL_EIGHTEENTH := Color("A15C38")
 const COL_BAD := Color("E07A6A")
 const COL_GOOD := Color("8FCB7A")
 
@@ -452,7 +454,7 @@ func _build_ui() -> void:
 	restart_button.pressed.connect(press_restart)
 	action_row.add_child(restart_button)
 
-	var help := _label("The schedule lists all eight matches every week. There is no bye. Watch and Skip play your match, and the other seven matches are recorded with it. Training still drills. The final is a series, and the same lineup, tactic, training, Watch, and Skip work for every final game. A tie in a final game is not a win for either side, and the series continues until one club has two wins. If Lumen Reedmice finish 3rd through 16th, the season ends on the board. Keyboard: Tab then Enter. Keys 1-4 pick a slot, Left/Right change that batter, T tactic, Y training, W watch, S skip, N continue, R restart on the office or the board.", 13, COL_MUTED)
+	var help := _label("The schedule lists all nine matches every week. There is no bye. Watch and Skip play your match, and the other eight matches are recorded with it. Training still drills. The final is a series, and the same lineup, tactic, training, Watch, and Skip work for every final game. A tie in a final game is not a win for either side, and the series continues until one club has two wins. If Lumen Reedmice finish 3rd through 18th, the season ends on the board. Keyboard: Tab then Enter. Keys 1-4 pick a slot, Left/Right change that batter, T tactic, Y training, W watch, S skip, N continue, R restart on the office or the board.", 13, COL_MUTED)
 	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	office.add_child(help)
 
@@ -519,7 +521,7 @@ func _build_ui() -> void:
 	board_box.add_theme_constant_override("separation", 10)
 	board_scroll.add_child(board_box)
 	board_box.add_child(_label("Board meeting", 32, COL_ACCENT))
-	board_box.add_child(_label("Thirty-week double round-robin in %s, eight matches a week and no bye, then a best-of-three final." % Sport.TOWN, 18, COL_TEXT))
+	board_box.add_child(_label("Thirty-four-week double round-robin in %s, nine matches a week and no bye, then a best-of-three final." % Sport.TOWN, 18, COL_TEXT))
 	board_label = _label("", 16, COL_TEXT)
 	board_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	board_box.add_child(board_label)
@@ -716,7 +718,7 @@ func _refresh_office() -> void:
 		]
 	else:
 		tactic_help.text = tactic_line
-		training_help.text = "After the week, every %s player gains +1 %s, capped at %d. All %d clubs drill every week. The other seven matches are recorded with yours." % [
+		training_help.text = "After the week, every %s player gains +1 %s, capped at %d. All %d clubs drill every week. The other eight matches are recorded with yours." % [
 			Sport.PLAYER_CLUB, Sport.STAT_LABEL[training], Sport.STAT_CAP, Sport.CLUB_COUNT,
 		]
 	opponent_label.text = _opponent_blurb()
@@ -1276,6 +1278,10 @@ func _club_color(club: String) -> Color:
 		return COL_FIFTEENTH
 	if club == str(Sport.CLUB_NAMES[15]):
 		return COL_SIXTEENTH
+	if club == str(Sport.CLUB_NAMES[16]):
+		return COL_SEVENTEENTH
+	if club == str(Sport.CLUB_NAMES[17]):
+		return COL_EIGHTEENTH
 	return COL_MUTED
 
 

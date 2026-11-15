@@ -171,6 +171,37 @@ class_name BeamTracer
 # north. That is the only facing on which its exit matches a siphon. Every
 # other facing leaves on a different side.
 #
+# Lintel
+# ------
+# A lintel is not a weir, a sluice, a shutter, a stain, a vane, a well, or a
+# siphon, and it does not replace one. It has no facing. Rotation is ignored.
+# Clicking does nothing.
+# While its own row is dry, a beam may enter from any side and passes straight
+# through in the same direction and the same color. That pass costs no bounce.
+# Red stays red, blue stays blue, and white stays white. It does not recolor,
+# it does not turn, and it does not split.
+# While that row is flooded, the beam stops at the waterline and does not
+# enter the cell. A flooded lintel does not carry the beam. It is shut under
+# water, the same way a vane is shut. A shutter is the opposite tide: dry
+# stops, flooded passes straight. A weir and a sluice stop while dry and,
+# while flooded, leave along a facing. A stain recolors on both tides.
+#
+# Mullion
+# ------
+# A mullion is not a lintel, a weir, a sluice, a shutter, a stain, a vane, a
+# well, or a siphon, and it does not replace one. It has no facing. Rotation
+# is ignored. Clicking does nothing.
+# While its own row is dry, a beam traveling north or south may enter and
+# passes straight through in the same direction and the same color. That pass
+# costs no bounce. Red stays red, blue stays blue, and white stays white. It
+# does not recolor, it does not turn, and it does not split.
+# While its own row is dry, a beam traveling east or west stops at the mullion
+# and does not enter the cell. It does not turn and it does not bounce.
+# While that row is flooded, every beam stops at the waterline and does not
+# enter the cell. A flooded mullion does not carry the beam. It is shut under
+# water, the same way a lintel and a vane are shut.
+# A dry lintel passes every direction. A dry mullion passes only north and south.
+#
 # Docks and boats
 # ---------------
 # A dock records every color that enters its cell. It is satisfied only when
@@ -181,6 +212,9 @@ class_name BeamTracer
 # Loops
 # -----
 # Each mirror, prism, pane, vane, well, siphon, sluice, and weir costs a bounce. Past MAX_BOUNCES the beam stops.
+# A dry lintel does not cost a bounce. A flooded lintel is not entered.
+# A dry mullion does not cost a bounce when it passes north or south. A dry
+# east-west beam does not enter it. A flooded mullion is not entered.
 # A (cell, direction, color) triple is never entered twice, and each cast also
 # stops after MAX_STEPS cells. Those caps are what make a mirror loop return.
 
@@ -212,7 +246,11 @@ static func norm_rot(kind: String, rot: int) -> int:
 	# A well has no facing either. Dry stops the beam; flooded water sends it north.
 	# A siphon has no facing either. Dry stops the beam; flooded water sends it
 	# north and swaps red with blue. White stays white.
-	if kind == "shutter" or kind == "well" or kind == "siphon":
+	# A lintel has no facing either. Dry passes the beam straight through.
+	# Flooded water stops the beam at the waterline.
+	# A mullion has no facing either. Dry north-south passes straight through.
+	# Dry east-west stops before the cell. Flooded water stops at the waterline.
+	if kind == "shutter" or kind == "well" or kind == "siphon" or kind == "lintel" or kind == "mullion":
 		return 0
 	# A stain has no facing. 0 is red and 90 is blue; 180 and 270 repeat them.
 	if kind == "stain":
@@ -221,7 +259,7 @@ static func norm_rot(kind: String, rot: int) -> int:
 	return posmod(rot, 180)
 
 static func turn_rot(kind: String, rot: int) -> int:
-	if kind == "shutter" or kind == "well" or kind == "siphon":
+	if kind == "shutter" or kind == "well" or kind == "siphon" or kind == "lintel" or kind == "mullion":
 		return 0
 	# Clicking swaps the color. It does not walk through a facing.
 	if kind == "stain":
@@ -345,9 +383,12 @@ static func trace(chart: Dictionary, state: Dictionary) -> Dictionary:
 
 static func failure_notes(chart: Dictionary, state: Dictionary) -> PackedStringArray:
 	var result := trace(chart, state)
+	if _pieces_share_cell(chart, state):
+		return PackedStringArray(["Two pieces stand on one cell."])
 	var hull := false
 	var dark := false
 	var wrong := false
+	var glowing := false
 	for raw_boat in chart["boats"]:
 		var boat: Dictionary = raw_boat
 		if bool(result["boats"][str(boat["id"])]):
@@ -355,6 +396,10 @@ static func failure_notes(chart: Dictionary, state: Dictionary) -> PackedStringA
 	for raw_dock in chart["docks"]:
 		var dock: Dictionary = raw_dock
 		var hits: Array = result["docks"][str(dock["id"])]
+		if bool(dock.get("keep_dark", false)):
+			if not hits.is_empty():
+				glowing = true
+			continue
 		if hits.has(str(dock["color"])):
 			continue
 		if hits.is_empty():
@@ -364,6 +409,8 @@ static func failure_notes(chart: Dictionary, state: Dictionary) -> PackedStringA
 	var notes := PackedStringArray()
 	if hull:
 		notes.append("A sleeping hull is still in the light.")
+	if glowing:
+		notes.append("A dock is in the light.")
 	if wrong:
 		notes.append("A dock has the wrong color.")
 	if dark:
@@ -372,6 +419,24 @@ static func failure_notes(chart: Dictionary, state: Dictionary) -> PackedStringA
 
 static func is_cleared(chart: Dictionary, state: Dictionary) -> bool:
 	return failure_notes(chart, state).is_empty()
+
+static func _pieces_share_cell(chart: Dictionary, state: Dictionary) -> bool:
+	if not state.has("pieces"):
+		return false
+	var seen := {}
+	var piece_state: Dictionary = state["pieces"]
+	for raw_piece in chart["pieces"]:
+		var piece: Dictionary = raw_piece
+		var id := str(piece["id"])
+		if not piece_state.has(id):
+			continue
+		var pst: Dictionary = piece_state[id]
+		var cell := _socket_cell(piece, str(pst["socket"]))
+		var key := "%d,%d" % [cell.x, cell.y]
+		if seen.has(key):
+			return true
+		seen[key] = true
+	return false
 
 static func _occupants(chart: Dictionary, state: Dictionary) -> Dictionary:
 	var map := {}
@@ -390,6 +455,7 @@ static func _occupants(chart: Dictionary, state: Dictionary) -> Dictionary:
 			"kind": "dock",
 			"id": str(dock["id"]),
 			"color": str(dock["color"]),
+			"pass_other": bool(dock.get("pass_other", false)),
 		}
 	for raw_boat in chart["boats"]:
 		var boat: Dictionary = raw_boat
@@ -454,6 +520,11 @@ static func _cast(
 		if flooded and not _flood_carries(occupants, cell):
 			segments.append(_boundary_seg(prev, cell, color))
 			return
+		# A dry mullion passes north and south. East and west stop on the edge
+		# and never enter the cell. Flooded mullions already returned above.
+		if _dry_mullion_blocks(occupants, cell, dir):
+			segments.append(_boundary_seg(prev, cell, color))
+			return
 		segments.append(_center_seg(prev, cell, color))
 		if not occupants.has(cell):
 			prev = cell
@@ -462,6 +533,13 @@ static func _cast(
 		var occ: Dictionary = occupants[cell]
 		var kind := str(occ["kind"])
 		if kind == "dock":
+			# A pass-other dock catches only its own color. Any other color
+			# keeps going, so a turned beam cannot die on the pier.
+			var want := str(occ.get("color", ""))
+			if bool(occ.get("pass_other", false)) and color != want:
+				prev = cell
+				cell = cell + VEC[dir]
+				continue
 			_note_dock(dock_hits, str(occ["id"]), color)
 			return
 		if kind == "boat":
@@ -549,6 +627,20 @@ static func _cast(
 			prev = cell
 			cell = cell + VEC[dir]
 			continue
+		if kind == "lintel":
+			# Dry stone passes the beam straight, same direction and same color.
+			# That pass costs no bounce. A flooded lintel never reaches here:
+			# the beam already stopped at the waterline.
+			prev = cell
+			cell = cell + VEC[dir]
+			continue
+		if kind == "mullion":
+			# Dry north-south passes straight, same direction and same color.
+			# That pass costs no bounce. Dry east-west never reaches here.
+			# A flooded mullion never reaches here either.
+			prev = cell
+			cell = cell + VEC[dir]
+			continue
 		if kind == "pane":
 			if color != pane_color(int(occ["rot"])):
 				return
@@ -574,13 +666,21 @@ static func _flood_carries(occupants: Dictionary, cell: Vector2i) -> bool:
 	# red with blue. A sluice lets the beam enter and leave along its facing
 	# without swapping colors. A weir lets the beam enter, leave along its
 	# facing, and swap red with blue. A vane is shut under water, so the beam
-	# stops at the waterline and does not enter that cell. Every other flooded
-	# cell stops.
+	# stops at the waterline and does not enter that cell. A lintel is shut
+	# under water the same way. A mullion is shut under water the same way.
+	# Every other flooded cell stops.
 	if not occupants.has(cell):
 		return false
 	var occ: Dictionary = occupants[cell]
 	var kind := str(occ["kind"])
 	return kind == "tide_mirror" or kind == "shutter" or kind == "stain" or kind == "well" or kind == "siphon" or kind == "sluice" or kind == "weir"
+
+static func _dry_mullion_blocks(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if dir != "E" and dir != "W":
+		return false
+	if not occupants.has(cell):
+		return false
+	return str(occupants[cell]["kind"]) == "mullion"
 
 static func _in_bounds(chart: Dictionary, cell: Vector2i) -> bool:
 	return cell.x >= 0 and cell.y >= 0 and cell.x < int(chart["cols"]) and cell.y < int(chart["rows"])
