@@ -243,6 +243,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_well(at)
 		"siphon":
 			_draw_siphon(at)
+		"sluice":
+			_draw_sluice(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -310,10 +312,10 @@ func _draw_tide_mirror(at: Vector2i, rot: int) -> void:
 
 func _keeps_its_face_under_water(kind: String) -> bool:
 	# These still act under water, so the closed bars are not drawn over them.
-	return kind == "tide_mirror" or kind == "shutter" or kind == "stain" or kind == "well" or kind == "siphon"
+	return kind == "tide_mirror" or kind == "shutter" or kind == "stain" or kind == "well" or kind == "siphon" or kind == "sluice"
 
 func _draw_shutter_gate(at: Vector2i) -> void:
-	# A sluice, not a mirror. Closed bars while the row is dry. An open slot
+	# A shutter, not a mirror. Closed bars while the row is dry. An open slot
 	# while that row is flooded, so the beam can pass straight through.
 	var center := _center(at)
 	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
@@ -431,6 +433,38 @@ func _draw_siphon(at: Vector2i) -> void:
 	else:
 		draw_line(west_top + Vector2(-6, cell * 0.12), west_top + Vector2(6, cell * 0.12), Palette.WOOD, 3.0)
 		draw_line(east_top + Vector2(-4, cell * 0.08), east_top + Vector2(8, cell * 0.12), Palette.WOOD, 3.0)
+
+func _draw_sluice(at: Vector2i, rot: int) -> void:
+	# A straight gate with a spout along the facing. Not the siphon's bent
+	# tube, and not the well's round mouth. Dry bars close the gate. Flood
+	# opens the channel and the spout shows the exit.
+	var center := _center(at)
+	var facing := Tracer.sluice_facing(rot)
+	var dir := _dir_vec(facing)
+	var flank := Vector2(-dir.y, dir.x)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var metal := Palette.TIDE if flooded else Palette.GATE_IRON
+	var length := cell * 0.34
+	var half := cell * 0.11
+	var tail := center - dir * length
+	var mouth := center + dir * length * 0.42
+	draw_line(tail + flank * half, mouth + flank * half, metal, 4.0)
+	draw_line(tail - flank * half, mouth - flank * half, metal, 4.0)
+	draw_line(tail + flank * half, tail - flank * half, metal, 4.0)
+	var tip := center + dir * length * 1.05
+	var base := center + dir * length * 0.28
+	var head := PackedVector2Array([
+		tip,
+		base + flank * half * 1.7,
+		base - flank * half * 1.7,
+	])
+	draw_colored_polygon(head, Palette.LANTERN if flooded else Palette.GATE)
+	if flooded:
+		draw_line(tail + dir * cell * 0.08, mouth, Palette.FOAM, 2.0)
+	else:
+		for i in 3:
+			var p := tail.lerp(mouth, 0.28 + float(i) * 0.24)
+			draw_line(p + flank * half, p - flank * half, Palette.WOOD, 3.0)
 
 func _draw_prism(at: Vector2i, rot: int, set_in_stone: bool) -> void:
 	var center := _center(at)
