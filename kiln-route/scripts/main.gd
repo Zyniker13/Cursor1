@@ -180,6 +180,10 @@ func _kind_for_key(code: int) -> int:
 		KEY_KP_4: Rules.Kind.FILTER,
 		KEY_5: Rules.Kind.SPLITTER,
 		KEY_KP_5: Rules.Kind.SPLITTER,
+		KEY_6: Rules.Kind.ROLLER,
+		KEY_KP_6: Rules.Kind.ROLLER,
+		KEY_7: Rules.Kind.WEIR,
+		KEY_KP_7: Rules.Kind.WEIR,
 	}
 	if not map.has(code):
 		return -1
@@ -322,9 +326,21 @@ func _planner():
 	return planners[room_index]
 
 
+func _kind_order() -> Array:
+	return [
+		Rules.Kind.BELT,
+		Rules.Kind.KILN,
+		Rules.Kind.PRESS,
+		Rules.Kind.FILTER,
+		Rules.Kind.SPLITTER,
+		Rules.Kind.ROLLER,
+		Rules.Kind.WEIR,
+	]
+
+
 func _default_kind() -> int:
 	var budget: Dictionary = _room().budget
-	for kind in [Rules.Kind.BELT, Rules.Kind.KILN, Rules.Kind.PRESS, Rules.Kind.FILTER, Rules.Kind.SPLITTER]:
+	for kind in _kind_order():
 		if int(budget.get(kind, 0)) > 0:
 			return kind
 	return Rules.Kind.BELT
@@ -333,7 +349,7 @@ func _default_kind() -> int:
 func _tray_kinds() -> Array:
 	var kinds: Array = []
 	var budget: Dictionary = _room().budget
-	for kind in [Rules.Kind.BELT, Rules.Kind.KILN, Rules.Kind.PRESS, Rules.Kind.FILTER, Rules.Kind.SPLITTER]:
+	for kind in _kind_order():
 		if int(budget.get(kind, 0)) > 0:
 			kinds.append(kind)
 	return kinds
@@ -349,14 +365,22 @@ func _layout() -> Dictionary:
 	var size := get_viewport_rect().size
 	if size.x < 100.0 or size.y < 100.0:
 		size = Vector2(1280, 720)
-	var tab_y := 56.0
-	var tab_h := 40.0
+	var per_row := 8
+	var rows := 1
+	if not rooms.is_empty():
+		rows = ceili(float(rooms.size()) / float(per_row))
+	var tab_y := 48.0
+	var tab_h := 30.0
 	var tab_gap := 8.0
+	var row_gap := 4.0
 	var tabs: Array = []
-	var tab_w := (size.x - 48.0 - tab_gap * 7.0) / 8.0
-	for index in 8:
-		tabs.append(Rect2(24 + index * (tab_w + tab_gap), tab_y, tab_w, tab_h))
-	var top := 148.0
+	var tab_w := (size.x - 48.0 - tab_gap * float(per_row - 1)) / float(per_row)
+	for index in rooms.size():
+		var col := index % per_row
+		var row: int = index / per_row
+		tabs.append(Rect2(24.0 + float(col) * (tab_w + tab_gap), tab_y + float(row) * (tab_h + row_gap), tab_w, tab_h))
+	var tabs_bottom := tab_y + float(rows) * tab_h + float(maxi(rows - 1, 0)) * row_gap
+	var top := tabs_bottom + 42.0
 	var footer := 156.0
 	var play := Rect2(24, top, size.x - 24 - 312, size.y - top - footer)
 	var side := Rect2(size.x - 300, top, 276, play.size.y)
@@ -387,7 +411,7 @@ func _layout() -> Dictionary:
 		"run_btn": Rect2(side.position.x + 14, side.position.y + side.size.y - 118, side.size.x - 28, 42),
 		"restart_btn": Rect2(side.position.x + 14, side.position.y + side.size.y - 68, side.size.x - 28, 36),
 		"tray": tray,
-		"blurb": Rect2(24, 108, size.x - 48, 32),
+		"blurb": Rect2(24, tabs_bottom + 6.0, size.x - 48, 30),
 	}
 
 
@@ -415,7 +439,7 @@ func _draw() -> void:
 	var size: Vector2 = lay.size
 	draw_rect(Rect2(Vector2.ZERO, size), COL_BG)
 	_text(Vector2(24, 14), "KILN ROUTE", 28, COL_TEXT)
-	_text(Vector2(236, 26), "foundry wing", 15, COL_DIM)
+	_text(Vector2(236, 26), "two wings", 15, COL_DIM)
 	var minute := "minute  %d / %d" % [_shown_tick(), Rules.SIM_TICKS]
 	var minute_w := font.get_string_size(minute, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
 	_text(Vector2(size.x - 24 - minute_w, 26), minute, 15, COL_DIM)
@@ -425,7 +449,7 @@ func _draw() -> void:
 	_draw_grid(lay)
 	_draw_side(lay)
 	_draw_tray(lay)
-	_text(Vector2(24, size.y - 28), "1-5 select    R rotate    LMB place or pick up    RMB rotate a piece    Space run    F skip    Bksp restart", 13, COL_DIM)
+	_text(Vector2(24, size.y - 28), "1-7 select    R rotate    LMB place or pick up    RMB rotate a piece    Space run    F skip    Bksp restart", 13, COL_DIM)
 
 
 func _draw_tabs(lay: Dictionary) -> void:
@@ -446,7 +470,8 @@ func _draw_tabs(lay: Dictionary) -> void:
 		if current:
 			draw_rect(Rect2(rect.position.x, rect.position.y + rect.size.y - 3, rect.size.x, 3), COL_ACCENT)
 		var label := "%d  %s" % [int(room.id), room.name]
-		_text_in(rect, label, 15, COL_TEXT if unlocked else COL_LOCK)
+		var tab_size := 14 if rooms.size() > 8 else 15
+		_text_in(rect, label, tab_size, COL_TEXT if unlocked else COL_LOCK)
 		if cleared.has(int(room.id)):
 			draw_circle(rect.position + Vector2(rect.size.x - 14, 14), 4.5, COL_OK)
 		elif not unlocked:
@@ -566,13 +591,20 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 	elif kind == Rules.Kind.PRESS:
 		var ram := Rect2(body.position + Vector2(body.size.x * 0.18, body.size.y * 0.16), Vector2(body.size.x * 0.46, body.size.y * 0.18))
 		draw_rect(ram, Color(0.22, 0.25, 0.3, alpha))
+	elif kind == Rules.Kind.ROLLER:
+		var axle := Color(0.12, 0.18, 0.26, alpha)
+		var along := Vector2(Rules.vec(dir))
+		draw_circle(center - along * body.size.x * 0.2, body.size.x * 0.09, axle)
+		draw_circle(center + along * body.size.x * 0.02, body.size.x * 0.09, axle)
 	var forward_alpha := alpha
 	var right_alpha := alpha
 	if kind == Rules.Kind.SPLITTER:
 		forward_alpha = alpha if phase == 0 else alpha * 0.35
 		right_alpha = alpha if phase == 1 else alpha * 0.35
+	elif kind == Rules.Kind.WEIR:
+		right_alpha = alpha * 0.4
 	_arrow(front, dir, body.size.x * 0.2, body.size.x * 0.12, Color(light.r, light.g, light.b, forward_alpha))
-	if kind == Rules.Kind.FILTER or kind == Rules.Kind.SPLITTER:
+	if kind == Rules.Kind.FILTER or kind == Rules.Kind.SPLITTER or kind == Rules.Kind.WEIR:
 		var turn := Rules.right(dir)
 		var side := center + Vector2(Rules.vec(turn)) * body.size.x * 0.18
 		var mark := Color("f2d48a") if kind == Rules.Kind.FILTER else light
@@ -705,6 +737,12 @@ func _kind_color(kind: int) -> Color:
 		return Color("b7c0cb")
 	if kind == Rules.Kind.FILTER:
 		return Color("3cb8b0")
+	if kind == Rules.Kind.SPLITTER:
+		return Color("c792ef")
+	if kind == Rules.Kind.ROLLER:
+		return Color("6aa6d8")
+	if kind == Rules.Kind.WEIR:
+		return Color("8fbf6a")
 	return Color("c792ef")
 
 
