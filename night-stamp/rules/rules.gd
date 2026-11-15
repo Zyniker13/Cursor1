@@ -2037,6 +2037,181 @@
 # The far-fill doubling, the open pay, and the long-blank doubling do not
 # remove Hold or Exemption, and they do not cancel a retrigger.
 #
+# PREFACE BELL, in desk order
+# A thirtieth night. The stamps, the ink, and the 3x3 form are unchanged.
+# The preface bell deals the starting deck again. Drafts and the relic
+# from an earlier night do not carry. Open it from the desk, or from a
+# victory desk. Restart act replays whichever night is on the desk.
+# The preface name was free. The epigraph button stays to its left.
+# Dedication stays to the left of the epigraph button.
+# - Neve Hale, lane column 2, exemption row top, Power Toll:
+#   "Patience drops by 2 when the number of filled cells is 1, 2, 4, or 8."
+#   Counts of zero, three, five, six, seven, and nine keep the drop at 1.
+#   Isla Voss drops for the squares zero, one, four, and nine, so she also
+#   drops for zero and for nine, and keeps the drop at 1 for two and for
+#   eight. Maud Hale drops for one and for eight, and keeps the drop at 1
+#   for two and for four. Soren Hale drops for every even count, including
+#   zero and six, and keeps the drop at 1 for one. Enid Hale drops for four,
+#   six, eight, and nine, so she also drops for six and for nine, and keeps
+#   the drop at 1 for one and for two. Hollin Voss drops for the primes two,
+#   three, five, and seven, so he also drops for three, five, and seven, and
+#   keeps the drop at 1 for one, four, and eight. Neve does none of those.
+#   The drop is 2 instead of 1 only on one, two, four, or eight. The toll
+#   does not change what a stamp scores.
+#   Exemption on the top row keeps the drop at 1, even on one, two, four,
+#   or eight. An Exemption off the top row does not.
+#   Hold is applied before the power toll.
+# - Tarn Voss, lane column 1, exemption row middle, Farther Blank:
+#   "A stamp scores twice only when the queue cell five places after it is
+#   empty."
+#   The queue is read from the top row downward, left to right inside a
+#   row, the same order Doss Okell uses. Five places after a stamp can land
+#   two rows down. The center cell has no cell five places after it, so it
+#   scores its own number. The middle-right cell has no cell five places
+#   after it, so it scores its own number. The bottom-left, bottom-middle,
+#   and bottom-right cells have no cell five places after them, so they
+#   score their own numbers. The cells one, two, three, and four places
+#   after a stamp do not matter. A filled cell five ahead means the stamp
+#   scores its own number, even when the nearer cells are empty. An empty
+#   cell five ahead means the stamp scores twice, even when a nearer cell
+#   is filled. Doss Okell looks four ahead and doubles when that cell is
+#   empty. Colm Voss looks three ahead. Oren Voss looks two ahead. Orin
+#   Keel looks one ahead. Tarn does none of those. A retrigger of a stamp
+#   whose cell five ahead is empty scores twice again. A retrigger of a
+#   stamp whose cell five ahead is filled does not.
+#   Exemption on the middle row cancels the doubling, so every stamp scores
+#   its own number. An Exemption off the middle row does not. An Exemption
+#   that qualifies and sits off the middle row scores twice.
+#   The blank does not change patience.
+# - Cade Brant, lane column 3, exemption row bottom, Rim Pay:
+#   "Each stamp in an edge-middle cell scores +2 once."
+#   The edge-middle cells are the top middle, the left middle, the right
+#   middle, and the bottom middle. The four corners and the center score
+#   their own number. Neighbors do not change the bonus. Two neighbors do
+#   not add 4. A lone edge-middle stamp still scores +2. Tallow Keel doubles
+#   an edge-middle cell and does not add 2. Nim Brant adds 2 only to the top
+#   middle. Hess Fen adds 2 to all of column 1, including the two left
+#   corners. Sela Fen adds 2 to all of column 3, including the two right
+#   corners. Sibley Brant adds 2 only to the center. Cade does none of those.
+#   A retrigger of an edge-middle stamp adds 2 again. A retrigger of a corner
+#   or the center does not.
+#   Exemption on the bottom row cancels the bonus, so every stamp scores its
+#   own number. An Exemption off the bottom row does not. An Exemption on an
+#   edge-middle cell and off the bottom row still adds 2.
+#   The pay does not change patience.
+# - Sile Okell, lane column 2, exemption row top, Long Fill:
+#   "A stamp scores twice only when the queue cell four places after it is
+#   filled."
+#   The queue is the same order Doss Okell uses. Four places after a stamp
+#   can land on the next row or the row after that. The middle-right cell
+#   has no cell four places after it, so it scores its own number. The
+#   bottom-left, bottom-middle, and bottom-right cells have no cell four
+#   places after them, so they score their own numbers. The cells one, two,
+#   and three places after a stamp do not matter. An empty cell four ahead
+#   means the stamp scores its own number, even when the nearer cells are
+#   filled. A filled cell four ahead means the stamp scores twice, even when
+#   a nearer cell is empty. Doss Okell doubles when the cell four ahead is
+#   empty. Phel Voss doubles when the cell three ahead is filled. Holt Quern
+#   doubles when the next cell is filled. Sile does none of those. A retrigger
+#   of a stamp whose cell four ahead is filled scores twice again. A retrigger
+#   of a stamp whose cell four ahead is empty does not.
+#   Exemption on the top row cancels the doubling, so every stamp scores its
+#   own number. An Exemption off the top row does not. An Exemption that
+#   qualifies and sits off the top row scores twice.
+#   The fill does not change patience.
+# The farther-blank doubling, the rim pay, and the long-fill doubling do not
+# remove Hold or Exemption, and they do not cancel a retrigger.
+#
+# FOREWORD BELL, in desk order
+# A thirty-first night. The stamps, the ink, and the 3x3 form are unchanged.
+# The foreword bell deals the starting deck again. Drafts and the relic
+# from an earlier night do not carry. Open it from the desk, or from a
+# victory desk. Restart act replays whichever night is on the desk.
+# The foreword name was free. The preface button stays to its left.
+# Epigraph stays to the left of the preface button. Dedication stays to
+# the left of the epigraph button.
+# - Shay Hale, lane column 3, exemption row bottom, Mid Toll:
+#   "Patience drops by 2 when the number of filled cells is 3, 4, 5, or 6."
+#   Counts of zero, one, two, seven, eight, and nine keep the drop at 1.
+#   Pell Dane drops only for three. Ada Hart drops only for four. Joss Pell
+#   drops only for five. Hugh Pell drops only for six. Hollin Voss drops for
+#   two, three, five, and seven, so he also drops for two and for seven, and
+#   keeps the drop at 1 for four and for six. Enid Hale drops for four, six,
+#   eight, and nine, so she also drops for eight and for nine, and keeps the
+#   drop at 1 for three and for five. Nessa Voss drops for seven, eight, and
+#   nine, and keeps the drop at 1 for three, four, five, and six. Merrick
+#   Hale drops for zero, one, and two, and keeps the drop at 1 for three,
+#   four, five, and six. Shay does none of those. The drop is 2 instead of 1
+#   only on three, four, five, or six. The toll does not change what a stamp
+#   scores.
+#   Exemption on the bottom row keeps the drop at 1, even on three, four,
+#   five, or six. An Exemption off the bottom row does not.
+#   Hold is applied before the mid toll.
+# - Glen Voss, lane column 2, exemption row top, Farther Fill:
+#   "A stamp scores twice only when the queue cell five places after it is
+#   filled."
+#   The queue is read from the top row downward, left to right inside a
+#   row, the same order Tarn Voss uses. Five places after a stamp can land
+#   two rows down. The center cell has no cell five places after it, so it
+#   scores its own number. The middle-right cell has no cell five places
+#   after it, so it scores its own number. The bottom-left, bottom-middle,
+#   and bottom-right cells have no cell five places after them, so they
+#   score their own numbers. The cells one, two, three, and four places
+#   after a stamp do not matter. An empty cell five ahead means the stamp
+#   scores its own number, even when the nearer cells are filled. A filled
+#   cell five ahead means the stamp scores twice, even when a nearer cell
+#   is empty. Tarn Voss doubles when the cell five ahead is empty. Sile
+#   Okell doubles when the cell four ahead is filled. Phel Voss doubles
+#   when the cell three ahead is filled. Glen does none of those. A
+#   retrigger of a stamp whose cell five ahead is filled scores twice
+#   again. A retrigger of a stamp whose cell five ahead is empty does not.
+#   Exemption on the top row cancels the doubling, so every stamp scores
+#   its own number. An Exemption off the top row does not. An Exemption
+#   that qualifies and sits off the top row scores twice.
+#   The fill does not change patience.
+# - Dell Brant, lane column 1, exemption row top, Mitre Pay:
+#   "Each stamp that has at least one corner neighbor and no side neighbor
+#   scores +2 once."
+#   A corner touch counts. A side touch does not qualify, even when a corner
+#   is also filled. A lone stamp scores its own number. Two corner neighbors
+#   still add 2 once, not 2 for each. Lark Brant adds 2 only when a stamp has
+#   no neighbor at all, so a corner neighbor gets nothing from Lark. Syl
+#   Okell adds 2 to a stamp with no side neighbor, including a lone stamp.
+#   Idris Reed adds 3 for a diagonal neighbor, and a side neighbor does not
+#   cancel it. Dell does none of those. A retrigger adds 2 again only while
+#   the stamp still has a corner neighbor and no side neighbor. Echo, Reply,
+#   and Ripple sit on a side of the stamp they retrigger, so that retrigger
+#   does not add 2.
+#   Exemption on the top row cancels the bonus, so every stamp scores its
+#   own number. An Exemption off the top row does not. An Exemption that
+#   qualifies and sits off the top row still adds 2.
+#   The pay does not change patience.
+# - Faye Okell, lane column 3, exemption row middle, Long Back:
+#   "A stamp scores twice only when the queue cell four places before it is
+#   filled."
+#   The queue is the same order Tarn Voss uses. Four places before a stamp
+#   can land on the previous row or the row before that. The top-left cell
+#   has no cell four places before it, so it scores its own number. The
+#   top-middle cell has no cell four places before it, so it scores its own
+#   number. The top-right cell has no cell four places before it, so it
+#   scores its own number. The middle-left cell has no cell four places
+#   before it, so it scores its own number. The cells one, two, and three
+#   places before a stamp do not matter. An empty cell four back means the
+#   stamp scores its own number, even when the nearer cells are filled. A
+#   filled cell four back means the stamp scores twice, even when a nearer
+#   cell is empty. No earlier traveler doubles on a filled cell four places
+#   back. Ned Keel doubles when the cell two back is filled. Hester Keel
+#   doubles when the cell one back is filled. Sile Okell doubles when the
+#   cell four ahead is filled. Faye does none of those. A retrigger of a
+#   stamp whose cell four back is filled scores twice again. A retrigger of
+#   a stamp whose cell four back is empty does not.
+#   Exemption on the middle row cancels the doubling, so every stamp scores
+#   its own number. An Exemption off the middle row does not. An Exemption
+#   that qualifies and sits off the middle row scores twice.
+#   The fill does not change patience.
+# The farther-fill doubling, the mitre pay, and the long-back doubling do not
+# remove Hold or Exemption, and they do not cancel a retrigger.
+#
 # RUN
 # - A run is seeded. The shuffle and the draft offer are a pure function of the
 #   seed, the night, the traveler, and the cards owned, so restarting an
@@ -2089,6 +2264,8 @@ const SHIFT_TITLEPAGE := 25
 const SHIFT_COPYRIGHT := 26
 const SHIFT_DEDICATION := 27
 const SHIFT_EPIGRAPH := 28
+const SHIFT_PREFACE := 29
+const SHIFT_FOREWORD := 30
 
 const ROW_NAMES := ["top row", "middle row", "bottom row"]
 const COL_NAMES := ["column 1", "column 2", "column 3"]
@@ -3542,6 +3719,103 @@ const EPIGRAPH_BELL := [
 
 
 
+
+const PREFACE_BELL := [
+	{
+		"id": "neve_hale",
+		"name": "Neve Hale",
+		"form_name": "Power Toll",
+		"rule_text": "Patience drops by 2 when the number of filled cells is 1, 2, 4, or 8.",
+		"rule": "drop_if_power_count",
+		"lane": 1,
+		"exemption_row": 0,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "tarn_voss",
+		"name": "Tarn Voss",
+		"form_name": "Farther Blank",
+		"rule_text": "A stamp scores twice only when the queue cell five places after it is empty. The center cell has no cell five places after it, so it does not double. The middle-right cell has no cell five places after it, so it does not double. The bottom-left cell has no cell five places after it, so it does not double. The bottom-middle cell has no cell five places after it, so it does not double. The bottom-right cell has no cell five places after it, so it does not double.",
+		"rule": "double_farther_blank",
+		"lane": 0,
+		"exemption_row": 1,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "cade_brant",
+		"name": "Cade Brant",
+		"form_name": "Rim Pay",
+		"rule_text": "Each stamp in an edge-middle cell scores +2 once. The four corners and the center score their own number.",
+		"rule": "yield_rim_pay",
+		"lane": 2,
+		"exemption_row": 2,
+		"goal": 16,
+		"patience": 5,
+	},
+	{
+		"id": "sile_okell",
+		"name": "Sile Okell",
+		"form_name": "Long Fill",
+		"rule_text": "A stamp scores twice only when the queue cell four places after it is filled. The middle-right cell has no cell four places after it, so it does not double. The bottom-left cell has no cell four places after it, so it does not double. The bottom-middle cell has no cell four places after it, so it does not double. The bottom-right cell has no cell four places after it, so it does not double.",
+		"rule": "double_long_fill",
+		"lane": 1,
+		"exemption_row": 0,
+		"goal": 22,
+		"patience": 5,
+	},
+]
+
+
+const FOREWORD_BELL := [
+	{
+		"id": "shay_hale",
+		"name": "Shay Hale",
+		"form_name": "Mid Toll",
+		"rule_text": "Patience drops by 2 when the number of filled cells is 3, 4, 5, or 6.",
+		"rule": "drop_if_mid_count",
+		"lane": 2,
+		"exemption_row": 2,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "glen_voss",
+		"name": "Glen Voss",
+		"form_name": "Farther Fill",
+		"rule_text": "A stamp scores twice only when the queue cell five places after it is filled. The center cell has no cell five places after it, so it does not double. The middle-right cell has no cell five places after it, so it does not double. The bottom-left cell has no cell five places after it, so it does not double. The bottom-middle cell has no cell five places after it, so it does not double. The bottom-right cell has no cell five places after it, so it does not double.",
+		"rule": "double_farther_fill",
+		"lane": 1,
+		"exemption_row": 0,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "dell_brant",
+		"name": "Dell Brant",
+		"form_name": "Mitre Pay",
+		"rule_text": "Each stamp that has at least one corner neighbor and no side neighbor scores +2 once. A corner touch counts. A side touch does not qualify. A lone stamp scores its own number.",
+		"rule": "yield_mitre_pay",
+		"lane": 0,
+		"exemption_row": 0,
+		"goal": 16,
+		"patience": 5,
+	},
+	{
+		"id": "faye_okell",
+		"name": "Faye Okell",
+		"form_name": "Long Back",
+		"rule_text": "A stamp scores twice only when the queue cell four places before it is filled. The top-left cell has no cell four places before it, so it does not double. The top-middle cell has no cell four places before it, so it does not double. The top-right cell has no cell four places before it, so it does not double. The middle-left cell has no cell four places before it, so it does not double.",
+		"rule": "double_long_back",
+		"lane": 2,
+		"exemption_row": 1,
+		"goal": 22,
+		"patience": 5,
+	},
+]
+
+
 class NightState:
 	extends RefCounted
 	var seed: int = 1
@@ -3637,6 +3911,10 @@ static func _canonical_shift(shift_index: int) -> int:
 		return SHIFT_TITLEPAGE
 	if shift_index == SHIFT_COPYRIGHT:
 		return SHIFT_COPYRIGHT
+	if shift_index == SHIFT_FOREWORD:
+		return SHIFT_FOREWORD
+	if shift_index == SHIFT_PREFACE:
+		return SHIFT_PREFACE
 	if shift_index == SHIFT_EPIGRAPH:
 		return SHIFT_EPIGRAPH
 	if shift_index == SHIFT_DEDICATION:
@@ -3656,7 +3934,11 @@ static func new_run(seed_value: int, shift_index: int = SHIFT_FIRST) -> NightSta
 	state.next_iid = 0
 	for card_id in STARTING_DECK:
 		_add_library_card(state, String(card_id))
-	if state.shift == SHIFT_EPIGRAPH:
+	if state.shift == SHIFT_FOREWORD:
+		_log(state, "The foreword bell begins. Seed %d." % state.seed)
+	elif state.shift == SHIFT_PREFACE:
+		_log(state, "The preface bell begins. Seed %d." % state.seed)
+	elif state.shift == SHIFT_EPIGRAPH:
 		_log(state, "The epigraph bell begins. Seed %d." % state.seed)
 	elif state.shift == SHIFT_DEDICATION:
 		_log(state, "The dedication bell begins. Seed %d." % state.seed)
@@ -3754,6 +4036,10 @@ static func restart_encounter(state: NightState) -> void:
 
 
 static func shift_label(state: NightState) -> String:
+	if state.shift == SHIFT_FOREWORD:
+		return "Foreword bell"
+	if state.shift == SHIFT_PREFACE:
+		return "Preface bell"
 	if state.shift == SHIFT_EPIGRAPH:
 		return "Epigraph bell"
 	if state.shift == SHIFT_DEDICATION:
@@ -3828,6 +4114,10 @@ static func traveler(state: NightState) -> Dictionary:
 
 
 static func _roster(state: NightState) -> Array:
+	if state.shift == SHIFT_FOREWORD:
+		return FOREWORD_BELL
+	if state.shift == SHIFT_PREFACE:
+		return PREFACE_BELL
 	if state.shift == SHIFT_EPIGRAPH:
 		return EPIGRAPH_BELL
 	if state.shift == SHIFT_DEDICATION:
@@ -4208,6 +4498,18 @@ static func stamp_progress(state: NightState, card_id: String, row: int, col: in
 		return amount + 2
 	if rule == "double_long_blank" and _long_blank(state, row, col):
 		return amount * 2
+	if rule == "double_farther_blank" and _farther_blank(state, row, col):
+		return amount * 2
+	if rule == "yield_rim_pay" and _is_edge_middle(row, col):
+		return amount + 2
+	if rule == "double_long_fill" and _long_fill(state, row, col):
+		return amount * 2
+	if rule == "double_farther_fill" and _farther_fill(state, row, col):
+		return amount * 2
+	if rule == "yield_mitre_pay" and _mitre_pay(state, row, col):
+		return amount + 2
+	if rule == "double_long_back" and _long_back(state, row, col):
+		return amount * 2
 	return amount
 
 
@@ -4339,6 +4641,10 @@ static func patience_loss(state: NightState) -> int:
 		elif rule == "drop_if_short_count" and _is_short_count(_stamp_count(state)):
 			loss = 2
 		elif rule == "drop_if_composite_count" and _is_composite_count(_stamp_count(state)):
+			loss = 2
+		elif rule == "drop_if_power_count" and _is_power_count(_stamp_count(state)):
+			loss = 2
+		elif rule == "drop_if_mid_count" and _is_mid_count(_stamp_count(state)):
 			loss = 2
 	return loss
 
@@ -4641,6 +4947,18 @@ static func _resolve_stamp(state: NightState, row: int, col: int, hush: bool) ->
 				_log(state, "%s on the %s, %s grants %d. No shared side or corner pays +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			elif tail_rule == "double_long_blank" and _long_blank(state, row, col) and amount > raw:
 				_log(state, "%s on the %s, %s grants %d. The empty cell four places after it doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_farther_blank" and _farther_blank(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The empty cell five places after it doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_rim_pay" and _is_edge_middle(row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The edge-middle cell pays +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_long_fill" and _long_fill(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The filled cell four places after it doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_farther_fill" and _farther_fill(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The filled cell five places after it doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_mitre_pay" and _mitre_pay(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. A corner neighbor and no side neighbor pays +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_long_back" and _long_back(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The filled cell four places before it doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			else:
 				_log(state, "%s on the %s, %s grants %d." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 	state.turn_progress += amount
@@ -4763,6 +5081,14 @@ static func _is_composite_count(count: int) -> bool:
 	return count == 4 or count == 6 or count == 8 or count == 9
 
 
+static func _is_power_count(count: int) -> bool:
+	return count == 1 or count == 2 or count == 4 or count == 8
+
+
+static func _is_mid_count(count: int) -> bool:
+	return count == 3 or count == 4 or count == 5 or count == 6
+
+
 static func _far_blank(state: NightState, row: int, col: int) -> bool:
 	if row < 0 or col < 0 or row > 2 or col > 2:
 		return false
@@ -4806,6 +5132,74 @@ static func _long_blank(state: NightState, row: int, col: int) -> bool:
 	if ahead_row > 2:
 		return false
 	return state.form[ahead_row][ahead_col] == null
+
+
+static func _farther_blank(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var ahead_row := row
+	var ahead_col := col + 5
+	while ahead_col > 2:
+		ahead_row += 1
+		ahead_col -= 3
+	if ahead_row > 2:
+		return false
+	return state.form[ahead_row][ahead_col] == null
+
+
+static func _farther_fill(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var ahead_row := row
+	var ahead_col := col + 5
+	while ahead_col > 2:
+		ahead_row += 1
+		ahead_col -= 3
+	if ahead_row > 2:
+		return false
+	return state.form[ahead_row][ahead_col] != null
+
+
+static func _long_back(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var back_row := row
+	var back_col := col - 4
+	while back_col < 0:
+		back_row -= 1
+		back_col += 3
+	if back_row < 0:
+		return false
+	return state.form[back_row][back_col] != null
+
+
+static func _mitre_pay(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	return _diagonal_count(state, row, col) > 0 and orthogonal_count(state, row, col) == 0
+
+
+static func _long_fill(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var ahead_row := row
+	var ahead_col := col + 4
+	while ahead_col > 2:
+		ahead_row += 1
+		ahead_col -= 3
+	if ahead_row > 2:
+		return false
+	return state.form[ahead_row][ahead_col] != null
 
 
 static func _untouched(state: NightState, row: int, col: int) -> bool:
@@ -5425,7 +5819,11 @@ static func _apply_result(state: NightState, result: Dictionary) -> void:
 		state.encounters_cleared += 1
 		if state.traveler_index >= _roster(state).size() - 1:
 			state.phase = "victory"
-			if state.shift == SHIFT_EPIGRAPH:
+			if state.shift == SHIFT_FOREWORD:
+				_log(state, "The queue is empty. The foreword bell is clear.")
+			elif state.shift == SHIFT_PREFACE:
+				_log(state, "The queue is empty. The preface bell is clear.")
+			elif state.shift == SHIFT_EPIGRAPH:
 				_log(state, "The queue is empty. The epigraph bell is clear.")
 			elif state.shift == SHIFT_DEDICATION:
 				_log(state, "The queue is empty. The dedication bell is clear.")

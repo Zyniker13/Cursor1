@@ -58,6 +58,8 @@ func _run() -> void:
 	test_casement_book()
 	test_jamb_rule()
 	test_jamb_book()
+	test_astragal_rule()
+	test_astragal_book()
 	test_chart_4_boat()
 	test_one_rotation_is_not_solved()
 	test_hint_points_at_one_piece()
@@ -222,7 +224,8 @@ func test_charts() -> void:
 	check(Charts.transom().size() == 8, "transom adds eight charts")
 	check(Charts.casement().size() == 8, "casement adds eight charts")
 	check(Charts.jamb().size() == 8, "jamb adds eight charts")
-	check(book.size() == 150, "one hundred fifty charts")
+	check(Charts.astragal().size() == 8, "astragal adds eight charts")
+	check(book.size() == 158, "one hundred fifty-eight charts")
 	check(str(book[13]["id"]) == "14" and str(book[13]["title"]) == "The Holding Line", "chart 14 stays the reach capstone")
 	check(str(book[14]["title"]) == "North Light", "chart 15 opens the basin")
 	check(str(book[21]["id"]) == "22" and str(book[21]["title"]) == "The Basin Mark", "chart 22 stays the basin capstone")
@@ -258,6 +261,8 @@ func test_charts() -> void:
 	check(str(book[141]["id"]) == "142" and str(book[141]["title"]) == "The Casement Mark", "chart 142 stays the casement capstone")
 	check(str(book[142]["title"]) == "The Dry Jamb", "chart 143 opens the jamb")
 	check(str(book[149]["id"]) == "150" and str(book[149]["title"]) == "The Jamb Mark", "chart 150 stays the jamb capstone")
+	check(str(book[150]["title"]) == "The Dry Astragal", "chart 151 opens the astragal")
+	check(str(book[157]["id"]) == "158" and str(book[157]["title"]) == "The Astragal Mark", "chart 158 stays the astragal capstone")
 	var seen_ids := {}
 	var seen_titles := {}
 	var quay_titles := ["First Glass", "Around the Pilings", "High Water", "Sleeping Hull", "Split the White", "The Night Mark"]
@@ -269,7 +274,7 @@ func test_charts() -> void:
 		var title := str(chart["title"])
 		check(not seen_ids.has(id), "chart id %s is unique" % id)
 		if seen_titles.has(title):
-			var echoed := (title == "After the Color" and id == "81") or (title == "Above the Gate" and (id == "84" or id == "92" or id == "100" or id == "108")) or (title == "Side Entry" and (id == "88" or id == "96" or id == "104")) or (title == "White Through" and (id == "97" or id == "105")) or (title == "Dry Stop" and (id == "90" or id == "98" or id == "106")) or (title == "The Wet Stop" and (id == "120" or id == "128" or id == "136" or id == "144")) or (title == "Color Kept" and (id == "121" or id == "129" or id == "137" or id == "145")) or (title == "No Turn" and (id == "122" or id == "130" or id == "138" or id == "146")) or (title == "Beside the Flood" and (id == "131" or id == "139" or id == "147"))
+			var echoed := (title == "After the Color" and id == "81") or (title == "Above the Gate" and (id == "84" or id == "92" or id == "100" or id == "108")) or (title == "Side Entry" and (id == "88" or id == "96" or id == "104")) or (title == "White Through" and (id == "97" or id == "105")) or (title == "Dry Stop" and (id == "90" or id == "98" or id == "106")) or (title == "The Wet Stop" and (id == "120" or id == "128" or id == "136" or id == "144" or id == "152")) or (title == "Color Kept" and (id == "121" or id == "129" or id == "137" or id == "145" or id == "153")) or (title == "No Turn" and (id == "122" or id == "130" or id == "138" or id == "146" or id == "154")) or (title == "Beside the Flood" and (id == "131" or id == "139" or id == "147" or id == "155"))
 			check(echoed, "chart title %s is unique" % title)
 		else:
 			check(true, "chart title %s is unique" % title)
@@ -5455,6 +5460,392 @@ func _check_jamb_axis_clears(chart: Dictionary, clears: Array, solved: Dictionar
 	check(authored, "chart %s authored solution is one open-axis facing" % id)
 
 
+func test_astragal_rule() -> void:
+	check(Tracer.norm_rot("astragal", 0) == 0 and Tracer.norm_rot("astragal", 90) == 90, "an astragal keeps a quarter turn")
+	check(Tracer.norm_rot("astragal", 180) == 180 and Tracer.norm_rot("astragal", 270) == 270, "an astragal keeps a half turn")
+	check(Tracer.norm_rot("astragal", 360) == 0 and Tracer.norm_rot("astragal", 450) == 90, "an astragal wraps a full turn")
+	check(Tracer.turn_rot("astragal", 0) == 90 and Tracer.turn_rot("astragal", 90) == 180, "clicking an astragal walks the facing")
+	check(Tracer.turn_rot("astragal", 180) == 270 and Tracer.turn_rot("astragal", 270) == 0, "clicking an astragal returns to north")
+	check(Tracer.astragal_facing(0) == "N" and Tracer.astragal_facing(90) == "E" and Tracer.astragal_facing(180) == "S" and Tracer.astragal_facing(270) == "W", "astragal facing follows the quarter turn")
+	check(Tracer.turn_rot("mullion", 0) == 0 and Tracer.turn_rot("mullion", 90) == 0, "clicking a mullion still does nothing")
+	check(Tracer.turn_rot("transom", 0) == 0 and Tracer.turn_rot("transom", 90) == 0, "clicking a transom still does nothing")
+	var hinted: Dictionary = Charts.astragal()[6]
+	var solved_hint := Charts.make_state(hinted, true)
+	check(not Hints.wrong_pieces(hinted, solved_hint).has("A"), "a hint accepts the held north astragal")
+	for spun in [90, 180, 270]:
+		var turned_hint := Charts.duplicate_state(solved_hint)
+		turned_hint["pieces"]["A"]["rot"] = spun
+		check(Hints.wrong_pieces(hinted, turned_hint).has("A"), "a hint rejects astragal rotation %d" % spun)
+		check(not Tracer.is_cleared(hinted, turned_hint), "astragal rotation %d is not the held open pair" % spun)
+	var carried := {}
+	carried[Vector2i(0, 0)] = {"kind": "astragal", "rot": 0}
+	check(not Tracer._flood_carries(carried, Vector2i(0, 0)), "a flooded astragal does not carry the beam")
+	# A north casement passes north and refuses east. A north astragal passes east as well.
+	var north_out := _blank(1, 5)
+	north_out["lanterns"] = [_lamp("L", 0, 4, "N", "white")]
+	north_out["docks"] = [_need("D", 0, 0, "white")]
+	north_out["pieces"] = [_fixed_casement("C", 0, 2, 0)]
+	var north_case: Dictionary = Tracer.trace(north_out, Charts.make_state(north_out, true))
+	check(_leaves(north_case, 0, 2, "N", "white") and north_case["docks"]["D"].has("white"), "a north casement passes north")
+	north_out["pieces"] = [_fixed_astragal("A", 0, 2, 0)]
+	var north_astra: Dictionary = Tracer.trace(north_out, Charts.make_state(north_out, true))
+	check(_arrives_from(north_astra, 0, 2, "N", "white") and _leaves(north_astra, 0, 2, "N", "white") and north_astra["docks"]["D"].has("white"), "a north astragal passes north")
+	var east_lane := _blank(5, 1)
+	east_lane["lanterns"] = [_lamp("L", 0, 0, "E", "white")]
+	east_lane["docks"] = [_need("D", 4, 0, "white")]
+	east_lane["pieces"] = [_fixed_casement("C", 2, 0, 0)]
+	var east_case: Dictionary = Tracer.trace(east_lane, Charts.make_state(east_lane, true))
+	check(not _center_hit(east_case, 2, 0) and east_case["docks"]["D"].is_empty(), "a north casement refuses east")
+	east_lane["pieces"] = [_fixed_astragal("A", 2, 0, 0)]
+	var east_astra: Dictionary = Tracer.trace(east_lane, Charts.make_state(east_lane, true))
+	check(_arrives_from(east_astra, 2, 0, "E", "white") and _leaves(east_astra, 2, 0, "E", "white") and east_astra["docks"]["D"].has("white"), "a north astragal passes east as well")
+	# A north jamb passes north and south and refuses east. A north astragal refuses south and passes east.
+	var south_lane := _blank(1, 5)
+	south_lane["lanterns"] = [_lamp("L", 0, 0, "S", "blue")]
+	south_lane["docks"] = [_need("D", 0, 4, "blue")]
+	south_lane["pieces"] = [_fixed_jamb("J", 0, 2, 0)]
+	var south_jamb: Dictionary = Tracer.trace(south_lane, Charts.make_state(south_lane, true))
+	check(_leaves(south_jamb, 0, 2, "S", "blue") and south_jamb["docks"]["D"].has("blue"), "a north jamb passes south")
+	south_lane["pieces"] = [_fixed_astragal("A", 0, 2, 0)]
+	var south_astra: Dictionary = Tracer.trace(south_lane, Charts.make_state(south_lane, true))
+	check(not _center_hit(south_astra, 0, 2) and south_astra["docks"]["D"].is_empty(), "a north astragal refuses south")
+	east_lane["pieces"] = [_fixed_jamb("J", 2, 0, 0)]
+	var east_jamb: Dictionary = Tracer.trace(east_lane, Charts.make_state(east_lane, true))
+	check(not _center_hit(east_jamb, 2, 0) and east_jamb["docks"]["D"].is_empty(), "a north jamb refuses east")
+	east_lane["pieces"] = [_fixed_astragal("A", 2, 0, 0)]
+	check(Tracer.trace(east_lane, Charts.make_state(east_lane, true))["docks"]["D"].has("white"), "a north astragal passes the east a north jamb refuses")
+	# A lintel passes the two directions a north astragal is blocking.
+	var west_lane := _blank(5, 1)
+	west_lane["lanterns"] = [_lamp("L", 4, 0, "W", "red")]
+	west_lane["docks"] = [_need("D", 0, 0, "red")]
+	west_lane["pieces"] = [_fixed_astragal("A", 2, 0, 0)]
+	var west_stop: Dictionary = Tracer.trace(west_lane, Charts.make_state(west_lane, true))
+	check(not _center_hit(west_stop, 2, 0) and west_stop["docks"]["D"].is_empty(), "a north astragal refuses west")
+	west_lane["pieces"] = [_fixed_lintel("N", 2, 0)]
+	check(_leaves(Tracer.trace(west_lane, Charts.make_state(west_lane, true)), 2, 0, "W", "red"), "a lintel passes west, which a north astragal blocks")
+	south_lane["pieces"] = [_fixed_lintel("N", 0, 2)]
+	check(_leaves(Tracer.trace(south_lane, Charts.make_state(south_lane, true)), 0, 2, "S", "blue"), "a lintel passes south, which a north astragal blocks")
+	# A mullion cannot be turned so that it passes east. A transom cannot be turned so that it passes north.
+	var mullion_east := _blank(5, 1)
+	mullion_east["lanterns"] = [_lamp("L", 0, 0, "E", "white")]
+	mullion_east["docks"] = [_need("D", 4, 0, "white")]
+	mullion_east["pieces"] = [_fixed_mullion("U", 2, 0)]
+	mullion_east["pieces"][0]["solution_rot"] = Tracer.turn_rot("mullion", 0)
+	var mullion_hit: Dictionary = Tracer.trace(mullion_east, Charts.make_state(mullion_east, true))
+	check(Tracer.turn_rot("mullion", 0) == 0 and not _center_hit(mullion_hit, 2, 0) and mullion_hit["docks"]["D"].is_empty(), "a mullion cannot be turned so that it passes east")
+	mullion_east["pieces"] = [_fixed_astragal("A", 2, 0, 0)]
+	check(_leaves(Tracer.trace(mullion_east, Charts.make_state(mullion_east, true)), 2, 0, "E", "white"), "a north astragal passes the east a mullion cannot turn to")
+	var transom_north := _blank(1, 5)
+	transom_north["lanterns"] = [_lamp("L", 0, 4, "N", "white")]
+	transom_north["docks"] = [_need("D", 0, 0, "white")]
+	transom_north["pieces"] = [_fixed_transom("O", 0, 2)]
+	transom_north["pieces"][0]["solution_rot"] = Tracer.turn_rot("transom", 0)
+	var transom_hit: Dictionary = Tracer.trace(transom_north, Charts.make_state(transom_north, true))
+	check(Tracer.turn_rot("transom", 0) == 0 and not _center_hit(transom_hit, 0, 2) and transom_hit["docks"]["D"].is_empty(), "a transom cannot be turned so that it passes north")
+	transom_north["pieces"] = [_fixed_astragal("A", 0, 2, 0)]
+	check(_leaves(Tracer.trace(transom_north, Charts.make_state(transom_north, true)), 0, 2, "N", "white"), "a north astragal passes the north a transom cannot turn to")
+	var clicked := _blank(5, 5)
+	clicked["lanterns"] = [_lamp("L", 2, 0, "S", "blue")]
+	clicked["docks"] = [_need("D", 2, 4, "blue")]
+	clicked["pieces"] = [_fixed_astragal("A", 2, 2, Tracer.turn_rot("astragal", 0))]
+	var clicked_hit: Dictionary = Tracer.trace(clicked, Charts.make_state(clicked, true))
+	check(Tracer.astragal_facing(Tracer.turn_rot("astragal", 0)) == "E" and _leaves(clicked_hit, 2, 2, "S", "blue") and clicked_hit["docks"]["D"].has("blue"), "an astragal clicked once from north faces east and passes south")
+	clicked["pieces"] = [_fixed_transom("O", 2, 2)]
+	check(not _center_hit(Tracer.trace(clicked, Charts.make_state(clicked, true)), 2, 2), "a transom still refuses the south an east astragal passes")
+	for rot in [0, 90, 180, 270]:
+		var facing := Tracer.astragal_facing(rot)
+		var clock := Tracer.rotate_dir(facing, 1)
+		for color in ["red", "blue", "white"]:
+			for dir in ["N", "E", "S", "W"]:
+				var open: bool = dir == facing or dir == clock
+				var lane := _blank(5, 5)
+				var at := Vector2i(2, 2)
+				var step: Vector2i = Tracer.VEC[dir]
+				var lamp_at := at - step
+				var dock_at := at + step * 2
+				lane["lanterns"] = [_lamp("L", lamp_at.x, lamp_at.y, dir, color)]
+				lane["docks"] = [_need("D", dock_at.x, dock_at.y, color)]
+				lane["pieces"] = [_fixed_astragal("A", at.x, at.y, rot)]
+				var hit: Dictionary = Tracer.trace(lane, Charts.make_state(lane, true))
+				if open:
+					check(hit["docks"]["D"].has(color) and hit["docks"]["D"].size() == 1, "a dry %s astragal keeps %s traveling %s" % [facing, color, dir])
+					check(_arrives_from(hit, at.x, at.y, dir, color) and _leaves(hit, at.x, at.y, dir, color), "a dry %s astragal passes %s straight %s" % [facing, color, dir])
+					var other := "red" if color != "red" else "blue"
+					check(not _departs(hit, at.x, at.y, other), "a dry %s astragal does not recolor %s traveling %s" % [facing, color, dir])
+					for other_dir in ["N", "E", "S", "W"]:
+						if other_dir == dir:
+							continue
+						check(not _leaves(hit, at.x, at.y, other_dir, color), "a dry %s astragal does not turn %s from %s to %s" % [facing, color, dir, other_dir])
+				else:
+					check(not _center_hit(hit, at.x, at.y) and not _leaves(hit, at.x, at.y, dir, color) and hit["docks"]["D"].is_empty(), "a dry %s astragal stops %s traveling %s before the cell" % [facing, color, dir])
+	var row := _astragal_row(20)
+	check(Tracer.trace(row, Charts.make_state(row, true))["docks"]["D"].has("white"), "twenty dry north astragals still pass an eastbound beam")
+	var column := _astragal_column(20)
+	check(Tracer.trace(column, Charts.make_state(column, true))["docks"]["D"].has("white"), "twenty dry north astragals still pass a northbound beam")
+	var east_flood := _blank(5, 4)
+	east_flood["tide_phases"] = [2]
+	east_flood["lanterns"] = [_lamp("L", 0, 1, "S", "white")]
+	east_flood["fixtures"] = [
+		{"id": "S0", "kind": "shutter", "x": 0, "y": 2, "rot": 0},
+		{"id": "T0", "kind": "tide_mirror", "x": 0, "y": 3, "rot": 90},
+		{"id": "S1", "kind": "shutter", "x": 1, "y": 3, "rot": 0},
+	]
+	east_flood["pieces"] = [_fixed_astragal("A", 2, 3, 0)]
+	var east_state := Charts.make_state(east_flood, true)
+	var east_flood_hit: Dictionary = Tracer.trace(east_flood, east_state)
+	check(Tracer.is_flooded(east_flood, east_state, Vector2i(2, 3)) and not _center_hit(east_flood_hit, 2, 3) and not _arrives_from(east_flood_hit, 2, 3, "E", "white"), "a flooded astragal stops an eastbound beam before the cell")
+	east_flood["pieces"] = [_fixed_jamb("J", 2, 3, 0)]
+	check(_trace_sig(Tracer.trace(east_flood, Charts.make_state(east_flood, true))) == _trace_sig(east_flood_hit), "a flooded astragal stops the way a flooded jamb stops")
+	east_flood["pieces"] = [_fixed_shutter("G", 2, 3)]
+	var east_open: Dictionary = Tracer.trace(east_flood, Charts.make_state(east_flood, true))
+	check(_center_hit(east_open, 2, 3) and _departs(east_open, 2, 3, "white"), "a flooded shutter passes the eastbound beam an astragal stops")
+	var well_carry := _blank(5, 4)
+	well_carry["tide_phases"] = [2]
+	well_carry["lanterns"] = [_lamp("L", 2, 1, "S", "red")]
+	well_carry["fixtures"] = [{"id": "S0", "kind": "shutter", "x": 2, "y": 2, "rot": 0}]
+	well_carry["pieces"] = [_fixed_well("K", 2, 3)]
+	check(_center_hit(Tracer.trace(well_carry, Charts.make_state(well_carry, true)), 2, 3), "a flooded well carries the beam an astragal stops")
+	var siphon_carry := _blank(5, 4)
+	siphon_carry["tide_phases"] = [2]
+	siphon_carry["lanterns"] = [_lamp("L", 2, 1, "S", "red")]
+	siphon_carry["fixtures"] = [{"id": "S0", "kind": "shutter", "x": 2, "y": 2, "rot": 0}]
+	siphon_carry["pieces"] = [_fixed_siphon("K", 2, 3)]
+	check(_center_hit(Tracer.trace(siphon_carry, Charts.make_state(siphon_carry, true)), 2, 3), "a flooded siphon carries the beam an astragal stops")
+	var sluice_carry := _blank(5, 4)
+	sluice_carry["tide_phases"] = [2]
+	sluice_carry["lanterns"] = [_lamp("L", 2, 1, "S", "red")]
+	sluice_carry["fixtures"] = [{"id": "S0", "kind": "shutter", "x": 2, "y": 2, "rot": 0}]
+	sluice_carry["pieces"] = [_fixed_sluice("K", 2, 3, 180)]
+	check(_center_hit(Tracer.trace(sluice_carry, Charts.make_state(sluice_carry, true)), 2, 3), "a flooded sluice carries the beam an astragal stops")
+	var weir_carry := _blank(5, 4)
+	weir_carry["tide_phases"] = [2]
+	weir_carry["lanterns"] = [_lamp("L", 2, 1, "S", "red")]
+	weir_carry["fixtures"] = [{"id": "S0", "kind": "shutter", "x": 2, "y": 2, "rot": 0}]
+	weir_carry["pieces"] = [_fixed_weir("K", 2, 3, 180)]
+	check(_center_hit(Tracer.trace(weir_carry, Charts.make_state(weir_carry, true)), 2, 3), "a flooded weir carries the beam an astragal stops")
+	var painted := _blank(5, 1)
+	painted["lanterns"] = [_lamp("L", 0, 0, "E", "blue")]
+	painted["docks"] = [_need("D", 4, 0, "blue")]
+	painted["pieces"] = [_fixed_astragal("A", 2, 0, 0)]
+	var kept_blue: Dictionary = Tracer.trace(painted, Charts.make_state(painted, true))
+	check(_leaves(kept_blue, 2, 0, "E", "blue") and kept_blue["docks"]["D"].has("blue") and not _departs(kept_blue, 2, 0, "red"), "a dry astragal keeps blue")
+	painted["lanterns"][0]["color"] = "red"
+	painted["docks"][0]["color"] = "red"
+	var kept_red: Dictionary = Tracer.trace(painted, Charts.make_state(painted, true))
+	check(_leaves(kept_red, 2, 0, "E", "red") and kept_red["docks"]["D"].has("red") and not _departs(kept_red, 2, 0, "blue"), "a dry astragal keeps red")
+	painted["lanterns"][0]["color"] = "white"
+	painted["docks"][0]["color"] = "white"
+	var kept_white: Dictionary = Tracer.trace(painted, Charts.make_state(painted, true))
+	check(_leaves(kept_white, 2, 0, "E", "white") and not _departs(kept_white, 2, 0, "red") and not _departs(kept_white, 2, 0, "blue"), "a dry astragal keeps white")
+	painted["lanterns"][0]["color"] = "blue"
+	painted["docks"][0]["color"] = "blue"
+	painted["pieces"] = [_fixed_stain("K", 2, 0, 0)]
+	var stained: Dictionary = Tracer.trace(painted, Charts.make_state(painted, true))
+	check(_leaves(stained, 2, 0, "E", "red") and not _leaves(stained, 2, 0, "E", "blue"), "a stain recolors the pass an astragal keeps")
+	var wet_color := _blank(5, 4)
+	wet_color["tide_phases"] = [2]
+	wet_color["lanterns"] = [_lamp("L", 0, 1, "S", "red")]
+	wet_color["fixtures"] = [
+		{"id": "S0", "kind": "shutter", "x": 0, "y": 2, "rot": 0},
+		{"id": "T0", "kind": "tide_mirror", "x": 0, "y": 3, "rot": 90},
+		{"id": "S1", "kind": "shutter", "x": 1, "y": 3, "rot": 0},
+	]
+	wet_color["docks"] = [_need("D", 4, 3, "blue")]
+	wet_color["pieces"] = [_fixed_weir("R", 2, 3, 90)]
+	var swapped: Dictionary = Tracer.trace(wet_color, Charts.make_state(wet_color, true))
+	check(_departs(swapped, 2, 3, "blue") and not _departs(swapped, 2, 3, "red"), "a flooded weir changes the color an astragal would have kept")
+	wet_color["pieces"] = [_fixed_astragal("A", 2, 3, 0)]
+	var held_color: Dictionary = Tracer.trace(wet_color, Charts.make_state(wet_color, true))
+	check(not _center_hit(held_color, 2, 3) and not _departs(held_color, 2, 3, "blue") and not _departs(held_color, 2, 3, "red"), "a flooded astragal does not recolor")
+	var turned := _blank(5, 5)
+	turned["lanterns"] = [_lamp("L", 2, 4, "N", "white")]
+	turned["docks"] = [_need("D", 2, 0, "white")]
+	turned["pieces"] = [_fixed_astragal("A", 2, 2, 0)]
+	var straight: Dictionary = Tracer.trace(turned, Charts.make_state(turned, true))
+	check(_leaves(straight, 2, 2, "N", "white") and not _leaves(straight, 2, 2, "E", "white") and not _leaves(straight, 2, 2, "W", "white") and not _leaves(straight, 2, 2, "S", "white"), "a dry astragal does not turn")
+	turned["pieces"] = [_fixed_mirror(2, 2, 0)]
+	check(_leaves(Tracer.trace(turned, Charts.make_state(turned, true)), 2, 2, "E", "white"), "a mirror turns the beam an astragal passes straight")
+	turned["pieces"] = [_fixed_vane("V", 2, 2, 90)]
+	check(_leaves(Tracer.trace(turned, Charts.make_state(turned, true)), 2, 2, "E", "white"), "a vane turns the beam an astragal passes straight")
+	turned["pieces"] = [_fixed_prism(2, 2, 0)]
+	var split: Dictionary = Tracer.trace(turned, Charts.make_state(turned, true))
+	check(_leaves(split, 2, 2, "W", "red") and _leaves(split, 2, 2, "E", "blue") and not _leaves(split, 2, 2, "N", "white"), "a prism turns the beam an astragal passes straight")
+	var sluice_turn := _blank(5, 4)
+	sluice_turn["tide_phases"] = [2]
+	sluice_turn["lanterns"] = [_lamp("L", 2, 1, "S", "white")]
+	sluice_turn["fixtures"] = [
+		{"id": "S0", "kind": "shutter", "x": 2, "y": 2, "rot": 0},
+		{"id": "S1", "kind": "shutter", "x": 3, "y": 3, "rot": 0},
+	]
+	sluice_turn["pieces"] = [_fixed_sluice("U", 2, 3, 90)]
+	check(_leaves(Tracer.trace(sluice_turn, Charts.make_state(sluice_turn, true)), 2, 3, "E", "white"), "a flooded sluice turns the beam an astragal would pass straight")
+
+
+func test_astragal_book() -> void:
+	var book: Array = Charts.astragal()
+	check(book.size() == 8, "astragal book has eight charts")
+	var titles := ["The Dry Astragal", "The Wet Stop", "Color Kept", "No Turn", "Beside the Flood", "Two Astragals", "The Held Astragal", "The Astragal Mark"]
+	for i in book.size():
+		var chart: Dictionary = book[i]
+		check(str(chart["id"]) == str(i + 151), "astragal chart %d keeps its number" % (i + 151))
+		check(str(chart["title"]) == str(titles[i]), "astragal chart %d keeps its title" % (i + 151))
+		check(str(chart["harbor"]) == Charts.ASTRAGAL, "chart %s belongs to the astragal" % str(chart["id"]))
+		var astragal_count := 0
+		for raw_piece in chart["pieces"]:
+			var piece: Dictionary = raw_piece
+			if str(piece["kind"]) == "astragal":
+				astragal_count += 1
+		check(astragal_count >= 1, "chart %s needs the astragal" % str(chart["id"]))
+	for older in Charts.all().slice(0, 150):
+		for raw_piece in older["pieces"]:
+			var older_piece: Dictionary = raw_piece
+			check(str(older_piece["kind"]) != "astragal", "chart %s keeps its pieces" % str(older["id"]))
+		for raw_fix in older["fixtures"]:
+			var older_fix: Dictionary = raw_fix
+			check(str(older_fix["kind"]) != "astragal", "chart %s keeps its fixed glass" % str(older["id"]))
+	for i in book.size():
+		for raw_piece in book[i]["pieces"]:
+			var piece: Dictionary = raw_piece
+			if str(piece["kind"]) != "astragal":
+				continue
+			var piece_id := str(piece["id"])
+			_expect_astragal_miss(i, piece_id, "casement", 0, "casement north")
+			_expect_astragal_miss(i, piece_id, "casement", 90, "casement east")
+			_expect_astragal_miss(i, piece_id, "casement", 180, "casement south")
+			_expect_astragal_miss(i, piece_id, "casement", 270, "casement west")
+			_expect_astragal_miss(i, piece_id, "jamb", 0, "jamb north")
+			_expect_astragal_miss(i, piece_id, "jamb", 90, "jamb east")
+			_expect_astragal_miss(i, piece_id, "jamb", 180, "jamb south")
+			_expect_astragal_miss(i, piece_id, "jamb", 270, "jamb west")
+			_expect_astragal_miss(i, piece_id, "mullion", 0, "mullion")
+			_expect_astragal_miss(i, piece_id, "transom", 0, "transom")
+			_expect_astragal_miss(i, piece_id, "lintel", 0, "lintel")
+			_expect_astragal_miss(i, piece_id, "shutter", 0, "shutter")
+			_expect_astragal_miss(i, piece_id, "well", 0, "well")
+			_expect_astragal_miss(i, piece_id, "siphon", 0, "siphon")
+			_expect_astragal_miss(i, piece_id, "stain", 0, "red stain")
+			_expect_astragal_miss(i, piece_id, "stain", 90, "blue stain")
+			_expect_astragal_miss(i, piece_id, "mirror", 0, "mirror")
+			_expect_astragal_miss(i, piece_id, "mirror", 90, "turned mirror")
+			for facing in [0, 90, 180, 270]:
+				_expect_astragal_miss(i, piece_id, "vane", facing, "vane %d" % facing)
+				_expect_astragal_miss(i, piece_id, "weir", facing, "weir %d" % facing)
+				_expect_astragal_miss(i, piece_id, "sluice", facing, "sluice %d" % facing)
+				_expect_astragal_miss(i, piece_id, "prism", facing, "prism %d" % facing)
+	var dry: Dictionary = book[0]
+	check(int(dry["tide_phases"][0]) == 0 and int(dry["solution_tide_index"]) == 0, "chart 151 is tide index 0 and flood 0")
+	var dry_hit: Dictionary = Tracer.trace(dry, Charts.make_state(dry, true))
+	check(_leaves(dry_hit, 3, 3, "N", "white") and dry_hit["docks"]["Wd"].has("white") and dry_hit["docks"]["Wd"].size() == 1, "chart 151 passes the northbound beam")
+	check(_leaves(dry_hit, 3, 3, "E", "red") and dry_hit["docks"]["Ed"].has("red") and dry_hit["docks"]["Ed"].size() == 1, "chart 151 passes the eastbound beam")
+	check(dry_hit["docks"]["Kd"].is_empty(), "chart 151 refuses the southbound return")
+	var dry_case: Dictionary = Charts.astragal()[0]
+	_retarget(dry_case, "A", "casement", 0)
+	var dry_case_hit: Dictionary = Tracer.trace(dry_case, Charts.make_state(dry_case, true))
+	check(dry_case_hit["docks"]["Wd"].has("white") and dry_case_hit["docks"]["Ed"].is_empty() and not Tracer.is_cleared(dry_case, Charts.make_state(dry_case, true)), "chart 151 a casement refuses the eastbound beam")
+	var dry_jamb: Dictionary = Charts.astragal()[0]
+	_retarget(dry_jamb, "A", "jamb", 0)
+	var dry_jamb_hit: Dictionary = Tracer.trace(dry_jamb, Charts.make_state(dry_jamb, true))
+	check(dry_jamb_hit["docks"]["Ed"].is_empty() and dry_jamb_hit["docks"]["Kd"].has("blue") and not Tracer.is_cleared(dry_jamb, Charts.make_state(dry_jamb, true)), "chart 151 a jamb refuses the eastbound beam and passes the southbound return")
+	var wet: Dictionary = book[1]
+	check(int(wet["start_tide_index"]) == 1 and int(wet["solution_tide_index"]) == 0 and int(wet["tide_phases"][1]) == 3, "chart 152 opens under water and solves dry")
+	var wet_start: Dictionary = Tracer.trace(wet, Charts.make_state(wet, false))
+	check(wet_start["docks"]["Nd"].is_empty() and wet_start["docks"]["Ed"].is_empty() and not _center_hit(wet_start, 3, 4), "chart 152 flooded row stops the beam at the waterline")
+	var wet_solved: Dictionary = Tracer.trace(wet, Charts.make_state(wet, true))
+	check(_leaves(wet_solved, 3, 4, "N", "white") and _leaves(wet_solved, 3, 4, "E", "red") and wet_solved["docks"]["Nd"].has("white") and wet_solved["docks"]["Ed"].has("red") and wet_solved["docks"]["Kd"].is_empty(), "chart 152 dry tide passes north and east")
+	var wet_open: Dictionary = Charts.astragal()[1]
+	_retarget(wet_open, "A", "shutter", 0)
+	var wet_open_state := Charts.make_state(wet_open, false)
+	check(_center_hit(Tracer.trace(wet_open, wet_open_state), 3, 4), "chart 152 a shutter passes while flooded")
+	for carrier in ["well", "siphon", "sluice", "weir"]:
+		var wet_carry: Dictionary = Charts.astragal()[1]
+		_retarget(wet_carry, "A", carrier, 180 if carrier == "sluice" or carrier == "weir" else 0)
+		var carry_state := Charts.make_state(wet_carry, false)
+		check(_center_hit(Tracer.trace(wet_carry, carry_state), 3, 4), "chart 152 a flooded %s carries the beam" % carrier)
+	var kept: Dictionary = Charts.astragal()[2]
+	var kept_hit: Dictionary = Tracer.trace(kept, Charts.make_state(kept, true))
+	check(_leaves(kept_hit, 3, 3, "N", "red") and kept_hit["docks"]["Rd"].has("red") and kept_hit["docks"]["Rd"].size() == 1, "chart 153 keeps red")
+	check(_leaves(kept_hit, 3, 3, "E", "blue") and kept_hit["docks"]["Bd"].has("blue") and kept_hit["docks"]["Bd"].size() == 1, "chart 153 keeps blue")
+	var white_pass: Dictionary = Charts.astragal()[2]
+	white_pass["lanterns"][0]["color"] = "white"
+	white_pass["docks"][0]["color"] = "white"
+	var white_hit: Dictionary = Tracer.trace(white_pass, Charts.make_state(white_pass, true))
+	check(_leaves(white_hit, 3, 3, "N", "white") and not _leaves(white_hit, 3, 3, "N", "red") and not _leaves(white_hit, 3, 3, "N", "blue") and white_hit["docks"]["Rd"].has("white") and white_hit["docks"]["Rd"].size() == 1 and white_hit["docks"]["Bd"].has("blue") and Tracer.is_cleared(white_pass, Charts.make_state(white_pass, true)), "chart 153 keeps white")
+	var straight: Dictionary = book[3]
+	var straight_hit: Dictionary = Tracer.trace(straight, Charts.make_state(straight, true))
+	check(_arrives_from(straight_hit, 3, 3, "N", "white") and _leaves(straight_hit, 3, 3, "N", "white") and not _leaves(straight_hit, 3, 3, "E", "white") and not _leaves(straight_hit, 3, 3, "S", "white") and not _leaves(straight_hit, 3, 3, "W", "white"), "chart 154 the northbound beam leaves on the same side it entered")
+	check(_arrives_from(straight_hit, 3, 3, "E", "red") and _leaves(straight_hit, 3, 3, "E", "red") and not _leaves(straight_hit, 3, 3, "N", "red") and not _leaves(straight_hit, 3, 3, "S", "red") and not _leaves(straight_hit, 3, 3, "W", "red"), "chart 154 the eastbound beam leaves on the same side it entered")
+	var beside: Dictionary = book[4]
+	check(int(beside["tide_phases"][0]) == 2, "chart 155 holds a flooded neighbor")
+	var beside_state := Charts.make_state(beside, true)
+	check(not Tracer.is_flooded(beside, beside_state, Vector2i(3, 2)) and Tracer.is_flooded(beside, beside_state, Vector2i(6, 4)), "chart 155 astragal row is dry and the next row is flooded")
+	var beside_hit: Dictionary = Tracer.trace(beside, beside_state)
+	check(_leaves(beside_hit, 3, 2, "E", "white") and _leaves(beside_hit, 3, 2, "N", "blue") and beside_hit["docks"]["Wd"].has("white") and beside_hit["docks"]["Nd"].has("blue") and beside_hit["docks"]["Kd"].is_empty() and not _center_hit(beside_hit, 6, 4), "chart 155 the dry row passes and the flood beam stops at the waterline")
+	var pair: Dictionary = book[5]
+	var pair_hit: Dictionary = Tracer.trace(pair, Charts.make_state(pair, true))
+	check(_leaves(pair_hit, 3, 3, "N", "white") and _leaves(pair_hit, 3, 3, "E", "red") and _leaves(pair_hit, 7, 5, "S", "white") and _leaves(pair_hit, 7, 5, "W", "blue"), "chart 156 each astragal passes its open pair")
+	check(pair_hit["docks"]["Ads"].is_empty() and pair_hit["docks"]["Bdn"].is_empty() and pair_hit["docks"]["Bde"].is_empty(), "chart 156 each blocked direction stays dark")
+	var swapped_pair := Charts.duplicate_state(Charts.make_state(pair, true))
+	swapped_pair["pieces"]["A"]["rot"] = 180
+	swapped_pair["pieces"]["B"]["rot"] = 0
+	check(not Tracer.is_cleared(pair, swapped_pair), "chart 156 swapping the facings fails")
+	var north_seat: Dictionary = Charts.astragal()[5]
+	_retarget(north_seat, "A", "jamb", 0)
+	var north_seat_hit: Dictionary = Tracer.trace(north_seat, Charts.make_state(north_seat, true))
+	check(north_seat_hit["docks"]["Ads"].has("blue") and north_seat_hit["docks"]["Ade"].is_empty() and not Tracer.is_cleared(north_seat, Charts.make_state(north_seat, true)), "chart 156 a north jamb cannot take the north-and-east seat")
+	var held: Dictionary = book[6]
+	check(int(held["tide_phases"][0]) == 0 and int(held["tide_phases"][1]) == 1 and int(held["tide_phases"][2]) == 4 and int(held["solution_tide_index"]) == 1 and int(held["start_tide_index"]) == 0, "chart 157 follows the held tide marks")
+	var held_start := Charts.make_state(held, false)
+	check(int(held_start["pieces"]["A"]["rot"]) == 180, "chart 157 starts on the other open pair")
+	var held_solved := Charts.make_state(held, true)
+	var held_hit: Dictionary = Tracer.trace(held, held_solved)
+	check(int(held_solved["pieces"]["A"]["rot"]) == 0 and _leaves(held_hit, 4, 3, "N", "white") and _leaves(held_hit, 4, 3, "E", "blue") and held_hit["docks"]["Kd"].is_empty() and not bool(held_hit["boats"]["Hb"]), "chart 157 the held facing passes north and east")
+	var held_low := Charts.duplicate_state(held_solved)
+	held_low["tide_index"] = 0
+	check(bool(Tracer.trace(held, held_low)["boats"]["Hb"]) and not Tracer.is_cleared(held, held_low), "chart 157 low water wakes the south hull")
+	var held_high := Charts.duplicate_state(held_solved)
+	held_high["tide_index"] = 2
+	var held_high_hit: Dictionary = Tracer.trace(held, held_high)
+	check(held_high_hit["docks"]["Wd"].is_empty() and not _center_hit(held_high_hit, 4, 3) and not Tracer.is_cleared(held, held_high), "chart 157 high water stops the beam outside the astragal")
+	var mark: Dictionary = book[7]
+	var mark_solved := Charts.make_state(mark, true)
+	check(str(mark_solved["pieces"]["A"]["socket"]) == "line" and int(mark_solved["pieces"]["A"]["rot"]) == 0 and str(mark_solved["pieces"]["G"]["socket"]) == "side", "chart 158 puts the north astragal on the line")
+	var mark_hit: Dictionary = Tracer.trace(mark, mark_solved)
+	check(_leaves(mark_hit, 3, 3, "N", "white") and _leaves(mark_hit, 3, 3, "E", "red") and mark_hit["docks"]["Wd"].has("white") and mark_hit["docks"]["Ed"].has("red") and mark_hit["docks"]["Kd"].is_empty(), "chart 158 the open pair satisfies the mark")
+	var mark_case: Dictionary = Charts.astragal()[7]
+	_retarget(mark_case, "A", "casement", 0)
+	check(not Tracer.is_cleared(mark_case, Charts.make_state(mark_case, true)), "chart 158 a casement in that cell fails")
+	var mark_jamb: Dictionary = Charts.astragal()[7]
+	_retarget(mark_jamb, "A", "jamb", 0)
+	check(not Tracer.is_cleared(mark_jamb, Charts.make_state(mark_jamb, true)), "chart 158 a jamb in that cell fails")
+	var mark_mullion: Dictionary = Charts.astragal()[7]
+	_retarget(mark_mullion, "A", "mullion", 0)
+	check(not Tracer.is_cleared(mark_mullion, Charts.make_state(mark_mullion, true)), "chart 158 a mullion in that cell fails")
+	var mark_transom: Dictionary = Charts.astragal()[7]
+	_retarget(mark_transom, "A", "transom", 0)
+	check(not Tracer.is_cleared(mark_transom, Charts.make_state(mark_transom, true)), "chart 158 a transom in that cell fails")
+	var mark_lintel: Dictionary = Charts.astragal()[7]
+	_retarget(mark_lintel, "A", "lintel", 0)
+	check(not Tracer.is_cleared(mark_lintel, Charts.make_state(mark_lintel, true)), "chart 158 a lintel in that cell fails")
+	check(str(book[0]["teach"]).to_lower().contains("tide index 0") and str(book[0]["teach"]).to_lower().contains("casement") and str(book[0]["teach"]).to_lower().contains("jamb") and str(book[0]["teach"]).to_lower().contains("eastbound") and str(book[0]["teach"]).to_lower().contains("return"), "chart 151 teaches the dry astragal")
+	check(str(book[1]["teach"]).to_lower().contains("waterline") and str(book[1]["teach"]).to_lower().contains("shutter") and str(book[1]["teach"]).to_lower().contains("well") and str(book[1]["teach"]).to_lower().contains("siphon") and str(book[1]["teach"]).to_lower().contains("sluice") and str(book[1]["teach"]).to_lower().contains("weir"), "chart 152 teaches the wet stop")
+	check(str(book[2]["teach"]).to_lower().contains("red stays red") and str(book[2]["teach"]).to_lower().contains("blue stays blue") and str(book[2]["teach"]).to_lower().contains("white stays white") and str(book[2]["teach"]).to_lower().contains("stain") and str(book[2]["teach"]).to_lower().contains("weir"), "chart 153 teaches the kept color")
+	check(str(book[3]["teach"]).to_lower().contains("does not turn") and str(book[3]["teach"]).to_lower().contains("prism") and str(book[3]["teach"]).to_lower().contains("vane") and str(book[3]["teach"]).to_lower().contains("sluice") and str(book[3]["teach"]).to_lower().contains("mirror"), "chart 154 teaches the straight pass")
+	check(str(book[4]["teach"]).to_lower().contains("waterline") and str(book[4]["teach"]).to_lower().contains("dry"), "chart 155 teaches the dry row beside the flood")
+	check(str(book[5]["teach"]).to_lower().contains("north and east") and str(book[5]["teach"]).to_lower().contains("south and west") and str(book[5]["teach"]).to_lower().contains("jamb") and str(book[5]["teach"]).to_lower().contains("south"), "chart 156 teaches both astragals")
+	check(str(book[6]["teach"]).to_lower().contains("facing") and str(book[6]["teach"]).to_lower().contains("other two directions"), "chart 157 teaches the held astragal")
+	check(str(book[7]["teach"]).to_lower().contains("casement") and str(book[7]["teach"]).to_lower().contains("jamb") and str(book[7]["teach"]).to_lower().contains("mullion") and str(book[7]["teach"]).to_lower().contains("transom") and str(book[7]["teach"]).to_lower().contains("lintel"), "chart 158 teaches the astragal mark")
+
+
+func _expect_astragal_miss(index: int, piece_id: String, kind: String, rot: int, label: String) -> void:
+	var chart: Dictionary = Charts.astragal()[index]
+	_retarget(chart, piece_id, kind, rot)
+	var state := Charts.make_state(chart, true)
+	if Tracer.is_cleared(chart, state):
+		check(false, "%s clears astragal chart %d" % [label, index + 151])
+	else:
+		check(true, "%s misses astragal chart %d" % [label, index + 151])
+
+
 func test_smoke() -> void:
 	var main_script: Script = load("res://scripts/main.gd")
 	main_script.persist_progress = false
@@ -5950,10 +6341,11 @@ func test_smoke() -> void:
 	var transom_rect: Rect2 = main.transom_book_button.get_global_rect()
 	var casement_rect: Rect2 = main.casement_book_button.get_global_rect()
 	var jamb_rect: Rect2 = main.jamb_book_button.get_global_rect()
+	var astragal_rect: Rect2 = main.astragal_book_button.get_global_rect()
 	var side_rect: Rect2 = main._side.get_global_rect()
-	check(side_rect.grow(1.0).encloses(sluice_rect) and side_rect.grow(1.0).encloses(weir_rect) and side_rect.grow(1.0).encloses(lintel_rect) and side_rect.grow(1.0).encloses(mullion_rect) and side_rect.grow(1.0).encloses(transom_rect) and side_rect.grow(1.0).encloses(casement_rect) and side_rect.grow(1.0).encloses(jamb_rect), "the sluice, weir, lintel, mullion, transom, casement, and jamb book buttons sit inside the side panel")
-	check(not sluice_rect.intersects(weir_rect) and not weir_rect.intersects(lintel_rect) and not lintel_rect.intersects(mullion_rect) and not mullion_rect.intersects(transom_rect) and not transom_rect.intersects(casement_rect) and not casement_rect.intersects(jamb_rect) and not sluice_rect.intersects(lintel_rect), "the transom button stays beside the mullion button, with the casement button, and the jamb button sits on its own row")
-	check(sluice_rect.size.x + 0.5 >= main.sluice_book_button.get_minimum_size().x and weir_rect.size.x + 0.5 >= main.weir_book_button.get_minimum_size().x and lintel_rect.size.x + 0.5 >= main.lintel_book_button.get_minimum_size().x and mullion_rect.size.x + 0.5 >= main.mullion_book_button.get_minimum_size().x and transom_rect.size.x + 0.5 >= main.transom_book_button.get_minimum_size().x and casement_rect.size.x + 0.5 >= main.casement_book_button.get_minimum_size().x and jamb_rect.size.x + 0.5 >= main.jamb_book_button.get_minimum_size().x, "the sluice, weir, lintel, mullion, transom, casement, and jamb labels have room")
+	check(side_rect.grow(1.0).encloses(sluice_rect) and side_rect.grow(1.0).encloses(weir_rect) and side_rect.grow(1.0).encloses(lintel_rect) and side_rect.grow(1.0).encloses(mullion_rect) and side_rect.grow(1.0).encloses(transom_rect) and side_rect.grow(1.0).encloses(casement_rect) and side_rect.grow(1.0).encloses(jamb_rect) and side_rect.grow(1.0).encloses(astragal_rect), "the sluice, weir, lintel, mullion, transom, casement, jamb, and astragal book buttons sit inside the side panel")
+	check(not sluice_rect.intersects(weir_rect) and not weir_rect.intersects(lintel_rect) and not lintel_rect.intersects(mullion_rect) and not mullion_rect.intersects(transom_rect) and not transom_rect.intersects(casement_rect) and not casement_rect.intersects(jamb_rect) and not jamb_rect.intersects(astragal_rect) and not sluice_rect.intersects(lintel_rect), "the transom button stays beside the mullion button, with the casement button, and the jamb button sits beside the astragal button")
+	check(sluice_rect.size.x + 0.5 >= main.sluice_book_button.get_minimum_size().x and weir_rect.size.x + 0.5 >= main.weir_book_button.get_minimum_size().x and lintel_rect.size.x + 0.5 >= main.lintel_book_button.get_minimum_size().x and mullion_rect.size.x + 0.5 >= main.mullion_book_button.get_minimum_size().x and transom_rect.size.x + 0.5 >= main.transom_book_button.get_minimum_size().x and casement_rect.size.x + 0.5 >= main.casement_book_button.get_minimum_size().x and jamb_rect.size.x + 0.5 >= main.jamb_book_button.get_minimum_size().x and astragal_rect.size.x + 0.5 >= main.astragal_book_button.get_minimum_size().x, "the sluice, weir, lintel, mullion, transom, casement, jamb, and astragal labels have room")
 	var window_w := int(ProjectSettings.get_setting("display/window/size/viewport_width"))
 	var window_h := int(ProjectSettings.get_setting("display/window/size/viewport_height"))
 	check(window_w == 1280 and window_h == 720, "the window stays 1280 by 720")
@@ -6094,8 +6486,38 @@ func test_smoke() -> void:
 	await process_frame
 	check(str(main.chart["id"]) == "143", "Jamb returns to The Dry Jamb")
 	check(_chart_row_fits(main.jamb_grid, main._side), "the jamb chart row fits in the window")
+	main.unlocked[150] = false
+	main._refresh_chrome()
+	check(main.astragal_book_button.disabled, "the astragal stays locked until the jamb mark is held")
+	main.unlocked[149] = true
+	check(main.select_chart(149), "chart 150 opens when unlocked")
+	check(main.astragal_book_button.disabled, "opening the jamb mark does not unlock the astragal")
+	main.state = Charts.duplicate_state(Charts.make_state(main.chart, true))
+	main._refresh()
+	main.try_lock()
+	check(main.board_locked and main.unlocked[150], "holding the jamb mark opens the astragal")
+	main._advance_from_win()
+	check(str(main.chart["id"]) == "151", "next chart from the jamb mark enters The Dry Astragal")
+	check(main.astragal_grid.visible and not main.jamb_grid.visible and not main.casement_grid.visible, "the astragal grid opens with The Dry Astragal")
+	check(str(main.harbor_label.text) == Charts.ASTRAGAL, "the harbor name follows the astragal")
+	check(str(main.tide_readout.text).to_lower().contains("astragal"), "chart 151 names the astragal in the water readout")
+	var astragal_cell := Charts.piece_cell(main.chart, main.state, "A")
+	check(str(main.selected_id) == "A" and int(main.state["pieces"]["A"]["rot"]) == 180, "chart 151 starts on the other open pair")
+	_click_cell(main, astragal_cell.x, astragal_cell.y, false)
+	check(int(main.state["pieces"]["A"]["rot"]) == 270, "a click turns the astragal from south to west")
+	check(str(main.status_label.text).to_lower().contains("clockwise") and str(main.status_label.text).to_lower().contains("facing"), "the astragal says it turns and passes its facing")
+	_click_cell(main, astragal_cell.x, astragal_cell.y, false)
+	check(int(main.state["pieces"]["A"]["rot"]) == 0, "the next click turns the astragal north")
+	_click_cell(main, astragal_cell.x, astragal_cell.y, false)
+	check(int(main.state["pieces"]["A"]["rot"]) == 90, "the next click turns the astragal east")
+	_click_cell(main, astragal_cell.x, astragal_cell.y, false)
+	check(int(main.state["pieces"]["A"]["rot"]) == 180, "four clicks restore the south facing")
+	main._on_book_pressed(19)
+	await process_frame
+	check(str(main.chart["id"]) == "151", "Astragal returns to The Dry Astragal")
+	check(_chart_row_fits(main.astragal_grid, main._side), "the astragal chart row fits in the window")
 	main._on_book_pressed(13)
-	check(main.weir_grid.visible and not main.lintel_grid.visible and not main.mullion_grid.visible and not main.transom_grid.visible and not main.casement_grid.visible and not main.jamb_grid.visible, "the weir book still opens")
+	check(main.weir_grid.visible and not main.lintel_grid.visible and not main.mullion_grid.visible and not main.transom_grid.visible and not main.casement_grid.visible and not main.jamb_grid.visible and not main.astragal_grid.visible, "the weir book still opens")
 	main.select_chart(0)
 	main.restart_chart()
 	var before_rot := int(main.state["pieces"]["M"]["rot"])
@@ -6183,8 +6605,9 @@ func _walk(chart: Dictionary, state: Dictionary, index: int, found: Array) -> vo
 	# A transom has no facing. Rotation is ignored.
 	# A casement has four facings. Only one of them passes a beam.
 	# A jamb has four facings. Both facings of the open axis pass.
+	# An astragal has four facings. Each facing opens a different pair.
 	var rots: Array = [0]
-	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb":
+	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal":
 		rots = [0, 90, 180, 270]
 	elif kind != "shutter" and kind != "well" and kind != "siphon" and kind != "lintel" and kind != "mullion" and kind != "transom":
 		rots = [0, 90]
@@ -6389,6 +6812,42 @@ func _fixed_siphon(id: String, x: int, y: int) -> Dictionary:
 		"solution_socket": "a",
 		"solution_rot": 0,
 	}
+
+
+func _fixed_astragal(id: String, x: int, y: int, rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": "Astragal",
+		"kind": "astragal",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": rot,
+		"solution_socket": "a",
+		"solution_rot": rot,
+	}
+
+
+func _astragal_row(count: int) -> Dictionary:
+	var chart := _blank(count + 2, 1)
+	chart["lanterns"] = [_lamp("L", 0, 0, "E", "white")]
+	chart["docks"] = [_need("D", count + 1, 0, "white")]
+	var pieces: Array = []
+	for x in range(1, count + 1):
+		pieces.append(_fixed_astragal("A%d" % x, x, 0, 0))
+	chart["pieces"] = pieces
+	return chart
+
+
+func _astragal_column(count: int) -> Dictionary:
+	var chart := _blank(1, count + 2)
+	chart["lanterns"] = [_lamp("L", 0, count + 1, "N", "white")]
+	chart["docks"] = [_need("D", 0, 0, "white")]
+	var pieces: Array = []
+	for y in range(1, count + 1):
+		pieces.append(_fixed_astragal("A%d" % y, 0, y, 0))
+	chart["pieces"] = pieces
+	return chart
 
 
 func _fixed_jamb(id: String, x: int, y: int, rot: int) -> Dictionary:

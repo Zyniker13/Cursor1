@@ -10,7 +10,7 @@ class_name ChartBook
 # The Sluice holds eight more. The Weir holds eight more.
 # The Lintel holds eight more. The Mullion holds eight more.
 # The Transom holds eight more. The Casement holds eight more.
-# The Jamb holds the last eight.
+# The Jamb holds eight more. The Astragal holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
@@ -41,6 +41,11 @@ class_name ChartBook
 # straight through in the same direction and the same color, and that pass
 # costs no bounce. The other axis stops and does not enter. While that row is
 # flooded, every beam stops at the waterline.
+# An astragal has a facing. Rotation changes it the same way: 0 north, 90 east,
+# 180 south, 270 west. While its row is dry, the facing and the next clockwise
+# direction pass straight through in the same direction and the same color,
+# and that pass costs no bounce. The other two directions stop and do not
+# enter. While that row is flooded, every beam stops at the waterline.
 # See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
@@ -66,6 +71,7 @@ const MULLION := "The Mullion"
 const TRANSOM := "The Transom"
 const CASEMENT := "The Casement"
 const JAMB := "The Jamb"
+const ASTRAGAL := "The Astragal"
 
 static func all() -> Array:
 	var book: Array = []
@@ -88,6 +94,7 @@ static func all() -> Array:
 	book.append_array(transom())
 	book.append_array(casement())
 	book.append_array(jamb())
+	book.append_array(astragal())
 	return book
 
 
@@ -165,6 +172,10 @@ static func casement() -> Array:
 
 static func jamb() -> Array:
 	return [chart_143(), chart_144(), chart_145(), chart_146(), chart_147(), chart_148(), chart_149(), chart_150()]
+
+
+static func astragal() -> Array:
+	return [chart_151(), chart_152(), chart_153(), chart_154(), chart_155(), chart_156(), chart_157(), chart_158()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -5539,6 +5550,283 @@ static func chart_150() -> Dictionary:
 	}
 
 
+static func chart_151() -> Dictionary:
+	# Tide index 0, flood 0. A north astragal passes north and east. The chart
+	# opens on the other pair, south and west, which refuses both.
+	return {
+		"id": "151",
+		"harbor": ASTRAGAL,
+		"title": "The Dry Astragal",
+		"teach": "Tide index 0, flood 0. A dry north astragal passes both the northbound beam and the eastbound beam. White stays white and red stays red. A casement in that cell refuses the eastbound beam. A jamb in that cell refuses the eastbound beam and passes the southbound return. A lintel lets that return through.",
+		"win": "The dry north astragal passes north and east, and the southbound return stops.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Wn", 3, 6, "N", "white"),
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+		],
+		"docks": [
+			_dock("Wd", 3, 1, "white", true),
+			_dock("Ed", 6, 3, "red"),
+			_dock("Kd", 3, 5, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_astragal("A", "Astragal", 3, 3, 180, 0),
+		],
+	}
+
+
+static func chart_152() -> Dictionary:
+	# The chart opens under water. The beam from the dry row stops at the
+	# waterline. The solution lowers the tide, and north and east pass.
+	return {
+		"id": "152",
+		"harbor": ASTRAGAL,
+		"title": "The Wet Stop",
+		"teach": "The astragal opens under water, so every beam stops at the waterline and does not enter. Lower the tide. Dry, the northbound beam and the eastbound beam pass. A shutter would pass while flooded. A well, a siphon, a sluice, or a weir would carry the beam. A casement refuses the eastbound beam. A jamb refuses the eastbound beam and passes the southbound return.",
+		"win": "The tide is low. North and east pass, and the southbound beam stops.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0, 3],
+		"start_tide_index": 1,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ss", 3, 1, "S", "blue"),
+			_lantern("Nn", 3, 6, "N", "white"),
+			_lantern("Ee", 0, 4, "E", "red"),
+		],
+		"docks": [
+			_dock("Nd", 3, 2, "white", true),
+			_dock("Kd", 3, 5, "blue", true, true),
+			_dock("Ed", 6, 4, "red"),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_astragal("A", "Astragal", 3, 4, 180, 0),
+		],
+	}
+
+
+static func chart_153() -> Dictionary:
+	# Red goes north and stays red. Blue goes east and stays blue.
+	return {
+		"id": "153",
+		"harbor": ASTRAGAL,
+		"title": "Color Kept",
+		"teach": "The dry astragal keeps red, blue, and white. Red stays red and blue stays blue. White stays white. A stain or a weir would change the color. A casement refuses the eastbound beam. A jamb refuses the eastbound beam and passes the southbound return.",
+		"win": "The color that enters the astragal is the color that leaves it.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Rs", 3, 6, "N", "red"),
+			_lantern("Be", 0, 3, "E", "blue"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+		],
+		"docks": [
+			_dock("Rd", 3, 1, "red", true),
+			_dock("Bd", 6, 3, "blue"),
+			_dock("Kd", 3, 5, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_astragal("A", "Astragal", 3, 3, 180, 0),
+		],
+	}
+
+
+static func chart_154() -> Dictionary:
+	# White goes straight north. Red goes straight east. Neither beam turns.
+	return {
+		"id": "154",
+		"harbor": ASTRAGAL,
+		"title": "No Turn",
+		"teach": "The beam leaves on the same side it entered. It does not turn. A prism, a vane, a sluice, or a mirror would turn it. A casement refuses the eastbound beam. A jamb passes the southbound return.",
+		"win": "White goes straight north, and red goes straight east.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Wn", 3, 6, "N", "white"),
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+		],
+		"docks": [
+			_dock("Wd", 3, 1, "white", true),
+			_dock("Ed", 6, 3, "red"),
+			_dock("Kd", 3, 5, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_astragal("A", "Astragal", 3, 3, 90, 0),
+		],
+	}
+
+
+static func chart_155() -> Dictionary:
+	# Flood 2 covers y >= 4. The astragal stays on the dry row and opens
+	# north and east. A separate beam stops at the flooded row's waterline.
+	return {
+		"id": "155",
+		"harbor": ASTRAGAL,
+		"title": "Beside the Flood",
+		"teach": "The astragal's own row is dry, so the northbound beam and the eastbound beam pass. The next flooded cell that is not a flood carrier still stops the beam at the waterline. A mullion cannot be turned so that it passes east. A transom cannot be turned so that it passes north. A casement refuses the eastbound beam. A lintel lets the westbound beam through.",
+		"win": "North and east pass on the dry row, and the beam into the flood stops.",
+		"cols": 8,
+		"rows": 6,
+		"tide_phases": [2],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("We", 0, 2, "E", "white"),
+			_lantern("Nn", 3, 3, "N", "blue"),
+			_lantern("Ww", 7, 2, "W", "red"),
+			_lantern("F", 6, 3, "S", "white"),
+		],
+		"docks": [
+			_dock("Wd", 5, 2, "white", true),
+			_dock("Nd", 3, 0, "blue"),
+			_dock("Kd", 1, 2, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_astragal("A", "Astragal", 3, 2, 180, 0),
+		],
+	}
+
+
+static func chart_156() -> Dictionary:
+	# One astragal opens north and east. The other opens south and west.
+	# Swapping those facings fails. A north jamb on the first seat also passes south.
+	return {
+		"id": "156",
+		"harbor": ASTRAGAL,
+		"title": "Two Astragals",
+		"teach": "One astragal is open on north and east. The other is open on south and west. Swapping their facings fails. A jamb cannot take the north-and-east seat, because a north jamb also passes south. A mullion cannot be turned so that it passes east. A transom cannot be turned so that it passes north.",
+		"win": "North and east stay on the first seat. South and west stay on the second.",
+		"cols": 11,
+		"rows": 9,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("An", 3, 5, "N", "white"),
+			_lantern("As", 3, 0, "S", "blue"),
+			_lantern("Ae", 0, 3, "E", "red"),
+			_lantern("Bs", 7, 2, "S", "white"),
+			_lantern("Bn", 7, 8, "N", "red"),
+			_lantern("Bw", 10, 5, "W", "blue"),
+			_lantern("Be", 4, 5, "E", "white"),
+		],
+		"docks": [
+			_dock("Adn", 3, 1, "white", true),
+			_dock("Ads", 3, 4, "blue", true, true),
+			_dock("Ade", 6, 3, "red"),
+			_dock("Bds", 7, 7, "white", true),
+			_dock("Bdn", 7, 4, "red", true, true),
+			_dock("Bdw", 5, 5, "blue", true),
+			_dock("Bde", 9, 5, "white", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_astragal("A", "North astragal", 3, 3, 180, 0),
+			_astragal("B", "South astragal", 7, 5, 0, 180),
+		],
+	}
+
+
+static func chart_157() -> Dictionary:
+	# Three tide marks. The middle mark leaves the astragal dry, facing north.
+	# The chart starts on the other pair. Low water wakes the hull. High water
+	# covers the astragal.
+	return {
+		"id": "157",
+		"harbor": ASTRAGAL,
+		"title": "The Held Astragal",
+		"teach": "The held facing is part of the solution. The chart starts on a facing whose open pair is the other two directions. Place the tide on the middle mark and face the astragal north. Low water wakes the south hull. High water covers the astragal and the beam stops at the waterline. A casement refuses the eastbound beam. A jamb passes the southbound return.",
+		"win": "The middle mark holds the north astragal. North and east pass, and the hull stays dark.",
+		"cols": 8,
+		"rows": 7,
+		"tide_phases": [0, 1, 4],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Wn", 4, 5, "N", "white"),
+			_lantern("Ee", 1, 3, "E", "blue"),
+			_lantern("Ss", 4, 0, "S", "red"),
+			_lantern("Hl", 0, 6, "E", "white"),
+		],
+		"docks": [
+			_dock("Wd", 4, 1, "white", true),
+			_dock("Ed", 7, 3, "blue"),
+			_dock("Kd", 4, 4, "red", true, true),
+		],
+		"boats": [
+			_boat("Hb", 3, 6),
+		],
+		"fixtures": [],
+		"pieces": [
+			_astragal("A", "Astragal", 4, 3, 180, 0),
+		],
+	}
+
+
+static func chart_158() -> Dictionary:
+	# The astragal and the shutter trade places. On the line the astragal faces
+	# north. North and east count. The southbound beam must not.
+	return {
+		"id": "158",
+		"harbor": ASTRAGAL,
+		"title": "The Astragal Mark",
+		"teach": "Move the astragal from the side socket onto the line and face it north. The mark is satisfied only by that open pair. The northbound beam and the eastbound beam pass. The southbound beam must not count. A casement, a jamb, a mullion, a transom, or a lintel in that cell fails.",
+		"win": "The astragal stands on the line, open north and east. Both docks are lit and the return stays dark.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Wn", 3, 6, "N", "white"),
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+		],
+		"docks": [
+			_dock("Wd", 3, 1, "white", true),
+			_dock("Ed", 6, 3, "red"),
+			_dock("Kd", 3, 5, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_placed("A", "Astragal", "astragal", [["side", 5, 5], ["line", 3, 3]], "side", "line", 180, 0),
+			_placed("G", "Line shutter", "shutter", [["line", 3, 3], ["side", 5, 5]], "line", "side", 0, 0),
+		],
+	}
+
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -5749,6 +6037,20 @@ static func _jamb(id: String, name: String, x: int, y: int, start_rot: int, sol_
 		"id": id,
 		"name": name,
 		"kind": "jamb",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _astragal(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "astragal",
 		"movable": false,
 		"sockets": [{"id": "a", "x": x, "y": y}],
 		"start_socket": "a",

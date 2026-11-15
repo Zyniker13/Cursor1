@@ -41,6 +41,7 @@ extends RefCounted
 ## The chevet's ring is the walk around the chevet.
 ## The retrochoir's ring is the walk around the retrochoir.
 ## The lady chapel's ring is the walk around the lady chapel.
+## The feretory's ring is the walk around the feretory.
 ## A census is accepted only when every corridor and hazard is marked truly
 ## and no tile is marked as something it is not.
 
@@ -54,7 +55,7 @@ const HAZARD_VALUE := 8
 const LOOP_VALUE := 15
 
 const TOWN_LINE := "Arrows turn and step, Q and E strafe, M marks the tile you face, and Space waits out the warden's swing."
-const RATE_CARD := "A true corridor pays 3. A true hazard pays 8. The cellar's east square, the cistern ring, the cloister walk, the crypt ring, the ossuary ring, the reliquary ring, the undercroft ring, the well ring, the scriptorium ring, the binding ring, the chart room ring, the bell loft ring, the clock room ring, the font ring, the apse ring, the choir ring, the rood ring, the crossing ring, the transept ring, the ambulatory ring, the chevet ring, the retrochoir ring, and the lady chapel ring each pay 15 only when every tile of that ring is marked corridor. A false mark pays nothing."
+const RATE_CARD := "A true corridor pays 3. A true hazard pays 8. The cellar's east square, the cistern ring, the cloister walk, the crypt ring, the ossuary ring, the reliquary ring, the undercroft ring, the well ring, the scriptorium ring, the binding ring, the chart room ring, the bell loft ring, the clock room ring, the font ring, the apse ring, the choir ring, the rood ring, the crossing ring, the transept ring, the ambulatory ring, the chevet ring, the retrochoir ring, the lady chapel ring, and the feretory ring each pay 15 only when every tile of that ring is marked corridor. A false mark pays nothing."
 
 const CELLAR_RECORD := "Record every corridor, both hazard cracks, and the east square."
 const CISTERN_RECORD := "Record every corridor, the three seep cracks, and the cistern ring around the pit."
@@ -79,6 +80,7 @@ const AMBULATORY_RECORD := "Record every corridor, the twenty ambulatory cracks,
 const CHEVET_RECORD := "Record every corridor, the twenty-one chevet cracks, and the ring around the chevet."
 const RETROCHOIR_RECORD := "Record every corridor, the twenty-two retrochoir cracks, and the ring around the retrochoir."
 const LADY_CHAPEL_RECORD := "Record every corridor, the twenty-three lady-chapel cracks, and the ring around the lady chapel."
+const FERETORY_RECORD := "Record every corridor, the twenty-four feretory cracks, and the ring around the feretory."
 
 const CELLAR_ROWS: PackedStringArray = [
 	"#############",
@@ -605,6 +607,45 @@ const LADY_CHAPEL_ROWS: PackedStringArray = [
 	"##########################",
 ]
 
+# The feretory is the 14x6 block of 'J' at columns 7-20, rows 4-9.
+# The paid ring is the 44-tile corridor cycle around that feretory.
+# J is the next free letter walking backward from M. L is the lift and K is
+# the clock, so neither is free. M stays the lady chapel. O is the retrochoir,
+# P is the binding press, Q is the chevet, and N is the font.
+# The sheet grows the lady chapel one column to the east. Cracks that sat on
+# x=24 move to x=25. (19,12) stays. The new crack is (25,16). (4,1) through
+# (25,1) are closed on the north landing. (2,1) stays open. (19,3) through
+# (23,3) stay open, and (24,3) is the new passage from the ring to the east
+# cracks. With the lady chapel's south-gallery closures and the pier door
+# carried forward, a swing-free survey costs 126 oil. Closing the next unused
+# south-gallery cell (6,12) raises it to 128, so (6,12) stays open. Opening
+# (4,12) brings the survey to 122. Closing (3,1) brings it to 120. (1,12),
+# (1,13), and (1,14) stay ordinary walls. Start, lift, and warden stay on
+# (1,1), (10,11), and (9,12).
+const FERETORY_ROWS: PackedStringArray = [
+	"###########################",
+	"#S.########################",
+	"#.#######################H#",
+	"#H####...................H#",
+	"#.####.JJJJJJJJJJJJJJ.###H#",
+	"#H####.JJJJJJJJJJJJJJ.###H#",
+	"#.####.JJJJJJJJJJJJJJ.###H#",
+	"#H####.JJJJJJJJJJJJJJ.###H#",
+	"#.####.JJJJJJJJJJJJJJ.###H#",
+	"#H####.JJJJJJJJJJJJJJ.###H#",
+	"#.####................###H#",
+	"#H........L########.#####H#",
+	"###H.H.H.E.########H.....H#",
+	"#########################H#",
+	"#########################H#",
+	"#########################H#",
+	"#########################H#",
+	"###########################",
+	"###########################",
+	"###########################",
+	"###########################",
+]
+
 enum Tile { WALL, FLOOR, HAZARD, LIFT }
 enum Mark { NONE, CORRIDOR, WALL, HAZARD }
 enum EndReason { NONE, EXTRACTED, LAMP_OUT, ABANDONED }
@@ -645,7 +686,7 @@ static var _floor_list: Array = []
 
 static func floors() -> Array:
 	if _floor_list.is_empty():
-		_floor_list = [_make_cellar(), _make_cistern(), _make_cloister(), _make_crypt(), _make_ossuary(), _make_reliquary(), _make_undercroft(), _make_wellhouse(), _make_scriptorium(), _make_binding(), _make_chartroom(), _make_bellloft(), _make_clockroom(), _make_font(), _make_apse(), _make_choir(), _make_rood(), _make_crossing(), _make_transept(), _make_ambulatory(), _make_chevet(), _make_retrochoir(), _make_ladychapel()]
+		_floor_list = [_make_cellar(), _make_cistern(), _make_cloister(), _make_crypt(), _make_ossuary(), _make_reliquary(), _make_undercroft(), _make_wellhouse(), _make_scriptorium(), _make_binding(), _make_chartroom(), _make_bellloft(), _make_clockroom(), _make_font(), _make_apse(), _make_choir(), _make_rood(), _make_crossing(), _make_transept(), _make_ambulatory(), _make_chevet(), _make_retrochoir(), _make_ladychapel(), _make_feretory()]
 	return _floor_list
 
 
@@ -1100,6 +1141,25 @@ static func _make_ladychapel() -> Floor:
 	return floor
 
 
+static func _make_feretory() -> Floor:
+	var floor := Floor.new()
+	floor.id = "feretory"
+	floor.title = "The Feretory"
+	floor.rows = FERETORY_ROWS
+	floor.loop_name = "Feretory ring"
+	var ring: Array = []
+	for x in range(6, 22):
+		ring.append(Vector2i(x, 3))
+	for y in range(4, 10):
+		ring.append(Vector2i(6, y))
+		ring.append(Vector2i(21, y))
+	for x in range(6, 22):
+		ring.append(Vector2i(x, 10))
+	floor.loop = ring
+	floor.record = FERETORY_RECORD
+	return floor
+
+
 static func width(floor: Floor = null) -> int:
 	return _use(floor).rows[0].length()
 
@@ -1517,6 +1577,8 @@ static func ahead_line(state: RunState) -> String:
 				return "Ahead: the retrochoir. It inks as a wall."
 			if glyph_at(n, plan) == "M":
 				return "Ahead: the lady chapel. It inks as a wall."
+			if glyph_at(n, plan) == "J":
+				return "Ahead: the feretory. It inks as a wall."
 			return "Ahead: wall."
 		Tile.HAZARD:
 			if plan != null and plan.id == "cistern":
@@ -1563,6 +1625,8 @@ static func ahead_line(state: RunState) -> String:
 				return "Ahead: a retrochoir crack. Stepping inks it and costs no extra oil."
 			if plan != null and plan.id == "ladychapel":
 				return "Ahead: a lady-chapel crack. Stepping inks it and costs no extra oil."
+			if plan != null and plan.id == "feretory":
+				return "Ahead: a feretory crack. Stepping inks it and costs no extra oil."
 			return "Ahead: a hazard crack. Stepping inks it and costs no extra oil."
 		Tile.LIFT:
 			return "Ahead: the lift. Stepping on carries the sheet out."
@@ -1680,6 +1744,8 @@ static func step(state: RunState, dir: Vector2i) -> Dictionary:
 				return _pack(state, false, false, false, 0, true, "You tap the retrochoir and ink it if the square was blank.")
 			if glyph_at(target, plan) == "M":
 				return _pack(state, false, false, false, 0, true, "You tap the lady chapel and ink it if the square was blank.")
+			if glyph_at(target, plan) == "J":
+				return _pack(state, false, false, false, 0, true, "You tap the feretory and ink it if the square was blank.")
 			return _pack(state, false, false, false, 0, true, "You tap a wall and ink it if the square was blank.")
 		if target == enemy_pos(plan):
 			return _pack(state, false, false, false, 0, true, "The warden occupies that tile.")
@@ -1745,6 +1811,8 @@ static func step(state: RunState, dir: Vector2i) -> Dictionary:
 			message = "You cross a retrochoir crack. It is inked if the square was blank."
 		elif plan != null and plan.id == "ladychapel":
 			message = "You cross a lady-chapel crack. It is inked if the square was blank."
+		elif plan != null and plan.id == "feretory":
+			message = "You cross a feretory crack. It is inked if the square was blank."
 		else:
 			message = "You cross a hazard crack. It is inked if the square was blank."
 	return _pack(state, true, true, hit, MOVE_OIL + (HIT_OIL if hit else 0), false, message)
