@@ -1,6 +1,6 @@
 # Lantern Census
 
-An eight-floor Godot 4 slice. The guild pays for the map you carry out. Oil is the turn budget. The cellar is the first floor. The cistern is the next one. The cloister is the third. The crypt is the fourth. The ossuary is the fifth. The reliquary is the sixth. The undercroft is the seventh. The well house is the eighth, with its own layout and its own census.
+An eleven-floor Godot 4 slice. The guild pays for the map you carry out. Oil is the turn budget. The cellar is the first floor. The cistern is the next one. The cloister is the third. The crypt is the fourth. The ossuary is the fifth. The reliquary is the sixth. The undercroft is the seventh. The well house is the eighth. The scriptorium is the ninth. The binding is the tenth. The chart room is the eleventh, with its own layout and its own census.
 
 ## Play
 
@@ -35,7 +35,7 @@ Town opens the floor select. It does not drop you straight down a shaft.
 
 ## Floor select
 
-The Cellar, the Cistern, the Cloister, the Crypt, the Ossuary, the Reliquary, the Undercroft, and the Well House are listed separately. Each card says what that floor asks you to record, and whether its census is still open.
+The Cellar, the Cistern, the Cloister, the Crypt, the Ossuary, the Reliquary, the Undercroft, the Well House, the Scriptorium, the Binding, and the Chart Room are listed separately. Each card says what that floor asks you to record, and whether its census is still open.
 
 The small flask can reach every lift. A finished census on any floor needs the large flask.
 
@@ -70,7 +70,7 @@ The warden stands on one tile and never moves. It telegraphs the tile it will hi
 
 A hit burns 3 oil on top of the action's 1 oil. The hit does not end the descent while any oil remains. Oil at 0 puts the lamp out, ends the descent, and the sheet pays nothing. Stepping onto the lift extracts you even when that step spends your last oil.
 
-Hazards do not burn extra oil. They are census tiles. Stepping on a blank one inks it. On the cistern those cracks are called seeps, on the cloister they are called cinders, on the crypt they are called ash cracks, on the ossuary they are called chalk cracks, on the reliquary they are called nail cracks, on the undercroft they are called salt cracks, and on the well house they are called well cracks; they use the same hazard rule.
+Hazards do not burn extra oil. They are census tiles. Stepping on a blank one inks it. On the cistern those cracks are called seeps, on the cloister they are called cinders, on the crypt they are called ash cracks, on the ossuary they are called chalk cracks, on the reliquary they are called nail cracks, on the undercroft they are called salt cracks, on the well house they are called well cracks, on the scriptorium they are called ink cracks, on the binding they are called glue cracks, and on the chart room they are called chart cracks; they use the same hazard rule.
 
 ## Payout
 
@@ -267,14 +267,85 @@ Record every corridor, the nine well cracks, and the well ring around the shaft.
 
 The full sheet is `46 × 3 + 9 × 8 + 15 = 225` coin. The shortest path to the lift is 19 steps, so the small flask has a margin of 5. A checked route that steps on every payable tile without taking a swing, then reaches the lift, costs 110 oil. The large flask holds 120, so a careful survey fits and a wandering one can still run the lamp out.
 
+## The Scriptorium
+
+Hand-authored, 18 by 14. `S` start, `L` lift, `H` ink crack, `E` warden, `D` the desk. The desk is wall for the sheet and is drawn as pale vellum. Bumping it inks a wall. The west aisle and the east run are open floor. The piers are ordinary walls.
+
+```
+##################
+#S....############
+#####......#######
+##..H.DDDD.H######
+#...#.DDDD.#######
+##..H.DDDD......L#
+##..H.DDDD.#######
+##..#.DD...#######
+##..H.DD.H########
+##..#.DD.#########
+##..H.DD.H########
+#####....#########
+#####HEH##########
+##################
+```
+
+Record every corridor, the ten ink cracks, and the scriptorium ring around the desk. The ink cracks are `(4,3)`, `(11,3)`, `(4,5)`, `(4,6)`, `(4,8)`, `(9,8)`, `(4,10)`, `(9,10)`, `(5,12)`, and `(7,12)`. The warden stands at `(6,12)`. The desk is an L: a 4×4 head at columns 6–9 and rows 3–6, and a 2×4 stem at columns 6–7 and rows 7–10. The ring is the 28-tile corridor cycle around that desk: the row `(5,2)`–`(10,2)`, the head's east side `(10,3)` `(10,4)` `(10,5)` `(10,6)` `(10,7)`, the inner corner `(9,7)`, the stem's east side `(8,7)` `(8,8)` `(8,9)` `(8,10)`, the row `(5,11)`–`(8,11)`, and the west side `(5,3)` `(5,4)` `(5,5)` `(5,6)` `(5,7)` `(5,8)` `(5,9)` `(5,10)`.
+
+The full sheet is `56 × 3 + 10 × 8 + 15 = 263` coin. The shortest path to the lift is 19 steps, so the small flask has a margin of 5. A checked route that steps on every payable tile without taking a swing, then reaches the lift, costs 108 oil. The large flask holds 120, so a careful survey fits and a wandering one can still run the lamp out.
+
+## The Binding
+
+Hand-authored, 16 by 13. `S` start, `L` lift, `H` glue crack, `E` warden, `P` the press. The press is wall for the sheet and is drawn as dark iron. Bumping it inks a wall. The west aisle and the south landing are open floor. The piers are ordinary walls.
+
+```
+################
+#S.............#
+#.#......#####.#
+#.#..PPP.#####.#
+#.#..PPP.#####.#
+#....PPP.#####.#
+#.#..PPP.#####.#
+#.#..PPP.#####L#
+#.#......#####.#
+#.#..H..H..###.#
+#..E..H..H..#..#
+#H.H.H.H.H.H.H##
+################
+```
+
+Record every corridor, the eleven glue cracks, and the binding ring around the press. The glue cracks are `(5,9)`, `(8,9)`, `(6,10)`, `(9,10)`, `(1,11)`, `(3,11)`, `(5,11)`, `(7,11)`, `(9,11)`, `(11,11)`, and `(13,11)`. The warden stands at `(3,10)`. The press is one solid 3×5 rectangle at columns 5–7 and rows 3–7. The ring is the 20-tile corridor cycle around that press: the row `(4,2)`–`(8,2)`, the sides `(4,3)` `(8,3)` `(4,4)` `(8,4)` `(4,5)` `(8,5)` `(4,6)` `(8,6)` `(4,7)` `(8,7)`, and the row `(4,8)`–`(8,8)`.
+
+The full sheet is `80 × 3 + 11 × 8 + 15 = 343` coin. The shortest path to the lift is 19 steps, so the small flask has a margin of 5. A checked route that steps on every payable tile without taking a swing, then reaches the lift, costs 114 oil. The large flask holds 120, so a careful survey fits and a wandering one can still run the lamp out.
+
+## The Chart Room
+
+Hand-authored, 17 by 11. `S` start, `L` lift, `H` chart crack, `E` warden, `T` the table. The table is wall for the sheet and is drawn as pale chart paper. Bumping it inks a wall. The west aisle and the south landing are open floor. The piers are ordinary walls.
+
+```
+#################
+#S..............#
+#.######.TT.##..#
+#H######.TT.##H.#
+#.######.TT.##..#
+#H######.TT.##..#
+#.######.TT.##HL#
+#H######.TT.##..#
+#.######.TT.##H.#
+#H.......TT.....#
+#..HEH.H....H.H.#
+```
+
+Record every corridor, the twelve chart cracks, and the chart room ring around the table. The chart cracks are `(1,3)`, `(14,3)`, `(1,5)`, `(14,6)`, `(1,7)`, `(14,8)`, `(1,9)`, `(3,10)`, `(5,10)`, `(7,10)`, `(12,10)`, and `(14,10)`. The warden stands at `(4,10)`. The table is one solid 2×8 bar at columns 9–10 and rows 2–9. The ring is the 24-tile corridor cycle around that table: `(8,1)`, `(9,1)`, `(10,1)`, `(11,1)`, `(8,2)`, `(11,2)`, `(8,3)`, `(11,3)`, `(8,4)`, `(11,4)`, `(8,5)`, `(11,5)`, `(8,6)`, `(11,6)`, `(8,7)`, `(11,7)`, `(8,8)`, `(11,8)`, `(8,9)`, `(11,9)`, `(8,10)`, `(9,10)`, `(10,10)`, and `(11,10)`.
+
+The full sheet is `65 × 3 + 12 × 8 + 15 = 306` coin. The shortest path to the lift is 19 steps, so the small flask has a margin of 5. A checked route that steps on every payable tile without taking a swing, then reaches the lift, costs 114 oil. The large flask holds 120, so a careful survey fits and a wandering one can still run the lamp out.
+
 ## Presentation
 
-All eight floors use the same code-drawn raycaster, with billboards for the warden, the swing, the hazards, and the lift. There are no imported textures. Cistern walls are cooler, the pit is teal, and the seeps read as green cracks. Cloister walls are warm limestone, the garth is a dark garden, and the cinders read as ember cracks. Crypt walls are violet stone, the tomb is a pale slab, and the ash reads as gray cracks. Ossuary walls are dry bone-stone, the stack is aged ivory, and the chalk reads as pale cracks. Reliquary walls are lacquered timber, the case is gilt wood, and the nails read as copper cracks. Undercroft walls are damp stone, the trough is dark brine, and the salt reads as pale crystals. Well house walls are dry yard stone, the shaft is dark water, and the well cracks read as wet blue seams. The sheet, the town, and the floor select are drawn in code.
+All eleven floors use the same code-drawn raycaster, with billboards for the warden, the swing, the hazards, and the lift. There are no imported textures. Cistern walls are cooler, the pit is teal, and the seeps read as green cracks. Cloister walls are warm limestone, the garth is a dark garden, and the cinders read as ember cracks. Crypt walls are violet stone, the tomb is a pale slab, and the ash reads as gray cracks. Ossuary walls are dry bone-stone, the stack is aged ivory, and the chalk reads as pale cracks. Reliquary walls are lacquered timber, the case is gilt wood, and the nails read as copper cracks. Undercroft walls are damp stone, the trough is dark brine, and the salt reads as pale crystals. Well house walls are dry yard stone, the shaft is dark water, and the well cracks read as wet blue seams. Scriptorium walls are lamp-lit oak, the desk is pale vellum, and the ink cracks read as blue-black seams. Binding walls are laid paper, the press is dark iron, and the glue cracks read as amber seams. Chart room walls are ink blue, the table is pale chart paper, and the chart cracks read as rust-red seams. The sheet, the town, and the floor select are drawn in code.
 
 ## Limitations
 
-- Eight floors, one warden on each. The warden does not patrol or chase.
+- Eleven floors, one warden on each. The warden does not patrol or chase.
 - The same floor can be turned in again on a later extract. A finished census stays finished.
 - Mouse look is optional and snaps by quarter turns. There is no sound.
 - Walls are for the sheet, not for the payout.
-- The automated checks cover the rules and all eight floors, including that the well house's true census is accepted and a wrong, short, or swapped sheet is rejected. They do not play the window, and this slice was not given a human playtest here.
+- The automated checks cover the rules and all eleven floors, including that the chart room's true census is accepted and a wrong, short, or swapped sheet is rejected. They do not play the window, and this slice was not given a human playtest here.

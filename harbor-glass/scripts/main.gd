@@ -2,9 +2,10 @@ extends Control
 
 # South Lantern Quay, then North Glass Reach, then the Turning Basin, then the
 # Painted Lock, then the West Return, then the Meeting Glass, then the Tide
-# Mirror. Pieces turn in place; a loose piece may also move between the sockets
-# authored for that chart. Lock Chart asks the beam tracer whether every dock
-# has its color and every hull is dark.
+# Mirror, then the Shutter, then the Stain.
+# Pieces turn in place; a loose piece may also move
+# between the sockets authored for that chart. Lock Chart asks the beam tracer
+# whether every dock has its color and every hull is dark.
 
 const Charts := preload("res://scripts/charts.gd")
 const Tracer := preload("res://scripts/beam_tracer.gd")
@@ -51,6 +52,8 @@ var paint_grid: GridContainer
 var west_grid: GridContainer
 var meet_grid: GridContainer
 var tide_grid: GridContainer
+var shutter_grid: GridContainer
+var stain_grid: GridContainer
 var quay_book_button: Button
 var reach_book_button: Button
 var basin_book_button: Button
@@ -58,8 +61,10 @@ var paint_book_button: Button
 var west_book_button: Button
 var meet_book_button: Button
 var tide_book_button: Button
+var shutter_book_button: Button
+var stain_book_button: Button
 var harbor_label: Label
-var _book_place: Array[int] = [0, 0, 0, 0, 0, 0, 0]
+var _book_place: Array[int] = [0, 0, 0, 0, 0, 0, 0, 0, 0]
 var tide_clock: TideClock
 var _side: Panel
 
@@ -121,8 +126,11 @@ func _build_ui() -> void:
 	book_row.add_theme_constant_override("separation", 6)
 	var book_row_b := HBoxContainer.new()
 	book_row_b.add_theme_constant_override("separation", 6)
+	var book_row_c := HBoxContainer.new()
+	book_row_c.add_theme_constant_override("separation", 6)
 	book_col.add_child(book_row)
 	book_col.add_child(book_row_b)
+	book_col.add_child(book_row_c)
 	quay_book_button = _button("Quay")
 	quay_book_button.tooltip_text = Charts.HARBOR
 	quay_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -151,6 +159,14 @@ func _build_ui() -> void:
 	tide_book_button.tooltip_text = Charts.TIDE
 	tide_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	tide_book_button.pressed.connect(_on_book_pressed.bind(6))
+	shutter_book_button = _button("Shutter")
+	shutter_book_button.tooltip_text = Charts.SHUTTER
+	shutter_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	shutter_book_button.pressed.connect(_on_book_pressed.bind(7))
+	stain_book_button = _button("Stain")
+	stain_book_button.tooltip_text = Charts.STAIN
+	stain_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stain_book_button.pressed.connect(_on_book_pressed.bind(8))
 	book_row.add_child(quay_book_button)
 	book_row.add_child(reach_book_button)
 	book_row.add_child(basin_book_button)
@@ -158,7 +174,9 @@ func _build_ui() -> void:
 	book_row_b.add_child(west_book_button)
 	book_row_b.add_child(meet_book_button)
 	book_row_b.add_child(tide_book_button)
-	for book_button in [quay_book_button, reach_book_button, basin_book_button, paint_book_button, west_book_button, meet_book_button, tide_book_button]:
+	book_row_b.add_child(shutter_book_button)
+	book_row_c.add_child(stain_book_button)
+	for book_button in [quay_book_button, reach_book_button, basin_book_button, paint_book_button, west_book_button, meet_book_button, tide_book_button, shutter_book_button, stain_book_button]:
 		book_button.add_theme_font_size_override("font_size", 13)
 
 	quay_grid = _chart_grid()
@@ -168,12 +186,16 @@ func _build_ui() -> void:
 	west_grid = _chart_grid()
 	meet_grid = _chart_grid()
 	tide_grid = _chart_grid()
+	shutter_grid = _chart_grid()
+	stain_grid = _chart_grid()
 	reach_grid.visible = false
 	basin_grid.visible = false
 	paint_grid.visible = false
 	west_grid.visible = false
 	meet_grid.visible = false
 	tide_grid.visible = false
+	shutter_grid.visible = false
+	stain_grid.visible = false
 	box.add_child(quay_grid)
 	box.add_child(reach_grid)
 	box.add_child(basin_grid)
@@ -181,6 +203,8 @@ func _build_ui() -> void:
 	box.add_child(west_grid)
 	box.add_child(meet_grid)
 	box.add_child(tide_grid)
+	box.add_child(shutter_grid)
+	box.add_child(stain_grid)
 	var bounds: Array = _book_bounds()
 	for i in charts.size():
 		var button := _button("Chart %d" % (i + 1))
@@ -199,8 +223,12 @@ func _build_ui() -> void:
 			west_grid.add_child(button)
 		elif i < int(bounds[6]):
 			meet_grid.add_child(button)
-		else:
+		elif i < int(bounds[7]):
 			tide_grid.add_child(button)
+		elif i < int(bounds[8]):
+			shutter_grid.add_child(button)
+		else:
+			stain_grid.add_child(button)
 		chart_buttons.append(button)
 
 	title_label = _label("", 20, Palette.TEXT)
@@ -246,7 +274,7 @@ func _build_ui() -> void:
 	status_label.custom_minimum_size = Vector2(340, 0)
 	box.add_child(status_label)
 
-	var legend := _label("Warm beam, red, and blue. A lamp may already burn one color. One mirror can take two lamps. A tide mirror reflects only while its row is flooded, and lets the beam pass while that row is dry. Docks take only their marked color. Hulls stay dark. Water shuts the other glass it covers.", 13, Palette.MUTED)
+	var legend := _label("Warm beam, red, and blue. A lamp may already burn one color. One mirror can take two lamps. A tide mirror reflects only while its row is flooded, and lets the beam pass while that row is dry. A shutter stops a beam while its row is dry, and lets the beam pass straight through while that row is flooded. A stain recolors a beam to its own color and lets it pass straight through, on a dry row and under water. Docks take only their marked color. Hulls stay dark. Water shuts the other glass it covers.", 13, Palette.MUTED)
 	legend.custom_minimum_size = Vector2(360, 0)
 	box.add_child(legend)
 	var keys := _label("Arrows or Tab select. R turns. M moves a loose piece. Space locks. H hints. T raises tide, Shift+T lowers it. Backspace restarts.", 12, Palette.MUTED)
@@ -355,6 +383,17 @@ func rotate_selected() -> void:
 	if piece.is_empty():
 		return
 	_resume_editing()
+	if str(piece["kind"]) == "shutter":
+		status_label.text = "A shutter opens with the tide. It does not turn."
+		_refresh()
+		return
+	if str(piece["kind"]) == "stain":
+		var stain_rot := int(state["pieces"][selected_id]["rot"])
+		state["pieces"][selected_id]["rot"] = Tracer.turn_rot("stain", stain_rot)
+		status_label.text = "The stain swaps color. It does not turn."
+		_clear_hint_if_resolved()
+		_refresh()
+		return
 	var cur := int(state["pieces"][selected_id]["rot"])
 	state["pieces"][selected_id]["rot"] = Tracer.turn_rot(str(piece["kind"]), cur)
 	_clear_hint_if_resolved()
@@ -508,6 +547,13 @@ func _refresh_chrome() -> void:
 			water += " A tide mirror under that water still reflects."
 		else:
 			water += " A dry tide mirror lets the beam pass."
+	if _has_shutter():
+		if flood > 0:
+			water += " A shutter under that water lets the beam pass."
+		else:
+			water += " A dry shutter stops the beam."
+	if _has_stain():
+		water += " A stain recolors the beam on a dry row and under water."
 	tide_readout.text = "%s. %s" % [phase, water]
 	var phases: Array = chart["tide_phases"]
 	var multi := phases.size() > 1
@@ -542,12 +588,16 @@ func _refresh_chrome() -> void:
 	west_grid.visible = book == 4
 	meet_grid.visible = book == 5
 	tide_grid.visible = book == 6
+	shutter_grid.visible = book == 7
+	stain_grid.visible = book == 8
 	reach_book_button.disabled = not unlocked[int(bounds[1])]
 	basin_book_button.disabled = not unlocked[int(bounds[2])]
 	paint_book_button.disabled = not unlocked[int(bounds[3])]
 	west_book_button.disabled = not unlocked[int(bounds[4])]
 	meet_book_button.disabled = not unlocked[int(bounds[5])]
 	tide_book_button.disabled = not unlocked[int(bounds[6])]
+	shutter_book_button.disabled = not unlocked[int(bounds[7])]
+	stain_book_button.disabled = not unlocked[int(bounds[8])]
 	_paint_button(quay_book_button, book == 0)
 	_paint_button(reach_book_button, book == 1)
 	_paint_button(basin_book_button, book == 2)
@@ -555,6 +605,8 @@ func _refresh_chrome() -> void:
 	_paint_button(west_book_button, book == 4)
 	_paint_button(meet_book_button, book == 5)
 	_paint_button(tide_book_button, book == 6)
+	_paint_button(shutter_book_button, book == 7)
+	_paint_button(stain_book_button, book == 8)
 
 func _show_win() -> void:
 	win_body.text = str(chart["win"])
@@ -592,11 +644,17 @@ func _book_bounds() -> Array:
 	var p := b + Charts.painted().size()
 	var w := p + Charts.west().size()
 	var m := w + Charts.meet().size()
-	return [0, q, r, b, p, w, m, charts.size()]
+	var t := m + Charts.tide().size()
+	var s := t + Charts.shutter().size()
+	return [0, q, r, b, p, w, m, t, s, charts.size()]
 
 
 func _book_of(index: int) -> int:
 	var bounds: Array = _book_bounds()
+	if index >= int(bounds[8]):
+		return 8
+	if index >= int(bounds[7]):
+		return 7
 	if index >= int(bounds[6]):
 		return 6
 	if index >= int(bounds[5]):
@@ -629,8 +687,12 @@ func _on_book_pressed(book: int) -> void:
 			status_label.text = "The west return is still locked."
 		elif book == 5:
 			status_label.text = "The meeting glass is still locked."
-		else:
+		elif book == 6:
 			status_label.text = "The tide mirror is still locked."
+		elif book == 7:
+			status_label.text = "The shutter is still locked."
+		else:
+			status_label.text = "The stain is still locked."
 		return
 	_book_place[here] = chart_index
 	var last := int(bounds[book + 1])
@@ -781,6 +843,28 @@ func _save_progress() -> void:
 		file.set_value("progress", "solved_%d" % i, solved[i])
 		file.set_value("progress", "unlocked_%d" % i, unlocked[i])
 	file.save(SAVE_PATH)
+
+func _has_stain() -> bool:
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		if str(piece["kind"]) == "stain":
+			return true
+	for raw in chart["fixtures"]:
+		var fix: Dictionary = raw
+		if str(fix["kind"]) == "stain":
+			return true
+	return false
+
+func _has_shutter() -> bool:
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		if str(piece["kind"]) == "shutter":
+			return true
+	for raw in chart["fixtures"]:
+		var fix: Dictionary = raw
+		if str(fix["kind"]) == "shutter":
+			return true
+	return false
 
 func _has_tide_mirror() -> bool:
 	for raw in chart["pieces"]:
