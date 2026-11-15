@@ -1,9 +1,9 @@
 extends RefCounted
 
-## Buildings 1 through 9. Directions: 0 east, 1 south, 2 west, 3 north.
+## Buildings 1 through 10. Directions: 0 east, 1 south, 2 west, 3 north.
 ## `unlocks` is the single new block this puzzle introduces, or "".
 
-const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook", "return"]
+const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook", "return", "pause"]
 
 
 static func all() -> Array:
@@ -1172,6 +1172,163 @@ static func all() -> Array:
 				_block("conveyor", 3, 3, 3),
 			]
 		),
+		_puzzle(
+			72, "Still Step", "pause",
+			"The dock is ahead. Pause, then step onto it.",
+			"",
+			"The parcel comes in facing east. A pause keeps that facing and steps east onto the dock on the next tick. A return sends it west. A hook sends it north. A turn sends it south.",
+			4, 3,
+			[
+				_cell(0, 0), _cell(1, 0), _cell(2, 0), _cell(3, 0),
+				_cell(0, 2), _cell(1, 2), _cell(2, 2), _cell(3, 2),
+			],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 3, "y": 1},
+			[{"color": "gray"}],
+			[
+				_block("conveyor", 1, 1, 0),
+				_block("pause", 2, 1, 0),
+			]
+		),
+		_puzzle(
+			73, "Let Pass", "",
+			"Hold the eastbound parcel so blue reaches the dock first.",
+			"",
+			"The pause waits out the arrival tick, so blue takes the dock, and the paused parcel follows. A return sends the first parcel back west. A conveyor lets it leave on the arrival tick, and both parcels claim the dock.",
+			6, 3,
+			[
+				_cell(0, 0), _cell(1, 0), _cell(2, 0), _cell(3, 0), _cell(4, 0),
+				_cell(0, 2), _cell(1, 2), _cell(2, 2), _cell(3, 2), _cell(4, 2), _cell(5, 2),
+			],
+			[_source(0, 1, 0, ["red"]), _source(5, 0, 1, ["blue"])],
+			{"x": 3, "y": 1},
+			[{"color": "blue"}, {"color": "red"}],
+			[
+				_block("conveyor", 1, 1, 0),
+				_block("pause", 2, 1, 0),
+				_block("conveyor", 4, 1, 2),
+				_block("conveyor", 5, 1, 2),
+			]
+		),
+		_puzzle(
+			74, "Pause Count", "",
+			"Stamp the parcel 1. The counter is ahead of the pause.",
+			"",
+			"Step east onto the counter. It stamps 1 on the tick after the parcel lands. A return and a hook miss the counter. A turn misses it too.",
+			4, 3,
+			[
+				_cell(0, 0), _cell(1, 0), _cell(2, 0), _cell(3, 0),
+				_cell(0, 2), _cell(1, 2), _cell(2, 2), _cell(3, 2),
+			],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 3, "y": 1},
+			[{"count": 1}],
+			[
+				_block("pause", 1, 1, 0),
+				_block("counter", 2, 1, 0),
+			]
+		),
+		_puzzle(
+			75, "Clear Ahead", "",
+			"Deliver blue, then red.",
+			"",
+			"The pause holds red one tick so blue takes the dock, then red follows. A return sends red back. A hook and a turn send red off the belt.",
+			7, 3,
+			[
+				_cell(0, 0), _cell(1, 0), _cell(2, 0), _cell(3, 0),
+				_cell(5, 1),
+				_cell(0, 2), _cell(1, 2), _cell(2, 2), _cell(3, 2), _cell(4, 2), _cell(5, 2), _cell(6, 2),
+			],
+			[_source(0, 1, 0, ["red"]), _source(6, 1, 3, ["blue"])],
+			{"x": 4, "y": 1},
+			[{"color": "blue"}, {"color": "red"}],
+			[
+				_block("conveyor", 1, 1, 0),
+				_block("pause", 2, 1, 0),
+				_block("conveyor", 3, 1, 0),
+				_block("conveyor", 6, 0, 2),
+				_block("conveyor", 5, 0, 2),
+				_block("conveyor", 4, 0, 1),
+			]
+		),
+		_puzzle(
+			76, "Two Pauses", "",
+			"Deliver blue, then red. One pause has to send them on in the facings they arrived with.",
+			"",
+			"Red arrives facing east and leaves east. Blue arrives facing west and leaves west. A return sends each back. A hook turns both a quarter counterclockwise. A turn turns both a quarter clockwise.",
+			6, 4,
+			[
+				_cell(0, 0), _cell(1, 0), _cell(4, 0), _cell(5, 0),
+				_cell(0, 2), _cell(1, 2),
+				_cell(0, 3), _cell(1, 3),
+			],
+			[_source(0, 1, 0, ["red"]), _source(5, 3, 3, ["blue"])],
+			{"x": 2, "y": 0},
+			[{"color": "blue"}, {"color": "red"}],
+			[
+				_block("slide", 1, 1, 0),
+				_block("conveyor", 2, 1, 3),
+				_block("pause", 3, 1, 2),
+				_block("conveyor", 4, 1, 1),
+				_block("conveyor", 4, 2, 1),
+				_block("conveyor", 4, 3, 2),
+				_block("conveyor", 3, 3, 2),
+				_block("conveyor", 2, 3, 3),
+				_block("conveyor", 2, 2, 3),
+				_block("bridge", 5, 1, 2),
+				_block("conveyor", 5, 2, 3),
+			]
+		),
+		_puzzle(
+			77, "Second Pause", "",
+			"Deliver the parcel yellow, stamped 2.",
+			"",
+			"Loop it through the counter. Paint it yellow on the way back. The second send faces the pause, which steps it onto the dock. A return sends it back the other way.",
+			5, 3,
+			[
+				_cell(0, 0), _cell(3, 0), _cell(4, 0),
+				_cell(0, 2), _cell(1, 2), _cell(2, 2), _cell(3, 2), _cell(4, 2),
+			],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 4, "y": 1},
+			[{"color": "yellow", "count": 2}],
+			[
+				_block("counter", 1, 1, 0),
+				_block("splitter", 2, 1, 3),
+				_block("painter", 2, 0, 2, "yellow"),
+				_block("conveyor", 1, 0, 1),
+				_block("pause", 3, 1, 0),
+			]
+		),
+		_puzzle(
+			78, "Night Pause", "",
+			"Deliver red 1, yellow 2, and blue 3.",
+			"",
+			"Red takes the filter and pauses south onto the counter. Gray takes the long belt and is primed yellow. Blue keeps its color and follows. The pause keeps the facing. A return would reverse it.",
+			4, 5,
+			[
+				_cell(0, 0), _cell(1, 0), _cell(3, 0),
+				_cell(3, 1),
+				_cell(1, 2), _cell(3, 2),
+				_cell(1, 3),
+				_cell(3, 4),
+			],
+			[_source(2, 0, 1, ["gray", "blue", "red"])],
+			{"x": 3, "y": 3},
+			[{"color": "red", "count": 1}, {"color": "yellow", "count": 2}, {"color": "blue", "count": 3}],
+			[
+				_block("filter", 2, 1, 1, "red"),
+				_block("pause", 2, 2, 0),
+				_block("counter", 2, 3, 0),
+				_block("conveyor", 1, 1, 2),
+				_block("conveyor", 0, 1, 1),
+				_block("conveyor", 0, 2, 1),
+				_block("conveyor", 0, 3, 1),
+				_block("conveyor", 0, 4, 0),
+				_block("primer", 1, 4, 0, "yellow"),
+				_block("conveyor", 2, 4, 3),
+			]
+		),
 	]
 
 
@@ -1201,7 +1358,7 @@ static func _puzzle(id: int, title: String, unlocks: String, brief: String, how_
 		"dock": dock,
 		"order": order,
 		"reference": reference,
-		"building": 9 if id >= 65 else 8 if id >= 58 else 7 if id >= 51 else 6 if id >= 44 else 5 if id >= 37 else 4 if id >= 30 else 3 if id >= 23 else 2 if id >= 16 else 1,
+		"building": 10 if id >= 72 else 9 if id >= 65 else 8 if id >= 58 else 7 if id >= 51 else 6 if id >= 44 else 5 if id >= 37 else 4 if id >= 30 else 3 if id >= 23 else 2 if id >= 16 else 1,
 	}
 
 
