@@ -46,13 +46,15 @@ func _run() -> void:
 	test_siphon_book()
 	test_sluice_rule()
 	test_sluice_book()
+	test_weir_rule()
+	test_weir_book()
 	test_chart_4_boat()
 	test_one_rotation_is_not_solved()
 	test_hint_points_at_one_piece()
 	test_hint_budget_never_marks_every_piece()
 	test_chart_3_tide()
 	test_chart_6_combined()
-	test_smoke()
+	await test_smoke()
 	print("RESULT passed=%d failed=%d" % [passed, failed])
 	quit(0 if failed == 0 else 1)
 
@@ -204,7 +206,8 @@ func test_charts() -> void:
 	check(Charts.well().size() == 8, "well adds eight charts")
 	check(Charts.siphon().size() == 8, "siphon adds eight charts")
 	check(Charts.sluice().size() == 8, "sluice adds eight charts")
-	check(book.size() == 102, "one hundred two charts")
+	check(Charts.weir().size() == 8, "weir adds eight charts")
+	check(book.size() == 110, "one hundred ten charts")
 	check(str(book[13]["id"]) == "14" and str(book[13]["title"]) == "The Holding Line", "chart 14 stays the reach capstone")
 	check(str(book[14]["title"]) == "North Light", "chart 15 opens the basin")
 	check(str(book[21]["id"]) == "22" and str(book[21]["title"]) == "The Basin Mark", "chart 22 stays the basin capstone")
@@ -227,6 +230,8 @@ func test_charts() -> void:
 	check(str(book[86]["title"]) == "The North Siphon", "chart 87 opens the siphon")
 	check(str(book[93]["id"]) == "94" and str(book[93]["title"]) == "The Siphon Mark", "chart 94 stays the siphon capstone")
 	check(str(book[94]["title"]) == "The East Sluice", "chart 95 opens the sluice")
+	check(str(book[101]["id"]) == "102" and str(book[101]["title"]) == "The Sluice Mark", "chart 102 stays the sluice capstone")
+	check(str(book[102]["title"]) == "The East Weir", "chart 103 opens the weir")
 	var seen_ids := {}
 	var seen_titles := {}
 	var quay_titles := ["First Glass", "Around the Pilings", "High Water", "Sleeping Hull", "Split the White", "The Night Mark"]
@@ -238,7 +243,7 @@ func test_charts() -> void:
 		var title := str(chart["title"])
 		check(not seen_ids.has(id), "chart id %s is unique" % id)
 		if seen_titles.has(title):
-			var echoed := (title == "After the Color" and id == "81") or (title == "Above the Gate" and (id == "84" or id == "92" or id == "100")) or (title == "Side Entry" and (id == "88" or id == "96")) or (title == "White Through" and id == "97") or (title == "Dry Stop" and (id == "90" or id == "98"))
+			var echoed := (title == "After the Color" and id == "81") or (title == "Above the Gate" and (id == "84" or id == "92" or id == "100" or id == "108")) or (title == "Side Entry" and (id == "88" or id == "96" or id == "104")) or (title == "White Through" and (id == "97" or id == "105")) or (title == "Dry Stop" and (id == "90" or id == "98" or id == "106"))
 			check(echoed, "chart title %s is unique" % title)
 		else:
 			check(true, "chart title %s is unique" % title)
@@ -297,6 +302,21 @@ func test_charts() -> void:
 					authored = true
 			check(facings.has(0) and facings.has(90) and facings.has(180) and facings.has(270), "chart 98 every dry facing clears")
 			check(authored, "chart 98 authored solution is one of the dry facings")
+		elif id == "106":
+			# A dry weir stops whichever way it faces, so all four facings
+			# clear once the dock mirror and the low tide are set.
+			check(clears.size() == 4, "chart 106 has four dry facings that clear (found %d)" % clears.size())
+			var weir_facings := {}
+			var weir_authored := false
+			for raw_clear in clears:
+				var clearing: Dictionary = raw_clear
+				check(int(clearing["tide_index"]) == 0, "chart 106 clear stays at low water")
+				check(int(clearing["pieces"]["M"]["rot"]) == 90, "chart 106 clear keeps the dock mirror")
+				weir_facings[int(clearing["pieces"]["R"]["rot"])] = true
+				if _same_solution(chart, clearing, solved):
+					weir_authored = true
+			check(weir_facings.has(0) and weir_facings.has(90) and weir_facings.has(180) and weir_facings.has(270), "chart 106 every dry facing clears")
+			check(weir_authored, "chart 106 authored solution is one of the dry facings")
 		elif clears.size() == 1:
 			check(true, "chart %s has one clearing state" % id)
 			check(_same_solution(chart, clears[0], solved), "chart %s clearing state is the authored solution" % id)
@@ -3292,6 +3312,510 @@ func test_sluice_book() -> void:
 	check(str(book[7]["teach"]).to_lower().contains("blue port"), "chart 102 teaches the blue port")
 
 
+func test_weir_rule() -> void:
+	check(Tracer.weir_facing(0) == "N" and Tracer.weir_facing(90) == "E", "a weir faces north, then east")
+	check(Tracer.weir_facing(180) == "S" and Tracer.weir_facing(270) == "W", "a weir faces south, then west")
+	check(Tracer.weir_color("red") == "blue" and Tracer.weir_color("blue") == "red", "a weir swaps red and blue")
+	check(Tracer.weir_color("white") == "white", "a weir leaves white as white")
+	check(Tracer.norm_rot("weir", 0) == 0 and Tracer.norm_rot("weir", 90) == 90, "a weir keeps a quarter turn")
+	check(Tracer.norm_rot("weir", 180) == 180 and Tracer.norm_rot("weir", 270) == 270, "a weir keeps a half turn and a west facing")
+	check(Tracer.norm_rot("weir", 360) == 0 and Tracer.norm_rot("weir", 450) == 90, "a weir facing wraps at a full turn")
+	check(Tracer.turn_rot("weir", 0) == 90 and Tracer.turn_rot("weir", 90) == 180, "clicking a weir walks the facing")
+	check(Tracer.turn_rot("weir", 180) == 270 and Tracer.turn_rot("weir", 270) == 0, "a weir click returns to north")
+	var hinted: Dictionary = Charts.weir()[0]
+	var solved_hint := Charts.make_state(hinted, true)
+	check(not Hints.wrong_pieces(hinted, solved_hint).has("R"), "a hint accepts the east-facing weir")
+	var spun := Charts.duplicate_state(solved_hint)
+	spun["pieces"]["R"]["rot"] = 0
+	check(Hints.wrong_pieces(hinted, spun).has("R"), "a hint marks a north-facing weir when the chart wants east")
+	var half := Charts.duplicate_state(solved_hint)
+	half["pieces"]["R"]["rot"] = 180
+	check(Hints.wrong_pieces(hinted, half).has("R"), "a hint marks a south-facing weir")
+	var wrapped := Charts.duplicate_state(solved_hint)
+	wrapped["pieces"]["R"]["rot"] = 450
+	check(not Hints.wrong_pieces(hinted, wrapped).has("R"), "a hint treats a full turn plus east as the east facing")
+
+	var dry := _blank(6, 4)
+	dry["lanterns"] = [_lamp("L", 0, 1, "E", "red")]
+	dry["docks"] = [_need("E", 5, 1, "blue"), _need("N", 2, 0, "blue")]
+	for rot in [0, 90, 180, 270]:
+		dry["pieces"] = [_fixed_weir("R", 2, 1, rot)]
+		var dry_hit: Dictionary = Tracer.trace(dry, Charts.make_state(dry, true))
+		check(dry_hit["docks"]["E"].is_empty() and dry_hit["docks"]["N"].is_empty(), "a dry weir stops the beam at facing %d" % rot)
+		check(_center_hit(dry_hit, 2, 1) and not _departs(dry_hit, 2, 1, "red") and not _departs(dry_hit, 2, 1, "blue"), "a dry weir does not pass at facing %d" % rot)
+
+	var gate := _blank(6, 6)
+	gate["tide_phases"] = [2]
+	gate["lanterns"] = [_lamp("L", 2, 2, "S", "red")]
+	gate["docks"] = [_need("D", 3, 3, "blue")]
+	gate["fixtures"] = [{"id": "G", "kind": "shutter", "x": 3, "y": 4, "rot": 0}]
+	gate["pieces"] = [_fixed_weir("R", 2, 4, 90)]
+	var south_state := Charts.make_state(gate, true)
+	check(Tracer.is_flooded(gate, south_state, Vector2i(2, 4)) and not Tracer.is_flooded(gate, south_state, Vector2i(2, 2)), "the sample weir is under water and the lamp is dry")
+	var south_hit: Dictionary = Tracer.trace(gate, south_state)
+	check(_arrives_from(south_hit, 2, 4, "S", "red") and _leaves(south_hit, 2, 4, "E", "blue"), "a southbound red beam leaves an east weir as blue")
+	check(not _leaves(south_hit, 2, 4, "E", "red") and not _leaves(south_hit, 2, 4, "N", "blue") and not _leaves(south_hit, 2, 4, "S", "blue") and not _leaves(south_hit, 2, 4, "W", "blue"), "an east weir does not split and does not keep the red")
+	gate["fixtures"] = [{"id": "C", "kind": "tide_mirror", "x": 3, "y": 4, "rot": 0}]
+	var lifted: Dictionary = Tracer.trace(gate, Charts.make_state(gate, true))
+	check(_leaves(lifted, 2, 4, "E", "blue") and lifted["docks"]["D"].has("blue") and lifted["docks"]["D"].size() == 1, "the east exit swaps to blue and the tide mirror lifts it")
+	var north_face := Charts.duplicate_state(Charts.make_state(gate, true))
+	north_face["pieces"]["R"]["rot"] = 0
+	var north_face_hit: Dictionary = Tracer.trace(gate, north_face)
+	check(_leaves(north_face_hit, 2, 4, "N", "blue") and not _leaves(north_face_hit, 2, 4, "E", "blue"), "turning the weir north changes the exit")
+	check(_trace_sig(north_face_hit) != _trace_sig(lifted), "a turned weir does not trace like another facing")
+	var as_siphon := _blank(6, 6)
+	as_siphon["tide_phases"] = [2]
+	as_siphon["lanterns"] = [_lamp("L", 2, 2, "S", "red")]
+	as_siphon["docks"] = [_need("D", 3, 3, "blue")]
+	as_siphon["fixtures"] = [{"id": "C", "kind": "tide_mirror", "x": 3, "y": 4, "rot": 0}]
+	as_siphon["pieces"] = [_fixed_siphon("S", 2, 4)]
+	var siphon_hit: Dictionary = Tracer.trace(as_siphon, Charts.make_state(as_siphon, true))
+	check(_trace_sig(north_face_hit) == _trace_sig(siphon_hit), "a north-facing weir matches a siphon's exit")
+	for other in [90, 180, 270]:
+		var other_face := Charts.duplicate_state(Charts.make_state(gate, true))
+		other_face["pieces"]["R"]["rot"] = other
+		check(_trace_sig(Tracer.trace(gate, other_face)) != _trace_sig(siphon_hit), "weir facing %d does not match a siphon" % other)
+
+	gate["lanterns"] = [_lamp("L", 2, 2, "S", "blue")]
+	gate["fixtures"] = [{"id": "G", "kind": "shutter", "x": 3, "y": 4, "rot": 0}]
+	gate["pieces"] = [_fixed_weir("R", 2, 4, 90)]
+	var from_south: Dictionary = Tracer.trace(gate, Charts.make_state(gate, true))
+	check(_arrives_from(from_south, 2, 4, "S", "blue") and _leaves(from_south, 2, 4, "E", "red"), "a southbound blue beam leaves east as red")
+	gate["lanterns"] = [_lamp("L", 2, 2, "S", "white")]
+	var white_through: Dictionary = Tracer.trace(gate, Charts.make_state(gate, true))
+	check(_arrives_from(white_through, 2, 4, "S", "white") and _leaves(white_through, 2, 4, "E", "white") and _segments_are(white_through, "white"), "white leaves an east weir still white")
+
+	gate["lanterns"] = [_lamp("L", 1, 2, "S", "red")]
+	gate["fixtures"] = [
+		{"id": "T", "kind": "tide_mirror", "x": 1, "y": 4, "rot": 90},
+		{"id": "G", "kind": "shutter", "x": 3, "y": 4, "rot": 0},
+	]
+	var from_west: Dictionary = Tracer.trace(gate, Charts.make_state(gate, true))
+	check(_arrives_from(from_west, 2, 4, "E", "red") and _leaves(from_west, 2, 4, "E", "blue"), "an eastbound red beam leaves an east weir as blue")
+	gate["docks"] = []
+	gate["lanterns"] = [_lamp("L", 3, 2, "S", "red")]
+	gate["fixtures"] = [{"id": "T", "kind": "tide_mirror", "x": 3, "y": 4, "rot": 0}]
+	var from_east: Dictionary = Tracer.trace(gate, Charts.make_state(gate, true))
+	check(_arrives_from(from_east, 2, 4, "W", "red") and _leaves(from_east, 2, 4, "E", "blue"), "a westbound red beam leaves an east weir as blue")
+	gate["pieces"] = [_fixed_weir("R", 2, 4, 180)]
+	gate["fixtures"] = [
+		{"id": "T", "kind": "tide_mirror", "x": 3, "y": 4, "rot": 0},
+		{"id": "G", "kind": "shutter", "x": 2, "y": 5, "rot": 0},
+	]
+	var south_face: Dictionary = Tracer.trace(gate, Charts.make_state(gate, true))
+	check(_arrives_from(south_face, 2, 4, "W", "red") and _leaves(south_face, 2, 4, "S", "blue") and not _leaves(south_face, 2, 4, "W", "blue"), "a south-facing weir leaves south even when the beam arrived traveling west")
+	gate["lanterns"] = [_lamp("L", 0, 3, "E", "red")]
+	gate["pieces"] = [_fixed_weir("R", 2, 4, 90)]
+	gate["fixtures"] = [
+		{"id": "M", "kind": "mirror", "x": 1, "y": 3, "rot": 90},
+		{"id": "G1", "kind": "shutter", "x": 1, "y": 4, "rot": 0},
+		{"id": "A", "kind": "tide_mirror", "x": 1, "y": 5, "rot": 90},
+		{"id": "B", "kind": "tide_mirror", "x": 2, "y": 5, "rot": 0},
+		{"id": "G", "kind": "shutter", "x": 3, "y": 4, "rot": 0},
+	]
+	var from_south_cell: Dictionary = Tracer.trace(gate, Charts.make_state(gate, true))
+	check(_arrives_from(from_south_cell, 2, 4, "N", "red") and _leaves(from_south_cell, 2, 4, "E", "blue"), "a northbound red beam leaves an east weir as blue")
+
+	var blocked := _blank(6, 6)
+	blocked["tide_phases"] = [2]
+	blocked["lanterns"] = [_lamp("L", 2, 2, "S", "red")]
+	blocked["docks"] = [_need("D", 3, 3, "blue")]
+	blocked["pieces"] = [_fixed_weir("R", 2, 4, 90)]
+	var waterline: Dictionary = Tracer.trace(blocked, Charts.make_state(blocked, true))
+	check(_center_hit(waterline, 2, 4) and not _center_hit(waterline, 3, 4) and waterline["docks"]["D"].is_empty(), "the next flooded cell stops the weir's beam at the waterline")
+	blocked["pieces"] = [_fixed_weir("R", 2, 4, 90), _fixed_vane("V", 3, 4, 0)]
+	var vane_block: Dictionary = Tracer.trace(blocked, Charts.make_state(blocked, true))
+	check(not _center_hit(vane_block, 3, 4) and vane_block["docks"]["D"].is_empty(), "a flooded vane still does not enter")
+	blocked["docks"] = [_need("D", 4, 3, "blue")]
+	blocked["fixtures"] = [{"id": "C", "kind": "tide_mirror", "x": 4, "y": 4, "rot": 0}]
+	blocked["pieces"] = [_fixed_weir("R", 2, 4, 90), _fixed_shutter("G", 3, 4)]
+	var opened: Dictionary = Tracer.trace(blocked, Charts.make_state(blocked, true))
+	check(_center_hit(opened, 3, 4) and opened["docks"]["D"].has("blue"), "a flooded shutter lets the weir's blue beam pass")
+	blocked["fixtures"] = []
+	blocked["docks"] = [_need("D", 3, 3, "blue")]
+	blocked["pieces"] = [_fixed_weir("R", 2, 4, 90), _fixed_well("W", 3, 4)]
+	var carried: Dictionary = Tracer.trace(blocked, Charts.make_state(blocked, true))
+	check(_leaves(carried, 3, 4, "N", "blue") and carried["docks"]["D"].has("blue") and not carried["docks"]["D"].has("red"), "a flooded well carries the weir's blue north")
+	blocked["pieces"] = [_fixed_weir("R", 2, 4, 90), _fixed_siphon("S", 3, 4)]
+	var swapped: Dictionary = Tracer.trace(blocked, Charts.make_state(blocked, true))
+	check(_leaves(swapped, 3, 4, "N", "red") and swapped["docks"]["D"].has("red") and not swapped["docks"]["D"].has("blue"), "a flooded siphon swaps the weir's blue back to red")
+	blocked["docks"] = [_need("D", 4, 3, "red")]
+	blocked["fixtures"] = [{"id": "C", "kind": "tide_mirror", "x": 4, "y": 4, "rot": 0}]
+	blocked["pieces"] = [_fixed_weir("R", 2, 4, 90), _fixed_stain("K", 3, 4, 0)]
+	var painted: Dictionary = Tracer.trace(blocked, Charts.make_state(blocked, true))
+	check(_center_hit(painted, 3, 4) and painted["docks"]["D"].has("red") and not painted["docks"]["D"].has("blue"), "a flooded stain still passes and sets its own color")
+	blocked["fixtures"] = []
+	blocked["docks"] = [_need("D", 3, 3, "red")]
+	blocked["pieces"] = [_fixed_weir("R", 2, 4, 90), _fixed_weir("R2", 3, 4, 0)]
+	var second: Dictionary = Tracer.trace(blocked, Charts.make_state(blocked, true))
+	check(_arrives_from(second, 3, 4, "E", "blue") and _leaves(second, 3, 4, "N", "red") and second["docks"]["D"].has("red"), "a second weir leaves along its own facing and swaps the color again")
+	blocked["pieces"] = [_fixed_weir("R", 2, 4, 90), _fixed_tide("Tm", 3, 4, 0)]
+	var mirrored: Dictionary = Tracer.trace(blocked, Charts.make_state(blocked, true))
+	check(_center_hit(mirrored, 3, 4) and mirrored["docks"]["D"].has("blue"), "a flooded tide mirror east of a weir is entered")
+	blocked["pieces"] = [_fixed_weir("R", 2, 4, 90), _fixed_sluice("U", 3, 4, 0)]
+	var kept: Dictionary = Tracer.trace(blocked, Charts.make_state(blocked, true))
+	check(_arrives_from(kept, 3, 4, "E", "blue") and _leaves(kept, 3, 4, "N", "blue") and kept["docks"]["D"].has("blue"), "a sluice beside a weir keeps the swapped color")
+
+	var chain15 := _weir_climb(15)
+	var chain16 := _weir_climb(16)
+	check(Tracer.trace(chain15, Charts.make_state(chain15, true))["docks"]["D"].has("white"), "fifteen weirs still pay their bounces and reach the dock")
+	check(Tracer.trace(chain16, Charts.make_state(chain16, true))["docks"]["D"].is_empty(), "the sixteenth weir spends the last bounce")
+
+
+func test_weir_book() -> void:
+	var book: Array = Charts.weir()
+	check(book.size() == 8, "weir book has eight charts")
+	var titles := ["The East Weir", "Side Entry", "White Through", "Dry Stop", "Two Weirs", "Above the Gate", "The Held Weir", "The Weir Mark"]
+	var solution_tides := [1, 0, 0, 0, 0, 1, 1, 1]
+	for i in book.size():
+		var chart: Dictionary = book[i]
+		check(str(chart["id"]) == str(i + 103), "weir chart %d keeps its number" % (i + 103))
+		check(str(chart["title"]) == str(titles[i]), "weir chart %d keeps its title" % (i + 103))
+		check(str(chart["harbor"]) == Charts.WEIR, "chart %s belongs to the weir" % str(chart["id"]))
+		check(int(chart["solution_tide_index"]) == int(solution_tides[i]), "chart %s keeps its clearing tide" % str(chart["id"]))
+		check(str(chart["teach"]) != "" and str(chart["win"]) != "", "chart %s has a teach line and a win line" % str(chart["id"]))
+		var weir_count := 0
+		for raw_piece in chart["pieces"]:
+			var piece: Dictionary = raw_piece
+			if str(piece["kind"]) == "weir":
+				weir_count += 1
+		check(weir_count >= 1, "chart %s needs the weir" % str(chart["id"]))
+		var tides := {}
+		for raw_clear in _clears(chart):
+			var clearing: Dictionary = raw_clear
+			tides[int(clearing["tide_index"])] = true
+		check(tides.size() == 1 and tides.has(int(solution_tides[i])), "chart %s has one clearing tide" % str(chart["id"]))
+	for raw_old in Charts.all().slice(0, 102):
+		var older: Dictionary = raw_old
+		for raw_piece in older["pieces"]:
+			var older_piece: Dictionary = raw_piece
+			check(str(older_piece["kind"]) != "weir", "chart %s keeps its pieces" % str(older["id"]))
+		for raw_fix in older["fixtures"]:
+			var older_fix: Dictionary = raw_fix
+			check(str(older_fix["kind"]) != "weir", "chart %s keeps its fixed glass" % str(older["id"]))
+	for i in book.size():
+		var chart: Dictionary = book[i]
+		var chart_id := str(chart["id"])
+		for raw_piece in chart["pieces"]:
+			var piece: Dictionary = raw_piece
+			if str(piece["kind"]) != "weir":
+				continue
+			var piece_id := str(piece["id"])
+			var sol_rot := int(piece["solution_rot"])
+			var as_sluice: Dictionary = Charts.weir()[i]
+			_retarget(as_sluice, piece_id, "sluice", sol_rot)
+			var sluice_clears := chart_id == "105" or chart_id == "106"
+			check(Tracer.is_cleared(as_sluice, Charts.make_state(as_sluice, true)) == sluice_clears, "sluice substitute on %s chart %s" % [piece_id, chart_id])
+			var as_siphon: Dictionary = Charts.weir()[i]
+			_retarget(as_siphon, piece_id, "siphon", 0)
+			var siphon_clears := chart_id == "106" or (chart_id == "107" and piece_id == "R1")
+			check(Tracer.is_cleared(as_siphon, Charts.make_state(as_siphon, true)) == siphon_clears, "siphon substitute on %s chart %s" % [piece_id, chart_id])
+			var as_well: Dictionary = Charts.weir()[i]
+			_retarget(as_well, piece_id, "well", 0)
+			var well_clears := chart_id == "106"
+			check(Tracer.is_cleared(as_well, Charts.make_state(as_well, true)) == well_clears, "well substitute on %s chart %s" % [piece_id, chart_id])
+			var as_shut: Dictionary = Charts.weir()[i]
+			_retarget(as_shut, piece_id, "shutter", 0)
+			var shut_clears := chart_id == "106"
+			check(Tracer.is_cleared(as_shut, Charts.make_state(as_shut, true)) == shut_clears, "shutter substitute on %s chart %s" % [piece_id, chart_id])
+			var as_stain: Dictionary = Charts.weir()[i]
+			_retarget(as_stain, piece_id, "stain", 0)
+			check(not Tracer.is_cleared(as_stain, Charts.make_state(as_stain, true)), "a red stain cannot replace %s on chart %s" % [piece_id, chart_id])
+			var as_blue: Dictionary = Charts.weir()[i]
+			_retarget(as_blue, piece_id, "stain", 90)
+			var blue_clears := chart_id == "108" or chart_id == "109" or chart_id == "110"
+			check(Tracer.is_cleared(as_blue, Charts.make_state(as_blue, true)) == blue_clears, "blue stain substitute on %s chart %s" % [piece_id, chart_id])
+			for vane_rot in [0, 90, 180, 270]:
+				var as_vane: Dictionary = Charts.weir()[i]
+				_retarget(as_vane, piece_id, "vane", vane_rot)
+				var vane_clears: bool = chart_id == "106" and int(vane_rot) == 270
+				check(Tracer.is_cleared(as_vane, Charts.make_state(as_vane, true)) == vane_clears, "vane %d substitute on %s chart %s" % [vane_rot, piece_id, chart_id])
+
+	var east: Dictionary = book[0]
+	var east_solved := Charts.make_state(east, true)
+	check(int(east_solved["tide_index"]) == 1 and int(east_solved["pieces"]["R"]["rot"]) == 90 and int(east_solved["pieces"]["K"]["rot"]) == 0, "chart 103 faces the weir east and clicks the stain to red")
+	check(Tracer.is_flooded(east, east_solved, Vector2i(3, 4)) and not Tracer.is_flooded(east, east_solved, Vector2i(4, 3)), "chart 103 flood covers the weir and not the dock")
+	var east_hit: Dictionary = Tracer.trace(east, east_solved)
+	check(_arrives_from(east_hit, 3, 4, "S", "red") and _leaves(east_hit, 3, 4, "E", "blue"), "chart 103 red arrives traveling south and leaves east as blue")
+	check(east_hit["docks"]["Bd"].has("blue") and east_hit["docks"]["Bd"].size() == 1 and not bool(east_hit["boats"]["Hb"]), "chart 103 lands blue on the dock")
+	var east_north := Charts.duplicate_state(east_solved)
+	east_north["pieces"]["R"]["rot"] = 0
+	var east_north_hit: Dictionary = Tracer.trace(east, east_north)
+	check(_leaves(east_north_hit, 3, 4, "N", "blue") and east_north_hit["docks"]["Bd"].is_empty() and not Tracer.is_cleared(east, east_north), "a north-facing weir on chart 103 misses the east dock")
+	var east_low := Charts.duplicate_state(east_solved)
+	east_low["tide_index"] = 0
+	var east_low_hit: Dictionary = Tracer.trace(east, east_low)
+	check(not Tracer.is_flooded(east, east_low, Vector2i(3, 4)) and _center_hit(east_low_hit, 3, 4) and not _departs(east_low_hit, 3, 4, "red") and bool(east_low_hit["boats"]["Hb"]), "chart 103 low water stops in the dry weir and lights the hull")
+	var east_sluice: Dictionary = Charts.weir()[0]
+	_retarget(east_sluice, "R", "sluice", 90)
+	var east_sluice_hit: Dictionary = Tracer.trace(east_sluice, Charts.make_state(east_sluice, true))
+	check(_leaves(east_sluice_hit, 3, 4, "E", "red") and not east_sluice_hit["docks"]["Bd"].has("blue"), "an east-facing sluice on chart 103 leaves red and misses the blue dock")
+	var east_siphon: Dictionary = Charts.weir()[0]
+	_retarget(east_siphon, "R", "siphon", 0)
+	var east_siphon_hit: Dictionary = Tracer.trace(east_siphon, Charts.make_state(east_siphon, true))
+	check(_leaves(east_siphon_hit, 3, 4, "N", "blue") and east_siphon_hit["docks"]["Bd"].is_empty(), "a siphon on chart 103 leaves north as blue")
+	var east_well: Dictionary = Charts.weir()[0]
+	_retarget(east_well, "R", "well", 0)
+	var east_well_hit: Dictionary = Tracer.trace(east_well, Charts.make_state(east_well, true))
+	check(_leaves(east_well_hit, 3, 4, "N", "red") and east_well_hit["docks"]["Bd"].is_empty(), "a well on chart 103 leaves north as red")
+	var east_shut: Dictionary = Charts.weir()[0]
+	_retarget(east_shut, "R", "shutter", 0)
+	check(not _leaves(Tracer.trace(east_shut, Charts.make_state(east_shut, true)), 3, 4, "E", "blue"), "a shutter on chart 103 keeps going south")
+
+	var side: Dictionary = book[1]
+	var side_solved := Charts.make_state(side, true)
+	check(int(side["tide_phases"][0]) == 2 and Tracer.is_flooded(side, side_solved, Vector2i(2, 4)) and not Tracer.is_flooded(side, side_solved, Vector2i(1, 3)), "chart 104's only phase floods the weir and not the dock")
+	var side_hit: Dictionary = Tracer.trace(side, side_solved)
+	check(_arrives_from(side_hit, 2, 4, "W", "red") and _leaves(side_hit, 2, 4, "S", "blue"), "chart 104 arrives traveling west as red and leaves south as blue")
+	check(side_hit["docks"]["Bd"].has("blue") and side_hit["docks"]["Bd"].size() == 1 and not bool(side_hit["boats"]["Hn"]) and not bool(side_hit["boats"]["Ht"]), "chart 104 lands blue and leaves both hulls dark")
+	var side_sluice: Dictionary = Charts.weir()[1]
+	_retarget(side_sluice, "R", "sluice", 180)
+	var side_sluice_hit: Dictionary = Tracer.trace(side_sluice, Charts.make_state(side_sluice, true))
+	check(_leaves(side_sluice_hit, 2, 4, "S", "red") and not side_sluice_hit["docks"]["Bd"].has("blue"), "a sluice on chart 104 leaves south as red and misses")
+	var side_siphon: Dictionary = Charts.weir()[1]
+	_retarget(side_siphon, "R", "siphon", 0)
+	var side_siphon_hit: Dictionary = Tracer.trace(side_siphon, Charts.make_state(side_siphon, true))
+	check(_leaves(side_siphon_hit, 2, 4, "N", "blue") and bool(side_siphon_hit["boats"]["Hn"]) and side_siphon_hit["docks"]["Bd"].is_empty(), "a siphon on chart 104 leaves north as blue and lights the north hull")
+	var side_well: Dictionary = Charts.weir()[1]
+	_retarget(side_well, "R", "well", 0)
+	var side_well_hit: Dictionary = Tracer.trace(side_well, Charts.make_state(side_well, true))
+	check(_leaves(side_well_hit, 2, 4, "N", "red") and bool(side_well_hit["boats"]["Hn"]) and side_well_hit["docks"]["Bd"].is_empty(), "a well on chart 104 leaves north as red")
+	var side_north := Charts.duplicate_state(side_solved)
+	side_north["pieces"]["R"]["rot"] = 0
+	check(_leaves(Tracer.trace(side, side_north), 2, 4, "N", "blue") and not Tracer.is_cleared(side, side_north), "a north-facing weir on chart 104 misses the dock")
+	var side_shut: Dictionary = Charts.weir()[1]
+	_retarget(side_shut, "R", "shutter", 0)
+	var side_shut_hit: Dictionary = Tracer.trace(side_shut, Charts.make_state(side_shut, true))
+	check(bool(side_shut_hit["boats"]["Ht"]) and side_shut_hit["docks"]["Bd"].is_empty(), "a shutter on chart 104 keeps going west")
+
+	var pale: Dictionary = book[2]
+	var pale_hit: Dictionary = Tracer.trace(pale, Charts.make_state(pale, true))
+	check(int(pale["tide_phases"][0]) == 2 and Tracer.is_flooded(pale, Charts.make_state(pale, true), Vector2i(3, 4)), "chart 105 floods the weir")
+	check(_arrives(pale_hit, 3, 4, "white") and _leaves(pale_hit, 3, 4, "E", "white"), "chart 105 white enters and leaves east still white")
+	check(pale_hit["docks"]["D"].has("white") and pale_hit["docks"]["D"].size() == 1 and _segments_are(pale_hit, "white"), "chart 105 lands white and does not paint another color")
+	var pale_sluice: Dictionary = Charts.weir()[2]
+	_retarget(pale_sluice, "R", "sluice", 90)
+	var pale_sluice_hit: Dictionary = Tracer.trace(pale_sluice, Charts.make_state(pale_sluice, true))
+	check(_leaves(pale_sluice_hit, 3, 4, "E", "white") and pale_sluice_hit["docks"]["D"].has("white") and Tracer.is_cleared(pale_sluice, Charts.make_state(pale_sluice, true)), "a sluice on chart 105 also keeps white and also clears")
+	var pale_siphon: Dictionary = Charts.weir()[2]
+	_retarget(pale_siphon, "R", "siphon", 0)
+	var pale_siphon_hit: Dictionary = Tracer.trace(pale_siphon, Charts.make_state(pale_siphon, true))
+	check(_leaves(pale_siphon_hit, 3, 4, "N", "white") and not _leaves(pale_siphon_hit, 3, 4, "E", "white") and pale_siphon_hit["docks"]["D"].is_empty(), "a siphon on chart 105 keeps white and leaves north")
+	var pale_well: Dictionary = Charts.weir()[2]
+	_retarget(pale_well, "R", "well", 0)
+	check(_leaves(Tracer.trace(pale_well, Charts.make_state(pale_well, true)), 3, 4, "N", "white") and not Tracer.is_cleared(pale_well, Charts.make_state(pale_well, true)), "a well on chart 105 leaves north as white and misses")
+	var pale_stain: Dictionary = Charts.weir()[2]
+	_retarget(pale_stain, "R", "stain", 0)
+	var pale_stain_hit: Dictionary = Tracer.trace(pale_stain, Charts.make_state(pale_stain, true))
+	check(not pale_stain_hit["docks"]["D"].has("white") and not Tracer.is_cleared(pale_stain, Charts.make_state(pale_stain, true)), "a stain set to red misses chart 105's white dock")
+	var pale_north := Charts.duplicate_state(Charts.make_state(pale, true))
+	pale_north["pieces"]["R"]["rot"] = 0
+	check(not Tracer.is_cleared(pale, pale_north), "a north-facing weir on chart 105 misses the east dock")
+
+	var dry_chart: Dictionary = book[3]
+	var dry_solved := Charts.make_state(dry_chart, true)
+	check(int(dry_solved["tide_index"]) == 0 and not Tracer.is_flooded(dry_chart, dry_solved, Vector2i(2, 4)) and not Tracer.is_flooded(dry_chart, dry_solved, Vector2i(5, 4)), "chart 106 solution is the dry phase")
+	var dry_hit: Dictionary = Tracer.trace(dry_chart, dry_solved)
+	check(dry_hit["docks"]["D"].has("white") and not bool(dry_hit["boats"]["Hn"]) and not bool(dry_hit["boats"]["He"]) and not bool(dry_hit["boats"]["Hp"]) and not bool(dry_hit["boats"]["Hs"]), "chart 106 dry weir keeps every hull dark")
+	check(_center_hit(dry_hit, 2, 4) and not _departs(dry_hit, 2, 4, "white") and _arrives_from(dry_hit, 2, 4, "E", "white"), "chart 106 dry weir stops the eastbound beam short of the hull")
+	for rot in [0, 90, 180, 270]:
+		var spun_dry := Charts.duplicate_state(dry_solved)
+		spun_dry["pieces"]["R"]["rot"] = rot
+		var spun_hit: Dictionary = Tracer.trace(dry_chart, spun_dry)
+		check(Tracer.is_cleared(dry_chart, spun_dry) and not _departs(spun_hit, 2, 4, "white"), "rotating the dry weir to %d still stops the beam" % rot)
+	var dry_flood := Charts.duplicate_state(dry_solved)
+	dry_flood["tide_index"] = 1
+	dry_flood["pieces"]["R"]["rot"] = 90
+	var dry_flood_hit: Dictionary = Tracer.trace(dry_chart, dry_flood)
+	check(Tracer.is_flooded(dry_chart, dry_flood, Vector2i(2, 4)) and Tracer.is_flooded(dry_chart, dry_flood, Vector2i(5, 4)), "chart 106 index 1 floods the weir and the dock")
+	check(_leaves(dry_flood_hit, 2, 4, "E", "white") and bool(dry_flood_hit["boats"]["He"]) and dry_flood_hit["docks"]["D"].is_empty() and not Tracer.is_cleared(dry_chart, dry_flood), "chart 106 east-facing flood sends the beam onto the east hull")
+	var dry_north := Charts.duplicate_state(dry_flood)
+	dry_north["pieces"]["R"]["rot"] = 0
+	var dry_north_hit: Dictionary = Tracer.trace(dry_chart, dry_north)
+	check(_leaves(dry_north_hit, 2, 4, "N", "white") and bool(dry_north_hit["boats"]["Hn"]) and not bool(dry_north_hit["boats"]["He"]) and not Tracer.is_cleared(dry_chart, dry_north), "chart 106 north-facing flood sends the beam onto the north hull")
+	for failed_rot in [180, 270]:
+		var failed_face := Charts.duplicate_state(dry_flood)
+		failed_face["pieces"]["R"]["rot"] = failed_rot
+		check(Tracer.is_flooded(dry_chart, failed_face, Vector2i(5, 4)) and not Tracer.is_cleared(dry_chart, failed_face), "chart 106 facing %d fails because the dock is under the waterline" % failed_rot)
+	var dry_sluice: Dictionary = Charts.weir()[3]
+	_retarget(dry_sluice, "R", "sluice", 0)
+	check(Tracer.is_cleared(dry_sluice, Charts.make_state(dry_sluice, true)), "a dry sluice also clears chart 106")
+	var dry_siphon: Dictionary = Charts.weir()[3]
+	_retarget(dry_siphon, "R", "siphon", 0)
+	check(Tracer.is_cleared(dry_siphon, Charts.make_state(dry_siphon, true)), "a dry siphon also clears chart 106")
+	var dry_well: Dictionary = Charts.weir()[3]
+	_retarget(dry_well, "R", "well", 0)
+	check(Tracer.is_cleared(dry_well, Charts.make_state(dry_well, true)), "a dry well also clears chart 106")
+	var dry_shut: Dictionary = Charts.weir()[3]
+	_retarget(dry_shut, "R", "shutter", 0)
+	check(Tracer.is_cleared(dry_shut, Charts.make_state(dry_shut, true)), "a dry shutter also clears chart 106")
+	var dry_head: Dictionary = Charts.weir()[3]
+	_retarget(dry_head, "R", "vane", 270)
+	check(Tracer.is_cleared(dry_head, Charts.make_state(dry_head, true)), "a head-on west-facing vane also clears chart 106")
+	var dry_stain: Dictionary = Charts.weir()[3]
+	_retarget(dry_stain, "R", "stain", 0)
+	check(bool(Tracer.trace(dry_stain, Charts.make_state(dry_stain, true))["boats"]["Hp"]) and not Tracer.is_cleared(dry_stain, Charts.make_state(dry_stain, true)), "a stain on chart 106 lets the dry beam pass and lights the hull")
+
+	var two: Dictionary = book[4]
+	var two_solved := Charts.make_state(two, true)
+	check(int(two["tide_phases"][0]) == 3 and Tracer.is_flooded(two, two_solved, Vector2i(3, 5)) and Tracer.is_flooded(two, two_solved, Vector2i(3, 4)) and not Tracer.is_flooded(two, two_solved, Vector2i(4, 3)), "chart 107 flood covers both weirs and leaves the dock dry")
+	var two_hit: Dictionary = Tracer.trace(two, two_solved)
+	check(_arrives_from(two_hit, 3, 5, "W", "red") and _leaves(two_hit, 3, 5, "N", "blue"), "chart 107 red leaves the north-facing weir as blue")
+	check(_arrives_from(two_hit, 3, 4, "N", "blue") and _leaves(two_hit, 3, 4, "E", "red"), "chart 107 that blue leaves the east-facing weir as red")
+	check(two_hit["docks"]["Rd"].has("red") and two_hit["docks"]["Rd"].size() == 1 and not two_hit["docks"]["Rd"].has("blue") and not bool(two_hit["boats"]["Hn"]), "chart 107 lands red on the dry dock")
+	var two_sluice_1: Dictionary = Charts.weir()[4]
+	_retarget(two_sluice_1, "R1", "sluice", 0)
+	var two_sluice_1_hit: Dictionary = Tracer.trace(two_sluice_1, Charts.make_state(two_sluice_1, true))
+	check(two_sluice_1_hit["docks"]["Rd"].has("blue") and not two_sluice_1_hit["docks"]["Rd"].has("red") and not Tracer.is_cleared(two_sluice_1, Charts.make_state(two_sluice_1, true)), "a sluice in chart 107's first cell leaves red and the second weir turns it blue")
+	var two_sluice_2: Dictionary = Charts.weir()[4]
+	_retarget(two_sluice_2, "R2", "sluice", 90)
+	var two_sluice_2_hit: Dictionary = Tracer.trace(two_sluice_2, Charts.make_state(two_sluice_2, true))
+	check(_leaves(two_sluice_2_hit, 3, 4, "E", "blue") and two_sluice_2_hit["docks"]["Rd"].has("blue") and not two_sluice_2_hit["docks"]["Rd"].has("red"), "a sluice in chart 107's second cell sends the blue east still blue")
+	var two_siphon_2: Dictionary = Charts.weir()[4]
+	_retarget(two_siphon_2, "R2", "siphon", 0)
+	var two_siphon_2_hit: Dictionary = Tracer.trace(two_siphon_2, Charts.make_state(two_siphon_2, true))
+	check(_leaves(two_siphon_2_hit, 3, 4, "N", "red") and two_siphon_2_hit["docks"]["Rd"].is_empty() and bool(two_siphon_2_hit["boats"]["Hn"]), "a siphon in chart 107's second cell sends the beam north")
+	var two_well_2: Dictionary = Charts.weir()[4]
+	_retarget(two_well_2, "R2", "well", 0)
+	var two_well_2_hit: Dictionary = Tracer.trace(two_well_2, Charts.make_state(two_well_2, true))
+	check(_leaves(two_well_2_hit, 3, 4, "N", "blue") and two_well_2_hit["docks"]["Rd"].is_empty() and not Tracer.is_cleared(two_well_2, Charts.make_state(two_well_2, true)), "a well in chart 107's second cell sends the beam north")
+	var two_north := Charts.duplicate_state(two_solved)
+	two_north["pieces"]["R2"]["rot"] = 0
+	check(not Tracer.is_cleared(two, two_north), "a north-facing weir in chart 107's second cell misses the east dock")
+	var two_siphon_1: Dictionary = Charts.weir()[4]
+	_retarget(two_siphon_1, "R1", "siphon", 0)
+	check(Tracer.trace(two_siphon_1, Charts.make_state(two_siphon_1, true))["docks"]["Rd"].has("red") and Tracer.is_cleared(two_siphon_1, Charts.make_state(two_siphon_1, true)), "a siphon in chart 107's first cell also clears")
+	var two_well_1: Dictionary = Charts.weir()[4]
+	_retarget(two_well_1, "R1", "well", 0)
+	var two_well_1_hit: Dictionary = Tracer.trace(two_well_1, Charts.make_state(two_well_1, true))
+	check(two_well_1_hit["docks"]["Rd"].has("blue") and not two_well_1_hit["docks"]["Rd"].has("red") and not Tracer.is_cleared(two_well_1, Charts.make_state(two_well_1, true)), "a well in chart 107's first cell misses the red dock")
+
+	var above: Dictionary = book[5]
+	var above_solved := Charts.make_state(above, true)
+	check(int(above_solved["tide_index"]) == 1, "chart 108 opens on the flood")
+	check(Tracer.is_flooded(above, above_solved, Vector2i(3, 4)) and not Tracer.is_flooded(above, above_solved, Vector2i(4, 3)), "chart 108 flood covers the weir and leaves the dock dry")
+	var above_hit: Dictionary = Tracer.trace(above, above_solved)
+	check(_leaves(above_hit, 3, 4, "E", "blue") and above_hit["docks"]["Bd"].has("blue") and above_hit["docks"]["Bd"].size() == 1 and not bool(above_hit["boats"]["Hn"]) and not bool(above_hit["boats"]["Hs"]), "chart 108 turns red to blue on the east dock")
+	var above_low := Charts.duplicate_state(above_solved)
+	above_low["tide_index"] = 0
+	var above_low_hit: Dictionary = Tracer.trace(above, above_low)
+	check(_center_hit(above_low_hit, 3, 4) and not _departs(above_low_hit, 3, 4, "white") and bool(above_low_hit["boats"]["Hs"]) and not Tracer.is_cleared(above, above_low), "chart 108 low water stops in the dry weir and wakes the south hull")
+	var above_sluice: Dictionary = Charts.weir()[5]
+	_retarget(above_sluice, "R", "sluice", 90)
+	var above_sluice_hit: Dictionary = Tracer.trace(above_sluice, Charts.make_state(above_sluice, true))
+	check(_leaves(above_sluice_hit, 3, 4, "E", "red") and not above_sluice_hit["docks"]["Bd"].has("blue"), "a sluice on chart 108 keeps red and misses the blue dock")
+	var above_siphon: Dictionary = Charts.weir()[5]
+	_retarget(above_siphon, "R", "siphon", 0)
+	var above_siphon_hit: Dictionary = Tracer.trace(above_siphon, Charts.make_state(above_siphon, true))
+	check(_leaves(above_siphon_hit, 3, 4, "N", "blue") and bool(above_siphon_hit["boats"]["Hn"]) and above_siphon_hit["docks"]["Bd"].is_empty(), "a siphon on chart 108 turns the red blue and sends it north")
+	var above_well: Dictionary = Charts.weir()[5]
+	_retarget(above_well, "R", "well", 0)
+	check(_leaves(Tracer.trace(above_well, Charts.make_state(above_well, true)), 3, 4, "N", "red") and not Tracer.is_cleared(above_well, Charts.make_state(above_well, true)), "a well on chart 108 sends red north")
+	var above_blue: Dictionary = Charts.weir()[5]
+	_retarget(above_blue, "R", "stain", 90)
+	check(Tracer.is_cleared(above_blue, Charts.make_state(above_blue, true)), "a blue stain on chart 108 also clears")
+	var above_red: Dictionary = Charts.weir()[5]
+	_retarget(above_red, "R", "stain", 0)
+	check(Tracer.trace(above_red, Charts.make_state(above_red, true))["docks"]["Bd"].has("red") and not Tracer.is_cleared(above_red, Charts.make_state(above_red, true)), "a red stain on chart 108 misses the blue dock")
+	var above_north := Charts.duplicate_state(above_solved)
+	above_north["pieces"]["R"]["rot"] = 0
+	check(not Tracer.is_cleared(above, above_north), "a north-facing weir on chart 108 misses the east dock")
+
+	var held: Dictionary = book[6]
+	var held_solved := Charts.make_state(held, true)
+	check(int(held_solved["tide_index"]) == 1, "chart 109 is authored at mid water")
+	check(Tracer.is_flooded(held, held_solved, Vector2i(3, 5)) and not Tracer.is_flooded(held, held_solved, Vector2i(4, 4)), "chart 109 flood line y >= 5 covers the weir and not the dock")
+	var held_hit: Dictionary = Tracer.trace(held, held_solved)
+	check(_leaves(held_hit, 3, 5, "E", "blue") and held_hit["docks"]["Bd"].has("blue") and held_hit["docks"]["Bd"].size() == 1 and not bool(held_hit["boats"]["Hn"]) and not bool(held_hit["boats"]["Hs"]), "chart 109 turns red to blue on the dry dock")
+	var held_low := Charts.duplicate_state(held_solved)
+	held_low["tide_index"] = 0
+	var held_low_hit: Dictionary = Tracer.trace(held, held_low)
+	check(not Tracer.is_flooded(held, held_low, Vector2i(3, 5)) and _center_hit(held_low_hit, 3, 5) and not _departs(held_low_hit, 3, 5, "white") and bool(held_low_hit["boats"]["Hs"]), "chart 109 index 0 stops on the dry weir and wakes the south hull")
+	var held_high := Charts.duplicate_state(held_solved)
+	held_high["tide_index"] = 2
+	var held_high_hit: Dictionary = Tracer.trace(held, held_high)
+	check(Tracer.is_flooded(held, held_high, Vector2i(4, 4)) and _center_hit(held_high_hit, 3, 5) and not _center_hit(held_high_hit, 4, 4), "chart 109 index 2 stops at the dock's waterline")
+	check(not held_high_hit["docks"]["Bd"].has("blue") and not Tracer.is_cleared(held, held_high), "chart 109 index 2 does not hit the dock")
+	var held_north := Charts.duplicate_state(held_solved)
+	held_north["pieces"]["R"]["rot"] = 0
+	var held_north_hit: Dictionary = Tracer.trace(held, held_north)
+	check(_leaves(held_north_hit, 3, 5, "N", "blue") and held_north_hit["docks"]["Bd"].is_empty() and bool(held_north_hit["boats"]["Hn"]), "a north-facing weir on chart 109 misses the east dock")
+	var held_sluice: Dictionary = Charts.weir()[6]
+	_retarget(held_sluice, "R", "sluice", 90)
+	check(_leaves(Tracer.trace(held_sluice, Charts.make_state(held_sluice, true)), 3, 5, "E", "red") and not Tracer.is_cleared(held_sluice, Charts.make_state(held_sluice, true)), "a sluice on chart 109 keeps red and misses the blue dock")
+	var held_siphon: Dictionary = Charts.weir()[6]
+	_retarget(held_siphon, "R", "siphon", 0)
+	check(_leaves(Tracer.trace(held_siphon, Charts.make_state(held_siphon, true)), 3, 5, "N", "blue") and not Tracer.is_cleared(held_siphon, Charts.make_state(held_siphon, true)), "a siphon on chart 109 sends red north as blue")
+	var held_well: Dictionary = Charts.weir()[6]
+	_retarget(held_well, "R", "well", 0)
+	check(_leaves(Tracer.trace(held_well, Charts.make_state(held_well, true)), 3, 5, "N", "red") and not Tracer.is_cleared(held_well, Charts.make_state(held_well, true)), "a well on chart 109 sends red north")
+	var held_blue: Dictionary = Charts.weir()[6]
+	_retarget(held_blue, "R", "stain", 90)
+	check(Tracer.is_cleared(held_blue, Charts.make_state(held_blue, true)), "a blue stain on chart 109 also clears")
+	var held_red: Dictionary = Charts.weir()[6]
+	_retarget(held_red, "R", "stain", 0)
+	check(not Tracer.is_cleared(held_red, Charts.make_state(held_red, true)), "a red stain on chart 109 misses the blue dock")
+	for raw_held in _clears(held):
+		var held_state: Dictionary = raw_held
+		check(int(held_state["tide_index"]) == 1, "every chart 109 clear is the middle flood")
+
+	var mark: Dictionary = book[7]
+	var mark_start := Charts.make_state(mark, false)
+	check(str(mark_start["pieces"]["P"]["socket"]) == "side", "chart 110 prism starts off the beam")
+	var mark_solved := Charts.make_state(mark, true)
+	check(int(mark_solved["tide_index"]) == 1 and str(mark_solved["pieces"]["P"]["socket"]) == "line" and int(mark_solved["pieces"]["P"]["rot"]) == 90 and int(mark_solved["pieces"]["R"]["rot"]) == 90, "chart 110 solution puts the prism on the line and faces the weir east")
+	check(Tracer.is_flooded(mark, mark_solved, Vector2i(5, 4)) and Tracer.is_flooded(mark, mark_solved, Vector2i(2, 4)) and not Tracer.is_flooded(mark, mark_solved, Vector2i(6, 3)), "chart 110 flood covers the weir and the empty blue cell, and leaves the dock dry")
+	var mark_hit: Dictionary = Tracer.trace(mark, mark_solved)
+	check(_arrives(mark_hit, 5, 4, "red") and not _arrives(mark_hit, 5, 4, "blue") and _leaves(mark_hit, 5, 4, "E", "blue"), "chart 110 only the red port enters, and it leaves east as blue")
+	check(mark_hit["docks"]["Bd"].has("blue") and mark_hit["docks"]["Bd"].size() == 1 and not bool(mark_hit["boats"]["Hw"]) and not bool(mark_hit["boats"]["Hs"]), "chart 110 lands blue and leaves both hulls dark")
+	var mark_side := Charts.duplicate_state(mark_solved)
+	mark_side["pieces"]["P"]["socket"] = "side"
+	check(bool(Tracer.trace(mark, mark_side)["boats"]["Hw"]) and not Tracer.trace(mark, mark_side)["docks"]["Bd"].has("blue"), "chart 110 side socket wakes the west hull")
+	var mark_low := Charts.duplicate_state(mark_solved)
+	mark_low["tide_index"] = 0
+	check(bool(Tracer.trace(mark, mark_low)["boats"]["Hs"]) and not Tracer.is_cleared(mark, mark_low), "chart 110 low water wakes the south hull")
+	var mark_sluice: Dictionary = Charts.weir()[7]
+	_retarget(mark_sluice, "R", "sluice", 90)
+	var mark_sluice_hit: Dictionary = Tracer.trace(mark_sluice, Charts.make_state(mark_sluice, true))
+	check(_leaves(mark_sluice_hit, 5, 4, "E", "red") and not mark_sluice_hit["docks"]["Bd"].has("blue") and not Tracer.is_cleared(mark_sluice, Charts.make_state(mark_sluice, true)), "a sluice on chart 110 sends red east still red and misses")
+	var mark_siphon: Dictionary = Charts.weir()[7]
+	_retarget(mark_siphon, "R", "siphon", 0)
+	var mark_siphon_hit: Dictionary = Tracer.trace(mark_siphon, Charts.make_state(mark_siphon, true))
+	check(_leaves(mark_siphon_hit, 5, 4, "N", "blue") and mark_siphon_hit["docks"]["Bd"].is_empty() and not Tracer.is_cleared(mark_siphon, Charts.make_state(mark_siphon, true)), "a siphon on chart 110 sends red north as blue and misses")
+	var mark_well: Dictionary = Charts.weir()[7]
+	_retarget(mark_well, "R", "well", 0)
+	var mark_well_hit: Dictionary = Tracer.trace(mark_well, Charts.make_state(mark_well, true))
+	check(_leaves(mark_well_hit, 5, 4, "N", "red") and mark_well_hit["docks"]["Bd"].is_empty() and not Tracer.is_cleared(mark_well, Charts.make_state(mark_well, true)), "a well on chart 110 sends red north and misses")
+	var mark_blue: Dictionary = Charts.weir()[7]
+	_retarget(mark_blue, "R", "stain", 90)
+	check(Tracer.is_cleared(mark_blue, Charts.make_state(mark_blue, true)), "a blue stain on chart 110 also clears")
+	var mark_red: Dictionary = Charts.weir()[7]
+	_retarget(mark_red, "R", "stain", 0)
+	check(not Tracer.is_cleared(mark_red, Charts.make_state(mark_red, true)), "a red stain on chart 110 misses the blue dock")
+	var mark_north := Charts.duplicate_state(mark_solved)
+	mark_north["pieces"]["R"]["rot"] = 0
+	check(_leaves(Tracer.trace(mark, mark_north), 5, 4, "N", "blue") and not Tracer.is_cleared(mark, mark_north), "a north-facing weir on chart 110 misses the blue dock")
+	for raw_mark in _clears(mark):
+		var mark_clear: Dictionary = raw_mark
+		check(int(mark_clear["tide_index"]) == 1, "every chart 110 clear is the flood")
+	check(str(book[0]["teach"]).to_lower().contains("east"), "chart 103 teaches the east exit")
+	check(str(book[0]["teach"]).to_lower().contains("blue"), "chart 103 teaches the blue dock")
+	check(str(book[1]["teach"]).to_lower().contains("traveling west"), "chart 104 teaches the western travel")
+	check(str(book[2]["teach"]).to_lower().contains("still white"), "chart 105 teaches that white stays white")
+	check(str(book[2]["teach"]).to_lower().contains("also clears"), "chart 105 records the sluice that also clears")
+	check(str(book[3]["teach"]).to_lower().contains("eastbound") or str(book[3]["teach"]).to_lower().contains("hull past the gate"), "chart 106 names the stopped beam")
+	check(str(book[3]["teach"]).to_lower().contains("also clear"), "chart 106 records the dry substitutes that also clear")
+	check(str(book[4]["teach"]).to_lower().contains("also clears"), "chart 107 records the siphon that also clears")
+	check(str(book[5]["teach"]).to_lower().contains("drier row"), "chart 108 teaches the drier dock")
+	check(str(book[5]["teach"]).to_lower().contains("also clears"), "chart 108 records the stain that also clears")
+	check(str(book[6]["teach"]).to_lower().contains("y >= 5"), "chart 109 teaches the flood line")
+	check(str(book[6]["teach"]).to_lower().contains("waterline"), "chart 109 teaches the waterline")
+	check(str(book[6]["teach"]).to_lower().contains("also clears"), "chart 109 records the stain that also clears")
+	check(str(book[7]["teach"]).to_lower().contains("red port"), "chart 110 teaches the red port")
+	check(str(book[7]["teach"]).to_lower().contains("blue port"), "chart 110 teaches the blue port")
+	check(str(book[7]["teach"]).to_lower().contains("also clears"), "chart 110 records the stain that also clears")
+
+
 func test_smoke() -> void:
 	var main_script: Script = load("res://scripts/main.gd")
 	main_script.persist_progress = false
@@ -3377,7 +3901,7 @@ func test_smoke() -> void:
 	main._on_book_pressed(11)
 	check(main.chart_index == stuck, "Siphon stays shut until the well mark is held")
 	check(str(main.status_label.text).to_lower().contains("siphon"), "a locked siphon is named")
-	check(main.quay_grid.visible and not main.reach_grid.visible and not main.basin_grid.visible and not main.paint_grid.visible and not main.west_grid.visible and not main.meet_grid.visible and not main.tide_grid.visible and not main.shutter_grid.visible and not main.stain_grid.visible and not main.vane_grid.visible and not main.well_grid.visible and not main.siphon_grid.visible and not main.sluice_grid.visible, "the quay grid is the one on screen")
+	check(main.quay_grid.visible and not main.reach_grid.visible and not main.basin_grid.visible and not main.paint_grid.visible and not main.west_grid.visible and not main.meet_grid.visible and not main.tide_grid.visible and not main.shutter_grid.visible and not main.stain_grid.visible and not main.vane_grid.visible and not main.well_grid.visible and not main.siphon_grid.visible and not main.sluice_grid.visible and not main.weir_grid.visible, "the quay grid is the one on screen")
 	_tap(main, KEY_R)
 	_tap(main, KEY_SPACE)
 	check(main.board_locked, "keyboard R then Space locks chart 1")
@@ -3687,7 +4211,7 @@ func test_smoke() -> void:
 	check(main.board_locked and main.unlocked[86], "holding the well mark opens the siphon")
 	main._advance_from_win()
 	check(str(main.chart["id"]) == "87", "next chart from the well mark enters The North Siphon")
-	check(main.siphon_grid.visible and not main.well_grid.visible and not main.sluice_grid.visible, "the siphon grid opens with The North Siphon")
+	check(main.siphon_grid.visible and not main.well_grid.visible and not main.sluice_grid.visible and not main.weir_grid.visible, "the siphon grid opens with The North Siphon")
 	check(str(main.harbor_label.text) == Charts.SIPHON, "the harbor name follows the siphon")
 	check(main.raise_button.visible, "chart 87 shows the tide lever")
 	check(int(main.state["tide_index"]) == 0, "chart 87 starts at low water")
@@ -3719,7 +4243,7 @@ func test_smoke() -> void:
 	check(main.board_locked and main.unlocked[94], "holding the siphon mark opens the sluice")
 	main._advance_from_win()
 	check(str(main.chart["id"]) == "95", "next chart from the siphon mark enters The East Sluice")
-	check(main.sluice_grid.visible and not main.siphon_grid.visible, "the sluice grid opens with The East Sluice")
+	check(main.sluice_grid.visible and not main.siphon_grid.visible and not main.weir_grid.visible, "the sluice grid opens with The East Sluice")
 	check(str(main.harbor_label.text) == Charts.SLUICE, "the harbor name follows the sluice")
 	check(main.raise_button.visible, "chart 95 shows the tide lever")
 	check(int(main.state["tide_index"]) == 0, "chart 95 starts at low water")
@@ -3738,7 +4262,60 @@ func test_smoke() -> void:
 	check(int(main.state["pieces"]["U"]["rot"]) == 0, "four turns restore the north facing")
 	main._on_book_pressed(12)
 	check(str(main.chart["id"]) == "95", "Sluice returns to The East Sluice")
-	check(main.sluice_grid.visible and not main.siphon_grid.visible, "Sluice shows the sluice grid")
+	check(main.sluice_grid.visible and not main.siphon_grid.visible and not main.weir_grid.visible, "Sluice shows the sluice grid")
+	main.unlocked[102] = false
+	check(not main.select_chart(102), "a locked weir chart stays shut")
+	check(main.chart_index == 94, "selecting a locked weir chart does not switch")
+	main._refresh_chrome()
+	check(main.weir_book_button.disabled, "the weir book starts locked")
+	main._on_book_pressed(13)
+	check(str(main.status_label.text).to_lower().contains("weir"), "the weir book says it is locked")
+	main.unlocked[101] = true
+	main.unlocked[102] = false
+	check(main.select_chart(101), "chart 102 opens when unlocked")
+	check(main.weir_book_button.disabled, "the weir stays locked until the sluice mark is held")
+	main.state = Charts.duplicate_state(Charts.make_state(main.chart, true))
+	main._refresh()
+	main.try_lock()
+	check(main.board_locked and main.unlocked[102], "holding the sluice mark opens the weir")
+	main._advance_from_win()
+	check(str(main.chart["id"]) == "103", "next chart from the sluice mark enters The East Weir")
+	check(main.weir_grid.visible and not main.sluice_grid.visible, "the weir grid opens with The East Weir")
+	check(str(main.harbor_label.text) == Charts.WEIR, "the harbor name follows the weir")
+	check(main.raise_button.visible, "chart 103 shows the tide lever")
+	check(int(main.state["tide_index"]) == 0, "chart 103 starts at low water")
+	check(str(main.tide_readout.text).to_lower().contains("weir"), "chart 103 names the weir in the water readout")
+	_click_cell(main, 3, 4, false)
+	check(str(main.selected_id) == "R", "a click selects the weir")
+	check(int(main.state["pieces"]["R"]["rot"]) == 0, "the first click does not turn the weir")
+	_click_cell(main, 3, 4, false)
+	check(int(main.state["pieces"]["R"]["rot"]) == 90, "a second click turns the weir from north to east")
+	check(str(main.status_label.text).to_lower().contains("clockwise") and str(main.status_label.text).to_lower().contains("swaps"), "the weir says it turns and swaps red and blue")
+	_tap(main, KEY_R)
+	check(int(main.state["pieces"]["R"]["rot"]) == 180, "R turns the weir clockwise")
+	_click_cell(main, 3, 4, true)
+	check(int(main.state["pieces"]["R"]["rot"]) == 270, "a right click turns the weir west")
+	_click_cell(main, 3, 4, false)
+	check(int(main.state["pieces"]["R"]["rot"]) == 0, "four turns restore the north facing")
+	_tap(main, KEY_T)
+	check(int(main.state["tide_index"]) == 1, "T raises the weir chart onto the flood")
+	main._on_book_pressed(13)
+	check(str(main.chart["id"]) == "103", "Weir returns to The East Weir")
+	check(main.weir_grid.visible and not main.sluice_grid.visible, "Weir shows the weir grid")
+	await process_frame
+	await process_frame
+	var sluice_rect: Rect2 = main.sluice_book_button.get_global_rect()
+	var weir_rect: Rect2 = main.weir_book_button.get_global_rect()
+	var side_rect: Rect2 = main._side.get_global_rect()
+	check(side_rect.grow(1.0).encloses(sluice_rect) and side_rect.grow(1.0).encloses(weir_rect), "the sluice and weir book buttons sit inside the side panel")
+	check(not sluice_rect.intersects(weir_rect), "the weir button does not cover the sluice button")
+	check(sluice_rect.size.x + 0.5 >= main.sluice_book_button.get_minimum_size().x and weir_rect.size.x + 0.5 >= main.weir_book_button.get_minimum_size().x, "the sluice and weir labels have room in the chart row")
+	main._on_book_pressed(12)
+	await process_frame
+	check(_chart_row_fits(main.sluice_grid, main._side), "the sluice chart row fits in the window")
+	main._on_book_pressed(13)
+	await process_frame
+	check(_chart_row_fits(main.weir_grid, main._side), "the weir chart row fits in the window")
 	main.select_chart(0)
 	main.restart_chart()
 	var before_rot := int(main.state["pieces"]["M"]["rot"])
@@ -3747,6 +4324,24 @@ func test_smoke() -> void:
 	_click_cell(main, 2, 2, true)
 	check(int(main.state["pieces"]["M"]["rot"]) == before_rot, "right click turns the mirror back")
 	main.free()
+
+func _chart_row_fits(grid: GridContainer, side: Control) -> bool:
+	var bounds := side.get_global_rect().grow(1.0)
+	var count := 0
+	for child in grid.get_children():
+		var button := child as Button
+		if button == null:
+			continue
+		count += 1
+		var rect := button.get_global_rect()
+		var need := button.get_minimum_size()
+		if not bounds.encloses(rect):
+			print("CLIPPED ", button.text, " ", rect, " outside ", bounds)
+			return false
+		if rect.size.x + 0.5 < need.x or rect.size.y + 0.5 < need.y:
+			print("CRAMPED ", button.text, " got ", rect.size, " need ", need)
+			return false
+	return count > 0
 
 func _trace_sig(result: Dictionary) -> String:
 	var parts := PackedStringArray()
@@ -3802,8 +4397,9 @@ func _walk(chart: Dictionary, state: Dictionary, index: int, found: Array) -> vo
 	# A stain has no facing either, but 0 (red) and 90 (blue) are different colors.
 	# A vane has four facings, the same count as a prism has faces.
 	# A sluice has four facings too. The exit follows that facing.
+	# A weir has four facings too. The exit follows that facing and swaps color.
 	var rots: Array = [0]
-	if kind == "prism" or kind == "vane" or kind == "sluice":
+	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir":
 		rots = [0, 90, 180, 270]
 	elif kind != "shutter" and kind != "well" and kind != "siphon":
 		rots = [0, 90]
@@ -4008,6 +4604,39 @@ func _fixed_siphon(id: String, x: int, y: int) -> Dictionary:
 		"solution_socket": "a",
 		"solution_rot": 0,
 	}
+
+
+func _fixed_weir(id: String, x: int, y: int, rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": "Weir",
+		"kind": "weir",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": rot,
+		"solution_socket": "a",
+		"solution_rot": rot,
+	}
+
+
+func _weir_climb(weir_count: int) -> Dictionary:
+	# One tide-mirror bounce, then one bounce per north-facing weir.
+	# White stays white. Fifteen weirs still reach the dock. Sixteen
+	# spend the cap before it.
+	var south := weir_count + 1
+	var chart := _blank(3, south + 1)
+	chart["tide_phases"] = [south + 1 - 2]
+	chart["lanterns"] = [_lamp("L", 2, 1, "S", "white")]
+	chart["docks"] = [_need("D", 1, 0, "white")]
+	var pieces: Array = []
+	for y in range(2, south):
+		pieces.append(_fixed_shutter("G%d" % y, 2, y))
+	pieces.append(_fixed_tide("T", 2, south, 0))
+	for y in range(2, south + 1):
+		pieces.append(_fixed_weir("R%d" % y, 1, y, 0))
+	chart["pieces"] = pieces
+	return chart
 
 
 func _fixed_sluice(id: String, x: int, y: int, rot: int) -> Dictionary:
