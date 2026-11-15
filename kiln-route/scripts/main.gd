@@ -184,6 +184,8 @@ func _kind_for_key(code: int) -> int:
 		KEY_KP_6: Rules.Kind.ROLLER,
 		KEY_7: Rules.Kind.WEIR,
 		KEY_KP_7: Rules.Kind.WEIR,
+		KEY_8: Rules.Kind.BRIDGE,
+		KEY_KP_8: Rules.Kind.BRIDGE,
 	}
 	if not map.has(code):
 		return -1
@@ -335,6 +337,7 @@ func _kind_order() -> Array:
 		Rules.Kind.SPLITTER,
 		Rules.Kind.ROLLER,
 		Rules.Kind.WEIR,
+		Rules.Kind.BRIDGE,
 	]
 
 
@@ -439,7 +442,7 @@ func _draw() -> void:
 	var size: Vector2 = lay.size
 	draw_rect(Rect2(Vector2.ZERO, size), COL_BG)
 	_text(Vector2(24, 14), "KILN ROUTE", 28, COL_TEXT)
-	_text(Vector2(236, 26), "two wings", 15, COL_DIM)
+	_text(Vector2(236, 26), "three wings", 15, COL_DIM)
 	var minute := "minute  %d / %d" % [_shown_tick(), Rules.SIM_TICKS]
 	var minute_w := font.get_string_size(minute, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
 	_text(Vector2(size.x - 24 - minute_w, 26), minute, 15, COL_DIM)
@@ -449,7 +452,7 @@ func _draw() -> void:
 	_draw_grid(lay)
 	_draw_side(lay)
 	_draw_tray(lay)
-	_text(Vector2(24, size.y - 28), "1-7 select    R rotate    LMB place or pick up    RMB rotate a piece    Space run    F skip    Bksp restart", 13, COL_DIM)
+	_text(Vector2(24, size.y - 28), "1-8 select    R rotate    LMB place or pick up    RMB rotate a piece    Space run    F skip    Bksp restart", 13, COL_DIM)
 
 
 func _draw_tabs(lay: Dictionary) -> void:
@@ -561,6 +564,14 @@ func _draw_piece(rect: Rect2, kind: int, dir: int, alpha: float, live) -> void:
 		return
 	var center := rect.get_center()
 	var scale := rect.size.x / 88.0
+	if kind == Rules.Kind.BRIDGE:
+		var fwd := Vector2(Rules.vec(dir)) * rect.size.x * 0.1
+		var across := Vector2(Rules.vec(Rules.right(dir))) * rect.size.x * 0.16
+		if int(live.hold) >= 0:
+			_draw_item(center + fwd, int(live.hold), scale * 0.72)
+		if int(live.cross) >= 0:
+			_draw_item(center + across, int(live.cross), scale * 0.72)
+		return
 	if int(live.hold) >= 0:
 		_draw_item(center, int(live.hold), scale)
 	elif live.output_ready:
@@ -596,6 +607,9 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 		var along := Vector2(Rules.vec(dir))
 		draw_circle(center - along * body.size.x * 0.2, body.size.x * 0.09, axle)
 		draw_circle(center + along * body.size.x * 0.02, body.size.x * 0.09, axle)
+	elif kind == Rules.Kind.BRIDGE:
+		var across := Vector2(Rules.vec(Rules.right(dir)))
+		draw_line(center - across * body.size.x * 0.36, center + across * body.size.x * 0.36, Color(1, 1, 1, 0.34 * alpha), maxf(2.0, body.size.x * 0.08))
 	var forward_alpha := alpha
 	var right_alpha := alpha
 	if kind == Rules.Kind.SPLITTER:
@@ -609,6 +623,10 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 		var side := center + Vector2(Rules.vec(turn)) * body.size.x * 0.18
 		var mark := Color("f2d48a") if kind == Rules.Kind.FILTER else light
 		_arrow(side, turn, body.size.x * 0.16, body.size.x * 0.1, Color(mark.r, mark.g, mark.b, right_alpha))
+	elif kind == Rules.Kind.BRIDGE:
+		var turn := Rules.right(dir)
+		var side := center + Vector2(Rules.vec(turn)) * body.size.x * 0.22
+		_arrow(side, turn, body.size.x * 0.14, body.size.x * 0.09, Color(light.r, light.g, light.b, alpha))
 
 
 func _draw_side(lay: Dictionary) -> void:
@@ -743,6 +761,8 @@ func _kind_color(kind: int) -> Color:
 		return Color("6aa6d8")
 	if kind == Rules.Kind.WEIR:
 		return Color("8fbf6a")
+	if kind == Rules.Kind.BRIDGE:
+		return Color("6f8f9a")
 	return Color("c792ef")
 
 
