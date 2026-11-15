@@ -2,7 +2,7 @@
 
 Kiln Route is a foundry puzzle. Each room hands you a tray of machines and a quota. The route clears when the quota is met inside one simulated minute. Pieces can always be picked back up.
 
-This project is the first wing: 8 rooms, not the full 48.
+This project is the first two wings: 16 rooms, not the full 48. Clearing room 8 unlocks room 9.
 
 Art is drawn by Godot (rects, polygons, lines, and arcs). There are no imported sprites.
 
@@ -16,7 +16,7 @@ godot --path kiln-route
 
 ## Controls
 
-- 1 belt, 2 kiln, 3 press, 4 filter, 5 splitter (only pieces in the tray can be selected)
+- 1 belt, 2 kiln, 3 press, 4 filter, 5 splitter, 6 roller, 7 weir (only pieces in the tray can be selected)
 - R or E rotates clockwise, Q rotates counter-clockwise. R rotates the piece under the cursor when there is one, otherwise it rotates the piece you are about to place. Right-click does the same.
 - Left-click an empty floor cell to place the selected piece. Left-click a placed piece to pick it up and return it to the tray.
 - Space or Enter runs the minute. While it is running, Space or F skips to the result. The Run button does the same.
@@ -55,6 +55,8 @@ Facing is east, south, west, or north. North is up. "Right" means 90 degrees clo
 - **Kiln.** Accepts one ore from behind while idle, and refuses every other material. The ore is consumed on entry. `KILN_DELAY` is 2: an ore that enters on tick 1 can leave as an ingot on tick 3. While the timer is running, or while the ingot cannot leave, the kiln accepts nothing. The ingot leaves forward.
 - **Press.** Accepts ingots from behind and refuses every other material. It stores the first ingot. The second ingot is consumed with the first, and one plate is ready `PRESS_DELAY` (1) tick later. Ingots that enter on ticks 1 and 2 from a source aimed straight into the press can leave as a plate on tick 3. While the plate is waiting to leave, or during that delay, the press accepts nothing. The plate leaves forward.
 - **Splitter.** Holds one item. Accepts only from behind. The first item it successfully sends goes forward, the next goes to the right, then it repeats. The alternation advances only when the item actually leaves. If the chosen exit is blocked, the item waits and the splitter does not try the other exit.
+- **Roller.** Holds one item. Accepts any material, but only from behind. It pushes that item forward. It refuses a side entry and a head-on entry. A refused item stays where it was. A roller does not sort and does not split.
+- **Weir.** Holds one item. Accepts any material, but only from behind. It tries to push the item forward. If that cell refuses, it tries the right side. If both refuse, the item waits. The next item tries forward again. A weir does not alternate, and a successful spill does not change that preference.
 
 ### Budget and clearing
 
@@ -70,6 +72,14 @@ The tray is the piece budget. Placing a piece you do not have is refused. A run 
 6. **Pinch** — the tray has two belts, not the three a spaced line wants, so two machines have to touch.
 7. **Relight** — the kiln starts on the wrong cell. Leaving it there misses the quota; pick it up and put it on the route.
 8. **Two Orders** — the bin wants both ingots and plates, and the tray has no spare piece. One kiln has to feed both.
+9. **Straight** — a roller refuses ore crossing an ingot lane. A belt in that cell stalls the bin.
+10. **Spill** — a weir keeps the forward kiln full and spills the rest to a second kiln. One kiln misses the quota.
+11. **Keep** — aim the filter so ore goes to the bin and ingots fall into the waste chute.
+12. **Detour** — a wall closes the middle row. The belts have to turn and go around it.
+13. **Refine** — the filter scraps raw ingots and feeds ore to the kiln. The bin counts the kiln's ingots.
+14. **Miscast** — the roller starts off the lane. Pick it up and seat it on the crossing.
+15. **Hearth** — spill a second kiln into the same press. One kiln cannot stamp the quota.
+16. **Balance** — the roller guards the ingot line, then a splitter feeds both the ingot bin and the press.
 
 ## Tests
 
@@ -87,11 +97,11 @@ The suite checks:
 - A layout that meets the quota with an extra piece is rejected, and the tray itself refuses that extra piece.
 - Flooding one machine from different inputs (two schedules into one belt, two patterns into one splitter, two rates into one kiln) is deterministic: the same seed and state produce the same deliveries, and the different floods do not collapse to one output.
 - Pickup returns a placed belt to the tray, including a kiln the room started with, and pickup during a run does the same through the game object.
-- The documented belt, kiln, press, filter, and splitter timings, including that a blocked splitter does not flip.
+- The documented belt, kiln, press, filter, splitter, roller, and weir timings, including that a blocked splitter does not flip and that a weir tries forward again after a spill.
 
 ## Limitations
 
-- One wing of 8 rooms. There is no overworld and no other wings.
+- Two wings, 16 rooms. There is no overworld and no further wing yet. The full route is still 48 rooms.
 - No audio, no gamepad, and no drag-paint.
 - Items wait when blocked. They are not deleted, except by a waste chute.
 - A splitter does not skip a blocked exit.

@@ -43,6 +43,11 @@ func _run() -> void:
 	_test_filter_rule()
 	_test_splitter_alternates()
 	_test_splitter_waits_without_flipping()
+	_test_roller_passes_every_material()
+	_test_roller_refuses_side()
+	_test_weir_prefers_forward()
+	_test_weir_spills_when_forward_is_blocked()
+	_test_weir_tries_forward_again()
 	_test_rooms()
 	_test_over_budget()
 	_test_pickup()
@@ -51,6 +56,7 @@ func _run() -> void:
 	_test_flood_is_deterministic()
 	_test_room5_needs_both_kilns()
 	_test_room8_both_products()
+	_test_wing2_lessons()
 	_test_game_object()
 
 
@@ -145,12 +151,108 @@ func _test_splitter_waits_without_flipping() -> void:
 	check(splitter.hold == Rules.Mat.ORE, "blocked splitter keeps the item")
 
 
+func _test_roller_passes_every_material() -> void:
+	var room := _machine_room(Rules.Kind.ROLLER, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE], 1, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE])
+	var placed := [Rooms.piece(Rules.Kind.ROLLER, 1, 0, Rules.Dir.EAST)]
+	var result := World.simulate(room, placed, 6)
+	var expected := "2:2,0:0|3:2,0:1|4:2,0:2|5:2,0:0|6:2,0:1"
+	check(_trace(result) == expected, "roller sends every material forward, got %s" % _trace(result))
+
+
+func _test_roller_refuses_side() -> void:
+	var room := {
+		"id": 0,
+		"name": "roller side",
+		"blurb": "",
+		"rule": "",
+		"w": 3,
+		"h": 2,
+		"sources": [
+			Rooms.source(0, 1, Rules.Dir.EAST, [Rules.Mat.ORE], 1),
+			Rooms.source(1, 0, Rules.Dir.SOUTH, [Rules.Mat.PLATE], 1),
+		],
+		"sinks": [Rooms.sink(2, 1, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE])],
+		"chutes": [],
+		"walls": [],
+		"budget": Rooms.kv([Rules.Kind.ROLLER, 1, Rules.Kind.BELT, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [],
+		"solution": [],
+	}
+	var roller := World.simulate(room, [Rooms.piece(Rules.Kind.ROLLER, 1, 1, Rules.Dir.EAST)], 5)
+	var expected := "2:2,1:0|3:2,1:0|4:2,1:0|5:2,1:0"
+	check(_trace(roller) == expected, "roller ignores the side plate and passes ore, got %s" % _trace(roller))
+	check(int(roller.counts[Rules.Mat.PLATE]) == 0, "roller delivers no plate")
+	check(int(roller.world.sources[1].pending) == Rules.Mat.PLATE, "refused plate stays on the side source")
+	var side_only := room.duplicate()
+	side_only.sources = [Rooms.source(1, 0, Rules.Dir.SOUTH, [Rules.Mat.PLATE], 1)]
+	var belt := World.simulate(side_only, [Rooms.piece(Rules.Kind.BELT, 1, 1, Rules.Dir.EAST)], 4)
+	var roller_side := World.simulate(side_only, [Rooms.piece(Rules.Kind.ROLLER, 1, 1, Rules.Dir.EAST)], 4)
+	check(_trace(belt) == "2:2,1:2|3:2,1:2|4:2,1:2", "a belt takes a plate from the side, got %s" % _trace(belt))
+	check(int(roller_side.counts[Rules.Mat.PLATE]) == 0 and int(roller_side.world.sources[0].pending) == Rules.Mat.PLATE, "a roller refuses that same side plate")
+
+
+func _test_weir_prefers_forward() -> void:
+	var room := _fork_room([Rules.Mat.ORE], Rules.Kind.WEIR)
+	var placed := [Rooms.piece(Rules.Kind.WEIR, 1, 0, Rules.Dir.EAST)]
+	var result := World.simulate(room, placed, 5)
+	var expected := "2:2,0:0|3:2,0:0|4:2,0:0|5:2,0:0"
+	check(_trace(result) == expected, "open weir sends every item forward, got %s" % _trace(result))
+	check(int(result.world.machines[Vector2i(1, 0)].phase) == 0, "weir does not keep a splitter phase")
+
+
+func _test_weir_spills_when_forward_is_blocked() -> void:
+	var room := _fork_room([Rules.Mat.ORE], Rules.Kind.WEIR)
+	room.walls = [Rooms.cell(2, 0)]
+	room.w = 3
+	var placed := [Rooms.piece(Rules.Kind.WEIR, 1, 0, Rules.Dir.EAST)]
+	var result := World.simulate(room, placed, 5)
+	var expected := "2:1,1:0|3:1,1:0|4:1,1:0|5:1,1:0"
+	check(_trace(result) == expected, "blocked weir spills to the right, got %s" % _trace(result))
+	check(int(result.world.machines[Vector2i(1, 0)].phase) == 0, "a spill does not stick the weir on the side")
+
+
+func _test_weir_tries_forward_again() -> void:
+	var room := {
+		"id": 0,
+		"name": "weir kiln",
+		"blurb": "",
+		"rule": "",
+		"w": 4,
+		"h": 2,
+		"sources": [Rooms.source(0, 0, Rules.Dir.EAST, [Rules.Mat.ORE], 1)],
+		"sinks": [
+			Rooms.sink(3, 0, [Rules.Mat.INGOT]),
+			Rooms.sink(1, 1, [Rules.Mat.ORE]),
+		],
+		"chutes": [],
+		"walls": [],
+		"budget": Rooms.kv([Rules.Kind.WEIR, 1, Rules.Kind.KILN, 1]),
+		"quota": Rooms.kv([Rules.Mat.INGOT, 1]),
+		"initial": [],
+		"solution": [],
+	}
+	var placed := [
+		Rooms.piece(Rules.Kind.WEIR, 1, 0, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.KILN, 2, 0, Rules.Dir.EAST),
+	]
+	var result := World.simulate(room, placed, 40)
+	var ingots := int(result.counts[Rules.Mat.INGOT])
+	var spilled := int(result.counts[Rules.Mat.ORE])
+	check(ingots >= 10, "weir keeps feeding the kiln after spills (%d ingots)" % ingots)
+	check(spilled >= 10, "weir keeps spilling ore the kiln cannot take (%d ore)" % spilled)
+	check(int(result.world.machines[Vector2i(1, 0)].phase) == 0, "kiln-fed weir still has no phase")
+
+
 func _test_rooms() -> void:
 	var catalog := Rooms.all()
-	check(catalog.size() == 8, "wing has 8 rooms")
+	check(catalog.size() == 16, "two wings have 16 rooms")
+	check(catalog[0].name == "Haul" and catalog[7].name == "Two Orders", "rooms 1 through 8 stay the first wing")
+	check(catalog[8].name == "Straight" and catalog[15].name == "Balance", "rooms 9 through 16 are the second wing")
 	check(not ("\n" in str(catalog[0].blurb)), "room 1 instruction is one line")
 	for index in catalog.size():
 		var room: Dictionary = catalog[index]
+		check(not ("\n" in str(room.blurb)), "room %d instruction is one line" % int(room.id))
 		check(int(room.id) == index + 1, "room id %d" % (index + 1))
 		var initial: Dictionary = World.simulate(room, room.initial)
 		check(
@@ -204,6 +306,12 @@ func _test_pickup() -> void:
 	check(started.at(2, 0) != null and started.remaining(Rules.Kind.KILN) == 0, "relight starts with the kiln off the tray")
 	check(started.pickup(2, 0), "pickup lifts the pre-placed kiln")
 	check(started.at(2, 0) == null and started.remaining(Rules.Kind.KILN) == 1, "pre-placed kiln returns to the tray")
+	var miscast: Dictionary = Rooms.all()[13]
+	var parked = Planner.new(miscast)
+	check(parked.at(1, 0) != null and parked.remaining(Rules.Kind.ROLLER) == 0, "miscast starts with the roller off the tray")
+	check(parked.pickup(1, 0), "pickup lifts the pre-placed roller")
+	check(parked.at(1, 0) == null and parked.remaining(Rules.Kind.ROLLER) == 1, "pre-placed roller returns to the tray")
+	check(parked.place(Rules.Kind.ROLLER, 3, 1, Rules.Dir.EAST), "the returned roller can be seated on the crossing")
 
 
 func _test_room7_tempting() -> void:
@@ -313,6 +421,113 @@ func _test_room8_both_products() -> void:
 	check(int(sorted_run.counts[Rules.Mat.ORE]) == 0 and int(sorted_run.discarded) > 0, "sort sends ore into the waste chute (%s discarded %d)" % [sorted_run.text, sorted_run.discarded])
 
 
+func _test_wing2_lessons() -> void:
+	var straight: Dictionary = Rooms.all()[8]
+	var jammed: Array = [
+		Rooms.piece(Rules.Kind.BELT, 1, 1, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 2, 1, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 3, 1, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.ROLLER, 4, 1, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 5, 1, Rules.Dir.EAST),
+	]
+	var jam_run: Dictionary = World.simulate(straight, jammed)
+	check(World.budget_met(jammed, straight.budget), "belt on the straight crossing stays inside the tray")
+	check(int(jam_run.counts[Rules.Mat.INGOT]) == 0, "belt on the straight crossing delivers no ingot (%s)" % jam_run.text)
+	check(not jam_run.quota_ok, "belt on the straight crossing misses the quota")
+	var spill: Dictionary = Rooms.all()[9]
+	var one_kiln: Dictionary = World.simulate(spill, [
+		Rooms.piece(Rules.Kind.BELT, 1, 0, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.WEIR, 2, 0, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.KILN, 3, 0, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 4, 0, Rules.Dir.EAST),
+	])
+	var both: Dictionary = World.simulate(spill, spill.solution)
+	var spill_quota := int(spill.quota[Rules.Mat.INGOT])
+	check(int(one_kiln.counts[Rules.Mat.INGOT]) < spill_quota, "one spill kiln misses %d (%s)" % [spill_quota, one_kiln.text])
+	check(int(both.counts[Rules.Mat.INGOT]) >= spill_quota, "both spill kilns reach the quota (%s)" % both.text)
+	check(int(both.counts[Rules.Mat.INGOT]) > int(one_kiln.counts[Rules.Mat.INGOT]), "the spill kiln adds ingots")
+	var keep: Dictionary = Rooms.all()[10]
+	var kept: Dictionary = World.simulate(keep, keep.solution)
+	check(int(kept.counts[Rules.Mat.ORE]) >= int(keep.quota[Rules.Mat.ORE]) and int(kept.counts[Rules.Mat.INGOT]) == 0, "keep delivers ore and no ingot (%s)" % kept.text)
+	check(int(kept.discarded) > 0, "keep drops ingots down the waste chute")
+	var clogged: Dictionary = World.simulate(keep, [
+		Rooms.piece(Rules.Kind.BELT, 1, 0, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 2, 0, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 3, 0, Rules.Dir.EAST),
+	])
+	check(int(clogged.counts[Rules.Mat.ORE]) < int(keep.quota[Rules.Mat.ORE]), "keep without a filter clogs (%s)" % clogged.text)
+	var detour: Dictionary = Rooms.all()[11]
+	var into_wall: Dictionary = World.simulate(detour, [
+		Rooms.piece(Rules.Kind.BELT, 1, 0, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 2, 0, Rules.Dir.EAST),
+	])
+	check(int(into_wall.counts[Rules.Mat.ORE]) == 0, "detour belts that stop on the wall deliver nothing")
+	var refine: Dictionary = Rooms.all()[12]
+	var refined: Dictionary = World.simulate(refine, refine.solution)
+	check(int(refined.counts[Rules.Mat.INGOT]) >= int(refine.quota[Rules.Mat.INGOT]) and int(refined.discarded) > 0, "refine counts kiln ingots and discards the raw ones (%s discarded %d)" % [refined.text, refined.discarded])
+	var raw: Dictionary = World.simulate(refine, [
+		Rooms.piece(Rules.Kind.BELT, 1, 0, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 2, 0, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.KILN, 3, 0, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 4, 0, Rules.Dir.EAST),
+	])
+	check(int(raw.counts[Rules.Mat.INGOT]) < int(refine.quota[Rules.Mat.INGOT]), "raw ingots against the kiln miss refine (%s)" % raw.text)
+	var miscast: Dictionary = Rooms.all()[13]
+	var parked: Array = miscast.initial.duplicate(true)
+	parked.append(Rooms.piece(Rules.Kind.BELT, 1, 1, Rules.Dir.EAST))
+	parked.append(Rooms.piece(Rules.Kind.BELT, 2, 1, Rules.Dir.EAST))
+	parked.append(Rooms.piece(Rules.Kind.BELT, 4, 1, Rules.Dir.EAST))
+	parked.append(Rooms.piece(Rules.Kind.BELT, 5, 1, Rules.Dir.EAST))
+	var left: Dictionary = World.simulate(miscast, parked)
+	check(World.budget_met(parked, miscast.budget), "leaving the miscast roller parked stays inside the tray")
+	check(int(left.counts[Rules.Mat.INGOT]) == 0 and not left.quota_ok, "a parked roller leaves a gap and misses (%s)" % left.text)
+	var hearth: Dictionary = Rooms.all()[14]
+	var single: Dictionary = World.simulate(hearth, [
+		Rooms.piece(Rules.Kind.BELT, 1, 0, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 2, 0, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.KILN, 3, 0, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 4, 0, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.PRESS, 5, 0, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 6, 0, Rules.Dir.EAST),
+	])
+	var stamped: Dictionary = World.simulate(hearth, hearth.solution)
+	var plate_quota := int(hearth.quota[Rules.Mat.PLATE])
+	check(int(single.counts[Rules.Mat.PLATE]) < plate_quota, "one hearth kiln misses %d plates (%s)" % [plate_quota, single.text])
+	check(int(stamped.counts[Rules.Mat.PLATE]) >= plate_quota, "both hearth kilns reach the plate quota (%s)" % stamped.text)
+	var balance: Dictionary = Rooms.all()[15]
+	var solved: Dictionary = World.simulate(balance, balance.solution)
+	check(int(solved.counts[Rules.Mat.INGOT]) >= int(balance.quota[Rules.Mat.INGOT]) and int(solved.counts[Rules.Mat.PLATE]) >= int(balance.quota[Rules.Mat.PLATE]), "balance hits both quotas (%s)" % solved.text)
+	var ingots_only: Dictionary = World.simulate(balance, [
+		Rooms.piece(Rules.Kind.BELT, 1, 1, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.KILN, 2, 1, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.ROLLER, 3, 1, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 4, 1, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 5, 1, Rules.Dir.EAST),
+	])
+	check(int(ingots_only.counts[Rules.Mat.PLATE]) == 0 and int(ingots_only.counts[Rules.Mat.INGOT]) > 0, "balance without the press is ingots only (%s)" % ingots_only.text)
+	check(not ingots_only.success, "ingots alone miss balance")
+	var plates_only: Dictionary = World.simulate(balance, [
+		Rooms.piece(Rules.Kind.BELT, 1, 1, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.KILN, 2, 1, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.ROLLER, 3, 1, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 4, 1, Rules.Dir.SOUTH),
+		Rooms.piece(Rules.Kind.BELT, 4, 2, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.PRESS, 5, 2, Rules.Dir.EAST),
+	])
+	check(int(plates_only.counts[Rules.Mat.INGOT]) == 0 and int(plates_only.counts[Rules.Mat.PLATE]) > 0, "balance without the splitter is plates only (%s)" % plates_only.text)
+	check(not plates_only.success, "plates alone miss balance")
+	var crossed: Dictionary = World.simulate(balance, [
+		Rooms.piece(Rules.Kind.BELT, 1, 1, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.KILN, 2, 1, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 3, 1, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.SPLITTER, 4, 1, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 5, 1, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 4, 2, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.PRESS, 5, 2, Rules.Dir.EAST),
+	])
+	check(int(crossed.counts[Rules.Mat.INGOT]) == 0 and int(crossed.counts[Rules.Mat.PLATE]) == 0, "a belt on the balance crossing delivers nothing (%s)" % crossed.text)
+
+
 func _test_game_object() -> void:
 	var packed: PackedScene = load("res://scenes/main.tscn")
 	var main = packed.instantiate()
@@ -324,6 +539,8 @@ func _test_game_object() -> void:
 	main.boot()
 	main.testing_isolate()
 	var catalog := Rooms.all()
+	check(not main.is_unlocked(9), "room 9 stays locked until room 8 is cleared")
+	check(not main.testing_select(8), "locked room 9 cannot be selected")
 	check(main.testing_select(0), "room 1 can be selected")
 	var before: int = main.testing_tray(Rules.Kind.BELT)
 	check(main.testing_place(Rules.Kind.BELT, 1, 1, Rules.Dir.EAST), "game place spends a belt")
@@ -341,6 +558,10 @@ func _test_game_object() -> void:
 		if index == 0:
 			check(main.is_unlocked(2), "clearing room 1 unlocks room 2")
 			check(not main.is_unlocked(3), "room 3 stays locked until room 2 is cleared")
+		if index == 7:
+			check(main.is_unlocked(9), "clearing room 8 unlocks room 9")
+			check(not main.is_unlocked(10), "room 10 stays locked until room 9 is cleared")
+	check(not main.is_unlocked(17), "there is no room 17 to unlock")
 	check(not main.testing_select(99), "room select rejects an unknown room")
 	main.queue_free()
 

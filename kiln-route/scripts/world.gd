@@ -266,7 +266,13 @@ func _sorted_cells() -> Array:
 
 
 func _holder(kind: int) -> bool:
-	return kind == Rules.Kind.BELT or kind == Rules.Kind.FILTER or kind == Rules.Kind.SPLITTER
+	return (
+		kind == Rules.Kind.BELT
+		or kind == Rules.Kind.FILTER
+		or kind == Rules.Kind.SPLITTER
+		or kind == Rules.Kind.ROLLER
+		or kind == Rules.Kind.WEIR
+	)
 
 
 func _try_output(pos: Vector2i) -> bool:
@@ -281,6 +287,8 @@ func _try_output(pos: Vector2i) -> bool:
 			out_dir = machine.dir if mat == Rules.Mat.ORE else Rules.right(machine.dir)
 		elif machine.kind == Rules.Kind.SPLITTER:
 			out_dir = machine.dir if machine.phase == 0 else Rules.right(machine.dir)
+		elif machine.kind == Rules.Kind.WEIR:
+			return _try_weir(pos, machine, mat)
 	elif machine.kind == Rules.Kind.KILN:
 		if not machine.output_ready:
 			return false
@@ -304,10 +312,31 @@ func _try_output(pos: Vector2i) -> bool:
 	return true
 
 
+## Forward first, then clockwise. Both tries are in this output pass.
+## A refused forward cell is unchanged, so the side try is safe.
+## The preference does not stick: the next item tries forward again.
+func _try_weir(pos: Vector2i, machine: Machine, mat: int) -> bool:
+	if _accept(pos + Rules.vec(machine.dir), mat, machine.dir):
+		machine.hold = -1
+		machine.moved = false
+		return true
+	var turn := Rules.right(machine.dir)
+	if _accept(pos + Rules.vec(turn), mat, turn):
+		machine.hold = -1
+		machine.moved = false
+		return true
+	return false
+
+
 func _can_take(machine: Machine, mat: int, arrival: int) -> bool:
 	if machine.kind == Rules.Kind.BELT:
 		return machine.hold < 0 and arrival != Rules.opposite(machine.dir)
-	if machine.kind == Rules.Kind.FILTER or machine.kind == Rules.Kind.SPLITTER:
+	if (
+		machine.kind == Rules.Kind.FILTER
+		or machine.kind == Rules.Kind.SPLITTER
+		or machine.kind == Rules.Kind.ROLLER
+		or machine.kind == Rules.Kind.WEIR
+	):
 		return machine.hold < 0 and arrival == machine.dir
 	if machine.kind == Rules.Kind.KILN:
 		return (
