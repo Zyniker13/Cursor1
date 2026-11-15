@@ -3,7 +3,7 @@ extends RefCounted
 
 const Rules = preload("res://rules/rules.gd")
 
-## Thirteen wings of the closed museum. Each solution is a list of actions the rules
+## Fifteen wings of the closed museum. Each solution is a list of actions the rules
 ## accept. Tokens are R L U D, W for wait, and T0 / T1 for lamps.
 
 
@@ -83,6 +83,10 @@ static func _puzzle(number: int, title: String, lesson: String, rows: PackedStri
 		wing_number = number - 68
 	elif wing == "Veil Wing":
 		wing_number = number - 74
+	elif wing == "Shade Wing":
+		wing_number = number - 80
+	elif wing == "Screen Wing":
+		wing_number = number - 86
 	return {
 		"number": number,
 		"wing": wing,
@@ -125,6 +129,8 @@ static func _all() -> Array:
 	puzzles.append_array(_porch_wing())
 	puzzles.append_array(_oriel_wing())
 	puzzles.append_array(_veil_wing())
+	puzzles.append_array(_shade_wing())
+	puzzles.append_array(_screen_wing())
 	return puzzles
 
 
@@ -1569,5 +1575,218 @@ static func _veil_wing() -> Array:
 			[_guard(3, 3, [Vector2i(3, 3)], 2)],
 			"R R R R R",
 			"Veil Wing"
+		),
+	]
+
+
+static func _shade_wing() -> Array:
+	return [
+		_puzzle(
+			81,
+			"The First Shade",
+			"This room is about the rule that light stops at a shade, so the gap beyond stays dark and you leave by that dark gap.",
+			PackedStringArray([
+				"############",
+				"#..SHX.....#",
+				"#..#.#.....#",
+				"#..........#",
+				"#..........#",
+				"############",
+			]),
+			[_lamp(4, 2, "n", 2)],
+			[_guard(4, 3, [Vector2i(4, 3)], 1)],
+			"R R",
+			"Shade Wing"
+		),
+		_puzzle(
+			82,
+			"The Dark Step",
+			"This room is about the rule that you step onto the shade under the lamp without snuffing, and the shade stays dark.",
+			PackedStringArray([
+				"#########",
+				"#.SHX...#",
+				"#.#.#...#",
+				"#.......#",
+				"#########",
+			]),
+			[_lamp(3, 2, "n", 2)],
+			[_guard(3, 3, [Vector2i(3, 3)], 1)],
+			"R R",
+			"Shade Wing"
+		),
+		_puzzle(
+			83,
+			"The Long Road",
+			"This room is about the rule that a called guard cannot step on a shade, so he takes the longer floor road.",
+			PackedStringArray([
+				"#############",
+				"#S....H....X#",
+				"##.###.#.##.#",
+				"#...........#",
+				"#...........#",
+				"#...........#",
+				"#############",
+			]),
+			[_lamp(4, 1, "e", 0), _lamp(6, 3, "n", 3), _lamp(10, 5, "n", 0)],
+			[_guard(10, 4, [Vector2i(10, 4)], 2)],
+			"R R T0 R W W W W W W W W R R R R R R R",
+			"Shade Wing"
+		),
+		_puzzle(
+			84,
+			"The Far Dark",
+			"This room is about the rule that the tile past a shade stays dark and can be entered.",
+			PackedStringArray([
+				"############",
+				"#..SH..X...#",
+				"#..#.#.....#",
+				"#..........#",
+				"############",
+			]),
+			[_lamp(4, 2, "n", 2)],
+			[_guard(4, 3, [Vector2i(4, 3)], 1)],
+			"R R R R",
+			"Shade Wing"
+		),
+		_puzzle(
+			85,
+			"The Second Lamp",
+			"This room is about the rule that this room keeps its second lamp, and that lamp's light stops at the shade.",
+			PackedStringArray([
+				"#########",
+				"#.#.....#",
+				"#.SHX...#",
+				"#.#.#...#",
+				"#.......#",
+				"#########",
+			]),
+			[_lamp(3, 1, "s", 2), _lamp(3, 3, "n", 2)],
+			[_guard(3, 4, [Vector2i(3, 4)], 1)],
+			"R T0 R",
+			"Shade Wing"
+		),
+		_puzzle(
+			86,
+			"The Last Shade",
+			"This room is about the rule that you leave by the dark gap the shade left.",
+			PackedStringArray([
+				"##########",
+				"#..SHX...#",
+				"#..#.#...#",
+				"#........#",
+				"##########",
+			]),
+			[_lamp(4, 2, "n", 2)],
+			[_guard(6, 1, [Vector2i(6, 1)], 1), _guard(4, 3, [Vector2i(4, 3)], 1)],
+			"R R",
+			"Shade Wing"
+		),
+	]
+
+
+static func _screen_wing() -> Array:
+	return [
+		_puzzle(
+			87,
+			"The First Screen",
+			"This room is about the rule that a screen lets the lamp light the gap beyond and stops the guard's sight, so you cross that lit gap.",
+			PackedStringArray([
+				"###########",
+				"#S..G....X#",
+				"####E..##.#",
+				"####.####.#",
+				"#.........#",
+				"###########",
+			]),
+			[_lamp(7, 1, "e", 0), _lamp(4, 3, "n", 2)],
+			[_guard(4, 4, [Vector2i(4, 4)], 3)],
+			"R R R R R T0 W W W W W R R R",
+			"Screen Wing"
+		),
+		_puzzle(
+			88,
+			"The Lit Screen",
+			"This room is about the rule that the screen is lit, so you snuff before you step onto it.",
+			PackedStringArray([
+				"########",
+				"#.X....#",
+				"#.G#...#",
+				"#.E....#",
+				"#..S...#",
+				"#......#",
+				"########",
+			]),
+			[_lamp(3, 3, "n", 2)],
+			[_guard(2, 2, [Vector2i(2, 2)], 3)],
+			"T0 L U T0 U U",
+			"Screen Wing"
+		),
+		_puzzle(
+			89,
+			"The Closed Road",
+			"This room is about the rule that a called guard cannot step on a screen, so he takes the longer floor road.",
+			PackedStringArray([
+				"#############",
+				"#S...G.....X#",
+				"#####E..###.#",
+				"#####.#####.#",
+				"#...........#",
+				"#############",
+			]),
+			[_lamp(9, 1, "e", 0), _lamp(5, 3, "n", 2)],
+			[_guard(5, 4, [Vector2i(5, 4)], 3)],
+			"R R R R R R R T0 W W W W W W R R R",
+			"Screen Wing"
+		),
+		_puzzle(
+			90,
+			"The Far Light",
+			"This room is about the rule that the tile past a screen is lit and unwatched.",
+			PackedStringArray([
+				"################",
+				"#S......G.....X#",
+				"########E..###.#",
+				"########.#####.#",
+				"#..............#",
+				"################",
+			]),
+			[_lamp(12, 1, "e", 0), _lamp(8, 3, "n", 2)],
+			[_guard(8, 4, [Vector2i(8, 4)], 3)],
+			"R R R R R R R R R R T0 W W W W W W R R R",
+			"Screen Wing"
+		),
+		_puzzle(
+			91,
+			"The Second Lamp",
+			"This room is about the rule that this room keeps its second lamp, and that lamp's light passes the screen.",
+			PackedStringArray([
+				"##########",
+				"#........#",
+				"###.####.#",
+				"###E..##.#",
+				"#S.G...X.#",
+				"##########",
+			]),
+			[_lamp(6, 4, "e", 0), _lamp(3, 2, "s", 2)],
+			[_guard(3, 1, [Vector2i(3, 1)], 3)],
+			"R R R R T0 W W W W W W R R",
+			"Screen Wing"
+		),
+		_puzzle(
+			92,
+			"The Last Screen",
+			"This room is about the rule that you leave by the lit unwatched gap the screen left.",
+			PackedStringArray([
+				"##########",
+				"#S.G...X.#",
+				"###E..##.#",
+				"###.####.#",
+				"#........#",
+				"##########",
+			]),
+			[_lamp(6, 1, "e", 0), _lamp(3, 3, "n", 2)],
+			[_guard(3, 4, [Vector2i(3, 4)], 3)],
+			"R R R R T0 W W W W W R R",
+			"Screen Wing"
 		),
 	]

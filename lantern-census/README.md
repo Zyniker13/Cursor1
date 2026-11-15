@@ -1,6 +1,6 @@
 # Lantern Census
 
-A twenty-one-floor Godot 4 slice. The guild pays for the map you carry out. Oil is the turn budget. The cellar is the first floor. The cistern is the next one. The cloister is the third. The crypt is the fourth. The ossuary is the fifth. The reliquary is the sixth. The undercroft is the seventh. The well house is the eighth. The scriptorium is the ninth. The binding is the tenth. The chart room is the eleventh. The bell loft is the twelfth. The clock room is the thirteenth. The font is the fourteenth. The apse is the fifteenth. The choir is the sixteenth. The rood is the seventeenth. The crossing is the eighteenth. The transept is the nineteenth. The ambulatory is the twentieth. The chevet is the twenty-first, with its own layout and its own census.
+A twenty-three-floor Godot 4 slice. The guild pays for the map you carry out. Oil is the turn budget. The cellar is the first floor. The cistern is the next one. The cloister is the third. The crypt is the fourth. The ossuary is the fifth. The reliquary is the sixth. The undercroft is the seventh. The well house is the eighth. The scriptorium is the ninth. The binding is the tenth. The chart room is the eleventh. The bell loft is the twelfth. The clock room is the thirteenth. The font is the fourteenth. The apse is the fifteenth. The choir is the sixteenth. The rood is the seventeenth. The crossing is the eighteenth. The transept is the nineteenth. The ambulatory is the twentieth. The chevet is the twenty-first. The retrochoir is the twenty-second. The lady chapel is the twenty-third, with its own layout and its own census.
 
 ## Play
 
@@ -35,7 +35,7 @@ Town opens the floor select. It does not drop you straight down a shaft.
 
 ## Floor select
 
-The Cellar, the Cistern, the Cloister, the Crypt, the Ossuary, the Reliquary, the Undercroft, the Well House, the Scriptorium, the Binding, the Chart Room, the Bell Loft, the Clock Room, the Font, the Apse, the Choir, the Rood, the Crossing, the Transept, the Ambulatory, and the Chevet are listed separately. Each card says what that floor asks you to record, and whether its census is still open.
+The Cellar, the Cistern, the Cloister, the Crypt, the Ossuary, the Reliquary, the Undercroft, the Well House, the Scriptorium, the Binding, the Chart Room, the Bell Loft, the Clock Room, the Font, the Apse, the Choir, the Rood, the Crossing, the Transept, the Ambulatory, the Chevet, the Retrochoir, and the Lady Chapel are listed separately. Each card says what that floor asks you to record, and whether its census is still open.
 
 The small flask can reach every lift. A finished census on any floor needs the large flask.
 
@@ -70,7 +70,7 @@ The warden stands on one tile and never moves. It telegraphs the tile it will hi
 
 A hit burns 3 oil on top of the action's 1 oil. The hit does not end the descent while any oil remains. Oil at 0 puts the lamp out, ends the descent, and the sheet pays nothing. Stepping onto the lift extracts you even when that step spends your last oil.
 
-Hazards do not burn extra oil. They are census tiles. Stepping on a blank one inks it. On the cistern those cracks are called seeps, on the cloister they are called cinders, on the crypt they are called ash cracks, on the ossuary they are called chalk cracks, on the reliquary they are called nail cracks, on the undercroft they are called salt cracks, on the well house they are called well cracks, on the scriptorium they are called ink cracks, on the binding they are called glue cracks, on the chart room they are called chart cracks, on the bell loft they are called bell cracks, on the clock room they are called clock cracks, on the font they are called font cracks, on the apse they are called apse cracks, on the choir they are called choir cracks, on the rood they are called rood cracks, on the crossing they are called crossing cracks, on the transept they are called transept cracks, on the ambulatory they are called ambulatory cracks, and on the chevet they are called chevet cracks; they use the same hazard rule.
+Hazards do not burn extra oil. They are census tiles. Stepping on a blank one inks it. On the cistern those cracks are called seeps, on the cloister they are called cinders, on the crypt they are called ash cracks, on the ossuary they are called chalk cracks, on the reliquary they are called nail cracks, on the undercroft they are called salt cracks, on the well house they are called well cracks, on the scriptorium they are called ink cracks, on the binding they are called glue cracks, on the chart room they are called chart cracks, on the bell loft they are called bell cracks, on the clock room they are called clock cracks, on the font they are called font cracks, on the apse they are called apse cracks, on the choir they are called choir cracks, on the rood they are called rood cracks, on the crossing they are called crossing cracks, on the transept they are called transept cracks, on the ambulatory they are called ambulatory cracks, on the chevet they are called chevet cracks, on the retrochoir they are called retrochoir cracks, and on the lady chapel they are called lady-chapel cracks; they use the same hazard rule.
 
 ## Payout
 
@@ -640,14 +640,80 @@ Record every corridor, the twenty-one chevet cracks, and the ring around the che
 
 The full sheet is `73 × 3 + 21 × 8 + 15 = 402` coin. The shortest path to the lift is 19 steps, so the small flask has a margin of 5. A checked route that steps on every payable tile without taking a swing, then reaches the lift, costs 120 oil. The large flask holds 120, so a careful survey fits and a wandering one can still run the lamp out. The Chevet title fits on a 1366-wide card, but that width clips The Scriptorium and The Ambulatory once the Chevet card is added. The floor select is 1434 by 720, the smallest width that shows those titles. The Chevet card sits beside the Ambulatory card and does not cover it.
 
+## The Retrochoir
+
+Hand-authored, 25 by 21. `S` start, `L` lift, `H` retrochoir crack, `E` warden, `O` the retrochoir. `O` was an unused letter. `P` is the binding press, so it stays unused. The retrochoir is wall for the sheet and is drawn as pale gilt timber, distinct from the chevet's dark leaded glass, the ambulatory's pale vaulting, and the transept's pale ashlar. Bumping it inks a wall. Walls stay warm limestone. Retrochoir cracks read as copper nails, distinct from the chevet's violet cames. The west aisle down to the lift path is open floor. The piers are ordinary walls.
+
+The sheet grows the chevet one column to the east. Every chevet crack whose x was 22 moves one column east, to x 23. `(19,12)` stays where it was. The new crack is `(23,14)`, on the new east wall. The landing east of the lift, `(11,11)` through `(22,11)`, is closed into the east pier. The north landing `(4,1)` through `(23,1)` is closed as well. `(2,1)` and `(3,1)` stay open floor. `(1,12)`, `(1,13)`, and `(1,14)` stay ordinary walls and are not cracks. `(19,3)`, `(20,3)`, and `(21,3)` stay open. On the chevet, closing that north passage put the survey at 126 oil, and the open passage is what made it 120. Here, with the east pier and the north landing closed and with those three cells still open, leaving the new cell `(22,3)` walled surveys at 136 oil. `(22,3)` is left open as one more passage cell from the ring to the east cracks. It is not a ring tile, a crack, the warden, the lift, the start, or a cell on the 19-step path. That open passage brings the survey to 126 oil. The ordinary floors `(2,12)` and `(11,12)` through `(18,12)` are closed as well. They are not ring tiles, cracks, the warden, the lift, the start, or cells on the 19-step path. With those closures, a swing-free survey costs 120 oil. The large flask holds 120, so a careful survey fits.
+
+```
+#########################
+#S..#####################
+#.#####################H#
+#H####.................H#
+#.####.OOOOOOOOOOOO.###H#
+#H####.OOOOOOOOOOOO.###H#
+#.####.OOOOOOOOOOOO.###H#
+#H####.OOOOOOOOOOOO.###H#
+#.####.OOOOOOOOOOOO.###H#
+#H####.OOOOOOOOOOOO.###H#
+#.####..............###H#
+#H........L############H#
+###H.H.H.E.########H...H#
+#######################H#
+#######################H#
+#########################
+#########################
+#########################
+#########################
+#########################
+#########################
+```
+
+Record every corridor, the twenty-two retrochoir cracks, and the ring around the retrochoir. The retrochoir cracks are `(23,2)`, `(1,3)`, `(23,3)`, `(23,4)`, `(1,5)`, `(23,5)`, `(23,6)`, `(1,7)`, `(23,7)`, `(23,8)`, `(1,9)`, `(23,9)`, `(23,10)`, `(1,11)`, `(23,11)`, `(3,12)`, `(5,12)`, `(7,12)`, `(19,12)`, `(23,12)`, `(23,13)`, and `(23,14)`. `(23,13)` is the crack moved from `(22,13)`. `(23,14)` is the new crack. `(1,12)`, `(1,13)`, and `(1,14)` are ordinary walls. The warden stands at `(9,12)`, with open corridor immediately west at `(8,12)` and east at `(10,12)`. The lift is at `(10,11)`. The start is at `(1,1)`. The retrochoir is one solid 12×6 rectangle at columns 7–18 and rows 4–9. The ring is the 40-tile corridor cycle around that retrochoir: `(6,3)` through `(19,3)`, the sides `(6,4)` `(19,4)` `(6,5)` `(19,5)` `(6,6)` `(19,6)` `(6,7)` `(19,7)` `(6,8)` `(19,8)` `(6,9)` `(19,9)`, and `(6,10)` through `(19,10)`. Every ring tile is ordinary floor.
+
+The full sheet is `67 × 3 + 22 × 8 + 15 = 392` coin. The shortest path to the lift is 19 steps, so the small flask has a margin of 5. A checked route that steps on every payable tile without taking a swing, then reaches the lift, costs 120 oil. The large flask holds 120, so a careful survey fits and a wandering one can still run the lamp out. The Chevet window was 1434 by 720. Adding the Retrochoir card makes each card narrower, and 1500 clips The Scriptorium and The Ambulatory. The floor select is 1501 by 720, the smallest width that shows every title, including The Scriptorium, The Ambulatory, and The Chevet. The Retrochoir card sits beside the Chevet card and does not cover it.
+
+## The Lady Chapel
+
+Hand-authored, 26 by 21. `S` start, `L` lift, `H` lady-chapel crack, `E` warden, `M` the lady chapel. `M` is the next unused letter. The church floors have been walking backward through unused letters, `X`, `V`, `U`, `Q`, then `O`. `N` is the font, so `M` is next. `O` is the retrochoir, `P` is the binding press, and `Q` is the chevet. The lady chapel is wall for the sheet and is drawn as a blue starred vault, distinct from the retrochoir's pale gilt timber, the chevet's dark leaded glass, and the ambulatory's pale vaulting. Bumping it inks a wall. Walls stay warm limestone. Lady-chapel cracks read as lapis seams, distinct from the retrochoir's copper nails and the chevet's violet cames. The west aisle down to the lift path is open floor. The piers are ordinary walls, except `(19,11)`, which is open floor so the survey fits in 120 oil.
+
+```
+##########################
+#S..######################
+#.######################H#
+#H####..................H#
+#.####.MMMMMMMMMMMMM.###H#
+#H####.MMMMMMMMMMMMM.###H#
+#.####.MMMMMMMMMMMMM.###H#
+#H####.MMMMMMMMMMMMM.###H#
+#.####.MMMMMMMMMMMMM.###H#
+#H####.MMMMMMMMMMMMM.###H#
+#.####...............###H#
+#H........L########.####H#
+###H#H.H.E.########H....H#
+########################H#
+########################H#
+########################H#
+##########################
+##########################
+##########################
+##########################
+##########################
+```
+
+Record every corridor, the twenty-three lady-chapel cracks, and the ring around the lady chapel. The lady-chapel cracks are `(24,2)`, `(1,3)`, `(24,3)`, `(24,4)`, `(1,5)`, `(24,5)`, `(24,6)`, `(1,7)`, `(24,7)`, `(24,8)`, `(1,9)`, `(24,9)`, `(24,10)`, `(1,11)`, `(24,11)`, `(3,12)`, `(5,12)`, `(7,12)`, `(19,12)`, `(24,12)`, `(24,13)`, `(24,14)`, and `(24,15)`. Every retrochoir crack whose x was 23 moved to x 24. `(19,12)` stayed. `(24,15)` is the new crack. `(1,12)`, `(1,13)`, and `(1,14)` are ordinary walls. The warden stands at `(9,12)`, with open corridor immediately west at `(8,12)` and east at `(10,12)`. The lift is at `(10,11)`. The start is at `(1,1)`. None of those three moved. The lady chapel is one solid 13×6 rectangle at columns 7–19 and rows 4–9. The ring is the 42-tile corridor cycle around that chapel: `(6,3)` through `(20,3)`, the sides `(6,4)` `(20,4)` `(6,5)` `(20,5)` `(6,6)` `(20,6)` `(6,7)` `(20,7)` `(6,8)` `(20,8)` `(6,9)` `(20,9)`, and `(6,10)` through `(20,10)`. Every ring tile is ordinary floor.
+
+The full sheet is `70 × 3 + 23 × 8 + 15 = 409` coin. There are 70 corridors. The shortest path to the lift is 19 steps, so the small flask has a margin of 5. A checked route that steps on every payable tile without taking a swing, then reaches the lift, costs 120 oil. Before the last closures, with `(23,3)` still wall and the south gallery open, that survey was 142 oil. Opening `(23,3)` brought it to 132. Closing `(2,12)` and `(11,12)` through `(18,12)` brought it to 126. Opening `(19,11)` brought it to 116, and closing `(4,12)` brought it to 120. The large flask holds 120. The Retrochoir window was 1501 by 720. Adding the Lady Chapel card makes each card narrower. At 1569 the measured line for The Scriptorium is still wider than its heading, and the last letter is clipped. 1579 is still short of that line. The floor select is 1580 by 720, the smallest width that shows every title inside its heading, including The Scriptorium, The Ambulatory, The Chevet, and The Retrochoir. The Lady Chapel card sits immediately to the right of the Retrochoir card and does not cover it.
+
 ## Presentation
 
-All twenty-one floors use the same code-drawn raycaster, with billboards for the warden, the swing, the hazards, and the lift. There are no imported textures. Cistern walls are cooler, the pit is teal, and the seeps read as green cracks. Cloister walls are warm limestone, the garth is a dark garden, and the cinders read as ember cracks. Crypt walls are violet stone, the tomb is a pale slab, and the ash reads as gray cracks. Ossuary walls are dry bone-stone, the stack is aged ivory, and the chalk reads as pale cracks. Reliquary walls are lacquered timber, the case is gilt wood, and the nails read as copper cracks. Undercroft walls are damp stone, the trough is dark brine, and the salt reads as pale crystals. Well house walls are dry yard stone, the shaft is dark water, and the well cracks read as wet blue seams. Scriptorium walls are lamp-lit oak, the desk is pale vellum, and the ink cracks read as blue-black seams. Binding walls are laid paper, the press is dark iron, and the glue cracks read as amber seams. Chart room walls are ink blue, the table is pale chart paper, and the chart cracks read as rust-red seams. Bell loft walls are soot, the bell is bronze, and the bell cracks read as amber seams. Clock room walls are dark timber, the clock is a pale clock face, and the clock cracks read as brass seams. Font walls are damp plaster, the font is a dark stone basin, and the font cracks read as pale lime seams. Apse walls are cut limestone, the apse is pale cut stone, and the apse cracks read as gilt seams. Choir walls are dark oak, the choir is pale timber stalls, and the choir cracks read as wax seams. Rood walls are soot stone, the rood is a dark timber screen, and the rood cracks read as iron seams. Crossing walls are soot limestone, the crossing is dark stone, and the crossing cracks read as iron seams. Transept walls are warm limestone, the transept is pale ashlar, and the transept cracks read as gilt seams. Ambulatory walls are warm limestone, the ambulatory is pale vaulting, and the ambulatory cracks read as chalk ribs. Chevet walls are warm limestone, the chevet is dark leaded glass, and the chevet cracks read as violet cames. The sheet, the town, and the floor select are drawn in code.
+All twenty-three floors use the same code-drawn raycaster, with billboards for the warden, the swing, the hazards, and the lift. There are no imported textures. Cistern walls are cooler, the pit is teal, and the seeps read as green cracks. Cloister walls are warm limestone, the garth is a dark garden, and the cinders read as ember cracks. Crypt walls are violet stone, the tomb is a pale slab, and the ash reads as gray cracks. Ossuary walls are dry bone-stone, the stack is aged ivory, and the chalk reads as pale cracks. Reliquary walls are lacquered timber, the case is gilt wood, and the nails read as copper cracks. Undercroft walls are damp stone, the trough is dark brine, and the salt reads as pale crystals. Well house walls are dry yard stone, the shaft is dark water, and the well cracks read as wet blue seams. Scriptorium walls are lamp-lit oak, the desk is pale vellum, and the ink cracks read as blue-black seams. Binding walls are laid paper, the press is dark iron, and the glue cracks read as amber seams. Chart room walls are ink blue, the table is pale chart paper, and the chart cracks read as rust-red seams. Bell loft walls are soot, the bell is bronze, and the bell cracks read as amber seams. Clock room walls are dark timber, the clock is a pale clock face, and the clock cracks read as brass seams. Font walls are damp plaster, the font is a dark stone basin, and the font cracks read as pale lime seams. Apse walls are cut limestone, the apse is pale cut stone, and the apse cracks read as gilt seams. Choir walls are dark oak, the choir is pale timber stalls, and the choir cracks read as wax seams. Rood walls are soot stone, the rood is a dark timber screen, and the rood cracks read as iron seams. Crossing walls are soot limestone, the crossing is dark stone, and the crossing cracks read as iron seams. Transept walls are warm limestone, the transept is pale ashlar, and the transept cracks read as gilt seams. Ambulatory walls are warm limestone, the ambulatory is pale vaulting, and the ambulatory cracks read as chalk ribs. Chevet walls are warm limestone, the chevet is dark leaded glass, and the chevet cracks read as violet cames. Retrochoir walls are warm limestone, the retrochoir is pale gilt timber, and the retrochoir cracks read as copper nails. Lady chapel walls are warm limestone, the lady chapel is a blue starred vault, and the lady-chapel cracks read as lapis seams. The sheet, the town, and the floor select are drawn in code.
 
 ## Limitations
 
-- Twenty-one floors, one warden on each. The warden does not patrol or chase.
+- Twenty-three floors, one warden on each. The warden does not patrol or chase.
 - The same floor can be turned in again on a later extract. A finished census stays finished.
 - Mouse look is optional and snaps by quarter turns. There is no sound.
 - Walls are for the sheet, not for the payout.
-- The automated checks cover the rules and all twenty-one floors, including that the chevet's true census is accepted and a wrong, short, or swapped sheet is rejected. They do not play the window, and this slice was not given a human playtest here. The chevet's swing-free survey costs 120 oil with the north passage `(19,3)`, `(20,3)`, and `(21,3)` left open. Walling that passage, after `(11,11)` through `(21,11)` were closed into the east pier and `(4,1)` through `(22,1)` were closed on the north landing, surveys at 126 oil. No further ordinary floor is closed. `(1,12)`, `(1,13)`, and `(1,14)` stay ordinary walls.
+- The automated checks cover the rules and all twenty-three floors, including that the chevet's, the retrochoir's, and the lady chapel's true censuses are accepted and a wrong, short, or swapped sheet is rejected. They do not play the window, and this slice was not given a human playtest here. The chevet's swing-free survey costs 120 oil with the north passage `(19,3)`, `(20,3)`, and `(21,3)` left open. Walling that passage, after `(11,11)` through `(21,11)` were closed into the east pier and `(4,1)` through `(22,1)` were closed on the north landing, surveys at 126 oil. No further ordinary floor is closed. `(1,12)`, `(1,13)`, and `(1,14)` stay ordinary walls. The retrochoir's swing-free survey costs 120 oil. With the east pier `(11,11)` through `(22,11)` and the north landing `(4,1)` through `(23,1)` closed, and with `(19,3)`, `(20,3)`, and `(21,3)` left open, leaving `(22,3)` walled surveys at 136 oil. Leaving `(22,3)` open brings that survey to 126. Closing the ordinary floors `(2,12)` and `(11,12)` through `(18,12)` brings it to 120. The ring stays open. The lady chapel's swing-free survey costs 120 oil. With the east pier `(11,11)` through `(23,11)` and the north landing `(4,1)` through `(24,1)` closed, and with `(19,3)` through `(22,3)` left open, leaving `(23,3)` walled and the south gallery open surveys at 142 oil. Leaving `(23,3)` open brings that survey to 132. Closing `(2,12)` and `(11,12)` through `(18,12)` brings it to 126. Opening `(19,11)` brings it to 116, and closing `(4,12)` brings it to 120. `(2,1)` and `(3,1)` stay open. The ring stays open.

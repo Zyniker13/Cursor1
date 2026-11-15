@@ -207,6 +207,9 @@ func _kind_for_key(code: int) -> int:
 		KEY_Y: Rules.Kind.HOE,
 		KEY_U: Rules.Kind.HARROW,
 		KEY_I: Rules.Kind.FORK,
+		KEY_O: Rules.Kind.PRONG,
+		KEY_P: Rules.Kind.SHARE,
+		KEY_T: Rules.Kind.COULTER,
 	}
 	if not map.has(code):
 		return -1
@@ -373,6 +376,9 @@ func _kind_order() -> Array:
 		Rules.Kind.HOE,
 		Rules.Kind.HARROW,
 		Rules.Kind.FORK,
+		Rules.Kind.PRONG,
+		Rules.Kind.SHARE,
+		Rules.Kind.COULTER,
 	]
 
 
@@ -501,7 +507,7 @@ func _draw() -> void:
 	var size: Vector2 = lay.size
 	draw_rect(Rect2(Vector2.ZERO, size), COL_BG)
 	_text(Vector2(24, 14), "KILN ROUTE", 28, COL_TEXT)
-	_text(Vector2(236, 26), "seventeen wings", 15, COL_DIM)
+	_text(Vector2(236, 26), "twenty wings", 15, COL_DIM)
 	var minute := "minute  %d / %d" % [_shown_tick(), Rules.SIM_TICKS]
 	var minute_w := font.get_string_size(minute, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
 	_text(Vector2(size.x - 24 - minute_w, 26), minute, 15, COL_DIM)
@@ -511,7 +517,7 @@ func _draw() -> void:
 	_draw_grid(lay)
 	_draw_side(lay)
 	_draw_tray(lay)
-	_text(Vector2(24, size.y - 28), "1-9 0 - = \\ ; , ' . / ` y u i select   R rotate   LMB place or pick up   RMB rotate   Space run   F skip   Bksp restart", 13, COL_DIM)
+	_text(Vector2(24, size.y - 28), "1-9 0 - = \\ ; , ' . / ` y u i o p t select   R rotate   LMB place or pick up   RMB rotate   Space run   F skip   Bksp restart", 13, COL_DIM)
 
 
 func _draw_tabs(lay: Dictionary) -> void:
@@ -824,6 +830,50 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 		var nick := along * body.size.x * 0.12
 		draw_line(left_root + left_v * reach * 0.62, left_root + left_v * reach * 0.62 + nick, ink, thick)
 		draw_line(right_root + right_v * reach * 0.62, right_root + right_v * reach * 0.62 + nick, ink, thick)
+	elif kind == Rules.Kind.PRONG:
+		# The right tine leaves from the waiting item. The left tine leaves from the arrival, ahead of it.
+		# A fork's two tines share one hub.
+		var along := Vector2(Rules.vec(dir))
+		var left_v := Vector2(Rules.vec(Rules.left(dir)))
+		var right_v := Vector2(Rules.vec(Rules.right(dir)))
+		var ink := Color(1, 1, 1, 0.92 * alpha)
+		var thick := maxf(2.0, body.size.x * 0.07)
+		var rear := center - along * body.size.x * 0.16
+		var ahead := center + along * body.size.x * 0.14
+		var reach := body.size.x * 0.26
+		draw_line(rear, rear + right_v * reach, ink, thick)
+		draw_line(ahead, ahead + left_v * reach, ink, thick)
+		var nick := along * body.size.x * 0.1
+		draw_line(rear + right_v * reach * 0.55, rear + right_v * reach * 0.55 - nick, ink, thick)
+		draw_line(ahead + left_v * reach * 0.55, ahead + left_v * reach * 0.55 + nick, ink, thick)
+	elif kind == Rules.Kind.SHARE:
+		# The forward stroke leaves from the waiting item. The left stroke leaves from the arrival, ahead of it.
+		# A prong's strokes leave right and left. A fork's two tines share one hub.
+		var along := Vector2(Rules.vec(dir))
+		var left_v := Vector2(Rules.vec(Rules.left(dir)))
+		var ink := Color(1, 1, 1, 0.92 * alpha)
+		var thick := maxf(2.0, body.size.x * 0.07)
+		var rear := center - along * body.size.x * 0.18
+		var ahead := center + along * body.size.x * 0.12
+		var reach := body.size.x * 0.28
+		draw_line(rear, rear + along * reach, ink, thick)
+		draw_line(ahead, ahead + left_v * reach, ink, thick)
+		var nick := left_v * body.size.x * 0.08
+		draw_line(rear + along * reach * 0.55, rear + along * reach * 0.55 + nick, ink, thick)
+	elif kind == Rules.Kind.COULTER:
+		# The forward stroke leaves from the waiting item. The right stroke leaves from the arrival, ahead of it.
+		# A share's side stroke leaves left.
+		var along := Vector2(Rules.vec(dir))
+		var right_v := Vector2(Rules.vec(Rules.right(dir)))
+		var ink := Color(1, 1, 1, 0.92 * alpha)
+		var thick := maxf(2.0, body.size.x * 0.07)
+		var rear := center - along * body.size.x * 0.18
+		var ahead := center + along * body.size.x * 0.12
+		var reach := body.size.x * 0.28
+		draw_line(rear, rear + along * reach, ink, thick)
+		draw_line(ahead, ahead + right_v * reach, ink, thick)
+		var nick := right_v * body.size.x * 0.08
+		draw_line(rear + along * reach * 0.55, rear + along * reach * 0.55 - nick, ink, thick)
 	elif kind == Rules.Kind.GRATE:
 		var along := Vector2(Rules.vec(dir))
 		var across := Vector2(Rules.vec(Rules.right(dir)))
@@ -843,7 +893,7 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 	var forward := light
 	if kind == Rules.Kind.GRATE:
 		forward = Color("d7dee6")
-	if kind != Rules.Kind.HOOK and kind != Rules.Kind.DROP and kind != Rules.Kind.LIFT and kind != Rules.Kind.SHED and kind != Rules.Kind.RAKE and kind != Rules.Kind.HOE and kind != Rules.Kind.HARROW and kind != Rules.Kind.FORK:
+	if kind != Rules.Kind.HOOK and kind != Rules.Kind.DROP and kind != Rules.Kind.LIFT and kind != Rules.Kind.SHED and kind != Rules.Kind.RAKE and kind != Rules.Kind.HOE and kind != Rules.Kind.HARROW and kind != Rules.Kind.FORK and kind != Rules.Kind.PRONG and kind != Rules.Kind.SHARE and kind != Rules.Kind.COULTER:
 		_arrow(front, dir, body.size.x * 0.2, body.size.x * 0.12, Color(forward.r, forward.g, forward.b, forward_alpha))
 	if kind == Rules.Kind.HOOK:
 		var turn := Rules.left(dir)
@@ -878,6 +928,30 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 		var right_side := center + Vector2(Rules.vec(right_turn)) * body.size.x * 0.3
 		_arrow(left_side, left_turn, body.size.x * 0.14, body.size.x * 0.09, Color(fork_mark.r, fork_mark.g, fork_mark.b, alpha))
 		_arrow(right_side, right_turn, body.size.x * 0.14, body.size.x * 0.09, Color(fork_mark.r, fork_mark.g, fork_mark.b, alpha))
+	elif kind == Rules.Kind.PRONG:
+		var prong_mark := Color("f3c4e0")
+		var left_turn := Rules.left(dir)
+		var right_turn := Rules.right(dir)
+		var left_side := center + Vector2(Rules.vec(left_turn)) * body.size.x * 0.3
+		var right_side := center + Vector2(Rules.vec(right_turn)) * body.size.x * 0.3
+		_arrow(left_side, left_turn, body.size.x * 0.14, body.size.x * 0.09, Color(prong_mark.r, prong_mark.g, prong_mark.b, alpha))
+		_arrow(right_side, right_turn, body.size.x * 0.14, body.size.x * 0.09, Color(prong_mark.r, prong_mark.g, prong_mark.b, alpha))
+	elif kind == Rules.Kind.SHARE:
+		var share_mark := Color("f6d2b4")
+		var forward_turn := dir
+		var left_turn := Rules.left(dir)
+		var forward_side := center + Vector2(Rules.vec(forward_turn)) * body.size.x * 0.22
+		var left_side := center + Vector2(Rules.vec(left_turn)) * body.size.x * 0.3
+		_arrow(forward_side, forward_turn, body.size.x * 0.14, body.size.x * 0.09, Color(share_mark.r, share_mark.g, share_mark.b, alpha))
+		_arrow(left_side, left_turn, body.size.x * 0.14, body.size.x * 0.09, Color(share_mark.r, share_mark.g, share_mark.b, alpha))
+	elif kind == Rules.Kind.COULTER:
+		var coulter_mark := Color("c5e6a8")
+		var forward_turn := dir
+		var right_turn := Rules.right(dir)
+		var forward_side := center + Vector2(Rules.vec(forward_turn)) * body.size.x * 0.22
+		var right_side := center + Vector2(Rules.vec(right_turn)) * body.size.x * 0.3
+		_arrow(forward_side, forward_turn, body.size.x * 0.14, body.size.x * 0.09, Color(coulter_mark.r, coulter_mark.g, coulter_mark.b, alpha))
+		_arrow(right_side, right_turn, body.size.x * 0.14, body.size.x * 0.09, Color(coulter_mark.r, coulter_mark.g, coulter_mark.b, alpha))
 	elif kind == Rules.Kind.DROP:
 		var turn := Rules.right(dir)
 		var side := center + Vector2(Rules.vec(turn)) * body.size.x * 0.2
@@ -1047,6 +1121,12 @@ func _key_label(kind: int) -> String:
 		return "u"
 	if kind == Rules.Kind.FORK:
 		return "i"
+	if kind == Rules.Kind.PRONG:
+		return "o"
+	if kind == Rules.Kind.SHARE:
+		return "p"
+	if kind == Rules.Kind.COULTER:
+		return "t"
 	return str(kind + 1)
 
 
@@ -1095,6 +1175,12 @@ func _kind_color(kind: int) -> Color:
 		return Color("6e7a48")
 	if kind == Rules.Kind.FORK:
 		return Color("3d6f8a")
+	if kind == Rules.Kind.PRONG:
+		return Color("7a3e6d")
+	if kind == Rules.Kind.SHARE:
+		return Color("b85c38")
+	if kind == Rules.Kind.COULTER:
+		return Color("3f6b4e")
 	return Color("c792ef")
 
 

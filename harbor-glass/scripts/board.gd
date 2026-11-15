@@ -249,6 +249,12 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_weir(at, rot)
 		"lintel":
 			_draw_lintel(at)
+		"mullion":
+			_draw_mullion(at)
+		"transom":
+			_draw_transom(at)
+		"casement":
+			_draw_casement(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -526,6 +532,75 @@ func _draw_lintel(at: Vector2i) -> void:
 	draw_rect(left, edge, false, 1.5)
 	draw_rect(right, edge, false, 1.5)
 
+func _draw_mullion(at: Vector2i) -> void:
+	# A vertical stone bar. Not the lintel's horizontal bar, and not a shutter slat.
+	# The bar does not turn: a mullion has no facing.
+	var center := _center(at)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var stone := Palette.WOOD if flooded else Palette.WOOD_DARK
+	var edge := Palette.PILE_EDGE if flooded else Palette.WOOD
+	var cap_w := cell * 0.30
+	var cap_h := cell * 0.10
+	var shaft_w := cell * 0.16
+	var top := center.y - cell * 0.38
+	var bot := center.y + cell * 0.38
+	var top_cap := Rect2(Vector2(center.x - cap_w * 0.5, top), Vector2(cap_w, cap_h))
+	var bot_cap := Rect2(Vector2(center.x - cap_w * 0.5, bot - cap_h), Vector2(cap_w, cap_h))
+	var shaft := Rect2(Vector2(center.x - shaft_w * 0.5, top_cap.end.y), Vector2(shaft_w, bot_cap.position.y - top_cap.end.y))
+	draw_rect(top_cap, stone)
+	draw_rect(bot_cap, stone)
+	draw_rect(shaft, stone)
+	draw_rect(top_cap, edge, false, 1.5)
+	draw_rect(bot_cap, edge, false, 1.5)
+	draw_rect(shaft, edge, false, 2.0)
+	draw_line(Vector2(center.x, shaft.position.y + 4.0), Vector2(center.x, shaft.end.y - 4.0), Palette.LANTERN_HOT, 1.5)
+
+func _draw_transom(at: Vector2i) -> void:
+	# A pale horizontal bar with a dark center stroke. Not the lintel's solid
+	# stone bar, and not the mullion's vertical bar. The bar does not turn:
+	# a transom has no facing.
+	var center := _center(at)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var pale := Palette.GLASS
+	pale.a = 0.55 if flooded else 0.96
+	var bar := Rect2(center + Vector2(-cell * 0.42, -cell * 0.11), Vector2(cell * 0.84, cell * 0.22))
+	draw_rect(bar, pale)
+	draw_rect(bar, Palette.FOAM if flooded else Palette.GLASS_EDGE, false, 2.0)
+	draw_line(Vector2(bar.position.x + 6.0, center.y), Vector2(bar.end.x - 6.0, center.y), Palette.GATE_IRON, 3.0)
+
+func _draw_casement(at: Vector2i, rot: int) -> void:
+	# A pale hinged leaf. The dark hinge sits on the facing edge and moves
+	# when the piece is rotated. The leaf has no center stroke, so it is not
+	# the transom's thin bar, and it is not the mullion's vertical shaft.
+	var center := _center(at)
+	var facing := Tracer.casement_facing(rot)
+	var dir := _dir_vec(facing)
+	var flank := Vector2(-dir.y, dir.x)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var pale := Palette.GLASS
+	pale.a = 0.42 if flooded else 0.96
+	var half_along := cell * 0.28
+	var half_across := cell * 0.20
+	var mid := center - dir * cell * 0.06
+	var back := mid - dir * half_along
+	var front := mid + dir * half_along
+	var leaf := PackedVector2Array([
+		back - flank * half_across,
+		back + flank * half_across,
+		front + flank * half_across,
+		front - flank * half_across,
+	])
+	draw_colored_polygon(leaf, pale)
+	var rim := leaf.duplicate()
+	rim.append(leaf[0])
+	draw_polyline(rim, Palette.FOAM if flooded else Palette.GLASS_EDGE, 2.0)
+	var hinge_a := front - flank * (half_across + cell * 0.04)
+	var hinge_b := front + flank * (half_across + cell * 0.04)
+	draw_line(hinge_a, hinge_b, Palette.GATE_IRON, 6.0)
+	draw_circle(hinge_a, 4.2, Palette.WOOD_DARK)
+	draw_circle(hinge_b, 4.2, Palette.WOOD_DARK)
+	draw_circle(hinge_a.lerp(hinge_b, 0.5), 3.2, Palette.GATE_IRON)
+
 func _draw_prism(at: Vector2i, rot: int, set_in_stone: bool) -> void:
 	var center := _center(at)
 	var r := cell * 0.32
@@ -587,11 +662,17 @@ func _draw_dock(dock: Dictionary) -> void:
 	for i in 3:
 		var y := wood.position.y + 6.0 + float(i) * (wood.size.y / 3.5)
 		draw_line(Vector2(wood.position.x + 3, y), Vector2(wood.position.x + wood.size.x - 3, y), Palette.WOOD_DARK, 1.5)
-	var required := str(dock["color"])
+	if bool(dock.get("pass_other", false)):
+		var slot := Rect2(wood.position.x + wood.size.x * 0.42, wood.position.y + 2.0, wood.size.x * 0.16, wood.size.y - 4.0)
+		draw_rect(slot, Color(Palette.NIGHT.r, Palette.NIGHT.g, Palette.NIGHT.b, 0.55))
+	var keep_dark := bool(dock.get("keep_dark", false))
+	var required := "dark" if keep_dark else str(dock["color"])
 	var hits: Array = trace.get("docks", {}).get(str(dock["id"]), [])
 	var lamp := Palette.beam(required)
 	lamp = lamp.darkened(0.55)
-	if hits.has(required):
+	if keep_dark:
+		lamp = Color("243140") if hits.is_empty() else Palette.WARN
+	elif hits.has(required):
 		lamp = Palette.beam(required)
 	elif not hits.is_empty():
 		lamp = Palette.beam(str(hits[0])).darkened(0.15)
