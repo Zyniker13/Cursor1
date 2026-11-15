@@ -338,7 +338,7 @@ func _build_ui() -> void:
 
 	var puzzles_row := HBoxContainer.new()
 	puzzles_row.name = "PuzzleRow"
-	puzzles_row.add_theme_constant_override("separation", 3)
+	puzzles_row.add_theme_constant_override("separation", 2)
 	column.add_child(puzzles_row)
 	for i in _puzzles.size():
 		var building_now := int(_puzzles[i].get("building", 1))
@@ -350,15 +350,15 @@ func _build_ui() -> void:
 			mark.name = _building_mark_name(building_now)
 			mark.text = "B%d" % building_now
 			mark.add_theme_color_override("font_color", AMBER)
-			mark.add_theme_font_size_override("font_size", 13)
+			mark.add_theme_font_size_override("font_size", 11)
 			puzzles_row.add_child(mark)
 		var button := Button.new()
 		button.name = "RouteButton%d" % (i + 1)
 		button.text = str(i + 1)
 		button.tooltip_text = str(_puzzles[i]["title"])
 		button.focus_mode = Control.FOCUS_NONE
-		button.custom_minimum_size = Vector2(20, 26)
-		button.add_theme_font_size_override("font_size", 11)
+		button.custom_minimum_size = Vector2(16, 24)
+		button.add_theme_font_size_override("font_size", 10)
 		button.pressed.connect(select_puzzle.bind(i))
 		puzzles_row.add_child(button)
 		_puzzle_buttons.append(button)
@@ -466,6 +466,8 @@ func _building_mark_name(building: int) -> String:
 			return "BuildingFourMark"
 		5:
 			return "BuildingFiveMark"
+		6:
+			return "BuildingSixMark"
 		_:
 			return "Building%dMark" % building
 
@@ -574,9 +576,9 @@ func _style_puzzle_buttons() -> void:
 	for i in _puzzle_buttons.size():
 		var button: Button = _puzzle_buttons[i]
 		if i == _index:
-			_paint_button(button, AMBER, Color("#1a140e"), Color("#f6e2c2"), 2)
+			_paint_button(button, AMBER, Color("#1a140e"), Color("#f6e2c2"), 1)
 		else:
-			_paint_button(button, Color("#2c3348"), INK, Color("#4a536c"), 2)
+			_paint_button(button, Color("#2c3348"), INK, Color("#4a536c"), 1)
 
 
 func _style_tools() -> void:
@@ -614,6 +616,8 @@ func _sync_facing() -> void:
 	if _facing:
 		if _selected == "turn":
 			_facing.text = "Facing   clockwise"
+		elif _selected == "slide":
+			_facing.text = "Facing   with the parcel"
 		else:
 			_facing.text = "Facing   %s" % Sim.DIR_NAMES[_ghost_dir]
 
@@ -887,6 +891,8 @@ func _draw_block(block: Dictionary, alpha: float) -> void:
 		_edge_arrow(rect, dir, ink, 1.2)
 	elif typ == "turn":
 		_turn_mark(rect, ink)
+	elif typ == "slide":
+		_slide_mark(rect, ink)
 	else:
 		_arrow(rect, dir, ink, 0.78)
 
@@ -1029,6 +1035,13 @@ func _filter_bar(rect: Rect2, dir: int, color: Color) -> void:
 	draw_line(center - side * rect.size.x * 0.16, center + side * rect.size.x * 0.16, color, 3.0)
 
 
+func _slide_mark(rect: Rect2, color: Color) -> void:
+	var center := rect.get_center()
+	var vec := Vector2(1, 0)
+	_tri(center - vec * rect.size.x * 0.18, vec, rect.size.x * 0.14, rect.size.x * 0.085, color)
+	_tri(center + vec * rect.size.x * 0.16, vec, rect.size.x * 0.14, rect.size.x * 0.085, color)
+
+
 func _turn_mark(rect: Rect2, color: Color) -> void:
 	var center := rect.get_center()
 	var radius := rect.size.x * 0.2
@@ -1101,6 +1114,8 @@ func _tool_color(tool: String) -> Color:
 			return Color("#4f7d6a")
 		"turn":
 			return Color("#6e8bb8")
+		"slide":
+			return Color("#d06b86")
 		_:
 			return Color("#888888")
 
@@ -1143,6 +1158,8 @@ func _tool_tip(tool: String) -> String:
 			return "Sets a parcel down two steps along its arrow, over the cell in front."
 		"turn":
 			return "Rotates a parcel one quarter clockwise and waits that tick. It leaves in the new facing on the next tick."
+		"slide":
+			return "Moves a parcel two cells in its facing and does not rotate it. The cell between can be a brick, a belt, or another parcel."
 		_:
 			return ""
 

@@ -16,7 +16,8 @@ const HEARTH := 7
 const SHEAR := 8
 const CHIME := 9
 const RASP := 10
-const COUNT := 11
+const MAUL := 11
+const COUNT := 12
 
 # fire_ticks and slow_ticks are sim ticks of length DT.
 # light_radius, weapon_range, projectile_speed, and splash_radius are pixels.
@@ -28,6 +29,7 @@ const COUNT := 11
 # cuts_web: this plant's light reveals web moths and lets shots hurt them.
 # cracks_glass: this plant's light reveals glass moths and lets shots hurt them.
 # strips_scale: this plant's light reveals scale moths and lets shots hurt them.
+# cracks_mail: this plant's light reveals mail moths and lets shots hurt them.
 const DEFS := [
 	{
 		"name": "Pea",
@@ -47,6 +49,7 @@ const DEFS := [
 		"cuts_web": false,
 		"cracks_glass": false,
 		"strips_scale": false,
+		"cracks_mail": false,
 	},
 	{
 		"name": "Vine",
@@ -66,6 +69,7 @@ const DEFS := [
 		"cuts_web": false,
 		"cracks_glass": false,
 		"strips_scale": false,
+		"cracks_mail": false,
 	},
 	{
 		"name": "Lantern",
@@ -85,6 +89,7 @@ const DEFS := [
 		"cuts_web": false,
 		"cracks_glass": false,
 		"strips_scale": false,
+		"cracks_mail": false,
 	},
 	{
 		"name": "Gourd",
@@ -104,6 +109,7 @@ const DEFS := [
 		"cuts_web": false,
 		"cracks_glass": false,
 		"strips_scale": false,
+		"cracks_mail": false,
 	},
 	{
 		"name": "Wick",
@@ -123,6 +129,7 @@ const DEFS := [
 		"cuts_web": false,
 		"cracks_glass": false,
 		"strips_scale": false,
+		"cracks_mail": false,
 	},
 	{
 		"name": "Briar",
@@ -142,6 +149,7 @@ const DEFS := [
 		"cuts_web": false,
 		"cracks_glass": false,
 		"strips_scale": false,
+		"cracks_mail": false,
 	},
 	{
 		"name": "Flare",
@@ -161,6 +169,7 @@ const DEFS := [
 		"cuts_web": false,
 		"cracks_glass": false,
 		"strips_scale": false,
+		"cracks_mail": false,
 	},
 	{
 		"name": "Hearth",
@@ -180,6 +189,7 @@ const DEFS := [
 		"cuts_web": false,
 		"cracks_glass": false,
 		"strips_scale": false,
+		"cracks_mail": false,
 	},
 	{
 		"name": "Shear",
@@ -199,6 +209,7 @@ const DEFS := [
 		"cuts_web": true,
 		"cracks_glass": false,
 		"strips_scale": false,
+		"cracks_mail": false,
 	},
 	{
 		"name": "Chime",
@@ -218,6 +229,7 @@ const DEFS := [
 		"cuts_web": false,
 		"cracks_glass": true,
 		"strips_scale": false,
+		"cracks_mail": false,
 	},
 	{
 		"name": "Rasp",
@@ -237,6 +249,27 @@ const DEFS := [
 		"cuts_web": false,
 		"cracks_glass": false,
 		"strips_scale": true,
+		"cracks_mail": false,
+	},
+	{
+		"name": "Maul",
+		"role": "Cracks mail, modest shots, tight light.",
+		"damage": 5,
+		"fire_ticks": 33,
+		"light_radius": 192.0,
+		"weapon_range": 100.0,
+		"projectile_speed": 320.0,
+		"slow_factor": 1.0,
+		"slow_ticks": 0,
+		"splash_radius": 0.0,
+		"burns_shroud": false,
+		"cracks_rind": false,
+		"melts_pitch": false,
+		"thaws_frost": false,
+		"cuts_web": false,
+		"cracks_glass": false,
+		"strips_scale": false,
+		"cracks_mail": true,
 	},
 ]
 
