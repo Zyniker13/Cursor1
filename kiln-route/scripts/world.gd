@@ -15,6 +15,9 @@ extends RefCounted
 ## later item arrives from behind, that arrival moves one cell forward inside
 ## the accept and the first item remains the waiter.
 ## A shed is the same, except the arrival moves one cell to the left.
+## A rake does not forward in step 2 on its own. The first item stays until a
+## later item arrives from behind. On that tick the waiter moves one cell to
+## the left and the arrival becomes the new waiter.
 
 const Rules = preload("res://scripts/foundry.gd")
 
@@ -46,7 +49,7 @@ class Machine:
 	## Second lane on a bridge. -1 is empty. Other machines leave it empty.
 	var cross := -1
 	var cross_moved := false
-	## True while a twin, a pass, a slip, or a shed is resolving an arrival, so a loop cannot re-enter.
+	## True while a twin, a pass, a slip, a shed, or a rake is resolving an arrival, so a loop cannot re-enter.
 	var pairing := false
 
 class Source:
@@ -422,8 +425,9 @@ func _can_take(machine: Machine, mat: int, arrival: int) -> bool:
 		or machine.kind == Rules.Kind.PASS
 		or machine.kind == Rules.Kind.SLIP
 		or machine.kind == Rules.Kind.SHED
+		or machine.kind == Rules.Kind.RAKE
 	):
-		# Pairing is handled in _accept. A twin, a pass, a slip, or a shed may already be holding.
+		# Pairing is handled in _accept. A twin, a pass, a slip, a shed, or a rake may already be holding.
 		return false
 	if machine.kind == Rules.Kind.BRIDGE:
 		if arrival == machine.dir:
@@ -475,6 +479,8 @@ func _accept(dest: Vector2i, mat: int, arrival: int) -> bool:
 		return _accept_slip(dest, machine, mat, arrival)
 	if machine.kind == Rules.Kind.SHED:
 		return _accept_shed(dest, machine, mat, arrival)
+	if machine.kind == Rules.Kind.RAKE:
+		return _accept_rake(dest, machine, mat, arrival)
 	if not _can_take(machine, mat, arrival):
 		return false
 	if _holder(machine.kind):
@@ -596,6 +602,32 @@ func _accept_shed(pos: Vector2i, machine: Machine, mat: int, arrival: int) -> bo
 	machine.pairing = false
 	if not sent:
 		return false
+	machine.moved = true
+	return true
+
+
+## Behind only. The first item waits until a later item arrives from behind.
+## That later item may be a different material. On that tick the waiter moves
+## one cell to the left and the arrival becomes the new waiter. A blocked left
+## cell refuses the arrival and leaves the waiter in place. A lone item never
+## leaves, including on the next tick and the tick after that. The rake does
+## not spill, rotate, alternate, or send forward, right, or back.
+func _accept_rake(pos: Vector2i, machine: Machine, mat: int, arrival: int) -> bool:
+	if arrival != machine.dir:
+		return false
+	if machine.hold < 0:
+		machine.hold = mat
+		machine.moved = true
+		return true
+	if machine.moved or machine.pairing:
+		return false
+	var turn := Rules.left(machine.dir)
+	machine.pairing = true
+	var sent: bool = _accept(pos + Rules.vec(turn), machine.hold, turn)
+	machine.pairing = false
+	if not sent:
+		return false
+	machine.hold = mat
 	machine.moved = true
 	return true
 
