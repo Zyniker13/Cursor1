@@ -32,6 +32,8 @@ extends RefCounted
 ## The bell loft's ring is the walk around the bell.
 ## The clock room's ring is the walk around the clock.
 ## The font's ring is the walk around the font.
+## The apse's ring is the walk around the apse.
+## The choir's ring is the walk around the choir.
 ## A census is accepted only when every corridor and hazard is marked truly
 ## and no tile is marked as something it is not.
 
@@ -45,7 +47,7 @@ const HAZARD_VALUE := 8
 const LOOP_VALUE := 15
 
 const TOWN_LINE := "Arrows turn and step, Q and E strafe, M marks the tile you face, and Space waits out the warden's swing."
-const RATE_CARD := "A true corridor pays 3. A true hazard pays 8. The cellar's east square, the cistern ring, the cloister walk, the crypt ring, the ossuary ring, the reliquary ring, the undercroft ring, the well ring, the scriptorium ring, the binding ring, the chart room ring, the bell loft ring, the clock room ring, and the font ring each pay 15 only when every tile of that ring is marked corridor. A false mark pays nothing."
+const RATE_CARD := "A true corridor pays 3. A true hazard pays 8. The cellar's east square, the cistern ring, the cloister walk, the crypt ring, the ossuary ring, the reliquary ring, the undercroft ring, the well ring, the scriptorium ring, the binding ring, the chart room ring, the bell loft ring, the clock room ring, the font ring, the apse ring, and the choir ring each pay 15 only when every tile of that ring is marked corridor. A false mark pays nothing."
 
 const CELLAR_RECORD := "Record every corridor, both hazard cracks, and the east square."
 const CISTERN_RECORD := "Record every corridor, the three seep cracks, and the cistern ring around the pit."
@@ -61,6 +63,8 @@ const CHART_RECORD := "Record every corridor, the twelve chart cracks, and the c
 const BELL_RECORD := "Record every corridor, the thirteen bell cracks, and the bell loft ring around the bell."
 const CLOCK_RECORD := "Record every corridor, the fourteen clock cracks, and the ring around the clock."
 const FONT_RECORD := "Record every corridor, the fifteen font cracks, and the ring around the font."
+const APSE_RECORD := "Record every corridor, the sixteen apse cracks, and the ring around the apse."
+const CHOIR_RECORD := "Record every corridor, the seventeen choir cracks, and the ring around the choir."
 
 const CELLAR_ROWS: PackedStringArray = [
 	"#############",
@@ -314,6 +318,53 @@ const FONT_ROWS: PackedStringArray = [
 	"#################",
 ]
 
+# The apse is the 5x6 block of 'A' at columns 7-11, rows 4-9.
+# The paid ring is the 26-tile corridor cycle around that apse.
+# The west aisle and the north landing are ordinary floors. The piers are walls.
+const APSE_ROWS: PackedStringArray = [
+	"##################",
+	"#S...............#",
+	"#.##############.#",
+	"#H####.......###.#",
+	"#.####.AAAAA.###.#",
+	"#H####.AAAAA.###H#",
+	"#.####.AAAAA.###.#",
+	"#H####.AAAAA.###.#",
+	"#.####.AAAAA.###H#",
+	"#H####.AAAAA.###H#",
+	"#.####.......###.#",
+	"#H........L....HH#",
+	"#..H.H.H.E....H.H#",
+	"#H################",
+	"#.################",
+	"##################",
+	"##################",
+]
+
+# The choir is the 6x6 block of 'C' at columns 7-12, rows 4-9.
+# The paid ring is the 28-tile corridor cycle around that choir.
+# The west aisle and the north landing are ordinary floors. The piers are walls.
+const CHOIR_ROWS: PackedStringArray = [
+	"###################",
+	"#S................#",
+	"#.###############.#",
+	"#H####........###H#",
+	"#.####.CCCCCC.###.#",
+	"#H####.CCCCCC.###H#",
+	"#.####.CCCCCC.###H#",
+	"#H####.CCCCCC.###.#",
+	"#.####.CCCCCC.###H#",
+	"#H####.CCCCCC.###H#",
+	"#.####........###.#",
+	"#H........L......H#",
+	"#..H.H.H.E.....H.H#",
+	"#H#################",
+	"#.#################",
+	"###################",
+	"###################",
+	"###################",
+]
+
 enum Tile { WALL, FLOOR, HAZARD, LIFT }
 enum Mark { NONE, CORRIDOR, WALL, HAZARD }
 enum EndReason { NONE, EXTRACTED, LAMP_OUT, ABANDONED }
@@ -354,7 +405,7 @@ static var _floor_list: Array = []
 
 static func floors() -> Array:
 	if _floor_list.is_empty():
-		_floor_list = [_make_cellar(), _make_cistern(), _make_cloister(), _make_crypt(), _make_ossuary(), _make_reliquary(), _make_undercroft(), _make_wellhouse(), _make_scriptorium(), _make_binding(), _make_chartroom(), _make_bellloft(), _make_clockroom(), _make_font()]
+		_floor_list = [_make_cellar(), _make_cistern(), _make_cloister(), _make_crypt(), _make_ossuary(), _make_reliquary(), _make_undercroft(), _make_wellhouse(), _make_scriptorium(), _make_binding(), _make_chartroom(), _make_bellloft(), _make_clockroom(), _make_font(), _make_apse(), _make_choir()]
 	return _floor_list
 
 
@@ -634,6 +685,44 @@ static func _make_font() -> Floor:
 		ring.append(Vector2i(x, 10))
 	floor.loop = ring
 	floor.record = FONT_RECORD
+	return floor
+
+
+static func _make_apse() -> Floor:
+	var floor := Floor.new()
+	floor.id = "apse"
+	floor.title = "The Apse"
+	floor.rows = APSE_ROWS
+	floor.loop_name = "Apse ring"
+	var ring: Array = []
+	for x in range(6, 13):
+		ring.append(Vector2i(x, 3))
+	for y in range(4, 10):
+		ring.append(Vector2i(6, y))
+		ring.append(Vector2i(12, y))
+	for x in range(6, 13):
+		ring.append(Vector2i(x, 10))
+	floor.loop = ring
+	floor.record = APSE_RECORD
+	return floor
+
+
+static func _make_choir() -> Floor:
+	var floor := Floor.new()
+	floor.id = "choir"
+	floor.title = "The Choir"
+	floor.rows = CHOIR_ROWS
+	floor.loop_name = "Choir ring"
+	var ring: Array = []
+	for x in range(6, 14):
+		ring.append(Vector2i(x, 3))
+	for y in range(4, 10):
+		ring.append(Vector2i(6, y))
+		ring.append(Vector2i(13, y))
+	for x in range(6, 14):
+		ring.append(Vector2i(x, 10))
+	floor.loop = ring
+	floor.record = CHOIR_RECORD
 	return floor
 
 
@@ -1036,6 +1125,10 @@ static func ahead_line(state: RunState) -> String:
 				return "Ahead: the clock. It inks as a wall."
 			if glyph_at(n, plan) == "N":
 				return "Ahead: the font. It inks as a wall."
+			if glyph_at(n, plan) == "A":
+				return "Ahead: the apse. It inks as a wall."
+			if glyph_at(n, plan) == "C":
+				return "Ahead: the choir. It inks as a wall."
 			return "Ahead: wall."
 		Tile.HAZARD:
 			if plan != null and plan.id == "cistern":
@@ -1064,6 +1157,10 @@ static func ahead_line(state: RunState) -> String:
 				return "Ahead: a clock crack. Stepping inks it and costs no extra oil."
 			if plan != null and plan.id == "font":
 				return "Ahead: a font crack. Stepping inks it and costs no extra oil."
+			if plan != null and plan.id == "apse":
+				return "Ahead: an apse crack. Stepping inks it and costs no extra oil."
+			if plan != null and plan.id == "choir":
+				return "Ahead: a choir crack. Stepping inks it and costs no extra oil."
 			return "Ahead: a hazard crack. Stepping inks it and costs no extra oil."
 		Tile.LIFT:
 			return "Ahead: the lift. Stepping on carries the sheet out."
@@ -1163,6 +1260,10 @@ static func step(state: RunState, dir: Vector2i) -> Dictionary:
 				return _pack(state, false, false, false, 0, true, "You tap the clock and ink it if the square was blank.")
 			if glyph_at(target, plan) == "N":
 				return _pack(state, false, false, false, 0, true, "You tap the font and ink it if the square was blank.")
+			if glyph_at(target, plan) == "A":
+				return _pack(state, false, false, false, 0, true, "You tap the apse and ink it if the square was blank.")
+			if glyph_at(target, plan) == "C":
+				return _pack(state, false, false, false, 0, true, "You tap the choir and ink it if the square was blank.")
 			return _pack(state, false, false, false, 0, true, "You tap a wall and ink it if the square was blank.")
 		if target == enemy_pos(plan):
 			return _pack(state, false, false, false, 0, true, "The warden occupies that tile.")
@@ -1210,6 +1311,10 @@ static func step(state: RunState, dir: Vector2i) -> Dictionary:
 			message = "You cross a clock crack. It is inked if the square was blank."
 		elif plan != null and plan.id == "font":
 			message = "You cross a font crack. It is inked if the square was blank."
+		elif plan != null and plan.id == "apse":
+			message = "You cross an apse crack. It is inked if the square was blank."
+		elif plan != null and plan.id == "choir":
+			message = "You cross a choir crack. It is inked if the square was blank."
 		else:
 			message = "You cross a hazard crack. It is inked if the square was blank."
 	return _pack(state, true, true, hit, MOVE_OIL + (HIT_OIL if hit else 0), false, message)
