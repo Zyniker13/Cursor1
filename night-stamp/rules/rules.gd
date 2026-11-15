@@ -1714,6 +1714,90 @@
 # The skip-blank doubling, the wing pay, and the gutter pay do not remove
 # Hold or Exemption, and they do not cancel a retrigger.
 #
+# TITLE-PAGE BELL, in desk order
+# A twenty-sixth night. The stamps, the ink, and the 3x3 form are unchanged.
+# The title-page bell deals the starting deck again. Drafts and the relic
+# from an earlier night do not carry. Open it from the desk, or from a
+# victory desk. Restart act replays whichever night is on the desk.
+# - Nessa Voss, lane column 2, exemption row top, High Toll:
+#   "Patience drops by 2 when the number of filled cells is 7, 8, or 9."
+#   Dory Hart drops patience by 2 only for exactly seven cells, and keeps
+#   the drop at 1 for eight and for nine. Gwyn Brant drops only for exactly
+#   eight, and keeps the drop at 1 for seven and for nine. Nia Soren drops
+#   only for exactly nine, and keeps the drop at 1 for seven and for eight.
+#   Una Pell drops for every odd count, including one, three, and five, and
+#   keeps the drop at 1 for the even counts zero, two, four, and six. Soren
+#   Hale drops for every even count, including zero, two, four, and six, and
+#   keeps the drop at 1 for the odd counts one, three, and five. Nessa does
+#   none of those. The drop is 2 instead of 1 when the number of filled
+#   cells is seven, eight, or nine. Counts of zero through six keep the
+#   drop at 1. The toll does not change what a stamp scores.
+#   Exemption on the top row keeps the drop at 1, even on seven, eight, or
+#   nine. An Exemption off the top row does not.
+#   Hold is applied before the high toll.
+# - Ned Keel, lane column 1, exemption row bottom, Skip Fill:
+#   "A stamp scores twice only when the queue cell two places before it
+#   is filled."
+#   The queue is read from the top row downward, left to right inside a
+#   row, the same order Tobin Hart uses. The cell two places before a
+#   stamp can sit on the previous row. The top-left cell has no cell two
+#   places before it, so it scores its own number. The top-middle cell has
+#   no cell two places before it, so it scores its own number. The
+#   top-right cell scores twice only when the top-left cell is filled. A
+#   later cell looks two steps back. The immediate previous cell and the
+#   immediate next cell do not matter. An empty cell two back means the
+#   stamp scores its own number, even when both immediate neighbors are
+#   filled. A filled cell two back means the stamp scores twice, even when
+#   an immediate neighbor is empty. Tobin Hart doubles a stamp only when
+#   the cell two back is empty, so the top-right cell alone doubles for
+#   Tobin and a filled cell two back does not. Brigg Marsh looks at the
+#   immediate previous cell, so the top-middle cell can double for Brigg
+#   and a filled previous cell does not double even when the cell two back
+#   is empty. Hester Keel looks at the immediate previous cell being
+#   filled, so she doubles the top-right cell when the top-middle cell is
+#   filled and does not double it when only the top-left cell is filled.
+#   Ned does none of those. A retrigger of a stamp whose cell two back is
+#   filled scores twice again. A retrigger of any other stamp does not.
+#   Exemption on the bottom row cancels the doubling, so every stamp
+#   scores its own number. An Exemption off the bottom row does not. An
+#   Exemption that qualifies and sits off the bottom row scores twice.
+#   The fill does not change patience.
+# - Sela Fen, lane column 3, exemption row middle, Post Pay:
+#   "Each stamp in column 3 scores +2 once."
+#   A stamp in column 1 or column 2 scores its own number. The top-right,
+#   the right middle, and the bottom-right are column 3, so each scores
+#   +2. Neighbors do not change the bonus. A column-3 stamp with two
+#   neighbors still scores +2 once, not +4. A lone column-3 stamp still
+#   scores +2. Hess Fen adds 2 to column 1 and does not add 2 to column 3.
+#   Colin Fen adds 2 to column 2 and does not add 2 to column 3. Petra Hale
+#   adds 2 to the four corners, including the top and bottom of column 3,
+#   and does not add 2 to the right middle. Yarrow Fen adds 2 to the whole
+#   top row and does not add 2 to the right middle. Maren Fen adds 2 to
+#   the whole bottom row and does not add 2 to the right middle. Sela does
+#   none of those. A retrigger of a column-3 stamp adds 2 again. A
+#   retrigger of a column-1 or column-2 stamp does not.
+#   Exemption on the middle row cancels the bonus, so every stamp scores
+#   its own number. An Exemption off the middle row does not. An Exemption
+#   in column 3 and off the middle row still adds 2.
+#   The pay does not change patience.
+# - Tess Okell, lane column 2, exemption row top, Seam Pay:
+#   "Each stamp that shares a side with at least one other filled stamp
+#   scores +2 once."
+#   A corner touch does not count. A lone stamp scores its own number. A
+#   stamp with two side neighbors still scores +2 once, not +2 for each
+#   neighbor. Opal Quill adds 3 for a side share and does not add 2. Idris
+#   Reed adds 3 for a diagonal neighbor and does not add 2 for a side.
+#   Rue Hart doubles the later stamp of a side pair and leaves the earlier
+#   stamp at its own number. Tess does none of those. A retrigger of a
+#   stamp that shares a side adds 2 again. A retrigger of a stamp that
+#   does not share a side does not.
+#   Exemption on the top row cancels the bonus, so every stamp scores its
+#   own number. An Exemption off the top row does not. An Exemption that
+#   shares a side and sits off the top row still adds 2.
+#   The pay does not change patience.
+# The skip-fill doubling, the post pay, and the seam pay do not remove
+# Hold or Exemption, and they do not cancel a retrigger.
+#
 # RUN
 # - A run is seeded. The shuffle and the draft offer are a pure function of the
 #   seed, the night, the traveler, and the cards owned, so restarting an
@@ -1762,6 +1846,7 @@ const SHIFT_FRONTISPIECE := 21
 const SHIFT_FLYLEAF := 22
 const SHIFT_ENDPAPER := 23
 const SHIFT_HALFTITLE := 24
+const SHIFT_TITLEPAGE := 25
 
 const ROW_NAMES := ["top row", "middle row", "bottom row"]
 const COL_NAMES := ["column 1", "column 2", "column 3"]
@@ -3023,6 +3108,53 @@ const HALFTITLE_BELL := [
 	},
 ]
 
+const TITLEPAGE_BELL := [
+	{
+		"id": "nessa_voss",
+		"name": "Nessa Voss",
+		"form_name": "High Toll",
+		"rule_text": "Patience drops by 2 when the number of filled cells is 7, 8, or 9.",
+		"rule": "drop_if_high_count",
+		"lane": 1,
+		"exemption_row": 0,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "ned_keel",
+		"name": "Ned Keel",
+		"form_name": "Skip Fill",
+		"rule_text": "A stamp scores twice only when the queue cell two places before it is filled. The top-left cell has no cell two places before it, so it does not double. The top-middle cell has no cell two places before it, so it does not double.",
+		"rule": "double_skip_fill",
+		"lane": 0,
+		"exemption_row": 2,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "sela_fen",
+		"name": "Sela Fen",
+		"form_name": "Post Pay",
+		"rule_text": "Each stamp in column 3 scores +2 once. A stamp in column 1 or column 2 scores its own number.",
+		"rule": "yield_post_pay",
+		"lane": 2,
+		"exemption_row": 1,
+		"goal": 16,
+		"patience": 5,
+	},
+	{
+		"id": "tess_okell",
+		"name": "Tess Okell",
+		"form_name": "Seam Pay",
+		"rule_text": "Each stamp that shares a side with at least one other filled stamp scores +2 once. A corner touch does not count. A lone stamp scores its own number.",
+		"rule": "yield_seam_pay",
+		"lane": 1,
+		"exemption_row": 0,
+		"goal": 22,
+		"patience": 5,
+	},
+]
+
 
 
 class NightState:
@@ -3116,6 +3248,8 @@ static func _canonical_shift(shift_index: int) -> int:
 		return SHIFT_ENDPAPER
 	if shift_index == SHIFT_HALFTITLE:
 		return SHIFT_HALFTITLE
+	if shift_index == SHIFT_TITLEPAGE:
+		return SHIFT_TITLEPAGE
 	return SHIFT_FIRST
 
 
@@ -3131,7 +3265,9 @@ static func new_run(seed_value: int, shift_index: int = SHIFT_FIRST) -> NightSta
 	state.next_iid = 0
 	for card_id in STARTING_DECK:
 		_add_library_card(state, String(card_id))
-	if state.shift == SHIFT_HALFTITLE:
+	if state.shift == SHIFT_TITLEPAGE:
+		_log(state, "The title-page bell begins. Seed %d." % state.seed)
+	elif state.shift == SHIFT_HALFTITLE:
 		_log(state, "The half-title bell begins. Seed %d." % state.seed)
 	elif state.shift == SHIFT_ENDPAPER:
 		_log(state, "The endpaper bell begins. Seed %d." % state.seed)
@@ -3221,6 +3357,8 @@ static func restart_encounter(state: NightState) -> void:
 
 
 static func shift_label(state: NightState) -> String:
+	if state.shift == SHIFT_TITLEPAGE:
+		return "Title-page bell"
 	if state.shift == SHIFT_HALFTITLE:
 		return "Half-title bell"
 	if state.shift == SHIFT_ENDPAPER:
@@ -3287,6 +3425,8 @@ static func traveler(state: NightState) -> Dictionary:
 
 
 static func _roster(state: NightState) -> Array:
+	if state.shift == SHIFT_TITLEPAGE:
+		return TITLEPAGE_BELL
 	if state.shift == SHIFT_HALFTITLE:
 		return HALFTITLE_BELL
 	if state.shift == SHIFT_ENDPAPER:
@@ -3637,6 +3777,12 @@ static func stamp_progress(state: NightState, card_id: String, row: int, col: in
 		return amount + 2
 	if rule == "yield_gutter_pay" and col == 0:
 		return amount + 2
+	if rule == "double_skip_fill" and _skip_fill(state, row, col):
+		return amount * 2
+	if rule == "yield_post_pay" and col == 2:
+		return amount + 2
+	if rule == "yield_seam_pay" and orthogonal_count(state, row, col) > 0:
+		return amount + 2
 	return amount
 
 
@@ -3758,6 +3904,8 @@ static func patience_loss(state: NightState) -> int:
 		elif rule == "drop_if_square_count" and _is_square_count(_stamp_count(state)):
 			loss = 2
 		elif rule == "drop_if_triad_count" and _stamp_count(state) % 3 == 0:
+			loss = 2
+		elif rule == "drop_if_high_count" and _is_high_count(_stamp_count(state)):
 			loss = 2
 	return loss
 
@@ -4038,6 +4186,12 @@ static func _resolve_stamp(state: NightState, row: int, col: int, hush: bool) ->
 				_log(state, "%s on the %s, %s grants %d. The wing pays +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			elif tail_rule == "yield_gutter_pay" and col == 0 and amount > raw:
 				_log(state, "%s on the %s, %s grants %d. Column 1 pays +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_skip_fill" and _skip_fill(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The filled cell two places before it doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_post_pay" and col == 2 and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. Column 3 pays +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_seam_pay" and orthogonal_count(state, row, col) > 0 and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. A shared side pays +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			else:
 				_log(state, "%s on the %s, %s grants %d." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 	state.turn_progress += amount
@@ -4138,6 +4292,25 @@ static func _skip_blank(state: NightState, row: int, col: int) -> bool:
 	if back_row < 0:
 		return false
 	return state.form[back_row][back_col] == null
+
+
+static func _is_high_count(count: int) -> bool:
+	return count == 7 or count == 8 or count == 9
+
+
+static func _skip_fill(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var back_row := row
+	var back_col := col - 2
+	if back_col < 0:
+		back_row -= 1
+		back_col += 3
+	if back_row < 0:
+		return false
+	return state.form[back_row][back_col] != null
 
 
 static func _is_wing_cell(row: int, col: int) -> bool:
@@ -4719,7 +4892,9 @@ static func _apply_result(state: NightState, result: Dictionary) -> void:
 		state.encounters_cleared += 1
 		if state.traveler_index >= _roster(state).size() - 1:
 			state.phase = "victory"
-			if state.shift == SHIFT_HALFTITLE:
+			if state.shift == SHIFT_TITLEPAGE:
+				_log(state, "The queue is empty. The title-page bell is clear.")
+			elif state.shift == SHIFT_HALFTITLE:
 				_log(state, "The queue is empty. The half-title bell is clear.")
 			elif state.shift == SHIFT_ENDPAPER:
 				_log(state, "The queue is empty. The endpaper bell is clear.")
