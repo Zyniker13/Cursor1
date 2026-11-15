@@ -28,6 +28,7 @@ const APSE_AWNING := Color(0.78, 0.66, 0.38)
 const CHOIR_AWNING := Color(0.58, 0.40, 0.18)
 const ROOD_AWNING := Color(0.38, 0.40, 0.44)
 const CROSSING_AWNING := Color(0.32, 0.34, 0.28)
+const TRANSEPT_AWNING := Color(0.74, 0.68, 0.52)
 
 var notice_label: Label
 var purse_label: Label
@@ -169,6 +170,8 @@ func _awning_for(floor_id: String) -> Color:
 		return ROOD_AWNING
 	if floor_id == "crossing":
 		return CROSSING_AWNING
+	if floor_id == "transept":
+		return TRANSEPT_AWNING
 	return CHART_AWNING
 
 

@@ -13,6 +13,9 @@ class_name HintBook
 # A siphon has no facing. Rotation is ignored, the same way a well ignores it.
 # A sluice has four facings. North, east, south, and west are different pieces.
 # A hint uses that facing. Dry, every facing stops the beam.
+# A weir has four facings. North, east, south, and west are different pieces.
+# A hint uses that facing. Dry, every facing stops the beam. Flood swaps red
+# with blue and leaves along the facing. White stays white.
 
 const Tracer := preload("res://scripts/beam_tracer.gd")
 
