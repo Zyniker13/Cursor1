@@ -43,6 +43,8 @@ var _refresh_queued := false
 var seed_edit: LineEdit
 var relic_label: Label
 var encounter_label: Label
+var desk_label: Label
+var shift_button: Button
 var name_label: Label
 var rule_label: Label
 var meta_label: Label
@@ -71,7 +73,9 @@ func _ready() -> void:
 	state = Rules.new_run(12345)
 	seed_edit.text = "12345"
 	_refresh_ui()
-	get_viewport().gui_release_focus()
+	var viewport := get_viewport()
+	if viewport != null:
+		viewport.gui_release_focus()
 
 
 func _build() -> void:
@@ -138,7 +142,8 @@ func _build_top() -> Control:
 	bar.add_theme_constant_override("separation", 12)
 	var title := _label("NIGHT STAMP", 32, TEXT)
 	bar.add_child(title)
-	bar.add_child(_label("Act 1 · border desk", 16, MUTED))
+	desk_label = _label("Act 1 · border desk", 16, MUTED)
+	bar.add_child(desk_label)
 	encounter_label = _label("Encounter 1 of 4", 16, INK)
 	bar.add_child(encounter_label)
 	bar.add_child(_spacer())
@@ -168,6 +173,9 @@ func _build_traveler() -> Control:
 	var header := HBoxContainer.new()
 	name_label = _label("Traveler", 26, TEXT)
 	header.add_child(name_label)
+	shift_button = _button("Late shift")
+	shift_button.pressed.connect(_toggle_shift)
+	header.add_child(shift_button)
 	header.add_child(_spacer())
 	relic_label = _label("Relic: none", 16, INK)
 	header.add_child(relic_label)
@@ -350,7 +358,29 @@ func _restart_encounter() -> void:
 
 
 func _restart_act() -> void:
-	state = Rules.new_run(_parse_seed())
+	var shift := Rules.SHIFT_FIRST
+	if state != null:
+		shift = int(state.shift)
+	_open_shift(shift, _parse_seed())
+
+
+func _toggle_shift() -> void:
+	var next := Rules.SHIFT_LATE
+	if state.shift == Rules.SHIFT_LATE:
+		next = Rules.SHIFT_FIRST
+	_open_shift(next, _parse_seed())
+
+
+func _begin_late_shift() -> void:
+	_open_shift(Rules.SHIFT_LATE, state.seed)
+
+
+func _begin_first_bell() -> void:
+	_open_shift(Rules.SHIFT_FIRST, state.seed)
+
+
+func _open_shift(shift_index: int, seed_value: int) -> void:
+	state = Rules.new_run(seed_value, shift_index)
 	seed_edit.text = str(state.seed)
 	selected = 0
 	cursor_row = 1
@@ -394,13 +424,17 @@ func _refresh_ui() -> void:
 	else:
 		selected = clampi(selected, 0, state.hand.size() - 1)
 	var traveler = Rules.traveler(state)
-	encounter_label.text = "Encounter %d of 4" % [int(state.traveler_index) + 1]
+	desk_label.text = "%s · border desk" % Rules.shift_label(state)
+	encounter_label.text = "Encounter %d of %d" % [int(state.traveler_index) + 1, Rules.roster_size(state)]
+	shift_button.text = "First bell" if state.shift == Rules.SHIFT_LATE else "Late shift"
 	name_label.text = String(traveler["name"])
 	rule_label.text = "\"%s\"" % traveler["rule_text"]
-	meta_label.text = "Lane %s    ·    Exemption matches the %s" % [
-		Rules.COL_NAMES[int(traveler["lane"])],
-		Rules.ROW_NAMES[int(traveler["exemption_row"])],
-	]
+	var lane := String(Rules.COL_NAMES[int(traveler["lane"])])
+	var exempt := String(Rules.ROW_NAMES[int(traveler["exemption_row"])])
+	if traveler.has("form_name"):
+		meta_label.text = "%s    ·    Lane %s    ·    Exemption matches the %s" % [traveler["form_name"], lane, exempt]
+	else:
+		meta_label.text = "Lane %s    ·    Exemption matches the %s" % [lane, exempt]
 	if state.relic_id == "":
 		relic_label.text = "Relic: none"
 	else:
@@ -515,7 +549,7 @@ func _fill_modal() -> void:
 		_add_modal_restarts()
 	elif state.phase == "relic":
 		modal_box.add_child(_label("The drawer offers a relic", 28, TEXT))
-		modal_box.add_child(_wrapped("Pick one. It lasts for the rest of Act 1. Keys 1 and 2 choose.", 16, MUTED))
+		modal_box.add_child(_wrapped("Pick one. It lasts for the rest of this night. Keys 1 and 2 choose.", 16, MUTED))
 		for i in state.relic_options.size():
 			var relic_id := String(state.relic_options[i])
 			var relic = Rules.RELICS[relic_id]
@@ -526,11 +560,24 @@ func _fill_modal() -> void:
 			modal_box.add_child(button)
 		_add_modal_restarts()
 	elif state.phase == "victory":
-		modal_box.add_child(_label("Act 1 is clear", 32, TEXT))
-		modal_box.add_child(_wrapped("Four travelers passed the desk. Restart the act to run the seed again.", 18, MUTED))
-		var button := _button("Restart act")
-		button.pressed.connect(_restart_act)
-		modal_box.add_child(button)
+		if state.shift == Rules.SHIFT_LATE:
+			modal_box.add_child(_label("The late shift is clear", 32, TEXT))
+			modal_box.add_child(_wrapped("Nell Parr, Sol Wicks, Pim Larke, and Rue Calder passed the desk. Restart this night to run the seed again, or open the first bell.", 18, MUTED))
+			var restart_night := _button("Restart act")
+			restart_night.pressed.connect(_restart_act)
+			modal_box.add_child(restart_night)
+			var first := _button("Open the first bell")
+			first.pressed.connect(_begin_first_bell)
+			modal_box.add_child(first)
+		else:
+			modal_box.add_child(_label("Act 1 is clear", 32, TEXT))
+			modal_box.add_child(_wrapped("Four travelers passed the desk. The late shift is a second night: the same stamps, a fresh deck, and four new forms.", 18, MUTED))
+			var late := _button("Begin the late shift")
+			late.pressed.connect(_begin_late_shift)
+			modal_box.add_child(late)
+			var button := _button("Restart act")
+			button.pressed.connect(_restart_act)
+			modal_box.add_child(button)
 	elif state.phase == "defeat":
 		modal_box.add_child(_label("Patience breaks", 32, TEXT))
 		modal_box.add_child(_wrapped("%s turns away. Restart the encounter to deal the same hand, or restart the act." % Rules.traveler(state)["name"], 18, MUTED))
