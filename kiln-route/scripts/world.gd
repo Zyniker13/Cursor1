@@ -46,6 +46,20 @@ extends RefCounted
 ## refuses, neither item leaves. A share sends the arrival left. A pass keeps
 ## the arrival. A hoe keeps the arrival and sends the waiter right. Nothing
 ## stays in the coulter.
+## A moldboard does not forward in step 2 on its own. The first item stays.
+## When a later item arrives from behind, the waiter moves one cell to the
+## left and the arrival moves one cell forward, and only if both of those
+## cells can take them. The moldboard is empty after that tick. If either
+## exit refuses, neither item leaves. A share sends the waiter forward and
+## the arrival left. A coulter sends the arrival right. Nothing stays in
+## the moldboard.
+## A landside does not forward in step 2 on its own. The first item stays.
+## When a later item arrives from behind, the waiter moves one cell to the
+## right and the arrival moves one cell forward, and only if both of those
+## cells can take them. The landside is empty after that tick. If either
+## exit refuses, neither item leaves. A moldboard sends the waiter left.
+## A coulter sends the waiter forward and the arrival right. Nothing stays
+## in the landside.
 
 const Rules = preload("res://scripts/foundry.gd")
 
@@ -77,7 +91,7 @@ class Machine:
 	## Second lane on a bridge. -1 is empty. Other machines leave it empty.
 	var cross := -1
 	var cross_moved := false
-	## True while a twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, or a coulter is resolving an arrival, so a loop cannot re-enter.
+	## True while a twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, or a landside is resolving an arrival, so a loop cannot re-enter.
 	var pairing := false
 
 class Source:
@@ -460,8 +474,10 @@ func _can_take(machine: Machine, mat: int, arrival: int) -> bool:
 		or machine.kind == Rules.Kind.PRONG
 		or machine.kind == Rules.Kind.SHARE
 		or machine.kind == Rules.Kind.COULTER
+		or machine.kind == Rules.Kind.MOLDBOARD
+		or machine.kind == Rules.Kind.LANDSIDE
 	):
-		# Pairing is handled in _accept. A twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, or a coulter may already be holding.
+		# Pairing is handled in _accept. A twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, or a landside may already be holding.
 		return false
 	if machine.kind == Rules.Kind.BRIDGE:
 		if arrival == machine.dir:
@@ -527,6 +543,10 @@ func _accept(dest: Vector2i, mat: int, arrival: int) -> bool:
 		return _accept_share(dest, machine, mat, arrival)
 	if machine.kind == Rules.Kind.COULTER:
 		return _accept_coulter(dest, machine, mat, arrival)
+	if machine.kind == Rules.Kind.MOLDBOARD:
+		return _accept_moldboard(dest, machine, mat, arrival)
+	if machine.kind == Rules.Kind.LANDSIDE:
+		return _accept_landside(dest, machine, mat, arrival)
 	if not _can_take(machine, mat, arrival):
 		return false
 	if _holder(machine.kind):
@@ -863,6 +883,83 @@ func _accept_coulter(pos: Vector2i, machine: Machine, mat: int, arrival: int) ->
 	if forward_sent:
 		right_sent = _accept(pos + Rules.vec(right_dir), mat, right_dir)
 	if not forward_sent or not right_sent:
+		_restore(mark)
+		return false
+	machine.pairing = false
+	machine.hold = -1
+	machine.moved = false
+	return true
+
+
+## Behind only. The first item waits and never leaves on its own. A later item
+## from behind may be a different material. On that tick the waiter moves one
+## cell to the left and the arrival moves one cell forward, if both cells can
+## take them. The moldboard is empty afterwards. If either exit refuses, neither
+## item leaves and the arrival is not accepted. A lone item never leaves,
+## including on the next tick and the tick after that. The moldboard does not
+## spill, rotate, alternate, or send right or back, and it does not keep either
+## item. A share sends the waiter forward and the arrival left. A coulter sends
+## the waiter forward and the arrival right. A fork sends the waiter left and
+## the arrival right. A prong sends the waiter right and the arrival left. A
+## rake sends the waiter left and keeps the arrival. A slip sends the arrival
+## forward and keeps the waiter.
+func _accept_moldboard(pos: Vector2i, machine: Machine, mat: int, arrival: int) -> bool:
+	if arrival != machine.dir:
+		return false
+	if machine.hold < 0:
+		machine.hold = mat
+		machine.moved = true
+		return true
+	if machine.moved or machine.pairing:
+		return false
+	var left_dir := Rules.left(machine.dir)
+	var forward_dir := machine.dir
+	var mark := _checkpoint()
+	machine.pairing = true
+	var left_sent: bool = _accept(pos + Rules.vec(left_dir), machine.hold, left_dir)
+	var forward_sent := false
+	if left_sent:
+		forward_sent = _accept(pos + Rules.vec(forward_dir), mat, forward_dir)
+	if not left_sent or not forward_sent:
+		_restore(mark)
+		return false
+	machine.pairing = false
+	machine.hold = -1
+	machine.moved = false
+	return true
+
+
+## Behind only. The first item waits and never leaves on its own. A later item
+## from behind may be a different material. On that tick the waiter moves one
+## cell to the right and the arrival moves one cell forward, if both cells can
+## take them. The landside is empty afterwards. If either exit refuses, neither
+## item leaves and the arrival is not accepted. A lone item never leaves,
+## including on the next tick and the tick after that. The landside does not
+## spill, rotate, alternate, or send left or back, and it does not keep either
+## item. A moldboard sends the waiter left and the arrival forward. A coulter
+## sends the waiter forward and the arrival right. A share sends the waiter
+## forward and the arrival left. A fork sends the waiter left and the arrival
+## right. A prong sends the waiter right and the arrival left. A hoe sends the
+## waiter right and keeps the arrival. A slip sends the arrival forward and
+## keeps the waiter.
+func _accept_landside(pos: Vector2i, machine: Machine, mat: int, arrival: int) -> bool:
+	if arrival != machine.dir:
+		return false
+	if machine.hold < 0:
+		machine.hold = mat
+		machine.moved = true
+		return true
+	if machine.moved or machine.pairing:
+		return false
+	var right_dir := Rules.right(machine.dir)
+	var forward_dir := machine.dir
+	var mark := _checkpoint()
+	machine.pairing = true
+	var right_sent: bool = _accept(pos + Rules.vec(right_dir), machine.hold, right_dir)
+	var forward_sent := false
+	if right_sent:
+		forward_sent = _accept(pos + Rules.vec(forward_dir), mat, forward_dir)
+	if not right_sent or not forward_sent:
 		_restore(mark)
 		return false
 	machine.pairing = false

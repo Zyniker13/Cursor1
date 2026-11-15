@@ -5,7 +5,7 @@ extends Control
 # Mirror, then the Shutter, then the Stain, then the Vane, then the Well,
 # then the Siphon, then the Sluice, then the Weir, then the Lintel,
 # then the Mullion, then the Transom, then the Casement, then the Jamb,
-# then the Astragal.
+# then the Astragal, then the Scotia, then the Torus.
 # Pieces turn in place; a loose piece may also move
 # between the sockets authored for that chart. Lock Chart asks the beam tracer
 # whether every dock has its color and every hull is dark.
@@ -68,6 +68,8 @@ var transom_grid: GridContainer
 var casement_grid: GridContainer
 var jamb_grid: GridContainer
 var astragal_grid: GridContainer
+var scotia_grid: GridContainer
+var torus_grid: GridContainer
 var quay_book_button: Button
 var reach_book_button: Button
 var basin_book_button: Button
@@ -88,8 +90,10 @@ var transom_book_button: Button
 var casement_book_button: Button
 var jamb_book_button: Button
 var astragal_book_button: Button
+var scotia_book_button: Button
+var torus_book_button: Button
 var harbor_label: Label
-var _book_place: Array[int] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+var _book_place: Array[int] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 var tide_clock: TideClock
 var _side: Panel
 
@@ -242,6 +246,14 @@ func _build_ui() -> void:
 	astragal_book_button.tooltip_text = Charts.ASTRAGAL
 	astragal_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	astragal_book_button.pressed.connect(_on_book_pressed.bind(19))
+	scotia_book_button = _button("Scotia")
+	scotia_book_button.tooltip_text = Charts.SCOTIA
+	scotia_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scotia_book_button.pressed.connect(_on_book_pressed.bind(20))
+	torus_book_button = _button("Torus")
+	torus_book_button.tooltip_text = Charts.TORUS
+	torus_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	torus_book_button.pressed.connect(_on_book_pressed.bind(21))
 	book_row.add_child(quay_book_button)
 	book_row.add_child(reach_book_button)
 	book_row.add_child(basin_book_button)
@@ -262,7 +274,9 @@ func _build_ui() -> void:
 	book_row_d.add_child(casement_book_button)
 	book_row_e.add_child(jamb_book_button)
 	book_row_e.add_child(astragal_book_button)
-	for book_button in [quay_book_button, reach_book_button, basin_book_button, paint_book_button, west_book_button, meet_book_button, tide_book_button, shutter_book_button, stain_book_button, vane_book_button, well_book_button, siphon_book_button, sluice_book_button, weir_book_button, lintel_book_button, mullion_book_button, transom_book_button, casement_book_button, jamb_book_button, astragal_book_button]:
+	book_row_e.add_child(scotia_book_button)
+	book_row_e.add_child(torus_book_button)
+	for book_button in [quay_book_button, reach_book_button, basin_book_button, paint_book_button, west_book_button, meet_book_button, tide_book_button, shutter_book_button, stain_book_button, vane_book_button, well_book_button, siphon_book_button, sluice_book_button, weir_book_button, lintel_book_button, mullion_book_button, transom_book_button, casement_book_button, jamb_book_button, astragal_book_button, scotia_book_button, torus_book_button]:
 		book_button.add_theme_font_size_override("font_size", 13)
 
 	quay_grid = _chart_grid()
@@ -285,6 +299,8 @@ func _build_ui() -> void:
 	casement_grid = _chart_grid()
 	jamb_grid = _chart_grid()
 	astragal_grid = _chart_grid()
+	scotia_grid = _chart_grid()
+	torus_grid = _chart_grid()
 	reach_grid.visible = false
 	basin_grid.visible = false
 	paint_grid.visible = false
@@ -304,6 +320,8 @@ func _build_ui() -> void:
 	casement_grid.visible = false
 	jamb_grid.visible = false
 	astragal_grid.visible = false
+	scotia_grid.visible = false
+	torus_grid.visible = false
 	box.add_child(quay_grid)
 	box.add_child(reach_grid)
 	box.add_child(basin_grid)
@@ -324,6 +342,8 @@ func _build_ui() -> void:
 	box.add_child(casement_grid)
 	box.add_child(jamb_grid)
 	box.add_child(astragal_grid)
+	box.add_child(scotia_grid)
+	box.add_child(torus_grid)
 	var bounds: Array = _book_bounds()
 	for i in charts.size():
 		var button := _button("Chart %d" % (i + 1))
@@ -368,8 +388,12 @@ func _build_ui() -> void:
 			casement_grid.add_child(button)
 		elif i < int(bounds[19]):
 			jamb_grid.add_child(button)
-		else:
+		elif i < int(bounds[20]):
 			astragal_grid.add_child(button)
+		elif i < int(bounds[21]):
+			scotia_grid.add_child(button)
+		else:
+			torus_grid.add_child(button)
 		chart_buttons.append(button)
 
 	title_label = _label("", 20, Palette.TEXT)
@@ -415,7 +439,7 @@ func _build_ui() -> void:
 	status_label.custom_minimum_size = Vector2(340, 0)
 	box.add_child(status_label)
 
-	var legend := _label("Warm beam, red, and blue. A lamp may already burn one color. One mirror can take two lamps. A tide mirror reflects only while its row is flooded, and lets the beam pass while that row is dry. A shutter stops a beam while its row is dry, and lets the beam pass straight through while that row is flooded. A stain recolors a beam to its own color and lets it pass straight through, on a dry row and under water. A vane turns a beam into its facing, and a head-on beam stops. Water shuts a vane the way it shuts a mirror. A well stops a beam while its row is dry. While that row is flooded, the beam leaves north and keeps its color. A well does not turn. A siphon stops a beam while its row is dry. While that row is flooded, the beam leaves north and swaps red with blue. White stays white. A siphon does not turn. A sluice stops a beam while its row is dry. While that row is flooded, the beam leaves along the sluice's facing and keeps its color. A weir stops a beam while its row is dry. While that row is flooded, the beam leaves along the weir's facing and swaps red with blue. White stays white. A lintel lets a beam pass straight through while its row is dry, and stops the beam while that row is flooded. A lintel does not turn. A mullion lets a north-south beam pass straight through while its row is dry, and an east-west beam stops before it enters. A flooded mullion stops every beam. A mullion does not turn. A transom lets an east-west beam pass straight through while its row is dry, and a north-south beam stops before it enters. A flooded transom stops every beam. A transom does not turn. A casement lets a beam pass straight through while its row is dry, but only in the direction it faces. Every other direction stops before the cell. A flooded casement stops every beam. The casement turns. A jamb passes both directions of the axis it faces while its row is dry, and the other axis stops before the cell. North and south open the north-south axis. East and west open the east-west axis. A flooded jamb stops every beam. The jamb turns. An astragal passes the direction it faces and the next clockwise direction while its row is dry. The other two directions stop before the cell. A flooded astragal stops every beam. The astragal turns. Docks take only their marked color. Hulls stay dark. Water shuts the other glass it covers.", 13, Palette.MUTED)
+	var legend := _label("Warm beam, red, and blue. A lamp may already burn one color. One mirror can take two lamps. A tide mirror reflects only while its row is flooded, and lets the beam pass while that row is dry. A shutter stops a beam while its row is dry, and lets the beam pass straight through while that row is flooded. A stain recolors a beam to its own color and lets it pass straight through, on a dry row and under water. A vane turns a beam into its facing, and a head-on beam stops. Water shuts a vane the way it shuts a mirror. A well stops a beam while its row is dry. While that row is flooded, the beam leaves north and keeps its color. A well does not turn. A siphon stops a beam while its row is dry. While that row is flooded, the beam leaves north and swaps red with blue. White stays white. A siphon does not turn. A sluice stops a beam while its row is dry. While that row is flooded, the beam leaves along the sluice's facing and keeps its color. A weir stops a beam while its row is dry. While that row is flooded, the beam leaves along the weir's facing and swaps red with blue. White stays white. A lintel lets a beam pass straight through while its row is dry, and stops the beam while that row is flooded. A lintel does not turn. A mullion lets a north-south beam pass straight through while its row is dry, and an east-west beam stops before it enters. A flooded mullion stops every beam. A mullion does not turn. A transom lets an east-west beam pass straight through while its row is dry, and a north-south beam stops before it enters. A flooded transom stops every beam. A transom does not turn. A casement lets a beam pass straight through while its row is dry, but only in the direction it faces. Every other direction stops before the cell. A flooded casement stops every beam. The casement turns. A jamb passes both directions of the axis it faces while its row is dry, and the other axis stops before the cell. North and south open the north-south axis. East and west open the east-west axis. A flooded jamb stops every beam. The jamb turns. An astragal passes the direction it faces and the next clockwise direction while its row is dry. The other two directions stop before the cell. A flooded astragal stops every beam. The astragal turns. A scotia passes the direction it faces and the next counterclockwise direction while its row is dry. The other two directions stop before the cell. A flooded scotia stops every beam. The scotia turns. A torus passes the direction opposite its facing and the next clockwise direction while its row is dry. The other two directions stop before the cell. A flooded torus stops every beam. The torus turns. Docks take only their marked color. Hulls stay dark. Water shuts the other glass it covers.", 13, Palette.MUTED)
 	legend.custom_minimum_size = Vector2(360, 0)
 	box.add_child(legend)
 	var keys := _label("Arrows or Tab select. R turns. M moves a loose piece. Space locks. H hints. T raises tide, Shift+T lowers it. Backspace restarts.", 12, Palette.MUTED)
@@ -594,6 +618,20 @@ func rotate_selected() -> void:
 		var astragal_rot := int(state["pieces"][selected_id]["rot"])
 		state["pieces"][selected_id]["rot"] = Tracer.turn_rot("astragal", astragal_rot)
 		status_label.text = "The astragal turns clockwise. It passes its facing and the next direction."
+		_clear_hint_if_resolved()
+		_refresh()
+		return
+	if str(piece["kind"]) == "scotia":
+		var scotia_rot := int(state["pieces"][selected_id]["rot"])
+		state["pieces"][selected_id]["rot"] = Tracer.turn_rot("scotia", scotia_rot)
+		status_label.text = "The scotia turns clockwise. It passes its facing and the next counterclockwise direction."
+		_clear_hint_if_resolved()
+		_refresh()
+		return
+	if str(piece["kind"]) == "torus":
+		var torus_rot := int(state["pieces"][selected_id]["rot"])
+		state["pieces"][selected_id]["rot"] = Tracer.turn_rot("torus", torus_rot)
+		status_label.text = "The torus turns clockwise. It passes the opposite direction and the next clockwise direction."
 		_clear_hint_if_resolved()
 		_refresh()
 		return
@@ -779,6 +817,10 @@ func _refresh_chrome() -> void:
 		water += " A dry jamb passes both directions of its open axis. A flooded jamb stops the beam."
 	if _has_astragal():
 		water += " A dry astragal passes its facing and the next clockwise direction. A flooded astragal stops the beam."
+	if _has_scotia():
+		water += " A dry scotia passes its facing and the next counterclockwise direction. A flooded scotia stops the beam."
+	if _has_torus():
+		water += " A dry torus passes the opposite of its facing and the next clockwise direction. A flooded torus stops the beam."
 	tide_readout.text = "%s. %s" % [phase, water]
 	var phases: Array = chart["tide_phases"]
 	var multi := phases.size() > 1
@@ -826,6 +868,8 @@ func _refresh_chrome() -> void:
 	casement_grid.visible = book == 17
 	jamb_grid.visible = book == 18
 	astragal_grid.visible = book == 19
+	scotia_grid.visible = book == 20
+	torus_grid.visible = book == 21
 	reach_book_button.disabled = not unlocked[int(bounds[1])]
 	basin_book_button.disabled = not unlocked[int(bounds[2])]
 	paint_book_button.disabled = not unlocked[int(bounds[3])]
@@ -845,6 +889,8 @@ func _refresh_chrome() -> void:
 	casement_book_button.disabled = not unlocked[int(bounds[17])]
 	jamb_book_button.disabled = not unlocked[int(bounds[18])]
 	astragal_book_button.disabled = not unlocked[int(bounds[19])]
+	scotia_book_button.disabled = not unlocked[int(bounds[20])]
+	torus_book_button.disabled = not unlocked[int(bounds[21])]
 	_paint_button(quay_book_button, book == 0)
 	_paint_button(reach_book_button, book == 1)
 	_paint_button(basin_book_button, book == 2)
@@ -865,6 +911,8 @@ func _refresh_chrome() -> void:
 	_paint_button(casement_book_button, book == 17)
 	_paint_button(jamb_book_button, book == 18)
 	_paint_button(astragal_book_button, book == 19)
+	_paint_button(scotia_book_button, book == 20)
+	_paint_button(torus_book_button, book == 21)
 
 func _show_win() -> void:
 	win_body.text = str(chart["win"])
@@ -915,11 +963,17 @@ func _book_bounds() -> Array:
 	var transom := mullion + Charts.transom().size()
 	var casement := transom + Charts.casement().size()
 	var jamb := casement + Charts.jamb().size()
-	return [0, q, r, b, p, w, m, t, s, n, v, well, siphon, sluice, weir, lintel, mullion, transom, casement, jamb, charts.size()]
+	var astragal := jamb + Charts.astragal().size()
+	var scotia := astragal + Charts.scotia().size()
+	return [0, q, r, b, p, w, m, t, s, n, v, well, siphon, sluice, weir, lintel, mullion, transom, casement, jamb, astragal, scotia, charts.size()]
 
 
 func _book_of(index: int) -> int:
 	var bounds: Array = _book_bounds()
+	if index >= int(bounds[21]):
+		return 21
+	if index >= int(bounds[20]):
+		return 20
 	if index >= int(bounds[19]):
 		return 19
 	if index >= int(bounds[18]):
@@ -1004,8 +1058,12 @@ func _on_book_pressed(book: int) -> void:
 			status_label.text = "The casement is still locked."
 		elif book == 18:
 			status_label.text = "The jamb is still locked."
-		else:
+		elif book == 19:
 			status_label.text = "The astragal is still locked."
+		elif book == 20:
+			status_label.text = "The scotia is still locked."
+		else:
+			status_label.text = "The torus is still locked."
 		return
 	_book_place[here] = chart_index
 	var last := int(bounds[book + 1])
@@ -1156,6 +1214,28 @@ func _save_progress() -> void:
 		file.set_value("progress", "solved_%d" % i, solved[i])
 		file.set_value("progress", "unlocked_%d" % i, unlocked[i])
 	file.save(SAVE_PATH)
+
+func _has_torus() -> bool:
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		if str(piece["kind"]) == "torus":
+			return true
+	for raw in chart["fixtures"]:
+		var fix: Dictionary = raw
+		if str(fix["kind"]) == "torus":
+			return true
+	return false
+
+func _has_scotia() -> bool:
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		if str(piece["kind"]) == "scotia":
+			return true
+	for raw in chart["fixtures"]:
+		var fix: Dictionary = raw
+		if str(fix["kind"]) == "scotia":
+			return true
+	return false
 
 func _has_astragal() -> bool:
 	for raw in chart["pieces"]:
