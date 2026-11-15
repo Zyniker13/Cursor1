@@ -476,6 +476,8 @@ func _building_mark_name(building: int) -> String:
 			return "BuildingNineMark"
 		10:
 			return "BuildingTenMark"
+		11:
+			return "BuildingElevenMark"
 		_:
 			return "Building%dMark" % building
 
@@ -909,6 +911,8 @@ func _draw_block(block: Dictionary, alpha: float) -> void:
 		_return_mark(rect, ink)
 	elif typ == "pause":
 		_pause_mark(rect, ink)
+	elif typ == "chute":
+		_chute_mark(rect, dir, ink)
 	elif typ == "slide":
 		_slide_mark(rect, ink)
 	elif typ == "bin":
@@ -1093,6 +1097,20 @@ func _hook_mark(rect: Rect2, color: Color) -> void:
 	_tri(tip, vec.normalized(), rect.size.x * 0.11, rect.size.x * 0.07, color)
 
 
+func _chute_mark(rect: Rect2, dir: int, color: Color) -> void:
+	var vec := _dir_vec(dir)
+	var side := Vector2(-vec.y, vec.x)
+	var center := rect.get_center()
+	var mouth := rect.size.x * 0.30
+	var neck := rect.size.x * 0.07
+	var back := center - vec * rect.size.x * 0.24
+	var throat := center + vec * rect.size.x * 0.04
+	draw_line(back - side * mouth, back + side * mouth, color, 2.5)
+	draw_line(back + side * mouth, throat + side * neck, color, 3.0)
+	draw_line(back - side * mouth, throat - side * neck, color, 3.0)
+	_tri(center + vec * rect.size.x * 0.20, vec, rect.size.x * 0.16, rect.size.x * 0.10, color)
+
+
 func _pause_mark(rect: Rect2, color: Color) -> void:
 	var center := rect.get_center()
 	var bar_w := maxf(rect.size.x * 0.12, 3.0)
@@ -1198,6 +1216,8 @@ func _tool_color(tool: String) -> Color:
 			return Color("#9a3d55")
 		"pause":
 			return Color("#3f6f8a")
+		"chute":
+			return Color("#d4762c")
 		"slide":
 			return Color("#d06b86")
 		"bin":
@@ -1250,6 +1270,8 @@ func _tool_tip(tool: String) -> String:
 			return "Reverses a parcel's facing and waits that tick. It steps back along that facing on the next tick."
 		"pause":
 			return "Waits one tick without turning the parcel. It then steps one cell in the facing the parcel already had."
+		"chute":
+			return "Writes its own facing onto a parcel and waits that tick. The parcel then steps one cell that way."
 		"slide":
 			return "Moves a parcel two cells in its facing and does not rotate it. The cell between can be a brick, a belt, or another parcel."
 		"bin":

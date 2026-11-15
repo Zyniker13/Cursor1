@@ -73,7 +73,7 @@ func _build_hud() -> void:
 	layer.add_child(bottom_panel)
 
 	controls_label = Label.new()
-	controls_label.text = "Arrows move    F lamp you face    Space wait    U undo    R restart    click a neighbor or a lamp\n1–8 east    Shift+1–6 west    Ctrl+1–6 north    Alt+1–6 south    F1–F6 attic    F7–F12 cellar    Keypad 1–6 gallery\nShift+F1–F6 court    Alt+F1–F6 nave    Ctrl+F1–F6 cloister    Ctrl+Shift+F1–F6 porch"
+	controls_label.text = "Arrows move    F lamp you face    Space wait    U undo    R restart    click a neighbor or a lamp\n1–8 east    Shift+1–6 west    Ctrl+1–6 north    Alt+1–6 south    F1–F6 attic    F7–F12 cellar    Keypad 1–6 gallery\nShift+F1–F6 court    Alt+F1–F6 nave    Ctrl+F1–F6 cloister    Ctrl+Shift+F1–F6 porch    Alt+Shift+F1–F6 oriel"
 	controls_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	controls_label.add_theme_font_size_override("font_size", 14)
 	controls_label.add_theme_color_override("font_color", MUTED)
@@ -118,10 +118,10 @@ func _build_hud() -> void:
 		row_y += 36.0
 
 	legend_label = Label.new()
-	legend_label.text = "Gold diamond — lamplight, you cannot walk it.    Red diamond — a guard is watching.    Arrow — that guard's next step.    Brass disc — a plate. Step on it in the dark and the nearest guard is called.    Iron cup — a bell. Step on it in the dark and every guard who can reach it is called.    Iron bars — a grate. It stays dark, you may enter it, and a guard cannot.    Stone sill — a lamp lights it, light stops there, and a guard cannot enter or see through it."
+	legend_label.text = "Gold diamond — lamplight, you cannot walk it.    Red diamond — a guard is watching.    Arrow — that guard's next step.    Brass disc — a plate. Step on it in the dark and the nearest guard is called.    Iron cup — a bell. Step on it in the dark and every guard who can reach it is called.    Iron bars — a grate. It stays dark, you may enter it, and a guard cannot.    Stone sill — a lamp lights it, light stops there, and a guard cannot enter or see through it.    Pale sheet — a pane. Light and sight pass through it, and neither you nor a guard can step on it."
 	legend_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	legend_label.position = Vector2(20, row_y + 2.0)
-	legend_label.size = Vector2(1240, 64)
+	legend_label.size = Vector2(1240, 88)
 	legend_label.add_theme_font_size_override("font_size", 14)
 	legend_label.add_theme_color_override("font_color", MUTED)
 	bottom_panel.add_child(legend_label)
@@ -133,7 +133,7 @@ func _build_hud() -> void:
 	status_label.position = Vector2(20, row_y + 2.0)
 	status_label.size = Vector2(1240, 52)
 	bottom_panel.add_child(status_label)
-	bottom_h = row_y + 74.0
+	bottom_h = row_y + 98.0
 
 	turn_label = Label.new()
 	turn_label.add_theme_font_size_override("font_size", 16)
@@ -170,7 +170,7 @@ func _layout() -> void:
 	if controls_label:
 		controls_label.size = Vector2(maxf(200.0, view.x - 40.0), 84)
 	if legend_label:
-		legend_label.size = Vector2(maxf(200.0, view.x - 40.0), 64)
+		legend_label.size = Vector2(maxf(200.0, view.x - 40.0), 88)
 	if status_label:
 		status_label.size = Vector2(maxf(200.0, view.x - 40.0), 52)
 	title_label.position = Vector2(24, 16)
@@ -274,6 +274,9 @@ func _puzzle_index_for_key(event: InputEventKey) -> int:
 	var porch := _porch_index(event)
 	if porch >= 0:
 		return 62 + porch
+	var oriel := _oriel_index(event)
+	if oriel >= 0:
+		return 68 + oriel
 	var court := _court_index(event)
 	if court >= 0:
 		return 44 + court
@@ -314,6 +317,17 @@ func _puzzle_index_for_key(event: InputEventKey) -> int:
 	return digit
 
 
+func _oriel_index(event: InputEventKey) -> int:
+	if event.ctrl_pressed or event.meta_pressed or not event.alt_pressed or not event.shift_pressed:
+		return -1
+	var key := event.physical_keycode
+	if key < KEY_F1 or key > KEY_F6:
+		key = event.keycode
+	if key < KEY_F1 or key > KEY_F6:
+		return -1
+	return int(key) - int(KEY_F1)
+
+
 func _porch_index(event: InputEventKey) -> int:
 	if event.alt_pressed or not event.shift_pressed:
 		return -1
@@ -352,7 +366,7 @@ func _nave_index(event: InputEventKey) -> int:
 
 
 func _court_index(event: InputEventKey) -> int:
-	if not event.shift_pressed or event.ctrl_pressed or event.meta_pressed:
+	if not event.shift_pressed or event.ctrl_pressed or event.meta_pressed or event.alt_pressed:
 		return -1
 	var key := event.physical_keycode
 	if key < KEY_F1 or key > KEY_F6:
@@ -576,6 +590,13 @@ func _draw_tile(state: Dictionary, x: int, y: int, lit: Dictionary, watched: Dic
 		draw_line(rect.position + Vector2(4, tile * 0.45), rect.position + Vector2(tile - 4, tile * 0.45), Color(WALL_EDGE, 0.35), 1.0)
 		draw_line(rect.position + Vector2(4, tile * 0.72), rect.position + Vector2(tile - 4, tile * 0.72), Color(WALL_EDGE, 0.25), 1.0)
 		return
+	if kind == Rules.Tile.PANE:
+		draw_rect(rect, GROUT)
+		var sheet := Rect2(rect.position + Vector2(2, 2), rect.size - Vector2(4, 4))
+		_draw_pane(sheet)
+		if hover == cell:
+			draw_rect(sheet, Color(1, 1, 1, 0.08), false, 2.0)
+		return
 	var floor_color := FLOOR_ALT if (x + y) % 2 == 0 else FLOOR
 	draw_rect(rect, GROUT)
 	var inset := Rect2(rect.position + Vector2(2, 2), rect.size - Vector2(4, 4))
@@ -634,6 +655,19 @@ func _draw_plate(center: Vector2) -> void:
 	draw_rect(Rect2(center + Vector2(-tile * 0.07, -tile * 0.018), Vector2(tile * 0.14, tile * 0.036)), Color("3a2c16"))
 	draw_circle(center, tile * 0.045, Color("8d7344"))
 	draw_circle(center, tile * 0.02, Color("3a2c16"))
+
+
+func _draw_pane(inset: Rect2) -> void:
+	var glass := Color("d7e6ee")
+	var edge := Color("7f9aab")
+	var sheen := Color("f7fbfd")
+	draw_rect(inset, glass)
+	draw_rect(inset, edge, false, maxf(2.0, tile * 0.04))
+	var gleam := Rect2(
+		inset.position + Vector2(inset.size.x * 0.18, inset.size.y * 0.12),
+		Vector2(maxf(3.0, inset.size.x * 0.14), inset.size.y * 0.76)
+	)
+	draw_rect(gleam, sheen)
 
 
 func _draw_sill(inset: Rect2) -> void:
