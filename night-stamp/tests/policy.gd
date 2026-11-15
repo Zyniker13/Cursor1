@@ -310,6 +310,39 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 			guess -= 2
 	if rule == "yield_frame" and not (row == 1 and col == 1):
 		guess += 3
+	if rule == "zero_first":
+		var head = true
+		for head_row in range(0, row + 1):
+			var head_end = 2
+			if head_row == row:
+				head_end = col - 1
+			for head_col in range(0, head_end + 1):
+				if state.form[head_row][head_col] != null:
+					head = false
+		if head and not (card_id == "exemption" and row == 0):
+			guess = 2 - int(CARD_POWER.get(card_id, 40))
+		elif not head:
+			guess += 3
+	if rule == "double_patience_if_center_filled" and row == 1 and col == 1:
+		guess -= 12
+	if rule == "yield_corner" and _is_corner(row, col):
+		guess += 3
+	if rule == "double_shared_later":
+		var shared_number = _stamp_number(state, card_id, row, col)
+		var earlier_match = false
+		for slip_row in range(0, row + 1):
+			var slip_end = 2
+			if slip_row == row:
+				slip_end = col - 1
+			for slip_col in range(0, slip_end + 1):
+				var slip_stamp = state.form[slip_row][slip_col]
+				if slip_stamp == null:
+					continue
+				if _stamp_number(state, String(slip_stamp["card_id"]), slip_row, slip_col) == shared_number:
+					earlier_match = true
+		if earlier_match:
+			guess += shared_number
+		guess += row
 	if rule == "ignore_isolated":
 		var neighbors = 0
 		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
