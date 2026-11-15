@@ -1,6 +1,6 @@
 # Dispatch
 
-A wiring puzzle. Route parcels across Building 1, Building 2, Building 3, Building 4, and Building 5, then submit the belt. After a delivery, the game shows your cycles and block count beside par. Par is not a handwritten number: it is the result of simulating that puzzle's reference graph.
+A wiring puzzle. Route parcels across Building 1, Building 2, Building 3, Building 4, Building 5, and Building 6, then submit the belt. After a delivery, the game shows your cycles and block count beside par. Par is not a handwritten number: it is the result of simulating that puzzle's reference graph.
 
 Blocks are drawn by Godot. There is no imported art.
 
@@ -30,7 +30,7 @@ The process exits non-zero if a test fails. These were written for Godot 4.7.
 
 ## Controls
 
-Left-click an empty cell to place the selected block. Left-click a block of the same type to rotate it, or a different type to replace it. Right-click deletes. `R` rotates the block under the cursor, or the placement arrow if the cell is empty. `Delete` removes the block under the cursor. `Enter` submits. `Backspace` restarts the puzzle. Keys `1` through `8` select the first eight puzzles. `[` and `]` step to the previous or next puzzle. Puzzle 1 also prints the how-to on the board. Building 2 is routes 16 through 22, Building 3 is routes 23 through 29, Building 4 is routes 30 through 36, and Building 5 is routes 37 through 43. Each later building is marked on the route row. Building 2 opens after route 15, Building 3 opens after route 22, Building 4 opens after route 29, and Building 5 opens after route 36.
+Left-click an empty cell to place the selected block. Left-click a block of the same type to rotate it, or a different type to replace it. Right-click deletes. `R` rotates the block under the cursor, or the placement arrow if the cell is empty. `Delete` removes the block under the cursor. `Enter` submits. `Backspace` restarts the puzzle. Keys `1` through `8` select the first eight puzzles. `[` and `]` step to the previous or next puzzle. Puzzle 1 also prints the how-to on the board. Building 2 is routes 16 through 22, Building 3 is routes 23 through 29, Building 4 is routes 30 through 36, Building 5 is routes 37 through 43, and Building 6 is routes 44 through 50. Each later building is marked on the route row. Building 2 opens after route 15, Building 3 opens after route 22, Building 4 opens after route 29, Building 5 opens after route 36, and Building 6 opens after route 43.
 
 ## Simulation
 
@@ -40,7 +40,7 @@ Each tick, in order:
 
 1. A painter sets the color of a parcel standing on it. A primer sets the color only when that parcel is gray. A counter increments once for that parcel and stamps the new value. A parcel is stamped only on the first tick it spends on that counter.
 2. Every parcel picks a destination from the block under it. A turn that is rotating a parcel picks no destination.
-3. Destinations that are illegal, contested by two parcels, or occupied by a parcel that is staying are cancelled. This repeats until it settles. Conveyors, painters, counters, splitters, filters, primers, bridges, and turns may step into a cell another parcel is leaving on the same tick.
+3. Destinations that are illegal, contested by two parcels, or occupied by a parcel that is staying are cancelled. This repeats until it settles. Conveyors, painters, counters, splitters, filters, primers, bridges, turns, and slides may step into a cell another parcel is leaving on the same tick.
 4. The surviving moves happen together. A parcel that steps onto the dock is delivered, in order.
 5. A splitter that actually sent a parcel switches to its other output.
 6. Each source emits its next parcel into the cell it faces, if that cell is empty and in bounds.
@@ -95,6 +95,12 @@ A parcel remembers the direction it is facing. It is born facing the chute that 
 
 On the tick a parcel arrives, a turn rotates that facing one quarter clockwise and does not move the parcel. On the next tick the parcel steps one cell in the new facing. That step follows the same rule as a conveyor: the cell must be the dock or a block, and the turn may enter a cell another parcel is leaving. If the cell is blocked by a parcel that is staying, the turn waits and tries again without rotating a second time. Rotating the block does not change the quarter. A turn does not paint, stamp, or filter, and it does not skip a cell.
 
+### Slide
+
+Moves a parcel two cells in the parcel's current facing on the tick the parcel is standing on it, and does not rotate the parcel. The cell between is not entered, so it can be a brick, a belt, or a parcel. The landing follows the same rule as a conveyor: it must be the dock or a block, and a slide may land in a cell another parcel is leaving. If that landing is blocked by a parcel that is staying, the slide does not move the parcel and does not rotate it. It tries again on the next tick.
+
+A slide is not a bridge. A bridge lands two cells along the block's arrow. A slide lands two cells along the parcel's facing, so a turn before a slide changes where it lands, and rotating the slide block does not. A slide does not paint, stamp, or filter.
+
 ## Puzzles
 
 1. First Mile introduces the conveyor. Send the parcel straight to the dock.
@@ -140,7 +146,14 @@ On the tick a parcel arrives, a turn rotates that facing one quarter clockwise a
 41. Two Rights sends blue and red through one turn. Blue is facing west and leaves north. Red is facing east and leaves south.
 42. Second Bend loops the parcel through the counter, paints it yellow on the way back, and turns it onto the dock. The delivery is yellow 2.
 43. Night Turn uses the filter, the turn, the primer, and the counter. Red turns south onto the counter for stamp 1. Gray takes the long belt, becomes yellow, and is stamped 2. Blue keeps its color and is stamped 3.
+44. Long Step introduces the slide. The parcel slides two cells in its facing, over the brick, onto the dock.
+45. Bent Slide turns the parcel south, then slides it over the brick. A bridge aimed along the chute would miss the dock, because the landing follows the new facing.
+46. Far Stamp turns both parcels south and slides them over the brick onto the counter. The stamps are 1, then 2.
+47. Over the Latch slides red over the waiting blue and onto the dock. Blue leaves once that dock is clear. Without the latch, both parcels claim the dock and the belt jams.
+48. Two Spans sends blue and red through one slide. Blue is facing west and reaches the blue filter. Red is facing east and reaches the red filter, then the long belt. One bridge arrow cannot feed both filters.
+49. Second Slide loops the parcel through the counter, paints it yellow on the way back, and slides it over the brick. The delivery is yellow 2.
+50. Night Slide uses the filter, the turn, the slide, the latch, the primer, and the counter. Red turns south and slides over the brick onto the counter for stamp 1. The latch holds the south belt. Gray becomes yellow and is stamped 2. Blue keeps its color and is stamped 3.
 
 ## Limits
 
-These are Building 1, Building 2, Building 3, Building 4, and Building 5. There is no histogram, no sound, and no proof that par is the shortest possible route: par is the reference graph, and another graph can deliver the order with a different cycle count or block count. Playback of a run that hits the tick cap is shortened on screen; the simulation itself still runs to the cap.
+These are Building 1, Building 2, Building 3, Building 4, Building 5, and Building 6. There is no histogram, no sound, and no proof that par is the shortest possible route: par is the reference graph, and another graph can deliver the order with a different cycle count or block count. Playback of a run that hits the tick cap is shortened on screen; the simulation itself still runs to the cap.
