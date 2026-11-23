@@ -4718,6 +4718,68 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 		var jogb_after_empty = jogb_after_row <= 2 and state.form[jogb_after_row][jogb_after_col] == null
 		if jogb_before_empty and jogb_after_empty:
 			guess += _stamp_number(state, card_id, row, col)
+	if rule == "drop_if_countersink_count":
+		var countersink_filled = 0
+		for countersink_row in 3:
+			for countersink_col in 3:
+				if state.form[countersink_row][countersink_col] != null:
+					countersink_filled += 1
+		var countersink_next = countersink_filled + 1
+		if countersink_next == 10 or countersink_next == 13:
+			guess -= 4
+		elif countersink_filled == 10 or countersink_filled == 13:
+			guess += 5
+	if rule == "double_crimp_fill":
+		var crimp_before_row = row
+		var crimp_before_col = col - 10
+		while crimp_before_col < 0:
+			crimp_before_row -= 1
+			crimp_before_col += 3
+		var crimp_after_row = row
+		var crimp_after_col = col + 1
+		while crimp_after_col > 2:
+			crimp_after_row += 1
+			crimp_after_col -= 3
+		var crimp_before_filled = crimp_before_row >= 0 and state.form[crimp_before_row][crimp_before_col] != null
+		var crimp_after_filled = crimp_after_row <= 2 and state.form[crimp_after_row][crimp_after_col] != null
+		if crimp_before_filled and crimp_after_filled:
+			guess += _stamp_number(state, card_id, row, col)
+	if rule == "yield_cotter_pay":
+		var cotter_sides = 0
+		var cotter_corners = 0
+		for cotter_side in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var cotter_side_row = row + cotter_side.x
+			var cotter_side_col = col + cotter_side.y
+			if cotter_side_row < 0 or cotter_side_col < 0 or cotter_side_row > 2 or cotter_side_col > 2:
+				continue
+			if state.form[cotter_side_row][cotter_side_col] != null:
+				cotter_sides += 1
+		for cotter_corner in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var cotter_corner_row = row + cotter_corner.x
+			var cotter_corner_col = col + cotter_corner.y
+			if cotter_corner_row < 0 or cotter_corner_col < 0 or cotter_corner_row > 2 or cotter_corner_col > 2:
+				continue
+			if state.form[cotter_corner_row][cotter_corner_col] != null:
+				cotter_corners += 1
+		if cotter_sides == 8 and cotter_corners == 4:
+			guess += 4
+		else:
+			guess -= 1
+	if rule == "double_crimp_blank":
+		var crimpb_before_row = row
+		var crimpb_before_col = col - 10
+		while crimpb_before_col < 0:
+			crimpb_before_row -= 1
+			crimpb_before_col += 3
+		var crimpb_after_row = row
+		var crimpb_after_col = col + 1
+		while crimpb_after_col > 2:
+			crimpb_after_row += 1
+			crimpb_after_col -= 3
+		var crimpb_before_empty = crimpb_before_row >= 0 and state.form[crimpb_before_row][crimpb_before_col] == null
+		var crimpb_after_empty = crimpb_after_row <= 2 and state.form[crimpb_after_row][crimpb_after_col] == null
+		if crimpb_before_empty and crimpb_after_empty:
+			guess += _stamp_number(state, card_id, row, col)
 	if rule == "drop_if_drift_count":
 		var drift_filled = 0
 		for drift_row in 3:

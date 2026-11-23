@@ -104,6 +104,8 @@ func _run() -> void:
 	test_architrave_book()
 	test_archivolt_rule()
 	test_archivolt_book()
+	test_abacus_rule()
+	test_abacus_book()
 	test_chart_4_boat()
 	test_one_rotation_is_not_solved()
 	test_hint_points_at_one_piece()
@@ -291,7 +293,8 @@ func test_charts() -> void:
 	check(Charts.impost().size() == 8, "impost adds eight charts")
 	check(Charts.architrave().size() == 8, "architrave adds eight charts")
 	check(Charts.archivolt().size() == 8, "archivolt adds eight charts")
-	check(book.size() == 334, "three hundred thirty-four charts")
+	check(Charts.abacus().size() == 8, "abacus adds eight charts")
+	check(book.size() == 342, "three hundred forty-two charts")
 	check(str(book[13]["id"]) == "14" and str(book[13]["title"]) == "The Holding Line", "chart 14 stays the reach capstone")
 	check(str(book[14]["title"]) == "North Light", "chart 15 opens the basin")
 	check(str(book[21]["id"]) == "22" and str(book[21]["title"]) == "The Basin Mark", "chart 22 stays the basin capstone")
@@ -373,6 +376,8 @@ func test_charts() -> void:
 	check(str(book[325]["id"]) == "326" and str(book[325]["title"]) == "The Architrave Line", "chart 326 stays the architrave capstone")
 	check(str(book[326]["title"]) == "The Flooded Archivolt", "chart 327 opens the archivolt")
 	check(str(book[333]["id"]) == "334" and str(book[333]["title"]) == "The Archivolt Line", "chart 334 stays the archivolt capstone")
+	check(str(book[334]["title"]) == "The Flooded Abacus", "chart 335 opens the abacus")
+	check(str(book[341]["id"]) == "342" and str(book[341]["title"]) == "The Abacus Line", "chart 342 stays the abacus capstone")
 	var seen_ids := {}
 	var seen_titles := {}
 	var quay_titles := ["First Glass", "Around the Pilings", "High Water", "Sleeping Hull", "Split the White", "The Night Mark"]
@@ -13069,6 +13074,130 @@ func _fixed_archivolt(id: String, x: int, y: int, rot: int) -> Dictionary:
 	}
 
 
+func test_abacus_rule() -> void:
+	for dir in ["N", "E", "S", "W"]:
+		check(not Tracer.abacus_passes(0, dir), "a dry abacus stops %s" % dir)
+		check(not Tracer.abacus_passes(90, dir), "a turned dry abacus still stops %s" % dir)
+	check(Tracer.abacus_flood_passes(0, "N"), "a flooded north abacus passes north")
+	check(not Tracer.abacus_flood_passes(0, "E") and not Tracer.abacus_flood_passes(0, "W") and not Tracer.abacus_flood_passes(0, "S"), "a flooded north abacus stops east, west, and south")
+	check(Tracer.abacus_flood_passes(90, "E"), "one click faces the abacus east and only east passes")
+	check(not Tracer.abacus_flood_passes(90, "N") and not Tracer.abacus_flood_passes(90, "W") and not Tracer.abacus_flood_passes(90, "S"), "a flooded east abacus stops the other headings")
+	check(Tracer.abacus_flood_passes(180, "S") and not Tracer.abacus_flood_passes(180, "N"), "a flooded south abacus passes only south")
+	check(not Tracer.abacus_flood_passes(180, "N"), "opposite flooded facings do not share the open heading")
+	check(not Tracer.archivolt_passes(0, "N") and not Tracer.archivolt_passes(0, "E"), "a dry archivolt still stops every heading")
+	check(Tracer.archivolt_flood_passes(0, "E") and Tracer.archivolt_flood_passes(0, "W") and not Tracer.archivolt_flood_passes(0, "N") and not Tracer.archivolt_flood_passes(0, "S"), "a flooded north archivolt still passes only east and west")
+	check(Tracer.archivolt_flood_passes(90, "N") and Tracer.archivolt_flood_passes(90, "S") and not Tracer.archivolt_flood_passes(90, "E"), "one click still opens the archivolt's north and south")
+	check(Tracer.architrave_passes(0, "E") and Tracer.architrave_passes(0, "W") and not Tracer.architrave_passes(0, "N"), "a dry north architrave still passes only east and west")
+	check(Tracer.architrave_flood_passes(0, "N") and not Tracer.architrave_flood_passes(0, "E"), "a flooded north architrave still passes only north")
+	check(Tracer.throat_passes(0, "N") and Tracer.throat_passes(0, "E") and not Tracer.throat_passes(0, "S"), "a dry north throat still passes every heading except south")
+	check(Tracer.throat_flood_passes(0, "S") and not Tracer.throat_flood_passes(0, "N"), "a flooded north throat still passes only south")
+	check(Tracer.cyma_passes(0, "N") and not Tracer.cyma_passes(0, "E") and not Tracer.cyma_passes(0, "S"), "a dry north cyma still passes only north")
+	var lane := _blank(3, 1)
+	lane["lanterns"] = [_lamp("L", 0, 0, "E", "white")]
+	lane["docks"] = [_need("D", 2, 0, "white")]
+	lane["pieces"] = [_fixed_abacus("O", 1, 0, 90)]
+	check(not Tracer.is_cleared(lane, Charts.make_state(lane, true)), "a dry abacus stops the east beam")
+	var lintel: Dictionary = lane.duplicate(true)
+	lintel["pieces"][0]["kind"] = "lintel"
+	check(Tracer.is_cleared(lintel, Charts.make_state(lintel, true)), "a dry lintel still passes every heading")
+	var wet_lintel: Dictionary = lintel.duplicate(true)
+	wet_lintel["tide_phases"] = [1]
+	check(not Tracer.is_cleared(wet_lintel, Charts.make_state(wet_lintel, true)), "a flooded lintel stays shut")
+
+
+func test_abacus_book() -> void:
+	var book := Charts.abacus()
+	check(book.size() == 8, "the abacus book has eight charts")
+	var titles := ["The Flooded Abacus", "The Turned Abacus", "The Archivolt Miss", "The Throat Stop", "The Cyma Shut", "Two Abacuses", "The Shut Abacus", "The Abacus Line"]
+	for i in book.size():
+		var chart: Dictionary = book[i]
+		check(str(chart["harbor"]) == Charts.ABACUS, "chart %s belongs to the abacus" % str(chart["id"]))
+		check(str(chart["title"]) == titles[i], "chart %s keeps its title" % str(chart["id"]))
+		check(str(chart["teach"]).to_lower().contains("abacus") or str(chart["id"]) == "337" or str(chart["id"]) == "338" or str(chart["id"]) == "339", "chart %s teaches the piece" % str(chart["id"]))
+		_expect_abacus_misses(chart)
+	check(str(book[2]["teach"]).to_lower().contains("archivolt"), "chart 337 names the archivolt")
+	check(str(book[3]["teach"]).to_lower().contains("throat"), "chart 338 names the throat")
+	check(str(book[4]["teach"]).to_lower().contains("cyma"), "chart 339 names the cyma")
+	_expect_abacus_miss(book[2], "O", "archivolt", 0, "a flooded archivolt misses chart 337")
+	_expect_abacus_miss(book[3], "O", "throat", 0, "a flooded north throat misses chart 338")
+	_expect_abacus_miss(book[4], "O", "cyma", 0, "a flooded cyma misses chart 339")
+	var north: Dictionary = book[0]
+	var hood: Dictionary = north.duplicate(true)
+	_retarget(hood, "O", "hood", 0)
+	check(Tracer.is_cleared(hood, Charts.make_state(hood, true)), "a flooded north hood clears the same facing")
+	var architrave: Dictionary = north.duplicate(true)
+	_retarget(architrave, "O", "architrave", 0)
+	check(Tracer.is_cleared(architrave, Charts.make_state(architrave, true)), "a flooded north architrave clears the same facing")
+	var pair: Dictionary = book[5]
+	var swapped: Dictionary = pair.duplicate(true)
+	_retarget(swapped, "O", "abacus", 90)
+	_retarget(swapped, "U", "abacus", 0)
+	check(not Tracer.is_cleared(swapped, Charts.make_state(swapped, true)), "swapping the two abacus facings misses")
+	var south: Dictionary = pair.duplicate(true)
+	_retarget(south, "O", "abacus", 180)
+	check(not Tracer.is_cleared(south, Charts.make_state(south, true)), "the opposite west abacus does not clear")
+	var west: Dictionary = pair.duplicate(true)
+	_retarget(west, "U", "abacus", 270)
+	check(not Tracer.is_cleared(west, Charts.make_state(west, true)), "the opposite east abacus does not clear")
+	var low: Dictionary = Charts.duplicate_state(Charts.make_state(book[6], true))
+	low["tide_index"] = 0
+	check(not Tracer.is_cleared(book[6], low), "low water on chart 341 stays shut")
+	var line: Dictionary = book[7]
+	var lit: Dictionary = Tracer.trace(line, Charts.make_state(line, true))
+	check(not bool(lit["boats"]["Hb"]), "the abacus line keeps the hull dark")
+	var ebb: Dictionary = Charts.duplicate_state(Charts.make_state(line, true))
+	ebb["tide_index"] = 0
+	var ebb_trace: Dictionary = Tracer.trace(line, ebb)
+	check(bool(ebb_trace["boats"]["Hb"]) and not Tracer.is_cleared(line, ebb), "low water lights the hull and does not clear")
+
+
+func _expect_abacus_misses(chart: Dictionary) -> void:
+	var kinds: Array = ["archivolt", "cyma", "impost", "threshold", "corona", "larmier", "cill", "fillet", "vane", "weir", "sluice", "prism", "jamb", "transom", "mullion", "lintel", "shutter", "stain", "hood", "architrave", "throat", "drip", "beak"]
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		var pid := str(piece["id"])
+		var facing := Tracer.abacus_facing(int(piece["solution_rot"]))
+		for kind in kinds:
+			for rot in [0, 90, 180, 270]:
+				if _abacus_kind_clears(kind, rot, facing):
+					continue
+				_expect_abacus_miss(chart, pid, kind, rot, "chart %s %s %s at %d misses" % [str(chart["id"]), pid, kind, rot])
+
+
+func _abacus_kind_clears(kind: String, rot: int, facing: String) -> bool:
+	if kind == "hood":
+		return Tracer.hood_flood_passes(rot, facing)
+	if kind == "architrave":
+		return Tracer.architrave_flood_passes(rot, facing)
+	if kind == "throat":
+		return Tracer.throat_flood_passes(rot, facing)
+	if kind == "drip":
+		return Tracer.drip_flood_passes(rot, facing)
+	if kind == "beak":
+		return Tracer.beak_flood_passes(rot, facing)
+	return false
+
+
+func _expect_abacus_miss(chart: Dictionary, piece_id: String, kind: String, rot: int, label: String) -> void:
+	var copy: Dictionary = chart.duplicate(true)
+	_retarget(copy, piece_id, kind, rot)
+	check(not Tracer.is_cleared(copy, Charts.make_state(copy, true)), label)
+
+
+func _fixed_abacus(id: String, x: int, y: int, rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": "Abacus",
+		"kind": "abacus",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": rot,
+		"solution_socket": "a",
+		"solution_rot": rot,
+	}
+
+
 func test_smoke() -> void:
 	var main_script: Script = load("res://scripts/main.gd")
 	main_script.persist_progress = false
@@ -14502,8 +14631,44 @@ func test_smoke() -> void:
 	await process_frame
 	check(str(main.chart["id"]) == "327", "Archivolt returns to The Flooded Archivolt")
 	check(_chart_row_fits(main.archivolt_grid, main._side), "the archivolt chart row fits in the window")
+	var abacus_rect: Rect2 = main.abacus_book_button.get_global_rect()
+	var abacus_side: Rect2 = main._side.get_global_rect()
+	check(abacus_side.grow(1.0).encloses(abacus_rect), "the abacus book button sits inside the side panel")
+	check(not abacus_rect.intersects(archivolt_rect), "the abacus book button stays off the archivolt")
+	check(abacus_rect.size.x + 0.5 >= main.abacus_book_button.get_minimum_size().x, "the abacus label has room")
+	check(archivolt_rect.size.x + 0.5 >= main.archivolt_book_button.get_minimum_size().x, "the archivolt label still has room")
+	main.unlocked[334] = false
+	main._refresh_chrome()
+	check(main.abacus_book_button.disabled, "the abacus stays locked until the archivolt line is held")
+	main.unlocked[333] = true
+	check(main.select_chart(333), "chart 334 opens when unlocked")
+	check(main.abacus_book_button.disabled, "opening the archivolt line does not unlock the abacus")
+	main.state = Charts.duplicate_state(Charts.make_state(main.chart, true))
+	main._refresh()
+	main.try_lock()
+	check(main.board_locked and main.unlocked[334], "holding the archivolt line opens the abacus")
+	main._advance_from_win()
+	check(str(main.chart["id"]) == "335", "next chart from the archivolt line enters The Flooded Abacus")
+	check(main.abacus_grid.visible and not main.archivolt_grid.visible and not main.architrave_grid.visible, "the abacus grid opens with The Flooded Abacus")
+	check(str(main.harbor_label.text) == Charts.ABACUS, "the harbor name follows the abacus")
+	check(str(main.tide_readout.text).to_lower().contains("abacus"), "chart 335 names the abacus in the water readout")
+	var abacus_cell := Charts.piece_cell(main.chart, main.state, "O")
+	check(str(main.selected_id) == "O" and int(main.state["pieces"]["O"]["rot"]) == 90, "chart 335 starts facing east")
+	_click_cell(main, abacus_cell.x, abacus_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 180, "a click turns the abacus from east to south")
+	check(str(main.status_label.text).to_lower().contains("stops") and str(main.status_label.text).to_lower().contains("facing"), "the abacus says every dry heading stops and the flood opens only the facing")
+	_click_cell(main, abacus_cell.x, abacus_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 270, "the next click turns the abacus west")
+	_click_cell(main, abacus_cell.x, abacus_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 0, "the next click turns the abacus north")
+	_click_cell(main, abacus_cell.x, abacus_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 90, "four clicks restore the east facing")
+	main._on_book_pressed(42)
+	await process_frame
+	check(str(main.chart["id"]) == "335", "Abacus returns to The Flooded Abacus")
+	check(_chart_row_fits(main.abacus_grid, main._side), "the abacus chart row fits in the window")
 	main._on_book_pressed(13)
-	check(main.weir_grid.visible and not main.lintel_grid.visible and not main.mullion_grid.visible and not main.transom_grid.visible and not main.casement_grid.visible and not main.jamb_grid.visible and not main.astragal_grid.visible and not main.scotia_grid.visible and not main.torus_grid.visible and not main.ogee_grid.visible and not main.ovolo_grid.visible and not main.cavetto_grid.visible and not main.fillet_grid.visible and not main.corona_grid.visible and not main.bead_grid.visible and not main.quirk_grid.visible and not main.cyma_grid.visible and not main.fascia_grid.visible and not main.soffit_grid.visible and not main.drip_grid.visible and not main.beak_grid.visible and not main.hood_grid.visible and not main.throat_grid.visible and not main.larmier_grid.visible and not main.cill_grid.visible and not main.threshold_grid.visible and not main.impost_grid.visible and not main.architrave_grid.visible and not main.archivolt_grid.visible, "the weir book still opens")
+	check(main.weir_grid.visible and not main.lintel_grid.visible and not main.mullion_grid.visible and not main.transom_grid.visible and not main.casement_grid.visible and not main.jamb_grid.visible and not main.astragal_grid.visible and not main.scotia_grid.visible and not main.torus_grid.visible and not main.ogee_grid.visible and not main.ovolo_grid.visible and not main.cavetto_grid.visible and not main.fillet_grid.visible and not main.corona_grid.visible and not main.bead_grid.visible and not main.quirk_grid.visible and not main.cyma_grid.visible and not main.fascia_grid.visible and not main.soffit_grid.visible and not main.drip_grid.visible and not main.beak_grid.visible and not main.hood_grid.visible and not main.throat_grid.visible and not main.larmier_grid.visible and not main.cill_grid.visible and not main.threshold_grid.visible and not main.impost_grid.visible and not main.architrave_grid.visible and not main.archivolt_grid.visible and not main.abacus_grid.visible, "the weir book still opens")
 	main.select_chart(0)
 	main.restart_chart()
 	var before_rot := int(main.state["pieces"]["M"]["rot"])
@@ -14613,7 +14778,7 @@ func _walk(chart: Dictionary, state: Dictionary, index: int, found: Array) -> vo
 	# A threshold has four facings. Opposite facings do not share the open set. Dry, only the opposite of the facing passes. Flooded, every direction except that opposite passes.
 	# An impost has four facings. Opposite facings do not share the open set. Dry, only the facing passes. Flooded, every direction except that facing passes.
 	var rots: Array = [0]
-	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma" or kind == "fascia" or kind == "soffit" or kind == "drip" or kind == "beak" or kind == "hood" or kind == "throat" or kind == "larmier" or kind == "cill" or kind == "threshold" or kind == "impost" or kind == "architrave" or kind == "archivolt":
+	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma" or kind == "fascia" or kind == "soffit" or kind == "drip" or kind == "beak" or kind == "hood" or kind == "throat" or kind == "larmier" or kind == "cill" or kind == "threshold" or kind == "impost" or kind == "architrave" or kind == "archivolt" or kind == "abacus":
 		rots = [0, 90, 180, 270]
 	elif kind != "shutter" and kind != "well" and kind != "siphon" and kind != "lintel" and kind != "mullion" and kind != "transom":
 		rots = [0, 90]
