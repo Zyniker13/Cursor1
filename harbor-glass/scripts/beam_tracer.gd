@@ -441,7 +441,7 @@ static func norm_rot(kind: String, rot: int) -> int:
 	# A cavetto uses the same four facings. Each one stops only the opposite
 	# of the facing and passes the other three directions. A north cavetto
 	# passes north, east, and west, which a north ovolo does not.
-	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma" or kind == "fascia" or kind == "soffit" or kind == "drip":
+	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma" or kind == "fascia" or kind == "soffit" or kind == "drip" or kind == "beak" or kind == "hood" or kind == "throat":
 		return posmod(rot, 360)
 	# A shutter has no facing. Dry stops the beam; flooded water lets it pass.
 	# A well has no facing either. Dry stops the beam; flooded water sends it north.
@@ -679,6 +679,48 @@ static func drip_flood_passes(rot: int, dir: String) -> bool:
 	# passes. A flooded north drip passes only west.
 	return dir == rotate_dir(drip_facing(rot), -1)
 
+static func beak_facing(rot: int) -> String:
+	# 0 north, 90 east, 180 south, 270 west. Opposite facings are not the same piece.
+	return rotate_dir("N", posmod(int(norm_rot("beak", rot) / 90.0), 4))
+
+static func beak_passes(rot: int, dir: String) -> bool:
+	# Dry rule, the clockwise mirror of a drip. Every direction except the
+	# next clockwise one. North passes north, south, and west, and stops east.
+	return dir != rotate_dir(beak_facing(rot), 1)
+
+static func beak_flood_passes(rot: int, dir: String) -> bool:
+	# Flooded rule, the dry stop flipped. Only the dry-stopped direction
+	# passes. A flooded north beak passes only east.
+	return dir == rotate_dir(beak_facing(rot), 1)
+
+static func hood_facing(rot: int) -> String:
+	# 0 north, 90 east, 180 south, 270 west. Opposite facings are not the same piece.
+	return rotate_dir("N", posmod(int(norm_rot("hood", rot) / 90.0), 4))
+
+static func hood_passes(rot: int, dir: String) -> bool:
+	# Dry rule. Every direction except the facing. North passes east, south,
+	# and west, and stops north.
+	return dir != hood_facing(rot)
+
+static func hood_flood_passes(rot: int, dir: String) -> bool:
+	# Flooded rule, the dry stop flipped. Only the facing passes. A flooded
+	# north hood passes only north.
+	return dir == hood_facing(rot)
+
+static func throat_facing(rot: int) -> String:
+	# 0 north, 90 east, 180 south, 270 west. Opposite facings are not the same piece.
+	return rotate_dir("N", posmod(int(norm_rot("throat", rot) / 90.0), 4))
+
+static func throat_passes(rot: int, dir: String) -> bool:
+	# Dry rule. Every direction except the opposite of the facing. North passes
+	# north, east, and west, and stops south.
+	return dir != rotate_dir(throat_facing(rot), 2)
+
+static func throat_flood_passes(rot: int, dir: String) -> bool:
+	# Flooded rule, the dry stop flipped. Only the opposite of the facing
+	# passes. A flooded north throat passes only south.
+	return dir == rotate_dir(throat_facing(rot), 2)
+
 static func sluice_facing(rot: int) -> String:
 	# 0 north, 90 east, 180 south, 270 west. The exit follows this facing.
 	return rotate_dir("N", posmod(int(rot / 90.0), 4))
@@ -883,7 +925,7 @@ static func _cast(
 		if flooded and not _flood_carries(occupants, cell):
 			# A flooded drip is not a full carrier. Only the dry-stopped
 			# direction enters. The other three stop at the waterline.
-			if not _flooded_drip_passes(occupants, cell, dir):
+			if not _flooded_drip_passes(occupants, cell, dir) and not _flooded_beak_passes(occupants, cell, dir) and not _flooded_hood_passes(occupants, cell, dir) and not _flooded_throat_passes(occupants, cell, dir):
 				segments.append(_boundary_seg(prev, cell, color))
 				return
 		# A dry mullion passes north and south. East and west stop on the edge
@@ -990,6 +1032,24 @@ static func _cast(
 		# one. That direction stops on the edge. A flooded drip already passed
 		# the waterline gate above, and only its dry-stopped direction is here.
 		if not flooded and _dry_drip_blocks(occupants, cell, dir):
+			segments.append(_boundary_seg(prev, cell, color))
+			return
+		# A dry beak passes every direction except the next clockwise one.
+		# That direction stops on the edge. A flooded beak already passed the
+		# waterline gate above, and only its dry-stopped direction is here.
+		if not flooded and _dry_beak_blocks(occupants, cell, dir):
+			segments.append(_boundary_seg(prev, cell, color))
+			return
+		# A dry hood passes every direction except its facing. That direction
+		# stops on the edge. A flooded hood already passed the waterline gate
+		# above, and only its facing is here.
+		if not flooded and _dry_hood_blocks(occupants, cell, dir):
+			segments.append(_boundary_seg(prev, cell, color))
+			return
+		# A dry throat passes every direction except the opposite of its facing.
+		# That direction stops on the edge. A flooded throat already passed the
+		# waterline gate above, and only that opposite direction is here.
+		if not flooded and _dry_throat_blocks(occupants, cell, dir):
 			segments.append(_boundary_seg(prev, cell, color))
 			return
 		segments.append(_center_seg(prev, cell, color))
@@ -1253,6 +1313,27 @@ static func _cast(
 			prev = cell
 			cell = cell + VEC[dir]
 			continue
+		if kind == "beak":
+			# Dry, every direction except the next clockwise one passes
+			# straight. Flooded, only that stopped direction passes straight.
+			# Same direction, same color, no bounce, no turn, no recolor, no split.
+			prev = cell
+			cell = cell + VEC[dir]
+			continue
+		if kind == "hood":
+			# Dry, every direction except the facing passes straight. Flooded,
+			# only the facing passes straight. Same direction, same color, no
+			# bounce, no turn, no recolor, no split.
+			prev = cell
+			cell = cell + VEC[dir]
+			continue
+		if kind == "throat":
+			# Dry, every direction except the opposite of the facing passes
+			# straight. Flooded, only that opposite passes straight. Same
+			# direction, same color, no bounce, no turn, no recolor, no split.
+			prev = cell
+			cell = cell + VEC[dir]
+			continue
 		if kind == "pane":
 			if color != pane_color(int(occ["rot"])):
 				return
@@ -1300,6 +1381,12 @@ static func _flood_carries(occupants: Dictionary, cell: Vector2i) -> bool:
 	# soffit is shut under water the same way, so _flood_carries stays false
 	# for it. A drip is not listed here either. Under water only its
 	# dry-stopped direction enters, and that exception is the waterline gate.
+	# A beak is not listed here either. Under water only its dry-stopped
+	# direction enters, and that exception is the same gate.
+	# A hood is not listed here either. Under water only its facing enters,
+	# and that exception is the same gate.
+	# A throat is not listed here either. Under water only the opposite of
+	# its facing enters, and that exception is the same gate.
 	# Every other flooded cell stops.
 	if not occupants.has(cell):
 		return false
@@ -1439,6 +1526,48 @@ static func _flooded_drip_passes(occupants: Dictionary, cell: Vector2i, dir: Str
 	if str(occupants[cell]["kind"]) != "drip":
 		return false
 	return drip_flood_passes(int(occupants[cell]["rot"]), dir)
+
+static func _dry_beak_blocks(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "beak":
+		return false
+	return not beak_passes(int(occupants[cell]["rot"]), dir)
+
+static func _flooded_beak_passes(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "beak":
+		return false
+	return beak_flood_passes(int(occupants[cell]["rot"]), dir)
+
+static func _dry_hood_blocks(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "hood":
+		return false
+	return not hood_passes(int(occupants[cell]["rot"]), dir)
+
+static func _flooded_hood_passes(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "hood":
+		return false
+	return hood_flood_passes(int(occupants[cell]["rot"]), dir)
+
+static func _dry_throat_blocks(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "throat":
+		return false
+	return not throat_passes(int(occupants[cell]["rot"]), dir)
+
+static func _flooded_throat_passes(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "throat":
+		return false
+	return throat_flood_passes(int(occupants[cell]["rot"]), dir)
 
 static func _in_bounds(chart: Dictionary, cell: Vector2i) -> bool:
 	return cell.x >= 0 and cell.y >= 0 and cell.x < int(chart["cols"]) and cell.y < int(chart["rows"])
