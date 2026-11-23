@@ -2287,6 +2287,174 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 		if reach_ahead_row <= 2 and state.form[reach_ahead_row][reach_ahead_col] != null:
 			var reach_helped = state.form[reach_ahead_row][reach_ahead_col]
 			guess += _stamp_number(state, String(reach_helped["card_id"]), reach_ahead_row, reach_ahead_col)
+	if rule == "drop_if_cleft_count":
+		var cleft_filled = 0
+		for cleft_row in 3:
+			for cleft_col in 3:
+				if state.form[cleft_row][cleft_col] != null:
+					cleft_filled += 1
+		var cleft_next = cleft_filled + 1
+		if cleft_next == 0 or cleft_next == 2:
+			guess -= 4
+		elif cleft_filled == 0 or cleft_filled == 2:
+			guess += 5
+	if rule == "double_pace_blank":
+		var pace_blank_ahead_row = row
+		var pace_blank_ahead_col = col + 1
+		while pace_blank_ahead_col > 2:
+			pace_blank_ahead_row += 1
+			pace_blank_ahead_col -= 3
+		if pace_blank_ahead_row > 2:
+			guess -= 4
+		elif state.form[pace_blank_ahead_row][pace_blank_ahead_col] == null:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+		var pace_spoiled_row = row
+		var pace_spoiled_col = col - 1
+		while pace_spoiled_col < 0:
+			pace_spoiled_row -= 1
+			pace_spoiled_col += 3
+		if pace_spoiled_row >= 0 and state.form[pace_spoiled_row][pace_spoiled_col] != null:
+			var pace_spoiled = state.form[pace_spoiled_row][pace_spoiled_col]
+			guess -= _stamp_number(state, String(pace_spoiled["card_id"]), pace_spoiled_row, pace_spoiled_col)
+	if rule == "yield_vault_pay":
+		var vault_corners = 0
+		for vault_delta in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var vault_row = row + vault_delta.x
+			var vault_col = col + vault_delta.y
+			if vault_row < 0 or vault_col < 0 or vault_row > 2 or vault_col > 2:
+				continue
+			if state.form[vault_row][vault_col] != null:
+				vault_corners += 1
+		if vault_corners == 4:
+			guess += 4
+		else:
+			guess -= 1
+		for vault_delta in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var vault_near_row = row + vault_delta.x
+			var vault_near_col = col + vault_delta.y
+			if vault_near_row < 0 or vault_near_col < 0 or vault_near_row > 2 or vault_near_col > 2:
+				continue
+			if state.form[vault_near_row][vault_near_col] == null:
+				continue
+			var vault_other = 0
+			for vault_other_delta in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+				var vault_other_row = vault_near_row + vault_other_delta.x
+				var vault_other_col = vault_near_col + vault_other_delta.y
+				if vault_other_row < 0 or vault_other_col < 0 or vault_other_row > 2 or vault_other_col > 2:
+					continue
+				if vault_other_row == row and vault_other_col == col:
+					continue
+				if state.form[vault_other_row][vault_other_col] != null:
+					vault_other += 1
+			if vault_other == 3:
+				guess += 2
+			elif vault_other == 4:
+				guess -= 2
+	if rule == "double_pace_back":
+		var pace_back_row = row
+		var pace_back_col = col - 1
+		while pace_back_col < 0:
+			pace_back_row -= 1
+			pace_back_col += 3
+		if pace_back_row < 0:
+			guess -= 4
+		elif state.form[pace_back_row][pace_back_col] != null:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+		var pace_ahead_row = row
+		var pace_ahead_col = col + 1
+		while pace_ahead_col > 2:
+			pace_ahead_row += 1
+			pace_ahead_col -= 3
+		if pace_ahead_row <= 2 and state.form[pace_ahead_row][pace_ahead_col] != null:
+			var pace_helped = state.form[pace_ahead_row][pace_ahead_col]
+			guess += _stamp_number(state, String(pace_helped["card_id"]), pace_ahead_row, pace_ahead_col)
+	if rule == "drop_if_notch_count":
+		var notch_filled = 0
+		for notch_row in 3:
+			for notch_col in 3:
+				if state.form[notch_row][notch_col] != null:
+					notch_filled += 1
+		var notch_next = notch_filled + 1
+		if notch_next == 1 or notch_next == 3:
+			guess -= 4
+		elif notch_filled == 1 or notch_filled == 3:
+			guess += 5
+	if rule == "double_pace_fill":
+		var pace_fill_ahead_row = row
+		var pace_fill_ahead_col = col + 1
+		while pace_fill_ahead_col > 2:
+			pace_fill_ahead_row += 1
+			pace_fill_ahead_col -= 3
+		if pace_fill_ahead_row > 2:
+			guess -= 4
+		elif state.form[pace_fill_ahead_row][pace_fill_ahead_col] != null:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+		var pace_helped_row = row
+		var pace_helped_col = col - 1
+		while pace_helped_col < 0:
+			pace_helped_row -= 1
+			pace_helped_col += 3
+		if pace_helped_row >= 0 and state.form[pace_helped_row][pace_helped_col] != null:
+			var pace_helped = state.form[pace_helped_row][pace_helped_col]
+			guess += _stamp_number(state, String(pace_helped["card_id"]), pace_helped_row, pace_helped_col)
+	if rule == "yield_bare_pay":
+		var bare_corners = 0
+		for bare_delta in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var bare_row = row + bare_delta.x
+			var bare_col = col + bare_delta.y
+			if bare_row < 0 or bare_col < 0 or bare_row > 2 or bare_col > 2:
+				continue
+			if state.form[bare_row][bare_col] != null:
+				bare_corners += 1
+		if bare_corners == 0:
+			guess += 4
+		else:
+			guess -= 1
+		for bare_delta in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var bare_near_row = row + bare_delta.x
+			var bare_near_col = col + bare_delta.y
+			if bare_near_row < 0 or bare_near_col < 0 or bare_near_row > 2 or bare_near_col > 2:
+				continue
+			if state.form[bare_near_row][bare_near_col] == null:
+				continue
+			var bare_other = 0
+			for bare_other_delta in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+				var bare_other_row = bare_near_row + bare_other_delta.x
+				var bare_other_col = bare_near_col + bare_other_delta.y
+				if bare_other_row < 0 or bare_other_col < 0 or bare_other_row > 2 or bare_other_col > 2:
+					continue
+				if bare_other_row == row and bare_other_col == col:
+					continue
+				if state.form[bare_other_row][bare_other_col] != null:
+					bare_other += 1
+			if bare_other == 0:
+				guess -= 2
+	if rule == "double_pace_gap":
+		var pace_gap_row = row
+		var pace_gap_col = col - 1
+		while pace_gap_col < 0:
+			pace_gap_row -= 1
+			pace_gap_col += 3
+		if pace_gap_row < 0:
+			guess -= 4
+		elif state.form[pace_gap_row][pace_gap_col] == null:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+		var pace_spoiled_row = row
+		var pace_spoiled_col = col + 1
+		while pace_spoiled_col > 2:
+			pace_spoiled_row += 1
+			pace_spoiled_col -= 3
+		if pace_spoiled_row <= 2 and state.form[pace_spoiled_row][pace_spoiled_col] != null:
+			var pace_spoiled = state.form[pace_spoiled_row][pace_spoiled_col]
+			guess -= _stamp_number(state, String(pace_spoiled["card_id"]), pace_spoiled_row, pace_spoiled_col)
 	if rule == "ignore_isolated":
 		var neighbors = 0
 		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
