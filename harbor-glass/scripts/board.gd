@@ -311,6 +311,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_echinus(at, rot)
 		"annulet":
 			_draw_annulet(at, rot)
+		"listel":
+			_draw_listel(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -1769,6 +1771,66 @@ func _annulet_tick(center: Vector2, dir: String, mark: Color) -> void:
 	var inner := center + outward * cell * 0.30
 	var outer := center + outward * cell * 0.44
 	var half := cell * 0.06
+	draw_colored_polygon(PackedVector2Array([
+		inner - across * half,
+		inner + across * half,
+		outer + across * half,
+		outer - across * half,
+	]), mark)
+
+func _draw_listel(at: Vector2i, rot: int) -> void:
+	# A narrow band with ticks on the facing and the clockwise edge. It is
+	# thinner than the annulet ring.
+	var center := _center(at)
+	var facing := Tracer.listel_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var clock := "E"
+	match facing:
+		"N":
+			clock = "E"
+		"E":
+			clock = "S"
+		"S":
+			clock = "W"
+		_:
+			clock = "N"
+	_listel_band(center, facing, mark)
+	_listel_tick(center, facing, mark)
+	_listel_tick(center, clock, mark)
+
+func _listel_band(center: Vector2, dir: String, mark: Color) -> void:
+	var along := Vector2.RIGHT
+	match dir:
+		"N", "S":
+			along = Vector2.RIGHT
+		_:
+			along = Vector2.DOWN
+	var half := cell * 0.36
+	var thick := cell * 0.05
+	var across := Vector2(-along.y, along.x)
+	draw_colored_polygon(PackedVector2Array([
+		center - along * half - across * thick,
+		center + along * half - across * thick,
+		center + along * half + across * thick,
+		center - along * half + across * thick,
+	]), mark)
+
+func _listel_tick(center: Vector2, dir: String, mark: Color) -> void:
+	var outward := Vector2.UP
+	match dir:
+		"N":
+			outward = Vector2.UP
+		"E":
+			outward = Vector2.RIGHT
+		"S":
+			outward = Vector2.DOWN
+		_:
+			outward = Vector2.LEFT
+	var across := Vector2(-outward.y, outward.x)
+	var inner := center + outward * cell * 0.08
+	var outer := center + outward * cell * 0.28
+	var half := cell * 0.045
 	draw_colored_polygon(PackedVector2Array([
 		inner - across * half,
 		inner + across * half,
