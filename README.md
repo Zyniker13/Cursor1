@@ -2,16 +2,16 @@
 
 Playable slices, Godot 4. Steam packaging comes later.
 
-- [Harbor Glass](harbor-glass/) — a tide-clock light puzzle through the Cavetto
-- [Brine Mark](brine-mark/) — an indirect salt-flat colony sim through the pennon beat
-- [Dispatch](dispatch/) — a parcel-routing puzzle through the sheer
-- [Night Stamp](night-stamp/) — a border-desk deckbuilder through the acknowledgments bell
-- [Orchard Surge](orchard-surge/) — a dark-orchard wave game through night 49
-- [Lantern Census](lantern-census/) — a twenty-seven-floor map survey through the Pyx Chamber
-- [Lowball](lowball/) — a forty-two-week twenty-two-club circle through Brinewharf Avocets
-- [Casework](casework/) — a forty-one-case deduction board through the scotia
+- [Harbor Glass](harbor-glass/) — a tide-clock light puzzle through the Fillet
+- [Brine Mark](brine-mark/) — an indirect salt-flat colony sim through the gonfalon beat
+- [Dispatch](dispatch/) — a parcel-routing puzzle through the wale
+- [Night Stamp](night-stamp/) — a border-desk deckbuilder through the appendix bell
+- [Orchard Surge](orchard-surge/) — a dark-orchard wave game through night 51
+- [Lantern Census](lantern-census/) — a twenty-nine-floor map survey through the Piscina
+- [Lowball](lowball/) — a forty-six-week twenty-four-club circle through Mudwharf Knots
+- [Casework](casework/) — a forty-two-case deduction board through the cyma
 - [Lampblack](lampblack/) — turn-based museum stealth through the baize
-- [Kiln Route](kiln-route/) — a hundred-and-ninety-two-room foundry puzzle through the heel
+- [Kiln Route](kiln-route/) — a two-hundred-and-eight-room foundry puzzle through the clevis
 
 ```bash
 godot --path harbor-glass
