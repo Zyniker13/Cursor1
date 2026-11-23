@@ -3,7 +3,7 @@ extends RefCounted
 
 const Rules = preload("res://rules/rules.gd")
 
-## Eighteen wings of the closed museum. Each solution is a list of actions the rules
+## Nineteen wings of the closed museum. Each solution is a list of actions the rules
 ## accept. Tokens are R L U D, W for wait, and T0 / T1 for lamps.
 
 
@@ -93,6 +93,8 @@ static func _puzzle(number: int, title: String, lesson: String, rows: PackedStri
 		wing_number = number - 98
 	elif wing == "Baize Wing":
 		wing_number = number - 104
+	elif wing == "Scrim Wing":
+		wing_number = number - 110
 	return {
 		"number": number,
 		"wing": wing,
@@ -140,6 +142,7 @@ static func _all() -> Array:
 	puzzles.append_array(_glaze_wing())
 	puzzles.append_array(_mica_wing())
 	puzzles.append_array(_baize_wing())
+	puzzles.append_array(_scrim_wing())
 	return puzzles
 
 
@@ -2145,5 +2148,112 @@ static func _baize_wing() -> Array:
 			[_guard(9, 5, [Vector2i(9, 5)], 4)],
 			"R R T0 R W W W W W W W U R R D U R R R R R D",
 			"Baize Wing"
+		),
+	]
+
+
+static func _scrim_wing() -> Array:
+	return [
+		_puzzle(
+			111,
+			"The Lit Scrim",
+			"This room is about the rule that the scrim is lit.",
+			PackedStringArray([
+				"##########",
+				"#...X....#",
+				"#...K....#",
+				"#...S....#",
+				"#........#",
+				"##########",
+			]),
+			[_lamp(4, 4, "n", 3)],
+			[_guard(4, 1, [Vector2i(4, 1)], 0)],
+			"T0 U U",
+			"Scrim Wing"
+		),
+		_puzzle(
+			112,
+			"The Seen Thread",
+			"This room is about the rule that the guard sees a lit tile through the lit scrim.",
+			PackedStringArray([
+				"########",
+				"#X.G...#",
+				"##.K####",
+				"#......#",
+				"#......#",
+				"#...S..#",
+				"########",
+			]),
+			[_lamp(4, 4, "n", 3), _lamp(3, 1, "w", 0)],
+			[_guard(5, 4, [Vector2i(5, 4)], 1), _guard(4, 2, [Vector2i(4, 2)], 3)],
+			"T0 L U U U U L L",
+			"Scrim Wing"
+		),
+		_puzzle(
+			113,
+			"The Halted Wick",
+			"This room is about the rule that a second lamp's light stops at the scrim.",
+			PackedStringArray([
+				"###########",
+				"#....X....#",
+				"#.........#",
+				"#.###K#####",
+				"#.........#",
+				"#S........#",
+				"###########",
+			]),
+			[_lamp(9, 4, "w", 0), _lamp(5, 4, "n", 3)],
+			[_guard(9, 5, [Vector2i(9, 5)], 2)],
+			"U U U R R R R U",
+			"Scrim Wing"
+		),
+		_puzzle(
+			114,
+			"The Closed Scrim",
+			"This room is about the rule that a guard cannot enter the scrim.",
+			PackedStringArray([
+				"#########",
+				"#S.K.X..#",
+				"#######.#",
+				"#.......#",
+				"#########",
+			]),
+			[_lamp(3, 1, "e", 1)],
+			[_guard(6, 1, [Vector2i(6, 1)], 2)],
+			"R T0 R R R",
+			"Scrim Wing"
+		),
+		_puzzle(
+			115,
+			"The Early Thread",
+			"This room is about the rule that the early step onto the lit scrim fails.",
+			PackedStringArray([
+				"#########",
+				"#..X....#",
+				"#..K....#",
+				"#..S....#",
+				"#.......#",
+				"#########",
+			]),
+			[_lamp(3, 4, "n", 3)],
+			[_guard(3, 1, [Vector2i(3, 1)], 0)],
+			"T0 U U",
+			"Scrim Wing"
+		),
+		_puzzle(
+			116,
+			"The Last Scrim",
+			"This room is about the rule that you leave by stepping on the dark scrim.",
+			PackedStringArray([
+				"##########",
+				"#S.K..X..#",
+				"########.#",
+				"#........#",
+				"##########",
+			]),
+			[_lamp(3, 1, "e", 2)],
+			[_guard(8, 1, [Vector2i(8, 1)], 2)],
+			"R T0 R R R R",
+			"Scrim Wing"
 		),
 	]
