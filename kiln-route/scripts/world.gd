@@ -88,6 +88,14 @@ extends RefCounted
 ## is empty after that tick. If either exit refuses, neither item leaves. A
 ## stilt accepts from the left and sends the waiter backward. A heel accepts
 ## from behind and sends the same two exits. Nothing stays in the clevis.
+## A beam does not forward in step 2 on its own. The first item stays.
+## Only an arrival from ahead is accepted. When a later item arrives from
+## ahead, the waiter moves one cell backward and the arrival moves one cell
+## left, and only if both of those cells can take them. The beam is empty
+## after that tick. If either exit refuses, neither item leaves. A clevis
+## accepts from the right and sends the waiter forward. A stilt accepts from
+## the left and sends the waiter backward and the arrival forward. Nothing
+## stays in the beam.
 
 const Rules = preload("res://scripts/foundry.gd")
 
@@ -119,7 +127,7 @@ class Machine:
 	## Second lane on a bridge. -1 is empty. Other machines leave it empty.
 	var cross := -1
 	var cross_moved := false
-	## True while a twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, or a clevis is resolving an arrival, so a loop cannot re-enter.
+	## True while a twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, a clevis, or a beam is resolving an arrival, so a loop cannot re-enter.
 	var pairing := false
 
 class Source:
@@ -508,8 +516,9 @@ func _can_take(machine: Machine, mat: int, arrival: int) -> bool:
 		or machine.kind == Rules.Kind.HEEL
 		or machine.kind == Rules.Kind.STILT
 		or machine.kind == Rules.Kind.CLEVIS
+		or machine.kind == Rules.Kind.BEAM
 	):
-		# Pairing is handled in _accept. A twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, or a clevis may already be holding.
+		# Pairing is handled in _accept. A twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, a clevis, or a beam may already be holding.
 		return false
 	if machine.kind == Rules.Kind.BRIDGE:
 		if arrival == machine.dir:
@@ -587,6 +596,8 @@ func _accept(dest: Vector2i, mat: int, arrival: int) -> bool:
 		return _accept_stilt(dest, machine, mat, arrival)
 	if machine.kind == Rules.Kind.CLEVIS:
 		return _accept_clevis(dest, machine, mat, arrival)
+	if machine.kind == Rules.Kind.BEAM:
+		return _accept_beam(dest, machine, mat, arrival)
 	if not _can_take(machine, mat, arrival):
 		return false
 	if _holder(machine.kind):
@@ -1186,6 +1197,48 @@ func _accept_clevis(pos: Vector2i, machine: Machine, mat: int, arrival: int) -> 
 	if forward_sent:
 		back_sent = _accept(pos + Rules.vec(back_dir), mat, back_dir)
 	if not forward_sent or not back_sent:
+		_restore(mark)
+		return false
+	machine.pairing = false
+	machine.hold = -1
+	machine.moved = false
+	return true
+
+
+## From ahead only. The item is moving opposite the way the beam faces. The
+## first item waits and never leaves on its own. A later item from ahead may
+## be a different material. On that tick the waiter moves one cell backward
+## and the arrival moves one cell left, if both cells can take them. Backward
+## is opposite the facing. The beam is empty afterwards. If either exit
+## refuses, neither item leaves and the arrival is not accepted. A lone item
+## never leaves, including on the next tick and the tick after that. The beam
+## does not accept from the left, from the right, or from behind. It does not
+## spill, rotate, alternate, or send the waiter forward, right, or left, and
+## it does not keep either item. A slade and a stilt send the waiter backward
+## and the arrival forward. A heel and a clevis send the waiter forward and
+## the arrival backward. A landside sends the waiter right and the arrival
+## forward. A moldboard sends the waiter left and the arrival forward. A
+## coulter sends the waiter forward and the arrival right. A share sends the
+## waiter forward and the arrival left. A fork sends the waiter left and the
+## arrival right. A prong sends the waiter right and the arrival left.
+func _accept_beam(pos: Vector2i, machine: Machine, mat: int, arrival: int) -> bool:
+	if arrival != Rules.opposite(machine.dir):
+		return false
+	if machine.hold < 0:
+		machine.hold = mat
+		machine.moved = true
+		return true
+	if machine.moved or machine.pairing:
+		return false
+	var back_dir := Rules.opposite(machine.dir)
+	var left_dir := Rules.left(machine.dir)
+	var mark := _checkpoint()
+	machine.pairing = true
+	var back_sent: bool = _accept(pos + Rules.vec(back_dir), machine.hold, back_dir)
+	var left_sent := false
+	if back_sent:
+		left_sent = _accept(pos + Rules.vec(left_dir), mat, left_dir)
+	if not back_sent or not left_sent:
 		_restore(mark)
 		return false
 	machine.pairing = false
