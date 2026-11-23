@@ -4656,6 +4656,68 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 				nickb_later_after_col -= 3
 			if nickb_later_after_row <= 2 and state.form[nickb_later_after_row][nickb_later_after_col] == null:
 				guess -= _stamp_number(state, String(nickb_later["card_id"]), nickb_later_row, nickb_later_col)
+	if rule == "drop_if_broach_count":
+		var broach_filled = 0
+		for broach_row in 3:
+			for broach_col in 3:
+				if state.form[broach_row][broach_col] != null:
+					broach_filled += 1
+		var broach_next = broach_filled + 1
+		if broach_next == 8 or broach_next == 11:
+			guess -= 4
+		elif broach_filled == 8 or broach_filled == 11:
+			guess += 5
+	if rule == "double_jog_fill":
+		var jog_before_row = row
+		var jog_before_col = col - 8
+		while jog_before_col < 0:
+			jog_before_row -= 1
+			jog_before_col += 3
+		var jog_after_row = row
+		var jog_after_col = col + 1
+		while jog_after_col > 2:
+			jog_after_row += 1
+			jog_after_col -= 3
+		var jog_before_filled = jog_before_row >= 0 and state.form[jog_before_row][jog_before_col] != null
+		var jog_after_filled = jog_after_row <= 2 and state.form[jog_after_row][jog_after_col] != null
+		if jog_before_filled and jog_after_filled:
+			guess += _stamp_number(state, card_id, row, col)
+	if rule == "yield_peen_pay":
+		var peen_sides = 0
+		var peen_corners = 0
+		for peen_side in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var peen_side_row = row + peen_side.x
+			var peen_side_col = col + peen_side.y
+			if peen_side_row < 0 or peen_side_col < 0 or peen_side_row > 2 or peen_side_col > 2:
+				continue
+			if state.form[peen_side_row][peen_side_col] != null:
+				peen_sides += 1
+		for peen_corner in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var peen_corner_row = row + peen_corner.x
+			var peen_corner_col = col + peen_corner.y
+			if peen_corner_row < 0 or peen_corner_col < 0 or peen_corner_row > 2 or peen_corner_col > 2:
+				continue
+			if state.form[peen_corner_row][peen_corner_col] != null:
+				peen_corners += 1
+		if peen_sides == 6 and peen_corners == 4:
+			guess += 4
+		else:
+			guess -= 1
+	if rule == "double_jog_blank":
+		var jogb_before_row = row
+		var jogb_before_col = col - 8
+		while jogb_before_col < 0:
+			jogb_before_row -= 1
+			jogb_before_col += 3
+		var jogb_after_row = row
+		var jogb_after_col = col + 1
+		while jogb_after_col > 2:
+			jogb_after_row += 1
+			jogb_after_col -= 3
+		var jogb_before_empty = jogb_before_row >= 0 and state.form[jogb_before_row][jogb_before_col] == null
+		var jogb_after_empty = jogb_after_row <= 2 and state.form[jogb_after_row][jogb_after_col] == null
+		if jogb_before_empty and jogb_after_empty:
+			guess += _stamp_number(state, card_id, row, col)
 	if rule == "ignore_isolated":
 		var neighbors = 0
 		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:

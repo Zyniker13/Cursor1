@@ -55,7 +55,8 @@ const BIER_AWNING := Color(0.45, 0.28, 0.14)
 const CERECLOTH_AWNING := Color(0.82, 0.74, 0.52)
 const HEARSE_AWNING := Color(0.16, 0.14, 0.18)
 const SHROUD_AWNING := Color(0.74, 0.74, 0.72)
-const WINDOW_W := 3076.0
+const PYRE_AWNING := Color(0.72, 0.28, 0.10)
+const WINDOW_W := 3144.0
 
 var notice_label: Label
 var purse_label: Label
@@ -251,6 +252,8 @@ func _awning_for(floor_id: String) -> Color:
 		return HEARSE_AWNING
 	if floor_id == "shroud":
 		return SHROUD_AWNING
+	if floor_id == "pyre":
+		return PYRE_AWNING
 	return CHART_AWNING
 
 
