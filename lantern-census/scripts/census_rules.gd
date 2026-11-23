@@ -49,6 +49,8 @@ extends RefCounted
 ## The piscina's ring is that same walk, left where the aumbry left it.
 ## The sedilia's ring is that same walk, left where the piscina left it.
 ## The credence's ring is that same walk, left where the sedilia left it.
+## The reredos leaves that walk except at (9,10), which is closed. The ring
+## steps through (8,11), (9,11), and the lift so every ring tile is a corridor.
 ## A census is accepted only when every corridor and hazard is marked truly
 ## and no tile is marked as something it is not.
 
@@ -62,7 +64,7 @@ const HAZARD_VALUE := 8
 const LOOP_VALUE := 15
 
 const TOWN_LINE := "Arrows turn and step, Q and E strafe, M marks the tile you face, and Space waits out the warden's swing."
-const RATE_CARD := "A true corridor pays 3. A true hazard pays 8. The cellar's east square, the cistern ring, the cloister walk, the crypt ring, the ossuary ring, the reliquary ring, the undercroft ring, the well ring, the scriptorium ring, the binding ring, the chart room ring, the bell loft ring, the clock room ring, the font ring, the apse ring, the choir ring, the rood ring, the crossing ring, the transept ring, the ambulatory ring, the chevet ring, the retrochoir ring, the lady chapel ring, the feretory ring, the chantry ring, the sacristy ring, the pyx ring, the aumbry ring, the piscina ring, the sedilia ring, and the credence ring each pay 15 only when every tile of that ring is marked corridor. A false mark pays nothing."
+const RATE_CARD := "A true corridor pays 3. A true hazard pays 8. The cellar's east square, the cistern ring, the cloister walk, the crypt ring, the ossuary ring, the reliquary ring, the undercroft ring, the well ring, the scriptorium ring, the binding ring, the chart room ring, the bell loft ring, the clock room ring, the font ring, the apse ring, the choir ring, the rood ring, the crossing ring, the transept ring, the ambulatory ring, the chevet ring, the retrochoir ring, the lady chapel ring, the feretory ring, the chantry ring, the sacristy ring, the pyx ring, the aumbry ring, the piscina ring, the sedilia ring, the credence ring, and the reredos ring each pay 15 only when every tile of that ring is marked corridor. A false mark pays nothing."
 
 const CELLAR_RECORD := "Record every corridor, both hazard cracks, and the east square."
 const CISTERN_RECORD := "Record every corridor, the three seep cracks, and the cistern ring around the pit."
@@ -95,6 +97,7 @@ const AUMBRY_RECORD := "Record every corridor, the twenty-eight aumbry cracks, a
 const PISCINA_RECORD := "Record every corridor, the twenty-nine piscina cracks, and the ring around the piscina."
 const SEDILIA_RECORD := "Record every corridor, the thirty sedilia cracks, and the ring around the sedilia."
 const CREDENCE_RECORD := "Record every corridor, the thirty-one credence cracks, and the ring around the credence."
+const REREDOS_RECORD := "Record every corridor, the thirty-two reredos cracks, and the ring around the reredos."
 
 const CELLAR_ROWS: PackedStringArray = [
 	"#############",
@@ -967,6 +970,50 @@ const CREDENCE_ROWS: PackedStringArray = [
 	"##################################",
 ]
 
+# The reredos is the 14x6 block of '<' at columns 7-20, rows 4-9.
+# '<' is the next free glyph walking backward from '>'. '>' is the credence,
+# '?' is the sedilia, and '@' is the piscina. '=' is the crypt, so it is not free.
+# '<' is unused, and an unknown glyph inks as one wall.
+# The sheet grows the credence one column to the east. The credence, the ring,
+# the warden, the lift, the start, and the 19-step path stay on their cells.
+# The credence's closures stay. (10,12), (6,12), (5,12), (4,12), (25,2), (3,12),
+# (2,1), and (3,1) stay closed. (32,16), (31,16), (30,16), (29,16), (28,16),
+# (28,15), (27,15), and (26,15) stay cracks. The new crack is (33,16), on the
+# new column, immediately east of (32,16). No crack is closed. With those
+# closures carried forward, that single new crack surveys at 122 oil, with
+# 69 corridors and 32 cracks. No new cell brings the survey to 120. Reopening
+# (2,1) or (6,12) or (10,12) surveys at 124. Reopening (5,12) surveys at 130.
+# Reopening (4,12) surveys at 132. The west swing surveys at 121. Closing
+# (22,3) surveys at 132. The only cells that return the survey to 120 are the
+# ring tiles (21,4), (7,10), and (9,10). (21,4) and (7,10) stay open. (9,10)
+# is closed so the survey is 120. The ring leaves that one cell and steps
+# through (8,11), (9,11), and the lift, so the ring still pays.
+# (1,12), (1,13), and (1,14) stay ordinary walls. Start, lift, and warden stay
+# on (1,1), (10,11), and (9,12).
+const REREDOS_ROWS: PackedStringArray = [
+	"###################################",
+	"#S#################################",
+	"#.#################################",
+	"#H####...................H#########",
+	"#.####.<<<<<<<<<<<<<<.###H#########",
+	"#H####.<<<<<<<<<<<<<<.###H#########",
+	"#.####.<<<<<<<<<<<<<<.###H#########",
+	"#H####.<<<<<<<<<<<<<<.###H#########",
+	"#.####.<<<<<<<<<<<<<<.###H#########",
+	"#H####.<<<<<<<<<<<<<<.###H#########",
+	"#.####...#............###H#########",
+	"#H........L########.#####H#########",
+	"#######H.E#########H.....H#########",
+	"#########################H#########",
+	"#########################H#########",
+	"#########################HHHH######",
+	"#########################HHHHHHHHH#",
+	"###################################",
+	"###################################",
+	"###################################",
+	"###################################",
+]
+
 enum Tile { WALL, FLOOR, HAZARD, LIFT }
 enum Mark { NONE, CORRIDOR, WALL, HAZARD }
 enum EndReason { NONE, EXTRACTED, LAMP_OUT, ABANDONED }
@@ -1007,7 +1054,7 @@ static var _floor_list: Array = []
 
 static func floors() -> Array:
 	if _floor_list.is_empty():
-		_floor_list = [_make_cellar(), _make_cistern(), _make_cloister(), _make_crypt(), _make_ossuary(), _make_reliquary(), _make_undercroft(), _make_wellhouse(), _make_scriptorium(), _make_binding(), _make_chartroom(), _make_bellloft(), _make_clockroom(), _make_font(), _make_apse(), _make_choir(), _make_rood(), _make_crossing(), _make_transept(), _make_ambulatory(), _make_chevet(), _make_retrochoir(), _make_ladychapel(), _make_feretory(), _make_chantry(), _make_sacristy(), _make_pyx(), _make_aumbry(), _make_piscina(), _make_sedilia(), _make_credence()]
+		_floor_list = [_make_cellar(), _make_cistern(), _make_cloister(), _make_crypt(), _make_ossuary(), _make_reliquary(), _make_undercroft(), _make_wellhouse(), _make_scriptorium(), _make_binding(), _make_chartroom(), _make_bellloft(), _make_clockroom(), _make_font(), _make_apse(), _make_choir(), _make_rood(), _make_crossing(), _make_transept(), _make_ambulatory(), _make_chevet(), _make_retrochoir(), _make_ladychapel(), _make_feretory(), _make_chantry(), _make_sacristy(), _make_pyx(), _make_aumbry(), _make_piscina(), _make_sedilia(), _make_credence(), _make_reredos()]
 	return _floor_list
 
 
@@ -1609,6 +1656,30 @@ static func _make_credence() -> Floor:
 	return floor
 
 
+static func _make_reredos() -> Floor:
+	var floor := Floor.new()
+	floor.id = "reredos"
+	floor.title = "The Reredos"
+	floor.rows = REREDOS_ROWS
+	floor.loop_name = "Reredos ring"
+	var ring: Array = []
+	for x in range(6, 22):
+		ring.append(Vector2i(x, 3))
+	for y in range(4, 10):
+		ring.append(Vector2i(6, y))
+		ring.append(Vector2i(21, y))
+	for x in range(6, 9):
+		ring.append(Vector2i(x, 10))
+	ring.append(Vector2i(8, 11))
+	ring.append(Vector2i(9, 11))
+	ring.append(Vector2i(10, 11))
+	for x in range(10, 22):
+		ring.append(Vector2i(x, 10))
+	floor.loop = ring
+	floor.record = REREDOS_RECORD
+	return floor
+
+
 static func width(floor: Floor = null) -> int:
 	return _use(floor).rows[0].length()
 
@@ -2042,6 +2113,8 @@ static func ahead_line(state: RunState) -> String:
 				return "Ahead: the sedilia. It inks as a wall."
 			if glyph_at(n, plan) == ">":
 				return "Ahead: the credence. It inks as a wall."
+			if glyph_at(n, plan) == "<":
+				return "Ahead: the reredos. It inks as a wall."
 			return "Ahead: wall."
 		Tile.HAZARD:
 			if plan != null and plan.id == "cistern":
@@ -2104,6 +2177,8 @@ static func ahead_line(state: RunState) -> String:
 				return "Ahead: a sedilia crack. Stepping inks it and costs no extra oil."
 			if plan != null and plan.id == "credence":
 				return "Ahead: a credence crack. Stepping inks it and costs no extra oil."
+			if plan != null and plan.id == "reredos":
+				return "Ahead: a reredos crack. Stepping inks it and costs no extra oil."
 			return "Ahead: a hazard crack. Stepping inks it and costs no extra oil."
 		Tile.LIFT:
 			return "Ahead: the lift. Stepping on carries the sheet out."
@@ -2237,6 +2312,8 @@ static func step(state: RunState, dir: Vector2i) -> Dictionary:
 				return _pack(state, false, false, false, 0, true, "You tap the sedilia and ink it if the square was blank.")
 			if glyph_at(target, plan) == ">":
 				return _pack(state, false, false, false, 0, true, "You tap the credence and ink it if the square was blank.")
+			if glyph_at(target, plan) == "<":
+				return _pack(state, false, false, false, 0, true, "You tap the reredos and ink it if the square was blank.")
 			return _pack(state, false, false, false, 0, true, "You tap a wall and ink it if the square was blank.")
 		if target == enemy_pos(plan):
 			return _pack(state, false, false, false, 0, true, "The warden occupies that tile.")
@@ -2318,6 +2395,8 @@ static func step(state: RunState, dir: Vector2i) -> Dictionary:
 			message = "You cross a sedilia crack. It is inked if the square was blank."
 		elif plan != null and plan.id == "credence":
 			message = "You cross a credence crack. It is inked if the square was blank."
+		elif plan != null and plan.id == "reredos":
+			message = "You cross a reredos crack. It is inked if the square was blank."
 		else:
 			message = "You cross a hazard crack. It is inked if the square was blank."
 	return _pack(state, true, true, hit, MOVE_OIL + (HIT_OIL if hit else 0), false, message)
