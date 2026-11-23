@@ -59,6 +59,13 @@ const SWEEP_SEED_26 := 677
 # are home for games 1 and 3. Pellfen Terns are home for game 2. A fixed Lash
 # drill on that seed finishes 27th and does not reach the final.
 const SWEEP_SEED_27 := 771
+# Twenty-eight-club season. Seed 771 stays locked to the twenty-seven-club
+# circle. The next seed is 788. It drills the lowest stat, finishes 1st, and
+# beats Pellfen Terns. From Lumen Reedmice's side the games are 3-2, 3-4, and
+# 6-5. The series is 2 wins to 1 win. Lumen Reedmice are home for games 1 and
+# 3. Pellfen Terns are home for game 2. A fixed Lash drill on that seed
+# finishes 28th and does not reach the final.
+const SWEEP_SEED_28 := 788
 const THIRD_SEED := 63
 const MISS_SEED := 16067
 const TIE_SEED := 77
@@ -109,6 +116,10 @@ func _run() -> void:
 	_test_twenty_seven_club()
 	_test_fairness_and_cap()
 	await _test_game_flow_twenty_seven()
+	Sport.use_season(28)
+	_test_twenty_eight_club()
+	_test_fairness_and_cap()
+	await _test_game_flow_twenty_eight()
 	if _failures.is_empty():
 		print("ALL TESTS PASSED")
 		quit(0)
@@ -1348,6 +1359,9 @@ func _test_fairness_and_cap() -> void:
 	var twenty_seventh_lash := 0
 	if Sport.CLUB_COUNT > 26:
 		twenty_seventh_lash = _sum_stat(sample["rosters"][26], "lash")
+	var twenty_eighth_lash := 0
+	if Sport.CLUB_COUNT > 27:
+		twenty_eighth_lash = _sum_stat(sample["rosters"][27], "lash")
 	var player_lash := _sum_stat(sample["rosters"][0], "lash")
 	Sport.apply_training(sample["rosters"][0], "lash")
 	_check(_sum_stat(sample["rosters"][0], "lash") == player_lash + Sport.ROSTER_SIZE, "training did not add 1 to each Lumen Reedmice player")
@@ -1378,6 +1392,8 @@ func _test_fairness_and_cap() -> void:
 		_check(_sum_stat(sample["rosters"][25], "lash") == twenty_sixth_lash, "training the player changed Barwharf Sanderlings")
 	if Sport.CLUB_COUNT > 26:
 		_check(_sum_stat(sample["rosters"][26], "lash") == twenty_seventh_lash, "training the player changed Spitwharf Stints")
+	if Sport.CLUB_COUNT > 27:
+		_check(_sum_stat(sample["rosters"][27], "lash") == twenty_eighth_lash, "training the player changed Shoalwharf Turnstones")
 	var player: Dictionary = sample["player_roster"][0]
 	var untouched := Sport.get_stat(player, "eye")
 	Sport.set_stat(player, "lash", Sport.STAT_CAP + 5)
@@ -4057,5 +4073,288 @@ func _test_game_flow_twenty_seven() -> void:
 	_check(str(game.result_label.text).contains("other thirteen matches"), "week 1 does not count the other thirteen matches")
 	_check(_count_outcome_token(str(game.result_label.text), "Other match:") == 13, "week 1 did not show the other thirteen matches")
 	_check(str(game.result_label.text).contains("Spitwharf Stints"), "week 1 did not show Spitwharf Stints")
+	game.queue_free()
+	await process_frame
+
+
+func _test_twenty_eight_club() -> void:
+	print("TEST twenty-eight clubs and the even ring")
+	_check(Sport.CLUB_COUNT == 28, "club count is not twenty-eight")
+	_check(Sport.CLUB_NAMES.size() == 28, "club list is not twenty-eight clubs")
+	_check(str(Sport.CLUB_NAMES[26]) == Sport.TWENTY_SEVENTH_CLUB, "Spitwharf Stints was renamed")
+	_check(str(Sport.CLUB_NAMES[27]) == Sport.TWENTY_EIGHTH_CLUB, "Shoalwharf Turnstones is missing")
+	_check(Sport.TWENTY_EIGHTH_CLUB == "Shoalwharf Turnstones", "the twenty-eighth club drifted")
+	_check(Sport.TWENTY_EIGHTH_CLUB != Sport.TWENTY_SEVENTH_CLUB, "Shoalwharf Turnstones reused Spitwharf Stints")
+	for earlier in range(27):
+		var earlier_name := str(Sport.CLUB_NAMES[earlier])
+		_check(earlier_name != Sport.TWENTY_EIGHTH_CLUB, "Shoalwharf Turnstones reused an earlier name")
+		_check(not earlier_name.contains("Shoalwharf"), "Shoalwharf was already a club name")
+		_check(not earlier_name.contains("Turnstones"), "Turnstones was already a club name")
+	_check(Sport.SERIES_WEEKS == 54, "series is not fifty-four weeks")
+	_check(Sport.MATCHES_PER_WEEK == 14, "a week does not hold fourteen matches")
+	_check(Sport.BYES_EACH == 0, "a club still has a bye")
+	_check(Sport.GAMES_EACH == 54, "a club does not play fifty-four games")
+	_check(Sport.SCHEDULE_TEXT.contains("fourteen matches"), "fourteen matches a week is not described")
+	_check(not Sport.SCHEDULE_TEXT.contains("thirteen matches"), "the schedule still says thirteen matches")
+	_check(not Sport.SCHEDULE_TEXT.contains("twelve matches"), "the schedule still says twelve matches")
+	_check(not Sport.SCHEDULE_TEXT.contains("eleven matches"), "the schedule still says eleven matches")
+	_check(Sport.SCHEDULE_TEXT.contains("no bye"), "the schedule does not say there is no bye")
+	_check(Sport.SCHEDULE_TEXT.contains("zero byes"), "zero byes is not described")
+	_check(not Sport.SCHEDULE_TEXT.contains("one bye"), "the schedule still says there is one bye")
+	_check(not Sport.SCHEDULE_TEXT.contains("two byes"), "the schedule still says two byes")
+	_check(Sport.FINAL_TEXT.contains("3rd through 28th"), "missing the final does not run through 28th")
+	_check(not Sport.FINAL_TEXT.contains("27th"), "missing the final still stops at 27th")
+	_check(Sport.FINAL_TEXT.contains("week 54"), "the final does not follow week 54")
+	_check(Sport.SEED_RULE.contains("by 28"), "the series seed is not divided by 28")
+	_check(not Sport.SEED_RULE.contains("by 27"), "the series seed is still divided by 27")
+	_check(Sport.SEED_RULE.contains("remainder 27"), "remainder 27 is missing from the seed rule")
+	_check(Sport.SEED_RULE.contains("Shoalwharf Turnstones"), "the seed rule omits Shoalwharf Turnstones")
+	_check(Sport.seed_start(0) == 0, "seed 0 did not start with Lumen Reedmice")
+	_check(Sport.seed_start(27) == 27, "seed 27 did not start with Shoalwharf Turnstones")
+	_check(Sport.seed_start(28) == 0, "seed remainder drifted")
+	_check(Sport.seed_start(-1) == 27, "a negative series seed broke the remainder")
+	_check(Sport.seed_order_names(27).begins_with("Shoalwharf Turnstones"), "remainder 27 did not start with Shoalwharf Turnstones")
+	_check(
+		_same_indexes(Sport.RING, [0, 1, 2, 3, 4, 5, 12, 14, 16, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 17, 15, 13, 6, 7, 8, 9, 10, 11]),
+		"the twenty-eight-club ring drifted"
+	)
+	_check(int(Sport.RING[0]) == Sport.PLAYER_INDEX, "Lumen Reedmice left the first seat")
+	_check(int(Sport.RING[Sport.RING.size() - 1]) == 11, "Pellfen Terns are not the last seat")
+	_check(not Sport.RING.has(Sport.BYE), "the even ring still has a bye")
+	var turnstones_at: int = Sport.RING.find(27)
+	_check(int(Sport.RING[turnstones_at - 1]) == 26 and int(Sport.RING[turnstones_at + 1]) == 17, "Shoalwharf Turnstones is not between Spitwharf Stints and Wickfen Dunlins")
+	var held: Array = Sport.RING.duplicate()
+	Sport.rotate_ring(held)
+	_check(int(held[held.size() - 1]) == 11, "the last seat did not stay put")
+	_check(int(held[0]) == 1, "the other seats did not rotate one place left")
+	_check(int(held[held.size() - 2]) == 0, "the first seat was left out of the rotation")
+	var appended: Array = Sport.APPENDED_RING.duplicate()
+	_check(
+		_same_indexes(appended, [0, 1, 2, 3, 4, 5, 12, 14, 16, 18, 19, 20, 21, 22, 23, 24, 25, 26, 17, 15, 13, 6, 7, 8, 9, 10, 11, Sport.BYE, 27]),
+		"the appended ring drifted"
+	)
+	var appended_pairs: Array = Sport.outside_in(appended)
+	_check(int(appended_pairs[0][0]) == 0 and int(appended_pairs[0][1]) == 27, "appending Shoalwharf Turnstones did not send Lumen Reedmice home to them")
+	var opening: Array = Sport.week_fixtures(0)
+	_check(not _same_pair(opening[0], appended_pairs[0]), "appending Shoalwharf Turnstones to the bye ring was used for week 1")
+	var spun: Array = Sport.RING.duplicate()
+	var spun_first = spun[0]
+	spun.remove_at(0)
+	spun.append(spun_first)
+	var second: Array = Sport.week_fixtures(1)
+	_check(not _same_pair(second[0], Sport.outside_in(spun)[0]), "rotating every seat, including the last, was used for week 2")
+	var full_counts := {}
+	var probe: Array = Sport.RING.duplicate()
+	var half := int(Sport.SERIES_WEEKS / 2)
+	for _turn in half:
+		for pair in Sport.outside_in(probe):
+			var key := "%d-%d" % [mini(int(pair[0]), int(pair[1])), maxi(int(pair[0]), int(pair[1]))]
+			full_counts[key] = int(full_counts.get(key, 0)) + 1
+		var first_seat = probe[0]
+		probe.remove_at(0)
+		probe.append(first_seat)
+	_check(full_counts.size() != 378, "rotating every seat, including the last, was a full round-robin")
+	var expected: Array = [
+		[Sport.PLAYER_CLUB, Sport.TWELFTH_CLUB],
+		[Sport.OPPONENT_CLUB, Sport.ELEVENTH_CLUB],
+		[Sport.THIRD_CLUB, Sport.TENTH_CLUB],
+		[Sport.FOURTH_CLUB, Sport.NINTH_CLUB],
+		[Sport.FIFTH_CLUB, Sport.EIGHTH_CLUB],
+		[Sport.SIXTH_CLUB, Sport.SEVENTH_CLUB],
+		[Sport.THIRTEENTH_CLUB, Sport.FOURTEENTH_CLUB],
+		[Sport.FIFTEENTH_CLUB, Sport.SIXTEENTH_CLUB],
+		[Sport.SEVENTEENTH_CLUB, Sport.EIGHTEENTH_CLUB],
+		[Sport.NINETEENTH_CLUB, Sport.TWENTY_EIGHTH_CLUB],
+		[Sport.TWENTIETH_CLUB, Sport.TWENTY_SEVENTH_CLUB],
+		[Sport.TWENTY_FIRST_CLUB, Sport.TWENTY_SIXTH_CLUB],
+		[Sport.TWENTY_SECOND_CLUB, Sport.TWENTY_FIFTH_CLUB],
+		[Sport.TWENTY_THIRD_CLUB, Sport.TWENTY_FOURTH_CLUB],
+	]
+	_check(opening.size() == 14, "week 1 does not list fourteen matches")
+	_check(Sport.week_bye(0) == -1, "week 1 still has a bye")
+	_check(not opening[0].has("bye") and not opening[0].has("bye_club"), "week 1 still stores a bye")
+	for slot in expected.size():
+		var pair: Array = expected[slot]
+		_check(str(opening[slot]["home_club"]) == str(pair[0]) and str(opening[slot]["away_club"]) == str(pair[1]), "week 1 match %d drifted" % (slot + 1))
+	_check(str(second[0]["home_club"]) == Sport.OPPONENT_CLUB and str(second[0]["away_club"]) == Sport.TWELFTH_CLUB, "week 2 does not send Southspur Glass home to Pellfen Terns")
+	var late: Array = Sport.week_fixtures(half)
+	_check(str(late[0]["home_club"]) == Sport.TWELFTH_CLUB and str(late[0]["away_club"]) == Sport.PLAYER_CLUB, "week 28 did not reverse the opening match")
+	_check(Sport.week_bye(half) == -1, "week 28 still has a bye")
+	for slot in 14:
+		_check(int(late[slot]["home"]) == int(opening[slot]["away"]), "second half did not reverse home")
+		_check(int(late[slot]["away"]) == int(opening[slot]["home"]), "second half did not reverse away")
+	var pair_counts := {}
+	var directed := {}
+	for week_index in Sport.SERIES_WEEKS:
+		var cards: Array = Sport.week_fixtures(week_index)
+		_check(cards.size() == 14, "week %d does not list fourteen matches" % (week_index + 1))
+		_check(Sport.week_bye(week_index) == -1, "week %d has a bye" % (week_index + 1))
+		var seen := {}
+		for card in cards:
+			var home := int(card["home"])
+			var away := int(card["away"])
+			_check(not card.has("bye"), "week %d stores a bye" % (week_index + 1))
+			seen[home] = true
+			seen[away] = true
+			var arrow := "%d>%d" % [home, away]
+			_check(not directed.has(arrow), "home and away repeated for %s" % arrow)
+			directed[arrow] = true
+			var pair_name := _pair_key(card)
+			pair_counts[pair_name] = int(pair_counts.get(pair_name, 0)) + 1
+		_check(seen.size() == 28, "week %d does not play every club" % (week_index + 1))
+	var pair_total := 0
+	for a in Sport.CLUB_COUNT:
+		for b in range(a + 1, Sport.CLUB_COUNT):
+			var pair_name := "%d-%d" % [a, b]
+			_check(int(pair_counts.get(pair_name, 0)) == 2, "pair %s is not played home and away" % pair_name)
+			pair_total += 1
+	_check(pair_total == 378, "the twenty-eight clubs are not a full double round-robin")
+	Sport.use_season(27)
+	_check(
+		_same_indexes(Sport.RING, [0, 1, 2, 3, 4, 5, 12, 14, 16, 18, 19, 20, 21, 22, 23, 24, 25, 26, 17, 15, 13, 6, 7, 8, 9, 10, 11, Sport.BYE]),
+		"the twenty-seven-club ring changed"
+	)
+	var kept: Array = Sport.week_fixtures(0)
+	_check(Sport.week_bye(0) == Sport.PLAYER_INDEX, "the twenty-seven-club week 1 bye moved")
+	_check(kept.size() == 13, "the twenty-seven-club week 1 no longer lists thirteen matches")
+	_check(str(kept[9]["home_club"]) == "Quaywharf Godwits" and str(kept[9]["away_club"]) == "Spitwharf Stints", "the twenty-seven-club week 1 list changed")
+	var dealt_27: Dictionary = Sport.create_clubs(42)
+	Sport.use_season(28)
+	var dealt: Dictionary = Sport.create_clubs(42)
+	for club_index in 27:
+		_check(
+			_stat_order(dealt["rosters"][club_index]) == _stat_order(dealt_27["rosters"][club_index]),
+			"club %d did not keep its stat lines" % club_index
+		)
+	_check(_stat_bag(dealt["rosters"][27]) == _stat_bag(dealt["rosters"][0]), "Shoalwharf Turnstones were not dealt the same stat lines")
+	_check(
+		_stat_order(dealt["rosters"][0]) == "15-11-11-15-12-15,9-15-9-13-9-14,9-9-9-10-12-11,15-9-11-11-9-10,9-13-13-10-10-15,14-9-10-14-13-15",
+		"Lumen Reedmice did not keep their stat lines"
+	)
+	var sweep = SeriesScript.new(SWEEP_SEED_28)
+	_play_regular(sweep, true)
+	_assert_schedule(sweep, "seed 788")
+	_check(sweep.place() == 1, "seed 788 did not finish 1st")
+	_check(sweep.reached_final(), "seed 788 missed the final")
+	_check(int(sweep.finalist_indices()[0]) == Sport.PLAYER_INDEX, "Lumen Reedmice did not lead the league")
+	_check(int(sweep.finalist_indices()[1]) == 11, "Pellfen Terns were not the opponent")
+	_check(sweep.final_home_index(0) == Sport.PLAYER_INDEX, "game 1 did not give Lumen Reedmice home")
+	_check(sweep.final_home_index(1) == 11, "game 2 did not give Pellfen Terns home")
+	_check(sweep.final_home_index(2) == Sport.PLAYER_INDEX, "game 3 did not give Lumen Reedmice home")
+	_play_final_game(sweep, Sport.PLAYER_INDEX, "win", 3, 2, true)
+	_check(not sweep.is_over(), "one win ended the series")
+	_check(str(sweep.final_games[0]["player_focus"]) == "arm", "game 1 did not drill the lowest stat")
+	var drill_notes: Array = sweep.final_games[0]["training_notes"]
+	_check(drill_notes.size() == Sport.CLUB_COUNT, "game 1 did not drill every club")
+	var left_out := 0
+	for club_index in Sport.CLUB_COUNT:
+		_check((drill_notes[club_index] as Array).size() == Sport.ROSTER_SIZE, "game 1 skipped a player")
+		if club_index != Sport.PLAYER_INDEX and club_index != 11:
+			left_out += 1
+	_check(left_out == 26, "the final did not leave twenty-six clubs out")
+	_play_final_game(sweep, 11, "loss", 3, 4, true)
+	_check(not sweep.is_over(), "one loss ended the series")
+	_check(str(sweep.final_games[1]["player_focus"]) == "lash", "game 2 did not drill the lowest stat")
+	_play_final_game(sweep, Sport.PLAYER_INDEX, "win", 6, 5, true)
+	_check(sweep.is_over(), "two wins did not end the series")
+	_check(sweep.goal_met(), "winning the series missed the goal")
+	_check(sweep.final_games.size() == 3, "the series did not end in three games")
+	_check(int(sweep.series_win_counts()[Sport.PLAYER_INDEX]) == 2 and int(sweep.series_win_counts()[11]) == 1, "the series did not end 2-1")
+	_check(str(sweep.final_games[2]["player_focus"]) == "eye", "game 3 did not drill the lowest stat")
+	var fixed = SeriesScript.new(SWEEP_SEED_28)
+	_play_regular(fixed, false)
+	_check(fixed.place() == 28, "a fixed Lash drill did not finish 28th")
+	_check(not fixed.reached_final(), "a fixed Lash drill reached the final")
+	_check(fixed.is_over() and not fixed.goal_met(), "a fixed Lash drill won the series")
+	print("Scripted final: seed 788 drills the lowest stat, finishes 1st, and beats Pellfen Terns 2-1 after 3-2, 3-4, and 6-5")
+
+
+func _check_twenty_eight_rows(game) -> void:
+	var label: Label = game.schedule_label
+	_check(not label.clip_text, "the schedule clips a match")
+	var window_width := int(ProjectSettings.get_setting("display/window/size/viewport_width"))
+	var window_height := int(ProjectSettings.get_setting("display/window/size/viewport_height"))
+	_check(window_width == 1280 and window_height == 720, "the window is not 1280 by 720")
+	var expected: Array = [
+		"Lumen Reedmice vs Pellfen Terns",
+		"Southspur Glass vs Ashwharf Swifts",
+		"Pellwick Cinders vs Marrowfen Owls",
+		"Marrowgate Herons vs Saltwharf Gulls",
+		"Saltmere Kites vs Cinderwharf Pikes",
+		"Ashfen Moths vs Reedfen Larks",
+		"Southfen Coots vs Tidefen Grebes",
+		"Brinefen Curlews vs Quayfen Knots",
+		"Millfen Ruffs vs Wickfen Dunlins",
+		"Lockfen Snipes vs Shoalwharf Turnstones",
+		"Quaywharf Godwits vs Spitwharf Stints",
+		"Tidewharf Whimbrels vs Barwharf Sanderlings",
+		"Brinewharf Avocets vs Reefwharf Dunlins",
+		"Saltwharf Curlews vs Mudwharf Knots",
+	]
+	var lines := str(label.text).split("\n")
+	_check(lines.size() > expected.size(), "week 1 does not list fourteen matches")
+	var index := 0
+	var thirteenth_bottom := 0.0
+	for i in expected.size():
+		var line := str(lines[i])
+		var last: Rect2 = label.get_character_bounds(index + line.length() - 1)
+		var first: Rect2 = label.get_character_bounds(index)
+		_check(first.size.y > 0.0 and last.size.y > 0.0, "week 1 row %d has no glyphs" % (i + 1))
+		_check(is_equal_approx(first.position.y, last.position.y), "week 1 row %d wrapped off the schedule" % (i + 1))
+		_check(last.position.x + last.size.x <= label.size.x + 1.0, "week 1 row %d is clipped by the schedule" % (i + 1))
+		_check(line.ends_with(str(expected[i])), "week 1 row %d is not %s" % [i + 1, str(expected[i])])
+		_check(not line.contains("bye"), "week 1 row %d lists a bye" % (i + 1))
+		var global_first: Rect2 = label.get_global_transform() * first
+		var global_last: Rect2 = label.get_global_transform() * last
+		var bottom := global_last.position.y + global_last.size.y
+		var right := global_last.position.x + global_last.size.x
+		_check(bottom <= float(window_height) and global_last.position.y >= 0.0, "week 1 row %d ends at %s and does not fit the %d window" % [i + 1, bottom, window_height])
+		_check(right <= float(window_width) and global_last.position.x >= 0.0, "week 1 row %d runs off the window" % (i + 1))
+		var row := Rect2(global_first.position, Vector2(global_last.end.x - global_first.position.x, bottom - global_first.position.y))
+		_check(not _eighth_overlaps_control(game, row), "week 1 row %d overlaps a control" % (i + 1))
+		if i == 12:
+			thirteenth_bottom = bottom
+		if i == 13:
+			_check(bottom > thirteenth_bottom, "the fourteenth match is not below the thirteenth match")
+		index += line.length() + 1
+
+
+func _test_game_flow_twenty_eight() -> void:
+	print("TEST twenty-eight-club office")
+	var packed: PackedScene = load("res://scenes/main.tscn")
+	var game = packed.instantiate()
+	root.add_child(game)
+	await process_frame
+	await process_frame
+	_check(str(game.week_label.text) == "Week 1 of 54", "office does not open on a fifty-four-week series")
+	_check(str(game.fixture_title.text) == Sport.TWELFTH_CLUB, "week 1 opponent was not Pellfen Terns")
+	_check(str(game.record_label.text).contains("You bat second."), "week 1 did not give Lumen Reedmice home")
+	_check(str(game.shape_label.text).contains("fourteen matches"), "the office does not say there are fourteen matches")
+	_check(not str(game.shape_label.text).contains("thirteen matches"), "the office still says thirteen matches")
+	_check(str(game.shape_label.text).contains("no bye"), "the office does not say there is no bye")
+	_check(str(game.shape_label.text).contains("zero byes"), "the office does not say every club has zero byes")
+	_check(not str(game.shape_label.text).contains("one bye"), "the office still says there is one bye")
+	_check(str(game.rule_label.text).contains("by 28"), "the office does not divide the seed by 28")
+	_check(not str(game.rule_label.text).contains("by 27"), "the office still divides the seed by 27")
+	_check(str(game.rule_label.text).contains("Shoalwharf Turnstones"), "the office omits Shoalwharf Turnstones")
+	_check(str(game.rule_label.text).contains("3rd through 28th"), "the office still ends the miss at 27th")
+	_check(str(game.rule_label.text).contains("week 54"), "the office final does not follow week 54")
+	_check(str(game.help_label.text).contains("fourteen matches"), "the office help does not say fourteen matches")
+	_check(str(game.help_label.text).contains("no bye"), "the office help does not say there is no bye")
+	_check(str(game.help_label.text).contains("other thirteen matches"), "the office help does not count the other thirteen matches")
+	_check(not str(game.help_label.text).contains("other twelve matches"), "the office help still counts twelve other matches")
+	var schedule := str(game.schedule_label.text)
+	_check(schedule.contains("Lockfen Snipes vs Shoalwharf Turnstones"), "week 1 does not list Lockfen Snipes against Shoalwharf Turnstones")
+	_check(schedule.contains("Quaywharf Godwits vs Spitwharf Stints"), "week 1 does not list Quaywharf Godwits against Spitwharf Stints")
+	_check(_count_outcome_token(schedule, " bye") == 0, "the schedule still lists a bye")
+	_check(_count_outcome_token(schedule, " vs ") == Sport.SERIES_WEEKS * Sport.MATCHES_PER_WEEK, "the schedule does not list fourteen matches a week")
+	_check(str(game.standings_label.text).contains(Sport.TWENTY_EIGHTH_CLUB), "the table omits Shoalwharf Turnstones")
+	_check_twenty_eight_rows(game)
+	game.skip_button.pressed.emit()
+	_check(game.phase == "result", "week 1 skip did not reach the result")
+	_check(game.watch_log.size() == Sport.PAS_PER_MATCH, "week 1 did not watch the match")
+	_check(not str(game.result_label.text).begins_with("Bye."), "week 1 result is a bye")
+	_check(_count_outcome_token(str(game.result_label.text), "Other match:") == 13, "week 1 did not show the other thirteen matches")
+	_check(str(game.result_label.text).contains("Shoalwharf Turnstones"), "week 1 did not show Shoalwharf Turnstones")
 	game.queue_free()
 	await process_frame
