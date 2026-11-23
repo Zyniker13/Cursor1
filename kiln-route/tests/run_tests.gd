@@ -143,6 +143,9 @@ func _run() -> void:
 	_test_wrest_splits_left_and_right()
 	_test_wrest_refuses_left_right_and_behind()
 	_test_wrest_blocked_does_not_spill()
+	_test_jointer_splits_right_and_left()
+	_test_jointer_refuses_left_right_and_behind()
+	_test_jointer_blocked_does_not_spill()
 	_test_rooms()
 	_test_over_budget()
 	_test_pickup()
@@ -184,6 +187,7 @@ func _run() -> void:
 	_test_wing32_lessons()
 	_test_wing33_lessons()
 	_test_wing34_lessons()
+	_test_wing35_lessons()
 	_test_game_object()
 
 
@@ -1038,7 +1042,7 @@ func _arm_lane(pattern: Array) -> Dictionary:
 
 func _test_rooms() -> void:
 	var catalog := Rooms.all()
-	check(catalog.size() == 272, "thirty-four wings have 272 rooms")
+	check(catalog.size() == 280, "thirty-five wings have 280 rooms")
 	check(catalog[0].name == "Haul" and catalog[7].name == "Two Orders", "rooms 1 through 8 stay the first wing")
 	check(catalog[8].name == "Straight" and catalog[15].name == "Balance", "rooms 9 through 16 are the second wing")
 	check(catalog[16].name == "Span" and catalog[23].name == "Ledger", "rooms 17 through 24 are the third wing")
@@ -1073,6 +1077,7 @@ func _test_rooms() -> void:
 	check(catalog[248].name == "Ahead Ore" and catalog[255].name == "Held Pair", "rooms 249 through 256 are the thirty-second wing")
 	check(catalog[256].name == "Ahead Ore" and catalog[263].name == "Held Pair", "rooms 257 through 264 are the thirty-third wing")
 	check(catalog[264].name == "Ahead Ore" and catalog[271].name == "Held Pair", "rooms 265 through 272 are the thirty-fourth wing")
+	check(catalog[272].name == "Ahead Ore" and catalog[279].name == "Held Pair", "rooms 273 through 280 are the thirty-fifth wing")
 	for index in catalog.size():
 		var bridge_count := int(catalog[index].budget.get(Rules.Kind.BRIDGE, 0))
 		var grate_count := int(catalog[index].budget.get(Rules.Kind.GRATE, 0))
@@ -1106,6 +1111,9 @@ func _test_rooms() -> void:
 		var point_count := int(catalog[index].budget.get(Rules.Kind.POINT, 0))
 		var throat_count := int(catalog[index].budget.get(Rules.Kind.THROAT, 0))
 		var wrest_count := int(catalog[index].budget.get(Rules.Kind.WREST, 0))
+		var jointer_count := int(catalog[index].budget.get(Rules.Kind.JOINTER, 0))
+		if index < 272:
+			check(jointer_count == 0, "room %d does not use the jointer" % (index + 1))
 		if index < 264:
 			check(wrest_count == 0, "room %d does not use the wrest" % (index + 1))
 		if index < 256:
@@ -1649,8 +1657,40 @@ func _test_rooms() -> void:
 			check(drop_count == 0, "room %d does not use the drop" % (index + 1))
 			check(arm_count == 0, "room %d does not use the arm" % (index + 1))
 			check(hook_count == 0, "room %d does not use the hook" % (index + 1))
-		else:
+		elif index < 272:
 			check(wrest_count >= 1, "room %d depends on the wrest" % (index + 1))
+			check(throat_count == 0, "room %d does not use the throat" % (index + 1))
+			check(point_count == 0, "room %d does not use the point" % (index + 1))
+			check(shin_count == 0, "room %d does not use the shin" % (index + 1))
+			check(frog_count == 0, "room %d does not use the frog" % (index + 1))
+			check(sole_count == 0, "room %d does not use the sole" % (index + 1))
+			check(hake_count == 0, "room %d does not use the hake" % (index + 1))
+			check(beam_count == 0, "room %d does not use the beam" % (index + 1))
+			check(clevis_count == 0, "room %d does not use the clevis" % (index + 1))
+			check(stilt_count == 0, "room %d does not use the stilt" % (index + 1))
+			check(heel_count == 0, "room %d does not use the heel" % (index + 1))
+			check(slade_count == 0, "room %d does not use the slade" % (index + 1))
+			check(landside_count == 0, "room %d does not use the landside" % (index + 1))
+			check(moldboard_count == 0, "room %d does not use the moldboard" % (index + 1))
+			check(coulter_count == 0, "room %d does not use the coulter" % (index + 1))
+			check(share_count == 0, "room %d does not use the share" % (index + 1))
+			check(prong_count == 0, "room %d does not use the prong" % (index + 1))
+			check(fork_count == 0, "room %d does not use the fork" % (index + 1))
+			check(harrow_count == 0, "room %d does not use the harrow" % (index + 1))
+			check(hoe_count == 0, "room %d does not use the hoe" % (index + 1))
+			check(rake_count == 0, "room %d does not use the rake" % (index + 1))
+			check(shed_count == 0, "room %d does not use the shed" % (index + 1))
+			check(slip_count == 0, "room %d does not use the slip" % (index + 1))
+			check(pass_count == 0, "room %d does not use the pass" % (index + 1))
+			check(twin_count == 0, "room %d does not use the twin" % (index + 1))
+			check(dwell_count == 0, "room %d does not use the dwell" % (index + 1))
+			check(lift_count == 0, "room %d does not use the lift" % (index + 1))
+			check(drop_count == 0, "room %d does not use the drop" % (index + 1))
+			check(arm_count == 0, "room %d does not use the arm" % (index + 1))
+			check(hook_count == 0, "room %d does not use the hook" % (index + 1))
+		else:
+			check(jointer_count >= 1, "room %d depends on the jointer" % (index + 1))
+			check(wrest_count == 0, "room %d does not use the wrest" % (index + 1))
 			check(throat_count == 0, "room %d does not use the throat" % (index + 1))
 			check(point_count == 0, "room %d does not use the point" % (index + 1))
 			check(shin_count == 0, "room %d does not use the shin" % (index + 1))
@@ -4407,6 +4447,32 @@ func _test_game_object() -> void:
 	check(main._kind_for_key(KEY_R) == -1, "R stays a control beside the wrest")
 	check(main._kind_for_key(KEY_F) == -1, "F stays a control beside the wrest")
 	check(main._kind_for_key(KEY_KP_ENTER) == -1, "there is no second keypad key for the wrest")
+	check(main._kind_for_key(KEY_S) == Rules.Kind.JOINTER, "S selects the jointer")
+	check(main._key_label(Rules.Kind.JOINTER) == "s", "jointer key is S")
+	check(Rules.KIND_NAME[Rules.Kind.JOINTER] == "Jointer", "the tray labels the jointer")
+	check(main._tray_count_line(Rules.Kind.JOINTER, 1) == "1 ahead", "the jointer count reads 1 ahead")
+	check(main._tray_count_line(Rules.Kind.WREST, 1) == "1 ahead", "the wrest count still reads 1 ahead")
+	check(main._key_label(Rules.Kind.JOINTER) != "a", "jointer does not take the wrest key")
+	check(main._key_label(Rules.Kind.JOINTER) != "d", "jointer does not take the throat key")
+	check(main._key_label(Rules.Kind.JOINTER) != "z", "jointer does not take the point key")
+	check(main._key_label(Rules.Kind.JOINTER) != "x", "jointer does not take the shin key")
+	check(main._key_label(Rules.Kind.JOINTER) != "c", "jointer does not take the frog key")
+	check(main._key_label(Rules.Kind.JOINTER) != "v", "jointer does not take the sole key")
+	check(main._key_label(Rules.Kind.JOINTER) != "q", "jointer does not take Q")
+	check(main._key_label(Rules.Kind.JOINTER) != "e", "jointer does not take E")
+	check(main._key_label(Rules.Kind.JOINTER) != "r", "jointer does not take R")
+	check(main._key_label(Rules.Kind.JOINTER) != "f", "jointer does not take F")
+	check(main._kind_for_key(KEY_A) == Rules.Kind.WREST, "A stays the wrest beside the jointer")
+	check(main._kind_for_key(KEY_D) == Rules.Kind.THROAT, "D stays the throat beside the jointer")
+	check(main._kind_for_key(KEY_Z) == Rules.Kind.POINT, "Z stays the point beside the jointer")
+	check(main._kind_for_key(KEY_X) == Rules.Kind.SHIN, "X stays the shin beside the jointer")
+	check(main._kind_for_key(KEY_C) == Rules.Kind.FROG, "C stays the frog beside the jointer")
+	check(main._kind_for_key(KEY_V) == Rules.Kind.SOLE, "V stays the sole beside the jointer")
+	check(main._kind_for_key(KEY_Q) == -1, "Q stays a control beside the jointer")
+	check(main._kind_for_key(KEY_E) == -1, "E stays a control beside the jointer")
+	check(main._kind_for_key(KEY_R) == -1, "R stays a control beside the jointer")
+	check(main._kind_for_key(KEY_F) == -1, "F stays a control beside the jointer")
+	check(main._kind_for_key(KEY_KP_ENTER) == -1, "there is no second keypad key for the jointer")
 	check(main._kind_for_key(KEY_COMMA) == Rules.Kind.TWIN, "comma stays on the twin beside the pass")
 	check(main._kind_for_key(KEY_MINUS) == Rules.Kind.ARM, "minus stays on the arm beside the pass")
 	check(main._kind_for_key(KEY_EQUAL) == Rules.Kind.DROP, "equals stays on the drop beside the pass")
@@ -4456,6 +4522,7 @@ func _test_game_object() -> void:
 	check(not main.is_unlocked(249), "room 249 stays locked until room 248 is cleared")
 	check(not main.is_unlocked(257), "room 257 stays locked until room 256 is cleared")
 	check(not main.is_unlocked(265), "room 265 stays locked until room 264 is cleared")
+	check(not main.is_unlocked(273), "room 273 stays locked until room 272 is cleared")
 	check(not main.testing_select(8), "locked room 9 cannot be selected")
 	check(main.testing_select(0), "room 1 can be selected")
 	var before: int = main.testing_tray(Rules.Kind.BELT)
@@ -4591,7 +4658,11 @@ func _test_game_object() -> void:
 			check(not main.is_unlocked(266), "room 266 stays locked until room 265 is cleared")
 		if index == 271:
 			check(main.is_unlocked(272), "clearing room 271 unlocks room 272")
-			check(not main.is_unlocked(273), "room 273 stays locked until room 272 is cleared")
+			check(main.is_unlocked(273), "clearing room 272 unlocks room 273")
+			check(not main.is_unlocked(274), "room 274 stays locked until room 273 is cleared")
+		if index == 279:
+			check(main.is_unlocked(280), "clearing room 279 unlocks room 280")
+			check(not main.is_unlocked(281), "room 281 stays locked until room 280 is cleared")
 	check(main.is_unlocked(72), "clearing room 71 unlocks room 72")
 	check(main.is_unlocked(80), "clearing room 79 unlocks room 80")
 	check(main.is_unlocked(88), "clearing room 87 unlocks room 88")
@@ -4637,8 +4708,10 @@ func _test_game_object() -> void:
 	check(main.is_unlocked(264), "clearing room 263 unlocks room 264")
 	check(main.is_unlocked(265), "clearing room 264 unlocks room 265")
 	check(main.is_unlocked(272), "clearing room 271 unlocks room 272")
-	check(not main.is_unlocked(273), "there is no room 273 to unlock")
-	check(not main.testing_select(272), "room select rejects an unknown room")
+	check(main.is_unlocked(273), "clearing room 272 unlocks room 273")
+	check(main.is_unlocked(280), "clearing room 279 unlocks room 280")
+	check(not main.is_unlocked(281), "there is no room 281 to unlock")
+	check(not main.testing_select(280), "room select rejects an unknown room")
 	_check_window(main)
 	main.queue_free()
 
@@ -5633,7 +5706,26 @@ func _check_window(main) -> void:
 	var wrest_held_tab: Rect2 = wrest_held_lay.tabs[271]
 	check(wrest_held_tab.position.y + wrest_held_tab.size.y < (wrest_held_lay.play as Rect2).position.y, "the wrest held pair tab stays above the board")
 	check(wrest_tab.position.y + wrest_tab.size.y < (wrest_held_lay.play as Rect2).position.y, "the ahead ore tab stays above the board beside the wrest held pair")
-	var footer := "1-9 0 - = \\ ; , ' . / ` y u i o p t g h j k l m n b v c x z d a select   R rotate   LMB place or pick up   RMB rotate   Space run   F skip   Bksp restart"
+	check(main.testing_select(272), "select ahead ore to measure the jointer window")
+	var jointer_lay: Dictionary = main._layout()
+	_check_tray_fits(jointer_lay, "jointer ahead ore")
+	var jointer_tab: Rect2 = jointer_lay.tabs[272]
+	check(jointer_tab.position.y + jointer_tab.size.y < (jointer_lay.play as Rect2).position.y, "the jointer room tab stays above the board")
+	check(wrest_held_tab.position.y + wrest_held_tab.size.y < (jointer_lay.play as Rect2).position.y, "the wrest held pair tab stays above the board beside the jointer")
+	check(absf(jointer_tab.size.y - 10.0) < 0.01, "the jointer tab stays 10 px tall (%s)" % jointer_tab.size.y)
+	check(ceili(float(Rooms.all().size()) / 10.0) == 28, "the room strip still has 28 rows beside the jointer")
+	check(main.testing_pickup(2, 1), "pickup returns the room 273 jointer")
+	check(main.testing_tray(Rules.Kind.JOINTER) == 1, "room 273 tray holds one jointer")
+	check(Rules.KIND_NAME[Rules.Kind.JOINTER] == "Jointer", "room 273 tray labels the jointer")
+	check(main._tray_count_line(Rules.Kind.JOINTER, 1) == "1 ahead", "room 273 tray shows 1 ahead")
+	check(main._key_label(Rules.Kind.JOINTER) == "s", "room 273 tray shows the jointer key")
+	check(main.testing_select(279), "select the jointer held pair to measure the window")
+	var jointer_held_lay: Dictionary = main._layout()
+	_check_tray_fits(jointer_held_lay, "jointer held pair")
+	var jointer_held_tab: Rect2 = jointer_held_lay.tabs[279]
+	check(jointer_held_tab.position.y + jointer_held_tab.size.y < (jointer_held_lay.play as Rect2).position.y, "the jointer held pair tab stays above the board")
+	check(jointer_tab.position.y + jointer_tab.size.y < (jointer_held_lay.play as Rect2).position.y, "the ahead ore tab stays above the board beside the jointer held pair")
+	var footer := "1-9 0 - = \\ ; , ' . / ` y u i o p t g h j k l m n b v c x z d a s select   R rotate   LMB place or pick up   RMB rotate   Space run   F skip   Bksp restart"
 	var footer_size: Vector2 = main.font.get_string_size(footer, HORIZONTAL_ALIGNMENT_LEFT, -1, 13)
 	var footer_w := footer_size.x
 	check(footer_w <= size.x - 48.0, "the footer fits the window (%s px)" % footer_w)
@@ -5678,6 +5770,7 @@ func _check_tray_fits(lay: Dictionary, label: String) -> void:
 	var saw_point := false
 	var saw_throat := false
 	var saw_wrest := false
+	var saw_jointer := false
 	for slot in lay.tray:
 		var rect: Rect2 = slot.rect
 		check(rect.position.x >= 0.0 and rect.position.y >= play.position.y + play.size.y, "%s tray stays below the board" % label)
@@ -5726,6 +5819,8 @@ func _check_tray_fits(lay: Dictionary, label: String) -> void:
 			saw_throat = true
 		if int(slot.kind) == Rules.Kind.WREST:
 			saw_wrest = true
+		if int(slot.kind) == Rules.Kind.JOINTER:
+			saw_jointer = true
 	if label.begins_with("shed"):
 		check(saw_shed, "the shed tray slot is on the shed room")
 	elif label.begins_with("hoe"):
@@ -5768,6 +5863,8 @@ func _check_tray_fits(lay: Dictionary, label: String) -> void:
 		check(saw_throat, "the throat tray slot is on the throat room")
 	elif label.begins_with("wrest"):
 		check(saw_wrest, "the wrest tray slot is on the wrest room")
+	elif label.begins_with("jointer"):
+		check(saw_jointer, "the jointer tray slot is on the jointer room")
 	else:
 		check(saw_rake, "the rake tray slot is on the rake room")
 
@@ -13247,3 +13344,293 @@ func _test_wing34_lessons() -> void:
 	check(belt_early.world.machines[Vector2i(3, 3)].hold < 0 and belt_early.world.machines[Vector2i(3, 2)].hold < 0 and int(belt_early.world.sources[0].pending) == Rules.Mat.ORE, "a belt refuses the ahead arrival, so the first ore stays on the source")
 	check(int(finished.counts[Rules.Mat.INGOT]) == 29 and int(finished.counts[Rules.Mat.PLATE]) == 30, "held pair feeds the kiln and the plate bin (%s)" % finished.text)
 	check(not held_throat.quota_ok, "held pair's throat misses the quota (%s)" % held_throat.text)
+
+
+
+func _jointer_lane(pattern: Array, period: int) -> Dictionary:
+	return {
+		"id": 0,
+		"name": "jointer",
+		"blurb": "",
+		"rule": "",
+		"w": 3,
+		"h": 3,
+		"sources": [Rooms.source(2, 1, Rules.Dir.WEST, pattern, period)],
+		"sinks": [
+			Rooms.sink(2, 1, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+			Rooms.sink(0, 1, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+			Rooms.sink(1, 0, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+			Rooms.sink(1, 2, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [],
+		"budget": Rooms.kv([Rules.Kind.JOINTER, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [],
+		"solution": [],
+	}
+
+
+func _test_jointer_splits_right_and_left() -> void:
+	var mixed := _jointer_lane([Rules.Mat.ORE, Rules.Mat.INGOT], 4)
+	var placed := [Rooms.piece(Rules.Kind.JOINTER, 1, 1, Rules.Dir.EAST)]
+	var early := World.simulate(mixed, placed, 4)
+	var mid := World.simulate(mixed, placed, 8)
+	var waiting := World.simulate(mixed, placed, 12)
+	var result := World.simulate(mixed, placed, 16)
+	var again := World.simulate(mixed, placed, 16)
+	check(_trace(early) == "" and early.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "a lone ore is still in the jointer after the belt tick and the dwell tick")
+	check(_trace(mid) == "5:1,2:0|5:1,0:1" and mid.world.machines[Vector2i(1, 1)].hold < 0, "the waiter leaves right and the arrival leaves left, got %s" % _trace(mid))
+	check(int(mid.counts[Rules.Mat.ORE]) == 1 and int(mid.counts[Rules.Mat.INGOT]) == 1, "the first jointer pair leaves on the arrival tick")
+	check(_trace(waiting) == "5:1,2:0|5:1,0:1" and waiting.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "the next lone ore does not leave the jointer, got %s" % _trace(waiting))
+	check(_trace(result) == "5:1,2:0|5:1,0:1|13:1,2:0|13:1,0:1", "the next jointer pair leaves right and left, got %s" % _trace(result))
+	check(result.world.machines[Vector2i(1, 1)].hold < 0, "the jointer is empty after the second pair")
+	check(not ("2,1:" in _trace(result)), "a jointer does not send either item forward")
+	check(not ("0,1:" in _trace(result)), "a jointer does not send the waiter behind")
+	check(int(result.world.machines[Vector2i(1, 1)].phase) == 0, "a jointer does not rotate or alternate")
+	check(_same(result, again), "the same jointer lane is deterministic (seed %d)" % result.seed)
+	var same := World.simulate(_jointer_lane([Rules.Mat.ORE], 4), placed, 16)
+	check(_trace(same) == "" and same.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "the same material does not release the waiter, got %s" % _trace(same))
+	var as_wrest := World.simulate(mixed, [Rooms.piece(Rules.Kind.WREST, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_wrest) == "5:1,0:0|5:1,2:1", "a wrest on the jointer lane sends the waiter left and the arrival right, got %s" % _trace(as_wrest))
+	var as_shin := World.simulate(mixed, [Rooms.piece(Rules.Kind.SHIN, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_shin) == "5:1,0:0|5:2,1:1", "a shin on the jointer lane sends the arrival forward, got %s" % _trace(as_shin))
+	var as_point := World.simulate(mixed, [Rooms.piece(Rules.Kind.POINT, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_point) == "5:1,2:0|5:2,1:1", "a point on the jointer lane sends the arrival forward, got %s" % _trace(as_point))
+	var as_throat := World.simulate(mixed, [Rooms.piece(Rules.Kind.THROAT, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_throat) == "5:0,1:0|5:2,1:1", "a throat on the jointer lane sends the waiter behind, got %s" % _trace(as_throat))
+	var as_beam := World.simulate(mixed, [Rooms.piece(Rules.Kind.BEAM, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_beam) == "5:0,1:0|5:1,0:1", "a beam on the jointer lane sends the waiter backward, got %s" % _trace(as_beam))
+	var behind := {
+		"id": 0, "name": "jointer behind", "blurb": "", "rule": "", "w": 3, "h": 3,
+		"sources": [Rooms.source(0, 1, Rules.Dir.EAST, [Rules.Mat.ORE, Rules.Mat.INGOT], 4)],
+		"sinks": [
+			Rooms.sink(0, 1, [Rules.Mat.ORE, Rules.Mat.INGOT]), Rooms.sink(1, 0, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+			Rooms.sink(1, 2, [Rules.Mat.ORE, Rules.Mat.INGOT]), Rooms.sink(2, 1, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+		],
+		"chutes": [], "walls": [],
+		"budget": Rooms.kv([Rules.Kind.JOINTER, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [], "solution": [],
+	}
+	var from_behind := World.simulate(behind, placed, 8)
+	check(_trace(from_behind) == "" and from_behind.world.machines[Vector2i(1, 1)].hold < 0, "a jointer refuses an arrival from behind, got %s" % _trace(from_behind))
+	check(_trace(World.simulate(_stilt_lane([Rules.Mat.ORE, Rules.Mat.INGOT], 4), placed, 8)) == "", "a jointer refuses an arrival from the left")
+	check(_trace(World.simulate(_clevis_lane([Rules.Mat.ORE, Rules.Mat.INGOT], 4), placed, 8)) == "", "a jointer refuses an arrival from the right")
+	var belt := World.simulate(mixed, [Rooms.piece(Rules.Kind.BELT, 1, 1, Rules.Dir.EAST)], 12)
+	check(_trace(belt) == "" and belt.world.machines[Vector2i(1, 1)].hold < 0, "a belt refuses the jointer's ahead arrival, got %s" % _trace(belt))
+	for mat in [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]:
+		var lone := World.simulate(_jointer_lane([mat], 80), placed, 15)
+		check(_trace(lone) == "" and lone.world.machines[Vector2i(1, 1)].hold == mat, "a lone %s never leaves a jointer" % Rules.MAT_NAME[mat])
+	var south := {
+		"id": 0, "name": "jointer south", "blurb": "", "rule": "", "w": 3, "h": 3,
+		"sources": [Rooms.source(1, 2, Rules.Dir.NORTH, [Rules.Mat.ORE, Rules.Mat.INGOT], 4)],
+		"sinks": [
+			Rooms.sink(1, 0, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+			Rooms.sink(0, 1, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+			Rooms.sink(2, 1, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+			Rooms.sink(1, 2, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+		],
+		"chutes": [], "walls": [],
+		"budget": Rooms.kv([Rules.Kind.JOINTER, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [], "solution": [],
+	}
+	var turned := World.simulate(south, [Rooms.piece(Rules.Kind.JOINTER, 1, 1, Rules.Dir.SOUTH)], 8)
+	check(_trace(turned) == "5:0,1:0|5:2,1:1" and turned.world.machines[Vector2i(1, 1)].hold < 0, "a south-facing jointer sends the waiter right and the arrival left, got %s" % _trace(turned))
+
+
+func _test_jointer_refuses_left_right_and_behind() -> void:
+	var left_side := {
+		"id": 0, "name": "jointer left", "blurb": "", "rule": "", "w": 3, "h": 3,
+		"sources": [Rooms.source(1, 0, Rules.Dir.SOUTH, [Rules.Mat.PLATE], 1)],
+		"sinks": [Rooms.sink(2, 1, [Rules.Mat.PLATE])],
+		"chutes": [], "walls": [],
+		"budget": Rooms.kv([Rules.Kind.JOINTER, 1, Rules.Kind.BELT, 1]),
+		"quota": Rooms.kv([Rules.Mat.PLATE, 1]),
+		"initial": [], "solution": [],
+	}
+	var belt_left := World.simulate(left_side, [Rooms.piece(Rules.Kind.BELT, 1, 1, Rules.Dir.EAST)], 4)
+	var jointer_left := World.simulate(left_side, [Rooms.piece(Rules.Kind.JOINTER, 1, 1, Rules.Dir.EAST)], 4)
+	check(int(belt_left.counts[Rules.Mat.PLATE]) >= 1, "a belt takes a plate from the left of the jointer cell, got %s" % _trace(belt_left))
+	check(int(jointer_left.counts[Rules.Mat.PLATE]) == 0 and int(jointer_left.world.sources[0].pending) == Rules.Mat.PLATE, "a jointer refuses that same plate from the left")
+	var right_side := {
+		"id": 0, "name": "jointer right", "blurb": "", "rule": "", "w": 3, "h": 3,
+		"sources": [Rooms.source(1, 2, Rules.Dir.NORTH, [Rules.Mat.INGOT], 1)],
+		"sinks": [Rooms.sink(2, 1, [Rules.Mat.INGOT])],
+		"chutes": [], "walls": [],
+		"budget": Rooms.kv([Rules.Kind.JOINTER, 1, Rules.Kind.BELT, 1]),
+		"quota": Rooms.kv([Rules.Mat.INGOT, 1]),
+		"initial": [], "solution": [],
+	}
+	var belt_right := World.simulate(right_side, [Rooms.piece(Rules.Kind.BELT, 1, 1, Rules.Dir.EAST)], 4)
+	var jointer_right := World.simulate(right_side, [Rooms.piece(Rules.Kind.JOINTER, 1, 1, Rules.Dir.EAST)], 4)
+	check(int(belt_right.counts[Rules.Mat.INGOT]) >= 1, "a belt takes an ingot from the right of the jointer cell, got %s" % _trace(belt_right))
+	check(int(jointer_right.counts[Rules.Mat.INGOT]) == 0 and int(jointer_right.world.sources[0].pending) == Rules.Mat.INGOT, "a jointer refuses that same ingot from the right")
+	var behind := {
+		"id": 0, "name": "jointer behind refuse", "blurb": "", "rule": "", "w": 3, "h": 1,
+		"sources": [Rooms.source(0, 0, Rules.Dir.EAST, [Rules.Mat.PLATE], 1)],
+		"sinks": [Rooms.sink(2, 0, [Rules.Mat.PLATE])],
+		"chutes": [], "walls": [],
+		"budget": Rooms.kv([Rules.Kind.JOINTER, 1, Rules.Kind.BELT, 1]),
+		"quota": Rooms.kv([Rules.Mat.PLATE, 1]),
+		"initial": [], "solution": [],
+	}
+	var belt := World.simulate(behind, [Rooms.piece(Rules.Kind.BELT, 1, 0, Rules.Dir.EAST)], 4)
+	var jointer_behind := World.simulate(behind, [Rooms.piece(Rules.Kind.JOINTER, 1, 0, Rules.Dir.EAST)], 4)
+	check(int(belt.counts[Rules.Mat.PLATE]) >= 1, "a belt takes a plate from behind the jointer cell, got %s" % _trace(belt))
+	check(int(jointer_behind.counts[Rules.Mat.PLATE]) == 0 and int(jointer_behind.world.sources[0].pending) == Rules.Mat.PLATE, "a jointer refuses that same plate from behind")
+
+
+func _test_jointer_blocked_does_not_spill() -> void:
+	var right_wall := {
+		"id": 0, "name": "jointer right wall", "blurb": "", "rule": "", "w": 3, "h": 3,
+		"sources": [Rooms.source(2, 1, Rules.Dir.WEST, [Rules.Mat.ORE, Rules.Mat.INGOT], 1)],
+		"sinks": [
+			Rooms.sink(1, 0, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+			Rooms.sink(2, 1, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+			Rooms.sink(0, 1, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+		],
+		"chutes": [Rooms.cell(0, 0), Rooms.cell(2, 0), Rooms.cell(0, 2), Rooms.cell(2, 2)],
+		"walls": [Rooms.cell(1, 2)],
+		"budget": Rooms.kv([Rules.Kind.JOINTER, 1, Rules.Kind.SHIN, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [], "solution": [],
+	}
+	var held := World.simulate(right_wall, [Rooms.piece(Rules.Kind.JOINTER, 1, 1, Rules.Dir.EAST)], 6)
+	var shin := World.simulate(right_wall, [Rooms.piece(Rules.Kind.SHIN, 1, 1, Rules.Dir.EAST)], 2)
+	check(held.error == "" and held.discarded == 0 and held.trace.is_empty(), "a jointer with a blocked right cell does not spill left or forward")
+	check(held.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "blocked ore stays on the jointer when the right cell refuses")
+	check(int(held.world.sources[0].pending) == Rules.Mat.INGOT, "the arrival is not accepted while the jointer's right cell refuses")
+	check(int(held.counts[Rules.Mat.ORE]) == 0 and int(held.counts[Rules.Mat.INGOT]) == 0, "a blocked right cell does not send the arrival left")
+	check(_trace(shin) == "2:1,0:0|2:2,1:1", "a shin uses the open left cell the jointer refuses, got %s" % _trace(shin))
+	var left_wall := {
+		"id": 0, "name": "jointer left wall", "blurb": "", "rule": "", "w": 3, "h": 3,
+		"sources": [Rooms.source(2, 1, Rules.Dir.WEST, [Rules.Mat.ORE, Rules.Mat.INGOT], 1)],
+		"sinks": [
+			Rooms.sink(1, 2, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+			Rooms.sink(2, 1, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+			Rooms.sink(0, 1, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+		],
+		"chutes": [Rooms.cell(0, 0), Rooms.cell(2, 0), Rooms.cell(0, 2), Rooms.cell(2, 2)],
+		"walls": [Rooms.cell(1, 0)],
+		"budget": Rooms.kv([Rules.Kind.JOINTER, 1, Rules.Kind.POINT, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [], "solution": [],
+	}
+	var left_held := World.simulate(left_wall, [Rooms.piece(Rules.Kind.JOINTER, 1, 1, Rules.Dir.EAST)], 6)
+	var point := World.simulate(left_wall, [Rooms.piece(Rules.Kind.POINT, 1, 1, Rules.Dir.EAST)], 2)
+	check(left_held.trace.is_empty() and left_held.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "a blocked left cell keeps the waiter on the jointer")
+	check(int(left_held.world.sources[0].pending) == Rules.Mat.INGOT, "the arrival is not accepted while the jointer's left cell refuses")
+	check(int(left_held.counts[Rules.Mat.ORE]) == 0 and int(left_held.counts[Rules.Mat.INGOT]) == 0, "a blocked left cell does not send the waiter right")
+	check(_trace(point) == "2:1,2:0|2:2,1:1", "a point uses the open right cell the jointer refuses, got %s" % _trace(point))
+
+
+func _test_wing35_lessons() -> void:
+	var wrong_kinds: Array = [
+		Rules.Kind.BELT, Rules.Kind.DWELL, Rules.Kind.TWIN, Rules.Kind.PASS,
+		Rules.Kind.SLIP, Rules.Kind.SHED, Rules.Kind.HOOK, Rules.Kind.RAKE,
+		Rules.Kind.HOE, Rules.Kind.HARROW, Rules.Kind.LANDSIDE, Rules.Kind.MOLDBOARD,
+		Rules.Kind.COULTER, Rules.Kind.SHARE, Rules.Kind.FORK, Rules.Kind.PRONG,
+		Rules.Kind.SLADE, Rules.Kind.HEEL, Rules.Kind.STILT, Rules.Kind.CLEVIS,
+		Rules.Kind.BEAM, Rules.Kind.HAKE, Rules.Kind.SOLE, Rules.Kind.FROG,
+		Rules.Kind.SHIN, Rules.Kind.POINT, Rules.Kind.THROAT, Rules.Kind.WREST,
+	]
+	for index in range(272, 280):
+		var room: Dictionary = Rooms.all()[index]
+		for kind in wrong_kinds:
+			var swapped := _swap_kind(room.solution, Rules.Kind.JOINTER, int(kind))
+			var run: Dictionary = World.simulate(room, swapped)
+			check(run.error == "", "%s in place of the room %d jointer simulates (%s)" % [Rules.KIND_NAME[int(kind)], room.id, run.error])
+			check(not run.quota_ok, "%s in place of the room %d jointer misses the quota (%s)" % [Rules.KIND_NAME[int(kind)], room.id, run.text])
+			check(not run.success, "%s in place of the room %d jointer does not clear" % [Rules.KIND_NAME[int(kind)], room.id])
+			if int(kind) != Rules.Kind.BELT:
+				check(int(room.budget.get(int(kind), 0)) == 0, "room %d does not budget a %s" % [room.id, Rules.KIND_NAME[int(kind)]])
+		var planner = Planner.new(room)
+		for piece in room.initial:
+			check(planner.pickup(int(piece.x), int(piece.y)), "room %d picks up its starting piece" % room.id)
+		for piece in room.solution:
+			check(planner.place(int(piece.kind), int(piece.x), int(piece.y), int(piece.dir)), "room %d places its solution from the tray" % room.id)
+		var spare := _spare_cell(room)
+		check(spare.x >= 0, "room %d has an empty cell for an extra piece" % room.id)
+		check(not planner.place(Rules.Kind.BELT, spare.x, spare.y, Rules.Dir.EAST), "room %d rejects a belt past the tray" % room.id)
+		var extra: Array = room.solution.duplicate(true)
+		extra.append(Rooms.piece(Rules.Kind.BELT, spare.x, spare.y, Rules.Dir.EAST))
+		var over: Dictionary = World.simulate(room, extra)
+		check(over.quota_ok and not over.budget_ok and not over.success, "room %d extra belt meets the quota and is rejected (%s)" % [room.id, over.text])
+	var ore: Dictionary = Rooms.all()[272]
+	var smelted: Dictionary = World.simulate(ore, ore.solution)
+	check(int(smelted.counts[Rules.Mat.INGOT]) == 29 and int(smelted.counts[Rules.Mat.PLATE]) == 30, "ahead ore feeds the kiln and the plate bin (%s)" % smelted.text)
+	var ore_wrest: Dictionary = World.simulate(ore, _swap_kind(ore.solution, Rules.Kind.JOINTER, Rules.Kind.WREST))
+	var ore_throat: Dictionary = World.simulate(ore, _swap_kind(ore.solution, Rules.Kind.JOINTER, Rules.Kind.THROAT))
+	var ore_point: Dictionary = World.simulate(ore, _swap_kind(ore.solution, Rules.Kind.JOINTER, Rules.Kind.POINT))
+	var ore_shin: Dictionary = World.simulate(ore, _swap_kind(ore.solution, Rules.Kind.JOINTER, Rules.Kind.SHIN))
+	var ore_beam: Dictionary = World.simulate(ore, _swap_kind(ore.solution, Rules.Kind.JOINTER, Rules.Kind.BEAM))
+	check(not ore_wrest.quota_ok, "ahead ore's wrest misses the quota (%s)" % ore_wrest.text)
+	check(not ore_throat.quota_ok, "ahead ore's throat misses the quota (%s)" % ore_throat.text)
+	check(not ore_point.quota_ok, "ahead ore's point misses the quota (%s)" % ore_point.text)
+	check(not ore_shin.quota_ok, "ahead ore's shin misses the quota (%s)" % ore_shin.text)
+	check(not ore_beam.quota_ok, "ahead ore's beam misses the quota (%s)" % ore_beam.text)
+	var still: Dictionary = Rooms.all()[273]
+	var stilled: Dictionary = World.simulate(still, still.solution)
+	check(int(still.budget[Rules.Kind.BELT]) == 1, "still jointer budgets one belt")
+	var still_belts := 0
+	var still_south := false
+	for piece in still.solution:
+		if int(piece.kind) == Rules.Kind.BELT:
+			still_belts += 1
+			check(int(piece.x) == 0 and int(piece.y) == 2, "still jointer's belt is on the crossing")
+		if int(piece.kind) == Rules.Kind.JOINTER:
+			still_south = int(piece.dir) == Rules.Dir.SOUTH
+	check(still_belts == 1 and still_south, "still jointer places one south-facing jointer")
+	check(int(stilled.counts[Rules.Mat.INGOT]) == 29 and int(stilled.counts[Rules.Mat.PLATE]) == 30 and int(stilled.discarded) > 0, "still jointer counts both exits and scraps the side stream (%s discarded %d)" % [stilled.text, stilled.discarded])
+	var seat: Dictionary = Rooms.all()[274]
+	var parked: Array = []
+	for piece in seat.solution:
+		if int(piece.kind) != Rules.Kind.JOINTER:
+			parked.append(piece)
+	parked.append(Rooms.piece(Rules.Kind.JOINTER, 5, 0, Rules.Dir.EAST))
+	var gap: Dictionary = World.simulate(seat, parked)
+	check(World.budget_met(parked, seat.budget) and not gap.quota_ok, "a parked jointer misses the seat (%s)" % gap.text)
+	var seated: Dictionary = World.simulate(seat, seat.solution)
+	check(int(seated.counts[Rules.Mat.INGOT]) == 29 and int(seated.counts[Rules.Mat.PLATE]) == 30, "seating the jointer clears the seat (%s)" % seated.text)
+	var corner: Dictionary = Rooms.all()[275]
+	var cornered: Dictionary = World.simulate(corner, corner.solution)
+	check(int(cornered.counts[Rules.Mat.INGOT]) == 59 and int(cornered.counts[Rules.Mat.PLATE]) == 60, "split corner counts both exits (%s)" % cornered.text)
+	var corner_wrest: Dictionary = World.simulate(corner, _swap_kind(corner.solution, Rules.Kind.JOINTER, Rules.Kind.WREST))
+	check(not corner_wrest.quota_ok, "split corner's wrest misses the quota (%s)" % corner_wrest.text)
+	var stocks: Dictionary = Rooms.all()[276]
+	var stocked: Dictionary = World.simulate(stocks, stocks.solution)
+	check(int(stocked.counts[Rules.Mat.INGOT]) == 118 and int(stocked.counts[Rules.Mat.PLATE]) == 120, "two stocks counts both lanes (%s)" % stocked.text)
+	var scrap: Dictionary = Rooms.all()[277]
+	var scraped: Dictionary = World.simulate(scrap, scrap.solution)
+	var scrap_south := false
+	for piece in scrap.solution:
+		if int(piece.kind) == Rules.Kind.JOINTER:
+			scrap_south = int(piece.dir) == Rules.Dir.SOUTH
+	check(scrap_south, "after the split's jointer faces south")
+	check(int(scraped.counts[Rules.Mat.INGOT]) == 29 and int(scraped.counts[Rules.Mat.PLATE]) == 30 and int(scraped.discarded) > 0, "after the split counts both exits and discards the scrap (%s discarded %d)" % [scraped.text, scraped.discarded])
+	var bin: Dictionary = Rooms.all()[278]
+	var solved: Dictionary = World.simulate(bin, bin.solution)
+	check(int(solved.counts[Rules.Mat.INGOT]) == 29 and int(solved.counts[Rules.Mat.PLATE]) == 104, "split bin hits both quotas (%s)" % solved.text)
+	check(solved.world.machines[Vector2i(4, 1)].hold < 0, "split bin's jointer is empty after the pairs")
+	var plates_only: Dictionary = World.simulate(bin, [Rooms.piece(Rules.Kind.BELT, 6, 5, Rules.Dir.WEST)])
+	check(int(plates_only.counts[Rules.Mat.INGOT]) == 0 and int(plates_only.counts[Rules.Mat.PLATE]) < int(bin.quota[Rules.Mat.PLATE]), "split bin's lower plates alone miss (%s)" % plates_only.text)
+	var pressed: Dictionary = World.simulate(bin, [
+		Rooms.piece(Rules.Kind.JOINTER, 4, 1, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.KILN, 4, 2, Rules.Dir.SOUTH),
+		Rooms.piece(Rules.Kind.PRESS, 4, 3, Rules.Dir.SOUTH),
+		Rooms.piece(Rules.Kind.BELT, 6, 5, Rules.Dir.WEST),
+	])
+	check(int(pressed.counts[Rules.Mat.INGOT]) == 0 and not pressed.success, "pressing every ingot misses the split bin (%s)" % pressed.text)
+	var held_room: Dictionary = Rooms.all()[279]
+	var waiting: Dictionary = World.simulate(held_room, held_room.solution, 2)
+	var leaving: Dictionary = World.simulate(held_room, held_room.solution, 3)
+	var finished: Dictionary = World.simulate(held_room, held_room.solution)
+	var belt_early: Dictionary = World.simulate(held_room, _swap_kind(held_room.solution, Rules.Kind.JOINTER, Rules.Kind.BELT), 2)
+	var held_wrest: Dictionary = World.simulate(held_room, _swap_kind(held_room.solution, Rules.Kind.JOINTER, Rules.Kind.WREST))
+	check(waiting.world.machines[Vector2i(3, 1)].hold == Rules.Mat.ORE and waiting.trace.is_empty(), "held pair keeps the first ore through the empty tick")
+	check(leaving.world.machines[Vector2i(3, 1)].hold < 0 and _trace(leaving) == "3:3,0:2", "held pair leaves on the arrival tick and the cell is empty, got %s" % _trace(leaving))
+	check(belt_early.world.machines[Vector2i(3, 1)].hold < 0 and belt_early.world.machines[Vector2i(3, 2)].hold < 0 and int(belt_early.world.sources[0].pending) == Rules.Mat.ORE, "a belt refuses the ahead arrival, so the first ore stays on the source")
+	check(int(finished.counts[Rules.Mat.INGOT]) == 29 and int(finished.counts[Rules.Mat.PLATE]) == 30, "held pair feeds the kiln and the plate bin (%s)" % finished.text)
+	check(not held_wrest.quota_ok, "held pair's wrest misses the quota (%s)" % held_wrest.text)
