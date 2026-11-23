@@ -3,7 +3,7 @@ extends RefCounted
 
 const Rules = preload("res://rules/rules.gd")
 
-## Twenty-four wings of the closed museum. Each solution is a list of actions the rules
+## Twenty-five wings of the closed museum. Each solution is a list of actions the rules
 ## accept. Tokens are R L U D, W for wait, and T0 / T1 for lamps.
 
 
@@ -105,6 +105,8 @@ static func _puzzle(number: int, title: String, lesson: String, rows: PackedStri
 		wing_number = number - 134
 	elif wing == "Cambric Wing":
 		wing_number = number - 140
+	elif wing == "Holland Wing":
+		wing_number = number - 146
 	return {
 		"number": number,
 		"wing": wing,
@@ -158,6 +160,7 @@ static func _all() -> Array:
 	puzzles.append_array(_lawn_wing())
 	puzzles.append_array(_muslin_wing())
 	puzzles.append_array(_cambric_wing())
+	puzzles.append_array(_holland_wing())
 	return puzzles
 
 
@@ -2797,5 +2800,118 @@ static func _cambric_wing() -> Array:
 			[_guard(1, 1, [Vector2i(1, 1)], 0)],
 			"U T0 D L R U D L D",
 			"Cambric Wing"
+		),
+	]
+
+
+static func _holland_wing() -> Array:
+	return [
+		_puzzle(
+			147,
+			"The Lit Holland",
+			"This room is about the rule that the holland is lit.",
+			PackedStringArray([
+				"#########",
+				"#GO.....#",
+				"#.G#....#",
+				"#.S.....#",
+				"###....X#",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"U U T0 R R W D D D R R R",
+			"Holland Wing"
+		),
+		_puzzle(
+			148,
+			"The Seen Grain",
+			"This room is about the rule that the guard sees a lit tile through the lit holland.",
+			PackedStringArray([
+				"#########",
+				"#GO.....#",
+				"#.G#....#",
+				"#.S.....#",
+				"###....X#",
+				"#########",
+				"#.......#",
+				"#..O....#",
+				"#..G....#",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3), _lamp(3, 6, "s", 2)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0), _guard(3, 8, [Vector2i(3, 8)], 3)],
+			"U U T0 R R W D D D R R R",
+			"Holland Wing"
+		),
+		_puzzle(
+			149,
+			"The Passed Ray",
+			"This room is about the rule that a second lamp's light passes through the holland.",
+			PackedStringArray([
+				"#########",
+				"#########",
+				"#GO.....#",
+				"#.G#....#",
+				"#.S.....#",
+				"###....X#",
+				"#########",
+			]),
+			[_lamp(3, 2, "w", 3)],
+			[_guard(1, 2, [Vector2i(1, 2)], 0)],
+			"U U T0 R R W D D D R R R",
+			"Holland Wing"
+		),
+		_puzzle(
+			150,
+			"The Trod Holland",
+			"This room is about the rule that a guard can enter the holland.",
+			PackedStringArray([
+				"##########",
+				"#GO.....##",
+				"#.G#....##",
+				"#.S.....##",
+				"###....X##",
+				"##########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"U U T0 R R W D D D R R R",
+			"Holland Wing"
+		),
+		_puzzle(
+			151,
+			"The Firm Footing",
+			"This room is about the rule that the early step onto the lit holland succeeds.",
+			PackedStringArray([
+				"#########",
+				"#GO.....#",
+				"#.G#....#",
+				"#.S.....#",
+				"###....X#",
+				"#########",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"U U T0 R R W D D D R R R",
+			"Holland Wing"
+		),
+		_puzzle(
+			152,
+			"The Last Holland",
+			"This room is about the rule that you leave by stepping on the dark holland.",
+			PackedStringArray([
+				"#########",
+				"#GO.....#",
+				"#.G#....#",
+				"#.S.....#",
+				"###..O.X#",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"U U T0 R R W D D D R R R",
+			"Holland Wing"
 		),
 	]

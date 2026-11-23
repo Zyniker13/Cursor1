@@ -441,7 +441,7 @@ static func norm_rot(kind: String, rot: int) -> int:
 	# A cavetto uses the same four facings. Each one stops only the opposite
 	# of the facing and passes the other three directions. A north cavetto
 	# passes north, east, and west, which a north ovolo does not.
-	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma" or kind == "fascia" or kind == "soffit" or kind == "drip" or kind == "beak" or kind == "hood" or kind == "throat" or kind == "larmier":
+	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma" or kind == "fascia" or kind == "soffit" or kind == "drip" or kind == "beak" or kind == "hood" or kind == "throat" or kind == "larmier" or kind == "cill":
 		return posmod(rot, 360)
 	# A shutter has no facing. Dry stops the beam; flooded water lets it pass.
 	# A well has no facing either. Dry stops the beam; flooded water sends it north.
@@ -742,6 +742,28 @@ static func larmier_flood_passes(rot: int, dir: String) -> bool:
 	var facing := larmier_facing(rot)
 	return dir == facing or dir == rotate_dir(facing, 2)
 
+static func cill_facing(rot: int) -> String:
+	# 0 north, 90 east, 180 south, 270 west. Opposite facings share the open
+	# set, the same way a larmier's opposite facings share an axis. The stored
+	# facing still walks all four quarter-turns.
+	return rotate_dir("N", posmod(int(norm_rot("cill", rot) / 90.0), 4))
+
+static func cill_passes(rot: int, dir: String) -> bool:
+	# Dry rule, the larmier's polarity swap. The facing and the opposite.
+	# North passes north and south and stops east and west. A south cill passes
+	# the same north and south. One click faces east and passes east and west,
+	# the axis a dry larmier stops.
+	var facing := cill_facing(rot)
+	return dir == facing or dir == rotate_dir(facing, 2)
+
+static func cill_flood_passes(rot: int, dir: String) -> bool:
+	# Flooded rule. Only the two perpendicular directions pass. A flooded north
+	# cill passes only east and west. A flooded south cill passes the same east
+	# and west. That is the axis a dry larmier passes, and it is not a flooded
+	# larmier, which passes the facing and the opposite.
+	var facing := cill_facing(rot)
+	return dir == rotate_dir(facing, 1) or dir == rotate_dir(facing, -1)
+
 static func sluice_facing(rot: int) -> String:
 	# 0 north, 90 east, 180 south, 270 west. The exit follows this facing.
 	return rotate_dir("N", posmod(int(rot / 90.0), 4))
@@ -946,7 +968,7 @@ static func _cast(
 		if flooded and not _flood_carries(occupants, cell):
 			# A flooded drip is not a full carrier. Only the dry-stopped
 			# direction enters. The other three stop at the waterline.
-			if not _flooded_drip_passes(occupants, cell, dir) and not _flooded_beak_passes(occupants, cell, dir) and not _flooded_hood_passes(occupants, cell, dir) and not _flooded_throat_passes(occupants, cell, dir) and not _flooded_larmier_passes(occupants, cell, dir):
+			if not _flooded_drip_passes(occupants, cell, dir) and not _flooded_beak_passes(occupants, cell, dir) and not _flooded_hood_passes(occupants, cell, dir) and not _flooded_throat_passes(occupants, cell, dir) and not _flooded_larmier_passes(occupants, cell, dir) and not _flooded_cill_passes(occupants, cell, dir):
 				segments.append(_boundary_seg(prev, cell, color))
 				return
 		# A dry mullion passes north and south. East and west stop on the edge
@@ -1077,6 +1099,12 @@ static func _cast(
 		# The facing and the opposite stop on the edge. A flooded larmier already
 		# passed the waterline gate above, and only that axis is here.
 		if not flooded and _dry_larmier_blocks(occupants, cell, dir):
+			segments.append(_boundary_seg(prev, cell, color))
+			return
+		# A dry cill passes the facing and the opposite. The two perpendicular
+		# directions stop on the edge. A flooded cill already passed the
+		# waterline gate above, and only that perpendicular pair is here.
+		if not flooded and _dry_cill_blocks(occupants, cell, dir):
 			segments.append(_boundary_seg(prev, cell, color))
 			return
 		segments.append(_center_seg(prev, cell, color))
@@ -1368,6 +1396,13 @@ static func _cast(
 			prev = cell
 			cell = cell + VEC[dir]
 			continue
+		if kind == "cill":
+			# Dry, the facing and the opposite pass straight. Flooded, only the
+			# two perpendicular directions pass straight. Same direction, same
+			# color, no bounce, no turn, no recolor, no split.
+			prev = cell
+			cell = cell + VEC[dir]
+			continue
 		if kind == "pane":
 			if color != pane_color(int(occ["rot"])):
 				return
@@ -1423,6 +1458,8 @@ static func _flood_carries(occupants: Dictionary, cell: Vector2i) -> bool:
 	# its facing enters, and that exception is the same gate.
 	# A larmier is not listed here either. Under water only the facing and
 	# the opposite enter, and that exception is the same gate.
+	# A cill is not listed here either. Under water only the two directions
+	# perpendicular to its facing enter, and that exception is the same gate.
 	# Every other flooded cell stops.
 	if not occupants.has(cell):
 		return false
@@ -1618,6 +1655,20 @@ static func _flooded_larmier_passes(occupants: Dictionary, cell: Vector2i, dir: 
 	if str(occupants[cell]["kind"]) != "larmier":
 		return false
 	return larmier_flood_passes(int(occupants[cell]["rot"]), dir)
+
+static func _dry_cill_blocks(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "cill":
+		return false
+	return not cill_passes(int(occupants[cell]["rot"]), dir)
+
+static func _flooded_cill_passes(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "cill":
+		return false
+	return cill_flood_passes(int(occupants[cell]["rot"]), dir)
 
 static func _in_bounds(chart: Dictionary, cell: Vector2i) -> bool:
 	return cell.x >= 0 and cell.y >= 0 and cell.x < int(chart["cols"]) and cell.y < int(chart["rows"])
