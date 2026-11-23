@@ -48,6 +48,7 @@ func _initialize() -> void:
 	_test_wheft(errors)
 	_test_ancient(errors)
 	_test_gonfanon(errors)
+	_test_colour(errors)
 	_test_determinism(errors)
 	_test_population(errors)
 	_test_no_select_ant(errors)
@@ -121,7 +122,7 @@ func _test_determinism(errors: Array) -> void:
 	var plans := _plans(errors)
 	if plans.is_empty():
 		return
-	for plan_name in ["winning", "all_rake", "dry_pans", "continued", "late_pans", "no_crib", "carted", "late_crib", "dry_crib", "no_ship", "shipped", "late_ship", "dry_ship", "no_stall", "sold", "late_sold", "dry_sold", "no_yard", "banked", "late_banked", "dry_banked", "no_bunk", "hired", "late_hired", "dry_hired", "no_loft", "lofted", "late_lofted", "dry_lofted", "no_gate", "gated", "late_gated", "dry_gated", "no_wage", "paid", "late_paid", "dry_paid", "no_relief", "posted", "late_posted", "dry_posted", "no_watch", "stood", "late_stood", "dry_stood", "watch_only", "no_lamp", "lit", "late_lit", "dry_lit", "lamp_only", "no_bell", "rung", "late_rung", "dry_rung", "bell_only", "no_horn", "sounded", "late_sounded", "dry_sounded", "horn_only", "no_flag", "raised", "late_raised", "dry_raised", "flag_only", "no_banner", "hoisted", "late_hoisted", "dry_hoisted", "banner_only", "no_pennant", "flown", "late_flown", "dry_flown", "pennant_only", "no_standard", "carried", "late_carried", "dry_carried", "standard_only", "no_jack", "shown", "late_shown", "dry_shown", "jack_only", "no_ensign", "broken", "late_broken", "dry_broken", "ensign_only", "no_burgee", "struck", "late_struck", "dry_struck", "burgee_only", "no_cornet", "dipped", "late_dipped", "dry_dipped", "cornet_only", "no_guidon", "saluted", "late_saluted", "dry_saluted", "guidon_only", "no_fanion", "presented", "late_presented", "dry_presented", "fanion_only", "furled", "late_furled", "dry_furled", "pennon_only", "gonfalon", "late_gonfalon", "dry_gonfalon", "gonfalon_only", "oriflamme", "late_oriflamme", "dry_oriflamme", "oriflamme_only", "vexillum", "late_vexillum", "dry_vexillum", "vexillum_only", "labarum", "late_labarum", "dry_labarum", "labarum_only", "signum", "late_signum", "dry_signum", "signum_only", "streamer", "late_streamer", "dry_streamer", "streamer_only", "bannerol", "late_bannerol", "dry_bannerol", "bannerol_only", "pendant", "late_pendant", "dry_pendant", "pendant_only", "wheft", "late_wheft", "dry_wheft", "wheft_only", "ancient", "late_ancient", "dry_ancient", "ancient_only", "gonfanon", "late_gonfanon", "dry_gonfanon", "gonfanon_only"]:
+	for plan_name in ["winning", "all_rake", "dry_pans", "continued", "late_pans", "no_crib", "carted", "late_crib", "dry_crib", "no_ship", "shipped", "late_ship", "dry_ship", "no_stall", "sold", "late_sold", "dry_sold", "no_yard", "banked", "late_banked", "dry_banked", "no_bunk", "hired", "late_hired", "dry_hired", "no_loft", "lofted", "late_lofted", "dry_lofted", "no_gate", "gated", "late_gated", "dry_gated", "no_wage", "paid", "late_paid", "dry_paid", "no_relief", "posted", "late_posted", "dry_posted", "no_watch", "stood", "late_stood", "dry_stood", "watch_only", "no_lamp", "lit", "late_lit", "dry_lit", "lamp_only", "no_bell", "rung", "late_rung", "dry_rung", "bell_only", "no_horn", "sounded", "late_sounded", "dry_sounded", "horn_only", "no_flag", "raised", "late_raised", "dry_raised", "flag_only", "no_banner", "hoisted", "late_hoisted", "dry_hoisted", "banner_only", "no_pennant", "flown", "late_flown", "dry_flown", "pennant_only", "no_standard", "carried", "late_carried", "dry_carried", "standard_only", "no_jack", "shown", "late_shown", "dry_shown", "jack_only", "no_ensign", "broken", "late_broken", "dry_broken", "ensign_only", "no_burgee", "struck", "late_struck", "dry_struck", "burgee_only", "no_cornet", "dipped", "late_dipped", "dry_dipped", "cornet_only", "no_guidon", "saluted", "late_saluted", "dry_saluted", "guidon_only", "no_fanion", "presented", "late_presented", "dry_presented", "fanion_only", "furled", "late_furled", "dry_furled", "pennon_only", "gonfalon", "late_gonfalon", "dry_gonfalon", "gonfalon_only", "oriflamme", "late_oriflamme", "dry_oriflamme", "oriflamme_only", "vexillum", "late_vexillum", "dry_vexillum", "vexillum_only", "labarum", "late_labarum", "dry_labarum", "labarum_only", "signum", "late_signum", "dry_signum", "signum_only", "streamer", "late_streamer", "dry_streamer", "streamer_only", "bannerol", "late_bannerol", "dry_bannerol", "bannerol_only", "pendant", "late_pendant", "dry_pendant", "pendant_only", "wheft", "late_wheft", "dry_wheft", "wheft_only", "ancient", "late_ancient", "dry_ancient", "ancient_only", "gonfanon", "late_gonfanon", "dry_gonfanon", "gonfanon_only", "colour", "late_colour", "dry_colour", "colour_only"]:
 		var before := errors.size()
 		var first = _run_plan(plans, plan_name, errors)
 		var second = _run_plan(plans, plan_name, errors)
@@ -265,6 +266,10 @@ func _test_determinism(errors: Array) -> void:
 		if int(first.get_gonfanon_hemmed()) != int(second.get_gonfanon_hemmed()) or int(first.get_ancient_left()) != int(second.get_ancient_left()):
 			_fail(errors, "%s gonfanon runs differed (%d unhemmed %d, and %d unhemmed %d)" % [
 				plan_name, first.get_gonfanon_hemmed(), first.get_ancient_left(), second.get_gonfanon_hemmed(), second.get_ancient_left(),
+			])
+		if int(first.get_colour_fringed()) != int(second.get_colour_fringed()) or int(first.get_gonfanon_left()) != int(second.get_gonfanon_left()):
+			_fail(errors, "%s colour runs differed (%d unfringed %d, and %d unfringed %d)" % [
+				plan_name, first.get_colour_fringed(), first.get_gonfanon_left(), second.get_colour_fringed(), second.get_gonfanon_left(),
 			])
 		if String(first.get_summary()) != String(second.get_summary()):
 			_fail(errors, "%s summaries differed" % plan_name)
@@ -1069,6 +1074,40 @@ func _test_scene_boots(errors: Array) -> void:
 	node._on_key(KEY_SPACE)
 	if int(node.sim.get_paint(14, -29)) != Sim.ANCIENT:
 		_fail(errors, "the ancient cell accepted a gonfanon")
+	node._on_key(KEY_BRACERIGHT)
+	if not String(node.mode_label.text).contains("Colour"):
+		_fail(errors, "colour mark was not named")
+	gonfanon_button = null
+	var colour_button: Button = null
+	for entry in node.mode_buttons:
+		if int(entry["mode"]) == Sim.COLOUR:
+			colour_button = entry["button"]
+		elif int(entry["mode"]) == Sim.GONFANON:
+			gonfanon_button = entry["button"]
+	if colour_button == null or gonfanon_button == null:
+		_fail(errors, "colour button is missing beside the gonfanon")
+	elif not String(colour_button.text).contains("Colour") or not String(gonfanon_button.text).contains("Gonfanon"):
+		_fail(errors, "colour button is not labeled beside the gonfanon")
+	elif colour_button.get_parent() != gonfanon_button.get_parent() or colour_button.get_index() != gonfanon_button.get_index() + 1:
+		_fail(errors, "colour button does not sit beside the gonfanon")
+	else:
+		var colour_style := colour_button.get_theme_stylebox("normal") as StyleBoxFlat
+		if colour_style == null or colour_style.get_border_width(SIDE_LEFT) != 3 or colour_style.border_color != Color("f0c14a"):
+			_fail(errors, "selected colour has no gold outline")
+	node._on_key(KEY_UP)
+	node._on_key(KEY_UP)
+	node._on_key(KEY_SPACE)
+	if int(node.sim.get_paint(14, -31)) != Sim.COLOUR:
+		_fail(errors, "keyboard cursor did not paint a colour at 14,-31")
+	node._on_key(KEY_BRACELEFT)
+	node._on_key(KEY_SPACE)
+	if int(node.sim.get_paint(14, -31)) != Sim.COLOUR:
+		_fail(errors, "the colour cell accepted a gonfanon")
+	node._on_key(KEY_DOWN)
+	node._on_key(KEY_BRACERIGHT)
+	node._on_key(KEY_SPACE)
+	if int(node.sim.get_paint(14, -30)) != Sim.GONFANON:
+		_fail(errors, "the gonfanon cell accepted a colour")
 	var season = node.find_child("SeasonNote", true, false)
 	if season == null or not String(season.text).to_lower().contains("pan"):
 		_fail(errors, "season note does not mention pans")
@@ -1215,6 +1254,10 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "rules text does not mention the gonfanon")
 	if rules == null or not String(rules.text).to_lower().contains("hem one"):
 		_fail(errors, "rules text does not name the gonfanon hem of one tailed hire")
+	if rules == null or not String(rules.text).to_lower().contains("colour"):
+		_fail(errors, "rules text does not mention the colour")
+	if rules == null or not String(rules.text).to_lower().contains("fringe one"):
+		_fail(errors, "rules text does not name the colour fringe of one hemmed hire")
 	var hint = node.find_child("HintLine", true, false)
 	if hint == null or not String(hint.text).to_lower().contains("watch"):
 		_fail(errors, "hint line does not name the watch")
@@ -1274,14 +1317,16 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "hint's last line does not name the ancient after the wheft: %s" % hint_last)
 	if hint_last.find("{ gonfanon") < hint_last.find("] ancient") or not hint_last.contains("{ gonfanon"):
 		_fail(errors, "hint's last line does not name the gonfanon after the ancient: %s" % hint_last)
-	if hint != null and (int(hint.position.y) != 1848 or int(hint.size.x) != 1583 or not hint.clip_contents):
+	if hint_last.find("} colour") < hint_last.find("{ gonfanon") or not hint_last.contains("} colour"):
+		_fail(errors, "hint's last line does not name the colour after the gonfanon: %s" % hint_last)
+	if hint != null and (int(hint.position.y) != 1890 or int(hint.size.x) != 1642 or not hint.clip_contents):
 		_fail(errors, "hint line left its box (y %s w %s clip %s)" % [hint.position.y, hint.size.x, hint.clip_contents])
 	if hint == null or not String(hint.text).contains("\n"):
 		_fail(errors, "hint line is still one long line")
 	var panel = node.find_child("Panel", true, false)
 	if hint != null and panel != null and hint.position.x + hint.size.x > panel.position.x:
 		_fail(errors, "hint line runs under the side panel")
-	if hint != null and hint.position.y + hint.size.y > 1952.0:
+	if hint != null and hint.position.y + hint.size.y > 1994.0:
 		_fail(errors, "hint line continues past the window")
 	var map_bottom := 58.0 + float(Sim.GRID_H - Sim.GRID_NORTH) * 42.0
 	if hint != null and hint.position.y < map_bottom:
@@ -1726,10 +1771,23 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "gonfanon countdown started at %d, expected %d" % [node.sim.get_ticks_until_rain(), Sim.GONFANON_TICK])
 	elif not String(node.season_label.text).to_lower().contains("gonfanon"):
 		_fail(errors, "gonfanon note does not mention the gonfanon: %s" % node.season_label.text)
+	var spun_colour := 0
+	while int(node.sim.get_beat()) != Sim.COLOURING and not node.sim.is_over() and spun_colour < int(Sim.GONFANON_TICK) + 2:
+		node.sim.tick()
+		spun_colour += 1
+	node._refresh()
+	if int(node.sim.get_beat()) != Sim.COLOURING or node.sim.is_over():
+		_fail(errors, "the scene did not open the colour beat")
+	elif not String(node.rain_label.text).to_lower().contains("colour"):
+		_fail(errors, "colour countdown was not named: %s" % node.rain_label.text)
+	elif int(node.sim.get_ticks_until_rain()) != int(Sim.COLOUR_TICK):
+		_fail(errors, "colour countdown started at %d, expected %d" % [node.sim.get_ticks_until_rain(), Sim.COLOUR_TICK])
+	elif not String(node.season_label.text).to_lower().contains("colour"):
+		_fail(errors, "colour note does not mention the colour: %s" % node.season_label.text)
 	node._on_key(KEY_R)
-	if int(node.sim.get_paint(9, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 5)) != Sim.EMPTY or int(node.sim.get_paint(7, 4)) != Sim.EMPTY or int(node.sim.get_paint(7, 3)) != Sim.EMPTY or int(node.sim.get_paint(7, 2)) != Sim.EMPTY or int(node.sim.get_paint(7, 1)) != Sim.EMPTY or int(node.sim.get_paint(7, 0)) != Sim.EMPTY or int(node.sim.get_paint(7, -1)) != Sim.EMPTY or int(node.sim.get_paint(7, -2)) != Sim.EMPTY or int(node.sim.get_paint(7, -3)) != Sim.EMPTY or int(node.sim.get_paint(7, -4)) != Sim.EMPTY or int(node.sim.get_paint(7, -5)) != Sim.EMPTY or int(node.sim.get_paint(7, -6)) != Sim.EMPTY or int(node.sim.get_paint(7, -7)) != Sim.EMPTY or int(node.sim.get_paint(14, -11)) != Sim.EMPTY or int(node.sim.get_paint(14, -12)) != Sim.EMPTY or int(node.sim.get_paint(14, -13)) != Sim.EMPTY or int(node.sim.get_paint(14, -14)) != Sim.EMPTY or int(node.sim.get_paint(14, -15)) != Sim.EMPTY or int(node.sim.get_paint(14, -16)) != Sim.EMPTY or int(node.sim.get_paint(14, -17)) != Sim.EMPTY or int(node.sim.get_paint(14, -18)) != Sim.EMPTY or int(node.sim.get_paint(14, -19)) != Sim.EMPTY or int(node.sim.get_paint(14, -20)) != Sim.EMPTY or int(node.sim.get_paint(14, -21)) != Sim.EMPTY or int(node.sim.get_paint(14, -22)) != Sim.EMPTY or int(node.sim.get_paint(14, -23)) != Sim.EMPTY or int(node.sim.get_paint(14, -24)) != Sim.EMPTY or int(node.sim.get_paint(14, -25)) != Sim.EMPTY or int(node.sim.get_paint(14, -26)) != Sim.EMPTY or int(node.sim.get_paint(14, -27)) != Sim.EMPTY or int(node.sim.get_paint(14, -28)) != Sim.EMPTY or int(node.sim.get_paint(14, -29)) != Sim.EMPTY or int(node.sim.get_paint(14, -30)) != Sim.EMPTY:
+	if int(node.sim.get_paint(9, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 5)) != Sim.EMPTY or int(node.sim.get_paint(7, 4)) != Sim.EMPTY or int(node.sim.get_paint(7, 3)) != Sim.EMPTY or int(node.sim.get_paint(7, 2)) != Sim.EMPTY or int(node.sim.get_paint(7, 1)) != Sim.EMPTY or int(node.sim.get_paint(7, 0)) != Sim.EMPTY or int(node.sim.get_paint(7, -1)) != Sim.EMPTY or int(node.sim.get_paint(7, -2)) != Sim.EMPTY or int(node.sim.get_paint(7, -3)) != Sim.EMPTY or int(node.sim.get_paint(7, -4)) != Sim.EMPTY or int(node.sim.get_paint(7, -5)) != Sim.EMPTY or int(node.sim.get_paint(7, -6)) != Sim.EMPTY or int(node.sim.get_paint(7, -7)) != Sim.EMPTY or int(node.sim.get_paint(14, -11)) != Sim.EMPTY or int(node.sim.get_paint(14, -12)) != Sim.EMPTY or int(node.sim.get_paint(14, -13)) != Sim.EMPTY or int(node.sim.get_paint(14, -14)) != Sim.EMPTY or int(node.sim.get_paint(14, -15)) != Sim.EMPTY or int(node.sim.get_paint(14, -16)) != Sim.EMPTY or int(node.sim.get_paint(14, -17)) != Sim.EMPTY or int(node.sim.get_paint(14, -18)) != Sim.EMPTY or int(node.sim.get_paint(14, -19)) != Sim.EMPTY or int(node.sim.get_paint(14, -20)) != Sim.EMPTY or int(node.sim.get_paint(14, -21)) != Sim.EMPTY or int(node.sim.get_paint(14, -22)) != Sim.EMPTY or int(node.sim.get_paint(14, -23)) != Sim.EMPTY or int(node.sim.get_paint(14, -24)) != Sim.EMPTY or int(node.sim.get_paint(14, -25)) != Sim.EMPTY or int(node.sim.get_paint(14, -26)) != Sim.EMPTY or int(node.sim.get_paint(14, -27)) != Sim.EMPTY or int(node.sim.get_paint(14, -28)) != Sim.EMPTY or int(node.sim.get_paint(14, -29)) != Sim.EMPTY or int(node.sim.get_paint(14, -30)) != Sim.EMPTY or int(node.sim.get_paint(14, -31)) != Sim.EMPTY:
 		_fail(errors, "restart scenario did not clear the marks")
-	if int(node.sim.get_season()) != Sim.WET or int(node.sim.get_wet_haul()) != 0 or int(node.sim.get_beat()) != Sim.WET or int(node.sim.get_carted()) != 0 or int(node.sim.get_shipped()) != 0 or int(node.sim.get_coins()) != 0 or int(node.sim.get_banked()) != 0 or int(node.sim.get_hired()) != 0 or int(node.sim.get_lofted()) != 0 or int(node.sim.get_gated()) != 0 or int(node.sim.get_paid()) != 0 or int(node.sim.get_posted()) != 0 or int(node.sim.get_stood()) != 0 or int(node.sim.get_lit()) != 0 or int(node.sim.get_rung()) != 0 or int(node.sim.get_sounded()) != 0 or int(node.sim.get_raised()) != 0 or int(node.sim.get_hoisted()) != 0 or int(node.sim.get_flown()) != 0 or int(node.sim.get_carried()) != 0 or int(node.sim.get_shown()) != 0 or int(node.sim.get_broken()) != 0 or int(node.sim.get_struck()) != 0 or int(node.sim.get_dipped()) != 0 or int(node.sim.get_saluted()) != 0 or int(node.sim.get_presented()) != 0 or int(node.sim.get_furled()) != 0 or int(node.sim.get_gonfalon_dipped()) != 0 or int(node.sim.get_oriflamme_lowered()) != 0 or int(node.sim.get_vexillum_housed()) != 0 or int(node.sim.get_labarum_cased()) != 0 or int(node.sim.get_signum_sleeved()) != 0 or int(node.sim.get_streamer_rolled()) != 0 or int(node.sim.get_bannerol_bent()) != 0 or int(node.sim.get_pendant_stopped()) != 0 or int(node.sim.get_wheft_laced()) != 0 or int(node.sim.get_ancient_tailed()) != 0 or int(node.sim.get_gonfanon_hemmed()) != 0:
+	if int(node.sim.get_season()) != Sim.WET or int(node.sim.get_wet_haul()) != 0 or int(node.sim.get_beat()) != Sim.WET or int(node.sim.get_carted()) != 0 or int(node.sim.get_shipped()) != 0 or int(node.sim.get_coins()) != 0 or int(node.sim.get_banked()) != 0 or int(node.sim.get_hired()) != 0 or int(node.sim.get_lofted()) != 0 or int(node.sim.get_gated()) != 0 or int(node.sim.get_paid()) != 0 or int(node.sim.get_posted()) != 0 or int(node.sim.get_stood()) != 0 or int(node.sim.get_lit()) != 0 or int(node.sim.get_rung()) != 0 or int(node.sim.get_sounded()) != 0 or int(node.sim.get_raised()) != 0 or int(node.sim.get_hoisted()) != 0 or int(node.sim.get_flown()) != 0 or int(node.sim.get_carried()) != 0 or int(node.sim.get_shown()) != 0 or int(node.sim.get_broken()) != 0 or int(node.sim.get_struck()) != 0 or int(node.sim.get_dipped()) != 0 or int(node.sim.get_saluted()) != 0 or int(node.sim.get_presented()) != 0 or int(node.sim.get_furled()) != 0 or int(node.sim.get_gonfalon_dipped()) != 0 or int(node.sim.get_oriflamme_lowered()) != 0 or int(node.sim.get_vexillum_housed()) != 0 or int(node.sim.get_labarum_cased()) != 0 or int(node.sim.get_signum_sleeved()) != 0 or int(node.sim.get_streamer_rolled()) != 0 or int(node.sim.get_bannerol_bent()) != 0 or int(node.sim.get_pendant_stopped()) != 0 or int(node.sim.get_wheft_laced()) != 0 or int(node.sim.get_ancient_tailed()) != 0 or int(node.sim.get_gonfanon_hemmed()) != 0 or int(node.sim.get_colour_fringed()) != 0:
 		_fail(errors, "restart scenario did not return to the wet season")
 	if int(node.sim.get_population()) > Sim.POP_CAP:
 		_fail(errors, "restart left the population over the cap")
@@ -4025,12 +4083,12 @@ func _test_lamp(errors: Array) -> void:
 	])
 
 
-func _assert_chain(sim, errors: Array, label: String, wet: int, stored: int, carted: int, shipped: int, coins: int, hired: int, yard: int, paid: int, posted: int, stood: int, lit: int, rung: int, sounded: int = 0, raised: int = 0, hoisted: int = 0, flown: int = 0, carried: int = 0, shown: int = 0, broken: int = 0, struck: int = 0, dipped: int = 0, saluted: int = 0, presented: int = 0, furled: int = 0, gonfalon: int = 0, oriflamme: int = 0, vexillum: int = 0, labarum: int = 0, signum: int = 0, streamer: int = 0, bannerol: int = 0, pendant: int = 0, wheft: int = 0, ancient: int = 0, gonfanon: int = 0) -> void:
+func _assert_chain(sim, errors: Array, label: String, wet: int, stored: int, carted: int, shipped: int, coins: int, hired: int, yard: int, paid: int, posted: int, stood: int, lit: int, rung: int, sounded: int = 0, raised: int = 0, hoisted: int = 0, flown: int = 0, carried: int = 0, shown: int = 0, broken: int = 0, struck: int = 0, dipped: int = 0, saluted: int = 0, presented: int = 0, furled: int = 0, gonfalon: int = 0, oriflamme: int = 0, vexillum: int = 0, labarum: int = 0, signum: int = 0, streamer: int = 0, bannerol: int = 0, pendant: int = 0, wheft: int = 0, ancient: int = 0, gonfanon: int = 0, colour: int = 0) -> void:
 	if sim == null:
 		_fail(errors, "%s did not run" % label)
 		return
-	if int(sim.get_wet_haul()) != wet or int(sim.get_stored_salt()) != stored or int(sim.get_carted()) != carted or int(sim.get_shipped()) != shipped or int(sim.get_coins()) != coins or int(sim.get_hired()) != hired or int(sim.get_yard_left()) != yard or int(sim.get_paid()) != paid or int(sim.get_posted()) != posted or int(sim.get_stood()) != stood or int(sim.get_lit()) != lit or int(sim.get_rung()) != rung or int(sim.get_sounded()) != sounded or int(sim.get_raised()) != raised or int(sim.get_hoisted()) != hoisted or int(sim.get_flown()) != flown or int(sim.get_carried()) != carried or int(sim.get_shown()) != shown or int(sim.get_broken()) != broken or int(sim.get_struck()) != struck or int(sim.get_dipped()) != dipped or int(sim.get_saluted()) != saluted or int(sim.get_presented()) != presented or int(sim.get_furled()) != furled or int(sim.get_gonfalon_dipped()) != gonfalon or int(sim.get_oriflamme_lowered()) != oriflamme or int(sim.get_vexillum_housed()) != vexillum or int(sim.get_labarum_cased()) != labarum or int(sim.get_signum_sleeved()) != signum or int(sim.get_streamer_rolled()) != streamer or int(sim.get_bannerol_bent()) != bannerol or int(sim.get_pendant_stopped()) != pendant or int(sim.get_wheft_laced()) != wheft or int(sim.get_ancient_tailed()) != ancient or int(sim.get_gonfanon_hemmed()) != gonfanon:
-		_fail(errors, "%s changed (wet %d stored %d carted %d shipped %d coins %d hired %d yard %d paid %d posted %d stood %d lit %d rung %d sounded %d raised %d hoisted %d flown %d carried %d shown %d broken %d struck %d dipped %d saluted %d presented %d furled %d gonfalon %d oriflamme %d vexillum %d labarum %d signum %d streamer %d bannerol %d pendant %d wheft %d ancient %d gonfanon %d)" % [label, sim.get_wet_haul(), sim.get_stored_salt(), sim.get_carted(), sim.get_shipped(), sim.get_coins(), sim.get_hired(), sim.get_yard_left(), sim.get_paid(), sim.get_posted(), sim.get_stood(), sim.get_lit(), sim.get_rung(), sim.get_sounded(), sim.get_raised(), sim.get_hoisted(), sim.get_flown(), sim.get_carried(), sim.get_shown(), sim.get_broken(), sim.get_struck(), sim.get_dipped(), sim.get_saluted(), sim.get_presented(), sim.get_furled(), sim.get_gonfalon_dipped(), sim.get_oriflamme_lowered(), sim.get_vexillum_housed(), sim.get_labarum_cased(), sim.get_signum_sleeved(), sim.get_streamer_rolled(), sim.get_bannerol_bent(), sim.get_pendant_stopped(), sim.get_wheft_laced(), sim.get_ancient_tailed(), sim.get_gonfanon_hemmed()])
+	if int(sim.get_wet_haul()) != wet or int(sim.get_stored_salt()) != stored or int(sim.get_carted()) != carted or int(sim.get_shipped()) != shipped or int(sim.get_coins()) != coins or int(sim.get_hired()) != hired or int(sim.get_yard_left()) != yard or int(sim.get_paid()) != paid or int(sim.get_posted()) != posted or int(sim.get_stood()) != stood or int(sim.get_lit()) != lit or int(sim.get_rung()) != rung or int(sim.get_sounded()) != sounded or int(sim.get_raised()) != raised or int(sim.get_hoisted()) != hoisted or int(sim.get_flown()) != flown or int(sim.get_carried()) != carried or int(sim.get_shown()) != shown or int(sim.get_broken()) != broken or int(sim.get_struck()) != struck or int(sim.get_dipped()) != dipped or int(sim.get_saluted()) != saluted or int(sim.get_presented()) != presented or int(sim.get_furled()) != furled or int(sim.get_gonfalon_dipped()) != gonfalon or int(sim.get_oriflamme_lowered()) != oriflamme or int(sim.get_vexillum_housed()) != vexillum or int(sim.get_labarum_cased()) != labarum or int(sim.get_signum_sleeved()) != signum or int(sim.get_streamer_rolled()) != streamer or int(sim.get_bannerol_bent()) != bannerol or int(sim.get_pendant_stopped()) != pendant or int(sim.get_wheft_laced()) != wheft or int(sim.get_ancient_tailed()) != ancient or int(sim.get_gonfanon_hemmed()) != gonfanon or int(sim.get_colour_fringed()) != colour:
+		_fail(errors, "%s changed (wet %d stored %d carted %d shipped %d coins %d hired %d yard %d paid %d posted %d stood %d lit %d rung %d sounded %d raised %d hoisted %d flown %d carried %d shown %d broken %d struck %d dipped %d saluted %d presented %d furled %d gonfalon %d oriflamme %d vexillum %d labarum %d signum %d streamer %d bannerol %d pendant %d wheft %d ancient %d gonfanon %d colour %d)" % [label, sim.get_wet_haul(), sim.get_stored_salt(), sim.get_carted(), sim.get_shipped(), sim.get_coins(), sim.get_hired(), sim.get_yard_left(), sim.get_paid(), sim.get_posted(), sim.get_stood(), sim.get_lit(), sim.get_rung(), sim.get_sounded(), sim.get_raised(), sim.get_hoisted(), sim.get_flown(), sim.get_carried(), sim.get_shown(), sim.get_broken(), sim.get_struck(), sim.get_dipped(), sim.get_saluted(), sim.get_presented(), sim.get_furled(), sim.get_gonfalon_dipped(), sim.get_oriflamme_lowered(), sim.get_vexillum_housed(), sim.get_labarum_cased(), sim.get_signum_sleeved(), sim.get_streamer_rolled(), sim.get_bannerol_bent(), sim.get_pendant_stopped(), sim.get_wheft_laced(), sim.get_ancient_tailed(), sim.get_gonfanon_hemmed(), sim.get_colour_fringed()])
 
 
 func _test_bell(errors: Array) -> void:
@@ -8045,7 +8103,7 @@ func _test_ancient(errors: Array) -> void:
 func _test_gonfanon(errors: Array) -> void:
 	if int(Sim.GONFANON_CAP) != 1 or int(Sim.GONFANON_TICK) != 100 or int(Sim.GONFANON) != 40:
 		_fail(errors, "gonfanon constants drifted")
-	if int(Sim.GRID_NORTH) != -30:
+	if int(Sim.GRID_NORTH) > -30:
 		_fail(errors, "the map was not extended to the gonfanon row (north %s)" % Sim.GRID_NORTH)
 	var fresh = Sim.new()
 	fresh.restart()
@@ -8150,6 +8208,116 @@ func _test_gonfanon(errors: Array) -> void:
 	if not shore.is_over():
 		_fail(errors, "the gonfanon beat did not end the scenario")
 	print("gonfanon hemmed %d left ancient %d tailed %d wheft left %d laced %d pendant left %d stopped %d bannerol left %d bent %d streamer left %d rolled %d sleeved %d cased %d housed %d vexillum left %d signum left %d coins %d hired %d yard %d; no gonfanon hemmed %d tailed %d wheft left %d; gonfanon without a tailed hire hemmed %d coins %d hired %d" % [hemmed.get_gonfanon_hemmed(), hemmed.get_ancient_left(), hemmed.get_ancient_tailed(), hemmed.get_wheft_left(), hemmed.get_wheft_laced(), hemmed.get_pendant_left(), hemmed.get_pendant_stopped(), hemmed.get_bannerol_left(), hemmed.get_bannerol_bent(), hemmed.get_streamer_left(), hemmed.get_streamer_rolled(), hemmed.get_signum_sleeved(), hemmed.get_labarum_cased(), hemmed.get_vexillum_housed(), hemmed.get_vexillum_left(), hemmed.get_signum_left(), hemmed.get_coins(), hemmed.get_hired(), hemmed.get_yard_left(), kept.get_gonfanon_hemmed(), kept.get_ancient_tailed(), kept.get_wheft_left(), bare.get_gonfanon_hemmed(), bare.get_coins(), bare.get_hired()])
+
+
+func _test_colour(errors: Array) -> void:
+	if int(Sim.COLOUR_CAP) != 1 or int(Sim.COLOUR_TICK) != 100 or int(Sim.COLOUR) != 41:
+		_fail(errors, "colour constants drifted")
+	if int(Sim.GRID_NORTH) != -31:
+		_fail(errors, "the map was not extended to the colour row (north %s)" % Sim.GRID_NORTH)
+	var fresh = Sim.new()
+	fresh.restart()
+	if not fresh.paint_cell(14, -31, Sim.COLOUR):
+		_fail(errors, "the colour cell rejected a colour")
+	if fresh.paint_cell(14, -31, Sim.GONFANON):
+		_fail(errors, "the colour cell accepted a gonfanon")
+	if int(fresh.get_paint(14, -31)) != Sim.COLOUR:
+		_fail(errors, "a rejected gonfanon erased the colour")
+	if not fresh.paint_cell(14, -30, Sim.GONFANON):
+		_fail(errors, "the gonfanon cell rejected a gonfanon")
+	if fresh.paint_cell(14, -30, Sim.COLOUR):
+		_fail(errors, "the gonfanon cell accepted a colour")
+	if int(fresh.get_paint(14, -30)) != Sim.GONFANON:
+		_fail(errors, "a rejected colour erased the gonfanon")
+	if fresh.paint_cell(14, -29, Sim.COLOUR):
+		_fail(errors, "the ancient cell accepted a colour")
+	if fresh.paint_cell(14, -28, Sim.COLOUR):
+		_fail(errors, "the wheft cell accepted a colour")
+	if fresh.paint_cell(Sim.COAST_X, -31, Sim.COLOUR):
+		_fail(errors, "the brine accepted a colour")
+	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.COLOUR):
+		_fail(errors, "the anthill accepted a colour")
+	var plans := _plans(errors)
+	if plans.is_empty():
+		return
+	var kept = _run_plan(plans, "gonfanon", errors)
+	var fringed = _run_plan(plans, "colour", errors)
+	var fringed_again = _run_plan(plans, "colour", errors)
+	var late = _run_plan(plans, "late_colour", errors)
+	var dry_colour = _run_plan(plans, "dry_colour", errors)
+	var bare = _run_plan(plans, "colour_only", errors)
+	var no_hemmed = _run_plan(plans, "gonfanon_only", errors)
+	if kept == null or fringed == null or fringed_again == null or late == null or dry_colour == null or bare == null or no_hemmed == null:
+		return
+	if not kept.is_over() or int(kept.get_beat()) == Sim.COLOURING or int(kept.get_colour_fringed()) != 0 or int(kept.get_gonfanon_left()) != 1 or int(kept.get_gonfanon_hemmed()) != 1 or int(kept.get_ancient_left()) != 0 or int(kept.get_ancient_tailed()) != 1 or int(kept.get_wheft_left()) != 0 or int(kept.get_wheft_laced()) != 1 or int(kept.get_pendant_left()) != 0 or int(kept.get_pendant_stopped()) != 1 or int(kept.get_bannerol_left()) != 0 or int(kept.get_bannerol_bent()) != 1 or int(kept.get_streamer_left()) != 0 or int(kept.get_streamer_rolled()) != 1 or int(kept.get_signum_sleeved()) != 1 or int(kept.get_signum_left()) != 0 or int(kept.get_labarum_cased()) != 1 or int(kept.get_vexillum_housed()) != 1 or int(kept.get_vexillum_left()) != 0 or int(kept.get_coins()) != 2997 or int(kept.get_hired()) != 29 or int(kept.get_yard_left()) != 57:
+		_fail(errors, "a gonfanon with no colour changed the locked counts (over %s beat %s fringed %d left %d hemmed %d ancient left %d coins %d hired %d yard %d)" % [kept.is_over(), kept.get_beat(), kept.get_colour_fringed(), kept.get_gonfanon_left(), kept.get_gonfanon_hemmed(), kept.get_ancient_left(), kept.get_coins(), kept.get_hired(), kept.get_yard_left()])
+	var kept_summary := String(kept.get_summary())
+	if kept_summary.to_lower().contains("colour") or kept_summary.contains("Fringed") or not kept_summary.contains("Hemmed 1 on the gonfanon"):
+		_fail(errors, "a gonfanon with no colour changed the summary: %s" % kept_summary)
+	if not fringed.is_over() or int(fringed.get_colour_fringed()) != 1 or int(fringed.get_gonfanon_left()) != 0 or int(fringed.get_gonfanon_hemmed()) != 1 or int(fringed.get_ancient_left()) != 0 or int(fringed.get_ancient_tailed()) != 1 or int(fringed.get_wheft_left()) != 0 or int(fringed.get_wheft_laced()) != 1 or int(fringed.get_pendant_left()) != 0 or int(fringed.get_pendant_stopped()) != 1 or int(fringed.get_bannerol_left()) != 0 or int(fringed.get_bannerol_bent()) != 1 or int(fringed.get_streamer_left()) != 0 or int(fringed.get_streamer_rolled()) != 1 or int(fringed.get_signum_sleeved()) != 1 or int(fringed.get_signum_left()) != 0 or int(fringed.get_labarum_cased()) != 1 or int(fringed.get_vexillum_housed()) != 1 or int(fringed.get_vexillum_left()) != 0 or int(fringed.get_oriflamme_lowered()) != 1 or int(fringed.get_furled()) != 1 or int(fringed.get_presented()) != 1 or int(fringed.get_struck()) != 1 or int(fringed.get_coins()) != 2997 or int(fringed.get_hired()) != 29 or int(fringed.get_yard_left()) != 57 or int(fringed.get_stored_salt()) != int(kept.get_stored_salt()):
+		_fail(errors, "fringed %d, gonfanon left %d, hemmed %d, ancient left %d, tailed %d, wheft left %d, laced %d, pendant left %d, stopped %d, bannerol left %d, bent %d, streamer left %d, rolled %d, sleeved %d, signum left %d, cased %d, housed %d, vexillum left %d, coins %d, hired %d, yard %d" % [fringed.get_colour_fringed(), fringed.get_gonfanon_left(), fringed.get_gonfanon_hemmed(), fringed.get_ancient_left(), fringed.get_ancient_tailed(), fringed.get_wheft_left(), fringed.get_wheft_laced(), fringed.get_pendant_left(), fringed.get_pendant_stopped(), fringed.get_bannerol_left(), fringed.get_bannerol_bent(), fringed.get_streamer_left(), fringed.get_streamer_rolled(), fringed.get_signum_sleeved(), fringed.get_signum_left(), fringed.get_labarum_cased(), fringed.get_vexillum_housed(), fringed.get_vexillum_left(), fringed.get_coins(), fringed.get_hired(), fringed.get_yard_left()])
+	if int(fringed.get_colour_fringed()) > int(Sim.COLOUR_CAP):
+		_fail(errors, "colour fringed %d, over the cap of %d" % [fringed.get_colour_fringed(), Sim.COLOUR_CAP])
+	var colour_cell: Array = plans["colour"]["colour"][0]
+	var gonfanon_cell: Array = plans["colour"]["gonfanon"][0]
+	var colour_salt: Dictionary = fringed.get_cell_salt(int(colour_cell[0]), int(colour_cell[1]))
+	var gonfanon_salt: Dictionary = fringed.get_cell_salt(int(gonfanon_cell[0]), int(gonfanon_cell[1]))
+	if int(colour_salt.get("colour", 0)) != 1 or int(gonfanon_salt.get("gonfanon", 0)) != 0:
+		_fail(errors, "colour cell holds %s, gonfanon holds %s" % [colour_salt.get("colour", 0), gonfanon_salt.get("gonfanon", 0)])
+	var fringed_summary := String(fringed.get_summary())
+	if not fringed_summary.contains("Fringed 1 on the colour") or not fringed_summary.contains("Left 0 at the gonfanon") or not fringed_summary.contains("Hemmed 1 on the gonfanon") or not fringed_summary.contains("Tailed 1 on the ancient"):
+		_fail(errors, "colour summary missed the fringe: %s" % fringed_summary)
+	if int(fringed_again.get_colour_fringed()) != 1 or int(fringed_again.get_gonfanon_left()) != 0 or int(fringed_again.get_gonfanon_hemmed()) != 1 or int(fringed_again.get_coins()) != 2997 or int(fringed_again.get_hired()) != 29 or String(fringed_again.get_summary()) != fringed_summary:
+		_fail(errors, "repeated colour paint fringed %d then %d" % [fringed.get_colour_fringed(), fringed_again.get_colour_fringed()])
+	if int(late.get_colour_fringed()) != 1 or int(late.get_gonfanon_left()) != 0 or int(late.get_gonfanon_hemmed()) != 1 or int(late.get_ancient_left()) != 0 or int(late.get_ancient_tailed()) != 1 or int(late.get_wheft_left()) != 0 or int(late.get_wheft_laced()) != 1 or int(late.get_signum_sleeved()) != 1 or int(late.get_pendant_left()) != 0 or int(late.get_vexillum_housed()) != 1 or int(late.get_vexillum_left()) != 0 or int(late.get_coins()) != 2997 or int(late.get_hired()) != 29 or int(late.get_yard_left()) != 57:
+		_fail(errors, "painting the colour at the gonfanon beat (fringed %d left %d hemmed %d) did not match painting it early" % [late.get_colour_fringed(), late.get_gonfanon_left(), late.get_gonfanon_hemmed()])
+	_assert_chain(dry_colour, errors, "dry colour", 0, 1032, 1032, 1032, 1032, 10, 0, 8, 6, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+	if int(dry_colour.get_colour_fringed()) != 1 or int(dry_colour.get_gonfanon_left()) != 0 or int(dry_colour.get_gonfanon_hemmed()) != 1 or int(dry_colour.get_ancient_tailed()) != 1 or int(dry_colour.get_wheft_laced()) != 1 or int(dry_colour.get_streamer_rolled()) != 1 or int(dry_colour.get_signum_sleeved()) != 1 or int(dry_colour.get_yard_left()) != 0 or int(dry_colour.get_wet_haul()) != 0:
+		_fail(errors, "dry colour changed the short crew (wet %d fringed %d left %d hemmed %d rolled %d sleeved %d yard %d)" % [dry_colour.get_wet_haul(), dry_colour.get_colour_fringed(), dry_colour.get_gonfanon_left(), dry_colour.get_gonfanon_hemmed(), dry_colour.get_streamer_rolled(), dry_colour.get_signum_sleeved(), dry_colour.get_yard_left()])
+	if int(bare.get_colour_fringed()) != 0 or int(bare.get_gonfanon_hemmed()) != 0 or int(bare.get_coins()) != int(no_hemmed.get_coins()) or int(bare.get_hired()) != int(no_hemmed.get_hired()) or String(bare.get_summary()) != String(no_hemmed.get_summary()):
+		_fail(errors, "a colour with nobody hemmed fringed %d coins %d hired %d" % [bare.get_colour_fringed(), bare.get_coins(), bare.get_hired()])
+	if String(bare.get_summary()).to_lower().contains("colour") or String(bare.get_summary()).contains("Fringed"):
+		_fail(errors, "a colour with nobody hemmed changed the summary: %s" % bare.get_summary())
+	_assert_pop(fringed, errors, "colour")
+	_assert_pop(late, errors, "late_colour")
+	_assert_pop(dry_colour, errors, "dry_colour")
+	_assert_pop(bare, errors, "colour_only")
+	var shore = _prepare_plan(plans, "colour", errors)
+	if shore == null:
+		return
+	var open_guard := 0
+	var open_limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + int(Sim.SHIP_TICK) + int(Sim.MARKET_TICK) + int(Sim.YARD_TICK) + int(Sim.BUNK_TICK) + int(Sim.LOFT_TICK) + int(Sim.GATE_TICK) + int(Sim.WAGE_TICK) + int(Sim.RELIEF_TICK) + int(Sim.WATCH_TICK) + int(Sim.LAMP_TICK) + int(Sim.BELL_TICK) + int(Sim.HORN_TICK) + int(Sim.FLAG_TICK) + int(Sim.BANNER_TICK) + int(Sim.PENNANT_TICK) + int(Sim.STANDARD_TICK) + int(Sim.JACK_TICK) + int(Sim.ENSIGN_TICK) + int(Sim.BURGEE_TICK) + int(Sim.CORNET_TICK) + int(Sim.GUIDON_TICK) + int(Sim.FANION_TICK) + int(Sim.PENNON_TICK) + int(Sim.GONFALON_TICK) + int(Sim.ORIFLAMME_TICK) + int(Sim.VEXILLUM_TICK) + int(Sim.LABARUM_TICK) + int(Sim.SIGNUM_TICK) + int(Sim.STREAMER_TICK) + int(Sim.BANNEROL_TICK) + int(Sim.PENDANT_TICK) + int(Sim.WHEFT_TICK) + int(Sim.ANCIENT_TICK) + int(Sim.GONFANON_TICK) + 2
+	while int(shore.get_beat()) != Sim.COLOURING and not shore.is_over() and open_guard < open_limit:
+		shore.tick()
+		open_guard += 1
+	if int(shore.get_beat()) != Sim.COLOURING or shore.is_over() or int(shore.get_ticks_until_rain()) != int(Sim.COLOUR_TICK):
+		_fail(errors, "colour opened early (beat %s ticks %d fringed %d left %d hemmed %d)" % [shore.get_beat(), shore.get_ticks_until_rain(), shore.get_colour_fringed(), shore.get_gonfanon_left(), shore.get_gonfanon_hemmed()])
+		return
+	if int(shore.get_colour_fringed()) != 0 or int(shore.get_gonfanon_left()) != 1 or int(shore.get_gonfanon_hemmed()) != 1 or int(shore.get_ancient_left()) != 0 or int(shore.get_ancient_tailed()) != 1 or int(shore.get_wheft_left()) != 0 or int(shore.get_wheft_laced()) != 1 or int(shore.get_pendant_left()) != 0 or int(shore.get_pendant_stopped()) != 1 or int(shore.get_bannerol_left()) != 0 or int(shore.get_bannerol_bent()) != 1 or int(shore.get_streamer_left()) != 0 or int(shore.get_streamer_rolled()) != 1 or int(shore.get_signum_sleeved()) != 1 or int(shore.get_signum_left()) != 0 or int(shore.get_vexillum_left()) != 0 or int(shore.get_vexillum_housed()) != 1 or int(shore.get_coins()) != 2997 or int(shore.get_hired()) != 29 or int(shore.get_yard_left()) != 57:
+		_fail(errors, "colour opened with a hire already moved (fringed %d left %d hemmed %d tailed %d)" % [shore.get_colour_fringed(), shore.get_gonfanon_left(), shore.get_gonfanon_hemmed(), shore.get_ancient_tailed()])
+	var saw_cap := false
+	var cap_guard := 0
+	while not shore.is_over() and cap_guard < int(Sim.COLOUR_TICK) + 2:
+		shore.tick()
+		cap_guard += 1
+		if int(shore.get_colour_fringed()) == int(Sim.COLOUR_CAP) and int(shore.get_gonfanon_left()) == 0 and int(shore.get_gonfanon_hemmed()) == 1 and int(shore.get_signum_sleeved()) == 1 and int(shore.get_ticks_until_rain()) > 0:
+			saw_cap = true
+			shore.tick()
+			if int(shore.get_colour_fringed()) != 1 or int(shore.get_gonfanon_left()) != 0 or int(shore.get_gonfanon_hemmed()) != 1 or int(shore.get_ancient_tailed()) != 1:
+				_fail(errors, "the colour kept fringing after the cap (fringed %d left %d hemmed %d)" % [shore.get_colour_fringed(), shore.get_gonfanon_left(), shore.get_gonfanon_hemmed()])
+			break
+	if not saw_cap:
+		_fail(errors, "the colour did not fringe at %d while ticks remained (fringed %d left %d ticks %d)" % [Sim.COLOUR_CAP, shore.get_colour_fringed(), shore.get_gonfanon_left(), shore.get_ticks_until_rain()])
+	var end_guard := 0
+	while not shore.is_over() and end_guard < int(Sim.COLOUR_TICK) + 2:
+		shore.tick()
+		end_guard += 1
+		if int(shore.get_colour_fringed()) != 1 or int(shore.get_gonfanon_left()) != 0 or int(shore.get_gonfanon_hemmed()) != 1:
+			_fail(errors, "the colour fringed again after the cap (fringed %d left %d hemmed %d)" % [shore.get_colour_fringed(), shore.get_gonfanon_left(), shore.get_gonfanon_hemmed()])
+			break
+	if not shore.is_over():
+		_fail(errors, "the colour beat did not end the scenario")
+	print("colour fringed %d left gonfanon %d hemmed %d ancient left %d tailed %d wheft left %d laced %d pendant left %d stopped %d bannerol left %d bent %d streamer left %d rolled %d sleeved %d cased %d housed %d vexillum left %d signum left %d coins %d hired %d yard %d; no colour fringed %d hemmed %d gonfanon left %d; colour without a hemmed hire fringed %d coins %d hired %d" % [fringed.get_colour_fringed(), fringed.get_gonfanon_left(), fringed.get_gonfanon_hemmed(), fringed.get_ancient_left(), fringed.get_ancient_tailed(), fringed.get_wheft_left(), fringed.get_wheft_laced(), fringed.get_pendant_left(), fringed.get_pendant_stopped(), fringed.get_bannerol_left(), fringed.get_bannerol_bent(), fringed.get_streamer_left(), fringed.get_streamer_rolled(), fringed.get_signum_sleeved(), fringed.get_labarum_cased(), fringed.get_vexillum_housed(), fringed.get_vexillum_left(), fringed.get_signum_left(), fringed.get_coins(), fringed.get_hired(), fringed.get_yard_left(), kept.get_colour_fringed(), kept.get_gonfanon_hemmed(), kept.get_gonfanon_left(), bare.get_colour_fringed(), bare.get_coins(), bare.get_hired()])
 
 
 func _run_plan(plans: Dictionary, plan_name: String, errors: Array):
@@ -8800,6 +8968,24 @@ func _run_plan(plans: Dictionary, plan_name: String, errors: Array):
 		_apply_marks(sim, plan["after_ancient"], errors)
 		if errors.size() > gonfanon_before:
 			return null
+	if plan.has("after_gonfanon"):
+		var colour_guard := 0
+		var colour_limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + int(Sim.SHIP_TICK) + int(Sim.MARKET_TICK) + int(Sim.YARD_TICK) + int(Sim.BUNK_TICK) + int(Sim.LOFT_TICK) + int(Sim.GATE_TICK) + int(Sim.WAGE_TICK) + int(Sim.RELIEF_TICK) + int(Sim.WATCH_TICK) + int(Sim.LAMP_TICK) + int(Sim.BELL_TICK) + int(Sim.HORN_TICK) + int(Sim.FLAG_TICK) + int(Sim.BANNER_TICK) + int(Sim.PENNANT_TICK) + int(Sim.STANDARD_TICK) + int(Sim.JACK_TICK) + int(Sim.ENSIGN_TICK) + int(Sim.BURGEE_TICK) + int(Sim.CORNET_TICK) + int(Sim.GUIDON_TICK) + int(Sim.FANION_TICK) + int(Sim.PENNON_TICK) + int(Sim.GONFALON_TICK) + int(Sim.ORIFLAMME_TICK) + int(Sim.VEXILLUM_TICK) + int(Sim.LABARUM_TICK) + int(Sim.SIGNUM_TICK) + int(Sim.STREAMER_TICK) + int(Sim.BANNEROL_TICK) + int(Sim.PENDANT_TICK) + int(Sim.WHEFT_TICK) + int(Sim.ANCIENT_TICK) + 2
+		while int(sim.get_beat()) != Sim.GONFANONING and not sim.is_over() and colour_guard < colour_limit:
+			sim.tick()
+			colour_guard += 1
+		if int(sim.get_beat()) != Sim.GONFANONING or sim.is_over():
+			_fail(errors, "%s did not open the gonfanon beat before the colour" % plan_name)
+			return null
+		if int(sim.get_ticks_until_rain()) != int(Sim.GONFANON_TICK):
+			_fail(errors, "%s gonfanon countdown started at %d, expected %d" % [
+				plan_name, sim.get_ticks_until_rain(), Sim.GONFANON_TICK,
+			])
+			return null
+		var colour_before := errors.size()
+		_apply_marks(sim, plan["after_gonfanon"], errors)
+		if errors.size() > colour_before:
+			return null
 	sim.run_until_rain()
 	return sim
 
@@ -8885,6 +9071,8 @@ func _apply_marks(sim, plan: Dictionary, errors: Array) -> void:
 		_apply_cells(sim, plan["ancient"], Sim.ANCIENT, errors)
 	if plan.has("gonfanon"):
 		_apply_cells(sim, plan["gonfanon"], Sim.GONFANON, errors)
+	if plan.has("colour"):
+		_apply_cells(sim, plan["colour"], Sim.COLOUR, errors)
 	if plan.has("rake_rect"):
 		_apply_rect(sim, plan["rake_rect"], Sim.RAKE, errors)
 
