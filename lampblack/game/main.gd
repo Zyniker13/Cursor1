@@ -73,15 +73,15 @@ func _build_hud() -> void:
 	layer.add_child(bottom_panel)
 
 	controls_label = Label.new()
-	controls_label.text = "Arrows move    F lamp you face    Space wait    U undo    R restart    click a neighbor or a lamp\n1–8 east    Shift+1–6 west    Ctrl+1–6 north    Alt+1–6 south    F1–F6 attic    F7–F12 cellar    Keypad 1–6 gallery\nShift+F1–F6 court    Alt+F1–F6 nave    Ctrl+F1–F6 cloister    Ctrl+Shift+F1–F6 porch    Alt+Shift+F1–F6 oriel    Alt+Shift+1–6 veil    Ctrl+Alt+1–6 shade    Ctrl+Shift+1–6 screen    Ctrl+Alt+Shift+1–6 glaze    Ctrl+Alt+Shift+F1–F6 mica    Meta+Ctrl+Alt+Shift+F1–F6 baize    Meta+Ctrl+Alt+Shift+1–6 scrim    Meta+Ctrl+Alt+1–6 gauze"
+	controls_label.text = "Arrows move    F lamp you face    Space wait    U undo    R restart    click a neighbor or a lamp\n1–8 east    Shift+1–6 west    Ctrl+1–6 north    Alt+1–6 south    F1–F6 attic    F7–F12 cellar    Keypad 1–6 gallery\nShift+F1–F6 court    Alt+F1–F6 nave    Ctrl+F1–F6 cloister    Ctrl+Shift+F1–F6 porch    Alt+Shift+F1–F6 oriel    Alt+Shift+1–6 veil    Ctrl+Alt+1–6 shade    Ctrl+Shift+1–6 screen    Ctrl+Alt+Shift+1–6 glaze    Ctrl+Alt+Shift+F1–F6 mica    Meta+Ctrl+Alt+Shift+F1–F6 baize    Meta+Ctrl+Alt+Shift+1–6 scrim    Meta+Ctrl+Alt+1–6 gauze    Meta+Alt+1–6 voile    Meta+Alt+Shift+1–6 lawn"
 	controls_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	controls_label.add_theme_font_size_override("font_size", 14)
 	controls_label.add_theme_color_override("font_color", MUTED)
 	controls_label.position = Vector2(20, 4)
-	controls_label.size = Vector2(1240, 89)
+	controls_label.size = Vector2(1240, 100)
 	bottom_panel.add_child(controls_label)
 
-	var row_y := 95.0
+	var row_y := 106.0
 	var wings: Array = Puzzles.wings()
 	for wing_i in wings.size():
 		var wing: Dictionary = wings[wing_i]
@@ -118,10 +118,10 @@ func _build_hud() -> void:
 		row_y += 36.0
 
 	legend_label = Label.new()
-	legend_label.text = "Gold diamond — lamplight, you cannot walk it.    Red diamond — a guard is watching.    Arrow — that guard's next step.    Brass disc — a plate. Step on it in the dark and the nearest guard is called.    Iron cup — a bell. Step on it in the dark and every guard who can reach it is called.    Iron bars — a grate. It stays dark, you may enter it, and a guard cannot.    Stone sill — a lamp lights it, light stops there, and a guard cannot enter or see through it.    Pale sheet — a pane. Light and sight pass through it, and neither you nor a guard can step on it.    Dark cloth — a curtain. A lamp lights it, light passes, sight stops, and a guard can step on it.    Dark louver — a shade. It stays dark, light stops, sight stops, you may step on it, and a guard cannot.    Pale lattice — a screen. A lamp lights it, light passes, sight stops, you may step on it, and a guard cannot.    Ivory sheet, bright cross — a glaze. A lamp lights it, light passes, sight passes while it is lit, you may step on it, and a guard cannot.    Pale gray sheet, dark ring — a mica. It stays dark, light passes, sight passes, you may step on it, and a guard cannot.    Deep green cloth, pale hem — a baize. It stays dark, light stops, sight passes, you may step on it, and a guard cannot.    Pale gold cloth, dark thread — a scrim. A lamp lights it, light stops, sight passes while it is lit, you may step on it only while it is dark, and a guard cannot.    Pale cloth, open stitches — a gauze. A lamp lights it, a second lamp's light passes, sight passes while it is lit, you may step on it only while it is dark, and a guard cannot."
+	legend_label.text = "Gold diamond — lamplight, you cannot walk it.    Red diamond — a guard is watching.    Arrow — that guard's next step.    Brass disc — a plate. Step on it in the dark and the nearest guard is called.    Iron cup — a bell. Step on it in the dark and every guard who can reach it is called.    Iron bars — a grate. It stays dark, you may enter it, and a guard cannot.    Stone sill — a lamp lights it, light stops there, and a guard cannot enter or see through it.    Pale sheet — a pane. Light and sight pass through it, and neither you nor a guard can step on it.    Dark cloth — a curtain. A lamp lights it, light passes, sight stops, and a guard can step on it.    Dark louver — a shade. It stays dark, light stops, sight stops, you may step on it, and a guard cannot.    Pale lattice — a screen. A lamp lights it, light passes, sight stops, you may step on it, and a guard cannot.    Ivory sheet, bright cross — a glaze. A lamp lights it, light passes, sight passes while it is lit, you may step on it, and a guard cannot.    Pale gray sheet, dark ring — a mica. It stays dark, light passes, sight passes, you may step on it, and a guard cannot.    Deep green cloth, pale hem — a baize. It stays dark, light stops, sight passes, you may step on it, and a guard cannot.    Pale gold cloth, dark thread — a scrim. A lamp lights it, light stops, sight passes while it is lit, you may step on it only while it is dark, and a guard cannot.    Pale cloth, open stitches — a gauze. A lamp lights it, a second lamp's light passes, sight passes while it is lit, you may step on it only while it is dark, and a guard cannot.    Pale sheer, broken slant — a voile. A lamp lights it, a second lamp's light passes, the early step onto it succeeds, and a guard cannot.    Green field, short blades — a lawn. A lamp lights it, a second lamp's light stops, the early step onto it succeeds, and a guard cannot."
 	legend_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	legend_label.position = Vector2(20, row_y + 2.0)
-	legend_label.size = Vector2(1240, 180)
+	legend_label.size = Vector2(1240, 200)
 	legend_label.add_theme_font_size_override("font_size", 14)
 	legend_label.add_theme_color_override("font_color", MUTED)
 	bottom_panel.add_child(legend_label)
@@ -133,7 +133,7 @@ func _build_hud() -> void:
 	status_label.position = Vector2(20, row_y + 2.0)
 	status_label.size = Vector2(1240, 52)
 	bottom_panel.add_child(status_label)
-	bottom_h = row_y + 190.0
+	bottom_h = row_y + 210.0
 
 	turn_label = Label.new()
 	turn_label.add_theme_font_size_override("font_size", 16)
@@ -168,9 +168,9 @@ func _layout() -> void:
 	bottom_panel.position = Vector2(0, view.y - bottom_h)
 	bottom_panel.size = Vector2(view.x, bottom_h)
 	if controls_label:
-		controls_label.size = Vector2(maxf(200.0, view.x - 40.0), 89)
+		controls_label.size = Vector2(maxf(200.0, view.x - 40.0), 100)
 	if legend_label:
-		legend_label.size = Vector2(maxf(200.0, view.x - 40.0), 180)
+		legend_label.size = Vector2(maxf(200.0, view.x - 40.0), 200)
 	if status_label:
 		status_label.size = Vector2(maxf(200.0, view.x - 40.0), 52)
 	title_label.position = Vector2(24, 16)
@@ -336,6 +336,18 @@ func _puzzle_index_for_key(event: InputEventKey) -> int:
 	var gauze := _gauze_index(event)
 	if gauze >= 0:
 		return 116 + gauze
+	# Ctrl+Alt+Shift+1–6 is the glaze. Meta+Alt+1–6 without Ctrl and without
+	# Shift selected nothing. Claim it before the fallthrough. Ctrl stays off
+	# this chord, and Shift stays off it.
+	var voile := _voile_index(event)
+	if voile >= 0:
+		return 122 + voile
+	# Meta+Ctrl+1–6 without Alt and without Shift is the north wing. Meta+Alt+Shift
+	# on a digit selected nothing. Claim it before the fallthrough. Ctrl stays off
+	# this chord. Meta+Alt without Shift stays the voile.
+	var lawn := _lawn_index(event)
+	if lawn >= 0:
+		return 128 + lawn
 	# Alt alone is the south wing. Alt combined with Ctrl, Meta, or a leftover
 	# Shift selects nothing, so the other wings stay where they were.
 	if event.alt_pressed:
@@ -354,6 +366,24 @@ func _puzzle_index_for_key(event: InputEventKey) -> int:
 			return -1
 		return 8 + digit
 	if digit > 7:
+		return -1
+	return digit
+
+
+func _lawn_index(event: InputEventKey) -> int:
+	if event.ctrl_pressed or not event.meta_pressed or not event.alt_pressed or not event.shift_pressed or _is_shifted_digit(event.keycode):
+		return -1
+	var digit := _digit_from_key(event)
+	if digit < 0 or digit > 5:
+		return -1
+	return digit
+
+
+func _voile_index(event: InputEventKey) -> int:
+	if event.ctrl_pressed or event.shift_pressed or not event.meta_pressed or not event.alt_pressed or _is_shifted_digit(event.keycode):
+		return -1
+	var digit := _digit_from_key(event)
+	if digit < 0 or digit > 5:
 		return -1
 	return digit
 
@@ -730,6 +760,10 @@ func _draw_tile(state: Dictionary, x: int, y: int, lit: Dictionary, watched: Dic
 		_draw_scrim_cloth(inset)
 	if kind == Rules.Tile.GAUZE:
 		_draw_gauze_cloth(inset)
+	if kind == Rules.Tile.VOILE:
+		_draw_voile_cloth(inset)
+	if kind == Rules.Tile.LAWN:
+		_draw_lawn_field(inset)
 	if kind == Rules.Tile.SILL:
 		_draw_sill(inset)
 	if kind == Rules.Tile.CURTAIN:
@@ -767,6 +801,10 @@ func _draw_tile(state: Dictionary, x: int, y: int, lit: Dictionary, watched: Dic
 		_draw_scrim_thread(inset)
 	if kind == Rules.Tile.GAUZE:
 		_draw_gauze_stitches(inset)
+	if kind == Rules.Tile.VOILE:
+		_draw_voile_slant(inset)
+	if kind == Rules.Tile.LAWN:
+		_draw_lawn_blades(inset)
 	if hover == cell:
 		draw_rect(inset, Color(1, 1, 1, 0.08), false, 2.0)
 
@@ -794,6 +832,46 @@ func _draw_plate(center: Vector2) -> void:
 	draw_rect(Rect2(center + Vector2(-tile * 0.07, -tile * 0.018), Vector2(tile * 0.14, tile * 0.036)), Color("3a2c16"))
 	draw_circle(center, tile * 0.045, Color("8d7344"))
 	draw_circle(center, tile * 0.02, Color("3a2c16"))
+
+
+func _draw_lawn_field(inset: Rect2) -> void:
+	# Green field. The short blades are drawn after the lamp diamond.
+	draw_rect(inset, Color("3d7a4e"))
+
+
+func _draw_lawn_blades(inset: Rect2) -> void:
+	# A few short vertical strokes. They do not span the tile, and they are not a hem or a grid.
+	var ink := Color("d7e2c8")
+	var thick := maxf(1.4, tile * 0.035)
+	var marks: Array[Vector2] = [
+		Vector2(0.18, 0.30),
+		Vector2(0.34, 0.20),
+		Vector2(0.52, 0.38),
+		Vector2(0.70, 0.24),
+		Vector2(0.84, 0.42),
+	]
+	var lengths: Array[float] = [0.32, 0.26, 0.34, 0.28, 0.24]
+	for i in marks.size():
+		var top := inset.position + Vector2(inset.size.x * marks[i].x, inset.size.y * marks[i].y)
+		var bot := top + Vector2(0, inset.size.y * lengths[i])
+		draw_line(top, bot, ink, thick)
+
+
+func _draw_voile_cloth(inset: Rect2) -> void:
+	# Pale sheer. The broken slant is drawn after the lamp diamond.
+	draw_rect(inset, Color("f7f4ef"))
+
+
+func _draw_voile_slant(inset: Rect2) -> void:
+	# Two short slants. They do not meet, and they do not cross the tile.
+	var ink := Color("8d8478")
+	var thick := maxf(1.4, tile * 0.03)
+	var a := inset.position + Vector2(inset.size.x * 0.14, inset.size.y * 0.64)
+	var b := inset.position + Vector2(inset.size.x * 0.40, inset.size.y * 0.40)
+	var c := inset.position + Vector2(inset.size.x * 0.56, inset.size.y * 0.70)
+	var d := inset.position + Vector2(inset.size.x * 0.82, inset.size.y * 0.46)
+	draw_line(a, b, ink, thick)
+	draw_line(c, d, ink, thick)
 
 
 func _draw_gauze_cloth(inset: Rect2) -> void:
