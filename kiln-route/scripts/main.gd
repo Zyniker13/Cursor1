@@ -242,6 +242,7 @@ func _kind_for_key(code: int) -> int:
 		KEY_F7: Rules.Kind.SLEDGE,
 		KEY_F8: Rules.Kind.BICK,
 		KEY_F9: Rules.Kind.PRITCHEL,
+		KEY_F10: Rules.Kind.MANDREL,
 	}
 	if not map.has(code):
 		return -1
@@ -443,6 +444,7 @@ func _kind_order() -> Array:
 		Rules.Kind.SLEDGE,
 		Rules.Kind.BICK,
 		Rules.Kind.PRITCHEL,
+		Rules.Kind.MANDREL,
 	]
 
 
@@ -470,7 +472,7 @@ func _counts_now() -> Dictionary:
 
 
 func _layout() -> Dictionary:
-	var size := Vector2(1315, 720)
+	var size := Vector2(1340, 720)
 	if is_inside_tree():
 		var view := get_viewport_rect().size
 		if view.x >= 100.0 and view.y >= 100.0:
@@ -509,6 +511,8 @@ func _layout() -> Dictionary:
 	# F8 makes the footer 1249 px, so the window is 1297 wide and each tab is 117.7 px.
 	# The fifty-second wing adds a forty-second row. Seven pixels leaves a six-row board at 23.17 px.
 	# F9 makes the footer 1267 px, so the window is 1315 wide and each tab is 119.5 px.
+	# The fifty-third wing adds a forty-third row. Seven pixels leaves a six-row board at 21.83 px.
+	# F10 makes the footer 1292 px, so the window is 1340 wide and each tab is 122 px.
 	# Shorter tabs give that row back so the rule text keeps its space.
 	var per_row := 8
 	var tab_h := 30.0
@@ -638,7 +642,7 @@ func _draw() -> void:
 	var size: Vector2 = lay.size
 	draw_rect(Rect2(Vector2.ZERO, size), COL_BG)
 	_text(Vector2(24, 14), "KILN ROUTE", 28, COL_TEXT)
-	_text(Vector2(236, 26), "fifty-two wings", 15, COL_DIM)
+	_text(Vector2(236, 26), "fifty-three wings", 15, COL_DIM)
 	var minute := "minute  %d / %d" % [_shown_tick(), Rules.SIM_TICKS]
 	var minute_w := font.get_string_size(minute, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
 	_text(Vector2(size.x - 24 - minute_w, 26), minute, 15, COL_DIM)
@@ -648,7 +652,7 @@ func _draw() -> void:
 	_draw_grid(lay)
 	_draw_side(lay)
 	_draw_tray(lay)
-	_text(Vector2(24, size.y - 28), "1-9 0 - = \\ ; , ' . / ` y u i o p t g h j k l m n b v c x z d a s w Tab Home End Insert Delete Page Down Page Up F1 F2 F3 F4 F5 F6 F7 F8 F9 select R rotate LMB place/pickup RMB rotate Space run F skip Bksp restart", 13, COL_DIM)
+	_text(Vector2(24, size.y - 28), "1-9 0 - = \\ ; , ' . / ` y u i o p t g h j k l m n b v c x z d a s w Tab Home End Insert Delete Page Down Page Up F1 F2 F3 F4 F5 F6 F7 F8 F9 F10 select R rotate LMB place/pickup RMB rotate Space run F skip Bksp restart", 13, COL_DIM)
 
 
 func _draw_tabs(lay: Dictionary) -> void:
@@ -1439,6 +1443,20 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 		draw_line(center, center + along * body.size.x * 0.16, ink, thick)
 		draw_line(hip_r, hip_r + right_v * body.size.x * 0.36, ink, thick)
 		draw_line(hip_l, hip_l + left_v * reach, ink, thick)
+	elif kind == Rules.Kind.MANDREL:
+		# Entry is from ahead. The waiter leaves left and can step through a source.
+		# The arrival leaves right and does not step through a source.
+		var along := Vector2(Rules.vec(dir))
+		var left_v := Vector2(Rules.vec(Rules.left(dir)))
+		var right_v := Vector2(Rules.vec(Rules.right(dir)))
+		var ink := Color("f0b8a0", 0.95 * alpha)
+		var thick := maxf(2.0, body.size.x * 0.07)
+		var reach := body.size.x * 0.24
+		var hip_l := center + left_v * body.size.x * 0.1
+		var hip_r := center + right_v * body.size.x * 0.1
+		draw_line(center, center + along * body.size.x * 0.16, ink, thick)
+		draw_line(hip_l, hip_l + left_v * body.size.x * 0.36, ink, thick)
+		draw_line(hip_r, hip_r + right_v * reach, ink, thick)
 	elif kind == Rules.Kind.GRATE:
 		var along := Vector2(Rules.vec(dir))
 		var across := Vector2(Rules.vec(Rules.right(dir)))
@@ -1458,7 +1476,7 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 	var forward := light
 	if kind == Rules.Kind.GRATE:
 		forward = Color("d7dee6")
-	if kind != Rules.Kind.HOOK and kind != Rules.Kind.DROP and kind != Rules.Kind.LIFT and kind != Rules.Kind.SHED and kind != Rules.Kind.RAKE and kind != Rules.Kind.HOE and kind != Rules.Kind.HARROW and kind != Rules.Kind.FORK and kind != Rules.Kind.PRONG and kind != Rules.Kind.SHARE and kind != Rules.Kind.COULTER and kind != Rules.Kind.MOLDBOARD and kind != Rules.Kind.LANDSIDE and kind != Rules.Kind.SLADE and kind != Rules.Kind.HEEL and kind != Rules.Kind.STILT and kind != Rules.Kind.CLEVIS and kind != Rules.Kind.BEAM and kind != Rules.Kind.HAKE and kind != Rules.Kind.SOLE and kind != Rules.Kind.FROG and kind != Rules.Kind.SHIN and kind != Rules.Kind.POINT and kind != Rules.Kind.THROAT and kind != Rules.Kind.WREST and kind != Rules.Kind.JOINTER and kind != Rules.Kind.BRIDLE and kind != Rules.Kind.TRASHBOARD and kind != Rules.Kind.GAUGE and kind != Rules.Kind.BREAST and kind != Rules.Kind.HARDIE and kind != Rules.Kind.FULLER and kind != Rules.Kind.SWAGE and kind != Rules.Kind.FLATTER and kind != Rules.Kind.DRIFT and kind != Rules.Kind.PUNCH and kind != Rules.Kind.SETT and kind != Rules.Kind.BOLSTER and kind != Rules.Kind.SNAP and kind != Rules.Kind.ANVIL and kind != Rules.Kind.SLEDGE and kind != Rules.Kind.BICK and kind != Rules.Kind.PRITCHEL:
+	if kind != Rules.Kind.HOOK and kind != Rules.Kind.DROP and kind != Rules.Kind.LIFT and kind != Rules.Kind.SHED and kind != Rules.Kind.RAKE and kind != Rules.Kind.HOE and kind != Rules.Kind.HARROW and kind != Rules.Kind.FORK and kind != Rules.Kind.PRONG and kind != Rules.Kind.SHARE and kind != Rules.Kind.COULTER and kind != Rules.Kind.MOLDBOARD and kind != Rules.Kind.LANDSIDE and kind != Rules.Kind.SLADE and kind != Rules.Kind.HEEL and kind != Rules.Kind.STILT and kind != Rules.Kind.CLEVIS and kind != Rules.Kind.BEAM and kind != Rules.Kind.HAKE and kind != Rules.Kind.SOLE and kind != Rules.Kind.FROG and kind != Rules.Kind.SHIN and kind != Rules.Kind.POINT and kind != Rules.Kind.THROAT and kind != Rules.Kind.WREST and kind != Rules.Kind.JOINTER and kind != Rules.Kind.BRIDLE and kind != Rules.Kind.TRASHBOARD and kind != Rules.Kind.GAUGE and kind != Rules.Kind.BREAST and kind != Rules.Kind.HARDIE and kind != Rules.Kind.FULLER and kind != Rules.Kind.SWAGE and kind != Rules.Kind.FLATTER and kind != Rules.Kind.DRIFT and kind != Rules.Kind.PUNCH and kind != Rules.Kind.SETT and kind != Rules.Kind.BOLSTER and kind != Rules.Kind.SNAP and kind != Rules.Kind.ANVIL and kind != Rules.Kind.SLEDGE and kind != Rules.Kind.BICK and kind != Rules.Kind.PRITCHEL and kind != Rules.Kind.MANDREL:
 		_arrow(front, dir, body.size.x * 0.2, body.size.x * 0.12, Color(forward.r, forward.g, forward.b, forward_alpha))
 	if kind == Rules.Kind.HOOK:
 		var turn := Rules.left(dir)
@@ -1752,6 +1770,14 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 		var left_side := center + Vector2(Rules.vec(left_turn)) * body.size.x * 0.32
 		_arrow(right_side, right_turn, body.size.x * 0.18, body.size.x * 0.09, Color(pritchel_mark.r, pritchel_mark.g, pritchel_mark.b, alpha))
 		_arrow(left_side, left_turn, body.size.x * 0.14, body.size.x * 0.09, Color(pritchel_mark.r, pritchel_mark.g, pritchel_mark.b, alpha))
+	elif kind == Rules.Kind.MANDREL:
+		var mandrel_mark := Color("f0b8a0")
+		var left_turn := Rules.left(dir)
+		var right_turn := Rules.right(dir)
+		var left_side := center + Vector2(Rules.vec(left_turn)) * body.size.x * 0.28
+		var right_side := center + Vector2(Rules.vec(right_turn)) * body.size.x * 0.32
+		_arrow(left_side, left_turn, body.size.x * 0.18, body.size.x * 0.09, Color(mandrel_mark.r, mandrel_mark.g, mandrel_mark.b, alpha))
+		_arrow(right_side, right_turn, body.size.x * 0.14, body.size.x * 0.09, Color(mandrel_mark.r, mandrel_mark.g, mandrel_mark.b, alpha))
 	elif kind == Rules.Kind.DROP:
 		var turn := Rules.right(dir)
 		var side := center + Vector2(Rules.vec(turn)) * body.size.x * 0.2
@@ -1991,6 +2017,8 @@ func _key_label(kind: int) -> String:
 		return "F8"
 	if kind == Rules.Kind.PRITCHEL:
 		return "F9"
+	if kind == Rules.Kind.MANDREL:
+		return "F10"
 	return str(kind + 1)
 
 
@@ -2075,6 +2103,9 @@ func _tray_count_line(kind: int, count: int) -> String:
 		return "%d ahead" % count
 	# The pritchel count reads "ahead" so room 409 shows "1 ahead" beside Pritchel and its key.
 	if kind == Rules.Kind.PRITCHEL:
+		return "%d ahead" % count
+	# The mandrel count reads "ahead" so room 417 shows "1 ahead" beside Mandrel and its key.
+	if kind == Rules.Kind.MANDREL:
 		return "%d ahead" % count
 	return "%d left" % count
 
@@ -2194,6 +2225,8 @@ func _kind_color(kind: int) -> Color:
 		return Color("2a5840")
 	if kind == Rules.Kind.PRITCHEL:
 		return Color("5a3048")
+	if kind == Rules.Kind.MANDREL:
+		return Color("6a3028")
 	return Color("c792ef")
 
 
