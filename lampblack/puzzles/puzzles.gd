@@ -3,7 +3,7 @@ extends RefCounted
 
 const Rules = preload("res://rules/rules.gd")
 
-## Twenty-one wings of the closed museum. Each solution is a list of actions the rules
+## Twenty-two wings of the closed museum. Each solution is a list of actions the rules
 ## accept. Tokens are R L U D, W for wait, and T0 / T1 for lamps.
 
 
@@ -99,6 +99,8 @@ static func _puzzle(number: int, title: String, lesson: String, rows: PackedStri
 		wing_number = number - 116
 	elif wing == "Voile Wing":
 		wing_number = number - 122
+	elif wing == "Lawn Wing":
+		wing_number = number - 128
 	return {
 		"number": number,
 		"wing": wing,
@@ -149,6 +151,7 @@ static func _all() -> Array:
 	puzzles.append_array(_scrim_wing())
 	puzzles.append_array(_gauze_wing())
 	puzzles.append_array(_voile_wing())
+	puzzles.append_array(_lawn_wing())
 	return puzzles
 
 
@@ -2475,5 +2478,112 @@ static func _voile_wing() -> Array:
 			[_guard(6, 3, [Vector2i(6, 3)], 0)],
 			"T0 R R R",
 			"Voile Wing"
+		),
+	]
+
+
+static func _lawn_wing() -> Array:
+	return [
+		_puzzle(
+			129,
+			"The Lit Lawn",
+			"This room is about the rule that the lawn is lit.",
+			PackedStringArray([
+				"#######",
+				"#X....#",
+				"#..L..#",
+				"#..S..#",
+				"#.....#",
+				"#######",
+			]),
+			[_lamp(4, 2, "w", 1)],
+			[_guard(5, 4, [Vector2i(5, 4)], 0)],
+			"L L U U",
+			"Lawn Wing"
+		),
+		_puzzle(
+			130,
+			"The Seen Sward",
+			"This room is about the rule that the guard sees a lit tile through the lit lawn.",
+			PackedStringArray([
+				"########",
+				"#X.G...#",
+				"##.L####",
+				"#......#",
+				"#......#",
+				"#...S..#",
+				"########",
+			]),
+			[_lamp(4, 4, "n", 3), _lamp(3, 1, "w", 0)],
+			[_guard(5, 4, [Vector2i(5, 4)], 1), _guard(4, 2, [Vector2i(4, 2)], 3)],
+			"T0 L U U U U L L",
+			"Lawn Wing"
+		),
+		_puzzle(
+			131,
+			"The Halted Gleam",
+			"This room is about the rule that a second lamp's light stops at the lawn.",
+			PackedStringArray([
+				"###########",
+				"#....X....#",
+				"#.........#",
+				"#.###L#####",
+				"#.........#",
+				"#S........#",
+				"###########",
+			]),
+			[_lamp(9, 4, "w", 0), _lamp(5, 4, "n", 3)],
+			[_guard(9, 5, [Vector2i(9, 5)], 2)],
+			"U U U R R R R U",
+			"Lawn Wing"
+		),
+		_puzzle(
+			132,
+			"The Barred Lawn",
+			"This room is about the rule that a guard cannot enter the lawn.",
+			PackedStringArray([
+				"#########",
+				"#S.L.X..#",
+				"#######.#",
+				"#.......#",
+				"#########",
+			]),
+			[_lamp(3, 1, "e", 1)],
+			[_guard(6, 1, [Vector2i(6, 1)], 2)],
+			"R R R R",
+			"Lawn Wing"
+		),
+		_puzzle(
+			133,
+			"The Early Tread",
+			"This room is about the rule that the early step onto the lit lawn succeeds.",
+			PackedStringArray([
+				"#######",
+				"#..X..#",
+				"#..L..#",
+				"#..S..#",
+				"#.....#",
+				"#######",
+			]),
+			[_lamp(5, 2, "w", 2)],
+			[_guard(1, 4, [Vector2i(1, 4)], 0)],
+			"U U",
+			"Lawn Wing"
+		),
+		_puzzle(
+			134,
+			"The Last Lawn",
+			"This room is about the rule that you leave by stepping on the dark lawn.",
+			PackedStringArray([
+				"########",
+				"#S.LX..#",
+				"#......#",
+				"#......#",
+				"########",
+			]),
+			[_lamp(2, 1, "e", 2)],
+			[_guard(6, 3, [Vector2i(6, 3)], 0)],
+			"T0 R R R",
+			"Lawn Wing"
 		),
 	]
