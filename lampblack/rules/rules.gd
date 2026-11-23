@@ -35,6 +35,8 @@ extends RefCounted
 ## stops the flood. The shade itself is never lit, and tiles past it stay dark. A screen
 ## does not stop the flood. The screen itself is lit, and tiles past it still light. A
 ## glaze does not stop the flood. The glaze itself is lit, and tiles past it still light.
+## A mica does not stop the flood. The mica itself is never lit, and tiles past it
+## still light.
 ##
 ## Movement
 ## Dark floor and a dark exit may be entered. A gap may be entered only while it is lit.
@@ -58,6 +60,8 @@ extends RefCounted
 ## as other lit floor. Stepping onto a lit screen a guard is watching is a loss.
 ## A glaze is floor. A lamp lights it. An unwatched lit glaze is refused, the same
 ## as other lit floor. Stepping onto a lit glaze a guard is watching is a loss.
+## A mica is floor you may enter. It stays dark even when a lamp's diamond covers its
+## tile, so standing on it is not a loss.
 ##
 ## Plates
 ## The turn the player steps onto a plate calls the nearest guard, by the same rule as a
@@ -77,7 +81,7 @@ extends RefCounted
 ## with no floor path to the bell is not called and keeps the rail. A grate is not a
 ## floor path. A sill is not a floor path. A pane is not a floor path. A curtain is a
 ## floor path. A shade is not a floor path. A screen is not a floor path. A glaze is
-## not a floor path.
+## not a floor path. A mica is not a floor path.
 ##
 ## Grates
 ## A grate is floor you may enter. It is never lit, even when a lamp's diamond covers
@@ -184,6 +188,25 @@ extends RefCounted
 ## A glaze is lit, lets the light through, lets the sight through while it is lit, and
 ## a guard cannot step on it.
 ##
+## Micas
+## A mica is floor you may enter. It stays dark even when a lamp's diamond covers
+## its tile, so you may step onto it while a lamp is lit. Standing on it is not a
+## loss, because it stays dark. Light does not stop at a mica: tiles past it still
+## light. Sight does not stop at a mica: a guard sees lit tiles beyond it, even
+## though the mica cell itself is dark. A guard cannot enter a mica. Pathing treats
+## it as closed, the same as a wall, so a called guard walks around it. A mica
+## calls nobody. It is never a hold. A plate still calls only the nearest guard.
+## A bell still calls every guard who has a floor path, and a mica is not that
+## path. A mica is not a wall, a sill, a grate, a pane, a plate, a bell, a curtain,
+## a shade, a screen, or a glaze. A glaze is lit, so the step onto it before the
+## snuff fails. A shade stays dark and stops the light. A grate stays dark and lets
+## the light through, but a guard does not see through a grate. A screen is lit,
+## lets the light through, and stops the sight. A pane lets the light and the sight
+## through, and nobody can step on it. A curtain lets the light through, stops the
+## sight, and a guard can enter it. A sill is lit and stops both the light and the
+## sight. A mica stays dark, lets the light through, lets the sight through, and
+## a guard cannot step on it.
+##
 ## Vision
 ## Each guard watches a Manhattan diamond of their vision radius, and only on tiles that
 ## are currently lit. Walls and dark tiles block vision. A grate stays dark, so it blocks
@@ -196,14 +219,16 @@ extends RefCounted
 ## through it; the lit screen itself can still be watched. A pane does
 ## not block vision, even though the pane itself is never lit, so a guard sees lit tiles
 ## beyond it. A lit glaze does not block vision, so a guard sees lit tiles beyond it.
-## A dark glaze blocks vision the same way any dark floor does. A guard standing in the dark can still look into an adjacent lit tile. The
+## A dark glaze blocks vision the same way any dark floor does. A mica stays dark, but
+## vision does not stop at it, so a guard sees lit tiles beyond it. The mica cell
+## itself is not watched, because it is dark. A guard standing in the dark can still look into an adjacent lit tile. The
 ## guard's own tile is not marked watched; standing on the guard is a separate loss.
 ##
 ## Guards
 ## Alerted guards take one step along a shortest 4-neighbor path to the tile they were
 ## called to, a lamp, a plate, or a bell. Neighbors are expanded north, east, south,
 ## then west, and that order breaks ties. They may walk on floor, plate, bell, exit,
-## and curtain tiles, lit or dark, but not through walls, gaps, grates, sills, panes, shades, screens, or glazes. When they step onto that tile
+## and curtain tiles, lit or dark, but not through walls, gaps, grates, sills, panes, shades, screens, glazes, or micas. When they step onto that tile
 ## they hold there. They do not resume the rail unless a later snuff, plate, or bell calls them.
 ## A guard who is not alert and not holding patrols their rail. The rail is a list of
 ## waypoints. rail_index is the waypoint they are walking toward, and rail_dir is +1 or -1.
@@ -215,7 +240,7 @@ extends RefCounted
 ## every lamp's lit flag, and every guard's position, rail index, rail direction, alert
 ## target, and hold flag.
 
-enum Tile { WALL, FLOOR, GAP, EXIT, PLATE, BELL, GRATE, SILL, PANE, CURTAIN, SHADE, SCREEN, GLAZE }
+enum Tile { WALL, FLOOR, GAP, EXIT, PLATE, BELL, GRATE, SILL, PANE, CURTAIN, SHADE, SCREEN, GLAZE, MICA }
 enum Result { OK, WIN, LOSS, ILLEGAL }
 
 const DIRS := [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]
@@ -270,6 +295,8 @@ static func build(rows: PackedStringArray, lamps: Array, guards: Array) -> Dicti
 					kind = Tile.SCREEN
 				"Z":
 					kind = Tile.GLAZE
+				"M":
+					kind = Tile.MICA
 				_:
 					push_error("bad tile '%s'" % ch)
 			tiles[y * width + x] = kind
@@ -403,8 +430,9 @@ static func lamp_lights(state: Dictionary, lamp: Dictionary) -> Array:
 		# lit, and the flood does not stop there, so tiles past it still light. A glaze
 		# is lit, and the flood does not stop there, so tiles past it still light. Sight
 		# through a glaze is ordinary floor sight: open while the glaze is lit, and
-		# closed while it is dark.
-		if cell_kind != Tile.GRATE and cell_kind != Tile.PANE and cell_kind != Tile.SHADE:
+		# closed while it is dark. A mica stays dark, and the flood does not stop
+		# there, so tiles past it still light.
+		if cell_kind != Tile.GRATE and cell_kind != Tile.PANE and cell_kind != Tile.SHADE and cell_kind != Tile.MICA:
 			lit.append(cell)
 		if cell_kind == Tile.SILL or cell_kind == Tile.SHADE:
 			continue
@@ -455,13 +483,15 @@ static func watched_tiles(state: Dictionary, lit: Dictionary = {}) -> Dictionary
 			# it is lit. A guard standing on a screen can still look out from it. A pane
 			# is never lit, and vision passes. A lit glaze is ordinary lit floor for
 			# vision, so sight passes to the lit tiles beyond it. A dark glaze is
-			# ordinary dark floor, so sight stops there.
+			# ordinary dark floor, so sight stops there. A mica stays dark, and vision
+			# passes, so a guard sees lit tiles beyond it. The mica cell itself is not
+			# watched, because it is never lit.
 			var kind := tile_at(state, cell.x, cell.y)
 			if kind == Tile.SILL or ((kind == Tile.CURTAIN or kind == Tile.SCREEN) and dist > 0):
 				continue
 			if dist >= int(guard["vision"]):
 				continue
-			var source_open := dist == 0 or lights.has(cell) or kind == Tile.PANE
+			var source_open := dist == 0 or lights.has(cell) or kind == Tile.PANE or kind == Tile.MICA
 			if not source_open:
 				continue
 			for dir in DIRS:
@@ -473,7 +503,7 @@ static func watched_tiles(state: Dictionary, lit: Dictionary = {}) -> Dictionary
 					continue
 				if absi(nxt.x - origin.x) + absi(nxt.y - origin.y) > int(guard["vision"]):
 					continue
-				if not lights.has(nxt) and nxt_kind != Tile.PANE:
+				if not lights.has(nxt) and nxt_kind != Tile.PANE and nxt_kind != Tile.MICA:
 					continue
 				seen[nxt] = true
 				queue.append({"cell": nxt, "dist": dist + 1})
@@ -664,7 +694,7 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 		if dest == Tile.GAP:
 			if not lit.has(Vector2i(nx, ny)):
 				return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "darkgap")
-		elif dest == Tile.GRATE or dest == Tile.SHADE:
+		elif dest == Tile.GRATE or dest == Tile.SHADE or dest == Tile.MICA:
 			pass
 		elif dest == Tile.FLOOR or dest == Tile.EXIT or dest == Tile.PLATE or dest == Tile.BELL or dest == Tile.SILL or dest == Tile.CURTAIN or dest == Tile.SCREEN or dest == Tile.GLAZE:
 			if lit.has(Vector2i(nx, ny)):
@@ -701,7 +731,7 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 		if absi(int(lamp["x"]) - int(player["x"])) + absi(int(lamp["y"]) - int(player["y"])) != 1:
 			return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "range")
 		var here := tile_at(st, player["x"], player["y"])
-		if here != Tile.FLOOR and here != Tile.EXIT and here != Tile.PLATE and here != Tile.BELL and here != Tile.GRATE and here != Tile.SILL and here != Tile.CURTAIN and here != Tile.SHADE and here != Tile.SCREEN and here != Tile.GLAZE:
+		if here != Tile.FLOOR and here != Tile.EXIT and here != Tile.PLATE and here != Tile.BELL and here != Tile.GRATE and here != Tile.SILL and here != Tile.CURTAIN and here != Tile.SHADE and here != Tile.SCREEN and here != Tile.GLAZE and here != Tile.MICA:
 			return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "range")
 		var was_lit: bool = lamp["lit"]
 		lamp["lit"] = not was_lit
