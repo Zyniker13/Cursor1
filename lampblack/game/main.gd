@@ -73,7 +73,7 @@ func _build_hud() -> void:
 	layer.add_child(bottom_panel)
 
 	controls_label = Label.new()
-	controls_label.text = "Arrows move    F lamp you face    Space wait    U undo    R restart    click a neighbor or a lamp\n1–8 east    Shift+1–6 west    Ctrl+1–6 north    Alt+1–6 south    F1–F6 attic    F7–F12 cellar    Keypad 1–6 gallery\nShift+F1–F6 court    Alt+F1–F6 nave    Ctrl+F1–F6 cloister    Ctrl+Shift+F1–F6 porch    Alt+Shift+F1–F6 oriel    Alt+Shift+1–6 veil    Ctrl+Alt+1–6 shade    Ctrl+Shift+1–6 screen    Ctrl+Alt+Shift+1–6 glaze    Ctrl+Alt+Shift+F1–F6 mica"
+	controls_label.text = "Arrows move    F lamp you face    Space wait    U undo    R restart    click a neighbor or a lamp\n1–8 east    Shift+1–6 west    Ctrl+1–6 north    Alt+1–6 south    F1–F6 attic    F7–F12 cellar    Keypad 1–6 gallery\nShift+F1–F6 court    Alt+F1–F6 nave    Ctrl+F1–F6 cloister    Ctrl+Shift+F1–F6 porch    Alt+Shift+F1–F6 oriel    Alt+Shift+1–6 veil    Ctrl+Alt+1–6 shade    Ctrl+Shift+1–6 screen    Ctrl+Alt+Shift+1–6 glaze    Ctrl+Alt+Shift+F1–F6 mica    Meta+Ctrl+Alt+Shift+F1–F6 baize"
 	controls_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	controls_label.add_theme_font_size_override("font_size", 14)
 	controls_label.add_theme_color_override("font_color", MUTED)
@@ -118,7 +118,7 @@ func _build_hud() -> void:
 		row_y += 36.0
 
 	legend_label = Label.new()
-	legend_label.text = "Gold diamond — lamplight, you cannot walk it.    Red diamond — a guard is watching.    Arrow — that guard's next step.    Brass disc — a plate. Step on it in the dark and the nearest guard is called.    Iron cup — a bell. Step on it in the dark and every guard who can reach it is called.    Iron bars — a grate. It stays dark, you may enter it, and a guard cannot.    Stone sill — a lamp lights it, light stops there, and a guard cannot enter or see through it.    Pale sheet — a pane. Light and sight pass through it, and neither you nor a guard can step on it.    Dark cloth — a curtain. A lamp lights it, light passes, sight stops, and a guard can step on it.    Dark louver — a shade. It stays dark, light stops, sight stops, you may step on it, and a guard cannot.    Pale lattice — a screen. A lamp lights it, light passes, sight stops, you may step on it, and a guard cannot.    Ivory sheet, bright cross — a glaze. A lamp lights it, light passes, sight passes while it is lit, you may step on it, and a guard cannot.    Pale gray sheet, dark ring — a mica. It stays dark, light passes, sight passes, you may step on it, and a guard cannot."
+	legend_label.text = "Gold diamond — lamplight, you cannot walk it.    Red diamond — a guard is watching.    Arrow — that guard's next step.    Brass disc — a plate. Step on it in the dark and the nearest guard is called.    Iron cup — a bell. Step on it in the dark and every guard who can reach it is called.    Iron bars — a grate. It stays dark, you may enter it, and a guard cannot.    Stone sill — a lamp lights it, light stops there, and a guard cannot enter or see through it.    Pale sheet — a pane. Light and sight pass through it, and neither you nor a guard can step on it.    Dark cloth — a curtain. A lamp lights it, light passes, sight stops, and a guard can step on it.    Dark louver — a shade. It stays dark, light stops, sight stops, you may step on it, and a guard cannot.    Pale lattice — a screen. A lamp lights it, light passes, sight stops, you may step on it, and a guard cannot.    Ivory sheet, bright cross — a glaze. A lamp lights it, light passes, sight passes while it is lit, you may step on it, and a guard cannot.    Pale gray sheet, dark ring — a mica. It stays dark, light passes, sight passes, you may step on it, and a guard cannot.    Deep green cloth, pale hem — a baize. It stays dark, light stops, sight passes, you may step on it, and a guard cannot."
 	legend_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	legend_label.position = Vector2(20, row_y + 2.0)
 	legend_label.size = Vector2(1240, 144)
@@ -170,7 +170,7 @@ func _layout() -> void:
 	if controls_label:
 		controls_label.size = Vector2(maxf(200.0, view.x - 40.0), 89)
 	if legend_label:
-		legend_label.size = Vector2(maxf(200.0, view.x - 40.0), 135)
+		legend_label.size = Vector2(maxf(200.0, view.x - 40.0), 144)
 	if status_label:
 		status_label.size = Vector2(maxf(200.0, view.x - 40.0), 52)
 	title_label.position = Vector2(24, 16)
@@ -271,6 +271,11 @@ func _puzzle_index_for_key(event: InputEventKey) -> int:
 	var gallery := _gallery_index(event)
 	if gallery >= 0:
 		return 38 + gallery
+	# Ctrl+Alt+F1–F6 without Shift already selects the nave. Meta+Ctrl+Alt+Shift
+	# on F1–F6 selected nothing. Claim it before the mica, which rejects Meta.
+	var baize := _baize_index(event)
+	if baize >= 0:
+		return 104 + baize
 	# Ctrl+Alt+Shift on F1–F6 is the mica, and only when Meta is not held.
 	# That chord has to be claimed before Ctrl+Shift without Alt selects the porch.
 	var mica := _mica_index(event)
@@ -340,6 +345,17 @@ func _puzzle_index_for_key(event: InputEventKey) -> int:
 	if digit > 7:
 		return -1
 	return digit
+
+
+func _baize_index(event: InputEventKey) -> int:
+	if not event.ctrl_pressed or not event.alt_pressed or not event.shift_pressed or not event.meta_pressed:
+		return -1
+	var key := event.physical_keycode
+	if key < KEY_F1 or key > KEY_F6:
+		key = event.keycode
+	if key < KEY_F1 or key > KEY_F6:
+		return -1
+	return int(key) - int(KEY_F1)
 
 
 func _mica_index(event: InputEventKey) -> int:
@@ -672,13 +688,15 @@ func _draw_tile(state: Dictionary, x: int, y: int, lit: Dictionary, watched: Dic
 	var floor_color := FLOOR_ALT if (x + y) % 2 == 0 else FLOOR
 	draw_rect(rect, GROUT)
 	var inset := Rect2(rect.position + Vector2(2, 2), rect.size - Vector2(4, 4))
-	if lit.has(cell) and kind != Rules.Tile.GRATE and kind != Rules.Tile.SHADE:
+	if lit.has(cell) and kind != Rules.Tile.GRATE and kind != Rules.Tile.SHADE and kind != Rules.Tile.BAIZE:
 		floor_color = LIT
 	draw_rect(inset, floor_color)
 	if kind == Rules.Tile.GLAZE:
 		_draw_glaze_sheet(inset)
 	if kind == Rules.Tile.MICA:
 		_draw_mica(inset)
+	if kind == Rules.Tile.BAIZE:
+		_draw_baize(inset)
 	if kind == Rules.Tile.SILL:
 		_draw_sill(inset)
 	if kind == Rules.Tile.CURTAIN:
@@ -697,7 +715,7 @@ func _draw_tile(state: Dictionary, x: int, y: int, lit: Dictionary, watched: Dic
 		draw_rect(Rect2(door.position - Vector2(3, 3), door.size + Vector2(6, 6)), EXIT_COLOR)
 		draw_rect(door, Color("10210f"))
 	var center := rect.get_center()
-	if lit.has(cell) and kind != Rules.Tile.GRATE and kind != Rules.Tile.SHADE:
+	if lit.has(cell) and kind != Rules.Tile.GRATE and kind != Rules.Tile.SHADE and kind != Rules.Tile.BAIZE:
 		draw_colored_polygon(_diamond(center, tile * 0.34, tile * 0.34), LIGHT)
 	if kind == Rules.Tile.SCREEN:
 		_draw_screen(inset)
@@ -739,6 +757,17 @@ func _draw_plate(center: Vector2) -> void:
 	draw_rect(Rect2(center + Vector2(-tile * 0.07, -tile * 0.018), Vector2(tile * 0.14, tile * 0.036)), Color("3a2c16"))
 	draw_circle(center, tile * 0.045, Color("8d7344"))
 	draw_circle(center, tile * 0.02, Color("3a2c16"))
+
+
+func _draw_baize(inset: Rect2) -> void:
+	# Deep green cloth, with a thin pale hem. Not the mica ring and not the glaze cross.
+	draw_rect(inset, Color("1b4332"))
+	var hem := maxf(1.5, tile * 0.045)
+	var pale := Color("d7e2c8")
+	draw_rect(Rect2(inset.position, Vector2(inset.size.x, hem)), pale)
+	draw_rect(Rect2(Vector2(inset.position.x, inset.end.y - hem), Vector2(inset.size.x, hem)), pale)
+	draw_rect(Rect2(inset.position, Vector2(hem, inset.size.y)), pale)
+	draw_rect(Rect2(Vector2(inset.end.x - hem, inset.position.y), Vector2(hem, inset.size.y)), pale)
 
 
 func _draw_mica(inset: Rect2) -> void:
