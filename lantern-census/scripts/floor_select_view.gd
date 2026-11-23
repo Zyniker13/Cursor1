@@ -43,7 +43,8 @@ const SEDILIA_AWNING := Color(0.46, 0.40, 0.32)
 const CREDENCE_AWNING := Color(0.64, 0.54, 0.38)
 const REREDOS_AWNING := Color(0.42, 0.32, 0.48)
 const PREDELLA_AWNING := Color(0.50, 0.28, 0.22)
-const WINDOW_W := 2260.0
+const DOSSAL_AWNING := Color(0.36, 0.10, 0.16)
+const WINDOW_W := 2328.0
 
 var notice_label: Label
 var purse_label: Label
@@ -215,6 +216,8 @@ func _awning_for(floor_id: String) -> Color:
 		return REREDOS_AWNING
 	if floor_id == "predella":
 		return PREDELLA_AWNING
+	if floor_id == "dossal":
+		return DOSSAL_AWNING
 	return CHART_AWNING
 
 
