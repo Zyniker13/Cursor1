@@ -2466,6 +2466,7 @@ const SHIFT_ENVOY := 46
 const SHIFT_FINALE := 47
 const SHIFT_EPODE := 48
 const SHIFT_RECESSIONAL := 50
+const SHIFT_RESPONSORY := 70
 const SHIFT_SEQUENCE := 69
 const SHIFT_TRACT := 68
 const SHIFT_GRADUAL := 67
@@ -4859,6 +4860,53 @@ const FINALE_BELL := [
 
 
 
+const RESPONSORY_BELL := [
+	{
+		"id": "sverre_eng",
+		"name": "Sverre Eng",
+		"form_name": "Scorper Toll",
+		"rule_text": "Patience drops by 2 when the number of filled cells is 31 or 34.",
+		"rule": "drop_if_scorper_count",
+		"lane": 0,
+		"exemption_row": 1,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "live_ask",
+		"name": "Live Ask",
+		"form_name": "Quirk Fill",
+		"rule_text": "A stamp scores twice only when the queue cell one place after it is filled and the queue cell twenty-two places before it is filled. Every cell on the form has no cell twenty-two places before it, so none of them double.",
+		"rule": "double_quirk_fill",
+		"lane": 1,
+		"exemption_row": 0,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "tobias_nygard",
+		"name": "Tobias Nygard",
+		"form_name": "Grommet Pay",
+		"rule_text": "Each stamp with exactly four corner neighbors and exactly twenty side neighbors scores +2 once. Any other count scores its own number. Exactly four corner neighbors with four, five, six, seven, eight, nine, ten, eleven, twelve, thirteen, fourteen, fifteen, sixteen, seventeen, eighteen, or nineteen side neighbors score their own number. A lone stamp scores its own number.",
+		"rule": "yield_grommet_pay",
+		"lane": 2,
+		"exemption_row": 1,
+		"goal": 16,
+		"patience": 5,
+	},
+	{
+		"id": "mikkel_brekke",
+		"name": "Mikkel Brekke",
+		"form_name": "Quirk Blank",
+		"rule_text": "A stamp scores twice only when the queue cell one place after it is empty and the queue cell twenty-two places before it is empty. Every cell on the form has no cell twenty-two places before it, so none of them double.",
+		"rule": "double_quirk_blank",
+		"lane": 1,
+		"exemption_row": 2,
+		"goal": 22,
+		"patience": 5,
+	},
+]
+
 const SEQUENCE_BELL := [
 	{
 		"id": "odin_brevik",
@@ -6005,6 +6053,8 @@ static func _canonical_shift(shift_index: int) -> int:
 		return SHIFT_TITLEPAGE
 	if shift_index == SHIFT_COPYRIGHT:
 		return SHIFT_COPYRIGHT
+	if shift_index == SHIFT_RESPONSORY:
+		return SHIFT_RESPONSORY
 	if shift_index == SHIFT_SEQUENCE:
 		return SHIFT_SEQUENCE
 	if shift_index == SHIFT_TRACT:
@@ -6106,6 +6156,8 @@ static func new_run(seed_value: int, shift_index: int = SHIFT_FIRST) -> NightSta
 	state.next_iid = 0
 	for card_id in STARTING_DECK:
 		_add_library_card(state, String(card_id))
+	if state.shift == SHIFT_RESPONSORY:
+		_log(state, "The responsory bell begins. Seed %d." % state.seed)
 	if state.shift == SHIFT_SEQUENCE:
 		_log(state, "The sequence bell begins. Seed %d." % state.seed)
 	if state.shift == SHIFT_TRACT:
@@ -6286,6 +6338,8 @@ static func restart_encounter(state: NightState) -> void:
 
 
 static func shift_label(state: NightState) -> String:
+	if state.shift == SHIFT_RESPONSORY:
+		return "Responsory bell"
 	if state.shift == SHIFT_SEQUENCE:
 		return "Sequence bell"
 	if state.shift == SHIFT_TRACT:
@@ -6442,6 +6496,8 @@ static func traveler(state: NightState) -> Dictionary:
 
 
 static func _roster(state: NightState) -> Array:
+	if state.shift == SHIFT_RESPONSORY:
+		return RESPONSORY_BELL
 	if state.shift == SHIFT_SEQUENCE:
 		return SEQUENCE_BELL
 	if state.shift == SHIFT_TRACT:
@@ -7062,6 +7118,12 @@ static func stamp_progress(state: NightState, card_id: String, row: int, col: in
 		return amount * 2
 	if rule == "yield_stake_pay" and _stake_pay(state, row, col):
 		return amount + 2
+	if rule == "double_quirk_fill" and _quirk_fill(state, row, col):
+		return amount * 2
+	if rule == "yield_grommet_pay" and _grommet_pay(state, row, col):
+		return amount + 2
+	if rule == "double_quirk_blank" and _quirk_blank(state, row, col):
+		return amount * 2
 	if rule == "double_arris_fill" and _arris_fill(state, row, col):
 		return amount * 2
 	if rule == "yield_rove_pay" and _rove_pay(state, row, col):
@@ -7321,6 +7383,8 @@ static func patience_loss(state: NightState) -> int:
 		elif rule == "drop_if_gauge_count" and _is_gauge_count(_stamp_count(state)):
 			loss = 2
 		elif rule == "drop_if_latch_count" and _is_latch_count(_stamp_count(state)):
+			loss = 2
+		elif rule == "drop_if_scorper_count" and _is_scorper_count(_stamp_count(state)):
 			loss = 2
 		elif rule == "drop_if_burin_count" and _is_burin_count(_stamp_count(state)):
 			loss = 2
@@ -7831,6 +7895,12 @@ static func _resolve_stamp(state: NightState, row: int, col: int, hush: bool) ->
 				_log(state, "%s on the %s, %s grants %d. Four corner neighbors and five side neighbors pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			elif tail_rule == "double_nick_blank" and _nick_blank(state, row, col) and amount > raw:
 				_log(state, "%s on the %s, %s grants %d. The empty cell seven places before it and the empty cell one place after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_quirk_fill" and _quirk_fill(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The filled cell twenty-two places before it and the filled cell one place after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_grommet_pay" and _grommet_pay(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. Four corner neighbors and twenty side neighbors pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_quirk_blank" and _quirk_blank(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The empty cell twenty-two places before it and the empty cell one place after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			elif tail_rule == "double_arris_fill" and _arris_fill(state, row, col) and amount > raw:
 				_log(state, "%s on the %s, %s grants %d. The filled cell twenty-one places before it and the filled cell one place after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			elif tail_rule == "yield_rove_pay" and _rove_pay(state, row, col) and amount > raw:
@@ -8283,6 +8353,56 @@ static func _wedge_pay(state: NightState, row: int, col: int) -> bool:
 	if state.form[row][col] == null:
 		return false
 	return _diagonal_count(state, row, col) == 2
+
+
+static func _is_scorper_count(count: int) -> bool:
+	return count == 31 or count == 34
+
+
+static func _quirk_fill(state: NightState, row: int, col: int) -> bool:
+	return _twenty_two_back(state, row, col) and _pace_fill(state, row, col)
+
+
+static func _grommet_pay(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	return orthogonal_count(state, row, col) == 20 and _diagonal_count(state, row, col) == 4
+
+
+static func _quirk_blank(state: NightState, row: int, col: int) -> bool:
+	return _twenty_two_gap(state, row, col) and _pace_blank(state, row, col)
+
+
+static func _twenty_two_back(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var back_row := row
+	var back_col := col - 22
+	while back_col < 0:
+		back_row -= 1
+		back_col += 3
+	if back_row < 0:
+		return false
+	return state.form[back_row][back_col] != null
+
+
+static func _twenty_two_gap(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var back_row := row
+	var back_col := col - 22
+	while back_col < 0:
+		back_row -= 1
+		back_col += 3
+	if back_row < 0:
+		return false
+	return state.form[back_row][back_col] == null
 
 
 static func _is_burin_count(count: int) -> bool:
@@ -10235,6 +10355,8 @@ static func _apply_result(state: NightState, result: Dictionary) -> void:
 		state.encounters_cleared += 1
 		if state.traveler_index >= _roster(state).size() - 1:
 			state.phase = "victory"
+			if state.shift == SHIFT_RESPONSORY:
+				_log(state, "The queue is empty. The responsory bell is clear.")
 			if state.shift == SHIFT_SEQUENCE:
 				_log(state, "The queue is empty. The sequence bell is clear.")
 			if state.shift == SHIFT_TRACT:
