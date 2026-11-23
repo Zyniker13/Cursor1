@@ -44,6 +44,8 @@ const Scotia = preload("res://scripts/scotia.gd")
 const Cyma = preload("res://scripts/cyma.gd")
 const Cavetto = preload("res://scripts/cavetto.gd")
 const Reed = preload("res://scripts/reed.gd")
+const Annulet = preload("res://scripts/annulet.gd")
+const Hood = preload("res://scripts/hood.gd")
 const Catalog = preload("res://scripts/catalog.gd")
 const Solver = preload("res://scripts/solver.gd")
 const Verdict = preload("res://scripts/verdict.gd")
@@ -135,6 +137,10 @@ const CAVETTO_TIMELINE := "Seth (cavetto hand) cut the cavetto in the dentil at 
 const CAVETTO_TRUE := {"who": "Seth", "place": "dentil", "hour": "158"}
 const REED_TIMELINE := "Greta (reed hand) cut the reed in the ogee at 163, seen from the nosing, so the walnut would take the reed.\nNolan (walnut hand) marked the walnut on the rounder at 162.\nCelia (nosing clerk) turned the nosing in the ogee.\nThe maple was hung on the rounder.\nThe nosing was blued at 161.\nThe rounder was tempered at 164.\nThe ogee was hung at 165."
 const REED_TRUE := {"who": "Greta", "place": "ogee", "hour": "163"}
+const ANNULET_TIMELINE := "Clive (annulet hand) cut the annulet in the beech at 168, seen from the burnisher, so the spruce would take the annulet.\nEdith (spruce hand) marked the spruce on the drawshave at 167.\nMaude (burnisher clerk) turned the burnisher in the beech.\nThe poplar was hung on the drawshave.\nThe burnisher was stippled at 166.\nThe drawshave was forged at 169.\nThe beech was hung at 170."
+const ANNULET_TRUE := {"who": "Clive", "place": "beech", "hour": "168"}
+const HOOD_TIMELINE := "Hugo (hood hand) cut the hood in the sycamore at 173, seen from the compass, so the holly would take the hood.\nNina (holly hand) marked the holly on the trying at 172.\nWalter (compass clerk) turned the compass in the sycamore.\nThe chestnut was hung on the trying.\nThe compass was glazed at 171.\nThe trying was bronzed at 174.\nThe sycamore was hung at 175."
+const HOOD_TRUE := {"who": "Hugo", "place": "sycamore", "hour": "173"}
 
 var _failures: Array[String] = []
 var _checks := 0
@@ -406,6 +412,18 @@ func _initialize() -> void:
 	_test_reed_only_true_theory()
 	_test_reed_near_misses()
 	_test_reed_incomplete()
+	_test_annulet_file_shape()
+	_test_annulet_unique_model()
+	_test_annulet_each_exhibit_necessary()
+	_test_annulet_only_true_theory()
+	_test_annulet_near_misses()
+	_test_annulet_incomplete()
+	_test_hood_file_shape()
+	_test_hood_unique_model()
+	_test_hood_each_exhibit_necessary()
+	_test_hood_only_true_theory()
+	_test_hood_near_misses()
+	_test_hood_incomplete()
 	_test_solutions_differ()
 	_test_menu_opens_either_case()
 	print("menu interaction done")
@@ -14385,6 +14403,873 @@ func _test_reed_incomplete() -> void:
 			_expect(message.find(phrase) == -1, "reed incomplete used another file's slot (%s) in: %s" % [phrase, message])
 	print("reed incomplete submissions refused with the missing slot")
 
+func _test_annulet_file_shape() -> void:
+	_expect(Annulet.EXHIBITS.size() == 9, "annulet exhibit count is %d" % Annulet.EXHIBITS.size())
+	_expect(Annulet.PEOPLE.size() == 3, "annulet cast should be three people")
+	_expect(Annulet.PLACES.size() == 3, "annulet room count is %d" % Annulet.PLACES.size())
+	_expect(Annulet.HOURS.size() == 5, "annulet hour list length is %d" % Annulet.HOURS.size())
+	_expect(Annulet.PEOPLE == ["Clive", "Edith", "Maude"], "annulet cast is %s" % str(Annulet.PEOPLE))
+	_expect(Annulet.PLACES == ["beech", "burnisher", "drawshave"], "annulet rooms are %s" % str(Annulet.PLACES))
+	_expect(Annulet.HOURS == ["166", "167", "168", "169", "170"], "annulet hours are %s" % str(Annulet.HOURS))
+	_expect(Annulet.AIMS == ["take_spruce", "spare_spruce", "set_spruce"], "annulet aims are %s" % str(Annulet.AIMS))
+	_expect(Annulet.aim_phrase("take_spruce") == "so the spruce would take the annulet", "annulet aim phrase")
+	_expect(Annulet.aim_phrase("spare_spruce") == "to spare the spruce still waiting on the annulet", "annulet spare aim")
+	_expect(Annulet.aim_phrase("set_spruce") == "to set the spruce before the beech was hung", "annulet set aim")
+	_expect(Annulet.TITLE == "The annulet", "annulet title")
+	_expect(Annulet.BLURB == "The annulet left its peg at the joiner's hinny. Name who cut the annulet, the room they cut it in, and the hour.", "annulet blurb")
+	_expect(Annulet.FILE_CODE == "CW-45", "annulet file code")
+	_expect(Annulet.fields() == ["taker", "place", "hour", "spruce", "spruce_room", "spruce_hour", "seen_from", "burnisher", "aim", "burnisher_room", "poplar_room", "stipple_hour", "forge_hour", "hang_hour"], "annulet fields are %s" % str(Annulet.fields()))
+	_expect(Annulet.PLAYER_FIELDS == ["taker", "place", "hour"], "annulet player fields")
+	_expect(Annulet.HOURS[Annulet.HOURS.size() / 2] == ANNULET_TRUE["hour"], "annulet cutting should be the middle hour")
+	_expect(Annulet.HOURS[0] != ANNULET_TRUE["hour"], "annulet cutting should not be the earliest hour")
+	_expect(Annulet.HOURS[Annulet.HOURS.size() - 1] != ANNULET_TRUE["hour"], "annulet cutting should not be the latest hour")
+	var counts := _player_pin_counts(Annulet)
+	_expect(int(counts["taker"]) == 3 and int(counts["place"]) == 3 and int(counts["hour"]) == 3, "annulet pin counts are %s" % str(counts))
+	var loose_pin: Array = [
+		[CaseData, "spare key"],
+		[Rehearsal, "rehearsal score"],
+		[Gilt, "gilt stamp"],
+		[Ferry, "ferry bell"],
+		[Weather, "weather slate"],
+		[Loom, "loom shuttle"],
+		[Hive, "hive smoker"],
+		[Glass, "glass pontil"],
+		[Press, "press proof"],
+		[Assay, "assay cup"],
+	]
+	var rhythm: Array = [
+		[Kiln, "kiln chalk"],
+		[Tide, "tide ledger"],
+		[Night, "night bell"],
+		[Salt, "salt mark"],
+		[Wick, "wick trim"],
+		[Anneal, "glass anneal"],
+		[Graft, "orchard graft"],
+		[Dye, "dye vat"],
+		[Tar, "tar kettle"],
+		[Cork, "cork press"],
+		[Net, "net loft"],
+		[Cask, "cask hoop"],
+		[Linen, "linen fold"],
+		[Dovetail, "dovetail"],
+		[Mortise, "mortise"],
+		[Rebate, "rebate"],
+		[Housing, "housing"],
+		[Tenon, "tenon"],
+		[Bridle, "bridle"],
+		[Dado, "dado"],
+		[Spline, "spline"],
+		[Mitre, "mitre"],
+		[Lap, "lap"],
+		[Scarf, "scarf"],
+		[Finger, "finger"],
+		[Haunch, "haunch"],
+		[Dowel, "dowel"],
+		[Tongue, "tongue"],
+		[Quirk, "quirk"],
+		[Chamfer, "chamfer"],
+		[Scotia, "scotia"],
+		[Cyma, "cyma"],
+		[Cavetto, "cavetto"],
+		[Reed, "reed"],
+	]
+	for row in loose_pin:
+		_expect(counts != _player_pin_counts(row[0]), "annulet copied the %s pin pattern" % row[1])
+	for row in rhythm:
+		_expect(counts == _player_pin_counts(row[0]), "annulet should keep the %s pin rhythm" % row[1])
+	var earlier: Array = []
+	earlier.append_array(loose_pin)
+	earlier.append_array(rhythm)
+	for row in earlier:
+		var book = row[0]
+		var name := str(row[1])
+		_expect(Annulet.TITLE != book.TITLE, "annulet shares a title with the %s" % name)
+		_expect(Annulet.FILE_CODE != book.FILE_CODE, "annulet shares a file code with the %s" % name)
+		_expect(_field_key(Annulet) != _field_key(book), "annulet copied the %s timeline fields" % name)
+	var seen := {}
+	var stated := {}
+	var paired_hidden := 0
+	var earlier_texts := {}
+	var earlier_sentences := {}
+	var earlier_titles := {}
+	for row in earlier:
+		for old_exhibit in row[0].EXHIBITS:
+			var old_text := str(old_exhibit["text"])
+			earlier_texts[old_text] = true
+			earlier_titles[str(old_exhibit["title"])] = true
+			for old_sentence in old_text.split(". "):
+				earlier_sentences[old_sentence.trim_suffix(".").strip_edges()] = true
+	var exhibit_titles: Array[String] = []
+	var exhibit_sources: Array[String] = []
+	for exhibit in Annulet.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		exhibit_titles.append(str(exhibit["title"]))
+		exhibit_sources.append(str(exhibit["source"]))
+		_expect(not seen.has(exhibit_id), "duplicate annulet id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(not earlier_titles.has(str(exhibit["title"])), "%s reuses an earlier title %s" % [exhibit_id, exhibit["title"]])
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		_expect(not earlier_texts.has(str(exhibit["text"])), "annulet copied an earlier exhibit")
+		for sentence in str(exhibit["text"]).split(". "):
+			var cleaned := sentence.trim_suffix(".").strip_edges()
+			_expect(not earlier_sentences.has(cleaned), "annulet copied an earlier sentence: %s" % cleaned)
+		for banned in ["tarred", "rope", "kettle", "winch", "pitch", "loft", "strand", "hook", "walk", "dipped", "skein", "indigo", "pressed", "press", "cork", "bottle", "seal", "mallet", "screw", "cellar", "bench", "neck", "plug", "dye", "vat", "mesh", "shed", "rail", "crank", "needle", "mended", "twine", "house", "cooperage", "cask", "hoop", "croze", "stave", "driver", "yard", "shop", "linen", "fold", "shears", "roller", "hem", "sheet", "crease", "drawer", "dovetail", "vise", "stile", "apron", "saw", "clamp", "peg", "mortise", "chisel", "tenon", "awl", "wedge", "bored", "ragged", "racked", "rebate", "plane", "gauge", "shoulder", "shim", "tansy", "solt", "quern", "housing", "square", "bead", "trench", "fillet", "stock", "chalk", "ewan", "maren", "hollin", "gouge", "rasp", "bevel", "guide", "harl", "neve", "luth", "nick", "bridle", "router", "scraper", "adze", "spline", "templet", "strop", "notch", "wend", "sile", "jute", "dado", "cleat", "spur", "kern", "phel", "tarn", "shavings", "mouth", "iron", "senn", "voss", "cade", "slot", "feather", "whet", "orrin", "venn", "haim", "mitre", "arris", "offcut", "saddle", "dressed", "brushed", "nye", "yew", "pry", "lap", "grain", "brad", "plough", "float", "gimlet", "cradle", "crest", "horn", "scarf", "hob", "nairn", "cole", "shaving", "blade", "spokeshave", "firmer", "paring", "drawknife", "edge", "skimmed", "film", "sole", "tang", "mare", "finger", "clem", "gale", "boyd", "pad", "badger", "jack", "socket", "catch", "chip", "burr", "flake", "buffed", "sheen", "pony", "rubbed", "face", "haunch", "cheek", "smoother", "jointer", "fore", "sliver", "pin", "rhys", "mab", "lisle", "colt", "wiped", "mote", "toe", "mist", "bed", "dowel", "bore", "auger", "bit", "brace", "curl", "chuck", "flute", "faye", "kerr", "brynn", "foal", "waxed", "honed", "speck", "gloss", "wax", "point", "shay", "dell", "glen", "tongue", "groove", "kerf", "punch", "peel", "scribe", "knife", "fence", "tallow", "tallowed", "ground", "fleck", "filly", "coat", "cutting", "grind", "ross", "pia", "jude", "quirk", "scratch", "scratched", "scratching", "snib", "ovolo", "veiner", "astragal", "gelding", "grit", "bloom", "stoned", "oiled", "score", "bolt", "grease", "merrick", "enid", "petra", "chamfer", "chamfering", "block", "file", "cove", "travisher", "cant", "stallion", "soap", "soaped", "fettle", "fettled", "wisp", "rime", "haze", "tooth", "willa", "nils", "cora", "scotia", "scotiaing", "hollow", "riffler", "scorp", "torus", "fascia", "pumiced", "peened", "whiting", "crocus", "soot", "cusp", "yearling", "pumice", "ruth", "amos", "lena", "cyma", "cymaing", "bolection", "inshave", "froe", "echinus", "corona", "rouged", "chased", "emery", "tripoli", "garnet", "beak", "jennet", "rouge", "chase", "seth", "ida", "vera", "cavetto", "cavettoing", "dentil", "bullnose", "twibil", "thumbnail", "staff", "scraped", "knurled", "sand", "birch", "cedar", "drip", "palfrey", "scrape", "knurl", "greta", "nolan", "celia", "reed", "reeding", "ogee", "nosing", "rounder", "walnut", "maple", "blued", "tempered", "oak", "elm", "larch", "deal", "weanling", "blue", "temper"]:
+			_expect(str(exhibit["text"]).find(banned) == -1, "%s copies %s" % [exhibit_id, banned])
+		var states_player_pin := false
+		var states_unique := false
+		var player_literals := 0
+		var hidden_literals := 0
+		for literal in exhibit["literals"]:
+			stated[str(literal["value"])] = true
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Annulet.PLAYER_FIELDS:
+				states_player_pin = true
+				player_literals += 1
+				var expected := Annulet.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Annulet.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats >= 2, "%s states %s once" % [exhibit_id, field])
+			else:
+				hidden_literals += 1
+				var owners := 0
+				for other in Annulet.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		if hidden_literals == 2:
+			paired_hidden += 1
+		else:
+			_expect(hidden_literals == 1, "%s states %d hidden facts" % [exhibit_id, hidden_literals])
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(player_literals == 1, "%s states %d player pins" % [exhibit_id, player_literals])
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+	_expect(paired_hidden == 2, "annulet should have two slips with two hidden facts, found %d" % paired_hidden)
+	_expect(exhibit_titles == ["Spruce chit", "Billet sight", "Poplar bill", "Osier slate", "Burnisher card", "Stipple slip", "Annulet leaf", "Hinny note", "Forge order"], "annulet exhibit titles are %s" % str(exhibit_titles))
+	_expect(exhibit_sources == ["Edith, spruce hand", "Burnisher billet", "Drawshave nose", "Beech osier", "Maude, burnisher clerk", "Burnisher tote", "Spruce book", "Joiner's hinny", "Drawshave card"], "annulet sources are %s" % str(exhibit_sources))
+	for hour in Annulet.HOURS:
+		_expect(stated.has(hour), "annulet hour %s is absent from the exhibits" % hour)
+
+
+func _test_annulet_unique_model() -> void:
+	var models := Solver.enumerate(Annulet.EXHIBITS, Annulet)
+	print("annulet models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one annulet model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Clive", "annulet taker")
+	_expect(str(model["place"]) == "beech", "annulet place")
+	_expect(str(model["hour"]) == "168", "annulet hour")
+	_expect(str(model["spruce"]) == "Edith", "annulet spruce hand")
+	_expect(str(model["spruce_room"]) == "drawshave", "annulet spruce room")
+	_expect(str(model["spruce_hour"]) == "167", "annulet spruce hour")
+	_expect(str(model["seen_from"]) == "burnisher", "annulet seen from")
+	_expect(str(model["burnisher"]) == "Maude", "annulet burnisher")
+	_expect(str(model["aim"]) == "take_spruce", "annulet aim")
+	_expect(str(model["burnisher_room"]) == "beech", "annulet burnisher room")
+	_expect(str(model["poplar_room"]) == "drawshave", "annulet poplar room")
+	_expect(str(model["stipple_hour"]) == "166", "annulet stipple hour")
+	_expect(str(model["forge_hour"]) == "169", "annulet forge hour")
+	_expect(str(model["hang_hour"]) == "170", "annulet hang hour")
+	for hour in Annulet.HOURS:
+		var used := false
+		for field in Annulet.fields():
+			if str(model[field]) == hour:
+				used = true
+		_expect(used, "annulet hour %s is blank in the true timeline" % hour)
+	for place in Annulet.PLACES:
+		var place_used := false
+		for field in Annulet.fields():
+			if str(model[field]) == place:
+				place_used = true
+		_expect(place_used, "annulet room %s is blank in the true timeline" % place)
+	for person in Annulet.PEOPLE:
+		var person_used := false
+		for field in Annulet.fields():
+			if str(model[field]) == person:
+				person_used = true
+		_expect(person_used, "annulet person %s is blank in the true timeline" % person)
+	_expect(Annulet.timeline(model) == ANNULET_TIMELINE, "annulet timeline drifted:\n%s" % Annulet.timeline(model))
+	for exhibit in Annulet.EXHIBITS:
+		_expect(Annulet.holds(exhibit, model), "%s rejects the annulet timeline" % exhibit["id"])
+
+
+func _test_annulet_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Annulet.EXHIBITS, Annulet)
+	for exhibit in Annulet.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Annulet.without(exhibit_id), Annulet)
+		print("annulet without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "annulet %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Annulet.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "annulet %s removal did not admit a timeline it forbids" % exhibit_id)
+
+
+func _test_annulet_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	var burnisher_miss := {"who": "Edith", "place": "burnisher", "hour": "166"}
+	_expect(Annulet.conflicting_ids(burnisher_miss).size() == 9, "Edith / burnisher / 166 contradicts %d exhibits" % Annulet.conflicting_ids(burnisher_miss).size())
+	for who in Annulet.PEOPLE:
+		for place in Annulet.PLACES:
+			for hour in Annulet.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == ANNULET_TRUE["who"] and place == ANNULET_TRUE["place"] and hour == ANNULET_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Annulet)
+					print("annulet true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true annulet theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "annulet acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(ANNULET_TIMELINE) >= 0, "annulet acceptance should give the timeline")
+					_expect(str(result["message"]).find("Clive") >= 0, "annulet acceptance omits Clive")
+					_expect(str(result["message"]).find("beech") >= 0, "annulet acceptance omits the beech")
+					_expect(str(result["message"]).find("168") >= 0, "annulet acceptance omits 168")
+					_expect(str(result["message"]).find("so the spruce would take the annulet") >= 0, "annulet acceptance omits the spruce")
+					_expect(str(result["message"]).find("Clive (annulet hand) cut the annulet in the beech at 168") >= 0, "annulet acceptance omits the annuleting")
+					_expect(Annulet.conflicting_ids(theory).is_empty(), "true annulet theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Annulet)
+					_expect(Annulet.conflicting_ids(theory).size() >= 2, "%s / %s / %s contradicts fewer than two exhibits" % [who, place, hour])
+					rejected += 1
+	for outsider in ["Greta", "Nolan", "Celia", "Seth", "Ida", "Vera", "Ruth", "Amos", "Lena", "Willa", "Nils", "Cora", "Merrick", "Enid", "Petra", "Ross", "Pia", "Jude", "Shay", "Dell", "Glen", "Faye", "Kerr", "Brynn", "Rhys", "Mab", "Lisle", "Clem", "Gale", "Boyd", "Hob", "Nairn", "Cole", "Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal", "Nell"]:
+		_expect_rejected({"who": outsider, "place": "beech", "hour": "168"}, Annulet)
+	print("annulet theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d annulet theories" % accepted)
+	_expect(rejected >= 2, "rejected %d annulet theories" % rejected)
+
+
+func _test_annulet_near_misses() -> void:
+	var misses := [
+		{"who": "Clive", "place": "beech", "hour": "169", "titles": ["Annulet leaf", "Hinny note", "Forge order"]},
+		{"who": "Clive", "place": "beech", "hour": "167", "titles": ["Annulet leaf", "Hinny note", "Forge order"]},
+		{"who": "Clive", "place": "burnisher", "hour": "168", "titles": ["Osier slate", "Burnisher card", "Stipple slip"]},
+		{"who": "Edith", "place": "beech", "hour": "168", "titles": ["Spruce chit", "Billet sight", "Poplar bill"]},
+	]
+	var wrong_hour_in_bit := 0
+	var wrong_place_at_hour := 0
+	var wrong_person_in_bit := 0
+	for theory in misses:
+		_expect_rejected(theory, Annulet)
+		var result: Dictionary = Verdict.submit(theory, Annulet)
+		var message := str(result["message"])
+		_expect(Annulet.conflicting_ids(theory).size() >= 2, "near-miss should contradict at least two exhibits: %s" % message)
+		_expect(Annulet.conflicting_ids(theory).size() == 3, "near-miss should name three exhibits: %s" % message)
+		var named_at := -1
+		for title in theory["titles"]:
+			var at := message.find(str(title))
+			_expect(at >= 0, "near-miss omits %s: %s" % [title, message])
+			_expect(at > named_at, "near-miss names %s out of paper order: %s" % [title, message])
+			named_at = at
+		if str(theory["who"]) == "Clive" and str(theory["place"]) == "beech" and str(theory["hour"]) != "168":
+			wrong_hour_in_bit += 1
+		if str(theory["who"]) == "Clive" and str(theory["place"]) != "beech" and str(theory["hour"]) == "168":
+			wrong_place_at_hour += 1
+		if str(theory["who"]) != "Clive" and str(theory["place"]) == "beech" and str(theory["hour"]) == "168":
+			wrong_person_in_bit += 1
+	print("annulet near-misses rejected: %d" % misses.size())
+	_expect(misses.size() == 4, "need four annulet near-misses, found %d" % misses.size())
+	_expect(wrong_hour_in_bit == 2, "two near-misses should keep Clive in the beech at another hour")
+	_expect(wrong_place_at_hour >= 1, "a near-miss should keep Clive at 168 in another room")
+	_expect(wrong_person_in_bit >= 1, "a near-miss should keep the beech at 168 for another person")
+
+func _test_annulet_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+		"who took the gilt stamp",
+		"where they took the stamp",
+		"at which hour they took the stamp",
+		"who took the ferry bell",
+		"where they took the bell",
+		"at which hour they took the bell",
+		"who took the weather slate",
+		"where they took the slate",
+		"at which hour they took the slate",
+		"who took the loom shuttle",
+		"where they took the shuttle",
+		"at which hour they took the shuttle",
+		"who took the hive smoker",
+		"where they took the smoker",
+		"at which hour they took the smoker",
+		"who took the glass pontil",
+		"where they took the pontil",
+		"at which hour they took the pontil",
+		"who took the press proof",
+		"where they took the proof",
+		"at which hour they took the proof",
+		"who set the assay cup",
+		"where they set the cup",
+		"at which hour they set the cup",
+		"who chalked the kiln mark",
+		"where they chalked the mark",
+		"at which hour they chalked the mark",
+		"who entered the tide ledger",
+		"where they entered the ledger",
+		"at which hour they entered the ledger",
+		"who stopped the night bell",
+		"where they stopped the bell",
+		"at which hour they stopped the bell",
+		"who scored the salt mark",
+		"where they scored the mark",
+		"at which hour they scored the mark",
+		"who trimmed the wick",
+		"where they trimmed the wick",
+		"at which hour they trimmed the wick",
+		"who annealed the gather",
+		"where they annealed the gather",
+		"at which hour they annealed the gather",
+		"who grafted the scion",
+		"where they grafted the scion",
+		"at which hour they grafted the scion",
+		"who dipped the skein",
+		"where they dipped the skein",
+		"at which hour they dipped the skein",
+		"who tarred the rope",
+		"where they tarred the rope",
+		"at which hour they tarred the rope",
+		"who pressed the cork",
+		"where they pressed the cork",
+		"at which hour they pressed the cork",
+		"who mended the net",
+		"where they mended the net",
+		"at which hour they mended the net",
+		"who drove the hoop",
+		"where they drove the hoop",
+		"at which hour they drove the hoop",
+		"who folded the linen",
+		"where they folded the linen",
+		"at which hour they folded the linen",
+		"who cut the dovetail",
+		"where they cut the dovetail",
+		"at which hour they cut the dovetail",
+		"who cut the mortise",
+		"where they cut the mortise",
+		"at which hour they cut the mortise",
+		"who cut the rebate",
+		"where they cut the rebate",
+		"at which hour they cut the rebate",
+		"who cut the housing",
+		"where they cut the housing",
+		"at which hour they cut the housing",
+		"who cut the tenon",
+		"where they cut the tenon",
+		"at which hour they cut the tenon",
+		"who cut the bridle",
+		"where they cut the bridle",
+		"at which hour they cut the bridle",
+		"who cut the dado",
+		"where they cut the dado",
+		"at which hour they cut the dado",
+		"who cut the spline",
+		"where they cut the spline",
+		"at which hour they cut the spline",
+		"who cut the mitre",
+		"where they cut the mitre",
+		"at which hour they cut the mitre",
+		"who cut the lap",
+		"where they cut the lap",
+		"at which hour they cut the lap",
+		"who cut the scarf",
+		"where they cut the scarf",
+		"at which hour they cut the scarf",
+		"who cut the finger",
+		"where they cut the finger",
+		"at which hour they cut the finger",
+		"who cut the haunch",
+		"where they cut the haunch",
+		"at which hour they cut the haunch",
+		"who cut the dowel",
+		"where they cut the dowel",
+		"at which hour they cut the dowel",
+		"who cut the tongue",
+		"where they cut the tongue",
+		"at which hour they cut the tongue",
+		"who scratched the quirk",
+		"where they scratched the quirk",
+		"at which hour they scratched the quirk",
+		"who cut the chamfer",
+		"where they cut the chamfer",
+		"at which hour they cut the chamfer",
+		"who cut the scotia",
+		"where they cut the scotia",
+		"at which hour they cut the scotia",
+	]
+
+	var cases := [
+		{"theory": {"who": "", "place": "beech", "hour": "168"}, "present": ["who cut the annulet"], "absent": ["where they cut the annulet", "at which hour they cut the annulet"]},
+		{"theory": {"who": "Clive", "place": "", "hour": "168"}, "present": ["where they cut the annulet"], "absent": ["who cut the annulet", "at which hour they cut the annulet"]},
+		{"theory": {"who": "Clive", "place": "beech", "hour": ""}, "present": ["at which hour they cut the annulet"], "absent": ["who cut the annulet", "where they cut the annulet"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who cut the annulet", "where they cut the annulet", "at which hour they cut the annulet"], "absent": []},
+		{"theory": {}, "present": ["who cut the annulet", "where they cut the annulet", "at which hour they cut the annulet"], "absent": []},
+		{"theory": {"who": "Maude", "place": "", "hour": "170"}, "present": ["where they cut the annulet"], "absent": ["who cut the annulet", "at which hour they cut the annulet"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Annulet)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "annulet incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "annulet incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "annulet incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "annulet incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "annulet incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "annulet missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "annulet named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "annulet incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("annulet incomplete submissions refused with the missing slot")
+
+func _test_hood_file_shape() -> void:
+	_expect(Hood.EXHIBITS.size() == 9, "hood exhibit count is %d" % Hood.EXHIBITS.size())
+	_expect(Hood.PEOPLE.size() == 3, "hood cast should be three people")
+	_expect(Hood.PLACES.size() == 3, "hood room count is %d" % Hood.PLACES.size())
+	_expect(Hood.HOURS.size() == 5, "hood hour list length is %d" % Hood.HOURS.size())
+	_expect(Hood.PEOPLE == ["Hugo", "Nina", "Walter"], "hood cast is %s" % str(Hood.PEOPLE))
+	_expect(Hood.PLACES == ["sycamore", "compass", "trying"], "hood rooms are %s" % str(Hood.PLACES))
+	_expect(Hood.HOURS == ["171", "172", "173", "174", "175"], "hood hours are %s" % str(Hood.HOURS))
+	_expect(Hood.AIMS == ["take_holly", "spare_holly", "set_holly"], "hood aims are %s" % str(Hood.AIMS))
+	_expect(Hood.aim_phrase("take_holly") == "so the holly would take the hood", "hood aim phrase")
+	_expect(Hood.aim_phrase("spare_holly") == "to spare the holly still waiting on the hood", "hood spare aim")
+	_expect(Hood.aim_phrase("set_holly") == "to set the holly before the sycamore was hung", "hood set aim")
+	_expect(Hood.TITLE == "The hood", "hood title")
+	_expect(Hood.BLURB == "The hood left its peg at the joiner's mule. Name who cut the hood, the room they cut it in, and the hour.", "hood blurb")
+	_expect(Hood.FILE_CODE == "CW-46", "hood file code")
+	_expect(Hood.fields() == ["taker", "place", "hour", "holly", "holly_room", "holly_hour", "seen_from", "compass", "aim", "compass_room", "chestnut_room", "glaze_hour", "bronze_hour", "hang_hour"], "hood fields are %s" % str(Hood.fields()))
+	_expect(Hood.PLAYER_FIELDS == ["taker", "place", "hour"], "hood player fields")
+	_expect(Hood.HOURS[Hood.HOURS.size() / 2] == HOOD_TRUE["hour"], "hood cutting should be the middle hour")
+	_expect(Hood.HOURS[0] != HOOD_TRUE["hour"], "hood cutting should not be the earliest hour")
+	_expect(Hood.HOURS[Hood.HOURS.size() - 1] != HOOD_TRUE["hour"], "hood cutting should not be the latest hour")
+	var counts := _player_pin_counts(Hood)
+	_expect(int(counts["taker"]) == 3 and int(counts["place"]) == 3 and int(counts["hour"]) == 3, "hood pin counts are %s" % str(counts))
+	var loose_pin: Array = [
+		[CaseData, "spare key"],
+		[Rehearsal, "rehearsal score"],
+		[Gilt, "gilt stamp"],
+		[Ferry, "ferry bell"],
+		[Weather, "weather slate"],
+		[Loom, "loom shuttle"],
+		[Hive, "hive smoker"],
+		[Glass, "glass pontil"],
+		[Press, "press proof"],
+		[Assay, "assay cup"],
+	]
+	var rhythm: Array = [
+		[Kiln, "kiln chalk"],
+		[Tide, "tide ledger"],
+		[Night, "night bell"],
+		[Salt, "salt mark"],
+		[Wick, "wick trim"],
+		[Anneal, "glass anneal"],
+		[Graft, "orchard graft"],
+		[Dye, "dye vat"],
+		[Tar, "tar kettle"],
+		[Cork, "cork press"],
+		[Net, "net loft"],
+		[Cask, "cask hoop"],
+		[Linen, "linen fold"],
+		[Dovetail, "dovetail"],
+		[Mortise, "mortise"],
+		[Rebate, "rebate"],
+		[Housing, "housing"],
+		[Tenon, "tenon"],
+		[Bridle, "bridle"],
+		[Dado, "dado"],
+		[Spline, "spline"],
+		[Mitre, "mitre"],
+		[Lap, "lap"],
+		[Scarf, "scarf"],
+		[Finger, "finger"],
+		[Haunch, "haunch"],
+		[Dowel, "dowel"],
+		[Tongue, "tongue"],
+		[Quirk, "quirk"],
+		[Chamfer, "chamfer"],
+		[Scotia, "scotia"],
+		[Cyma, "cyma"],
+		[Cavetto, "cavetto"],
+		[Reed, "reed"],
+		[Annulet, "annulet"],
+	]
+	for row in loose_pin:
+		_expect(counts != _player_pin_counts(row[0]), "hood copied the %s pin pattern" % row[1])
+	for row in rhythm:
+		_expect(counts == _player_pin_counts(row[0]), "hood should keep the %s pin rhythm" % row[1])
+	var earlier: Array = []
+	earlier.append_array(loose_pin)
+	earlier.append_array(rhythm)
+	for row in earlier:
+		var book = row[0]
+		var name := str(row[1])
+		_expect(Hood.TITLE != book.TITLE, "hood shares a title with the %s" % name)
+		_expect(Hood.FILE_CODE != book.FILE_CODE, "hood shares a file code with the %s" % name)
+		_expect(_field_key(Hood) != _field_key(book), "hood copied the %s timeline fields" % name)
+	var seen := {}
+	var stated := {}
+	var paired_hidden := 0
+	var earlier_texts := {}
+	var earlier_sentences := {}
+	var earlier_titles := {}
+	for row in earlier:
+		for old_exhibit in row[0].EXHIBITS:
+			var old_text := str(old_exhibit["text"])
+			earlier_texts[old_text] = true
+			earlier_titles[str(old_exhibit["title"])] = true
+			for old_sentence in old_text.split(". "):
+				earlier_sentences[old_sentence.trim_suffix(".").strip_edges()] = true
+	var exhibit_titles: Array[String] = []
+	var exhibit_sources: Array[String] = []
+	for exhibit in Hood.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		exhibit_titles.append(str(exhibit["title"]))
+		exhibit_sources.append(str(exhibit["source"]))
+		_expect(not seen.has(exhibit_id), "duplicate hood id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(not earlier_titles.has(str(exhibit["title"])), "%s reuses an earlier title %s" % [exhibit_id, exhibit["title"]])
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		_expect(not earlier_texts.has(str(exhibit["text"])), "hood copied an earlier exhibit")
+		for sentence in str(exhibit["text"]).split(". "):
+			var cleaned := sentence.trim_suffix(".").strip_edges()
+			_expect(not earlier_sentences.has(cleaned), "hood copied an earlier sentence: %s" % cleaned)
+		for banned in ["tarred", "rope", "kettle", "winch", "pitch", "loft", "strand", "hook", "walk", "dipped", "skein", "indigo", "pressed", "press", "cork", "bottle", "seal", "mallet", "screw", "cellar", "bench", "neck", "plug", "dye", "vat", "mesh", "shed", "rail", "crank", "needle", "mended", "twine", "house", "cooperage", "cask", "hoop", "croze", "stave", "driver", "yard", "shop", "linen", "fold", "shears", "roller", "hem", "sheet", "crease", "drawer", "dovetail", "vise", "stile", "apron", "saw", "clamp", "peg", "mortise", "chisel", "tenon", "awl", "wedge", "bored", "ragged", "racked", "rebate", "plane", "gauge", "shoulder", "shim", "tansy", "solt", "quern", "housing", "square", "bead", "trench", "fillet", "stock", "chalk", "ewan", "maren", "hollin", "gouge", "rasp", "bevel", "guide", "harl", "neve", "luth", "nick", "bridle", "router", "scraper", "adze", "spline", "templet", "strop", "notch", "wend", "sile", "jute", "dado", "cleat", "spur", "kern", "phel", "tarn", "shavings", "mouth", "iron", "senn", "voss", "cade", "slot", "feather", "whet", "orrin", "venn", "haim", "mitre", "arris", "offcut", "saddle", "dressed", "brushed", "nye", "yew", "pry", "lap", "grain", "brad", "plough", "float", "gimlet", "cradle", "crest", "horn", "scarf", "hob", "nairn", "cole", "shaving", "blade", "spokeshave", "firmer", "paring", "drawknife", "edge", "skimmed", "film", "sole", "tang", "mare", "finger", "clem", "gale", "boyd", "pad", "badger", "jack", "socket", "catch", "chip", "burr", "flake", "buffed", "sheen", "pony", "rubbed", "face", "haunch", "cheek", "smoother", "jointer", "fore", "sliver", "pin", "rhys", "mab", "lisle", "colt", "wiped", "mote", "toe", "mist", "bed", "dowel", "bore", "auger", "bit", "brace", "curl", "chuck", "flute", "faye", "kerr", "brynn", "foal", "waxed", "honed", "speck", "gloss", "wax", "point", "shay", "dell", "glen", "tongue", "groove", "kerf", "punch", "peel", "scribe", "knife", "fence", "tallow", "tallowed", "ground", "fleck", "filly", "coat", "cutting", "grind", "ross", "pia", "jude", "quirk", "scratch", "scratched", "scratching", "snib", "ovolo", "veiner", "astragal", "gelding", "grit", "bloom", "stoned", "oiled", "score", "bolt", "grease", "merrick", "enid", "petra", "chamfer", "chamfering", "block", "file", "cove", "travisher", "cant", "stallion", "soap", "soaped", "fettle", "fettled", "wisp", "rime", "haze", "tooth", "willa", "nils", "cora", "scotia", "scotiaing", "hollow", "riffler", "scorp", "torus", "fascia", "pumiced", "peened", "whiting", "crocus", "soot", "cusp", "yearling", "pumice", "ruth", "amos", "lena", "cyma", "cymaing", "bolection", "inshave", "froe", "echinus", "corona", "rouged", "chased", "emery", "tripoli", "garnet", "beak", "jennet", "rouge", "chase", "seth", "ida", "vera", "cavetto", "cavettoing", "dentil", "bullnose", "twibil", "thumbnail", "staff", "scraped", "knurled", "sand", "birch", "cedar", "drip", "palfrey", "scrape", "knurl", "greta", "nolan", "celia", "reed", "reeding", "ogee", "nosing", "rounder", "walnut", "maple", "blued", "tempered", "oak", "elm", "larch", "deal", "weanling", "blue", "temper", "clive", "edith", "maude", "annulet", "annuleting", "beech", "burnisher", "drawshave", "spruce", "poplar", "stippled", "forged", "rowan", "withy", "osier", "billet", "hinny", "stipple", "forge"]:
+			_expect(str(exhibit["text"]).find(banned) == -1, "%s copies %s" % [exhibit_id, banned])
+		var states_player_pin := false
+		var states_unique := false
+		var player_literals := 0
+		var hidden_literals := 0
+		for literal in exhibit["literals"]:
+			stated[str(literal["value"])] = true
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Hood.PLAYER_FIELDS:
+				states_player_pin = true
+				player_literals += 1
+				var expected := Hood.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Hood.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats >= 2, "%s states %s once" % [exhibit_id, field])
+			else:
+				hidden_literals += 1
+				var owners := 0
+				for other in Hood.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		if hidden_literals == 2:
+			paired_hidden += 1
+		else:
+			_expect(hidden_literals == 1, "%s states %d hidden facts" % [exhibit_id, hidden_literals])
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(player_literals == 1, "%s states %d player pins" % [exhibit_id, player_literals])
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+	_expect(paired_hidden == 2, "hood should have two slips with two hidden facts, found %d" % paired_hidden)
+	_expect(exhibit_titles == ["Holly chit", "Ivory sight", "Chestnut bill", "Boxwood slate", "Compass card", "Glaze slip", "Hood leaf", "Mule note", "Bronze order"], "hood exhibit titles are %s" % str(exhibit_titles))
+	_expect(exhibit_sources == ["Nina, holly hand", "Compass ivory", "Trying nose", "Sycamore boxwood", "Walter, compass clerk", "Compass tote", "Holly book", "Joiner's mule", "Trying card"], "hood sources are %s" % str(exhibit_sources))
+	for hour in Hood.HOURS:
+		_expect(stated.has(hour), "hood hour %s is absent from the exhibits" % hour)
+
+
+func _test_hood_unique_model() -> void:
+	var models := Solver.enumerate(Hood.EXHIBITS, Hood)
+	print("hood models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one hood model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Hugo", "hood taker")
+	_expect(str(model["place"]) == "sycamore", "hood place")
+	_expect(str(model["hour"]) == "173", "hood hour")
+	_expect(str(model["holly"]) == "Nina", "hood holly hand")
+	_expect(str(model["holly_room"]) == "trying", "hood holly room")
+	_expect(str(model["holly_hour"]) == "172", "hood holly hour")
+	_expect(str(model["seen_from"]) == "compass", "hood seen from")
+	_expect(str(model["compass"]) == "Walter", "hood compass")
+	_expect(str(model["aim"]) == "take_holly", "hood aim")
+	_expect(str(model["compass_room"]) == "sycamore", "hood compass room")
+	_expect(str(model["chestnut_room"]) == "trying", "hood chestnut room")
+	_expect(str(model["glaze_hour"]) == "171", "hood glaze hour")
+	_expect(str(model["bronze_hour"]) == "174", "hood bronze hour")
+	_expect(str(model["hang_hour"]) == "175", "hood hang hour")
+	for hour in Hood.HOURS:
+		var used := false
+		for field in Hood.fields():
+			if str(model[field]) == hour:
+				used = true
+		_expect(used, "hood hour %s is blank in the true timeline" % hour)
+	for place in Hood.PLACES:
+		var place_used := false
+		for field in Hood.fields():
+			if str(model[field]) == place:
+				place_used = true
+		_expect(place_used, "hood room %s is blank in the true timeline" % place)
+	for person in Hood.PEOPLE:
+		var person_used := false
+		for field in Hood.fields():
+			if str(model[field]) == person:
+				person_used = true
+		_expect(person_used, "hood person %s is blank in the true timeline" % person)
+	_expect(Hood.timeline(model) == HOOD_TIMELINE, "hood timeline drifted:\n%s" % Hood.timeline(model))
+	for exhibit in Hood.EXHIBITS:
+		_expect(Hood.holds(exhibit, model), "%s rejects the hood timeline" % exhibit["id"])
+
+
+func _test_hood_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Hood.EXHIBITS, Hood)
+	for exhibit in Hood.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Hood.without(exhibit_id), Hood)
+		print("hood without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "hood %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Hood.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "hood %s removal did not admit a timeline it forbids" % exhibit_id)
+
+
+func _test_hood_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	var compass_miss := {"who": "Nina", "place": "compass", "hour": "171"}
+	_expect(Hood.conflicting_ids(compass_miss).size() == 9, "Nina / compass / 171 contradicts %d exhibits" % Hood.conflicting_ids(compass_miss).size())
+	for who in Hood.PEOPLE:
+		for place in Hood.PLACES:
+			for hour in Hood.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == HOOD_TRUE["who"] and place == HOOD_TRUE["place"] and hour == HOOD_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Hood)
+					print("hood true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true hood theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "hood acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(HOOD_TIMELINE) >= 0, "hood acceptance should give the timeline")
+					_expect(str(result["message"]).find("Hugo") >= 0, "hood acceptance omits Hugo")
+					_expect(str(result["message"]).find("sycamore") >= 0, "hood acceptance omits the sycamore")
+					_expect(str(result["message"]).find("173") >= 0, "hood acceptance omits 173")
+					_expect(str(result["message"]).find("so the holly would take the hood") >= 0, "hood acceptance omits the holly")
+					_expect(str(result["message"]).find("Hugo (hood hand) cut the hood in the sycamore at 173") >= 0, "hood acceptance omits the hooding")
+					_expect(Hood.conflicting_ids(theory).is_empty(), "true hood theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Hood)
+					_expect(Hood.conflicting_ids(theory).size() >= 2, "%s / %s / %s contradicts fewer than two exhibits" % [who, place, hour])
+					rejected += 1
+	for outsider in ["Clive", "Edith", "Maude", "Greta", "Nolan", "Celia", "Seth", "Ida", "Vera", "Ruth", "Amos", "Lena", "Willa", "Nils", "Cora", "Merrick", "Enid", "Petra", "Ross", "Pia", "Jude", "Shay", "Dell", "Glen", "Faye", "Kerr", "Brynn", "Rhys", "Mab", "Lisle", "Clem", "Gale", "Boyd", "Hob", "Nairn", "Cole", "Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal", "Nell"]:
+		_expect_rejected({"who": outsider, "place": "sycamore", "hour": "173"}, Hood)
+	print("hood theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d hood theories" % accepted)
+	_expect(rejected >= 2, "rejected %d hood theories" % rejected)
+
+
+func _test_hood_near_misses() -> void:
+	var misses := [
+		{"who": "Hugo", "place": "sycamore", "hour": "174", "titles": ["Hood leaf", "Mule note", "Bronze order"]},
+		{"who": "Hugo", "place": "sycamore", "hour": "172", "titles": ["Hood leaf", "Mule note", "Bronze order"]},
+		{"who": "Hugo", "place": "compass", "hour": "173", "titles": ["Boxwood slate", "Compass card", "Glaze slip"]},
+		{"who": "Nina", "place": "sycamore", "hour": "173", "titles": ["Holly chit", "Ivory sight", "Chestnut bill"]},
+	]
+	var wrong_hour_in_bit := 0
+	var wrong_place_at_hour := 0
+	var wrong_person_in_bit := 0
+	for theory in misses:
+		_expect_rejected(theory, Hood)
+		var result: Dictionary = Verdict.submit(theory, Hood)
+		var message := str(result["message"])
+		_expect(Hood.conflicting_ids(theory).size() >= 2, "near-miss should contradict at least two exhibits: %s" % message)
+		_expect(Hood.conflicting_ids(theory).size() == 3, "near-miss should name three exhibits: %s" % message)
+		var named_at := -1
+		for title in theory["titles"]:
+			var at := message.find(str(title))
+			_expect(at >= 0, "near-miss omits %s: %s" % [title, message])
+			_expect(at > named_at, "near-miss names %s out of paper order: %s" % [title, message])
+			named_at = at
+		if str(theory["who"]) == "Hugo" and str(theory["place"]) == "sycamore" and str(theory["hour"]) != "173":
+			wrong_hour_in_bit += 1
+		if str(theory["who"]) == "Hugo" and str(theory["place"]) != "sycamore" and str(theory["hour"]) == "173":
+			wrong_place_at_hour += 1
+		if str(theory["who"]) != "Hugo" and str(theory["place"]) == "sycamore" and str(theory["hour"]) == "173":
+			wrong_person_in_bit += 1
+	print("hood near-misses rejected: %d" % misses.size())
+	_expect(misses.size() == 4, "need four hood near-misses, found %d" % misses.size())
+	_expect(wrong_hour_in_bit == 2, "two near-misses should keep Hugo in the sycamore at another hour")
+	_expect(wrong_place_at_hour >= 1, "a near-miss should keep Hugo at 173 in another room")
+	_expect(wrong_person_in_bit >= 1, "a near-miss should keep the sycamore at 173 for another person")
+
+func _test_hood_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+		"who took the gilt stamp",
+		"where they took the stamp",
+		"at which hour they took the stamp",
+		"who took the ferry bell",
+		"where they took the bell",
+		"at which hour they took the bell",
+		"who took the weather slate",
+		"where they took the slate",
+		"at which hour they took the slate",
+		"who took the loom shuttle",
+		"where they took the shuttle",
+		"at which hour they took the shuttle",
+		"who took the hive smoker",
+		"where they took the smoker",
+		"at which hour they took the smoker",
+		"who took the glass pontil",
+		"where they took the pontil",
+		"at which hour they took the pontil",
+		"who took the press proof",
+		"where they took the proof",
+		"at which hour they took the proof",
+		"who set the assay cup",
+		"where they set the cup",
+		"at which hour they set the cup",
+		"who chalked the kiln mark",
+		"where they chalked the mark",
+		"at which hour they chalked the mark",
+		"who entered the tide ledger",
+		"where they entered the ledger",
+		"at which hour they entered the ledger",
+		"who stopped the night bell",
+		"where they stopped the bell",
+		"at which hour they stopped the bell",
+		"who scored the salt mark",
+		"where they scored the mark",
+		"at which hour they scored the mark",
+		"who trimmed the wick",
+		"where they trimmed the wick",
+		"at which hour they trimmed the wick",
+		"who annealed the gather",
+		"where they annealed the gather",
+		"at which hour they annealed the gather",
+		"who grafted the scion",
+		"where they grafted the scion",
+		"at which hour they grafted the scion",
+		"who dipped the skein",
+		"where they dipped the skein",
+		"at which hour they dipped the skein",
+		"who tarred the rope",
+		"where they tarred the rope",
+		"at which hour they tarred the rope",
+		"who pressed the cork",
+		"where they pressed the cork",
+		"at which hour they pressed the cork",
+		"who mended the net",
+		"where they mended the net",
+		"at which hour they mended the net",
+		"who drove the hoop",
+		"where they drove the hoop",
+		"at which hour they drove the hoop",
+		"who folded the linen",
+		"where they folded the linen",
+		"at which hour they folded the linen",
+		"who cut the dovetail",
+		"where they cut the dovetail",
+		"at which hour they cut the dovetail",
+		"who cut the mortise",
+		"where they cut the mortise",
+		"at which hour they cut the mortise",
+		"who cut the rebate",
+		"where they cut the rebate",
+		"at which hour they cut the rebate",
+		"who cut the housing",
+		"where they cut the housing",
+		"at which hour they cut the housing",
+		"who cut the tenon",
+		"where they cut the tenon",
+		"at which hour they cut the tenon",
+		"who cut the bridle",
+		"where they cut the bridle",
+		"at which hour they cut the bridle",
+		"who cut the dado",
+		"where they cut the dado",
+		"at which hour they cut the dado",
+		"who cut the spline",
+		"where they cut the spline",
+		"at which hour they cut the spline",
+		"who cut the mitre",
+		"where they cut the mitre",
+		"at which hour they cut the mitre",
+		"who cut the lap",
+		"where they cut the lap",
+		"at which hour they cut the lap",
+		"who cut the scarf",
+		"where they cut the scarf",
+		"at which hour they cut the scarf",
+		"who cut the finger",
+		"where they cut the finger",
+		"at which hour they cut the finger",
+		"who cut the haunch",
+		"where they cut the haunch",
+		"at which hour they cut the haunch",
+		"who cut the dowel",
+		"where they cut the dowel",
+		"at which hour they cut the dowel",
+		"who cut the tongue",
+		"where they cut the tongue",
+		"at which hour they cut the tongue",
+		"who scratched the quirk",
+		"where they scratched the quirk",
+		"at which hour they scratched the quirk",
+		"who cut the chamfer",
+		"where they cut the chamfer",
+		"at which hour they cut the chamfer",
+		"who cut the scotia",
+		"where they cut the scotia",
+		"at which hour they cut the scotia",
+	]
+
+	var cases := [
+		{"theory": {"who": "", "place": "sycamore", "hour": "173"}, "present": ["who cut the hood"], "absent": ["where they cut the hood", "at which hour they cut the hood"]},
+		{"theory": {"who": "Hugo", "place": "", "hour": "173"}, "present": ["where they cut the hood"], "absent": ["who cut the hood", "at which hour they cut the hood"]},
+		{"theory": {"who": "Hugo", "place": "sycamore", "hour": ""}, "present": ["at which hour they cut the hood"], "absent": ["who cut the hood", "where they cut the hood"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who cut the hood", "where they cut the hood", "at which hour they cut the hood"], "absent": []},
+		{"theory": {}, "present": ["who cut the hood", "where they cut the hood", "at which hour they cut the hood"], "absent": []},
+		{"theory": {"who": "Walter", "place": "", "hour": "175"}, "present": ["where they cut the hood"], "absent": ["who cut the hood", "at which hour they cut the hood"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Hood)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "hood incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "hood incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "hood incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "hood incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "hood incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "hood missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "hood named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "hood incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("hood incomplete submissions refused with the missing slot")
+
 func _test_solutions_differ() -> void:
 	var spare := {"who": "Nell", "place": "kitchen", "hour": "7"}
 	_expect(spare["who"] != REHEARSAL_TRUE["who"], "rehearsal copied the spare-key taker")
@@ -19125,7 +20010,527 @@ func _test_solutions_differ() -> void:
 	_expect(not Reed.HOURS.has("159"), "reed hours must not take 159")
 	_expect(not Reed.HOURS.has("160"), "reed hours must not take 160")
 
-	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal", "The orchard graft", "The dye vat", "The tar kettle", "The cork press", "The net loft", "The cask hoop", "The linen fold", "The dovetail", "The mortise", "The rebate", "The housing", "The tenon", "The bridle", "The dado", "The spline", "The mitre", "The lap", "The scarf", "The finger", "The haunch", "The dowel", "The tongue", "The quirk", "The chamfer", "The scotia", "The cyma", "The cavetto", "The reed"], "case list is %s" % str(titles))
+	_expect(ANNULET_TRUE["who"] == "Clive", "annulet taker")
+	_expect(ANNULET_TRUE["place"] == "beech", "annulet room")
+	_expect(ANNULET_TRUE["hour"] == "168", "annulet hour")
+	for forbidden in ["Greta", "Nolan", "Celia", "Seth", "Ida", "Vera", "Ruth", "Amos", "Lena", "Willa", "Nils", "Cora", "Merrick", "Enid", "Petra", "Ross", "Pia", "Jude", "Shay", "Dell", "Glen", "Faye", "Kerr", "Brynn", "Lisle", "Mab", "Rhys", "Clem", "Gale", "Boyd", "Hob", "Nairn", "Cole", "Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(ANNULET_TRUE["who"] != forbidden, "annulet accepted %s" % forbidden)
+	for forbidden_place in ["ogee", "nosing", "rounder", "dentil", "bullnose", "twibil", "bolection", "inshave", "froe", "hollow", "riffler", "scorp", "block", "file", "travisher", "scratch", "snib", "veiner", "knife", "punch", "scribe", "bit", "auger", "brace", "jointer", "smoother", "fore", "pad", "badger", "jack", "drawknife", "spokeshave", "firmer", "plough", "float", "gimlet", "router", "scraper", "adze", "gouge", "rasp", "bevel", "saw", "square", "bead", "plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(ANNULET_TRUE["place"] != forbidden_place, "annulet accepted the %s" % forbidden_place)
+	_expect(ANNULET_TRUE["place"] != "punch", "annulet accepted the punch")
+	_expect(ANNULET_TRUE["place"] != "scribe", "annulet accepted the scribe")
+	_expect(ANNULET_TRUE["place"] != "snib", "annulet accepted the snib")
+	_expect(ANNULET_TRUE["place"] != "veiner", "annulet accepted the veiner")
+	_expect(ANNULET_TRUE["place"] != "file", "annulet accepted the file")
+	_expect(ANNULET_TRUE["place"] != "travisher", "annulet accepted the travisher")
+	_expect(ANNULET_TRUE["place"] != "block", "annulet accepted the block")
+	_expect(ANNULET_TRUE["place"] != "riffler", "annulet accepted the riffler")
+	_expect(ANNULET_TRUE["place"] != "scorp", "annulet accepted the scorp")
+	_expect(ANNULET_TRUE["place"] != "hollow", "annulet accepted the hollow")
+	_expect(ANNULET_TRUE["place"] != "burnisher", "annulet accepted the burnisher")
+	_expect(ANNULET_TRUE["place"] != "drawshave", "annulet accepted the drawshave")
+	_expect(ANNULET_TRUE["place"] != "ogee", "annulet accepted the ogee")
+	_expect(ANNULET_TRUE["place"] != "nosing", "annulet accepted the nosing")
+	_expect(ANNULET_TRUE["place"] != "rounder", "annulet accepted the rounder")
+	_expect(ANNULET_TRUE["place"] != "dentil", "annulet accepted the dentil")
+	_expect(ANNULET_TRUE["place"] != "bullnose", "annulet accepted the bullnose")
+	_expect(ANNULET_TRUE["place"] != "twibil", "annulet accepted the twibil")
+	_expect(ANNULET_TRUE["place"] != "bolection", "annulet accepted the bolection")
+	_expect(ANNULET_TRUE["place"] != "inshave", "annulet accepted the inshave")
+	_expect(ANNULET_TRUE["place"] != "froe", "annulet accepted the froe")
+	_expect(ANNULET_TRUE["hour"] != "111", "annulet accepted 111")
+	_expect(ANNULET_TRUE["hour"] != "112", "annulet accepted 112")
+	_expect(ANNULET_TRUE["hour"] != "114", "annulet accepted 114")
+	_expect(ANNULET_TRUE["hour"] != "115", "annulet accepted 115")
+	_expect(ANNULET_TRUE["hour"] != "106", "annulet accepted 106")
+	_expect(ANNULET_TRUE["hour"] != "107", "annulet accepted 107")
+	_expect(ANNULET_TRUE["hour"] != "108", "annulet accepted 108")
+	_expect(ANNULET_TRUE["hour"] != "109", "annulet accepted 109")
+	_expect(ANNULET_TRUE["hour"] != "110", "annulet accepted 110")
+	_expect(ANNULET_TRUE["hour"] != "101", "annulet accepted 101")
+	_expect(ANNULET_TRUE["hour"] != "102", "annulet accepted 102")
+	_expect(ANNULET_TRUE["hour"] != "103", "annulet accepted 103")
+	_expect(ANNULET_TRUE["hour"] != "104", "annulet accepted 104")
+	_expect(ANNULET_TRUE["hour"] != "105", "annulet accepted 105")
+	_expect(ANNULET_TRUE["hour"] != "96", "annulet accepted 96")
+	_expect(ANNULET_TRUE["hour"] != "97", "annulet accepted 97")
+	_expect(ANNULET_TRUE["hour"] != "98", "annulet accepted 98")
+	_expect(ANNULET_TRUE["hour"] != "99", "annulet accepted 99")
+	_expect(ANNULET_TRUE["hour"] != "100", "annulet accepted 100")
+	_expect(ANNULET_TRUE["hour"] != "91", "annulet accepted 91")
+	_expect(ANNULET_TRUE["hour"] != "92", "annulet accepted 92")
+	_expect(ANNULET_TRUE["hour"] != "93", "annulet accepted 93")
+	_expect(ANNULET_TRUE["hour"] != "94", "annulet accepted 94")
+	_expect(ANNULET_TRUE["hour"] != "95", "annulet accepted 95")
+	_expect(ANNULET_TRUE["hour"] != "88", "annulet accepted 88")
+	_expect(ANNULET_TRUE["hour"] != "83", "annulet accepted 83")
+	_expect(ANNULET_TRUE["hour"] != "78", "annulet accepted 78")
+	_expect(ANNULET_TRUE["hour"] != "73", "annulet accepted 73")
+	_expect(ANNULET_TRUE["hour"] != "68", "annulet accepted 68")
+	_expect(ANNULET_TRUE["hour"] != "63", "annulet accepted 63")
+	_expect(ANNULET_TRUE["hour"] != "8", "annulet accepted 8")
+	_expect(ANNULET_TRUE["hour"] != "6", "annulet accepted 6")
+	_expect(ANNULET_TRUE["hour"] != "3", "annulet accepted 3")
+	_expect(ANNULET_TRUE["hour"] != "16", "annulet accepted 16")
+	_expect(ANNULET_TRUE["hour"] != "19", "annulet accepted 19")
+	_expect(ANNULET_TRUE["hour"] != "113", "annulet accepted 113")
+	_expect(ANNULET_TRUE["hour"] != "121", "annulet accepted 121")
+	_expect(ANNULET_TRUE["hour"] != "122", "annulet accepted 122")
+	_expect(ANNULET_TRUE["hour"] != "124", "annulet accepted 124")
+	_expect(ANNULET_TRUE["hour"] != "125", "annulet accepted 125")
+	_expect(ANNULET_TRUE["hour"] != "116", "annulet accepted 116")
+	_expect(ANNULET_TRUE["hour"] != "117", "annulet accepted 117")
+	_expect(ANNULET_TRUE["hour"] != "118", "annulet accepted 118")
+	_expect(ANNULET_TRUE["hour"] != "119", "annulet accepted 119")
+	_expect(ANNULET_TRUE["hour"] != "120", "annulet accepted 120")
+	_expect(ANNULET_TRUE["hour"] != "123", "annulet accepted 123")
+	_expect(ANNULET_TRUE["hour"] != "126", "annulet accepted 126")
+	_expect(ANNULET_TRUE["hour"] != "127", "annulet accepted 127")
+	_expect(ANNULET_TRUE["hour"] != "129", "annulet accepted 129")
+	_expect(ANNULET_TRUE["hour"] != "130", "annulet accepted 130")
+	_expect(ANNULET_TRUE["hour"] != "128", "annulet accepted 128")
+	_expect(ANNULET_TRUE["hour"] != "131", "annulet accepted 131")
+	_expect(ANNULET_TRUE["hour"] != "132", "annulet accepted 132")
+	_expect(ANNULET_TRUE["hour"] != "134", "annulet accepted 134")
+	_expect(ANNULET_TRUE["hour"] != "135", "annulet accepted 135")
+	_expect(ANNULET_TRUE["hour"] != "133", "annulet accepted 133")
+	_expect(ANNULET_TRUE["hour"] != "136", "annulet accepted 136")
+	_expect(ANNULET_TRUE["hour"] != "137", "annulet accepted 137")
+	_expect(ANNULET_TRUE["hour"] != "139", "annulet accepted 139")
+	_expect(ANNULET_TRUE["hour"] != "140", "annulet accepted 140")
+	_expect(ANNULET_TRUE["hour"] != "138", "annulet accepted 138")
+	_expect(ANNULET_TRUE["hour"] != "141", "annulet accepted 141")
+	_expect(ANNULET_TRUE["hour"] != "142", "annulet accepted 142")
+	_expect(ANNULET_TRUE["hour"] != "144", "annulet accepted 144")
+	_expect(ANNULET_TRUE["hour"] != "145", "annulet accepted 145")
+	_expect(ANNULET_TRUE["hour"] != "143", "annulet accepted 143")
+	_expect(ANNULET_TRUE["hour"] != "146", "annulet accepted 146")
+	_expect(ANNULET_TRUE["hour"] != "147", "annulet accepted 147")
+	_expect(ANNULET_TRUE["hour"] != "149", "annulet accepted 149")
+	_expect(ANNULET_TRUE["hour"] != "150", "annulet accepted 150")
+	_expect(ANNULET_TRUE["hour"] != "148", "annulet accepted 148")
+	_expect(ANNULET_TRUE["hour"] != "166", "annulet accepted 166")
+	_expect(ANNULET_TRUE["hour"] != "167", "annulet accepted 167")
+	_expect(ANNULET_TRUE["hour"] != "169", "annulet accepted 169")
+	_expect(ANNULET_TRUE["hour"] != "170", "annulet accepted 170")
+	_expect(ANNULET_TRUE["hour"] != "163", "annulet accepted 163")
+	_expect(ANNULET_TRUE["hour"] != "158", "annulet accepted 158")
+	_expect(ANNULET_TRUE["hour"] != "153", "annulet accepted 153")
+	var before_annulet: Array = before_reed.duplicate()
+	before_annulet.append([Reed, REED_TRUE, "reed"])
+	for row in before_annulet:
+		var book = row[0]
+		var truth: Dictionary = row[1]
+		var name := str(row[2])
+		_expect(ANNULET_TRUE["who"] != truth["who"], "annulet copied the %s taker" % name)
+		_expect(ANNULET_TRUE["place"] != truth["place"], "annulet copied the %s room" % name)
+		_expect(ANNULET_TRUE["hour"] != str(truth["hour"]), "annulet copied the %s hour" % name)
+		_expect_rejected(ANNULET_TRUE, book)
+		_expect_rejected(truth, Annulet)
+	_expect(REED_TRUE["who"] == "Greta" and REED_TRUE["place"] == "ogee" and REED_TRUE["hour"] == "163", "the reed should still accept Greta in the ogee at 163")
+	_expect(CAVETTO_TRUE["who"] == "Seth" and CAVETTO_TRUE["place"] == "dentil" and CAVETTO_TRUE["hour"] == "158", "the cavetto should still accept Seth in the dentil at 158")
+	_expect(CYMA_TRUE["who"] == "Ruth" and CYMA_TRUE["place"] == "bolection" and CYMA_TRUE["hour"] == "153", "the cyma should still accept Ruth in the bolection at 153")
+	_expect(SCOTIA_TRUE["who"] == "Willa" and SCOTIA_TRUE["place"] == "hollow" and SCOTIA_TRUE["hour"] == "148", "the scotia should still accept Willa in the hollow at 148")
+	_expect(CHAMFER_TRUE["who"] == "Merrick" and CHAMFER_TRUE["place"] == "block" and CHAMFER_TRUE["hour"] == "143", "the chamfer should still accept Merrick in the block at 143")
+	_expect(QUIRK_TRUE["who"] == "Ross" and QUIRK_TRUE["place"] == "scratch" and QUIRK_TRUE["hour"] == "138", "the quirk should still accept Ross in the scratch at 138")
+	_expect(DOWEL_TRUE["who"] == "Faye" and DOWEL_TRUE["place"] == "bit" and DOWEL_TRUE["hour"] == "128", "the dowel should still accept Faye in the bit at 128")
+	_expect(TONGUE_TRUE["who"] == "Shay" and TONGUE_TRUE["place"] == "knife" and TONGUE_TRUE["hour"] == "133", "the tongue should still accept Shay in the knife at 133")
+	_expect(HAUNCH_TRUE["who"] == "Rhys" and HAUNCH_TRUE["place"] == "fore" and HAUNCH_TRUE["hour"] == "123", "the haunch should still accept Rhys in the fore at 123")
+	_expect(FINGER_TRUE["who"] == "Clem" and FINGER_TRUE["place"] == "pad" and FINGER_TRUE["hour"] == "118", "the finger should still accept Clem in the pad at 118")
+	for row in before_annulet:
+		var book = row[0]
+		var name := str(row[2])
+		for person in Annulet.PEOPLE:
+			_expect(not book.PEOPLE.has(person), "annulet cast repeats %s from the %s" % [person, name])
+		for place in Annulet.PLACES:
+			_expect(not book.PLACES.has(place), "annulet rooms repeat %s from the %s" % [place, name])
+		for hour in Annulet.HOURS:
+			_expect(not book.HOURS.has(hour), "annulet hours repeat %s from the %s" % [hour, name])
+	for forbidden_person in ["Greta", "Nolan", "Celia", "Seth", "Ida", "Vera", "Ruth", "Amos", "Lena", "Willa", "Nils", "Cora", "Merrick", "Enid", "Petra", "Ross", "Pia", "Jude", "Shay", "Dell", "Glen", "Faye", "Kerr", "Brynn", "Lisle", "Mab", "Rhys", "Clem", "Gale", "Boyd", "Hob", "Nairn", "Cole", "Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(not Annulet.PEOPLE.has(forbidden_person), "annulet cast must not take %s" % forbidden_person)
+	_expect(Annulet.role_phrase("Clive") == "the annulet hand", "the annulet should call Clive the annulet hand")
+	_expect(Annulet.role_phrase("Edith") == "the spruce hand", "the annulet should call Edith the spruce hand")
+	_expect(Annulet.role_phrase("Maude") == "the burnisher clerk", "the annulet should call Maude the burnisher clerk")
+	for forbidden_place in ["ogee", "nosing", "rounder", "dentil", "bullnose", "twibil", "bolection", "inshave", "froe", "hollow", "riffler", "scorp", "block", "file", "travisher", "scratch", "snib", "veiner", "knife", "punch", "scribe", "bit", "auger", "brace", "jointer", "smoother", "fore", "drawknife", "spokeshave", "firmer", "plough", "float", "gimlet", "router", "scraper", "adze", "gouge", "rasp", "bevel", "saw", "square", "bead", "plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(not Annulet.PLACES.has(forbidden_place), "annulet rooms must not take the %s" % forbidden_place)
+	_expect(not Annulet.HOURS.has("6"), "annulet hours must not take 6")
+	_expect(not Annulet.HOURS.has("7"), "annulet hours must not take 7")
+	_expect(not Annulet.HOURS.has("8"), "annulet hours must not take 8")
+	_expect(not Annulet.HOURS.has("9"), "annulet hours must not take 9")
+	_expect(not Annulet.HOURS.has("10"), "annulet hours must not take 10")
+	_expect(not Annulet.HOURS.has("60"), "annulet hours must not take 60")
+	_expect(not Annulet.HOURS.has("61"), "annulet hours must not take 61")
+	_expect(not Annulet.HOURS.has("62"), "annulet hours must not take 62")
+	_expect(not Annulet.HOURS.has("63"), "annulet hours must not take 63")
+	_expect(not Annulet.HOURS.has("64"), "annulet hours must not take 64")
+	_expect(not Annulet.HOURS.has("65"), "annulet hours must not take 65")
+	_expect(not Annulet.HOURS.has("66"), "annulet hours must not take 66")
+	_expect(not Annulet.HOURS.has("67"), "annulet hours must not take 67")
+	_expect(not Annulet.HOURS.has("68"), "annulet hours must not take 68")
+	_expect(not Annulet.HOURS.has("69"), "annulet hours must not take 69")
+	_expect(not Annulet.HOURS.has("70"), "annulet hours must not take 70")
+	_expect(not Annulet.HOURS.has("71"), "annulet hours must not take 71")
+	_expect(not Annulet.HOURS.has("72"), "annulet hours must not take 72")
+	_expect(not Annulet.HOURS.has("73"), "annulet hours must not take 73")
+	_expect(not Annulet.HOURS.has("74"), "annulet hours must not take 74")
+	_expect(not Annulet.HOURS.has("75"), "annulet hours must not take 75")
+	_expect(not Annulet.HOURS.has("76"), "annulet hours must not take 76")
+	_expect(not Annulet.HOURS.has("77"), "annulet hours must not take 77")
+	_expect(not Annulet.HOURS.has("78"), "annulet hours must not take 78")
+	_expect(not Annulet.HOURS.has("79"), "annulet hours must not take 79")
+	_expect(not Annulet.HOURS.has("80"), "annulet hours must not take 80")
+	_expect(not Annulet.HOURS.has("81"), "annulet hours must not take 81")
+	_expect(not Annulet.HOURS.has("82"), "annulet hours must not take 82")
+	_expect(not Annulet.HOURS.has("83"), "annulet hours must not take 83")
+	_expect(not Annulet.HOURS.has("84"), "annulet hours must not take 84")
+	_expect(not Annulet.HOURS.has("85"), "annulet hours must not take 85")
+	_expect(not Annulet.HOURS.has("86"), "annulet hours must not take 86")
+	_expect(not Annulet.HOURS.has("87"), "annulet hours must not take 87")
+	_expect(not Annulet.HOURS.has("88"), "annulet hours must not take 88")
+	_expect(not Annulet.HOURS.has("89"), "annulet hours must not take 89")
+	_expect(not Annulet.HOURS.has("90"), "annulet hours must not take 90")
+	_expect(not Annulet.HOURS.has("91"), "annulet hours must not take 91")
+	_expect(not Annulet.HOURS.has("92"), "annulet hours must not take 92")
+	_expect(not Annulet.HOURS.has("93"), "annulet hours must not take 93")
+	_expect(not Annulet.HOURS.has("94"), "annulet hours must not take 94")
+	_expect(not Annulet.HOURS.has("95"), "annulet hours must not take 95")
+	_expect(not Annulet.HOURS.has("96"), "annulet hours must not take 96")
+	_expect(not Annulet.HOURS.has("97"), "annulet hours must not take 97")
+	_expect(not Annulet.HOURS.has("98"), "annulet hours must not take 98")
+	_expect(not Annulet.HOURS.has("99"), "annulet hours must not take 99")
+	_expect(not Annulet.HOURS.has("100"), "annulet hours must not take 100")
+	_expect(not Annulet.HOURS.has("101"), "annulet hours must not take 101")
+	_expect(not Annulet.HOURS.has("102"), "annulet hours must not take 102")
+	_expect(not Annulet.HOURS.has("103"), "annulet hours must not take 103")
+	_expect(not Annulet.HOURS.has("104"), "annulet hours must not take 104")
+	_expect(not Annulet.HOURS.has("105"), "annulet hours must not take 105")
+	_expect(not Annulet.HOURS.has("106"), "annulet hours must not take 106")
+	_expect(not Annulet.HOURS.has("107"), "annulet hours must not take 107")
+	_expect(not Annulet.HOURS.has("108"), "annulet hours must not take 108")
+	_expect(not Annulet.HOURS.has("109"), "annulet hours must not take 109")
+	_expect(not Annulet.HOURS.has("110"), "annulet hours must not take 110")
+	_expect(not Annulet.HOURS.has("111"), "annulet hours must not take 111")
+	_expect(not Annulet.HOURS.has("112"), "annulet hours must not take 112")
+	_expect(not Annulet.HOURS.has("113"), "annulet hours must not take 113")
+	_expect(not Annulet.HOURS.has("114"), "annulet hours must not take 114")
+	_expect(not Annulet.HOURS.has("115"), "annulet hours must not take 115")
+	_expect(not Annulet.HOURS.has("116"), "annulet hours must not take 116")
+	_expect(not Annulet.HOURS.has("117"), "annulet hours must not take 117")
+	_expect(not Annulet.HOURS.has("118"), "annulet hours must not take 118")
+	_expect(not Annulet.HOURS.has("119"), "annulet hours must not take 119")
+	_expect(not Annulet.HOURS.has("120"), "annulet hours must not take 120")
+	_expect(not Annulet.HOURS.has("121"), "annulet hours must not take 121")
+	_expect(not Annulet.HOURS.has("122"), "annulet hours must not take 122")
+	_expect(not Annulet.HOURS.has("123"), "annulet hours must not take 123")
+	_expect(not Annulet.HOURS.has("124"), "annulet hours must not take 124")
+	_expect(not Annulet.HOURS.has("125"), "annulet hours must not take 125")
+	_expect(not Annulet.HOURS.has("126"), "annulet hours must not take 126")
+	_expect(not Annulet.HOURS.has("127"), "annulet hours must not take 127")
+	_expect(not Annulet.HOURS.has("128"), "annulet hours must not take 128")
+	_expect(not Annulet.HOURS.has("129"), "annulet hours must not take 129")
+	_expect(not Annulet.HOURS.has("130"), "annulet hours must not take 130")
+	_expect(not Annulet.HOURS.has("131"), "annulet hours must not take 131")
+	_expect(not Annulet.HOURS.has("132"), "annulet hours must not take 132")
+	_expect(not Annulet.HOURS.has("133"), "annulet hours must not take 133")
+	_expect(not Annulet.HOURS.has("134"), "annulet hours must not take 134")
+	_expect(not Annulet.HOURS.has("135"), "annulet hours must not take 135")
+	_expect(not Annulet.HOURS.has("136"), "annulet hours must not take 136")
+	_expect(not Annulet.HOURS.has("137"), "annulet hours must not take 137")
+	_expect(not Annulet.HOURS.has("138"), "annulet hours must not take 138")
+	_expect(not Annulet.HOURS.has("139"), "annulet hours must not take 139")
+	_expect(not Annulet.HOURS.has("140"), "annulet hours must not take 140")
+	_expect(not Annulet.HOURS.has("141"), "annulet hours must not take 141")
+	_expect(not Annulet.HOURS.has("142"), "annulet hours must not take 142")
+	_expect(not Annulet.HOURS.has("143"), "annulet hours must not take 143")
+	_expect(not Annulet.HOURS.has("144"), "annulet hours must not take 144")
+	_expect(not Annulet.HOURS.has("145"), "annulet hours must not take 145")
+	_expect(not Annulet.HOURS.has("146"), "annulet hours must not take 146")
+	_expect(not Annulet.HOURS.has("147"), "annulet hours must not take 147")
+	_expect(not Annulet.HOURS.has("148"), "annulet hours must not take 148")
+	_expect(not Annulet.HOURS.has("149"), "annulet hours must not take 149")
+	_expect(not Annulet.HOURS.has("150"), "annulet hours must not take 150")
+	_expect(not Annulet.HOURS.has("151"), "annulet hours must not take 151")
+	_expect(not Annulet.HOURS.has("152"), "annulet hours must not take 152")
+	_expect(not Annulet.HOURS.has("153"), "annulet hours must not take 153")
+	_expect(not Annulet.HOURS.has("154"), "annulet hours must not take 154")
+	_expect(not Annulet.HOURS.has("155"), "annulet hours must not take 155")
+	_expect(not Annulet.HOURS.has("156"), "annulet hours must not take 156")
+	_expect(not Annulet.HOURS.has("157"), "annulet hours must not take 157")
+	_expect(not Annulet.HOURS.has("158"), "annulet hours must not take 158")
+	_expect(not Annulet.HOURS.has("159"), "annulet hours must not take 159")
+	_expect(not Annulet.HOURS.has("160"), "annulet hours must not take 160")
+	_expect(not Annulet.HOURS.has("161"), "annulet hours must not take 161")
+	_expect(not Annulet.HOURS.has("162"), "annulet hours must not take 162")
+	_expect(not Annulet.HOURS.has("163"), "annulet hours must not take 163")
+	_expect(not Annulet.HOURS.has("164"), "annulet hours must not take 164")
+	_expect(not Annulet.HOURS.has("165"), "annulet hours must not take 165")
+
+	_expect(HOOD_TRUE["who"] == "Hugo", "hood taker")
+	_expect(HOOD_TRUE["place"] == "sycamore", "hood room")
+	_expect(HOOD_TRUE["hour"] == "173", "hood hour")
+	for forbidden in ["Clive", "Edith", "Maude", "Greta", "Nolan", "Celia", "Seth", "Ida", "Vera", "Ruth", "Amos", "Lena", "Willa", "Nils", "Cora", "Merrick", "Enid", "Petra", "Ross", "Pia", "Jude", "Shay", "Dell", "Glen", "Faye", "Kerr", "Brynn", "Lisle", "Mab", "Rhys", "Clem", "Gale", "Boyd", "Hob", "Nairn", "Cole", "Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(HOOD_TRUE["who"] != forbidden, "hood accepted %s" % forbidden)
+	for forbidden_place in ["beech", "burnisher", "drawshave", "ogee", "nosing", "rounder", "dentil", "bullnose", "twibil", "bolection", "inshave", "froe", "hollow", "riffler", "scorp", "block", "file", "travisher", "scratch", "snib", "veiner", "knife", "punch", "scribe", "bit", "auger", "brace", "jointer", "smoother", "fore", "pad", "badger", "jack", "drawknife", "spokeshave", "firmer", "plough", "float", "gimlet", "router", "scraper", "adze", "gouge", "rasp", "bevel", "saw", "square", "bead", "plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(HOOD_TRUE["place"] != forbidden_place, "hood accepted the %s" % forbidden_place)
+	_expect(HOOD_TRUE["place"] != "punch", "hood accepted the punch")
+	_expect(HOOD_TRUE["place"] != "scribe", "hood accepted the scribe")
+	_expect(HOOD_TRUE["place"] != "snib", "hood accepted the snib")
+	_expect(HOOD_TRUE["place"] != "veiner", "hood accepted the veiner")
+	_expect(HOOD_TRUE["place"] != "file", "hood accepted the file")
+	_expect(HOOD_TRUE["place"] != "travisher", "hood accepted the travisher")
+	_expect(HOOD_TRUE["place"] != "block", "hood accepted the block")
+	_expect(HOOD_TRUE["place"] != "riffler", "hood accepted the riffler")
+	_expect(HOOD_TRUE["place"] != "scorp", "hood accepted the scorp")
+	_expect(HOOD_TRUE["place"] != "hollow", "hood accepted the hollow")
+	_expect(HOOD_TRUE["place"] != "compass", "hood accepted the compass")
+	_expect(HOOD_TRUE["place"] != "trying", "hood accepted the trying")
+	_expect(HOOD_TRUE["place"] != "beech", "hood accepted the beech")
+	_expect(HOOD_TRUE["place"] != "burnisher", "hood accepted the burnisher")
+	_expect(HOOD_TRUE["place"] != "drawshave", "hood accepted the drawshave")
+	_expect(HOOD_TRUE["place"] != "ogee", "hood accepted the ogee")
+	_expect(HOOD_TRUE["place"] != "nosing", "hood accepted the nosing")
+	_expect(HOOD_TRUE["place"] != "rounder", "hood accepted the rounder")
+	_expect(HOOD_TRUE["place"] != "dentil", "hood accepted the dentil")
+	_expect(HOOD_TRUE["place"] != "bullnose", "hood accepted the bullnose")
+	_expect(HOOD_TRUE["place"] != "twibil", "hood accepted the twibil")
+	_expect(HOOD_TRUE["place"] != "bolection", "hood accepted the bolection")
+	_expect(HOOD_TRUE["place"] != "inshave", "hood accepted the inshave")
+	_expect(HOOD_TRUE["place"] != "froe", "hood accepted the froe")
+	_expect(HOOD_TRUE["hour"] != "111", "hood accepted 111")
+	_expect(HOOD_TRUE["hour"] != "112", "hood accepted 112")
+	_expect(HOOD_TRUE["hour"] != "114", "hood accepted 114")
+	_expect(HOOD_TRUE["hour"] != "115", "hood accepted 115")
+	_expect(HOOD_TRUE["hour"] != "106", "hood accepted 106")
+	_expect(HOOD_TRUE["hour"] != "107", "hood accepted 107")
+	_expect(HOOD_TRUE["hour"] != "108", "hood accepted 108")
+	_expect(HOOD_TRUE["hour"] != "109", "hood accepted 109")
+	_expect(HOOD_TRUE["hour"] != "110", "hood accepted 110")
+	_expect(HOOD_TRUE["hour"] != "101", "hood accepted 101")
+	_expect(HOOD_TRUE["hour"] != "102", "hood accepted 102")
+	_expect(HOOD_TRUE["hour"] != "103", "hood accepted 103")
+	_expect(HOOD_TRUE["hour"] != "104", "hood accepted 104")
+	_expect(HOOD_TRUE["hour"] != "105", "hood accepted 105")
+	_expect(HOOD_TRUE["hour"] != "96", "hood accepted 96")
+	_expect(HOOD_TRUE["hour"] != "97", "hood accepted 97")
+	_expect(HOOD_TRUE["hour"] != "98", "hood accepted 98")
+	_expect(HOOD_TRUE["hour"] != "99", "hood accepted 99")
+	_expect(HOOD_TRUE["hour"] != "100", "hood accepted 100")
+	_expect(HOOD_TRUE["hour"] != "91", "hood accepted 91")
+	_expect(HOOD_TRUE["hour"] != "92", "hood accepted 92")
+	_expect(HOOD_TRUE["hour"] != "93", "hood accepted 93")
+	_expect(HOOD_TRUE["hour"] != "94", "hood accepted 94")
+	_expect(HOOD_TRUE["hour"] != "95", "hood accepted 95")
+	_expect(HOOD_TRUE["hour"] != "88", "hood accepted 88")
+	_expect(HOOD_TRUE["hour"] != "83", "hood accepted 83")
+	_expect(HOOD_TRUE["hour"] != "78", "hood accepted 78")
+	_expect(HOOD_TRUE["hour"] != "73", "hood accepted 73")
+	_expect(HOOD_TRUE["hour"] != "68", "hood accepted 68")
+	_expect(HOOD_TRUE["hour"] != "63", "hood accepted 63")
+	_expect(HOOD_TRUE["hour"] != "8", "hood accepted 8")
+	_expect(HOOD_TRUE["hour"] != "6", "hood accepted 6")
+	_expect(HOOD_TRUE["hour"] != "3", "hood accepted 3")
+	_expect(HOOD_TRUE["hour"] != "16", "hood accepted 16")
+	_expect(HOOD_TRUE["hour"] != "19", "hood accepted 19")
+	_expect(HOOD_TRUE["hour"] != "113", "hood accepted 113")
+	_expect(HOOD_TRUE["hour"] != "121", "hood accepted 121")
+	_expect(HOOD_TRUE["hour"] != "122", "hood accepted 122")
+	_expect(HOOD_TRUE["hour"] != "124", "hood accepted 124")
+	_expect(HOOD_TRUE["hour"] != "125", "hood accepted 125")
+	_expect(HOOD_TRUE["hour"] != "116", "hood accepted 116")
+	_expect(HOOD_TRUE["hour"] != "117", "hood accepted 117")
+	_expect(HOOD_TRUE["hour"] != "118", "hood accepted 118")
+	_expect(HOOD_TRUE["hour"] != "119", "hood accepted 119")
+	_expect(HOOD_TRUE["hour"] != "120", "hood accepted 120")
+	_expect(HOOD_TRUE["hour"] != "123", "hood accepted 123")
+	_expect(HOOD_TRUE["hour"] != "126", "hood accepted 126")
+	_expect(HOOD_TRUE["hour"] != "127", "hood accepted 127")
+	_expect(HOOD_TRUE["hour"] != "129", "hood accepted 129")
+	_expect(HOOD_TRUE["hour"] != "130", "hood accepted 130")
+	_expect(HOOD_TRUE["hour"] != "128", "hood accepted 128")
+	_expect(HOOD_TRUE["hour"] != "131", "hood accepted 131")
+	_expect(HOOD_TRUE["hour"] != "132", "hood accepted 132")
+	_expect(HOOD_TRUE["hour"] != "134", "hood accepted 134")
+	_expect(HOOD_TRUE["hour"] != "135", "hood accepted 135")
+	_expect(HOOD_TRUE["hour"] != "133", "hood accepted 133")
+	_expect(HOOD_TRUE["hour"] != "136", "hood accepted 136")
+	_expect(HOOD_TRUE["hour"] != "137", "hood accepted 137")
+	_expect(HOOD_TRUE["hour"] != "139", "hood accepted 139")
+	_expect(HOOD_TRUE["hour"] != "140", "hood accepted 140")
+	_expect(HOOD_TRUE["hour"] != "138", "hood accepted 138")
+	_expect(HOOD_TRUE["hour"] != "141", "hood accepted 141")
+	_expect(HOOD_TRUE["hour"] != "142", "hood accepted 142")
+	_expect(HOOD_TRUE["hour"] != "144", "hood accepted 144")
+	_expect(HOOD_TRUE["hour"] != "145", "hood accepted 145")
+	_expect(HOOD_TRUE["hour"] != "143", "hood accepted 143")
+	_expect(HOOD_TRUE["hour"] != "146", "hood accepted 146")
+	_expect(HOOD_TRUE["hour"] != "147", "hood accepted 147")
+	_expect(HOOD_TRUE["hour"] != "149", "hood accepted 149")
+	_expect(HOOD_TRUE["hour"] != "150", "hood accepted 150")
+	_expect(HOOD_TRUE["hour"] != "148", "hood accepted 148")
+	_expect(HOOD_TRUE["hour"] != "171", "hood accepted 171")
+	_expect(HOOD_TRUE["hour"] != "172", "hood accepted 172")
+	_expect(HOOD_TRUE["hour"] != "174", "hood accepted 174")
+	_expect(HOOD_TRUE["hour"] != "175", "hood accepted 175")
+	_expect(HOOD_TRUE["hour"] != "168", "hood accepted 168")
+	_expect(HOOD_TRUE["hour"] != "163", "hood accepted 163")
+	_expect(HOOD_TRUE["hour"] != "158", "hood accepted 158")
+	_expect(HOOD_TRUE["hour"] != "153", "hood accepted 153")
+	var before_hood: Array = before_annulet.duplicate()
+	before_hood.append([Annulet, ANNULET_TRUE, "annulet"])
+	for row in before_hood:
+		var book = row[0]
+		var truth: Dictionary = row[1]
+		var name := str(row[2])
+		_expect(HOOD_TRUE["who"] != truth["who"], "hood copied the %s taker" % name)
+		_expect(HOOD_TRUE["place"] != truth["place"], "hood copied the %s room" % name)
+		_expect(HOOD_TRUE["hour"] != str(truth["hour"]), "hood copied the %s hour" % name)
+		_expect_rejected(HOOD_TRUE, book)
+		_expect_rejected(truth, Hood)
+	_expect(ANNULET_TRUE["who"] == "Clive" and ANNULET_TRUE["place"] == "beech" and ANNULET_TRUE["hour"] == "168", "the annulet should still accept Clive in the beech at 168")
+	_expect(REED_TRUE["who"] == "Greta" and REED_TRUE["place"] == "ogee" and REED_TRUE["hour"] == "163", "the reed should still accept Greta in the ogee at 163")
+	_expect(CAVETTO_TRUE["who"] == "Seth" and CAVETTO_TRUE["place"] == "dentil" and CAVETTO_TRUE["hour"] == "158", "the cavetto should still accept Seth in the dentil at 158")
+	_expect(CYMA_TRUE["who"] == "Ruth" and CYMA_TRUE["place"] == "bolection" and CYMA_TRUE["hour"] == "153", "the cyma should still accept Ruth in the bolection at 153")
+	_expect(SCOTIA_TRUE["who"] == "Willa" and SCOTIA_TRUE["place"] == "hollow" and SCOTIA_TRUE["hour"] == "148", "the scotia should still accept Willa in the hollow at 148")
+	_expect(CHAMFER_TRUE["who"] == "Merrick" and CHAMFER_TRUE["place"] == "block" and CHAMFER_TRUE["hour"] == "143", "the chamfer should still accept Merrick in the block at 143")
+	_expect(QUIRK_TRUE["who"] == "Ross" and QUIRK_TRUE["place"] == "scratch" and QUIRK_TRUE["hour"] == "138", "the quirk should still accept Ross in the scratch at 138")
+	_expect(DOWEL_TRUE["who"] == "Faye" and DOWEL_TRUE["place"] == "bit" and DOWEL_TRUE["hour"] == "128", "the dowel should still accept Faye in the bit at 128")
+	_expect(TONGUE_TRUE["who"] == "Shay" and TONGUE_TRUE["place"] == "knife" and TONGUE_TRUE["hour"] == "133", "the tongue should still accept Shay in the knife at 133")
+	_expect(HAUNCH_TRUE["who"] == "Rhys" and HAUNCH_TRUE["place"] == "fore" and HAUNCH_TRUE["hour"] == "123", "the haunch should still accept Rhys in the fore at 123")
+	_expect(FINGER_TRUE["who"] == "Clem" and FINGER_TRUE["place"] == "pad" and FINGER_TRUE["hour"] == "118", "the finger should still accept Clem in the pad at 118")
+	for row in before_hood:
+		var book = row[0]
+		var name := str(row[2])
+		for person in Hood.PEOPLE:
+			_expect(not book.PEOPLE.has(person), "hood cast repeats %s from the %s" % [person, name])
+		for place in Hood.PLACES:
+			_expect(not book.PLACES.has(place), "hood rooms repeat %s from the %s" % [place, name])
+		for hour in Hood.HOURS:
+			_expect(not book.HOURS.has(hour), "hood hours repeat %s from the %s" % [hour, name])
+	for forbidden_person in ["Clive", "Edith", "Maude", "Greta", "Nolan", "Celia", "Seth", "Ida", "Vera", "Ruth", "Amos", "Lena", "Willa", "Nils", "Cora", "Merrick", "Enid", "Petra", "Ross", "Pia", "Jude", "Shay", "Dell", "Glen", "Faye", "Kerr", "Brynn", "Lisle", "Mab", "Rhys", "Clem", "Gale", "Boyd", "Hob", "Nairn", "Cole", "Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(not Hood.PEOPLE.has(forbidden_person), "hood cast must not take %s" % forbidden_person)
+	_expect(Hood.role_phrase("Hugo") == "the hood hand", "the hood should call Hugo the hood hand")
+	_expect(Hood.role_phrase("Nina") == "the holly hand", "the hood should call Nina the holly hand")
+	_expect(Hood.role_phrase("Walter") == "the compass clerk", "the hood should call Walter the compass clerk")
+	for forbidden_place in ["beech", "burnisher", "drawshave", "ogee", "nosing", "rounder", "dentil", "bullnose", "twibil", "bolection", "inshave", "froe", "hollow", "riffler", "scorp", "block", "file", "travisher", "scratch", "snib", "veiner", "knife", "punch", "scribe", "bit", "auger", "brace", "jointer", "smoother", "fore", "drawknife", "spokeshave", "firmer", "plough", "float", "gimlet", "router", "scraper", "adze", "gouge", "rasp", "bevel", "saw", "square", "bead", "plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(not Hood.PLACES.has(forbidden_place), "hood rooms must not take the %s" % forbidden_place)
+	_expect(not Hood.HOURS.has("6"), "hood hours must not take 6")
+	_expect(not Hood.HOURS.has("7"), "hood hours must not take 7")
+	_expect(not Hood.HOURS.has("8"), "hood hours must not take 8")
+	_expect(not Hood.HOURS.has("9"), "hood hours must not take 9")
+	_expect(not Hood.HOURS.has("10"), "hood hours must not take 10")
+	_expect(not Hood.HOURS.has("60"), "hood hours must not take 60")
+	_expect(not Hood.HOURS.has("61"), "hood hours must not take 61")
+	_expect(not Hood.HOURS.has("62"), "hood hours must not take 62")
+	_expect(not Hood.HOURS.has("63"), "hood hours must not take 63")
+	_expect(not Hood.HOURS.has("64"), "hood hours must not take 64")
+	_expect(not Hood.HOURS.has("65"), "hood hours must not take 65")
+	_expect(not Hood.HOURS.has("66"), "hood hours must not take 66")
+	_expect(not Hood.HOURS.has("67"), "hood hours must not take 67")
+	_expect(not Hood.HOURS.has("68"), "hood hours must not take 68")
+	_expect(not Hood.HOURS.has("69"), "hood hours must not take 69")
+	_expect(not Hood.HOURS.has("70"), "hood hours must not take 70")
+	_expect(not Hood.HOURS.has("71"), "hood hours must not take 71")
+	_expect(not Hood.HOURS.has("72"), "hood hours must not take 72")
+	_expect(not Hood.HOURS.has("73"), "hood hours must not take 73")
+	_expect(not Hood.HOURS.has("74"), "hood hours must not take 74")
+	_expect(not Hood.HOURS.has("75"), "hood hours must not take 75")
+	_expect(not Hood.HOURS.has("76"), "hood hours must not take 76")
+	_expect(not Hood.HOURS.has("77"), "hood hours must not take 77")
+	_expect(not Hood.HOURS.has("78"), "hood hours must not take 78")
+	_expect(not Hood.HOURS.has("79"), "hood hours must not take 79")
+	_expect(not Hood.HOURS.has("80"), "hood hours must not take 80")
+	_expect(not Hood.HOURS.has("81"), "hood hours must not take 81")
+	_expect(not Hood.HOURS.has("82"), "hood hours must not take 82")
+	_expect(not Hood.HOURS.has("83"), "hood hours must not take 83")
+	_expect(not Hood.HOURS.has("84"), "hood hours must not take 84")
+	_expect(not Hood.HOURS.has("85"), "hood hours must not take 85")
+	_expect(not Hood.HOURS.has("86"), "hood hours must not take 86")
+	_expect(not Hood.HOURS.has("87"), "hood hours must not take 87")
+	_expect(not Hood.HOURS.has("88"), "hood hours must not take 88")
+	_expect(not Hood.HOURS.has("89"), "hood hours must not take 89")
+	_expect(not Hood.HOURS.has("90"), "hood hours must not take 90")
+	_expect(not Hood.HOURS.has("91"), "hood hours must not take 91")
+	_expect(not Hood.HOURS.has("92"), "hood hours must not take 92")
+	_expect(not Hood.HOURS.has("93"), "hood hours must not take 93")
+	_expect(not Hood.HOURS.has("94"), "hood hours must not take 94")
+	_expect(not Hood.HOURS.has("95"), "hood hours must not take 95")
+	_expect(not Hood.HOURS.has("96"), "hood hours must not take 96")
+	_expect(not Hood.HOURS.has("97"), "hood hours must not take 97")
+	_expect(not Hood.HOURS.has("98"), "hood hours must not take 98")
+	_expect(not Hood.HOURS.has("99"), "hood hours must not take 99")
+	_expect(not Hood.HOURS.has("100"), "hood hours must not take 100")
+	_expect(not Hood.HOURS.has("101"), "hood hours must not take 101")
+	_expect(not Hood.HOURS.has("102"), "hood hours must not take 102")
+	_expect(not Hood.HOURS.has("103"), "hood hours must not take 103")
+	_expect(not Hood.HOURS.has("104"), "hood hours must not take 104")
+	_expect(not Hood.HOURS.has("105"), "hood hours must not take 105")
+	_expect(not Hood.HOURS.has("106"), "hood hours must not take 106")
+	_expect(not Hood.HOURS.has("107"), "hood hours must not take 107")
+	_expect(not Hood.HOURS.has("108"), "hood hours must not take 108")
+	_expect(not Hood.HOURS.has("109"), "hood hours must not take 109")
+	_expect(not Hood.HOURS.has("110"), "hood hours must not take 110")
+	_expect(not Hood.HOURS.has("111"), "hood hours must not take 111")
+	_expect(not Hood.HOURS.has("112"), "hood hours must not take 112")
+	_expect(not Hood.HOURS.has("113"), "hood hours must not take 113")
+	_expect(not Hood.HOURS.has("114"), "hood hours must not take 114")
+	_expect(not Hood.HOURS.has("115"), "hood hours must not take 115")
+	_expect(not Hood.HOURS.has("116"), "hood hours must not take 116")
+	_expect(not Hood.HOURS.has("117"), "hood hours must not take 117")
+	_expect(not Hood.HOURS.has("118"), "hood hours must not take 118")
+	_expect(not Hood.HOURS.has("119"), "hood hours must not take 119")
+	_expect(not Hood.HOURS.has("120"), "hood hours must not take 120")
+	_expect(not Hood.HOURS.has("121"), "hood hours must not take 121")
+	_expect(not Hood.HOURS.has("122"), "hood hours must not take 122")
+	_expect(not Hood.HOURS.has("123"), "hood hours must not take 123")
+	_expect(not Hood.HOURS.has("124"), "hood hours must not take 124")
+	_expect(not Hood.HOURS.has("125"), "hood hours must not take 125")
+	_expect(not Hood.HOURS.has("126"), "hood hours must not take 126")
+	_expect(not Hood.HOURS.has("127"), "hood hours must not take 127")
+	_expect(not Hood.HOURS.has("128"), "hood hours must not take 128")
+	_expect(not Hood.HOURS.has("129"), "hood hours must not take 129")
+	_expect(not Hood.HOURS.has("130"), "hood hours must not take 130")
+	_expect(not Hood.HOURS.has("131"), "hood hours must not take 131")
+	_expect(not Hood.HOURS.has("132"), "hood hours must not take 132")
+	_expect(not Hood.HOURS.has("133"), "hood hours must not take 133")
+	_expect(not Hood.HOURS.has("134"), "hood hours must not take 134")
+	_expect(not Hood.HOURS.has("135"), "hood hours must not take 135")
+	_expect(not Hood.HOURS.has("136"), "hood hours must not take 136")
+	_expect(not Hood.HOURS.has("137"), "hood hours must not take 137")
+	_expect(not Hood.HOURS.has("138"), "hood hours must not take 138")
+	_expect(not Hood.HOURS.has("139"), "hood hours must not take 139")
+	_expect(not Hood.HOURS.has("140"), "hood hours must not take 140")
+	_expect(not Hood.HOURS.has("141"), "hood hours must not take 141")
+	_expect(not Hood.HOURS.has("142"), "hood hours must not take 142")
+	_expect(not Hood.HOURS.has("143"), "hood hours must not take 143")
+	_expect(not Hood.HOURS.has("144"), "hood hours must not take 144")
+	_expect(not Hood.HOURS.has("145"), "hood hours must not take 145")
+	_expect(not Hood.HOURS.has("146"), "hood hours must not take 146")
+	_expect(not Hood.HOURS.has("147"), "hood hours must not take 147")
+	_expect(not Hood.HOURS.has("148"), "hood hours must not take 148")
+	_expect(not Hood.HOURS.has("149"), "hood hours must not take 149")
+	_expect(not Hood.HOURS.has("150"), "hood hours must not take 150")
+	_expect(not Hood.HOURS.has("151"), "hood hours must not take 151")
+	_expect(not Hood.HOURS.has("152"), "hood hours must not take 152")
+	_expect(not Hood.HOURS.has("153"), "hood hours must not take 153")
+	_expect(not Hood.HOURS.has("154"), "hood hours must not take 154")
+	_expect(not Hood.HOURS.has("155"), "hood hours must not take 155")
+	_expect(not Hood.HOURS.has("156"), "hood hours must not take 156")
+	_expect(not Hood.HOURS.has("157"), "hood hours must not take 157")
+	_expect(not Hood.HOURS.has("158"), "hood hours must not take 158")
+	_expect(not Hood.HOURS.has("159"), "hood hours must not take 159")
+	_expect(not Hood.HOURS.has("160"), "hood hours must not take 160")
+	_expect(not Hood.HOURS.has("161"), "hood hours must not take 161")
+	_expect(not Hood.HOURS.has("162"), "hood hours must not take 162")
+	_expect(not Hood.HOURS.has("163"), "hood hours must not take 163")
+	_expect(not Hood.HOURS.has("164"), "hood hours must not take 164")
+	_expect(not Hood.HOURS.has("165"), "hood hours must not take 165")
+	_expect(not Hood.HOURS.has("166"), "hood hours must not take 166")
+	_expect(not Hood.HOURS.has("167"), "hood hours must not take 167")
+	_expect(not Hood.HOURS.has("168"), "hood hours must not take 168")
+	_expect(not Hood.HOURS.has("169"), "hood hours must not take 169")
+	_expect(not Hood.HOURS.has("170"), "hood hours must not take 170")
+
+	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal", "The orchard graft", "The dye vat", "The tar kettle", "The cork press", "The net loft", "The cask hoop", "The linen fold", "The dovetail", "The mortise", "The rebate", "The housing", "The tenon", "The bridle", "The dado", "The spline", "The mitre", "The lap", "The scarf", "The finger", "The haunch", "The dowel", "The tongue", "The quirk", "The chamfer", "The scotia", "The cyma", "The cavetto", "The reed", "The annulet", "The hood"], "case list is %s" % str(titles))
 
 
 
@@ -19139,7 +20544,7 @@ func _test_menu_opens_either_case() -> void:
 		root._ready()
 	var menu_blob := _visible_label_blob(root)
 	_expect(get_root().size == Vector2i(1280, 800), "case window is %s" % str(get_root().size))
-	_expect(menu_blob.find("Forty-four files") >= 0, "menu does not offer forty-four files: %s" % menu_blob)
+	_expect(menu_blob.find("Forty-six files") >= 0, "menu does not offer forty-six files: %s" % menu_blob)
 	_expect(menu_blob.find("CW-07") >= 0, "menu omits CW-07")
 	_expect(menu_blob.find("The hive smoker") >= 0, "menu omits The hive smoker")
 	_expect(menu_blob.find("CW-08") >= 0, "menu omits CW-08")
@@ -19216,6 +20621,10 @@ func _test_menu_opens_either_case() -> void:
 	_expect(menu_blob.find("The cavetto") >= 0, "menu omits The cavetto")
 	_expect(menu_blob.find("CW-44") >= 0, "menu omits CW-44")
 	_expect(menu_blob.find("The reed") >= 0, "menu omits The reed")
+	_expect(menu_blob.find("CW-45") >= 0, "menu omits CW-45")
+	_expect(menu_blob.find("The annulet") >= 0, "menu omits The annulet")
+	_expect(menu_blob.find("CW-46") >= 0, "menu omits CW-46")
+	_expect(menu_blob.find("The hood") >= 0, "menu omits The hood")
 	_expect(root.get_child_count() > 0, "main scene built %d children" % root.get_child_count())
 	_press(root, "How to play")
 	var howto := _visible_label_blob(root)
@@ -19263,6 +20672,8 @@ func _test_menu_opens_either_case() -> void:
 	_expect(howto.find("The cyma") >= 0, "how to play omits The cyma")
 	_expect(howto.find("The cavetto") >= 0, "how to play omits The cavetto")
 	_expect(howto.find("The reed") >= 0, "how to play omits The reed")
+	_expect(howto.find("The annulet") >= 0, "how to play omits The annulet")
+	_expect(howto.find("The hood") >= 0, "how to play omits The hood")
 	_expect(howto.find("names that slot") >= 0, "how to play omits the empty-slot rule")
 	_press(root, "Back to the menu")
 	_expect(_find_visible_button(root, "Open The spare key") != null, "menu is missing The spare key")
@@ -19309,6 +20720,8 @@ func _test_menu_opens_either_case() -> void:
 	_expect(_find_visible_button(root, "Open The cyma") != null, "menu is missing The cyma")
 	_expect(_find_visible_button(root, "Open The cavetto") != null, "menu is missing The cavetto")
 	_expect(_find_visible_button(root, "Open The reed") != null, "menu is missing The reed")
+	_expect(_find_visible_button(root, "Open The annulet") != null, "menu is missing The annulet")
+	_expect(_find_visible_button(root, "Open The hood") != null, "menu is missing The hood")
 	_press(root, "Open The rehearsal score")
 	var rehearsal_open := _visible_label_blob(root)
 	_expect(rehearsal_open.find("Cut list") >= 0, "rehearsal file did not open")
@@ -24622,6 +26035,1091 @@ func _test_menu_opens_either_case() -> void:
 	_expect(dowel_after_reed.find("fits every exhibit") >= 0, "dowel board rejected the true theory after The reed: %s" % dowel_after_reed)
 	_expect(dowel_after_reed.find("Faye (dowel hand) cut the dowel in the bit at 128") >= 0, "dowel board timeline after The reed: %s" % dowel_after_reed)
 	_press(root, "Menu")
+	_press(root, "Open The annulet")
+	var annulet_open := _visible_label_blob(root)
+	_expect(annulet_open.find("Spruce chit") >= 0, "annulet burnisher did not open")
+	_expect(annulet_open.find("Hinny note") >= 0, "annulet burnisher did not show its exhibits")
+	_expect(annulet_open.find("CW-45") >= 0, "annulet burnisher omits CW-45")
+	_expect(annulet_open.find("Billet sight") >= 0, "annulet burnisher omits Billet sight")
+	_expect(annulet_open.find("Poplar bill") >= 0, "annulet burnisher omits Poplar bill")
+	_expect(annulet_open.find("Osier slate") >= 0, "annulet burnisher omits Osier slate")
+	_expect(annulet_open.find("Burnisher card") >= 0, "annulet burnisher omits Burnisher card")
+	_expect(annulet_open.find("Stipple slip") >= 0, "annulet burnisher omits Stipple slip")
+	_expect(annulet_open.find("Annulet leaf") >= 0, "annulet burnisher omits Annulet leaf")
+	_expect(annulet_open.find("Forge order") >= 0, "annulet burnisher omits Forge order")
+	_expect(annulet_open.find("Drawshave card") >= 0, "annulet burnisher omits the drawshave card")
+	_expect(annulet_open.find("Complaint slip") == -1, "spare key papers showed inside The annulet")
+	_expect(annulet_open.find("Cut list") == -1, "rehearsal papers showed inside The annulet")
+	_expect(annulet_open.find("Move order") == -1, "gilt stamp papers showed inside The annulet")
+	_expect(annulet_open.find("Whistle slip") == -1, "ferry bell papers showed inside The annulet")
+	_expect(annulet_open.find("Frost note") == -1, "weather slate papers showed inside The annulet")
+	_expect(annulet_open.find("Trough tag") == -1, "loom shuttle papers showed inside The annulet")
+	_expect(annulet_open.find("Fuel line") == -1, "hive smoker papers showed inside The annulet")
+	_expect(annulet_open.find("Weight line") == -1, "glass pontil papers showed inside The annulet")
+	_expect(annulet_open.find("Lock line") == -1, "press proof papers showed inside The annulet")
+	_expect(annulet_open.find("Cup line") == -1, "assay cup papers showed inside The annulet")
+	_expect(annulet_open.find("Mark line") == -1, "kiln chalk papers showed inside The annulet")
+	_expect(annulet_open.find("Ledger line") == -1, "tide ledger papers showed inside The annulet")
+	_expect(annulet_open.find("Bell line") == -1, "night bell papers showed inside The annulet")
+	_expect(annulet_open.find("Salt line") == -1, "salt mark papers showed inside The annulet")
+	_expect(annulet_open.find("Oil note") == -1, "wick trim papers showed inside The annulet")
+	_expect(annulet_open.find("Gather note") == -1, "glass anneal papers showed inside The annulet")
+	_expect(annulet_open.find("Scion note") == -1, "orchard graft papers showed inside The annulet")
+	_expect(annulet_open.find("Winder chit") == -1, "dye vat papers showed inside The annulet")
+	_expect(annulet_open.find("Rope chit") == -1, "tar kettle papers showed inside The annulet")
+	_expect(annulet_open.find("Cutter chit") == -1, "cork press papers showed inside The annulet")
+	_expect(annulet_open.find("Mesh chit") == -1, "net loft papers showed inside The annulet")
+	_expect(annulet_open.find("Hoop chit") == -1, "cask hoop papers showed inside The annulet")
+	_expect(annulet_open.find("Shears chit") == -1, "linen fold papers showed inside The annulet")
+	_expect(annulet_open.find("Apron sight") == -1, "dovetail papers showed inside The annulet")
+	_expect(annulet_open.find("Peg hook") == -1, "dovetail papers showed inside The annulet")
+	_expect(annulet_open.find("Joint slate") == -1, "dovetail papers showed inside The annulet")
+	_expect(annulet_open.find("Clamp card") == -1, "dovetail papers showed inside The annulet")
+	_expect(annulet_open.find("Sweep slip") == -1, "dovetail papers showed inside The annulet")
+	_expect(annulet_open.find("Cut leaf") == -1, "dovetail papers showed inside The annulet")
+	_expect(annulet_open.find("Joint note") == -1, "dovetail papers showed inside The annulet")
+	_expect(annulet_open.find("Jaw order") == -1, "dovetail papers showed inside The annulet")
+	_expect(annulet_open.find("CW-24") == -1, "dovetail file code stayed up inside The annulet")
+	_expect(annulet_open.find("Chisel chit") == -1, "mortise papers stayed up inside The annulet")
+	_expect(annulet_open.find("Awl sight") == -1, "mortise papers showed inside The annulet")
+	_expect(annulet_open.find("Wedge hook") == -1, "mortise papers showed inside The annulet")
+	_expect(annulet_open.find("Tenon slate") == -1, "mortise papers showed inside The annulet")
+	_expect(annulet_open.find("Brush slip") == -1, "mortise papers showed inside The annulet")
+	_expect(annulet_open.find("Bore leaf") == -1, "mortise papers showed inside The annulet")
+	_expect(annulet_open.find("Tenon note") == -1, "mortise papers showed inside The annulet")
+	_expect(annulet_open.find("Rack order") == -1, "mortise papers showed inside The annulet")
+	_expect(annulet_open.find("CW-25") == -1, "mortise file code stayed up inside The annulet")
+	_expect(annulet_open.find("Plane chit") == -1, "rebate papers stayed up inside The annulet")
+	_expect(annulet_open.find("Gauge sight") == -1, "rebate papers showed inside The annulet")
+	_expect(annulet_open.find("Shim hook") == -1, "rebate papers showed inside The annulet")
+	_expect(annulet_open.find("Shoulder slate") == -1, "rebate papers showed inside The annulet")
+	_expect(annulet_open.find("Fence card") == -1, "rebate papers showed inside The annulet")
+	_expect(annulet_open.find("Oil slip") == -1, "rebate papers showed inside The annulet")
+	_expect(annulet_open.find("Scribe leaf") == -1, "rebate papers showed inside The annulet")
+	_expect(annulet_open.find("Shoulder note") == -1, "rebate papers showed inside The annulet")
+	_expect(annulet_open.find("CW-26") == -1, "rebate file code stayed up inside The annulet")
+	_expect(annulet_open.find("Saw chit") == -1, "housing papers stayed up inside The annulet")
+	_expect(annulet_open.find("Square sight") == -1, "housing papers showed inside The annulet")
+	_expect(annulet_open.find("Fillet hook") == -1, "housing papers showed inside The annulet")
+	_expect(annulet_open.find("Trench slate") == -1, "housing papers showed inside The annulet")
+	_expect(annulet_open.find("Stock card") == -1, "housing papers showed inside The annulet")
+	_expect(annulet_open.find("Chalk slip") == -1, "housing papers showed inside The annulet")
+	_expect(annulet_open.find("Mark leaf") == -1, "housing papers showed inside The annulet")
+	_expect(annulet_open.find("Trench note") == -1, "housing papers showed inside The annulet")
+	_expect(annulet_open.find("CW-27") == -1, "housing file code stayed up inside The annulet")
+	_expect(annulet_open.find("Gouge chit") == -1, "tenon papers stayed up inside The annulet")
+	_expect(annulet_open.find("Rasp sight") == -1, "tenon papers showed inside The annulet")
+	_expect(annulet_open.find("Dowel hook") == -1, "tenon papers showed inside The annulet")
+	_expect(annulet_open.find("Haunch slate") == -1, "tenon papers showed inside The annulet")
+	_expect(annulet_open.find("Guide card") == -1, "tenon papers showed inside The annulet")
+	_expect(annulet_open.find("Hone slip") == -1, "tenon papers showed inside The annulet")
+	_expect(annulet_open.find("Nick leaf") == -1, "tenon papers showed inside The annulet")
+	_expect(annulet_open.find("CW-28") == -1, "tenon file code stayed up inside The annulet")
+	_expect(annulet_open.find("Router chit") == -1, "bridle papers stayed up inside The annulet")
+	_expect(annulet_open.find("Stippler sight") == -1, "bridle papers showed inside The annulet")
+	_expect(annulet_open.find("Spline hook") == -1, "bridle papers showed inside The annulet")
+	_expect(annulet_open.find("Tongue slate") == -1, "bridle papers showed inside The annulet")
+	_expect(annulet_open.find("Templet card") == -1, "bridle papers showed inside The annulet")
+	_expect(annulet_open.find("Strop slip") == -1, "bridle papers showed inside The annulet")
+	_expect(annulet_open.find("Notch leaf") == -1, "bridle papers showed inside The annulet")
+	_expect(annulet_open.find("Tongue note") == -1, "bridle papers showed inside The annulet")
+	_expect(annulet_open.find("CW-29") == -1, "bridle file code stayed up inside The annulet")
+	_expect(annulet_open.find("Plough chit") == -1, "dado papers stayed up inside The annulet")
+	_expect(annulet_open.find("Float sight") == -1, "dado papers showed inside The annulet")
+	_expect(annulet_open.find("Cleat hook") == -1, "dado papers showed inside The annulet")
+	_expect(annulet_open.find("Groove slate") == -1, "dado papers showed inside The annulet")
+	_expect(annulet_open.find("Spur card") == -1, "dado papers showed inside The annulet")
+	_expect(annulet_open.find("Whet slip") == -1, "dado papers showed inside The annulet")
+	_expect(annulet_open.find("Score leaf") == -1, "dado papers showed inside The annulet")
+	_expect(annulet_open.find("Groove note") == -1, "dado papers showed inside The annulet")
+	_expect(annulet_open.find("CW-30") == -1, "dado file code stayed up inside The annulet")
+	_expect(annulet_open.find("Slot chit") == -1, "spline papers stayed up inside The annulet")
+	_expect(annulet_open.find("Rest sight") == -1, "spline papers showed inside The annulet")
+	_expect(annulet_open.find("Feather hook") == -1, "spline papers showed inside The annulet")
+	_expect(annulet_open.find("Slot slate") == -1, "spline papers showed inside The annulet")
+	_expect(annulet_open.find("Key card") == -1, "spline papers showed inside The annulet")
+	_expect(annulet_open.find("Cheek slip") == -1, "spline papers showed inside The annulet")
+	_expect(annulet_open.find("Slot leaf") == -1, "spline papers showed inside The annulet")
+	_expect(annulet_open.find("Slot note") == -1, "spline papers showed inside The annulet")
+	_expect(annulet_open.find("Dry order") == -1, "spline papers showed inside The annulet")
+	_expect(annulet_open.find("CW-31") == -1, "spline file code stayed up inside The annulet")
+	_expect(annulet_open.find("Arris chit") == -1, "mitre papers stayed up inside The annulet")
+	_expect(annulet_open.find("Horn sight") == -1, "mitre papers showed inside The annulet")
+	_expect(annulet_open.find("Offcut hook") == -1, "mitre papers showed inside The annulet")
+	_expect(annulet_open.find("Arris slate") == -1, "mitre papers showed inside The annulet")
+	_expect(annulet_open.find("Stop card") == -1, "mitre papers showed inside The annulet")
+	_expect(annulet_open.find("Dress slip") == -1, "mitre papers showed inside The annulet")
+	_expect(annulet_open.find("Arris leaf") == -1, "mitre papers showed inside The annulet")
+	_expect(annulet_open.find("Arris note") == -1, "mitre papers showed inside The annulet")
+	_expect(annulet_open.find("Brush order") == -1, "mitre papers showed inside The annulet")
+	_expect(annulet_open.find("CW-32") == -1, "mitre file code stayed up inside The annulet")
+	_expect(annulet_open.find("Grain chit") == -1, "lap papers stayed up inside The annulet")
+	_expect(annulet_open.find("Crest sight") == -1, "lap papers showed inside The annulet")
+	_expect(annulet_open.find("Paring hook") == -1, "lap papers showed inside The annulet")
+	_expect(annulet_open.find("Grain slate") == -1, "lap papers showed inside The annulet")
+	_expect(annulet_open.find("Brad card") == -1, "lap papers showed inside The annulet")
+	_expect(annulet_open.find("Skim slip") == -1, "lap papers showed inside The annulet")
+	_expect(annulet_open.find("Grain leaf") == -1, "lap papers showed inside The annulet")
+	_expect(annulet_open.find("Grain note") == -1, "lap papers showed inside The annulet")
+	_expect(annulet_open.find("Oil order") == -1, "lap papers showed inside The annulet")
+	_expect(annulet_open.find("CW-33") == -1, "lap file code stayed up inside The annulet")
+	_expect(annulet_open.find("Shoulder chit") == -1, "scarf papers stayed up inside The annulet")
+	_expect(annulet_open.find("Sole sight") == -1, "scarf papers showed inside The annulet")
+	_expect(annulet_open.find("Shaving hook") == -1, "scarf papers showed inside The annulet")
+	_expect(annulet_open.find("Edge slate") == -1, "scarf papers showed inside The annulet")
+	_expect(annulet_open.find("Wedge card") == -1, "scarf papers showed inside The annulet")
+	_expect(annulet_open.find("Film slip") == -1, "scarf papers showed inside The annulet")
+	_expect(annulet_open.find("Scarf leaf") == -1, "scarf papers showed inside The annulet")
+	_expect(annulet_open.find("Scarf note") == -1, "scarf papers showed inside The annulet")
+	_expect(annulet_open.find("Finish order") == -1, "scarf papers showed inside The annulet")
+	_expect(annulet_open.find("CW-34") == -1, "scarf file code stayed up inside The annulet")
+	_expect(annulet_open.find("Socket chit") == -1, "finger papers showed inside The annulet")
+	_expect(annulet_open.find("Burr sight") == -1, "finger papers showed inside The annulet")
+	_expect(annulet_open.find("Chip bill") == -1, "finger papers showed inside The annulet")
+	_expect(annulet_open.find("Face slate") == -1, "finger papers showed inside The annulet")
+	_expect(annulet_open.find("Catch card") == -1, "finger papers showed inside The annulet")
+	_expect(annulet_open.find("Sheen slip") == -1, "finger papers showed inside The annulet")
+	_expect(annulet_open.find("Finger leaf") == -1, "finger papers showed inside The annulet")
+	_expect(annulet_open.find("Finger note") == -1, "finger papers showed inside The annulet")
+	_expect(annulet_open.find("Rub order") == -1, "finger papers showed inside The annulet")
+	_expect(annulet_open.find("CW-35") == -1, "finger file code stayed up inside The annulet")
+	_expect(annulet_open.find("so the bevel would take the haunch") == -1, "tenon aim stayed up inside The annulet")
+	_expect(annulet_open.find("Cheek chit") == -1, "haunch papers showed inside The annulet")
+	_expect(annulet_open.find("Toe sight") == -1, "haunch papers showed inside The annulet")
+	_expect(annulet_open.find("Sliver bill") == -1, "haunch papers showed inside The annulet")
+	_expect(annulet_open.find("Bed slate") == -1, "haunch papers showed inside The annulet")
+	_expect(annulet_open.find("Pin card") == -1, "haunch papers showed inside The annulet")
+	_expect(annulet_open.find("Wipe slip") == -1, "haunch papers showed inside The annulet")
+	_expect(annulet_open.find("Haunch leaf") == -1, "haunch papers showed inside The annulet")
+	_expect(annulet_open.find("Haunch note") == -1, "haunch papers showed inside The annulet")
+	_expect(annulet_open.find("Stone order") == -1, "haunch papers showed inside The annulet")
+	_expect(annulet_open.find("CW-36") == -1, "haunch file code stayed up inside The annulet")
+	_expect(annulet_open.find("so the cheek would take the haunch") == -1, "haunch aim stayed up inside The annulet")
+	_expect(annulet_open.find("Bore chit") == -1, "dowel papers showed inside The annulet")
+	_expect(annulet_open.find("Point sight") == -1, "dowel papers showed inside The annulet")
+	_expect(annulet_open.find("Curl bill") == -1, "dowel papers showed inside The annulet")
+	_expect(annulet_open.find("Flute slate") == -1, "dowel papers showed inside The annulet")
+	_expect(annulet_open.find("Chuck card") == -1, "dowel papers showed inside The annulet")
+	_expect(annulet_open.find("Wax slip") == -1, "dowel papers showed inside The annulet")
+	_expect(annulet_open.find("Dowel leaf") == -1, "dowel papers showed inside The annulet")
+	_expect(annulet_open.find("Dowel note") == -1, "dowel papers showed inside The annulet")
+	_expect(annulet_open.find("Hone order") == -1, "dowel papers showed inside The annulet")
+	_expect(annulet_open.find("CW-37") == -1, "dowel file code stayed up inside The annulet")
+	_expect(annulet_open.find("Brace card") == -1, "dowel papers showed inside The annulet")
+	_expect(annulet_open.find("so the bore would take the dowel") == -1, "dowel aim stayed up inside The annulet")
+	_expect(annulet_open.find("Groove chit") == -1, "tongue papers showed inside The annulet")
+	_expect(annulet_open.find("Face sight") == -1, "tongue papers showed inside The annulet")
+	_expect(annulet_open.find("Peel bill") == -1, "tongue papers showed inside The annulet")
+	_expect(annulet_open.find("Kerf slate") == -1, "tongue papers showed inside The annulet")
+	_expect(annulet_open.find("Turn card") == -1, "tongue papers showed inside The annulet")
+	_expect(annulet_open.find("Tallow slip") == -1, "tongue papers showed inside The annulet")
+	_expect(annulet_open.find("Tongue leaf") == -1, "tongue papers showed inside The annulet")
+	_expect(annulet_open.find("Filly note") == -1, "tongue papers showed inside The annulet")
+	_expect(annulet_open.find("Grind order") == -1, "tongue papers showed inside The annulet")
+	_expect(annulet_open.find("Scribe card") == -1, "tongue papers showed inside The annulet")
+	_expect(annulet_open.find("CW-38") == -1, "tongue file code stayed up inside The annulet")
+	_expect(annulet_open.find("so the groove would take the tongue") == -1, "tongue aim stayed up inside The annulet")
+	_expect(annulet_open.find("Ovolo chit") == -1, "quirk papers showed inside The annulet")
+	_expect(annulet_open.find("Bolt sight") == -1, "quirk papers showed inside The annulet")
+	_expect(annulet_open.find("Astragal bill") == -1, "quirk papers showed inside The annulet")
+	_expect(annulet_open.find("Score slate") == -1, "quirk papers showed inside The annulet")
+	_expect(annulet_open.find("Snib card") == -1, "quirk papers showed inside The annulet")
+	_expect(annulet_open.find("Grease slip") == -1, "quirk papers showed inside The annulet")
+	_expect(annulet_open.find("Quirk leaf") == -1, "quirk papers showed inside The annulet")
+	_expect(annulet_open.find("Gelding note") == -1, "quirk papers showed inside The annulet")
+	_expect(annulet_open.find("Whet order") == -1, "quirk papers showed inside The annulet")
+	_expect(annulet_open.find("Veiner card") == -1, "quirk papers showed inside The annulet")
+	_expect(annulet_open.find("CW-39") == -1, "quirk file code stayed up inside The annulet")
+	_expect(annulet_open.find("so the ovolo would take the quirk") == -1, "quirk aim stayed up inside The annulet")
+	_expect(annulet_open.find("Cove chit") == -1, "chamfer papers showed inside The annulet")
+	_expect(annulet_open.find("Tooth sight") == -1, "chamfer papers showed inside The annulet")
+	_expect(annulet_open.find("Cant bill") == -1, "chamfer papers showed inside The annulet")
+	_expect(annulet_open.find("Wisp slate") == -1, "chamfer papers showed inside The annulet")
+	_expect(annulet_open.find("File card") == -1, "chamfer papers showed inside The annulet")
+	_expect(annulet_open.find("Soap slip") == -1, "chamfer papers showed inside The annulet")
+	_expect(annulet_open.find("Chamfer leaf") == -1, "chamfer papers showed inside The annulet")
+	_expect(annulet_open.find("Stallion note") == -1, "chamfer papers showed inside The annulet")
+	_expect(annulet_open.find("Fettle order") == -1, "chamfer papers showed inside The annulet")
+	_expect(annulet_open.find("Travisher card") == -1, "chamfer papers showed inside The annulet")
+	_expect(annulet_open.find("CW-40") == -1, "chamfer file code stayed up inside The annulet")
+	_expect(annulet_open.find("so the cove would take the chamfer") == -1, "chamfer aim stayed up inside The annulet")
+	_expect(annulet_open.find("Torus chit") == -1, "scotia papers showed inside The annulet")
+	_expect(annulet_open.find("Cusp sight") == -1, "scotia papers showed inside The annulet")
+	_expect(annulet_open.find("Fascia bill") == -1, "scotia papers showed inside The annulet")
+	_expect(annulet_open.find("Soot slate") == -1, "scotia papers showed inside The annulet")
+	_expect(annulet_open.find("Riffler card") == -1, "scotia papers showed inside The annulet")
+	_expect(annulet_open.find("Pumice slip") == -1, "scotia papers showed inside The annulet")
+	_expect(annulet_open.find("Scotia leaf") == -1, "scotia papers showed inside The annulet")
+	_expect(annulet_open.find("Yearling note") == -1, "scotia papers showed inside The annulet")
+	_expect(annulet_open.find("Peen order") == -1, "scotia papers showed inside The annulet")
+	_expect(annulet_open.find("Scorp card") == -1, "scotia papers showed inside The annulet")
+	_expect(annulet_open.find("CW-41") == -1, "scotia file code stayed up inside The annulet")
+	_expect(annulet_open.find("so the torus would take the scotia") == -1, "scotia aim stayed up inside The annulet")
+	_expect(annulet_open.find("Echinus chit") == -1, "cyma papers showed inside The annulet")
+	_expect(annulet_open.find("Beak sight") == -1, "cyma papers showed inside The annulet")
+	_expect(annulet_open.find("Corona bill") == -1, "cyma papers showed inside The annulet")
+	_expect(annulet_open.find("Garnet slate") == -1, "cyma papers showed inside The annulet")
+	_expect(annulet_open.find("Inshave card") == -1, "cyma papers showed inside The annulet")
+	_expect(annulet_open.find("Rouge slip") == -1, "cyma papers showed inside The annulet")
+	_expect(annulet_open.find("Cyma leaf") == -1, "cyma papers showed inside The annulet")
+	_expect(annulet_open.find("Jennet note") == -1, "cyma papers showed inside The annulet")
+	_expect(annulet_open.find("Chase order") == -1, "cyma papers showed inside The annulet")
+	_expect(annulet_open.find("Froe card") == -1, "cyma papers showed inside The annulet")
+	_expect(annulet_open.find("CW-42") == -1, "cyma file code stayed up inside The annulet")
+	_expect(annulet_open.find("so the echinus would take the cyma") == -1, "cyma aim stayed up inside The annulet")
+	_expect(annulet_open.find("Thumbnail chit") == -1, "cavetto papers showed inside The annulet")
+	_expect(annulet_open.find("Drip sight") == -1, "cavetto papers showed inside The annulet")
+	_expect(annulet_open.find("Staff bill") == -1, "cavetto papers showed inside The annulet")
+	_expect(annulet_open.find("Cedar slate") == -1, "cavetto papers showed inside The annulet")
+	_expect(annulet_open.find("Bullnose card") == -1, "cavetto papers showed inside The annulet")
+	_expect(annulet_open.find("Scrape slip") == -1, "cavetto papers showed inside The annulet")
+	_expect(annulet_open.find("Cavetto leaf") == -1, "cavetto papers showed inside The annulet")
+	_expect(annulet_open.find("Palfrey note") == -1, "cavetto papers showed inside The annulet")
+	_expect(annulet_open.find("Knurl order") == -1, "cavetto papers showed inside The annulet")
+	_expect(annulet_open.find("Twibil card") == -1, "cavetto papers showed inside The annulet")
+	_expect(annulet_open.find("CW-43") == -1, "cavetto file code stayed up inside The annulet")
+	_expect(annulet_open.find("so the thumbnail would take the cavetto") == -1, "cavetto aim stayed up inside The annulet")
+	_expect(annulet_open.find("Walnut chit") == -1, "reed papers showed inside The annulet")
+	_expect(annulet_open.find("Deal sight") == -1, "reed papers showed inside The annulet")
+	_expect(annulet_open.find("Maple bill") == -1, "reed papers showed inside The annulet")
+	_expect(annulet_open.find("Larch slate") == -1, "reed papers showed inside The annulet")
+	_expect(annulet_open.find("Nosing card") == -1, "reed papers showed inside The annulet")
+	_expect(annulet_open.find("Blue slip") == -1, "reed papers showed inside The annulet")
+	_expect(annulet_open.find("Reed leaf") == -1, "reed papers showed inside The annulet")
+	_expect(annulet_open.find("Weanling note") == -1, "reed papers showed inside The annulet")
+	_expect(annulet_open.find("Temper order") == -1, "reed papers showed inside The annulet")
+	_expect(annulet_open.find("Rounder card") == -1, "reed papers showed inside The annulet")
+	_expect(annulet_open.find("CW-44") == -1, "reed file code stayed up inside The annulet")
+	_expect(annulet_open.find("so the walnut would take the reed") == -1, "reed aim stayed up inside The annulet")
+	_press(root, "Submit theory")
+	var empty_annulet := _verdict_text(root)
+	_expect(empty_annulet.find("who cut the annulet") >= 0, "empty annulet board: %s" % empty_annulet)
+	_expect(empty_annulet.find("where they cut the annulet") >= 0, "empty annulet board: %s" % empty_annulet)
+	_expect(empty_annulet.find("at which hour they cut the annulet") >= 0, "empty annulet board: %s" % empty_annulet)
+	_expect(empty_annulet.find("who scratched the quirk") == -1, "empty chamfer board used a quirk slot: %s" % empty_annulet)
+	_expect(empty_annulet.find("who cut the tongue") == -1, "empty chamfer board used a tongue slot: %s" % empty_annulet)
+	_expect(empty_annulet.find("who cut the dowel") == -1, "empty chamfer board used a dowel slot: %s" % empty_annulet)
+	_expect(empty_annulet.find("who cut the chamfer") == -1, "empty scotia board used a chamfer slot: %s" % empty_annulet)
+	_expect(empty_annulet.find("where they cut the chamfer") == -1, "empty scotia board used a chamfer slot: %s" % empty_annulet)
+	_expect(empty_annulet.find("at which hour they cut the chamfer") == -1, "empty scotia board used a chamfer slot: %s" % empty_annulet)
+	_expect(empty_annulet.find("who cut the scotia") == -1, "empty annulet board used a scotia slot: %s" % empty_annulet)
+	_expect(empty_annulet.find("where they cut the scotia") == -1, "empty annulet board used a scotia slot: %s" % empty_annulet)
+	_expect(empty_annulet.find("at which hour they cut the scotia") == -1, "empty annulet board used a scotia slot: %s" % empty_annulet)
+	_expect(empty_annulet.find("who cut the cyma") == -1, "empty annulet board used a cyma slot: %s" % empty_annulet)
+	_expect(empty_annulet.find("where they cut the cyma") == -1, "empty annulet board used a cyma slot: %s" % empty_annulet)
+	_expect(empty_annulet.find("at which hour they cut the cyma") == -1, "empty annulet board used a cyma slot: %s" % empty_annulet)
+	_expect(empty_annulet.find("who cut the cavetto") == -1, "empty annulet board used a cavetto slot: %s" % empty_annulet)
+	_expect(empty_annulet.find("where they cut the cavetto") == -1, "empty annulet board used a cavetto slot: %s" % empty_annulet)
+	_expect(empty_annulet.find("at which hour they cut the cavetto") == -1, "empty annulet board used a cavetto slot: %s" % empty_annulet)
+	_expect(empty_annulet.find("who cut the reed") == -1, "empty annulet board used a reed slot: %s" % empty_annulet)
+	_expect(empty_annulet.find("where they cut the reed") == -1, "empty annulet board used a reed slot: %s" % empty_annulet)
+	_expect(empty_annulet.find("at which hour they cut the reed") == -1, "empty annulet board used a reed slot: %s" % empty_annulet)
+	_expect(empty_annulet.to_lower().find("conflict") == -1, "empty chamfer board talked about a conflict: %s" % empty_annulet)
+	_press(root, "Edith")
+	_press(root, "Burnisher")
+	_press(root, "166")
+	_press(root, "Submit theory")
+	var annulet_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(annulet_miss, Annulet, {"who": "Edith", "place": "burnisher", "hour": "166"})
+	_expect(Annulet.conflicting_ids({"who": "Edith", "place": "burnisher", "hour": "166"}).size() == 9, "Edith / burnisher / 166 should contradict every exhibit")
+	_expect(annulet_miss.find("Spruce chit") >= 0, "wrong triple reply omits Spruce chit: %s" % annulet_miss)
+	_expect(annulet_miss.find("Billet sight") >= 0, "wrong triple reply omits Billet sight: %s" % annulet_miss)
+	_expect(annulet_miss.find("Poplar bill") >= 0, "wrong triple reply omits Poplar bill: %s" % annulet_miss)
+	_expect(annulet_miss.find("Osier slate") >= 0, "wrong triple reply omits Osier slate: %s" % annulet_miss)
+	_expect(annulet_miss.find("Burnisher card") >= 0, "wrong triple reply omits Burnisher card: %s" % annulet_miss)
+	_expect(annulet_miss.find("Stipple slip") >= 0, "wrong triple reply omits Stipple slip: %s" % annulet_miss)
+	_expect(annulet_miss.find("Annulet leaf") >= 0, "wrong triple reply omits Annulet leaf: %s" % annulet_miss)
+	_expect(annulet_miss.find("Hinny note") >= 0, "wrong triple reply omits Hinny note: %s" % annulet_miss)
+	_expect(annulet_miss.find("Forge order") >= 0, "wrong triple reply omits Forge order: %s" % annulet_miss)
+	_press(root, "Clive")
+	_press(root, "Beech")
+	_press(root, "168")
+	_press(root, "Submit theory")
+	var annulet_accepted := _verdict_text(root)
+	_expect(annulet_accepted.find("fits every exhibit") >= 0, "annulet board rejected the true theory: %s" % annulet_accepted)
+	_expect(annulet_accepted.find(ANNULET_TIMELINE) >= 0, "annulet board timeline: %s" % annulet_accepted)
+	_expect(annulet_accepted.find("Clive (annulet hand) cut the annulet in the beech at 168") >= 0, "annulet board omits Clive at 168: %s" % annulet_accepted)
+	_expect(annulet_accepted.find("in the beech") >= 0, "annulet board omits the beech: %s" % annulet_accepted)
+	_expect(annulet_accepted.find("so the spruce would take the annulet") >= 0, "annulet board omits the spruce: %s" % annulet_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var annulet_cleared := _verdict_text(root)
+	_expect(annulet_cleared.find("who cut the annulet") >= 0, "cleared annulet board: %s" % annulet_cleared)
+	_expect(annulet_cleared.find("fits every exhibit") == -1, "cleared chamfer board stayed accepted: %s" % annulet_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The reed")
+	var reed_from_annulet := _visible_label_blob(root)
+	_expect(reed_from_annulet.find("Walnut chit") >= 0, "could not return to The reed from The annulet")
+	_expect(reed_from_annulet.find("Weanling note") >= 0, "reed exhibits did not return from The annulet")
+	_expect(reed_from_annulet.find("CW-44") >= 0, "returned reed omits CW-44")
+	_expect(reed_from_annulet.find("Spruce chit") == -1, "annulet papers showed inside The reed")
+	_expect(reed_from_annulet.find("Hinny note") == -1, "annulet papers showed inside The reed")
+	_expect(reed_from_annulet.find("CW-45") == -1, "annulet file code stayed up inside The reed")
+	_press(root, "Greta")
+	_press(root, "Ogee")
+	_press(root, "163")
+	_press(root, "Submit theory")
+	var reed_after_annulet := _verdict_text(root)
+	_expect(reed_after_annulet.find("fits every exhibit") >= 0, "reed board rejected the true theory after The annulet: %s" % reed_after_annulet)
+	_expect(reed_after_annulet.find("Greta (reed hand) cut the reed in the ogee at 163") >= 0, "reed board timeline after The annulet: %s" % reed_after_annulet)
+	_press(root, "Menu")
+	_press(root, "Open The cavetto")
+	var cavetto_from_annulet := _visible_label_blob(root)
+	_expect(cavetto_from_annulet.find("Thumbnail chit") >= 0, "could not return to The cavetto from The annulet")
+	_expect(cavetto_from_annulet.find("Palfrey note") >= 0, "cavetto exhibits did not return from The annulet")
+	_expect(cavetto_from_annulet.find("CW-43") >= 0, "returned cavetto omits CW-43")
+	_expect(cavetto_from_annulet.find("Spruce chit") == -1, "annulet papers showed inside The cavetto")
+	_expect(cavetto_from_annulet.find("Hinny note") == -1, "annulet papers showed inside The cavetto")
+	_expect(cavetto_from_annulet.find("CW-45") == -1, "annulet file code stayed up inside The cavetto")
+	_expect(cavetto_from_annulet.find("Walnut chit") == -1, "reed papers showed inside The cavetto")
+	_expect(cavetto_from_annulet.find("Weanling note") == -1, "reed papers showed inside The cavetto")
+	_expect(cavetto_from_annulet.find("CW-44") == -1, "reed file code stayed up inside The cavetto")
+	_press(root, "Seth")
+	_press(root, "Dentil")
+	_press(root, "158")
+	_press(root, "Submit theory")
+	var cavetto_after_annulet := _verdict_text(root)
+	_expect(cavetto_after_annulet.find("fits every exhibit") >= 0, "cavetto board rejected the true theory after The annulet: %s" % cavetto_after_annulet)
+	_expect(cavetto_after_annulet.find("Seth (cavetto hand) cut the cavetto in the dentil at 158") >= 0, "cavetto board timeline after The annulet: %s" % cavetto_after_annulet)
+	_press(root, "Menu")
+	_press(root, "Open The cyma")
+	var cyma_from_annulet := _visible_label_blob(root)
+	_expect(cyma_from_annulet.find("Echinus chit") >= 0, "could not return to The cyma from The annulet")
+	_expect(cyma_from_annulet.find("Jennet note") >= 0, "cyma exhibits did not return from The annulet")
+	_expect(cyma_from_annulet.find("CW-42") >= 0, "returned cyma omits CW-42")
+	_expect(cyma_from_annulet.find("Spruce chit") == -1, "annulet papers showed inside The cyma")
+	_expect(cyma_from_annulet.find("Hinny note") == -1, "annulet papers showed inside The cyma")
+	_expect(cyma_from_annulet.find("CW-45") == -1, "annulet file code stayed up inside The cyma")
+	_expect(cyma_from_annulet.find("Walnut chit") == -1, "reed papers showed inside The cyma")
+	_expect(cyma_from_annulet.find("Weanling note") == -1, "reed papers showed inside The cyma")
+	_expect(cyma_from_annulet.find("CW-44") == -1, "reed file code stayed up inside The cyma")
+	_expect(cyma_from_annulet.find("Thumbnail chit") == -1, "cavetto papers showed inside The cyma")
+	_expect(cyma_from_annulet.find("Palfrey note") == -1, "cavetto papers showed inside The cyma")
+	_expect(cyma_from_annulet.find("CW-43") == -1, "cavetto file code stayed up inside The cyma")
+	_press(root, "Ruth")
+	_press(root, "Bolection")
+	_press(root, "153")
+	_press(root, "Submit theory")
+	var cyma_after_annulet := _verdict_text(root)
+	_expect(cyma_after_annulet.find("fits every exhibit") >= 0, "cyma board rejected the true theory after The annulet: %s" % cyma_after_annulet)
+	_expect(cyma_after_annulet.find("Ruth (cyma hand) cut the cyma in the bolection at 153") >= 0, "cyma board timeline after The annulet: %s" % cyma_after_annulet)
+	_press(root, "Menu")
+	_press(root, "Open The scotia")
+	var scotia_from_annulet := _visible_label_blob(root)
+	_expect(scotia_from_annulet.find("Torus chit") >= 0, "could not return to The scotia from The annulet")
+	_expect(scotia_from_annulet.find("Yearling note") >= 0, "scotia exhibits did not return from The annulet")
+	_expect(scotia_from_annulet.find("CW-41") >= 0, "returned scotia omits CW-41")
+	_expect(scotia_from_annulet.find("Spruce chit") == -1, "annulet papers showed inside The scotia")
+	_expect(scotia_from_annulet.find("Hinny note") == -1, "annulet papers showed inside The scotia")
+	_expect(scotia_from_annulet.find("CW-45") == -1, "annulet file code stayed up inside The scotia")
+	_expect(scotia_from_annulet.find("Walnut chit") == -1, "reed papers showed inside The scotia")
+	_expect(scotia_from_annulet.find("Weanling note") == -1, "reed papers showed inside The scotia")
+	_expect(scotia_from_annulet.find("CW-44") == -1, "reed file code stayed up inside The scotia")
+	_expect(scotia_from_annulet.find("Thumbnail chit") == -1, "cavetto papers showed inside The scotia")
+	_expect(scotia_from_annulet.find("Palfrey note") == -1, "cavetto papers showed inside The scotia")
+	_expect(scotia_from_annulet.find("CW-43") == -1, "cavetto file code stayed up inside The scotia")
+	_expect(scotia_from_annulet.find("Echinus chit") == -1, "cyma papers showed inside The scotia")
+	_expect(scotia_from_annulet.find("Jennet note") == -1, "cyma papers showed inside The scotia")
+	_expect(scotia_from_annulet.find("CW-42") == -1, "cyma file code stayed up inside The scotia")
+	_press(root, "Willa")
+	_press(root, "Hollow")
+	_press(root, "148")
+	_press(root, "Submit theory")
+	var scotia_after_annulet := _verdict_text(root)
+	_expect(scotia_after_annulet.find("fits every exhibit") >= 0, "scotia board rejected the true theory after The annulet: %s" % scotia_after_annulet)
+	_expect(scotia_after_annulet.find("Willa (scotia hand) cut the scotia in the hollow at 148") >= 0, "scotia board timeline after The annulet: %s" % scotia_after_annulet)
+	_press(root, "Menu")
+	_press(root, "Open The chamfer")
+	var chamfer_from_annulet := _visible_label_blob(root)
+	_expect(chamfer_from_annulet.find("Cove chit") >= 0, "could not return to The chamfer from The annulet")
+	_expect(chamfer_from_annulet.find("Stallion note") >= 0, "chamfer exhibits did not return from The annulet")
+	_expect(chamfer_from_annulet.find("CW-40") >= 0, "returned chamfer omits CW-40")
+	_expect(chamfer_from_annulet.find("Torus chit") == -1, "scotia papers showed inside The chamfer")
+	_expect(chamfer_from_annulet.find("Yearling note") == -1, "scotia papers showed inside The chamfer")
+	_expect(chamfer_from_annulet.find("CW-41") == -1, "scotia file code stayed up inside The chamfer")
+	_expect(chamfer_from_annulet.find("Spruce chit") == -1, "annulet papers showed inside The chamfer")
+	_expect(chamfer_from_annulet.find("Hinny note") == -1, "annulet papers showed inside The chamfer")
+	_expect(chamfer_from_annulet.find("CW-45") == -1, "annulet file code stayed up inside The chamfer")
+	_expect(chamfer_from_annulet.find("Walnut chit") == -1, "reed papers showed inside The chamfer")
+	_expect(chamfer_from_annulet.find("Weanling note") == -1, "reed papers showed inside The chamfer")
+	_expect(chamfer_from_annulet.find("CW-44") == -1, "reed file code stayed up inside The chamfer")
+	_expect(chamfer_from_annulet.find("Thumbnail chit") == -1, "cavetto papers showed inside The chamfer")
+	_expect(chamfer_from_annulet.find("Palfrey note") == -1, "cavetto papers showed inside The chamfer")
+	_expect(chamfer_from_annulet.find("CW-43") == -1, "cavetto file code stayed up inside The chamfer")
+	_expect(chamfer_from_annulet.find("Echinus chit") == -1, "cyma papers showed inside The chamfer")
+	_expect(chamfer_from_annulet.find("Jennet note") == -1, "cyma papers showed inside The chamfer")
+	_expect(chamfer_from_annulet.find("CW-42") == -1, "cyma file code stayed up inside The chamfer")
+	_press(root, "Merrick")
+	_press(root, "Block")
+	_press(root, "143")
+	_press(root, "Submit theory")
+	var chamfer_after_annulet := _verdict_text(root)
+	_expect(chamfer_after_annulet.find("fits every exhibit") >= 0, "chamfer board rejected the true theory after The annulet: %s" % chamfer_after_annulet)
+	_expect(chamfer_after_annulet.find("Merrick (chamfer hand) cut the chamfer in the block at 143") >= 0, "chamfer board timeline after The annulet: %s" % chamfer_after_annulet)
+	_press(root, "Menu")
+	_press(root, "Open The quirk")
+	var quirk_from_annulet := _visible_label_blob(root)
+	_expect(quirk_from_annulet.find("Ovolo chit") >= 0, "could not return to The quirk from The annulet")
+	_expect(quirk_from_annulet.find("Gelding note") >= 0, "quirk exhibits did not return from The annulet")
+	_expect(quirk_from_annulet.find("CW-39") >= 0, "returned quirk omits CW-39")
+	_expect(quirk_from_annulet.find("Cove chit") == -1, "chamfer papers showed inside The quirk")
+	_expect(quirk_from_annulet.find("Stallion note") == -1, "chamfer papers showed inside The quirk")
+	_expect(quirk_from_annulet.find("CW-40") == -1, "chamfer file code stayed up inside The quirk")
+	_expect(quirk_from_annulet.find("Torus chit") == -1, "scotia papers showed inside The quirk")
+	_expect(quirk_from_annulet.find("Yearling note") == -1, "scotia papers showed inside The quirk")
+	_expect(quirk_from_annulet.find("CW-41") == -1, "scotia file code stayed up inside The quirk")
+	_expect(quirk_from_annulet.find("Spruce chit") == -1, "annulet papers showed inside The quirk")
+	_expect(quirk_from_annulet.find("Hinny note") == -1, "annulet papers showed inside The quirk")
+	_expect(quirk_from_annulet.find("CW-45") == -1, "annulet file code stayed up inside The quirk")
+	_expect(quirk_from_annulet.find("Walnut chit") == -1, "reed papers showed inside The quirk")
+	_expect(quirk_from_annulet.find("Weanling note") == -1, "reed papers showed inside The quirk")
+	_expect(quirk_from_annulet.find("CW-44") == -1, "reed file code stayed up inside The quirk")
+	_expect(quirk_from_annulet.find("Thumbnail chit") == -1, "cavetto papers showed inside The quirk")
+	_expect(quirk_from_annulet.find("Palfrey note") == -1, "cavetto papers showed inside The quirk")
+	_expect(quirk_from_annulet.find("CW-43") == -1, "cavetto file code stayed up inside The quirk")
+	_expect(quirk_from_annulet.find("Echinus chit") == -1, "cyma papers showed inside The quirk")
+	_expect(quirk_from_annulet.find("Jennet note") == -1, "cyma papers showed inside The quirk")
+	_expect(quirk_from_annulet.find("CW-42") == -1, "cyma file code stayed up inside The quirk")
+	_press(root, "Ross")
+	_press(root, "Scratch")
+	_press(root, "138")
+	_press(root, "Submit theory")
+	var quirk_after_annulet := _verdict_text(root)
+	_expect(quirk_after_annulet.find("fits every exhibit") >= 0, "quirk board rejected the true theory after The annulet: %s" % quirk_after_annulet)
+	_expect(quirk_after_annulet.find("Ross (quirk hand) scratched the quirk in the scratch at 138") >= 0, "quirk board timeline after The annulet: %s" % quirk_after_annulet)
+	_press(root, "Menu")
+	_press(root, "Open The tongue")
+	var tongue_from_annulet := _visible_label_blob(root)
+	_expect(tongue_from_annulet.find("Groove chit") >= 0, "could not return to The tongue from The annulet")
+	_expect(tongue_from_annulet.find("Filly note") >= 0, "tongue exhibits did not return from The annulet")
+	_expect(tongue_from_annulet.find("CW-38") >= 0, "returned tongue omits CW-38")
+	_expect(tongue_from_annulet.find("Cove chit") == -1, "chamfer papers showed inside The tongue")
+	_expect(tongue_from_annulet.find("Stallion note") == -1, "chamfer papers showed inside The tongue")
+	_expect(tongue_from_annulet.find("CW-40") == -1, "chamfer file code stayed up inside The tongue")
+	_expect(tongue_from_annulet.find("Torus chit") == -1, "scotia papers showed inside The tongue")
+	_expect(tongue_from_annulet.find("Yearling note") == -1, "scotia papers showed inside The tongue")
+	_expect(tongue_from_annulet.find("CW-41") == -1, "scotia file code stayed up inside The tongue")
+	_expect(tongue_from_annulet.find("Spruce chit") == -1, "annulet papers showed inside The tongue")
+	_expect(tongue_from_annulet.find("Hinny note") == -1, "annulet papers showed inside The tongue")
+	_expect(tongue_from_annulet.find("CW-45") == -1, "annulet file code stayed up inside The tongue")
+	_expect(tongue_from_annulet.find("Walnut chit") == -1, "reed papers showed inside The tongue")
+	_expect(tongue_from_annulet.find("Weanling note") == -1, "reed papers showed inside The tongue")
+	_expect(tongue_from_annulet.find("CW-44") == -1, "reed file code stayed up inside The tongue")
+	_expect(tongue_from_annulet.find("Thumbnail chit") == -1, "cavetto papers showed inside The tongue")
+	_expect(tongue_from_annulet.find("Palfrey note") == -1, "cavetto papers showed inside The tongue")
+	_expect(tongue_from_annulet.find("CW-43") == -1, "cavetto file code stayed up inside The tongue")
+	_expect(tongue_from_annulet.find("Echinus chit") == -1, "cyma papers showed inside The tongue")
+	_expect(tongue_from_annulet.find("Jennet note") == -1, "cyma papers showed inside The tongue")
+	_expect(tongue_from_annulet.find("CW-42") == -1, "cyma file code stayed up inside The tongue")
+	_press(root, "Shay")
+	_press(root, "Knife")
+	_press(root, "133")
+	_press(root, "Submit theory")
+	var tongue_after_annulet := _verdict_text(root)
+	_expect(tongue_after_annulet.find("fits every exhibit") >= 0, "tongue board rejected the true theory after The annulet: %s" % tongue_after_annulet)
+	_expect(tongue_after_annulet.find("Shay (tongue hand) cut the tongue in the knife at 133") >= 0, "tongue board timeline after The annulet: %s" % tongue_after_annulet)
+	_press(root, "Menu")
+	_press(root, "Open The dowel")
+	var dowel_from_annulet := _visible_label_blob(root)
+	_expect(dowel_from_annulet.find("Bore chit") >= 0, "could not return to The dowel from The annulet")
+	_expect(dowel_from_annulet.find("Dowel note") >= 0, "dowel exhibits did not return from The annulet")
+	_expect(dowel_from_annulet.find("CW-37") >= 0, "returned dowel omits CW-37")
+	_expect(dowel_from_annulet.find("Cove chit") == -1, "chamfer papers showed inside The dowel")
+	_expect(dowel_from_annulet.find("Stallion note") == -1, "chamfer papers showed inside The dowel")
+	_expect(dowel_from_annulet.find("CW-40") == -1, "chamfer file code stayed up inside The dowel")
+	_expect(dowel_from_annulet.find("Torus chit") == -1, "scotia papers showed inside The dowel")
+	_expect(dowel_from_annulet.find("Yearling note") == -1, "scotia papers showed inside The dowel")
+	_expect(dowel_from_annulet.find("CW-41") == -1, "scotia file code stayed up inside The dowel")
+	_expect(dowel_from_annulet.find("Spruce chit") == -1, "annulet papers showed inside The dowel")
+	_expect(dowel_from_annulet.find("Hinny note") == -1, "annulet papers showed inside The dowel")
+	_expect(dowel_from_annulet.find("CW-45") == -1, "annulet file code stayed up inside The dowel")
+	_expect(dowel_from_annulet.find("Walnut chit") == -1, "reed papers showed inside The dowel")
+	_expect(dowel_from_annulet.find("Weanling note") == -1, "reed papers showed inside The dowel")
+	_expect(dowel_from_annulet.find("CW-44") == -1, "reed file code stayed up inside The dowel")
+	_expect(dowel_from_annulet.find("Thumbnail chit") == -1, "cavetto papers showed inside The dowel")
+	_expect(dowel_from_annulet.find("Palfrey note") == -1, "cavetto papers showed inside The dowel")
+	_expect(dowel_from_annulet.find("CW-43") == -1, "cavetto file code stayed up inside The dowel")
+	_expect(dowel_from_annulet.find("Echinus chit") == -1, "cyma papers showed inside The dowel")
+	_expect(dowel_from_annulet.find("Jennet note") == -1, "cyma papers showed inside The dowel")
+	_expect(dowel_from_annulet.find("CW-42") == -1, "cyma file code stayed up inside The dowel")
+	_press(root, "Faye")
+	_press(root, "Bit")
+	_press(root, "128")
+	_press(root, "Submit theory")
+	var dowel_after_annulet := _verdict_text(root)
+	_expect(dowel_after_annulet.find("fits every exhibit") >= 0, "dowel board rejected the true theory after The annulet: %s" % dowel_after_annulet)
+	_expect(dowel_after_annulet.find("Faye (dowel hand) cut the dowel in the bit at 128") >= 0, "dowel board timeline after The annulet: %s" % dowel_after_annulet)
+	_press(root, "Menu")
+	_press(root, "Open The hood")
+	var hood_open := _visible_label_blob(root)
+	_expect(hood_open.find("Holly chit") >= 0, "hood compass did not open")
+	_expect(hood_open.find("Mule note") >= 0, "hood compass did not show its exhibits")
+	_expect(hood_open.find("CW-46") >= 0, "hood compass omits CW-46")
+	_expect(hood_open.find("Ivory sight") >= 0, "hood compass omits Ivory sight")
+	_expect(hood_open.find("Chestnut bill") >= 0, "hood compass omits Chestnut bill")
+	_expect(hood_open.find("Boxwood slate") >= 0, "hood compass omits Boxwood slate")
+	_expect(hood_open.find("Compass card") >= 0, "hood compass omits Compass card")
+	_expect(hood_open.find("Glaze slip") >= 0, "hood compass omits Glaze slip")
+	_expect(hood_open.find("Hood leaf") >= 0, "hood compass omits Hood leaf")
+	_expect(hood_open.find("Bronze order") >= 0, "hood compass omits Bronze order")
+	_expect(hood_open.find("Trying card") >= 0, "hood compass omits the trying card")
+	_expect(hood_open.find("Complaint slip") == -1, "spare key papers showed inside The hood")
+	_expect(hood_open.find("Cut list") == -1, "rehearsal papers showed inside The hood")
+	_expect(hood_open.find("Move order") == -1, "gilt stamp papers showed inside The hood")
+	_expect(hood_open.find("Whistle slip") == -1, "ferry bell papers showed inside The hood")
+	_expect(hood_open.find("Frost note") == -1, "weather slate papers showed inside The hood")
+	_expect(hood_open.find("Trough tag") == -1, "loom shuttle papers showed inside The hood")
+	_expect(hood_open.find("Fuel line") == -1, "hive smoker papers showed inside The hood")
+	_expect(hood_open.find("Weight line") == -1, "glass pontil papers showed inside The hood")
+	_expect(hood_open.find("Lock line") == -1, "press proof papers showed inside The hood")
+	_expect(hood_open.find("Cup line") == -1, "assay cup papers showed inside The hood")
+	_expect(hood_open.find("Mark line") == -1, "kiln chalk papers showed inside The hood")
+	_expect(hood_open.find("Ledger line") == -1, "tide ledger papers showed inside The hood")
+	_expect(hood_open.find("Bell line") == -1, "night bell papers showed inside The hood")
+	_expect(hood_open.find("Salt line") == -1, "salt mark papers showed inside The hood")
+	_expect(hood_open.find("Oil note") == -1, "wick trim papers showed inside The hood")
+	_expect(hood_open.find("Gather note") == -1, "glass anneal papers showed inside The hood")
+	_expect(hood_open.find("Scion note") == -1, "orchard graft papers showed inside The hood")
+	_expect(hood_open.find("Winder chit") == -1, "dye vat papers showed inside The hood")
+	_expect(hood_open.find("Rope chit") == -1, "tar kettle papers showed inside The hood")
+	_expect(hood_open.find("Cutter chit") == -1, "cork press papers showed inside The hood")
+	_expect(hood_open.find("Mesh chit") == -1, "net loft papers showed inside The hood")
+	_expect(hood_open.find("Hoop chit") == -1, "cask hoop papers showed inside The hood")
+	_expect(hood_open.find("Shears chit") == -1, "linen fold papers showed inside The hood")
+	_expect(hood_open.find("Apron sight") == -1, "dovetail papers showed inside The hood")
+	_expect(hood_open.find("Peg hook") == -1, "dovetail papers showed inside The hood")
+	_expect(hood_open.find("Joint slate") == -1, "dovetail papers showed inside The hood")
+	_expect(hood_open.find("Clamp card") == -1, "dovetail papers showed inside The hood")
+	_expect(hood_open.find("Sweep slip") == -1, "dovetail papers showed inside The hood")
+	_expect(hood_open.find("Cut leaf") == -1, "dovetail papers showed inside The hood")
+	_expect(hood_open.find("Joint note") == -1, "dovetail papers showed inside The hood")
+	_expect(hood_open.find("Jaw order") == -1, "dovetail papers showed inside The hood")
+	_expect(hood_open.find("CW-24") == -1, "dovetail file code stayed up inside The hood")
+	_expect(hood_open.find("Chisel chit") == -1, "mortise papers stayed up inside The hood")
+	_expect(hood_open.find("Awl sight") == -1, "mortise papers showed inside The hood")
+	_expect(hood_open.find("Wedge hook") == -1, "mortise papers showed inside The hood")
+	_expect(hood_open.find("Tenon slate") == -1, "mortise papers showed inside The hood")
+	_expect(hood_open.find("Brush slip") == -1, "mortise papers showed inside The hood")
+	_expect(hood_open.find("Bore leaf") == -1, "mortise papers showed inside The hood")
+	_expect(hood_open.find("Tenon note") == -1, "mortise papers showed inside The hood")
+	_expect(hood_open.find("Rack order") == -1, "mortise papers showed inside The hood")
+	_expect(hood_open.find("CW-25") == -1, "mortise file code stayed up inside The hood")
+	_expect(hood_open.find("Plane chit") == -1, "rebate papers stayed up inside The hood")
+	_expect(hood_open.find("Gauge sight") == -1, "rebate papers showed inside The hood")
+	_expect(hood_open.find("Shim hook") == -1, "rebate papers showed inside The hood")
+	_expect(hood_open.find("Shoulder slate") == -1, "rebate papers showed inside The hood")
+	_expect(hood_open.find("Fence card") == -1, "rebate papers showed inside The hood")
+	_expect(hood_open.find("Oil slip") == -1, "rebate papers showed inside The hood")
+	_expect(hood_open.find("Scribe leaf") == -1, "rebate papers showed inside The hood")
+	_expect(hood_open.find("Shoulder note") == -1, "rebate papers showed inside The hood")
+	_expect(hood_open.find("CW-26") == -1, "rebate file code stayed up inside The hood")
+	_expect(hood_open.find("Saw chit") == -1, "housing papers stayed up inside The hood")
+	_expect(hood_open.find("Square sight") == -1, "housing papers showed inside The hood")
+	_expect(hood_open.find("Fillet hook") == -1, "housing papers showed inside The hood")
+	_expect(hood_open.find("Trench slate") == -1, "housing papers showed inside The hood")
+	_expect(hood_open.find("Stock card") == -1, "housing papers showed inside The hood")
+	_expect(hood_open.find("Chalk slip") == -1, "housing papers showed inside The hood")
+	_expect(hood_open.find("Mark leaf") == -1, "housing papers showed inside The hood")
+	_expect(hood_open.find("Trench note") == -1, "housing papers showed inside The hood")
+	_expect(hood_open.find("CW-27") == -1, "housing file code stayed up inside The hood")
+	_expect(hood_open.find("Gouge chit") == -1, "tenon papers stayed up inside The hood")
+	_expect(hood_open.find("Rasp sight") == -1, "tenon papers showed inside The hood")
+	_expect(hood_open.find("Dowel hook") == -1, "tenon papers showed inside The hood")
+	_expect(hood_open.find("Haunch slate") == -1, "tenon papers showed inside The hood")
+	_expect(hood_open.find("Guide card") == -1, "tenon papers showed inside The hood")
+	_expect(hood_open.find("Hone slip") == -1, "tenon papers showed inside The hood")
+	_expect(hood_open.find("Nick leaf") == -1, "tenon papers showed inside The hood")
+	_expect(hood_open.find("CW-28") == -1, "tenon file code stayed up inside The hood")
+	_expect(hood_open.find("Router chit") == -1, "bridle papers stayed up inside The hood")
+	_expect(hood_open.find("Glazer sight") == -1, "bridle papers showed inside The hood")
+	_expect(hood_open.find("Spline hook") == -1, "bridle papers showed inside The hood")
+	_expect(hood_open.find("Tongue slate") == -1, "bridle papers showed inside The hood")
+	_expect(hood_open.find("Templet card") == -1, "bridle papers showed inside The hood")
+	_expect(hood_open.find("Strop slip") == -1, "bridle papers showed inside The hood")
+	_expect(hood_open.find("Notch leaf") == -1, "bridle papers showed inside The hood")
+	_expect(hood_open.find("Tongue note") == -1, "bridle papers showed inside The hood")
+	_expect(hood_open.find("CW-29") == -1, "bridle file code stayed up inside The hood")
+	_expect(hood_open.find("Plough chit") == -1, "dado papers stayed up inside The hood")
+	_expect(hood_open.find("Float sight") == -1, "dado papers showed inside The hood")
+	_expect(hood_open.find("Cleat hook") == -1, "dado papers showed inside The hood")
+	_expect(hood_open.find("Groove slate") == -1, "dado papers showed inside The hood")
+	_expect(hood_open.find("Spur card") == -1, "dado papers showed inside The hood")
+	_expect(hood_open.find("Whet slip") == -1, "dado papers showed inside The hood")
+	_expect(hood_open.find("Score leaf") == -1, "dado papers showed inside The hood")
+	_expect(hood_open.find("Groove note") == -1, "dado papers showed inside The hood")
+	_expect(hood_open.find("CW-30") == -1, "dado file code stayed up inside The hood")
+	_expect(hood_open.find("Slot chit") == -1, "spline papers stayed up inside The hood")
+	_expect(hood_open.find("Rest sight") == -1, "spline papers showed inside The hood")
+	_expect(hood_open.find("Feather hook") == -1, "spline papers showed inside The hood")
+	_expect(hood_open.find("Slot slate") == -1, "spline papers showed inside The hood")
+	_expect(hood_open.find("Key card") == -1, "spline papers showed inside The hood")
+	_expect(hood_open.find("Cheek slip") == -1, "spline papers showed inside The hood")
+	_expect(hood_open.find("Slot leaf") == -1, "spline papers showed inside The hood")
+	_expect(hood_open.find("Slot note") == -1, "spline papers showed inside The hood")
+	_expect(hood_open.find("Dry order") == -1, "spline papers showed inside The hood")
+	_expect(hood_open.find("CW-31") == -1, "spline file code stayed up inside The hood")
+	_expect(hood_open.find("Arris chit") == -1, "mitre papers stayed up inside The hood")
+	_expect(hood_open.find("Horn sight") == -1, "mitre papers showed inside The hood")
+	_expect(hood_open.find("Offcut hook") == -1, "mitre papers showed inside The hood")
+	_expect(hood_open.find("Arris slate") == -1, "mitre papers showed inside The hood")
+	_expect(hood_open.find("Stop card") == -1, "mitre papers showed inside The hood")
+	_expect(hood_open.find("Dress slip") == -1, "mitre papers showed inside The hood")
+	_expect(hood_open.find("Arris leaf") == -1, "mitre papers showed inside The hood")
+	_expect(hood_open.find("Arris note") == -1, "mitre papers showed inside The hood")
+	_expect(hood_open.find("Brush order") == -1, "mitre papers showed inside The hood")
+	_expect(hood_open.find("CW-32") == -1, "mitre file code stayed up inside The hood")
+	_expect(hood_open.find("Grain chit") == -1, "lap papers stayed up inside The hood")
+	_expect(hood_open.find("Crest sight") == -1, "lap papers showed inside The hood")
+	_expect(hood_open.find("Paring hook") == -1, "lap papers showed inside The hood")
+	_expect(hood_open.find("Grain slate") == -1, "lap papers showed inside The hood")
+	_expect(hood_open.find("Brad card") == -1, "lap papers showed inside The hood")
+	_expect(hood_open.find("Skim slip") == -1, "lap papers showed inside The hood")
+	_expect(hood_open.find("Grain leaf") == -1, "lap papers showed inside The hood")
+	_expect(hood_open.find("Grain note") == -1, "lap papers showed inside The hood")
+	_expect(hood_open.find("Oil order") == -1, "lap papers showed inside The hood")
+	_expect(hood_open.find("CW-33") == -1, "lap file code stayed up inside The hood")
+	_expect(hood_open.find("Shoulder chit") == -1, "scarf papers stayed up inside The hood")
+	_expect(hood_open.find("Sole sight") == -1, "scarf papers showed inside The hood")
+	_expect(hood_open.find("Shaving hook") == -1, "scarf papers showed inside The hood")
+	_expect(hood_open.find("Edge slate") == -1, "scarf papers showed inside The hood")
+	_expect(hood_open.find("Wedge card") == -1, "scarf papers showed inside The hood")
+	_expect(hood_open.find("Film slip") == -1, "scarf papers showed inside The hood")
+	_expect(hood_open.find("Scarf leaf") == -1, "scarf papers showed inside The hood")
+	_expect(hood_open.find("Scarf note") == -1, "scarf papers showed inside The hood")
+	_expect(hood_open.find("Finish order") == -1, "scarf papers showed inside The hood")
+	_expect(hood_open.find("CW-34") == -1, "scarf file code stayed up inside The hood")
+	_expect(hood_open.find("Socket chit") == -1, "finger papers showed inside The hood")
+	_expect(hood_open.find("Burr sight") == -1, "finger papers showed inside The hood")
+	_expect(hood_open.find("Chip bill") == -1, "finger papers showed inside The hood")
+	_expect(hood_open.find("Face slate") == -1, "finger papers showed inside The hood")
+	_expect(hood_open.find("Catch card") == -1, "finger papers showed inside The hood")
+	_expect(hood_open.find("Sheen slip") == -1, "finger papers showed inside The hood")
+	_expect(hood_open.find("Finger leaf") == -1, "finger papers showed inside The hood")
+	_expect(hood_open.find("Finger note") == -1, "finger papers showed inside The hood")
+	_expect(hood_open.find("Rub order") == -1, "finger papers showed inside The hood")
+	_expect(hood_open.find("CW-35") == -1, "finger file code stayed up inside The hood")
+	_expect(hood_open.find("so the bevel would take the haunch") == -1, "tenon aim stayed up inside The hood")
+	_expect(hood_open.find("Cheek chit") == -1, "haunch papers showed inside The hood")
+	_expect(hood_open.find("Toe sight") == -1, "haunch papers showed inside The hood")
+	_expect(hood_open.find("Sliver bill") == -1, "haunch papers showed inside The hood")
+	_expect(hood_open.find("Bed slate") == -1, "haunch papers showed inside The hood")
+	_expect(hood_open.find("Pin card") == -1, "haunch papers showed inside The hood")
+	_expect(hood_open.find("Wipe slip") == -1, "haunch papers showed inside The hood")
+	_expect(hood_open.find("Haunch leaf") == -1, "haunch papers showed inside The hood")
+	_expect(hood_open.find("Haunch note") == -1, "haunch papers showed inside The hood")
+	_expect(hood_open.find("Stone order") == -1, "haunch papers showed inside The hood")
+	_expect(hood_open.find("CW-36") == -1, "haunch file code stayed up inside The hood")
+	_expect(hood_open.find("so the cheek would take the haunch") == -1, "haunch aim stayed up inside The hood")
+	_expect(hood_open.find("Bore chit") == -1, "dowel papers showed inside The hood")
+	_expect(hood_open.find("Point sight") == -1, "dowel papers showed inside The hood")
+	_expect(hood_open.find("Curl bill") == -1, "dowel papers showed inside The hood")
+	_expect(hood_open.find("Flute slate") == -1, "dowel papers showed inside The hood")
+	_expect(hood_open.find("Chuck card") == -1, "dowel papers showed inside The hood")
+	_expect(hood_open.find("Wax slip") == -1, "dowel papers showed inside The hood")
+	_expect(hood_open.find("Dowel leaf") == -1, "dowel papers showed inside The hood")
+	_expect(hood_open.find("Dowel note") == -1, "dowel papers showed inside The hood")
+	_expect(hood_open.find("Hone order") == -1, "dowel papers showed inside The hood")
+	_expect(hood_open.find("CW-37") == -1, "dowel file code stayed up inside The hood")
+	_expect(hood_open.find("Brace card") == -1, "dowel papers showed inside The hood")
+	_expect(hood_open.find("so the bore would take the dowel") == -1, "dowel aim stayed up inside The hood")
+	_expect(hood_open.find("Groove chit") == -1, "tongue papers showed inside The hood")
+	_expect(hood_open.find("Face sight") == -1, "tongue papers showed inside The hood")
+	_expect(hood_open.find("Peel bill") == -1, "tongue papers showed inside The hood")
+	_expect(hood_open.find("Kerf slate") == -1, "tongue papers showed inside The hood")
+	_expect(hood_open.find("Turn card") == -1, "tongue papers showed inside The hood")
+	_expect(hood_open.find("Tallow slip") == -1, "tongue papers showed inside The hood")
+	_expect(hood_open.find("Tongue leaf") == -1, "tongue papers showed inside The hood")
+	_expect(hood_open.find("Filly note") == -1, "tongue papers showed inside The hood")
+	_expect(hood_open.find("Grind order") == -1, "tongue papers showed inside The hood")
+	_expect(hood_open.find("Scribe card") == -1, "tongue papers showed inside The hood")
+	_expect(hood_open.find("CW-38") == -1, "tongue file code stayed up inside The hood")
+	_expect(hood_open.find("so the groove would take the tongue") == -1, "tongue aim stayed up inside The hood")
+	_expect(hood_open.find("Ovolo chit") == -1, "quirk papers showed inside The hood")
+	_expect(hood_open.find("Bolt sight") == -1, "quirk papers showed inside The hood")
+	_expect(hood_open.find("Astragal bill") == -1, "quirk papers showed inside The hood")
+	_expect(hood_open.find("Score slate") == -1, "quirk papers showed inside The hood")
+	_expect(hood_open.find("Snib card") == -1, "quirk papers showed inside The hood")
+	_expect(hood_open.find("Grease slip") == -1, "quirk papers showed inside The hood")
+	_expect(hood_open.find("Quirk leaf") == -1, "quirk papers showed inside The hood")
+	_expect(hood_open.find("Gelding note") == -1, "quirk papers showed inside The hood")
+	_expect(hood_open.find("Whet order") == -1, "quirk papers showed inside The hood")
+	_expect(hood_open.find("Veiner card") == -1, "quirk papers showed inside The hood")
+	_expect(hood_open.find("CW-39") == -1, "quirk file code stayed up inside The hood")
+	_expect(hood_open.find("so the ovolo would take the quirk") == -1, "quirk aim stayed up inside The hood")
+	_expect(hood_open.find("Cove chit") == -1, "chamfer papers showed inside The hood")
+	_expect(hood_open.find("Tooth sight") == -1, "chamfer papers showed inside The hood")
+	_expect(hood_open.find("Cant bill") == -1, "chamfer papers showed inside The hood")
+	_expect(hood_open.find("Wisp slate") == -1, "chamfer papers showed inside The hood")
+	_expect(hood_open.find("File card") == -1, "chamfer papers showed inside The hood")
+	_expect(hood_open.find("Soap slip") == -1, "chamfer papers showed inside The hood")
+	_expect(hood_open.find("Chamfer leaf") == -1, "chamfer papers showed inside The hood")
+	_expect(hood_open.find("Stallion note") == -1, "chamfer papers showed inside The hood")
+	_expect(hood_open.find("Fettle order") == -1, "chamfer papers showed inside The hood")
+	_expect(hood_open.find("Travisher card") == -1, "chamfer papers showed inside The hood")
+	_expect(hood_open.find("CW-40") == -1, "chamfer file code stayed up inside The hood")
+	_expect(hood_open.find("so the cove would take the chamfer") == -1, "chamfer aim stayed up inside The hood")
+	_expect(hood_open.find("Torus chit") == -1, "scotia papers showed inside The hood")
+	_expect(hood_open.find("Cusp sight") == -1, "scotia papers showed inside The hood")
+	_expect(hood_open.find("Fascia bill") == -1, "scotia papers showed inside The hood")
+	_expect(hood_open.find("Soot slate") == -1, "scotia papers showed inside The hood")
+	_expect(hood_open.find("Riffler card") == -1, "scotia papers showed inside The hood")
+	_expect(hood_open.find("Pumice slip") == -1, "scotia papers showed inside The hood")
+	_expect(hood_open.find("Scotia leaf") == -1, "scotia papers showed inside The hood")
+	_expect(hood_open.find("Yearling note") == -1, "scotia papers showed inside The hood")
+	_expect(hood_open.find("Peen order") == -1, "scotia papers showed inside The hood")
+	_expect(hood_open.find("Scorp card") == -1, "scotia papers showed inside The hood")
+	_expect(hood_open.find("CW-41") == -1, "scotia file code stayed up inside The hood")
+	_expect(hood_open.find("so the torus would take the scotia") == -1, "scotia aim stayed up inside The hood")
+	_expect(hood_open.find("Echinus chit") == -1, "cyma papers showed inside The hood")
+	_expect(hood_open.find("Beak sight") == -1, "cyma papers showed inside The hood")
+	_expect(hood_open.find("Corona bill") == -1, "cyma papers showed inside The hood")
+	_expect(hood_open.find("Garnet slate") == -1, "cyma papers showed inside The hood")
+	_expect(hood_open.find("Inshave card") == -1, "cyma papers showed inside The hood")
+	_expect(hood_open.find("Rouge slip") == -1, "cyma papers showed inside The hood")
+	_expect(hood_open.find("Cyma leaf") == -1, "cyma papers showed inside The hood")
+	_expect(hood_open.find("Jennet note") == -1, "cyma papers showed inside The hood")
+	_expect(hood_open.find("Chase order") == -1, "cyma papers showed inside The hood")
+	_expect(hood_open.find("Froe card") == -1, "cyma papers showed inside The hood")
+	_expect(hood_open.find("CW-42") == -1, "cyma file code stayed up inside The hood")
+	_expect(hood_open.find("so the echinus would take the cyma") == -1, "cyma aim stayed up inside The hood")
+	_expect(hood_open.find("Thumbnail chit") == -1, "cavetto papers showed inside The hood")
+	_expect(hood_open.find("Drip sight") == -1, "cavetto papers showed inside The hood")
+	_expect(hood_open.find("Staff bill") == -1, "cavetto papers showed inside The hood")
+	_expect(hood_open.find("Cedar slate") == -1, "cavetto papers showed inside The hood")
+	_expect(hood_open.find("Bullnose card") == -1, "cavetto papers showed inside The hood")
+	_expect(hood_open.find("Scrape slip") == -1, "cavetto papers showed inside The hood")
+	_expect(hood_open.find("Cavetto leaf") == -1, "cavetto papers showed inside The hood")
+	_expect(hood_open.find("Palfrey note") == -1, "cavetto papers showed inside The hood")
+	_expect(hood_open.find("Knurl order") == -1, "cavetto papers showed inside The hood")
+	_expect(hood_open.find("Twibil card") == -1, "cavetto papers showed inside The hood")
+	_expect(hood_open.find("CW-43") == -1, "cavetto file code stayed up inside The hood")
+	_expect(hood_open.find("so the thumbnail would take the cavetto") == -1, "cavetto aim stayed up inside The hood")
+	_expect(hood_open.find("Walnut chit") == -1, "reed papers showed inside The hood")
+	_expect(hood_open.find("Deal sight") == -1, "reed papers showed inside The hood")
+	_expect(hood_open.find("Maple bill") == -1, "reed papers showed inside The hood")
+	_expect(hood_open.find("Larch slate") == -1, "reed papers showed inside The hood")
+	_expect(hood_open.find("Nosing card") == -1, "reed papers showed inside The hood")
+	_expect(hood_open.find("Blue slip") == -1, "reed papers showed inside The hood")
+	_expect(hood_open.find("Reed leaf") == -1, "reed papers showed inside The hood")
+	_expect(hood_open.find("Weanling note") == -1, "reed papers showed inside The hood")
+	_expect(hood_open.find("Temper order") == -1, "reed papers showed inside The hood")
+	_expect(hood_open.find("Rounder card") == -1, "reed papers showed inside The hood")
+	_expect(hood_open.find("CW-44") == -1, "reed file code stayed up inside The hood")
+	_expect(hood_open.find("so the walnut would take the reed") == -1, "reed aim stayed up inside The hood")
+	_expect(hood_open.find("Spruce chit") == -1, "annulet papers showed inside The hood")
+	_expect(hood_open.find("Billet sight") == -1, "annulet papers showed inside The hood")
+	_expect(hood_open.find("Poplar bill") == -1, "annulet papers showed inside The hood")
+	_expect(hood_open.find("Osier slate") == -1, "annulet papers showed inside The hood")
+	_expect(hood_open.find("Burnisher card") == -1, "annulet papers showed inside The hood")
+	_expect(hood_open.find("Stipple slip") == -1, "annulet papers showed inside The hood")
+	_expect(hood_open.find("Annulet leaf") == -1, "annulet papers showed inside The hood")
+	_expect(hood_open.find("Hinny note") == -1, "annulet papers showed inside The hood")
+	_expect(hood_open.find("Forge order") == -1, "annulet papers showed inside The hood")
+	_expect(hood_open.find("Drawshave card") == -1, "annulet papers showed inside The hood")
+	_expect(hood_open.find("CW-45") == -1, "annulet file code stayed up inside The hood")
+	_expect(hood_open.find("so the spruce would take the annulet") == -1, "annulet aim stayed up inside The hood")
+	_press(root, "Submit theory")
+	var empty_hood := _verdict_text(root)
+	_expect(empty_hood.find("who cut the hood") >= 0, "empty hood board: %s" % empty_hood)
+	_expect(empty_hood.find("where they cut the hood") >= 0, "empty hood board: %s" % empty_hood)
+	_expect(empty_hood.find("at which hour they cut the hood") >= 0, "empty hood board: %s" % empty_hood)
+	_expect(empty_hood.find("who scratched the quirk") == -1, "empty chamfer board used a quirk slot: %s" % empty_hood)
+	_expect(empty_hood.find("who cut the tongue") == -1, "empty chamfer board used a tongue slot: %s" % empty_hood)
+	_expect(empty_hood.find("who cut the dowel") == -1, "empty chamfer board used a dowel slot: %s" % empty_hood)
+	_expect(empty_hood.find("who cut the chamfer") == -1, "empty scotia board used a chamfer slot: %s" % empty_hood)
+	_expect(empty_hood.find("where they cut the chamfer") == -1, "empty scotia board used a chamfer slot: %s" % empty_hood)
+	_expect(empty_hood.find("at which hour they cut the chamfer") == -1, "empty scotia board used a chamfer slot: %s" % empty_hood)
+	_expect(empty_hood.find("who cut the scotia") == -1, "empty hood board used a scotia slot: %s" % empty_hood)
+	_expect(empty_hood.find("where they cut the scotia") == -1, "empty hood board used a scotia slot: %s" % empty_hood)
+	_expect(empty_hood.find("at which hour they cut the scotia") == -1, "empty hood board used a scotia slot: %s" % empty_hood)
+	_expect(empty_hood.find("who cut the cyma") == -1, "empty hood board used a cyma slot: %s" % empty_hood)
+	_expect(empty_hood.find("where they cut the cyma") == -1, "empty hood board used a cyma slot: %s" % empty_hood)
+	_expect(empty_hood.find("at which hour they cut the cyma") == -1, "empty hood board used a cyma slot: %s" % empty_hood)
+	_expect(empty_hood.find("who cut the cavetto") == -1, "empty hood board used a cavetto slot: %s" % empty_hood)
+	_expect(empty_hood.find("where they cut the cavetto") == -1, "empty hood board used a cavetto slot: %s" % empty_hood)
+	_expect(empty_hood.find("at which hour they cut the cavetto") == -1, "empty hood board used a cavetto slot: %s" % empty_hood)
+	_expect(empty_hood.find("who cut the reed") == -1, "empty hood board used a reed slot: %s" % empty_hood)
+	_expect(empty_hood.find("where they cut the reed") == -1, "empty hood board used a reed slot: %s" % empty_hood)
+	_expect(empty_hood.find("at which hour they cut the reed") == -1, "empty hood board used a reed slot: %s" % empty_hood)
+	_expect(empty_hood.find("who cut the annulet") == -1, "empty hood board used an annulet slot: %s" % empty_hood)
+	_expect(empty_hood.find("where they cut the annulet") == -1, "empty hood board used an annulet slot: %s" % empty_hood)
+	_expect(empty_hood.find("at which hour they cut the annulet") == -1, "empty hood board used an annulet slot: %s" % empty_hood)
+	_expect(empty_hood.to_lower().find("conflict") == -1, "empty chamfer board talked about a conflict: %s" % empty_hood)
+	_press(root, "Nina")
+	_press(root, "Compass")
+	_press(root, "171")
+	_press(root, "Submit theory")
+	var hood_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(hood_miss, Hood, {"who": "Nina", "place": "compass", "hour": "171"})
+	_expect(Hood.conflicting_ids({"who": "Nina", "place": "compass", "hour": "171"}).size() == 9, "Nina / compass / 171 should contradict every exhibit")
+	_expect(hood_miss.find("Holly chit") >= 0, "wrong triple reply omits Holly chit: %s" % hood_miss)
+	_expect(hood_miss.find("Ivory sight") >= 0, "wrong triple reply omits Ivory sight: %s" % hood_miss)
+	_expect(hood_miss.find("Chestnut bill") >= 0, "wrong triple reply omits Chestnut bill: %s" % hood_miss)
+	_expect(hood_miss.find("Boxwood slate") >= 0, "wrong triple reply omits Boxwood slate: %s" % hood_miss)
+	_expect(hood_miss.find("Compass card") >= 0, "wrong triple reply omits Compass card: %s" % hood_miss)
+	_expect(hood_miss.find("Glaze slip") >= 0, "wrong triple reply omits Glaze slip: %s" % hood_miss)
+	_expect(hood_miss.find("Hood leaf") >= 0, "wrong triple reply omits Hood leaf: %s" % hood_miss)
+	_expect(hood_miss.find("Mule note") >= 0, "wrong triple reply omits Mule note: %s" % hood_miss)
+	_expect(hood_miss.find("Bronze order") >= 0, "wrong triple reply omits Bronze order: %s" % hood_miss)
+	_press(root, "Hugo")
+	_press(root, "Sycamore")
+	_press(root, "173")
+	_press(root, "Submit theory")
+	var hood_accepted := _verdict_text(root)
+	_expect(hood_accepted.find("fits every exhibit") >= 0, "hood board rejected the true theory: %s" % hood_accepted)
+	_expect(hood_accepted.find(HOOD_TIMELINE) >= 0, "hood board timeline: %s" % hood_accepted)
+	_expect(hood_accepted.find("Hugo (hood hand) cut the hood in the sycamore at 173") >= 0, "hood board omits Hugo at 173: %s" % hood_accepted)
+	_expect(hood_accepted.find("in the sycamore") >= 0, "hood board omits the sycamore: %s" % hood_accepted)
+	_expect(hood_accepted.find("so the holly would take the hood") >= 0, "hood board omits the holly: %s" % hood_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var hood_cleared := _verdict_text(root)
+	_expect(hood_cleared.find("who cut the hood") >= 0, "cleared hood board: %s" % hood_cleared)
+	_expect(hood_cleared.find("fits every exhibit") == -1, "cleared chamfer board stayed accepted: %s" % hood_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The annulet")
+	var annulet_from_hood := _visible_label_blob(root)
+	_expect(annulet_from_hood.find("Spruce chit") >= 0, "could not return to The annulet from The hood")
+	_expect(annulet_from_hood.find("Hinny note") >= 0, "annulet exhibits did not return from The hood")
+	_expect(annulet_from_hood.find("CW-45") >= 0, "returned annulet omits CW-45")
+	_expect(annulet_from_hood.find("Holly chit") == -1, "hood papers showed inside The annulet")
+	_expect(annulet_from_hood.find("Mule note") == -1, "hood papers showed inside The annulet")
+	_expect(annulet_from_hood.find("CW-46") == -1, "hood file code stayed up inside The annulet")
+	_press(root, "Clive")
+	_press(root, "Beech")
+	_press(root, "168")
+	_press(root, "Submit theory")
+	var annulet_after_hood := _verdict_text(root)
+	_expect(annulet_after_hood.find("fits every exhibit") >= 0, "annulet board rejected the true theory after The hood: %s" % annulet_after_hood)
+	_expect(annulet_after_hood.find("Clive (annulet hand) cut the annulet in the beech at 168") >= 0, "annulet board timeline after The hood: %s" % annulet_after_hood)
+	_press(root, "Menu")
+	_press(root, "Open The reed")
+	var reed_from_hood := _visible_label_blob(root)
+	_expect(reed_from_hood.find("Walnut chit") >= 0, "could not return to The reed from The hood")
+	_expect(reed_from_hood.find("Weanling note") >= 0, "reed exhibits did not return from The hood")
+	_expect(reed_from_hood.find("CW-44") >= 0, "returned reed omits CW-44")
+	_expect(reed_from_hood.find("Holly chit") == -1, "hood papers showed inside The reed")
+	_expect(reed_from_hood.find("Mule note") == -1, "hood papers showed inside The reed")
+	_expect(reed_from_hood.find("CW-46") == -1, "hood file code stayed up inside The reed")
+	_expect(reed_from_hood.find("Spruce chit") == -1, "annulet papers showed inside The reed")
+	_expect(reed_from_hood.find("Hinny note") == -1, "annulet papers showed inside The reed")
+	_expect(reed_from_hood.find("CW-45") == -1, "annulet file code stayed up inside The reed")
+	_press(root, "Greta")
+	_press(root, "Ogee")
+	_press(root, "163")
+	_press(root, "Submit theory")
+	var reed_after_hood := _verdict_text(root)
+	_expect(reed_after_hood.find("fits every exhibit") >= 0, "reed board rejected the true theory after The hood: %s" % reed_after_hood)
+	_expect(reed_after_hood.find("Greta (reed hand) cut the reed in the ogee at 163") >= 0, "reed board timeline after The hood: %s" % reed_after_hood)
+	_press(root, "Menu")
+	_press(root, "Open The cavetto")
+	var cavetto_from_hood := _visible_label_blob(root)
+	_expect(cavetto_from_hood.find("Thumbnail chit") >= 0, "could not return to The cavetto from The hood")
+	_expect(cavetto_from_hood.find("Palfrey note") >= 0, "cavetto exhibits did not return from The hood")
+	_expect(cavetto_from_hood.find("CW-43") >= 0, "returned cavetto omits CW-43")
+	_expect(cavetto_from_hood.find("Holly chit") == -1, "hood papers showed inside The cavetto")
+	_expect(cavetto_from_hood.find("Mule note") == -1, "hood papers showed inside The cavetto")
+	_expect(cavetto_from_hood.find("CW-46") == -1, "hood file code stayed up inside The cavetto")
+	_expect(cavetto_from_hood.find("Spruce chit") == -1, "annulet papers showed inside The cavetto")
+	_expect(cavetto_from_hood.find("Hinny note") == -1, "annulet papers showed inside The cavetto")
+	_expect(cavetto_from_hood.find("CW-45") == -1, "annulet file code stayed up inside The cavetto")
+	_expect(cavetto_from_hood.find("Walnut chit") == -1, "reed papers showed inside The cavetto")
+	_expect(cavetto_from_hood.find("Weanling note") == -1, "reed papers showed inside The cavetto")
+	_expect(cavetto_from_hood.find("CW-44") == -1, "reed file code stayed up inside The cavetto")
+	_press(root, "Seth")
+	_press(root, "Dentil")
+	_press(root, "158")
+	_press(root, "Submit theory")
+	var cavetto_after_hood := _verdict_text(root)
+	_expect(cavetto_after_hood.find("fits every exhibit") >= 0, "cavetto board rejected the true theory after The hood: %s" % cavetto_after_hood)
+	_expect(cavetto_after_hood.find("Seth (cavetto hand) cut the cavetto in the dentil at 158") >= 0, "cavetto board timeline after The hood: %s" % cavetto_after_hood)
+	_press(root, "Menu")
+	_press(root, "Open The cyma")
+	var cyma_from_hood := _visible_label_blob(root)
+	_expect(cyma_from_hood.find("Echinus chit") >= 0, "could not return to The cyma from The hood")
+	_expect(cyma_from_hood.find("Jennet note") >= 0, "cyma exhibits did not return from The hood")
+	_expect(cyma_from_hood.find("CW-42") >= 0, "returned cyma omits CW-42")
+	_expect(cyma_from_hood.find("Holly chit") == -1, "hood papers showed inside The cyma")
+	_expect(cyma_from_hood.find("Mule note") == -1, "hood papers showed inside The cyma")
+	_expect(cyma_from_hood.find("CW-46") == -1, "hood file code stayed up inside The cyma")
+	_expect(cyma_from_hood.find("Spruce chit") == -1, "annulet papers showed inside The cyma")
+	_expect(cyma_from_hood.find("Hinny note") == -1, "annulet papers showed inside The cyma")
+	_expect(cyma_from_hood.find("CW-45") == -1, "annulet file code stayed up inside The cyma")
+	_expect(cyma_from_hood.find("Walnut chit") == -1, "reed papers showed inside The cyma")
+	_expect(cyma_from_hood.find("Weanling note") == -1, "reed papers showed inside The cyma")
+	_expect(cyma_from_hood.find("CW-44") == -1, "reed file code stayed up inside The cyma")
+	_expect(cyma_from_hood.find("Thumbnail chit") == -1, "cavetto papers showed inside The cyma")
+	_expect(cyma_from_hood.find("Palfrey note") == -1, "cavetto papers showed inside The cyma")
+	_expect(cyma_from_hood.find("CW-43") == -1, "cavetto file code stayed up inside The cyma")
+	_press(root, "Ruth")
+	_press(root, "Bolection")
+	_press(root, "153")
+	_press(root, "Submit theory")
+	var cyma_after_hood := _verdict_text(root)
+	_expect(cyma_after_hood.find("fits every exhibit") >= 0, "cyma board rejected the true theory after The hood: %s" % cyma_after_hood)
+	_expect(cyma_after_hood.find("Ruth (cyma hand) cut the cyma in the bolection at 153") >= 0, "cyma board timeline after The hood: %s" % cyma_after_hood)
+	_press(root, "Menu")
+	_press(root, "Open The scotia")
+	var scotia_from_hood := _visible_label_blob(root)
+	_expect(scotia_from_hood.find("Torus chit") >= 0, "could not return to The scotia from The hood")
+	_expect(scotia_from_hood.find("Yearling note") >= 0, "scotia exhibits did not return from The hood")
+	_expect(scotia_from_hood.find("CW-41") >= 0, "returned scotia omits CW-41")
+	_expect(scotia_from_hood.find("Holly chit") == -1, "hood papers showed inside The scotia")
+	_expect(scotia_from_hood.find("Mule note") == -1, "hood papers showed inside The scotia")
+	_expect(scotia_from_hood.find("CW-46") == -1, "hood file code stayed up inside The scotia")
+	_expect(scotia_from_hood.find("Spruce chit") == -1, "annulet papers showed inside The scotia")
+	_expect(scotia_from_hood.find("Hinny note") == -1, "annulet papers showed inside The scotia")
+	_expect(scotia_from_hood.find("CW-45") == -1, "annulet file code stayed up inside The scotia")
+	_expect(scotia_from_hood.find("Walnut chit") == -1, "reed papers showed inside The scotia")
+	_expect(scotia_from_hood.find("Weanling note") == -1, "reed papers showed inside The scotia")
+	_expect(scotia_from_hood.find("CW-44") == -1, "reed file code stayed up inside The scotia")
+	_expect(scotia_from_hood.find("Thumbnail chit") == -1, "cavetto papers showed inside The scotia")
+	_expect(scotia_from_hood.find("Palfrey note") == -1, "cavetto papers showed inside The scotia")
+	_expect(scotia_from_hood.find("CW-43") == -1, "cavetto file code stayed up inside The scotia")
+	_expect(scotia_from_hood.find("Echinus chit") == -1, "cyma papers showed inside The scotia")
+	_expect(scotia_from_hood.find("Jennet note") == -1, "cyma papers showed inside The scotia")
+	_expect(scotia_from_hood.find("CW-42") == -1, "cyma file code stayed up inside The scotia")
+	_press(root, "Willa")
+	_press(root, "Hollow")
+	_press(root, "148")
+	_press(root, "Submit theory")
+	var scotia_after_hood := _verdict_text(root)
+	_expect(scotia_after_hood.find("fits every exhibit") >= 0, "scotia board rejected the true theory after The hood: %s" % scotia_after_hood)
+	_expect(scotia_after_hood.find("Willa (scotia hand) cut the scotia in the hollow at 148") >= 0, "scotia board timeline after The hood: %s" % scotia_after_hood)
+	_press(root, "Menu")
+	_press(root, "Open The chamfer")
+	var chamfer_from_hood := _visible_label_blob(root)
+	_expect(chamfer_from_hood.find("Cove chit") >= 0, "could not return to The chamfer from The hood")
+	_expect(chamfer_from_hood.find("Stallion note") >= 0, "chamfer exhibits did not return from The hood")
+	_expect(chamfer_from_hood.find("CW-40") >= 0, "returned chamfer omits CW-40")
+	_expect(chamfer_from_hood.find("Torus chit") == -1, "scotia papers showed inside The chamfer")
+	_expect(chamfer_from_hood.find("Yearling note") == -1, "scotia papers showed inside The chamfer")
+	_expect(chamfer_from_hood.find("CW-41") == -1, "scotia file code stayed up inside The chamfer")
+	_expect(chamfer_from_hood.find("Holly chit") == -1, "hood papers showed inside The chamfer")
+	_expect(chamfer_from_hood.find("Mule note") == -1, "hood papers showed inside The chamfer")
+	_expect(chamfer_from_hood.find("CW-46") == -1, "hood file code stayed up inside The chamfer")
+	_expect(chamfer_from_hood.find("Spruce chit") == -1, "annulet papers showed inside The chamfer")
+	_expect(chamfer_from_hood.find("Hinny note") == -1, "annulet papers showed inside The chamfer")
+	_expect(chamfer_from_hood.find("CW-45") == -1, "annulet file code stayed up inside The chamfer")
+	_expect(chamfer_from_hood.find("Walnut chit") == -1, "reed papers showed inside The chamfer")
+	_expect(chamfer_from_hood.find("Weanling note") == -1, "reed papers showed inside The chamfer")
+	_expect(chamfer_from_hood.find("CW-44") == -1, "reed file code stayed up inside The chamfer")
+	_expect(chamfer_from_hood.find("Thumbnail chit") == -1, "cavetto papers showed inside The chamfer")
+	_expect(chamfer_from_hood.find("Palfrey note") == -1, "cavetto papers showed inside The chamfer")
+	_expect(chamfer_from_hood.find("CW-43") == -1, "cavetto file code stayed up inside The chamfer")
+	_expect(chamfer_from_hood.find("Echinus chit") == -1, "cyma papers showed inside The chamfer")
+	_expect(chamfer_from_hood.find("Jennet note") == -1, "cyma papers showed inside The chamfer")
+	_expect(chamfer_from_hood.find("CW-42") == -1, "cyma file code stayed up inside The chamfer")
+	_press(root, "Merrick")
+	_press(root, "Block")
+	_press(root, "143")
+	_press(root, "Submit theory")
+	var chamfer_after_hood := _verdict_text(root)
+	_expect(chamfer_after_hood.find("fits every exhibit") >= 0, "chamfer board rejected the true theory after The hood: %s" % chamfer_after_hood)
+	_expect(chamfer_after_hood.find("Merrick (chamfer hand) cut the chamfer in the block at 143") >= 0, "chamfer board timeline after The hood: %s" % chamfer_after_hood)
+	_press(root, "Menu")
+	_press(root, "Open The quirk")
+	var quirk_from_hood := _visible_label_blob(root)
+	_expect(quirk_from_hood.find("Ovolo chit") >= 0, "could not return to The quirk from The hood")
+	_expect(quirk_from_hood.find("Gelding note") >= 0, "quirk exhibits did not return from The hood")
+	_expect(quirk_from_hood.find("CW-39") >= 0, "returned quirk omits CW-39")
+	_expect(quirk_from_hood.find("Cove chit") == -1, "chamfer papers showed inside The quirk")
+	_expect(quirk_from_hood.find("Stallion note") == -1, "chamfer papers showed inside The quirk")
+	_expect(quirk_from_hood.find("CW-40") == -1, "chamfer file code stayed up inside The quirk")
+	_expect(quirk_from_hood.find("Torus chit") == -1, "scotia papers showed inside The quirk")
+	_expect(quirk_from_hood.find("Yearling note") == -1, "scotia papers showed inside The quirk")
+	_expect(quirk_from_hood.find("CW-41") == -1, "scotia file code stayed up inside The quirk")
+	_expect(quirk_from_hood.find("Holly chit") == -1, "hood papers showed inside The quirk")
+	_expect(quirk_from_hood.find("Mule note") == -1, "hood papers showed inside The quirk")
+	_expect(quirk_from_hood.find("CW-46") == -1, "hood file code stayed up inside The quirk")
+	_expect(quirk_from_hood.find("Spruce chit") == -1, "annulet papers showed inside The quirk")
+	_expect(quirk_from_hood.find("Hinny note") == -1, "annulet papers showed inside The quirk")
+	_expect(quirk_from_hood.find("CW-45") == -1, "annulet file code stayed up inside The quirk")
+	_expect(quirk_from_hood.find("Walnut chit") == -1, "reed papers showed inside The quirk")
+	_expect(quirk_from_hood.find("Weanling note") == -1, "reed papers showed inside The quirk")
+	_expect(quirk_from_hood.find("CW-44") == -1, "reed file code stayed up inside The quirk")
+	_expect(quirk_from_hood.find("Thumbnail chit") == -1, "cavetto papers showed inside The quirk")
+	_expect(quirk_from_hood.find("Palfrey note") == -1, "cavetto papers showed inside The quirk")
+	_expect(quirk_from_hood.find("CW-43") == -1, "cavetto file code stayed up inside The quirk")
+	_expect(quirk_from_hood.find("Echinus chit") == -1, "cyma papers showed inside The quirk")
+	_expect(quirk_from_hood.find("Jennet note") == -1, "cyma papers showed inside The quirk")
+	_expect(quirk_from_hood.find("CW-42") == -1, "cyma file code stayed up inside The quirk")
+	_press(root, "Ross")
+	_press(root, "Scratch")
+	_press(root, "138")
+	_press(root, "Submit theory")
+	var quirk_after_hood := _verdict_text(root)
+	_expect(quirk_after_hood.find("fits every exhibit") >= 0, "quirk board rejected the true theory after The hood: %s" % quirk_after_hood)
+	_expect(quirk_after_hood.find("Ross (quirk hand) scratched the quirk in the scratch at 138") >= 0, "quirk board timeline after The hood: %s" % quirk_after_hood)
+	_press(root, "Menu")
+	_press(root, "Open The tongue")
+	var tongue_from_hood := _visible_label_blob(root)
+	_expect(tongue_from_hood.find("Groove chit") >= 0, "could not return to The tongue from The hood")
+	_expect(tongue_from_hood.find("Filly note") >= 0, "tongue exhibits did not return from The hood")
+	_expect(tongue_from_hood.find("CW-38") >= 0, "returned tongue omits CW-38")
+	_expect(tongue_from_hood.find("Cove chit") == -1, "chamfer papers showed inside The tongue")
+	_expect(tongue_from_hood.find("Stallion note") == -1, "chamfer papers showed inside The tongue")
+	_expect(tongue_from_hood.find("CW-40") == -1, "chamfer file code stayed up inside The tongue")
+	_expect(tongue_from_hood.find("Torus chit") == -1, "scotia papers showed inside The tongue")
+	_expect(tongue_from_hood.find("Yearling note") == -1, "scotia papers showed inside The tongue")
+	_expect(tongue_from_hood.find("CW-41") == -1, "scotia file code stayed up inside The tongue")
+	_expect(tongue_from_hood.find("Holly chit") == -1, "hood papers showed inside The tongue")
+	_expect(tongue_from_hood.find("Mule note") == -1, "hood papers showed inside The tongue")
+	_expect(tongue_from_hood.find("CW-46") == -1, "hood file code stayed up inside The tongue")
+	_expect(tongue_from_hood.find("Spruce chit") == -1, "annulet papers showed inside The tongue")
+	_expect(tongue_from_hood.find("Hinny note") == -1, "annulet papers showed inside The tongue")
+	_expect(tongue_from_hood.find("CW-45") == -1, "annulet file code stayed up inside The tongue")
+	_expect(tongue_from_hood.find("Walnut chit") == -1, "reed papers showed inside The tongue")
+	_expect(tongue_from_hood.find("Weanling note") == -1, "reed papers showed inside The tongue")
+	_expect(tongue_from_hood.find("CW-44") == -1, "reed file code stayed up inside The tongue")
+	_expect(tongue_from_hood.find("Thumbnail chit") == -1, "cavetto papers showed inside The tongue")
+	_expect(tongue_from_hood.find("Palfrey note") == -1, "cavetto papers showed inside The tongue")
+	_expect(tongue_from_hood.find("CW-43") == -1, "cavetto file code stayed up inside The tongue")
+	_expect(tongue_from_hood.find("Echinus chit") == -1, "cyma papers showed inside The tongue")
+	_expect(tongue_from_hood.find("Jennet note") == -1, "cyma papers showed inside The tongue")
+	_expect(tongue_from_hood.find("CW-42") == -1, "cyma file code stayed up inside The tongue")
+	_press(root, "Shay")
+	_press(root, "Knife")
+	_press(root, "133")
+	_press(root, "Submit theory")
+	var tongue_after_hood := _verdict_text(root)
+	_expect(tongue_after_hood.find("fits every exhibit") >= 0, "tongue board rejected the true theory after The hood: %s" % tongue_after_hood)
+	_expect(tongue_after_hood.find("Shay (tongue hand) cut the tongue in the knife at 133") >= 0, "tongue board timeline after The hood: %s" % tongue_after_hood)
+	_press(root, "Menu")
+	_press(root, "Open The dowel")
+	var dowel_from_hood := _visible_label_blob(root)
+	_expect(dowel_from_hood.find("Bore chit") >= 0, "could not return to The dowel from The hood")
+	_expect(dowel_from_hood.find("Dowel note") >= 0, "dowel exhibits did not return from The hood")
+	_expect(dowel_from_hood.find("CW-37") >= 0, "returned dowel omits CW-37")
+	_expect(dowel_from_hood.find("Cove chit") == -1, "chamfer papers showed inside The dowel")
+	_expect(dowel_from_hood.find("Stallion note") == -1, "chamfer papers showed inside The dowel")
+	_expect(dowel_from_hood.find("CW-40") == -1, "chamfer file code stayed up inside The dowel")
+	_expect(dowel_from_hood.find("Torus chit") == -1, "scotia papers showed inside The dowel")
+	_expect(dowel_from_hood.find("Yearling note") == -1, "scotia papers showed inside The dowel")
+	_expect(dowel_from_hood.find("CW-41") == -1, "scotia file code stayed up inside The dowel")
+	_expect(dowel_from_hood.find("Holly chit") == -1, "hood papers showed inside The dowel")
+	_expect(dowel_from_hood.find("Mule note") == -1, "hood papers showed inside The dowel")
+	_expect(dowel_from_hood.find("CW-46") == -1, "hood file code stayed up inside The dowel")
+	_expect(dowel_from_hood.find("Spruce chit") == -1, "annulet papers showed inside The dowel")
+	_expect(dowel_from_hood.find("Hinny note") == -1, "annulet papers showed inside The dowel")
+	_expect(dowel_from_hood.find("CW-45") == -1, "annulet file code stayed up inside The dowel")
+	_expect(dowel_from_hood.find("Walnut chit") == -1, "reed papers showed inside The dowel")
+	_expect(dowel_from_hood.find("Weanling note") == -1, "reed papers showed inside The dowel")
+	_expect(dowel_from_hood.find("CW-44") == -1, "reed file code stayed up inside The dowel")
+	_expect(dowel_from_hood.find("Thumbnail chit") == -1, "cavetto papers showed inside The dowel")
+	_expect(dowel_from_hood.find("Palfrey note") == -1, "cavetto papers showed inside The dowel")
+	_expect(dowel_from_hood.find("CW-43") == -1, "cavetto file code stayed up inside The dowel")
+	_expect(dowel_from_hood.find("Echinus chit") == -1, "cyma papers showed inside The dowel")
+	_expect(dowel_from_hood.find("Jennet note") == -1, "cyma papers showed inside The dowel")
+	_expect(dowel_from_hood.find("CW-42") == -1, "cyma file code stayed up inside The dowel")
+	_press(root, "Faye")
+	_press(root, "Bit")
+	_press(root, "128")
+	_press(root, "Submit theory")
+	var dowel_after_hood := _verdict_text(root)
+	_expect(dowel_after_hood.find("fits every exhibit") >= 0, "dowel board rejected the true theory after The hood: %s" % dowel_after_hood)
+	_expect(dowel_after_hood.find("Faye (dowel hand) cut the dowel in the bit at 128") >= 0, "dowel board timeline after The hood: %s" % dowel_after_hood)
+	_press(root, "Menu")
 	_menu_root = root
 
 
@@ -24954,13 +27452,13 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 								var chamfer_code_bottom := chamfer_code_top + chamfer_code_rect.size.y
 								print("scrolled bottom CW-40 %s..%s page %s max %s" % [chamfer_code_top, chamfer_code_bottom, chamfer_page, chamfer_bar.max_value])
 								_expect(chamfer_code_rect.position.x >= 0.0 and chamfer_code_rect.position.x + chamfer_code_rect.size.x <= 1280.0, "CW-40 is outside the window horizontally %s" % chamfer_code_rect)
-								_expect(chamfer_code_top >= -0.5, "CW-40 is above the window when the file list is scrolled to the bottom (%s)" % chamfer_code_top)
+								_expect(chamfer_code_top < 0.0, "CW-40 should sit above the window once The annulet is on the list (%s)" % chamfer_code_top)
 								_expect(chamfer_code_bottom <= chamfer_page + 0.5, "CW-40 is below the window when the file list is scrolled to the bottom (%s)" % chamfer_code_bottom)
 								var chamfer_button_top := chamfer_rect.position.y - chamfer_max_scroll
 								var chamfer_button_bottom := chamfer_button_top + chamfer_rect.size.y
 								print("scrolled bottom Open The chamfer %s..%s" % [chamfer_button_top, chamfer_button_bottom])
 								_expect(chamfer_rect.position.x >= 0.0 and chamfer_rect.position.x + chamfer_rect.size.x <= 1280.0, "Open The chamfer is outside the window horizontally %s" % chamfer_rect)
-								_expect(chamfer_button_top >= -0.5, "Open The chamfer is above the window when the file list is scrolled to the bottom (%s)" % chamfer_button_top)
+								_expect(chamfer_button_top < 0.0, "Open The chamfer should sit above the window once The annulet is on the list (%s)" % chamfer_button_top)
 								_expect(chamfer_button_bottom <= chamfer_page + 0.5, "Open The chamfer is below the window when the file list is scrolled to the bottom (%s)" % chamfer_button_bottom)
 
 
@@ -25001,13 +27499,13 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 									var scotia_code_bottom := scotia_code_top + scotia_code_rect.size.y
 									print("scrolled bottom CW-41 %s..%s page %s max %s" % [scotia_code_top, scotia_code_bottom, scotia_page, scotia_bar.max_value])
 									_expect(scotia_code_rect.position.x >= 0.0 and scotia_code_rect.position.x + scotia_code_rect.size.x <= 1280.0, "CW-41 is outside the window horizontally %s" % scotia_code_rect)
-									_expect(scotia_code_top >= -0.5, "CW-41 is above the window when the file list is scrolled to the bottom (%s)" % scotia_code_top)
+									_expect(scotia_code_top < 0.0, "CW-41 should sit above the window once The hood is on the list (%s)" % scotia_code_top)
 									_expect(scotia_code_bottom <= scotia_page + 0.5, "CW-41 is below the window when the file list is scrolled to the bottom (%s)" % scotia_code_bottom)
 									var scotia_button_top := scotia_rect.position.y - scotia_max_scroll
 									var scotia_button_bottom := scotia_button_top + scotia_rect.size.y
 									print("scrolled bottom Open The scotia %s..%s" % [scotia_button_top, scotia_button_bottom])
 									_expect(scotia_rect.position.x >= 0.0 and scotia_rect.position.x + scotia_rect.size.x <= 1280.0, "Open The scotia is outside the window horizontally %s" % scotia_rect)
-									_expect(scotia_button_top >= -0.5, "Open The scotia is above the window when the file list is scrolled to the bottom (%s)" % scotia_button_top)
+									_expect(scotia_button_top < 0.0, "Open The scotia should sit above the window once The hood is on the list (%s)" % scotia_button_top)
 									_expect(scotia_button_bottom <= scotia_page + 0.5, "Open The scotia is below the window when the file list is scrolled to the bottom (%s)" % scotia_button_bottom)
 
 
@@ -25160,6 +27658,116 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 												_expect(reed_rect.position.x >= 0.0 and reed_rect.position.x + reed_rect.size.x <= 1280.0, "Open The reed is outside the window horizontally %s" % reed_rect)
 												_expect(reed_button_top >= -0.5, "Open The reed is above the window when the file list is scrolled to the bottom (%s)" % reed_button_top)
 												_expect(reed_button_bottom <= reed_page + 0.5, "Open The reed is below the window when the file list is scrolled to the bottom (%s)" % reed_button_bottom)
+
+											var annulet_button := _find_visible_button(root, "Open The annulet")
+											_expect(annulet_button != null, "file list is missing Open The annulet")
+											if annulet_button != null:
+												var annulet_rect := _content_rect(annulet_button)
+												print("file list annulet %s stride %s" % [annulet_rect, card_stride])
+												_expect(annulet_rect.size.y >= 40.0, "Open The annulet has no height")
+												_expect(reed_rect.position.y + reed_rect.size.y <= annulet_rect.position.y, "Open The reed is not above Open The annulet")
+												_expect(annulet_rect.position.y == reed_rect.position.y + card_stride, "annulet content top is %s, one stride below the reed is %s" % [annulet_rect.position.y, reed_rect.position.y + card_stride])
+												_expect(reed_rect.position.y == 6633.0, "reed content top moved to %s" % reed_rect.position.y)
+												_expect(cavetto_rect.position.y == 6486.0, "cavetto content top moved to %s" % cavetto_rect.position.y)
+												_expect(cyma_rect.position.y == 6339.0, "cyma content top moved to %s" % cyma_rect.position.y)
+												_expect(scotia_rect.position.y == 6192.0, "scotia content top moved to %s" % scotia_rect.position.y)
+												_expect(chamfer_rect.position.y == 6045.0, "chamfer content top moved to %s" % chamfer_rect.position.y)
+												_expect(quirk_rect.position.y == 5898.0, "quirk content top moved to %s" % quirk_rect.position.y)
+												_expect(tongue_rect.position.y == 5751.0, "tongue content top moved to %s" % tongue_rect.position.y)
+												_expect(dowel_rect.position.y == 5604.0, "dowel content top moved to %s" % dowel_rect.position.y)
+												if card_stride == 147.0:
+													_expect(annulet_rect.position.y == 6780.0, "annulet content top is %s" % annulet_rect.position.y)
+													_expect(reed_rect.position.y == 6633.0, "reed content top is %s" % reed_rect.position.y)
+													_expect(cavetto_rect.position.y == 6486.0, "cavetto content top is %s" % cavetto_rect.position.y)
+													_expect(cyma_rect.position.y == 6339.0, "cyma content top is %s" % cyma_rect.position.y)
+													_expect(scotia_rect.position.y == 6192.0, "scotia content top is %s" % scotia_rect.position.y)
+													_expect(chamfer_rect.position.y == 6045.0, "chamfer content top is %s" % chamfer_rect.position.y)
+													_expect(quirk_rect.position.y == 5898.0, "quirk content top is %s" % quirk_rect.position.y)
+													_expect(tongue_rect.position.y == 5751.0, "tongue content top is %s" % tongue_rect.position.y)
+													_expect(dowel_rect.position.y == 5604.0, "dowel content top is %s" % dowel_rect.position.y)
+												var annulet_bottom := annulet_rect.position.y + annulet_rect.size.y
+												var annulet_visible_top := annulet_bottom - window_height
+												_expect(reed_rect.position.y >= annulet_visible_top, "Open The reed is not fully on screen above Open The annulet")
+												_expect(reed_rect.position.y + reed_rect.size.y <= annulet_bottom, "Open The reed extends past the window when Open The annulet sits at the bottom")
+												_expect(annulet_bottom > window_height, "Open The annulet already fits without scrolling")
+												var annulet_code := _find_visible_label(root, "CW-45   The annulet")
+												_expect(annulet_code != null, "file list omits the CW-45 label")
+												if annulet_code != null:
+													var annulet_page := window_height
+													var annulet_bar := scroll.get_v_scroll_bar()
+													var annulet_content_height := float(annulet_bar.max_value)
+													var annulet_max_scroll := annulet_content_height - annulet_page
+													if annulet_max_scroll < 0.0:
+														annulet_max_scroll = 0.0
+													var annulet_code_rect := _content_rect(annulet_code)
+													var annulet_code_top := annulet_code_rect.position.y - annulet_max_scroll
+													var annulet_code_bottom := annulet_code_top + annulet_code_rect.size.y
+													print("scrolled bottom CW-45 %s..%s page %s max %s" % [annulet_code_top, annulet_code_bottom, annulet_page, annulet_bar.max_value])
+													_expect(annulet_code_rect.position.x >= 0.0 and annulet_code_rect.position.x + annulet_code_rect.size.x <= 1280.0, "CW-45 is outside the window horizontally %s" % annulet_code_rect)
+													_expect(annulet_code_top >= -0.5, "CW-45 is above the window when the file list is scrolled to the bottom (%s)" % annulet_code_top)
+													_expect(annulet_code_bottom <= annulet_page + 0.5, "CW-45 is below the window when the file list is scrolled to the bottom (%s)" % annulet_code_bottom)
+													var annulet_button_top := annulet_rect.position.y - annulet_max_scroll
+													var annulet_button_bottom := annulet_button_top + annulet_rect.size.y
+													print("scrolled bottom Open The annulet %s..%s" % [annulet_button_top, annulet_button_bottom])
+													_expect(annulet_rect.position.x >= 0.0 and annulet_rect.position.x + annulet_rect.size.x <= 1280.0, "Open The annulet is outside the window horizontally %s" % annulet_rect)
+													_expect(annulet_button_top >= -0.5, "Open The annulet is above the window when the file list is scrolled to the bottom (%s)" % annulet_button_top)
+													_expect(annulet_button_bottom <= annulet_page + 0.5, "Open The annulet is below the window when the file list is scrolled to the bottom (%s)" % annulet_button_bottom)
+
+												var hood_button := _find_visible_button(root, "Open The hood")
+												_expect(hood_button != null, "file list is missing Open The hood")
+												if hood_button != null:
+													var hood_rect := _content_rect(hood_button)
+													print("file list hood %s stride %s" % [hood_rect, card_stride])
+													_expect(hood_rect.size.y >= 40.0, "Open The hood has no height")
+													_expect(annulet_rect.position.y + annulet_rect.size.y <= hood_rect.position.y, "Open The annulet is not above Open The hood")
+													_expect(hood_rect.position.y == annulet_rect.position.y + card_stride, "hood content top is %s, one stride below the annulet is %s" % [hood_rect.position.y, annulet_rect.position.y + card_stride])
+													_expect(annulet_rect.position.y == 6780.0, "annulet content top moved to %s" % annulet_rect.position.y)
+													_expect(reed_rect.position.y == 6633.0, "reed content top moved to %s" % reed_rect.position.y)
+													_expect(cavetto_rect.position.y == 6486.0, "cavetto content top moved to %s" % cavetto_rect.position.y)
+													_expect(cyma_rect.position.y == 6339.0, "cyma content top moved to %s" % cyma_rect.position.y)
+													_expect(scotia_rect.position.y == 6192.0, "scotia content top moved to %s" % scotia_rect.position.y)
+													_expect(chamfer_rect.position.y == 6045.0, "chamfer content top moved to %s" % chamfer_rect.position.y)
+													_expect(quirk_rect.position.y == 5898.0, "quirk content top moved to %s" % quirk_rect.position.y)
+													_expect(tongue_rect.position.y == 5751.0, "tongue content top moved to %s" % tongue_rect.position.y)
+													_expect(dowel_rect.position.y == 5604.0, "dowel content top moved to %s" % dowel_rect.position.y)
+													if card_stride == 147.0:
+														_expect(hood_rect.position.y == 6927.0, "hood content top is %s" % hood_rect.position.y)
+														_expect(annulet_rect.position.y == 6780.0, "annulet content top is %s" % annulet_rect.position.y)
+														_expect(reed_rect.position.y == 6633.0, "reed content top is %s" % reed_rect.position.y)
+														_expect(cavetto_rect.position.y == 6486.0, "cavetto content top is %s" % cavetto_rect.position.y)
+														_expect(cyma_rect.position.y == 6339.0, "cyma content top is %s" % cyma_rect.position.y)
+														_expect(scotia_rect.position.y == 6192.0, "scotia content top is %s" % scotia_rect.position.y)
+														_expect(chamfer_rect.position.y == 6045.0, "chamfer content top is %s" % chamfer_rect.position.y)
+														_expect(quirk_rect.position.y == 5898.0, "quirk content top is %s" % quirk_rect.position.y)
+														_expect(tongue_rect.position.y == 5751.0, "tongue content top is %s" % tongue_rect.position.y)
+														_expect(dowel_rect.position.y == 5604.0, "dowel content top is %s" % dowel_rect.position.y)
+													var hood_bottom := hood_rect.position.y + hood_rect.size.y
+													var hood_visible_top := hood_bottom - window_height
+													_expect(annulet_rect.position.y >= hood_visible_top, "Open The annulet is not fully on screen above Open The hood")
+													_expect(annulet_rect.position.y + annulet_rect.size.y <= hood_bottom, "Open The annulet extends past the window when Open The hood sits at the bottom")
+													_expect(hood_bottom > window_height, "Open The hood already fits without scrolling")
+													var hood_code := _find_visible_label(root, "CW-46   The hood")
+													_expect(hood_code != null, "file list omits the CW-46 label")
+													if hood_code != null:
+														var hood_page := window_height
+														var hood_bar := scroll.get_v_scroll_bar()
+														var hood_content_height := float(hood_bar.max_value)
+														var hood_max_scroll := hood_content_height - hood_page
+														if hood_max_scroll < 0.0:
+															hood_max_scroll = 0.0
+														var hood_code_rect := _content_rect(hood_code)
+														var hood_code_top := hood_code_rect.position.y - hood_max_scroll
+														var hood_code_bottom := hood_code_top + hood_code_rect.size.y
+														print("scrolled bottom CW-46 %s..%s page %s max %s" % [hood_code_top, hood_code_bottom, hood_page, hood_bar.max_value])
+														_expect(hood_code_rect.position.x >= 0.0 and hood_code_rect.position.x + hood_code_rect.size.x <= 1280.0, "CW-46 is outside the window horizontally %s" % hood_code_rect)
+														_expect(hood_code_top >= -0.5, "CW-46 is above the window when the file list is scrolled to the bottom (%s)" % hood_code_top)
+														_expect(hood_code_bottom <= hood_page + 0.5, "CW-46 is below the window when the file list is scrolled to the bottom (%s)" % hood_code_bottom)
+														var hood_button_top := hood_rect.position.y - hood_max_scroll
+														var hood_button_bottom := hood_button_top + hood_rect.size.y
+														print("scrolled bottom Open The hood %s..%s" % [hood_button_top, hood_button_bottom])
+														_expect(hood_rect.position.x >= 0.0 and hood_rect.position.x + hood_rect.size.x <= 1280.0, "Open The hood is outside the window horizontally %s" % hood_rect)
+														_expect(hood_button_top >= -0.5, "Open The hood is above the window when the file list is scrolled to the bottom (%s)" % hood_button_top)
+														_expect(hood_button_bottom <= hood_page + 0.5, "Open The hood is below the window when the file list is scrolled to the bottom (%s)" % hood_button_bottom)
 
 func _content_rect(control: Control) -> Rect2:
 	var rect := control.get_global_rect()

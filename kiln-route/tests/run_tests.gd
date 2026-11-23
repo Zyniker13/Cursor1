@@ -122,6 +122,15 @@ func _run() -> void:
 	_test_beam_splits_backward_and_left()
 	_test_beam_refuses_left_right_and_behind()
 	_test_beam_blocked_does_not_spill()
+	_test_hake_splits_backward_and_right()
+	_test_hake_refuses_left_right_and_behind()
+	_test_hake_blocked_does_not_spill()
+	_test_sole_splits_forward_and_right()
+	_test_sole_refuses_left_right_and_behind()
+	_test_sole_blocked_does_not_spill()
+	_test_frog_splits_forward_and_left()
+	_test_frog_refuses_left_right_and_behind()
+	_test_frog_blocked_does_not_spill()
 	_test_rooms()
 	_test_over_budget()
 	_test_pickup()
@@ -156,6 +165,9 @@ func _run() -> void:
 	_test_wing25_lessons()
 	_test_wing26_lessons()
 	_test_wing27_lessons()
+	_test_wing28_lessons()
+	_test_wing29_lessons()
+	_test_wing30_lessons()
 	_test_game_object()
 
 
@@ -1010,7 +1022,7 @@ func _arm_lane(pattern: Array) -> Dictionary:
 
 func _test_rooms() -> void:
 	var catalog := Rooms.all()
-	check(catalog.size() == 216, "twenty-seven wings have 216 rooms")
+	check(catalog.size() == 240, "thirty wings have 240 rooms")
 	check(catalog[0].name == "Haul" and catalog[7].name == "Two Orders", "rooms 1 through 8 stay the first wing")
 	check(catalog[8].name == "Straight" and catalog[15].name == "Balance", "rooms 9 through 16 are the second wing")
 	check(catalog[16].name == "Span" and catalog[23].name == "Ledger", "rooms 17 through 24 are the third wing")
@@ -1038,6 +1050,9 @@ func _test_rooms() -> void:
 	check(catalog[192].name == "Left Ore" and catalog[199].name == "Held Pair", "rooms 193 through 200 are the twenty-fifth wing")
 	check(catalog[200].name == "Right Ore" and catalog[207].name == "Held Pair", "rooms 201 through 208 are the twenty-sixth wing")
 	check(catalog[208].name == "Ahead Ore" and catalog[215].name == "Held Pair", "rooms 209 through 216 are the twenty-seventh wing")
+	check(catalog[216].name == "Ahead Ore" and catalog[223].name == "Held Pair", "rooms 217 through 224 are the twenty-eighth wing")
+	check(catalog[224].name == "Ahead Ore" and catalog[231].name == "Held Pair", "rooms 225 through 232 are the twenty-ninth wing")
+	check(catalog[232].name == "Ahead Ore" and catalog[239].name == "Held Pair", "rooms 233 through 240 are the thirtieth wing")
 	for index in catalog.size():
 		var bridge_count := int(catalog[index].budget.get(Rules.Kind.BRIDGE, 0))
 		var grate_count := int(catalog[index].budget.get(Rules.Kind.GRATE, 0))
@@ -1064,6 +1079,15 @@ func _test_rooms() -> void:
 		var stilt_count := int(catalog[index].budget.get(Rules.Kind.STILT, 0))
 		var clevis_count := int(catalog[index].budget.get(Rules.Kind.CLEVIS, 0))
 		var beam_count := int(catalog[index].budget.get(Rules.Kind.BEAM, 0))
+		var hake_count := int(catalog[index].budget.get(Rules.Kind.HAKE, 0))
+		var sole_count := int(catalog[index].budget.get(Rules.Kind.SOLE, 0))
+		var frog_count := int(catalog[index].budget.get(Rules.Kind.FROG, 0))
+		if index < 232:
+			check(frog_count == 0, "room %d does not use the frog" % (index + 1))
+		if index < 224:
+			check(sole_count == 0, "room %d does not use the sole" % (index + 1))
+		if index < 216:
+			check(hake_count == 0, "room %d does not use the hake" % (index + 1))
 		if index < 208:
 			check(beam_count == 0, "room %d does not use the beam" % (index + 1))
 		if index < 200:
@@ -1404,8 +1428,86 @@ func _test_rooms() -> void:
 			check(drop_count == 0, "room %d does not use the drop" % (index + 1))
 			check(arm_count == 0, "room %d does not use the arm" % (index + 1))
 			check(hook_count == 0, "room %d does not use the hook" % (index + 1))
-		else:
+		elif index < 216:
 			check(beam_count >= 1, "room %d depends on the beam" % (index + 1))
+			check(clevis_count == 0, "room %d does not use the clevis" % (index + 1))
+			check(stilt_count == 0, "room %d does not use the stilt" % (index + 1))
+			check(heel_count == 0, "room %d does not use the heel" % (index + 1))
+			check(slade_count == 0, "room %d does not use the slade" % (index + 1))
+			check(landside_count == 0, "room %d does not use the landside" % (index + 1))
+			check(moldboard_count == 0, "room %d does not use the moldboard" % (index + 1))
+			check(coulter_count == 0, "room %d does not use the coulter" % (index + 1))
+			check(share_count == 0, "room %d does not use the share" % (index + 1))
+			check(prong_count == 0, "room %d does not use the prong" % (index + 1))
+			check(fork_count == 0, "room %d does not use the fork" % (index + 1))
+			check(harrow_count == 0, "room %d does not use the harrow" % (index + 1))
+			check(hoe_count == 0, "room %d does not use the hoe" % (index + 1))
+			check(rake_count == 0, "room %d does not use the rake" % (index + 1))
+			check(shed_count == 0, "room %d does not use the shed" % (index + 1))
+			check(slip_count == 0, "room %d does not use the slip" % (index + 1))
+			check(pass_count == 0, "room %d does not use the pass" % (index + 1))
+			check(twin_count == 0, "room %d does not use the twin" % (index + 1))
+			check(dwell_count == 0, "room %d does not use the dwell" % (index + 1))
+			check(lift_count == 0, "room %d does not use the lift" % (index + 1))
+			check(drop_count == 0, "room %d does not use the drop" % (index + 1))
+			check(arm_count == 0, "room %d does not use the arm" % (index + 1))
+			check(hook_count == 0, "room %d does not use the hook" % (index + 1))
+		elif index < 224:
+			check(hake_count >= 1, "room %d depends on the hake" % (index + 1))
+			check(beam_count == 0, "room %d does not use the beam" % (index + 1))
+			check(clevis_count == 0, "room %d does not use the clevis" % (index + 1))
+			check(stilt_count == 0, "room %d does not use the stilt" % (index + 1))
+			check(heel_count == 0, "room %d does not use the heel" % (index + 1))
+			check(slade_count == 0, "room %d does not use the slade" % (index + 1))
+			check(landside_count == 0, "room %d does not use the landside" % (index + 1))
+			check(moldboard_count == 0, "room %d does not use the moldboard" % (index + 1))
+			check(coulter_count == 0, "room %d does not use the coulter" % (index + 1))
+			check(share_count == 0, "room %d does not use the share" % (index + 1))
+			check(prong_count == 0, "room %d does not use the prong" % (index + 1))
+			check(fork_count == 0, "room %d does not use the fork" % (index + 1))
+			check(harrow_count == 0, "room %d does not use the harrow" % (index + 1))
+			check(hoe_count == 0, "room %d does not use the hoe" % (index + 1))
+			check(rake_count == 0, "room %d does not use the rake" % (index + 1))
+			check(shed_count == 0, "room %d does not use the shed" % (index + 1))
+			check(slip_count == 0, "room %d does not use the slip" % (index + 1))
+			check(pass_count == 0, "room %d does not use the pass" % (index + 1))
+			check(twin_count == 0, "room %d does not use the twin" % (index + 1))
+			check(dwell_count == 0, "room %d does not use the dwell" % (index + 1))
+			check(lift_count == 0, "room %d does not use the lift" % (index + 1))
+			check(drop_count == 0, "room %d does not use the drop" % (index + 1))
+			check(arm_count == 0, "room %d does not use the arm" % (index + 1))
+			check(hook_count == 0, "room %d does not use the hook" % (index + 1))
+		elif index < 232:
+			check(sole_count >= 1, "room %d depends on the sole" % (index + 1))
+			check(hake_count == 0, "room %d does not use the hake" % (index + 1))
+			check(beam_count == 0, "room %d does not use the beam" % (index + 1))
+			check(clevis_count == 0, "room %d does not use the clevis" % (index + 1))
+			check(stilt_count == 0, "room %d does not use the stilt" % (index + 1))
+			check(heel_count == 0, "room %d does not use the heel" % (index + 1))
+			check(slade_count == 0, "room %d does not use the slade" % (index + 1))
+			check(landside_count == 0, "room %d does not use the landside" % (index + 1))
+			check(moldboard_count == 0, "room %d does not use the moldboard" % (index + 1))
+			check(coulter_count == 0, "room %d does not use the coulter" % (index + 1))
+			check(share_count == 0, "room %d does not use the share" % (index + 1))
+			check(prong_count == 0, "room %d does not use the prong" % (index + 1))
+			check(fork_count == 0, "room %d does not use the fork" % (index + 1))
+			check(harrow_count == 0, "room %d does not use the harrow" % (index + 1))
+			check(hoe_count == 0, "room %d does not use the hoe" % (index + 1))
+			check(rake_count == 0, "room %d does not use the rake" % (index + 1))
+			check(shed_count == 0, "room %d does not use the shed" % (index + 1))
+			check(slip_count == 0, "room %d does not use the slip" % (index + 1))
+			check(pass_count == 0, "room %d does not use the pass" % (index + 1))
+			check(twin_count == 0, "room %d does not use the twin" % (index + 1))
+			check(dwell_count == 0, "room %d does not use the dwell" % (index + 1))
+			check(lift_count == 0, "room %d does not use the lift" % (index + 1))
+			check(drop_count == 0, "room %d does not use the drop" % (index + 1))
+			check(arm_count == 0, "room %d does not use the arm" % (index + 1))
+			check(hook_count == 0, "room %d does not use the hook" % (index + 1))
+		else:
+			check(frog_count >= 1, "room %d depends on the frog" % (index + 1))
+			check(sole_count == 0, "room %d does not use the sole" % (index + 1))
+			check(hake_count == 0, "room %d does not use the hake" % (index + 1))
+			check(beam_count == 0, "room %d does not use the beam" % (index + 1))
 			check(clevis_count == 0, "room %d does not use the clevis" % (index + 1))
 			check(stilt_count == 0, "room %d does not use the stilt" % (index + 1))
 			check(heel_count == 0, "room %d does not use the heel" % (index + 1))
@@ -4001,6 +4103,72 @@ func _test_game_object() -> void:
 	check(main._kind_for_key(KEY_R) == -1, "R stays a control beside the beam")
 	check(main._kind_for_key(KEY_F) == -1, "F stays a control beside the beam")
 	check(main._kind_for_key(KEY_KP_ENTER) == -1, "there is no second keypad key for the beam")
+	check(main._kind_for_key(KEY_B) == Rules.Kind.HAKE, "B selects the hake")
+	check(main._key_label(Rules.Kind.HAKE) == "b", "hake key is B")
+	check(Rules.KIND_NAME[Rules.Kind.HAKE] == "Hake", "the tray labels the hake")
+	check(main._tray_count_line(Rules.Kind.HAKE, 1) == "1 ahead", "the hake count reads 1 ahead")
+	check(main._tray_count_line(Rules.Kind.BEAM, 1) == "1 ahead", "the beam count still reads 1 ahead")
+	check(main._key_label(Rules.Kind.HAKE) != "n", "hake does not take the beam key")
+	check(main._key_label(Rules.Kind.HAKE) != "m", "hake does not take the clevis key")
+	check(main._key_label(Rules.Kind.HAKE) != "o", "hake does not take the prong key")
+	check(main._key_label(Rules.Kind.HAKE) != "p", "hake does not take the share key")
+	check(main._key_label(Rules.Kind.HAKE) != "q", "hake does not take Q")
+	check(main._key_label(Rules.Kind.HAKE) != "e", "hake does not take E")
+	check(main._key_label(Rules.Kind.HAKE) != "r", "hake does not take R")
+	check(main._key_label(Rules.Kind.HAKE) != "f", "hake does not take F")
+	check(main._kind_for_key(KEY_N) == Rules.Kind.BEAM, "N stays the beam beside the hake")
+	check(main._kind_for_key(KEY_M) == Rules.Kind.CLEVIS, "M stays the clevis beside the hake")
+	check(main._kind_for_key(KEY_L) == Rules.Kind.STILT, "L stays the stilt beside the hake")
+	check(main._kind_for_key(KEY_K) == Rules.Kind.HEEL, "K stays the heel beside the hake")
+	check(main._kind_for_key(KEY_O) == Rules.Kind.PRONG, "O stays the prong beside the hake")
+	check(main._kind_for_key(KEY_P) == Rules.Kind.SHARE, "P stays the share beside the hake")
+	check(main._kind_for_key(KEY_Q) == -1, "Q stays a control beside the hake")
+	check(main._kind_for_key(KEY_E) == -1, "E stays a control beside the hake")
+	check(main._kind_for_key(KEY_R) == -1, "R stays a control beside the hake")
+	check(main._kind_for_key(KEY_F) == -1, "F stays a control beside the hake")
+	check(main._kind_for_key(KEY_KP_ENTER) == -1, "there is no second keypad key for the hake")
+	check(main._kind_for_key(KEY_V) == Rules.Kind.SOLE, "V selects the sole")
+	check(main._key_label(Rules.Kind.SOLE) == "v", "sole key is V")
+	check(Rules.KIND_NAME[Rules.Kind.SOLE] == "Sole", "the tray labels the sole")
+	check(main._tray_count_line(Rules.Kind.SOLE, 1) == "1 ahead", "the sole count reads 1 ahead")
+	check(main._tray_count_line(Rules.Kind.HAKE, 1) == "1 ahead", "the hake count still reads 1 ahead")
+	check(main._key_label(Rules.Kind.SOLE) != "b", "sole does not take the hake key")
+	check(main._key_label(Rules.Kind.SOLE) != "n", "sole does not take the beam key")
+	check(main._key_label(Rules.Kind.SOLE) != "o", "sole does not take the prong key")
+	check(main._key_label(Rules.Kind.SOLE) != "p", "sole does not take the share key")
+	check(main._key_label(Rules.Kind.SOLE) != "q", "sole does not take Q")
+	check(main._key_label(Rules.Kind.SOLE) != "e", "sole does not take E")
+	check(main._key_label(Rules.Kind.SOLE) != "r", "sole does not take R")
+	check(main._key_label(Rules.Kind.SOLE) != "f", "sole does not take F")
+	check(main._kind_for_key(KEY_B) == Rules.Kind.HAKE, "B stays the hake beside the sole")
+	check(main._kind_for_key(KEY_N) == Rules.Kind.BEAM, "N stays the beam beside the sole")
+	check(main._kind_for_key(KEY_O) == Rules.Kind.PRONG, "O stays the prong beside the sole")
+	check(main._kind_for_key(KEY_P) == Rules.Kind.SHARE, "P stays the share beside the sole")
+	check(main._kind_for_key(KEY_Q) == -1, "Q stays a control beside the sole")
+	check(main._kind_for_key(KEY_E) == -1, "E stays a control beside the sole")
+	check(main._kind_for_key(KEY_R) == -1, "R stays a control beside the sole")
+	check(main._kind_for_key(KEY_F) == -1, "F stays a control beside the sole")
+	check(main._kind_for_key(KEY_KP_ENTER) == -1, "there is no second keypad key for the sole")
+	check(main._kind_for_key(KEY_C) == Rules.Kind.FROG, "C selects the frog")
+	check(main._key_label(Rules.Kind.FROG) == "c", "frog key is C")
+	check(Rules.KIND_NAME[Rules.Kind.FROG] == "Frog", "the tray labels the frog")
+	check(main._tray_count_line(Rules.Kind.FROG, 1) == "1 ahead", "the frog count reads 1 ahead")
+	check(main._tray_count_line(Rules.Kind.SOLE, 1) == "1 ahead", "the sole count still reads 1 ahead")
+	check(main._key_label(Rules.Kind.FROG) != "v", "frog does not take the sole key")
+	check(main._key_label(Rules.Kind.FROG) != "b", "frog does not take the hake key")
+	check(main._key_label(Rules.Kind.FROG) != "n", "frog does not take the beam key")
+	check(main._key_label(Rules.Kind.FROG) != "q", "frog does not take Q")
+	check(main._key_label(Rules.Kind.FROG) != "e", "frog does not take E")
+	check(main._key_label(Rules.Kind.FROG) != "r", "frog does not take R")
+	check(main._key_label(Rules.Kind.FROG) != "f", "frog does not take F")
+	check(main._kind_for_key(KEY_V) == Rules.Kind.SOLE, "V stays the sole beside the frog")
+	check(main._kind_for_key(KEY_B) == Rules.Kind.HAKE, "B stays the hake beside the frog")
+	check(main._kind_for_key(KEY_N) == Rules.Kind.BEAM, "N stays the beam beside the frog")
+	check(main._kind_for_key(KEY_Q) == -1, "Q stays a control beside the frog")
+	check(main._kind_for_key(KEY_E) == -1, "E stays a control beside the frog")
+	check(main._kind_for_key(KEY_R) == -1, "R stays a control beside the frog")
+	check(main._kind_for_key(KEY_F) == -1, "F stays a control beside the frog")
+	check(main._kind_for_key(KEY_KP_ENTER) == -1, "there is no second keypad key for the frog")
 	check(main._kind_for_key(KEY_COMMA) == Rules.Kind.TWIN, "comma stays on the twin beside the pass")
 	check(main._kind_for_key(KEY_MINUS) == Rules.Kind.ARM, "minus stays on the arm beside the pass")
 	check(main._kind_for_key(KEY_EQUAL) == Rules.Kind.DROP, "equals stays on the drop beside the pass")
@@ -4043,6 +4211,9 @@ func _test_game_object() -> void:
 	check(not main.is_unlocked(193), "room 193 stays locked until room 192 is cleared")
 	check(not main.is_unlocked(201), "room 201 stays locked until room 200 is cleared")
 	check(not main.is_unlocked(209), "room 209 stays locked until room 208 is cleared")
+	check(not main.is_unlocked(217), "room 217 stays locked until room 216 is cleared")
+	check(not main.is_unlocked(225), "room 225 stays locked until room 224 is cleared")
+	check(not main.is_unlocked(233), "room 233 stays locked until room 232 is cleared")
 	check(not main.testing_select(8), "locked room 9 cannot be selected")
 	check(main.testing_select(0), "room 1 can be selected")
 	var before: int = main.testing_tray(Rules.Kind.BELT)
@@ -4150,7 +4321,19 @@ func _test_game_object() -> void:
 			check(not main.is_unlocked(210), "room 210 stays locked until room 209 is cleared")
 		if index == 215:
 			check(main.is_unlocked(216), "clearing room 215 unlocks room 216")
-			check(not main.is_unlocked(217), "room 217 stays locked until room 216 is cleared")
+			check(main.is_unlocked(217), "clearing room 216 unlocks room 217")
+			check(not main.is_unlocked(218), "room 218 stays locked until room 217 is cleared")
+		if index == 223:
+			check(main.is_unlocked(224), "clearing room 223 unlocks room 224")
+			check(main.is_unlocked(225), "clearing room 224 unlocks room 225")
+			check(not main.is_unlocked(226), "room 226 stays locked until room 225 is cleared")
+		if index == 231:
+			check(main.is_unlocked(232), "clearing room 231 unlocks room 232")
+			check(main.is_unlocked(233), "clearing room 232 unlocks room 233")
+			check(not main.is_unlocked(234), "room 234 stays locked until room 233 is cleared")
+		if index == 239:
+			check(main.is_unlocked(240), "clearing room 239 unlocks room 240")
+			check(not main.is_unlocked(241), "room 241 stays locked until room 240 is cleared")
 	check(main.is_unlocked(72), "clearing room 71 unlocks room 72")
 	check(main.is_unlocked(80), "clearing room 79 unlocks room 80")
 	check(main.is_unlocked(88), "clearing room 87 unlocks room 88")
@@ -4182,8 +4365,14 @@ func _test_game_object() -> void:
 	check(main.is_unlocked(208), "clearing room 207 unlocks room 208")
 	check(main.is_unlocked(209), "clearing room 208 unlocks room 209")
 	check(main.is_unlocked(216), "clearing room 215 unlocks room 216")
-	check(not main.is_unlocked(217), "there is no room 217 to unlock")
-	check(not main.testing_select(216), "room select rejects an unknown room")
+	check(main.is_unlocked(217), "clearing room 216 unlocks room 217")
+	check(main.is_unlocked(224), "clearing room 223 unlocks room 224")
+	check(main.is_unlocked(225), "clearing room 224 unlocks room 225")
+	check(main.is_unlocked(232), "clearing room 231 unlocks room 232")
+	check(main.is_unlocked(233), "clearing room 232 unlocks room 233")
+	check(main.is_unlocked(240), "clearing room 239 unlocks room 240")
+	check(not main.is_unlocked(241), "there is no room 241 to unlock")
+	check(not main.testing_select(240), "room select rejects an unknown room")
 	_check_window(main)
 	main.queue_free()
 
@@ -5038,7 +5227,7 @@ func _check_window(main) -> void:
 	var beam_tab: Rect2 = beam_lay.tabs[208]
 	check(beam_tab.position.y + beam_tab.size.y < (beam_lay.play as Rect2).position.y, "the beam room tab stays above the board")
 	check(clevis_held_tab.position.y + clevis_held_tab.size.y < (beam_lay.play as Rect2).position.y, "the clevis held pair tab stays above the board beside the beam")
-	check(absf(beam_tab.size.y - 14.0) < 0.01, "the room tab stays 14 px tall (%s)" % beam_tab.size.y)
+	check(absf(beam_tab.size.y - 12.0) < 0.01, "the twenty-fourth tab row is 12 px tall (%s)" % beam_tab.size.y)
 	check(main.testing_pickup(2, 1), "pickup returns the room 209 beam")
 	check(main.testing_tray(Rules.Kind.BEAM) == 1, "room 209 tray holds one beam")
 	check(Rules.KIND_NAME[Rules.Kind.BEAM] == "Beam", "room 209 tray labels the beam")
@@ -5050,7 +5239,63 @@ func _check_window(main) -> void:
 	var beam_held_tab: Rect2 = beam_held_lay.tabs[215]
 	check(beam_held_tab.position.y + beam_held_tab.size.y < (beam_held_lay.play as Rect2).position.y, "the beam held pair tab stays above the board")
 	check(beam_tab.position.y + beam_tab.size.y < (beam_held_lay.play as Rect2).position.y, "the ahead ore tab stays above the board beside the beam held pair")
-	var footer := "1-9 0 - = \\ ; , ' . / ` y u i o p t g h j k l m n select   R rotate   LMB place or pick up   RMB rotate   Space run   F skip   Bksp restart"
+	check(main.testing_select(216), "select ahead ore to measure the hake window")
+	var hake_lay: Dictionary = main._layout()
+	_check_tray_fits(hake_lay, "hake ahead ore")
+	var hake_tab: Rect2 = hake_lay.tabs[216]
+	check(hake_tab.position.y + hake_tab.size.y < (hake_lay.play as Rect2).position.y, "the hake room tab stays above the board")
+	check(beam_held_tab.position.y + beam_held_tab.size.y < (hake_lay.play as Rect2).position.y, "the beam held pair tab stays above the board beside the hake")
+	check(absf(hake_tab.size.y - 12.0) < 0.01, "the twenty-fourth tab row is 12 px tall beside the hake (%s)" % hake_tab.size.y)
+	check(main.testing_pickup(2, 1), "pickup returns the room 217 hake")
+	check(main.testing_tray(Rules.Kind.HAKE) == 1, "room 217 tray holds one hake")
+	check(Rules.KIND_NAME[Rules.Kind.HAKE] == "Hake", "room 217 tray labels the hake")
+	check(main._tray_count_line(Rules.Kind.HAKE, 1) == "1 ahead", "room 217 tray shows 1 ahead")
+	check(main._key_label(Rules.Kind.HAKE) == "b", "room 217 tray shows the hake key")
+	check(main.testing_select(223), "select the hake held pair to measure the window")
+	var hake_held_lay: Dictionary = main._layout()
+	_check_tray_fits(hake_held_lay, "hake held pair")
+	var hake_held_tab: Rect2 = hake_held_lay.tabs[223]
+	check(hake_held_tab.position.y + hake_held_tab.size.y < (hake_held_lay.play as Rect2).position.y, "the hake held pair tab stays above the board")
+	check(hake_tab.position.y + hake_tab.size.y < (hake_held_lay.play as Rect2).position.y, "the ahead ore tab stays above the board beside the hake held pair")
+	check(main.testing_select(224), "select ahead ore to measure the sole window")
+	var sole_lay: Dictionary = main._layout()
+	_check_tray_fits(sole_lay, "sole ahead ore")
+	var sole_tab: Rect2 = sole_lay.tabs[224]
+	check(sole_tab.position.y + sole_tab.size.y < (sole_lay.play as Rect2).position.y, "the sole room tab stays above the board")
+	check(hake_held_tab.position.y + hake_held_tab.size.y < (sole_lay.play as Rect2).position.y, "the hake held pair tab stays above the board beside the sole")
+	check(ceili(float(Rooms.all().size()) / 10.0) == 24, "the room strip has 24 rows")
+	check(absf(sole_tab.size.y - 12.0) < 0.01, "the sole tab stays 12 px tall (%s)" % sole_tab.size.y)
+	check(main.testing_pickup(2, 1), "pickup returns the room 225 sole")
+	check(main.testing_tray(Rules.Kind.SOLE) == 1, "room 225 tray holds one sole")
+	check(Rules.KIND_NAME[Rules.Kind.SOLE] == "Sole", "room 225 tray labels the sole")
+	check(main._tray_count_line(Rules.Kind.SOLE, 1) == "1 ahead", "room 225 tray shows 1 ahead")
+	check(main._key_label(Rules.Kind.SOLE) == "v", "room 225 tray shows the sole key")
+	check(main.testing_select(231), "select the sole held pair to measure the window")
+	var sole_held_lay: Dictionary = main._layout()
+	_check_tray_fits(sole_held_lay, "sole held pair")
+	var sole_held_tab: Rect2 = sole_held_lay.tabs[231]
+	check(sole_held_tab.position.y + sole_held_tab.size.y < (sole_held_lay.play as Rect2).position.y, "the sole held pair tab stays above the board")
+	check(sole_tab.position.y + sole_tab.size.y < (sole_held_lay.play as Rect2).position.y, "the ahead ore tab stays above the board beside the sole held pair")
+	check(main.testing_select(232), "select ahead ore to measure the frog window")
+	var frog_lay: Dictionary = main._layout()
+	_check_tray_fits(frog_lay, "frog ahead ore")
+	var frog_tab: Rect2 = frog_lay.tabs[232]
+	check(frog_tab.position.y + frog_tab.size.y < (frog_lay.play as Rect2).position.y, "the frog room tab stays above the board")
+	check(sole_held_tab.position.y + sole_held_tab.size.y < (frog_lay.play as Rect2).position.y, "the sole held pair tab stays above the board beside the frog")
+	check(ceili(float(Rooms.all().size()) / 10.0) == 24, "the room strip still has 24 rows")
+	check(absf(frog_tab.size.y - 12.0) < 0.01, "the frog tab stays 12 px tall (%s)" % frog_tab.size.y)
+	check(main.testing_pickup(2, 2), "pickup returns the room 233 frog")
+	check(main.testing_tray(Rules.Kind.FROG) == 1, "room 233 tray holds one frog")
+	check(Rules.KIND_NAME[Rules.Kind.FROG] == "Frog", "room 233 tray labels the frog")
+	check(main._tray_count_line(Rules.Kind.FROG, 1) == "1 ahead", "room 233 tray shows 1 ahead")
+	check(main._key_label(Rules.Kind.FROG) == "c", "room 233 tray shows the frog key")
+	check(main.testing_select(239), "select the frog held pair to measure the window")
+	var frog_held_lay: Dictionary = main._layout()
+	_check_tray_fits(frog_held_lay, "frog held pair")
+	var frog_held_tab: Rect2 = frog_held_lay.tabs[239]
+	check(frog_held_tab.position.y + frog_held_tab.size.y < (frog_held_lay.play as Rect2).position.y, "the frog held pair tab stays above the board")
+	check(frog_tab.position.y + frog_tab.size.y < (frog_held_lay.play as Rect2).position.y, "the ahead ore tab stays above the board beside the frog held pair")
+	var footer := "1-9 0 - = \\ ; , ' . / ` y u i o p t g h j k l m n b v c select   R rotate   LMB place or pick up   RMB rotate   Space run   F skip   Bksp restart"
 	var footer_size: Vector2 = main.font.get_string_size(footer, HORIZONTAL_ALIGNMENT_LEFT, -1, 13)
 	var footer_w := footer_size.x
 	check(footer_w <= size.x - 48.0, "the footer fits the window (%s px)" % footer_w)
@@ -5088,6 +5333,9 @@ func _check_tray_fits(lay: Dictionary, label: String) -> void:
 	var saw_stilt := false
 	var saw_clevis := false
 	var saw_beam := false
+	var saw_hake := false
+	var saw_sole := false
+	var saw_frog := false
 	for slot in lay.tray:
 		var rect: Rect2 = slot.rect
 		check(rect.position.x >= 0.0 and rect.position.y >= play.position.y + play.size.y, "%s tray stays below the board" % label)
@@ -5122,6 +5370,12 @@ func _check_tray_fits(lay: Dictionary, label: String) -> void:
 			saw_clevis = true
 		if int(slot.kind) == Rules.Kind.BEAM:
 			saw_beam = true
+		if int(slot.kind) == Rules.Kind.HAKE:
+			saw_hake = true
+		if int(slot.kind) == Rules.Kind.SOLE:
+			saw_sole = true
+		if int(slot.kind) == Rules.Kind.FROG:
+			saw_frog = true
 	if label.begins_with("shed"):
 		check(saw_shed, "the shed tray slot is on the shed room")
 	elif label.begins_with("hoe"):
@@ -5150,6 +5404,12 @@ func _check_tray_fits(lay: Dictionary, label: String) -> void:
 		check(saw_clevis, "the clevis tray slot is on the clevis room")
 	elif label.begins_with("beam"):
 		check(saw_beam, "the beam tray slot is on the beam room")
+	elif label.begins_with("hake"):
+		check(saw_hake, "the hake tray slot is on the hake room")
+	elif label.begins_with("sole"):
+		check(saw_sole, "the sole tray slot is on the sole room")
+	elif label.begins_with("frog"):
+		check(saw_frog, "the frog tray slot is on the frog room")
 	else:
 		check(saw_rake, "the rake tray slot is on the rake room")
 
@@ -10592,3 +10852,892 @@ func _test_wing27_lessons() -> void:
 	check(int(finished.counts[Rules.Mat.INGOT]) == 29 and int(finished.counts[Rules.Mat.PLATE]) == 30, "held pair feeds the kiln and the plate bin (%s)" % finished.text)
 	check(int(held_slip.counts[Rules.Mat.INGOT]) == 0, "held pair's slip keeps the ore (%s)" % held_slip.text)
 	check(int(held_clevis.counts[Rules.Mat.INGOT]) == 0 and int(held_clevis.counts[Rules.Mat.PLATE]) == 0, "held pair's clevis refuses the ahead arrival (%s)" % held_clevis.text)
+
+
+
+func _hake_lane(pattern: Array, period: int) -> Dictionary:
+	return {
+		"id": 0,
+		"name": "hake",
+		"blurb": "",
+		"rule": "",
+		"w": 3,
+		"h": 3,
+		"sources": [Rooms.source(2, 1, Rules.Dir.WEST, pattern, period)],
+		"sinks": [
+			Rooms.sink(2, 1, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+			Rooms.sink(0, 1, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+			Rooms.sink(1, 0, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+			Rooms.sink(1, 2, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [],
+		"budget": Rooms.kv([Rules.Kind.HAKE, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [],
+		"solution": [],
+	}
+
+
+func _test_hake_splits_backward_and_right() -> void:
+	var ore := _hake_lane([Rules.Mat.ORE], 4)
+	var placed := [Rooms.piece(Rules.Kind.HAKE, 1, 1, Rules.Dir.EAST)]
+	var early := World.simulate(ore, placed, 4)
+	var mid := World.simulate(ore, placed, 8)
+	var waiting := World.simulate(ore, placed, 12)
+	var result := World.simulate(ore, placed, 16)
+	var again := World.simulate(ore, placed, 16)
+	check(_trace(early) == "" and early.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "a lone ore is still in the hake after the belt tick and the dwell tick")
+	check(_trace(mid) == "5:0,1:0|5:1,2:0" and mid.world.machines[Vector2i(1, 1)].hold < 0, "the waiter leaves backward and the arrival leaves right, and the hake is empty, got %s" % _trace(mid))
+	check(int(mid.counts[Rules.Mat.ORE]) == 2, "the first hake pair leaves on the arrival tick")
+	check(_trace(waiting) == "5:0,1:0|5:1,2:0" and waiting.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "the next lone ore does not leave the hake on the next tick or the tick after that, got %s" % _trace(waiting))
+	check(_trace(result) == "5:0,1:0|5:1,2:0|13:0,1:0|13:1,2:0", "the next hake pair leaves backward and right, got %s" % _trace(result))
+	check(result.world.machines[Vector2i(1, 1)].hold < 0, "the hake is empty after the second pair")
+	check(int(result.counts[Rules.Mat.ORE]) == 4, "two hake pairs leave and nothing stays")
+	check(not ("1,0:" in _trace(result)), "a hake does not send the arrival left")
+	check(not ("2,1:" in _trace(result)), "a hake does not send the waiter forward")
+	check(_same(result, again), "the same hake lane is deterministic (seed %d)" % result.seed)
+	var as_beam := World.simulate(ore, [Rooms.piece(Rules.Kind.BEAM, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_beam) == "5:0,1:0|5:1,0:0" and as_beam.world.machines[Vector2i(1, 1)].hold < 0, "a beam on the hake lane sends the arrival left, got %s" % _trace(as_beam))
+	var as_clevis := World.simulate(ore, [Rooms.piece(Rules.Kind.CLEVIS, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_clevis) == "" and as_clevis.world.machines[Vector2i(1, 1)].hold < 0, "a clevis refuses the hake's ahead arrival, got %s" % _trace(as_clevis))
+	var as_stilt := World.simulate(ore, [Rooms.piece(Rules.Kind.STILT, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_stilt) == "" and as_stilt.world.machines[Vector2i(1, 1)].hold < 0, "a stilt refuses the hake's ahead arrival, got %s" % _trace(as_stilt))
+	var as_heel := World.simulate(ore, [Rooms.piece(Rules.Kind.HEEL, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_heel) == "" and as_heel.world.machines[Vector2i(1, 1)].hold < 0, "a heel refuses the hake's ahead arrival, got %s" % _trace(as_heel))
+	var behind := {
+		"id": 0,
+		"name": "hake behind",
+		"blurb": "",
+		"rule": "",
+		"w": 3,
+		"h": 3,
+		"sources": [Rooms.source(0, 1, Rules.Dir.EAST, [Rules.Mat.ORE], 4)],
+		"sinks": [
+			Rooms.sink(0, 1, [Rules.Mat.ORE]),
+			Rooms.sink(1, 0, [Rules.Mat.ORE]),
+			Rooms.sink(1, 2, [Rules.Mat.ORE]),
+			Rooms.sink(2, 1, [Rules.Mat.ORE]),
+		],
+		"chutes": [],
+		"walls": [],
+		"budget": Rooms.kv([Rules.Kind.HAKE, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [],
+		"solution": [],
+	}
+	var from_behind := World.simulate(behind, placed, 8)
+	var heel_behind := World.simulate(behind, [Rooms.piece(Rules.Kind.HEEL, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(from_behind) == "" and from_behind.world.machines[Vector2i(1, 1)].hold < 0, "a hake refuses an arrival from behind, got %s" % _trace(from_behind))
+	check(_trace(heel_behind) == "5:2,1:0|5:0,1:0", "a heel on the behind lane sends the waiter forward and the arrival backward, got %s" % _trace(heel_behind))
+	var from_left := World.simulate(_stilt_lane([Rules.Mat.ORE], 4), placed, 8)
+	var stilt_left := World.simulate(_stilt_lane([Rules.Mat.ORE], 4), [Rooms.piece(Rules.Kind.STILT, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(from_left) == "", "a hake refuses an arrival from the left, got %s" % _trace(from_left))
+	check(_trace(stilt_left) == "5:0,1:0|5:2,1:0", "a stilt on the left lane sends the waiter backward and the arrival forward, got %s" % _trace(stilt_left))
+	var from_right := World.simulate(_clevis_lane([Rules.Mat.ORE], 4), placed, 8)
+	var clevis_right := World.simulate(_clevis_lane([Rules.Mat.ORE], 4), [Rooms.piece(Rules.Kind.CLEVIS, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(from_right) == "", "a hake refuses an arrival from the right, got %s" % _trace(from_right))
+	check(_trace(clevis_right) == "5:2,1:0|5:0,1:0", "a clevis on the right lane sends the waiter forward and the arrival backward, got %s" % _trace(clevis_right))
+	var belt := World.simulate(ore, [Rooms.piece(Rules.Kind.BELT, 1, 1, Rules.Dir.EAST)], 12)
+	var dwell := World.simulate(ore, [Rooms.piece(Rules.Kind.DWELL, 1, 1, Rules.Dir.EAST)], 12)
+	check(_trace(belt) == "" and belt.world.machines[Vector2i(1, 1)].hold < 0, "a belt refuses the hake's ahead arrival, got %s" % _trace(belt))
+	check(_trace(dwell) == "", "a dwell refuses the hake's ahead arrival, got %s" % _trace(dwell))
+	for mat in [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]:
+		var lane := _hake_lane([mat], 80)
+		var lone := World.simulate(lane, placed, 15)
+		check(_trace(lone) == "" and lone.world.machines[Vector2i(1, 1)].hold == mat, "a lone %s never leaves a hake" % Rules.MAT_NAME[mat])
+	var mixed := _hake_lane([Rules.Mat.ORE, Rules.Mat.INGOT], 4)
+	var held := World.simulate(mixed, placed, 4)
+	var pushed := World.simulate(mixed, placed, 8)
+	var later := World.simulate(mixed, placed, 12)
+	check(_trace(held) == "" and held.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "a hake does not release before the different material arrives")
+	check(_trace(pushed) == "5:0,1:0|5:1,2:1" and pushed.world.machines[Vector2i(1, 1)].hold < 0, "a different material leaves right while the waiter leaves backward, got %s" % _trace(pushed))
+	check(_trace(later) == "5:0,1:0|5:1,2:1" and later.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "the next lone ore waits in the hake, got %s" % _trace(later))
+	check(int(pushed.world.machines[Vector2i(1, 1)].phase) == 0, "a hake does not rotate or alternate")
+	var south := {
+		"id": 0,
+		"name": "hake south",
+		"blurb": "",
+		"rule": "",
+		"w": 3,
+		"h": 3,
+		"sources": [Rooms.source(1, 2, Rules.Dir.NORTH, [Rules.Mat.ORE, Rules.Mat.INGOT], 4)],
+		"sinks": [
+			Rooms.sink(1, 0, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+			Rooms.sink(0, 1, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+			Rooms.sink(2, 1, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+			Rooms.sink(1, 2, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+		],
+		"chutes": [],
+		"walls": [],
+		"budget": Rooms.kv([Rules.Kind.HAKE, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [],
+		"solution": [],
+	}
+	var turned := World.simulate(south, [Rooms.piece(Rules.Kind.HAKE, 1, 1, Rules.Dir.SOUTH)], 8)
+	check(_trace(turned) == "5:1,0:0|5:0,1:1" and turned.world.machines[Vector2i(1, 1)].hold < 0, "a south-facing hake sends the waiter backward and the arrival right, got %s" % _trace(turned))
+
+
+func _test_hake_refuses_left_right_and_behind() -> void:
+	var left_side := {
+		"id": 0, "name": "hake left", "blurb": "", "rule": "", "w": 3, "h": 3,
+		"sources": [Rooms.source(1, 0, Rules.Dir.SOUTH, [Rules.Mat.PLATE], 1)],
+		"sinks": [Rooms.sink(2, 1, [Rules.Mat.PLATE])],
+		"chutes": [], "walls": [],
+		"budget": Rooms.kv([Rules.Kind.HAKE, 1, Rules.Kind.BELT, 1]),
+		"quota": Rooms.kv([Rules.Mat.PLATE, 1]),
+		"initial": [], "solution": [],
+	}
+	var belt_left := World.simulate(left_side, [Rooms.piece(Rules.Kind.BELT, 1, 1, Rules.Dir.EAST)], 4)
+	var hake_left := World.simulate(left_side, [Rooms.piece(Rules.Kind.HAKE, 1, 1, Rules.Dir.EAST)], 4)
+	check(int(belt_left.counts[Rules.Mat.PLATE]) >= 1, "a belt takes a plate from the left of the hake cell, got %s" % _trace(belt_left))
+	check(int(hake_left.counts[Rules.Mat.PLATE]) == 0 and int(hake_left.world.sources[0].pending) == Rules.Mat.PLATE, "a hake refuses that same plate from the left")
+	var right_side := {
+		"id": 0, "name": "hake right", "blurb": "", "rule": "", "w": 3, "h": 3,
+		"sources": [Rooms.source(1, 2, Rules.Dir.NORTH, [Rules.Mat.INGOT], 1)],
+		"sinks": [Rooms.sink(2, 1, [Rules.Mat.INGOT])],
+		"chutes": [], "walls": [],
+		"budget": Rooms.kv([Rules.Kind.HAKE, 1, Rules.Kind.BELT, 1]),
+		"quota": Rooms.kv([Rules.Mat.INGOT, 1]),
+		"initial": [], "solution": [],
+	}
+	var belt_right := World.simulate(right_side, [Rooms.piece(Rules.Kind.BELT, 1, 1, Rules.Dir.EAST)], 4)
+	var hake_right := World.simulate(right_side, [Rooms.piece(Rules.Kind.HAKE, 1, 1, Rules.Dir.EAST)], 4)
+	check(int(belt_right.counts[Rules.Mat.INGOT]) >= 1, "a belt takes an ingot from the right of the hake cell, got %s" % _trace(belt_right))
+	check(int(hake_right.counts[Rules.Mat.INGOT]) == 0 and int(hake_right.world.sources[0].pending) == Rules.Mat.INGOT, "a hake refuses that same ingot from the right")
+	var behind := {
+		"id": 0, "name": "hake behind refuse", "blurb": "", "rule": "", "w": 3, "h": 1,
+		"sources": [Rooms.source(0, 0, Rules.Dir.EAST, [Rules.Mat.PLATE], 1)],
+		"sinks": [Rooms.sink(2, 0, [Rules.Mat.PLATE])],
+		"chutes": [], "walls": [],
+		"budget": Rooms.kv([Rules.Kind.HAKE, 1, Rules.Kind.BELT, 1]),
+		"quota": Rooms.kv([Rules.Mat.PLATE, 1]),
+		"initial": [], "solution": [],
+	}
+	var belt := World.simulate(behind, [Rooms.piece(Rules.Kind.BELT, 1, 0, Rules.Dir.EAST)], 4)
+	var hake_behind := World.simulate(behind, [Rooms.piece(Rules.Kind.HAKE, 1, 0, Rules.Dir.EAST)], 4)
+	check(int(belt.counts[Rules.Mat.PLATE]) >= 1, "a belt takes a plate from behind the hake cell, got %s" % _trace(belt))
+	check(int(hake_behind.counts[Rules.Mat.PLATE]) == 0 and int(hake_behind.world.sources[0].pending) == Rules.Mat.PLATE, "a hake refuses that same plate from behind")
+
+
+func _test_hake_blocked_does_not_spill() -> void:
+	var right_wall := {
+		"id": 0, "name": "hake right wall", "blurb": "", "rule": "", "w": 3, "h": 3,
+		"sources": [Rooms.source(2, 1, Rules.Dir.WEST, [Rules.Mat.ORE, Rules.Mat.PLATE], 1)],
+		"sinks": [
+			Rooms.sink(0, 1, [Rules.Mat.ORE, Rules.Mat.PLATE]),
+			Rooms.sink(1, 0, [Rules.Mat.ORE, Rules.Mat.PLATE]),
+		],
+		"chutes": [Rooms.cell(0, 0), Rooms.cell(2, 0), Rooms.cell(0, 2), Rooms.cell(2, 2)],
+		"walls": [Rooms.cell(1, 2)],
+		"budget": Rooms.kv([Rules.Kind.HAKE, 1, Rules.Kind.BEAM, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [], "solution": [],
+	}
+	var held := World.simulate(right_wall, [Rooms.piece(Rules.Kind.HAKE, 1, 1, Rules.Dir.EAST)], 6)
+	var beam := World.simulate(right_wall, [Rooms.piece(Rules.Kind.BEAM, 1, 1, Rules.Dir.EAST)], 2)
+	check(held.error == "" and held.discarded == 0 and held.trace.is_empty(), "a hake with a blocked right cell does not spill backward or left")
+	check(held.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "blocked ore stays on the hake when the right cell refuses")
+	check(int(held.world.sources[0].pending) == Rules.Mat.PLATE, "the arrival is not accepted while the hake's right cell refuses")
+	check(int(held.counts[Rules.Mat.ORE]) == 0 and int(held.counts[Rules.Mat.PLATE]) == 0, "a blocked right cell does not send the waiter backward")
+	check(_trace(beam) == "2:0,1:0|2:1,0:2", "a beam uses the open left cell the hake refuses, got %s" % _trace(beam))
+	var back_wall := {
+		"id": 0, "name": "hake back wall", "blurb": "", "rule": "", "w": 3, "h": 3,
+		"sources": [Rooms.source(2, 1, Rules.Dir.WEST, [Rules.Mat.ORE, Rules.Mat.PLATE], 1)],
+		"sinks": [Rooms.sink(1, 2, [Rules.Mat.ORE, Rules.Mat.PLATE])],
+		"chutes": [Rooms.cell(0, 0), Rooms.cell(2, 0), Rooms.cell(0, 2), Rooms.cell(2, 2)],
+		"walls": [Rooms.cell(0, 1)],
+		"budget": Rooms.kv([Rules.Kind.HAKE, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [], "solution": [],
+	}
+	var back_held := World.simulate(back_wall, [Rooms.piece(Rules.Kind.HAKE, 1, 1, Rules.Dir.EAST)], 6)
+	check(back_held.trace.is_empty() and back_held.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "a blocked backward cell keeps the waiter on the hake")
+	check(int(back_held.world.sources[0].pending) == Rules.Mat.PLATE, "the arrival is not accepted while the hake's backward cell refuses")
+	check(int(back_held.counts[Rules.Mat.ORE]) == 0 and int(back_held.counts[Rules.Mat.PLATE]) == 0, "a blocked backward cell does not send the arrival right")
+
+
+func _test_wing28_lessons() -> void:
+	var wrong_kinds: Array = [
+		Rules.Kind.BELT, Rules.Kind.DWELL, Rules.Kind.TWIN, Rules.Kind.PASS,
+		Rules.Kind.SLIP, Rules.Kind.SHED, Rules.Kind.HOOK, Rules.Kind.RAKE,
+		Rules.Kind.HOE, Rules.Kind.HARROW, Rules.Kind.LANDSIDE, Rules.Kind.MOLDBOARD,
+		Rules.Kind.COULTER, Rules.Kind.SHARE, Rules.Kind.FORK, Rules.Kind.PRONG,
+		Rules.Kind.SLADE, Rules.Kind.HEEL, Rules.Kind.STILT, Rules.Kind.CLEVIS,
+		Rules.Kind.BEAM,
+	]
+	for index in range(216, 224):
+		var room: Dictionary = Rooms.all()[index]
+		for kind in wrong_kinds:
+			var swapped := _swap_kind(room.solution, Rules.Kind.HAKE, int(kind))
+			var run: Dictionary = World.simulate(room, swapped)
+			check(run.error == "", "%s in place of the room %d hake simulates (%s)" % [Rules.KIND_NAME[int(kind)], room.id, run.error])
+			check(not run.quota_ok, "%s in place of the room %d hake misses the quota (%s)" % [Rules.KIND_NAME[int(kind)], room.id, run.text])
+			check(not run.success, "%s in place of the room %d hake does not clear" % [Rules.KIND_NAME[int(kind)], room.id])
+			if int(kind) != Rules.Kind.BELT:
+				check(int(room.budget.get(int(kind), 0)) == 0, "room %d does not budget a %s" % [room.id, Rules.KIND_NAME[int(kind)]])
+		var planner = Planner.new(room)
+		for piece in room.initial:
+			check(planner.pickup(int(piece.x), int(piece.y)), "room %d picks up its starting piece" % room.id)
+		for piece in room.solution:
+			check(planner.place(int(piece.kind), int(piece.x), int(piece.y), int(piece.dir)), "room %d places its solution from the tray" % room.id)
+		var spare := _spare_cell(room)
+		check(spare.x >= 0, "room %d has an empty cell for an extra piece" % room.id)
+		check(not planner.place(Rules.Kind.BELT, spare.x, spare.y, Rules.Dir.EAST), "room %d rejects a belt past the tray" % room.id)
+		var extra: Array = room.solution.duplicate(true)
+		extra.append(Rooms.piece(Rules.Kind.BELT, spare.x, spare.y, Rules.Dir.EAST))
+		var over: Dictionary = World.simulate(room, extra)
+		check(over.quota_ok and not over.budget_ok and not over.success, "room %d extra belt meets the quota and is rejected (%s)" % [room.id, over.text])
+	var ore: Dictionary = Rooms.all()[216]
+	var smelted: Dictionary = World.simulate(ore, ore.solution)
+	check(int(smelted.counts[Rules.Mat.INGOT]) == 29 and int(smelted.counts[Rules.Mat.PLATE]) == 30, "ahead ore feeds the kiln and the plate bin (%s)" % smelted.text)
+	var ore_beam: Dictionary = World.simulate(ore, _swap_kind(ore.solution, Rules.Kind.HAKE, Rules.Kind.BEAM))
+	check(int(ore_beam.counts[Rules.Mat.PLATE]) == 0, "ahead ore's beam sends the plate left (%s)" % ore_beam.text)
+	var still: Dictionary = Rooms.all()[217]
+	var stilled: Dictionary = World.simulate(still, still.solution)
+	check(int(still.budget[Rules.Kind.BELT]) == 1, "still hake budgets one belt")
+	var still_belts := 0
+	var still_south := false
+	for piece in still.solution:
+		if int(piece.kind) == Rules.Kind.BELT:
+			still_belts += 1
+			check(int(piece.x) == 3 and int(piece.y) == 0, "still hake's belt is on the crossing")
+		if int(piece.kind) == Rules.Kind.HAKE:
+			still_south = int(piece.dir) == Rules.Dir.SOUTH
+	check(still_belts == 1 and still_south, "still hake places one south-facing hake")
+	check(int(stilled.counts[Rules.Mat.INGOT]) == 29 and int(stilled.counts[Rules.Mat.PLATE]) == 30 and int(stilled.discarded) > 0, "still hake counts both exits and scraps the side stream (%s discarded %d)" % [stilled.text, stilled.discarded])
+	var seat: Dictionary = Rooms.all()[218]
+	var parked: Array = []
+	for piece in seat.solution:
+		if int(piece.kind) != Rules.Kind.HAKE:
+			parked.append(piece)
+	parked.append(Rooms.piece(Rules.Kind.HAKE, 5, 0, Rules.Dir.EAST))
+	var gap: Dictionary = World.simulate(seat, parked)
+	check(World.budget_met(parked, seat.budget) and not gap.quota_ok, "a parked hake misses the seat (%s)" % gap.text)
+	var seated: Dictionary = World.simulate(seat, seat.solution)
+	check(int(seated.counts[Rules.Mat.INGOT]) == 29 and int(seated.counts[Rules.Mat.PLATE]) == 30, "seating the hake clears the seat (%s)" % seated.text)
+	var corner: Dictionary = Rooms.all()[219]
+	var cornered: Dictionary = World.simulate(corner, corner.solution)
+	check(int(cornered.counts[Rules.Mat.INGOT]) == 59 and int(cornered.counts[Rules.Mat.PLATE]) == 60, "split corner counts both exits (%s)" % cornered.text)
+	var corner_beam: Dictionary = World.simulate(corner, _swap_kind(corner.solution, Rules.Kind.HAKE, Rules.Kind.BEAM))
+	check(int(corner_beam.counts[Rules.Mat.PLATE]) == 0, "split corner's beam hits the left wall (%s)" % corner_beam.text)
+	var stocks: Dictionary = Rooms.all()[220]
+	var stocked: Dictionary = World.simulate(stocks, stocks.solution)
+	check(int(stocked.counts[Rules.Mat.INGOT]) == 118 and int(stocked.counts[Rules.Mat.PLATE]) == 120, "two stocks counts both lanes (%s)" % stocked.text)
+	var scrap: Dictionary = Rooms.all()[221]
+	var scraped: Dictionary = World.simulate(scrap, scrap.solution)
+	var scrap_south := false
+	for piece in scrap.solution:
+		if int(piece.kind) == Rules.Kind.HAKE:
+			scrap_south = int(piece.dir) == Rules.Dir.SOUTH
+	check(scrap_south, "after the split's hake faces south")
+	check(int(scraped.counts[Rules.Mat.INGOT]) == 29 and int(scraped.counts[Rules.Mat.PLATE]) == 30 and int(scraped.discarded) > 0, "after the split counts both exits and discards the scrap (%s discarded %d)" % [scraped.text, scraped.discarded])
+	var bin: Dictionary = Rooms.all()[222]
+	var solved: Dictionary = World.simulate(bin, bin.solution)
+	check(int(solved.counts[Rules.Mat.INGOT]) == 29 and int(solved.counts[Rules.Mat.PLATE]) == 104, "split bin hits both quotas (%s)" % solved.text)
+	check(solved.world.machines[Vector2i(2, 2)].hold < 0, "split bin's hake is empty after the pairs")
+	var plates_only: Dictionary = World.simulate(bin, [Rooms.piece(Rules.Kind.BELT, 1, 4, Rules.Dir.EAST)])
+	check(int(plates_only.counts[Rules.Mat.INGOT]) == 0 and int(plates_only.counts[Rules.Mat.PLATE]) < int(bin.quota[Rules.Mat.PLATE]), "split bin's lower plates alone miss (%s)" % plates_only.text)
+	var pressed: Dictionary = World.simulate(bin, [
+		Rooms.piece(Rules.Kind.HAKE, 2, 2, Rules.Dir.WEST),
+		Rooms.piece(Rules.Kind.KILN, 3, 2, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.PRESS, 4, 2, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 1, 4, Rules.Dir.EAST),
+	])
+	check(int(pressed.counts[Rules.Mat.INGOT]) == 0 and not pressed.success, "pressing every ingot misses the split bin (%s)" % pressed.text)
+	var held_room: Dictionary = Rooms.all()[223]
+	var waiting: Dictionary = World.simulate(held_room, held_room.solution, 2)
+	var leaving: Dictionary = World.simulate(held_room, held_room.solution, 3)
+	var finished: Dictionary = World.simulate(held_room, held_room.solution)
+	var belt_early: Dictionary = World.simulate(held_room, _swap_kind(held_room.solution, Rules.Kind.HAKE, Rules.Kind.BELT), 2)
+	var held_beam: Dictionary = World.simulate(held_room, _swap_kind(held_room.solution, Rules.Kind.HAKE, Rules.Kind.BEAM))
+	check(waiting.world.machines[Vector2i(3, 1)].hold == Rules.Mat.ORE and waiting.trace.is_empty(), "held pair keeps the first ore through the empty tick")
+	check(leaving.world.machines[Vector2i(3, 1)].hold < 0 and _trace(leaving) == "3:3,2:2", "held pair leaves on the arrival tick and the cell is empty, got %s" % _trace(leaving))
+	check(belt_early.world.machines[Vector2i(3, 1)].hold < 0 and belt_early.world.machines[Vector2i(2, 1)].hold < 0 and int(belt_early.world.sources[0].pending) == Rules.Mat.ORE, "a belt refuses the ahead arrival, so the first ore stays on the source")
+	check(int(finished.counts[Rules.Mat.INGOT]) == 29 and int(finished.counts[Rules.Mat.PLATE]) == 30, "held pair feeds the kiln and the plate bin (%s)" % finished.text)
+	check(int(held_beam.counts[Rules.Mat.PLATE]) == 0, "held pair's beam sends the plate left (%s)" % held_beam.text)
+
+
+
+func _sole_lane(pattern: Array, period: int) -> Dictionary:
+	return {
+		"id": 0,
+		"name": "sole",
+		"blurb": "",
+		"rule": "",
+		"w": 3,
+		"h": 3,
+		"sources": [Rooms.source(2, 1, Rules.Dir.WEST, pattern, period)],
+		"sinks": [
+			Rooms.sink(2, 1, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+			Rooms.sink(0, 1, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+			Rooms.sink(1, 0, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+			Rooms.sink(1, 2, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [],
+		"budget": Rooms.kv([Rules.Kind.SOLE, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [],
+		"solution": [],
+	}
+
+
+func _test_sole_splits_forward_and_right() -> void:
+	var ore := _sole_lane([Rules.Mat.ORE], 4)
+	var placed := [Rooms.piece(Rules.Kind.SOLE, 1, 1, Rules.Dir.EAST)]
+	var early := World.simulate(ore, placed, 4)
+	var mid := World.simulate(ore, placed, 8)
+	var waiting := World.simulate(ore, placed, 12)
+	var result := World.simulate(ore, placed, 16)
+	var again := World.simulate(ore, placed, 16)
+	check(_trace(early) == "" and early.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "a lone ore is still in the sole after the belt tick and the dwell tick")
+	check(_trace(mid) == "5:2,1:0|5:1,2:0" and mid.world.machines[Vector2i(1, 1)].hold < 0, "the waiter leaves forward and the arrival leaves right, and the sole is empty, got %s" % _trace(mid))
+	check(int(mid.counts[Rules.Mat.ORE]) == 2, "the first sole pair leaves on the arrival tick")
+	check(_trace(waiting) == "5:2,1:0|5:1,2:0" and waiting.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "the next lone ore does not leave the sole on the next tick or the tick after that, got %s" % _trace(waiting))
+	check(_trace(result) == "5:2,1:0|5:1,2:0|13:2,1:0|13:1,2:0", "the next sole pair leaves forward and right, got %s" % _trace(result))
+	check(result.world.machines[Vector2i(1, 1)].hold < 0, "the sole is empty after the second pair")
+	check(int(result.counts[Rules.Mat.ORE]) == 4, "two sole pairs leave and nothing stays")
+	check(not ("0,1:" in _trace(result)), "a sole does not send the waiter backward")
+	check(not ("1,0:" in _trace(result)), "a sole does not send the arrival left")
+	check(_same(result, again), "the same sole lane is deterministic (seed %d)" % result.seed)
+	var as_hake := World.simulate(ore, [Rooms.piece(Rules.Kind.HAKE, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_hake) == "5:0,1:0|5:1,2:0" and as_hake.world.machines[Vector2i(1, 1)].hold < 0, "a hake on the sole lane sends the waiter backward, got %s" % _trace(as_hake))
+	var as_beam := World.simulate(ore, [Rooms.piece(Rules.Kind.BEAM, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_beam) == "5:0,1:0|5:1,0:0", "a beam on the sole lane sends the arrival left, got %s" % _trace(as_beam))
+	var as_coulter := World.simulate(ore, [Rooms.piece(Rules.Kind.COULTER, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_coulter) == "" and as_coulter.world.machines[Vector2i(1, 1)].hold < 0, "a coulter refuses the sole's ahead arrival, got %s" % _trace(as_coulter))
+	var as_clevis := World.simulate(ore, [Rooms.piece(Rules.Kind.CLEVIS, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_clevis) == "", "a clevis refuses the sole's ahead arrival, got %s" % _trace(as_clevis))
+	var as_stilt := World.simulate(ore, [Rooms.piece(Rules.Kind.STILT, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_stilt) == "", "a stilt refuses the sole's ahead arrival, got %s" % _trace(as_stilt))
+	var as_heel := World.simulate(ore, [Rooms.piece(Rules.Kind.HEEL, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_heel) == "", "a heel refuses the sole's ahead arrival, got %s" % _trace(as_heel))
+	var behind := {
+		"id": 0, "name": "sole behind", "blurb": "", "rule": "", "w": 3, "h": 3,
+		"sources": [Rooms.source(0, 1, Rules.Dir.EAST, [Rules.Mat.ORE], 4)],
+		"sinks": [
+			Rooms.sink(0, 1, [Rules.Mat.ORE]), Rooms.sink(1, 0, [Rules.Mat.ORE]),
+			Rooms.sink(1, 2, [Rules.Mat.ORE]), Rooms.sink(2, 1, [Rules.Mat.ORE]),
+		],
+		"chutes": [], "walls": [],
+		"budget": Rooms.kv([Rules.Kind.SOLE, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [], "solution": [],
+	}
+	var from_behind := World.simulate(behind, placed, 8)
+	var heel_behind := World.simulate(behind, [Rooms.piece(Rules.Kind.HEEL, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(from_behind) == "" and from_behind.world.machines[Vector2i(1, 1)].hold < 0, "a sole refuses an arrival from behind, got %s" % _trace(from_behind))
+	check(_trace(heel_behind) == "5:2,1:0|5:0,1:0", "a heel on the behind lane sends the waiter forward and the arrival backward, got %s" % _trace(heel_behind))
+	var from_left := World.simulate(_stilt_lane([Rules.Mat.ORE], 4), placed, 8)
+	check(_trace(from_left) == "", "a sole refuses an arrival from the left, got %s" % _trace(from_left))
+	var from_right := World.simulate(_clevis_lane([Rules.Mat.ORE], 4), placed, 8)
+	check(_trace(from_right) == "", "a sole refuses an arrival from the right, got %s" % _trace(from_right))
+	var belt := World.simulate(ore, [Rooms.piece(Rules.Kind.BELT, 1, 1, Rules.Dir.EAST)], 12)
+	check(_trace(belt) == "" and belt.world.machines[Vector2i(1, 1)].hold < 0, "a belt refuses the sole's ahead arrival, got %s" % _trace(belt))
+	for mat in [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]:
+		var lane := _sole_lane([mat], 80)
+		var lone := World.simulate(lane, placed, 15)
+		check(_trace(lone) == "" and lone.world.machines[Vector2i(1, 1)].hold == mat, "a lone %s never leaves a sole" % Rules.MAT_NAME[mat])
+	var mixed := _sole_lane([Rules.Mat.ORE, Rules.Mat.INGOT], 4)
+	var held := World.simulate(mixed, placed, 4)
+	var pushed := World.simulate(mixed, placed, 8)
+	check(_trace(held) == "" and held.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "a sole does not release before the different material arrives")
+	check(_trace(pushed) == "5:2,1:0|5:1,2:1" and pushed.world.machines[Vector2i(1, 1)].hold < 0, "a different material leaves right while the waiter leaves forward, got %s" % _trace(pushed))
+	check(int(pushed.world.machines[Vector2i(1, 1)].phase) == 0, "a sole does not rotate or alternate")
+	var south := {
+		"id": 0, "name": "sole south", "blurb": "", "rule": "", "w": 3, "h": 3,
+		"sources": [Rooms.source(1, 2, Rules.Dir.NORTH, [Rules.Mat.ORE, Rules.Mat.INGOT], 4)],
+		"sinks": [
+			Rooms.sink(1, 0, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+			Rooms.sink(0, 1, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+			Rooms.sink(2, 1, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+			Rooms.sink(1, 2, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+		],
+		"chutes": [], "walls": [],
+		"budget": Rooms.kv([Rules.Kind.SOLE, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [], "solution": [],
+	}
+	var turned := World.simulate(south, [Rooms.piece(Rules.Kind.SOLE, 1, 1, Rules.Dir.SOUTH)], 8)
+	check(_trace(turned) == "5:1,2:0|5:0,1:1" and turned.world.machines[Vector2i(1, 1)].hold < 0, "a south-facing sole sends the waiter forward and the arrival right, got %s" % _trace(turned))
+
+
+func _test_sole_refuses_left_right_and_behind() -> void:
+	var left_side := {
+		"id": 0, "name": "sole left", "blurb": "", "rule": "", "w": 3, "h": 3,
+		"sources": [Rooms.source(1, 0, Rules.Dir.SOUTH, [Rules.Mat.PLATE], 1)],
+		"sinks": [Rooms.sink(2, 1, [Rules.Mat.PLATE])],
+		"chutes": [], "walls": [],
+		"budget": Rooms.kv([Rules.Kind.SOLE, 1, Rules.Kind.BELT, 1]),
+		"quota": Rooms.kv([Rules.Mat.PLATE, 1]),
+		"initial": [], "solution": [],
+	}
+	var belt_left := World.simulate(left_side, [Rooms.piece(Rules.Kind.BELT, 1, 1, Rules.Dir.EAST)], 4)
+	var sole_left := World.simulate(left_side, [Rooms.piece(Rules.Kind.SOLE, 1, 1, Rules.Dir.EAST)], 4)
+	check(int(belt_left.counts[Rules.Mat.PLATE]) >= 1, "a belt takes a plate from the left of the sole cell, got %s" % _trace(belt_left))
+	check(int(sole_left.counts[Rules.Mat.PLATE]) == 0 and int(sole_left.world.sources[0].pending) == Rules.Mat.PLATE, "a sole refuses that same plate from the left")
+	var right_side := {
+		"id": 0, "name": "sole right", "blurb": "", "rule": "", "w": 3, "h": 3,
+		"sources": [Rooms.source(1, 2, Rules.Dir.NORTH, [Rules.Mat.INGOT], 1)],
+		"sinks": [Rooms.sink(2, 1, [Rules.Mat.INGOT])],
+		"chutes": [], "walls": [],
+		"budget": Rooms.kv([Rules.Kind.SOLE, 1, Rules.Kind.BELT, 1]),
+		"quota": Rooms.kv([Rules.Mat.INGOT, 1]),
+		"initial": [], "solution": [],
+	}
+	var belt_right := World.simulate(right_side, [Rooms.piece(Rules.Kind.BELT, 1, 1, Rules.Dir.EAST)], 4)
+	var sole_right := World.simulate(right_side, [Rooms.piece(Rules.Kind.SOLE, 1, 1, Rules.Dir.EAST)], 4)
+	check(int(belt_right.counts[Rules.Mat.INGOT]) >= 1, "a belt takes an ingot from the right of the sole cell, got %s" % _trace(belt_right))
+	check(int(sole_right.counts[Rules.Mat.INGOT]) == 0 and int(sole_right.world.sources[0].pending) == Rules.Mat.INGOT, "a sole refuses that same ingot from the right")
+	var behind := {
+		"id": 0, "name": "sole behind refuse", "blurb": "", "rule": "", "w": 3, "h": 1,
+		"sources": [Rooms.source(0, 0, Rules.Dir.EAST, [Rules.Mat.PLATE], 1)],
+		"sinks": [Rooms.sink(2, 0, [Rules.Mat.PLATE])],
+		"chutes": [], "walls": [],
+		"budget": Rooms.kv([Rules.Kind.SOLE, 1, Rules.Kind.BELT, 1]),
+		"quota": Rooms.kv([Rules.Mat.PLATE, 1]),
+		"initial": [], "solution": [],
+	}
+	var belt := World.simulate(behind, [Rooms.piece(Rules.Kind.BELT, 1, 0, Rules.Dir.EAST)], 4)
+	var sole_behind := World.simulate(behind, [Rooms.piece(Rules.Kind.SOLE, 1, 0, Rules.Dir.EAST)], 4)
+	check(int(belt.counts[Rules.Mat.PLATE]) >= 1, "a belt takes a plate from behind the sole cell, got %s" % _trace(belt))
+	check(int(sole_behind.counts[Rules.Mat.PLATE]) == 0 and int(sole_behind.world.sources[0].pending) == Rules.Mat.PLATE, "a sole refuses that same plate from behind")
+
+
+func _test_sole_blocked_does_not_spill() -> void:
+	var right_wall := {
+		"id": 0, "name": "sole right wall", "blurb": "", "rule": "", "w": 3, "h": 3,
+		"sources": [Rooms.source(2, 1, Rules.Dir.WEST, [Rules.Mat.ORE, Rules.Mat.PLATE], 1)],
+		"sinks": [
+			Rooms.sink(2, 1, [Rules.Mat.ORE, Rules.Mat.PLATE]),
+			Rooms.sink(0, 1, [Rules.Mat.ORE, Rules.Mat.PLATE]),
+			Rooms.sink(1, 0, [Rules.Mat.ORE, Rules.Mat.PLATE]),
+		],
+		"chutes": [Rooms.cell(0, 0), Rooms.cell(2, 0), Rooms.cell(0, 2), Rooms.cell(2, 2)],
+		"walls": [Rooms.cell(1, 2)],
+		"budget": Rooms.kv([Rules.Kind.SOLE, 1, Rules.Kind.BEAM, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [], "solution": [],
+	}
+	var held := World.simulate(right_wall, [Rooms.piece(Rules.Kind.SOLE, 1, 1, Rules.Dir.EAST)], 6)
+	var beam := World.simulate(right_wall, [Rooms.piece(Rules.Kind.BEAM, 1, 1, Rules.Dir.EAST)], 2)
+	check(held.error == "" and held.discarded == 0 and held.trace.is_empty(), "a sole with a blocked right cell does not spill forward or backward")
+	check(held.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "blocked ore stays on the sole when the right cell refuses")
+	check(int(held.world.sources[0].pending) == Rules.Mat.PLATE, "the arrival is not accepted while the sole's right cell refuses")
+	check(int(held.counts[Rules.Mat.ORE]) == 0 and int(held.counts[Rules.Mat.PLATE]) == 0, "a blocked right cell does not send the waiter forward")
+	check(_trace(beam) == "2:0,1:0|2:1,0:2", "a beam uses the open left cell the sole refuses, got %s" % _trace(beam))
+	var forward_wall := {
+		"id": 0, "name": "sole forward wall", "blurb": "", "rule": "", "w": 3, "h": 3,
+		"sources": [Rooms.source(2, 1, Rules.Dir.WEST, [Rules.Mat.ORE, Rules.Mat.PLATE], 1)],
+		"sinks": [
+			Rooms.sink(0, 1, [Rules.Mat.ORE, Rules.Mat.PLATE]),
+			Rooms.sink(1, 2, [Rules.Mat.ORE, Rules.Mat.PLATE]),
+		],
+		"chutes": [Rooms.cell(0, 0), Rooms.cell(2, 0), Rooms.cell(0, 2), Rooms.cell(2, 2)],
+		"walls": [Rooms.cell(2, 1)],
+		"budget": Rooms.kv([Rules.Kind.SOLE, 1, Rules.Kind.HAKE, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [], "solution": [],
+	}
+	var forward_held := World.simulate(forward_wall, [Rooms.piece(Rules.Kind.SOLE, 1, 1, Rules.Dir.EAST)], 6)
+	var hake := World.simulate(forward_wall, [Rooms.piece(Rules.Kind.HAKE, 1, 1, Rules.Dir.EAST)], 2)
+	check(forward_held.trace.is_empty() and forward_held.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "a blocked forward cell keeps the waiter on the sole")
+	check(int(forward_held.world.sources[0].pending) == Rules.Mat.PLATE, "the arrival is not accepted while the sole's forward cell refuses")
+	check(int(forward_held.counts[Rules.Mat.ORE]) == 0 and int(forward_held.counts[Rules.Mat.PLATE]) == 0, "a blocked forward cell does not send the arrival right")
+	check(_trace(hake) == "2:0,1:0|2:1,2:2", "a hake uses the open backward cell the sole refuses, got %s" % _trace(hake))
+
+
+func _test_wing29_lessons() -> void:
+	var wrong_kinds: Array = [
+		Rules.Kind.BELT, Rules.Kind.DWELL, Rules.Kind.TWIN, Rules.Kind.PASS,
+		Rules.Kind.SLIP, Rules.Kind.SHED, Rules.Kind.HOOK, Rules.Kind.RAKE,
+		Rules.Kind.HOE, Rules.Kind.HARROW, Rules.Kind.LANDSIDE, Rules.Kind.MOLDBOARD,
+		Rules.Kind.COULTER, Rules.Kind.SHARE, Rules.Kind.FORK, Rules.Kind.PRONG,
+		Rules.Kind.SLADE, Rules.Kind.HEEL, Rules.Kind.STILT, Rules.Kind.CLEVIS,
+		Rules.Kind.BEAM, Rules.Kind.HAKE,
+	]
+	for index in range(224, 232):
+		var room: Dictionary = Rooms.all()[index]
+		for kind in wrong_kinds:
+			var swapped := _swap_kind(room.solution, Rules.Kind.SOLE, int(kind))
+			var run: Dictionary = World.simulate(room, swapped)
+			check(run.error == "", "%s in place of the room %d sole simulates (%s)" % [Rules.KIND_NAME[int(kind)], room.id, run.error])
+			check(not run.quota_ok, "%s in place of the room %d sole misses the quota (%s)" % [Rules.KIND_NAME[int(kind)], room.id, run.text])
+			check(not run.success, "%s in place of the room %d sole does not clear" % [Rules.KIND_NAME[int(kind)], room.id])
+			if int(kind) != Rules.Kind.BELT:
+				check(int(room.budget.get(int(kind), 0)) == 0, "room %d does not budget a %s" % [room.id, Rules.KIND_NAME[int(kind)]])
+		var planner = Planner.new(room)
+		for piece in room.initial:
+			check(planner.pickup(int(piece.x), int(piece.y)), "room %d picks up its starting piece" % room.id)
+		for piece in room.solution:
+			check(planner.place(int(piece.kind), int(piece.x), int(piece.y), int(piece.dir)), "room %d places its solution from the tray" % room.id)
+		var spare := _spare_cell(room)
+		check(spare.x >= 0, "room %d has an empty cell for an extra piece" % room.id)
+		check(not planner.place(Rules.Kind.BELT, spare.x, spare.y, Rules.Dir.EAST), "room %d rejects a belt past the tray" % room.id)
+		var extra: Array = room.solution.duplicate(true)
+		extra.append(Rooms.piece(Rules.Kind.BELT, spare.x, spare.y, Rules.Dir.EAST))
+		var over: Dictionary = World.simulate(room, extra)
+		check(over.quota_ok and not over.budget_ok and not over.success, "room %d extra belt meets the quota and is rejected (%s)" % [room.id, over.text])
+	var ore: Dictionary = Rooms.all()[224]
+	var smelted: Dictionary = World.simulate(ore, ore.solution)
+	check(int(smelted.counts[Rules.Mat.INGOT]) == 29 and int(smelted.counts[Rules.Mat.PLATE]) == 30, "ahead ore feeds the kiln and the plate bin (%s)" % smelted.text)
+	var ore_hake: Dictionary = World.simulate(ore, _swap_kind(ore.solution, Rules.Kind.SOLE, Rules.Kind.HAKE))
+	check(int(ore_hake.counts[Rules.Mat.PLATE]) == 0, "ahead ore's hake sends the plate backward (%s)" % ore_hake.text)
+	var still: Dictionary = Rooms.all()[225]
+	var stilled: Dictionary = World.simulate(still, still.solution)
+	check(int(still.budget[Rules.Kind.BELT]) == 1, "still sole budgets one belt")
+	var still_belts := 0
+	var still_south := false
+	for piece in still.solution:
+		if int(piece.kind) == Rules.Kind.BELT:
+			still_belts += 1
+			check(int(piece.x) == 1 and int(piece.y) == 2, "still sole's belt is on the crossing")
+		if int(piece.kind) == Rules.Kind.SOLE:
+			still_south = int(piece.dir) == Rules.Dir.SOUTH
+	check(still_belts == 1 and still_south, "still sole places one south-facing sole")
+	check(int(stilled.counts[Rules.Mat.INGOT]) == 29 and int(stilled.counts[Rules.Mat.PLATE]) == 30 and int(stilled.discarded) > 0, "still sole counts both exits and scraps the side stream (%s discarded %d)" % [stilled.text, stilled.discarded])
+	var seat: Dictionary = Rooms.all()[226]
+	var parked: Array = []
+	for piece in seat.solution:
+		if int(piece.kind) != Rules.Kind.SOLE:
+			parked.append(piece)
+	parked.append(Rooms.piece(Rules.Kind.SOLE, 5, 0, Rules.Dir.EAST))
+	var gap: Dictionary = World.simulate(seat, parked)
+	check(World.budget_met(parked, seat.budget) and not gap.quota_ok, "a parked sole misses the seat (%s)" % gap.text)
+	var seated: Dictionary = World.simulate(seat, seat.solution)
+	check(int(seated.counts[Rules.Mat.INGOT]) == 29 and int(seated.counts[Rules.Mat.PLATE]) == 30, "seating the sole clears the seat (%s)" % seated.text)
+	var corner: Dictionary = Rooms.all()[227]
+	var cornered: Dictionary = World.simulate(corner, corner.solution)
+	check(int(cornered.counts[Rules.Mat.INGOT]) == 59 and int(cornered.counts[Rules.Mat.PLATE]) == 60, "split corner counts both exits (%s)" % cornered.text)
+	var corner_hake: Dictionary = World.simulate(corner, _swap_kind(corner.solution, Rules.Kind.SOLE, Rules.Kind.HAKE))
+	check(int(corner_hake.counts[Rules.Mat.PLATE]) == 0 and int(corner_hake.counts[Rules.Mat.INGOT]) == 0, "split corner's hake hits the backward wall (%s)" % corner_hake.text)
+	var stocks: Dictionary = Rooms.all()[228]
+	var stocked: Dictionary = World.simulate(stocks, stocks.solution)
+	check(int(stocked.counts[Rules.Mat.INGOT]) == 118 and int(stocked.counts[Rules.Mat.PLATE]) == 120, "two stocks counts both lanes (%s)" % stocked.text)
+	var scrap: Dictionary = Rooms.all()[229]
+	var scraped: Dictionary = World.simulate(scrap, scrap.solution)
+	var scrap_south := false
+	for piece in scrap.solution:
+		if int(piece.kind) == Rules.Kind.SOLE:
+			scrap_south = int(piece.dir) == Rules.Dir.SOUTH
+	check(scrap_south, "after the split's sole faces south")
+	check(int(scraped.counts[Rules.Mat.INGOT]) == 29 and int(scraped.counts[Rules.Mat.PLATE]) == 30 and int(scraped.discarded) > 0, "after the split counts both exits and discards the scrap (%s discarded %d)" % [scraped.text, scraped.discarded])
+	var bin: Dictionary = Rooms.all()[230]
+	var solved: Dictionary = World.simulate(bin, bin.solution)
+	check(int(solved.counts[Rules.Mat.INGOT]) == 29 and int(solved.counts[Rules.Mat.PLATE]) == 104, "split bin hits both quotas (%s)" % solved.text)
+	check(solved.world.machines[Vector2i(2, 2)].hold < 0, "split bin's sole is empty after the pairs")
+	var plates_only: Dictionary = World.simulate(bin, [Rooms.piece(Rules.Kind.BELT, 1, 4, Rules.Dir.EAST)])
+	check(int(plates_only.counts[Rules.Mat.INGOT]) == 0 and int(plates_only.counts[Rules.Mat.PLATE]) < int(bin.quota[Rules.Mat.PLATE]), "split bin's lower plates alone miss (%s)" % plates_only.text)
+	var pressed: Dictionary = World.simulate(bin, [
+		Rooms.piece(Rules.Kind.SOLE, 2, 2, Rules.Dir.NORTH),
+		Rooms.piece(Rules.Kind.KILN, 3, 2, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.PRESS, 4, 2, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 1, 4, Rules.Dir.EAST),
+	])
+	check(int(pressed.counts[Rules.Mat.INGOT]) == 0 and not pressed.success, "pressing every ingot misses the split bin (%s)" % pressed.text)
+	var held_room: Dictionary = Rooms.all()[231]
+	var waiting: Dictionary = World.simulate(held_room, held_room.solution, 2)
+	var leaving: Dictionary = World.simulate(held_room, held_room.solution, 3)
+	var finished: Dictionary = World.simulate(held_room, held_room.solution)
+	var belt_early: Dictionary = World.simulate(held_room, _swap_kind(held_room.solution, Rules.Kind.SOLE, Rules.Kind.BELT), 2)
+	var held_hake: Dictionary = World.simulate(held_room, _swap_kind(held_room.solution, Rules.Kind.SOLE, Rules.Kind.HAKE))
+	check(waiting.world.machines[Vector2i(3, 1)].hold == Rules.Mat.PLATE and waiting.trace.is_empty(), "held pair keeps the first plate through the empty tick")
+	check(leaving.world.machines[Vector2i(3, 1)].hold < 0 and _trace(leaving) == "3:4,1:2", "held pair leaves on the arrival tick and the cell is empty, got %s" % _trace(leaving))
+	check(belt_early.world.machines[Vector2i(3, 1)].hold < 0 and belt_early.world.machines[Vector2i(3, 2)].hold < 0 and int(belt_early.world.sources[0].pending) == Rules.Mat.PLATE, "a belt refuses the ahead arrival, so the first plate stays on the source")
+	check(int(finished.counts[Rules.Mat.INGOT]) == 29 and int(finished.counts[Rules.Mat.PLATE]) == 30, "held pair feeds the kiln and the plate bin (%s)" % finished.text)
+	check(int(held_hake.counts[Rules.Mat.PLATE]) == 0, "held pair's hake sends the plate backward (%s)" % held_hake.text)
+
+
+
+func _frog_lane(pattern: Array, period: int) -> Dictionary:
+	return {
+		"id": 0,
+		"name": "frog",
+		"blurb": "",
+		"rule": "",
+		"w": 3,
+		"h": 3,
+		"sources": [Rooms.source(2, 1, Rules.Dir.WEST, pattern, period)],
+		"sinks": [
+			Rooms.sink(2, 1, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+			Rooms.sink(0, 1, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+			Rooms.sink(1, 0, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+			Rooms.sink(1, 2, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [],
+		"budget": Rooms.kv([Rules.Kind.FROG, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [],
+		"solution": [],
+	}
+
+
+func _test_frog_splits_forward_and_left() -> void:
+	var ore := _frog_lane([Rules.Mat.ORE], 4)
+	var placed := [Rooms.piece(Rules.Kind.FROG, 1, 1, Rules.Dir.EAST)]
+	var early := World.simulate(ore, placed, 4)
+	var mid := World.simulate(ore, placed, 8)
+	var waiting := World.simulate(ore, placed, 12)
+	var result := World.simulate(ore, placed, 16)
+	var again := World.simulate(ore, placed, 16)
+	check(_trace(early) == "" and early.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "a lone ore is still in the frog after the belt tick and the dwell tick")
+	check(_trace(mid) == "5:2,1:0|5:1,0:0" and mid.world.machines[Vector2i(1, 1)].hold < 0, "the waiter leaves forward and the arrival leaves left, and the frog is empty, got %s" % _trace(mid))
+	check(int(mid.counts[Rules.Mat.ORE]) == 2, "the first frog pair leaves on the arrival tick")
+	check(_trace(waiting) == "5:2,1:0|5:1,0:0" and waiting.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "the next lone ore does not leave the frog on the next tick or the tick after that, got %s" % _trace(waiting))
+	check(_trace(result) == "5:2,1:0|5:1,0:0|13:2,1:0|13:1,0:0", "the next frog pair leaves forward and left, got %s" % _trace(result))
+	check(result.world.machines[Vector2i(1, 1)].hold < 0, "the frog is empty after the second pair")
+	check(int(result.counts[Rules.Mat.ORE]) == 4, "two frog pairs leave and nothing stays")
+	check(not ("1,2:" in _trace(result)), "a frog does not send the arrival right")
+	check(not ("0,1:" in _trace(result)), "a frog does not send the waiter backward")
+	check(_same(result, again), "the same frog lane is deterministic (seed %d)" % result.seed)
+	var as_sole := World.simulate(ore, [Rooms.piece(Rules.Kind.SOLE, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_sole) == "5:2,1:0|5:1,2:0" and as_sole.world.machines[Vector2i(1, 1)].hold < 0, "a sole on the frog lane sends the arrival right, got %s" % _trace(as_sole))
+	var as_beam := World.simulate(ore, [Rooms.piece(Rules.Kind.BEAM, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_beam) == "5:0,1:0|5:1,0:0", "a beam on the frog lane sends the waiter backward, got %s" % _trace(as_beam))
+	var as_share := World.simulate(ore, [Rooms.piece(Rules.Kind.SHARE, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_share) == "" and as_share.world.machines[Vector2i(1, 1)].hold < 0, "a share refuses the frog's ahead arrival, got %s" % _trace(as_share))
+	var as_hake := World.simulate(ore, [Rooms.piece(Rules.Kind.HAKE, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_hake) == "5:0,1:0|5:1,2:0", "a hake on the frog lane sends the waiter backward and the arrival right, got %s" % _trace(as_hake))
+	var as_coulter := World.simulate(ore, [Rooms.piece(Rules.Kind.COULTER, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_coulter) == "", "a coulter refuses the frog's ahead arrival, got %s" % _trace(as_coulter))
+	var behind := {
+		"id": 0, "name": "frog behind", "blurb": "", "rule": "", "w": 3, "h": 3,
+		"sources": [Rooms.source(0, 1, Rules.Dir.EAST, [Rules.Mat.ORE], 4)],
+		"sinks": [
+			Rooms.sink(0, 1, [Rules.Mat.ORE]), Rooms.sink(1, 0, [Rules.Mat.ORE]),
+			Rooms.sink(1, 2, [Rules.Mat.ORE]), Rooms.sink(2, 1, [Rules.Mat.ORE]),
+		],
+		"chutes": [], "walls": [],
+		"budget": Rooms.kv([Rules.Kind.FROG, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [], "solution": [],
+	}
+	var from_behind := World.simulate(behind, placed, 8)
+	var share_behind := World.simulate(behind, [Rooms.piece(Rules.Kind.SHARE, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(from_behind) == "" and from_behind.world.machines[Vector2i(1, 1)].hold < 0, "a frog refuses an arrival from behind, got %s" % _trace(from_behind))
+	check(_trace(share_behind) == "5:2,1:0|5:1,0:0", "a share on the behind lane sends the waiter forward and the arrival left, got %s" % _trace(share_behind))
+	var from_left := World.simulate(_stilt_lane([Rules.Mat.ORE], 4), placed, 8)
+	check(_trace(from_left) == "", "a frog refuses an arrival from the left, got %s" % _trace(from_left))
+	var from_right := World.simulate(_clevis_lane([Rules.Mat.ORE], 4), placed, 8)
+	check(_trace(from_right) == "", "a frog refuses an arrival from the right, got %s" % _trace(from_right))
+	var belt := World.simulate(ore, [Rooms.piece(Rules.Kind.BELT, 1, 1, Rules.Dir.EAST)], 12)
+	check(_trace(belt) == "" and belt.world.machines[Vector2i(1, 1)].hold < 0, "a belt refuses the frog's ahead arrival, got %s" % _trace(belt))
+	for mat in [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]:
+		var lane := _frog_lane([mat], 80)
+		var lone := World.simulate(lane, placed, 15)
+		check(_trace(lone) == "" and lone.world.machines[Vector2i(1, 1)].hold == mat, "a lone %s never leaves a frog" % Rules.MAT_NAME[mat])
+	var mixed := _frog_lane([Rules.Mat.ORE, Rules.Mat.INGOT], 4)
+	var held := World.simulate(mixed, placed, 4)
+	var pushed := World.simulate(mixed, placed, 8)
+	check(_trace(held) == "" and held.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "a frog does not release before the different material arrives")
+	check(_trace(pushed) == "5:2,1:0|5:1,0:1" and pushed.world.machines[Vector2i(1, 1)].hold < 0, "a different material leaves left while the waiter leaves forward, got %s" % _trace(pushed))
+	check(int(pushed.world.machines[Vector2i(1, 1)].phase) == 0, "a frog does not rotate or alternate")
+	var south := {
+		"id": 0, "name": "frog south", "blurb": "", "rule": "", "w": 3, "h": 3,
+		"sources": [Rooms.source(1, 2, Rules.Dir.NORTH, [Rules.Mat.ORE, Rules.Mat.INGOT], 4)],
+		"sinks": [
+			Rooms.sink(1, 0, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+			Rooms.sink(0, 1, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+			Rooms.sink(2, 1, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+			Rooms.sink(1, 2, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+		],
+		"chutes": [], "walls": [],
+		"budget": Rooms.kv([Rules.Kind.FROG, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [], "solution": [],
+	}
+	var turned := World.simulate(south, [Rooms.piece(Rules.Kind.FROG, 1, 1, Rules.Dir.SOUTH)], 8)
+	check(_trace(turned) == "5:1,2:0|5:2,1:1" and turned.world.machines[Vector2i(1, 1)].hold < 0, "a south-facing frog sends the waiter forward and the arrival left, got %s" % _trace(turned))
+
+
+func _test_frog_refuses_left_right_and_behind() -> void:
+	var left_side := {
+		"id": 0, "name": "frog left", "blurb": "", "rule": "", "w": 3, "h": 3,
+		"sources": [Rooms.source(1, 0, Rules.Dir.SOUTH, [Rules.Mat.PLATE], 1)],
+		"sinks": [Rooms.sink(2, 1, [Rules.Mat.PLATE])],
+		"chutes": [], "walls": [],
+		"budget": Rooms.kv([Rules.Kind.FROG, 1, Rules.Kind.BELT, 1]),
+		"quota": Rooms.kv([Rules.Mat.PLATE, 1]),
+		"initial": [], "solution": [],
+	}
+	var belt_left := World.simulate(left_side, [Rooms.piece(Rules.Kind.BELT, 1, 1, Rules.Dir.EAST)], 4)
+	var frog_left := World.simulate(left_side, [Rooms.piece(Rules.Kind.FROG, 1, 1, Rules.Dir.EAST)], 4)
+	check(int(belt_left.counts[Rules.Mat.PLATE]) >= 1, "a belt takes a plate from the left of the frog cell, got %s" % _trace(belt_left))
+	check(int(frog_left.counts[Rules.Mat.PLATE]) == 0 and int(frog_left.world.sources[0].pending) == Rules.Mat.PLATE, "a frog refuses that same plate from the left")
+	var right_side := {
+		"id": 0, "name": "frog right", "blurb": "", "rule": "", "w": 3, "h": 3,
+		"sources": [Rooms.source(1, 2, Rules.Dir.NORTH, [Rules.Mat.INGOT], 1)],
+		"sinks": [Rooms.sink(2, 1, [Rules.Mat.INGOT])],
+		"chutes": [], "walls": [],
+		"budget": Rooms.kv([Rules.Kind.FROG, 1, Rules.Kind.BELT, 1]),
+		"quota": Rooms.kv([Rules.Mat.INGOT, 1]),
+		"initial": [], "solution": [],
+	}
+	var belt_right := World.simulate(right_side, [Rooms.piece(Rules.Kind.BELT, 1, 1, Rules.Dir.EAST)], 4)
+	var frog_right := World.simulate(right_side, [Rooms.piece(Rules.Kind.FROG, 1, 1, Rules.Dir.EAST)], 4)
+	check(int(belt_right.counts[Rules.Mat.INGOT]) >= 1, "a belt takes an ingot from the right of the frog cell, got %s" % _trace(belt_right))
+	check(int(frog_right.counts[Rules.Mat.INGOT]) == 0 and int(frog_right.world.sources[0].pending) == Rules.Mat.INGOT, "a frog refuses that same ingot from the right")
+	var behind := {
+		"id": 0, "name": "frog behind refuse", "blurb": "", "rule": "", "w": 3, "h": 1,
+		"sources": [Rooms.source(0, 0, Rules.Dir.EAST, [Rules.Mat.PLATE], 1)],
+		"sinks": [Rooms.sink(2, 0, [Rules.Mat.PLATE])],
+		"chutes": [], "walls": [],
+		"budget": Rooms.kv([Rules.Kind.FROG, 1, Rules.Kind.BELT, 1]),
+		"quota": Rooms.kv([Rules.Mat.PLATE, 1]),
+		"initial": [], "solution": [],
+	}
+	var belt := World.simulate(behind, [Rooms.piece(Rules.Kind.BELT, 1, 0, Rules.Dir.EAST)], 4)
+	var frog_behind := World.simulate(behind, [Rooms.piece(Rules.Kind.FROG, 1, 0, Rules.Dir.EAST)], 4)
+	check(int(belt.counts[Rules.Mat.PLATE]) >= 1, "a belt takes a plate from behind the frog cell, got %s" % _trace(belt))
+	check(int(frog_behind.counts[Rules.Mat.PLATE]) == 0 and int(frog_behind.world.sources[0].pending) == Rules.Mat.PLATE, "a frog refuses that same plate from behind")
+
+
+func _test_frog_blocked_does_not_spill() -> void:
+	var left_wall := {
+		"id": 0, "name": "frog left wall", "blurb": "", "rule": "", "w": 3, "h": 3,
+		"sources": [Rooms.source(2, 1, Rules.Dir.WEST, [Rules.Mat.ORE, Rules.Mat.PLATE], 1)],
+		"sinks": [
+			Rooms.sink(2, 1, [Rules.Mat.ORE, Rules.Mat.PLATE]),
+			Rooms.sink(0, 1, [Rules.Mat.ORE, Rules.Mat.PLATE]),
+			Rooms.sink(1, 2, [Rules.Mat.ORE, Rules.Mat.PLATE]),
+		],
+		"chutes": [Rooms.cell(0, 0), Rooms.cell(2, 0), Rooms.cell(0, 2), Rooms.cell(2, 2)],
+		"walls": [Rooms.cell(1, 0)],
+		"budget": Rooms.kv([Rules.Kind.FROG, 1, Rules.Kind.SOLE, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [], "solution": [],
+	}
+	var held := World.simulate(left_wall, [Rooms.piece(Rules.Kind.FROG, 1, 1, Rules.Dir.EAST)], 6)
+	var sole := World.simulate(left_wall, [Rooms.piece(Rules.Kind.SOLE, 1, 1, Rules.Dir.EAST)], 2)
+	check(held.error == "" and held.discarded == 0 and held.trace.is_empty(), "a frog with a blocked left cell does not spill forward or right")
+	check(held.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "blocked ore stays on the frog when the left cell refuses")
+	check(int(held.world.sources[0].pending) == Rules.Mat.PLATE, "the arrival is not accepted while the frog's left cell refuses")
+	check(int(held.counts[Rules.Mat.ORE]) == 0 and int(held.counts[Rules.Mat.PLATE]) == 0, "a blocked left cell does not send the waiter forward")
+	check(_trace(sole) == "2:2,1:0|2:1,2:2", "a sole uses the open right cell the frog refuses, got %s" % _trace(sole))
+	var forward_wall := {
+		"id": 0, "name": "frog forward wall", "blurb": "", "rule": "", "w": 3, "h": 3,
+		"sources": [Rooms.source(2, 1, Rules.Dir.WEST, [Rules.Mat.ORE, Rules.Mat.PLATE], 1)],
+		"sinks": [
+			Rooms.sink(0, 1, [Rules.Mat.ORE, Rules.Mat.PLATE]),
+			Rooms.sink(1, 0, [Rules.Mat.ORE, Rules.Mat.PLATE]),
+		],
+		"chutes": [Rooms.cell(0, 0), Rooms.cell(2, 0), Rooms.cell(0, 2), Rooms.cell(2, 2)],
+		"walls": [Rooms.cell(2, 1)],
+		"budget": Rooms.kv([Rules.Kind.FROG, 1, Rules.Kind.BEAM, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [], "solution": [],
+	}
+	var forward_held := World.simulate(forward_wall, [Rooms.piece(Rules.Kind.FROG, 1, 1, Rules.Dir.EAST)], 6)
+	var beam := World.simulate(forward_wall, [Rooms.piece(Rules.Kind.BEAM, 1, 1, Rules.Dir.EAST)], 2)
+	check(forward_held.trace.is_empty() and forward_held.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "a blocked forward cell keeps the waiter on the frog")
+	check(int(forward_held.world.sources[0].pending) == Rules.Mat.PLATE, "the arrival is not accepted while the frog's forward cell refuses")
+	check(int(forward_held.counts[Rules.Mat.ORE]) == 0 and int(forward_held.counts[Rules.Mat.PLATE]) == 0, "a blocked forward cell does not send the arrival left")
+	check(_trace(beam) == "2:0,1:0|2:1,0:2", "a beam uses the open backward cell the frog refuses, got %s" % _trace(beam))
+
+
+func _test_wing30_lessons() -> void:
+	var wrong_kinds: Array = [
+		Rules.Kind.BELT, Rules.Kind.DWELL, Rules.Kind.TWIN, Rules.Kind.PASS,
+		Rules.Kind.SLIP, Rules.Kind.SHED, Rules.Kind.HOOK, Rules.Kind.RAKE,
+		Rules.Kind.HOE, Rules.Kind.HARROW, Rules.Kind.LANDSIDE, Rules.Kind.MOLDBOARD,
+		Rules.Kind.COULTER, Rules.Kind.SHARE, Rules.Kind.FORK, Rules.Kind.PRONG,
+		Rules.Kind.SLADE, Rules.Kind.HEEL, Rules.Kind.STILT, Rules.Kind.CLEVIS,
+		Rules.Kind.BEAM, Rules.Kind.HAKE, Rules.Kind.SOLE,
+	]
+	for index in range(232, 240):
+		var room: Dictionary = Rooms.all()[index]
+		for kind in wrong_kinds:
+			var swapped := _swap_kind(room.solution, Rules.Kind.FROG, int(kind))
+			var run: Dictionary = World.simulate(room, swapped)
+			check(run.error == "", "%s in place of the room %d frog simulates (%s)" % [Rules.KIND_NAME[int(kind)], room.id, run.error])
+			check(not run.quota_ok, "%s in place of the room %d frog misses the quota (%s)" % [Rules.KIND_NAME[int(kind)], room.id, run.text])
+			check(not run.success, "%s in place of the room %d frog does not clear" % [Rules.KIND_NAME[int(kind)], room.id])
+			if int(kind) != Rules.Kind.BELT:
+				check(int(room.budget.get(int(kind), 0)) == 0, "room %d does not budget a %s" % [room.id, Rules.KIND_NAME[int(kind)]])
+		var planner = Planner.new(room)
+		for piece in room.initial:
+			check(planner.pickup(int(piece.x), int(piece.y)), "room %d picks up its starting piece" % room.id)
+		for piece in room.solution:
+			check(planner.place(int(piece.kind), int(piece.x), int(piece.y), int(piece.dir)), "room %d places its solution from the tray" % room.id)
+		var spare := _spare_cell(room)
+		check(spare.x >= 0, "room %d has an empty cell for an extra piece" % room.id)
+		check(not planner.place(Rules.Kind.BELT, spare.x, spare.y, Rules.Dir.EAST), "room %d rejects a belt past the tray" % room.id)
+		var extra: Array = room.solution.duplicate(true)
+		extra.append(Rooms.piece(Rules.Kind.BELT, spare.x, spare.y, Rules.Dir.EAST))
+		var over: Dictionary = World.simulate(room, extra)
+		check(over.quota_ok and not over.budget_ok and not over.success, "room %d extra belt meets the quota and is rejected (%s)" % [room.id, over.text])
+	var ore: Dictionary = Rooms.all()[232]
+	var smelted: Dictionary = World.simulate(ore, ore.solution)
+	check(int(smelted.counts[Rules.Mat.INGOT]) == 29 and int(smelted.counts[Rules.Mat.PLATE]) == 30, "ahead ore feeds the kiln and the plate bin (%s)" % smelted.text)
+	var ore_sole: Dictionary = World.simulate(ore, _swap_kind(ore.solution, Rules.Kind.FROG, Rules.Kind.SOLE))
+	var ore_beam: Dictionary = World.simulate(ore, _swap_kind(ore.solution, Rules.Kind.FROG, Rules.Kind.BEAM))
+	var ore_share: Dictionary = World.simulate(ore, _swap_kind(ore.solution, Rules.Kind.FROG, Rules.Kind.SHARE))
+	check(int(ore_sole.counts[Rules.Mat.INGOT]) == 0, "ahead ore's sole sends the ore right (%s)" % ore_sole.text)
+	check(int(ore_beam.counts[Rules.Mat.PLATE]) == 0, "ahead ore's beam sends the plate backward (%s)" % ore_beam.text)
+	check(int(ore_share.counts[Rules.Mat.INGOT]) == 0 and int(ore_share.counts[Rules.Mat.PLATE]) == 0, "ahead ore's share refuses the ahead arrival (%s)" % ore_share.text)
+	var still: Dictionary = Rooms.all()[233]
+	var stilled: Dictionary = World.simulate(still, still.solution)
+	check(int(still.budget[Rules.Kind.BELT]) == 1, "still frog budgets one belt")
+	var still_belts := 0
+	var still_south := false
+	for piece in still.solution:
+		if int(piece.kind) == Rules.Kind.BELT:
+			still_belts += 1
+			check(int(piece.x) == 4 and int(piece.y) == 2, "still frog's belt is on the crossing")
+		if int(piece.kind) == Rules.Kind.FROG:
+			still_south = int(piece.dir) == Rules.Dir.SOUTH
+	check(still_belts == 1 and still_south, "still frog places one south-facing frog")
+	check(int(stilled.counts[Rules.Mat.INGOT]) == 29 and int(stilled.counts[Rules.Mat.PLATE]) == 30 and int(stilled.discarded) > 0, "still frog counts both exits and scraps the side stream (%s discarded %d)" % [stilled.text, stilled.discarded])
+	var seat: Dictionary = Rooms.all()[234]
+	var parked: Array = []
+	for piece in seat.solution:
+		if int(piece.kind) != Rules.Kind.FROG:
+			parked.append(piece)
+	parked.append(Rooms.piece(Rules.Kind.FROG, 5, 0, Rules.Dir.EAST))
+	var gap: Dictionary = World.simulate(seat, parked)
+	check(World.budget_met(parked, seat.budget) and not gap.quota_ok, "a parked frog misses the seat (%s)" % gap.text)
+	var seated: Dictionary = World.simulate(seat, seat.solution)
+	check(int(seated.counts[Rules.Mat.INGOT]) == 29 and int(seated.counts[Rules.Mat.PLATE]) == 30, "seating the frog clears the seat (%s)" % seated.text)
+	var corner: Dictionary = Rooms.all()[235]
+	var cornered: Dictionary = World.simulate(corner, corner.solution)
+	check(int(cornered.counts[Rules.Mat.INGOT]) == 59 and int(cornered.counts[Rules.Mat.PLATE]) == 60, "split corner counts both exits (%s)" % cornered.text)
+	var corner_sole: Dictionary = World.simulate(corner, _swap_kind(corner.solution, Rules.Kind.FROG, Rules.Kind.SOLE))
+	check(int(corner_sole.counts[Rules.Mat.INGOT]) == 0 and int(corner_sole.counts[Rules.Mat.PLATE]) == 0, "split corner's sole hits the right wall (%s)" % corner_sole.text)
+	var stocks: Dictionary = Rooms.all()[236]
+	var stocked: Dictionary = World.simulate(stocks, stocks.solution)
+	check(int(stocked.counts[Rules.Mat.INGOT]) == 118 and int(stocked.counts[Rules.Mat.PLATE]) == 120, "two stocks counts both lanes (%s)" % stocked.text)
+	var scrap: Dictionary = Rooms.all()[237]
+	var scraped: Dictionary = World.simulate(scrap, scrap.solution)
+	var scrap_south := false
+	for piece in scrap.solution:
+		if int(piece.kind) == Rules.Kind.FROG:
+			scrap_south = int(piece.dir) == Rules.Dir.SOUTH
+	check(scrap_south, "after the split's frog faces south")
+	check(int(scraped.counts[Rules.Mat.INGOT]) == 29 and int(scraped.counts[Rules.Mat.PLATE]) == 30 and int(scraped.discarded) > 0, "after the split counts both exits and discards the scrap (%s discarded %d)" % [scraped.text, scraped.discarded])
+	var bin: Dictionary = Rooms.all()[238]
+	var solved: Dictionary = World.simulate(bin, bin.solution)
+	check(int(solved.counts[Rules.Mat.INGOT]) == 29 and int(solved.counts[Rules.Mat.PLATE]) == 104, "split bin hits both quotas (%s)" % solved.text)
+	check(solved.world.machines[Vector2i(2, 2)].hold < 0, "split bin's frog is empty after the pairs")
+	var plates_only: Dictionary = World.simulate(bin, [Rooms.piece(Rules.Kind.BELT, 1, 4, Rules.Dir.EAST)])
+	check(int(plates_only.counts[Rules.Mat.INGOT]) == 0 and int(plates_only.counts[Rules.Mat.PLATE]) < int(bin.quota[Rules.Mat.PLATE]), "split bin's lower plates alone miss (%s)" % plates_only.text)
+	var pressed: Dictionary = World.simulate(bin, [
+		Rooms.piece(Rules.Kind.FROG, 2, 2, Rules.Dir.SOUTH),
+		Rooms.piece(Rules.Kind.KILN, 3, 2, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.PRESS, 4, 2, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 1, 4, Rules.Dir.EAST),
+	])
+	check(int(pressed.counts[Rules.Mat.INGOT]) == 0 and not pressed.success, "pressing every ingot misses the split bin (%s)" % pressed.text)
+	var held_room: Dictionary = Rooms.all()[239]
+	var waiting: Dictionary = World.simulate(held_room, held_room.solution, 2)
+	var leaving: Dictionary = World.simulate(held_room, held_room.solution, 3)
+	var finished: Dictionary = World.simulate(held_room, held_room.solution)
+	var belt_early: Dictionary = World.simulate(held_room, _swap_kind(held_room.solution, Rules.Kind.FROG, Rules.Kind.BELT), 2)
+	var held_sole: Dictionary = World.simulate(held_room, _swap_kind(held_room.solution, Rules.Kind.FROG, Rules.Kind.SOLE))
+	check(waiting.world.machines[Vector2i(3, 3)].hold == Rules.Mat.PLATE and waiting.trace.is_empty(), "held pair keeps the first plate through the empty tick")
+	check(leaving.world.machines[Vector2i(3, 3)].hold < 0 and _trace(leaving) == "3:4,3:2", "held pair leaves on the arrival tick and the cell is empty, got %s" % _trace(leaving))
+	check(belt_early.world.machines[Vector2i(3, 3)].hold < 0 and belt_early.world.machines[Vector2i(3, 2)].hold < 0 and int(belt_early.world.sources[0].pending) == Rules.Mat.PLATE, "a belt refuses the ahead arrival, so the first plate stays on the source")
+	check(int(finished.counts[Rules.Mat.INGOT]) == 29 and int(finished.counts[Rules.Mat.PLATE]) == 30, "held pair feeds the kiln and the plate bin (%s)" % finished.text)
+	check(int(held_sole.counts[Rules.Mat.INGOT]) == 0, "held pair's sole sends the ore right (%s)" % held_sole.text)

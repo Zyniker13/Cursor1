@@ -1,6 +1,6 @@
 # Casework
 
-A deduction game with forty-four cases, **The spare key**, **The rehearsal score**, **The gilt stamp**, **The ferry bell**, **The weather slate**, **The loom shuttle**, **The hive smoker**, **The glass pontil**, **The press proof**, **The assay cup**, **The kiln chalk**, **The tide ledger**, **The night bell**, **The salt mark**, **The wick trim**, **The glass anneal**, **The orchard graft**, **The dye vat**, **The tar kettle**, **The cork press**, **The net loft**, **The cask hoop**, **The linen fold**, **The dovetail**, **The mortise**, **The rebate**, **The housing**, **The tenon**, **The bridle**, **The dado**, **The spline**, **The mitre**, **The lap**, **The scarf**, **The finger**, **The haunch**, **The dowel**, **The tongue**, **The quirk**, **The chamfer**, **The scotia**, **The cyma**, **The cavetto**, and **The reed**.
+A deduction game with forty-six cases, **The spare key**, **The rehearsal score**, **The gilt stamp**, **The ferry bell**, **The weather slate**, **The loom shuttle**, **The hive smoker**, **The glass pontil**, **The press proof**, **The assay cup**, **The kiln chalk**, **The tide ledger**, **The night bell**, **The salt mark**, **The wick trim**, **The glass anneal**, **The orchard graft**, **The dye vat**, **The tar kettle**, **The cork press**, **The net loft**, **The cask hoop**, **The linen fold**, **The dovetail**, **The mortise**, **The rebate**, **The housing**, **The tenon**, **The bridle**, **The dado**, **The spline**, **The mitre**, **The lap**, **The scarf**, **The finger**, **The haunch**, **The dowel**, **The tongue**, **The quirk**, **The chamfer**, **The scotia**, **The cyma**, **The cavetto**, **The reed**, **The annulet**, and **The hood**.
 
 Pick a file. That file keeps a single timeline. You read the exhibits and pin who, the room, and the hour. A theory is accepted only when it fits every exhibit. A theory that does not fit comes back naming the exhibits it contradicts. An empty pin is refused by the name of the missing slot.
 
@@ -95,6 +95,10 @@ There is no voice. The papers and the board are the whole case.
 **The cavetto.** The cavetto left its peg at the joiner's palfrey. Name who cut the cavetto, the room they cut it in, and the hour.
 
 **The reed.** The reed left its peg at the joiner's weanling. Name who cut the reed, the room they cut it in, and the hour.
+
+**The annulet.** The annulet left its peg at the joiner's hinny. Name who cut the annulet, the room they cut it in, and the hour.
+
+**The hood.** The hood left its peg at the joiner's mule. Name who cut the hood, the room they cut it in, and the hour.
 
 ## Play
 

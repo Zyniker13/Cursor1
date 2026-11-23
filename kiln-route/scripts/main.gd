@@ -217,6 +217,9 @@ func _kind_for_key(code: int) -> int:
 		KEY_L: Rules.Kind.STILT,
 		KEY_M: Rules.Kind.CLEVIS,
 		KEY_N: Rules.Kind.BEAM,
+		KEY_B: Rules.Kind.HAKE,
+		KEY_V: Rules.Kind.SOLE,
+		KEY_C: Rules.Kind.FROG,
 	}
 	if not map.has(code):
 		return -1
@@ -393,6 +396,9 @@ func _kind_order() -> Array:
 		Rules.Kind.STILT,
 		Rules.Kind.CLEVIS,
 		Rules.Kind.BEAM,
+		Rules.Kind.HAKE,
+		Rules.Kind.SOLE,
+		Rules.Kind.FROG,
 	]
 
 
@@ -432,11 +438,22 @@ func _layout() -> Dictionary:
 	# The twenty-fifth wing fills that row. Tab width stays 116 unless a label is wider.
 	# The twenty-sixth wing adds a twenty-first row. One pixel shorter keeps a six-row board drawable.
 	# The twenty-seventh wing adds a twenty-second row. Fourteen pixels still leaves a six-row board drawable.
+	# The twenty-eighth wing adds a twenty-third row. One pixel shorter keeps a six-row board drawable.
+	# The twenty-ninth wing adds a twenty-fourth row. One pixel shorter keeps a six-row board drawable.
+	# The thirtieth wing fills that row. Twelve pixels still leaves a six-row board drawable.
 	# Shorter tabs give that row back so the rule text keeps its space.
 	var per_row := 8
 	var tab_h := 30.0
 	var row_gap := 4.0
-	if rooms.size() > 200:
+	if rooms.size() > 224:
+		per_row = 10
+		tab_h = 12.0
+		row_gap = 1.0
+	elif rooms.size() > 216:
+		per_row = 10
+		tab_h = 13.0
+		row_gap = 1.0
+	elif rooms.size() > 200:
 		per_row = 10
 		tab_h = 14.0
 		row_gap = 1.0
@@ -533,7 +550,7 @@ func _draw() -> void:
 	var size: Vector2 = lay.size
 	draw_rect(Rect2(Vector2.ZERO, size), COL_BG)
 	_text(Vector2(24, 14), "KILN ROUTE", 28, COL_TEXT)
-	_text(Vector2(236, 26), "twenty-seven wings", 15, COL_DIM)
+	_text(Vector2(236, 26), "thirty wings", 15, COL_DIM)
 	var minute := "minute  %d / %d" % [_shown_tick(), Rules.SIM_TICKS]
 	var minute_w := font.get_string_size(minute, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
 	_text(Vector2(size.x - 24 - minute_w, 26), minute, 15, COL_DIM)
@@ -543,7 +560,7 @@ func _draw() -> void:
 	_draw_grid(lay)
 	_draw_side(lay)
 	_draw_tray(lay)
-	_text(Vector2(24, size.y - 28), "1-9 0 - = \\ ; , ' . / ` y u i o p t g h j k l m n select   R rotate   LMB place or pick up   RMB rotate   Space run   F skip   Bksp restart", 13, COL_DIM)
+	_text(Vector2(24, size.y - 28), "1-9 0 - = \\ ; , ' . / ` y u i o p t g h j k l m n b v c select   R rotate   LMB place or pick up   RMB rotate   Space run   F skip   Bksp restart", 13, COL_DIM)
 
 
 func _draw_tabs(lay: Dictionary) -> void:
@@ -1002,6 +1019,47 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 		draw_line(nose, nose + along * body.size.x * 0.16, ink, thick)
 		draw_line(rear, rear + back_v * reach, ink, thick)
 		draw_line(hip, hip + left_v * reach, ink, thick)
+	elif kind == Rules.Kind.HAKE:
+		# Entry is from ahead. The waiter leaves backward. The arrival leaves right.
+		# A beam uses the same entry and sends the arrival left.
+		var along := Vector2(Rules.vec(dir))
+		var back_v := -along
+		var right_v := Vector2(Rules.vec(Rules.right(dir)))
+		var ink := Color("cfe6ef", 0.95 * alpha)
+		var thick := maxf(2.0, body.size.x * 0.07)
+		var rear := center - along * body.size.x * 0.2
+		var reach := body.size.x * 0.24
+		var nose := center + along * body.size.x * 0.16
+		var hip := center + right_v * body.size.x * 0.1
+		draw_line(nose, nose + along * body.size.x * 0.16, ink, thick)
+		draw_line(rear, rear + back_v * reach, ink, thick)
+		draw_line(hip, hip + right_v * reach, ink, thick)
+	elif kind == Rules.Kind.SOLE:
+		# Entry is from ahead. The waiter leaves forward. The arrival leaves right.
+		# A hake uses the same entry and sends the waiter backward.
+		var along := Vector2(Rules.vec(dir))
+		var right_v := Vector2(Rules.vec(Rules.right(dir)))
+		var ink := Color("f0d4c2", 0.95 * alpha)
+		var thick := maxf(2.0, body.size.x * 0.07)
+		var nose := center + along * body.size.x * 0.16
+		var reach := body.size.x * 0.24
+		var hip := center + right_v * body.size.x * 0.1
+		draw_line(nose, nose + along * body.size.x * 0.16, ink, thick)
+		draw_line(center, center + along * reach, ink, thick)
+		draw_line(hip, hip + right_v * reach, ink, thick)
+	elif kind == Rules.Kind.FROG:
+		# Entry is from ahead. The waiter leaves forward. The arrival leaves left.
+		# A sole uses the same entry and sends the arrival right.
+		var along := Vector2(Rules.vec(dir))
+		var left_v := Vector2(Rules.vec(Rules.left(dir)))
+		var ink := Color("d7efc4", 0.95 * alpha)
+		var thick := maxf(2.0, body.size.x * 0.07)
+		var nose := center + along * body.size.x * 0.16
+		var reach := body.size.x * 0.24
+		var hip := center + left_v * body.size.x * 0.1
+		draw_line(nose, nose + along * body.size.x * 0.16, ink, thick)
+		draw_line(center, center + along * reach, ink, thick)
+		draw_line(hip, hip + left_v * reach, ink, thick)
 	elif kind == Rules.Kind.GRATE:
 		var along := Vector2(Rules.vec(dir))
 		var across := Vector2(Rules.vec(Rules.right(dir)))
@@ -1021,7 +1079,7 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 	var forward := light
 	if kind == Rules.Kind.GRATE:
 		forward = Color("d7dee6")
-	if kind != Rules.Kind.HOOK and kind != Rules.Kind.DROP and kind != Rules.Kind.LIFT and kind != Rules.Kind.SHED and kind != Rules.Kind.RAKE and kind != Rules.Kind.HOE and kind != Rules.Kind.HARROW and kind != Rules.Kind.FORK and kind != Rules.Kind.PRONG and kind != Rules.Kind.SHARE and kind != Rules.Kind.COULTER and kind != Rules.Kind.MOLDBOARD and kind != Rules.Kind.LANDSIDE and kind != Rules.Kind.SLADE and kind != Rules.Kind.HEEL and kind != Rules.Kind.STILT and kind != Rules.Kind.CLEVIS and kind != Rules.Kind.BEAM:
+	if kind != Rules.Kind.HOOK and kind != Rules.Kind.DROP and kind != Rules.Kind.LIFT and kind != Rules.Kind.SHED and kind != Rules.Kind.RAKE and kind != Rules.Kind.HOE and kind != Rules.Kind.HARROW and kind != Rules.Kind.FORK and kind != Rules.Kind.PRONG and kind != Rules.Kind.SHARE and kind != Rules.Kind.COULTER and kind != Rules.Kind.MOLDBOARD and kind != Rules.Kind.LANDSIDE and kind != Rules.Kind.SLADE and kind != Rules.Kind.HEEL and kind != Rules.Kind.STILT and kind != Rules.Kind.CLEVIS and kind != Rules.Kind.BEAM and kind != Rules.Kind.HAKE and kind != Rules.Kind.SOLE and kind != Rules.Kind.FROG:
 		_arrow(front, dir, body.size.x * 0.2, body.size.x * 0.12, Color(forward.r, forward.g, forward.b, forward_alpha))
 	if kind == Rules.Kind.HOOK:
 		var turn := Rules.left(dir)
@@ -1130,6 +1188,28 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 		var left_side := center + Vector2(Rules.vec(left_turn)) * body.size.x * 0.28
 		_arrow(back_side, back_turn, body.size.x * 0.14, body.size.x * 0.09, Color(beam_mark.r, beam_mark.g, beam_mark.b, alpha))
 		_arrow(left_side, left_turn, body.size.x * 0.14, body.size.x * 0.09, Color(beam_mark.r, beam_mark.g, beam_mark.b, alpha))
+	elif kind == Rules.Kind.HAKE:
+		var hake_mark := Color("cfe6ef")
+		var back_turn := Rules.opposite(dir)
+		var right_turn := Rules.right(dir)
+		var back_side := center + Vector2(Rules.vec(back_turn)) * body.size.x * 0.32
+		var right_side := center + Vector2(Rules.vec(right_turn)) * body.size.x * 0.28
+		_arrow(back_side, back_turn, body.size.x * 0.14, body.size.x * 0.09, Color(hake_mark.r, hake_mark.g, hake_mark.b, alpha))
+		_arrow(right_side, right_turn, body.size.x * 0.14, body.size.x * 0.09, Color(hake_mark.r, hake_mark.g, hake_mark.b, alpha))
+	elif kind == Rules.Kind.SOLE:
+		var sole_mark := Color("f0d4c2")
+		var right_turn := Rules.right(dir)
+		var forward_side := center + Vector2(Rules.vec(dir)) * body.size.x * 0.32
+		var right_side := center + Vector2(Rules.vec(right_turn)) * body.size.x * 0.28
+		_arrow(forward_side, dir, body.size.x * 0.14, body.size.x * 0.09, Color(sole_mark.r, sole_mark.g, sole_mark.b, alpha))
+		_arrow(right_side, right_turn, body.size.x * 0.14, body.size.x * 0.09, Color(sole_mark.r, sole_mark.g, sole_mark.b, alpha))
+	elif kind == Rules.Kind.FROG:
+		var frog_mark := Color("d7efc4")
+		var left_turn := Rules.left(dir)
+		var forward_side := center + Vector2(Rules.vec(dir)) * body.size.x * 0.32
+		var left_side := center + Vector2(Rules.vec(left_turn)) * body.size.x * 0.28
+		_arrow(forward_side, dir, body.size.x * 0.14, body.size.x * 0.09, Color(frog_mark.r, frog_mark.g, frog_mark.b, alpha))
+		_arrow(left_side, left_turn, body.size.x * 0.14, body.size.x * 0.09, Color(frog_mark.r, frog_mark.g, frog_mark.b, alpha))
 	elif kind == Rules.Kind.DROP:
 		var turn := Rules.right(dir)
 		var side := center + Vector2(Rules.vec(turn)) * body.size.x * 0.2
@@ -1319,6 +1399,12 @@ func _key_label(kind: int) -> String:
 		return "m"
 	if kind == Rules.Kind.BEAM:
 		return "n"
+	if kind == Rules.Kind.HAKE:
+		return "b"
+	if kind == Rules.Kind.SOLE:
+		return "v"
+	if kind == Rules.Kind.FROG:
+		return "c"
 	return str(kind + 1)
 
 
@@ -1328,6 +1414,15 @@ func _tray_count_line(kind: int, count: int) -> String:
 		return "%d right" % count
 	# The beam count reads "ahead" so room 209 shows "1 ahead" beside Beam and its key.
 	if kind == Rules.Kind.BEAM:
+		return "%d ahead" % count
+	# The hake count reads "ahead" so room 217 shows "1 ahead" beside Hake and its key.
+	if kind == Rules.Kind.HAKE:
+		return "%d ahead" % count
+	# The sole count reads "ahead" so room 225 shows "1 ahead" beside Sole and its key.
+	if kind == Rules.Kind.SOLE:
+		return "%d ahead" % count
+	# The frog count reads "ahead" so room 233 shows "1 ahead" beside Frog and its key.
+	if kind == Rules.Kind.FROG:
 		return "%d ahead" % count
 	return "%d left" % count
 
@@ -1397,6 +1492,12 @@ func _kind_color(kind: int) -> Color:
 		return Color("6a3a4a")
 	if kind == Rules.Kind.BEAM:
 		return Color("4a3d62")
+	if kind == Rules.Kind.HAKE:
+		return Color("2a4a58")
+	if kind == Rules.Kind.SOLE:
+		return Color("5c3d2e")
+	if kind == Rules.Kind.FROG:
+		return Color("3e5a32")
 	return Color("c792ef")
 
 

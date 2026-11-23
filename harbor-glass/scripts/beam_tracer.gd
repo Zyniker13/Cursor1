@@ -441,7 +441,7 @@ static func norm_rot(kind: String, rot: int) -> int:
 	# A cavetto uses the same four facings. Each one stops only the opposite
 	# of the facing and passes the other three directions. A north cavetto
 	# passes north, east, and west, which a north ovolo does not.
-	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona":
+	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk":
 		return posmod(rot, 360)
 	# A shutter has no facing. Dry stops the beam; flooded water lets it pass.
 	# A well has no facing either. Dry stops the beam; flooded water sends it north.
@@ -614,6 +614,26 @@ static func corona_passes(rot: int, dir: String) -> bool:
 	# an ogee, a torus, a scotia, an astragal, a casement, or a lintel.
 	var facing := corona_facing(rot)
 	return dir == rotate_dir(facing, 1) or dir == rotate_dir(facing, -1)
+
+static func bead_facing(rot: int) -> String:
+	# 0 north, 90 east, 180 south, 270 west. Opposite facings are not the same piece.
+	return rotate_dir("N", posmod(int(norm_rot("bead", rot) / 90.0), 4))
+
+static func bead_passes(rot: int, dir: String) -> bool:
+	# Only the next clockwise direction. North passes only east. One click
+	# faces east and passes only south. That is not a corona, a fillet, a
+	# casement, an astragal, a jamb, a mullion, a transom, or a lintel.
+	return dir == rotate_dir(bead_facing(rot), 1)
+
+static func quirk_facing(rot: int) -> String:
+	# 0 north, 90 east, 180 south, 270 west. Opposite facings are not the same piece.
+	return rotate_dir("N", posmod(int(norm_rot("quirk", rot) / 90.0), 4))
+
+static func quirk_passes(rot: int, dir: String) -> bool:
+	# Only the next counterclockwise direction. North passes only west. One
+	# click faces east and passes only north. That is not a bead, a corona, a
+	# fillet, a casement, a scotia, a jamb, a mullion, a transom, or a lintel.
+	return dir == rotate_dir(quirk_facing(rot), -1)
 
 static func sluice_facing(rot: int) -> String:
 	# 0 north, 90 east, 180 south, 270 west. The exit follows this facing.
@@ -889,6 +909,18 @@ static func _cast(
 		if _dry_corona_blocks(occupants, cell, dir):
 			segments.append(_boundary_seg(prev, cell, color))
 			return
+		# A dry bead passes only the next clockwise direction. The other three
+		# directions stop on the edge and never enter the cell. Flooded beads
+		# already returned above.
+		if _dry_bead_blocks(occupants, cell, dir):
+			segments.append(_boundary_seg(prev, cell, color))
+			return
+		# A dry quirk passes only the next counterclockwise direction. The
+		# other three directions stop on the edge and never enter the cell.
+		# Flooded quirks already returned above.
+		if _dry_quirk_blocks(occupants, cell, dir):
+			segments.append(_boundary_seg(prev, cell, color))
+			return
 		segments.append(_center_seg(prev, cell, color))
 		if not occupants.has(cell):
 			prev = cell
@@ -1099,6 +1131,24 @@ static func _cast(
 			prev = cell
 			cell = cell + VEC[dir]
 			continue
+		if kind == "bead":
+			# Dry, only the next clockwise direction passes straight, same
+			# direction and same color. That pass costs no bounce. It does not
+			# turn, it does not recolor, and it does not split. The other three
+			# directions never reach here. A flooded bead never reaches here
+			# either.
+			prev = cell
+			cell = cell + VEC[dir]
+			continue
+		if kind == "quirk":
+			# Dry, only the next counterclockwise direction passes straight,
+			# same direction and same color. That pass costs no bounce. It does
+			# not turn, it does not recolor, and it does not split. The other
+			# three directions never reach here. A flooded quirk never reaches
+			# here either.
+			prev = cell
+			cell = cell + VEC[dir]
+			continue
 		if kind == "pane":
 			if color != pane_color(int(occ["rot"])):
 				return
@@ -1138,7 +1188,9 @@ static func _flood_carries(occupants: Dictionary, cell: Vector2i) -> bool:
 	# cavetto is shut under water the same way, so _flood_carries stays false
 	# for it. A fillet is shut under water the same way, so _flood_carries
 	# stays false for it. A corona is shut under water the same way, so
-	# _flood_carries stays false for it.
+	# _flood_carries stays false for it. A bead is shut under water the same
+	# way, so _flood_carries stays false for it. A quirk is shut under water
+	# the same way, so _flood_carries stays false for it.
 	# Every other flooded cell stops.
 	if not occupants.has(cell):
 		return false
@@ -1229,6 +1281,20 @@ static func _dry_corona_blocks(occupants: Dictionary, cell: Vector2i, dir: Strin
 	if str(occupants[cell]["kind"]) != "corona":
 		return false
 	return not corona_passes(int(occupants[cell]["rot"]), dir)
+
+static func _dry_bead_blocks(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "bead":
+		return false
+	return not bead_passes(int(occupants[cell]["rot"]), dir)
+
+static func _dry_quirk_blocks(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "quirk":
+		return false
+	return not quirk_passes(int(occupants[cell]["rot"]), dir)
 
 static func _in_bounds(chart: Dictionary, cell: Vector2i) -> bool:
 	return cell.x >= 0 and cell.y >= 0 and cell.x < int(chart["cols"]) and cell.y < int(chart["rows"])
