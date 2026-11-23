@@ -435,7 +435,10 @@ static func norm_rot(kind: String, rot: int) -> int:
 	# An ogee uses the same four facings. Each one is its own open pair:
 	# the opposite of the facing and the next counterclockwise direction. A
 	# north ogee passes south and west, which a north torus does not.
-	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee":
+	# An ovolo uses the same four facings. Each one stops only the facing and
+	# passes the other three directions. A north ovolo passes east, south, and
+	# west, which a north ogee does not.
+	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo":
 		return posmod(rot, 360)
 	# A shutter has no facing. Dry stops the beam; flooded water lets it pass.
 	# A well has no facing either. Dry stops the beam; flooded water sends it north.
@@ -566,6 +569,16 @@ static func ogee_passes(rot: int, dir: String) -> bool:
 	# facing. North opens south and west. That is not the north torus pair.
 	var facing := ogee_facing(rot)
 	return dir == rotate_dir(facing, 2) or dir == rotate_dir(facing, -1)
+
+static func ovolo_facing(rot: int) -> String:
+	# 0 north, 90 east, 180 south, 270 west. The dry stop is this facing.
+	return rotate_dir("N", posmod(int(norm_rot("ovolo", rot) / 90.0), 4))
+
+static func ovolo_passes(rot: int, dir: String) -> bool:
+	# Every direction except the facing. North stops north and passes east,
+	# south, and west. That is not a casement, a jamb, a mullion, a transom,
+	# a lintel, an astragal, a scotia, a torus, or an ogee.
+	return dir != ovolo_facing(rot)
 
 static func sluice_facing(rot: int) -> String:
 	# 0 north, 90 east, 180 south, 270 west. The exit follows this facing.
@@ -817,6 +830,12 @@ static func _cast(
 		if _dry_ogee_blocks(occupants, cell, dir):
 			segments.append(_boundary_seg(prev, cell, color))
 			return
+		# A dry ovolo passes every direction except its facing. That facing
+		# stops on the edge and never enters the cell. Flooded ovolos already
+		# returned above.
+		if _dry_ovolo_blocks(occupants, cell, dir):
+			segments.append(_boundary_seg(prev, cell, color))
+			return
 		segments.append(_center_seg(prev, cell, color))
 		if not occupants.has(cell):
 			prev = cell
@@ -992,6 +1011,14 @@ static func _cast(
 			prev = cell
 			cell = cell + VEC[dir]
 			continue
+		if kind == "ovolo":
+			# Dry, every direction except the facing passes straight, same
+			# direction and same color. That pass costs no bounce. It does not
+			# turn, it does not recolor, and it does not split. The facing
+			# never reaches here. A flooded ovolo never reaches here either.
+			prev = cell
+			cell = cell + VEC[dir]
+			continue
 		if kind == "pane":
 			if color != pane_color(int(occ["rot"])):
 				return
@@ -1026,7 +1053,8 @@ static func _flood_carries(occupants: Dictionary, cell: Vector2i) -> bool:
 	# false for it. A scotia is shut under water the same way, so
 	# _flood_carries stays false for it. A torus is shut under water the same
 	# way, so _flood_carries stays false for it. An ogee is shut under water
-	# the same way, so _flood_carries stays false for it.
+	# the same way, so _flood_carries stays false for it. An ovolo is shut
+	# under water the same way, so _flood_carries stays false for it.
 	# Every other flooded cell stops.
 	if not occupants.has(cell):
 		return false
@@ -1089,6 +1117,13 @@ static func _dry_ogee_blocks(occupants: Dictionary, cell: Vector2i, dir: String)
 	if str(occupants[cell]["kind"]) != "ogee":
 		return false
 	return not ogee_passes(int(occupants[cell]["rot"]), dir)
+
+static func _dry_ovolo_blocks(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "ovolo":
+		return false
+	return not ovolo_passes(int(occupants[cell]["rot"]), dir)
 
 static func _in_bounds(chart: Dictionary, cell: Vector2i) -> bool:
 	return cell.x >= 0 and cell.y >= 0 and cell.x < int(chart["cols"]) and cell.y < int(chart["rows"])

@@ -265,6 +265,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_torus(at, rot)
 		"ogee":
 			_draw_ogee(at, rot)
+		"ovolo":
+			_draw_ovolo(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -799,6 +801,52 @@ func _ogee_curve(center: Vector2, dir: String, curve: Color, shade: Color) -> vo
 		inner.append(at - outward * (cell * 0.035))
 	draw_polyline(spine, curve, 3.5)
 	draw_polyline(inner, shade, 1.75)
+
+func _draw_ovolo(at: Vector2i, rot: int) -> void:
+	# A pale convex bow on every open edge. A north ovolo bows on the east,
+	# south, and west edges. Each bow is one quarter-round hump. It is not
+	# the torus beads, not the scotia posts, and not the ogee S-curve.
+	var center := _center(at)
+	var facing := Tracer.ovolo_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var bow := Palette.GLASS if not flooded else Palette.FOAM
+	var shade := Palette.TIDE if not flooded else Palette.WOOD
+	for dir in ["N", "E", "S", "W"]:
+		if dir == facing:
+			continue
+		_ovolo_bow(center, dir, bow, shade)
+
+func _ovolo_bow(center: Vector2, dir: String, bow: Color, shade: Color) -> void:
+	var along := Vector2.RIGHT
+	var outward := Vector2.DOWN
+	match dir:
+		"N":
+			along = Vector2.RIGHT
+			outward = Vector2.UP
+		"S":
+			along = Vector2.RIGHT
+			outward = Vector2.DOWN
+		"E":
+			along = Vector2.DOWN
+			outward = Vector2.RIGHT
+		_:
+			along = Vector2.DOWN
+			outward = Vector2.LEFT
+	var edge := cell * 0.34
+	var rise := cell * 0.13
+	var half := cell * 0.24
+	var origin := center + outward * edge - along * half
+	var steps := 12
+	var spine := PackedVector2Array()
+	var inner := PackedVector2Array()
+	for i in steps + 1:
+		var t := float(i) / float(steps)
+		var hump := sin(t * PI)
+		var bow_at := origin + along * (half * 2.0 * t) + outward * (rise * hump)
+		spine.append(bow_at)
+		inner.append(bow_at - outward * (cell * 0.04))
+	draw_polyline(spine, bow, 4.0)
+	draw_polyline(inner, shade, 1.6)
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
 	if dir == "N" or dir == "S":
