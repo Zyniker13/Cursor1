@@ -29,7 +29,7 @@ func _run() -> void:
 	for index in Puzzles.count():
 		var puzzle: Dictionary = Puzzles.get_puzzle(index)
 		var wing := str(puzzle["wing"])
-		if wing == "West Wing" or wing == "North Wing" or wing == "South Wing" or wing == "Attic Wing" or wing == "Cellar Wing" or wing == "Gallery Wing" or wing == "Court Wing" or wing == "Nave Wing" or wing == "Cloister Wing" or wing == "Porch Wing" or wing == "Oriel Wing" or wing == "Veil Wing" or wing == "Shade Wing" or wing == "Screen Wing" or wing == "Glaze Wing" or wing == "Mica Wing" or wing == "Baize Wing" or wing == "Scrim Wing" or wing == "Gauze Wing" or wing == "Voile Wing" or wing == "Lawn Wing" or wing == "Muslin Wing" or wing == "Cambric Wing" or wing == "Holland Wing" or wing == "Buckram Wing" or wing == "Ticking Wing" or wing == "Denim Wing":
+		if wing == "West Wing" or wing == "North Wing" or wing == "South Wing" or wing == "Attic Wing" or wing == "Cellar Wing" or wing == "Gallery Wing" or wing == "Court Wing" or wing == "Nave Wing" or wing == "Cloister Wing" or wing == "Porch Wing" or wing == "Oriel Wing" or wing == "Veil Wing" or wing == "Shade Wing" or wing == "Screen Wing" or wing == "Glaze Wing" or wing == "Mica Wing" or wing == "Baize Wing" or wing == "Scrim Wing" or wing == "Gauze Wing" or wing == "Voile Wing" or wing == "Lawn Wing" or wing == "Muslin Wing" or wing == "Cambric Wing" or wing == "Holland Wing" or wing == "Buckram Wing" or wing == "Ticking Wing" or wing == "Denim Wing" or wing == "Canvas Wing" or wing == "Drill Wing":
 			_check_undo_restores_exact_state(index)
 	_check_alert_step()
 	_check_west_lit_step_still_loses()
@@ -99,6 +99,10 @@ func _run() -> void:
 	_check_ticking_snuffs_are_required()
 	_check_denim_rooms()
 	_check_denim_snuffs_are_required()
+	_check_canvas_rooms()
+	_check_canvas_snuffs_are_required()
+	_check_drill_rooms()
+	_check_drill_snuffs_are_required()
 	_check_lawn_snuffs_are_required()
 	_check_puzzle_select_shows_both_wings()
 	print("%d passed, %d failed" % [_passed, _failed])
@@ -106,30 +110,30 @@ func _run() -> void:
 
 func _check_wings() -> void:
 	var wings: Array = Puzzles.wings()
-	_check(Puzzles.count() == 170, "twenty-eight wings together are 170 puzzles")
-	_check(wings.size() == 28, "puzzle select lists twenty-eight wings")
+	_check(Puzzles.count() == 182, "thirty wings together are 182 puzzles")
+	_check(wings.size() == 30, "puzzle select lists thirty wings")
 	_check(
-		wings.size() == 28 and str(wings[0]["name"]) == "East Wing" and int(wings[0]["count"]) == 8 and int(wings[0]["first"]) == 0,
+		wings.size() == 30 and str(wings[0]["name"]) == "East Wing" and int(wings[0]["count"]) == 8 and int(wings[0]["first"]) == 0,
 		"the east wing still has 8 puzzles"
 	)
 	_check(
-		wings.size() == 28 and str(wings[1]["name"]) == "West Wing" and int(wings[1]["count"]) == 6 and int(wings[1]["first"]) == 8,
+		wings.size() == 30 and str(wings[1]["name"]) == "West Wing" and int(wings[1]["count"]) == 6 and int(wings[1]["first"]) == 8,
 		"the west wing has 6 puzzles"
 	)
 	_check(
-		wings.size() == 28 and str(wings[2]["name"]) == "North Wing" and int(wings[2]["count"]) == 6 and int(wings[2]["first"]) == 14,
+		wings.size() == 30 and str(wings[2]["name"]) == "North Wing" and int(wings[2]["count"]) == 6 and int(wings[2]["first"]) == 14,
 		"the north wing has 6 puzzles"
 	)
 	_check(
-		wings.size() == 28 and str(wings[3]["name"]) == "South Wing" and int(wings[3]["count"]) == 6 and int(wings[3]["first"]) == 20,
+		wings.size() == 30 and str(wings[3]["name"]) == "South Wing" and int(wings[3]["count"]) == 6 and int(wings[3]["first"]) == 20,
 		"the south wing has 6 puzzles"
 	)
 	_check(
-		wings.size() == 28 and str(wings[4]["name"]) == "Attic Wing" and int(wings[4]["count"]) == 6 and int(wings[4]["first"]) == 26,
+		wings.size() == 30 and str(wings[4]["name"]) == "Attic Wing" and int(wings[4]["count"]) == 6 and int(wings[4]["first"]) == 26,
 		"the attic has 6 puzzles"
 	)
 	_check(
-		wings.size() == 28 and str(wings[5]["name"]) == "Cellar Wing" and int(wings[5]["count"]) == 6 and int(wings[5]["first"]) == 32,
+		wings.size() == 30 and str(wings[5]["name"]) == "Cellar Wing" and int(wings[5]["count"]) == 6 and int(wings[5]["first"]) == 32,
 		"the cellar has 6 puzzles"
 	)
 	var south_titles: PackedStringArray = PackedStringArray([
@@ -197,7 +201,7 @@ func _check_wings() -> void:
 			cellar_ok = false
 	_check(cellar_ok, "the cellar is numbered 33 through 38 and each banner names its rule")
 	_check(
-		wings.size() == 28 and str(wings[6]["name"]) == "Gallery Wing" and int(wings[6]["count"]) == 6 and int(wings[6]["first"]) == 38,
+		wings.size() == 30 and str(wings[6]["name"]) == "Gallery Wing" and int(wings[6]["count"]) == 6 and int(wings[6]["first"]) == 38,
 		"the gallery has 6 puzzles"
 	)
 	var gallery_titles: PackedStringArray = PackedStringArray([
@@ -226,7 +230,7 @@ func _check_wings() -> void:
 			gallery_ok = false
 	_check(gallery_ok, "the gallery is numbered 39 through 44 and each banner names its rule")
 	_check(
-		wings.size() == 28 and str(wings[7]["name"]) == "Court Wing" and int(wings[7]["count"]) == 6 and int(wings[7]["first"]) == 44,
+		wings.size() == 30 and str(wings[7]["name"]) == "Court Wing" and int(wings[7]["count"]) == 6 and int(wings[7]["first"]) == 44,
 		"the court has 6 puzzles"
 	)
 	var court_titles: PackedStringArray = PackedStringArray([
@@ -255,7 +259,7 @@ func _check_wings() -> void:
 			court_ok = false
 	_check(court_ok, "the court is numbered 45 through 50 and each banner names its rule")
 	_check(
-		wings.size() == 28 and str(wings[8]["name"]) == "Nave Wing" and int(wings[8]["count"]) == 6 and int(wings[8]["first"]) == 50,
+		wings.size() == 30 and str(wings[8]["name"]) == "Nave Wing" and int(wings[8]["count"]) == 6 and int(wings[8]["first"]) == 50,
 		"the nave has 6 puzzles"
 	)
 	var nave_titles: PackedStringArray = PackedStringArray([
@@ -288,7 +292,7 @@ func _check_wings() -> void:
 	var first_bell: Dictionary = Puzzles.get_puzzle(50)
 	_check(str(first_bell["lesson"]).count(".") == 1, "room 51 states the bell rule in one sentence")
 	_check(
-		wings.size() == 28 and str(wings[9]["name"]) == "Cloister Wing" and int(wings[9]["count"]) == 6 and int(wings[9]["first"]) == 56,
+		wings.size() == 30 and str(wings[9]["name"]) == "Cloister Wing" and int(wings[9]["count"]) == 6 and int(wings[9]["first"]) == 56,
 		"the cloister has 6 puzzles"
 	)
 	var cloister_titles: PackedStringArray = PackedStringArray([
@@ -321,7 +325,7 @@ func _check_wings() -> void:
 	var first_grate: Dictionary = Puzzles.get_puzzle(56)
 	_check(str(first_grate["lesson"]).count(".") == 1, "room 57 states the grate rule in one sentence")
 	_check(
-		wings.size() == 28 and str(wings[10]["name"]) == "Porch Wing" and int(wings[10]["count"]) == 6 and int(wings[10]["first"]) == 62,
+		wings.size() == 30 and str(wings[10]["name"]) == "Porch Wing" and int(wings[10]["count"]) == 6 and int(wings[10]["first"]) == 62,
 		"the porch has 6 puzzles"
 	)
 	var porch_titles: PackedStringArray = PackedStringArray([
@@ -354,7 +358,7 @@ func _check_wings() -> void:
 	var first_sill: Dictionary = Puzzles.get_puzzle(62)
 	_check(str(first_sill["lesson"]).count(".") == 1, "room 63 states the sill rule in one sentence")
 	_check(
-		wings.size() == 28 and str(wings[11]["name"]) == "Oriel Wing" and int(wings[11]["count"]) == 6 and int(wings[11]["first"]) == 68,
+		wings.size() == 30 and str(wings[11]["name"]) == "Oriel Wing" and int(wings[11]["count"]) == 6 and int(wings[11]["first"]) == 68,
 		"the oriel has 6 puzzles"
 	)
 	var oriel_titles: PackedStringArray = PackedStringArray([
@@ -387,7 +391,7 @@ func _check_wings() -> void:
 	var first_pane: Dictionary = Puzzles.get_puzzle(68)
 	_check(str(first_pane["lesson"]).count(".") == 1, "room 69 states the pane rule in one sentence")
 	_check(
-		wings.size() == 28 and str(wings[12]["name"]) == "Veil Wing" and int(wings[12]["count"]) == 6 and int(wings[12]["first"]) == 74,
+		wings.size() == 30 and str(wings[12]["name"]) == "Veil Wing" and int(wings[12]["count"]) == 6 and int(wings[12]["first"]) == 74,
 		"the veil has 6 puzzles"
 	)
 	var veil_titles: PackedStringArray = PackedStringArray([
@@ -420,7 +424,7 @@ func _check_wings() -> void:
 	var first_cloth: Dictionary = Puzzles.get_puzzle(74)
 	_check(str(first_cloth["lesson"]).count(".") == 1, "room 75 states the curtain rule in one sentence")
 	_check(
-		wings.size() == 28 and str(wings[13]["name"]) == "Shade Wing" and int(wings[13]["count"]) == 6 and int(wings[13]["first"]) == 80,
+		wings.size() == 30 and str(wings[13]["name"]) == "Shade Wing" and int(wings[13]["count"]) == 6 and int(wings[13]["first"]) == 80,
 		"the shade has 6 puzzles"
 	)
 	var shade_titles: PackedStringArray = PackedStringArray([
@@ -453,7 +457,7 @@ func _check_wings() -> void:
 	var first_shade: Dictionary = Puzzles.get_puzzle(80)
 	_check(str(first_shade["lesson"]).count(".") == 1, "room 81 states the shade rule in one sentence")
 	_check(
-		wings.size() == 28 and str(wings[14]["name"]) == "Screen Wing" and int(wings[14]["count"]) == 6 and int(wings[14]["first"]) == 86,
+		wings.size() == 30 and str(wings[14]["name"]) == "Screen Wing" and int(wings[14]["count"]) == 6 and int(wings[14]["first"]) == 86,
 		"the screen has 6 puzzles"
 	)
 	var screen_titles: PackedStringArray = PackedStringArray([
@@ -486,7 +490,7 @@ func _check_wings() -> void:
 	var first_screen: Dictionary = Puzzles.get_puzzle(86)
 	_check(str(first_screen["lesson"]).count(".") == 1, "room 87 states the screen rule in one sentence")
 	_check(
-		wings.size() == 28 and str(wings[15]["name"]) == "Glaze Wing" and int(wings[15]["count"]) == 6 and int(wings[15]["first"]) == 92,
+		wings.size() == 30 and str(wings[15]["name"]) == "Glaze Wing" and int(wings[15]["count"]) == 6 and int(wings[15]["first"]) == 92,
 		"the glaze has 6 puzzles"
 	)
 	var glaze_titles: PackedStringArray = PackedStringArray([
@@ -519,7 +523,7 @@ func _check_wings() -> void:
 	var first_glaze: Dictionary = Puzzles.get_puzzle(92)
 	_check(str(first_glaze["lesson"]).count(".") == 1, "room 93 states the glaze rule in one sentence")
 	_check(
-		wings.size() == 28 and str(wings[16]["name"]) == "Mica Wing" and int(wings[16]["count"]) == 6 and int(wings[16]["first"]) == 98,
+		wings.size() == 30 and str(wings[16]["name"]) == "Mica Wing" and int(wings[16]["count"]) == 6 and int(wings[16]["first"]) == 98,
 		"the mica has 6 puzzles"
 	)
 	var mica_titles: PackedStringArray = PackedStringArray([
@@ -552,7 +556,7 @@ func _check_wings() -> void:
 	var first_mica: Dictionary = Puzzles.get_puzzle(98)
 	_check(str(first_mica["lesson"]).count(".") == 1, "room 99 states the mica rule in one sentence")
 	_check(
-		wings.size() == 28 and str(wings[17]["name"]) == "Baize Wing" and int(wings[17]["count"]) == 6 and int(wings[17]["first"]) == 104,
+		wings.size() == 30 and str(wings[17]["name"]) == "Baize Wing" and int(wings[17]["count"]) == 6 and int(wings[17]["first"]) == 104,
 		"the baize has 6 puzzles"
 	)
 	var baize_titles: PackedStringArray = PackedStringArray([
@@ -585,7 +589,7 @@ func _check_wings() -> void:
 	var first_baize: Dictionary = Puzzles.get_puzzle(104)
 	_check(str(first_baize["lesson"]).count(".") == 1, "room 105 states the baize rule in one sentence")
 	_check(
-		wings.size() == 28 and str(wings[18]["name"]) == "Scrim Wing" and int(wings[18]["count"]) == 6 and int(wings[18]["first"]) == 110,
+		wings.size() == 30 and str(wings[18]["name"]) == "Scrim Wing" and int(wings[18]["count"]) == 6 and int(wings[18]["first"]) == 110,
 		"the scrim has 6 puzzles"
 	)
 	var scrim_titles: PackedStringArray = PackedStringArray([
@@ -618,7 +622,7 @@ func _check_wings() -> void:
 	var first_scrim: Dictionary = Puzzles.get_puzzle(110)
 	_check(str(first_scrim["lesson"]).count(".") == 1, "room 111 states the scrim rule in one sentence")
 	_check(
-		wings.size() == 28 and str(wings[19]["name"]) == "Gauze Wing" and int(wings[19]["count"]) == 6 and int(wings[19]["first"]) == 116,
+		wings.size() == 30 and str(wings[19]["name"]) == "Gauze Wing" and int(wings[19]["count"]) == 6 and int(wings[19]["first"]) == 116,
 		"the gauze has 6 puzzles"
 	)
 	var gauze_titles: PackedStringArray = PackedStringArray([
@@ -651,7 +655,7 @@ func _check_wings() -> void:
 	var first_gauze: Dictionary = Puzzles.get_puzzle(116)
 	_check(str(first_gauze["lesson"]).count(".") == 1, "room 117 states the gauze rule in one sentence")
 	_check(
-		wings.size() == 28 and str(wings[20]["name"]) == "Voile Wing" and int(wings[20]["count"]) == 6 and int(wings[20]["first"]) == 122,
+		wings.size() == 30 and str(wings[20]["name"]) == "Voile Wing" and int(wings[20]["count"]) == 6 and int(wings[20]["first"]) == 122,
 		"the voile has 6 puzzles"
 	)
 	var voile_titles: PackedStringArray = PackedStringArray([
@@ -684,7 +688,7 @@ func _check_wings() -> void:
 	var first_voile: Dictionary = Puzzles.get_puzzle(122)
 	_check(str(first_voile["lesson"]).count(".") == 1, "room 123 states the voile rule in one sentence")
 	_check(
-		wings.size() == 28 and str(wings[21]["name"]) == "Lawn Wing" and int(wings[21]["count"]) == 6 and int(wings[21]["first"]) == 128,
+		wings.size() == 30 and str(wings[21]["name"]) == "Lawn Wing" and int(wings[21]["count"]) == 6 and int(wings[21]["first"]) == 128,
 		"the lawn has 6 puzzles"
 	)
 	var lawn_titles: PackedStringArray = PackedStringArray([
@@ -717,7 +721,7 @@ func _check_wings() -> void:
 	var first_lawn: Dictionary = Puzzles.get_puzzle(128)
 	_check(str(first_lawn["lesson"]).count(".") == 1, "room 129 states the lawn rule in one sentence")
 	_check(
-		wings.size() == 28 and str(wings[22]["name"]) == "Muslin Wing" and int(wings[22]["count"]) == 6 and int(wings[22]["first"]) == 134,
+		wings.size() == 30 and str(wings[22]["name"]) == "Muslin Wing" and int(wings[22]["count"]) == 6 and int(wings[22]["first"]) == 134,
 		"the muslin has 6 puzzles"
 	)
 	var muslin_titles: PackedStringArray = PackedStringArray([
@@ -750,7 +754,7 @@ func _check_wings() -> void:
 	var first_muslin: Dictionary = Puzzles.get_puzzle(134)
 	_check(str(first_muslin["lesson"]).count(".") == 1, "room 135 states the muslin rule in one sentence")
 	_check(
-		wings.size() == 28 and str(wings[23]["name"]) == "Cambric Wing" and int(wings[23]["count"]) == 6 and int(wings[23]["first"]) == 140,
+		wings.size() == 30 and str(wings[23]["name"]) == "Cambric Wing" and int(wings[23]["count"]) == 6 and int(wings[23]["first"]) == 140,
 		"the cambric has 6 puzzles"
 	)
 	var cambric_titles: PackedStringArray = PackedStringArray([
@@ -783,7 +787,7 @@ func _check_wings() -> void:
 	var first_cambric: Dictionary = Puzzles.get_puzzle(140)
 	_check(str(first_cambric["lesson"]).count(".") == 1, "room 141 states the cambric rule in one sentence")
 	_check(
-		wings.size() == 28 and str(wings[24]["name"]) == "Holland Wing" and int(wings[24]["count"]) == 6 and int(wings[24]["first"]) == 146,
+		wings.size() == 30 and str(wings[24]["name"]) == "Holland Wing" and int(wings[24]["count"]) == 6 and int(wings[24]["first"]) == 146,
 		"the holland has 6 puzzles"
 	)
 	var holland_titles: PackedStringArray = PackedStringArray([
@@ -816,7 +820,7 @@ func _check_wings() -> void:
 	var first_holland: Dictionary = Puzzles.get_puzzle(146)
 	_check(str(first_holland["lesson"]).count(".") == 1, "room 147 states the holland rule in one sentence")
 	_check(
-		wings.size() == 28 and str(wings[25]["name"]) == "Buckram Wing" and int(wings[25]["count"]) == 6 and int(wings[25]["first"]) == 152,
+		wings.size() == 30 and str(wings[25]["name"]) == "Buckram Wing" and int(wings[25]["count"]) == 6 and int(wings[25]["first"]) == 152,
 		"the buckram has 6 puzzles"
 	)
 	var buckram_titles: PackedStringArray = PackedStringArray([
@@ -849,7 +853,7 @@ func _check_wings() -> void:
 	var first_buckram: Dictionary = Puzzles.get_puzzle(152)
 	_check(str(first_buckram["lesson"]).count(".") == 1, "room 153 states the buckram rule in one sentence")
 	_check(
-		wings.size() == 28 and str(wings[26]["name"]) == "Ticking Wing" and int(wings[26]["count"]) == 6 and int(wings[26]["first"]) == 158,
+		wings.size() == 30 and str(wings[26]["name"]) == "Ticking Wing" and int(wings[26]["count"]) == 6 and int(wings[26]["first"]) == 158,
 		"the ticking has 6 puzzles"
 	)
 	var ticking_titles: PackedStringArray = PackedStringArray([
@@ -882,7 +886,7 @@ func _check_wings() -> void:
 	var first_ticking: Dictionary = Puzzles.get_puzzle(158)
 	_check(str(first_ticking["lesson"]).count(".") == 1, "room 159 states the ticking rule in one sentence")
 	_check(
-		wings.size() == 28 and str(wings[27]["name"]) == "Denim Wing" and int(wings[27]["count"]) == 6 and int(wings[27]["first"]) == 164,
+		wings.size() == 30 and str(wings[27]["name"]) == "Denim Wing" and int(wings[27]["count"]) == 6 and int(wings[27]["first"]) == 164,
 		"the denim has 6 puzzles"
 	)
 	var denim_titles: PackedStringArray = PackedStringArray([
@@ -914,6 +918,72 @@ func _check_wings() -> void:
 	_check(denim_ok, "the denim is numbered 165 through 170 and each banner names its rule")
 	var first_denim: Dictionary = Puzzles.get_puzzle(164)
 	_check(str(first_denim["lesson"]).count(".") == 1, "room 165 states the denim rule in one sentence")
+	_check(
+		wings.size() == 30 and str(wings[28]["name"]) == "Canvas Wing" and int(wings[28]["count"]) == 6 and int(wings[28]["first"]) == 170,
+		"the canvas has 6 puzzles"
+	)
+	var canvas_titles: PackedStringArray = PackedStringArray([
+		"The Lit Canvas",
+		"The Seen Sail",
+		"The Passed Bolt",
+		"The Open Canvas",
+		"The Quenched Step",
+		"The Last Canvas",
+	])
+	var canvas_ok := true
+	var canvas_rules: PackedStringArray = PackedStringArray([
+		"the canvas is lit",
+		"the guard sees a lit tile through the lit canvas",
+		"a second lamp's light passes through the canvas",
+		"a guard can enter the canvas",
+		"the early step onto the lit canvas succeeds and puts it out",
+		"you leave by stepping on the canvas, and that step puts it out",
+	])
+	for i in canvas_titles.size():
+		var canvas_room: Dictionary = Puzzles.get_puzzle(170 + i)
+		var canvas_lesson := str(canvas_room["lesson"])
+		if str(canvas_room["title"]) != canvas_titles[i] or str(canvas_room["wing"]) != "Canvas Wing" or int(canvas_room["wing_number"]) != i + 1 or int(canvas_room["number"]) != 171 + i:
+			canvas_ok = false
+		if not canvas_lesson.begins_with("This room is about the rule that ") or not canvas_lesson.contains(canvas_rules[i]):
+			canvas_ok = false
+		if i == 0 and canvas_lesson.count(".") != 1:
+			canvas_ok = false
+	_check(canvas_ok, "the canvas is numbered 171 through 176 and each banner names its rule")
+	var first_canvas: Dictionary = Puzzles.get_puzzle(170)
+	_check(str(first_canvas["lesson"]).count(".") == 1, "room 171 states the canvas rule in one sentence")
+	_check(
+		wings.size() == 30 and str(wings[29]["name"]) == "Drill Wing" and int(wings[29]["count"]) == 6 and int(wings[29]["first"]) == 176,
+		"the drill has 6 puzzles"
+	)
+	var drill_titles: PackedStringArray = PackedStringArray([
+		"The Lit Drill",
+		"The Hidden Drill",
+		"The Passed Weave",
+		"The Open Drill",
+		"The Spent Step",
+		"The Last Drill",
+	])
+	var drill_ok := true
+	var drill_rules: PackedStringArray = PackedStringArray([
+		"the drill is lit",
+		"the guard does not see a lit tile through the lit drill",
+		"a second lamp's light passes through the drill",
+		"a guard can enter the drill",
+		"the early step onto the lit drill succeeds and puts it out",
+		"you leave by stepping on the drill, and that step puts it out",
+	])
+	for i in drill_titles.size():
+		var drill_room: Dictionary = Puzzles.get_puzzle(176 + i)
+		var drill_lesson := str(drill_room["lesson"])
+		if str(drill_room["title"]) != drill_titles[i] or str(drill_room["wing"]) != "Drill Wing" or int(drill_room["wing_number"]) != i + 1 or int(drill_room["number"]) != 177 + i:
+			drill_ok = false
+		if not drill_lesson.begins_with("This room is about the rule that ") or not drill_lesson.contains(drill_rules[i]):
+			drill_ok = false
+		if i == 0 and drill_lesson.count(".") != 1:
+			drill_ok = false
+	_check(drill_ok, "the drill is numbered 177 through 182 and each banner names its rule")
+	var first_drill: Dictionary = Puzzles.get_puzzle(176)
+	_check(str(first_drill["lesson"]).count(".") == 1, "room 177 states the drill rule in one sentence")
 
 
 func _index_of(title: String) -> int:
@@ -1213,6 +1283,8 @@ func _check_puzzle_select_shows_both_wings() -> void:
 	var buckram := false
 	var ticking := false
 	var denim := false
+	var canvas := false
+	var drill := false
 	var nave_buttons := PackedStringArray()
 	var nave_tips := PackedStringArray()
 	var cloister_buttons := PackedStringArray()
@@ -1253,6 +1325,10 @@ func _check_puzzle_select_shows_both_wings() -> void:
 	var ticking_tips := PackedStringArray()
 	var denim_buttons := PackedStringArray()
 	var denim_tips := PackedStringArray()
+	var canvas_buttons := PackedStringArray()
+	var canvas_tips := PackedStringArray()
+	var drill_buttons := PackedStringArray()
+	var drill_tips := PackedStringArray()
 	var wing_y := {}
 	var legend_y := -1.0
 	var legend := ""
@@ -1263,7 +1339,7 @@ func _check_puzzle_select_shows_both_wings() -> void:
 		var node: Node = stack.pop_back()
 		if node is Label:
 			var label := node as Label
-			if label.text == "East Wing" or label.text == "West Wing" or label.text == "North Wing" or label.text == "South Wing" or label.text == "Attic Wing" or label.text == "Cellar Wing" or label.text == "Gallery Wing" or label.text == "Court Wing" or label.text == "Nave Wing" or label.text == "Cloister Wing" or label.text == "Porch Wing" or label.text == "Oriel Wing" or label.text == "Veil Wing" or label.text == "Shade Wing" or label.text == "Screen Wing" or label.text == "Glaze Wing" or label.text == "Mica Wing" or label.text == "Baize Wing" or label.text == "Scrim Wing" or label.text == "Gauze Wing" or label.text == "Voile Wing" or label.text == "Lawn Wing" or label.text == "Muslin Wing" or label.text == "Cambric Wing" or label.text == "Holland Wing" or label.text == "Buckram Wing" or label.text == "Ticking Wing" or label.text == "Denim Wing":
+			if label.text == "East Wing" or label.text == "West Wing" or label.text == "North Wing" or label.text == "South Wing" or label.text == "Attic Wing" or label.text == "Cellar Wing" or label.text == "Gallery Wing" or label.text == "Court Wing" or label.text == "Nave Wing" or label.text == "Cloister Wing" or label.text == "Porch Wing" or label.text == "Oriel Wing" or label.text == "Veil Wing" or label.text == "Shade Wing" or label.text == "Screen Wing" or label.text == "Glaze Wing" or label.text == "Mica Wing" or label.text == "Baize Wing" or label.text == "Scrim Wing" or label.text == "Gauze Wing" or label.text == "Voile Wing" or label.text == "Lawn Wing" or label.text == "Muslin Wing" or label.text == "Cambric Wing" or label.text == "Holland Wing" or label.text == "Buckram Wing" or label.text == "Ticking Wing" or label.text == "Denim Wing" or label.text == "Canvas Wing" or label.text == "Drill Wing":
 				wing_y[label.text] = label.get_parent().position.y
 			if label.text == "East Wing":
 				east = true
@@ -1401,6 +1477,18 @@ func _check_puzzle_select_shows_both_wings() -> void:
 					if child is Button and str((child as Button).text).is_valid_int():
 						denim_buttons.append((child as Button).text)
 						denim_tips.append((child as Button).tooltip_text)
+			elif label.text == "Canvas Wing":
+				canvas = true
+				for child in label.get_parent().get_children():
+					if child is Button and str((child as Button).text).is_valid_int():
+						canvas_buttons.append((child as Button).text)
+						canvas_tips.append((child as Button).tooltip_text)
+			elif label.text == "Drill Wing":
+				drill = true
+				for child in label.get_parent().get_children():
+					if child is Button and str((child as Button).text).is_valid_int():
+						drill_buttons.append((child as Button).text)
+						drill_tips.append((child as Button).tooltip_text)
 			elif label.text.begins_with("Gold diamond"):
 				legend_y = label.position.y
 				legend = label.text
@@ -1412,10 +1500,10 @@ func _check_puzzle_select_shows_both_wings() -> void:
 				puzzle_buttons += 1
 		for child in node.get_children():
 			stack.append(child)
-	_check(east and west and north and south and attic and cellar and gallery and court and nave and cloister and porch and oriel and veil and shade and screen and glaze and mica and baize and scrim and gauze and voile and lawn and muslin and cambric and holland and buckram and ticking and denim, "puzzle select shows all twenty-eight wings")
+	_check(east and west and north and south and attic and cellar and gallery and court and nave and cloister and porch and oriel and veil and shade and screen and glaze and mica and baize and scrim and gauze and voile and lawn and muslin and cambric and holland and buckram and ticking and denim and canvas and drill, "puzzle select shows all thirty wings")
 	_check(
-		wing_y.has("East Wing") and wing_y.has("West Wing") and wing_y.has("North Wing") and wing_y.has("South Wing") and wing_y.has("Attic Wing") and wing_y.has("Cellar Wing") and wing_y.has("Gallery Wing") and wing_y.has("Court Wing") and wing_y.has("Nave Wing") and wing_y.has("Cloister Wing") and wing_y.has("Porch Wing") and wing_y.has("Oriel Wing") and wing_y.has("Veil Wing") and wing_y.has("Shade Wing") and wing_y.has("Screen Wing") and float(wing_y["East Wing"]) < float(wing_y["West Wing"]) and float(wing_y["West Wing"]) < float(wing_y["North Wing"]) and float(wing_y["North Wing"]) < float(wing_y["South Wing"]) and float(wing_y["South Wing"]) < float(wing_y["Attic Wing"]) and float(wing_y["Attic Wing"]) < float(wing_y["Cellar Wing"]) and float(wing_y["Cellar Wing"]) < float(wing_y["Gallery Wing"]) and float(wing_y["Gallery Wing"]) < float(wing_y["Court Wing"]) and float(wing_y["Court Wing"]) < float(wing_y["Nave Wing"]) and float(wing_y["Nave Wing"]) < float(wing_y["Cloister Wing"]) and float(wing_y["Cloister Wing"]) < float(wing_y["Porch Wing"]) and float(wing_y["Porch Wing"]) < float(wing_y["Oriel Wing"]) and float(wing_y["Oriel Wing"]) < float(wing_y["Veil Wing"]) and float(wing_y["Veil Wing"]) < float(wing_y["Shade Wing"]) and float(wing_y["Shade Wing"]) < float(wing_y["Screen Wing"]) and wing_y.has("Glaze Wing") and float(wing_y["Screen Wing"]) < float(wing_y["Glaze Wing"]) and wing_y.has("Mica Wing") and float(wing_y["Glaze Wing"]) < float(wing_y["Mica Wing"]) and wing_y.has("Baize Wing") and float(wing_y["Mica Wing"]) < float(wing_y["Baize Wing"]) and wing_y.has("Scrim Wing") and float(wing_y["Baize Wing"]) < float(wing_y["Scrim Wing"]) and wing_y.has("Gauze Wing") and float(wing_y["Scrim Wing"]) < float(wing_y["Gauze Wing"]) and wing_y.has("Voile Wing") and float(wing_y["Gauze Wing"]) < float(wing_y["Voile Wing"]) and wing_y.has("Lawn Wing") and float(wing_y["Voile Wing"]) < float(wing_y["Lawn Wing"]) and wing_y.has("Muslin Wing") and float(wing_y["Lawn Wing"]) < float(wing_y["Muslin Wing"]) and wing_y.has("Cambric Wing") and float(wing_y["Muslin Wing"]) < float(wing_y["Cambric Wing"]) and wing_y.has("Holland Wing") and float(wing_y["Cambric Wing"]) < float(wing_y["Holland Wing"]) and wing_y.has("Buckram Wing") and float(wing_y["Holland Wing"]) < float(wing_y["Buckram Wing"]) and wing_y.has("Ticking Wing") and float(wing_y["Buckram Wing"]) < float(wing_y["Ticking Wing"]) and wing_y.has("Denim Wing") and float(wing_y["Ticking Wing"]) < float(wing_y["Denim Wing"]),
-		"the twenty-eight wings are listed in order"
+		wing_y.has("East Wing") and wing_y.has("West Wing") and wing_y.has("North Wing") and wing_y.has("South Wing") and wing_y.has("Attic Wing") and wing_y.has("Cellar Wing") and wing_y.has("Gallery Wing") and wing_y.has("Court Wing") and wing_y.has("Nave Wing") and wing_y.has("Cloister Wing") and wing_y.has("Porch Wing") and wing_y.has("Oriel Wing") and wing_y.has("Veil Wing") and wing_y.has("Shade Wing") and wing_y.has("Screen Wing") and float(wing_y["East Wing"]) < float(wing_y["West Wing"]) and float(wing_y["West Wing"]) < float(wing_y["North Wing"]) and float(wing_y["North Wing"]) < float(wing_y["South Wing"]) and float(wing_y["South Wing"]) < float(wing_y["Attic Wing"]) and float(wing_y["Attic Wing"]) < float(wing_y["Cellar Wing"]) and float(wing_y["Cellar Wing"]) < float(wing_y["Gallery Wing"]) and float(wing_y["Gallery Wing"]) < float(wing_y["Court Wing"]) and float(wing_y["Court Wing"]) < float(wing_y["Nave Wing"]) and float(wing_y["Nave Wing"]) < float(wing_y["Cloister Wing"]) and float(wing_y["Cloister Wing"]) < float(wing_y["Porch Wing"]) and float(wing_y["Porch Wing"]) < float(wing_y["Oriel Wing"]) and float(wing_y["Oriel Wing"]) < float(wing_y["Veil Wing"]) and float(wing_y["Veil Wing"]) < float(wing_y["Shade Wing"]) and float(wing_y["Shade Wing"]) < float(wing_y["Screen Wing"]) and wing_y.has("Glaze Wing") and float(wing_y["Screen Wing"]) < float(wing_y["Glaze Wing"]) and wing_y.has("Mica Wing") and float(wing_y["Glaze Wing"]) < float(wing_y["Mica Wing"]) and wing_y.has("Baize Wing") and float(wing_y["Mica Wing"]) < float(wing_y["Baize Wing"]) and wing_y.has("Scrim Wing") and float(wing_y["Baize Wing"]) < float(wing_y["Scrim Wing"]) and wing_y.has("Gauze Wing") and float(wing_y["Scrim Wing"]) < float(wing_y["Gauze Wing"]) and wing_y.has("Voile Wing") and float(wing_y["Gauze Wing"]) < float(wing_y["Voile Wing"]) and wing_y.has("Lawn Wing") and float(wing_y["Voile Wing"]) < float(wing_y["Lawn Wing"]) and wing_y.has("Muslin Wing") and float(wing_y["Lawn Wing"]) < float(wing_y["Muslin Wing"]) and wing_y.has("Cambric Wing") and float(wing_y["Muslin Wing"]) < float(wing_y["Cambric Wing"]) and wing_y.has("Holland Wing") and float(wing_y["Cambric Wing"]) < float(wing_y["Holland Wing"]) and wing_y.has("Buckram Wing") and float(wing_y["Holland Wing"]) < float(wing_y["Buckram Wing"]) and wing_y.has("Ticking Wing") and float(wing_y["Buckram Wing"]) < float(wing_y["Ticking Wing"]) and wing_y.has("Denim Wing") and float(wing_y["Ticking Wing"]) < float(wing_y["Denim Wing"]) and wing_y.has("Canvas Wing") and float(wing_y["Denim Wing"]) < float(wing_y["Canvas Wing"]) and wing_y.has("Drill Wing") and float(wing_y["Canvas Wing"]) < float(wing_y["Drill Wing"]),
+		"the thirty wings are listed in order"
 	)
 	_check(legend_y >= float(wing_y["Cellar Wing"]) + 32.0, "the cellar row sits above the legend")
 	_check(legend_y >= float(wing_y["Gallery Wing"]) + 32.0, "the gallery row sits above the legend")
@@ -1440,6 +1528,8 @@ func _check_puzzle_select_shows_both_wings() -> void:
 	_check(legend_y >= float(wing_y["Buckram Wing"]) + 32.0, "the buckram row sits above the legend")
 	_check(legend_y >= float(wing_y["Ticking Wing"]) + 32.0, "the ticking row sits above the legend")
 	_check(legend_y >= float(wing_y["Denim Wing"]) + 32.0, "the denim row sits above the legend")
+	_check(legend_y >= float(wing_y["Canvas Wing"]) + 32.0, "the canvas row sits above the legend")
+	_check(legend_y >= float(wing_y["Drill Wing"]) + 32.0, "the drill row sits above the legend")
 	_check(float(wing_y["East Wing"]) == 106.0, "the wing rows start at y 106")
 	_check(nave_buttons == PackedStringArray(["1", "2", "3", "4", "5", "6"]), "the nave row is labeled 1 through 6")
 	_check(
@@ -1480,6 +1570,8 @@ func _check_puzzle_select_shows_both_wings() -> void:
 	_check(legend.contains("Cream cloth, loose threads"), "the legend names the muslin as a cream cloth with loose threads")
 	_check(legend.contains("Close stripes"), "the legend names the ticking as close stripes")
 	_check(legend.contains("Blue twill"), "the legend names the denim as blue twill")
+	_check(legend.contains("Unbleached cloth"), "the legend names the canvas as unbleached cloth")
+	_check(legend.contains("Khaki twill"), "the legend names the drill as khaki twill")
 	_check(legend_text_h <= 260.0, "the legend text fits the legend box")
 	_check(controls_text_h <= 100.0, "the control hint fits above the first wing")
 	_check(hint.contains("Ctrl+Shift+1–6 screen"), "the control hint names the screen binding")
@@ -1495,6 +1587,8 @@ func _check_puzzle_select_shows_both_wings() -> void:
 	_check(hint.contains("Meta+F13–F18 buckram"), "the control hint names the buckram binding")
 	_check(hint.contains("Meta+Ctrl+F13–F18 ticking"), "the control hint names the ticking binding")
 	_check(hint.contains("Meta+Alt+F13–F18 denim"), "the control hint names the denim binding")
+	_check(hint.contains("Meta+Shift+F13–F18 canvas"), "the control hint names the canvas binding")
+	_check(hint.contains("Meta+Ctrl+Alt+F13–F18 drill"), "the control hint names the drill binding")
 	_check(mica_buttons == PackedStringArray(["1", "2", "3", "4", "5", "6"]), "the mica row is labeled 1 through 6")
 	_check(
 		mica_tips == PackedStringArray(["The Dark Step", "The Seen Gap", "The Passed Lamp", "The Long Road", "The Early Catch", "The Last Mica"]),
@@ -1554,6 +1648,16 @@ func _check_puzzle_select_shows_both_wings() -> void:
 	_check(
 		denim_tips == PackedStringArray(["The Lit Denim", "The Seen Twill", "The Passed Seam", "The Open Denim", "The Sure Tread", "The Last Denim"]),
 		"the denim buttons name the six denims"
+	)
+	_check(canvas_buttons == PackedStringArray(["1", "2", "3", "4", "5", "6"]), "the canvas row is labeled 1 through 6")
+	_check(
+		canvas_tips == PackedStringArray(["The Lit Canvas", "The Seen Sail", "The Passed Bolt", "The Open Canvas", "The Quenched Step", "The Last Canvas"]),
+		"the canvas buttons name the six canvases"
+	)
+	_check(drill_buttons == PackedStringArray(["1", "2", "3", "4", "5", "6"]), "the drill row is labeled 1 through 6")
+	_check(
+		drill_tips == PackedStringArray(["The Lit Drill", "The Hidden Drill", "The Passed Weave", "The Open Drill", "The Spent Step", "The Last Drill"]),
+		"the drill buttons name the six drills"
 	)
 	_check(porch_buttons == PackedStringArray(["1", "2", "3", "4", "5", "6"]), "the porch row is labeled 1 through 6")
 	_check(
@@ -2024,7 +2128,7 @@ func _check_puzzle_select_shows_both_wings() -> void:
 	_check(main._puzzle_index_for_key(ticking_first) == 158, "meta+ctrl+F13 without alt and without shift selects the first ticking room")
 	_check(main._puzzle_index_for_key(ticking_physical) == 159, "the physical meta+ctrl+F14 key selects the second ticking room")
 	_check(main._puzzle_index_for_key(ticking_alt) == 164, "meta+alt+F13 without ctrl and without shift selects the first denim room")
-	_check(main._puzzle_index_for_key(ticking_shift) == -1, "meta+shift+F13 without ctrl and without alt selects nothing")
+	_check(main._puzzle_index_for_key(ticking_shift) == 170, "meta+shift+F13 without ctrl and without alt selects the first canvas room")
 	_check(main._ticking_index(buckram_first) == -1, "the ticking handler ignores meta+F13")
 	_check(main._ticking_index(ticking_alt) == -1, "the ticking handler ignores meta+alt+F13")
 	_check(main._ticking_index(ticking_shift) == -1, "the ticking handler ignores meta+shift+F13")
@@ -2047,10 +2151,65 @@ func _check_puzzle_select_shows_both_wings() -> void:
 	denim_both.alt_pressed = true
 	_check(main._puzzle_index_for_key(denim_meta) == 167, "meta+alt+F16 without ctrl and without shift selects the fourth denim room")
 	_check(main._puzzle_index_for_key(denim_physical) == 165, "the physical meta+alt+F14 key selects the second denim room")
-	_check(main._puzzle_index_for_key(denim_both) == -1, "meta+ctrl+alt+F13 without shift selects nothing")
+	_check(main._puzzle_index_for_key(denim_both) == 176, "meta+ctrl+alt+F13 without shift selects the first drill room")
 	_check(main._denim_index(ticking_first) == -1, "the denim handler ignores meta+ctrl+F13")
 	_check(main._denim_index(buckram_first) == -1, "the denim handler ignores meta+F13")
 	_check(main._denim_index(ticking_shift) == -1, "the denim handler ignores meta+shift+F13")
+	var canvas_last := InputEventKey.new()
+	canvas_last.physical_keycode = KEY_F18
+	canvas_last.keycode = KEY_F18
+	canvas_last.meta_pressed = true
+	canvas_last.shift_pressed = true
+	var canvas_physical := InputEventKey.new()
+	canvas_physical.physical_keycode = KEY_F14
+	canvas_physical.keycode = KEY_NONE
+	canvas_physical.meta_pressed = true
+	canvas_physical.shift_pressed = true
+	var canvas_ctrl := InputEventKey.new()
+	canvas_ctrl.physical_keycode = KEY_F13
+	canvas_ctrl.keycode = KEY_F13
+	canvas_ctrl.meta_pressed = true
+	canvas_ctrl.ctrl_pressed = true
+	canvas_ctrl.shift_pressed = true
+	_check(main._puzzle_index_for_key(canvas_last) == 175, "meta+shift+F18 without ctrl and without alt selects the last canvas room")
+	_check(main._puzzle_index_for_key(canvas_physical) == 171, "the physical meta+shift+F14 key selects the second canvas room")
+	_check(main._puzzle_index_for_key(canvas_ctrl) == -1, "meta+ctrl+shift+F13 without alt selects nothing")
+	_check(main._canvas_index(ticking_shift) == 0, "the canvas handler takes meta+shift+F13")
+	_check(main._canvas_index(ticking_first) == -1, "the canvas handler ignores meta+ctrl+F13")
+	_check(main._canvas_index(buckram_first) == -1, "the canvas handler ignores meta+F13")
+	_check(main._canvas_index(ticking_alt) == -1, "the canvas handler ignores meta+alt+F13")
+	var drill_last := InputEventKey.new()
+	drill_last.physical_keycode = KEY_F18
+	drill_last.keycode = KEY_F18
+	drill_last.meta_pressed = true
+	drill_last.ctrl_pressed = true
+	drill_last.alt_pressed = true
+	var drill_physical := InputEventKey.new()
+	drill_physical.physical_keycode = KEY_F14
+	drill_physical.keycode = KEY_NONE
+	drill_physical.meta_pressed = true
+	drill_physical.ctrl_pressed = true
+	drill_physical.alt_pressed = true
+	var drill_shift := InputEventKey.new()
+	drill_shift.physical_keycode = KEY_F13
+	drill_shift.keycode = KEY_F13
+	drill_shift.meta_pressed = true
+	drill_shift.ctrl_pressed = true
+	drill_shift.alt_pressed = true
+	drill_shift.shift_pressed = true
+	_check(main._puzzle_index_for_key(drill_last) == 181, "meta+ctrl+alt+F18 without shift selects the last drill room")
+	_check(main._puzzle_index_for_key(drill_physical) == 177, "the physical meta+ctrl+alt+F14 key selects the second drill room")
+	_check(main._puzzle_index_for_key(drill_shift) == -1, "meta+ctrl+alt+shift+F13 selects nothing")
+	_check(main._drill_index(denim_both) == 0, "the drill handler takes meta+ctrl+alt+F13")
+	_check(main._drill_index(ticking_shift) == -1, "the drill handler ignores meta+shift+F13")
+	_check(main._drill_index(ticking_first) == -1, "the drill handler ignores meta+ctrl+F13")
+	_check(main._drill_index(ticking_alt) == -1, "the drill handler ignores meta+alt+F13")
+	_check(main._drill_index(buckram_first) == -1, "the drill handler ignores meta+F13")
+	_check(main._canvas_index(denim_both) == -1, "the canvas handler ignores meta+ctrl+alt+F13")
+	_check(main._denim_index(denim_both) == -1, "the denim handler ignores meta+ctrl+alt+F13")
+	_check(main._ticking_index(denim_both) == -1, "the ticking handler ignores meta+ctrl+alt+F13")
+	_check(main._ticking_index(ticking_shift) == -1, "the ticking handler ignores meta+shift+F13")
+	_check(main._buckram_index(ticking_shift) == -1, "the buckram handler ignores meta+shift+F13")
 	_check(main._ticking_index(ticking_alt) == -1, "the ticking handler ignores meta+alt+F13")
 	_check(main._holland_index(oriel_last) == -1, "the holland handler ignores alt+shift+F6")
 	_check(main._holland_index(oriel_ctrl) == -1, "the holland handler ignores ctrl+alt+shift+F1")
@@ -2420,12 +2579,12 @@ func _check_puzzle_select_shows_both_wings() -> void:
 	_check(main._cambric_index(lawn_last) == -1, "the cambric handler ignores meta+alt+shift+6")
 	_check(main._muslin_index(cambric_plain) == -1, "the muslin handler ignores meta+1")
 	_check(main._puzzle_index_for_key(north_key) == 14, "ctrl+1 stays on the north wing")
-	var row_y := 106.0 + 28.0 * 36.0
+	var row_y := 106.0 + 30.0 * 36.0
 	var bottom := row_y + 270.0
-	var avail := 1920.0 - 124.0 - bottom - 28.0
+	var avail := 1992.0 - 124.0 - bottom - 28.0
 	_check(avail / 8.0 >= 48.0, "an 8-tile board still draws at 48 pixels")
 	_check(int(ProjectSettings.get_setting("display/window/size/viewport_width")) == 1280, "the window stays 1280 wide")
-	_check(int(ProjectSettings.get_setting("display/window/size/viewport_height")) == 1920, "the window is 1920 tall")
+	_check(int(ProjectSettings.get_setting("display/window/size/viewport_height")) == 1992, "the window is 1992 tall")
 	main.free()
 
 
@@ -10156,3 +10315,452 @@ func _check_denim_early_step_succeeds() -> void:
 	_check(lit.has(cell) and stepped["result"] == Rules.Result.OK and Rules.apply(buckram, {"type": "move", "dx": 1, "dy": 0})["reason"] == "lit", "an unwatched lit denim can be entered, and the same step onto a buckram fails")
 	_check(lit.has(Vector2i(2, 1)) and not Rules.light_map(cambric).has(Vector2i(2, 1)), "a second lamp's light passes a denim and stops at a cambric")
 	_check(Rules.guard_walkable(state, cell.x, cell.y) and not Rules.guard_walkable(_with_tile(state, cell.x, cell.y, Rules.Tile.VOILE), cell.x, cell.y), "a guard can enter the denim and cannot enter a voile")
+
+
+func _check_canvas_snuffs_are_required() -> void:
+	for index in Puzzles.count():
+		var puzzle: Dictionary = Puzzles.get_puzzle(index)
+		if str(puzzle["wing"]) != "Canvas Wing":
+			continue
+		var uses := false
+		for action in puzzle["solution"]:
+			if str(action["type"]) == "toggle":
+				uses = true
+		if uses:
+			_check_toggles_required(index)
+
+
+func _check_canvas_rooms() -> void:
+	_check_canvas_identity()
+	_check_earlier_wings_have_no_canvases()
+	_check_lit_canvas()
+	_check_seen_sail()
+	_check_passed_bolt()
+	_check_open_canvas()
+	_check_quenched_step()
+	_check_last_canvas()
+	_check_canvas_step_puts_it_out()
+
+
+func _check_canvas_identity() -> void:
+	var seen := {}
+	var titles := {}
+	var layout_ok := true
+	var title_ok := true
+	for index in Puzzles.count():
+		var puzzle: Dictionary = Puzzles.get_puzzle(index)
+		if str(puzzle["wing"]) != "Canvas Wing":
+			continue
+		var rows := ""
+		for row in puzzle["rows"]:
+			rows += str(row)
+		if seen.has(rows):
+			layout_ok = false
+		seen[rows] = true
+		var title := str(puzzle["title"])
+		if titles.has(title):
+			title_ok = false
+		titles[title] = true
+	var once := true
+	var wing_titles: Array = titles.keys()
+	for index in Puzzles.count():
+		var puzzle: Dictionary = Puzzles.get_puzzle(index)
+		if str(puzzle["wing"]) == "Canvas Wing":
+			continue
+		if titles.has(str(puzzle["title"])):
+			once = false
+	_check(layout_ok, "each canvas room has its own layout")
+	_check(title_ok, "each canvas room has its own name")
+	_check(once and wing_titles.size() == 6, "the canvas titles are not reused")
+
+
+func _canvas_room(title: String) -> int:
+	for i in Puzzles.count():
+		var puzzle: Dictionary = Puzzles.get_puzzle(i)
+		if str(puzzle["wing"]) == "Canvas Wing" and str(puzzle["title"]) == title:
+			return i
+	return -1
+
+
+func _check_earlier_wings_have_no_canvases() -> void:
+	var clean := true
+	for index in Puzzles.count():
+		var puzzle: Dictionary = Puzzles.get_puzzle(index)
+		if str(puzzle["wing"]) == "Canvas Wing":
+			continue
+		for row in puzzle["rows"]:
+			if str(row).contains("U"):
+				clean = false
+	_check(clean, "earlier wings have no canvases")
+
+
+func _canvas_swap(state: Dictionary, kind: int) -> Dictionary:
+	var copy := Rules.clone(state)
+	for i in copy["tiles"].size():
+		if copy["tiles"][i] == Rules.Tile.CANVAS:
+			copy["tiles"][i] = kind
+	return copy
+
+
+func _canvas_on(state: Dictionary, puzzle: Dictionary, cell: Vector2i) -> Dictionary:
+	var cursor := Rules.clone(state)
+	for action in puzzle["solution"]:
+		if str(action["type"]) == "move":
+			var dest := Vector2i(int(cursor["player"]["x"]) + int(action["dx"]), int(cursor["player"]["y"]) + int(action["dy"]))
+			var out: Dictionary = Rules.apply(cursor, action)
+			cursor = out["state"]
+			if dest == cell:
+				return cursor
+		else:
+			var other: Dictionary = Rules.apply(cursor, action)
+			cursor = other["state"]
+	return cursor
+
+
+func _check_lit_canvas() -> void:
+	var index := _canvas_room("The Lit Canvas")
+	var puzzle: Dictionary = Puzzles.get_puzzle(index)
+	var state := Puzzles.initial_state(index)
+	var cell := _find_tile(state, Rules.Tile.CANVAS)
+	var spec := _solution_spec(puzzle)
+	var lit: Dictionary = Rules.light_map(state)
+	_check(cell == Vector2i(2, 1) and lit.has(cell), "the lit canvas is lit")
+	_check(_spec_result(state, spec) == "win" and _visited(state, puzzle, Vector2i(3, 3)), "the solution crosses the lit gap and leaves")
+	_check(_spec_result(_canvas_swap(state, Rules.Tile.CAMBRIC), spec) == "darkgap", "a cambric does not clear the lit canvas, because the light stops")
+	_check(_spec_result(_canvas_swap(state, Rules.Tile.VOILE), spec) == "guard", "a voile does not clear the lit canvas, because a guard cannot enter it")
+
+
+func _check_seen_sail() -> void:
+	var index := _canvas_room("The Seen Sail")
+	var puzzle: Dictionary = Puzzles.get_puzzle(index)
+	var state := Puzzles.initial_state(index)
+	var spec := _solution_spec(puzzle)
+	var lit: Dictionary = Rules.light_map(state)
+	var cloth := Vector2i(3, 7)
+	var beyond := Vector2i(3, 6)
+	var watched: Dictionary = Rules.watched_tiles(state, lit)
+	var ticking := _canvas_swap(state, Rules.Tile.TICKING)
+	_check(lit.has(cloth) and lit.has(beyond) and watched.has(beyond), "the guard sees a lit tile through the lit canvas")
+	_check(not Rules.watched_tiles(ticking, Rules.light_map(ticking)).has(beyond), "a ticking hides that lit tile")
+	_check(_spec_result(state, spec) == "win", "the solution leaves the seen sail")
+	_check(_spec_result(_canvas_swap(state, Rules.Tile.CAMBRIC), spec) == "darkgap", "a cambric does not clear the seen sail")
+	_check(_spec_result(_canvas_swap(state, Rules.Tile.VOILE), spec) == "guard", "a voile does not clear the seen sail")
+
+
+func _check_passed_bolt() -> void:
+	var index := _canvas_room("The Passed Bolt")
+	var puzzle: Dictionary = Puzzles.get_puzzle(index)
+	var state := Puzzles.initial_state(index)
+	var cell := _find_tile(state, Rules.Tile.CANVAS)
+	var spec := _solution_spec(puzzle)
+	var past := Vector2i(3, 4)
+	var lit: Dictionary = Rules.light_map(state)
+	_check(lit.has(cell) and lit.has(past), "a second lamp's light passes through the canvas")
+	_check(not Rules.light_map(_with_tile(state, cell.x, cell.y, Rules.Tile.CAMBRIC)).has(past), "a cambric stops that second lamp")
+	_check(_spec_result(state, spec) == "win", "the solution crosses the lit gap past the canvas")
+	_check(_spec_result(_canvas_swap(state, Rules.Tile.CAMBRIC), spec) == "darkgap", "a cambric does not clear the passed bolt, because its second lamp stops")
+	_check(_spec_result(_canvas_swap(state, Rules.Tile.VOILE), spec) == "guard", "a voile does not clear the passed bolt")
+
+
+func _check_open_canvas() -> void:
+	var index := _canvas_room("The Open Canvas")
+	var puzzle: Dictionary = Puzzles.get_puzzle(index)
+	var state := Puzzles.initial_state(index)
+	var cell := _find_tile(state, Rules.Tile.CANVAS)
+	var spec := _solution_spec(puzzle)
+	var voile := _canvas_swap(state, Rules.Tile.VOILE)
+	var through: Array = Rules.bfs_path(state, 1, 1, 3, 1)["path"]
+	var around: Array = Rules.bfs_path(voile, 1, 1, 3, 1)["path"]
+	_check(Rules.guard_walkable(state, cell.x, cell.y) and not Rules.guard_walkable(voile, cell.x, cell.y), "a guard can enter the canvas, and a guard cannot enter the voile")
+	_check(_path_has(through, cell) and not _path_has(around, cell), "the called guard walks the canvas and walks around a voile")
+	_check(_spec_result(state, spec) == "win", "the solution clears the open canvas")
+	_check(_spec_result(_canvas_swap(state, Rules.Tile.CAMBRIC), spec) == "darkgap", "a cambric does not clear the open canvas")
+	_check(_spec_result(voile, spec) == "guard", "a voile does not clear the open canvas, because the guard cannot enter it")
+
+
+func _check_quenched_step() -> void:
+	var index := _canvas_room("The Quenched Step")
+	var puzzle: Dictionary = Puzzles.get_puzzle(index)
+	var state := Puzzles.initial_state(index)
+	var spec := _solution_spec(puzzle)
+	var beside := Rules.clone(state)
+	beside["player"]["x"] = 2
+	beside["player"]["y"] = 2
+	var allowed: Dictionary = Rules.apply(beside, {"type": "move", "dx": 0, "dy": -1})
+	var denim := _canvas_swap(beside, Rules.Tile.DENIM)
+	var stayed: Dictionary = Rules.apply(denim, {"type": "move", "dx": 0, "dy": -1})
+	var refused: Dictionary = Rules.apply(_canvas_swap(beside, Rules.Tile.BUCKRAM), {"type": "move", "dx": 0, "dy": -1})
+	_check(Rules.light_map(beside).has(Vector2i(2, 1)) and allowed["result"] == Rules.Result.OK and not Rules.light_map(allowed["state"]).has(Vector2i(2, 1)), "the early step onto the lit canvas succeeds and puts it out")
+	_check(stayed["result"] == Rules.Result.OK and Rules.light_map(stayed["state"]).has(Vector2i(2, 1)) and refused["reason"] == "lit", "the same step leaves a denim lit, and a buckram refuses it")
+	_check(_spec_result(state, spec) == "win", "the solution clears the quenched step")
+	_check(_spec_result(_canvas_swap(state, Rules.Tile.CAMBRIC), spec) == "darkgap", "a cambric does not clear the quenched step")
+	_check(_spec_result(_canvas_swap(state, Rules.Tile.VOILE), spec) == "guard", "a voile does not clear the quenched step")
+
+
+func _check_last_canvas() -> void:
+	var index := _canvas_room("The Last Canvas")
+	var puzzle: Dictionary = Puzzles.get_puzzle(index)
+	var state := Puzzles.initial_state(index)
+	var lit_cloth := Vector2i(2, 3)
+	var dark_cloth := Vector2i(2, 5)
+	var spec := _solution_spec(puzzle)
+	var after := _canvas_on(state, puzzle, lit_cloth)
+	var denim_state := _canvas_swap(state, Rules.Tile.DENIM)
+	var denim_after := _canvas_on(denim_state, puzzle, lit_cloth)
+	var beside := Rules.clone(state)
+	beside["player"]["x"] = 2
+	beside["player"]["y"] = 4
+	var dark_step: Dictionary = Rules.apply(beside, {"type": "move", "dx": 0, "dy": 1})
+	_check(Rules.tile_at(state, lit_cloth.x, lit_cloth.y) == Rules.Tile.CANVAS and Rules.light_map(state).has(lit_cloth) and not Rules.light_map(state).has(dark_cloth), "the leaving canvas starts lit and the other canvas is dark")
+	_check(not Rules.light_map(after).has(lit_cloth) and Rules.light_map(after).has(Vector2i(3, 3)), "stepping on the canvas puts it out, and the light still passes")
+	_check(Rules.light_map(denim_after).has(lit_cloth), "the same step leaves a denim lit")
+	_check(_spec_result(state, spec) == "win" and _visited(state, puzzle, lit_cloth) and not _stepped_on_while_dark(state, puzzle, lit_cloth) and not _visited(state, puzzle, dark_cloth), "you leave by stepping on the canvas, and that step is what makes it dark")
+	_check(dark_step["result"] == Rules.Result.OK and not Rules.light_map(dark_step["state"]).has(dark_cloth), "a dark canvas can be entered, and it stays dark")
+	_check(_spec_result(_canvas_swap(state, Rules.Tile.CAMBRIC), spec) == "darkgap", "a cambric does not clear the last canvas")
+	_check(_spec_result(_canvas_swap(state, Rules.Tile.VOILE), spec) == "guard", "a voile does not clear the last canvas")
+
+
+func _check_canvas_step_puts_it_out() -> void:
+	var rows := PackedStringArray(["######", "#.SU.#", "######"])
+	var lamps: Array = [{"x": 4, "y": 1, "facing": "w", "radius": 2, "lit": true}]
+	var state := Rules.build(rows, lamps, [{"x": 1, "y": 1, "vision": 0, "rail": [Vector2i(1, 1)]}])
+	var cell := Vector2i(3, 1)
+	var lit: Dictionary = Rules.light_map(state)
+	var stepped: Dictionary = Rules.apply(state, {"type": "move", "dx": 1, "dy": 0})
+	var after: Dictionary = Rules.light_map(stepped["state"])
+	var denim := _with_tile(state, cell.x, cell.y, Rules.Tile.DENIM)
+	var stayed: Dictionary = Rules.apply(denim, {"type": "move", "dx": 1, "dy": 0})
+	var buckram := _with_tile(state, cell.x, cell.y, Rules.Tile.BUCKRAM)
+	var cambric := _with_tile(state, cell.x, cell.y, Rules.Tile.CAMBRIC)
+	_check(lit.has(cell) and lit.has(Vector2i(2, 1)) and stepped["result"] == Rules.Result.OK and not after.has(cell) and after.has(Vector2i(2, 1)), "the early step onto the lit canvas succeeds, puts it out, and the light still passes")
+	_check(Rules.light_map(stayed["state"]).has(cell) and Rules.apply(buckram, {"type": "move", "dx": 1, "dy": 0})["reason"] == "lit", "a denim stays lit under that step, and a buckram refuses it")
+	_check(not Rules.light_map(cambric).has(Vector2i(2, 1)), "a cambric stops the light a canvas lets through")
+	_check(Rules.guard_walkable(state, cell.x, cell.y) and not Rules.guard_walkable(_with_tile(state, cell.x, cell.y, Rules.Tile.VOILE), cell.x, cell.y), "a guard can enter the canvas and cannot enter a voile")
+
+
+func _check_drill_snuffs_are_required() -> void:
+	for index in Puzzles.count():
+		var puzzle: Dictionary = Puzzles.get_puzzle(index)
+		if str(puzzle["wing"]) != "Drill Wing":
+			continue
+		var uses := false
+		for action in puzzle["solution"]:
+			if str(action["type"]) == "toggle":
+				uses = true
+		if uses:
+			_check_toggles_required(index)
+
+
+func _check_drill_rooms() -> void:
+	_check_drill_identity()
+	_check_earlier_wings_have_no_drills()
+	_check_lit_drill()
+	_check_hidden_drill()
+	_check_passed_weave()
+	_check_open_drill()
+	_check_spent_step()
+	_check_last_drill()
+	_check_drill_step_puts_it_out()
+
+
+func _check_drill_identity() -> void:
+	var seen := {}
+	var titles := {}
+	var layout_ok := true
+	var title_ok := true
+	for index in Puzzles.count():
+		var puzzle: Dictionary = Puzzles.get_puzzle(index)
+		if str(puzzle["wing"]) != "Drill Wing":
+			continue
+		var rows := ""
+		for row in puzzle["rows"]:
+			rows += str(row)
+		if seen.has(rows):
+			layout_ok = false
+		seen[rows] = true
+		var title := str(puzzle["title"])
+		if titles.has(title):
+			title_ok = false
+		titles[title] = true
+	var once := true
+	var wing_titles: Array = titles.keys()
+	for index in Puzzles.count():
+		var puzzle: Dictionary = Puzzles.get_puzzle(index)
+		if str(puzzle["wing"]) == "Drill Wing":
+			continue
+		if titles.has(str(puzzle["title"])):
+			once = false
+	_check(layout_ok, "each drill room has its own layout")
+	_check(title_ok, "each drill room has its own name")
+	_check(once and wing_titles.size() == 6, "the drill titles are not reused")
+
+
+func _drill_room(title: String) -> int:
+	for i in Puzzles.count():
+		var puzzle: Dictionary = Puzzles.get_puzzle(i)
+		if str(puzzle["wing"]) == "Drill Wing" and str(puzzle["title"]) == title:
+			return i
+	return -1
+
+
+func _check_earlier_wings_have_no_drills() -> void:
+	var clean := true
+	for index in Puzzles.count():
+		var puzzle: Dictionary = Puzzles.get_puzzle(index)
+		if str(puzzle["wing"]) == "Drill Wing":
+			continue
+		for row in puzzle["rows"]:
+			if str(row).contains("W"):
+				clean = false
+	_check(clean, "earlier wings have no drills")
+
+
+func _drill_swap(state: Dictionary, kind: int) -> Dictionary:
+	var copy := Rules.clone(state)
+	for i in copy["tiles"].size():
+		if copy["tiles"][i] == Rules.Tile.DRILL:
+			copy["tiles"][i] = kind
+	return copy
+
+
+func _drill_on(state: Dictionary, puzzle: Dictionary, cell: Vector2i) -> Dictionary:
+	var cursor := Rules.clone(state)
+	for action in puzzle["solution"]:
+		if str(action["type"]) == "move":
+			var dest := Vector2i(int(cursor["player"]["x"]) + int(action["dx"]), int(cursor["player"]["y"]) + int(action["dy"]))
+			var out: Dictionary = Rules.apply(cursor, action)
+			cursor = out["state"]
+			if dest == cell:
+				return cursor
+		else:
+			var other: Dictionary = Rules.apply(cursor, action)
+			cursor = other["state"]
+	return cursor
+
+
+func _check_lit_drill() -> void:
+	var index := _drill_room("The Lit Drill")
+	var puzzle: Dictionary = Puzzles.get_puzzle(index)
+	var state := Puzzles.initial_state(index)
+	var cell := _find_tile(state, Rules.Tile.DRILL)
+	var spec := _solution_spec(puzzle)
+	var lit: Dictionary = Rules.light_map(state)
+	_check(cell == Vector2i(2, 1) and lit.has(cell), "the lit drill is lit")
+	_check(_spec_result(state, spec) == "win" and _visited(state, puzzle, Vector2i(3, 3)), "the solution crosses the lit gap and leaves")
+	_check(_spec_result(_drill_swap(state, Rules.Tile.CAMBRIC), spec) == "darkgap", "a cambric does not clear the lit drill, because the light stops")
+	_check(_spec_result(_drill_swap(state, Rules.Tile.VOILE), spec) == "guard", "a voile does not clear the lit drill, because a guard cannot enter it")
+
+
+func _check_hidden_drill() -> void:
+	var index := _drill_room("The Hidden Drill")
+	var puzzle: Dictionary = Puzzles.get_puzzle(index)
+	var state := Puzzles.initial_state(index)
+	var spec := _solution_spec(puzzle)
+	var lit: Dictionary = Rules.light_map(state)
+	var cloth := Vector2i(3, 7)
+	var beyond := Vector2i(3, 6)
+	var watched: Dictionary = Rules.watched_tiles(state, lit)
+	var canvas := _drill_swap(state, Rules.Tile.CANVAS)
+	_check(lit.has(cloth) and lit.has(beyond) and watched.has(cloth) and not watched.has(beyond), "the guard does not see a lit tile through the lit drill")
+	_check(Rules.watched_tiles(canvas, Rules.light_map(canvas)).has(beyond), "a canvas lets the guard see that lit tile")
+	_check(_spec_result(state, spec) == "win", "the solution leaves the hidden drill")
+	_check(_spec_result(_drill_swap(state, Rules.Tile.CAMBRIC), spec) == "darkgap", "a cambric does not clear the hidden drill")
+	_check(_spec_result(_drill_swap(state, Rules.Tile.VOILE), spec) == "guard", "a voile does not clear the hidden drill")
+
+
+func _check_passed_weave() -> void:
+	var index := _drill_room("The Passed Weave")
+	var puzzle: Dictionary = Puzzles.get_puzzle(index)
+	var state := Puzzles.initial_state(index)
+	var cell := _find_tile(state, Rules.Tile.DRILL)
+	var spec := _solution_spec(puzzle)
+	var past := Vector2i(3, 4)
+	var lit: Dictionary = Rules.light_map(state)
+	_check(lit.has(cell) and lit.has(past), "a second lamp's light passes through the drill")
+	_check(not Rules.light_map(_with_tile(state, cell.x, cell.y, Rules.Tile.CAMBRIC)).has(past), "a cambric stops that second lamp")
+	_check(_spec_result(state, spec) == "win", "the solution crosses the lit gap past the drill")
+	_check(_spec_result(_drill_swap(state, Rules.Tile.CAMBRIC), spec) == "darkgap", "a cambric does not clear the passed weave, because its second lamp stops")
+	_check(_spec_result(_drill_swap(state, Rules.Tile.VOILE), spec) == "guard", "a voile does not clear the passed weave")
+
+
+func _check_open_drill() -> void:
+	var index := _drill_room("The Open Drill")
+	var puzzle: Dictionary = Puzzles.get_puzzle(index)
+	var state := Puzzles.initial_state(index)
+	var cell := _find_tile(state, Rules.Tile.DRILL)
+	var spec := _solution_spec(puzzle)
+	var voile := _drill_swap(state, Rules.Tile.VOILE)
+	var through: Array = Rules.bfs_path(state, 1, 1, 3, 1)["path"]
+	var around: Array = Rules.bfs_path(voile, 1, 1, 3, 1)["path"]
+	_check(Rules.guard_walkable(state, cell.x, cell.y) and not Rules.guard_walkable(voile, cell.x, cell.y), "a guard can enter the drill, and a guard cannot enter the voile")
+	_check(_path_has(through, cell) and not _path_has(around, cell), "the called guard walks the drill and walks around a voile")
+	_check(_spec_result(state, spec) == "win", "the solution clears the open drill")
+	_check(_spec_result(_drill_swap(state, Rules.Tile.CAMBRIC), spec) == "darkgap", "a cambric does not clear the open drill")
+	_check(_spec_result(voile, spec) == "guard", "a voile does not clear the open drill, because the guard cannot enter it")
+
+
+func _check_spent_step() -> void:
+	var index := _drill_room("The Spent Step")
+	var puzzle: Dictionary = Puzzles.get_puzzle(index)
+	var state := Puzzles.initial_state(index)
+	var spec := _solution_spec(puzzle)
+	var beside := Rules.clone(state)
+	beside["player"]["x"] = 2
+	beside["player"]["y"] = 2
+	var allowed: Dictionary = Rules.apply(beside, {"type": "move", "dx": 0, "dy": -1})
+	var denim := _drill_swap(beside, Rules.Tile.DENIM)
+	var stayed: Dictionary = Rules.apply(denim, {"type": "move", "dx": 0, "dy": -1})
+	var ticking := _drill_swap(beside, Rules.Tile.TICKING)
+	var ticking_step: Dictionary = Rules.apply(ticking, {"type": "move", "dx": 0, "dy": -1})
+	var refused: Dictionary = Rules.apply(_drill_swap(beside, Rules.Tile.BUCKRAM), {"type": "move", "dx": 0, "dy": -1})
+	_check(Rules.light_map(beside).has(Vector2i(2, 1)) and allowed["result"] == Rules.Result.OK and not Rules.light_map(allowed["state"]).has(Vector2i(2, 1)), "the early step onto the lit drill succeeds and puts it out")
+	_check(stayed["result"] == Rules.Result.OK and Rules.light_map(stayed["state"]).has(Vector2i(2, 1)) and Rules.light_map(ticking_step["state"]).has(Vector2i(2, 1)) and refused["reason"] == "lit", "the same step leaves a denim and a ticking lit, and a buckram refuses it")
+	_check(_spec_result(state, spec) == "win", "the solution clears the spent step")
+	_check(_spec_result(_drill_swap(state, Rules.Tile.CAMBRIC), spec) == "darkgap", "a cambric does not clear the spent step")
+	_check(_spec_result(_drill_swap(state, Rules.Tile.VOILE), spec) == "guard", "a voile does not clear the spent step")
+
+
+func _check_last_drill() -> void:
+	var index := _drill_room("The Last Drill")
+	var puzzle: Dictionary = Puzzles.get_puzzle(index)
+	var state := Puzzles.initial_state(index)
+	var lit_cloth := Vector2i(2, 3)
+	var dark_cloth := Vector2i(2, 5)
+	var spec := _solution_spec(puzzle)
+	var after := _drill_on(state, puzzle, lit_cloth)
+	var denim_state := _drill_swap(state, Rules.Tile.DENIM)
+	var denim_after := _drill_on(denim_state, puzzle, lit_cloth)
+	var beside := Rules.clone(state)
+	beside["player"]["x"] = 2
+	beside["player"]["y"] = 4
+	var dark_step: Dictionary = Rules.apply(beside, {"type": "move", "dx": 0, "dy": 1})
+	_check(Rules.tile_at(state, lit_cloth.x, lit_cloth.y) == Rules.Tile.DRILL and Rules.light_map(state).has(lit_cloth) and not Rules.light_map(state).has(dark_cloth), "the leaving drill starts lit and the other drill is dark")
+	_check(not Rules.light_map(after).has(lit_cloth) and Rules.light_map(after).has(Vector2i(3, 3)), "stepping on the drill puts it out, and the light still passes")
+	_check(Rules.light_map(denim_after).has(lit_cloth), "the same step leaves a denim lit")
+	_check(_spec_result(state, spec) == "win" and _visited(state, puzzle, lit_cloth) and not _stepped_on_while_dark(state, puzzle, lit_cloth) and not _visited(state, puzzle, dark_cloth), "you leave by stepping on the drill, and that step is what makes it dark")
+	_check(dark_step["result"] == Rules.Result.OK and not Rules.light_map(dark_step["state"]).has(dark_cloth), "a dark drill can be entered, and it stays dark")
+	_check(_spec_result(_drill_swap(state, Rules.Tile.CAMBRIC), spec) == "darkgap", "a cambric does not clear the last drill")
+	_check(_spec_result(_drill_swap(state, Rules.Tile.VOILE), spec) == "guard", "a voile does not clear the last drill")
+
+
+func _check_drill_step_puts_it_out() -> void:
+	var rows := PackedStringArray(["######", "#.SW.#", "######"])
+	var lamps: Array = [{"x": 4, "y": 1, "facing": "w", "radius": 2, "lit": true}]
+	var state := Rules.build(rows, lamps, [{"x": 1, "y": 1, "vision": 0, "rail": [Vector2i(1, 1)]}])
+	var cell := Vector2i(3, 1)
+	var lit: Dictionary = Rules.light_map(state)
+	var stepped: Dictionary = Rules.apply(state, {"type": "move", "dx": 1, "dy": 0})
+	var after: Dictionary = Rules.light_map(stepped["state"])
+	var denim := _with_tile(state, cell.x, cell.y, Rules.Tile.DENIM)
+	var stayed: Dictionary = Rules.apply(denim, {"type": "move", "dx": 1, "dy": 0})
+	var buckram := _with_tile(state, cell.x, cell.y, Rules.Tile.BUCKRAM)
+	var cambric := _with_tile(state, cell.x, cell.y, Rules.Tile.CAMBRIC)
+	var canvas := _with_tile(state, cell.x, cell.y, Rules.Tile.CANVAS)
+	var guard := [{"x": 1, "y": 1, "vision": 3, "rail": [Vector2i(1, 1)]}]
+	var watched_state := Rules.build(rows, lamps, guard)
+	var watched_canvas := _with_tile(watched_state, cell.x, cell.y, Rules.Tile.CANVAS)
+	_check(lit.has(cell) and lit.has(Vector2i(2, 1)) and stepped["result"] == Rules.Result.OK and not after.has(cell) and after.has(Vector2i(2, 1)), "the early step onto the lit drill succeeds, puts it out, and the light still passes")
+	_check(Rules.light_map(stayed["state"]).has(cell) and Rules.apply(buckram, {"type": "move", "dx": 1, "dy": 0})["reason"] == "lit", "a denim stays lit under that step, and a buckram refuses it")
+	_check(not Rules.light_map(cambric).has(Vector2i(2, 1)), "a cambric stops the light a drill lets through")
+	_check(not Rules.watched_tiles(watched_state, Rules.light_map(watched_state)).has(Vector2i(4, 1)) and Rules.watched_tiles(watched_canvas, Rules.light_map(watched_canvas)).has(Vector2i(4, 1)), "sight stops at the lit drill and passes a canvas")
+	_check(Rules.guard_walkable(state, cell.x, cell.y) and not Rules.guard_walkable(_with_tile(state, cell.x, cell.y, Rules.Tile.VOILE), cell.x, cell.y), "a guard can enter the drill and cannot enter a voile")

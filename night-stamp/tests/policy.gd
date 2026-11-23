@@ -4718,6 +4718,192 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 		var jogb_after_empty = jogb_after_row <= 2 and state.form[jogb_after_row][jogb_after_col] == null
 		if jogb_before_empty and jogb_after_empty:
 			guess += _stamp_number(state, card_id, row, col)
+	if rule == "drop_if_awl_count":
+		var awl_filled = 0
+		for awl_row in 3:
+			for awl_col in 3:
+				if state.form[awl_row][awl_col] != null:
+					awl_filled += 1
+		var awl_next = awl_filled + 1
+		if awl_next == 13 or awl_next == 16:
+			guess -= 4
+		elif awl_filled == 13 or awl_filled == 16:
+			guess += 5
+	if rule == "double_groove_fill":
+		var groove_before_row = row
+		var groove_before_col = col - 13
+		while groove_before_col < 0:
+			groove_before_row -= 1
+			groove_before_col += 3
+		var groove_after_row = row
+		var groove_after_col = col + 1
+		while groove_after_col > 2:
+			groove_after_row += 1
+			groove_after_col -= 3
+		var groove_before_filled = groove_before_row >= 0 and state.form[groove_before_row][groove_before_col] != null
+		var groove_after_filled = groove_after_row <= 2 and state.form[groove_after_row][groove_after_col] != null
+		if groove_before_filled and groove_after_filled:
+			guess += _stamp_number(state, card_id, row, col)
+	if rule == "yield_sprig_pay":
+		var sprig_sides = 0
+		var sprig_corners = 0
+		for sprig_side in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var sprig_side_row = row + sprig_side.x
+			var sprig_side_col = col + sprig_side.y
+			if sprig_side_row < 0 or sprig_side_col < 0 or sprig_side_row > 2 or sprig_side_col > 2:
+				continue
+			if state.form[sprig_side_row][sprig_side_col] != null:
+				sprig_sides += 1
+		for sprig_corner in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var sprig_corner_row = row + sprig_corner.x
+			var sprig_corner_col = col + sprig_corner.y
+			if sprig_corner_row < 0 or sprig_corner_col < 0 or sprig_corner_row > 2 or sprig_corner_col > 2:
+				continue
+			if state.form[sprig_corner_row][sprig_corner_col] != null:
+				sprig_corners += 1
+		if sprig_sides == 11 and sprig_corners == 4:
+			guess += 4
+		else:
+			guess -= 1
+	if rule == "double_groove_blank":
+		var grooveb_before_row = row
+		var grooveb_before_col = col - 13
+		while grooveb_before_col < 0:
+			grooveb_before_row -= 1
+			grooveb_before_col += 3
+		var grooveb_after_row = row
+		var grooveb_after_col = col + 1
+		while grooveb_after_col > 2:
+			grooveb_after_row += 1
+			grooveb_after_col -= 3
+		var grooveb_before_empty = grooveb_before_row >= 0 and state.form[grooveb_before_row][grooveb_before_col] == null
+		var grooveb_after_empty = grooveb_after_row <= 2 and state.form[grooveb_after_row][grooveb_after_col] == null
+		if grooveb_before_empty and grooveb_after_empty:
+			guess += _stamp_number(state, card_id, row, col)
+	if rule == "drop_if_gimlet_count":
+		var gimlet_filled = 0
+		for gimlet_row in 3:
+			for gimlet_col in 3:
+				if state.form[gimlet_row][gimlet_col] != null:
+					gimlet_filled += 1
+		var gimlet_next = gimlet_filled + 1
+		if gimlet_next == 12 or gimlet_next == 15:
+			guess -= 4
+		elif gimlet_filled == 12 or gimlet_filled == 15:
+			guess += 5
+	if rule == "double_flute_fill":
+		var flute_before_row = row
+		var flute_before_col = col - 12
+		while flute_before_col < 0:
+			flute_before_row -= 1
+			flute_before_col += 3
+		var flute_after_row = row
+		var flute_after_col = col + 1
+		while flute_after_col > 2:
+			flute_after_row += 1
+			flute_after_col -= 3
+		var flute_before_filled = flute_before_row >= 0 and state.form[flute_before_row][flute_before_col] != null
+		var flute_after_filled = flute_after_row <= 2 and state.form[flute_after_row][flute_after_col] != null
+		if flute_before_filled and flute_after_filled:
+			guess += _stamp_number(state, card_id, row, col)
+	if rule == "yield_tack_pay":
+		var tack_sides = 0
+		var tack_corners = 0
+		for tack_side in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var tack_side_row = row + tack_side.x
+			var tack_side_col = col + tack_side.y
+			if tack_side_row < 0 or tack_side_col < 0 or tack_side_row > 2 or tack_side_col > 2:
+				continue
+			if state.form[tack_side_row][tack_side_col] != null:
+				tack_sides += 1
+		for tack_corner in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var tack_corner_row = row + tack_corner.x
+			var tack_corner_col = col + tack_corner.y
+			if tack_corner_row < 0 or tack_corner_col < 0 or tack_corner_row > 2 or tack_corner_col > 2:
+				continue
+			if state.form[tack_corner_row][tack_corner_col] != null:
+				tack_corners += 1
+		if tack_sides == 10 and tack_corners == 4:
+			guess += 4
+		else:
+			guess -= 1
+	if rule == "double_flute_blank":
+		var fluteb_before_row = row
+		var fluteb_before_col = col - 12
+		while fluteb_before_col < 0:
+			fluteb_before_row -= 1
+			fluteb_before_col += 3
+		var fluteb_after_row = row
+		var fluteb_after_col = col + 1
+		while fluteb_after_col > 2:
+			fluteb_after_row += 1
+			fluteb_after_col -= 3
+		var fluteb_before_empty = fluteb_before_row >= 0 and state.form[fluteb_before_row][fluteb_before_col] == null
+		var fluteb_after_empty = fluteb_after_row <= 2 and state.form[fluteb_after_row][fluteb_after_col] == null
+		if fluteb_before_empty and fluteb_after_empty:
+			guess += _stamp_number(state, card_id, row, col)
+	if rule == "drop_if_auger_count":
+		var auger_filled = 0
+		for auger_row in 3:
+			for auger_col in 3:
+				if state.form[auger_row][auger_col] != null:
+					auger_filled += 1
+		var auger_next = auger_filled + 1
+		if auger_next == 11 or auger_next == 14:
+			guess -= 4
+		elif auger_filled == 11 or auger_filled == 14:
+			guess += 5
+	if rule == "double_wave_fill":
+		var wave_before_row = row
+		var wave_before_col = col - 11
+		while wave_before_col < 0:
+			wave_before_row -= 1
+			wave_before_col += 3
+		var wave_after_row = row
+		var wave_after_col = col + 1
+		while wave_after_col > 2:
+			wave_after_row += 1
+			wave_after_col -= 3
+		var wave_before_filled = wave_before_row >= 0 and state.form[wave_before_row][wave_before_col] != null
+		var wave_after_filled = wave_after_row <= 2 and state.form[wave_after_row][wave_after_col] != null
+		if wave_before_filled and wave_after_filled:
+			guess += _stamp_number(state, card_id, row, col)
+	if rule == "yield_nail_pay":
+		var nail_sides = 0
+		var nail_corners = 0
+		for nail_side in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var nail_side_row = row + nail_side.x
+			var nail_side_col = col + nail_side.y
+			if nail_side_row < 0 or nail_side_col < 0 or nail_side_row > 2 or nail_side_col > 2:
+				continue
+			if state.form[nail_side_row][nail_side_col] != null:
+				nail_sides += 1
+		for nail_corner in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var nail_corner_row = row + nail_corner.x
+			var nail_corner_col = col + nail_corner.y
+			if nail_corner_row < 0 or nail_corner_col < 0 or nail_corner_row > 2 or nail_corner_col > 2:
+				continue
+			if state.form[nail_corner_row][nail_corner_col] != null:
+				nail_corners += 1
+		if nail_sides == 9 and nail_corners == 4:
+			guess += 4
+		else:
+			guess -= 1
+	if rule == "double_wave_blank":
+		var waveb_before_row = row
+		var waveb_before_col = col - 11
+		while waveb_before_col < 0:
+			waveb_before_row -= 1
+			waveb_before_col += 3
+		var waveb_after_row = row
+		var waveb_after_col = col + 1
+		while waveb_after_col > 2:
+			waveb_after_row += 1
+			waveb_after_col -= 3
+		var waveb_before_empty = waveb_before_row >= 0 and state.form[waveb_before_row][waveb_before_col] == null
+		var waveb_after_empty = waveb_after_row <= 2 and state.form[waveb_after_row][waveb_after_col] == null
+		if waveb_before_empty and waveb_after_empty:
+			guess += _stamp_number(state, card_id, row, col)
 	if rule == "drop_if_countersink_count":
 		var countersink_filled = 0
 		for countersink_row in 3:

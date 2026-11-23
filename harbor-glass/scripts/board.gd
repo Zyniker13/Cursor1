@@ -305,6 +305,12 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_archivolt(at, rot)
 		"abacus":
 			_draw_abacus(at, rot)
+		"rebate":
+			_draw_rebate(at, rot)
+		"echinus":
+			_draw_echinus(at, rot)
+		"annulet":
+			_draw_annulet(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -1580,6 +1586,194 @@ func _abacus_peg(center: Vector2, dir: String, mark: Color) -> void:
 		base + along * half,
 		tip + along * half,
 		tip - along * half,
+	]), mark)
+
+func _draw_rebate(at: Vector2i, rot: int) -> void:
+	# A rectangular recess open on the opposite edge. A north rebate leaves
+	# the south side open. It is not the abacus slab and not the archivolt arch.
+	var center := _center(at)
+	var facing := Tracer.rebate_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var gap := "S"
+	match facing:
+		"N":
+			gap = "S"
+		"S":
+			gap = "N"
+		"E":
+			gap = "W"
+		_:
+			gap = "E"
+	_rebate_channel(center, gap, mark)
+
+func _rebate_channel(center: Vector2, gap: String, mark: Color) -> void:
+	var along := Vector2.RIGHT
+	var outward := Vector2.DOWN
+	match gap:
+		"S":
+			along = Vector2.RIGHT
+			outward = Vector2.DOWN
+		"N":
+			along = Vector2.RIGHT
+			outward = Vector2.UP
+		"W":
+			along = Vector2.DOWN
+			outward = Vector2.LEFT
+		_:
+			along = Vector2.DOWN
+			outward = Vector2.RIGHT
+	var half := cell * 0.34
+	var thick := cell * 0.08
+	var back := center - outward * cell * 0.28
+	var side := cell * 0.28
+	draw_colored_polygon(PackedVector2Array([
+		back - along * half,
+		back + along * half,
+		back + along * half - outward * thick,
+		back - along * half - outward * thick,
+	]), mark)
+	var cheek := center + outward * cell * 0.16
+	draw_colored_polygon(PackedVector2Array([
+		back - along * half,
+		back - along * half + along * thick,
+		cheek - along * side + along * thick,
+		cheek - along * side,
+	]), mark)
+	draw_colored_polygon(PackedVector2Array([
+		back + along * half,
+		back + along * half - along * thick,
+		cheek + along * side - along * thick,
+		cheek + along * side,
+	]), mark)
+
+func _draw_echinus(at: Vector2i, rot: int) -> void:
+	# A convex quarter-round under the capital, bulging toward the facing,
+	# with a tick on the clockwise edge. It is not the rebate's open channel.
+	var center := _center(at)
+	var facing := Tracer.echinus_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	_echinus_bulge(center, facing, mark)
+	_echinus_tick(center, facing, mark)
+
+func _echinus_bulge(center: Vector2, dir: String, mark: Color) -> void:
+	var along := Vector2.RIGHT
+	var outward := Vector2.UP
+	match dir:
+		"N":
+			along = Vector2.RIGHT
+			outward = Vector2.UP
+		"S":
+			along = Vector2.RIGHT
+			outward = Vector2.DOWN
+		"E":
+			along = Vector2.DOWN
+			outward = Vector2.RIGHT
+		_:
+			along = Vector2.DOWN
+			outward = Vector2.LEFT
+	var root := center - outward * cell * 0.06
+	var crown := center + outward * cell * 0.36
+	var hip := cell * 0.30
+	draw_colored_polygon(PackedVector2Array([
+		root - along * hip,
+		root + along * hip,
+		root + along * hip * 0.55 + outward * cell * 0.22,
+		crown,
+		root - along * hip * 0.55 + outward * cell * 0.22,
+	]), mark)
+
+func _echinus_tick(center: Vector2, dir: String, mark: Color) -> void:
+	var clock := Vector2.RIGHT
+	match dir:
+		"N":
+			clock = Vector2.RIGHT
+		"E":
+			clock = Vector2.DOWN
+		"S":
+			clock = Vector2.LEFT
+		_:
+			clock = Vector2.UP
+	var inner := center + clock * cell * 0.18
+	var outer := center + clock * cell * 0.40
+	var half := cell * 0.06
+	var across := Vector2(-clock.y, clock.x)
+	draw_colored_polygon(PackedVector2Array([
+		inner - across * half,
+		inner + across * half,
+		outer + across * half,
+		outer - across * half,
+	]), mark)
+
+func _draw_annulet(at: Vector2i, rot: int) -> void:
+	# A small closed ring, with a tick on the counterclockwise edge. It is
+	# not the echinus bulge and not the rebate's open channel.
+	var center := _center(at)
+	var facing := Tracer.annulet_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	_annulet_ring(center, mark)
+	var counter := "W"
+	match facing:
+		"N":
+			counter = "W"
+		"E":
+			counter = "N"
+		"S":
+			counter = "E"
+		_:
+			counter = "S"
+	_annulet_tick(center, counter, mark)
+
+func _annulet_ring(center: Vector2, mark: Color) -> void:
+	var outer := cell * 0.34
+	var inner := cell * 0.18
+	draw_colored_polygon(PackedVector2Array([
+		center + Vector2(-outer, -outer),
+		center + Vector2(outer, -outer),
+		center + Vector2(outer, -inner),
+		center + Vector2(-outer, -inner),
+	]), mark)
+	draw_colored_polygon(PackedVector2Array([
+		center + Vector2(-outer, inner),
+		center + Vector2(outer, inner),
+		center + Vector2(outer, outer),
+		center + Vector2(-outer, outer),
+	]), mark)
+	draw_colored_polygon(PackedVector2Array([
+		center + Vector2(-outer, -inner),
+		center + Vector2(-inner, -inner),
+		center + Vector2(-inner, inner),
+		center + Vector2(-outer, inner),
+	]), mark)
+	draw_colored_polygon(PackedVector2Array([
+		center + Vector2(inner, -inner),
+		center + Vector2(outer, -inner),
+		center + Vector2(outer, inner),
+		center + Vector2(inner, inner),
+	]), mark)
+
+func _annulet_tick(center: Vector2, dir: String, mark: Color) -> void:
+	var outward := Vector2.LEFT
+	match dir:
+		"N":
+			outward = Vector2.UP
+		"E":
+			outward = Vector2.RIGHT
+		"S":
+			outward = Vector2.DOWN
+		_:
+			outward = Vector2.LEFT
+	var across := Vector2(-outward.y, outward.x)
+	var inner := center + outward * cell * 0.30
+	var outer := center + outward * cell * 0.44
+	var half := cell * 0.06
+	draw_colored_polygon(PackedVector2Array([
+		inner - across * half,
+		inner + across * half,
+		outer + across * half,
+		outer - across * half,
 	]), mark)
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
