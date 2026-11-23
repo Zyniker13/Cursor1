@@ -140,6 +140,25 @@ extends RefCounted
 ## while the path stays 19 steps. (12,11) stays the one-cell detour and stays off the ring.
 ## (13,10) through (21,10) and (21,4) through (21,10) stay closed.
 ## The recorded walk drops (12,10) and is open between (21,3) and (11,10).
+## The arcosolium keeps that walk except at (11,10), which is closed.
+## (11,10) is a dead end off (11,11). Closing it keeps the 19-step path
+## and lowers the survey from the crack-only 138 to 136. No new cell is opened.
+## The new crack at (51,15) stays a leaf. Adding only that crack surveys at 138 oil.
+## No one-, two-, or three-cell opening returns a lower survey
+## while the path stays 19 steps. (12,11) stays the one-cell detour and stays off the ring.
+## (11,10) through (21,10) and (21,4) through (21,10) stay closed.
+## The recorded walk drops (11,10) and is open between (21,3) and (11,11).
+## The cubiculum keeps that walk. (11,10) and (10,10) are already closed.
+## No open cell west of (11,11) is a one-neighbor dead end except the start.
+## (8,12) is the open pocket west of (11,11). Closing it keeps the 19-step path
+## and lowers the survey from the crack-only 138 to 137. No new cell is opened.
+## The new crack at (52,15) stays a leaf. Adding only that crack surveys at 138 oil.
+## No one-, two-, or three-cell opening returns a lower survey
+## while the path stays 19 steps. (12,11) stays the one-cell detour and stays off the ring.
+## (11,10) through (21,10) and (21,4) through (21,10) stay closed. (8,12) is closed.
+## The recorded walk drops (11,10). The paid ring keeps that walk and also
+## includes (22,3), already open east of (21,3), so it is not the arcosolium ring.
+## The ring is open between (22,3) and (11,11).
 ## A census is accepted only when every corridor and hazard is marked truly
 ## and no tile is marked as something it is not.
 
@@ -153,7 +172,7 @@ const HAZARD_VALUE := 8
 const LOOP_VALUE := 15
 
 const TOWN_LINE := "Arrows turn and step, Q and E strafe, M marks the tile you face, and Space waits out the warden's swing."
-const RATE_CARD := "A true corridor pays 3. A true hazard pays 8. The cellar's east square, the cistern ring, the cloister walk, the crypt ring, the ossuary ring, the reliquary ring, the undercroft ring, the well ring, the scriptorium ring, the binding ring, the chart room ring, the bell loft ring, the clock room ring, the font ring, the apse ring, the choir ring, the rood ring, the crossing ring, the transept ring, the ambulatory ring, the chevet ring, the retrochoir ring, the lady chapel ring, the feretory ring, the chantry ring, the sacristy ring, the pyx ring, the aumbry ring, the piscina ring, the sedilia ring, the credence ring, the reredos ring, the predella ring, the dossal ring, the retable ring, the tester ring, the riddel ring, the frontal ring, the pall ring, the herse ring, the catafalque ring, the bier ring, the cerecloth ring, the hearse ring, the shroud ring, the pyre ring, the cenotaph ring, the winding ring, the charnel ring, the sepulchre ring, the vault ring, the cairn ring, the columbarium ring, and the loculus ring each pay 15 only when every tile of that ring is marked corridor. A false mark pays nothing."
+const RATE_CARD := "A true corridor pays 3. A true hazard pays 8. The cellar's east square, the cistern ring, the cloister walk, the crypt ring, the ossuary ring, the reliquary ring, the undercroft ring, the well ring, the scriptorium ring, the binding ring, the chart room ring, the bell loft ring, the clock room ring, the font ring, the apse ring, the choir ring, the rood ring, the crossing ring, the transept ring, the ambulatory ring, the chevet ring, the retrochoir ring, the lady chapel ring, the feretory ring, the chantry ring, the sacristy ring, the pyx ring, the aumbry ring, the piscina ring, the sedilia ring, the credence ring, the reredos ring, the predella ring, the dossal ring, the retable ring, the tester ring, the riddel ring, the frontal ring, the pall ring, the herse ring, the catafalque ring, the bier ring, the cerecloth ring, the hearse ring, the shroud ring, the pyre ring, the cenotaph ring, the winding ring, the charnel ring, the sepulchre ring, the vault ring, the cairn ring, the columbarium ring, the loculus ring, the arcosolium ring, and the cubiculum ring each pay 15 only when every tile of that ring is marked corridor. A false mark pays nothing."
 
 const CELLAR_RECORD := "Record every corridor, both hazard cracks, and the east square."
 const CISTERN_RECORD := "Record every corridor, the three seep cracks, and the cistern ring around the pit."
@@ -209,6 +228,8 @@ const VAULT_RECORD := "Record every corridor, the fifty-one vault cracks, and th
 const CAIRN_RECORD := "Record every corridor, the fifty-two cairn cracks, and the ring around the cairn."
 const COLUMBARIUM_RECORD := "Record every corridor, the fifty-three columbarium cracks, and the ring around the columbarium."
 const LOCULUS_RECORD := "Record every corridor, the fifty-four loculus cracks, and the ring around the loculus."
+const ARCOSOLIUM_RECORD := "Record every corridor, the fifty-five arcosolium cracks, and the ring around the arcosolium."
+const CUBICULUM_RECORD := "Record every corridor, the fifty-six cubiculum cracks, and the ring around the cubiculum."
 
 const CELLAR_ROWS: PackedStringArray = [
 	"#############",
@@ -1981,6 +2002,92 @@ const LOCULUS_ROWS: PackedStringArray = [
 ]
 
 
+
+# The arcosolium is the 14x6 block of backticks at columns 7-20, rows 4-9.
+# '|' stays the loculus. '\' stays the columbarium. '/' stays the cairn. '+' stays the cloister garth.
+# ':' selects the winding. ';' selects the cenotaph. '=' selects the tomb.
+# The backtick selects nothing elsewhere and inks as one wall.
+# The sheet grows the loculus one cell east. That new column stays wall.
+# The warden, the lift, the start, and the 19-step path stay.
+# (51,15) is the wall immediately east of (50,15). It is not on the tour:
+# adding only that crack surveys at 138 oil. (21,10) through (21,4) stay closed.
+# (20,10) through (12,10) stay closed. (11,10) is closed on this floor.
+# (21,11) and (22,10) stay walls.
+# (11,10) is a dead end south of the loculus feature and north of (11,11).
+# Closing it does not lengthen the 19-step path and opens no new cell.
+# (12,11) stays the one-cell detour and stays off the ring. (13,11) through (18,11) stay open.
+# Closing (11,10) surveys at 136 oil. The crack alone, with (11,10) still open, surveys at 138.
+# The survey is 136 oil: the new crack is still a leaf, and no one-, two-, or three-cell
+# opening reaches a lower survey while the path stays 19 steps.
+# The recorded walk drops (11,10) and is open between (21,3) and (11,11).
+# (6,11) stays open. (10,10) stays closed and (11,11) stays open.
+const ARCOSOLIUM_ROWS: PackedStringArray = [
+	"##########################################################",
+	"#S########################################################",
+	"#.########################################################",
+	"#H####...................H################################",
+	"#.####.``````````````####H################################",
+	"#H####.``````````````####H################################",
+	"#.####.``````````````####H################################",
+	"#H####.``````````````####H################################",
+	"#.####.``````````````####H################################",
+	"#H####.``````````````####H################################",
+	"#.####.##################H################################",
+	"#H........L.........#####H################################",
+	"#######H.E#########H.....H################################",
+	"#########################H################################",
+	"#########################H################################",
+	"#########################HHHHHHHHHHHHHHHHHHHHHHHHHHH######",
+	"#########################HHHHHHHHH########################",
+	"##########################################################",
+	"##########################################################",
+	"##########################################################",
+	"##########################################################",
+]
+
+
+# The cubiculum is the 14x6 block of 'a' at columns 7-20, rows 4-9.
+# '`' stays the arcosolium. '|' stays the loculus. '\\' stays the columbarium. '/' stays the cairn. '+' stays the cloister garth.
+# '~' selects the riddel. '!' selects the frontal. '?' selects the sedilia.
+# 'a' is the next mark after the backtick. It selects nothing elsewhere and inks as one wall.
+# The sheet grows the arcosolium one cell east. That new column stays wall.
+# The warden, the lift, the start, and the 19-step path stay.
+# (52,15) is the wall immediately east of (51,15). It is not on the tour:
+# adding only that crack surveys at 138 oil. (11,10) and (10,10) are already closed.
+# No open cell west of (11,11) has only one walkable neighbor except the start.
+# (8,12) is the open pocket west of (11,11), beside the warden. Closing it keeps
+# the 19-step path and lowers the survey from 138 to 137. No new cell is opened.
+# (12,11) stays the one-cell detour and stays off the ring. (13,11) through (18,11) stay open.
+# No one-, two-, or three-cell opening reaches a lower survey while the path stays 19 steps.
+# The recorded walk drops (11,10). The paid ring also includes (22,3), already open east of (21,3).
+# It is open between (22,3) and (11,11). It no longer enters (8,12).
+# (6,11) stays open. (10,10) stays closed and (11,11) stays open. (10,12) stays closed.
+const CUBICULUM_ROWS: PackedStringArray = [
+	"###########################################################",
+	"#S#########################################################",
+	"#.#########################################################",
+	"#H####...................H#################################",
+	"#.####.aaaaaaaaaaaaaa####H#################################",
+	"#H####.aaaaaaaaaaaaaa####H#################################",
+	"#.####.aaaaaaaaaaaaaa####H#################################",
+	"#H####.aaaaaaaaaaaaaa####H#################################",
+	"#.####.aaaaaaaaaaaaaa####H#################################",
+	"#H####.aaaaaaaaaaaaaa####H#################################",
+	"#.####.##################H#################################",
+	"#H........L.........#####H#################################",
+	"#######H#E#########H.....H#################################",
+	"#########################H#################################",
+	"#########################H#################################",
+	"#########################HHHHHHHHHHHHHHHHHHHHHHHHHHHH######",
+	"#########################HHHHHHHHH#########################",
+	"###########################################################",
+	"###########################################################",
+	"###########################################################",
+	"###########################################################",
+]
+
+
+
 enum Tile { WALL, FLOOR, HAZARD, LIFT }
 enum Mark { NONE, CORRIDOR, WALL, HAZARD }
 enum EndReason { NONE, EXTRACTED, LAMP_OUT, ABANDONED }
@@ -2021,7 +2128,7 @@ static var _floor_list: Array = []
 
 static func floors() -> Array:
 	if _floor_list.is_empty():
-		_floor_list = [_make_cellar(), _make_cistern(), _make_cloister(), _make_crypt(), _make_ossuary(), _make_reliquary(), _make_undercroft(), _make_wellhouse(), _make_scriptorium(), _make_binding(), _make_chartroom(), _make_bellloft(), _make_clockroom(), _make_font(), _make_apse(), _make_choir(), _make_rood(), _make_crossing(), _make_transept(), _make_ambulatory(), _make_chevet(), _make_retrochoir(), _make_ladychapel(), _make_feretory(), _make_chantry(), _make_sacristy(), _make_pyx(), _make_aumbry(), _make_piscina(), _make_sedilia(), _make_credence(), _make_reredos(), _make_predella(), _make_dossal(), _make_retable(), _make_tester(), _make_riddel(), _make_frontal(), _make_pall(), _make_herse(), _make_catafalque(), _make_bier(), _make_cerecloth(), _make_hearse(), _make_shroud(), _make_pyre(), _make_cenotaph(), _make_winding(), _make_charnel(), _make_sepulchre(), _make_vault(), _make_cairn(), _make_columbarium(), _make_loculus()]
+		_floor_list = [_make_cellar(), _make_cistern(), _make_cloister(), _make_crypt(), _make_ossuary(), _make_reliquary(), _make_undercroft(), _make_wellhouse(), _make_scriptorium(), _make_binding(), _make_chartroom(), _make_bellloft(), _make_clockroom(), _make_font(), _make_apse(), _make_choir(), _make_rood(), _make_crossing(), _make_transept(), _make_ambulatory(), _make_chevet(), _make_retrochoir(), _make_ladychapel(), _make_feretory(), _make_chantry(), _make_sacristy(), _make_pyx(), _make_aumbry(), _make_piscina(), _make_sedilia(), _make_credence(), _make_reredos(), _make_predella(), _make_dossal(), _make_retable(), _make_tester(), _make_riddel(), _make_frontal(), _make_pall(), _make_herse(), _make_catafalque(), _make_bier(), _make_cerecloth(), _make_hearse(), _make_shroud(), _make_pyre(), _make_cenotaph(), _make_winding(), _make_charnel(), _make_sepulchre(), _make_vault(), _make_cairn(), _make_columbarium(), _make_loculus(), _make_arcosolium(), _make_cubiculum()]
 	return _floor_list
 
 
@@ -3239,6 +3346,55 @@ static func _make_loculus() -> Floor:
 	return floor
 
 
+
+static func _make_arcosolium() -> Floor:
+	var floor := Floor.new()
+	floor.id = "arcosolium"
+	floor.title = "The Arcosolium"
+	floor.rows = ARCOSOLIUM_ROWS
+	floor.loop_name = "Arcosolium ring"
+	var ring: Array = []
+	for x in range(6, 22):
+		ring.append(Vector2i(x, 3))
+	ring.append(Vector2i(11, 11))
+	ring.append(Vector2i(10, 11))
+	ring.append(Vector2i(9, 11))
+	ring.append(Vector2i(8, 11))
+	ring.append(Vector2i(7, 11))
+	ring.append(Vector2i(6, 11))
+	ring.append(Vector2i(6, 10))
+	for y in range(9, 3, -1):
+		ring.append(Vector2i(6, y))
+	floor.loop = ring
+	floor.record = ARCOSOLIUM_RECORD
+	return floor
+
+
+
+static func _make_cubiculum() -> Floor:
+	var floor := Floor.new()
+	floor.id = "cubiculum"
+	floor.title = "The Cubiculum"
+	floor.rows = CUBICULUM_ROWS
+	floor.loop_name = "Cubiculum ring"
+	var ring: Array = []
+	for x in range(6, 22):
+		ring.append(Vector2i(x, 3))
+	ring.append(Vector2i(22, 3))
+	ring.append(Vector2i(11, 11))
+	ring.append(Vector2i(10, 11))
+	ring.append(Vector2i(9, 11))
+	ring.append(Vector2i(8, 11))
+	ring.append(Vector2i(7, 11))
+	ring.append(Vector2i(6, 11))
+	ring.append(Vector2i(6, 10))
+	for y in range(9, 3, -1):
+		ring.append(Vector2i(6, y))
+	floor.loop = ring
+	floor.record = CUBICULUM_RECORD
+	return floor
+
+
 static func width(floor: Floor = null) -> int:
 	return _use(floor).rows[0].length()
 
@@ -3718,6 +3874,10 @@ static func ahead_line(state: RunState) -> String:
 				return "Ahead: the columbarium. It inks as a wall."
 			if glyph_at(n, plan) == "|":
 				return "Ahead: the loculus. It inks as a wall."
+			if glyph_at(n, plan) == "`":
+				return "Ahead: the arcosolium. It inks as a wall."
+			if glyph_at(n, plan) == "a":
+				return "Ahead: the cubiculum. It inks as a wall."
 			return "Ahead: wall."
 		Tile.HAZARD:
 			if plan != null and plan.id == "cistern":
@@ -3826,6 +3986,10 @@ static func ahead_line(state: RunState) -> String:
 				return "Ahead: a columbarium crack. Stepping inks it and costs no extra oil."
 			if plan != null and plan.id == "loculus":
 				return "Ahead: a loculus crack. Stepping inks it and costs no extra oil."
+			if plan != null and plan.id == "arcosolium":
+				return "Ahead: an arcosolium crack. Stepping inks it and costs no extra oil."
+			if plan != null and plan.id == "cubiculum":
+				return "Ahead: a cubiculum crack. Stepping inks it and costs no extra oil."
 			return "Ahead: a hazard crack. Stepping inks it and costs no extra oil."
 		Tile.LIFT:
 			return "Ahead: the lift. Stepping on carries the sheet out."
@@ -4005,6 +4169,10 @@ static func step(state: RunState, dir: Vector2i) -> Dictionary:
 				return _pack(state, false, false, false, 0, true, "You tap the columbarium and ink it if the square was blank.")
 			if glyph_at(target, plan) == "|":
 				return _pack(state, false, false, false, 0, true, "You tap the loculus and ink it if the square was blank.")
+			if glyph_at(target, plan) == "`":
+				return _pack(state, false, false, false, 0, true, "You tap the arcosolium and ink it if the square was blank.")
+			if glyph_at(target, plan) == "a":
+				return _pack(state, false, false, false, 0, true, "You tap the cubiculum and ink it if the square was blank.")
 			return _pack(state, false, false, false, 0, true, "You tap a wall and ink it if the square was blank.")
 		if target == enemy_pos(plan):
 			return _pack(state, false, false, false, 0, true, "The warden occupies that tile.")
@@ -4132,6 +4300,10 @@ static func step(state: RunState, dir: Vector2i) -> Dictionary:
 			message = "You cross a columbarium crack. It is inked if the square was blank."
 		elif plan != null and plan.id == "loculus":
 			message = "You cross a loculus crack. It is inked if the square was blank."
+		elif plan != null and plan.id == "arcosolium":
+			message = "You cross an arcosolium crack. It is inked if the square was blank."
+		elif plan != null and plan.id == "cubiculum":
+			message = "You cross a cubiculum crack. It is inked if the square was blank."
 		else:
 			message = "You cross a hazard crack. It is inked if the square was blank."
 	return _pack(state, true, true, hit, MOVE_OIL + (HIT_OIL if hit else 0), false, message)
