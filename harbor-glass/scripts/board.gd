@@ -323,6 +323,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_reglet(at, rot)
 		"billet":
 			_draw_billet(at, rot)
+		"reed":
+			_draw_reed(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -2119,6 +2121,59 @@ func _billet_brick(center: Vector2, dir: String, mark: Color) -> void:
 		mid + outward * half_along - across * half_across,
 		mid + outward * half_along + across * half_across,
 		mid - outward * half_along + across * half_across,
+	]), mark)
+
+func _draw_reed(at: Vector2i, rot: int) -> void:
+	# A slender stalk on the facing, with a rib on every heading once the row
+	# is flooded. The ribs are thinner than the billet bricks.
+	var center := _center(at)
+	var facing := Tracer.reed_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var outward := Vector2.UP
+	match facing:
+		"N":
+			outward = Vector2.UP
+		"E":
+			outward = Vector2.RIGHT
+		"S":
+			outward = Vector2.DOWN
+		_:
+			outward = Vector2.LEFT
+	var across := Vector2(-outward.y, outward.x)
+	var stalk := cell * 0.34
+	var thin := cell * 0.025
+	draw_colored_polygon(PackedVector2Array([
+		center - outward * stalk - across * thin,
+		center + outward * stalk - across * thin,
+		center + outward * stalk + across * thin,
+		center - outward * stalk + across * thin,
+	]), mark)
+	if not flooded:
+		return
+	for dir in ["N", "E", "S", "W"]:
+		_reed_rib(center, dir, mark)
+
+func _reed_rib(center: Vector2, dir: String, mark: Color) -> void:
+	var outward := Vector2.UP
+	match dir:
+		"N":
+			outward = Vector2.UP
+		"E":
+			outward = Vector2.RIGHT
+		"S":
+			outward = Vector2.DOWN
+		_:
+			outward = Vector2.LEFT
+	var across := Vector2(-outward.y, outward.x)
+	var inner := center + outward * cell * 0.08
+	var outer := center + outward * cell * 0.22
+	var half := cell * 0.012
+	draw_colored_polygon(PackedVector2Array([
+		inner - across * half,
+		inner + across * half,
+		outer + across * half,
+		outer - across * half,
 	]), mark)
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
