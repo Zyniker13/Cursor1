@@ -3,7 +3,7 @@ extends RefCounted
 
 const Rules = preload("res://rules/rules.gd")
 
-## Twenty-two wings of the closed museum. Each solution is a list of actions the rules
+## Twenty-four wings of the closed museum. Each solution is a list of actions the rules
 ## accept. Tokens are R L U D, W for wait, and T0 / T1 for lamps.
 
 
@@ -101,6 +101,10 @@ static func _puzzle(number: int, title: String, lesson: String, rows: PackedStri
 		wing_number = number - 122
 	elif wing == "Lawn Wing":
 		wing_number = number - 128
+	elif wing == "Muslin Wing":
+		wing_number = number - 134
+	elif wing == "Cambric Wing":
+		wing_number = number - 140
 	return {
 		"number": number,
 		"wing": wing,
@@ -152,6 +156,8 @@ static func _all() -> Array:
 	puzzles.append_array(_gauze_wing())
 	puzzles.append_array(_voile_wing())
 	puzzles.append_array(_lawn_wing())
+	puzzles.append_array(_muslin_wing())
+	puzzles.append_array(_cambric_wing())
 	return puzzles
 
 
@@ -2585,5 +2591,211 @@ static func _lawn_wing() -> Array:
 			[_guard(6, 3, [Vector2i(6, 3)], 0)],
 			"T0 R R R",
 			"Lawn Wing"
+		),
+	]
+
+
+static func _muslin_wing() -> Array:
+	return [
+		_puzzle(
+			135,
+			"The Lit Muslin",
+			"This room is about the rule that the muslin is lit.",
+			PackedStringArray([
+				"#######",
+				"#GN...#",
+				"#...S.#",
+				"#X....#",
+				"#######",
+			]),
+			[_lamp(4, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"T0 L L L D",
+			"Muslin Wing"
+		),
+		_puzzle(
+			136,
+			"The Seen Warp",
+			"This room is about the rule that the guard sees a lit tile through the lit muslin.",
+			PackedStringArray([
+				"#######",
+				"#GN...#",
+				"#...S.#",
+				"#.....#",
+				"#X....#",
+				"#######",
+			]),
+			[_lamp(4, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 3)],
+			"T0 L L L D D",
+			"Muslin Wing"
+		),
+		_puzzle(
+			137,
+			"The Halted Sheen",
+			"This room is about the rule that a second lamp's light stops at the muslin.",
+			PackedStringArray([
+				"#######",
+				"##.#.##",
+				"#GN...#",
+				"#...S.#",
+				"#X....#",
+				"#######",
+			]),
+			[_lamp(4, 2, "s", 2), _lamp(2, 1, "s", 2)],
+			[_guard(1, 2, [Vector2i(1, 2)], 0)],
+			"T0 L L L D",
+			"Muslin Wing"
+		),
+		_puzzle(
+			138,
+			"The Open Muslin",
+			"This room is about the rule that a guard can enter the muslin.",
+			PackedStringArray([
+				"########",
+				"#GN....#",
+				"#...S..#",
+				"#X.....#",
+				"########",
+			]),
+			[_lamp(4, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"T0 L L L D",
+			"Muslin Wing"
+		),
+		_puzzle(
+			139,
+			"The Refused Entry",
+			"This room is about the rule that the early step onto the lit muslin fails.",
+			PackedStringArray([
+				"#######",
+				"#GN...#",
+				"#.S...#",
+				"#X....#",
+				"#######",
+			]),
+			[_lamp(2, 3, "n", 2)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"T0 L D",
+			"Muslin Wing"
+		),
+		_puzzle(
+			140,
+			"The Last Muslin",
+			"This room is about the rule that you leave by stepping on the dark muslin.",
+			PackedStringArray([
+				"###X###",
+				"#GN...#",
+				"#...S.#",
+				"#######",
+			]),
+			[_lamp(4, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"T0 L L U R U",
+			"Muslin Wing"
+		),
+	]
+
+
+static func _cambric_wing() -> Array:
+	return [
+		_puzzle(
+			141,
+			"The Lit Cambric",
+			"This room is about the rule that the cambric is lit.",
+			PackedStringArray([
+				"#######",
+				"#GY...#",
+				"#.S...#",
+				"#X....#",
+				"#######",
+			]),
+			[_lamp(3, 1, "s", 2)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"U T0 D L D",
+			"Cambric Wing"
+		),
+		_puzzle(
+			142,
+			"The Seen Weft",
+			"This room is about the rule that the guard sees a lit tile through the lit cambric.",
+			PackedStringArray([
+				"#########",
+				"#GY...#.#",
+				"#.S...#Y#",
+				"#X....#G#",
+				"#########",
+			]),
+			[_lamp(3, 1, "s", 2), _lamp(7, 1, "s", 2)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0), _guard(7, 3, [Vector2i(7, 3)], 3)],
+			"U T0 D L D",
+			"Cambric Wing"
+		),
+		_puzzle(
+			143,
+			"The Halted Glow",
+			"This room is about the rule that a second lamp's light stops at the cambric.",
+			PackedStringArray([
+				"#######",
+				"##.#.##",
+				"#GY...#",
+				"#...S.#",
+				"#X....#",
+				"#######",
+			]),
+			[_lamp(4, 2, "s", 2), _lamp(2, 1, "s", 2)],
+			[_guard(1, 2, [Vector2i(1, 2)], 0)],
+			"T0 L L U D L D",
+			"Cambric Wing"
+		),
+		_puzzle(
+			144,
+			"The Walked Cambric",
+			"This room is about the rule that a guard can enter the cambric.",
+			PackedStringArray([
+				"########",
+				"#GY....#",
+				"#.S....#",
+				"#X.....#",
+				"########",
+			]),
+			[_lamp(3, 1, "s", 2)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"U T0 D L D",
+			"Cambric Wing"
+		),
+		_puzzle(
+			145,
+			"The Sure Landing",
+			"This room is about the rule that the early step onto the lit cambric succeeds.",
+			PackedStringArray([
+				"#######",
+				"#GY...#",
+				"#.S...#",
+				"#.....#",
+				"#X....#",
+				"#######",
+			]),
+			[_lamp(3, 1, "s", 2)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"U T0 D L D D",
+			"Cambric Wing"
+		),
+		_puzzle(
+			146,
+			"The Last Cambric",
+			"This room is about the rule that you leave by stepping on the dark cambric.",
+			PackedStringArray([
+				"#######",
+				"#GY...#",
+				"#.S...#",
+				"#X....#",
+				"#.....#",
+				"#######",
+			]),
+			[_lamp(3, 1, "s", 2)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"U T0 D L R U D L D",
+			"Cambric Wing"
 		),
 	]

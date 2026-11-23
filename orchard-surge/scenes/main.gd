@@ -45,6 +45,8 @@ const KIND_COLOR := [
 	Color(0.86, 0.80, 0.62, 1),
 	Color(0.78, 0.86, 0.92, 1),
 	Color(0.96, 0.94, 0.88, 1),
+	Color(0.36, 0.42, 0.62, 1),
+	Color(0.94, 0.96, 0.98, 1),
 ]
 
 var sim = null
@@ -164,6 +166,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			selected = Catalog.TUNICLE
 		elif event.is_action_pressed("plant_z"):
 			selected = Catalog.ROCHET
+		elif event.is_action_pressed("plant_comma"):
+			selected = Catalog.COPE
+		elif event.is_action_pressed("plant_period"):
+			selected = Catalog.SURPLICE
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if sim != null and sim.outcome == Sim.OUTCOME_RUNNING and sim.phase == Sim.PHASE_PLANT:
 			var cell := _mouse_cell()
@@ -249,6 +255,8 @@ func _bind_keys() -> void:
 	_bind("plant_x", [KEY_X])
 	_bind("plant_y", [KEY_Y])
 	_bind("plant_z", [KEY_Z])
+	_bind("plant_comma", [KEY_COMMA])
+	_bind("plant_period", [KEY_PERIOD])
 	_bind("restart", [KEY_R])
 
 
@@ -359,7 +367,7 @@ func _build_hud() -> void:
 	hp_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(hp_fill)
 
-	seeds_label = _label("Seeds 28", 15, Color("e7d7a4"))
+	seeds_label = _label("Seeds 30", 15, Color("e7d7a4"))
 	seeds_label.position = Vector2(704, 40)
 	seeds_label.size = Vector2(110, 24)
 	layer.add_child(seeds_label)
@@ -383,7 +391,7 @@ func _build_hud() -> void:
 	hint_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hint_box.clip_contents = true
 	layer.add_child(hint_box)
-	hint_label = _label("Move: WASD. Plant: 1-9, 0, B, C, E, F, G, H, I, J, K, L, M, N, O, P, Q, T, U, V, X, Y, Z. Only a wick burns shroud. Only a briar cracks rind. Only a flare melts pitch. Only a hearth thaws frost. Only a shear cuts web. Only a chime cracks glass. Only a rasp strips scale. Only a maul cracks mail. Only a bill splits hide. Only a shade shades dusk. Only a cowl cowls veil. Only a hood hoods pall. Only a cloak cloaks gloom. Only a cape capes murk. Only a shawl shawls dread. Only a stole stoles woe. Only a mantle mantles blight. Only a tippet tippets rot. Only a wimple wimples mildew. Only an alb albs rust. Only an amice amices scab. Only an orphrey orphreys spot. Only a maniple maniples scald. Only a chasuble chasubles blister. Only a dalmatic dalmatics char. Only a tunicle tunicles scorch. Only a rochet rochets sear.", 9, Color("aeb8a4"))
+	hint_label = _label("Move: WASD. Plant: 1-9, 0, B, C, E, F, G, H, I, J, K, L, M, N, O, P, Q, T, U, V, X, Y, Z, comma, period. Only a wick burns shroud. Only a briar cracks rind. Only a flare melts pitch. Only a hearth thaws frost. Only a shear cuts web. Only a chime cracks glass. Only a rasp strips scale. Only a maul cracks mail. Only a bill splits hide. Only a shade shades dusk. Only a cowl cowls veil. Only a hood hoods pall. Only a cloak cloaks gloom. Only a cape capes murk. Only a shawl shawls dread. Only a stole stoles woe. Only a mantle mantles blight. Only a tippet tippets rot. Only a wimple wimples mildew. Only an alb albs rust. Only an amice amices scab. Only an orphrey orphreys spot. Only a maniple maniples scald. Only a chasuble chasubles blister. Only a dalmatic dalmatics char. Only a tunicle tunicles scorch. Only a rochet rochets sear. Only a cope copes singe. Only a surplice surplices brand.", 8, Color("aeb8a4"))
 	hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	hint_label.clip_text = true
@@ -484,7 +492,7 @@ func _refresh_hud() -> void:
 		return
 	overlay.visible = true
 	if sim.outcome == Sim.OUTCOME_WON:
-		outcome_label.text = "The surge breaks.\nFifty-seven nights passed, and the orchard still stands."
+		outcome_label.text = "The surge breaks.\nSixty-one nights passed, and the orchard still stands."
 	else:
 		outcome_label.text = "The lights went out.\nHealth reached zero before the orchard was clear."
 
@@ -534,6 +542,10 @@ func _hotkey_text(kind: int) -> String:
 		return "Y"
 	if kind == Catalog.ROCHET:
 		return "Z"
+	if kind == Catalog.COPE:
+		return ","
+	if kind == Catalog.SURPLICE:
+		return "."
 	return str(kind + 1)
 
 
@@ -548,8 +560,14 @@ func _card_top_for(kind: int) -> float:
 	# The chasuble card stays on the maniple's bottom, y 9354–9694.
 	# The dalmatic card stays on the chasuble's bottom, y 9694–10034.
 	# The tunicle card stays on the dalmatic's bottom, y 10034–10374.
-	# The rochet card starts on the tunicle's bottom, y 10374–10714, so the 10780 window keeps the same 66px spare.
-	if kind >= Catalog.ROCHET:
+	# The rochet card stays on the tunicle's bottom, y 10374–10714.
+	# The cope card starts on the rochet's bottom, y 10714–11054.
+	# The surplice card starts on the cope's bottom, y 11054–11394, so the 11460 window keeps the same 66px spare.
+	if kind >= Catalog.SURPLICE:
+		y -= CARD_GAP * 15.0
+	elif kind >= Catalog.COPE:
+		y -= CARD_GAP * 14.0
+	elif kind >= Catalog.ROCHET:
 		y -= CARD_GAP * 13.0
 	elif kind >= Catalog.TUNICLE:
 		y -= CARD_GAP * 12.0
@@ -716,6 +734,10 @@ func _draw_fog() -> void:
 				draw_rect(rect, Color(0.62, 0.74, 0.82, 0.16), true)
 			if sim.tile_rochets_sear(tx, ty):
 				draw_rect(rect, Color(0.93, 0.90, 0.82, 0.16), true)
+			if sim.tile_copes_singe(tx, ty):
+				draw_rect(rect, Color(0.45, 0.52, 0.78, 0.16), true)
+			if sim.tile_surplices_brand(tx, ty):
+				draw_rect(rect, Color(0.93, 0.95, 0.98, 0.18), true)
 			if sim.tile_splits_hide(tx, ty):
 				draw_rect(rect, Color(0.86, 0.7, 0.42, 0.1), true)
 
@@ -1133,6 +1155,32 @@ func _draw_plant(plant) -> void:
 			draw_rect(Rect2(at + Vector2(-4, -8), Vector2(8, 7)), Color("6e675c"), false, 1.2)
 			var rochet_pulse := 0.55 + 0.45 * sin(float(sim.tick) * 0.018)
 			draw_arc(at + Vector2(0, 4), 9.0, 0.2, PI - 0.2, 8, Color(0.96, 0.94, 0.88, 0.35 + 0.3 * rochet_pulse), 1.3, true)
+		Catalog.SURPLICE:
+			# A long white vestment with a straight hem. Not the cope's semicircle and gold clasp, and not the rochet's flared skirt.
+			draw_colored_polygon(PackedVector2Array([
+				at + Vector2(-6, -11),
+				at + Vector2(6, -11),
+				at + Vector2(6, 12),
+				at + Vector2(-6, 12),
+			]), Color("fbfcfe"))
+			draw_line(at + Vector2(-6, 12), at + Vector2(6, 12), Color("8ea0b4"), 2.0)
+			draw_line(at + Vector2(0, -11), at + Vector2(0, 12), Color("d5dde8"), 1.0)
+			var surplice_pulse := 0.55 + 0.45 * sin(float(sim.tick) * 0.014)
+			draw_line(at + Vector2(-6, 2), at + Vector2(6, 2), Color(0.86, 0.90, 0.96, 0.35 + 0.3 * surplice_pulse), 1.2)
+		Catalog.COPE:
+			# A semicircular cope with a gold clasp. Not the rochet's white skirt and square yoke.
+			draw_colored_polygon(PackedVector2Array([
+				at + Vector2(-12, -2),
+				at + Vector2(0, -8),
+				at + Vector2(12, -2),
+				at + Vector2(14, 9),
+				at + Vector2(0, 12),
+				at + Vector2(-14, 9),
+			]), Color("3c4a78"))
+			draw_line(at + Vector2(0, -7), at + Vector2(0, 11), Color("e2b34a"), 1.6)
+			draw_circle(at + Vector2(0, -6), 2.2, Color("f0d48a"))
+			var cope_pulse := 0.55 + 0.45 * sin(float(sim.tick) * 0.016)
+			draw_arc(at + Vector2(0, 3), 13.0, 0.15, PI - 0.15, 12, Color(0.55, 0.62, 0.86, 0.35 + 0.3 * cope_pulse), 1.4, true)
 		_:
 			draw_circle(at, 6.0, Color.WHITE)
 
@@ -1245,6 +1293,12 @@ func _draw_shot(shot) -> void:
 				at + Vector2(-2, 1),
 			]), Color("ffffff"))
 			draw_line(at + Vector2(-3, 2), at + Vector2(3, 4), Color("f7f4ee"), 1.6)
+		Catalog.SURPLICE:
+			draw_line(at + Vector2(0, -6), at + Vector2(0, 5), Color("fbfcfe"), 2.0)
+			draw_line(at + Vector2(-4, 5), at + Vector2(4, 5), Color("8ea0b4"), 1.6)
+		Catalog.COPE:
+			draw_arc(at, 4.6, 0.2, PI - 0.2, 8, Color("3c4a78"), 1.8, true)
+			draw_circle(at + Vector2(0, -2), 1.4, Color("f0d48a"))
 		_:
 			draw_circle(at, 6.0, Color("ffb15a"))
 			draw_circle(at, 2.5, Color("fff0d2"))
@@ -1253,6 +1307,12 @@ func _draw_shot(shot) -> void:
 func _draw_pest(pest) -> void:
 	var at := _screen(pest.pos)
 	var flutter := sin(float(sim.tick) * 0.45 + float(pest.id)) * 3.0
+	if _brand_only(pest):
+		_draw_brand_moth(at, pest, flutter)
+		return
+	if _singe_only(pest):
+		_draw_singe_moth(at, pest, flutter)
+		return
 	if _sear_only(pest):
 		_draw_sear_moth(at, pest, flutter)
 		return
@@ -1342,7 +1402,7 @@ func _draw_pest(pest) -> void:
 	if pest.slow_ticks > 0:
 		wing = Color("2f6b58")
 		body = Color("21483c")
-		if pest.shrouded or pest.rinded or pest.pitched or pest.frosted or pest.webbed or pest.glassed or pest.scaled or pest.mailed or pest.hided or pest.dusked or pest.veiled or pest.palled or pest.gloomed or pest.murked or pest.dreaded or pest.woed or pest.blighted or pest.rotted or pest.mildewed or pest.rusted or pest.scabbed or pest.spotted or pest.scalded or pest.blistered or pest.charred or pest.scorched or pest.seared:
+		if pest.shrouded or pest.rinded or pest.pitched or pest.frosted or pest.webbed or pest.glassed or pest.scaled or pest.mailed or pest.hided or pest.dusked or pest.veiled or pest.palled or pest.gloomed or pest.murked or pest.dreaded or pest.woed or pest.blighted or pest.rotted or pest.mildewed or pest.rusted or pest.scabbed or pest.spotted or pest.scalded or pest.blistered or pest.charred or pest.scorched or pest.seared or pest.singed or pest.branded:
 			wing = Color("2a4038")
 			body = Color("1c2c28")
 	draw_colored_polygon(PackedVector2Array([
@@ -1444,6 +1504,10 @@ func _draw_pest(pest) -> void:
 		draw_arc(at, 88.0, 1.5, TAU - 2.35, 12, Color(0.86, 0.42, 0.16, 0.95), 1.8, true)
 	if pest.seared:
 		draw_arc(at, 91.0, 1.65, TAU - 2.5, 12, Color(0.95, 0.90, 0.78, 0.95), 1.8, true)
+	if pest.singed:
+		draw_arc(at, 94.0, 1.8, TAU - 2.65, 12, Color(0.72, 0.36, 0.16, 0.95), 1.8, true)
+	if pest.branded:
+		draw_arc(at, 97.0, 1.95, TAU - 2.8, 12, Color(0.82, 0.88, 0.94, 0.95), 1.8, true)
 	if pest.hp < Sim.PEST_HP:
 		var width := 16.0 * clampf(float(pest.hp) / float(Sim.PEST_HP), 0.0, 1.0)
 		draw_rect(Rect2(at + Vector2(-8, -14), Vector2(16, 3)), Color(0, 0, 0, 0.45), true)
@@ -1451,55 +1515,107 @@ func _draw_pest(pest) -> void:
 
 
 func _dread_only(pest) -> bool:
-	return pest.dreaded and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.woed and not pest.blighted and not pest.rotted and not pest.mildewed and not pest.rusted and not pest.scabbed and not pest.spotted and not pest.scalded and not pest.blistered and not pest.charred and not pest.scorched and not pest.seared
+	return pest.dreaded and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.woed and not pest.blighted and not pest.rotted and not pest.mildewed and not pest.rusted and not pest.scabbed and not pest.spotted and not pest.scalded and not pest.blistered and not pest.charred and not pest.scorched and not pest.seared and not pest.singed and not pest.branded
 
 
 func _woe_only(pest) -> bool:
-	return pest.woed and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.blighted and not pest.rotted and not pest.mildewed and not pest.rusted and not pest.scabbed and not pest.spotted and not pest.scalded and not pest.blistered and not pest.charred and not pest.scorched and not pest.seared
+	return pest.woed and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.blighted and not pest.rotted and not pest.mildewed and not pest.rusted and not pest.scabbed and not pest.spotted and not pest.scalded and not pest.blistered and not pest.charred and not pest.scorched and not pest.seared and not pest.singed and not pest.branded
 
 
 func _blight_only(pest) -> bool:
-	return pest.blighted and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.woed and not pest.rotted and not pest.mildewed and not pest.rusted and not pest.scabbed and not pest.spotted and not pest.scalded and not pest.blistered and not pest.charred and not pest.scorched and not pest.seared
+	return pest.blighted and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.woed and not pest.rotted and not pest.mildewed and not pest.rusted and not pest.scabbed and not pest.spotted and not pest.scalded and not pest.blistered and not pest.charred and not pest.scorched and not pest.seared and not pest.singed and not pest.branded
 
 
 func _rot_only(pest) -> bool:
-	return pest.rotted and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.woed and not pest.blighted and not pest.mildewed and not pest.rusted and not pest.scabbed and not pest.spotted and not pest.scalded and not pest.blistered and not pest.charred and not pest.scorched and not pest.seared
+	return pest.rotted and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.woed and not pest.blighted and not pest.mildewed and not pest.rusted and not pest.scabbed and not pest.spotted and not pest.scalded and not pest.blistered and not pest.charred and not pest.scorched and not pest.seared and not pest.singed and not pest.branded
 
 
 func _mildew_only(pest) -> bool:
-	return pest.mildewed and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.woed and not pest.blighted and not pest.rotted and not pest.rusted and not pest.scabbed and not pest.spotted and not pest.scalded and not pest.blistered and not pest.charred and not pest.scorched and not pest.seared
+	return pest.mildewed and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.woed and not pest.blighted and not pest.rotted and not pest.rusted and not pest.scabbed and not pest.spotted and not pest.scalded and not pest.blistered and not pest.charred and not pest.scorched and not pest.seared and not pest.singed and not pest.branded
+
+
+func _brand_only(pest) -> bool:
+	return pest.branded and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.woed and not pest.blighted and not pest.rotted and not pest.mildewed and not pest.rusted and not pest.scabbed and not pest.spotted and not pest.scalded and not pest.blistered and not pest.charred and not pest.scorched and not pest.seared and not pest.singed
+
+
+func _draw_brand_moth(at: Vector2, pest, flutter: float) -> void:
+	# A grey body with a straight white hem. Not the singe moth's curled toast and not the sear moth's pale square.
+	var cloth := Color("9aa6b4")
+	var hem := Color("f7f9fc")
+	if pest.slow_ticks > 0:
+		cloth = Color("7e8b9a")
+	draw_colored_polygon(PackedVector2Array([
+		at + Vector2(-7, -6),
+		at + Vector2(7, -6),
+		at + Vector2(7, 6),
+		at + Vector2(-7, 6),
+	]), cloth)
+	draw_line(at + Vector2(-7, 6), at + Vector2(7, 6), hem, 1.8)
+	draw_line(at + Vector2(-2, -4 + flutter * 0.1), at + Vector2(-2, 4), hem, 1.0)
+	draw_arc(at, 12.0, 0.4, TAU - 0.4, 12, Color("d5dde6"), 1.3, true)
+
+
+func _singe_only(pest) -> bool:
+	return pest.singed and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.woed and not pest.blighted and not pest.rotted and not pest.mildewed and not pest.rusted and not pest.scabbed and not pest.spotted and not pest.scalded and not pest.blistered and not pest.charred and not pest.scorched and not pest.seared and not pest.branded
+
+
+func _draw_singe_moth(at: Vector2, pest, flutter: float) -> void:
+	# A toasted body with a curled edge. Not the sear moth's pale square or the rochet's white skirt.
+	var toast := Color("c46a32")
+	var crust := Color("5a2e16")
+	if pest.slow_ticks > 0:
+		toast = Color("a85628")
+	draw_colored_polygon(PackedVector2Array([
+		at + Vector2(-10, flutter * 0.2),
+		at + Vector2(-3, 2),
+		at + Vector2(-8, 8),
+		at + Vector2(-4, 5),
+	]), crust)
+	draw_colored_polygon(PackedVector2Array([
+		at + Vector2(9, -flutter * 0.15),
+		at + Vector2(2, -1),
+		at + Vector2(7, -7),
+	]), crust)
+	draw_colored_polygon(PackedVector2Array([
+		at + Vector2(-2, -5),
+		at + Vector2(4, -3),
+		at + Vector2(2, 5),
+		at + Vector2(-3, 3),
+	]), toast)
+	draw_line(at + Vector2(-1, -3), at + Vector2(3, 3), Color("f0c48a"), 1.2)
+	draw_arc(at, 11.0, 0.9, TAU - 1.8, 10, Color("e08a3a"), 1.4, true)
 
 
 func _sear_only(pest) -> bool:
-	return pest.seared and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.woed and not pest.blighted and not pest.rotted and not pest.mildewed and not pest.rusted and not pest.scabbed and not pest.spotted and not pest.scalded and not pest.blistered and not pest.charred and not pest.scorched
+	return pest.seared and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.woed and not pest.blighted and not pest.rotted and not pest.mildewed and not pest.rusted and not pest.scabbed and not pest.spotted and not pest.scalded and not pest.blistered and not pest.charred and not pest.scorched and not pest.singed and not pest.branded
 
 
 func _scorch_only(pest) -> bool:
-	return pest.scorched and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.woed and not pest.blighted and not pest.rotted and not pest.mildewed and not pest.rusted and not pest.scabbed and not pest.spotted and not pest.scalded and not pest.blistered and not pest.charred and not pest.seared
+	return pest.scorched and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.woed and not pest.blighted and not pest.rotted and not pest.mildewed and not pest.rusted and not pest.scabbed and not pest.spotted and not pest.scalded and not pest.blistered and not pest.charred and not pest.seared and not pest.singed and not pest.branded
 
 
 func _char_only(pest) -> bool:
-	return pest.charred and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.woed and not pest.blighted and not pest.rotted and not pest.mildewed and not pest.rusted and not pest.scabbed and not pest.spotted and not pest.scalded and not pest.blistered and not pest.scorched and not pest.seared
+	return pest.charred and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.woed and not pest.blighted and not pest.rotted and not pest.mildewed and not pest.rusted and not pest.scabbed and not pest.spotted and not pest.scalded and not pest.blistered and not pest.scorched and not pest.seared and not pest.singed and not pest.branded
 
 
 func _blister_only(pest) -> bool:
-	return pest.blistered and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.woed and not pest.blighted and not pest.rotted and not pest.mildewed and not pest.rusted and not pest.scabbed and not pest.spotted and not pest.scalded and not pest.charred and not pest.scorched and not pest.seared
+	return pest.blistered and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.woed and not pest.blighted and not pest.rotted and not pest.mildewed and not pest.rusted and not pest.scabbed and not pest.spotted and not pest.scalded and not pest.charred and not pest.scorched and not pest.seared and not pest.singed and not pest.branded
 
 
 func _scald_only(pest) -> bool:
-	return pest.scalded and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.woed and not pest.blighted and not pest.rotted and not pest.mildewed and not pest.rusted and not pest.scabbed and not pest.spotted and not pest.blistered and not pest.charred and not pest.scorched and not pest.seared
+	return pest.scalded and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.woed and not pest.blighted and not pest.rotted and not pest.mildewed and not pest.rusted and not pest.scabbed and not pest.spotted and not pest.blistered and not pest.charred and not pest.scorched and not pest.seared and not pest.singed and not pest.branded
 
 
 func _spot_only(pest) -> bool:
-	return pest.spotted and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.woed and not pest.blighted and not pest.rotted and not pest.mildewed and not pest.rusted and not pest.scabbed and not pest.scalded and not pest.blistered and not pest.charred and not pest.scorched and not pest.seared
+	return pest.spotted and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.woed and not pest.blighted and not pest.rotted and not pest.mildewed and not pest.rusted and not pest.scabbed and not pest.scalded and not pest.blistered and not pest.charred and not pest.scorched and not pest.seared and not pest.singed and not pest.branded
 
 
 func _scab_only(pest) -> bool:
-	return pest.scabbed and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.woed and not pest.blighted and not pest.rotted and not pest.mildewed and not pest.rusted and not pest.spotted and not pest.scalded and not pest.blistered and not pest.charred and not pest.scorched and not pest.seared
+	return pest.scabbed and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.woed and not pest.blighted and not pest.rotted and not pest.mildewed and not pest.rusted and not pest.spotted and not pest.scalded and not pest.blistered and not pest.charred and not pest.scorched and not pest.seared and not pest.singed and not pest.branded
 
 
 func _rust_only(pest) -> bool:
-	return pest.rusted and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.woed and not pest.blighted and not pest.rotted and not pest.mildewed and not pest.scabbed and not pest.spotted and not pest.scalded and not pest.blistered and not pest.charred and not pest.scorched and not pest.seared
+	return pest.rusted and not pest.shrouded and not pest.rinded and not pest.pitched and not pest.frosted and not pest.webbed and not pest.glassed and not pest.scaled and not pest.mailed and not pest.hided and not pest.dusked and not pest.veiled and not pest.palled and not pest.gloomed and not pest.murked and not pest.dreaded and not pest.woed and not pest.blighted and not pest.rotted and not pest.mildewed and not pest.scabbed and not pest.spotted and not pest.scalded and not pest.blistered and not pest.charred and not pest.scorched and not pest.seared and not pest.singed and not pest.branded
 
 
 func _draw_sear_moth(at: Vector2, pest, flutter: float) -> void:

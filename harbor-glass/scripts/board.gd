@@ -291,6 +291,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_hood(at, rot)
 		"throat":
 			_draw_throat(at, rot)
+		"larmier":
+			_draw_larmier(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -1254,6 +1256,42 @@ func _draw_throat(at: Vector2i, rot: int) -> void:
 		edge - along * reach,
 		edge - along * gap,
 	]), post)
+
+func _draw_larmier(at: Vector2i, rot: int) -> void:
+	# A short pale cap on the facing and on the opposite. A north larmier marks
+	# the north edge and the south edge. The caps are not the corona's side
+	# shelves and not the throat's gap.
+	var center := _center(at)
+	var facing := Tracer.larmier_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var cap := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	for turn in [0, 2]:
+		var marked := Tracer.rotate_dir(facing, turn)
+		var outward := Vector2.UP
+		var along := Vector2.RIGHT
+		match marked:
+			"N":
+				outward = Vector2.UP
+				along = Vector2.RIGHT
+			"S":
+				outward = Vector2.DOWN
+				along = Vector2.RIGHT
+			"E":
+				outward = Vector2.RIGHT
+				along = Vector2.DOWN
+			_:
+				outward = Vector2.LEFT
+				along = Vector2.DOWN
+		var brim := center + outward * cell * 0.28
+		var eave := center + outward * cell * 0.38
+		var half := cell * 0.10
+		var lip := cell * 0.05
+		draw_colored_polygon(PackedVector2Array([
+			brim - along * half,
+			brim + along * half,
+			eave + along * lip,
+			eave - along * lip,
+		]), cap)
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
 	if dir == "N" or dir == "S":
