@@ -17,7 +17,7 @@ class_name ChartBook
 # The Corona holds eight more. The Bead holds eight more. The Quirk holds eight more.
 # The Cyma holds eight more. The Fascia holds eight more. The Soffit holds eight more.
 # The Drip holds eight more. The Beak holds eight more. The Hood holds eight more.
-# The Throat holds eight more. The Larmier holds eight more. The Cill holds eight more. The Threshold holds eight more. The Impost holds eight more. The Architrave holds eight more. The Archivolt holds eight more. The Abacus holds eight more. The Rebate holds eight more. The Echinus holds eight more. The Annulet holds eight more. The Listel holds eight more. The Necking holds eight more. The Taenia holds eight more. The Baguette holds eight more. The Reglet holds eight more. The Billet holds eight more. The Reed holds eight more. The Staff holds the last eight.
+# The Throat holds eight more. The Larmier holds eight more. The Cill holds eight more. The Threshold holds eight more. The Impost holds eight more. The Architrave holds eight more. The Archivolt holds eight more. The Abacus holds eight more. The Rebate holds eight more. The Echinus holds eight more. The Annulet holds eight more. The Listel holds eight more. The Necking holds eight more. The Taenia holds eight more. The Baguette holds eight more. The Reglet holds eight more. The Billet holds eight more. The Reed holds eight more. The Staff holds eight more. The Thumb holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
@@ -477,6 +477,26 @@ class_name ChartBook
 # A flooded north annulet passes only west. A flooded north echinus passes
 # only east. A flooded north rebate passes only south. A flooded north abacus
 # passes only north. A flooded north throat passes only south.
+# A thumb has a facing. Rotation changes it the same way: 0 north, 90 east,
+# 180 south, 270 west. While its row is dry, every heading stops on the edge
+# and the beam does not enter. One click still stops every heading. Opposite
+# dry facings share that shut state. While that row is flooded, the opposite
+# and the next counterclockwise heading pass straight through, and that pass
+# costs no bounce. A flooded north thumb passes south and west, and stops
+# north and east. One click from south faces west, and east and south pass
+# while north and west stop. A flooded south thumb passes north and east, and
+# stops south and west. Opposite flooded facings do not share that set. A dry
+# ogee passes south and west and stays shut under water, so this piece is the
+# flooded version of that pair. A flooded north staff passes south and east,
+# and stops north and west. A flooded reed passes every heading. A flooded
+# north billet passes north, south, and west, and stops east. A flooded north
+# reglet passes north, south, and east, and stops west. A flooded north
+# baguette passes north, east, and west, and stops south. A flooded north
+# taenia passes north and south. A flooded north necking passes north and west.
+# A flooded north listel passes north and east. A flooded north annulet passes
+# only west. A flooded north echinus passes only east. A flooded north rebate
+# passes only south. A flooded north abacus passes only north. A flooded north
+# throat passes only south.
 # See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
@@ -537,6 +557,7 @@ const REGLET := "The Reglet"
 const BILLET := "The Billet"
 const REED := "The Reed"
 const STAFF := "The Staff"
+const THUMB := "The Thumb"
 
 static func all() -> Array:
 	var book: Array = []
@@ -594,6 +615,7 @@ static func all() -> Array:
 	book.append_array(billet())
 	book.append_array(reed())
 	book.append_array(staff())
+	book.append_array(thumb())
 	return book
 
 
@@ -811,6 +833,10 @@ static func reed() -> Array:
 
 static func staff() -> Array:
 	return [chart_423(), chart_424(), chart_425(), chart_426(), chart_427(), chart_428(), chart_429(), chart_430()]
+
+
+static func thumb() -> Array:
+	return [chart_431(), chart_432(), chart_433(), chart_434(), chart_435(), chart_436(), chart_437(), chart_438()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -14927,6 +14953,171 @@ static func chart_430() -> Dictionary:
 	)
 
 
+static func _thumb_lane(prefix: String, ox: int, south_east: bool) -> Dictionary:
+	return {
+		"lanterns": [
+			_lantern(prefix + "Tn", ox + 2, 1, "S", "white"),
+			_lantern(prefix + "Ts", ox + 4, 1, "S", "red"),
+			_lantern(prefix + "Te", ox + 1, 2, "S", "blue"),
+			_lantern(prefix + "Tw", ox + 8, 2, "S", "red"),
+		],
+		"docks": [
+			_dock(prefix + "Nd", ox + 4, 3, "white", true, true),
+			_dock(prefix + "Kb", ox + 4, 2, "blue", true, true),
+			_dock(prefix + "Ks", ox + 2, 3, "red", true, false),
+			_dock(prefix + "Ke", ox + 8, 3, "blue", true, not south_east),
+			_dock(prefix + "Kw", ox + 1, 3, "red", true, south_east),
+		],
+		"fixtures": [
+			_fixture(prefix + "S24", "shutter", ox + 2, 4, 0),
+			_fixture(prefix + "S25", "shutter", ox + 2, 5, 0),
+			_fixture(prefix + "S26", "shutter", ox + 2, 6, 0),
+			_fixture(prefix + "M27", "tide_mirror", ox + 2, 7, 90),
+			_fixture(prefix + "S37", "shutter", ox + 3, 7, 0),
+			_fixture(prefix + "M47", "tide_mirror", ox + 4, 7, 0),
+			_fixture(prefix + "S46", "shutter", ox + 4, 6, 0),
+			_fixture(prefix + "S45", "shutter", ox + 4, 5, 0),
+			_fixture(prefix + "M14", "tide_mirror", ox + 1, 4, 90),
+			_fixture(prefix + "S34", "shutter", ox + 3, 4, 0),
+			_fixture(prefix + "S54", "shutter", ox + 5, 4, 0),
+			_fixture(prefix + "S64", "shutter", ox + 6, 4, 0),
+			_fixture(prefix + "S74", "shutter", ox + 7, 4, 0),
+			_fixture(prefix + "M84", "tide_mirror", ox + 8, 4, 0),
+		],
+	}
+
+
+static func _thumb_chart(id: String, title: String, teach: String, win: String, start_rot: int, sol_rot: int, south_east: bool, boat: bool) -> Dictionary:
+	var lane := _thumb_lane("", 0, south_east)
+	var boats: Array = []
+	if boat:
+		boats.append(_boat("Hb", 1, 7))
+	return {
+		"id": id,
+		"title": title,
+		"harbor": THUMB,
+		"win": win,
+		"teach": teach,
+		"cols": 9,
+		"rows": 8,
+		"tide_phases": [0, 4],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": lane["lanterns"],
+		"docks": lane["docks"],
+		"boats": boats,
+		"fixtures": lane["fixtures"],
+		"pieces": [
+			_thumb("O", "Thumb", 4, 4, start_rot, sol_rot),
+		],
+	}
+
+
+static func chart_431() -> Dictionary:
+	return _thumb_chart(
+		"431",
+		"The Flooded Thumb",
+		"A flooded north thumb passes south and west, and stops north and east. While it is dry, every heading stops. One click from south faces west, and east and south pass.",
+		"High water opens south and west. Low water stops every heading.",
+		90,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_432() -> Dictionary:
+	return _thumb_chart(
+		"432",
+		"The Turned Thumb",
+		"One click from south faces the thumb west. East and south pass, and north and west stop. The north and west docks stay dark.",
+		"The west facing opens east and south.",
+		180,
+		270,
+		true,
+		false
+	)
+
+
+static func chart_433() -> Dictionary:
+	return _thumb_chart(
+		"433",
+		"The Staff Keep",
+		"A flooded north staff passes south and east, and stops north and west, so the east keep lights and the west dock stays dark.",
+		"South and west pass. The staff misses that set.",
+		180,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_434() -> Dictionary:
+	return _thumb_chart(
+		"434",
+		"The Reed Dark",
+		"A flooded reed passes every heading, so the north and east keeps light.",
+		"South and west pass. The reed misses that set.",
+		270,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_435() -> Dictionary:
+	return _thumb_chart(
+		"435",
+		"The Billet Dark",
+		"A flooded north billet passes north, south, and west, and stops east, so the north keep lights.",
+		"South and west pass. The billet misses that set.",
+		90,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_436() -> Dictionary:
+	return _thumb_chart(
+		"436",
+		"The Reglet Shut",
+		"A flooded north reglet passes north, south, and east, and stops west, so the west dock stays dark.",
+		"South and west pass. The reglet misses that set.",
+		180,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_437() -> Dictionary:
+	return _thumb_chart(
+		"437",
+		"The Baguette Shut",
+		"A flooded north baguette passes north, east, and west, and stops south, so the south dock stays dark.",
+		"South and west pass. The baguette misses that set.",
+		270,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_438() -> Dictionary:
+	return _thumb_chart(
+		"438",
+		"The Thumb Line",
+		"Raise the tide to the thumb's row. Under water, south and west pass, and north and east stop. A flooded north taenia passes north and south, so the north keep lights and the west dock stays dark. A flooded north necking passes north and west, so the north keep lights and the south dock stays dark. A flooded north listel passes north and east, so both keeps light and both docks stay dark. A flooded north annulet passes only west, so the south dock stays dark. A flooded north echinus passes only east, so both docks stay dark. A flooded north rebate passes only south, so the west dock stays dark. A flooded north abacus passes only north, so both docks stay dark. A flooded north throat passes only south, so the west dock stays dark. Low water lights the hull and leaves those docks dark.",
+		"The flood line stands on the thumb. The hull stays dark.",
+		90,
+		0,
+		false,
+		true
+	)
+
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -15375,6 +15566,20 @@ static func _throat(id: String, name: String, x: int, y: int, start_rot: int, so
 		"id": id,
 		"name": name,
 		"kind": "throat",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _thumb(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "thumb",
 		"movable": false,
 		"sockets": [{"id": "a", "x": x, "y": y}],
 		"start_socket": "a",
