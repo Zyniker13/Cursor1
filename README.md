@@ -7,7 +7,7 @@ Playable slices, Godot 4. Steam packaging comes later.
 - [Dispatch](dispatch/) — a parcel-routing puzzle through the keel
 - [Night Stamp](night-stamp/) — a border-desk deckbuilder through the prologue bell
 - [Orchard Surge](orchard-surge/) — a dark-orchard wave game through night 49
-- [Lantern Census](lantern-census/) — a twenty-six-floor map survey through the Sacristy
+- [Lantern Census](lantern-census/) — a twenty-seven-floor map survey through the Pyx Chamber
 - [Lowball](lowball/) — a forty-two-week twenty-one-club circle through Tidewharf Whimbrels
 - [Casework](casework/) — a forty-case deduction board through the chamfer
 - [Lampblack](lampblack/) — turn-based museum stealth through the glaze
