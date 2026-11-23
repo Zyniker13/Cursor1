@@ -144,7 +144,7 @@ func _draw() -> void:
 	if _font == null:
 		_font = ThemeDB.fallback_font
 	var layout := _layout()
-	draw_rect(Rect2(Vector2.ZERO, size if size.x > 32.0 else Vector2(2260, 720)), NIGHT)
+	draw_rect(Rect2(Vector2.ZERO, size if size.x > 32.0 else Vector2(2396, 720)), NIGHT)
 	if state == null or state.floor == null:
 		return
 	_draw_view(layout.view)
@@ -155,7 +155,7 @@ func _draw() -> void:
 func _layout() -> Dictionary:
 	var vp := size
 	if vp.x < 200.0:
-		vp = Vector2(2260, 720)
+		vp = Vector2(2396, 720)
 	var margin := 16.0
 	var hud_h := 200.0
 	var sheet_w := minf(488.0, vp.x * 0.38)
@@ -259,6 +259,10 @@ func _draw_view(view: Rect2) -> void:
 			col = Color(0.78, 0.66, 0.42)
 		elif state.floor.id == "predella":
 			col = Color(0.78, 0.66, 0.42)
+		elif state.floor.id == "dossal":
+			col = Color(0.78, 0.66, 0.42)
+		elif state.floor.id == "retable":
+			col = Color(0.78, 0.66, 0.42)
 		if glyph == "*":
 			col = Color(0.14, 0.38, 0.42)
 		elif glyph == "+":
@@ -324,10 +328,14 @@ func _draw_view(view: Rect2) -> void:
 			col = Color(0.70, 0.64, 0.54)
 		elif glyph == "[":
 			col = Color(0.62, 0.46, 0.36)
+		elif glyph == "{":
+			col = Color(0.58, 0.16, 0.20)
+		elif glyph == "]":
+			col = Color(0.72, 0.56, 0.18)
 		col *= shade
 		if int(hit.side) == 1:
 			col *= 0.74
-		if glyph != "*" and glyph != "+" and glyph != "=" and glyph != "x" and glyph != "R" and glyph != "B" and glyph != "W" and glyph != "D" and glyph != "P" and glyph != "T" and glyph != "Y" and glyph != "K" and glyph != "N" and glyph != "A" and glyph != "C" and glyph != "X" and glyph != "V" and glyph != "U" and glyph != "Q" and glyph != "O" and glyph != "M" and glyph != "J" and glyph != "I" and glyph != "G" and glyph != "F" and glyph != "Z" and glyph != "@" and glyph != "?" and glyph != ">" and glyph != "<" and glyph != "[" and (cell.x + cell.y) % 2 == 0:
+		if glyph != "*" and glyph != "+" and glyph != "=" and glyph != "x" and glyph != "R" and glyph != "B" and glyph != "W" and glyph != "D" and glyph != "P" and glyph != "T" and glyph != "Y" and glyph != "K" and glyph != "N" and glyph != "A" and glyph != "C" and glyph != "X" and glyph != "V" and glyph != "U" and glyph != "Q" and glyph != "O" and glyph != "M" and glyph != "J" and glyph != "I" and glyph != "G" and glyph != "F" and glyph != "Z" and glyph != "@" and glyph != "?" and glyph != ">" and glyph != "<" and glyph != "[" and glyph != "{" and glyph != "]" and (cell.x + cell.y) % 2 == 0:
 			if state.floor.id == "cloister":
 				col = col.lerp(Color(0.42, 0.34, 0.22), 0.22)
 			elif state.floor.id == "crypt":
@@ -390,6 +398,10 @@ func _draw_view(view: Rect2) -> void:
 				col = col.lerp(Color(0.40, 0.32, 0.28), 0.22)
 			elif state.floor.id == "predella":
 				col = col.lerp(Color(0.46, 0.30, 0.22), 0.22)
+			elif state.floor.id == "dossal":
+				col = col.lerp(Color(0.40, 0.12, 0.14), 0.22)
+			elif state.floor.id == "retable":
+				col = col.lerp(Color(0.36, 0.26, 0.10), 0.22)
 			else:
 				col = col.lerp(Color(0.32, 0.20, 0.14), 0.22)
 		var wall_x := origin.y + dist * ray.y if int(hit.side) == 0 else origin.x + dist * ray.x
@@ -483,6 +495,20 @@ func _draw_view(view: Rect2) -> void:
 				col = Color(0.55, 0.24, 0.20)
 			else:
 				col = Color(0.72, 0.64, 0.52)
+		if glyph == "{":
+			if wall_x < 0.08 or wall_x > 0.92:
+				col = Color(0.28, 0.08, 0.10)
+			elif int(wall_x * 8.0) % 2 == 0:
+				col = Color(0.62, 0.12, 0.18)
+			else:
+				col = Color(0.78, 0.62, 0.28)
+		if glyph == "]":
+			if wall_x < 0.12 or wall_x > 0.88:
+				col = Color(0.82, 0.66, 0.24)
+			elif wall_x > 0.28 and wall_x < 0.72:
+				col = Color(0.16, 0.18, 0.28)
+			else:
+				col = Color(0.58, 0.42, 0.16)
 		if state.oil <= 2:
 			col *= 0.45
 		elif state.oil <= 4:
@@ -673,6 +699,16 @@ func _draw_sky_floor(view: Rect2) -> void:
 		sky_lo = Color(0.46, 0.28, 0.18)
 		ground_hi = Color(0.12, 0.10, 0.07)
 		ground_lo = Color(0.44, 0.36, 0.22)
+	elif state.floor.id == "dossal":
+		sky_hi = Color(0.12, 0.05, 0.07)
+		sky_lo = Color(0.42, 0.12, 0.16)
+		ground_hi = Color(0.12, 0.10, 0.07)
+		ground_lo = Color(0.44, 0.36, 0.22)
+	elif state.floor.id == "retable":
+		sky_hi = Color(0.10, 0.09, 0.06)
+		sky_lo = Color(0.42, 0.32, 0.14)
+		ground_hi = Color(0.12, 0.10, 0.07)
+		ground_lo = Color(0.44, 0.36, 0.22)
 	for i in bands:
 		var t := float(i) / float(bands)
 		var sky := sky_hi.lerp(sky_lo, t)
@@ -742,6 +778,18 @@ func _draw_sky_floor(view: Rect2) -> void:
 		if plinth.x < view.size.x and plinth.y < half:
 			draw_rect(Rect2(view.position + plinth, Vector2(120, 14)), Color(0.74, 0.66, 0.54, 0.92))
 			draw_rect(Rect2(view.position + plinth + Vector2(18, 3), Vector2(84, 8)), Color(0.55, 0.24, 0.20, 0.95))
+	elif state.floor.id == "dossal":
+		var hangings: Array = [Vector2(110, 6), Vector2(190, 6), Vector2(270, 6), Vector2(350, 6)]
+		for spot in hangings:
+			if spot.x < view.size.x and spot.y < half:
+				draw_rect(Rect2(view.position + spot, Vector2(18, 46)), Color(0.62, 0.12, 0.18, 0.92))
+				draw_rect(Rect2(view.position + spot + Vector2(8, 0), Vector2(2, 46)), Color(0.78, 0.62, 0.28, 0.9))
+	elif state.floor.id == "retable":
+		var panel := Vector2(148, 8)
+		if panel.x < view.size.x and panel.y < half:
+			draw_rect(Rect2(view.position + panel, Vector2(100, 50)), Color(0.82, 0.66, 0.24, 0.95))
+			draw_rect(Rect2(view.position + panel + Vector2(8, 6), Vector2(84, 38)), Color(0.16, 0.18, 0.28, 0.96))
+			draw_rect(Rect2(view.position + panel + Vector2(36, 14), Vector2(28, 16)), Color(0.74, 0.56, 0.18, 0.9))
 
 
 func _cast(origin: Vector2, ray_dir: Vector2) -> Dictionary:
@@ -843,6 +891,10 @@ func _draw_sprites(view: Rect2, origin: Vector2, dir: Vector2, plane: Vector2, z
 		hazard_kind = "reredos"
 	elif state.floor.id == "predella":
 		hazard_kind = "predella"
+	elif state.floor.id == "dossal":
+		hazard_kind = "dossal"
+	elif state.floor.id == "retable":
+		hazard_kind = "retable"
 	for hazard in Rules.hazard_cells(state.floor):
 		items.append({"pos": hazard, "kind": hazard_kind})
 	var drawn: Array = []
@@ -1040,6 +1092,16 @@ func _sprite_column(view: Rect2, column: int, col_w: float, top: float, sprite_h
 			if u > 0.20 and u < 0.80:
 				slices.append([0.70, 0.78, Color(0.86, 0.78, 0.62)])
 				slices.append([0.78, 0.86, Color(0.62, 0.36, 0.24)])
+		"dossal":
+			if u > 0.24 and u < 0.76:
+				slices.append([0.16, 0.34, Color(0.72, 0.14, 0.18)])
+				slices.append([0.34, 0.46, Color(0.86, 0.72, 0.36)])
+				slices.append([0.62, 0.80, Color(0.34, 0.08, 0.12)])
+		"retable":
+			if u > 0.26 and u < 0.74:
+				slices.append([0.20, 0.34, Color(0.86, 0.70, 0.28)])
+				slices.append([0.34, 0.46, Color(0.22, 0.12, 0.08)])
+				slices.append([0.58, 0.76, Color(0.74, 0.54, 0.16)])
 		"hazard":
 			if u > 0.22 and u < 0.78:
 				slices.append([0.62, 0.70, Color(0.72, 0.34, 0.14)])
@@ -1157,6 +1219,10 @@ func _draw_sheet(sheet: Rect2) -> void:
 		legend = "Square wall    dot corridor    triangle reredos"
 	elif state.floor.id == "predella":
 		legend = "Square wall    dot corridor    triangle predella"
+	elif state.floor.id == "dossal":
+		legend = "Square wall    dot corridor    hanging dossal"
+	elif state.floor.id == "retable":
+		legend = "Square wall    dot corridor    framed retable"
 	draw_string(_font, Vector2(sheet.position.x + 16, legend_y), legend, HORIZONTAL_ALIGNMENT_LEFT, sheet.size.x - 32, 14, INK)
 	var swing_note := "Ring is the swing, not ink. Hood is the warden."
 	if state.floor.id == "cistern":
@@ -1288,6 +1354,10 @@ func _draw_hud(hud: Rect2) -> void:
 			lines.append("You are standing on a reredos crack.")
 		elif state.floor.id == "predella":
 			lines.append("You are standing on a predella crack.")
+		elif state.floor.id == "dossal":
+			lines.append("You are standing on a dossal crack.")
+		elif state.floor.id == "retable":
+			lines.append("You are standing on a retable crack.")
 		else:
 			lines.append("You are standing on a hazard crack.")
 	var y := hud.position.y + 46
