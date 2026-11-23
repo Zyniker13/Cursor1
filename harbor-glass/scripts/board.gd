@@ -309,6 +309,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_rebate(at, rot)
 		"echinus":
 			_draw_echinus(at, rot)
+		"annulet":
+			_draw_annulet(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -1697,6 +1699,76 @@ func _echinus_tick(center: Vector2, dir: String, mark: Color) -> void:
 	var outer := center + clock * cell * 0.40
 	var half := cell * 0.06
 	var across := Vector2(-clock.y, clock.x)
+	draw_colored_polygon(PackedVector2Array([
+		inner - across * half,
+		inner + across * half,
+		outer + across * half,
+		outer - across * half,
+	]), mark)
+
+func _draw_annulet(at: Vector2i, rot: int) -> void:
+	# A small closed ring, with a tick on the counterclockwise edge. It is
+	# not the echinus bulge and not the rebate's open channel.
+	var center := _center(at)
+	var facing := Tracer.annulet_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	_annulet_ring(center, mark)
+	var counter := "W"
+	match facing:
+		"N":
+			counter = "W"
+		"E":
+			counter = "N"
+		"S":
+			counter = "E"
+		_:
+			counter = "S"
+	_annulet_tick(center, counter, mark)
+
+func _annulet_ring(center: Vector2, mark: Color) -> void:
+	var outer := cell * 0.34
+	var inner := cell * 0.18
+	draw_colored_polygon(PackedVector2Array([
+		center + Vector2(-outer, -outer),
+		center + Vector2(outer, -outer),
+		center + Vector2(outer, -inner),
+		center + Vector2(-outer, -inner),
+	]), mark)
+	draw_colored_polygon(PackedVector2Array([
+		center + Vector2(-outer, inner),
+		center + Vector2(outer, inner),
+		center + Vector2(outer, outer),
+		center + Vector2(-outer, outer),
+	]), mark)
+	draw_colored_polygon(PackedVector2Array([
+		center + Vector2(-outer, -inner),
+		center + Vector2(-inner, -inner),
+		center + Vector2(-inner, inner),
+		center + Vector2(-outer, inner),
+	]), mark)
+	draw_colored_polygon(PackedVector2Array([
+		center + Vector2(inner, -inner),
+		center + Vector2(outer, -inner),
+		center + Vector2(outer, inner),
+		center + Vector2(inner, inner),
+	]), mark)
+
+func _annulet_tick(center: Vector2, dir: String, mark: Color) -> void:
+	var outward := Vector2.LEFT
+	match dir:
+		"N":
+			outward = Vector2.UP
+		"E":
+			outward = Vector2.RIGHT
+		"S":
+			outward = Vector2.DOWN
+		_:
+			outward = Vector2.LEFT
+	var across := Vector2(-outward.y, outward.x)
+	var inner := center + outward * cell * 0.30
+	var outer := center + outward * cell * 0.44
+	var half := cell * 0.06
 	draw_colored_polygon(PackedVector2Array([
 		inner - across * half,
 		inner + across * half,
