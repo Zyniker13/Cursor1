@@ -4,7 +4,7 @@ extends RefCounted
 ## and locked by tests/run_tests.gd.
 
 enum Mat { ORE, INGOT, PLATE }
-enum Kind { BELT, KILN, PRESS, FILTER, SPLITTER, ROLLER, WEIR, BRIDGE, GRATE, HOOK, ARM, DROP, LIFT, DWELL, TWIN, PASS, SLIP, SHED, RAKE, HOE, HARROW, FORK, PRONG, SHARE, COULTER, MOLDBOARD, LANDSIDE, SLADE, HEEL, STILT, CLEVIS, BEAM, HAKE, SOLE, FROG, SHIN, POINT, THROAT, WREST, JOINTER, BRIDLE, TRASHBOARD, GAUGE, BREAST, HARDIE, FULLER, SWAGE }
+enum Kind { BELT, KILN, PRESS, FILTER, SPLITTER, ROLLER, WEIR, BRIDGE, GRATE, HOOK, ARM, DROP, LIFT, DWELL, TWIN, PASS, SLIP, SHED, RAKE, HOE, HARROW, FORK, PRONG, SHARE, COULTER, MOLDBOARD, LANDSIDE, SLADE, HEEL, STILT, CLEVIS, BEAM, HAKE, SOLE, FROG, SHIN, POINT, THROAT, WREST, JOINTER, BRIDLE, TRASHBOARD, GAUGE, BREAST, HARDIE, FULLER, SWAGE, FLATTER }
 enum Dir { EAST, SOUTH, WEST, NORTH }
 
 ## One simulated minute. Every room runs this many ticks.
@@ -26,7 +26,7 @@ const VEC := [
 	Vector2i(0, -1),
 ]
 
-const KIND_NAME := ["Belt", "Kiln", "Press", "Filter", "Splitter", "Roller", "Weir", "Bridge", "Grate", "Hook", "Arm", "Drop", "Lift", "Dwell", "Twin", "Pass", "Slip", "Shed", "Rake", "Hoe", "Harrow", "Fork", "Prong", "Share", "Coulter", "Moldboard", "Landside", "Slade", "Heel", "Stilt", "Clevis", "Beam", "Hake", "Sole", "Frog", "Shin", "Point", "Throat", "Wrest", "Jointer", "Bridle", "Trashboard", "Gauge", "Breast", "Hardie", "Fuller", "Swage"]
+const KIND_NAME := ["Belt", "Kiln", "Press", "Filter", "Splitter", "Roller", "Weir", "Bridge", "Grate", "Hook", "Arm", "Drop", "Lift", "Dwell", "Twin", "Pass", "Slip", "Shed", "Rake", "Hoe", "Harrow", "Fork", "Prong", "Share", "Coulter", "Moldboard", "Landside", "Slade", "Heel", "Stilt", "Clevis", "Beam", "Hake", "Sole", "Frog", "Shin", "Point", "Throat", "Wrest", "Jointer", "Bridle", "Trashboard", "Gauge", "Breast", "Hardie", "Fuller", "Swage", "Flatter"]
 const MAT_NAME := ["Ore", "Ingot", "Plate"]
 const DIR_NAME := ["East", "South", "West", "North"]
 
