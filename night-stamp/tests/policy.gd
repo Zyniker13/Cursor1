@@ -4718,6 +4718,68 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 		var jogb_after_empty = jogb_after_row <= 2 and state.form[jogb_after_row][jogb_after_col] == null
 		if jogb_before_empty and jogb_after_empty:
 			guess += _stamp_number(state, card_id, row, col)
+	if rule == "drop_if_drift_count":
+		var drift_filled = 0
+		for drift_row in 3:
+			for drift_col in 3:
+				if state.form[drift_row][drift_col] != null:
+					drift_filled += 1
+		var drift_next = drift_filled + 1
+		if drift_next == 9 or drift_next == 12:
+			guess -= 4
+		elif drift_filled == 9 or drift_filled == 12:
+			guess += 5
+	if rule == "double_hook_fill":
+		var hook_before_row = row
+		var hook_before_col = col - 9
+		while hook_before_col < 0:
+			hook_before_row -= 1
+			hook_before_col += 3
+		var hook_after_row = row
+		var hook_after_col = col + 1
+		while hook_after_col > 2:
+			hook_after_row += 1
+			hook_after_col -= 3
+		var hook_before_filled = hook_before_row >= 0 and state.form[hook_before_row][hook_before_col] != null
+		var hook_after_filled = hook_after_row <= 2 and state.form[hook_after_row][hook_after_col] != null
+		if hook_before_filled and hook_after_filled:
+			guess += _stamp_number(state, card_id, row, col)
+	if rule == "yield_set_pay":
+		var set_sides = 0
+		var set_corners = 0
+		for set_side in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var set_side_row = row + set_side.x
+			var set_side_col = col + set_side.y
+			if set_side_row < 0 or set_side_col < 0 or set_side_row > 2 or set_side_col > 2:
+				continue
+			if state.form[set_side_row][set_side_col] != null:
+				set_sides += 1
+		for set_corner in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var set_corner_row = row + set_corner.x
+			var set_corner_col = col + set_corner.y
+			if set_corner_row < 0 or set_corner_col < 0 or set_corner_row > 2 or set_corner_col > 2:
+				continue
+			if state.form[set_corner_row][set_corner_col] != null:
+				set_corners += 1
+		if set_sides == 7 and set_corners == 4:
+			guess += 4
+		else:
+			guess -= 1
+	if rule == "double_hook_blank":
+		var hookb_before_row = row
+		var hookb_before_col = col - 9
+		while hookb_before_col < 0:
+			hookb_before_row -= 1
+			hookb_before_col += 3
+		var hookb_after_row = row
+		var hookb_after_col = col + 1
+		while hookb_after_col > 2:
+			hookb_after_row += 1
+			hookb_after_col -= 3
+		var hookb_before_empty = hookb_before_row >= 0 and state.form[hookb_before_row][hookb_before_col] == null
+		var hookb_after_empty = hookb_after_row <= 2 and state.form[hookb_after_row][hookb_after_col] == null
+		if hookb_before_empty and hookb_after_empty:
+			guess += _stamp_number(state, card_id, row, col)
 	if rule == "ignore_isolated":
 		var neighbors = 0
 		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
