@@ -303,6 +303,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_architrave(at, rot)
 		"archivolt":
 			_draw_archivolt(at, rot)
+		"abacus":
+			_draw_abacus(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -1515,6 +1517,70 @@ func _archivolt_notch(center: Vector2, dir: String, mark: Color) -> void:
 	var base := center + outward * cell * 0.14
 	draw_line(base - along * cell * 0.10, tip, mark, 2.0)
 	draw_line(base + along * cell * 0.10, tip, mark, 2.0)
+
+func _draw_abacus(at: Vector2i, rot: int) -> void:
+	# A flat square slab, the capital's abacus, with a peg on the facing.
+	# A north abacus lays the slab across the upper half and pegs the north
+	# edge. The slab is square-ended. It is not the archivolt's arch and not
+	# the architrave's two posts.
+	var center := _center(at)
+	var facing := Tracer.abacus_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	_abacus_slab(center, facing, mark)
+	_abacus_peg(center, facing, mark)
+
+func _abacus_slab(center: Vector2, dir: String, mark: Color) -> void:
+	var along := Vector2.RIGHT
+	var outward := Vector2.UP
+	match dir:
+		"N":
+			along = Vector2.RIGHT
+			outward = Vector2.UP
+		"S":
+			along = Vector2.RIGHT
+			outward = Vector2.DOWN
+		"E":
+			along = Vector2.DOWN
+			outward = Vector2.RIGHT
+		_:
+			along = Vector2.DOWN
+			outward = Vector2.LEFT
+	var outer := center + outward * cell * 0.34
+	var inner := center + outward * cell * 0.08
+	var half := cell * 0.36
+	draw_colored_polygon(PackedVector2Array([
+		inner - along * half,
+		inner + along * half,
+		outer + along * half,
+		outer - along * half,
+	]), mark)
+
+func _abacus_peg(center: Vector2, dir: String, mark: Color) -> void:
+	var along := Vector2.RIGHT
+	var outward := Vector2.UP
+	match dir:
+		"N":
+			along = Vector2.RIGHT
+			outward = Vector2.UP
+		"S":
+			along = Vector2.RIGHT
+			outward = Vector2.DOWN
+		"E":
+			along = Vector2.DOWN
+			outward = Vector2.RIGHT
+		_:
+			along = Vector2.DOWN
+			outward = Vector2.LEFT
+	var tip := center + outward * cell * 0.42
+	var base := center + outward * cell * 0.30
+	var half := cell * 0.07
+	draw_colored_polygon(PackedVector2Array([
+		base - along * half,
+		base + along * half,
+		tip + along * half,
+		tip - along * half,
+	]), mark)
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
 	if dir == "N" or dir == "S":
