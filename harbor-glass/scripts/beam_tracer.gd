@@ -441,7 +441,7 @@ static func norm_rot(kind: String, rot: int) -> int:
 	# A cavetto uses the same four facings. Each one stops only the opposite
 	# of the facing and passes the other three directions. A north cavetto
 	# passes north, east, and west, which a north ovolo does not.
-	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma" or kind == "fascia" or kind == "soffit" or kind == "drip" or kind == "beak" or kind == "hood" or kind == "throat" or kind == "larmier" or kind == "cill" or kind == "threshold" or kind == "impost" or kind == "architrave" or kind == "archivolt":
+	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma" or kind == "fascia" or kind == "soffit" or kind == "drip" or kind == "beak" or kind == "hood" or kind == "throat" or kind == "larmier" or kind == "cill" or kind == "threshold" or kind == "impost" or kind == "architrave" or kind == "archivolt" or kind == "abacus":
 		return posmod(rot, 360)
 	# A shutter has no facing. Dry stops the beam; flooded water lets it pass.
 	# A well has no facing either. Dry stops the beam; flooded water sends it north.
@@ -840,6 +840,23 @@ static func archivolt_flood_passes(rot: int, dir: String) -> bool:
 	var facing := archivolt_facing(rot)
 	return dir == rotate_dir(facing, 1) or dir == rotate_dir(facing, -1)
 
+static func abacus_facing(rot: int) -> String:
+	# 0 north, 90 east, 180 south, 270 west. Dry, every heading stops, so
+	# there is no dry open set. Flooded, only the facing passes, so opposite
+	# facings do not share that set.
+	return rotate_dir("N", posmod(int(norm_rot("abacus", rot) / 90.0), 4))
+
+static func abacus_passes(_rot: int, _dir: String) -> bool:
+	# Dry rule. Every heading stops. A dry lintel passes every heading and
+	# stays shut under water, so this piece does not repeat that pair.
+	return false
+
+static func abacus_flood_passes(rot: int, dir: String) -> bool:
+	# Flooded rule. Only the facing passes. A flooded north abacus passes
+	# only north. East, west, and south stop. One click faces east and only
+	# east passes. A flooded north archivolt passes east and west instead.
+	return dir == abacus_facing(rot)
+
 static func sluice_facing(rot: int) -> String:
 	# 0 north, 90 east, 180 south, 270 west. The exit follows this facing.
 	return rotate_dir("N", posmod(int(rot / 90.0), 4))
@@ -1044,7 +1061,7 @@ static func _cast(
 		if flooded and not _flood_carries(occupants, cell):
 			# A flooded drip is not a full carrier. Only the dry-stopped
 			# direction enters. The other three stop at the waterline.
-			if not _flooded_drip_passes(occupants, cell, dir) and not _flooded_beak_passes(occupants, cell, dir) and not _flooded_hood_passes(occupants, cell, dir) and not _flooded_throat_passes(occupants, cell, dir) and not _flooded_larmier_passes(occupants, cell, dir) and not _flooded_cill_passes(occupants, cell, dir) and not _flooded_threshold_passes(occupants, cell, dir) and not _flooded_impost_passes(occupants, cell, dir) and not _flooded_architrave_passes(occupants, cell, dir) and not _flooded_archivolt_passes(occupants, cell, dir):
+			if not _flooded_drip_passes(occupants, cell, dir) and not _flooded_beak_passes(occupants, cell, dir) and not _flooded_hood_passes(occupants, cell, dir) and not _flooded_throat_passes(occupants, cell, dir) and not _flooded_larmier_passes(occupants, cell, dir) and not _flooded_cill_passes(occupants, cell, dir) and not _flooded_threshold_passes(occupants, cell, dir) and not _flooded_impost_passes(occupants, cell, dir) and not _flooded_architrave_passes(occupants, cell, dir) and not _flooded_archivolt_passes(occupants, cell, dir) and not _flooded_abacus_passes(occupants, cell, dir):
 				segments.append(_boundary_seg(prev, cell, color))
 				return
 		# A dry mullion passes north and south. East and west stop on the edge
@@ -1205,6 +1222,11 @@ static func _cast(
 		# already passed the waterline gate above, and only the two
 		# perpendicular headings are here.
 		if not flooded and _dry_archivolt_blocks(occupants, cell, dir):
+			segments.append(_boundary_seg(prev, cell, color))
+			return
+		# A dry abacus stops every heading on the edge. A flooded abacus
+		# already passed the waterline gate above, and only the facing is here.
+		if not flooded and _dry_abacus_blocks(occupants, cell, dir):
 			segments.append(_boundary_seg(prev, cell, color))
 			return
 		segments.append(_center_seg(prev, cell, color))
@@ -1531,6 +1553,13 @@ static func _cast(
 			prev = cell
 			cell = cell + VEC[dir]
 			continue
+		if kind == "abacus":
+			# Dry, every heading already stopped on the edge. Flooded, only
+			# the facing passes straight. Same direction, same color, no
+			# bounce, no turn, no recolor, no split.
+			prev = cell
+			cell = cell + VEC[dir]
+			continue
 		if kind == "pane":
 			if color != pane_color(int(occ["rot"])):
 				return
@@ -1597,6 +1626,9 @@ static func _flood_carries(occupants: Dictionary, cell: Vector2i) -> bool:
 	# An archivolt is not listed here either. Under water only the two
 	# headings perpendicular to its facing enter, and that exception is the
 	# same gate. While its row is dry, every heading stops.
+	# An abacus is not listed here either. Under water only its facing
+	# enters, and that exception is the same gate. While its row is dry,
+	# every heading stops.
 	# Every other flooded cell stops.
 	if not occupants.has(cell):
 		return false
@@ -1862,6 +1894,20 @@ static func _flooded_archivolt_passes(occupants: Dictionary, cell: Vector2i, dir
 	if str(occupants[cell]["kind"]) != "archivolt":
 		return false
 	return archivolt_flood_passes(int(occupants[cell]["rot"]), dir)
+
+static func _dry_abacus_blocks(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "abacus":
+		return false
+	return not abacus_passes(int(occupants[cell]["rot"]), dir)
+
+static func _flooded_abacus_passes(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "abacus":
+		return false
+	return abacus_flood_passes(int(occupants[cell]["rot"]), dir)
 
 static func _in_bounds(chart: Dictionary, cell: Vector2i) -> bool:
 	return cell.x >= 0 and cell.y >= 0 and cell.x < int(chart["cols"]) and cell.y < int(chart["rows"])

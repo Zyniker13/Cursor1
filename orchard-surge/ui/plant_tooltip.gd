@@ -52,6 +52,8 @@ static func stat_lines(kind: int) -> PackedStringArray:
 		lines.append("Surplice: %dpx" % int(round(float(stats["light_radius"]))))
 	elif bool(stats["cottas_scathe"]):
 		lines.append("Cotta: %dpx" % int(round(float(stats["light_radius"]))))
+	elif bool(stats["chimeres_cauter"]):
+		lines.append("Chimere: %dpx" % int(round(float(stats["light_radius"]))))
 	elif bool(stats["casts_light"]):
 		lines.append("Light: %dpx" % int(round(float(stats["light_radius"]))))
 	else:
@@ -184,4 +186,8 @@ static func stat_lines(kind: int) -> PackedStringArray:
 		lines.append("Scathe: cottas")
 	else:
 		lines.append("Scathe: none")
+	if bool(stats["chimeres_cauter"]):
+		lines.append("Cauter: chimeres")
+	else:
+		lines.append("Cauter: none")
 	return lines
