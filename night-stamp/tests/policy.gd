@@ -4718,6 +4718,68 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 		var jogb_after_empty = jogb_after_row <= 2 and state.form[jogb_after_row][jogb_after_col] == null
 		if jogb_before_empty and jogb_after_empty:
 			guess += _stamp_number(state, card_id, row, col)
+	if rule == "drop_if_burin_count":
+		var burin_filled = 0
+		for burin_row in 3:
+			for burin_col in 3:
+				if state.form[burin_row][burin_col] != null:
+					burin_filled += 1
+		var burin_next = burin_filled + 1
+		if burin_next == 27 or burin_next == 30:
+			guess -= 4
+		elif burin_filled == 27 or burin_filled == 30:
+			guess += 5
+	if rule == "double_arris_fill":
+		var arris_before_row = row
+		var arris_before_col = col - 21
+		while arris_before_col < 0:
+			arris_before_row -= 1
+			arris_before_col += 3
+		var arris_after_row = row
+		var arris_after_col = col + 1
+		while arris_after_col > 2:
+			arris_after_row += 1
+			arris_after_col -= 3
+		var arris_before_filled = arris_before_row >= 0 and state.form[arris_before_row][arris_before_col] != null
+		var arris_after_filled = arris_after_row <= 2 and state.form[arris_after_row][arris_after_col] != null
+		if arris_before_filled and arris_after_filled:
+			guess += _stamp_number(state, card_id, row, col)
+	if rule == "yield_rove_pay":
+		var rove_sides = 0
+		var rove_corners = 0
+		for rove_side in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var rove_side_row = row + rove_side.x
+			var rove_side_col = col + rove_side.y
+			if rove_side_row < 0 or rove_side_col < 0 or rove_side_row > 2 or rove_side_col > 2:
+				continue
+			if state.form[rove_side_row][rove_side_col] != null:
+				rove_sides += 1
+		for rove_corner in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var rove_corner_row = row + rove_corner.x
+			var rove_corner_col = col + rove_corner.y
+			if rove_corner_row < 0 or rove_corner_col < 0 or rove_corner_row > 2 or rove_corner_col > 2:
+				continue
+			if state.form[rove_corner_row][rove_corner_col] != null:
+				rove_corners += 1
+		if rove_sides == 19 and rove_corners == 4:
+			guess += 4
+		else:
+			guess -= 1
+	if rule == "double_arris_blank":
+		var arrisb_before_row = row
+		var arrisb_before_col = col - 21
+		while arrisb_before_col < 0:
+			arrisb_before_row -= 1
+			arrisb_before_col += 3
+		var arrisb_after_row = row
+		var arrisb_after_col = col + 1
+		while arrisb_after_col > 2:
+			arrisb_after_row += 1
+			arrisb_after_col -= 3
+		var arrisb_before_empty = arrisb_before_row >= 0 and state.form[arrisb_before_row][arrisb_before_col] == null
+		var arrisb_after_empty = arrisb_after_row <= 2 and state.form[arrisb_after_row][arrisb_after_col] == null
+		if arrisb_before_empty and arrisb_after_empty:
+			guess += _stamp_number(state, card_id, row, col)
 	if rule == "drop_if_graver_count":
 		var graver_filled = 0
 		for graver_row in 3:
