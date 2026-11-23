@@ -17,7 +17,7 @@ class_name ChartBook
 # The Corona holds eight more. The Bead holds eight more. The Quirk holds eight more.
 # The Cyma holds eight more. The Fascia holds eight more. The Soffit holds eight more.
 # The Drip holds eight more. The Beak holds eight more. The Hood holds eight more.
-# The Throat holds eight more. The Larmier holds eight more. The Cill holds eight more. The Threshold holds eight more. The Impost holds eight more. The Architrave holds the last eight.
+# The Throat holds eight more. The Larmier holds eight more. The Cill holds eight more. The Threshold holds eight more. The Impost holds eight more. The Architrave holds eight more. The Archivolt holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
@@ -293,6 +293,17 @@ class_name ChartBook
 # the facing. A dry threshold passes only the opposite. A cyma stays shut
 # under water. A dry corona passes the same perpendicular pair and stays shut
 # under water.
+# An archivolt has a facing. Rotation changes it the same way: 0 north, 90
+# east, 180 south, 270 west. While its row is dry, every heading stops on
+# the edge and the beam does not enter. While that row is flooded, the two
+# perpendicular headings pass straight through in the same direction and the
+# same color, and that pass costs no bounce. It does not turn, it does not
+# recolor, and it does not split. A flooded north archivolt passes east and
+# west and stops north and south. One click faces east and only north and
+# south pass. A flooded south archivolt passes the same east and west. A dry
+# north throat passes north, east, and west, and a flooded north throat
+# passes only south. That pair is the throat's. A flooded north cill passes
+# the same east and west, and while it is dry it passes north and south.
 # See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
@@ -340,6 +351,7 @@ const CILL := "The Cill"
 const THRESHOLD := "The Threshold"
 const IMPOST := "The Impost"
 const ARCHITRAVE := "The Architrave"
+const ARCHIVOLT := "The Archivolt"
 
 static func all() -> Array:
 	var book: Array = []
@@ -384,6 +396,7 @@ static func all() -> Array:
 	book.append_array(threshold())
 	book.append_array(impost())
 	book.append_array(architrave())
+	book.append_array(archivolt())
 	return book
 
 
@@ -549,6 +562,10 @@ static func impost() -> Array:
 
 static func architrave() -> Array:
 	return [chart_319(), chart_320(), chart_321(), chart_322(), chart_323(), chart_324(), chart_325(), chart_326()]
+
+
+static func archivolt() -> Array:
+	return [chart_327(), chart_328(), chart_329(), chart_330(), chart_331(), chart_332(), chart_333(), chart_334()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -12413,6 +12430,194 @@ static func chart_326() -> Dictionary:
 	}
 
 
+static func _archivolt_lane(prefix: String, ox: int, open_ns: bool) -> Dictionary:
+	return {
+		"lanterns": [
+			_lantern(prefix + "Le", ox + 0, 2, "S", "white"),
+			_lantern(prefix + "Lw", ox + 8, 2, "S", "blue"),
+			_lantern(prefix + "Ln", ox + 2, 1, "S", "red"),
+			_lantern(prefix + "Ls", ox + 4, 1, "S", "white"),
+		],
+		"docks": [
+			_dock(prefix + "Ed", ox + 8, 3, "white", true, open_ns),
+			_dock(prefix + "Wd", ox + 0, 3, "blue", true, open_ns),
+			_dock(prefix + "Kn", ox + 4, 3, "red", true, not open_ns),
+			_dock(prefix + "Ks", ox + 2, 3, "white", true, not open_ns),
+			_dock(prefix + "Kb", ox + 4, 2, "blue", true, true),
+		],
+		"fixtures": [
+			_fixture(prefix + "M04", "tide_mirror", ox + 0, 4, 90),
+			_fixture(prefix + "S14", "shutter", ox + 1, 4, 0),
+			_fixture(prefix + "S24", "shutter", ox + 2, 4, 0),
+			_fixture(prefix + "S34", "shutter", ox + 3, 4, 0),
+			_fixture(prefix + "S54", "shutter", ox + 5, 4, 0),
+			_fixture(prefix + "S64", "shutter", ox + 6, 4, 0),
+			_fixture(prefix + "S74", "shutter", ox + 7, 4, 0),
+			_fixture(prefix + "M84", "tide_mirror", ox + 8, 4, 0),
+			_fixture(prefix + "S25", "shutter", ox + 2, 5, 0),
+			_fixture(prefix + "S26", "shutter", ox + 2, 6, 0),
+			_fixture(prefix + "M27", "tide_mirror", ox + 2, 7, 90),
+			_fixture(prefix + "S37", "shutter", ox + 3, 7, 0),
+			_fixture(prefix + "M47", "tide_mirror", ox + 4, 7, 0),
+			_fixture(prefix + "S46", "shutter", ox + 4, 6, 0),
+			_fixture(prefix + "S45", "shutter", ox + 4, 5, 0),
+		],
+	}
+
+
+static func _archivolt_chart(id: String, title: String, teach: String, win: String, start_rot: int, sol_rot: int, open_ns: bool, boat: bool) -> Dictionary:
+	var lane := _archivolt_lane("", 0, open_ns)
+	var boats: Array = []
+	if boat:
+		boats.append(_boat("Hb", 0, 7))
+	return {
+		"id": id,
+		"title": title,
+		"harbor": ARCHIVOLT,
+		"win": win,
+		"teach": teach,
+		"cols": 9,
+		"rows": 8,
+		"tide_phases": [0, 4],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": lane["lanterns"],
+		"docks": lane["docks"],
+		"boats": boats,
+		"fixtures": lane["fixtures"],
+		"pieces": [
+			_archivolt("O", "Archivolt", 4, 4, start_rot, sol_rot),
+		],
+	}
+
+
+static func chart_327() -> Dictionary:
+	return _archivolt_chart(
+		"327",
+		"The Flooded Archivolt",
+		"A flooded north archivolt passes east and west and stops north and south. While the row is dry, every heading stops. One click faces east and only north and south pass. A flooded south archivolt passes the same east and west.",
+		"High water opens east and west. Low water stops every heading.",
+		90,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_328() -> Dictionary:
+	return _archivolt_chart(
+		"328",
+		"The Turned Archivolt",
+		"One click from north faces east. A flooded east archivolt passes only north and south and stops east and west.",
+		"The archivolt faces east. North and south pass.",
+		0,
+		90,
+		true,
+		false
+	)
+
+
+static func chart_329() -> Dictionary:
+	return _archivolt_chart(
+		"329",
+		"The Architrave Miss",
+		"A flooded architrave passes only the facing, so it misses east and west. A dry architrave passes the perpendicular headings and stays shut on the stopped axis.",
+		"East and west pass. The architrave misses those beams.",
+		180,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_330() -> Dictionary:
+	return _archivolt_chart(
+		"330",
+		"The Threshold Beam",
+		"A flooded north threshold passes north, east, and west, and stops south. The north keep catches that extra beam. A dry threshold passes only the opposite.",
+		"East and west pass. The threshold lights the north keep.",
+		270,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_331() -> Dictionary:
+	return _archivolt_chart(
+		"331",
+		"The Hood Miss",
+		"A flooded hood passes only the facing, so it misses east and west. A dry hood passes every heading except the facing.",
+		"East and west pass. The hood misses those beams.",
+		90,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_332() -> Dictionary:
+	var west := _archivolt_lane("", 0, false)
+	var east := _archivolt_lane("U", 10, true)
+	var lanterns: Array = []
+	lanterns.append_array(west["lanterns"])
+	lanterns.append_array(east["lanterns"])
+	var docks: Array = []
+	docks.append_array(west["docks"])
+	docks.append_array(east["docks"])
+	var fixtures: Array = []
+	fixtures.append_array(west["fixtures"])
+	fixtures.append_array(east["fixtures"])
+	return {
+		"id": "332",
+		"title": "Two Archivolts",
+		"harbor": ARCHIVOLT,
+		"win": "The west archivolt passes east and west. The east archivolt passes north and south.",
+		"teach": "Two archivolts. The west one passes east and west. The east one passes north and south. Swapping the facings misses.",
+		"cols": 19,
+		"rows": 8,
+		"tide_phases": [0, 4],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": lanterns,
+		"docks": docks,
+		"boats": [],
+		"fixtures": fixtures,
+		"pieces": [
+			_archivolt("O", "West archivolt", 4, 4, 90, 0),
+			_archivolt("U", "East archivolt", 14, 4, 0, 90),
+		],
+	}
+
+
+static func chart_333() -> Dictionary:
+	return _archivolt_chart(
+		"333",
+		"The Dry Shut",
+		"While the row is dry, every heading stops. Raise the tide and east and west pass.",
+		"Low water stops the archivolt. High water opens east and west.",
+		270,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_334() -> Dictionary:
+	return _archivolt_chart(
+		"334",
+		"The Archivolt Line",
+		"Raise the tide to the archivolt's row. Under water, east and west pass. Low water lights the hull and leaves those docks dark.",
+		"The flood line stands on the archivolt. The hull stays dark.",
+		90,
+		0,
+		false,
+		true
+	)
+
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -12861,6 +13066,20 @@ static func _throat(id: String, name: String, x: int, y: int, start_rot: int, so
 		"id": id,
 		"name": name,
 		"kind": "throat",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _archivolt(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "archivolt",
 		"movable": false,
 		"sockets": [{"id": "a", "x": x, "y": y}],
 		"start_socket": "a",

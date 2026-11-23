@@ -301,6 +301,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_impost(at, rot)
 		"architrave":
 			_draw_architrave(at, rot)
+		"archivolt":
+			_draw_archivolt(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -1453,6 +1455,66 @@ func _architrave_cap(center: Vector2, dir: String, mark: Color) -> void:
 		base + along * cell * 0.05,
 		tip,
 	]), mark)
+
+func _draw_archivolt(at: Vector2i, rot: int) -> void:
+	# A curved band on the facing, the dry stop, and an open notch on each
+	# perpendicular edge, the flood pass. A north archivolt arches the north
+	# edge and notches east and west. The band is curved. It is not the
+	# architrave's two posts and not the corona's two shelves.
+	var center := _center(at)
+	var facing := Tracer.archivolt_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	_archivolt_arch(center, facing, mark)
+	for turn in [1, -1]:
+		_archivolt_notch(center, Tracer.rotate_dir(facing, turn), mark)
+
+func _archivolt_arch(center: Vector2, dir: String, mark: Color) -> void:
+	var along := Vector2.RIGHT
+	var outward := Vector2.UP
+	match dir:
+		"N":
+			along = Vector2.RIGHT
+			outward = Vector2.UP
+		"S":
+			along = Vector2.RIGHT
+			outward = Vector2.DOWN
+		"E":
+			along = Vector2.DOWN
+			outward = Vector2.RIGHT
+		_:
+			along = Vector2.DOWN
+			outward = Vector2.LEFT
+	var outer := PackedVector2Array()
+	var inner := PackedVector2Array()
+	for i in 7:
+		var ang := lerpf(-PI * 0.5, PI * 0.5, float(i) / 6.0)
+		var side := along * sin(ang) + outward * cos(ang)
+		outer.append(center + side * cell * 0.40)
+		inner.append(center + side * cell * 0.26)
+	for i in 6:
+		draw_colored_polygon(PackedVector2Array([outer[i], outer[i + 1], inner[i + 1], inner[i]]), mark)
+
+func _archivolt_notch(center: Vector2, dir: String, mark: Color) -> void:
+	var along := Vector2.RIGHT
+	var outward := Vector2.DOWN
+	match dir:
+		"N":
+			along = Vector2.RIGHT
+			outward = Vector2.UP
+		"S":
+			along = Vector2.RIGHT
+			outward = Vector2.DOWN
+		"E":
+			along = Vector2.DOWN
+			outward = Vector2.RIGHT
+		_:
+			along = Vector2.DOWN
+			outward = Vector2.LEFT
+	var tip := center + outward * cell * 0.34
+	var base := center + outward * cell * 0.14
+	draw_line(base - along * cell * 0.10, tip, mark, 2.0)
+	draw_line(base + along * cell * 0.10, tip, mark, 2.0)
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
 	if dir == "N" or dir == "S":
