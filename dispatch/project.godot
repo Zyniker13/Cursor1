@@ -11,13 +11,13 @@ config_version=5
 [application]
 
 config/name="Dispatch"
-config/description="Route parcels through Building 1, Building 2, Building 3, Building 4, Building 5, Building 6, Building 7, Building 8, Building 9, Building 10, Building 11, Building 12, Building 13, Building 14, Building 15, Building 16, Building 17, Building 18, Building 19, Building 20, Building 21, Building 22, Building 23, Building 24, Building 25, Building 26, Building 27, Building 28, Building 29, Building 30, Building 31, Building 32, Building 33, Building 34, Building 35, Building 36, Building 37, Building 38, Building 39, Building 40, Building 41, Building 42, and Building 43."
+config/description="Route parcels through Building 1, Building 2, Building 3, Building 4, Building 5, Building 6, Building 7, Building 8, Building 9, Building 10, Building 11, Building 12, Building 13, Building 14, Building 15, Building 16, Building 17, Building 18, Building 19, Building 20, Building 21, Building 22, Building 23, Building 24, Building 25, Building 26, Building 27, Building 28, Building 29, Building 30, Building 31, Building 32, Building 33, Building 34, Building 35, Building 36, Building 37, Building 38, Building 39, Building 40, Building 41, Building 42, Building 43, Building 44, Building 45, and Building 46."
 run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
 [display]
 
-window/size/viewport_width=7316
+window/size/viewport_width=7844
 window/size/viewport_height=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"

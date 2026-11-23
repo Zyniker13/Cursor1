@@ -4174,6 +4174,366 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 				crookb_later_after_col -= 3
 			if crookb_later_after_row <= 2 and state.form[crookb_later_after_row][crookb_later_after_col] == null:
 				guess -= _stamp_number(state, String(crookb_later["card_id"]), crookb_later_row, crookb_later_col)
+	if rule == "drop_if_ream_count":
+		var ream_filled = 0
+		for ream_row in 3:
+			for ream_col in 3:
+				if state.form[ream_row][ream_col] != null:
+					ream_filled += 1
+		var ream_next = ream_filled + 1
+		if ream_next == 5 or ream_next == 8:
+			guess -= 4
+		elif ream_filled == 5 or ream_filled == 8:
+			guess += 5
+	if rule == "double_bend_fill":
+		var bend_before_row = row
+		var bend_before_col = col - 5
+		while bend_before_col < 0:
+			bend_before_row -= 1
+			bend_before_col += 3
+		var bend_after_row = row
+		var bend_after_col = col + 1
+		while bend_after_col > 2:
+			bend_after_row += 1
+			bend_after_col -= 3
+		var bend_before_filled = bend_before_row >= 0 and state.form[bend_before_row][bend_before_col] != null
+		var bend_after_filled = bend_after_row <= 2 and state.form[bend_after_row][bend_after_col] != null
+		if bend_before_filled and bend_after_filled:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+		var bend_prior_row = row
+		var bend_prior_col = col - 1
+		while bend_prior_col < 0:
+			bend_prior_row -= 1
+			bend_prior_col += 3
+		if bend_prior_row >= 0 and state.form[bend_prior_row][bend_prior_col] != null:
+			var bend_prior = state.form[bend_prior_row][bend_prior_col]
+			var bend_prior_before_row = bend_prior_row
+			var bend_prior_before_col = bend_prior_col - 5
+			while bend_prior_before_col < 0:
+				bend_prior_before_row -= 1
+				bend_prior_before_col += 3
+			if bend_prior_before_row >= 0 and state.form[bend_prior_before_row][bend_prior_before_col] != null:
+				guess += _stamp_number(state, String(bend_prior["card_id"]), bend_prior_row, bend_prior_col)
+		var bend_later_row = row
+		var bend_later_col = col + 5
+		while bend_later_col > 2:
+			bend_later_row += 1
+			bend_later_col -= 3
+		if bend_later_row <= 2 and state.form[bend_later_row][bend_later_col] != null:
+			var bend_later = state.form[bend_later_row][bend_later_col]
+			var bend_later_after_row = bend_later_row
+			var bend_later_after_col = bend_later_col + 1
+			while bend_later_after_col > 2:
+				bend_later_after_row += 1
+				bend_later_after_col -= 3
+			if bend_later_after_row <= 2 and state.form[bend_later_after_row][bend_later_after_col] != null:
+				guess += _stamp_number(state, String(bend_later["card_id"]), bend_later_row, bend_later_col)
+	if rule == "yield_clinch_pay":
+		var clinch_sides = 0
+		var clinch_corners = 0
+		for clinch_side in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var clinch_side_row = row + clinch_side.x
+			var clinch_side_col = col + clinch_side.y
+			if clinch_side_row < 0 or clinch_side_col < 0 or clinch_side_row > 2 or clinch_side_col > 2:
+				continue
+			if state.form[clinch_side_row][clinch_side_col] != null:
+				clinch_sides += 1
+		for clinch_corner in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var clinch_corner_row = row + clinch_corner.x
+			var clinch_corner_col = col + clinch_corner.y
+			if clinch_corner_row < 0 or clinch_corner_col < 0 or clinch_corner_row > 2 or clinch_corner_col > 2:
+				continue
+			if state.form[clinch_corner_row][clinch_corner_col] != null:
+				clinch_corners += 1
+		if clinch_sides == 3 and clinch_corners == 4:
+			guess += 4
+		else:
+			guess -= 1
+		for clinch_side in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var clinch_near_row = row + clinch_side.x
+			var clinch_near_col = col + clinch_side.y
+			if clinch_near_row < 0 or clinch_near_col < 0 or clinch_near_row > 2 or clinch_near_col > 2:
+				continue
+			if state.form[clinch_near_row][clinch_near_col] == null:
+				continue
+			var clinch_other_sides = 0
+			var clinch_other_corners = 0
+			for clinch_other in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+				var clinch_other_row = clinch_near_row + clinch_other.x
+				var clinch_other_col = clinch_near_col + clinch_other.y
+				if clinch_other_row < 0 or clinch_other_col < 0 or clinch_other_row > 2 or clinch_other_col > 2:
+					continue
+				if clinch_other_row == row and clinch_other_col == col:
+					continue
+				if state.form[clinch_other_row][clinch_other_col] != null:
+					clinch_other_sides += 1
+			for clinch_other in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+				var clinch_other_row = clinch_near_row + clinch_other.x
+				var clinch_other_col = clinch_near_col + clinch_other.y
+				if clinch_other_row < 0 or clinch_other_col < 0 or clinch_other_row > 2 or clinch_other_col > 2:
+					continue
+				if state.form[clinch_other_row][clinch_other_col] != null:
+					clinch_other_corners += 1
+			if clinch_other_sides == 2 and clinch_other_corners == 4:
+				guess += 2
+			elif clinch_other_sides == 3 and clinch_other_corners == 4:
+				guess -= 2
+		for clinch_corner in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var clinch_diag_row = row + clinch_corner.x
+			var clinch_diag_col = col + clinch_corner.y
+			if clinch_diag_row < 0 or clinch_diag_col < 0 or clinch_diag_row > 2 or clinch_diag_col > 2:
+				continue
+			if state.form[clinch_diag_row][clinch_diag_col] == null:
+				continue
+			var clinch_diag_sides = 0
+			var clinch_diag_corners = 0
+			for clinch_other in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+				var clinch_other_row = clinch_diag_row + clinch_other.x
+				var clinch_other_col = clinch_diag_col + clinch_other.y
+				if clinch_other_row < 0 or clinch_other_col < 0 or clinch_other_row > 2 or clinch_other_col > 2:
+					continue
+				if state.form[clinch_other_row][clinch_other_col] != null:
+					clinch_diag_sides += 1
+			for clinch_other in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+				var clinch_other_row = clinch_diag_row + clinch_other.x
+				var clinch_other_col = clinch_diag_col + clinch_other.y
+				if clinch_other_row < 0 or clinch_other_col < 0 or clinch_other_row > 2 or clinch_other_col > 2:
+					continue
+				if clinch_other_row == row and clinch_other_col == col:
+					continue
+				if state.form[clinch_other_row][clinch_other_col] != null:
+					clinch_diag_corners += 1
+			if clinch_diag_corners == 3 and clinch_diag_sides == 3:
+				guess += 2
+			elif clinch_diag_corners == 4 and clinch_diag_sides == 3:
+				guess -= 2
+	if rule == "double_bend_blank":
+		var bendb_before_row = row
+		var bendb_before_col = col - 5
+		while bendb_before_col < 0:
+			bendb_before_row -= 1
+			bendb_before_col += 3
+		var bendb_after_row = row
+		var bendb_after_col = col + 1
+		while bendb_after_col > 2:
+			bendb_after_row += 1
+			bendb_after_col -= 3
+		var bendb_before_empty = bendb_before_row >= 0 and state.form[bendb_before_row][bendb_before_col] == null
+		var bendb_after_empty = bendb_after_row <= 2 and state.form[bendb_after_row][bendb_after_col] == null
+		if bendb_before_empty and bendb_after_empty:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+		var bendb_prior_row = row
+		var bendb_prior_col = col - 1
+		while bendb_prior_col < 0:
+			bendb_prior_row -= 1
+			bendb_prior_col += 3
+		if bendb_prior_row >= 0 and state.form[bendb_prior_row][bendb_prior_col] != null:
+			var bendb_prior = state.form[bendb_prior_row][bendb_prior_col]
+			var bendb_prior_before_row = bendb_prior_row
+			var bendb_prior_before_col = bendb_prior_col - 5
+			while bendb_prior_before_col < 0:
+				bendb_prior_before_row -= 1
+				bendb_prior_before_col += 3
+			if bendb_prior_before_row >= 0 and state.form[bendb_prior_before_row][bendb_prior_before_col] == null:
+				guess -= _stamp_number(state, String(bendb_prior["card_id"]), bendb_prior_row, bendb_prior_col)
+		var bendb_later_row = row
+		var bendb_later_col = col + 5
+		while bendb_later_col > 2:
+			bendb_later_row += 1
+			bendb_later_col -= 3
+		if bendb_later_row <= 2 and state.form[bendb_later_row][bendb_later_col] != null:
+			var bendb_later = state.form[bendb_later_row][bendb_later_col]
+			var bendb_later_after_row = bendb_later_row
+			var bendb_later_after_col = bendb_later_col + 1
+			while bendb_later_after_col > 2:
+				bendb_later_after_row += 1
+				bendb_later_after_col -= 3
+			if bendb_later_after_row <= 2 and state.form[bendb_later_after_row][bendb_later_after_col] == null:
+				guess -= _stamp_number(state, String(bendb_later["card_id"]), bendb_later_row, bendb_later_col)
+	if rule == "drop_if_burr_count":
+		var burr_filled = 0
+		for burr_row in 3:
+			for burr_col in 3:
+				if state.form[burr_row][burr_col] != null:
+					burr_filled += 1
+		var burr_next = burr_filled + 1
+		if burr_next == 6 or burr_next == 9:
+			guess -= 4
+		elif burr_filled == 6 or burr_filled == 9:
+			guess += 5
+	if rule == "double_kink_fill":
+		var kink_before_row = row
+		var kink_before_col = col - 6
+		while kink_before_col < 0:
+			kink_before_row -= 1
+			kink_before_col += 3
+		var kink_after_row = row
+		var kink_after_col = col + 1
+		while kink_after_col > 2:
+			kink_after_row += 1
+			kink_after_col -= 3
+		var kink_before_filled = kink_before_row >= 0 and state.form[kink_before_row][kink_before_col] != null
+		var kink_after_filled = kink_after_row <= 2 and state.form[kink_after_row][kink_after_col] != null
+		if kink_before_filled and kink_after_filled:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+		var kink_prior_row = row
+		var kink_prior_col = col - 1
+		while kink_prior_col < 0:
+			kink_prior_row -= 1
+			kink_prior_col += 3
+		if kink_prior_row >= 0 and state.form[kink_prior_row][kink_prior_col] != null:
+			var kink_prior = state.form[kink_prior_row][kink_prior_col]
+			var kink_prior_before_row = kink_prior_row
+			var kink_prior_before_col = kink_prior_col - 6
+			while kink_prior_before_col < 0:
+				kink_prior_before_row -= 1
+				kink_prior_before_col += 3
+			if kink_prior_before_row >= 0 and state.form[kink_prior_before_row][kink_prior_before_col] != null:
+				guess += _stamp_number(state, String(kink_prior["card_id"]), kink_prior_row, kink_prior_col)
+		var kink_later_row = row
+		var kink_later_col = col + 6
+		while kink_later_col > 2:
+			kink_later_row += 1
+			kink_later_col -= 3
+		if kink_later_row <= 2 and state.form[kink_later_row][kink_later_col] != null:
+			var kink_later = state.form[kink_later_row][kink_later_col]
+			var kink_later_after_row = kink_later_row
+			var kink_later_after_col = kink_later_col + 1
+			while kink_later_after_col > 2:
+				kink_later_after_row += 1
+				kink_later_after_col -= 3
+			if kink_later_after_row <= 2 and state.form[kink_later_after_row][kink_later_after_col] != null:
+				guess += _stamp_number(state, String(kink_later["card_id"]), kink_later_row, kink_later_col)
+	if rule == "yield_clench_pay":
+		var clench_sides = 0
+		var clench_corners = 0
+		for clench_side in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var clench_side_row = row + clench_side.x
+			var clench_side_col = col + clench_side.y
+			if clench_side_row < 0 or clench_side_col < 0 or clench_side_row > 2 or clench_side_col > 2:
+				continue
+			if state.form[clench_side_row][clench_side_col] != null:
+				clench_sides += 1
+		for clench_corner in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var clench_corner_row = row + clench_corner.x
+			var clench_corner_col = col + clench_corner.y
+			if clench_corner_row < 0 or clench_corner_col < 0 or clench_corner_row > 2 or clench_corner_col > 2:
+				continue
+			if state.form[clench_corner_row][clench_corner_col] != null:
+				clench_corners += 1
+		if clench_sides == 4 and clench_corners == 4:
+			guess += 4
+		else:
+			guess -= 1
+		for clench_side in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var clench_near_row = row + clench_side.x
+			var clench_near_col = col + clench_side.y
+			if clench_near_row < 0 or clench_near_col < 0 or clench_near_row > 2 or clench_near_col > 2:
+				continue
+			if state.form[clench_near_row][clench_near_col] == null:
+				continue
+			var clench_other_sides = 0
+			var clench_other_corners = 0
+			for clench_other in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+				var clench_other_row = clench_near_row + clench_other.x
+				var clench_other_col = clench_near_col + clench_other.y
+				if clench_other_row < 0 or clench_other_col < 0 or clench_other_row > 2 or clench_other_col > 2:
+					continue
+				if clench_other_row == row and clench_other_col == col:
+					continue
+				if state.form[clench_other_row][clench_other_col] != null:
+					clench_other_sides += 1
+			for clench_other in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+				var clench_other_row = clench_near_row + clench_other.x
+				var clench_other_col = clench_near_col + clench_other.y
+				if clench_other_row < 0 or clench_other_col < 0 or clench_other_row > 2 or clench_other_col > 2:
+					continue
+				if state.form[clench_other_row][clench_other_col] != null:
+					clench_other_corners += 1
+			if clench_other_sides == 3 and clench_other_corners == 4:
+				guess += 2
+			elif clench_other_sides == 4 and clench_other_corners == 4:
+				guess -= 2
+		for clench_corner in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var clench_diag_row = row + clench_corner.x
+			var clench_diag_col = col + clench_corner.y
+			if clench_diag_row < 0 or clench_diag_col < 0 or clench_diag_row > 2 or clench_diag_col > 2:
+				continue
+			if state.form[clench_diag_row][clench_diag_col] == null:
+				continue
+			var clench_diag_sides = 0
+			var clench_diag_corners = 0
+			for clench_other in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+				var clench_other_row = clench_diag_row + clench_other.x
+				var clench_other_col = clench_diag_col + clench_other.y
+				if clench_other_row < 0 or clench_other_col < 0 or clench_other_row > 2 or clench_other_col > 2:
+					continue
+				if state.form[clench_other_row][clench_other_col] != null:
+					clench_diag_sides += 1
+			for clench_other in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+				var clench_other_row = clench_diag_row + clench_other.x
+				var clench_other_col = clench_diag_col + clench_other.y
+				if clench_other_row < 0 or clench_other_col < 0 or clench_other_row > 2 or clench_other_col > 2:
+					continue
+				if clench_other_row == row and clench_other_col == col:
+					continue
+				if state.form[clench_other_row][clench_other_col] != null:
+					clench_diag_corners += 1
+			if clench_diag_corners == 3 and clench_diag_sides == 4:
+				guess += 2
+			elif clench_diag_corners == 4 and clench_diag_sides == 4:
+				guess -= 2
+	if rule == "double_kink_blank":
+		var kinkb_before_row = row
+		var kinkb_before_col = col - 6
+		while kinkb_before_col < 0:
+			kinkb_before_row -= 1
+			kinkb_before_col += 3
+		var kinkb_after_row = row
+		var kinkb_after_col = col + 1
+		while kinkb_after_col > 2:
+			kinkb_after_row += 1
+			kinkb_after_col -= 3
+		var kinkb_before_empty = kinkb_before_row >= 0 and state.form[kinkb_before_row][kinkb_before_col] == null
+		var kinkb_after_empty = kinkb_after_row <= 2 and state.form[kinkb_after_row][kinkb_after_col] == null
+		if kinkb_before_empty and kinkb_after_empty:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+		var kinkb_prior_row = row
+		var kinkb_prior_col = col - 1
+		while kinkb_prior_col < 0:
+			kinkb_prior_row -= 1
+			kinkb_prior_col += 3
+		if kinkb_prior_row >= 0 and state.form[kinkb_prior_row][kinkb_prior_col] != null:
+			var kinkb_prior = state.form[kinkb_prior_row][kinkb_prior_col]
+			var kinkb_prior_before_row = kinkb_prior_row
+			var kinkb_prior_before_col = kinkb_prior_col - 6
+			while kinkb_prior_before_col < 0:
+				kinkb_prior_before_row -= 1
+				kinkb_prior_before_col += 3
+			if kinkb_prior_before_row >= 0 and state.form[kinkb_prior_before_row][kinkb_prior_before_col] == null:
+				guess -= _stamp_number(state, String(kinkb_prior["card_id"]), kinkb_prior_row, kinkb_prior_col)
+		var kinkb_later_row = row
+		var kinkb_later_col = col + 6
+		while kinkb_later_col > 2:
+			kinkb_later_row += 1
+			kinkb_later_col -= 3
+		if kinkb_later_row <= 2 and state.form[kinkb_later_row][kinkb_later_col] != null:
+			var kinkb_later = state.form[kinkb_later_row][kinkb_later_col]
+			var kinkb_later_after_row = kinkb_later_row
+			var kinkb_later_after_col = kinkb_later_col + 1
+			while kinkb_later_after_col > 2:
+				kinkb_later_after_row += 1
+				kinkb_later_after_col -= 3
+			if kinkb_later_after_row <= 2 and state.form[kinkb_later_after_row][kinkb_later_after_col] == null:
+				guess -= _stamp_number(state, String(kinkb_later["card_id"]), kinkb_later_row, kinkb_later_col)
 	if rule == "ignore_isolated":
 		var neighbors = 0
 		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
