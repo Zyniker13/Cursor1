@@ -305,6 +305,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_archivolt(at, rot)
 		"abacus":
 			_draw_abacus(at, rot)
+		"rebate":
+			_draw_rebate(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -1580,6 +1582,65 @@ func _abacus_peg(center: Vector2, dir: String, mark: Color) -> void:
 		base + along * half,
 		tip + along * half,
 		tip - along * half,
+	]), mark)
+
+func _draw_rebate(at: Vector2i, rot: int) -> void:
+	# A rectangular recess open on the opposite edge. A north rebate leaves
+	# the south side open. It is not the abacus slab and not the archivolt arch.
+	var center := _center(at)
+	var facing := Tracer.rebate_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var gap := "S"
+	match facing:
+		"N":
+			gap = "S"
+		"S":
+			gap = "N"
+		"E":
+			gap = "W"
+		_:
+			gap = "E"
+	_rebate_channel(center, gap, mark)
+
+func _rebate_channel(center: Vector2, gap: String, mark: Color) -> void:
+	var along := Vector2.RIGHT
+	var outward := Vector2.DOWN
+	match gap:
+		"S":
+			along = Vector2.RIGHT
+			outward = Vector2.DOWN
+		"N":
+			along = Vector2.RIGHT
+			outward = Vector2.UP
+		"W":
+			along = Vector2.DOWN
+			outward = Vector2.LEFT
+		_:
+			along = Vector2.DOWN
+			outward = Vector2.RIGHT
+	var half := cell * 0.34
+	var thick := cell * 0.08
+	var back := center - outward * cell * 0.28
+	var side := cell * 0.28
+	draw_colored_polygon(PackedVector2Array([
+		back - along * half,
+		back + along * half,
+		back + along * half - outward * thick,
+		back - along * half - outward * thick,
+	]), mark)
+	var cheek := center + outward * cell * 0.16
+	draw_colored_polygon(PackedVector2Array([
+		back - along * half,
+		back - along * half + along * thick,
+		cheek - along * side + along * thick,
+		cheek - along * side,
+	]), mark)
+	draw_colored_polygon(PackedVector2Array([
+		back + along * half,
+		back + along * half - along * thick,
+		cheek + along * side - along * thick,
+		cheek + along * side,
 	]), mark)
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
