@@ -315,6 +315,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_listel(at, rot)
 		"necking":
 			_draw_necking(at, rot)
+		"taenia":
+			_draw_taenia(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -1901,6 +1903,56 @@ func _necking_tick(center: Vector2, dir: String, mark: Color) -> void:
 	var inner := center + outward * cell * 0.36
 	var outer := center + outward * cell * 0.48
 	var half := cell * 0.04
+	draw_colored_polygon(PackedVector2Array([
+		inner - across * half,
+		inner + across * half,
+		outer + across * half,
+		outer - across * half,
+	]), mark)
+
+func _draw_taenia(at: Vector2i, rot: int) -> void:
+	# A broad ribbon along the open axis, with a tick at each end. It is wider
+	# than the listel band and is not the necking's closed collar.
+	var center := _center(at)
+	var facing := Tracer.taenia_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var along := Vector2.DOWN
+	var other := "S"
+	match facing:
+		"N", "S":
+			along = Vector2.DOWN
+			other = "S" if facing == "N" else "N"
+		_:
+			along = Vector2.RIGHT
+			other = "W" if facing == "E" else "E"
+	var half := cell * 0.40
+	var thick := cell * 0.11
+	var across := Vector2(-along.y, along.x)
+	draw_colored_polygon(PackedVector2Array([
+		center - along * half - across * thick,
+		center + along * half - across * thick,
+		center + along * half + across * thick,
+		center - along * half + across * thick,
+	]), mark)
+	_taenia_tick(center, facing, mark)
+	_taenia_tick(center, other, mark)
+
+func _taenia_tick(center: Vector2, dir: String, mark: Color) -> void:
+	var outward := Vector2.UP
+	match dir:
+		"N":
+			outward = Vector2.UP
+		"E":
+			outward = Vector2.RIGHT
+		"S":
+			outward = Vector2.DOWN
+		_:
+			outward = Vector2.LEFT
+	var across := Vector2(-outward.y, outward.x)
+	var inner := center + outward * cell * 0.42
+	var outer := center + outward * cell * 0.50
+	var half := cell * 0.07
 	draw_colored_polygon(PackedVector2Array([
 		inner - across * half,
 		inner + across * half,
