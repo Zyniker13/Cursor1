@@ -106,6 +106,10 @@ func _run() -> void:
 	test_archivolt_book()
 	test_abacus_rule()
 	test_abacus_book()
+	test_rebate_rule()
+	test_rebate_book()
+	test_echinus_rule()
+	test_echinus_book()
 	test_chart_4_boat()
 	test_one_rotation_is_not_solved()
 	test_hint_points_at_one_piece()
@@ -294,7 +298,9 @@ func test_charts() -> void:
 	check(Charts.architrave().size() == 8, "architrave adds eight charts")
 	check(Charts.archivolt().size() == 8, "archivolt adds eight charts")
 	check(Charts.abacus().size() == 8, "abacus adds eight charts")
-	check(book.size() == 342, "three hundred forty-two charts")
+	check(Charts.rebate().size() == 8, "rebate adds eight charts")
+	check(Charts.echinus().size() == 8, "echinus adds eight charts")
+	check(book.size() == 358, "three hundred fifty-eight charts")
 	check(str(book[13]["id"]) == "14" and str(book[13]["title"]) == "The Holding Line", "chart 14 stays the reach capstone")
 	check(str(book[14]["title"]) == "North Light", "chart 15 opens the basin")
 	check(str(book[21]["id"]) == "22" and str(book[21]["title"]) == "The Basin Mark", "chart 22 stays the basin capstone")
@@ -378,6 +384,10 @@ func test_charts() -> void:
 	check(str(book[333]["id"]) == "334" and str(book[333]["title"]) == "The Archivolt Line", "chart 334 stays the archivolt capstone")
 	check(str(book[334]["title"]) == "The Flooded Abacus", "chart 335 opens the abacus")
 	check(str(book[341]["id"]) == "342" and str(book[341]["title"]) == "The Abacus Line", "chart 342 stays the abacus capstone")
+	check(str(book[342]["title"]) == "The Flooded Rebate", "chart 343 opens the rebate")
+	check(str(book[349]["id"]) == "350" and str(book[349]["title"]) == "The Rebate Line", "chart 350 stays the rebate capstone")
+	check(str(book[350]["title"]) == "The Flooded Echinus", "chart 351 opens the echinus")
+	check(str(book[357]["id"]) == "358" and str(book[357]["title"]) == "The Echinus Line", "chart 358 stays the echinus capstone")
 	var seen_ids := {}
 	var seen_titles := {}
 	var quay_titles := ["First Glass", "Around the Pilings", "High Water", "Sleeping Hull", "Split the White", "The Night Mark"]
@@ -13198,6 +13208,206 @@ func _fixed_abacus(id: String, x: int, y: int, rot: int) -> Dictionary:
 	}
 
 
+func test_rebate_rule() -> void:
+	for dir in ["N", "E", "S", "W"]:
+		check(not Tracer.rebate_passes(0, dir), "a dry rebate stops %s" % dir)
+		check(not Tracer.rebate_passes(90, dir), "a turned dry rebate still stops %s" % dir)
+	check(Tracer.rebate_flood_passes(0, "S"), "a flooded north rebate passes only south")
+	check(not Tracer.rebate_flood_passes(0, "N") and not Tracer.rebate_flood_passes(0, "E") and not Tracer.rebate_flood_passes(0, "W"), "a flooded north rebate stops east, west, and north")
+	check(Tracer.rebate_flood_passes(90, "W"), "one click faces the rebate east and only west passes")
+	check(not Tracer.rebate_flood_passes(90, "E") and not Tracer.rebate_flood_passes(90, "N") and not Tracer.rebate_flood_passes(90, "S"), "a flooded east rebate stops the other headings")
+	check(Tracer.rebate_flood_passes(180, "N") and not Tracer.rebate_flood_passes(180, "S"), "a flooded south rebate passes only north")
+	check(not Tracer.abacus_passes(0, "N") and not Tracer.abacus_passes(90, "E"), "a dry abacus still stops every heading")
+	check(Tracer.abacus_flood_passes(0, "N") and not Tracer.abacus_flood_passes(0, "E") and not Tracer.abacus_flood_passes(0, "S"), "a flooded north abacus still passes only north")
+	check(Tracer.abacus_flood_passes(90, "E") and not Tracer.abacus_flood_passes(90, "W"), "one click still opens only the abacus facing")
+	check(not Tracer.archivolt_passes(0, "S") and not Tracer.archivolt_passes(0, "E"), "a dry archivolt still stops every heading")
+	check(Tracer.archivolt_flood_passes(0, "E") and Tracer.archivolt_flood_passes(0, "W") and not Tracer.archivolt_flood_passes(0, "N") and not Tracer.archivolt_flood_passes(0, "S"), "a flooded north archivolt still passes only east and west")
+	check(Tracer.throat_passes(0, "N") and Tracer.throat_passes(0, "E") and not Tracer.throat_passes(0, "S"), "a dry north throat still passes every heading except south")
+	check(Tracer.throat_flood_passes(0, "S") and not Tracer.throat_flood_passes(0, "N"), "a flooded north throat still passes only south")
+
+
+func test_rebate_book() -> void:
+	var book := Charts.rebate()
+	check(book.size() == 8, "the rebate book has eight charts")
+	var titles := ["The Flooded Rebate", "The Turned Rebate", "The Abacus Miss", "The Archivolt Stop", "The Throat Aside", "Two Rebates", "The Shut Rebate", "The Rebate Line"]
+	for i in book.size():
+		var chart: Dictionary = book[i]
+		check(str(chart["harbor"]) == Charts.REBATE, "chart %s belongs to the rebate" % str(chart["id"]))
+		check(str(chart["title"]) == titles[i], "chart %s keeps its title" % str(chart["id"]))
+		_expect_rebate_misses(chart)
+	check(str(book[2]["teach"]).to_lower().contains("abacus"), "chart 345 names the abacus")
+	check(str(book[3]["teach"]).to_lower().contains("archivolt"), "chart 346 names the archivolt")
+	check(str(book[4]["teach"]).to_lower().contains("throat"), "chart 347 names the throat")
+	_expect_rebate_miss(book[2], "O", "abacus", 0, "a flooded north abacus misses chart 345")
+	_expect_rebate_miss(book[3], "O", "archivolt", 0, "a flooded archivolt misses chart 346")
+	_expect_rebate_miss(book[4], "O", "throat", 90, "a flooded east throat misses chart 347")
+	var shared: Dictionary = book[0].duplicate(true)
+	_retarget(shared, "O", "throat", 0)
+	check(Tracer.is_cleared(shared, Charts.make_state(shared, true)), "a flooded north throat shares the south beam")
+	var south_abacus: Dictionary = book[0].duplicate(true)
+	_retarget(south_abacus, "O", "abacus", 180)
+	check(Tracer.is_cleared(south_abacus, Charts.make_state(south_abacus, true)), "a flooded south abacus shares the south beam")
+	var pair: Dictionary = book[5]
+	var swapped: Dictionary = pair.duplicate(true)
+	_retarget(swapped, "O", "rebate", 90)
+	_retarget(swapped, "U", "rebate", 0)
+	check(not Tracer.is_cleared(swapped, Charts.make_state(swapped, true)), "swapping the two rebate facings misses")
+	var north: Dictionary = pair.duplicate(true)
+	_retarget(north, "O", "rebate", 180)
+	check(not Tracer.is_cleared(north, Charts.make_state(north, true)), "the opposite west rebate does not clear")
+	var eastward: Dictionary = pair.duplicate(true)
+	_retarget(eastward, "U", "rebate", 270)
+	check(not Tracer.is_cleared(eastward, Charts.make_state(eastward, true)), "the opposite east rebate does not clear")
+	var low: Dictionary = Charts.duplicate_state(Charts.make_state(book[6], true))
+	low["tide_index"] = 0
+	check(not Tracer.is_cleared(book[6], low), "low water on chart 349 stays shut")
+	var line: Dictionary = book[7]
+	var lit: Dictionary = Tracer.trace(line, Charts.make_state(line, true))
+	check(not bool(lit["boats"]["Hb"]), "the rebate line keeps the hull dark")
+	var ebb: Dictionary = Charts.duplicate_state(Charts.make_state(line, true))
+	ebb["tide_index"] = 0
+	var ebb_trace: Dictionary = Tracer.trace(line, ebb)
+	check(bool(ebb_trace["boats"]["Hb"]) and not Tracer.is_cleared(line, ebb), "low water lights the hull and does not clear")
+
+
+func _expect_rebate_misses(chart: Dictionary) -> void:
+	var kinds: Array = ["abacus", "archivolt", "throat", "hood", "architrave", "cyma", "impost", "threshold", "corona", "larmier", "cill", "fillet", "drip", "beak", "vane", "weir", "sluice", "prism", "jamb", "transom", "mullion", "lintel", "shutter", "stain"]
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		var pid := str(piece["id"])
+		var facing := Tracer.rebate_facing(int(piece["solution_rot"]))
+		for kind in kinds:
+			for rot in [0, 90, 180, 270]:
+				if _rebate_kind_clears(kind, rot, facing):
+					continue
+				_expect_rebate_miss(chart, pid, kind, rot, "chart %s %s %s at %d misses" % [str(chart["id"]), pid, kind, rot])
+
+
+func _rebate_kind_clears(kind: String, rot: int, facing: String) -> bool:
+	var open := Tracer.rotate_dir(facing, 2)
+	if kind == "throat":
+		return Tracer.throat_flood_passes(rot, open)
+	if kind == "abacus":
+		return Tracer.abacus_flood_passes(rot, open)
+	if kind == "hood":
+		return Tracer.hood_flood_passes(rot, open)
+	if kind == "architrave":
+		return Tracer.architrave_flood_passes(rot, open)
+	if kind == "drip":
+		return Tracer.drip_flood_passes(rot, open)
+	if kind == "beak":
+		return Tracer.beak_flood_passes(rot, open)
+	if kind == "weir":
+		return Tracer.weir_facing(rot) == open
+	if kind == "sluice":
+		return Tracer.sluice_facing(rot) == open
+	return false
+
+
+func _expect_rebate_miss(chart: Dictionary, piece_id: String, kind: String, rot: int, label: String) -> void:
+	var copy: Dictionary = chart.duplicate(true)
+	_retarget(copy, piece_id, kind, rot)
+	check(not Tracer.is_cleared(copy, Charts.make_state(copy, true)), label)
+
+
+func test_echinus_rule() -> void:
+	check(Tracer.echinus_passes(0, "N") and Tracer.echinus_passes(0, "E") and Tracer.echinus_passes(0, "W") and not Tracer.echinus_passes(0, "S"), "a dry north echinus passes every heading except south")
+	check(Tracer.echinus_passes(90, "E") and Tracer.echinus_passes(90, "S") and Tracer.echinus_passes(90, "N") and not Tracer.echinus_passes(90, "W"), "one dry click faces east and stops only west")
+	check(not Tracer.echinus_passes(180, "N"), "opposite dry facings do not share the stopped heading")
+	check(Tracer.echinus_flood_passes(0, "E") and not Tracer.echinus_flood_passes(0, "N") and not Tracer.echinus_flood_passes(0, "W") and not Tracer.echinus_flood_passes(0, "S"), "a flooded north echinus passes only east")
+	check(Tracer.echinus_flood_passes(90, "S") and not Tracer.echinus_flood_passes(90, "E"), "one flooded click faces east and only south passes")
+	check(Tracer.echinus_flood_passes(180, "W") and not Tracer.echinus_flood_passes(180, "E"), "a flooded south echinus passes only west")
+	check(not Tracer.echinus_flood_passes(0, "W") and not Tracer.echinus_flood_passes(180, "E"), "opposite flooded facings do not share the clockwise heading")
+	check(Tracer.fillet_passes(0, "S") and not Tracer.fillet_passes(0, "N") and not Tracer.fillet_passes(0, "E"), "a dry fillet still passes only south")
+	check(not Tracer.rebate_passes(0, "S") and Tracer.rebate_flood_passes(0, "S") and not Tracer.rebate_flood_passes(0, "E"), "a flooded north rebate still passes only south")
+	check(not Tracer.abacus_passes(0, "N") and Tracer.abacus_flood_passes(0, "N") and not Tracer.abacus_flood_passes(0, "E"), "a flooded north abacus still passes only north")
+	check(Tracer.throat_passes(0, "N") and Tracer.throat_passes(0, "E") and not Tracer.throat_passes(0, "S"), "a dry north throat still passes every heading except south")
+	check(Tracer.throat_flood_passes(0, "S") and not Tracer.throat_flood_passes(0, "E"), "a flooded north throat still passes only south")
+
+
+func test_echinus_book() -> void:
+	var book := Charts.echinus()
+	check(book.size() == 8, "the echinus book has eight charts")
+	var titles := ["The Flooded Echinus", "The Turned Echinus", "The Rebate Miss", "The Abacus North", "The Opposite Stop", "Two Echini", "The Dry Spread", "The Echinus Line"]
+	for i in book.size():
+		var chart: Dictionary = book[i]
+		check(str(chart["harbor"]) == Charts.ECHINUS, "chart %s belongs to the echinus" % str(chart["id"]))
+		check(str(chart["title"]) == titles[i], "chart %s keeps its title" % str(chart["id"]))
+		_expect_echinus_misses(chart)
+	check(str(book[2]["teach"]).to_lower().contains("rebate"), "chart 353 names the rebate")
+	check(str(book[3]["teach"]).to_lower().contains("abacus"), "chart 354 names the abacus")
+	check(str(book[4]["teach"]).to_lower().contains("throat"), "chart 355 names the throat")
+	_expect_echinus_miss(book[2], "O", "rebate", 0, "a flooded north rebate misses chart 353")
+	_expect_echinus_miss(book[3], "O", "abacus", 0, "a flooded north abacus misses chart 354")
+	_expect_echinus_miss(book[4], "O", "throat", 0, "a flooded north throat misses chart 355")
+	var shared: Dictionary = book[0].duplicate(true)
+	_retarget(shared, "O", "beak", 0)
+	check(Tracer.is_cleared(shared, Charts.make_state(shared, true)), "a flooded north beak shares the clockwise east beam")
+	var pair: Dictionary = book[5]
+	var swapped: Dictionary = pair.duplicate(true)
+	_retarget(swapped, "O", "echinus", 90)
+	_retarget(swapped, "U", "echinus", 0)
+	check(not Tracer.is_cleared(swapped, Charts.make_state(swapped, true)), "swapping the two echinus facings misses")
+	var south_face: Dictionary = pair.duplicate(true)
+	_retarget(south_face, "O", "echinus", 180)
+	check(not Tracer.is_cleared(south_face, Charts.make_state(south_face, true)), "the opposite west echinus does not clear")
+	var west_face: Dictionary = pair.duplicate(true)
+	_retarget(west_face, "U", "echinus", 270)
+	check(not Tracer.is_cleared(west_face, Charts.make_state(west_face, true)), "the opposite east echinus does not clear")
+	var low: Dictionary = Charts.duplicate_state(Charts.make_state(book[6], true))
+	low["tide_index"] = 0
+	check(not Tracer.is_cleared(book[6], low), "low water on chart 357 spreads past the single heading")
+	var line: Dictionary = book[7]
+	var lit: Dictionary = Tracer.trace(line, Charts.make_state(line, true))
+	check(not bool(lit["boats"]["Hb"]), "the echinus line keeps the hull dark")
+	var ebb: Dictionary = Charts.duplicate_state(Charts.make_state(line, true))
+	ebb["tide_index"] = 0
+	var ebb_trace: Dictionary = Tracer.trace(line, ebb)
+	check(bool(ebb_trace["boats"]["Hb"]) and not Tracer.is_cleared(line, ebb), "low water lights the hull and does not clear")
+
+
+func _expect_echinus_misses(chart: Dictionary) -> void:
+	var kinds: Array = ["rebate", "abacus", "throat", "hood", "architrave", "archivolt", "beak", "drip", "weir", "sluice", "cill", "corona", "fillet", "cyma", "impost", "threshold", "larmier", "prism", "stain", "shutter", "jamb", "lintel"]
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		var pid := str(piece["id"])
+		var facing := Tracer.echinus_facing(int(piece["solution_rot"]))
+		for kind in kinds:
+			for rot in [0, 90, 180, 270]:
+				if _echinus_kind_clears(kind, rot, facing):
+					continue
+				_expect_echinus_miss(chart, pid, kind, rot, "chart %s %s %s at %d misses" % [str(chart["id"]), pid, kind, rot])
+
+
+func _echinus_kind_clears(kind: String, rot: int, facing: String) -> bool:
+	var open := Tracer.rotate_dir(facing, 1)
+	if kind == "rebate":
+		return Tracer.rebate_flood_passes(rot, open)
+	if kind == "abacus":
+		return Tracer.abacus_flood_passes(rot, open)
+	if kind == "throat":
+		return Tracer.throat_flood_passes(rot, open)
+	if kind == "hood":
+		return Tracer.hood_flood_passes(rot, open)
+	if kind == "architrave":
+		return Tracer.architrave_flood_passes(rot, open)
+	if kind == "beak":
+		return Tracer.beak_flood_passes(rot, open)
+	if kind == "drip":
+		return Tracer.drip_flood_passes(rot, open)
+	if kind == "weir":
+		return Tracer.weir_facing(rot) == open
+	if kind == "sluice":
+		return Tracer.sluice_facing(rot) == open
+	return false
+
+
+func _expect_echinus_miss(chart: Dictionary, piece_id: String, kind: String, rot: int, label: String) -> void:
+	var copy: Dictionary = chart.duplicate(true)
+	_retarget(copy, piece_id, kind, rot)
+	check(not Tracer.is_cleared(copy, Charts.make_state(copy, true)), label)
+
+
 func test_smoke() -> void:
 	var main_script: Script = load("res://scripts/main.gd")
 	main_script.persist_progress = false
@@ -14667,8 +14877,80 @@ func test_smoke() -> void:
 	await process_frame
 	check(str(main.chart["id"]) == "335", "Abacus returns to The Flooded Abacus")
 	check(_chart_row_fits(main.abacus_grid, main._side), "the abacus chart row fits in the window")
+	var rebate_rect: Rect2 = main.rebate_book_button.get_global_rect()
+	var rebate_side: Rect2 = main._side.get_global_rect()
+	check(rebate_side.grow(1.0).encloses(rebate_rect), "the rebate book button sits inside the side panel")
+	check(not rebate_rect.intersects(abacus_rect), "the rebate book button stays off the abacus")
+	check(rebate_rect.size.x + 0.5 >= main.rebate_book_button.get_minimum_size().x, "the rebate label has room")
+	check(abacus_rect.size.x + 0.5 >= main.abacus_book_button.get_minimum_size().x, "the abacus label still has room")
+	main.unlocked[342] = false
+	main._refresh_chrome()
+	check(main.rebate_book_button.disabled, "the rebate stays locked until the abacus line is held")
+	main.unlocked[341] = true
+	check(main.select_chart(341), "chart 342 opens when unlocked")
+	check(main.rebate_book_button.disabled, "opening the abacus line does not unlock the rebate")
+	main.state = Charts.duplicate_state(Charts.make_state(main.chart, true))
+	main._refresh()
+	main.try_lock()
+	check(main.board_locked and main.unlocked[342], "holding the abacus line opens the rebate")
+	main._advance_from_win()
+	check(str(main.chart["id"]) == "343", "next chart from the abacus line enters The Flooded Rebate")
+	check(main.rebate_grid.visible and not main.abacus_grid.visible and not main.archivolt_grid.visible, "the rebate grid opens with The Flooded Rebate")
+	check(str(main.harbor_label.text) == Charts.REBATE, "the harbor name follows the rebate")
+	check(str(main.tide_readout.text).to_lower().contains("rebate"), "chart 343 names the rebate in the water readout")
+	var rebate_cell := Charts.piece_cell(main.chart, main.state, "O")
+	check(str(main.selected_id) == "O" and int(main.state["pieces"]["O"]["rot"]) == 90, "chart 343 starts facing east")
+	_click_cell(main, rebate_cell.x, rebate_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 180, "a click turns the rebate from east to south")
+	check(str(main.status_label.text).to_lower().contains("stops") and str(main.status_label.text).to_lower().contains("opposite"), "the rebate says every dry heading stops and the flood opens only the opposite")
+	_click_cell(main, rebate_cell.x, rebate_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 270, "the next click turns the rebate west")
+	_click_cell(main, rebate_cell.x, rebate_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 0, "the next click turns the rebate north")
+	_click_cell(main, rebate_cell.x, rebate_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 90, "four clicks restore the east facing")
+	main._on_book_pressed(43)
+	await process_frame
+	check(str(main.chart["id"]) == "343", "Rebate returns to The Flooded Rebate")
+	check(_chart_row_fits(main.rebate_grid, main._side), "the rebate chart row fits in the window")
+	var echinus_rect: Rect2 = main.echinus_book_button.get_global_rect()
+	var echinus_side: Rect2 = main._side.get_global_rect()
+	check(echinus_side.grow(1.0).encloses(echinus_rect), "the echinus book button sits inside the side panel")
+	check(not echinus_rect.intersects(rebate_rect), "the echinus book button stays off the rebate")
+	check(echinus_rect.size.x + 0.5 >= main.echinus_book_button.get_minimum_size().x, "the echinus label has room")
+	check(rebate_rect.size.x + 0.5 >= main.rebate_book_button.get_minimum_size().x, "the rebate label still has room")
+	main.unlocked[350] = false
+	main._refresh_chrome()
+	check(main.echinus_book_button.disabled, "the echinus stays locked until the rebate line is held")
+	main.unlocked[349] = true
+	check(main.select_chart(349), "chart 350 opens when unlocked")
+	check(main.echinus_book_button.disabled, "opening the rebate line does not unlock the echinus")
+	main.state = Charts.duplicate_state(Charts.make_state(main.chart, true))
+	main._refresh()
+	main.try_lock()
+	check(main.board_locked and main.unlocked[350], "holding the rebate line opens the echinus")
+	main._advance_from_win()
+	check(str(main.chart["id"]) == "351", "next chart from the rebate line enters The Flooded Echinus")
+	check(main.echinus_grid.visible and not main.rebate_grid.visible and not main.abacus_grid.visible, "the echinus grid opens with The Flooded Echinus")
+	check(str(main.harbor_label.text) == Charts.ECHINUS, "the harbor name follows the echinus")
+	check(str(main.tide_readout.text).to_lower().contains("echinus"), "chart 351 names the echinus in the water readout")
+	var echinus_cell := Charts.piece_cell(main.chart, main.state, "O")
+	check(str(main.selected_id) == "O" and int(main.state["pieces"]["O"]["rot"]) == 90, "chart 351 starts facing east")
+	_click_cell(main, echinus_cell.x, echinus_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 180, "a click turns the echinus from east to south")
+	check(str(main.status_label.text).to_lower().contains("opposite") and str(main.status_label.text).to_lower().contains("clockwise"), "the echinus says the dry pass skips the opposite and the flood opens the clockwise heading")
+	_click_cell(main, echinus_cell.x, echinus_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 270, "the next click turns the echinus west")
+	_click_cell(main, echinus_cell.x, echinus_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 0, "the next click turns the echinus north")
+	_click_cell(main, echinus_cell.x, echinus_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 90, "four clicks restore the east facing")
+	main._on_book_pressed(44)
+	await process_frame
+	check(str(main.chart["id"]) == "351", "Echinus returns to The Flooded Echinus")
+	check(_chart_row_fits(main.echinus_grid, main._side), "the echinus chart row fits in the window")
 	main._on_book_pressed(13)
-	check(main.weir_grid.visible and not main.lintel_grid.visible and not main.mullion_grid.visible and not main.transom_grid.visible and not main.casement_grid.visible and not main.jamb_grid.visible and not main.astragal_grid.visible and not main.scotia_grid.visible and not main.torus_grid.visible and not main.ogee_grid.visible and not main.ovolo_grid.visible and not main.cavetto_grid.visible and not main.fillet_grid.visible and not main.corona_grid.visible and not main.bead_grid.visible and not main.quirk_grid.visible and not main.cyma_grid.visible and not main.fascia_grid.visible and not main.soffit_grid.visible and not main.drip_grid.visible and not main.beak_grid.visible and not main.hood_grid.visible and not main.throat_grid.visible and not main.larmier_grid.visible and not main.cill_grid.visible and not main.threshold_grid.visible and not main.impost_grid.visible and not main.architrave_grid.visible and not main.archivolt_grid.visible and not main.abacus_grid.visible, "the weir book still opens")
+	check(main.weir_grid.visible and not main.lintel_grid.visible and not main.mullion_grid.visible and not main.transom_grid.visible and not main.casement_grid.visible and not main.jamb_grid.visible and not main.astragal_grid.visible and not main.scotia_grid.visible and not main.torus_grid.visible and not main.ogee_grid.visible and not main.ovolo_grid.visible and not main.cavetto_grid.visible and not main.fillet_grid.visible and not main.corona_grid.visible and not main.bead_grid.visible and not main.quirk_grid.visible and not main.cyma_grid.visible and not main.fascia_grid.visible and not main.soffit_grid.visible and not main.drip_grid.visible and not main.beak_grid.visible and not main.hood_grid.visible and not main.throat_grid.visible and not main.larmier_grid.visible and not main.cill_grid.visible and not main.threshold_grid.visible and not main.impost_grid.visible and not main.architrave_grid.visible and not main.archivolt_grid.visible and not main.abacus_grid.visible and not main.rebate_grid.visible and not main.echinus_grid.visible, "the weir book still opens")
 	main.select_chart(0)
 	main.restart_chart()
 	var before_rot := int(main.state["pieces"]["M"]["rot"])
@@ -14778,7 +15060,7 @@ func _walk(chart: Dictionary, state: Dictionary, index: int, found: Array) -> vo
 	# A threshold has four facings. Opposite facings do not share the open set. Dry, only the opposite of the facing passes. Flooded, every direction except that opposite passes.
 	# An impost has four facings. Opposite facings do not share the open set. Dry, only the facing passes. Flooded, every direction except that facing passes.
 	var rots: Array = [0]
-	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma" or kind == "fascia" or kind == "soffit" or kind == "drip" or kind == "beak" or kind == "hood" or kind == "throat" or kind == "larmier" or kind == "cill" or kind == "threshold" or kind == "impost" or kind == "architrave" or kind == "archivolt" or kind == "abacus":
+	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma" or kind == "fascia" or kind == "soffit" or kind == "drip" or kind == "beak" or kind == "hood" or kind == "throat" or kind == "larmier" or kind == "cill" or kind == "threshold" or kind == "impost" or kind == "architrave" or kind == "archivolt" or kind == "abacus" or kind == "rebate" or kind == "echinus":
 		rots = [0, 90, 180, 270]
 	elif kind != "shutter" and kind != "well" and kind != "siphon" and kind != "lintel" and kind != "mullion" and kind != "transom":
 		rots = [0, 90]
