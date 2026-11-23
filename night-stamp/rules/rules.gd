@@ -2303,6 +2303,96 @@
 # The near-blank doubling, the brace pay, and the farther-back doubling do not
 # remove Hold or Exemption, and they do not cancel a retrigger.
 #
+# INTRODUCTION BELL, in desk order
+# A thirty-third night. The stamps, the ink, and the 3x3 form are unchanged.
+# The introduction bell deals the starting deck again. Drafts and the relic
+# from an earlier night do not carry. Open it from the desk, or from a
+# victory desk. Restart act replays whichever night is on the desk.
+# The introduction name was free. The contents button stays to its left.
+# Foreword stays to the left of the contents button. Preface stays to the
+# left of the foreword button. Epigraph stays to the left of the preface
+# button.
+# No earlier traveler doubles on a filled cell three places back, so Brea
+# Voss keeps the name Near Fill. No earlier traveler doubles on an empty
+# cell five places back, so Calder Okell keeps the name Farther Gap. The
+# empty-cell-four-places-back fallback was not needed, so Long Gap stays
+# unused.
+# - Quin Hale, lane column 2, exemption row middle, Span Toll:
+#   "Patience drops by 2 when the number of filled cells is 5 or 6."
+#   Counts of zero, one, two, three, four, seven, eight, and nine keep the
+#   drop at 1. Joss Pell drops only for five. Hugh Pell drops only for six.
+#   Shay Hale drops for three, four, five, and six, so she also drops for
+#   three and for four. Hollin Voss drops for two, three, five, and seven,
+#   and keeps the drop at 1 for six. Enid Hale drops for four, six, eight,
+#   and nine, and keeps the drop at 1 for five. Quin does none of those. The
+#   drop is 2 instead of 1 only on five or six. The toll does not change
+#   what a stamp scores.
+#   Exemption on the middle row keeps the drop at 1, even on five or six.
+#   An Exemption off the middle row does not.
+#   Hold is applied before the span toll.
+# - Brea Voss, lane column 1, exemption row top, Near Fill:
+#   "A stamp scores twice only when the queue cell three places before it is
+#   filled."
+#   The queue is read from the top row downward, left to right inside a
+#   row, the same order Jude Voss uses. Three places before a stamp is the
+#   cell directly above it. The top-left cell has no cell three places
+#   before it, so it scores its own number. The top-middle cell has no cell
+#   three places before it, so it scores its own number. The top-right cell
+#   has no cell three places before it, so it scores its own number. The
+#   cells one and two places before a stamp do not matter. An empty cell
+#   three back means the stamp scores its own number, even when the nearer
+#   cells are filled. A filled cell three back means the stamp scores twice,
+#   even when a nearer cell is empty. Jude Voss doubles when the cell three
+#   back is empty. Faye Okell doubles when the cell four back is filled.
+#   Ned Keel doubles when the cell two back is filled. Brea does none of
+#   those. A retrigger of a stamp whose cell three back is filled scores
+#   twice again. A retrigger of a stamp whose cell three back is empty does
+#   not.
+#   Exemption on the top row cancels the doubling, so every stamp scores its
+#   own number. An Exemption off the top row does not. An Exemption that
+#   qualifies and sits off the top row scores twice.
+#   The fill does not change patience.
+# - Pia Brant, lane column 3, exemption row bottom, Twin Pay:
+#   "Each stamp with at least two side neighbors scores +2 once."
+#   Exactly one side neighbor scores its own number. A corner neighbor is
+#   not a side. A lone stamp scores its own number. Two side neighbors still
+#   add 2 once, not 2 for each. A third side neighbor still adds 2 once.
+#   Tess Okell adds 2 for one side neighbor. Clem Brant adds 2 for a side
+#   neighbor only when a corner neighbor is also filled. Opal Quill adds 3
+#   for a side share. Pia does none of those. A retrigger adds 2 again only
+#   when the stamp has two side neighbors apart from the stamp that
+#   retriggers it. Echo, Reply, and Ripple sit on a side. If the echo is
+#   the second side neighbor, that retrigger does not add 2.
+#   Exemption on the bottom row cancels the bonus, so every stamp scores its
+#   own number. An Exemption off the bottom row does not. An Exemption that
+#   qualifies and sits off the bottom row still adds 2.
+#   The pay does not change patience.
+# - Calder Okell, lane column 2, exemption row top, Farther Gap:
+#   "A stamp scores twice only when the queue cell five places before it is
+#   empty."
+#   The queue is the same order Ansel Okell uses. Five places before a stamp
+#   can land on the previous row or the row before that. The top-left cell
+#   has no cell five places before it, so it scores its own number. The
+#   top-middle cell has no cell five places before it, so it scores its own
+#   number. The top-right cell has no cell five places before it, so it
+#   scores its own number. The middle-left cell has no cell five places
+#   before it, so it scores its own number. The center cell has no cell five
+#   places before it, so it scores its own number. The cells one through
+#   four places before a stamp do not matter. A filled cell five back means
+#   the stamp scores its own number, even when the nearer cells are empty.
+#   An empty cell five back means the stamp scores twice, even when a nearer
+#   cell is filled. Ansel Okell doubles when the cell five back is filled.
+#   Tarn Voss doubles when the cell five ahead is empty. Jude Voss doubles
+#   when the cell three back is empty. Calder does none of those. A
+#   retrigger of a stamp whose cell five back is empty scores twice again.
+#   A retrigger of a stamp whose cell five back is filled does not.
+#   Exemption on the top row cancels the doubling, so every stamp scores its
+#   own number. An Exemption off the top row does not. An Exemption that
+#   qualifies and sits off the top row scores twice.
+#   The gap does not change patience.
+# The near-fill doubling, the twin pay, and the farther-gap doubling do not
+# remove Hold or Exemption, and they do not cancel a retrigger.
+#
 # RUN
 # - A run is seeded. The shuffle and the draft offer are a pure function of the
 #   seed, the night, the traveler, and the cards owned, so restarting an
@@ -2358,6 +2448,7 @@ const SHIFT_EPIGRAPH := 28
 const SHIFT_PREFACE := 29
 const SHIFT_FOREWORD := 30
 const SHIFT_CONTENTS := 31
+const SHIFT_INTRODUCTION := 32
 
 const ROW_NAMES := ["top row", "middle row", "bottom row"]
 const COL_NAMES := ["column 1", "column 2", "column 3"]
@@ -3956,6 +4047,54 @@ const CONTENTS_BELL := [
 ]
 
 
+const INTRODUCTION_BELL := [
+	{
+		"id": "quin_hale",
+		"name": "Quin Hale",
+		"form_name": "Span Toll",
+		"rule_text": "Patience drops by 2 when the number of filled cells is 5 or 6.",
+		"rule": "drop_if_span_count",
+		"lane": 1,
+		"exemption_row": 1,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "brea_voss",
+		"name": "Brea Voss",
+		"form_name": "Near Fill",
+		"rule_text": "A stamp scores twice only when the queue cell three places before it is filled. The top-left cell has no cell three places before it, so it does not double. The top-middle cell has no cell three places before it, so it does not double. The top-right cell has no cell three places before it, so it does not double.",
+		"rule": "double_near_fill",
+		"lane": 0,
+		"exemption_row": 0,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "pia_brant",
+		"name": "Pia Brant",
+		"form_name": "Twin Pay",
+		"rule_text": "Each stamp with at least two side neighbors scores +2 once. Exactly one side neighbor scores its own number. A corner neighbor is not a side. A lone stamp scores its own number.",
+		"rule": "yield_twin_pay",
+		"lane": 2,
+		"exemption_row": 2,
+		"goal": 16,
+		"patience": 5,
+	},
+	{
+		"id": "calder_okell",
+		"name": "Calder Okell",
+		"form_name": "Farther Gap",
+		"rule_text": "A stamp scores twice only when the queue cell five places before it is empty. The top-left cell has no cell five places before it, so it does not double. The top-middle cell has no cell five places before it, so it does not double. The top-right cell has no cell five places before it, so it does not double. The middle-left cell has no cell five places before it, so it does not double. The center cell has no cell five places before it, so it does not double.",
+		"rule": "double_farther_gap",
+		"lane": 1,
+		"exemption_row": 0,
+		"goal": 22,
+		"patience": 5,
+	},
+]
+
+
 class NightState:
 	extends RefCounted
 	var seed: int = 1
@@ -3996,6 +4135,8 @@ class NightState:
 	var last_patience_loss: int = 0
 	var last_won: bool = false
 	var last_lost: bool = false
+	var score_ignore_row: int = -1
+	var score_ignore_col: int = -1
 
 
 static func _canonical_shift(shift_index: int) -> int:
@@ -4051,6 +4192,8 @@ static func _canonical_shift(shift_index: int) -> int:
 		return SHIFT_TITLEPAGE
 	if shift_index == SHIFT_COPYRIGHT:
 		return SHIFT_COPYRIGHT
+	if shift_index == SHIFT_INTRODUCTION:
+		return SHIFT_INTRODUCTION
 	if shift_index == SHIFT_CONTENTS:
 		return SHIFT_CONTENTS
 	if shift_index == SHIFT_FOREWORD:
@@ -4076,7 +4219,9 @@ static func new_run(seed_value: int, shift_index: int = SHIFT_FIRST) -> NightSta
 	state.next_iid = 0
 	for card_id in STARTING_DECK:
 		_add_library_card(state, String(card_id))
-	if state.shift == SHIFT_CONTENTS:
+	if state.shift == SHIFT_INTRODUCTION:
+		_log(state, "The introduction bell begins. Seed %d." % state.seed)
+	elif state.shift == SHIFT_CONTENTS:
 		_log(state, "The contents bell begins. Seed %d." % state.seed)
 	elif state.shift == SHIFT_FOREWORD:
 		_log(state, "The foreword bell begins. Seed %d." % state.seed)
@@ -4180,6 +4325,8 @@ static func restart_encounter(state: NightState) -> void:
 
 
 static func shift_label(state: NightState) -> String:
+	if state.shift == SHIFT_INTRODUCTION:
+		return "Introduction bell"
 	if state.shift == SHIFT_CONTENTS:
 		return "Contents bell"
 	if state.shift == SHIFT_FOREWORD:
@@ -4260,6 +4407,8 @@ static func traveler(state: NightState) -> Dictionary:
 
 
 static func _roster(state: NightState) -> Array:
+	if state.shift == SHIFT_INTRODUCTION:
+		return INTRODUCTION_BELL
 	if state.shift == SHIFT_CONTENTS:
 		return CONTENTS_BELL
 	if state.shift == SHIFT_FOREWORD:
@@ -4421,6 +4570,8 @@ static func end_turn(state: NightState) -> void:
 
 static func resolve_turn(state: NightState, quiet: bool = false) -> Dictionary:
 	var hush = quiet or state.silent
+	state.score_ignore_row = -1
+	state.score_ignore_col = -1
 	state.chain_count = 0
 	state.chain_stopped = false
 	state.resolver_steps = 0
@@ -4664,6 +4815,12 @@ static func stamp_progress(state: NightState, card_id: String, row: int, col: in
 		return amount + 2
 	if rule == "double_farther_back" and _farther_back(state, row, col):
 		return amount * 2
+	if rule == "double_near_fill" and _near_fill(state, row, col):
+		return amount * 2
+	if rule == "yield_twin_pay" and _twin_pay(state, row, col):
+		return amount + 2
+	if rule == "double_farther_gap" and _farther_gap(state, row, col):
+		return amount * 2
 	return amount
 
 
@@ -4802,6 +4959,8 @@ static func patience_loss(state: NightState) -> int:
 			loss = 2
 		elif rule == "drop_if_outer_count" and _is_outer_count(_stamp_count(state)):
 			loss = 2
+		elif rule == "drop_if_span_count" and _is_span_count(_stamp_count(state)):
+			loss = 2
 	return loss
 
 
@@ -4907,6 +5066,8 @@ static func clone(state: NightState) -> NightState:
 	copy.relic_options = state.relic_options.duplicate()
 	copy.log = []
 	copy.silent = true
+	copy.score_ignore_row = state.score_ignore_row
+	copy.score_ignore_col = state.score_ignore_col
 	return copy
 
 
@@ -5121,14 +5282,20 @@ static func _resolve_stamp(state: NightState, row: int, col: int, hush: bool) ->
 				_log(state, "%s on the %s, %s grants %d. A side neighbor and a corner neighbor pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			elif tail_rule == "double_farther_back" and _farther_back(state, row, col) and amount > raw:
 				_log(state, "%s on the %s, %s grants %d. The filled cell five places before it doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_near_fill" and _near_fill(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The filled cell three places before it doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_twin_pay" and _twin_pay(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. Two side neighbors pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_farther_gap" and _farther_gap(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The empty cell five places before it doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			else:
 				_log(state, "%s on the %s, %s grants %d." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 	state.turn_progress += amount
 	for cell in _retrigger_cells(card_id, row, col):
-		_try_retrigger(state, cell.x, cell.y, hush)
+		_try_retrigger(state, cell.x, cell.y, hush, row, col)
 
 
-static func _try_retrigger(state: NightState, row: int, col: int, hush: bool) -> void:
+static func _try_retrigger(state: NightState, row: int, col: int, hush: bool, source_row: int = -1, source_col: int = -1) -> void:
 	if row < 0 or col < 0 or row > 2 or col > 2:
 		return
 	if state.form[row][col] == null:
@@ -5140,7 +5307,13 @@ static func _try_retrigger(state: NightState, row: int, col: int, hush: bool) ->
 			_log(state, "The queue stops at the chain cap (%d)." % CHAIN_CAP)
 		return
 	state.chain_count += 1
+	var saved_row := state.score_ignore_row
+	var saved_col := state.score_ignore_col
+	state.score_ignore_row = source_row
+	state.score_ignore_col = source_col
 	_resolve_stamp(state, row, col, hush)
+	state.score_ignore_row = saved_row
+	state.score_ignore_col = saved_col
 
 
 static func _retrigger_cells(card_id: String, row: int, col: int) -> Array:
@@ -5253,6 +5426,58 @@ static func _is_mid_count(count: int) -> bool:
 
 static func _is_outer_count(count: int) -> bool:
 	return count == 0 or count == 9
+
+
+static func _is_span_count(count: int) -> bool:
+	return count == 5 or count == 6
+
+
+static func _near_fill(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var back_row := row
+	var back_col := col - 3
+	while back_col < 0:
+		back_row -= 1
+		back_col += 3
+	if back_row < 0:
+		return false
+	return state.form[back_row][back_col] != null
+
+
+static func _twin_pay(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var sides := 0
+	for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+		var side_row = row + delta.x
+		var side_col = col + delta.y
+		if side_row < 0 or side_col < 0 or side_row > 2 or side_col > 2:
+			continue
+		if side_row == state.score_ignore_row and side_col == state.score_ignore_col:
+			continue
+		if state.form[side_row][side_col] != null:
+			sides += 1
+	return sides >= 2
+
+
+static func _farther_gap(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var back_row := row
+	var back_col := col - 5
+	while back_col < 0:
+		back_row -= 1
+		back_col += 3
+	if back_row < 0:
+		return false
+	return state.form[back_row][back_col] == null
 
 
 static func _far_blank(state: NightState, row: int, col: int) -> bool:
@@ -6023,7 +6248,9 @@ static func _apply_result(state: NightState, result: Dictionary) -> void:
 		state.encounters_cleared += 1
 		if state.traveler_index >= _roster(state).size() - 1:
 			state.phase = "victory"
-			if state.shift == SHIFT_CONTENTS:
+			if state.shift == SHIFT_INTRODUCTION:
+				_log(state, "The queue is empty. The introduction bell is clear.")
+			elif state.shift == SHIFT_CONTENTS:
 				_log(state, "The queue is empty. The contents bell is clear.")
 			elif state.shift == SHIFT_FOREWORD:
 				_log(state, "The queue is empty. The foreword bell is clear.")
