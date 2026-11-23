@@ -5,7 +5,7 @@ Playable slices, Godot 4. Steam packaging comes later.
 - [Harbor Glass](harbor-glass/) — a tide-clock light puzzle through the Architrave
 - [Brine Mark](brine-mark/) — an indirect salt-flat colony sim through the pendant beat
 - [Dispatch](dispatch/) — a parcel-routing puzzle through the vangs
-- [Night Stamp](night-stamp/) — a border-desk deckbuilder through the matins bell
+- [Night Stamp](night-stamp/) — a border-desk deckbuilder through the lauds bell
 - [Orchard Surge](orchard-surge/) — a dark-orchard wave game through night 63
 - [Lantern Census](lantern-census/) — a forty-six-floor map survey through the Pyre
 - [Lowball](lowball/) — a sixty-two-week thirty-one-club circle through Holmfen Dowitchers
