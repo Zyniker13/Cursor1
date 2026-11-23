@@ -48,6 +48,7 @@ extends RefCounted
 ## A muslin stops the flood. The muslin itself is lit, and tiles past it stay dark.
 ## A cambric stops the flood. The cambric itself is lit, and tiles past it stay dark.
 ## A holland does not stop the flood. The holland itself is lit, and tiles past it light.
+## A buckram does not stop the flood. The buckram itself is lit, and tiles past it light.
 ##
 ## Movement
 ## Dark floor and a dark exit may be entered. A gap may be entered only while it is lit.
@@ -102,6 +103,10 @@ extends RefCounted
 ## can enter it, but a second lamp's light stops at a cambric. A lawn stops the light and allows the early step, but a guard
 ## cannot enter a lawn. A muslin stops the light and a guard can enter it, but
 ## the early step fails. Stepping onto a lit cambric a guard is watching is a loss.
+## A buckram is floor. A lamp lights it. The early step onto an unwatched lit
+## buckram fails. A second lamp's light passes through it. A guard can enter
+## it. A holland lets that light pass and a guard can enter it, but the early
+## step onto a holland succeeds. You still leave by stepping on the dark buckram.
 ##
 ## Plates
 ## The turn the player steps onto a plate calls the nearest guard, by the same rule as a
@@ -122,7 +127,7 @@ extends RefCounted
 ## floor path. A sill is not a floor path. A pane is not a floor path. A curtain is a
 ## floor path. A shade is not a floor path. A screen is not a floor path. A glaze is
 ## not a floor path. A mica is not a floor path. A baize is not a floor path.
-## A scrim is not a floor path. A gauze is not a floor path. A voile is not a floor path. A lawn is not a floor path. A muslin is a floor path. A cambric is a floor path. A holland is a floor path.
+## A scrim is not a floor path. A gauze is not a floor path. A voile is not a floor path. A lawn is not a floor path. A muslin is a floor path. A cambric is a floor path. A holland is a floor path. A buckram is a floor path.
 ##
 ## Grates
 ## A grate is floor you may enter. It is never lit, even when a lamp's diamond covers
@@ -437,6 +442,34 @@ extends RefCounted
 ## lamp's light passes through it, the early step onto it succeeds, and a
 ## guard can enter it.
 ##
+## Buckrams
+## A buckram is the holland with one flip: the early step fails. A holland
+## already lets a second lamp pass and a guard can enter it, but the early
+## step onto a lit holland succeeds. A muslin refuses the early step and a
+## guard can enter it, but a second lamp's light stops at a muslin. A gauze
+## refuses the early step and lets a second lamp pass, but a guard cannot
+## enter a gauze. No cloth already lets a second lamp pass, refuses the early
+## step, and can be entered by a guard. A buckram is floor a lamp lights. An
+## unwatched lit buckram is refused, the same as other lit floor. Stepping
+## onto a lit buckram a guard is watching is a loss. Standing on it after the
+## lamp is snuffed is not a loss, because it is dark, and that dark step is
+## how you leave. Light passes a buckram: the buckram itself is lit, and tiles
+## past it light. A lamp standing on a buckram does not shine past that tile.
+## Sight does not stop while the buckram is lit: a guard sees lit tiles beyond
+## the lit buckram, and the lit buckram itself can be watched. When the
+## buckram is dark, sight stops the same way any dark floor does. A guard can
+## enter a buckram. Pathing treats it as open, the same as a holland, so a
+## called guard can walk through it. A voile is closed to guards, so the same
+## call walks around the voile. A buckram calls nobody. It is never a hold. A
+## plate still calls only the nearest guard. A bell still calls every guard
+## who has a floor path, and a buckram is that path. A buckram is not a wall,
+## a sill, a grate, a pane, a plate, a bell, a curtain, a shade, a screen, a
+## glaze, a mica, a baize, a scrim, a gauze, a voile, a lawn, a muslin, a
+## cambric, or a holland. A holland is lit, a second lamp's light passes, the
+## early step succeeds, and a guard can enter it. A buckram is lit, a second
+## lamp's light passes through it, the early step onto it fails, and a guard
+## can enter it.
+##
 ## Vision
 ## Each guard watches a Manhattan diamond of their vision radius, and only on tiles that
 ## are currently lit. Walls and dark tiles block vision. A grate stays dark, so it blocks
@@ -474,6 +507,9 @@ extends RefCounted
 ## A lit holland does not block vision, so a guard sees lit tiles beyond it, and
 ## the lit holland itself can be watched. A dark holland blocks vision the same
 ## way any dark floor does.
+## A lit buckram does not block vision, so a guard sees lit tiles beyond it, and
+## the lit buckram itself can be watched. A dark buckram blocks vision the same
+## way any dark floor does.
 ## A guard standing in the dark can still look into an adjacent lit tile. The
 ## guard's own tile is not marked watched; standing on the guard is a separate loss.
 ##
@@ -481,7 +517,7 @@ extends RefCounted
 ## Alerted guards take one step along a shortest 4-neighbor path to the tile they were
 ## called to, a lamp, a plate, or a bell. Neighbors are expanded north, east, south,
 ## then west, and that order breaks ties. They may walk on floor, plate, bell, exit,
-## and curtain tiles, lit or dark, and through muslins, cambrics, and hollands, but not through walls, gaps, grates, sills, panes, shades, screens, glazes, micas, baizes, scrims, gauzes, voiles, or lawns. When they step onto that tile
+## and curtain tiles, lit or dark, and through muslins, cambrics, hollands, and buckrams, but not through walls, gaps, grates, sills, panes, shades, screens, glazes, micas, baizes, scrims, gauzes, voiles, or lawns. When they step onto that tile
 ## they hold there. They do not resume the rail unless a later snuff, plate, or bell calls them.
 ## A guard who is not alert and not holding patrols their rail. The rail is a list of
 ## waypoints. rail_index is the waypoint they are walking toward, and rail_dir is +1 or -1.
@@ -493,7 +529,7 @@ extends RefCounted
 ## every lamp's lit flag, and every guard's position, rail index, rail direction, alert
 ## target, and hold flag.
 
-enum Tile { WALL, FLOOR, GAP, EXIT, PLATE, BELL, GRATE, SILL, PANE, CURTAIN, SHADE, SCREEN, GLAZE, MICA, BAIZE, SCRIM, GAUZE, VOILE, LAWN, MUSLIN, CAMBRIC, HOLLAND }
+enum Tile { WALL, FLOOR, GAP, EXIT, PLATE, BELL, GRATE, SILL, PANE, CURTAIN, SHADE, SCREEN, GLAZE, MICA, BAIZE, SCRIM, GAUZE, VOILE, LAWN, MUSLIN, CAMBRIC, HOLLAND, BUCKRAM }
 enum Result { OK, WIN, LOSS, ILLEGAL }
 
 const DIRS := [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]
@@ -566,6 +602,8 @@ static func build(rows: PackedStringArray, lamps: Array, guards: Array) -> Dicti
 					kind = Tile.CAMBRIC
 				"O":
 					kind = Tile.HOLLAND
+				"F":
+					kind = Tile.BUCKRAM
 				_:
 					push_error("bad tile '%s'" % ch)
 			tiles[y * width + x] = kind
@@ -675,7 +713,7 @@ static func lamp_lights(state: Dictionary, lamp: Dictionary) -> Array:
 		queue.append(origin)
 	# A lamp standing on a sill, a shade, a baize, a scrim, or a gauze does not shine past that tile.
 	# Every other lamp still seeds its neighbors. A grate and a pane let the flood through.
-	if origin_kind != Tile.SILL and origin_kind != Tile.SHADE and origin_kind != Tile.BAIZE and origin_kind != Tile.SCRIM and origin_kind != Tile.GAUZE and origin_kind != Tile.VOILE and origin_kind != Tile.LAWN and origin_kind != Tile.MUSLIN and origin_kind != Tile.CAMBRIC and origin_kind != Tile.HOLLAND:
+	if origin_kind != Tile.SILL and origin_kind != Tile.SHADE and origin_kind != Tile.BAIZE and origin_kind != Tile.SCRIM and origin_kind != Tile.GAUZE and origin_kind != Tile.VOILE and origin_kind != Tile.LAWN and origin_kind != Tile.MUSLIN and origin_kind != Tile.CAMBRIC and origin_kind != Tile.HOLLAND and origin_kind != Tile.BUCKRAM:
 		for dir in DIRS:
 			var nxt: Vector2i = origin + dir
 			var seed_kind := tile_at(state, nxt.x, nxt.y)
@@ -710,10 +748,13 @@ static func lamp_lights(state: Dictionary, lamp: Dictionary) -> Array:
 		# flood stops there, so a second lamp's light does not pass it. A muslin
 		# is lit, and the flood stops there. A cambric is lit, and the flood
 		# stops there. The early step onto the lit cambric still succeeds, and
-		# a guard can enter it.
+		# a guard can enter it. A buckram is lit. A flood that reaches the
+		# buckram from another tile passes through. A lamp standing on the
+		# buckram does not shine past it. The early step onto the lit buckram
+		# fails, and a guard can enter it.
 		if cell_kind != Tile.GRATE and cell_kind != Tile.PANE and cell_kind != Tile.SHADE and cell_kind != Tile.MICA and cell_kind != Tile.BAIZE:
 			lit.append(cell)
-		if (cell_kind == Tile.GAUZE or cell_kind == Tile.VOILE or cell_kind == Tile.HOLLAND) and cell == origin:
+		if (cell_kind == Tile.GAUZE or cell_kind == Tile.VOILE or cell_kind == Tile.HOLLAND or cell_kind == Tile.BUCKRAM) and cell == origin:
 			continue
 		if cell_kind == Tile.SILL or cell_kind == Tile.SHADE or cell_kind == Tile.BAIZE or cell_kind == Tile.SCRIM or cell_kind == Tile.LAWN or cell_kind == Tile.MUSLIN or cell_kind == Tile.CAMBRIC:
 			continue
@@ -823,7 +864,7 @@ static func loss_reason(state: Dictionary, lit: Dictionary = {}) -> String:
 
 static func guard_walkable(state: Dictionary, x: int, y: int) -> bool:
 	var kind := tile_at(state, x, y)
-	return kind == Tile.FLOOR or kind == Tile.EXIT or kind == Tile.PLATE or kind == Tile.BELL or kind == Tile.CURTAIN or kind == Tile.MUSLIN or kind == Tile.CAMBRIC or kind == Tile.HOLLAND
+	return kind == Tile.FLOOR or kind == Tile.EXIT or kind == Tile.PLATE or kind == Tile.BELL or kind == Tile.CURTAIN or kind == Tile.MUSLIN or kind == Tile.CAMBRIC or kind == Tile.HOLLAND or kind == Tile.BUCKRAM
 
 
 static func bfs_path(state: Dictionary, sx: int, sy: int, gx: int, gy: int) -> Dictionary:
@@ -984,7 +1025,7 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 				return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "darkgap")
 		elif dest == Tile.GRATE or dest == Tile.SHADE or dest == Tile.MICA or dest == Tile.BAIZE or dest == Tile.VOILE or dest == Tile.LAWN or dest == Tile.CAMBRIC or dest == Tile.HOLLAND:
 			pass
-		elif dest == Tile.FLOOR or dest == Tile.EXIT or dest == Tile.PLATE or dest == Tile.BELL or dest == Tile.SILL or dest == Tile.CURTAIN or dest == Tile.SCREEN or dest == Tile.GLAZE or dest == Tile.SCRIM or dest == Tile.GAUZE or dest == Tile.MUSLIN:
+		elif dest == Tile.FLOOR or dest == Tile.EXIT or dest == Tile.PLATE or dest == Tile.BELL or dest == Tile.SILL or dest == Tile.CURTAIN or dest == Tile.SCREEN or dest == Tile.GLAZE or dest == Tile.SCRIM or dest == Tile.GAUZE or dest == Tile.MUSLIN or dest == Tile.BUCKRAM:
 			if lit.has(Vector2i(nx, ny)):
 				return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "lit")
 		else:
@@ -1019,7 +1060,7 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 		if absi(int(lamp["x"]) - int(player["x"])) + absi(int(lamp["y"]) - int(player["y"])) != 1:
 			return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "range")
 		var here := tile_at(st, player["x"], player["y"])
-		if here != Tile.FLOOR and here != Tile.EXIT and here != Tile.PLATE and here != Tile.BELL and here != Tile.GRATE and here != Tile.SILL and here != Tile.CURTAIN and here != Tile.SHADE and here != Tile.SCREEN and here != Tile.GLAZE and here != Tile.MICA and here != Tile.BAIZE and here != Tile.SCRIM and here != Tile.GAUZE and here != Tile.VOILE and here != Tile.LAWN and here != Tile.MUSLIN and here != Tile.CAMBRIC and here != Tile.HOLLAND:
+		if here != Tile.FLOOR and here != Tile.EXIT and here != Tile.PLATE and here != Tile.BELL and here != Tile.GRATE and here != Tile.SILL and here != Tile.CURTAIN and here != Tile.SHADE and here != Tile.SCREEN and here != Tile.GLAZE and here != Tile.MICA and here != Tile.BAIZE and here != Tile.SCRIM and here != Tile.GAUZE and here != Tile.VOILE and here != Tile.LAWN and here != Tile.MUSLIN and here != Tile.CAMBRIC and here != Tile.HOLLAND and here != Tile.BUCKRAM:
 			return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "range")
 		var was_lit: bool = lamp["lit"]
 		lamp["lit"] = not was_lit

@@ -1,9 +1,9 @@
 extends RefCounted
 
-## Buildings 1 through 46. Directions: 0 east, 1 south, 2 west, 3 north.
+## Buildings 1 through 47. Directions: 0 east, 1 south, 2 west, 3 north.
 ## `unlocks` is the single new block this puzzle introduces, or "".
 
-const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook", "return", "pause", "chute", "shunt", "bias", "vault", "sling", "cant", "balk", "loft", "keel", "sheer", "strake", "wale", "garboard", "stealer", "rabbet", "futtock", "keelson", "stemson", "apron", "deadwood", "gripe", "forefoot", "knighthead", "hawse", "breasthook", "cathead", "gammon", "bobstay", "bumpkin", "dolphin", "martingale", "jibboom", "whisker", "cranse", "bees", "sprit"]
+const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook", "return", "pause", "chute", "shunt", "bias", "vault", "sling", "cant", "balk", "loft", "keel", "sheer", "strake", "wale", "garboard", "stealer", "rabbet", "futtock", "keelson", "stemson", "apron", "deadwood", "gripe", "forefoot", "knighthead", "hawse", "breasthook", "cathead", "gammon", "bobstay", "bumpkin", "dolphin", "martingale", "jibboom", "whisker", "cranse", "bees", "sprit", "bumkin"]
 
 
 static func all() -> Array:
@@ -6770,6 +6770,164 @@ static func all() -> Array:
 				_block("conveyor", 28, 4, 3),
 			]
 		),
+		_puzzle(
+			331, "First Bumkin", "bumkin",
+			"Jump twenty-five cells forward, and keep the facing.",
+			"",
+			"The parcel comes in facing east. The bumkin jumps it twenty-five cells east and leaves it facing east. The twenty-four cells in front are bricks and are not entered. The pause then steps east onto the dock. A sprit lands on the last brick. A bees lands two cells short. A cranse lands three cells short. A whisker lands four cells short. A jibboom lands five cells short. A martingale lands six cells short. A dolphin lands seven cells short. A bumpkin lands eight cells short. A bobstay lands nine cells short. A gammon lands ten cells short. A keel jumps three cells west. A rabbet jumps one cell west.",
+			29, 3,
+			[_cell(3, 1), _cell(4, 1), _cell(5, 1), _cell(6, 1), _cell(7, 1), _cell(8, 1), _cell(9, 1), _cell(10, 1), _cell(11, 1), _cell(12, 1), _cell(13, 1), _cell(14, 1), _cell(15, 1), _cell(16, 1), _cell(17, 1), _cell(18, 1), _cell(19, 1), _cell(20, 1), _cell(21, 1), _cell(22, 1), _cell(23, 1), _cell(24, 1), _cell(25, 1), _cell(26, 1), _cell(2, 0), _cell(2, 2)],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 28, "y": 1},
+			[{"color": "gray"}],
+			[
+				_block("conveyor", 1, 1, 0),
+				_block("bumkin", 2, 1, 0),
+				_block("pause", 27, 1, 0),
+			]
+		),
+		_puzzle(
+			332, "Let Bumkin", "",
+			"Wait until the landing is free, then jump twenty-five cells forward.",
+			"",
+			"Blue is standing on the landing. The bumkin holds red until that cell is free, then jumps twenty-five cells east and leaves red facing east. The cells in front are not entered. The pause steps east onto the dock. A sprit lands one cell short. A bees lands two cells short. A cranse lands three cells short. A whisker lands four cells short. A jibboom lands five cells short. A martingale lands six cells short. A dolphin lands seven cells short. A bumpkin lands eight cells short. A bobstay lands nine cells short. A gammon lands ten cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			29, 3,
+			[_cell(3, 1), _cell(4, 1), _cell(5, 1), _cell(6, 1), _cell(7, 1), _cell(8, 1), _cell(9, 1), _cell(10, 1), _cell(11, 1), _cell(12, 1), _cell(13, 1), _cell(14, 1), _cell(15, 1), _cell(16, 1), _cell(17, 1), _cell(18, 1), _cell(19, 1), _cell(20, 1), _cell(21, 1), _cell(22, 1), _cell(23, 1), _cell(24, 1), _cell(25, 1), _cell(26, 1)],
+			[
+				_source(0, 1, 0, ["red"]),
+				_source(26, 2, 0, ["blue"]),
+			],
+			{"x": 28, "y": 1},
+			[{"color": "blue"}, {"color": "red"}],
+			[
+				_block("conveyor", 1, 1, 0),
+				_block("bumkin", 2, 1, 0),
+				_block("garboard", 27, 2, 0),
+				_block("pause", 27, 1, 0),
+			]
+		),
+		_puzzle(
+			333, "Bumkin Count", "",
+			"Stamp blue 1 and red 2. The bumkin's wait is what makes the counter read 2.",
+			"",
+			"The bumkin waits, then jumps the east-facing parcel twenty-five cells east. The pause carries that facing onto the counter after blue has been stamped 1, so red is stamped 2. The cells in front are not entered. A sprit lands one cell short. A bees lands two cells short. A cranse lands three cells short. A whisker lands four cells short. A jibboom lands five cells short. A martingale lands six cells short. A dolphin lands seven cells short. A bumpkin lands eight cells short. A bobstay lands nine cells short. A gammon lands ten cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			30, 4,
+			[_cell(2, 1), _cell(3, 1), _cell(4, 1), _cell(5, 1), _cell(6, 1), _cell(7, 1), _cell(8, 1), _cell(9, 1), _cell(10, 1), _cell(11, 1), _cell(12, 1), _cell(13, 1), _cell(14, 1), _cell(15, 1), _cell(16, 1), _cell(17, 1), _cell(18, 1), _cell(19, 1), _cell(20, 1), _cell(21, 1), _cell(22, 1), _cell(23, 1), _cell(24, 1), _cell(25, 1), _cell(1, 0), _cell(1, 2)],
+			[
+				_source(0, 1, 0, ["red"]),
+				_source(27, 3, 3, ["blue"]),
+			],
+			{"x": 29, "y": 1},
+			[{"color": "blue", "count": 1}, {"color": "red", "count": 2}],
+			[
+				_block("bumkin", 1, 1, 0),
+				_block("pause", 26, 1, 0),
+				_block("conveyor", 27, 2, 3),
+				_block("counter", 27, 1, 0),
+				_block("conveyor", 28, 1, 0),
+			]
+		),
+		_puzzle(
+			334, "Twenty-Five Ahead", "",
+			"Jump twenty-five cells forward. The twenty-four bricks in front are not entered.",
+			"",
+			"The bumkin jumps twenty-five cells east and leaves the parcel facing east. The pause steps east onto the dock and does not enter any of the twenty-four bricks. A sprit tries to land on the last brick. A bees lands two cells short. A cranse lands three cells short. A whisker lands four cells short. A jibboom lands five cells short. A martingale lands six cells short. A dolphin lands seven cells short. A bumpkin lands eight cells short. A bobstay lands nine cells short. A gammon lands ten cells short. A pause tries to enter the first brick. A keel jumps three cells west. A rabbet jumps one cell west.",
+			28, 3,
+			[_cell(2, 1), _cell(3, 1), _cell(4, 1), _cell(5, 1), _cell(6, 1), _cell(7, 1), _cell(8, 1), _cell(9, 1), _cell(10, 1), _cell(11, 1), _cell(12, 1), _cell(13, 1), _cell(14, 1), _cell(15, 1), _cell(16, 1), _cell(17, 1), _cell(18, 1), _cell(19, 1), _cell(20, 1), _cell(21, 1), _cell(22, 1), _cell(23, 1), _cell(24, 1), _cell(25, 1)],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 27, "y": 1},
+			[{"color": "gray"}],
+			[
+				_block("bumkin", 1, 1, 0),
+				_block("pause", 26, 1, 0),
+			]
+		),
+		_puzzle(
+			335, "Two Bumkins", "",
+			"Deliver red, then blue. Each jump is twenty-five cells forward from a different facing.",
+			"",
+			"Red arrives facing east, jumps twenty-five cells east, and the pause steps east onto the dock. Blue arrives facing south, jumps twenty-five cells south, and the pause steps south onto the dock. Each jump keeps the arrival facing and skips the twenty-four cells in front. A sprit lands one cell short. A bees lands two cells short. A cranse lands three cells short. A whisker lands four cells short. A jibboom lands five cells short. A martingale lands six cells short. A dolphin lands seven cells short. A bumpkin lands eight cells short. A bobstay lands nine cells short. A gammon lands ten cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			28, 29,
+			[_cell(2, 28), _cell(3, 28), _cell(4, 28), _cell(5, 28), _cell(6, 28), _cell(7, 28), _cell(8, 28), _cell(9, 28), _cell(10, 28), _cell(11, 28), _cell(12, 28), _cell(13, 28), _cell(14, 28), _cell(15, 28), _cell(16, 28), _cell(17, 28), _cell(18, 28), _cell(19, 28), _cell(20, 28), _cell(21, 28), _cell(22, 28), _cell(23, 28), _cell(24, 28), _cell(25, 28), _cell(27, 3), _cell(27, 4), _cell(27, 5), _cell(27, 6), _cell(27, 7), _cell(27, 8), _cell(27, 9), _cell(27, 10), _cell(27, 11), _cell(27, 12), _cell(27, 13), _cell(27, 14), _cell(27, 15), _cell(27, 16), _cell(27, 17), _cell(27, 18), _cell(27, 19), _cell(27, 20), _cell(27, 21), _cell(27, 22), _cell(27, 23), _cell(27, 24), _cell(27, 25), _cell(27, 26), _cell(1, 27)],
+			[
+				_source(0, 28, 0, ["red"]),
+				_source(27, 0, 1, ["blue"]),
+			],
+			{"x": 27, "y": 28},
+			[{"color": "red"}, {"color": "blue"}],
+			[
+				_block("bumkin", 1, 28, 0),
+				_block("pause", 26, 28, 0),
+				_block("pause", 27, 1, 0),
+				_block("bumkin", 27, 2, 0),
+				_block("pause", 27, 27, 0),
+			]
+		),
+		_puzzle(
+			336, "Second Bumkin", "",
+			"Jump twenty-five cells forward, hook, then jump twenty-five cells forward on the new facing.",
+			"",
+			"The first bumkin jumps the east-facing parcel twenty-five cells east and leaves it facing east. The hook sends it north onto the second bumkin. That bumkin jumps twenty-five cells north, still facing north, onto the dock. One bumkin cannot do both jumps. A sprit lands one cell short. A bees lands two cells short. A cranse lands three cells short. A whisker lands four cells short. A jibboom lands five cells short. A martingale lands six cells short. A dolphin lands seven cells short. A bumpkin lands eight cells short. A bobstay lands nine cells short. A gammon lands ten cells short. A keel jumps three cells back. A rabbet jumps one cell back. A turn faces south.",
+			27, 27,
+			[_cell(2, 26), _cell(3, 26), _cell(4, 26), _cell(5, 26), _cell(6, 26), _cell(7, 26), _cell(8, 26), _cell(9, 26), _cell(10, 26), _cell(11, 26), _cell(12, 26), _cell(13, 26), _cell(14, 26), _cell(15, 26), _cell(16, 26), _cell(17, 26), _cell(18, 26), _cell(19, 26), _cell(20, 26), _cell(21, 26), _cell(22, 26), _cell(23, 26), _cell(24, 26), _cell(25, 26), _cell(26, 24), _cell(26, 23), _cell(26, 22), _cell(26, 21), _cell(26, 20), _cell(26, 19), _cell(26, 18), _cell(26, 17), _cell(26, 16), _cell(26, 15), _cell(26, 14), _cell(26, 13), _cell(26, 12), _cell(26, 11), _cell(26, 10), _cell(26, 9), _cell(26, 8), _cell(26, 7), _cell(26, 6), _cell(26, 5), _cell(26, 4), _cell(26, 3), _cell(26, 2), _cell(26, 1)],
+			[_source(0, 26, 0, ["gray"])],
+			{"x": 26, "y": 0},
+			[{"color": "gray"}],
+			[
+				_block("bumkin", 1, 26, 0),
+				_block("hook", 26, 26, 0),
+				_block("bumkin", 26, 25, 0),
+			]
+		),
+		_puzzle(
+			337, "Night Bumkin", "",
+			"Deliver red 1, yellow 2, and blue 3.",
+			"",
+			"Red takes the filter. The bumkin jumps it twenty-five cells east and leaves it facing east. The pause carries that facing onto the counter for stamp 1. The twenty-four cells in front are not entered. Gray takes the long belt and is primed yellow. Blue keeps its color. A sprit lands one cell short. A bees lands two cells short. A cranse lands three cells short. A whisker lands four cells short. A jibboom lands five cells short. A martingale lands six cells short. A dolphin lands seven cells short. A bumpkin lands eight cells short. A bobstay lands nine cells short. A gammon lands ten cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			31, 6,
+			[_cell(4, 3), _cell(5, 3), _cell(6, 3), _cell(7, 3), _cell(8, 3), _cell(9, 3), _cell(10, 3), _cell(11, 3), _cell(12, 3), _cell(13, 3), _cell(14, 3), _cell(15, 3), _cell(16, 3), _cell(17, 3), _cell(18, 3), _cell(19, 3), _cell(20, 3), _cell(21, 3), _cell(22, 3), _cell(23, 3), _cell(24, 3), _cell(25, 3), _cell(26, 3), _cell(27, 3)],
+			[_source(0, 3, 0, ["gray", "blue", "red"])],
+			{"x": 30, "y": 3},
+			[{"color": "red", "count": 1}, {"color": "yellow", "count": 2}, {"color": "blue", "count": 3}],
+			[
+				_block("filter", 1, 3, 0, "red"),
+				_block("conveyor", 2, 3, 0),
+				_block("bumkin", 3, 3, 0),
+				_block("pause", 28, 3, 0),
+				_block("counter", 29, 3, 0),
+				_block("pause", 1, 4, 0),
+				_block("primer", 1, 5, 0, "yellow"),
+				_block("conveyor", 2, 5, 0),
+				_block("conveyor", 3, 5, 0),
+				_block("conveyor", 4, 5, 0),
+				_block("conveyor", 5, 5, 0),
+				_block("conveyor", 6, 5, 0),
+				_block("conveyor", 7, 5, 0),
+				_block("conveyor", 8, 5, 0),
+				_block("conveyor", 9, 5, 0),
+				_block("conveyor", 10, 5, 0),
+				_block("conveyor", 11, 5, 0),
+				_block("conveyor", 12, 5, 0),
+				_block("conveyor", 13, 5, 0),
+				_block("conveyor", 14, 5, 0),
+				_block("conveyor", 15, 5, 0),
+				_block("conveyor", 16, 5, 0),
+				_block("conveyor", 17, 5, 0),
+				_block("conveyor", 18, 5, 0),
+				_block("conveyor", 19, 5, 0),
+				_block("conveyor", 20, 5, 0),
+				_block("conveyor", 21, 5, 0),
+				_block("conveyor", 22, 5, 0),
+				_block("conveyor", 23, 5, 0),
+				_block("conveyor", 24, 5, 0),
+				_block("conveyor", 25, 5, 0),
+				_block("conveyor", 26, 5, 0),
+				_block("conveyor", 27, 5, 0),
+				_block("conveyor", 28, 5, 0),
+				_block("conveyor", 29, 5, 3),
+				_block("conveyor", 29, 4, 3),
+			]
+		),
 	]
 
 
@@ -6799,7 +6957,7 @@ static func _puzzle(id: int, title: String, unlocks: String, brief: String, how_
 		"dock": dock,
 		"order": order,
 		"reference": reference,
-		"building": 46 if id >= 324 else 45 if id >= 317 else 44 if id >= 310 else 43 if id >= 303 else 42 if id >= 296 else 41 if id >= 289 else 40 if id >= 282 else 39 if id >= 275 else 38 if id >= 268 else 37 if id >= 261 else 36 if id >= 254 else 35 if id >= 247 else 34 if id >= 240 else 33 if id >= 233 else 32 if id >= 226 else 31 if id >= 219 else 30 if id >= 212 else 29 if id >= 205 else 28 if id >= 198 else 27 if id >= 191 else 26 if id >= 184 else 25 if id >= 177 else 24 if id >= 170 else 23 if id >= 163 else 22 if id >= 156 else 21 if id >= 149 else 20 if id >= 142 else 19 if id >= 135 else 18 if id >= 128 else 17 if id >= 121 else 16 if id >= 114 else 15 if id >= 107 else 14 if id >= 100 else 13 if id >= 93 else 12 if id >= 86 else 11 if id >= 79 else 10 if id >= 72 else 9 if id >= 65 else 8 if id >= 58 else 7 if id >= 51 else 6 if id >= 44 else 5 if id >= 37 else 4 if id >= 30 else 3 if id >= 23 else 2 if id >= 16 else 1,
+		"building": 47 if id >= 331 else 46 if id >= 324 else 45 if id >= 317 else 44 if id >= 310 else 43 if id >= 303 else 42 if id >= 296 else 41 if id >= 289 else 40 if id >= 282 else 39 if id >= 275 else 38 if id >= 268 else 37 if id >= 261 else 36 if id >= 254 else 35 if id >= 247 else 34 if id >= 240 else 33 if id >= 233 else 32 if id >= 226 else 31 if id >= 219 else 30 if id >= 212 else 29 if id >= 205 else 28 if id >= 198 else 27 if id >= 191 else 26 if id >= 184 else 25 if id >= 177 else 24 if id >= 170 else 23 if id >= 163 else 22 if id >= 156 else 21 if id >= 149 else 20 if id >= 142 else 19 if id >= 135 else 18 if id >= 128 else 17 if id >= 121 else 16 if id >= 114 else 15 if id >= 107 else 14 if id >= 100 else 13 if id >= 93 else 12 if id >= 86 else 11 if id >= 79 else 10 if id >= 72 else 9 if id >= 65 else 8 if id >= 58 else 7 if id >= 51 else 6 if id >= 44 else 5 if id >= 37 else 4 if id >= 30 else 3 if id >= 23 else 2 if id >= 16 else 1,
 	}
 
 

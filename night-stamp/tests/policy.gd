@@ -4534,6 +4534,128 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 				kinkb_later_after_col -= 3
 			if kinkb_later_after_row <= 2 and state.form[kinkb_later_after_row][kinkb_later_after_col] == null:
 				guess -= _stamp_number(state, String(kinkb_later["card_id"]), kinkb_later_row, kinkb_later_col)
+	if rule == "drop_if_chamfer_count":
+		var chamfer_filled = 0
+		for chamfer_row in 3:
+			for chamfer_col in 3:
+				if state.form[chamfer_row][chamfer_col] != null:
+					chamfer_filled += 1
+		var chamfer_next = chamfer_filled + 1
+		if chamfer_next == 7 or chamfer_next == 10:
+			guess -= 4
+		elif chamfer_filled == 7 or chamfer_filled == 10:
+			guess += 5
+	if rule == "double_nick_fill":
+		var nick_before_row = row
+		var nick_before_col = col - 7
+		while nick_before_col < 0:
+			nick_before_row -= 1
+			nick_before_col += 3
+		var nick_after_row = row
+		var nick_after_col = col + 1
+		while nick_after_col > 2:
+			nick_after_row += 1
+			nick_after_col -= 3
+		var nick_before_filled = nick_before_row >= 0 and state.form[nick_before_row][nick_before_col] != null
+		var nick_after_filled = nick_after_row <= 2 and state.form[nick_after_row][nick_after_col] != null
+		if nick_before_filled and nick_after_filled:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+		var nick_prior_row = row
+		var nick_prior_col = col - 1
+		while nick_prior_col < 0:
+			nick_prior_row -= 1
+			nick_prior_col += 3
+		if nick_prior_row >= 0 and state.form[nick_prior_row][nick_prior_col] != null:
+			var nick_prior = state.form[nick_prior_row][nick_prior_col]
+			var nick_prior_before_row = nick_prior_row
+			var nick_prior_before_col = nick_prior_col - 7
+			while nick_prior_before_col < 0:
+				nick_prior_before_row -= 1
+				nick_prior_before_col += 3
+			if nick_prior_before_row >= 0 and state.form[nick_prior_before_row][nick_prior_before_col] != null:
+				guess += _stamp_number(state, String(nick_prior["card_id"]), nick_prior_row, nick_prior_col)
+		var nick_later_row = row
+		var nick_later_col = col + 7
+		while nick_later_col > 2:
+			nick_later_row += 1
+			nick_later_col -= 3
+		if nick_later_row <= 2 and state.form[nick_later_row][nick_later_col] != null:
+			var nick_later = state.form[nick_later_row][nick_later_col]
+			var nick_later_after_row = nick_later_row
+			var nick_later_after_col = nick_later_col + 1
+			while nick_later_after_col > 2:
+				nick_later_after_row += 1
+				nick_later_after_col -= 3
+			if nick_later_after_row <= 2 and state.form[nick_later_after_row][nick_later_after_col] != null:
+				guess += _stamp_number(state, String(nick_later["card_id"]), nick_later_row, nick_later_col)
+	if rule == "yield_stake_pay":
+		var stake_sides = 0
+		var stake_corners = 0
+		for stake_side in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var stake_side_row = row + stake_side.x
+			var stake_side_col = col + stake_side.y
+			if stake_side_row < 0 or stake_side_col < 0 or stake_side_row > 2 or stake_side_col > 2:
+				continue
+			if state.form[stake_side_row][stake_side_col] != null:
+				stake_sides += 1
+		for stake_corner in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var stake_corner_row = row + stake_corner.x
+			var stake_corner_col = col + stake_corner.y
+			if stake_corner_row < 0 or stake_corner_col < 0 or stake_corner_row > 2 or stake_corner_col > 2:
+				continue
+			if state.form[stake_corner_row][stake_corner_col] != null:
+				stake_corners += 1
+		if stake_sides == 5 and stake_corners == 4:
+			guess += 4
+		else:
+			guess -= 1
+	if rule == "double_nick_blank":
+		var nickb_before_row = row
+		var nickb_before_col = col - 7
+		while nickb_before_col < 0:
+			nickb_before_row -= 1
+			nickb_before_col += 3
+		var nickb_after_row = row
+		var nickb_after_col = col + 1
+		while nickb_after_col > 2:
+			nickb_after_row += 1
+			nickb_after_col -= 3
+		var nickb_before_empty = nickb_before_row >= 0 and state.form[nickb_before_row][nickb_before_col] == null
+		var nickb_after_empty = nickb_after_row <= 2 and state.form[nickb_after_row][nickb_after_col] == null
+		if nickb_before_empty and nickb_after_empty:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+		var nickb_prior_row = row
+		var nickb_prior_col = col - 1
+		while nickb_prior_col < 0:
+			nickb_prior_row -= 1
+			nickb_prior_col += 3
+		if nickb_prior_row >= 0 and state.form[nickb_prior_row][nickb_prior_col] != null:
+			var nickb_prior = state.form[nickb_prior_row][nickb_prior_col]
+			var nickb_prior_before_row = nickb_prior_row
+			var nickb_prior_before_col = nickb_prior_col - 7
+			while nickb_prior_before_col < 0:
+				nickb_prior_before_row -= 1
+				nickb_prior_before_col += 3
+			if nickb_prior_before_row >= 0 and state.form[nickb_prior_before_row][nickb_prior_before_col] == null:
+				guess -= _stamp_number(state, String(nickb_prior["card_id"]), nickb_prior_row, nickb_prior_col)
+		var nickb_later_row = row
+		var nickb_later_col = col + 7
+		while nickb_later_col > 2:
+			nickb_later_row += 1
+			nickb_later_col -= 3
+		if nickb_later_row <= 2 and state.form[nickb_later_row][nickb_later_col] != null:
+			var nickb_later = state.form[nickb_later_row][nickb_later_col]
+			var nickb_later_after_row = nickb_later_row
+			var nickb_later_after_col = nickb_later_col + 1
+			while nickb_later_after_col > 2:
+				nickb_later_after_row += 1
+				nickb_later_after_col -= 3
+			if nickb_later_after_row <= 2 and state.form[nickb_later_after_row][nickb_later_after_col] == null:
+				guess -= _stamp_number(state, String(nickb_later["card_id"]), nickb_later_row, nickb_later_col)
 	if rule == "ignore_isolated":
 		var neighbors = 0
 		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
