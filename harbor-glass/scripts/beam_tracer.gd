@@ -441,7 +441,7 @@ static func norm_rot(kind: String, rot: int) -> int:
 	# A cavetto uses the same four facings. Each one stops only the opposite
 	# of the facing and passes the other three directions. A north cavetto
 	# passes north, east, and west, which a north ovolo does not.
-	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet":
+	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona":
 		return posmod(rot, 360)
 	# A shutter has no facing. Dry stops the beam; flooded water lets it pass.
 	# A well has no facing either. Dry stops the beam; flooded water sends it north.
@@ -602,6 +602,18 @@ static func fillet_passes(rot: int, dir: String) -> bool:
 	# and west. That is not a cavetto, an ovolo, an ogee, a torus, a scotia, an
 	# astragal, a casement, a jamb, a mullion, a transom, or a lintel.
 	return dir == rotate_dir(fillet_facing(rot), 2)
+
+static func corona_facing(rot: int) -> String:
+	# 0 north, 90 east, 180 south, 270 west. The dry pass is perpendicular.
+	return rotate_dir("N", posmod(int(norm_rot("corona", rot) / 90.0), 4))
+
+static func corona_passes(rot: int, dir: String) -> bool:
+	# The two directions perpendicular to the facing. North passes east and
+	# west and stops north and south. Turned once, north and south pass.
+	# That is not a transom, a mullion, a jamb, a fillet, a cavetto, an ovolo,
+	# an ogee, a torus, a scotia, an astragal, a casement, or a lintel.
+	var facing := corona_facing(rot)
+	return dir == rotate_dir(facing, 1) or dir == rotate_dir(facing, -1)
 
 static func sluice_facing(rot: int) -> String:
 	# 0 north, 90 east, 180 south, 270 west. The exit follows this facing.
@@ -871,6 +883,12 @@ static func _cast(
 		if _dry_fillet_blocks(occupants, cell, dir):
 			segments.append(_boundary_seg(prev, cell, color))
 			return
+		# A dry corona passes the two directions perpendicular to its facing.
+		# The facing and the opposite stop on the edge and never enter the
+		# cell. Flooded coronas already returned above.
+		if _dry_corona_blocks(occupants, cell, dir):
+			segments.append(_boundary_seg(prev, cell, color))
+			return
 		segments.append(_center_seg(prev, cell, color))
 		if not occupants.has(cell):
 			prev = cell
@@ -1072,6 +1090,15 @@ static func _cast(
 			prev = cell
 			cell = cell + VEC[dir]
 			continue
+		if kind == "corona":
+			# Dry, the two perpendicular directions pass straight, same
+			# direction and same color. That pass costs no bounce. It does not
+			# turn, it does not recolor, and it does not split. The facing and
+			# the opposite never reach here. A flooded corona never reaches
+			# here either.
+			prev = cell
+			cell = cell + VEC[dir]
+			continue
 		if kind == "pane":
 			if color != pane_color(int(occ["rot"])):
 				return
@@ -1110,7 +1137,8 @@ static func _flood_carries(occupants: Dictionary, cell: Vector2i) -> bool:
 	# under water the same way, so _flood_carries stays false for it. A
 	# cavetto is shut under water the same way, so _flood_carries stays false
 	# for it. A fillet is shut under water the same way, so _flood_carries
-	# stays false for it.
+	# stays false for it. A corona is shut under water the same way, so
+	# _flood_carries stays false for it.
 	# Every other flooded cell stops.
 	if not occupants.has(cell):
 		return false
@@ -1194,6 +1222,13 @@ static func _dry_fillet_blocks(occupants: Dictionary, cell: Vector2i, dir: Strin
 	if str(occupants[cell]["kind"]) != "fillet":
 		return false
 	return not fillet_passes(int(occupants[cell]["rot"]), dir)
+
+static func _dry_corona_blocks(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "corona":
+		return false
+	return not corona_passes(int(occupants[cell]["rot"]), dir)
 
 static func _in_bounds(chart: Dictionary, cell: Vector2i) -> bool:
 	return cell.x >= 0 and cell.y >= 0 and cell.x < int(chart["cols"]) and cell.y < int(chart["rows"])
