@@ -76,6 +76,8 @@ func _run() -> void:
 	_building_twenty_seven()
 	_stemson_rules()
 	_building_twenty_eight()
+	_apron_rules()
+	_building_twenty_nine()
 	_ui_uses_simulated_par()
 	if _failures.is_empty():
 		print("ALL TESTS PASSED")
@@ -6874,10 +6876,10 @@ func _stemson_rules() -> void:
 func _building_twenty_eight() -> void:
 	print("building 28")
 	var puzzles := Puzzles.all()
-	_check(puzzles.size() == 204, "building 28 adds routes 198 through 204")
+	_check(puzzles.size() >= 204, "building 28 adds routes 198 through 204")
 	_check(int(puzzles[196]["id"]) == 197, "route 197 is the last route before the stemson")
 	_check(int(puzzles[197]["id"]) == 198, "the stemson begins at route 198")
-	_check(Puzzles.INTRO.size() == 32 and Puzzles.INTRO[31] == "stemson", "the stemson is the block building 28 teaches")
+	_check(Puzzles.INTRO.size() >= 32 and Puzzles.INTRO[31] == "stemson", "the stemson is the block building 28 teaches")
 	_check(not Puzzles.unlocked_at(196).has("stemson"), "the stemson stays locked through route 197")
 	_check(Puzzles.unlocked_at(197).has("stemson"), "route 198 unlocks the stemson")
 	_check(Puzzles.unlocked_at(203).size() == 32, "building 28 ends with every block")
@@ -6896,6 +6898,8 @@ func _building_twenty_eight() -> void:
 			_check(int(puzzle.get("building", 1)) < 28, "route %d stays out of building 28" % id)
 			if id >= 191:
 				_check(int(puzzle.get("building", 1)) == 27, "route %d stays in building 27" % id)
+			continue
+		if id > 204:
 			continue
 		_check(int(puzzle.get("building", 1)) == 28, "route %d is building 28" % id)
 		var result: Dictionary = Sim.run(puzzle, puzzle["reference"])
@@ -7017,6 +7021,274 @@ func _building_twenty_eight() -> void:
 	_check(not bool(Sim.run(_by_id(204), _swap(_by_id(204), "counter", "conveyor"))["success"]), "route 204 fails without the counter")
 
 
+func _apron_rules() -> void:
+	print("apron")
+	var hop := {
+		"width": 9, "height": 3, "walls": [],
+		"sources": [{"x": 0, "y": 1, "dir": 0, "parcels": [{"color": "gray"}]}],
+		"dock": {"x": 8, "y": 1},
+		"order": [{"color": "gray"}],
+	}
+	var graph := [{"type": "apron", "x": 1, "y": 1, "dir": 0}]
+	var sent: Dictionary = Sim.run(hop, graph)
+	_check(bool(sent["success"]), "an apron jumps seven cells forward and delivers")
+	_check(int(sent["cycles"]) == 3 and int(sent["blocks"]) == 1, "the apron waits a tick and delivers on tick 3")
+	var born := _frame(sent, 1)
+	var waited := _frame(sent, 2)
+	_check(not born.is_empty() and _at(born, 1, 1) and _dir_at(born, 1, 1) == 0, "the parcel arrives facing east")
+	_check(not waited.is_empty() and _at(waited, 1, 1) and _dir_at(waited, 1, 1) == 0 and not _at(waited, 8, 1), "the apron does not move the parcel on that tick")
+	_check(_count_at(waited, 1, 1) == 0 and _color_at(waited, 1, 1) == "gray", "an apron does not stamp or paint")
+	var tinted: Dictionary = Sim.run(hop, [{"type": "apron", "x": 1, "y": 1, "dir": 0, "color": "red"}])
+	_check(bool(tinted["success"]) and str(tinted["delivered"][0]["color"]) == "gray" and int(tinted["delivered"][0]["count"]) == 0, "a color on an apron is ignored")
+	for dir in range(4):
+		var spun: Array = graph.duplicate(true)
+		spun[0]["dir"] = dir
+		var spun_run: Dictionary = Sim.run(hop, spun)
+		_check(bool(spun_run["success"]) and int(spun_run["cycles"]) == 3, "rotating an apron does not change the jump")
+	var over_bin: Dictionary = Sim.run(hop, [
+		{"type": "apron", "x": 1, "y": 1, "dir": 0},
+		{"type": "bin", "x": 2, "y": 1, "dir": 0},
+		{"type": "bin", "x": 3, "y": 1, "dir": 0},
+		{"type": "bin", "x": 4, "y": 1, "dir": 0},
+		{"type": "bin", "x": 5, "y": 1, "dir": 0},
+		{"type": "bin", "x": 6, "y": 1, "dir": 0},
+		{"type": "bin", "x": 7, "y": 1, "dir": 0},
+	])
+	_check(bool(over_bin["success"]) and int(over_bin["cycles"]) == 3, "bins in the skipped cells do not stop the apron")
+	var skipped := false
+	for frame in over_bin["frames"]:
+		if _at(frame, 2, 1) or _at(frame, 3, 1) or _at(frame, 4, 1) or _at(frame, 5, 1) or _at(frame, 6, 1) or _at(frame, 7, 1):
+			skipped = true
+	_check(not skipped, "the apron does not enter any of the six cells in front")
+	var short_stemson: Dictionary = Sim.run(hop, [
+		{"type": "stemson", "x": 1, "y": 1, "dir": 0},
+		{"type": "bin", "x": 7, "y": 1, "dir": 0},
+	])
+	_check(not bool(short_stemson["success"]) and _at(_frame(short_stemson, 3), 7, 1) and _dir_at(_frame(short_stemson, 3), 7, 1) == 0, "a stemson lands one cell short of an apron")
+	var short_keelson: Dictionary = Sim.run(hop, [
+		{"type": "keelson", "x": 1, "y": 1, "dir": 0},
+		{"type": "bin", "x": 6, "y": 1, "dir": 0},
+	])
+	_check(not bool(short_keelson["success"]) and _at(_frame(short_keelson, 3), 6, 1) and _dir_at(_frame(short_keelson, 3), 6, 1) == 0, "a keelson lands two cells short of an apron")
+	var short_futtock: Dictionary = Sim.run(hop, [
+		{"type": "futtock", "x": 1, "y": 1, "dir": 0},
+		{"type": "bin", "x": 5, "y": 1, "dir": 0},
+	])
+	_check(not bool(short_futtock["success"]) and _at(_frame(short_futtock, 3), 5, 1) and _dir_at(_frame(short_futtock, 3), 5, 1) == 0, "a futtock lands three cells short of an apron")
+	var short_loft: Dictionary = Sim.run(hop, [
+		{"type": "loft", "x": 1, "y": 1, "dir": 0},
+		{"type": "bin", "x": 4, "y": 1, "dir": 0},
+	])
+	_check(not bool(short_loft["success"]) and _at(_frame(short_loft, 3), 4, 1) and _dir_at(_frame(short_loft, 3), 4, 1) == 0, "a loft lands four cells short of an apron")
+	var keeled: Dictionary = Sim.run(hop, [{"type": "keel", "x": 1, "y": 1, "dir": 0}])
+	_check(not bool(keeled["success"]) and str(keeled["reason"]) == "stuck", "a keel jumps three cells back and misses the forward jump")
+	var rabbeted: Dictionary = Sim.run(hop, [{"type": "rabbet", "x": 1, "y": 1, "dir": 0}])
+	_check(not bool(rabbeted["success"]) and str(rabbeted["reason"]) == "stuck", "a rabbet jumps one cell back and misses the forward jump")
+	var jumps := [
+		{"name": "east", "src": Vector2i(0, 4), "arrival": 0, "apron": Vector2i(1, 4), "land": Vector2i(8, 4), "dock": Vector2i(9, 4), "size": Vector2i(10, 6)},
+		{"name": "south", "src": Vector2i(1, 0), "arrival": 1, "apron": Vector2i(1, 1), "land": Vector2i(1, 8), "dock": Vector2i(1, 9), "size": Vector2i(3, 10)},
+		{"name": "west", "src": Vector2i(9, 1), "arrival": 2, "apron": Vector2i(8, 1), "land": Vector2i(1, 1), "dock": Vector2i(0, 1), "size": Vector2i(10, 3)},
+		{"name": "north", "src": Vector2i(2, 9), "arrival": 3, "apron": Vector2i(2, 8), "land": Vector2i(2, 1), "dock": Vector2i(2, 0), "size": Vector2i(3, 10)},
+	]
+	for spec in jumps:
+		var src_at: Vector2i = spec["src"]
+		var apron_at: Vector2i = spec["apron"]
+		var land_at: Vector2i = spec["land"]
+		var dock_at: Vector2i = spec["dock"]
+		var size_at: Vector2i = spec["size"]
+		var arrival := int(spec["arrival"])
+		var strip := {
+			"width": size_at.x, "height": size_at.y, "walls": [],
+			"sources": [{"x": src_at.x, "y": src_at.y, "dir": arrival, "parcels": [{"color": "gray"}]}],
+			"dock": {"x": dock_at.x, "y": dock_at.y},
+			"order": [{"color": "gray"}],
+		}
+		var blocks := [
+			{"type": "apron", "x": apron_at.x, "y": apron_at.y, "dir": 0},
+			{"type": "pause", "x": land_at.x, "y": land_at.y, "dir": 0},
+		]
+		var side_run: Dictionary = Sim.run(strip, blocks)
+		var moved := _frame(side_run, 3)
+		_check(bool(side_run["success"]) and int(side_run["cycles"]) == 5, "a %s parcel jumps seven cells forward and the pause follows the old facing" % str(spec["name"]))
+		_check(not moved.is_empty() and _at(moved, land_at.x, land_at.y) and _dir_at(moved, land_at.x, land_at.y) == arrival, "a %s parcel still faces %s after the seven-cell jump" % [str(spec["name"]), str(spec["name"])])
+	var held_board := {
+		"width": 10, "height": 6, "walls": [{"x": 9, "y": 4}],
+		"sources": [
+			{"x": 0, "y": 4, "dir": 0, "parcels": [{"color": "gray"}]},
+			{"x": 7, "y": 4, "dir": 0, "parcels": [{"color": "blue"}]},
+		],
+		"dock": {"x": 9, "y": 5},
+		"order": [{"color": "gray"}],
+	}
+	var waiting: Dictionary = Sim.run(held_board, [
+		{"type": "apron", "x": 1, "y": 4, "dir": 0},
+		{"type": "pause", "x": 8, "y": 4, "dir": 0},
+	])
+	_check(not bool(waiting["success"]) and str(waiting["reason"]) == "tick_cap", "an apron keeps waiting while its landing stays blocked")
+	_check(_at(_frame(waiting, 3), 1, 4) and _dir_at(_frame(waiting, 3), 1, 4) == 0 and _color_at(_frame(waiting, 5), 8, 4) == "blue", "the apron keeps the arrival facing while the other parcel stays")
+	var gap := {
+		"width": 10, "height": 6, "walls": [],
+		"sources": [
+			{"x": 0, "y": 4, "dir": 0, "parcels": [{"color": "gray"}]},
+			{"x": 6, "y": 4, "dir": 0, "parcels": [{"color": "blue"}]},
+		],
+		"dock": {"x": 9, "y": 4},
+		"order": [{"color": "blue"}, {"color": "gray"}],
+	}
+	var followed: Dictionary = Sim.run(gap, [
+		{"type": "apron", "x": 1, "y": 4, "dir": 0},
+		{"type": "conveyor", "x": 7, "y": 4, "dir": 0},
+		{"type": "pause", "x": 8, "y": 4, "dir": 0},
+	])
+	_check(bool(followed["success"]) and int(followed["cycles"]) == 6, "an apron can land in a cell another parcel is leaving")
+	var into := _frame(followed, 4)
+	_check(not into.is_empty() and _color_at(into, 8, 4) == "gray" and _dir_at(into, 8, 4) == 0 and into.get("delivered", []).size() == 1, "the jump lands in the cell the other parcel left and still faces east")
+
+
+func _building_twenty_nine() -> void:
+	print("building 29")
+	var puzzles := Puzzles.all()
+	_check(puzzles.size() == 211, "building 29 adds routes 205 through 211")
+	_check(int(puzzles[203]["id"]) == 204, "route 204 is the last route before the apron")
+	_check(int(puzzles[204]["id"]) == 205, "the apron begins at route 205")
+	_check(Puzzles.INTRO.size() == 33 and Puzzles.INTRO[32] == "apron", "the apron is the block building 29 teaches")
+	_check(not Puzzles.unlocked_at(203).has("apron"), "the apron stays locked through route 204")
+	_check(Puzzles.unlocked_at(204).has("apron"), "route 205 unlocks the apron")
+	_check(Puzzles.unlocked_at(210).size() == 33, "building 29 ends with every block")
+	var pars := {
+		205: [6, 3],
+		206: [7, 4],
+		207: [7, 5],
+		208: [5, 2],
+		209: [7, 5],
+		210: [7, 3],
+		211: [19, 18],
+	}
+	for puzzle in puzzles:
+		var id := int(puzzle["id"])
+		if id <= 204:
+			_check(int(puzzle.get("building", 1)) < 29, "route %d stays out of building 29" % id)
+			if id >= 198:
+				_check(int(puzzle.get("building", 1)) == 28, "route %d stays in building 28" % id)
+			continue
+		_check(int(puzzle.get("building", 1)) == 29, "route %d is building 29" % id)
+		var result: Dictionary = Sim.run(puzzle, puzzle["reference"])
+		var par: Dictionary = Scoring.compute_par(puzzle)
+		_check(bool(result["success"]), "route %d reference delivers" % id)
+		_check(int(result["cycles"]) == int(par["cycles"]), "route %d reference meets par cycles" % id)
+		_check(int(result["blocks"]) == int(par["blocks"]), "route %d reference meets par blocks" % id)
+		_check(int(result["blocks"]) == puzzle["reference"].size(), "route %d plays the reference block count" % id)
+		var locked: Array = pars[id]
+		_check(int(par["cycles"]) == int(locked[0]) and int(par["blocks"]) == int(locked[1]), "route %d par is %d cycles and %d blocks" % [id, int(locked[0]), int(locked[1])])
+		if id == 205:
+			_check(str(puzzle.get("unlocks", "")) == "apron", "route 205 teaches the apron")
+		else:
+			_check(str(puzzle.get("unlocks", "")) == "", "route %d adds no further block" % id)
+		var uses_apron := false
+		for block in puzzle["reference"]:
+			if str(block["type"]) == "apron":
+				uses_apron = true
+		_check(uses_apron, "route %d reference uses the apron" % id)
+		if not bool(result["success"]):
+			_dump(result)
+		print("    par route %d  cycles %d  blocks %d" % [id, int(par["cycles"]), int(par["blocks"])])
+
+	for id in [205, 206, 207, 208, 209, 210, 211]:
+		for dir in range(4):
+			var spun: Array = _by_id(id)["reference"].duplicate(true)
+			for block in spun:
+				if str(block["type"]) == "apron":
+					block["dir"] = dir
+			var spun_run: Dictionary = Sim.run(_by_id(id), spun)
+			_check(bool(spun_run["success"]) and int(spun_run["cycles"]) == int(pars[id][0]), "route %d ignores which way the apron block is rotated" % id)
+		for kind in ["stemson", "keelson", "futtock", "loft", "vault", "keel", "rabbet", "balk", "return", "turn", "hook", "pause", "conveyor", "slide", "garboard", "stealer", "bias", "cant", "strake", "wale", "shunt", "sheer", "sling", "bridge", "chute"]:
+			var swapped: Dictionary = Sim.run(_by_id(id), _swap(_by_id(id), "apron", kind))
+			_check(not bool(swapped["success"]), "route %d fails if the apron is a %s" % [id, kind])
+		var omitted: Array = []
+		for block in _by_id(id)["reference"]:
+			if str(block["type"]) != "apron":
+				omitted.append(block)
+		_check(not bool(Sim.run(_by_id(id), omitted)["success"]), "route %d fails if the apron is missing" % id)
+
+	var lesson: Dictionary = Sim.run(_by_id(205), _by_id(205)["reference"])
+	_check(_at(_frame(lesson, 2), 2, 1) and _dir_at(_frame(lesson, 2), 2, 1) == 0, "route 205 starts the parcel facing east on the apron")
+	_check(_at(_frame(lesson, 3), 2, 1) and _dir_at(_frame(lesson, 3), 2, 1) == 0, "route 205 keeps the parcel facing east without moving it")
+	_check(_at(_frame(lesson, 4), 9, 1) and _dir_at(_frame(lesson, 4), 9, 1) == 0, "route 205 jumps seven cells east and still faces east")
+	var lesson_entered := false
+	for frame in lesson["frames"]:
+		if _at(frame, 3, 1) or _at(frame, 4, 1) or _at(frame, 5, 1) or _at(frame, 6, 1) or _at(frame, 7, 1) or _at(frame, 8, 1):
+			lesson_entered = true
+	_check(not lesson_entered, "route 205 does not enter the cells in front")
+	_check(str(Sim.run(_by_id(205), _swap(_by_id(205), "apron", "stemson"))["reason"]) == "stuck", "route 205's stemson lands on the last brick")
+	_check(str(Sim.run(_by_id(205), _swap(_by_id(205), "apron", "keelson"))["reason"]) == "stuck", "route 205's keelson lands two cells short")
+	_check(str(Sim.run(_by_id(205), _swap(_by_id(205), "apron", "futtock"))["reason"]) == "stuck", "route 205's futtock lands three cells short")
+	_check(str(Sim.run(_by_id(205), _swap(_by_id(205), "apron", "loft"))["reason"]) == "stuck", "route 205's loft lands four cells short")
+
+	var let_apron: Dictionary = Sim.run(_by_id(206), _by_id(206)["reference"])
+	_check(_color_at(_frame(let_apron, 4), 2, 1) == "red" and _dir_at(_frame(let_apron, 4), 2, 1) == 0 and _color_at(_frame(let_apron, 4), 9, 1) == "blue", "route 206 holds red while blue stands on the landing")
+	_check(_color_at(_frame(let_apron, 5), 9, 1) == "red" and _dir_at(_frame(let_apron, 5), 9, 1) == 0 and _frame(let_apron, 5).get("delivered", []).size() == 1, "route 206 jumps once the landing is free and still faces east")
+
+	var counted: Dictionary = Sim.run(_by_id(207), _by_id(207)["reference"])
+	_check(str(counted["delivered"][0]["color"]) == "blue" and int(counted["delivered"][0]["count"]) == 1, "route 207 delivers blue count 1")
+	_check(str(counted["delivered"][1]["color"]) == "red" and int(counted["delivered"][1]["count"]) == 2, "route 207 delivers red count 2")
+	_check(_color_at(_frame(counted, 3), 8, 1) == "red" and _dir_at(_frame(counted, 3), 8, 1) == 0, "route 207 jumps seven cells east and still faces east")
+	_check(_color_at(_frame(counted, 6), 10, 1) == "red" and _count_at(_frame(counted, 6), 10, 1) == 2, "route 207's counter stamps 2")
+
+	var clear: Dictionary = Sim.run(_by_id(208), _by_id(208)["reference"])
+	_check(_at(_frame(clear, 2), 1, 1) and _dir_at(_frame(clear, 2), 1, 1) == 0, "route 208 waits facing east")
+	_check(_at(_frame(clear, 3), 8, 1) and _dir_at(_frame(clear, 3), 8, 1) == 0, "route 208 lands seven cells east and still faces east")
+	var brick_entered := false
+	for frame in clear["frames"]:
+		if _at(frame, 2, 1) or _at(frame, 3, 1) or _at(frame, 4, 1) or _at(frame, 5, 1) or _at(frame, 6, 1) or _at(frame, 7, 1):
+			brick_entered = true
+	_check(not brick_entered, "route 208 does not enter any brick")
+	_check(str(Sim.run(_by_id(208), _swap(_by_id(208), "apron", "stemson"))["reason"]) == "stuck", "route 208's stemson tries to land on the last brick")
+	_check(str(Sim.run(_by_id(208), _swap(_by_id(208), "apron", "keelson"))["reason"]) == "stuck", "route 208's keelson lands two cells short")
+
+	var paired: Dictionary = Sim.run(_by_id(209), _by_id(209)["reference"])
+	_check(_color_at(_frame(paired, 2), 1, 10) == "red" and _dir_at(_frame(paired, 2), 1, 10) == 0, "route 209 holds the east-facing parcel")
+	_check(_color_at(_frame(paired, 4), 9, 2) == "blue" and _dir_at(_frame(paired, 4), 9, 2) == 1, "route 209 holds the south-facing parcel")
+	_check(_frame(paired, 5).get("delivered", []).size() == 1 and str(_frame(paired, 5)["delivered"][0]["color"]) == "red", "route 209 delivers the east-facing parcel first")
+	_check(int(paired["cycles"]) == 7, "route 209 delivers the south-facing parcel second")
+	for cell in [Vector2i(1, 10), Vector2i(9, 2)]:
+		for kind in ["stemson", "keelson", "futtock", "loft"]:
+			var one: Dictionary = Sim.run(_by_id(209), _swap_cell(_by_id(209), cell.x, cell.y, kind))
+			_check(not bool(one["success"]), "route 209 misses the dock if the apron at %d,%d is a %s" % [cell.x, cell.y, kind])
+
+	var second: Dictionary = Sim.run(_by_id(210), _by_id(210)["reference"])
+	_check(_at(_frame(second, 2), 1, 8) and _dir_at(_frame(second, 2), 1, 8) == 0, "route 210 waits on the first apron facing east")
+	_check(_at(_frame(second, 3), 8, 8) and _dir_at(_frame(second, 3), 8, 8) == 0, "route 210 jumps seven cells forward and still faces east")
+	_check(_at(_frame(second, 5), 8, 7) and _dir_at(_frame(second, 5), 8, 7) == 3, "route 210 reaches the second apron facing north")
+	_check(_at(_frame(second, 6), 8, 7) and _dir_at(_frame(second, 6), 8, 7) == 3, "route 210 waits on the second apron facing north")
+	_check(int(second["cycles"]) == 7, "route 210 jumps seven cells forward on the new facing")
+	_check(not bool(Sim.run(_by_id(210), _omit_cell(_by_id(210), 1, 8))["success"]), "route 210 fails without the first apron")
+	_check(not bool(Sim.run(_by_id(210), _omit_cell(_by_id(210), 8, 7))["success"]), "route 210 fails without the second apron")
+	for cell in [Vector2i(1, 8), Vector2i(8, 7)]:
+		for kind in ["stemson", "keelson", "futtock", "loft"]:
+			var missed: Dictionary = Sim.run(_by_id(210), _swap_cell(_by_id(210), cell.x, cell.y, kind))
+			_check(not bool(missed["success"]), "route 210 misses the dock if the apron at %d,%d is a %s" % [cell.x, cell.y, kind])
+
+	var night: Dictionary = Sim.run(_by_id(211), _by_id(211)["reference"])
+	_check(int(night["cycles"]) < 250, "route 211 finishes before tick 250")
+	_check(str(night["delivered"][0]["color"]) == "red" and int(night["delivered"][0]["count"]) == 1, "route 211 stamps red 1")
+	_check(str(night["delivered"][1]["color"]) == "yellow" and int(night["delivered"][1]["count"]) == 2, "route 211 stamps yellow 2")
+	_check(str(night["delivered"][2]["color"]) == "blue" and int(night["delivered"][2]["count"]) == 3, "route 211 stamps blue 3")
+	_check(_color_at(_frame(night, 6), 3, 3) == "red" and _dir_at(_frame(night, 6), 3, 3) == 0, "route 211 holds red facing east")
+	_check(_color_at(_frame(night, 8), 10, 3) == "red" and _dir_at(_frame(night, 8), 10, 3) == 0, "route 211 jumps red seven cells east and leaves it facing east")
+	_check(_color_at(_frame(night, 10), 11, 3) == "red" and _dir_at(_frame(night, 10), 11, 3) == 0 and _count_at(_frame(night, 10), 11, 3) == 0, "route 211 reaches the counter still facing east")
+	var night_entered := false
+	for frame in night["frames"]:
+		if _color_at(frame, 4, 3) == "red" or _color_at(frame, 5, 3) == "red" or _color_at(frame, 6, 3) == "red" or _color_at(frame, 7, 3) == "red" or _color_at(frame, 8, 3) == "red" or _color_at(frame, 9, 3) == "red":
+			night_entered = true
+	_check(not night_entered, "route 211 does not enter the cells in front")
+	_check(not bool(Sim.run(_by_id(211), _swap(_by_id(211), "apron", "stemson"))["success"]), "route 211's stemson misses the pause")
+	_check(not bool(Sim.run(_by_id(211), _swap(_by_id(211), "apron", "keelson"))["success"]), "route 211's keelson misses the pause")
+	_check(not bool(Sim.run(_by_id(211), _swap(_by_id(211), "apron", "futtock"))["success"]), "route 211's futtock misses the pause")
+	_check(not bool(Sim.run(_by_id(211), _swap(_by_id(211), "primer", "painter"))["success"]), "route 211 fails if blue is painted yellow")
+	_check(not bool(Sim.run(_by_id(211), _swap(_by_id(211), "filter", "conveyor"))["success"]), "route 211 fails if red is not pulled ahead")
+	_check(not bool(Sim.run(_by_id(211), _swap(_by_id(211), "counter", "conveyor"))["success"]), "route 211 fails without the counter")
+
+
 func _ui_uses_simulated_par() -> void:
 	print("scoreboard ui")
 	var scene := load("res://scenes/main.tscn")
@@ -7045,12 +7317,12 @@ func _ui_uses_simulated_par() -> void:
 				routes += 1
 		if row.get_child_count() > 1:
 			width += float(row.get_theme_constant("separation")) * float(row.get_child_count() - 1)
-	_check(routes == 204, "all 204 routes are on the board")
+	_check(routes == 211, "all 211 routes are on the board")
 	print("    route row width ", width)
-	_check(width == 4636.0, "the route row minimum width is 4636 (%s)" % width)
-	_check(int(ProjectSettings.get_setting("display/window/size/viewport_width")) == 4676, "the window is 4676 wide")
+	_check(width == 4812.0, "the route row minimum width is 4812 (%s)" % width)
+	_check(int(ProjectSettings.get_setting("display/window/size/viewport_width")) == 4852, "the window is 4852 wide")
 	_check(int(ProjectSettings.get_setting("display/window/size/viewport_height")) == 720, "the window is 720 tall")
-	_check(width + 40.0 == 4676.0, "the window keeps 20 pixels of spare on each side of the route row")
+	_check(width + 40.0 == 4852.0, "the window keeps 20 pixels of spare on each side of the route row")
 	_check(node.find_child("BuildingTwelveMark", true, false) != null, "building 12's mark stays on the route row")
 	_check(node.find_child("BuildingThirteenMark", true, false) != null, "the route row marks building 13")
 	node.select_puzzle(15)
@@ -8187,6 +8459,71 @@ func _ui_uses_simulated_par() -> void:
 				saw_keelson = true
 	_check(saw_stemson, "route 204 still offers the stemson")
 	_check(saw_keelson, "route 204 still offers the keelson")
+	var saw_apron := false
+	if tools != null:
+		for child in tools.get_children():
+			if child.is_queued_for_deletion():
+				continue
+			if str(child.text).begins_with("Apron"):
+				saw_apron = true
+	_check(not saw_apron, "route 204 keeps the apron locked")
+	node.select_puzzle(204)
+	_check(building != null and building.text == "BUILDING 29", "route 205 opens building 29")
+	_check(node.find_child("BuildingTwentyNineMark", true, false) != null, "the route row marks building 29")
+	_check(node.find_child("BuildingTwentyEightMark", true, false) != null, "building 28's mark stays beside building 29")
+	tools = node.find_child("ToolBox", true, false)
+	saw_apron = false
+	saw_stemson = false
+	var apron_button: Button = null
+	var stemson_again: Button = null
+	if tools != null:
+		for child in tools.get_children():
+			if child.is_queued_for_deletion():
+				continue
+			if str(child.text).begins_with("Apron"):
+				saw_apron = true
+				apron_button = child
+			if str(child.text).begins_with("Stemson"):
+				saw_stemson = true
+				stemson_again = child
+	_check(saw_apron, "route 205 offers the apron")
+	_check(saw_stemson, "route 205 still offers the stemson")
+	if apron_button != null:
+		_check(str(apron_button.tooltip_text).begins_with("Waits one tick, then jumps a parcel seven cells forward"), "the apron tooltip describes the seven-cell jump")
+		_check(str(apron_button.text).begins_with("Apron"), "the apron button reads Apron")
+		_check(node._tool_color("apron") == Color("#7a4a9a"), "the apron is #7a4a9a")
+		_check(node._tool_color("stemson") == Color("#9a4a6a"), "the stemson stays #9a4a6a")
+		_check(node._tool_color("keelson") == Color("#4a8f9a"), "the keelson stays #4a8f9a")
+		_check(node._tool_color("futtock") == Color("#6a8f3e"), "the futtock stays #6a8f3e")
+		_check(node._tool_color("rabbet") == Color("#8f4e6a"), "the rabbet stays #8f4e6a")
+		_check(node._tool_color("garboard") == Color("#3e8f6a"), "the garboard stays #3e8f6a")
+		var apron_rect: Rect2 = apron_button.get_global_rect()
+		var apron_view: Rect2 = node.get_viewport().get_visible_rect()
+		_check(apron_rect.position.x >= apron_view.position.x and apron_rect.position.y >= apron_view.position.y and apron_rect.end.x <= apron_view.end.x and apron_rect.end.y <= apron_view.end.y, "the apron button is fully on screen")
+	if stemson_again != null:
+		var stemson_again_rect: Rect2 = stemson_again.get_global_rect()
+		var stemson_again_view: Rect2 = node.get_viewport().get_visible_rect()
+		_check(stemson_again_rect.position.x >= stemson_again_view.position.x and stemson_again_rect.position.y >= stemson_again_view.position.y and stemson_again_rect.end.x <= stemson_again_view.end.x and stemson_again_rect.end.y <= stemson_again_view.end.y, "the stemson button stays fully on screen")
+	var apron_mark: Control = node.find_child("BuildingTwentyNineMark", true, false)
+	if apron_mark != null:
+		var apron_mark_rect: Rect2 = apron_mark.get_global_rect()
+		var apron_mark_view: Rect2 = node.get_viewport().get_visible_rect()
+		_check(apron_mark_rect.size.x > 1.0 and apron_mark_rect.position.x >= apron_mark_view.position.x and apron_mark_rect.end.x <= apron_mark_view.end.x and apron_mark_rect.position.y >= apron_mark_view.position.y and apron_mark_rect.end.y <= apron_mark_view.end.y, "the building 29 mark is fully on screen")
+	node.select_puzzle(210)
+	_check(building != null and building.text == "BUILDING 29", "route 211 stays in building 29")
+	tools = node.find_child("ToolBox", true, false)
+	saw_apron = false
+	saw_stemson = false
+	if tools != null:
+		for child in tools.get_children():
+			if child.is_queued_for_deletion():
+				continue
+			if str(child.text).begins_with("Apron"):
+				saw_apron = true
+			if str(child.text).begins_with("Stemson"):
+				saw_stemson = true
+	_check(saw_apron, "route 211 still offers the apron")
+	_check(saw_stemson, "route 211 still offers the stemson")
 	node.select_puzzle(0)
 	node._unhandled_input(_key_press(KEY_8))
 	_check(int(node.get_puzzle()["id"]) == 8, "key 8 still selects route 8")

@@ -7,7 +7,7 @@ const DIRS: Array[Vector2i] = [
 	Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, -1)
 ]
 const DIR_NAMES: Array[String] = ["East", "South", "West", "North"]
-const TYPES: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook", "return", "pause", "chute", "shunt", "bias", "vault", "sling", "cant", "balk", "loft", "keel", "sheer", "strake", "wale", "garboard", "stealer", "rabbet", "futtock", "keelson", "stemson"]
+const TYPES: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook", "return", "pause", "chute", "shunt", "bias", "vault", "sling", "cant", "balk", "loft", "keel", "sheer", "strake", "wale", "garboard", "stealer", "rabbet", "futtock", "keelson", "stemson", "apron"]
 const PAINTS: Array[String] = ["red", "blue", "yellow"]
 const TICK_CAP := 250
 
@@ -134,11 +134,11 @@ static func run(puzzle: Dictionary, graph: Array) -> Dictionary:
 			elif typ == "slide":
 				var step: Vector2i = DIRS[int(parcel["dir"])]
 				parcel["intent"] = Vector2i(int(parcel["x"]), int(parcel["y"])) + step * 2
-			elif typ == "turn" or typ == "hook" or typ == "return" or typ == "pause" or typ == "chute" or typ == "shunt" or typ == "bias" or typ == "vault" or typ == "sling" or typ == "cant" or typ == "balk" or typ == "loft" or typ == "keel" or typ == "sheer" or typ == "strake" or typ == "wale" or typ == "garboard" or typ == "stealer" or typ == "rabbet" or typ == "futtock" or typ == "keelson" or typ == "stemson":
+			elif typ == "turn" or typ == "hook" or typ == "return" or typ == "pause" or typ == "chute" or typ == "shunt" or typ == "bias" or typ == "vault" or typ == "sling" or typ == "cant" or typ == "balk" or typ == "loft" or typ == "keel" or typ == "sheer" or typ == "strake" or typ == "wale" or typ == "garboard" or typ == "stealer" or typ == "rabbet" or typ == "futtock" or typ == "keelson" or typ == "stemson" or typ == "apron":
 				if int(parcel["hold"]) < 1:
 					if typ == "chute":
 						parcel["dir"] = int(block["dir"])
-					elif typ != "shunt" and typ != "pause" and typ != "bias" and typ != "vault" and typ != "sling" and typ != "cant" and typ != "balk" and typ != "loft" and typ != "keel" and typ != "sheer" and typ != "strake" and typ != "wale" and typ != "garboard" and typ != "stealer" and typ != "rabbet" and typ != "futtock" and typ != "keelson" and typ != "stemson":
+					elif typ != "shunt" and typ != "pause" and typ != "bias" and typ != "vault" and typ != "sling" and typ != "cant" and typ != "balk" and typ != "loft" and typ != "keel" and typ != "sheer" and typ != "strake" and typ != "wale" and typ != "garboard" and typ != "stealer" and typ != "rabbet" and typ != "futtock" and typ != "keelson" and typ != "stemson" and typ != "apron":
 						var quarter := 0
 						if typ == "turn":
 							quarter = 1
@@ -165,6 +165,8 @@ static func run(puzzle: Dictionary, graph: Array) -> Dictionary:
 						span = 5
 					elif typ == "stemson":
 						span = 6
+					elif typ == "apron":
+						span = 7
 					elif typ == "sling":
 						step_dir = (step_dir + 1) % 4
 						span = 2
@@ -245,7 +247,7 @@ static func run(puzzle: Dictionary, graph: Array) -> Dictionary:
 				ejected[_key(origin.x, origin.y)] = true
 			moved = true
 			var travel := _dir_of(dest - origin)
-			if travel >= 0 and not (block != null and (str(block["type"]) == "shunt" or str(block["type"]) == "bias" or str(block["type"]) == "vault" or str(block["type"]) == "sling" or str(block["type"]) == "cant" or str(block["type"]) == "balk" or str(block["type"]) == "loft" or str(block["type"]) == "keel" or str(block["type"]) == "sheer" or str(block["type"]) == "strake" or str(block["type"]) == "wale" or str(block["type"]) == "garboard" or str(block["type"]) == "stealer" or str(block["type"]) == "rabbet" or str(block["type"]) == "futtock" or str(block["type"]) == "keelson" or str(block["type"]) == "stemson")):
+			if travel >= 0 and not (block != null and (str(block["type"]) == "shunt" or str(block["type"]) == "bias" or str(block["type"]) == "vault" or str(block["type"]) == "sling" or str(block["type"]) == "cant" or str(block["type"]) == "balk" or str(block["type"]) == "loft" or str(block["type"]) == "keel" or str(block["type"]) == "sheer" or str(block["type"]) == "strake" or str(block["type"]) == "wale" or str(block["type"]) == "garboard" or str(block["type"]) == "stealer" or str(block["type"]) == "rabbet" or str(block["type"]) == "futtock" or str(block["type"]) == "keelson" or str(block["type"]) == "stemson" or str(block["type"]) == "apron")):
 				parcel["dir"] = travel
 			if dest == dock:
 				delivered.append({
@@ -307,7 +309,7 @@ static func run(puzzle: Dictionary, graph: Array) -> Dictionary:
 				ahead += DIRS[int(block["dir"])]
 				if _find_at(parcels, ahead) == null and _enterable(ahead, dock, width, height, walls, source_cells, blocks):
 					latch_pending = true
-			elif (typ == "turn" or typ == "hook" or typ == "return" or typ == "pause" or typ == "chute" or typ == "shunt" or typ == "bias" or typ == "vault" or typ == "sling" or typ == "cant" or typ == "balk" or typ == "loft" or typ == "keel" or typ == "sheer" or typ == "strake" or typ == "wale" or typ == "garboard" or typ == "stealer" or typ == "rabbet" or typ == "futtock" or typ == "keelson" or typ == "stemson") and int(parcel["hold"]) >= 1:
+			elif (typ == "turn" or typ == "hook" or typ == "return" or typ == "pause" or typ == "chute" or typ == "shunt" or typ == "bias" or typ == "vault" or typ == "sling" or typ == "cant" or typ == "balk" or typ == "loft" or typ == "keel" or typ == "sheer" or typ == "strake" or typ == "wale" or typ == "garboard" or typ == "stealer" or typ == "rabbet" or typ == "futtock" or typ == "keelson" or typ == "stemson" or typ == "apron") and int(parcel["hold"]) >= 1:
 				var step_dir := int(parcel["dir"])
 				var span := 1
 				if typ == "shunt" or typ == "wale":
@@ -324,6 +326,8 @@ static func run(puzzle: Dictionary, graph: Array) -> Dictionary:
 					span = 5
 				elif typ == "stemson":
 					span = 6
+				elif typ == "apron":
+					span = 7
 				elif typ == "sling":
 					step_dir = (step_dir + 1) % 4
 					span = 2
