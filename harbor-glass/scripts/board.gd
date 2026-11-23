@@ -307,6 +307,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_abacus(at, rot)
 		"rebate":
 			_draw_rebate(at, rot)
+		"echinus":
+			_draw_echinus(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -1641,6 +1643,65 @@ func _rebate_channel(center: Vector2, gap: String, mark: Color) -> void:
 		back + along * half - along * thick,
 		cheek + along * side - along * thick,
 		cheek + along * side,
+	]), mark)
+
+func _draw_echinus(at: Vector2i, rot: int) -> void:
+	# A convex quarter-round under the capital, bulging toward the facing,
+	# with a tick on the clockwise edge. It is not the rebate's open channel.
+	var center := _center(at)
+	var facing := Tracer.echinus_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	_echinus_bulge(center, facing, mark)
+	_echinus_tick(center, facing, mark)
+
+func _echinus_bulge(center: Vector2, dir: String, mark: Color) -> void:
+	var along := Vector2.RIGHT
+	var outward := Vector2.UP
+	match dir:
+		"N":
+			along = Vector2.RIGHT
+			outward = Vector2.UP
+		"S":
+			along = Vector2.RIGHT
+			outward = Vector2.DOWN
+		"E":
+			along = Vector2.DOWN
+			outward = Vector2.RIGHT
+		_:
+			along = Vector2.DOWN
+			outward = Vector2.LEFT
+	var root := center - outward * cell * 0.06
+	var crown := center + outward * cell * 0.36
+	var hip := cell * 0.30
+	draw_colored_polygon(PackedVector2Array([
+		root - along * hip,
+		root + along * hip,
+		root + along * hip * 0.55 + outward * cell * 0.22,
+		crown,
+		root - along * hip * 0.55 + outward * cell * 0.22,
+	]), mark)
+
+func _echinus_tick(center: Vector2, dir: String, mark: Color) -> void:
+	var clock := Vector2.RIGHT
+	match dir:
+		"N":
+			clock = Vector2.RIGHT
+		"E":
+			clock = Vector2.DOWN
+		"S":
+			clock = Vector2.LEFT
+		_:
+			clock = Vector2.UP
+	var inner := center + clock * cell * 0.18
+	var outer := center + clock * cell * 0.40
+	var half := cell * 0.06
+	var across := Vector2(-clock.y, clock.x)
+	draw_colored_polygon(PackedVector2Array([
+		inner - across * half,
+		inner + across * half,
+		outer + across * half,
+		outer - across * half,
 	]), mark)
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
