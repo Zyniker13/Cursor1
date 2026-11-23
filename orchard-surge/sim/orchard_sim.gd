@@ -62,9 +62,9 @@ const HURT_TICKS := 12
 const PEST_HP := 12
 const PEST_SPEED := 42.0
 const PEST_RADIUS := 11.0
-const START_SEEDS := 26
+const START_SEEDS := 27
 const PLANT_TICKS := 240
-const WAVE_COUNT := 53
+const WAVE_COUNT := 55
 const START_CELL := Vector2i(7, 5)
 const PROJECTILE_RADIUS := 4.0
 const PROJECTILE_LIFE := 75
@@ -94,7 +94,8 @@ const PROJECTILE_LIFE := 75
 # Nights 48 and 49 bring scald moths. Night 48 is scald alone. Night 49 sends scald together with every Scorch lock. The moth count stays 16; scald is a lock on every one of those moths.
 # Nights 50 and 51 bring blister moths. Night 50 is blister alone. Night 51 sends blister together with every Sear lock. The moth count stays 16; blister is a lock on every one of those moths.
 # Nights 52 and 53 bring char moths. Night 52 is char alone. Night 53 sends char together with every Weal lock. The moth count stays 16; char is a lock on every one of those moths.
-# shroud_every / rind_every / pitch_every / frost_every / web_every / glass_every / scale_every / mail_every / hide_every / dusk_every / veil_every / pall_every / gloom_every / murk_every / dread_every / woe_every / blight_every / rot_every / mildew_every / rust_every / scab_every / spot_every / scald_every / blister_every / char_every 0: none. 1: every spawn. N: every Nth spawn, the Nth included.
+# Nights 54 and 55 bring scorch moths. Night 54 is scorch alone. Night 55 sends scorch together with every Singe lock. The moth count stays 16; scorch is a lock on every one of those moths. Night 47 stays named Scorch and carries no scorch.
+# shroud_every / rind_every / pitch_every / frost_every / web_every / glass_every / scale_every / mail_every / hide_every / dusk_every / veil_every / pall_every / gloom_every / murk_every / dread_every / woe_every / blight_every / rot_every / mildew_every / rust_every / scab_every / spot_every / scald_every / blister_every / char_every / scorch_every 0: none. 1: every spawn. N: every Nth spawn, the Nth included.
 # Nights 1–21 omit dusk_every; a missing key spawns no dusk.
 # Nights 1–23 omit veil_every; a missing key spawns no veil.
 # Nights 1–25 omit pall_every; a missing key spawns no pall.
@@ -111,6 +112,7 @@ const PROJECTILE_LIFE := 75
 # Nights 1–47 omit scald_every; a missing key spawns no scald. Night 46 is still Spot and carries no scald. Night 47 is still Scorch and carries no scald.
 # Nights 1–49 omit blister_every; a missing key spawns no blister. Night 48 is still Scald and carries no blister. Night 49 is still Sear and carries no blister.
 # Nights 1–51 omit char_every; a missing key spawns no char. Night 50 is still Blister and carries no char. Night 51 is still Weal and carries no char.
+# Nights 1–53 omit scorch_every; a missing key spawns no scorch. Night 47 is still Scorch and carries no scorch. Night 52 is still Char and carries no scorch. Night 53 is still Singe and carries no scorch.
 const WAVES := [
 	{"count": 8, "interval": 72, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "hide_every": 0, "name": ""},
 	{"count": 12, "interval": 66, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "hide_every": 0, "name": ""},
@@ -165,6 +167,8 @@ const WAVES := [
 	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 1, "scale_every": 1, "mail_every": 1, "hide_every": 1, "dusk_every": 1, "veil_every": 1, "pall_every": 1, "gloom_every": 1, "murk_every": 1, "dread_every": 1, "woe_every": 1, "blight_every": 1, "rot_every": 1, "mildew_every": 1, "rust_every": 1, "scab_every": 1, "spot_every": 1, "scald_every": 1, "blister_every": 1, "name": "Weal"},
 	{"count": 10, "interval": 126, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "hide_every": 0, "dusk_every": 0, "veil_every": 0, "pall_every": 0, "gloom_every": 0, "murk_every": 0, "dread_every": 0, "woe_every": 0, "blight_every": 0, "rot_every": 0, "mildew_every": 0, "rust_every": 0, "scab_every": 0, "spot_every": 0, "scald_every": 0, "blister_every": 0, "char_every": 1, "name": "Char"},
 	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 1, "scale_every": 1, "mail_every": 1, "hide_every": 1, "dusk_every": 1, "veil_every": 1, "pall_every": 1, "gloom_every": 1, "murk_every": 1, "dread_every": 1, "woe_every": 1, "blight_every": 1, "rot_every": 1, "mildew_every": 1, "rust_every": 1, "scab_every": 1, "spot_every": 1, "scald_every": 1, "blister_every": 1, "char_every": 1, "name": "Singe"},
+	{"count": 10, "interval": 132, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "hide_every": 0, "dusk_every": 0, "veil_every": 0, "pall_every": 0, "gloom_every": 0, "murk_every": 0, "dread_every": 0, "woe_every": 0, "blight_every": 0, "rot_every": 0, "mildew_every": 0, "rust_every": 0, "scab_every": 0, "spot_every": 0, "scald_every": 0, "blister_every": 0, "char_every": 0, "scorch_every": 1, "name": "Scorch"},
+	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 1, "scale_every": 1, "mail_every": 1, "hide_every": 1, "dusk_every": 1, "veil_every": 1, "pall_every": 1, "gloom_every": 1, "murk_every": 1, "dread_every": 1, "woe_every": 1, "blight_every": 1, "rot_every": 1, "mildew_every": 1, "rust_every": 1, "scab_every": 1, "spot_every": 1, "scald_every": 1, "blister_every": 1, "char_every": 1, "scorch_every": 1, "name": "Cinder"},
 ]
 
 
@@ -214,6 +218,7 @@ class Plant:
 	var maniples_scald: bool = false
 	var chasubles_blister: bool = false
 	var dalmatics_char: bool = false
+	var tunicles_scorch: bool = false
 	var casts_light: bool = true
 
 
@@ -248,6 +253,7 @@ class Pest:
 	var scalded: bool = false
 	var blistered: bool = false
 	var charred: bool = false
+	var scorched: bool = false
 	var speed: float = 0.0
 	var slow_factor: float = 1.0
 	var slow_ticks: int = 0
@@ -331,6 +337,8 @@ var blisters_spawned: int = 0
 var blisters_killed: int = 0
 var chars_spawned: int = 0
 var chars_killed: int = 0
+var scorches_spawned: int = 0
+var scorches_killed: int = 0
 var plants: Array = []
 var pests: Array = []
 var projectiles: Array = []
@@ -488,8 +496,11 @@ func tile_chasubles_blister(tx: int, ty: int) -> bool:
 func tile_dalmatics_char(tx: int, ty: int) -> bool:
 	return _tile_in_light(tx, ty, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true)
 
+func tile_tunicles_scorch(tx: int, ty: int) -> bool:
+	return _tile_in_light(tx, ty, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true)
 
-func _tile_in_light(tx: int, ty: int, shroud_only: bool, rind_only: bool, pitch_only: bool, frost_only: bool, web_only: bool, glass_only: bool, scale_only: bool, mail_only: bool, hide_only: bool, dusk_only: bool, veil_only: bool = false, pall_only: bool = false, gloom_only: bool = false, murk_only: bool = false, dread_only: bool = false, woe_only: bool = false, blight_only: bool = false, rot_only: bool = false, mildew_only: bool = false, rust_only: bool = false, scab_only: bool = false, spot_only: bool = false, scald_only: bool = false, blister_only: bool = false, char_only: bool = false) -> bool:
+
+func _tile_in_light(tx: int, ty: int, shroud_only: bool, rind_only: bool, pitch_only: bool, frost_only: bool, web_only: bool, glass_only: bool, scale_only: bool, mail_only: bool, hide_only: bool, dusk_only: bool, veil_only: bool = false, pall_only: bool = false, gloom_only: bool = false, murk_only: bool = false, dread_only: bool = false, woe_only: bool = false, blight_only: bool = false, rot_only: bool = false, mildew_only: bool = false, rust_only: bool = false, scab_only: bool = false, spot_only: bool = false, scald_only: bool = false, blister_only: bool = false, char_only: bool = false, scorch_only: bool = false) -> bool:
 	if tx < 0 or ty < 0 or tx >= MAP_W or ty >= MAP_H:
 		return false
 	var rect_min := Vector2(float(tx) * TILE, float(ty) * TILE)
@@ -548,7 +559,9 @@ func _tile_in_light(tx: int, ty: int, shroud_only: bool, rind_only: bool, pitch_
 			continue
 		if char_only and not grown.dalmatics_char:
 			continue
-		var special := shroud_only or rind_only or pitch_only or frost_only or web_only or glass_only or scale_only or mail_only or hide_only or dusk_only or veil_only or pall_only or gloom_only or murk_only or dread_only or woe_only or blight_only or rot_only or mildew_only or rust_only or scab_only or spot_only or scald_only or blister_only or char_only
+		if scorch_only and not grown.tunicles_scorch:
+			continue
+		var special := shroud_only or rind_only or pitch_only or frost_only or web_only or glass_only or scale_only or mail_only or hide_only or dusk_only or veil_only or pall_only or gloom_only or murk_only or dread_only or woe_only or blight_only or rot_only or mildew_only or rust_only or scab_only or spot_only or scald_only or blister_only or char_only or scorch_only
 		if not special and not grown.casts_light:
 			continue
 		var source: Vector2 = grown.pos
@@ -626,7 +639,7 @@ func _night_suffix(index: int) -> String:
 
 
 ## Shared entry for wave spawns and the visibility test. Does not alter damage or health.
-func spawn_pest(pos: Vector2, shrouded: bool = false, rinded: bool = false, pitched: bool = false, frosted: bool = false, webbed: bool = false, glassed: bool = false, scaled: bool = false, mailed: bool = false, hided: bool = false, dusked: bool = false, veiled: bool = false, palled: bool = false, gloomed: bool = false, murked: bool = false, dreaded: bool = false, woed: bool = false, blighted: bool = false, rotted: bool = false, mildewed: bool = false, rusted: bool = false, scabbed: bool = false, spotted: bool = false, scalded: bool = false, blistered: bool = false, charred: bool = false):
+func spawn_pest(pos: Vector2, shrouded: bool = false, rinded: bool = false, pitched: bool = false, frosted: bool = false, webbed: bool = false, glassed: bool = false, scaled: bool = false, mailed: bool = false, hided: bool = false, dusked: bool = false, veiled: bool = false, palled: bool = false, gloomed: bool = false, murked: bool = false, dreaded: bool = false, woed: bool = false, blighted: bool = false, rotted: bool = false, mildewed: bool = false, rusted: bool = false, scabbed: bool = false, spotted: bool = false, scalded: bool = false, blistered: bool = false, charred: bool = false, scorched: bool = false):
 	var pest := Pest.new()
 	pest.id = _next_pest_id
 	_next_pest_id += 1
@@ -661,6 +674,7 @@ func spawn_pest(pos: Vector2, shrouded: bool = false, rinded: bool = false, pitc
 	pest.scalded = scalded
 	pest.blistered = blistered
 	pest.charred = charred
+	pest.scorched = scorched
 	if shrouded:
 		shrouds_spawned += 1
 	if rinded:
@@ -711,6 +725,8 @@ func spawn_pest(pos: Vector2, shrouded: bool = false, rinded: bool = false, pitc
 		blisters_spawned += 1
 	if charred:
 		chars_spawned += 1
+	if scorched:
+		scorches_spawned += 1
 	_apply_visibility(pest)
 	pests.append(pest)
 	return pest
@@ -787,6 +803,7 @@ func _try_plant(cmd: Command) -> void:
 	plant.maniples_scald = bool(stats["maniples_scald"])
 	plant.chasubles_blister = bool(stats["chasubles_blister"])
 	plant.dalmatics_char = bool(stats["dalmatics_char"])
+	plant.tunicles_scorch = bool(stats["tunicles_scorch"])
 	plant.casts_light = bool(stats["casts_light"])
 	plants.append(plant)
 	seeds -= 1
@@ -847,6 +864,7 @@ func _wave_spawns() -> void:
 	var scald_every := int(spec.get("scald_every", 0))
 	var blister_every := int(spec.get("blister_every", 0))
 	var char_every := int(spec.get("char_every", 0))
+	var scorch_every := int(spec.get("scorch_every", 0))
 	var index := int(spec["count"]) - spawns_left
 	var shrouded := shroud_every > 0 and index % shroud_every == shroud_every - 1
 	var rinded := rind_every > 0 and index % rind_every == rind_every - 1
@@ -873,7 +891,8 @@ func _wave_spawns() -> void:
 	var scalded := scald_every > 0 and index % scald_every == scald_every - 1
 	var blistered := blister_every > 0 and index % blister_every == blister_every - 1
 	var charred := char_every > 0 and index % char_every == char_every - 1
-	spawn_pest(tile_center(cell.x, cell.y), shrouded, rinded, pitched, frosted, webbed, glassed, scaled, mailed, hided, dusked, veiled, palled, gloomed, murked, dreaded, woed, blighted, rotted, mildewed, rusted, scabbed, spotted, scalded, blistered, charred)
+	var scorched := scorch_every > 0 and index % scorch_every == scorch_every - 1
+	spawn_pest(tile_center(cell.x, cell.y), shrouded, rinded, pitched, frosted, webbed, glassed, scaled, mailed, hided, dusked, veiled, palled, gloomed, murked, dreaded, woed, blighted, rotted, mildewed, rusted, scabbed, spotted, scalded, blistered, charred, scorched)
 	spawns_left -= 1
 	spawn_wait = spawn_interval
 
@@ -908,7 +927,7 @@ func _apply_visibility(pest: Pest) -> void:
 		pest.hidden = true
 		return
 	var cell := cell_of(pest.pos)
-	if pest.shrouded or pest.rinded or pest.pitched or pest.frosted or pest.webbed or pest.glassed or pest.scaled or pest.mailed or pest.hided or pest.dusked or pest.veiled or pest.palled or pest.gloomed or pest.murked or pest.dreaded or pest.woed or pest.blighted or pest.rotted or pest.mildewed or pest.rusted or pest.scabbed or pest.spotted or pest.scalded or pest.blistered or pest.charred:
+	if pest.shrouded or pest.rinded or pest.pitched or pest.frosted or pest.webbed or pest.glassed or pest.scaled or pest.mailed or pest.hided or pest.dusked or pest.veiled or pest.palled or pest.gloomed or pest.murked or pest.dreaded or pest.woed or pest.blighted or pest.rotted or pest.mildewed or pest.rusted or pest.scabbed or pest.spotted or pest.scalded or pest.blistered or pest.charred or pest.scorched:
 		var open := true
 		if pest.shrouded:
 			open = open and tile_burns_shroud(cell.x, cell.y)
@@ -960,6 +979,8 @@ func _apply_visibility(pest: Pest) -> void:
 			open = open and tile_chasubles_blister(cell.x, cell.y)
 		if pest.charred:
 			open = open and tile_dalmatics_char(cell.x, cell.y)
+		if pest.scorched:
+			open = open and tile_tunicles_scorch(cell.x, cell.y)
 		pest.hidden = not open
 	else:
 		pest.hidden = not tile_lit(cell.x, cell.y)
@@ -1140,6 +1161,13 @@ func _char_up(pest: Pest) -> bool:
 	return not tile_dalmatics_char(cell.x, cell.y)
 
 
+func _scorch_up(pest: Pest) -> bool:
+	if not pest.scorched:
+		return false
+	var cell := cell_of(pest.pos)
+	return not tile_tunicles_scorch(cell.x, cell.y)
+
+
 func _plants_fire() -> void:
 	for entry in plants:
 		var plant := entry as Plant
@@ -1225,7 +1253,7 @@ func _impact(shot: Projectile, target: Pest) -> void:
 
 
 func _damage_pest(pest: Pest, shot: Projectile) -> void:
-	if _shroud_up(pest) or _rind_up(pest) or _pitch_up(pest) or _frost_up(pest) or _web_up(pest) or _glass_up(pest) or _scale_up(pest) or _mail_up(pest) or _hide_up(pest) or _dusk_up(pest) or _veil_up(pest) or _pall_up(pest) or _gloom_up(pest) or _murk_up(pest) or _dread_up(pest) or _woe_up(pest) or _blight_up(pest) or _rot_up(pest) or _mildew_up(pest) or _rust_up(pest) or _scab_up(pest) or _spot_up(pest) or _scald_up(pest) or _blister_up(pest) or _char_up(pest):
+	if _shroud_up(pest) or _rind_up(pest) or _pitch_up(pest) or _frost_up(pest) or _web_up(pest) or _glass_up(pest) or _scale_up(pest) or _mail_up(pest) or _hide_up(pest) or _dusk_up(pest) or _veil_up(pest) or _pall_up(pest) or _gloom_up(pest) or _murk_up(pest) or _dread_up(pest) or _woe_up(pest) or _blight_up(pest) or _rot_up(pest) or _mildew_up(pest) or _rust_up(pest) or _scab_up(pest) or _spot_up(pest) or _scald_up(pest) or _blister_up(pest) or _char_up(pest) or _scorch_up(pest):
 		return
 	pest.hp -= shot.damage
 	if shot.slow_ticks > 0:
@@ -1292,6 +1320,8 @@ func _damage_pest(pest: Pest, shot: Projectile) -> void:
 			blisters_killed += 1
 		if pest.charred:
 			chars_killed += 1
+		if pest.scorched:
+			scorches_killed += 1
 		events.append({
 			"type": "died",
 			"x": pest.pos.x,

@@ -109,6 +109,12 @@ extends RefCounted
 ## after that tick. If either exit refuses, neither item leaves. A hake
 ## accepts from ahead and sends the waiter backward and the arrival right.
 ## Nothing stays in the sole.
+## A frog does not forward in step 2 on its own. The first item stays.
+## Only an arrival from ahead is accepted. When a later item arrives from
+## ahead, the waiter moves one cell forward and the arrival moves one cell
+## left, and only if both of those cells can take them. The frog is empty
+## after that tick. If either exit refuses, neither item leaves. A sole
+## accepts from ahead and sends the arrival right. Nothing stays in the frog.
 
 const Rules = preload("res://scripts/foundry.gd")
 
@@ -140,7 +146,7 @@ class Machine:
 	## Second lane on a bridge. -1 is empty. Other machines leave it empty.
 	var cross := -1
 	var cross_moved := false
-	## True while a twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, a clevis, a beam, a hake, or a sole is resolving an arrival, so a loop cannot re-enter.
+	## True while a twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, a clevis, a beam, a hake, a sole, or a frog is resolving an arrival, so a loop cannot re-enter.
 	var pairing := false
 
 class Source:
@@ -532,8 +538,9 @@ func _can_take(machine: Machine, mat: int, arrival: int) -> bool:
 		or machine.kind == Rules.Kind.BEAM
 		or machine.kind == Rules.Kind.HAKE
 		or machine.kind == Rules.Kind.SOLE
+		or machine.kind == Rules.Kind.FROG
 	):
-		# Pairing is handled in _accept. A twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, a clevis, a beam, a hake, or a sole may already be holding.
+		# Pairing is handled in _accept. A twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, a clevis, a beam, a hake, a sole, or a frog may already be holding.
 		return false
 	if machine.kind == Rules.Kind.BRIDGE:
 		if arrival == machine.dir:
@@ -617,6 +624,8 @@ func _accept(dest: Vector2i, mat: int, arrival: int) -> bool:
 		return _accept_hake(dest, machine, mat, arrival)
 	if machine.kind == Rules.Kind.SOLE:
 		return _accept_sole(dest, machine, mat, arrival)
+	if machine.kind == Rules.Kind.FROG:
+		return _accept_frog(dest, machine, mat, arrival)
 	if not _can_take(machine, mat, arrival):
 		return false
 	if _holder(machine.kind):
@@ -1339,6 +1348,47 @@ func _accept_sole(pos: Vector2i, machine: Machine, mat: int, arrival: int) -> bo
 	if forward_sent:
 		right_sent = _accept(pos + Rules.vec(right_dir), mat, right_dir)
 	if not forward_sent or not right_sent:
+		_restore(mark)
+		return false
+	machine.pairing = false
+	machine.hold = -1
+	machine.moved = false
+	return true
+
+
+## From ahead only, the same entry a sole accepts. The first item waits and
+## never leaves on its own. A later item from ahead may be a different
+## material. On that tick the waiter moves one cell forward and the arrival
+## moves one cell left, if both cells can take them. Forward is the way the
+## frog faces. Left is the frog's left. The frog is empty afterwards. If
+## either exit refuses, neither item leaves and the arrival is not accepted.
+## A lone item never leaves, including on the next tick and the tick after
+## that. The frog does not accept from the left, from the right, or from
+## behind. It does not spill, rotate, alternate, or keep either item, and it
+## does not send the waiter backward, right, or left. A sole sends the same
+## waiter forward, and sends the arrival right. A beam sends the waiter
+## backward and the arrival left. A hake sends the waiter backward and the
+## arrival right. A share accepts from behind and sends the waiter forward
+## and the arrival left. A coulter accepts from behind and sends the waiter
+## forward and the arrival right.
+func _accept_frog(pos: Vector2i, machine: Machine, mat: int, arrival: int) -> bool:
+	if arrival != Rules.opposite(machine.dir):
+		return false
+	if machine.hold < 0:
+		machine.hold = mat
+		machine.moved = true
+		return true
+	if machine.moved or machine.pairing:
+		return false
+	var forward_dir := machine.dir
+	var left_dir := Rules.left(machine.dir)
+	var mark := _checkpoint()
+	machine.pairing = true
+	var forward_sent: bool = _accept(pos + Rules.vec(forward_dir), machine.hold, forward_dir)
+	var left_sent := false
+	if forward_sent:
+		left_sent = _accept(pos + Rules.vec(left_dir), mat, left_dir)
+	if not forward_sent or not left_sent:
 		_restore(mark)
 		return false
 	machine.pairing = false
