@@ -293,6 +293,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_throat(at, rot)
 		"larmier":
 			_draw_larmier(at, rot)
+		"cill":
+			_draw_cill(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -1292,6 +1294,23 @@ func _draw_larmier(at: Vector2i, rot: int) -> void:
 			eave + along * lip,
 			eave - along * lip,
 		]), cap)
+
+func _draw_cill(at: Vector2i, rot: int) -> void:
+	# A pale bar along the dry-stopped axis. A north cill bars east and west.
+	# The bar is not the larmier's end caps and not the corona's side shelves.
+	var center := _center(at)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var bar := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var along_dir := Tracer.rotate_dir(Tracer.cill_facing(rot), 1)
+	var along := Vector2.RIGHT if along_dir == "E" or along_dir == "W" else Vector2.DOWN
+	var half := cell * 0.32
+	var thick := cell * 0.08
+	draw_colored_polygon(PackedVector2Array([
+		center - along * half - along.orthogonal() * thick,
+		center + along * half - along.orthogonal() * thick,
+		center + along * half + along.orthogonal() * thick,
+		center - along * half + along.orthogonal() * thick,
+	]), bar)
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
 	if dir == "N" or dir == "S":
