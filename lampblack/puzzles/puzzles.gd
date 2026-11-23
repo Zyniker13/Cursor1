@@ -3,7 +3,7 @@ extends RefCounted
 
 const Rules = preload("res://rules/rules.gd")
 
-## Seventeen wings of the closed museum. Each solution is a list of actions the rules
+## Eighteen wings of the closed museum. Each solution is a list of actions the rules
 ## accept. Tokens are R L U D, W for wait, and T0 / T1 for lamps.
 
 
@@ -91,6 +91,8 @@ static func _puzzle(number: int, title: String, lesson: String, rows: PackedStri
 		wing_number = number - 92
 	elif wing == "Mica Wing":
 		wing_number = number - 98
+	elif wing == "Baize Wing":
+		wing_number = number - 104
 	return {
 		"number": number,
 		"wing": wing,
@@ -137,6 +139,7 @@ static func _all() -> Array:
 	puzzles.append_array(_screen_wing())
 	puzzles.append_array(_glaze_wing())
 	puzzles.append_array(_mica_wing())
+	puzzles.append_array(_baize_wing())
 	return puzzles
 
 
@@ -2027,5 +2030,120 @@ static func _mica_wing() -> Array:
 			[_guard(8, 2, [Vector2i(8, 2)], 3)],
 			"R R T0 R W W W U R R D U R R R R R D",
 			"Mica Wing"
+		),
+	]
+
+
+static func _baize_wing() -> Array:
+	return [
+		_puzzle(
+			105,
+			"The Dark Cloth",
+			"This room is about the rule that you step onto the baize while the lamp is lit and the floor past it stays dark.",
+			PackedStringArray([
+				"##########",
+				"#...X....#",
+				"#........#",
+				"####J#####",
+				"#...S....#",
+				"#........#",
+				"##########",
+			]),
+			[_lamp(4, 5, "n", 3)],
+			[_guard(6, 5, [Vector2i(6, 5), Vector2i(8, 5)], 5)],
+			"U U U",
+			"Baize Wing"
+		),
+		_puzzle(
+			106,
+			"The Seen Hem",
+			"This room is about the rule that the guard sees a lit tile through the dark baize, and the solution never takes that tile.",
+			PackedStringArray([
+				"##########",
+				"#...X....#",
+				"#........#",
+				"####J.####",
+				"#...S#...#",
+				"#........#",
+				"##########",
+			]),
+			[_lamp(4, 5, "n", 3), _lamp(5, 3, "w", 0)],
+			[_guard(4, 5, [Vector2i(4, 5)], 4)],
+			"U U U",
+			"Baize Wing"
+		),
+		_puzzle(
+			107,
+			"The Stopped Lamp",
+			"This room is about the rule that a second lamp's light stops at the baize, so the floor past it stays dark.",
+			PackedStringArray([
+				"###########",
+				"#....X....#",
+				"#.........#",
+				"#####J#####",
+				"#....S....#",
+				"#.........#",
+				"###########",
+			]),
+			[_lamp(5, 2, "n", 1), _lamp(5, 5, "n", 3)],
+			[_guard(8, 5, [Vector2i(8, 5)], 4)],
+			"U T0 U U",
+			"Baize Wing"
+		),
+		_puzzle(
+			108,
+			"The Long Cloth",
+			"This room is about the rule that a guard cannot enter the baize, so he takes the longer road.",
+			PackedStringArray([
+				"#############",
+				"#...........#",
+				"#S....J....X#",
+				"##.###.#.##.#",
+				"#...........#",
+				"#...........#",
+				"#...........#",
+				"#############",
+			]),
+			[_lamp(4, 2, "e", 0), _lamp(6, 4, "n", 3)],
+			[_guard(9, 4, [Vector2i(9, 4)], 3)],
+			"R R T0 R W W W W W W U R R D U R R R R R D",
+			"Baize Wing"
+		),
+		_puzzle(
+			109,
+			"The Early Hem",
+			"This room is about the rule that the early step onto the baize is legal, and a guard catches a scripted wrong step on the lit tile past it.",
+			PackedStringArray([
+				"###########",
+				"#....X....#",
+				"#.........#",
+				"####J.#####",
+				"#...S#....#",
+				"#.........#",
+				"###########",
+			]),
+			[_lamp(4, 5, "n", 3), _lamp(5, 3, "w", 0)],
+			[_guard(4, 5, [Vector2i(4, 5)], 4)],
+			"U U U R",
+			"Baize Wing"
+		),
+		_puzzle(
+			110,
+			"The Last Baize",
+			"This room is about the rule that you leave by stepping on the dark baize, and the floor beyond it stays dark.",
+			PackedStringArray([
+				"#############",
+				"#...........#",
+				"#S....J....X#",
+				"##.###.#.##.#",
+				"#...........#",
+				"#..........##",
+				"#...........#",
+				"#############",
+			]),
+			[_lamp(4, 2, "e", 0), _lamp(6, 4, "n", 3)],
+			[_guard(9, 5, [Vector2i(9, 5)], 4)],
+			"R R T0 R W W W W W W W U R R D U R R R R R D",
+			"Baize Wing"
 		),
 	]
