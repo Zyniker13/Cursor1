@@ -13,7 +13,7 @@ class_name ChartBook
 # The Jamb holds eight more. The Astragal holds eight more.
 # The Scotia holds eight more. The Torus holds eight more.
 # The Ogee holds eight more. The Ovolo holds eight more.
-# The Cavetto holds the last eight.
+# The Cavetto holds eight more. The Fillet holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
@@ -105,6 +105,18 @@ class_name ChartBook
 # stops. A casement passes only the facing. A jamb passes both directions on
 # its open axis. A mullion passes north and south. A transom passes east and
 # west. A lintel passes every dry direction.
+# A fillet has a facing. Rotation changes it the same way: 0 north, 90 east,
+# 180 south, 270 west. While its row is dry, only the opposite of the facing
+# passes straight through in the same direction and the same color, and that
+# pass costs no bounce. It does not turn, it does not recolor, and it does not
+# split. The facing and both sides stop and do not enter. Facing north, south
+# passes, and north, east, and west stop. A north cavetto passes north, east,
+# and west and stops south, so a north fillet is not a north cavetto. A
+# casement passes only the facing, so a north fillet is not a north casement.
+# While that row is flooded, every beam stops at the waterline, the same way a
+# flooded cavetto stops. A jamb passes both directions on its open axis. A
+# mullion passes north and south. A transom passes east and west. A lintel
+# passes every dry direction.
 # See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
@@ -136,6 +148,7 @@ const TORUS := "The Torus"
 const OGEE := "The Ogee"
 const OVOLO := "The Ovolo"
 const CAVETTO := "The Cavetto"
+const FILLET := "The Fillet"
 
 static func all() -> Array:
 	var book: Array = []
@@ -164,6 +177,7 @@ static func all() -> Array:
 	book.append_array(ogee())
 	book.append_array(ovolo())
 	book.append_array(cavetto())
+	book.append_array(fillet())
 	return book
 
 
@@ -265,6 +279,10 @@ static func ovolo() -> Array:
 
 static func cavetto() -> Array:
 	return [chart_191(), chart_192(), chart_193(), chart_194(), chart_195(), chart_196(), chart_197(), chart_198()]
+
+
+static func fillet() -> Array:
+	return [chart_199(), chart_200(), chart_201(), chart_202(), chart_203(), chart_204(), chart_205(), chart_206()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -7331,6 +7349,307 @@ static func chart_198() -> Dictionary:
 	}
 
 
+static func chart_199() -> Dictionary:
+	# Tide index 0, flood 0. A north fillet passes only south.
+	# The chart opens facing south, which stops that southbound beam.
+	return {
+		"id": "199",
+		"harbor": FILLET,
+		"title": "The Dry Fillet",
+		"teach": "Tide index 0, flood 0. A dry north fillet passes the southbound beam. North, east, and west stop. White stays white. A casement facing north refuses the southbound beam. A jamb passes the northbound return. A lintel lets that return through. A cavetto facing north refuses the southbound beam. An ovolo facing north also passes east and west. An ogee facing north also passes west.",
+		"win": "The dry north fillet passes south, and north, east, and west stop.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ss", 3, 0, "S", "white"),
+			_lantern("Nn", 3, 6, "N", "red"),
+			_lantern("Ee", 0, 3, "E", "blue"),
+			_lantern("Ww", 6, 3, "W", "red"),
+		],
+		"docks": [
+			_dock("Sd", 3, 5, "white", true),
+			_dock("Nd", 3, 1, "red", true, true),
+			_dock("Td", 3, 4, "blue", true, true),
+			_dock("Ed", 5, 3, "blue", true, true),
+			_dock("Wd", 1, 3, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_fillet("O", "Fillet", 3, 3, 180, 0),
+		],
+	}
+
+
+static func chart_200() -> Dictionary:
+	# The chart opens under water. The beam from the dry row stops at the
+	# waterline. The solution lowers the tide, and only south passes.
+	return {
+		"id": "200",
+		"harbor": FILLET,
+		"title": "The Wet Stop",
+		"teach": "The fillet opens under water, so every beam stops at the waterline and does not enter. Lower the tide. Dry, the southbound beam passes, and north, east, and west stop. A shutter would pass while flooded. A well, a siphon, a sluice, or a weir would carry the beam. A casement facing north refuses the southbound beam. A flooded cavetto stops the same way.",
+		"win": "The tide is low. South passes, and the other three beams stop.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [0, 4],
+		"start_tide_index": 1,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ss", 3, 0, "S", "white"),
+			_lantern("Nn", 3, 7, "N", "red"),
+			_lantern("Ee", 0, 4, "E", "blue"),
+			_lantern("Ww", 7, 4, "W", "red"),
+		],
+		"docks": [
+			_dock("Sd", 3, 6, "white", true),
+			_dock("Nd", 3, 1, "red", true, true),
+			_dock("Td", 3, 5, "blue", true, true),
+			_dock("Ed", 5, 4, "blue", true, true),
+			_dock("Wd", 1, 4, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_fillet("O", "Fillet", 3, 4, 180, 0),
+		],
+	}
+
+
+static func chart_201() -> Dictionary:
+	# Red goes south and stays red. The other three directions stop.
+	return {
+		"id": "201",
+		"harbor": FILLET,
+		"title": "Color Kept",
+		"teach": "The dry fillet keeps the color on the southbound pass. Red stays red. Blue stays blue and white stays white when that is the color that enters. A stain or a weir would change the color. A casement facing north refuses the southbound beam. A cavetto facing north refuses the southbound beam. An ovolo facing north also passes east and west.",
+		"win": "The color that enters the fillet is the color that leaves it.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ss", 3, 0, "S", "red"),
+			_lantern("Nn", 3, 6, "N", "blue"),
+			_lantern("Ee", 0, 3, "E", "white"),
+			_lantern("Ww", 6, 3, "W", "blue"),
+		],
+		"docks": [
+			_dock("Sd", 3, 5, "red", true),
+			_dock("Nd", 3, 1, "blue", true, true),
+			_dock("Te", 4, 3, "red", true, true),
+			_dock("Ed", 5, 3, "white", true, true),
+			_dock("Wd", 1, 3, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_fillet("O", "Fillet", 3, 3, 180, 0),
+		],
+	}
+
+
+static func chart_202() -> Dictionary:
+	# White goes straight south. The other beams stop before the cell.
+	return {
+		"id": "202",
+		"harbor": FILLET,
+		"title": "No Turn",
+		"teach": "The beam leaves on the same side it entered. It does not turn. A prism, a vane, a sluice, or a mirror would turn it. A casement facing north refuses the southbound beam. A jamb passes the northbound return. A cavetto facing north refuses the southbound beam.",
+		"win": "White goes straight south, and the other three beams stop.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ss", 3, 0, "S", "white"),
+			_lantern("Nn", 3, 6, "N", "red"),
+			_lantern("Ee", 0, 3, "E", "blue"),
+			_lantern("Ww", 6, 3, "W", "red"),
+		],
+		"docks": [
+			_dock("Sd", 3, 5, "white", true),
+			_dock("Nd", 3, 1, "red", true, true),
+			_dock("Td", 3, 4, "blue", true, true),
+			_dock("Ed", 5, 3, "blue", true, true),
+			_dock("Wd", 1, 3, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_fillet("O", "Fillet", 3, 3, 270, 0),
+		],
+	}
+
+
+static func chart_203() -> Dictionary:
+	# Flood 2 covers y >= 6. The fillet stays on the dry row and passes south.
+	# A separate beam stops at the flooded row's waterline.
+	return {
+		"id": "203",
+		"harbor": FILLET,
+		"title": "Beside the Flood",
+		"teach": "The fillet's own row is dry, so the southbound beam passes. North, east, and west stop. The next flooded cell that is not a flood carrier still stops the beam at the waterline. A casement facing north refuses the southbound beam. A lintel lets the northbound return through. A cavetto facing north refuses the southbound beam.",
+		"win": "South passes on the dry row, and the beam into the flood stops.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [2],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ss", 3, 0, "S", "white"),
+			_lantern("Nn", 3, 5, "N", "red"),
+			_lantern("Ee", 0, 2, "E", "blue"),
+			_lantern("Ww", 6, 2, "W", "red"),
+			_lantern("F", 1, 5, "S", "white"),
+		],
+		"docks": [
+			_dock("Sd", 3, 4, "white", true),
+			_dock("Nd", 3, 1, "red", true, true),
+			_dock("Td", 3, 3, "blue", true, true),
+			_dock("Ed", 5, 2, "blue", true, true),
+			_dock("Wd", 1, 2, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_fillet("O", "Fillet", 3, 2, 180, 0),
+		],
+	}
+
+
+static func chart_204() -> Dictionary:
+	# One fillet faces north and passes only south. The other faces south and
+	# passes only north. Swapping those facings fails.
+	return {
+		"id": "204",
+		"harbor": FILLET,
+		"title": "Two Fillets",
+		"teach": "One fillet is open only on south. The other is open only on north. Swapping their facings fails. A jamb cannot take the south seat, because a north jamb also passes north. A cavetto facing north cannot take the south seat. An ovolo facing south cannot take the north seat.",
+		"win": "South stays on the first seat. North stays on the second.",
+		"cols": 11,
+		"rows": 9,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("As", 2, 0, "S", "white"),
+			_lantern("An", 2, 6, "N", "red"),
+			_lantern("Ae", 0, 3, "E", "blue"),
+			_lantern("Aw", 5, 3, "W", "red"),
+			_lantern("Bs", 8, 2, "S", "red"),
+			_lantern("Bn", 8, 8, "N", "white"),
+			_lantern("Be", 6, 5, "E", "blue"),
+			_lantern("Bw", 10, 5, "W", "red"),
+		],
+		"docks": [
+			_dock("Adn", 2, 1, "red", true, true),
+			_dock("At", 2, 4, "blue", true, true),
+			_dock("Ads", 2, 5, "white", true),
+			_dock("Ade", 4, 3, "blue", true, true),
+			_dock("Adw", 1, 3, "red", true, true),
+			_dock("Bdn", 8, 3, "white", true),
+			_dock("Bt", 8, 4, "blue", true, true),
+			_dock("Bds", 8, 7, "red", true, true),
+			_dock("Bde", 9, 5, "blue", true, true),
+			_dock("Bdw", 7, 5, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_fillet("O", "South fillet", 2, 3, 180, 0),
+			_fillet("U", "North fillet", 8, 5, 0, 180),
+		],
+	}
+
+
+static func chart_205() -> Dictionary:
+	# Three tide marks. The middle mark leaves the fillet dry, facing north.
+	# Low water wakes the hull. High water covers the fillet.
+	return {
+		"id": "205",
+		"harbor": FILLET,
+		"title": "The Held Fillet",
+		"teach": "The held facing is part of the solution. The chart starts on a facing that stops south. Place the tide on the middle mark and face the fillet north. Low water wakes the south hull. High water covers the fillet and the beam stops at the waterline. A casement facing north refuses the southbound beam. A jamb passes the northbound return. A cavetto facing north refuses the southbound beam.",
+		"win": "The middle mark holds the north fillet. South passes, and the hull stays dark.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [0, 1, 5],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ss", 4, 0, "S", "white"),
+			_lantern("Nn", 4, 6, "N", "red"),
+			_lantern("Ee", 0, 3, "E", "blue"),
+			_lantern("Ww", 7, 3, "W", "red"),
+			_lantern("Hl", 0, 7, "E", "white"),
+		],
+		"docks": [
+			_dock("Sd", 4, 5, "white", true),
+			_dock("Nd", 4, 1, "red", true, true),
+			_dock("Td", 4, 4, "blue", true, true),
+			_dock("Ed", 6, 3, "blue", true, true),
+			_dock("Wd", 2, 3, "red", true, true),
+		],
+		"boats": [
+			_boat("Hb", 3, 7),
+		],
+		"fixtures": [],
+		"pieces": [
+			_fillet("O", "Fillet", 4, 3, 180, 0),
+		],
+	}
+
+
+static func chart_206() -> Dictionary:
+	# The fillet and the shutter trade places. On the line the fillet faces
+	# north. Only south counts.
+	return {
+		"id": "206",
+		"harbor": FILLET,
+		"title": "The Fillet Mark",
+		"teach": "Move the fillet from the side socket onto the line and face it north. The mark is satisfied only by that open set. The southbound beam passes. North, east, and west must not count. A casement facing north, a jamb, a mullion, a transom, a lintel, a cavetto, or an ovolo in that cell fails.",
+		"win": "The fillet stands on the line, open only south. One dock is lit and the other beams stay dark.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ss", 3, 0, "S", "white"),
+			_lantern("Nn", 3, 6, "N", "red"),
+			_lantern("Ee", 0, 3, "E", "blue"),
+			_lantern("Ww", 6, 3, "W", "red"),
+		],
+		"docks": [
+			_dock("Sd", 3, 5, "white", true),
+			_dock("Nd", 3, 1, "red", true, true),
+			_dock("Td", 3, 4, "blue", true, true),
+			_dock("Ed", 5, 3, "blue", true, true),
+			_dock("Wd", 1, 3, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_placed("O", "Fillet", "fillet", [["side", 5, 5], ["line", 3, 3]], "side", "line", 180, 0),
+			_placed("G", "Line shutter", "shutter", [["line", 3, 3], ["side", 5, 5]], "line", "side", 0, 0),
+		],
+	}
+
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -7625,6 +7944,20 @@ static func _cavetto(id: String, name: String, x: int, y: int, start_rot: int, s
 		"id": id,
 		"name": name,
 		"kind": "cavetto",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _fillet(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "fillet",
 		"movable": false,
 		"sockets": [{"id": "a", "x": x, "y": y}],
 		"start_socket": "a",
