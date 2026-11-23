@@ -17,7 +17,7 @@ class_name ChartBook
 # The Corona holds eight more. The Bead holds eight more. The Quirk holds eight more.
 # The Cyma holds eight more. The Fascia holds eight more. The Soffit holds eight more.
 # The Drip holds eight more. The Beak holds eight more. The Hood holds eight more.
-# The Throat holds eight more. The Larmier holds the last eight.
+# The Throat holds eight more. The Larmier holds eight more. The Cill holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
@@ -243,6 +243,17 @@ class_name ChartBook
 # and south. A flooded corona stops that axis. A flooded north throat passes
 # only south, so it misses one of the two flooded beams. A dry corona passes
 # the same east and west and stays shut under water.
+# A cill has a facing. Rotation changes it the same way: 0 north, 90 east,
+# 180 south, 270 west. Opposite facings share the open set. While its row is
+# dry, the facing and the opposite pass straight through in the same direction
+# and the same color, and that pass costs no bounce. It does not turn, it
+# does not recolor, and it does not split. Facing north, north and south pass,
+# and east and west stop. One click faces east and passes east and west. While
+# that row is flooded, the dry rule flips. Only the two perpendicular
+# directions pass, and the facing and the opposite stop at the waterline and
+# do not enter. A flooded north cill passes only east and west. A flooded
+# north larmier passes only north and south. A flooded corona stays shut. A
+# mullion passes north and south and has no flood flip onto east and west.
 # See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
@@ -286,6 +297,7 @@ const BEAK := "The Beak"
 const HOOD := "The Hood"
 const THROAT := "The Throat"
 const LARMIER := "The Larmier"
+const CILL := "The Cill"
 
 static func all() -> Array:
 	var book: Array = []
@@ -326,6 +338,7 @@ static func all() -> Array:
 	book.append_array(hood())
 	book.append_array(throat())
 	book.append_array(larmier())
+	book.append_array(cill())
 	return book
 
 
@@ -475,6 +488,10 @@ static func throat() -> Array:
 
 static func larmier() -> Array:
 	return [chart_287(), chart_288(), chart_289(), chart_290(), chart_291(), chart_292(), chart_293(), chart_294()]
+
+
+static func cill() -> Array:
+	return [chart_295(), chart_296(), chart_297(), chart_298(), chart_299(), chart_300(), chart_301(), chart_302()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -11081,6 +11098,309 @@ static func chart_294() -> Dictionary:
 	}
 
 
+static func chart_295() -> Dictionary:
+	# Dry north cill. North and south pass. East and west stop.
+	return {
+		"id": "295",
+		"title": "The Dry Cill",
+		"harbor": CILL,
+		"win": "The cill faces north. North and south pass, and east and west stay dark.",
+		"teach": "A dry north cill passes north and south and stops east and west. A south cill passes the same north and south. One click faces east and passes east and west. A north larmier passes east and west and misses.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 6, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "red"),
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Ww", 6, 3, "W", "blue"),
+		],
+		"docks": [
+			_dock("Nd", 3, 1, "white", true),
+			_dock("Sd", 3, 5, "red", true),
+			_dock("Ed", 5, 3, "red", true, true),
+			_dock("Wd", 1, 3, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_cill("O", "Cill", 3, 3, 90, 0),
+		],
+	}
+
+
+static func chart_296() -> Dictionary:
+	# Flooded north cill. Only east and west pass. The loop goes east, turns red, and returns west.
+	return {
+		"id": "296",
+		"title": "The Wet Stop",
+		"harbor": CILL,
+		"win": "The cill is flooded and faces north. East and west pass, and the south keep stays dark.",
+		"teach": "A flooded north cill passes only east and west. A flooded south cill passes the same east and west. A flooded north larmier passes only north and south and misses. A flooded corona stays shut.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [0, 4],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Gs", 1, 2, "S", "white"),
+			_lantern("Ts", 4, 2, "S", "white"),
+		],
+		"docks": [
+			_dock("Rd", 1, 3, "red", true),
+			_dock("Ks", 2, 1, "white", false, true),
+		],
+		"boats": [],
+		"fixtures": [
+			_fixture("M1", "tide_mirror", 1, 4, 90),
+			_fixture("S2", "shutter", 2, 4, 0),
+			_fixture("S3", "shutter", 3, 4, 0),
+			_fixture("St", "stain", 5, 4, 0),
+			_fixture("Su", "sluice", 6, 4, 270),
+			_fixture("S45", "shutter", 4, 5, 0),
+			_fixture("M46", "tide_mirror", 4, 6, 0),
+			_fixture("S36", "shutter", 3, 6, 0),
+			_fixture("M26", "tide_mirror", 2, 6, 90),
+			_fixture("S25", "shutter", 2, 5, 0),
+		],
+		"pieces": [
+			_cill("O", "Cill", 4, 4, 90, 0),
+		],
+	}
+
+
+static func chart_297() -> Dictionary:
+	# Open beams keep their colors. No white beam enters the cill.
+	return {
+		"id": "297",
+		"title": "Color Kept",
+		"harbor": CILL,
+		"win": "North stays red and south stays blue.",
+		"teach": "North stays red and south stays blue. East and west stop. The colors are not a trick of the glass.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 6, "N", "red"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+			_lantern("Ee", 0, 3, "E", "blue"),
+			_lantern("Ww", 6, 3, "W", "red"),
+		],
+		"docks": [
+			_dock("Nd", 3, 1, "red", true),
+			_dock("Sd", 3, 5, "blue", true),
+			_dock("Ed", 5, 3, "blue", true, true),
+			_dock("Wd", 1, 3, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_cill("O", "Cill", 3, 3, 270, 0),
+		],
+	}
+
+
+static func chart_298() -> Dictionary:
+	# The open beams leave the way they entered. The other axis stays dark.
+	return {
+		"id": "298",
+		"title": "No Turn",
+		"harbor": CILL,
+		"win": "North and south leave as they entered. East and west stay dark.",
+		"teach": "North and south leave the way they entered. East and west stop. The cill does not turn a beam.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 6, "N", "blue"),
+			_lantern("Ss", 3, 0, "S", "red"),
+			_lantern("Ee", 0, 3, "E", "blue"),
+			_lantern("Ww", 6, 3, "W", "red"),
+		],
+		"docks": [
+			_dock("Nd", 3, 1, "blue", true),
+			_dock("Sd", 3, 5, "red", true),
+			_dock("Ed", 5, 3, "blue", true, true),
+			_dock("Wd", 1, 3, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_cill("O", "Cill", 3, 3, 270, 0),
+		],
+	}
+
+
+static func chart_299() -> Dictionary:
+	# The cill stays dry. A lamp beside it dies in the flood.
+	return {
+		"id": "299",
+		"title": "Beside the Flood",
+		"harbor": CILL,
+		"win": "The dry cill passes north and south. The flood lamp stops at the waterline.",
+		"teach": "The cill stands on dry stone and passes north and south. The flood beside it swallows a lamp.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0, 1],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 5, "N", "blue"),
+			_lantern("Ss", 3, 0, "S", "red"),
+			_lantern("Ee", 0, 2, "E", "red"),
+			_lantern("Ww", 6, 2, "W", "blue"),
+			_lantern("F", 1, 5, "S", "white"),
+		],
+		"docks": [
+			_dock("Nd", 3, 1, "blue", true),
+			_dock("Sd", 3, 4, "red", true),
+			_dock("Ed", 5, 2, "red", true, true),
+			_dock("Wd", 1, 2, "blue", true, true),
+		],
+		"boats": [
+			_boat("B", 1, 6),
+		],
+		"fixtures": [],
+		"pieces": [
+			_cill("O", "Cill", 3, 2, 90, 0),
+		],
+	}
+
+
+static func chart_300() -> Dictionary:
+	# Two cills on different axes. Swapping the axes misses.
+	return {
+		"id": "300",
+		"title": "Two Cills",
+		"harbor": CILL,
+		"win": "The west cill passes north and south. The east cill passes east and west.",
+		"teach": "Two cills. The west one passes north and south. The east one passes east and west. Swapping the axes misses.",
+		"cols": 11,
+		"rows": 9,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("An", 2, 6, "N", "white"),
+			_lantern("As", 2, 0, "S", "blue"),
+			_lantern("Ae", 0, 3, "E", "red"),
+			_lantern("Aw", 5, 3, "W", "white"),
+			_lantern("Be", 6, 5, "E", "blue"),
+			_lantern("Bw", 10, 5, "W", "white"),
+			_lantern("Bn", 8, 8, "N", "red"),
+			_lantern("Bs", 8, 2, "S", "white"),
+		],
+		"docks": [
+			_dock("Adn", 2, 1, "white", true),
+			_dock("Ads", 2, 4, "blue", true),
+			_dock("Ade", 4, 3, "red", true, true),
+			_dock("Adw", 1, 3, "white", true, true),
+			_dock("Bde", 9, 5, "blue", true),
+			_dock("Bdw", 7, 5, "white", true),
+			_dock("Bdn", 8, 3, "red", true, true),
+			_dock("Bds", 8, 7, "white", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_cill("O", "West cill", 2, 3, 90, 0),
+			_cill("U", "East cill", 8, 5, 0, 90),
+		],
+	}
+
+
+static func chart_301() -> Dictionary:
+	# Dry solution passes north and south. High water passes only east and west.
+	return {
+		"id": "301",
+		"title": "The Held Cill",
+		"harbor": CILL,
+		"win": "The held cill passes north and south. High water opens only east and west.",
+		"teach": "Hold the dry cill. It passes north and south and stops east and west. High water passes only east and west.",
+		"cols": 10,
+		"rows": 8,
+		"tide_phases": [0, 2, 6],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 5, 5, "N", "white"),
+			_lantern("Ss", 5, 0, "S", "blue"),
+			_lantern("Ee", 2, 0, "S", "red"),
+			_lantern("Ww", 8, 0, "S", "blue"),
+			_lantern("Hw", 0, 1, "E", "white"),
+			_lantern("Fb", 0, 5, "S", "white"),
+		],
+		"docks": [
+			_dock("Nd", 5, 1, "white", true),
+			_dock("Sd", 5, 4, "blue", true),
+			_dock("Wd", 3, 3, "blue", true, true),
+			_dock("Ed", 7, 3, "red", true, true),
+		],
+		"boats": [
+			_boat("Hb", 0, 6),
+		],
+		"fixtures": [
+			_fixture("Me", "mirror", 2, 3, 90),
+			_fixture("Mw", "mirror", 8, 3, 0),
+			_fixture("Hm", "mirror", 4, 1, 90),
+			_fixture("Hs", "shutter", 4, 2, 0),
+			_fixture("Ht", "tide_mirror", 4, 3, 90),
+			_fixture("Hx", "tide_mirror", 6, 3, 0),
+		],
+		"pieces": [
+			_cill("O", "Cill", 5, 3, 90, 0),
+		],
+	}
+
+
+static func chart_302() -> Dictionary:
+	# The mark. The line seat passes north and south.
+	return {
+		"id": "302",
+		"title": "The Cill Mark",
+		"harbor": CILL,
+		"win": "The cill stands on the line and passes north and south.",
+		"teach": "Move the cill onto the line. It passes north and south. A north larmier misses.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 6, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "red"),
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Ww", 6, 3, "W", "blue"),
+		],
+		"docks": [
+			_dock("Nd", 3, 1, "white", true),
+			_dock("Sd", 3, 5, "red", true),
+			_dock("Ed", 5, 3, "red", true, true),
+			_dock("Wd", 1, 3, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_placed("O", "Cill", "cill", [["side", 5, 5], ["line", 3, 3]], "side", "line", 90, 0),
+			_placed("G", "Line shutter", "shutter", [["line", 3, 3], ["side", 5, 5]], "line", "side", 0, 0),
+		],
+	}
+
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -11529,6 +11849,20 @@ static func _throat(id: String, name: String, x: int, y: int, start_rot: int, so
 		"id": id,
 		"name": name,
 		"kind": "throat",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _cill(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "cill",
 		"movable": false,
 		"sockets": [{"id": "a", "x": x, "y": y}],
 		"start_socket": "a",
