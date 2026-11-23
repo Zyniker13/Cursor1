@@ -2,7 +2,7 @@
 
 Playable slices, Godot 4. Steam packaging comes later.
 
-- [Harbor Glass](harbor-glass/) — a tide-clock light puzzle through the Archivolt
+- [Harbor Glass](harbor-glass/) — a tide-clock light puzzle through the Abacus
 - [Brine Mark](brine-mark/) — an indirect salt-flat colony sim through the wheft beat
 - [Dispatch](dispatch/) — a parcel-routing puzzle through the tack
 - [Night Stamp](night-stamp/) — a border-desk deckbuilder through the prime bell
