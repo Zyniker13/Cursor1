@@ -17,7 +17,7 @@ class_name ChartBook
 # The Corona holds eight more. The Bead holds eight more. The Quirk holds eight more.
 # The Cyma holds eight more. The Fascia holds eight more. The Soffit holds eight more.
 # The Drip holds eight more. The Beak holds eight more. The Hood holds eight more.
-# The Throat holds eight more. The Larmier holds eight more. The Cill holds eight more. The Threshold holds eight more. The Impost holds eight more. The Architrave holds eight more. The Archivolt holds eight more. The Abacus holds eight more. The Rebate holds eight more. The Echinus holds the last eight.
+# The Throat holds eight more. The Larmier holds eight more. The Cill holds eight more. The Threshold holds eight more. The Impost holds eight more. The Architrave holds eight more. The Archivolt holds eight more. The Abacus holds eight more. The Rebate holds eight more. The Echinus holds eight more. The Annulet holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
@@ -338,6 +338,18 @@ class_name ChartBook
 # stays shut under water, so this piece does not repeat that pair. A flooded
 # north rebate passes only south. A flooded north abacus passes only north.
 # A flooded north throat passes only south.
+# An annulet has a facing. Rotation changes it the same way: 0 north, 90 east,
+# 180 south, 270 west. While its row is dry, every heading except the opposite
+# passes straight through. A dry north annulet passes north, east, and west,
+# and stops south. One click faces east and stops only west. Opposite dry
+# facings do not share that set. While that row is flooded, only the next
+# counterclockwise heading passes, and that pass costs no bounce. A flooded
+# north annulet passes only west. One click faces east and only north passes.
+# A flooded south annulet passes only east. A dry bead passes only east and
+# stays shut under water. A dry quirk passes only west and stays shut under
+# water. This piece does not repeat either pair. A flooded north echinus
+# passes only east. A flooded north rebate passes only south. A flooded north
+# abacus passes only north. A flooded north throat passes only south.
 # See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
@@ -389,6 +401,7 @@ const ARCHIVOLT := "The Archivolt"
 const ABACUS := "The Abacus"
 const REBATE := "The Rebate"
 const ECHINUS := "The Echinus"
+const ANNULET := "The Annulet"
 
 static func all() -> Array:
 	var book: Array = []
@@ -437,6 +450,7 @@ static func all() -> Array:
 	book.append_array(abacus())
 	book.append_array(rebate())
 	book.append_array(echinus())
+	book.append_array(annulet())
 	return book
 
 
@@ -618,6 +632,10 @@ static func rebate() -> Array:
 
 static func echinus() -> Array:
 	return [chart_351(), chart_352(), chart_353(), chart_354(), chart_355(), chart_356(), chart_357(), chart_358()]
+
+
+static func annulet() -> Array:
+	return [chart_359(), chart_360(), chart_361(), chart_362(), chart_363(), chart_364(), chart_365(), chart_366()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -13235,6 +13253,193 @@ static func chart_358() -> Dictionary:
 	)
 
 
+static func _annulet_lane(prefix: String, ox: int, open_north: bool) -> Dictionary:
+	return {
+		"lanterns": [
+			_lantern(prefix + "Tn", ox + 2, 1, "S", "white"),
+			_lantern(prefix + "Ts", ox + 4, 1, "S", "red"),
+			_lantern(prefix + "Te", ox + 1, 2, "S", "blue"),
+			_lantern(prefix + "Tw", ox + 8, 2, "S", "red"),
+		],
+		"docks": [
+			_dock(prefix + "Nd", ox + 4, 3, "white", true, not open_north),
+			_dock(prefix + "Kb", ox + 4, 2, "blue", true, true),
+			_dock(prefix + "Ks", ox + 2, 3, "red", true, true),
+			_dock(prefix + "Ke", ox + 8, 3, "blue", true, true),
+			_dock(prefix + "Kw", ox + 1, 3, "red", true, open_north),
+		],
+		"fixtures": [
+			_fixture(prefix + "S24", "shutter", ox + 2, 4, 0),
+			_fixture(prefix + "S25", "shutter", ox + 2, 5, 0),
+			_fixture(prefix + "S26", "shutter", ox + 2, 6, 0),
+			_fixture(prefix + "M27", "tide_mirror", ox + 2, 7, 90),
+			_fixture(prefix + "S37", "shutter", ox + 3, 7, 0),
+			_fixture(prefix + "M47", "tide_mirror", ox + 4, 7, 0),
+			_fixture(prefix + "S46", "shutter", ox + 4, 6, 0),
+			_fixture(prefix + "S45", "shutter", ox + 4, 5, 0),
+			_fixture(prefix + "M14", "tide_mirror", ox + 1, 4, 90),
+			_fixture(prefix + "S34", "shutter", ox + 3, 4, 0),
+			_fixture(prefix + "S54", "shutter", ox + 5, 4, 0),
+			_fixture(prefix + "S64", "shutter", ox + 6, 4, 0),
+			_fixture(prefix + "S74", "shutter", ox + 7, 4, 0),
+			_fixture(prefix + "M84", "tide_mirror", ox + 8, 4, 0),
+		],
+	}
+
+
+static func _annulet_chart(id: String, title: String, teach: String, win: String, start_rot: int, sol_rot: int, open_north: bool, boat: bool) -> Dictionary:
+	var lane := _annulet_lane("", 0, open_north)
+	var boats: Array = []
+	if boat:
+		boats.append(_boat("Hb", 1, 7))
+	return {
+		"id": id,
+		"title": title,
+		"harbor": ANNULET,
+		"win": win,
+		"teach": teach,
+		"cols": 9,
+		"rows": 8,
+		"tide_phases": [0, 4],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": lane["lanterns"],
+		"docks": lane["docks"],
+		"boats": boats,
+		"fixtures": lane["fixtures"],
+		"pieces": [
+			_annulet("O", "Annulet", 4, 4, start_rot, sol_rot),
+		],
+	}
+
+
+static func chart_359() -> Dictionary:
+	return _annulet_chart(
+		"359",
+		"The Flooded Annulet",
+		"A flooded north annulet passes only west, the next counterclockwise heading. North, east, and south stop. While it is dry, every heading except south passes.",
+		"High water opens only west. Low water lights the extra headings.",
+		90,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_360() -> Dictionary:
+	return _annulet_chart(
+		"360",
+		"The Turned Annulet",
+		"One click from north faces east. A flooded east annulet passes only north and stops east, south, and west.",
+		"The annulet faces east. Only north passes.",
+		0,
+		90,
+		true,
+		false
+	)
+
+
+static func chart_361() -> Dictionary:
+	return _annulet_chart(
+		"361",
+		"The Echinus Miss",
+		"A flooded north echinus passes only east, so it misses the counterclockwise west beam.",
+		"Only west passes. The echinus misses that beam.",
+		180,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_362() -> Dictionary:
+	return _annulet_chart(
+		"362",
+		"The Rebate South",
+		"A flooded north rebate passes only south, so it misses the counterclockwise west beam. A dry rebate stops every heading.",
+		"Only west passes. The rebate misses that beam.",
+		270,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_363() -> Dictionary:
+	return _annulet_chart(
+		"363",
+		"The Abacus Facing",
+		"A flooded north abacus passes only north, so it misses the counterclockwise west beam. A dry abacus stops every heading.",
+		"Only west passes. The abacus misses that beam.",
+		90,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_364() -> Dictionary:
+	return _annulet_chart(
+		"364",
+		"The Throat South",
+		"A flooded north throat passes only south, so it misses the counterclockwise west beam. A dry throat passes every heading except the opposite.",
+		"Only west passes. The throat misses that beam.",
+		180,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_365() -> Dictionary:
+	var west := _annulet_lane("", 0, false)
+	var north := _annulet_lane("U", 10, true)
+	var lanterns: Array = []
+	lanterns.append_array(west["lanterns"])
+	lanterns.append_array(north["lanterns"])
+	var docks: Array = []
+	docks.append_array(west["docks"])
+	docks.append_array(north["docks"])
+	var fixtures: Array = []
+	fixtures.append_array(west["fixtures"])
+	fixtures.append_array(north["fixtures"])
+	return {
+		"id": "365",
+		"title": "Two Annulets",
+		"harbor": ANNULET,
+		"win": "The west annulet passes only west. The east annulet passes only north.",
+		"teach": "Two annulets. The west one passes only west. The east one passes only north. Swapping the facings misses.",
+		"cols": 19,
+		"rows": 8,
+		"tide_phases": [0, 4],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": lanterns,
+		"docks": docks,
+		"boats": [],
+		"fixtures": fixtures,
+		"pieces": [
+			_annulet("O", "West annulet", 4, 4, 90, 0),
+			_annulet("U", "East annulet", 14, 4, 0, 90),
+		],
+	}
+
+
+static func chart_366() -> Dictionary:
+	return _annulet_chart(
+		"366",
+		"The Annulet Line",
+		"Raise the tide to the annulet's row. Under water, only west passes. Low water lights the hull and leaves the west dock dark.",
+		"The flood line stands on the annulet. The hull stays dark.",
+		90,
+		0,
+		false,
+		true
+	)
+
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -13683,6 +13888,20 @@ static func _throat(id: String, name: String, x: int, y: int, start_rot: int, so
 		"id": id,
 		"name": name,
 		"kind": "throat",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _annulet(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "annulet",
 		"movable": false,
 		"sockets": [{"id": "a", "x": x, "y": y}],
 		"start_socket": "a",
