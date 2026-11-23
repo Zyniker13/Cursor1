@@ -43,6 +43,7 @@ extends RefCounted
 ## The lady chapel's ring is the walk around the lady chapel.
 ## The feretory's ring is the walk around the feretory.
 ## The chantry's ring is the same walk, left where the feretory put it.
+## The sacristy's ring is that same walk, left where the chantry left it.
 ## A census is accepted only when every corridor and hazard is marked truly
 ## and no tile is marked as something it is not.
 
@@ -56,7 +57,7 @@ const HAZARD_VALUE := 8
 const LOOP_VALUE := 15
 
 const TOWN_LINE := "Arrows turn and step, Q and E strafe, M marks the tile you face, and Space waits out the warden's swing."
-const RATE_CARD := "A true corridor pays 3. A true hazard pays 8. The cellar's east square, the cistern ring, the cloister walk, the crypt ring, the ossuary ring, the reliquary ring, the undercroft ring, the well ring, the scriptorium ring, the binding ring, the chart room ring, the bell loft ring, the clock room ring, the font ring, the apse ring, the choir ring, the rood ring, the crossing ring, the transept ring, the ambulatory ring, the chevet ring, the retrochoir ring, the lady chapel ring, the feretory ring, and the chantry ring each pay 15 only when every tile of that ring is marked corridor. A false mark pays nothing."
+const RATE_CARD := "A true corridor pays 3. A true hazard pays 8. The cellar's east square, the cistern ring, the cloister walk, the crypt ring, the ossuary ring, the reliquary ring, the undercroft ring, the well ring, the scriptorium ring, the binding ring, the chart room ring, the bell loft ring, the clock room ring, the font ring, the apse ring, the choir ring, the rood ring, the crossing ring, the transept ring, the ambulatory ring, the chevet ring, the retrochoir ring, the lady chapel ring, the feretory ring, the chantry ring, and the sacristy ring each pay 15 only when every tile of that ring is marked corridor. A false mark pays nothing."
 
 const CELLAR_RECORD := "Record every corridor, both hazard cracks, and the east square."
 const CISTERN_RECORD := "Record every corridor, the three seep cracks, and the cistern ring around the pit."
@@ -83,6 +84,7 @@ const RETROCHOIR_RECORD := "Record every corridor, the twenty-two retrochoir cra
 const LADY_CHAPEL_RECORD := "Record every corridor, the twenty-three lady-chapel cracks, and the ring around the lady chapel."
 const FERETORY_RECORD := "Record every corridor, the twenty-four feretory cracks, and the ring around the feretory."
 const CHANTRY_RECORD := "Record every corridor, the twenty-five chantry cracks, and the ring around the chantry."
+const SACRISTY_RECORD := "Record every corridor, the twenty-six sacristy cracks, and the ring around the sacristy."
 
 const CELLAR_ROWS: PackedStringArray = [
 	"#############",
@@ -689,6 +691,50 @@ const CHANTRY_ROWS: PackedStringArray = [
 	"############################",
 ]
 
+# The sacristy is the 14x6 block of 'G' at columns 7-20, rows 4-9.
+# The paid ring is the same 44-tile corridor cycle the chantry walks.
+# G is the next free letter walking backward from I. H is a crack, so it is
+# not free. I stays the chantry. J stays the feretory. L is the lift, K is
+# the clock, M is the lady chapel, O is the retrochoir, P is the binding
+# press, Q is the chevet, and N is the font. S and E are the start and the
+# warden.
+# The sheet grows the chantry one column to the east. The screen, the ring,
+# the warden, the lift, the start, and the 19-step path stay on their cells.
+# Cracks that sat on the chantry stay, except the dead-end (3,12). The new
+# crack is (27,16), on the new column, immediately east of (26,16). With the
+# chantry's closures carried forward, that single new crack surveys at 122
+# oil. No new cell on the added column brings the survey to 120. Closing
+# (6,12) or (4,12) raises it, and reopening (2,1) raises it. Closing a ring
+# tile or the warden's east swing would bring it to 120 and would break the
+# sheet. Closing (3,12) alone returns the survey to 120 but drops the crack
+# count. (26,15) is opened as a crack between (25,15) and (26,16), which adds
+# the crack back without lengthening the survey, so (3,12) is closed and
+# (26,15) is the seam. (1,12), (1,13), and (1,14) stay ordinary walls. Start,
+# lift, and warden stay on (1,1), (10,11), and (9,12).
+const SACRISTY_ROWS: PackedStringArray = [
+	"#############################",
+	"#S###########################",
+	"#.#######################H###",
+	"#H####...................H###",
+	"#.####.GGGGGGGGGGGGGG.###H###",
+	"#H####.GGGGGGGGGGGGGG.###H###",
+	"#.####.GGGGGGGGGGGGGG.###H###",
+	"#H####.GGGGGGGGGGGGGG.###H###",
+	"#.####.GGGGGGGGGGGGGG.###H###",
+	"#H####.GGGGGGGGGGGGGG.###H###",
+	"#.####................###H###",
+	"#H........L########.#####H###",
+	"####.H.H.E.########H.....H###",
+	"#########################H###",
+	"#########################H###",
+	"#########################HH##",
+	"#########################HHH#",
+	"#############################",
+	"#############################",
+	"#############################",
+	"#############################",
+]
+
 enum Tile { WALL, FLOOR, HAZARD, LIFT }
 enum Mark { NONE, CORRIDOR, WALL, HAZARD }
 enum EndReason { NONE, EXTRACTED, LAMP_OUT, ABANDONED }
@@ -729,7 +775,7 @@ static var _floor_list: Array = []
 
 static func floors() -> Array:
 	if _floor_list.is_empty():
-		_floor_list = [_make_cellar(), _make_cistern(), _make_cloister(), _make_crypt(), _make_ossuary(), _make_reliquary(), _make_undercroft(), _make_wellhouse(), _make_scriptorium(), _make_binding(), _make_chartroom(), _make_bellloft(), _make_clockroom(), _make_font(), _make_apse(), _make_choir(), _make_rood(), _make_crossing(), _make_transept(), _make_ambulatory(), _make_chevet(), _make_retrochoir(), _make_ladychapel(), _make_feretory(), _make_chantry()]
+		_floor_list = [_make_cellar(), _make_cistern(), _make_cloister(), _make_crypt(), _make_ossuary(), _make_reliquary(), _make_undercroft(), _make_wellhouse(), _make_scriptorium(), _make_binding(), _make_chartroom(), _make_bellloft(), _make_clockroom(), _make_font(), _make_apse(), _make_choir(), _make_rood(), _make_crossing(), _make_transept(), _make_ambulatory(), _make_chevet(), _make_retrochoir(), _make_ladychapel(), _make_feretory(), _make_chantry(), _make_sacristy()]
 	return _floor_list
 
 
@@ -1222,6 +1268,25 @@ static func _make_chantry() -> Floor:
 	return floor
 
 
+static func _make_sacristy() -> Floor:
+	var floor := Floor.new()
+	floor.id = "sacristy"
+	floor.title = "The Sacristy"
+	floor.rows = SACRISTY_ROWS
+	floor.loop_name = "Sacristy ring"
+	var ring: Array = []
+	for x in range(6, 22):
+		ring.append(Vector2i(x, 3))
+	for y in range(4, 10):
+		ring.append(Vector2i(6, y))
+		ring.append(Vector2i(21, y))
+	for x in range(6, 22):
+		ring.append(Vector2i(x, 10))
+	floor.loop = ring
+	floor.record = SACRISTY_RECORD
+	return floor
+
+
 static func width(floor: Floor = null) -> int:
 	return _use(floor).rows[0].length()
 
@@ -1643,6 +1708,8 @@ static func ahead_line(state: RunState) -> String:
 				return "Ahead: the feretory. It inks as a wall."
 			if glyph_at(n, plan) == "I":
 				return "Ahead: the chantry. It inks as a wall."
+			if glyph_at(n, plan) == "G":
+				return "Ahead: the sacristy. It inks as a wall."
 			return "Ahead: wall."
 		Tile.HAZARD:
 			if plan != null and plan.id == "cistern":
@@ -1693,6 +1760,8 @@ static func ahead_line(state: RunState) -> String:
 				return "Ahead: a feretory crack. Stepping inks it and costs no extra oil."
 			if plan != null and plan.id == "chantry":
 				return "Ahead: a chantry crack. Stepping inks it and costs no extra oil."
+			if plan != null and plan.id == "sacristy":
+				return "Ahead: a sacristy crack. Stepping inks it and costs no extra oil."
 			return "Ahead: a hazard crack. Stepping inks it and costs no extra oil."
 		Tile.LIFT:
 			return "Ahead: the lift. Stepping on carries the sheet out."
@@ -1814,6 +1883,8 @@ static func step(state: RunState, dir: Vector2i) -> Dictionary:
 				return _pack(state, false, false, false, 0, true, "You tap the feretory and ink it if the square was blank.")
 			if glyph_at(target, plan) == "I":
 				return _pack(state, false, false, false, 0, true, "You tap the chantry and ink it if the square was blank.")
+			if glyph_at(target, plan) == "G":
+				return _pack(state, false, false, false, 0, true, "You tap the sacristy and ink it if the square was blank.")
 			return _pack(state, false, false, false, 0, true, "You tap a wall and ink it if the square was blank.")
 		if target == enemy_pos(plan):
 			return _pack(state, false, false, false, 0, true, "The warden occupies that tile.")
@@ -1883,6 +1954,8 @@ static func step(state: RunState, dir: Vector2i) -> Dictionary:
 			message = "You cross a feretory crack. It is inked if the square was blank."
 		elif plan != null and plan.id == "chantry":
 			message = "You cross a chantry crack. It is inked if the square was blank."
+		elif plan != null and plan.id == "sacristy":
+			message = "You cross a sacristy crack. It is inked if the square was blank."
 		else:
 			message = "You cross a hazard crack. It is inked if the square was blank."
 	return _pack(state, true, true, hit, MOVE_OIL + (HIT_OIL if hit else 0), false, message)
