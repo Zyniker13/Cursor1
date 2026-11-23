@@ -1,9 +1,9 @@
 extends RefCounted
 
-## Buildings 1 through 29. Directions: 0 east, 1 south, 2 west, 3 north.
+## Buildings 1 through 31. Directions: 0 east, 1 south, 2 west, 3 north.
 ## `unlocks` is the single new block this puzzle introduces, or "".
 
-const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook", "return", "pause", "chute", "shunt", "bias", "vault", "sling", "cant", "balk", "loft", "keel", "sheer", "strake", "wale", "garboard", "stealer", "rabbet", "futtock", "keelson", "stemson", "apron"]
+const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook", "return", "pause", "chute", "shunt", "bias", "vault", "sling", "cant", "balk", "loft", "keel", "sheer", "strake", "wale", "garboard", "stealer", "rabbet", "futtock", "keelson", "stemson", "apron", "deadwood", "gripe"]
 
 
 static func all() -> Array:
@@ -4237,6 +4237,289 @@ static func all() -> Array:
 				_block("conveyor", 11, 4, 3),
 			]
 		),
+		_puzzle(
+			212, "First Deadwood", "deadwood",
+			"Jump eight cells forward, and keep the facing.",
+			"",
+			"The parcel comes in facing east. The deadwood jumps it eight cells east and leaves it facing east. The seven cells in front are bricks and are not entered. The pause then steps east onto the dock. An apron lands on the last brick. A stemson lands two cells short. A keelson lands three cells short. A futtock lands four cells short. A keel jumps three cells west. A rabbet jumps one cell west.",
+			12, 3,
+			[_cell(3, 1), _cell(4, 1), _cell(5, 1), _cell(6, 1), _cell(7, 1), _cell(8, 1), _cell(9, 1), _cell(2, 0), _cell(2, 2)],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 11, "y": 1},
+			[{"color": "gray"}],
+			[
+				_block("conveyor", 1, 1, 0),
+				_block("deadwood", 2, 1, 0),
+				_block("pause", 10, 1, 0),
+			]
+		),
+		_puzzle(
+			213, "Let Deadwood", "",
+			"Wait until the landing is free, then jump eight cells forward.",
+			"",
+			"Blue is standing on the landing. The deadwood holds red until that cell is free, then jumps eight cells east and leaves red facing east. The cells in front are not entered. The pause steps east onto the dock. An apron lands one cell short. A stemson lands two cells short. A keelson lands three cells short. A futtock lands four cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			12, 3,
+			[_cell(3, 1), _cell(4, 1), _cell(5, 1), _cell(6, 1), _cell(7, 1), _cell(8, 1), _cell(9, 1)],
+			[
+				_source(0, 1, 0, ["red"]),
+				_source(9, 2, 0, ["blue"]),
+			],
+			{"x": 11, "y": 1},
+			[{"color": "blue"}, {"color": "red"}],
+			[
+				_block("conveyor", 1, 1, 0),
+				_block("deadwood", 2, 1, 0),
+				_block("garboard", 10, 2, 0),
+				_block("pause", 10, 1, 0),
+			]
+		),
+		_puzzle(
+			214, "Deadwood Count", "",
+			"Stamp blue 1 and red 2. The deadwood's wait is what makes the counter read 2.",
+			"",
+			"The deadwood waits, then jumps the east-facing parcel eight cells east. The pause carries that facing onto the counter after blue has been stamped 1, so red is stamped 2. The cells in front are not entered. An apron lands one cell short. A stemson lands two cells short. A keelson lands three cells short. A futtock lands four cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			13, 4,
+			[_cell(2, 1), _cell(3, 1), _cell(4, 1), _cell(5, 1), _cell(6, 1), _cell(7, 1), _cell(8, 1), _cell(1, 0), _cell(1, 2)],
+			[
+				_source(0, 1, 0, ["red"]),
+				_source(10, 3, 3, ["blue"]),
+			],
+			{"x": 12, "y": 1},
+			[{"color": "blue", "count": 1}, {"color": "red", "count": 2}],
+			[
+				_block("deadwood", 1, 1, 0),
+				_block("pause", 9, 1, 0),
+				_block("conveyor", 10, 2, 3),
+				_block("counter", 10, 1, 0),
+				_block("conveyor", 11, 1, 0),
+			]
+		),
+		_puzzle(
+			215, "Eight Ahead", "",
+			"Jump eight cells forward. The seven bricks in front are not entered.",
+			"",
+			"The deadwood jumps eight cells east and leaves the parcel facing east. The pause steps east onto the dock and does not enter any of the seven bricks. An apron tries to land on the last brick. A stemson lands two cells short. A keelson lands three cells short. A futtock lands four cells short. A pause tries to enter the first brick. A keel jumps three cells west. A rabbet jumps one cell west.",
+			11, 3,
+			[_cell(2, 1), _cell(3, 1), _cell(4, 1), _cell(5, 1), _cell(6, 1), _cell(7, 1), _cell(8, 1)],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 10, "y": 1},
+			[{"color": "gray"}],
+			[
+				_block("deadwood", 1, 1, 0),
+				_block("pause", 9, 1, 0),
+			]
+		),
+		_puzzle(
+			216, "Two Deadwoods", "",
+			"Deliver red, then blue. Each jump is eight cells forward from a different facing.",
+			"",
+			"Red arrives facing east, jumps eight cells east, and the pause steps east onto the dock. Blue arrives facing south, jumps eight cells south, and the pause steps south onto the dock. Each jump keeps the arrival facing and skips the seven cells in front. An apron lands one cell short. A stemson lands two cells short. A keelson lands three cells short. A futtock lands four cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			11, 12,
+			[_cell(2, 11), _cell(3, 11), _cell(4, 11), _cell(5, 11), _cell(6, 11), _cell(7, 11), _cell(8, 11), _cell(10, 3), _cell(10, 4), _cell(10, 5), _cell(10, 6), _cell(10, 7), _cell(10, 8), _cell(10, 9), _cell(1, 10)],
+			[
+				_source(0, 11, 0, ["red"]),
+				_source(10, 0, 1, ["blue"]),
+			],
+			{"x": 10, "y": 11},
+			[{"color": "red"}, {"color": "blue"}],
+			[
+				_block("deadwood", 1, 11, 0),
+				_block("pause", 9, 11, 0),
+				_block("pause", 10, 1, 0),
+				_block("deadwood", 10, 2, 0),
+				_block("pause", 10, 10, 0),
+			]
+		),
+		_puzzle(
+			217, "Second Deadwood", "",
+			"Jump eight cells forward, hook, then jump eight cells forward on the new facing.",
+			"",
+			"The first deadwood jumps the east-facing parcel eight cells east and leaves it facing east. The hook sends it north onto the second deadwood. That deadwood jumps eight cells north, still facing north, onto the dock. One deadwood cannot do both jumps. An apron lands one cell short. A stemson lands two cells short. A keelson lands three cells short. A futtock lands four cells short. A keel jumps three cells back. A rabbet jumps one cell back. A turn faces south.",
+			10, 10,
+			[_cell(2, 9), _cell(3, 9), _cell(4, 9), _cell(5, 9), _cell(6, 9), _cell(7, 9), _cell(8, 9), _cell(9, 7), _cell(9, 6), _cell(9, 5), _cell(9, 4), _cell(9, 3), _cell(9, 2), _cell(9, 1)],
+			[_source(0, 9, 0, ["gray"])],
+			{"x": 9, "y": 0},
+			[{"color": "gray"}],
+			[
+				_block("deadwood", 1, 9, 0),
+				_block("hook", 9, 9, 0),
+				_block("deadwood", 9, 8, 0),
+			]
+		),
+		_puzzle(
+			218, "Night Deadwood", "",
+			"Deliver red 1, yellow 2, and blue 3.",
+			"",
+			"Red takes the filter. The deadwood jumps it eight cells east and leaves it facing east. The pause carries that facing onto the counter for stamp 1. The seven cells in front are not entered. Gray takes the long belt and is primed yellow. Blue keeps its color. An apron lands one cell short. A stemson lands two cells short. A keelson lands three cells short. A futtock lands four cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			14, 6,
+			[_cell(4, 3), _cell(5, 3), _cell(6, 3), _cell(7, 3), _cell(8, 3), _cell(9, 3), _cell(10, 3)],
+			[_source(0, 3, 0, ["gray", "blue", "red"])],
+			{"x": 13, "y": 3},
+			[{"color": "red", "count": 1}, {"color": "yellow", "count": 2}, {"color": "blue", "count": 3}],
+			[
+				_block("filter", 1, 3, 0, "red"),
+				_block("conveyor", 2, 3, 0),
+				_block("deadwood", 3, 3, 0),
+				_block("pause", 11, 3, 0),
+				_block("counter", 12, 3, 0),
+				_block("pause", 1, 4, 0),
+				_block("primer", 1, 5, 0, "yellow"),
+				_block("conveyor", 2, 5, 0),
+				_block("conveyor", 3, 5, 0),
+				_block("conveyor", 4, 5, 0),
+				_block("conveyor", 5, 5, 0),
+				_block("conveyor", 6, 5, 0),
+				_block("conveyor", 7, 5, 0),
+				_block("conveyor", 8, 5, 0),
+				_block("conveyor", 9, 5, 0),
+				_block("conveyor", 10, 5, 0),
+				_block("conveyor", 11, 5, 0),
+				_block("conveyor", 12, 5, 3),
+				_block("conveyor", 12, 4, 3),
+			]
+		),
+		_puzzle(
+			219, "First Gripe", "gripe",
+			"Jump nine cells forward, and keep the facing.",
+			"",
+			"The parcel comes in facing east. The gripe jumps it nine cells east and leaves it facing east. The eight cells in front are bricks and are not entered. The pause then steps east onto the dock. A deadwood lands on the last brick. An apron lands two cells short. A stemson lands three cells short. A keelson lands four cells short. A keel jumps three cells west. A rabbet jumps one cell west.",
+			13, 3,
+			[_cell(3, 1), _cell(4, 1), _cell(5, 1), _cell(6, 1), _cell(7, 1), _cell(8, 1), _cell(9, 1), _cell(10, 1), _cell(2, 0), _cell(2, 2)],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 12, "y": 1},
+			[{"color": "gray"}],
+			[
+				_block("conveyor", 1, 1, 0),
+				_block("gripe", 2, 1, 0),
+				_block("pause", 11, 1, 0),
+			]
+		),
+		_puzzle(
+			220, "Let Gripe", "",
+			"Wait until the landing is free, then jump nine cells forward.",
+			"",
+			"Blue is standing on the landing. The gripe holds red until that cell is free, then jumps nine cells east and leaves red facing east. The cells in front are not entered. The pause steps east onto the dock. A deadwood lands one cell short. An apron lands two cells short. A stemson lands three cells short. A keelson lands four cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			13, 3,
+			[_cell(3, 1), _cell(4, 1), _cell(5, 1), _cell(6, 1), _cell(7, 1), _cell(8, 1), _cell(9, 1), _cell(10, 1)],
+			[
+				_source(0, 1, 0, ["red"]),
+				_source(10, 2, 0, ["blue"]),
+			],
+			{"x": 12, "y": 1},
+			[{"color": "blue"}, {"color": "red"}],
+			[
+				_block("conveyor", 1, 1, 0),
+				_block("gripe", 2, 1, 0),
+				_block("garboard", 11, 2, 0),
+				_block("pause", 11, 1, 0),
+			]
+		),
+		_puzzle(
+			221, "Gripe Count", "",
+			"Stamp blue 1 and red 2. The gripe's wait is what makes the counter read 2.",
+			"",
+			"The gripe waits, then jumps the east-facing parcel nine cells east. The pause carries that facing onto the counter after blue has been stamped 1, so red is stamped 2. The cells in front are not entered. A deadwood lands one cell short. An apron lands two cells short. A stemson lands three cells short. A keelson lands four cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			14, 4,
+			[_cell(2, 1), _cell(3, 1), _cell(4, 1), _cell(5, 1), _cell(6, 1), _cell(7, 1), _cell(8, 1), _cell(9, 1), _cell(1, 0), _cell(1, 2)],
+			[
+				_source(0, 1, 0, ["red"]),
+				_source(11, 3, 3, ["blue"]),
+			],
+			{"x": 13, "y": 1},
+			[{"color": "blue", "count": 1}, {"color": "red", "count": 2}],
+			[
+				_block("gripe", 1, 1, 0),
+				_block("pause", 10, 1, 0),
+				_block("conveyor", 11, 2, 3),
+				_block("counter", 11, 1, 0),
+				_block("conveyor", 12, 1, 0),
+			]
+		),
+		_puzzle(
+			222, "Nine Ahead", "",
+			"Jump nine cells forward. The eight bricks in front are not entered.",
+			"",
+			"The gripe jumps nine cells east and leaves the parcel facing east. The pause steps east onto the dock and does not enter any of the eight bricks. A deadwood tries to land on the last brick. An apron lands two cells short. A stemson lands three cells short. A keelson lands four cells short. A pause tries to enter the first brick. A keel jumps three cells west. A rabbet jumps one cell west.",
+			12, 3,
+			[_cell(2, 1), _cell(3, 1), _cell(4, 1), _cell(5, 1), _cell(6, 1), _cell(7, 1), _cell(8, 1), _cell(9, 1)],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 11, "y": 1},
+			[{"color": "gray"}],
+			[
+				_block("gripe", 1, 1, 0),
+				_block("pause", 10, 1, 0),
+			]
+		),
+		_puzzle(
+			223, "Two Gripes", "",
+			"Deliver red, then blue. Each jump is nine cells forward from a different facing.",
+			"",
+			"Red arrives facing east, jumps nine cells east, and the pause steps east onto the dock. Blue arrives facing south, jumps nine cells south, and the pause steps south onto the dock. Each jump keeps the arrival facing and skips the eight cells in front. A deadwood lands one cell short. An apron lands two cells short. A stemson lands three cells short. A keelson lands four cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			12, 13,
+			[_cell(2, 12), _cell(3, 12), _cell(4, 12), _cell(5, 12), _cell(6, 12), _cell(7, 12), _cell(8, 12), _cell(9, 12), _cell(11, 3), _cell(11, 4), _cell(11, 5), _cell(11, 6), _cell(11, 7), _cell(11, 8), _cell(11, 9), _cell(11, 10), _cell(1, 11)],
+			[
+				_source(0, 12, 0, ["red"]),
+				_source(11, 0, 1, ["blue"]),
+			],
+			{"x": 11, "y": 12},
+			[{"color": "red"}, {"color": "blue"}],
+			[
+				_block("gripe", 1, 12, 0),
+				_block("pause", 10, 12, 0),
+				_block("pause", 11, 1, 0),
+				_block("gripe", 11, 2, 0),
+				_block("pause", 11, 11, 0),
+			]
+		),
+		_puzzle(
+			224, "Second Gripe", "",
+			"Jump nine cells forward, hook, then jump nine cells forward on the new facing.",
+			"",
+			"The first gripe jumps the east-facing parcel nine cells east and leaves it facing east. The hook sends it north onto the second gripe. That gripe jumps nine cells north, still facing north, onto the dock. One gripe cannot do both jumps. A deadwood lands one cell short. An apron lands two cells short. A stemson lands three cells short. A keelson lands four cells short. A keel jumps three cells back. A rabbet jumps one cell back. A turn faces south.",
+			11, 11,
+			[_cell(2, 10), _cell(3, 10), _cell(4, 10), _cell(5, 10), _cell(6, 10), _cell(7, 10), _cell(8, 10), _cell(9, 10), _cell(10, 8), _cell(10, 7), _cell(10, 6), _cell(10, 5), _cell(10, 4), _cell(10, 3), _cell(10, 2), _cell(10, 1)],
+			[_source(0, 10, 0, ["gray"])],
+			{"x": 10, "y": 0},
+			[{"color": "gray"}],
+			[
+				_block("gripe", 1, 10, 0),
+				_block("hook", 10, 10, 0),
+				_block("gripe", 10, 9, 0),
+			]
+		),
+		_puzzle(
+			225, "Night Gripe", "",
+			"Deliver red 1, yellow 2, and blue 3.",
+			"",
+			"Red takes the filter. The gripe jumps it nine cells east and leaves it facing east. The pause carries that facing onto the counter for stamp 1. The eight cells in front are not entered. Gray takes the long belt and is primed yellow. Blue keeps its color. A deadwood lands one cell short. An apron lands two cells short. A stemson lands three cells short. A keelson lands four cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			15, 6,
+			[_cell(4, 3), _cell(5, 3), _cell(6, 3), _cell(7, 3), _cell(8, 3), _cell(9, 3), _cell(10, 3), _cell(11, 3)],
+			[_source(0, 3, 0, ["gray", "blue", "red"])],
+			{"x": 14, "y": 3},
+			[{"color": "red", "count": 1}, {"color": "yellow", "count": 2}, {"color": "blue", "count": 3}],
+			[
+				_block("filter", 1, 3, 0, "red"),
+				_block("conveyor", 2, 3, 0),
+				_block("gripe", 3, 3, 0),
+				_block("pause", 12, 3, 0),
+				_block("counter", 13, 3, 0),
+				_block("pause", 1, 4, 0),
+				_block("primer", 1, 5, 0, "yellow"),
+				_block("conveyor", 2, 5, 0),
+				_block("conveyor", 3, 5, 0),
+				_block("conveyor", 4, 5, 0),
+				_block("conveyor", 5, 5, 0),
+				_block("conveyor", 6, 5, 0),
+				_block("conveyor", 7, 5, 0),
+				_block("conveyor", 8, 5, 0),
+				_block("conveyor", 9, 5, 0),
+				_block("conveyor", 10, 5, 0),
+				_block("conveyor", 11, 5, 0),
+				_block("conveyor", 12, 5, 0),
+				_block("conveyor", 13, 5, 3),
+				_block("conveyor", 13, 4, 3),
+			]
+		),
 	]
 
 
@@ -4266,7 +4549,7 @@ static func _puzzle(id: int, title: String, unlocks: String, brief: String, how_
 		"dock": dock,
 		"order": order,
 		"reference": reference,
-		"building": 29 if id >= 205 else 28 if id >= 198 else 27 if id >= 191 else 26 if id >= 184 else 25 if id >= 177 else 24 if id >= 170 else 23 if id >= 163 else 22 if id >= 156 else 21 if id >= 149 else 20 if id >= 142 else 19 if id >= 135 else 18 if id >= 128 else 17 if id >= 121 else 16 if id >= 114 else 15 if id >= 107 else 14 if id >= 100 else 13 if id >= 93 else 12 if id >= 86 else 11 if id >= 79 else 10 if id >= 72 else 9 if id >= 65 else 8 if id >= 58 else 7 if id >= 51 else 6 if id >= 44 else 5 if id >= 37 else 4 if id >= 30 else 3 if id >= 23 else 2 if id >= 16 else 1,
+		"building": 31 if id >= 219 else 30 if id >= 212 else 29 if id >= 205 else 28 if id >= 198 else 27 if id >= 191 else 26 if id >= 184 else 25 if id >= 177 else 24 if id >= 170 else 23 if id >= 163 else 22 if id >= 156 else 21 if id >= 149 else 20 if id >= 142 else 19 if id >= 135 else 18 if id >= 128 else 17 if id >= 121 else 16 if id >= 114 else 15 if id >= 107 else 14 if id >= 100 else 13 if id >= 93 else 12 if id >= 86 else 11 if id >= 79 else 10 if id >= 72 else 9 if id >= 65 else 8 if id >= 58 else 7 if id >= 51 else 6 if id >= 44 else 5 if id >= 37 else 4 if id >= 30 else 3 if id >= 23 else 2 if id >= 16 else 1,
 	}
 
 

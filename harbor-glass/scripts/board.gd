@@ -283,6 +283,10 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_fascia(at, rot)
 		"soffit":
 			_draw_soffit(at, rot)
+		"drip":
+			_draw_drip(at, rot)
+		"beak":
+			_draw_beak(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -1122,6 +1126,56 @@ func _draw_soffit(at: Vector2i, rot: int) -> void:
 	var spot := center + outward * cell * 0.30
 	var half := cell * 0.14
 	draw_line(spot - along * half, spot + along * half, mark, 3.2)
+
+func _draw_drip(at: Vector2i, rot: int) -> void:
+	# A pale drop on the dry-stopped edge, which is the edge that opens under
+	# water. A north drip marks the west edge. The drop is not the soffit's bar.
+	var center := _center(at)
+	var marked := Tracer.rotate_dir(Tracer.drip_facing(rot), -1)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var drop := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var outward := Vector2.LEFT
+	match marked:
+		"N":
+			outward = Vector2.UP
+		"S":
+			outward = Vector2.DOWN
+		"E":
+			outward = Vector2.RIGHT
+		_:
+			outward = Vector2.LEFT
+	var spot := center + outward * cell * 0.30
+	draw_circle(spot, cell * 0.07, drop)
+
+func _draw_beak(at: Vector2i, rot: int) -> void:
+	# A pale point on the dry-stopped clockwise edge, which opens under water.
+	# A north beak marks the east edge. The point is not the drip's circle.
+	var center := _center(at)
+	var marked := Tracer.rotate_dir(Tracer.beak_facing(rot), 1)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var tip := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var outward := Vector2.RIGHT
+	var along := Vector2.DOWN
+	match marked:
+		"N":
+			outward = Vector2.UP
+			along = Vector2.RIGHT
+		"S":
+			outward = Vector2.DOWN
+			along = Vector2.RIGHT
+		"E":
+			outward = Vector2.RIGHT
+			along = Vector2.DOWN
+		_:
+			outward = Vector2.LEFT
+			along = Vector2.DOWN
+	var nose := center + outward * cell * 0.34
+	var base := center + outward * cell * 0.18
+	draw_colored_polygon(PackedVector2Array([
+		nose,
+		base + along * cell * 0.08,
+		base - along * cell * 0.08,
+	]), tip)
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
 	if dir == "N" or dir == "S":

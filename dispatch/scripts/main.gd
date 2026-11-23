@@ -514,6 +514,10 @@ func _building_mark_name(building: int) -> String:
 			return "BuildingTwentyEightMark"
 		29:
 			return "BuildingTwentyNineMark"
+		30:
+			return "BuildingThirtyMark"
+		31:
+			return "BuildingThirtyOneMark"
 		_:
 			return "Building%dMark" % building
 
@@ -666,7 +670,7 @@ func _sync_facing() -> void:
 			_facing.text = "Facing   counterclockwise"
 		elif _selected == "slide":
 			_facing.text = "Facing   with the parcel"
-		elif _selected == "bin" or _selected == "return" or _selected == "pause" or _selected == "shunt" or _selected == "bias" or _selected == "vault" or _selected == "sling" or _selected == "cant" or _selected == "balk" or _selected == "loft" or _selected == "keel" or _selected == "sheer" or _selected == "strake" or _selected == "wale" or _selected == "garboard" or _selected == "stealer" or _selected == "rabbet" or _selected == "futtock" or _selected == "keelson" or _selected == "stemson" or _selected == "apron":
+		elif _selected == "bin" or _selected == "return" or _selected == "pause" or _selected == "shunt" or _selected == "bias" or _selected == "vault" or _selected == "sling" or _selected == "cant" or _selected == "balk" or _selected == "loft" or _selected == "keel" or _selected == "sheer" or _selected == "strake" or _selected == "wale" or _selected == "garboard" or _selected == "stealer" or _selected == "rabbet" or _selected == "futtock" or _selected == "keelson" or _selected == "stemson" or _selected == "apron" or _selected == "deadwood" or _selected == "gripe":
 			_facing.text = "Facing   none"
 		else:
 			_facing.text = "Facing   %s" % Sim.DIR_NAMES[_ghost_dir]
@@ -985,6 +989,10 @@ func _draw_block(block: Dictionary, alpha: float) -> void:
 		_stemson_mark(rect, ink)
 	elif typ == "apron":
 		_apron_mark(rect, ink)
+	elif typ == "deadwood":
+		_deadwood_mark(rect, ink)
+	elif typ == "gripe":
+		_gripe_mark(rect, ink)
 	elif typ == "slide":
 		_slide_mark(rect, ink)
 	elif typ == "bin":
@@ -1314,6 +1322,26 @@ func _stealer_mark(rect: Rect2, color: Color) -> void:
 		draw_line(back + Vector2(0.0, span * 0.14), tip, color, 2.5)
 
 
+func _gripe_mark(rect: Rect2, color: Color) -> void:
+	var center := rect.get_center()
+	var span := rect.size.x
+	for i in 9:
+		var tip := center + Vector2(-span * 0.48 + float(i) * span * 0.11, 0.0)
+		var back := tip + Vector2(-span * 0.06, 0.0)
+		draw_line(back + Vector2(0.0, -span * 0.08), tip, color, 2.5)
+		draw_line(back + Vector2(0.0, span * 0.08), tip, color, 2.5)
+
+
+func _deadwood_mark(rect: Rect2, color: Color) -> void:
+	var center := rect.get_center()
+	var span := rect.size.x
+	for i in 8:
+		var tip := center + Vector2(-span * 0.46 + float(i) * span * 0.12, 0.0)
+		var back := tip + Vector2(-span * 0.07, 0.0)
+		draw_line(back + Vector2(0.0, -span * 0.08), tip, color, 2.5)
+		draw_line(back + Vector2(0.0, span * 0.08), tip, color, 2.5)
+
+
 func _apron_mark(rect: Rect2, color: Color) -> void:
 	var center := rect.get_center()
 	var span := rect.size.x
@@ -1507,6 +1535,10 @@ func _tool_color(tool: String) -> Color:
 			return Color("#9a4a6a")
 		"apron":
 			return Color("#7a4a9a")
+		"deadwood":
+			return Color("#3e7a6a")
+		"gripe":
+			return Color("#8a3e6a")
 		"slide":
 			return Color("#d06b86")
 		"bin":
@@ -1597,6 +1629,10 @@ func _tool_tip(tool: String) -> String:
 			return "Waits one tick, then jumps a parcel six cells forward. The five cells in front are not entered, and the parcel keeps the facing it arrived with."
 		"apron":
 			return "Waits one tick, then jumps a parcel seven cells forward. The six cells in front are not entered, and the parcel keeps the facing it arrived with."
+		"deadwood":
+			return "Waits one tick, then jumps a parcel eight cells forward. The seven cells in front are not entered, and the parcel keeps the facing it arrived with."
+		"gripe":
+			return "Waits one tick, then jumps a parcel nine cells forward. The eight cells in front are not entered, and the parcel keeps the facing it arrived with."
 		"slide":
 			return "Moves a parcel two cells in its facing and does not rotate it. The cell between can be a brick, a belt, or another parcel."
 		"bin":
