@@ -51,7 +51,8 @@ const FRONTAL_AWNING := Color(0.16, 0.34, 0.28)
 const PALL_AWNING := Color(0.86, 0.82, 0.70)
 const HERSE_AWNING := Color(0.32, 0.34, 0.38)
 const CATAFALQUE_AWNING := Color(0.36, 0.22, 0.14)
-const WINDOW_W := 2804.0
+const BIER_AWNING := Color(0.45, 0.28, 0.14)
+const WINDOW_W := 2872.0
 
 var notice_label: Label
 var purse_label: Label
@@ -239,6 +240,8 @@ func _awning_for(floor_id: String) -> Color:
 		return HERSE_AWNING
 	if floor_id == "catafalque":
 		return CATAFALQUE_AWNING
+	if floor_id == "bier":
+		return BIER_AWNING
 	return CHART_AWNING
 
 
