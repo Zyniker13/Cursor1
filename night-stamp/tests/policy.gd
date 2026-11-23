@@ -4718,6 +4718,68 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 		var jogb_after_empty = jogb_after_row <= 2 and state.form[jogb_after_row][jogb_after_col] == null
 		if jogb_before_empty and jogb_after_empty:
 			guess += _stamp_number(state, card_id, row, col)
+	if rule == "drop_if_punch_count":
+		var punch_filled = 0
+		for punch_row in 3:
+			for punch_col in 3:
+				if state.form[punch_row][punch_col] != null:
+					punch_filled += 1
+		var punch_next = punch_filled + 1
+		if punch_next == 20 or punch_next == 23:
+			guess -= 4
+		elif punch_filled == 20 or punch_filled == 23:
+			guess += 5
+	if rule == "double_rebate_fill":
+		var rebate_before_row = row
+		var rebate_before_col = col - 17
+		while rebate_before_col < 0:
+			rebate_before_row -= 1
+			rebate_before_col += 3
+		var rebate_after_row = row
+		var rebate_after_col = col + 1
+		while rebate_after_col > 2:
+			rebate_after_row += 1
+			rebate_after_col -= 3
+		var rebate_before_filled = rebate_before_row >= 0 and state.form[rebate_before_row][rebate_before_col] != null
+		var rebate_after_filled = rebate_after_row <= 2 and state.form[rebate_after_row][rebate_after_col] != null
+		if rebate_before_filled and rebate_after_filled:
+			guess += _stamp_number(state, card_id, row, col)
+	if rule == "yield_nut_pay":
+		var nut_sides = 0
+		var nut_corners = 0
+		for nut_side in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var nut_side_row = row + nut_side.x
+			var nut_side_col = col + nut_side.y
+			if nut_side_row < 0 or nut_side_col < 0 or nut_side_row > 2 or nut_side_col > 2:
+				continue
+			if state.form[nut_side_row][nut_side_col] != null:
+				nut_sides += 1
+		for nut_corner in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var nut_corner_row = row + nut_corner.x
+			var nut_corner_col = col + nut_corner.y
+			if nut_corner_row < 0 or nut_corner_col < 0 or nut_corner_row > 2 or nut_corner_col > 2:
+				continue
+			if state.form[nut_corner_row][nut_corner_col] != null:
+				nut_corners += 1
+		if nut_sides == 15 and nut_corners == 4:
+			guess += 4
+		else:
+			guess -= 1
+	if rule == "double_rebate_blank":
+		var rebateb_before_row = row
+		var rebateb_before_col = col - 17
+		while rebateb_before_col < 0:
+			rebateb_before_row -= 1
+			rebateb_before_col += 3
+		var rebateb_after_row = row
+		var rebateb_after_col = col + 1
+		while rebateb_after_col > 2:
+			rebateb_after_row += 1
+			rebateb_after_col -= 3
+		var rebateb_before_empty = rebateb_before_row >= 0 and state.form[rebateb_before_row][rebateb_before_col] == null
+		var rebateb_after_empty = rebateb_after_row <= 2 and state.form[rebateb_after_row][rebateb_after_col] == null
+		if rebateb_before_empty and rebateb_after_empty:
+			guess += _stamp_number(state, card_id, row, col)
 	if rule == "drop_if_die_count":
 		var die_filled = 0
 		for die_row in 3:
