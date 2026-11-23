@@ -73,7 +73,7 @@ func _build_hud() -> void:
 	layer.add_child(bottom_panel)
 
 	controls_label = Label.new()
-	controls_label.text = "Arrows move   F lamp you face   Space wait   U undo   R restart   click a neighbor or a lamp\n1–8 east   Shift+1–6 west   Ctrl+1–6 north   Alt+1–6 south   F1–F6 attic   F7–F12 cellar   Keypad 1–6 gallery Shift+F1–F6 court Alt+F1–F6 nave Ctrl+F1–F6 cloister Ctrl+Shift+F1–F6 porch\nAlt+Shift+F1–F6 oriel Alt+Shift+1–6 veil Ctrl+Alt+1–6 shade Ctrl+Shift+1–6 screen Ctrl+Alt+Shift+1–6 glaze Ctrl+Alt+Shift+F1–F6 mica Meta+Ctrl+Alt+Shift+F1–F6 baize Meta+Ctrl+Alt+Shift+1–6 scrim Meta+Ctrl+Alt+1–6 gauze Meta+Alt+1–6 voile Meta+Alt+Shift+1–6 lawn Meta+Shift+1–6 muslin Meta+1–6 cambric Meta+Alt+Shift+F1–F6 holland Meta+F13–F18 buckram Meta+Ctrl+F13–F18 ticking Meta+Alt+F13–F18 denim Meta+Shift+F13–F18 canvas Meta+Ctrl+Alt+F13–F18 drill Meta+Ctrl+Shift+F13–F18 twill"
+	controls_label.text = "Arrows move   F lamp you face   Space wait   U undo   R restart   click a neighbor or a lamp Alt+Shift+F1–F6 oriel Alt+Shift+1–6 veil\n1–8 east   Shift+1–6 west   Ctrl+1–6 north   Alt+1–6 south   F1–F6 attic   F7–F12 cellar   Keypad 1–6 gallery Shift+F1–F6 court Alt+F1–F6 nave Ctrl+F1–F6 cloister Ctrl+Shift+F1–F6 porch\nCtrl+Alt+1–6 shade Ctrl+Shift+1–6 screen Ctrl+Alt+Shift+1–6 glaze Ctrl+Alt+Shift+F1–F6 mica Meta+Ctrl+Alt+Shift+F1–F6 baize Meta+Ctrl+Alt+Shift+1–6 scrim Meta+Ctrl+Alt+1–6 gauze Meta+Alt+1–6 voile Meta+Alt+Shift+1–6 lawn Meta+Shift+1–6 muslin Meta+1–6 cambric Meta+Alt+Shift+F1–F6 holland Meta+F13–F18 buckram Meta+Ctrl+F13–F18 ticking Meta+Alt+F13–F18 denim Meta+Shift+F13–F18 canvas Meta+Ctrl+Alt+F13–F18 drill Meta+Ctrl+Shift+F13–F18 twill Meta+Alt+Shift+F13–F18 duck"
 	controls_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	controls_label.add_theme_font_size_override("font_size", 14)
 	controls_label.add_theme_color_override("font_color", MUTED)
@@ -118,7 +118,7 @@ func _build_hud() -> void:
 		row_y += 36.0
 
 	legend_label = Label.new()
-	legend_label.text = "Gold diamond — lamplight, you cannot walk it.    Red diamond — a guard is watching.    Arrow — that guard's next step.    Brass disc — a plate. Step on it in the dark and the nearest guard is called.    Iron cup — a bell. Step on it in the dark and every guard who can reach it is called.    Iron bars — a grate. It stays dark, you may enter it, and a guard cannot.    Stone sill — a lamp lights it, light stops there, and a guard cannot enter or see through it.    Pale sheet — a pane. Light and sight pass through it, and neither you nor a guard can step on it.    Dark cloth — a curtain. A lamp lights it, light passes, sight stops, and a guard can step on it.    Dark louver — a shade. It stays dark, light stops, sight stops, you may step on it, and a guard cannot.    Pale lattice — a screen. A lamp lights it, light passes, sight stops, you may step on it, and a guard cannot.    Ivory sheet, bright cross — a glaze. A lamp lights it, light passes, sight passes while it is lit, you may step on it, and a guard cannot.    Pale gray sheet, dark ring — a mica. It stays dark, light passes, sight passes, you may step on it, and a guard cannot.    Deep green cloth, pale hem — a baize. It stays dark, light stops, sight passes, you may step on it, and a guard cannot.    Pale gold cloth, dark thread — a scrim. A lamp lights it, light stops, sight passes while it is lit, you may step on it only while it is dark, and a guard cannot.    Pale cloth, open stitches — a gauze. A lamp lights it, a second lamp's light passes, sight passes while it is lit, you may step on it only while it is dark, and a guard cannot.    Pale sheer, broken slant — a voile. A lamp lights it, a second lamp's light passes, the early step onto it succeeds, and a guard cannot.    Green field, short blades — a lawn. A lamp lights it, a second lamp's light stops, the early step onto it succeeds, and a guard cannot.    Cream cloth, loose threads — a muslin. The early step fails and a guard can enter.    Pale cloth, a fine cross weave — a cambric. The early step succeeds and a guard can enter.    Warm linen, a fine rib — a holland. The early step succeeds and a guard can enter.    Stiff linen, a close rib — a buckram. The early step fails and a guard can enter.    Close stripes — a ticking. Sight stops and a guard can enter.    Blue twill — a denim.    Unbleached cloth — a canvas.    Khaki twill — a drill.    Pale herringbone — a twill. It starts dark."
+	legend_label.text = "Gold diamond — lamplight, you cannot walk it.    Red diamond — a guard is watching.    Arrow — that guard's next step.    Brass disc — a plate. Step on it in the dark and the nearest guard is called.    Iron cup — a bell. Step on it in the dark and every guard who can reach it is called.    Iron bars — a grate. It stays dark, you may enter it, and a guard cannot.    Stone sill — a lamp lights it, light stops there, and a guard cannot enter or see through it.    Pale sheet — a pane. Light and sight pass through it, and neither you nor a guard can step on it.    Dark cloth — a curtain. A lamp lights it, light passes, sight stops, and a guard can step on it.    Dark louver — a shade. It stays dark, light stops, sight stops, you may step on it, and a guard cannot.    Pale lattice — a screen. A lamp lights it, light passes, sight stops, you may step on it, and a guard cannot.    Ivory sheet, bright cross — a glaze. A lamp lights it, light passes, sight passes while it is lit, you may step on it, and a guard cannot.    Pale gray sheet, dark ring — a mica. It stays dark, light passes, sight passes, you may step on it, and a guard cannot.    Deep green cloth, pale hem — a baize. It stays dark, light stops, sight passes, you may step on it, and a guard cannot.    Pale gold cloth, dark thread — a scrim. A lamp lights it, light stops, sight passes while it is lit, you may step on it only while it is dark, and a guard cannot.    Pale cloth, open stitches — a gauze. A lamp lights it, a second lamp's light passes, sight passes while it is lit, you may step on it only while it is dark, and a guard cannot.    Pale sheer, broken slant — a voile. A lamp lights it, a second lamp's light passes, the early step onto it succeeds, and a guard cannot.    Green field, short blades — a lawn. A lamp lights it, a second lamp's light stops, the early step onto it succeeds, and a guard cannot.    Cream cloth, loose threads — a muslin. The early step fails and a guard can enter.    Pale cloth, a fine cross weave — a cambric. The early step succeeds and a guard can enter.    Warm linen, a fine rib — a holland. The early step succeeds and a guard can enter.    Stiff linen, a close rib — a buckram. The early step fails and a guard can enter.    Close stripes — a ticking. Sight stops and a guard can enter.    Blue twill — a denim.    Unbleached cloth — a canvas.    Khaki twill — a drill.    Pale herringbone — a twill.    Oatmeal cloth — a duck."
 	legend_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	legend_label.position = Vector2(20, row_y + 2.0)
 	legend_label.size = Vector2(1240, 260)
@@ -354,6 +354,12 @@ func _puzzle_index_for_key(event: InputEventKey) -> int:
 	var twill := _twill_index(event)
 	if twill >= 0:
 		return 182 + twill
+	# Meta+Ctrl+Shift+F13–F18 without Alt is the twill.
+	# Meta+Ctrl+Alt+F13–F18 without Shift is the drill.
+	# Meta+Alt+Shift+F13–F18 without Ctrl selected nothing.
+	var duck := _duck_index(event)
+	if duck >= 0:
+		return 188 + duck
 	var cellar := _cellar_index(event)
 	if cellar >= 0:
 		return 32 + cellar
@@ -643,6 +649,17 @@ func _buckram_index(event: InputEventKey) -> int:
 
 func _ticking_index(event: InputEventKey) -> int:
 	if not event.meta_pressed or not event.ctrl_pressed or event.alt_pressed or event.shift_pressed:
+		return -1
+	var key := event.physical_keycode
+	if key < KEY_F13 or key > KEY_F18:
+		key = event.keycode
+	if key < KEY_F13 or key > KEY_F18:
+		return -1
+	return int(key) - int(KEY_F13)
+
+
+func _duck_index(event: InputEventKey) -> int:
+	if not event.meta_pressed or not event.alt_pressed or not event.shift_pressed or event.ctrl_pressed:
 		return -1
 	var key := event.physical_keycode
 	if key < KEY_F13 or key > KEY_F18:
@@ -946,6 +963,8 @@ func _draw_tile(state: Dictionary, x: int, y: int, lit: Dictionary, watched: Dic
 		_draw_drill_cloth(inset, lit.has(cell))
 	if kind == Rules.Tile.TWILL:
 		_draw_twill_cloth(inset, lit.has(cell))
+	if kind == Rules.Tile.DUCK:
+		_draw_duck_cloth(inset, lit.has(cell))
 	if kind == Rules.Tile.SILL:
 		_draw_sill(inset)
 	if kind == Rules.Tile.CURTAIN:
@@ -1005,6 +1024,8 @@ func _draw_tile(state: Dictionary, x: int, y: int, lit: Dictionary, watched: Dic
 		_draw_drill_twill(inset, lit.has(cell))
 	if kind == Rules.Tile.TWILL:
 		_draw_twill_bone(inset, lit.has(cell))
+	if kind == Rules.Tile.DUCK:
+		_draw_duck_rib(inset, lit.has(cell))
 	if hover == cell:
 		draw_rect(inset, Color(1, 1, 1, 0.08), false, 2.0)
 
@@ -1032,6 +1053,20 @@ func _draw_plate(center: Vector2) -> void:
 	draw_rect(Rect2(center + Vector2(-tile * 0.07, -tile * 0.018), Vector2(tile * 0.14, tile * 0.036)), Color("3a2c16"))
 	draw_circle(center, tile * 0.045, Color("8d7344"))
 	draw_circle(center, tile * 0.02, Color("3a2c16"))
+
+
+func _draw_duck_cloth(inset: Rect2, burning: bool) -> void:
+	# Oatmeal duck. It stays dark; the leaving step fails.
+	draw_rect(inset, Color("efe6d2") if burning else Color("6b6458"))
+
+
+func _draw_duck_rib(inset: Rect2, burning: bool) -> void:
+	# Wide horizontal ribs, not twill's herringbone and not canvas's grid.
+	var ink := Color("8a7352") if burning else Color("2a2620")
+	var thick := maxf(2.2, tile * 0.06)
+	for i in 2:
+		var y := inset.position.y + inset.size.y * (0.36 + i * 0.28)
+		draw_line(Vector2(inset.position.x + inset.size.x * 0.1, y), Vector2(inset.position.x + inset.size.x * 0.9, y), ink, thick)
 
 
 func _draw_twill_cloth(inset: Rect2, burning: bool) -> void:
