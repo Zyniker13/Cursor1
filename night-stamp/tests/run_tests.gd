@@ -99,6 +99,8 @@ func _init() -> void:
 	test_addenda_bell_opens()
 	test_envoi_bell_rules()
 	test_envoi_bell_opens()
+	test_corrigenda_bell_rules()
+	test_corrigenda_bell_opens()
 	test_reward_flow_and_restart()
 	test_policy_clears_act()
 	test_policy_clears_late_shift()
@@ -141,6 +143,7 @@ func _init() -> void:
 	test_policy_clears_postscript_bell()
 	test_policy_clears_addenda_bell()
 	test_policy_clears_envoi_bell()
+	test_policy_clears_corrigenda_bell()
 	_layout_viewport = SubViewport.new()
 	_layout_viewport.size = Vector2i(int(ProjectSettings.get_setting("display/window/size/viewport_width")), int(ProjectSettings.get_setting("display/window/size/viewport_height")))
 	_layout_viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
@@ -11961,7 +11964,8 @@ func test_halftitle_header_row() -> void:
 	var postscript: Button = desk.postscript_button
 	var addenda: Button = desk.addenda_button
 	var envoi: Button = desk.envoi_button
-	check(header == fly.get_parent() and header == endpaper.get_parent() and header == halftitle.get_parent() and header == titlepage.get_parent() and header == copyright.get_parent() and header == dedication.get_parent() and header == epigraph.get_parent() and header == preface.get_parent() and header == foreword.get_parent() and header == contents.get_parent() and header == introduction.get_parent() and header == prologue.get_parent() and header == acknowledgments.get_parent() and header == glossary.get_parent() and header == appendix.get_parent() and header == afterword.get_parent() and header == postscript.get_parent() and header == addenda.get_parent() and header == envoi.get_parent(), "the envoi, addenda, postscript, afterword, appendix, glossary, acknowledgments, prologue, introduction, contents, foreword, preface, epigraph, dedication, copyright, title-page, half-title, and endpaper buttons stay on the night row")
+	var corrigenda: Button = desk.corrigenda_button
+	check(header == fly.get_parent() and header == endpaper.get_parent() and header == halftitle.get_parent() and header == titlepage.get_parent() and header == copyright.get_parent() and header == dedication.get_parent() and header == epigraph.get_parent() and header == preface.get_parent() and header == foreword.get_parent() and header == contents.get_parent() and header == introduction.get_parent() and header == prologue.get_parent() and header == acknowledgments.get_parent() and header == glossary.get_parent() and header == appendix.get_parent() and header == afterword.get_parent() and header == postscript.get_parent() and header == addenda.get_parent() and header == envoi.get_parent() and header == corrigenda.get_parent(), "the corrigenda, envoi, addenda, postscript, afterword, appendix, glossary, acknowledgments, prologue, introduction, contents, foreword, preface, epigraph, dedication, copyright, title-page, half-title, and endpaper buttons stay on the night row")
 	check(fly.text == "Flyleaf bell", "the laid-out desk still shows the flyleaf button")
 	check(endpaper.text == "Endpaper bell", "the laid-out desk still shows the endpaper button")
 	check(halftitle.text == "Half-title bell", "the laid-out desk still shows the half-title button")
@@ -11981,6 +11985,7 @@ func test_halftitle_header_row() -> void:
 	check(postscript.text == "Postscript bell", "the laid-out desk shows the postscript button")
 	check(addenda.text == "Addenda bell", "the laid-out desk shows the addenda button")
 	check(envoi.text == "Envoi bell", "the laid-out desk shows the envoi button")
+	check(corrigenda.text == "Corrigenda bell", "the laid-out desk shows the corrigenda button")
 	check(fly.size.x + 0.5 >= fly.get_combined_minimum_size().x, "the flyleaf button is not squeezed")
 	check(endpaper.size.x + 0.5 >= endpaper.get_combined_minimum_size().x, "the endpaper button is not squeezed")
 	check(halftitle.size.x + 0.5 >= halftitle.get_combined_minimum_size().x, "the half-title button is not squeezed")
@@ -12000,6 +12005,7 @@ func test_halftitle_header_row() -> void:
 	check(postscript.size.x + 0.5 >= postscript.get_combined_minimum_size().x, "the postscript button is not squeezed")
 	check(addenda.size.x + 0.5 >= addenda.get_combined_minimum_size().x, "the addenda button is not squeezed")
 	check(envoi.size.x + 0.5 >= envoi.get_combined_minimum_size().x, "the envoi button is not squeezed")
+	check(corrigenda.size.x + 0.5 >= corrigenda.get_combined_minimum_size().x, "the corrigenda button is not squeezed")
 	check(fly.global_position.x + fly.size.x <= float(window_width), "the flyleaf button is inside the window")
 	check(endpaper.global_position.x + endpaper.size.x <= float(window_width), "the endpaper button is inside the window")
 	check(halftitle.global_position.x + halftitle.size.x <= float(window_width), "the half-title button is inside the window")
@@ -12019,6 +12025,7 @@ func test_halftitle_header_row() -> void:
 	check(postscript.global_position.x + postscript.size.x <= float(window_width) - 28.0, "the postscript button keeps at least 28 pixels of spare on the right")
 	check(addenda.global_position.x + addenda.size.x <= float(window_width) - 28.0, "the addenda button keeps at least 28 pixels of spare on the right")
 	check(envoi.global_position.x + envoi.size.x <= float(window_width) - 28.0, "the envoi button keeps at least 28 pixels of spare on the right")
+	check(corrigenda.global_position.x + corrigenda.size.x <= float(window_width) - 28.0, "the corrigenda button keeps at least 28 pixels of spare on the right")
 	check(dedication.global_position.x >= 0.0 and dedication.size.y > 0.0, "the dedication button is visible")
 	check(epigraph.global_position.x >= 0.0 and epigraph.size.y > 0.0, "the epigraph button is visible")
 	check(preface.global_position.x >= 0.0 and preface.size.y > 0.0, "the preface button is visible")
@@ -12033,6 +12040,7 @@ func test_halftitle_header_row() -> void:
 	check(postscript.global_position.x >= 0.0 and postscript.size.y > 0.0, "the postscript button is visible")
 	check(addenda.global_position.x >= 0.0 and addenda.size.y > 0.0, "the addenda button is visible")
 	check(envoi.global_position.x >= 0.0 and envoi.size.y > 0.0, "the envoi button is visible")
+	check(corrigenda.global_position.x >= 0.0 and corrigenda.size.y > 0.0, "the corrigenda button is visible")
 	check(endpaper.global_position.x + endpaper.size.x <= halftitle.global_position.x, "the endpaper button stays left of the half-title button")
 	check(halftitle.global_position.x + halftitle.size.x <= titlepage.global_position.x, "the half-title button stays left of the title-page button")
 	check(titlepage.global_position.x + titlepage.size.x <= copyright.global_position.x, "the title-page button stays left of the copyright button")
@@ -12056,6 +12064,8 @@ func test_halftitle_header_row() -> void:
 	check(postscript.get_index() + 1 == addenda.get_index(), "no night button sits between postscript and addenda")
 	check(addenda.global_position.x + addenda.size.x <= envoi.global_position.x, "the envoi button stays immediately right of the addenda button")
 	check(addenda.get_index() + 1 == envoi.get_index(), "no night button sits between addenda and envoi")
+	check(envoi.global_position.x + envoi.size.x <= corrigenda.global_position.x, "the corrigenda button stays immediately right of the envoi button")
+	check(envoi.get_index() + 1 == corrigenda.get_index(), "no night button sits between envoi and corrigenda")
 	var spare := int(header.global_position.x * 2.0)
 	var openers = [
 		"_begin_first_bell",
@@ -12099,6 +12109,7 @@ func test_halftitle_header_row() -> void:
 		"_begin_postscript_bell",
 		"_begin_addenda_bell",
 		"_begin_envoi_bell",
+		"_begin_corrigenda_bell",
 	]
 	var widest := 0
 	for opener in openers:
@@ -12108,7 +12119,7 @@ func test_halftitle_header_row() -> void:
 		if row_width > widest:
 			widest = row_width
 		check(row_width + spare <= window_width, "%s header fits (%d + %d <= %d)" % [opener, row_width, spare, window_width])
-	check(widest == 5253, "the header row's minimum is 5253 (%d)" % widest)
+	check(widest == 5399, "the header row's minimum is 5399 (%d)" % widest)
 	check(spare == 56, "the header row's spare inside the window is 56")
 	check(spare / 2 >= 28, "each side keeps at least 28 pixels of spare")
 	check(window_width >= widest + spare, "the window is at least the row minimum plus that spare")
@@ -12335,6 +12346,24 @@ func test_halftitle_header_row() -> void:
 		check(rule.get_line_count() == 1, "envoi traveler %d's rule stays on one line (%d)" % [index, rule.get_line_count()])
 		check(rule.size.y + 0.5 >= rule.get_minimum_size().y, "envoi traveler %d's rule line fits" % index)
 		check(rule.global_position.y >= 0.0 and rule.global_position.y + rule.size.y <= float(window_height), "envoi traveler %d's rule is inside the window" % index)
+	desk._begin_corrigenda_bell()
+	desk._refresh_ui()
+	check(desk.corrigenda_button.text == "First bell", "the open corrigenda bell returns through the same button")
+	check(desk.envoi_button.text == "Envoi bell", "the envoi button stays beside the open corrigenda bell")
+	check(desk.addenda_button.text == "Addenda bell", "the addenda button stays to the left of the open corrigenda bell")
+	var corrigenda_rules = [
+		"\"Patience drops by 2 when the number of filled cells is 1 or 3.\"",
+		"\"A stamp scores twice only when the queue cell one place after it is filled. The bottom-right cell has no cell one place after it, so it does not double.\"",
+		"\"Each stamp with exactly zero corner neighbors scores +2 once. Exactly one corner neighbor scores its own number. Exactly two corner neighbors score their own number. Exactly three corner neighbors score their own number. Exactly four corner neighbors score their own number. A side neighbor is not a corner. A stamp with only side neighbors scores +2. A lone stamp scores +2 once.\"",
+		"\"A stamp scores twice only when the queue cell one place before it is empty. The top-left cell has no cell one place before it, so it does not double.\"",
+	]
+	for index in corrigenda_rules.size():
+		desk.state.traveler_index = index
+		desk._refresh_ui()
+		check(rule.text == String(corrigenda_rules[index]), "the open corrigenda bell shows traveler %d's rule" % index)
+		check(rule.get_line_count() == 1, "corrigenda traveler %d's rule stays on one line (%d)" % [index, rule.get_line_count()])
+		check(rule.size.y + 0.5 >= rule.get_minimum_size().y, "corrigenda traveler %d's rule line fits" % index)
+		check(rule.global_position.y >= 0.0 and rule.global_position.y + rule.size.y <= float(window_height), "corrigenda traveler %d's rule is inside the window" % index)
 
 
 func test_policy_clears_flyleaf_bell() -> void:
@@ -24510,3 +24539,496 @@ func test_policy_clears_envoi_bell() -> void:
 	check(state.shift == Rules.SHIFT_ENVOI, "the clear stayed on the envoi bell")
 	check(steps == 31, "seed 12345 clears the envoi bell in 31 actions")
 	print("envoi bell finished in %d actions, %d ms" % [steps, elapsed])
+
+
+func test_corrigenda_bell_rules() -> void:
+	var vera = Rules.scripted_encounter(421, 0, ["entry_mark"], 1, Rules.SHIFT_CORRIGENDA)
+	check(String(Rules.traveler(vera)["name"]) == "Vera Hale", "the corrigenda bell's first form is Vera Hale")
+	check(String(Rules.traveler(vera)["form_name"]) == "Notch Toll", "Vera brings the Notch Toll")
+	check(String(Rules.traveler(vera)["rule_text"]) == "Patience drops by 2 when the number of filled cells is 1 or 3.", "Vera's form states the notch toll")
+	check(String(Rules.traveler(vera)["rule"]) == "drop_if_notch_count", "Vera's rule is the notch toll")
+	check(int(Rules.traveler(vera)["lane"]) == 1 and int(Rules.traveler(vera)["exemption_row"]) == 2, "Vera waits in column 2 and exempts the bottom row")
+	check(int(Rules.traveler(vera)["goal"]) == 18 and int(Rules.traveler(vera)["patience"]) == 5, "Vera's goal is 18 and her patience is 5")
+	var vera_empty = Rules.scripted_encounter(421, 0, ["entry_mark"], 1, Rules.SHIFT_CORRIGENDA)
+	Rules.end_turn(vera_empty)
+	check(vera_empty.last_progress_gained == 0 and vera_empty.last_patience_loss == 1, "an empty form is the wrong count for Notch Toll")
+	var vera_one = Rules.scripted_encounter(421, 0, ["entry_mark"], 1, Rules.SHIFT_CORRIGENDA)
+	check(play_named(vera_one, "entry_mark", 0, 0), "Vera's single entry")
+	check(vera_one.last_progress_gained == 2 and vera_one.last_patience_loss == 2, "one filled cell is the correct count for Notch Toll")
+	var vera_two = Rules.scripted_encounter(421, 0, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_CORRIGENDA)
+	check(play_named(vera_two, "entry_mark", 0, 0), "Vera's first of two")
+	check(play_named(vera_two, "entry_mark", 0, 1), "Vera's second of two")
+	check(vera_two.last_progress_gained == 4 and vera_two.last_patience_loss == 1, "two filled cells are the wrong count for Notch Toll")
+	var vera_three = Rules.scripted_encounter(421, 0, ["entry_mark", "entry_mark", "entry_mark"], 3, Rules.SHIFT_CORRIGENDA)
+	check(play_named(vera_three, "entry_mark", 0, 0), "the first of three")
+	check(play_named(vera_three, "entry_mark", 0, 1), "the second of three")
+	check(play_named(vera_three, "entry_mark", 0, 2), "the third of three")
+	check(vera_three.last_progress_gained == 6 and vera_three.last_patience_loss == 2 and vera_three.phase == "play", "three filled cells are the correct count for Notch Toll")
+	var vera_five = Rules.scripted_encounter(421, 0, ["entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 5, Rules.SHIFT_CORRIGENDA)
+	check(play_named(vera_five, "entry_mark", 0, 0), "the first of five")
+	check(play_named(vera_five, "entry_mark", 0, 1), "the second of five")
+	check(play_named(vera_five, "entry_mark", 0, 2), "the third of five")
+	check(play_named(vera_five, "entry_mark", 1, 0), "the fourth of five")
+	check(play_named(vera_five, "entry_mark", 1, 1), "the fifth of five")
+	check(vera_five.last_progress_gained == 10 and vera_five.last_patience_loss == 1, "five filled cells are the wrong count for Notch Toll")
+	var vera_spared = Rules.scripted_encounter(421, 0, ["exemption", "entry_mark", "entry_mark"], 3, Rules.SHIFT_CORRIGENDA)
+	check(play_named(vera_spared, "exemption", 2, 1), "exemption on Vera's bottom row")
+	check(play_named(vera_spared, "entry_mark", 0, 0), "a stamp beside that exemption")
+	check(play_named(vera_spared, "entry_mark", 0, 1), "a second stamp")
+	check(vera_spared.last_progress_gained == 5 and vera_spared.last_patience_loss == 1, "a bottom-row exemption keeps Notch Toll at 1")
+	var vera_open = Rules.scripted_encounter(421, 0, ["exemption", "entry_mark", "entry_mark"], 3, Rules.SHIFT_CORRIGENDA)
+	check(play_named(vera_open, "exemption", 0, 0), "exemption off Vera's bottom row")
+	check(play_named(vera_open, "entry_mark", 0, 1), "a stamp beside the off-row exemption")
+	check(play_named(vera_open, "entry_mark", 0, 2), "a second stamp")
+	check(vera_open.last_progress_gained == 5 and vera_open.last_patience_loss == 2, "an exemption off the bottom row does not spare Notch Toll")
+	var vera_held = Rules.scripted_encounter(421, 0, ["hold"], 1, Rules.SHIFT_CORRIGENDA)
+	check(play_named(vera_held, "hold", 0, 1), "hold in Vera's column")
+	check(vera_held.last_progress_gained == 1 and vera_held.last_patience_loss == 0, "hold in column 2 comes before Notch Toll")
+	var vera_missed = Rules.scripted_encounter(421, 0, ["hold", "entry_mark", "entry_mark"], 3, Rules.SHIFT_CORRIGENDA)
+	check(play_named(vera_missed, "hold", 1, 0), "hold outside Vera's column")
+	check(play_named(vera_missed, "entry_mark", 0, 0), "a stamp beside the missed hold")
+	check(play_named(vera_missed, "entry_mark", 0, 2), "a second stamp")
+	check(vera_missed.last_progress_gained == 5 and vera_missed.last_patience_loss == 2, "hold in another column does not spare Notch Toll")
+	var vera_wax = Rules.scripted_encounter(421, 0, ["wax_seal", "wax_seal", "wax_seal"], 6, Rules.SHIFT_CORRIGENDA)
+	check(play_named(vera_wax, "wax_seal", 0, 0), "Vera's first wax")
+	check(play_named(vera_wax, "wax_seal", 0, 1), "Vera's second wax")
+	check(play_named(vera_wax, "wax_seal", 0, 2), "Vera's third wax")
+	check(vera_wax.last_progress_gained == 18 and vera_wax.phase == "draft", "three wax seals clear Notch Toll")
+	var elspeth = Rules.scripted_encounter(421, 0, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_ENVOI)
+	check(play_named(elspeth, "entry_mark", 0, 0), "Elspeth's first entry")
+	check(play_named(elspeth, "entry_mark", 0, 1), "Elspeth's second entry")
+	check(elspeth.last_patience_loss == 2, "Cleft Toll still drops on 2")
+	var una = Rules.scripted_encounter(421, 0, ["entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 5, Rules.SHIFT_ERRATA)
+	check(play_named(una, "entry_mark", 0, 0), "Una's first entry")
+	check(play_named(una, "entry_mark", 0, 1), "Una's second entry")
+	check(play_named(una, "entry_mark", 0, 2), "Una's third entry")
+	check(play_named(una, "entry_mark", 1, 0), "Una's fourth entry")
+	check(play_named(una, "entry_mark", 1, 1), "Una's fifth entry")
+	check(una.last_patience_loss == 2, "Odd Toll still drops on 5")
+
+	var felix = Rules.scripted_encounter(422, 1, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_CORRIGENDA)
+	check(String(Rules.traveler(felix)["name"]) == "Felix Voss", "the corrigenda bell's second form is Felix Voss")
+	check(String(Rules.traveler(felix)["form_name"]) == "Pace Fill", "Felix brings Pace Fill")
+	check(String(Rules.traveler(felix)["rule"]) == "double_pace_fill", "Felix's rule is pace fill")
+	check(int(Rules.traveler(felix)["lane"]) == 2 and int(Rules.traveler(felix)["exemption_row"]) == 1, "Felix waits in column 3 and exempts the middle row")
+	check(int(Rules.traveler(felix)["goal"]) == 20 and int(Rules.traveler(felix)["patience"]) == 5, "Felix's goal is 20 and his patience is 5")
+	check(play_named(felix, "entry_mark", 0, 0), "Felix's earlier stamp")
+	check(play_named(felix, "entry_mark", 0, 1), "the filled cell one place after it")
+	check(felix.last_progress_gained == 6, "a filled cell one ahead doubles the earlier stamp")
+	var felix_lone = Rules.scripted_encounter(422, 1, ["entry_mark"], 1, Rules.SHIFT_CORRIGENDA)
+	check(play_named(felix_lone, "entry_mark", 0, 0), "Felix's lone top-left stamp")
+	check(felix_lone.last_progress_gained == 2 and felix_lone.last_patience_loss == 1, "an empty cell one ahead is the wrong stamp for Pace Fill")
+	var felix_corner = Rules.scripted_encounter(422, 1, ["entry_mark"], 1, Rules.SHIFT_CORRIGENDA)
+	check(play_named(felix_corner, "entry_mark", 2, 2), "a bottom-right stamp")
+	check(felix_corner.last_progress_gained == 2, "the bottom-right cell has no cell one ahead, so Pace Fill does not double")
+	var felix_triple = Rules.scripted_encounter(422, 1, ["entry_mark", "entry_mark", "entry_mark"], 3, Rules.SHIFT_CORRIGENDA)
+	check(play_named(felix_triple, "entry_mark", 0, 0), "the first of a filled run")
+	check(play_named(felix_triple, "entry_mark", 0, 1), "the second of a filled run")
+	check(play_named(felix_triple, "entry_mark", 0, 2), "the third of a filled run")
+	check(felix_triple.last_progress_gained == 10, "two filled next cells double and the last empty next cell does not")
+	var felix_exempt = Rules.scripted_encounter(422, 1, ["exemption", "entry_mark", "entry_mark"], 3, Rules.SHIFT_CORRIGENDA)
+	check(play_named(felix_exempt, "exemption", 1, 0), "exemption on Felix's middle row")
+	check(play_named(felix_exempt, "entry_mark", 0, 0), "a stamp that would double")
+	check(play_named(felix_exempt, "entry_mark", 0, 1), "its filled next cell")
+	check(felix_exempt.last_progress_gained == 5, "a middle-row exemption cancels Pace Fill")
+	var felix_off = Rules.scripted_encounter(422, 1, ["exemption", "entry_mark", "entry_mark"], 3, Rules.SHIFT_CORRIGENDA)
+	check(play_named(felix_off, "exemption", 2, 0), "exemption off Felix's middle row")
+	check(play_named(felix_off, "entry_mark", 0, 0), "a qualifying stamp")
+	check(play_named(felix_off, "entry_mark", 0, 1), "its filled next cell")
+	check(felix_off.last_progress_gained == 7, "an exemption off the middle row does not cancel Pace Fill")
+	var felix_held = Rules.scripted_encounter(422, 1, ["hold", "entry_mark", "entry_mark"], 3, Rules.SHIFT_CORRIGENDA)
+	check(play_named(felix_held, "hold", 0, 2), "hold in Felix's column")
+	check(play_named(felix_held, "entry_mark", 0, 0), "a stamp beside that hold")
+	check(play_named(felix_held, "entry_mark", 0, 1), "the cell before the hold")
+	check(felix_held.last_progress_gained == 9 and felix_held.last_patience_loss == 0, "hold in column 3 comes before Pace Fill")
+	var felix_missed = Rules.scripted_encounter(422, 1, ["hold", "entry_mark", "entry_mark"], 3, Rules.SHIFT_CORRIGENDA)
+	check(play_named(felix_missed, "hold", 1, 0), "hold outside Felix's column")
+	check(play_named(felix_missed, "entry_mark", 0, 0), "a stamp beside the missed hold")
+	check(play_named(felix_missed, "entry_mark", 0, 1), "its filled next cell")
+	check(felix_missed.last_progress_gained == 7 and felix_missed.last_patience_loss == 1, "hold in another column does not spare Pace Fill")
+	var felix_reply = Rules.scripted_encounter(422, 1, ["entry_mark", "entry_mark", "reply"], 3, Rules.SHIFT_CORRIGENDA)
+	check(play_named(felix_reply, "entry_mark", 0, 0), "the stamp above reply")
+	check(play_named(felix_reply, "entry_mark", 0, 1), "its filled next cell")
+	check(play_named(felix_reply, "reply", 1, 0), "reply under a filled cell one ahead")
+	check(felix_reply.last_progress_gained == 11 and felix_reply.last_chain_count == 1, "a retrigger of a qualifying Pace Fill scores twice again")
+	var felix_reply_empty = Rules.scripted_encounter(422, 1, ["entry_mark", "reply"], 2, Rules.SHIFT_CORRIGENDA)
+	check(play_named(felix_reply_empty, "entry_mark", 0, 0), "a stamp with an empty cell one ahead")
+	check(play_named(felix_reply_empty, "reply", 1, 0), "reply under that stamp")
+	check(felix_reply_empty.last_progress_gained == 5 and felix_reply_empty.last_chain_count == 1, "an empty cell one ahead does not double the retrigger")
+	var felix_wax = Rules.scripted_encounter(422, 1, ["wax_seal", "wax_seal", "wax_seal"], 6, Rules.SHIFT_CORRIGENDA)
+	check(play_named(felix_wax, "wax_seal", 0, 0), "Felix's first wax")
+	check(play_named(felix_wax, "wax_seal", 0, 1), "Felix's second wax")
+	check(play_named(felix_wax, "wax_seal", 0, 2), "Felix's third wax")
+	check(felix_wax.last_progress_gained == 30 and felix_wax.phase == "relic", "Pace Fill clears into the relic drawer")
+	var owen = Rules.scripted_encounter(422, 1, ["entry_mark"], 1, Rules.SHIFT_ENVOI)
+	check(play_named(owen, "entry_mark", 0, 0), "Owen's lone stamp")
+	check(owen.last_progress_gained == 4, "Pace Blank still doubles an empty cell one ahead")
+
+	var rhea = Rules.scripted_encounter(423, 2, ["entry_mark"], 1, Rules.SHIFT_CORRIGENDA)
+	check(String(Rules.traveler(rhea)["name"]) == "Rhea Brant", "the corrigenda bell's third form is Rhea Brant")
+	check(String(Rules.traveler(rhea)["form_name"]) == "Bare Pay", "Rhea brings Bare Pay")
+	check(String(Rules.traveler(rhea)["rule"]) == "yield_bare_pay", "Rhea's rule is bare pay")
+	check(int(Rules.traveler(rhea)["lane"]) == 0 and int(Rules.traveler(rhea)["exemption_row"]) == 0, "Rhea waits in column 1 and exempts the top row")
+	check(int(Rules.traveler(rhea)["goal"]) == 16 and int(Rules.traveler(rhea)["patience"]) == 5, "Rhea's goal is 16 and her patience is 5")
+	check(play_named(rhea, "entry_mark", 1, 1), "a lone center stamp")
+	check(rhea.last_progress_gained == 4, "a lone stamp has zero corners and scores +2")
+	var rhea_sides = Rules.scripted_encounter(423, 2, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_CORRIGENDA)
+	check(play_named(rhea_sides, "entry_mark", 1, 1), "the center")
+	check(play_named(rhea_sides, "entry_mark", 1, 0), "a side neighbor")
+	check(rhea_sides.last_progress_gained == 8, "a side neighbor is not a corner, so both stamps score +2")
+	var rhea_one = Rules.scripted_encounter(423, 2, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_CORRIGENDA)
+	check(play_named(rhea_one, "entry_mark", 1, 1), "the center with one corner")
+	check(play_named(rhea_one, "entry_mark", 0, 0), "that corner")
+	check(rhea_one.last_progress_gained == 4, "exactly one corner neighbor scores its own number")
+	var rhea_four = Rules.scripted_encounter(423, 2, ["entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 5, Rules.SHIFT_CORRIGENDA)
+	check(play_named(rhea_four, "entry_mark", 0, 0), "the first of four corners")
+	check(play_named(rhea_four, "entry_mark", 0, 2), "the second of four corners")
+	check(play_named(rhea_four, "entry_mark", 2, 0), "the third of four corners")
+	check(play_named(rhea_four, "entry_mark", 2, 2), "the fourth of four corners")
+	check(play_named(rhea_four, "entry_mark", 1, 1), "the center")
+	check(rhea_four.last_progress_gained == 10, "exactly four corner neighbors score their own number")
+	var rhea_echo = Rules.scripted_encounter(423, 2, ["echo", "entry_mark"], 2, Rules.SHIFT_CORRIGENDA)
+	check(play_named(rhea_echo, "echo", 0, 1), "echo above the center")
+	check(play_named(rhea_echo, "entry_mark", 1, 1), "the center")
+	check(rhea_echo.last_progress_gained == 11 and rhea_echo.last_chain_count == 1, "a retrigger of a qualifying Bare Pay scores +2 again")
+	var rhea_echo_corner = Rules.scripted_encounter(423, 2, ["entry_mark", "echo", "entry_mark"], 3, Rules.SHIFT_CORRIGENDA)
+	check(play_named(rhea_echo_corner, "entry_mark", 0, 0), "a corner stamp")
+	check(play_named(rhea_echo_corner, "echo", 0, 1), "echo above one corner")
+	check(play_named(rhea_echo_corner, "entry_mark", 1, 1), "the center")
+	check(rhea_echo_corner.last_progress_gained == 9 and rhea_echo_corner.last_chain_count == 1, "exactly one corner neighbor does not gain +2 when retriggered")
+	var rhea_exempt = Rules.scripted_encounter(423, 2, ["exemption", "entry_mark"], 2, Rules.SHIFT_CORRIGENDA)
+	check(play_named(rhea_exempt, "exemption", 0, 1), "exemption on Rhea's top row")
+	check(play_named(rhea_exempt, "entry_mark", 1, 1), "a stamp with zero corners")
+	check(rhea_exempt.last_progress_gained == 3, "a top-row exemption cancels Bare Pay")
+	var rhea_off = Rules.scripted_encounter(423, 2, ["exemption", "entry_mark"], 2, Rules.SHIFT_CORRIGENDA)
+	check(play_named(rhea_off, "exemption", 2, 2), "exemption off Rhea's top row")
+	check(play_named(rhea_off, "entry_mark", 1, 0), "a stamp with zero corners")
+	check(rhea_off.last_progress_gained == 7, "an exemption off the top row does not cancel Bare Pay")
+	var rhea_held = Rules.scripted_encounter(423, 2, ["hold", "entry_mark"], 2, Rules.SHIFT_CORRIGENDA)
+	check(play_named(rhea_held, "hold", 2, 0), "hold in Rhea's column")
+	check(play_named(rhea_held, "entry_mark", 0, 1), "a stamp beside that hold")
+	check(rhea_held.last_progress_gained == 7 and rhea_held.last_patience_loss == 0, "hold in column 1 comes before Bare Pay")
+	var rhea_missed = Rules.scripted_encounter(423, 2, ["hold", "entry_mark"], 2, Rules.SHIFT_CORRIGENDA)
+	check(play_named(rhea_missed, "hold", 2, 2), "hold outside Rhea's column")
+	check(play_named(rhea_missed, "entry_mark", 0, 1), "a stamp beside the missed hold")
+	check(rhea_missed.last_progress_gained == 7 and rhea_missed.last_patience_loss == 1, "hold in another column does not spare Bare Pay")
+	var rhea_wax = Rules.scripted_encounter(423, 2, ["wax_seal", "wax_seal"], 4, Rules.SHIFT_CORRIGENDA)
+	check(play_named(rhea_wax, "wax_seal", 0, 0), "Rhea's first wax")
+	check(play_named(rhea_wax, "wax_seal", 0, 1), "Rhea's second wax")
+	check(rhea_wax.last_progress_gained == 16 and rhea_wax.phase == "draft", "Bare Pay clears into the draft")
+	var ingrid = Rules.scripted_encounter(423, 2, ["entry_mark"], 1, Rules.SHIFT_ENVOI)
+	check(play_named(ingrid, "entry_mark", 1, 1), "Ingrid's lone center")
+	check(ingrid.last_progress_gained == 2, "Vault Pay does not pay a lone stamp")
+
+	var jasper = Rules.scripted_encounter(424, 3, ["entry_mark"], 1, Rules.SHIFT_CORRIGENDA)
+	check(String(Rules.traveler(jasper)["name"]) == "Jasper Okell", "the corrigenda bell's fourth form is Jasper Okell")
+	check(String(Rules.traveler(jasper)["form_name"]) == "Pace Gap", "Jasper brings Pace Gap")
+	check(String(Rules.traveler(jasper)["rule"]) == "double_pace_gap", "Jasper's rule is pace gap")
+	check(int(Rules.traveler(jasper)["lane"]) == 2 and int(Rules.traveler(jasper)["exemption_row"]) == 0, "Jasper waits in column 3 and exempts the top row")
+	check(int(Rules.traveler(jasper)["goal"]) == 22 and int(Rules.traveler(jasper)["patience"]) == 5, "Jasper's goal is 22 and his patience is 5")
+	check(play_named(jasper, "entry_mark", 0, 1), "Jasper's lone top-middle stamp")
+	check(jasper.last_progress_gained == 4 and jasper.last_patience_loss == 1, "an empty cell one back is the correct stamp for Pace Gap")
+	var jasper_pair = Rules.scripted_encounter(424, 3, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_CORRIGENDA)
+	check(play_named(jasper_pair, "entry_mark", 0, 0), "a filled cell one back")
+	check(play_named(jasper_pair, "entry_mark", 0, 1), "the later stamp")
+	check(jasper_pair.last_progress_gained == 4, "a filled cell one back is the wrong stamp for Pace Gap")
+	var jasper_top = Rules.scripted_encounter(424, 3, ["entry_mark"], 1, Rules.SHIFT_CORRIGENDA)
+	check(play_named(jasper_top, "entry_mark", 0, 0), "a top-left stamp")
+	check(jasper_top.last_progress_gained == 2, "the top-left cell has no cell one back, so Pace Gap does not double")
+	var jasper_exempt = Rules.scripted_encounter(424, 3, ["exemption", "entry_mark"], 2, Rules.SHIFT_CORRIGENDA)
+	check(play_named(jasper_exempt, "exemption", 0, 2), "exemption on Jasper's top row")
+	check(play_named(jasper_exempt, "entry_mark", 0, 1), "a stamp that would double")
+	check(jasper_exempt.last_progress_gained == 3, "a top-row exemption cancels Pace Gap")
+	var jasper_off = Rules.scripted_encounter(424, 3, ["exemption", "entry_mark"], 2, Rules.SHIFT_CORRIGENDA)
+	check(play_named(jasper_off, "exemption", 1, 1), "exemption off Jasper's top row")
+	check(play_named(jasper_off, "entry_mark", 0, 1), "a qualifying stamp")
+	check(jasper_off.last_progress_gained == 6, "an exemption off the top row does not cancel Pace Gap")
+	var jasper_held = Rules.scripted_encounter(424, 3, ["hold", "entry_mark"], 2, Rules.SHIFT_CORRIGENDA)
+	check(play_named(jasper_held, "hold", 2, 2), "hold in Jasper's column")
+	check(play_named(jasper_held, "entry_mark", 0, 1), "a stamp beside that hold")
+	check(jasper_held.last_progress_gained == 6 and jasper_held.last_patience_loss == 0, "hold in column 3 comes before Pace Gap")
+	var jasper_missed = Rules.scripted_encounter(424, 3, ["hold", "entry_mark"], 2, Rules.SHIFT_CORRIGENDA)
+	check(play_named(jasper_missed, "hold", 1, 0), "hold outside Jasper's column")
+	check(play_named(jasper_missed, "entry_mark", 0, 1), "a stamp beside the missed hold")
+	check(jasper_missed.last_progress_gained == 6 and jasper_missed.last_patience_loss == 1, "hold in another column does not spare Pace Gap")
+	var jasper_reply = Rules.scripted_encounter(424, 3, ["entry_mark", "reply"], 2, Rules.SHIFT_CORRIGENDA)
+	check(play_named(jasper_reply, "entry_mark", 0, 1), "the doubled stamp")
+	check(play_named(jasper_reply, "reply", 1, 1), "reply under an empty cell one back")
+	check(jasper_reply.last_progress_gained == 10 and jasper_reply.last_chain_count == 1, "a retrigger of a qualifying Pace Gap scores twice again")
+	var jasper_reply_filled = Rules.scripted_encounter(424, 3, ["entry_mark", "entry_mark", "reply"], 3, Rules.SHIFT_CORRIGENDA)
+	check(play_named(jasper_reply_filled, "entry_mark", 0, 0), "a filled cell one back")
+	check(play_named(jasper_reply_filled, "entry_mark", 0, 1), "a stamp with a filled cell one back")
+	check(play_named(jasper_reply_filled, "reply", 1, 1), "reply under that stamp")
+	check(jasper_reply_filled.last_progress_gained == 8 and jasper_reply_filled.last_chain_count == 1, "a filled cell one back does not double the retrigger")
+	var jasper_wax = Rules.scripted_encounter(424, 3, ["wax_seal", "wax_seal", "wax_seal"], 6, Rules.SHIFT_CORRIGENDA)
+	check(play_named(jasper_wax, "wax_seal", 0, 1), "Jasper's doubled wax")
+	check(play_named(jasper_wax, "wax_seal", 0, 2), "Jasper's next wax")
+	check(play_named(jasper_wax, "wax_seal", 1, 0), "Jasper's third wax")
+	check(jasper_wax.last_progress_gained == 24 and jasper_wax.phase == "victory", "Pace Gap clears the corrigenda bell")
+	var lars = Rules.scripted_encounter(424, 3, ["entry_mark"], 1, Rules.SHIFT_ENVOI)
+	check(play_named(lars, "entry_mark", 0, 1), "Lars's lone stamp")
+	check(lars.last_progress_gained == 2, "Pace Back does not double an empty cell one back")
+
+
+func test_corrigenda_bell_opens() -> void:
+	check(Rules.SHIFT_CORRIGENDA == 41, "the corrigenda bell is night 42")
+	check(Rules.SHIFT_ENVOI == 40, "the envoi bell stays night 41")
+	check(Rules.SHIFT_ADDENDA == 39, "the addenda bell stays night 40")
+	check(Rules.CORRIGENDA_BELL.size() == 4, "the corrigenda bell has four travelers")
+	check(String(Rules.CORRIGENDA_BELL[0]["name"]) == "Vera Hale", "the corrigenda bell begins with Vera Hale")
+	check(String(Rules.CORRIGENDA_BELL[1]["name"]) == "Felix Voss", "the corrigenda bell's second traveler is Felix Voss")
+	check(String(Rules.CORRIGENDA_BELL[2]["name"]) == "Rhea Brant", "the corrigenda bell's third traveler is Rhea Brant")
+	check(String(Rules.CORRIGENDA_BELL[3]["name"]) == "Jasper Okell", "the corrigenda bell ends with Jasper Okell")
+	check(int(Rules.CORRIGENDA_BELL[0]["goal"]) == 18 and int(Rules.CORRIGENDA_BELL[1]["goal"]) == 20 and int(Rules.CORRIGENDA_BELL[2]["goal"]) == 16 and int(Rules.CORRIGENDA_BELL[3]["goal"]) == 22, "the corrigenda goals stay 18, 20, 16, and 22")
+	check(Rules.ENVOI_BELL.size() == 4 and String(Rules.ENVOI_BELL[0]["name"]) == "Elspeth Hale", "the envoi bell still begins with Elspeth Hale")
+	check(String(Rules.ENVOI_BELL[1]["name"]) == "Owen Voss" and String(Rules.ENVOI_BELL[2]["name"]) == "Ingrid Brant" and String(Rules.ENVOI_BELL[3]["name"]) == "Lars Okell", "the envoi bell still ends with Lars Okell")
+	var corrigenda_run = Rules.new_run(89, Rules.SHIFT_CORRIGENDA)
+	check(corrigenda_run.shift == Rules.SHIFT_CORRIGENDA, "the corrigenda bell is a separate night")
+	check(Rules.shift_label(corrigenda_run) == "Corrigenda bell", "the corrigenda bell keeps its name")
+	check(String(Rules.traveler(corrigenda_run)["name"]) == "Vera Hale", "the corrigenda bell begins with Vera Hale")
+	check(corrigenda_run.hand.size() == Rules.HAND_SIZE, "the corrigenda bell draws 5")
+	check(corrigenda_run.ink == Rules.BASE_INK, "the corrigenda bell starts at 3 ink")
+	check(corrigenda_run.library.size() == Rules.STARTING_DECK.size(), "the corrigenda bell deals the starting deck")
+	check(corrigenda_run.relic_id == "", "an earlier night's relic does not carry")
+	check(corrigenda_run.phase == "play", "the corrigenda bell opens in play")
+	var dealt: Array = []
+	for iid in corrigenda_run.hand:
+		dealt.append(Rules.card_id_of(corrigenda_run, int(iid)))
+	var before = corrigenda_run.library.size()
+	corrigenda_run.progress = 4
+	corrigenda_run.patience = 1
+	Rules.restart_encounter(corrigenda_run)
+	check(corrigenda_run.shift == Rules.SHIFT_CORRIGENDA and corrigenda_run.traveler_index == 0, "restart encounter stays on the corrigenda bell")
+	check(corrigenda_run.progress == 0 and corrigenda_run.patience == int(Rules.CORRIGENDA_BELL[0]["patience"]), "restart encounter resets Vera")
+	check(corrigenda_run.library.size() == before and corrigenda_run.hand.size() == 5 and corrigenda_run.phase == "play", "restart keeps the corrigenda-bell deck and deals a hand")
+	var redealt: Array = []
+	for iid in corrigenda_run.hand:
+		redealt.append(Rules.card_id_of(corrigenda_run, int(iid)))
+	check(redealt == dealt, "restart deals Vera the same hand")
+
+	var packed = load("res://game/main.tscn")
+	var desk = packed.instantiate()
+	root.add_child(desk)
+	if desk.state == null:
+		desk._ready()
+	check(desk.state.shift == Rules.SHIFT_FIRST, "the desk still opens on Act 1")
+	check(desk.corrigenda_button != desk.envoi_button, "the corrigenda button does not replace the envoi button")
+	check(desk.corrigenda_button.text == "Corrigenda bell", "the desk offers the corrigenda bell")
+	check(desk.envoi_button.text == "Envoi bell", "the desk still offers the envoi bell")
+	check(desk.addenda_button.text == "Addenda bell", "the desk still offers the addenda bell")
+	check(desk.postscript_button.text == "Postscript bell", "the desk still offers the postscript bell")
+	check(desk.afterword_button.text == "Afterword bell", "the desk still offers the afterword bell")
+	check(desk.envoi_button.get_index() + 1 == desk.corrigenda_button.get_index(), "the corrigenda button sits immediately right of envoi")
+	check(desk.addenda_button.get_index() + 1 == desk.envoi_button.get_index(), "addenda stays left of envoi")
+	check(desk.postscript_button.get_index() + 1 == desk.addenda_button.get_index(), "postscript stays left of addenda")
+	check(desk.afterword_button.get_index() + 1 == desk.postscript_button.get_index(), "afterword stays left of postscript")
+	desk.corrigenda_button.pressed.emit()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_CORRIGENDA, "the desk can open the corrigenda bell")
+	check(String(Rules.traveler(desk.state)["name"]) == "Vera Hale", "the open desk shows Vera")
+	check(String(desk.desk_label.text).begins_with("Corrigenda bell"), "the desk title follows the corrigenda bell")
+	check(desk.meta_label.text.contains("Notch Toll"), "the desk shows Vera's form")
+	check(desk.corrigenda_button.text == "First bell", "the corrigenda bell can return to the first bell")
+	check(desk.envoi_button.text == "Envoi bell", "the envoi bell stays available from the corrigenda bell")
+	desk.envoi_button.pressed.emit()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_ENVOI and String(Rules.traveler(desk.state)["name"]) == "Elspeth Hale", "from the corrigenda bell the envoi button opens the envoi bell")
+	check(desk.corrigenda_button.text == "Corrigenda bell", "the envoi desk still offers the corrigenda bell")
+	desk.corrigenda_button.pressed.emit()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_CORRIGENDA and String(Rules.traveler(desk.state)["name"]) == "Vera Hale", "from the envoi desk the corrigenda button opens the corrigenda bell")
+	desk._begin_corrigenda_bell()
+	desk._refresh_ui()
+	desk._restart_act()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_CORRIGENDA and String(Rules.traveler(desk.state)["name"]) == "Vera Hale", "restart act replays the corrigenda bell")
+	desk.corrigenda_button.pressed.emit()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_FIRST and String(Rules.traveler(desk.state)["name"]) == "Ada Quill", "the corrigenda bell returns to Ada")
+	check(desk.corrigenda_button.text == "Corrigenda bell", "the first bell offers the corrigenda bell again")
+	var doors = [
+		["_begin_late_shift", "Nell Parr", "the late shift"],
+		["_begin_closing_bell", "Moss Quen", "the closing bell"],
+		["_begin_ash_watch", "Orla Fen", "the ash watch"],
+		["_begin_gutter_lamp", "Ivo Dane", "the gutter lamp"],
+		["_begin_vellum_bell", "Edda Voss", "the vellum bell"],
+		["_begin_quire_watch", "Tess Quern", "the quire watch"],
+		["_begin_salt_watch", "Pell Voss", "the salt watch"],
+		["_begin_quay_bell", "Mara Quill", "the quay bell"],
+		["_begin_folio_bell", "Ness Hart", "the folio bell"],
+		["_begin_wick_bell", "Odell Voss", "the wick bell"],
+		["_begin_margin_bell", "Nim Voss", "the margin bell"],
+		["_begin_index_bell", "Len Quill", "the index bell"],
+		["_begin_ledger_bell", "Nell Voss", "the ledger bell"],
+		["_begin_spine_bell", "Wynn Quill", "the spine bell"],
+		["_begin_headband_bell", "Len Hart", "the headband bell"],
+		["_begin_clasp_bell", "Noll Hart", "the clasp bell"],
+		["_begin_signature_bell", "Dory Hart", "the signature bell"],
+		["_begin_catchword_bell", "Gwyn Brant", "the catchword bell"],
+		["_begin_colophon_bell", "Nia Soren", "the colophon bell"],
+		["_begin_errata_bell", "Una Pell", "the errata bell"],
+		["_begin_frontispiece_bell", "Soren Hale", "the frontispiece bell"],
+		["_begin_flyleaf_bell", "Hollin Voss", "the flyleaf bell"],
+		["_begin_endpaper_bell", "Isla Voss", "the endpaper bell"],
+		["_begin_halftitle_bell", "Tamsin Keel", "the half-title bell"],
+		["_begin_titlepage_bell", "Nessa Voss", "the title-page bell"],
+		["_begin_copyright_bell", "Merrick Hale", "the copyright bell"],
+		["_begin_dedication_bell", "Maud Hale", "the dedication bell"],
+		["_begin_epigraph_bell", "Enid Hale", "the epigraph bell"],
+		["_begin_preface_bell", "Neve Hale", "the preface bell"],
+		["_begin_foreword_bell", "Shay Hale", "the foreword bell"],
+		["_begin_contents_bell", "Ross Hale", "the contents bell"],
+		["_begin_introduction_bell", "Quin Hale", "the introduction bell"],
+		["_begin_prologue_bell", "Nola Hale", "the prologue bell"],
+		["_begin_acknowledgments_bell", "Maris Hale", "the acknowledgments bell"],
+		["_begin_glossary_bell", "Sybil Hale", "the glossary bell"],
+		["_begin_appendix_bell", "Briony Hale", "the appendix bell"],
+		["_begin_afterword_bell", "Catrin Hale", "the afterword bell"],
+		["_begin_postscript_bell", "Isolde Hale", "the postscript bell"],
+		["_begin_addenda_bell", "Freya Hale", "the addenda bell"],
+		["_begin_envoi_bell", "Elspeth Hale", "the envoi bell"],
+	]
+	for door in doors:
+		desk.call(String(door[0]))
+		desk._refresh_ui()
+		check(desk.state.shift != Rules.SHIFT_CORRIGENDA and String(Rules.traveler(desk.state)["name"]) == String(door[1]), "%s still opens" % String(door[2]))
+		check(desk.corrigenda_button.text == "Corrigenda bell", "%s offers the corrigenda bell" % String(door[2]))
+		desk._begin_corrigenda_bell()
+		desk._refresh_ui()
+		check(desk.state.shift == Rules.SHIFT_CORRIGENDA and String(Rules.traveler(desk.state)["name"]) == "Vera Hale", "%s can open the corrigenda bell" % String(door[2]))
+	var victories = [
+		[Rules.SHIFT_FIRST, "Act 1"],
+		[Rules.SHIFT_LATE, "the late shift"],
+		[Rules.SHIFT_CLOSING, "the closing bell"],
+		[Rules.SHIFT_ASH, "the ash watch"],
+		[Rules.SHIFT_GUTTER, "the gutter lamp"],
+		[Rules.SHIFT_VELLUM, "the vellum bell"],
+		[Rules.SHIFT_QUIRE, "the quire watch"],
+		[Rules.SHIFT_SALT, "the salt watch"],
+		[Rules.SHIFT_QUAY, "the quay bell"],
+		[Rules.SHIFT_FOLIO, "the folio bell"],
+		[Rules.SHIFT_WICK, "the wick bell"],
+		[Rules.SHIFT_MARGIN, "the margin bell"],
+		[Rules.SHIFT_INDEX, "the index bell"],
+		[Rules.SHIFT_LEDGER, "the ledger bell"],
+		[Rules.SHIFT_SPINE, "the spine bell"],
+		[Rules.SHIFT_HEADBAND, "the headband bell"],
+		[Rules.SHIFT_CLASP, "the clasp bell"],
+		[Rules.SHIFT_SIGNATURE, "the signature bell"],
+		[Rules.SHIFT_CATCHWORD, "the catchword bell"],
+		[Rules.SHIFT_COLOPHON, "the colophon bell"],
+		[Rules.SHIFT_ERRATA, "the errata bell"],
+		[Rules.SHIFT_FRONTISPIECE, "the frontispiece bell"],
+		[Rules.SHIFT_FLYLEAF, "the flyleaf bell"],
+		[Rules.SHIFT_ENDPAPER, "the endpaper bell"],
+		[Rules.SHIFT_HALFTITLE, "the half-title bell"],
+		[Rules.SHIFT_TITLEPAGE, "the title-page bell"],
+		[Rules.SHIFT_COPYRIGHT, "the copyright bell"],
+		[Rules.SHIFT_DEDICATION, "the dedication bell"],
+		[Rules.SHIFT_EPIGRAPH, "the epigraph bell"],
+		[Rules.SHIFT_PREFACE, "the preface bell"],
+		[Rules.SHIFT_FOREWORD, "the foreword bell"],
+		[Rules.SHIFT_CONTENTS, "the contents bell"],
+		[Rules.SHIFT_INTRODUCTION, "the introduction bell"],
+		[Rules.SHIFT_PROLOGUE, "the prologue bell"],
+		[Rules.SHIFT_ACKNOWLEDGMENTS, "the acknowledgments bell"],
+		[Rules.SHIFT_GLOSSARY, "the glossary bell"],
+		[Rules.SHIFT_APPENDIX, "the appendix bell"],
+		[Rules.SHIFT_AFTERWORD, "the afterword bell"],
+		[Rules.SHIFT_POSTSCRIPT, "the postscript bell"],
+		[Rules.SHIFT_ADDENDA, "the addenda bell"],
+		[Rules.SHIFT_ENVOI, "the envoi bell"],
+	]
+	for victory in victories:
+		desk._open_shift(int(victory[0]), desk.state.seed)
+		desk._refresh_ui()
+		desk.state.phase = "victory"
+		desk._refresh_ui()
+		var victory_corrigenda = _button_named(desk, "Open the corrigenda bell")
+		check(victory_corrigenda != null, "%s's victory desk offers the corrigenda bell" % String(victory[1]))
+		if victory_corrigenda != null:
+			victory_corrigenda.pressed.emit()
+			desk._refresh_ui()
+			check(desk.state.shift == Rules.SHIFT_CORRIGENDA and String(Rules.traveler(desk.state)["name"]) == "Vera Hale", "%s's victory desk opens the corrigenda bell" % String(victory[1]))
+	var earlier = [
+		["Open the envoi bell", Rules.SHIFT_ENVOI, "Elspeth Hale", "the envoi bell"],
+		["Open the addenda bell", Rules.SHIFT_ADDENDA, "Freya Hale", "the addenda bell"],
+		["Open the postscript bell", Rules.SHIFT_POSTSCRIPT, "Isolde Hale", "the postscript bell"],
+		["Open the afterword bell", Rules.SHIFT_AFTERWORD, "Catrin Hale", "the afterword bell"],
+		["Open the appendix bell", Rules.SHIFT_APPENDIX, "Briony Hale", "the appendix bell"],
+		["Open the glossary bell", Rules.SHIFT_GLOSSARY, "Sybil Hale", "the glossary bell"],
+		["Open the acknowledgments bell", Rules.SHIFT_ACKNOWLEDGMENTS, "Maris Hale", "the acknowledgments bell"],
+		["Open the prologue bell", Rules.SHIFT_PROLOGUE, "Nola Hale", "the prologue bell"],
+		["Open the introduction bell", Rules.SHIFT_INTRODUCTION, "Quin Hale", "the introduction bell"],
+		["Open the contents bell", Rules.SHIFT_CONTENTS, "Ross Hale", "the contents bell"],
+		["Open the foreword bell", Rules.SHIFT_FOREWORD, "Shay Hale", "the foreword bell"],
+		["Open the preface bell", Rules.SHIFT_PREFACE, "Neve Hale", "the preface bell"],
+		["Open the epigraph bell", Rules.SHIFT_EPIGRAPH, "Enid Hale", "the epigraph bell"],
+		["Open the dedication bell", Rules.SHIFT_DEDICATION, "Maud Hale", "the dedication bell"],
+		["Open the copyright bell", Rules.SHIFT_COPYRIGHT, "Merrick Hale", "the copyright bell"],
+		["Open the title-page bell", Rules.SHIFT_TITLEPAGE, "Nessa Voss", "the title-page bell"],
+		["Open the half-title bell", Rules.SHIFT_HALFTITLE, "Tamsin Keel", "the half-title bell"],
+		["Open the endpaper bell", Rules.SHIFT_ENDPAPER, "Isla Voss", "the endpaper bell"],
+		["Open the flyleaf bell", Rules.SHIFT_FLYLEAF, "Hollin Voss", "the flyleaf bell"],
+		["Open the frontispiece bell", Rules.SHIFT_FRONTISPIECE, "Soren Hale", "the frontispiece bell"],
+		["Open the errata bell", Rules.SHIFT_ERRATA, "Una Pell", "the errata bell"],
+		["Open the colophon bell", Rules.SHIFT_COLOPHON, "Nia Soren", "the colophon bell"],
+		["Open the catchword bell", Rules.SHIFT_CATCHWORD, "Gwyn Brant", "the catchword bell"],
+		["Open the signature bell", Rules.SHIFT_SIGNATURE, "Dory Hart", "the signature bell"],
+		["Open the clasp bell", Rules.SHIFT_CLASP, "Noll Hart", "the clasp bell"],
+		["Open the headband bell", Rules.SHIFT_HEADBAND, "Len Hart", "the headband bell"],
+		["Open the spine bell", Rules.SHIFT_SPINE, "Wynn Quill", "the spine bell"],
+		["Open the ledger bell", Rules.SHIFT_LEDGER, "Nell Voss", "the ledger bell"],
+		["Open the index bell", Rules.SHIFT_INDEX, "Len Quill", "the index bell"],
+		["Open the margin bell", Rules.SHIFT_MARGIN, "Nim Voss", "the margin bell"],
+		["Open the wick bell", Rules.SHIFT_WICK, "Odell Voss", "the wick bell"],
+		["Open the folio bell", Rules.SHIFT_FOLIO, "Ness Hart", "the folio bell"],
+		["Open the quay bell", Rules.SHIFT_QUAY, "Mara Quill", "the quay bell"],
+		["Open the salt watch", Rules.SHIFT_SALT, "Pell Voss", "the salt watch"],
+		["Open the quire watch", Rules.SHIFT_QUIRE, "Tess Quern", "the quire watch"],
+		["Open the vellum bell", Rules.SHIFT_VELLUM, "Edda Voss", "the vellum bell"],
+		["Open the gutter lamp", Rules.SHIFT_GUTTER, "Ivo Dane", "the gutter lamp"],
+		["Open the ash watch", Rules.SHIFT_ASH, "Orla Fen", "the ash watch"],
+		["Open the closing bell", Rules.SHIFT_CLOSING, "Moss Quen", "the closing bell"],
+		["Open the late shift", Rules.SHIFT_LATE, "Nell Parr", "the late shift"],
+		["Open the first bell", Rules.SHIFT_FIRST, "Ada Quill", "the first bell"],
+	]
+	for night in earlier:
+		desk._begin_corrigenda_bell()
+		desk._refresh_ui()
+		desk.state.phase = "victory"
+		desk._refresh_ui()
+		var opener = _button_named(desk, String(night[0]))
+		check(opener != null, "the corrigenda bell victory desk offers %s" % String(night[3]))
+		check(_button_named(desk, "Open the corrigenda bell") == null, "the corrigenda bell victory desk does not offer itself")
+		if opener != null:
+			opener.pressed.emit()
+			desk._refresh_ui()
+			check(desk.state.shift == int(night[1]) and String(Rules.traveler(desk.state)["name"]) == String(night[2]), "the corrigenda bell victory desk opens %s" % String(night[3]))
+	root.remove_child(desk)
+	desk.free()
+
+
+func test_policy_clears_corrigenda_bell() -> void:
+	var started = Time.get_ticks_msec()
+	var state = Rules.new_run(12345, Rules.SHIFT_CORRIGENDA)
+	var steps = 0
+	var seen = 0
+	while state.phase != "victory":
+		steps += 1
+		if steps > 500 or state.phase == "defeat":
+			check(false, "policy lost or stalled on the corrigenda bell, seed 12345: " + Rules.debug_summary(state))
+			return
+		var action = Policy.choose(state)
+		if not Rules.apply_action(state, action):
+			check(false, "corrigenda-bell policy action was rejected: %s / %s" % [str(action), Rules.debug_summary(state)])
+			return
+		if state.encounters_cleared != seen:
+			seen = state.encounters_cleared
+			print("cleared corrigenda encounter %d after %d actions" % [seen, steps])
+	var elapsed = Time.get_ticks_msec() - started
+	check(state.encounters_cleared == 4, "policy cleared all 4 corrigenda-bell encounters on seed 12345")
+	check(state.phase == "victory", "corrigenda bell ends in victory")
+	check(state.shift == Rules.SHIFT_CORRIGENDA, "the clear stayed on the corrigenda bell")
+	check(steps == 24, "seed 12345 clears the corrigenda bell in 24 actions")
+	print("corrigenda bell finished in %d actions, %d ms" % [steps, elapsed])
