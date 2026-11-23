@@ -329,6 +329,10 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_staff(at, rot)
 		"thumb":
 			_draw_thumb(at, rot)
+		"roll":
+			_draw_roll(at, rot)
+		"gutta":
+			_draw_gutta(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -2272,6 +2276,87 @@ func _thumb_vec(dir: String) -> Vector2:
 			return Vector2.DOWN
 		_:
 			return Vector2.LEFT
+
+func _draw_roll(at: Vector2i, rot: int) -> void:
+	# A barrel across the facing, with caps at both ends. Flooded, a spoke
+	# sits on every heading except the facing.
+	var center := _center(at)
+	var facing := Tracer.roll_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var outward := _roll_vec(facing)
+	var across := Vector2(-outward.y, outward.x)
+	var half := cell * 0.22
+	var thick := cell * 0.07
+	draw_colored_polygon(PackedVector2Array([
+		center - across * half - outward * thick,
+		center + across * half - outward * thick,
+		center + across * half + outward * thick,
+		center - across * half + outward * thick,
+	]), mark)
+	draw_circle(center - across * half, cell * 0.09, mark)
+	draw_circle(center + across * half, cell * 0.09, mark)
+	if not flooded:
+		return
+	_roll_spoke(center, Tracer.rotate_dir(facing, 1), mark)
+	_roll_spoke(center, Tracer.rotate_dir(facing, -1), mark)
+	_roll_spoke(center, Tracer.rotate_dir(facing, 2), mark)
+
+func _roll_spoke(center: Vector2, dir: String, mark: Color) -> void:
+	var outward := _roll_vec(dir)
+	var across := Vector2(-outward.y, outward.x)
+	var inner := center + outward * cell * 0.12
+	var outer := center + outward * cell * 0.28
+	var half := cell * 0.018
+	draw_colored_polygon(PackedVector2Array([
+		inner - across * half,
+		inner + across * half,
+		outer + across * half,
+		outer - across * half,
+	]), mark)
+
+func _roll_vec(dir: String) -> Vector2:
+	match dir:
+		"N":
+			return Vector2.UP
+		"E":
+			return Vector2.RIGHT
+		"S":
+			return Vector2.DOWN
+		_:
+			return Vector2.LEFT
+
+func _draw_gutta(at: Vector2i, rot: int) -> void:
+	# A small drop on the facing while the row is dry. Flooded, the facing
+	# drop is gone and a drop hangs on each perpendicular heading.
+	var center := _center(at)
+	var facing := Tracer.gutta_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	if not flooded:
+		_gutta_drop(center, facing, mark, cell * 0.11)
+		return
+	_gutta_drop(center, Tracer.rotate_dir(facing, 1), mark, cell * 0.08)
+	_gutta_drop(center, Tracer.rotate_dir(facing, -1), mark, cell * 0.08)
+
+func _gutta_drop(center: Vector2, dir: String, mark: Color, radius: float) -> void:
+	var outward := Vector2.UP
+	match dir:
+		"N":
+			outward = Vector2.UP
+		"E":
+			outward = Vector2.RIGHT
+		"S":
+			outward = Vector2.DOWN
+		_:
+			outward = Vector2.LEFT
+	var at := center + outward * cell * 0.2
+	draw_circle(at, radius, mark)
+	draw_colored_polygon(PackedVector2Array([
+		at - outward * radius * 0.2 + Vector2(-outward.y, outward.x) * radius * 0.55,
+		at - outward * radius * 0.2 + Vector2(outward.y, -outward.x) * radius * 0.55,
+		at + outward * radius * 1.15,
+	]), mark)
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
 	if dir == "N" or dir == "S":

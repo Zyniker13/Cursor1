@@ -72,8 +72,10 @@ const Meander = preload("res://scripts/meander.gd")
 const Interlace = preload("res://scripts/interlace.gd")
 const Diaper = preload("res://scripts/diaper.gd")
 const Knotwork = preload("res://scripts/knotwork.gd")
+const Strapwork = preload("res://scripts/strapwork.gd")
+const Basketwork = preload("res://scripts/basketwork.gd")
 
-const CASES: Array = [SpareKey, RehearsalScore, GiltStamp, FerryBell, WeatherSlate, LoomShuttle, HiveSmoker, GlassPontil, PressProof, AssayCup, KilnChalk, TideLedger, NightBell, SaltMark, WickTrim, GlassAnneal, OrchardGraft, DyeVat, TarKettle, CorkPress, NetLoft, CaskHoop, LinenFold, Dovetail, Mortise, Rebate, Housing, Tenon, Bridle, Dado, Spline, Mitre, Lap, Scarf, Finger, Haunch, Dowel, Tongue, Quirk, Chamfer, Scotia, Cyma, Cavetto, Reed, Annulet, Hood, Listel, Abacus, Girdle, Reglet, Gutta, Mutule, Modillion, Taenia, Apophyge, Trochilus, Talon, Bellcast, Metope, Triglyph, Regula, Bowtell, Cable, Chevron, Volute, Helix, Guilloche, Fret, Meander, Interlace, Diaper, Knotwork]
+const CASES: Array = [SpareKey, RehearsalScore, GiltStamp, FerryBell, WeatherSlate, LoomShuttle, HiveSmoker, GlassPontil, PressProof, AssayCup, KilnChalk, TideLedger, NightBell, SaltMark, WickTrim, GlassAnneal, OrchardGraft, DyeVat, TarKettle, CorkPress, NetLoft, CaskHoop, LinenFold, Dovetail, Mortise, Rebate, Housing, Tenon, Bridle, Dado, Spline, Mitre, Lap, Scarf, Finger, Haunch, Dowel, Tongue, Quirk, Chamfer, Scotia, Cyma, Cavetto, Reed, Annulet, Hood, Listel, Abacus, Girdle, Reglet, Gutta, Mutule, Modillion, Taenia, Apophyge, Trochilus, Talon, Bellcast, Metope, Triglyph, Regula, Bowtell, Cable, Chevron, Volute, Helix, Guilloche, Fret, Meander, Interlace, Diaper, Knotwork, Strapwork, Basketwork]
 
 
 static func all() -> Array:
