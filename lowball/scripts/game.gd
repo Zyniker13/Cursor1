@@ -29,6 +29,7 @@ const COL_SEVENTEENTH := Color("6B4E8A")
 const COL_EIGHTEENTH := Color("A15C38")
 const COL_NINETEENTH := Color("3F7A6E")
 const COL_TWENTIETH := Color("8C4A6F")
+const COL_TWENTY_FIRST := Color("3E6E8C")
 const COL_BAD := Color("E07A6A")
 const COL_GOOD := Color("8FCB7A")
 
@@ -88,6 +89,8 @@ var opponent_label: Label
 var tactic_help: Label
 var training_help: Label
 var seed_label: Label
+var help_label: Label
+var board_intro: Label
 
 
 func _ready() -> void:
@@ -127,6 +130,9 @@ func press_watch() -> void:
 	if phase != "office":
 		return
 	if not _start_playback():
+		return
+	if _pa_count() == 0:
+		_enter_result()
 		return
 	phase = "watch"
 	_apply_visibility()
@@ -456,9 +462,9 @@ func _build_ui() -> void:
 	restart_button.pressed.connect(press_restart)
 	action_row.add_child(restart_button)
 
-	var help := _label("The schedule lists all ten matches every week. There is no bye. Watch and Skip play your match, and the other nine matches are recorded with it. Training still drills. The final is a series, and the same lineup, tactic, training, Watch, and Skip work for every final game. A tie in a final game is not a win for either side, and the series continues until one club has two wins. If Lumen Reedmice finish 3rd through 20th, the season ends on the board. Keyboard: Tab then Enter. Keys 1-4 pick a slot, Left/Right change that batter, T tactic, Y training, W watch, S skip, N continue, R restart on the office or the board.", 13, COL_MUTED)
-	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	office.add_child(help)
+	help_label = _label(_office_help_text(), 13, COL_MUTED)
+	help_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	office.add_child(help_label)
 
 	match_panel = _full_margin()
 	add_child(match_panel)
@@ -523,7 +529,9 @@ func _build_ui() -> void:
 	board_box.add_theme_constant_override("separation", 10)
 	board_scroll.add_child(board_box)
 	board_box.add_child(_label("Board meeting", 32, COL_ACCENT))
-	board_box.add_child(_label("Thirty-eight-week double round-robin in %s, ten matches a week and no bye, then a best-of-three final." % Sport.TOWN, 18, COL_TEXT))
+	board_intro = _label(_board_intro_text(), 18, COL_TEXT)
+	board_intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	board_box.add_child(board_intro)
 	board_label = _label("", 16, COL_TEXT)
 	board_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	board_box.add_child(board_label)
@@ -623,14 +631,39 @@ func _show_board() -> void:
 	phase = "board"
 	if ticker != null:
 		ticker.stop()
+	_refresh_season_copy()
 	board_label.text = _board_text()
 	_apply_visibility()
 	_focus_control(board_restart_button)
 
 
+func _office_help_text() -> String:
+	if Sport.BYES_EACH == 0:
+		return "The schedule lists all ten matches every week. There is no bye. Watch and Skip play your match, and the other nine matches are recorded with it. Training still drills. The final is a series, and the same lineup, tactic, training, Watch, and Skip work for every final game. A tie in a final game is not a win for either side, and the series continues until one club has two wins. If Lumen Reedmice finish 3rd through 20th, the season ends on the board. Keyboard: Tab then Enter. Keys 1-4 pick a slot, Left/Right change that batter, T tactic, Y training, W watch, S skip, N continue, R restart on the office or the board."
+	return "The schedule lists ten matches and one bye every week. Watch and Skip play your match, and the other nine matches are recorded with it. On a bye there is no match to watch. The other ten matches are recorded, and training still drills. Forty-two weeks means forty-two drills. The final is a series, and the same lineup, tactic, training, Watch, and Skip work for every final game. A tie in a final game is not a win for either side, and the series continues until one club has two wins. If Lumen Reedmice finish 3rd through 21st, the season ends on the board. Keyboard: Tab then Enter. Keys 1-4 pick a slot, Left/Right change that batter, T tactic, Y training, W watch, S skip, N continue, R restart on the office or the board."
+
+
+func _board_intro_text() -> String:
+	if Sport.BYES_EACH == 0:
+		return "Thirty-eight-week double round-robin in %s, ten matches a week and no bye, then a best-of-three final." % Sport.TOWN
+	return "Forty-two-week double round-robin in %s, ten matches and one bye a week, then a best-of-three final." % Sport.TOWN
+
+
+func _refresh_season_copy() -> void:
+	if rule_label != null:
+		rule_label.text = "%s %s %s %s" % [Sport.FINAL_TEXT, Sport.FINAL_TIE_TEXT, Sport.TIE_RULE, Sport.SEED_RULE]
+	if shape_label != null:
+		shape_label.text = Sport.SCHEDULE_TEXT
+	if help_label != null:
+		help_label.text = _office_help_text()
+	if board_intro != null:
+		board_intro.text = _board_intro_text()
+
+
 func _refresh_office() -> void:
 	if series == null or week_label == null:
 		return
+	_refresh_season_copy()
 	if series.is_over():
 		return
 	var rec: Dictionary = series.record()
@@ -658,7 +691,8 @@ func _refresh_office() -> void:
 		week_label.text = "Week %d of %d" % [shown_week, Sport.SERIES_WEEKS]
 		goal_label.text = "%s  Points so far: %d from %d." % [Sport.GOAL_TEXT, int(rec["points"]), int(rec["played"])]
 	seed_label.text = "Series seed %d" % int(series.seed)
-	var bat_note := "You bat second." if series.player_bats_second() else "You bat first."
+	var on_bye: bool = (not series.in_final()) and bool(series.fixture().get("is_bye", false))
+	var bat_note := "Bye week." if on_bye else ("You bat second." if series.player_bats_second() else "You bat first.")
 	if series.in_final():
 		record_label.text = "Record %d-%d-%d. Series %d-%d. %s" % [
 			int(rec["wins"]),
@@ -678,12 +712,16 @@ func _refresh_office() -> void:
 	schedule_label.text = _schedule_text()
 	standings_label.text = _standings_text()
 	var card: Dictionary = series.fixture()
-	var opponent_name := str(card["away_club"]) if int(card["home"]) == Sport.PLAYER_INDEX else str(card["home_club"])
-	if series.in_final():
-		fixture_title.text = "Final game %d: %s" % [int(card.get("final_game", series.final_game_index() + 1)), opponent_name]
+	if on_bye:
+		fixture_title.text = "Bye week"
+		fixture_title.add_theme_color_override("font_color", COL_MUTED)
 	else:
-		fixture_title.text = opponent_name
-	fixture_title.add_theme_color_override("font_color", _club_color(opponent_name))
+		var opponent_name := str(card["away_club"]) if int(card["home"]) == Sport.PLAYER_INDEX else str(card["home_club"])
+		if series.in_final():
+			fixture_title.text = "Final game %d: %s" % [int(card.get("final_game", series.final_game_index() + 1)), opponent_name]
+		else:
+			fixture_title.text = opponent_name
+		fixture_title.add_theme_color_override("font_color", _club_color(opponent_name))
 	for i in roster_buttons.size():
 		var player: Dictionary = series.player_roster[i]
 		var slot_of := -1
@@ -716,6 +754,11 @@ func _refresh_office() -> void:
 	if series.in_final():
 		tactic_help.text = "%s %s" % [tactic_line, Sport.FINAL_TIE_TEXT]
 		training_help.text = "After this final game, every %s player gains +1 %s, capped at %d. All %d clubs drill after every final game, including the clubs left out. The table does not change." % [
+			Sport.PLAYER_CLUB, Sport.STAT_LABEL[training], Sport.STAT_CAP, Sport.CLUB_COUNT,
+		]
+	elif on_bye:
+		tactic_help.text = tactic_line + " This week is a bye, so the tactic is not used. There is no match to watch."
+		training_help.text = "After the week, every %s player gains +1 %s, capped at %d. All %d clubs drill every week, including the bye. The other ten matches are recorded." % [
 			Sport.PLAYER_CLUB, Sport.STAT_LABEL[training], Sport.STAT_CAP, Sport.CLUB_COUNT,
 		]
 	else:
@@ -774,6 +817,13 @@ func _other_fixture_line(card: Dictionary, plan_week: int) -> String:
 
 func _opponent_blurb() -> String:
 	var card: Dictionary = series.fixture()
+	if bool(card.get("is_bye", false)):
+		var bye_lines: Array = []
+		bye_lines.append("Bye. There is no match to watch. The other ten matches are recorded. No match is recorded for %s." % str(card["bye_club"]))
+		for other in series.other_fixtures():
+			bye_lines.append(_other_fixture_line(other, int(series.week)))
+		bye_lines.append("You still drill. Lineup and tactic wait for your next match. Batting second gives no stat bonus.")
+		return "\n".join(bye_lines)
 	var plan_week := int(series.week)
 	var opponent_i := int(card["away"]) if int(card["home"]) == Sport.PLAYER_INDEX else int(card["home"])
 	if series.in_final():
@@ -824,6 +874,9 @@ func _schedule_text() -> String:
 				lines.append("%sWeek %d   %s" % [prefix, w + 1, match_bit])
 			else:
 				lines.append("           %s" % match_bit)
+		var bye_index := Sport.week_bye(w)
+		if bye_index >= 0:
+			lines.append("           %s bye" % str(Sport.CLUB_NAMES[bye_index]))
 	if int(series.week) >= Sport.SERIES_WEEKS and series.reached_final():
 		for game in series.final_games:
 			lines.append("  Final game %d   %s %d, %s %d" % [
@@ -1093,6 +1146,11 @@ func _result_text(played: Dictionary) -> String:
 			Sport.TACTIC_LABEL[str(played["opponent_tactic"])],
 		])
 		lines.append(_series_follow(played))
+	elif str(played.get("player_result", "")) == "bye":
+		lines.append("Bye. There is no match to watch. The other ten matches are recorded. No match is recorded for %s." % str(played.get("bye_club", "")))
+		if played.has("other_matches"):
+			for other in played["other_matches"]:
+				lines.append(_other_match_line(other))
 	elif bool(played["player_played"]):
 		var word := _result_word(str(played["player_result"]))
 		var order := "second" if bool(played["player_bats_second"]) else "first"
@@ -1214,11 +1272,15 @@ func _board_text() -> String:
 		lines.append(line)
 	lines.append("")
 	for w in Sport.SERIES_WEEKS:
+		var announced_bye := false
 		for slot in Sport.MATCHES_PER_WEEK:
 			var index := w * Sport.MATCHES_PER_WEEK + slot
 			if index >= series.results.size():
 				continue
 			var result: Dictionary = series.results[index]
+			if not announced_bye and int(result.get("bye_index", -1)) == Sport.PLAYER_INDEX:
+				lines.append("Week %d: Bye. There is no match to watch. You had the bye." % (w + 1))
+				announced_bye = true
 			var lead := "Week %d" % (w + 1)
 			if not bool(result["player_played"]):
 				lead = "Week %d other match" % (w + 1)
@@ -1288,6 +1350,8 @@ func _club_color(club: String) -> Color:
 		return COL_NINETEENTH
 	if club == str(Sport.CLUB_NAMES[19]):
 		return COL_TWENTIETH
+	if Sport.CLUB_NAMES.size() > 20 and club == str(Sport.CLUB_NAMES[20]):
+		return COL_TWENTY_FIRST
 	return COL_MUTED
 
 
