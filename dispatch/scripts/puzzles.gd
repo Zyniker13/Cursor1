@@ -1,9 +1,9 @@
 extends RefCounted
 
-## Buildings 1 through 35. Directions: 0 east, 1 south, 2 west, 3 north.
+## Buildings 1 through 36. Directions: 0 east, 1 south, 2 west, 3 north.
 ## `unlocks` is the single new block this puzzle introduces, or "".
 
-const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook", "return", "pause", "chute", "shunt", "bias", "vault", "sling", "cant", "balk", "loft", "keel", "sheer", "strake", "wale", "garboard", "stealer", "rabbet", "futtock", "keelson", "stemson", "apron", "deadwood", "gripe", "forefoot", "knighthead", "hawse", "breasthook"]
+const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook", "return", "pause", "chute", "shunt", "bias", "vault", "sling", "cant", "balk", "loft", "keel", "sheer", "strake", "wale", "garboard", "stealer", "rabbet", "futtock", "keelson", "stemson", "apron", "deadwood", "gripe", "forefoot", "knighthead", "hawse", "breasthook", "cathead"]
 
 
 static func all() -> Array:
@@ -5098,6 +5098,153 @@ static func all() -> Array:
 				_block("conveyor", 17, 4, 3),
 			]
 		),
+		_puzzle(
+			254, "First Cathead", "cathead",
+			"Jump fourteen cells forward, and keep the facing.",
+			"",
+			"The parcel comes in facing east. The cathead jumps it fourteen cells east and leaves it facing east. The thirteen cells in front are bricks and are not entered. The pause then steps east onto the dock. A breasthook lands on the last brick. A hawse lands two cells short. A knighthead lands three cells short. A forefoot lands four cells short. A keel jumps three cells west. A rabbet jumps one cell west.",
+			18, 3,
+			[_cell(3, 1), _cell(4, 1), _cell(5, 1), _cell(6, 1), _cell(7, 1), _cell(8, 1), _cell(9, 1), _cell(10, 1), _cell(11, 1), _cell(12, 1), _cell(13, 1), _cell(14, 1), _cell(15, 1), _cell(2, 0), _cell(2, 2)],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 17, "y": 1},
+			[{"color": "gray"}],
+			[
+				_block("conveyor", 1, 1, 0),
+				_block("cathead", 2, 1, 0),
+				_block("pause", 16, 1, 0),
+			]
+		),
+		_puzzle(
+			255, "Let Cathead", "",
+			"Wait until the landing is free, then jump fourteen cells forward.",
+			"",
+			"Blue is standing on the landing. The cathead holds red until that cell is free, then jumps fourteen cells east and leaves red facing east. The cells in front are not entered. The pause steps east onto the dock. A breasthook lands one cell short. A hawse lands two cells short. A knighthead lands three cells short. A forefoot lands four cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			18, 3,
+			[_cell(3, 1), _cell(4, 1), _cell(5, 1), _cell(6, 1), _cell(7, 1), _cell(8, 1), _cell(9, 1), _cell(10, 1), _cell(11, 1), _cell(12, 1), _cell(13, 1), _cell(14, 1), _cell(15, 1)],
+			[
+				_source(0, 1, 0, ["red"]),
+				_source(15, 2, 0, ["blue"]),
+			],
+			{"x": 17, "y": 1},
+			[{"color": "blue"}, {"color": "red"}],
+			[
+				_block("conveyor", 1, 1, 0),
+				_block("cathead", 2, 1, 0),
+				_block("garboard", 16, 2, 0),
+				_block("pause", 16, 1, 0),
+			]
+		),
+		_puzzle(
+			256, "Cathead Count", "",
+			"Stamp blue 1 and red 2. The cathead's wait is what makes the counter read 2.",
+			"",
+			"The cathead waits, then jumps the east-facing parcel fourteen cells east. The pause carries that facing onto the counter after blue has been stamped 1, so red is stamped 2. The cells in front are not entered. A breasthook lands one cell short. A hawse lands two cells short. A knighthead lands three cells short. A forefoot lands four cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			19, 4,
+			[_cell(2, 1), _cell(3, 1), _cell(4, 1), _cell(5, 1), _cell(6, 1), _cell(7, 1), _cell(8, 1), _cell(9, 1), _cell(10, 1), _cell(11, 1), _cell(12, 1), _cell(13, 1), _cell(14, 1), _cell(1, 0), _cell(1, 2)],
+			[
+				_source(0, 1, 0, ["red"]),
+				_source(16, 3, 3, ["blue"]),
+			],
+			{"x": 18, "y": 1},
+			[{"color": "blue", "count": 1}, {"color": "red", "count": 2}],
+			[
+				_block("cathead", 1, 1, 0),
+				_block("pause", 15, 1, 0),
+				_block("conveyor", 16, 2, 3),
+				_block("counter", 16, 1, 0),
+				_block("conveyor", 17, 1, 0),
+			]
+		),
+		_puzzle(
+			257, "Fourteen Ahead", "",
+			"Jump fourteen cells forward. The thirteen bricks in front are not entered.",
+			"",
+			"The cathead jumps fourteen cells east and leaves the parcel facing east. The pause steps east onto the dock and does not enter any of the thirteen bricks. A breasthook tries to land on the last brick. A hawse lands two cells short. A knighthead lands three cells short. A forefoot lands four cells short. A pause tries to enter the first brick. A keel jumps three cells west. A rabbet jumps one cell west.",
+			17, 3,
+			[_cell(2, 1), _cell(3, 1), _cell(4, 1), _cell(5, 1), _cell(6, 1), _cell(7, 1), _cell(8, 1), _cell(9, 1), _cell(10, 1), _cell(11, 1), _cell(12, 1), _cell(13, 1), _cell(14, 1)],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 16, "y": 1},
+			[{"color": "gray"}],
+			[
+				_block("cathead", 1, 1, 0),
+				_block("pause", 15, 1, 0),
+			]
+		),
+		_puzzle(
+			258, "Two Catheads", "",
+			"Deliver red, then blue. Each jump is fourteen cells forward from a different facing.",
+			"",
+			"Red arrives facing east, jumps fourteen cells east, and the pause steps east onto the dock. Blue arrives facing south, jumps fourteen cells south, and the pause steps south onto the dock. Each jump keeps the arrival facing and skips the thirteen cells in front. A breasthook lands one cell short. A hawse lands two cells short. A knighthead lands three cells short. A forefoot lands four cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			17, 18,
+			[_cell(2, 17), _cell(3, 17), _cell(4, 17), _cell(5, 17), _cell(6, 17), _cell(7, 17), _cell(8, 17), _cell(9, 17), _cell(10, 17), _cell(11, 17), _cell(12, 17), _cell(13, 17), _cell(14, 17), _cell(16, 3), _cell(16, 4), _cell(16, 5), _cell(16, 6), _cell(16, 7), _cell(16, 8), _cell(16, 9), _cell(16, 10), _cell(16, 11), _cell(16, 12), _cell(16, 13), _cell(16, 14), _cell(16, 15), _cell(1, 16)],
+			[
+				_source(0, 17, 0, ["red"]),
+				_source(16, 0, 1, ["blue"]),
+			],
+			{"x": 16, "y": 17},
+			[{"color": "red"}, {"color": "blue"}],
+			[
+				_block("cathead", 1, 17, 0),
+				_block("pause", 15, 17, 0),
+				_block("pause", 16, 1, 0),
+				_block("cathead", 16, 2, 0),
+				_block("pause", 16, 16, 0),
+			]
+		),
+		_puzzle(
+			259, "Second Cathead", "",
+			"Jump fourteen cells forward, hook, then jump fourteen cells forward on the new facing.",
+			"",
+			"The first cathead jumps the east-facing parcel fourteen cells east and leaves it facing east. The hook sends it north onto the second cathead. That cathead jumps fourteen cells north, still facing north, onto the dock. One cathead cannot do both jumps. A breasthook lands one cell short. A hawse lands two cells short. A knighthead lands three cells short. A forefoot lands four cells short. A keel jumps three cells back. A rabbet jumps one cell back. A turn faces south.",
+			16, 16,
+			[_cell(2, 15), _cell(3, 15), _cell(4, 15), _cell(5, 15), _cell(6, 15), _cell(7, 15), _cell(8, 15), _cell(9, 15), _cell(10, 15), _cell(11, 15), _cell(12, 15), _cell(13, 15), _cell(14, 15), _cell(15, 13), _cell(15, 12), _cell(15, 11), _cell(15, 10), _cell(15, 9), _cell(15, 8), _cell(15, 7), _cell(15, 6), _cell(15, 5), _cell(15, 4), _cell(15, 3), _cell(15, 2), _cell(15, 1)],
+			[_source(0, 15, 0, ["gray"])],
+			{"x": 15, "y": 0},
+			[{"color": "gray"}],
+			[
+				_block("cathead", 1, 15, 0),
+				_block("hook", 15, 15, 0),
+				_block("cathead", 15, 14, 0),
+			]
+		),
+		_puzzle(
+			260, "Night Cathead", "",
+			"Deliver red 1, yellow 2, and blue 3.",
+			"",
+			"Red takes the filter. The cathead jumps it fourteen cells east and leaves it facing east. The pause carries that facing onto the counter for stamp 1. The thirteen cells in front are not entered. Gray takes the long belt and is primed yellow. Blue keeps its color. A breasthook lands one cell short. A hawse lands two cells short. A knighthead lands three cells short. A forefoot lands four cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			20, 6,
+			[_cell(4, 3), _cell(5, 3), _cell(6, 3), _cell(7, 3), _cell(8, 3), _cell(9, 3), _cell(10, 3), _cell(11, 3), _cell(12, 3), _cell(13, 3), _cell(14, 3), _cell(15, 3), _cell(16, 3)],
+			[_source(0, 3, 0, ["gray", "blue", "red"])],
+			{"x": 19, "y": 3},
+			[{"color": "red", "count": 1}, {"color": "yellow", "count": 2}, {"color": "blue", "count": 3}],
+			[
+				_block("filter", 1, 3, 0, "red"),
+				_block("conveyor", 2, 3, 0),
+				_block("cathead", 3, 3, 0),
+				_block("pause", 17, 3, 0),
+				_block("counter", 18, 3, 0),
+				_block("pause", 1, 4, 0),
+				_block("primer", 1, 5, 0, "yellow"),
+				_block("conveyor", 2, 5, 0),
+				_block("conveyor", 3, 5, 0),
+				_block("conveyor", 4, 5, 0),
+				_block("conveyor", 5, 5, 0),
+				_block("conveyor", 6, 5, 0),
+				_block("conveyor", 7, 5, 0),
+				_block("conveyor", 8, 5, 0),
+				_block("conveyor", 9, 5, 0),
+				_block("conveyor", 10, 5, 0),
+				_block("conveyor", 11, 5, 0),
+				_block("conveyor", 12, 5, 0),
+				_block("conveyor", 13, 5, 0),
+				_block("conveyor", 14, 5, 0),
+				_block("conveyor", 15, 5, 0),
+				_block("conveyor", 16, 5, 0),
+				_block("conveyor", 17, 5, 0),
+				_block("conveyor", 18, 5, 3),
+				_block("conveyor", 18, 4, 3),
+			]
+		),
 	]
 
 
@@ -5127,7 +5274,7 @@ static func _puzzle(id: int, title: String, unlocks: String, brief: String, how_
 		"dock": dock,
 		"order": order,
 		"reference": reference,
-		"building": 35 if id >= 247 else 34 if id >= 240 else 33 if id >= 233 else 32 if id >= 226 else 31 if id >= 219 else 30 if id >= 212 else 29 if id >= 205 else 28 if id >= 198 else 27 if id >= 191 else 26 if id >= 184 else 25 if id >= 177 else 24 if id >= 170 else 23 if id >= 163 else 22 if id >= 156 else 21 if id >= 149 else 20 if id >= 142 else 19 if id >= 135 else 18 if id >= 128 else 17 if id >= 121 else 16 if id >= 114 else 15 if id >= 107 else 14 if id >= 100 else 13 if id >= 93 else 12 if id >= 86 else 11 if id >= 79 else 10 if id >= 72 else 9 if id >= 65 else 8 if id >= 58 else 7 if id >= 51 else 6 if id >= 44 else 5 if id >= 37 else 4 if id >= 30 else 3 if id >= 23 else 2 if id >= 16 else 1,
+		"building": 36 if id >= 254 else 35 if id >= 247 else 34 if id >= 240 else 33 if id >= 233 else 32 if id >= 226 else 31 if id >= 219 else 30 if id >= 212 else 29 if id >= 205 else 28 if id >= 198 else 27 if id >= 191 else 26 if id >= 184 else 25 if id >= 177 else 24 if id >= 170 else 23 if id >= 163 else 22 if id >= 156 else 21 if id >= 149 else 20 if id >= 142 else 19 if id >= 135 else 18 if id >= 128 else 17 if id >= 121 else 16 if id >= 114 else 15 if id >= 107 else 14 if id >= 100 else 13 if id >= 93 else 12 if id >= 86 else 11 if id >= 79 else 10 if id >= 72 else 9 if id >= 65 else 8 if id >= 58 else 7 if id >= 51 else 6 if id >= 44 else 5 if id >= 37 else 4 if id >= 30 else 3 if id >= 23 else 2 if id >= 16 else 1,
 	}
 
 
