@@ -213,6 +213,8 @@ func _kind_for_key(code: int) -> int:
 		KEY_G: Rules.Kind.MOLDBOARD,
 		KEY_H: Rules.Kind.LANDSIDE,
 		KEY_J: Rules.Kind.SLADE,
+		KEY_K: Rules.Kind.HEEL,
+		KEY_L: Rules.Kind.STILT,
 	}
 	if not map.has(code):
 		return -1
@@ -385,6 +387,8 @@ func _kind_order() -> Array:
 		Rules.Kind.MOLDBOARD,
 		Rules.Kind.LANDSIDE,
 		Rules.Kind.SLADE,
+		Rules.Kind.HEEL,
+		Rules.Kind.STILT,
 	]
 
 
@@ -420,11 +424,17 @@ func _layout() -> Dictionary:
 	# Past 32 rooms, rows of ten keep each name readable.
 	# The sixth wing adds a fifth row. The seventh adds a sixth.
 	# The eighth adds a seventh. The ninth adds an eighth. The tenth fills that row.
+	# The twenty-fourth wing adds a twentieth row. One pixel shorter keeps a six-row board drawable.
+	# The twenty-fifth wing fills that row. Tab width stays 116 unless a label is wider.
 	# Shorter tabs give that row back so the rule text keeps its space.
 	var per_row := 8
 	var tab_h := 30.0
 	var row_gap := 4.0
-	if rooms.size() > 56:
+	if rooms.size() > 184:
+		per_row = 10
+		tab_h = 15.0
+		row_gap = 1.0
+	elif rooms.size() > 56:
 		per_row = 10
 		tab_h = 16.0
 		row_gap = 1.0
@@ -513,7 +523,7 @@ func _draw() -> void:
 	var size: Vector2 = lay.size
 	draw_rect(Rect2(Vector2.ZERO, size), COL_BG)
 	_text(Vector2(24, 14), "KILN ROUTE", 28, COL_TEXT)
-	_text(Vector2(236, 26), "twenty-three wings", 15, COL_DIM)
+	_text(Vector2(236, 26), "twenty-five wings", 15, COL_DIM)
 	var minute := "minute  %d / %d" % [_shown_tick(), Rules.SIM_TICKS]
 	var minute_w := font.get_string_size(minute, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
 	_text(Vector2(size.x - 24 - minute_w, 26), minute, 15, COL_DIM)
@@ -523,7 +533,7 @@ func _draw() -> void:
 	_draw_grid(lay)
 	_draw_side(lay)
 	_draw_tray(lay)
-	_text(Vector2(24, size.y - 28), "1-9 0 - = \\ ; , ' . / ` y u i o p t g h j select   R rotate   LMB place or pick up   RMB rotate   Space run   F skip   Bksp restart", 13, COL_DIM)
+	_text(Vector2(24, size.y - 28), "1-9 0 - = \\ ; , ' . / ` y u i o p t g h j k l select   R rotate   LMB place or pick up   RMB rotate   Space run   F skip   Bksp restart", 13, COL_DIM)
 
 
 func _draw_tabs(lay: Dictionary) -> void:
@@ -926,6 +936,33 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 		var reach := body.size.x * 0.24
 		draw_line(rear, rear + back_v * reach, ink, thick)
 		draw_line(ahead, ahead + along * reach, ink, thick)
+	elif kind == Rules.Kind.HEEL:
+		# The forward stroke leaves from the waiting item. The backward stroke leaves from the arrival.
+		# A slade sends the waiter backward and the arrival forward.
+		var along := Vector2(Rules.vec(dir))
+		var back_v := -along
+		var ink := Color("e7d7a2", 0.95 * alpha)
+		var thick := maxf(2.0, body.size.x * 0.07)
+		var rear := center - along * body.size.x * 0.2
+		var ahead := center + along * body.size.x * 0.14
+		var reach := body.size.x * 0.24
+		draw_line(rear, rear + along * reach, ink, thick)
+		draw_line(ahead, ahead + back_v * reach, ink, thick)
+	elif kind == Rules.Kind.STILT:
+		# Entry is the left side. The waiter leaves backward. The arrival leaves forward.
+		# A slade uses those same exits, but only for an arrival from behind.
+		var along := Vector2(Rules.vec(dir))
+		var back_v := -along
+		var left_v := Vector2(Rules.vec(Rules.left(dir)))
+		var ink := Color("d7f3ee", 0.95 * alpha)
+		var thick := maxf(2.0, body.size.x * 0.07)
+		var rear := center - along * body.size.x * 0.2
+		var ahead := center + along * body.size.x * 0.14
+		var reach := body.size.x * 0.24
+		var hip := center + left_v * body.size.x * 0.16
+		draw_line(hip, hip + left_v * body.size.x * 0.16, ink, thick)
+		draw_line(rear, rear + back_v * reach, ink, thick)
+		draw_line(ahead, ahead + along * reach, ink, thick)
 	elif kind == Rules.Kind.GRATE:
 		var along := Vector2(Rules.vec(dir))
 		var across := Vector2(Rules.vec(Rules.right(dir)))
@@ -945,7 +982,7 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 	var forward := light
 	if kind == Rules.Kind.GRATE:
 		forward = Color("d7dee6")
-	if kind != Rules.Kind.HOOK and kind != Rules.Kind.DROP and kind != Rules.Kind.LIFT and kind != Rules.Kind.SHED and kind != Rules.Kind.RAKE and kind != Rules.Kind.HOE and kind != Rules.Kind.HARROW and kind != Rules.Kind.FORK and kind != Rules.Kind.PRONG and kind != Rules.Kind.SHARE and kind != Rules.Kind.COULTER and kind != Rules.Kind.MOLDBOARD and kind != Rules.Kind.LANDSIDE and kind != Rules.Kind.SLADE:
+	if kind != Rules.Kind.HOOK and kind != Rules.Kind.DROP and kind != Rules.Kind.LIFT and kind != Rules.Kind.SHED and kind != Rules.Kind.RAKE and kind != Rules.Kind.HOE and kind != Rules.Kind.HARROW and kind != Rules.Kind.FORK and kind != Rules.Kind.PRONG and kind != Rules.Kind.SHARE and kind != Rules.Kind.COULTER and kind != Rules.Kind.MOLDBOARD and kind != Rules.Kind.LANDSIDE and kind != Rules.Kind.SLADE and kind != Rules.Kind.HEEL and kind != Rules.Kind.STILT:
 		_arrow(front, dir, body.size.x * 0.2, body.size.x * 0.12, Color(forward.r, forward.g, forward.b, forward_alpha))
 	if kind == Rules.Kind.HOOK:
 		var turn := Rules.left(dir)
@@ -1025,6 +1062,20 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 		var forward_side := center + Vector2(Rules.vec(dir)) * body.size.x * 0.28
 		_arrow(back_side, back_turn, body.size.x * 0.14, body.size.x * 0.09, Color(slade_mark.r, slade_mark.g, slade_mark.b, alpha))
 		_arrow(forward_side, dir, body.size.x * 0.14, body.size.x * 0.09, Color(slade_mark.r, slade_mark.g, slade_mark.b, alpha))
+	elif kind == Rules.Kind.HEEL:
+		var heel_mark := Color("e7d7a2")
+		var back_turn := Rules.opposite(dir)
+		var forward_side := center + Vector2(Rules.vec(dir)) * body.size.x * 0.32
+		var back_side := center + Vector2(Rules.vec(back_turn)) * body.size.x * 0.28
+		_arrow(forward_side, dir, body.size.x * 0.14, body.size.x * 0.09, Color(heel_mark.r, heel_mark.g, heel_mark.b, alpha))
+		_arrow(back_side, back_turn, body.size.x * 0.14, body.size.x * 0.09, Color(heel_mark.r, heel_mark.g, heel_mark.b, alpha))
+	elif kind == Rules.Kind.STILT:
+		var stilt_mark := Color("d7f3ee")
+		var back_turn := Rules.opposite(dir)
+		var back_side := center + Vector2(Rules.vec(back_turn)) * body.size.x * 0.32
+		var forward_side := center + Vector2(Rules.vec(dir)) * body.size.x * 0.28
+		_arrow(back_side, back_turn, body.size.x * 0.14, body.size.x * 0.09, Color(stilt_mark.r, stilt_mark.g, stilt_mark.b, alpha))
+		_arrow(forward_side, dir, body.size.x * 0.14, body.size.x * 0.09, Color(stilt_mark.r, stilt_mark.g, stilt_mark.b, alpha))
 	elif kind == Rules.Kind.DROP:
 		var turn := Rules.right(dir)
 		var side := center + Vector2(Rules.vec(turn)) * body.size.x * 0.2
@@ -1206,6 +1257,10 @@ func _key_label(kind: int) -> String:
 		return "h"
 	if kind == Rules.Kind.SLADE:
 		return "j"
+	if kind == Rules.Kind.HEEL:
+		return "k"
+	if kind == Rules.Kind.STILT:
+		return "l"
 	return str(kind + 1)
 
 
@@ -1266,6 +1321,10 @@ func _kind_color(kind: int) -> Color:
 		return Color("6e4428")
 	if kind == Rules.Kind.SLADE:
 		return Color("3a5160")
+	if kind == Rules.Kind.HEEL:
+		return Color("8c6a2f")
+	if kind == Rules.Kind.STILT:
+		return Color("355e62")
 	return Color("c792ef")
 
 

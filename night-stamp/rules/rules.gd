@@ -2450,6 +2450,7 @@ const SHIFT_FOREWORD := 30
 const SHIFT_CONTENTS := 31
 const SHIFT_INTRODUCTION := 32
 const SHIFT_PROLOGUE := 33
+const SHIFT_ACKNOWLEDGMENTS := 34
 
 const ROW_NAMES := ["top row", "middle row", "bottom row"]
 const COL_NAMES := ["column 1", "column 2", "column 3"]
@@ -4143,6 +4144,54 @@ const PROLOGUE_BELL := [
 ]
 
 
+const ACKNOWLEDGMENTS_BELL := [
+	{
+		"id": "maris_hale",
+		"name": "Maris Hale",
+		"form_name": "Crest Toll",
+		"rule_text": "Patience drops by 2 when the number of filled cells is 6 or 7.",
+		"rule": "drop_if_crest_count",
+		"lane": 0,
+		"exemption_row": 1,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "tavin_voss",
+		"name": "Tavin Voss",
+		"form_name": "Leap Fill",
+		"rule_text": "A stamp scores twice only when the queue cell six places after it is filled. The middle-left cell has no cell six places after it, so it does not double. The center cell has no cell six places after it, so it does not double. The middle-right cell has no cell six places after it, so it does not double. The bottom-left cell has no cell six places after it, so it does not double. The bottom-middle cell has no cell six places after it, so it does not double. The bottom-right cell has no cell six places after it, so it does not double.",
+		"rule": "double_leap_fill",
+		"lane": 1,
+		"exemption_row": 0,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "edith_brant",
+		"name": "Edith Brant",
+		"form_name": "Quad Pay",
+		"rule_text": "Each stamp with exactly four side neighbors scores +2 once. Exactly three side neighbors score their own number. Two side neighbors score their own number. Exactly one side neighbor scores its own number. A corner neighbor is not a side. A lone stamp scores its own number.",
+		"rule": "yield_quad_pay",
+		"lane": 2,
+		"exemption_row": 2,
+		"goal": 16,
+		"patience": 5,
+	},
+	{
+		"id": "lorin_okell",
+		"name": "Lorin Okell",
+		"form_name": "Deep Gap",
+		"rule_text": "A stamp scores twice only when the queue cell six places before it is empty. The top-left cell has no cell six places before it, so it does not double. The top-middle cell has no cell six places before it, so it does not double. The top-right cell has no cell six places before it, so it does not double. The middle-left cell has no cell six places before it, so it does not double. The center cell has no cell six places before it, so it does not double. The middle-right cell has no cell six places before it, so it does not double.",
+		"rule": "double_deep_gap",
+		"lane": 0,
+		"exemption_row": 2,
+		"goal": 22,
+		"patience": 5,
+	},
+]
+
+
 class NightState:
 	extends RefCounted
 	var seed: int = 1
@@ -4240,6 +4289,8 @@ static func _canonical_shift(shift_index: int) -> int:
 		return SHIFT_TITLEPAGE
 	if shift_index == SHIFT_COPYRIGHT:
 		return SHIFT_COPYRIGHT
+	if shift_index == SHIFT_ACKNOWLEDGMENTS:
+		return SHIFT_ACKNOWLEDGMENTS
 	if shift_index == SHIFT_PROLOGUE:
 		return SHIFT_PROLOGUE
 	if shift_index == SHIFT_INTRODUCTION:
@@ -4269,6 +4320,8 @@ static func new_run(seed_value: int, shift_index: int = SHIFT_FIRST) -> NightSta
 	state.next_iid = 0
 	for card_id in STARTING_DECK:
 		_add_library_card(state, String(card_id))
+	if state.shift == SHIFT_ACKNOWLEDGMENTS:
+		_log(state, "The acknowledgments bell begins. Seed %d." % state.seed)
 	if state.shift == SHIFT_PROLOGUE:
 		_log(state, "The prologue bell begins. Seed %d." % state.seed)
 	if state.shift == SHIFT_INTRODUCTION:
@@ -4377,6 +4430,8 @@ static func restart_encounter(state: NightState) -> void:
 
 
 static func shift_label(state: NightState) -> String:
+	if state.shift == SHIFT_ACKNOWLEDGMENTS:
+		return "Acknowledgments bell"
 	if state.shift == SHIFT_PROLOGUE:
 		return "Prologue bell"
 	if state.shift == SHIFT_INTRODUCTION:
@@ -4461,6 +4516,8 @@ static func traveler(state: NightState) -> Dictionary:
 
 
 static func _roster(state: NightState) -> Array:
+	if state.shift == SHIFT_ACKNOWLEDGMENTS:
+		return ACKNOWLEDGMENTS_BELL
 	if state.shift == SHIFT_PROLOGUE:
 		return PROLOGUE_BELL
 	if state.shift == SHIFT_INTRODUCTION:
@@ -4883,6 +4940,12 @@ static func stamp_progress(state: NightState, card_id: String, row: int, col: in
 		return amount + 2
 	if rule == "double_long_gap" and _long_gap(state, row, col):
 		return amount * 2
+	if rule == "double_leap_fill" and _leap_fill(state, row, col):
+		return amount * 2
+	if rule == "yield_quad_pay" and _quad_pay(state, row, col):
+		return amount + 2
+	if rule == "double_deep_gap" and _deep_gap(state, row, col):
+		return amount * 2
 	return amount
 
 
@@ -5024,6 +5087,8 @@ static func patience_loss(state: NightState) -> int:
 		elif rule == "drop_if_span_count" and _is_span_count(_stamp_count(state)):
 			loss = 2
 		elif rule == "drop_if_band_count" and _is_band_count(_stamp_count(state)):
+			loss = 2
+		elif rule == "drop_if_crest_count" and _is_crest_count(_stamp_count(state)):
 			loss = 2
 	return loss
 
@@ -5358,6 +5423,12 @@ static func _resolve_stamp(state: NightState, row: int, col: int, hush: bool) ->
 				_log(state, "%s on the %s, %s grants %d. Three side neighbors pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			elif tail_rule == "double_long_gap" and _long_gap(state, row, col) and amount > raw:
 				_log(state, "%s on the %s, %s grants %d. The empty cell four places before it doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_leap_fill" and _leap_fill(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The filled cell six places after it doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_quad_pay" and _quad_pay(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. Four side neighbors pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_deep_gap" and _deep_gap(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The empty cell six places before it doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			else:
 				_log(state, "%s on the %s, %s grants %d." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 	state.turn_progress += amount
@@ -5537,6 +5608,56 @@ static func _twin_pay(state: NightState, row: int, col: int) -> bool:
 
 static func _is_band_count(count: int) -> bool:
 	return count == 4 or count == 5
+
+
+static func _is_crest_count(count: int) -> bool:
+	return count == 6 or count == 7
+
+
+static func _leap_fill(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var ahead_row := row
+	var ahead_col := col + 6
+	while ahead_col > 2:
+		ahead_row += 1
+		ahead_col -= 3
+	if ahead_row > 2:
+		return false
+	return state.form[ahead_row][ahead_col] != null
+
+
+static func _quad_pay(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var sides := 0
+	for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+		var side_row = row + delta.x
+		var side_col = col + delta.y
+		if side_row < 0 or side_col < 0 or side_row > 2 or side_col > 2:
+			continue
+		if state.form[side_row][side_col] != null:
+			sides += 1
+	return sides == 4
+
+
+static func _deep_gap(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var back_row := row
+	var back_col := col - 6
+	while back_col < 0:
+		back_row -= 1
+		back_col += 3
+	if back_row < 0:
+		return false
+	return state.form[back_row][back_col] == null
 
 
 static func _step_fill(state: NightState, row: int, col: int) -> bool:
@@ -6368,6 +6489,8 @@ static func _apply_result(state: NightState, result: Dictionary) -> void:
 		state.encounters_cleared += 1
 		if state.traveler_index >= _roster(state).size() - 1:
 			state.phase = "victory"
+			if state.shift == SHIFT_ACKNOWLEDGMENTS:
+				_log(state, "The queue is empty. The acknowledgments bell is clear.")
 			if state.shift == SHIFT_PROLOGUE:
 				_log(state, "The queue is empty. The prologue bell is clear.")
 			if state.shift == SHIFT_INTRODUCTION:

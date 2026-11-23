@@ -40,6 +40,8 @@ const Dowel = preload("res://scripts/dowel.gd")
 const Tongue = preload("res://scripts/tongue.gd")
 const Quirk = preload("res://scripts/quirk.gd")
 const Chamfer = preload("res://scripts/chamfer.gd")
+const Scotia = preload("res://scripts/scotia.gd")
+const Cyma = preload("res://scripts/cyma.gd")
 const Catalog = preload("res://scripts/catalog.gd")
 const Solver = preload("res://scripts/solver.gd")
 const Verdict = preload("res://scripts/verdict.gd")
@@ -123,6 +125,10 @@ const QUIRK_TIMELINE := "Ross (quirk hand) scratched the quirk in the scratch at
 const QUIRK_TRUE := {"who": "Ross", "place": "scratch", "hour": "138"}
 const CHAMFER_TIMELINE := "Merrick (chamfer hand) cut the chamfer in the block at 143, seen from the file, so the cove would take the chamfer.\nEnid (cove hand) marked the cove on the travisher at 142.\nPetra (file clerk) turned the file in the block.\nThe cant was hung on the travisher.\nThe file was soaped at 141.\nThe travisher was fettled at 144.\nThe block was hung at 145."
 const CHAMFER_TRUE := {"who": "Merrick", "place": "block", "hour": "143"}
+const SCOTIA_TIMELINE := "Willa (scotia hand) cut the scotia in the hollow at 148, seen from the riffler, so the torus would take the scotia.\nNils (torus hand) marked the torus on the scorp at 147.\nCora (riffler clerk) turned the riffler in the hollow.\nThe fascia was hung on the scorp.\nThe riffler was pumiced at 146.\nThe scorp was peened at 149.\nThe hollow was hung at 150."
+const SCOTIA_TRUE := {"who": "Willa", "place": "hollow", "hour": "148"}
+const CYMA_TIMELINE := "Ruth (cyma hand) cut the cyma in the bolection at 153, seen from the inshave, so the echinus would take the cyma.\nAmos (echinus hand) marked the echinus on the froe at 152.\nLena (inshave clerk) turned the inshave in the bolection.\nThe corona was hung on the froe.\nThe inshave was rouged at 151.\nThe froe was chased at 154.\nThe bolection was hung at 155."
+const CYMA_TRUE := {"who": "Ruth", "place": "bolection", "hour": "153"}
 
 var _failures: Array[String] = []
 var _checks := 0
@@ -370,6 +376,18 @@ func _initialize() -> void:
 	_test_chamfer_only_true_theory()
 	_test_chamfer_near_misses()
 	_test_chamfer_incomplete()
+	_test_scotia_file_shape()
+	_test_scotia_unique_model()
+	_test_scotia_each_exhibit_necessary()
+	_test_scotia_only_true_theory()
+	_test_scotia_near_misses()
+	_test_scotia_incomplete()
+	_test_cyma_file_shape()
+	_test_cyma_unique_model()
+	_test_cyma_each_exhibit_necessary()
+	_test_cyma_only_true_theory()
+	_test_cyma_near_misses()
+	_test_cyma_incomplete()
 	_test_solutions_differ()
 	_test_menu_opens_either_case()
 	print("menu interaction done")
@@ -12630,6 +12648,862 @@ func _test_chamfer_incomplete() -> void:
 			_expect(message.find(phrase) == -1, "chamfer incomplete used another file's slot (%s) in: %s" % [phrase, message])
 	print("chamfer incomplete submissions refused with the missing slot")
 
+func _test_scotia_file_shape() -> void:
+	_expect(Scotia.EXHIBITS.size() == 9, "scotia exhibit count is %d" % Scotia.EXHIBITS.size())
+	_expect(Scotia.PEOPLE.size() == 3, "scotia cast should be three people")
+	_expect(Scotia.PLACES.size() == 3, "scotia room count is %d" % Scotia.PLACES.size())
+	_expect(Scotia.HOURS.size() == 5, "scotia hour list length is %d" % Scotia.HOURS.size())
+	_expect(Scotia.PEOPLE == ["Willa", "Nils", "Cora"], "scotia cast is %s" % str(Scotia.PEOPLE))
+	_expect(Scotia.PLACES == ["hollow", "riffler", "scorp"], "scotia rooms are %s" % str(Scotia.PLACES))
+	_expect(Scotia.HOURS == ["146", "147", "148", "149", "150"], "scotia hours are %s" % str(Scotia.HOURS))
+	_expect(Scotia.AIMS == ["take_torus", "spare_torus", "set_torus"], "scotia aims are %s" % str(Scotia.AIMS))
+	_expect(Scotia.aim_phrase("take_torus") == "so the torus would take the scotia", "scotia aim phrase")
+	_expect(Scotia.aim_phrase("spare_torus") == "to spare the torus still waiting on the scotia", "scotia spare aim")
+	_expect(Scotia.aim_phrase("set_torus") == "to set the torus before the hollow was hung", "scotia set aim")
+	_expect(Scotia.TITLE == "The scotia", "scotia title")
+	_expect(Scotia.BLURB == "The scotia left its peg at the joiner's yearling. Name who cut the scotia, the room they cut it in, and the hour.", "scotia blurb")
+	_expect(Scotia.FILE_CODE == "CW-41", "scotia file code")
+	_expect(Scotia.fields() == ["taker", "place", "hour", "torus", "torus_room", "torus_hour", "seen_from", "riffler", "aim", "riffler_room", "fascia_room", "pumice_hour", "peen_hour", "hang_hour"], "scotia fields are %s" % str(Scotia.fields()))
+	_expect(Scotia.PLAYER_FIELDS == ["taker", "place", "hour"], "scotia player fields")
+	_expect(Scotia.HOURS[Scotia.HOURS.size() / 2] == SCOTIA_TRUE["hour"], "scotia cutting should be the middle hour")
+	_expect(Scotia.HOURS[0] != SCOTIA_TRUE["hour"], "scotia cutting should not be the earliest hour")
+	_expect(Scotia.HOURS[Scotia.HOURS.size() - 1] != SCOTIA_TRUE["hour"], "scotia cutting should not be the latest hour")
+	var counts := _player_pin_counts(Scotia)
+	_expect(int(counts["taker"]) == 3 and int(counts["place"]) == 3 and int(counts["hour"]) == 3, "scotia pin counts are %s" % str(counts))
+	var loose_pin: Array = [
+		[CaseData, "spare key"],
+		[Rehearsal, "rehearsal score"],
+		[Gilt, "gilt stamp"],
+		[Ferry, "ferry bell"],
+		[Weather, "weather slate"],
+		[Loom, "loom shuttle"],
+		[Hive, "hive smoker"],
+		[Glass, "glass pontil"],
+		[Press, "press proof"],
+		[Assay, "assay cup"],
+	]
+	var rhythm: Array = [
+		[Kiln, "kiln chalk"],
+		[Tide, "tide ledger"],
+		[Night, "night bell"],
+		[Salt, "salt mark"],
+		[Wick, "wick trim"],
+		[Anneal, "glass anneal"],
+		[Graft, "orchard graft"],
+		[Dye, "dye vat"],
+		[Tar, "tar kettle"],
+		[Cork, "cork press"],
+		[Net, "net loft"],
+		[Cask, "cask hoop"],
+		[Linen, "linen fold"],
+		[Dovetail, "dovetail"],
+		[Mortise, "mortise"],
+		[Rebate, "rebate"],
+		[Housing, "housing"],
+		[Tenon, "tenon"],
+		[Bridle, "bridle"],
+		[Dado, "dado"],
+		[Spline, "spline"],
+		[Mitre, "mitre"],
+		[Lap, "lap"],
+		[Scarf, "scarf"],
+		[Finger, "finger"],
+		[Haunch, "haunch"],
+		[Dowel, "dowel"],
+		[Tongue, "tongue"],
+		[Quirk, "quirk"],
+		[Chamfer, "chamfer"],
+	]
+	for row in loose_pin:
+		_expect(counts != _player_pin_counts(row[0]), "scotia copied the %s pin pattern" % row[1])
+	for row in rhythm:
+		_expect(counts == _player_pin_counts(row[0]), "scotia should keep the %s pin rhythm" % row[1])
+	var earlier: Array = []
+	earlier.append_array(loose_pin)
+	earlier.append_array(rhythm)
+	for row in earlier:
+		var book = row[0]
+		var name := str(row[1])
+		_expect(Scotia.TITLE != book.TITLE, "scotia shares a title with the %s" % name)
+		_expect(Scotia.FILE_CODE != book.FILE_CODE, "scotia shares a file code with the %s" % name)
+		_expect(_field_key(Scotia) != _field_key(book), "scotia copied the %s timeline fields" % name)
+	var seen := {}
+	var stated := {}
+	var paired_hidden := 0
+	var earlier_texts := {}
+	var earlier_sentences := {}
+	var earlier_titles := {}
+	for row in earlier:
+		for old_exhibit in row[0].EXHIBITS:
+			var old_text := str(old_exhibit["text"])
+			earlier_texts[old_text] = true
+			earlier_titles[str(old_exhibit["title"])] = true
+			for old_sentence in old_text.split(". "):
+				earlier_sentences[old_sentence.trim_suffix(".").strip_edges()] = true
+	var exhibit_titles: Array[String] = []
+	var exhibit_sources: Array[String] = []
+	for exhibit in Scotia.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		exhibit_titles.append(str(exhibit["title"]))
+		exhibit_sources.append(str(exhibit["source"]))
+		_expect(not seen.has(exhibit_id), "duplicate scotia id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(not earlier_titles.has(str(exhibit["title"])), "%s reuses an earlier title %s" % [exhibit_id, exhibit["title"]])
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		_expect(not earlier_texts.has(str(exhibit["text"])), "scotia copied an earlier exhibit")
+		for sentence in str(exhibit["text"]).split(". "):
+			var cleaned := sentence.trim_suffix(".").strip_edges()
+			_expect(not earlier_sentences.has(cleaned), "scotia copied an earlier sentence: %s" % cleaned)
+		for banned in ["tarred", "rope", "kettle", "winch", "pitch", "loft", "strand", "hook", "walk", "dipped", "skein", "indigo", "pressed", "press", "cork", "bottle", "seal", "mallet", "screw", "cellar", "bench", "neck", "plug", "dye", "vat", "mesh", "shed", "rail", "crank", "needle", "mended", "twine", "house", "cooperage", "cask", "hoop", "croze", "stave", "driver", "yard", "shop", "linen", "fold", "shears", "roller", "hem", "sheet", "crease", "drawer", "dovetail", "vise", "stile", "apron", "saw", "clamp", "peg", "mortise", "chisel", "tenon", "awl", "wedge", "bored", "ragged", "racked", "rebate", "plane", "gauge", "shoulder", "shim", "tansy", "solt", "quern", "housing", "square", "bead", "trench", "fillet", "stock", "chalk", "ewan", "maren", "hollin", "gouge", "rasp", "bevel", "guide", "harl", "neve", "luth", "nick", "bridle", "router", "scraper", "adze", "spline", "templet", "strop", "notch", "wend", "sile", "jute", "dado", "cleat", "spur", "kern", "phel", "tarn", "shavings", "mouth", "iron", "senn", "voss", "cade", "slot", "feather", "whet", "orrin", "venn", "haim", "mitre", "arris", "offcut", "saddle", "dressed", "brushed", "nye", "yew", "pry", "lap", "grain", "brad", "plough", "float", "gimlet", "cradle", "crest", "horn", "scarf", "hob", "nairn", "cole", "shaving", "blade", "spokeshave", "firmer", "paring", "drawknife", "edge", "skimmed", "film", "sole", "tang", "mare", "finger", "clem", "gale", "boyd", "pad", "badger", "jack", "socket", "catch", "chip", "burr", "flake", "buffed", "sheen", "pony", "rubbed", "face", "haunch", "cheek", "smoother", "jointer", "fore", "sliver", "pin", "rhys", "mab", "lisle", "colt", "wiped", "mote", "toe", "mist", "bed", "dowel", "bore", "auger", "bit", "brace", "curl", "chuck", "flute", "faye", "kerr", "brynn", "foal", "waxed", "honed", "speck", "gloss", "wax", "point", "shay", "dell", "glen", "tongue", "groove", "kerf", "punch", "peel", "scribe", "knife", "fence", "tallow", "tallowed", "ground", "fleck", "filly", "coat", "cutting", "grind", "ross", "pia", "jude", "quirk", "scratch", "scratched", "scratching", "snib", "ovolo", "veiner", "astragal", "gelding", "grit", "bloom", "stoned", "oiled", "score", "bolt", "grease", "merrick", "enid", "petra", "chamfer", "chamfering", "block", "file", "cove", "travisher", "cant", "stallion", "soap", "soaped", "fettle", "fettled", "wisp", "rime", "haze", "tooth"]:
+			_expect(str(exhibit["text"]).find(banned) == -1, "%s copies %s" % [exhibit_id, banned])
+		var states_player_pin := false
+		var states_unique := false
+		var player_literals := 0
+		var hidden_literals := 0
+		for literal in exhibit["literals"]:
+			stated[str(literal["value"])] = true
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Scotia.PLAYER_FIELDS:
+				states_player_pin = true
+				player_literals += 1
+				var expected := Scotia.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Scotia.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats >= 2, "%s states %s once" % [exhibit_id, field])
+			else:
+				hidden_literals += 1
+				var owners := 0
+				for other in Scotia.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		if hidden_literals == 2:
+			paired_hidden += 1
+		else:
+			_expect(hidden_literals == 1, "%s states %d hidden facts" % [exhibit_id, hidden_literals])
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(player_literals == 1, "%s states %d player pins" % [exhibit_id, player_literals])
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+	_expect(paired_hidden == 2, "scotia should have two slips with two hidden facts, found %d" % paired_hidden)
+	_expect(exhibit_titles == ["Torus chit", "Cusp sight", "Fascia bill", "Soot slate", "Riffler card", "Pumice slip", "Scotia leaf", "Yearling note", "Peen order"], "scotia exhibit titles are %s" % str(exhibit_titles))
+	_expect(exhibit_sources == ["Nils, torus hand", "Riffler cusp", "Scorp nose", "Hollow soot", "Cora, riffler clerk", "Riffler tote", "Torus book", "Joiner's yearling", "Scorp card"], "scotia sources are %s" % str(exhibit_sources))
+	for hour in Scotia.HOURS:
+		_expect(stated.has(hour), "scotia hour %s is absent from the exhibits" % hour)
+
+
+func _test_scotia_unique_model() -> void:
+	var models := Solver.enumerate(Scotia.EXHIBITS, Scotia)
+	print("scotia models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one scotia model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Willa", "scotia taker")
+	_expect(str(model["place"]) == "hollow", "scotia place")
+	_expect(str(model["hour"]) == "148", "scotia hour")
+	_expect(str(model["torus"]) == "Nils", "scotia torus hand")
+	_expect(str(model["torus_room"]) == "scorp", "scotia torus room")
+	_expect(str(model["torus_hour"]) == "147", "scotia torus hour")
+	_expect(str(model["seen_from"]) == "riffler", "scotia seen from")
+	_expect(str(model["riffler"]) == "Cora", "scotia riffler")
+	_expect(str(model["aim"]) == "take_torus", "scotia aim")
+	_expect(str(model["riffler_room"]) == "hollow", "scotia riffler room")
+	_expect(str(model["fascia_room"]) == "scorp", "scotia fascia room")
+	_expect(str(model["pumice_hour"]) == "146", "scotia pumice hour")
+	_expect(str(model["peen_hour"]) == "149", "scotia peen hour")
+	_expect(str(model["hang_hour"]) == "150", "scotia hang hour")
+	for hour in Scotia.HOURS:
+		var used := false
+		for field in Scotia.fields():
+			if str(model[field]) == hour:
+				used = true
+		_expect(used, "scotia hour %s is blank in the true timeline" % hour)
+	for place in Scotia.PLACES:
+		var place_used := false
+		for field in Scotia.fields():
+			if str(model[field]) == place:
+				place_used = true
+		_expect(place_used, "scotia room %s is blank in the true timeline" % place)
+	for person in Scotia.PEOPLE:
+		var person_used := false
+		for field in Scotia.fields():
+			if str(model[field]) == person:
+				person_used = true
+		_expect(person_used, "scotia person %s is blank in the true timeline" % person)
+	_expect(Scotia.timeline(model) == SCOTIA_TIMELINE, "scotia timeline drifted:\n%s" % Scotia.timeline(model))
+	for exhibit in Scotia.EXHIBITS:
+		_expect(Scotia.holds(exhibit, model), "%s rejects the scotia timeline" % exhibit["id"])
+
+
+func _test_scotia_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Scotia.EXHIBITS, Scotia)
+	for exhibit in Scotia.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Scotia.without(exhibit_id), Scotia)
+		print("scotia without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "scotia %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Scotia.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "scotia %s removal did not admit a timeline it forbids" % exhibit_id)
+
+
+func _test_scotia_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	var riffler_miss := {"who": "Nils", "place": "riffler", "hour": "146"}
+	_expect(Scotia.conflicting_ids(riffler_miss).size() == 9, "Nils / riffler / 146 contradicts %d exhibits" % Scotia.conflicting_ids(riffler_miss).size())
+	for who in Scotia.PEOPLE:
+		for place in Scotia.PLACES:
+			for hour in Scotia.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == SCOTIA_TRUE["who"] and place == SCOTIA_TRUE["place"] and hour == SCOTIA_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Scotia)
+					print("scotia true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true scotia theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "scotia acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(SCOTIA_TIMELINE) >= 0, "scotia acceptance should give the timeline")
+					_expect(str(result["message"]).find("Willa") >= 0, "scotia acceptance omits Willa")
+					_expect(str(result["message"]).find("hollow") >= 0, "scotia acceptance omits the hollow")
+					_expect(str(result["message"]).find("148") >= 0, "scotia acceptance omits 148")
+					_expect(str(result["message"]).find("so the torus would take the scotia") >= 0, "scotia acceptance omits the torus")
+					_expect(str(result["message"]).find("Willa (scotia hand) cut the scotia in the hollow at 148") >= 0, "scotia acceptance omits the scotiaing")
+					_expect(Scotia.conflicting_ids(theory).is_empty(), "true scotia theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Scotia)
+					_expect(Scotia.conflicting_ids(theory).size() >= 2, "%s / %s / %s contradicts fewer than two exhibits" % [who, place, hour])
+					rejected += 1
+	for outsider in ["Merrick", "Enid", "Petra", "Ross", "Pia", "Jude", "Shay", "Dell", "Glen", "Faye", "Kerr", "Brynn", "Rhys", "Mab", "Lisle", "Clem", "Gale", "Boyd", "Hob", "Nairn", "Cole", "Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal", "Nell"]:
+		_expect_rejected({"who": outsider, "place": "hollow", "hour": "148"}, Scotia)
+	print("scotia theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d scotia theories" % accepted)
+	_expect(rejected >= 2, "rejected %d scotia theories" % rejected)
+
+
+func _test_scotia_near_misses() -> void:
+	var misses := [
+		{"who": "Willa", "place": "hollow", "hour": "149", "titles": ["Scotia leaf", "Yearling note", "Peen order"]},
+		{"who": "Willa", "place": "hollow", "hour": "147", "titles": ["Scotia leaf", "Yearling note", "Peen order"]},
+		{"who": "Willa", "place": "riffler", "hour": "148", "titles": ["Soot slate", "Riffler card", "Pumice slip"]},
+		{"who": "Nils", "place": "hollow", "hour": "148", "titles": ["Torus chit", "Cusp sight", "Fascia bill"]},
+	]
+	var wrong_hour_in_bit := 0
+	var wrong_place_at_hour := 0
+	var wrong_person_in_bit := 0
+	for theory in misses:
+		_expect_rejected(theory, Scotia)
+		var result: Dictionary = Verdict.submit(theory, Scotia)
+		var message := str(result["message"])
+		_expect(Scotia.conflicting_ids(theory).size() >= 2, "near-miss should contradict at least two exhibits: %s" % message)
+		_expect(Scotia.conflicting_ids(theory).size() == 3, "near-miss should name three exhibits: %s" % message)
+		var named_at := -1
+		for title in theory["titles"]:
+			var at := message.find(str(title))
+			_expect(at >= 0, "near-miss omits %s: %s" % [title, message])
+			_expect(at > named_at, "near-miss names %s out of paper order: %s" % [title, message])
+			named_at = at
+		if str(theory["who"]) == "Willa" and str(theory["place"]) == "hollow" and str(theory["hour"]) != "148":
+			wrong_hour_in_bit += 1
+		if str(theory["who"]) == "Willa" and str(theory["place"]) != "hollow" and str(theory["hour"]) == "148":
+			wrong_place_at_hour += 1
+		if str(theory["who"]) != "Willa" and str(theory["place"]) == "hollow" and str(theory["hour"]) == "148":
+			wrong_person_in_bit += 1
+	print("scotia near-misses rejected: %d" % misses.size())
+	_expect(misses.size() == 4, "need four scotia near-misses, found %d" % misses.size())
+	_expect(wrong_hour_in_bit == 2, "two near-misses should keep Willa in the hollow at another hour")
+	_expect(wrong_place_at_hour >= 1, "a near-miss should keep Willa at 148 in another room")
+	_expect(wrong_person_in_bit >= 1, "a near-miss should keep the hollow at 148 for another person")
+
+func _test_scotia_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+		"who took the gilt stamp",
+		"where they took the stamp",
+		"at which hour they took the stamp",
+		"who took the ferry bell",
+		"where they took the bell",
+		"at which hour they took the bell",
+		"who took the weather slate",
+		"where they took the slate",
+		"at which hour they took the slate",
+		"who took the loom shuttle",
+		"where they took the shuttle",
+		"at which hour they took the shuttle",
+		"who took the hive smoker",
+		"where they took the smoker",
+		"at which hour they took the smoker",
+		"who took the glass pontil",
+		"where they took the pontil",
+		"at which hour they took the pontil",
+		"who took the press proof",
+		"where they took the proof",
+		"at which hour they took the proof",
+		"who set the assay cup",
+		"where they set the cup",
+		"at which hour they set the cup",
+		"who chalked the kiln mark",
+		"where they chalked the mark",
+		"at which hour they chalked the mark",
+		"who entered the tide ledger",
+		"where they entered the ledger",
+		"at which hour they entered the ledger",
+		"who stopped the night bell",
+		"where they stopped the bell",
+		"at which hour they stopped the bell",
+		"who scored the salt mark",
+		"where they scored the mark",
+		"at which hour they scored the mark",
+		"who trimmed the wick",
+		"where they trimmed the wick",
+		"at which hour they trimmed the wick",
+		"who annealed the gather",
+		"where they annealed the gather",
+		"at which hour they annealed the gather",
+		"who grafted the scion",
+		"where they grafted the scion",
+		"at which hour they grafted the scion",
+		"who dipped the skein",
+		"where they dipped the skein",
+		"at which hour they dipped the skein",
+		"who tarred the rope",
+		"where they tarred the rope",
+		"at which hour they tarred the rope",
+		"who pressed the cork",
+		"where they pressed the cork",
+		"at which hour they pressed the cork",
+		"who mended the net",
+		"where they mended the net",
+		"at which hour they mended the net",
+		"who drove the hoop",
+		"where they drove the hoop",
+		"at which hour they drove the hoop",
+		"who folded the linen",
+		"where they folded the linen",
+		"at which hour they folded the linen",
+		"who cut the dovetail",
+		"where they cut the dovetail",
+		"at which hour they cut the dovetail",
+		"who cut the mortise",
+		"where they cut the mortise",
+		"at which hour they cut the mortise",
+		"who cut the rebate",
+		"where they cut the rebate",
+		"at which hour they cut the rebate",
+		"who cut the housing",
+		"where they cut the housing",
+		"at which hour they cut the housing",
+		"who cut the tenon",
+		"where they cut the tenon",
+		"at which hour they cut the tenon",
+		"who cut the bridle",
+		"where they cut the bridle",
+		"at which hour they cut the bridle",
+		"who cut the dado",
+		"where they cut the dado",
+		"at which hour they cut the dado",
+		"who cut the spline",
+		"where they cut the spline",
+		"at which hour they cut the spline",
+		"who cut the mitre",
+		"where they cut the mitre",
+		"at which hour they cut the mitre",
+		"who cut the lap",
+		"where they cut the lap",
+		"at which hour they cut the lap",
+		"who cut the scarf",
+		"where they cut the scarf",
+		"at which hour they cut the scarf",
+		"who cut the finger",
+		"where they cut the finger",
+		"at which hour they cut the finger",
+		"who cut the haunch",
+		"where they cut the haunch",
+		"at which hour they cut the haunch",
+		"who cut the dowel",
+		"where they cut the dowel",
+		"at which hour they cut the dowel",
+		"who cut the tongue",
+		"where they cut the tongue",
+		"at which hour they cut the tongue",
+		"who scratched the quirk",
+		"where they scratched the quirk",
+		"at which hour they scratched the quirk",
+		"who cut the chamfer",
+		"where they cut the chamfer",
+		"at which hour they cut the chamfer",
+	]
+
+	var cases := [
+		{"theory": {"who": "", "place": "hollow", "hour": "148"}, "present": ["who cut the scotia"], "absent": ["where they cut the scotia", "at which hour they cut the scotia"]},
+		{"theory": {"who": "Willa", "place": "", "hour": "148"}, "present": ["where they cut the scotia"], "absent": ["who cut the scotia", "at which hour they cut the scotia"]},
+		{"theory": {"who": "Willa", "place": "hollow", "hour": ""}, "present": ["at which hour they cut the scotia"], "absent": ["who cut the scotia", "where they cut the scotia"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who cut the scotia", "where they cut the scotia", "at which hour they cut the scotia"], "absent": []},
+		{"theory": {}, "present": ["who cut the scotia", "where they cut the scotia", "at which hour they cut the scotia"], "absent": []},
+		{"theory": {"who": "Cora", "place": "", "hour": "150"}, "present": ["where they cut the scotia"], "absent": ["who cut the scotia", "at which hour they cut the scotia"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Scotia)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "scotia incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "scotia incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "scotia incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "scotia incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "scotia incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "scotia missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "scotia named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "scotia incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("scotia incomplete submissions refused with the missing slot")
+
+func _test_cyma_file_shape() -> void:
+	_expect(Cyma.EXHIBITS.size() == 9, "cyma exhibit count is %d" % Cyma.EXHIBITS.size())
+	_expect(Cyma.PEOPLE.size() == 3, "cyma cast should be three people")
+	_expect(Cyma.PLACES.size() == 3, "cyma room count is %d" % Cyma.PLACES.size())
+	_expect(Cyma.HOURS.size() == 5, "cyma hour list length is %d" % Cyma.HOURS.size())
+	_expect(Cyma.PEOPLE == ["Ruth", "Amos", "Lena"], "cyma cast is %s" % str(Cyma.PEOPLE))
+	_expect(Cyma.PLACES == ["bolection", "inshave", "froe"], "cyma rooms are %s" % str(Cyma.PLACES))
+	_expect(Cyma.HOURS == ["151", "152", "153", "154", "155"], "cyma hours are %s" % str(Cyma.HOURS))
+	_expect(Cyma.AIMS == ["take_echinus", "spare_echinus", "set_echinus"], "cyma aims are %s" % str(Cyma.AIMS))
+	_expect(Cyma.aim_phrase("take_echinus") == "so the echinus would take the cyma", "cyma aim phrase")
+	_expect(Cyma.aim_phrase("spare_echinus") == "to spare the echinus still waiting on the cyma", "cyma spare aim")
+	_expect(Cyma.aim_phrase("set_echinus") == "to set the echinus before the bolection was hung", "cyma set aim")
+	_expect(Cyma.TITLE == "The cyma", "cyma title")
+	_expect(Cyma.BLURB == "The cyma left its peg at the joiner's jennet. Name who cut the cyma, the room they cut it in, and the hour.", "cyma blurb")
+	_expect(Cyma.FILE_CODE == "CW-42", "cyma file code")
+	_expect(Cyma.fields() == ["taker", "place", "hour", "echinus", "echinus_room", "echinus_hour", "seen_from", "inshave", "aim", "inshave_room", "corona_room", "rouge_hour", "chase_hour", "hang_hour"], "cyma fields are %s" % str(Cyma.fields()))
+	_expect(Cyma.PLAYER_FIELDS == ["taker", "place", "hour"], "cyma player fields")
+	_expect(Cyma.HOURS[Cyma.HOURS.size() / 2] == CYMA_TRUE["hour"], "cyma cutting should be the middle hour")
+	_expect(Cyma.HOURS[0] != CYMA_TRUE["hour"], "cyma cutting should not be the earliest hour")
+	_expect(Cyma.HOURS[Cyma.HOURS.size() - 1] != CYMA_TRUE["hour"], "cyma cutting should not be the latest hour")
+	var counts := _player_pin_counts(Cyma)
+	_expect(int(counts["taker"]) == 3 and int(counts["place"]) == 3 and int(counts["hour"]) == 3, "cyma pin counts are %s" % str(counts))
+	var loose_pin: Array = [
+		[CaseData, "spare key"],
+		[Rehearsal, "rehearsal score"],
+		[Gilt, "gilt stamp"],
+		[Ferry, "ferry bell"],
+		[Weather, "weather slate"],
+		[Loom, "loom shuttle"],
+		[Hive, "hive smoker"],
+		[Glass, "glass pontil"],
+		[Press, "press proof"],
+		[Assay, "assay cup"],
+	]
+	var rhythm: Array = [
+		[Kiln, "kiln chalk"],
+		[Tide, "tide ledger"],
+		[Night, "night bell"],
+		[Salt, "salt mark"],
+		[Wick, "wick trim"],
+		[Anneal, "glass anneal"],
+		[Graft, "orchard graft"],
+		[Dye, "dye vat"],
+		[Tar, "tar kettle"],
+		[Cork, "cork press"],
+		[Net, "net loft"],
+		[Cask, "cask hoop"],
+		[Linen, "linen fold"],
+		[Dovetail, "dovetail"],
+		[Mortise, "mortise"],
+		[Rebate, "rebate"],
+		[Housing, "housing"],
+		[Tenon, "tenon"],
+		[Bridle, "bridle"],
+		[Dado, "dado"],
+		[Spline, "spline"],
+		[Mitre, "mitre"],
+		[Lap, "lap"],
+		[Scarf, "scarf"],
+		[Finger, "finger"],
+		[Haunch, "haunch"],
+		[Dowel, "dowel"],
+		[Tongue, "tongue"],
+		[Quirk, "quirk"],
+		[Chamfer, "chamfer"],
+		[Scotia, "scotia"],
+	]
+	for row in loose_pin:
+		_expect(counts != _player_pin_counts(row[0]), "cyma copied the %s pin pattern" % row[1])
+	for row in rhythm:
+		_expect(counts == _player_pin_counts(row[0]), "cyma should keep the %s pin rhythm" % row[1])
+	var earlier: Array = []
+	earlier.append_array(loose_pin)
+	earlier.append_array(rhythm)
+	for row in earlier:
+		var book = row[0]
+		var name := str(row[1])
+		_expect(Cyma.TITLE != book.TITLE, "cyma shares a title with the %s" % name)
+		_expect(Cyma.FILE_CODE != book.FILE_CODE, "cyma shares a file code with the %s" % name)
+		_expect(_field_key(Cyma) != _field_key(book), "cyma copied the %s timeline fields" % name)
+	var seen := {}
+	var stated := {}
+	var paired_hidden := 0
+	var earlier_texts := {}
+	var earlier_sentences := {}
+	var earlier_titles := {}
+	for row in earlier:
+		for old_exhibit in row[0].EXHIBITS:
+			var old_text := str(old_exhibit["text"])
+			earlier_texts[old_text] = true
+			earlier_titles[str(old_exhibit["title"])] = true
+			for old_sentence in old_text.split(". "):
+				earlier_sentences[old_sentence.trim_suffix(".").strip_edges()] = true
+	var exhibit_titles: Array[String] = []
+	var exhibit_sources: Array[String] = []
+	for exhibit in Cyma.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		exhibit_titles.append(str(exhibit["title"]))
+		exhibit_sources.append(str(exhibit["source"]))
+		_expect(not seen.has(exhibit_id), "duplicate cyma id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(not earlier_titles.has(str(exhibit["title"])), "%s reuses an earlier title %s" % [exhibit_id, exhibit["title"]])
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		_expect(not earlier_texts.has(str(exhibit["text"])), "cyma copied an earlier exhibit")
+		for sentence in str(exhibit["text"]).split(". "):
+			var cleaned := sentence.trim_suffix(".").strip_edges()
+			_expect(not earlier_sentences.has(cleaned), "cyma copied an earlier sentence: %s" % cleaned)
+		for banned in ["tarred", "rope", "kettle", "winch", "pitch", "loft", "strand", "hook", "walk", "dipped", "skein", "indigo", "pressed", "press", "cork", "bottle", "seal", "mallet", "screw", "cellar", "bench", "neck", "plug", "dye", "vat", "mesh", "shed", "rail", "crank", "needle", "mended", "twine", "house", "cooperage", "cask", "hoop", "croze", "stave", "driver", "yard", "shop", "linen", "fold", "shears", "roller", "hem", "sheet", "crease", "drawer", "dovetail", "vise", "stile", "apron", "saw", "clamp", "peg", "mortise", "chisel", "tenon", "awl", "wedge", "bored", "ragged", "racked", "rebate", "plane", "gauge", "shoulder", "shim", "tansy", "solt", "quern", "housing", "square", "bead", "trench", "fillet", "stock", "chalk", "ewan", "maren", "hollin", "gouge", "rasp", "bevel", "guide", "harl", "neve", "luth", "nick", "bridle", "router", "scraper", "adze", "spline", "templet", "strop", "notch", "wend", "sile", "jute", "dado", "cleat", "spur", "kern", "phel", "tarn", "shavings", "mouth", "iron", "senn", "voss", "cade", "slot", "feather", "whet", "orrin", "venn", "haim", "mitre", "arris", "offcut", "saddle", "dressed", "brushed", "nye", "yew", "pry", "lap", "grain", "brad", "plough", "float", "gimlet", "cradle", "crest", "horn", "scarf", "hob", "nairn", "cole", "shaving", "blade", "spokeshave", "firmer", "paring", "drawknife", "edge", "skimmed", "film", "sole", "tang", "mare", "finger", "clem", "gale", "boyd", "pad", "badger", "jack", "socket", "catch", "chip", "burr", "flake", "buffed", "sheen", "pony", "rubbed", "face", "haunch", "cheek", "smoother", "jointer", "fore", "sliver", "pin", "rhys", "mab", "lisle", "colt", "wiped", "mote", "toe", "mist", "bed", "dowel", "bore", "auger", "bit", "brace", "curl", "chuck", "flute", "faye", "kerr", "brynn", "foal", "waxed", "honed", "speck", "gloss", "wax", "point", "shay", "dell", "glen", "tongue", "groove", "kerf", "punch", "peel", "scribe", "knife", "fence", "tallow", "tallowed", "ground", "fleck", "filly", "coat", "cutting", "grind", "ross", "pia", "jude", "quirk", "scratch", "scratched", "scratching", "snib", "ovolo", "veiner", "astragal", "gelding", "grit", "bloom", "stoned", "oiled", "score", "bolt", "grease", "merrick", "enid", "petra", "chamfer", "chamfering", "block", "file", "cove", "travisher", "cant", "stallion", "soap", "soaped", "fettle", "fettled", "wisp", "rime", "haze", "tooth", "willa", "nils", "cora", "scotia", "scotiaing", "hollow", "riffler", "scorp", "torus", "fascia", "pumiced", "peened", "whiting", "crocus", "soot", "cusp", "yearling", "pumice"]:
+			_expect(str(exhibit["text"]).find(banned) == -1, "%s copies %s" % [exhibit_id, banned])
+		var states_player_pin := false
+		var states_unique := false
+		var player_literals := 0
+		var hidden_literals := 0
+		for literal in exhibit["literals"]:
+			stated[str(literal["value"])] = true
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Cyma.PLAYER_FIELDS:
+				states_player_pin = true
+				player_literals += 1
+				var expected := Cyma.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Cyma.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats >= 2, "%s states %s once" % [exhibit_id, field])
+			else:
+				hidden_literals += 1
+				var owners := 0
+				for other in Cyma.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		if hidden_literals == 2:
+			paired_hidden += 1
+		else:
+			_expect(hidden_literals == 1, "%s states %d hidden facts" % [exhibit_id, hidden_literals])
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(player_literals == 1, "%s states %d player pins" % [exhibit_id, player_literals])
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+	_expect(paired_hidden == 2, "cyma should have two slips with two hidden facts, found %d" % paired_hidden)
+	_expect(exhibit_titles == ["Echinus chit", "Beak sight", "Corona bill", "Garnet slate", "Inshave card", "Rouge slip", "Cyma leaf", "Jennet note", "Chase order"], "cyma exhibit titles are %s" % str(exhibit_titles))
+	_expect(exhibit_sources == ["Amos, echinus hand", "Inshave beak", "Froe nose", "Bolection garnet", "Lena, inshave clerk", "Inshave tote", "Echinus book", "Joiner's jennet", "Froe card"], "cyma sources are %s" % str(exhibit_sources))
+	for hour in Cyma.HOURS:
+		_expect(stated.has(hour), "cyma hour %s is absent from the exhibits" % hour)
+
+
+func _test_cyma_unique_model() -> void:
+	var models := Solver.enumerate(Cyma.EXHIBITS, Cyma)
+	print("cyma models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one cyma model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Ruth", "cyma taker")
+	_expect(str(model["place"]) == "bolection", "cyma place")
+	_expect(str(model["hour"]) == "153", "cyma hour")
+	_expect(str(model["echinus"]) == "Amos", "cyma echinus hand")
+	_expect(str(model["echinus_room"]) == "froe", "cyma echinus room")
+	_expect(str(model["echinus_hour"]) == "152", "cyma echinus hour")
+	_expect(str(model["seen_from"]) == "inshave", "cyma seen from")
+	_expect(str(model["inshave"]) == "Lena", "cyma inshave")
+	_expect(str(model["aim"]) == "take_echinus", "cyma aim")
+	_expect(str(model["inshave_room"]) == "bolection", "cyma inshave room")
+	_expect(str(model["corona_room"]) == "froe", "cyma corona room")
+	_expect(str(model["rouge_hour"]) == "151", "cyma rouge hour")
+	_expect(str(model["chase_hour"]) == "154", "cyma chase hour")
+	_expect(str(model["hang_hour"]) == "155", "cyma hang hour")
+	for hour in Cyma.HOURS:
+		var used := false
+		for field in Cyma.fields():
+			if str(model[field]) == hour:
+				used = true
+		_expect(used, "cyma hour %s is blank in the true timeline" % hour)
+	for place in Cyma.PLACES:
+		var place_used := false
+		for field in Cyma.fields():
+			if str(model[field]) == place:
+				place_used = true
+		_expect(place_used, "cyma room %s is blank in the true timeline" % place)
+	for person in Cyma.PEOPLE:
+		var person_used := false
+		for field in Cyma.fields():
+			if str(model[field]) == person:
+				person_used = true
+		_expect(person_used, "cyma person %s is blank in the true timeline" % person)
+	_expect(Cyma.timeline(model) == CYMA_TIMELINE, "cyma timeline drifted:\n%s" % Cyma.timeline(model))
+	for exhibit in Cyma.EXHIBITS:
+		_expect(Cyma.holds(exhibit, model), "%s rejects the cyma timeline" % exhibit["id"])
+
+
+func _test_cyma_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Cyma.EXHIBITS, Cyma)
+	for exhibit in Cyma.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Cyma.without(exhibit_id), Cyma)
+		print("cyma without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "cyma %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Cyma.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "cyma %s removal did not admit a timeline it forbids" % exhibit_id)
+
+
+func _test_cyma_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	var inshave_miss := {"who": "Amos", "place": "inshave", "hour": "151"}
+	_expect(Cyma.conflicting_ids(inshave_miss).size() == 9, "Amos / inshave / 151 contradicts %d exhibits" % Cyma.conflicting_ids(inshave_miss).size())
+	for who in Cyma.PEOPLE:
+		for place in Cyma.PLACES:
+			for hour in Cyma.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == CYMA_TRUE["who"] and place == CYMA_TRUE["place"] and hour == CYMA_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Cyma)
+					print("cyma true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true cyma theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "cyma acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(CYMA_TIMELINE) >= 0, "cyma acceptance should give the timeline")
+					_expect(str(result["message"]).find("Ruth") >= 0, "cyma acceptance omits Ruth")
+					_expect(str(result["message"]).find("bolection") >= 0, "cyma acceptance omits the bolection")
+					_expect(str(result["message"]).find("153") >= 0, "cyma acceptance omits 153")
+					_expect(str(result["message"]).find("so the echinus would take the cyma") >= 0, "cyma acceptance omits the echinus")
+					_expect(str(result["message"]).find("Ruth (cyma hand) cut the cyma in the bolection at 153") >= 0, "cyma acceptance omits the cymaing")
+					_expect(Cyma.conflicting_ids(theory).is_empty(), "true cyma theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Cyma)
+					_expect(Cyma.conflicting_ids(theory).size() >= 2, "%s / %s / %s contradicts fewer than two exhibits" % [who, place, hour])
+					rejected += 1
+	for outsider in ["Willa", "Nils", "Cora", "Merrick", "Enid", "Petra", "Ross", "Pia", "Jude", "Shay", "Dell", "Glen", "Faye", "Kerr", "Brynn", "Rhys", "Mab", "Lisle", "Clem", "Gale", "Boyd", "Hob", "Nairn", "Cole", "Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal", "Nell"]:
+		_expect_rejected({"who": outsider, "place": "bolection", "hour": "153"}, Cyma)
+	print("cyma theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d cyma theories" % accepted)
+	_expect(rejected >= 2, "rejected %d cyma theories" % rejected)
+
+
+func _test_cyma_near_misses() -> void:
+	var misses := [
+		{"who": "Ruth", "place": "bolection", "hour": "154", "titles": ["Cyma leaf", "Jennet note", "Chase order"]},
+		{"who": "Ruth", "place": "bolection", "hour": "152", "titles": ["Cyma leaf", "Jennet note", "Chase order"]},
+		{"who": "Ruth", "place": "inshave", "hour": "153", "titles": ["Garnet slate", "Inshave card", "Rouge slip"]},
+		{"who": "Amos", "place": "bolection", "hour": "153", "titles": ["Echinus chit", "Beak sight", "Corona bill"]},
+	]
+	var wrong_hour_in_bit := 0
+	var wrong_place_at_hour := 0
+	var wrong_person_in_bit := 0
+	for theory in misses:
+		_expect_rejected(theory, Cyma)
+		var result: Dictionary = Verdict.submit(theory, Cyma)
+		var message := str(result["message"])
+		_expect(Cyma.conflicting_ids(theory).size() >= 2, "near-miss should contradict at least two exhibits: %s" % message)
+		_expect(Cyma.conflicting_ids(theory).size() == 3, "near-miss should name three exhibits: %s" % message)
+		var named_at := -1
+		for title in theory["titles"]:
+			var at := message.find(str(title))
+			_expect(at >= 0, "near-miss omits %s: %s" % [title, message])
+			_expect(at > named_at, "near-miss names %s out of paper order: %s" % [title, message])
+			named_at = at
+		if str(theory["who"]) == "Ruth" and str(theory["place"]) == "bolection" and str(theory["hour"]) != "153":
+			wrong_hour_in_bit += 1
+		if str(theory["who"]) == "Ruth" and str(theory["place"]) != "bolection" and str(theory["hour"]) == "153":
+			wrong_place_at_hour += 1
+		if str(theory["who"]) != "Ruth" and str(theory["place"]) == "bolection" and str(theory["hour"]) == "153":
+			wrong_person_in_bit += 1
+	print("cyma near-misses rejected: %d" % misses.size())
+	_expect(misses.size() == 4, "need four cyma near-misses, found %d" % misses.size())
+	_expect(wrong_hour_in_bit == 2, "two near-misses should keep Ruth in the bolection at another hour")
+	_expect(wrong_place_at_hour >= 1, "a near-miss should keep Ruth at 153 in another room")
+	_expect(wrong_person_in_bit >= 1, "a near-miss should keep the bolection at 153 for another person")
+
+func _test_cyma_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+		"who took the gilt stamp",
+		"where they took the stamp",
+		"at which hour they took the stamp",
+		"who took the ferry bell",
+		"where they took the bell",
+		"at which hour they took the bell",
+		"who took the weather slate",
+		"where they took the slate",
+		"at which hour they took the slate",
+		"who took the loom shuttle",
+		"where they took the shuttle",
+		"at which hour they took the shuttle",
+		"who took the hive smoker",
+		"where they took the smoker",
+		"at which hour they took the smoker",
+		"who took the glass pontil",
+		"where they took the pontil",
+		"at which hour they took the pontil",
+		"who took the press proof",
+		"where they took the proof",
+		"at which hour they took the proof",
+		"who set the assay cup",
+		"where they set the cup",
+		"at which hour they set the cup",
+		"who chalked the kiln mark",
+		"where they chalked the mark",
+		"at which hour they chalked the mark",
+		"who entered the tide ledger",
+		"where they entered the ledger",
+		"at which hour they entered the ledger",
+		"who stopped the night bell",
+		"where they stopped the bell",
+		"at which hour they stopped the bell",
+		"who scored the salt mark",
+		"where they scored the mark",
+		"at which hour they scored the mark",
+		"who trimmed the wick",
+		"where they trimmed the wick",
+		"at which hour they trimmed the wick",
+		"who annealed the gather",
+		"where they annealed the gather",
+		"at which hour they annealed the gather",
+		"who grafted the scion",
+		"where they grafted the scion",
+		"at which hour they grafted the scion",
+		"who dipped the skein",
+		"where they dipped the skein",
+		"at which hour they dipped the skein",
+		"who tarred the rope",
+		"where they tarred the rope",
+		"at which hour they tarred the rope",
+		"who pressed the cork",
+		"where they pressed the cork",
+		"at which hour they pressed the cork",
+		"who mended the net",
+		"where they mended the net",
+		"at which hour they mended the net",
+		"who drove the hoop",
+		"where they drove the hoop",
+		"at which hour they drove the hoop",
+		"who folded the linen",
+		"where they folded the linen",
+		"at which hour they folded the linen",
+		"who cut the dovetail",
+		"where they cut the dovetail",
+		"at which hour they cut the dovetail",
+		"who cut the mortise",
+		"where they cut the mortise",
+		"at which hour they cut the mortise",
+		"who cut the rebate",
+		"where they cut the rebate",
+		"at which hour they cut the rebate",
+		"who cut the housing",
+		"where they cut the housing",
+		"at which hour they cut the housing",
+		"who cut the tenon",
+		"where they cut the tenon",
+		"at which hour they cut the tenon",
+		"who cut the bridle",
+		"where they cut the bridle",
+		"at which hour they cut the bridle",
+		"who cut the dado",
+		"where they cut the dado",
+		"at which hour they cut the dado",
+		"who cut the spline",
+		"where they cut the spline",
+		"at which hour they cut the spline",
+		"who cut the mitre",
+		"where they cut the mitre",
+		"at which hour they cut the mitre",
+		"who cut the lap",
+		"where they cut the lap",
+		"at which hour they cut the lap",
+		"who cut the scarf",
+		"where they cut the scarf",
+		"at which hour they cut the scarf",
+		"who cut the finger",
+		"where they cut the finger",
+		"at which hour they cut the finger",
+		"who cut the haunch",
+		"where they cut the haunch",
+		"at which hour they cut the haunch",
+		"who cut the dowel",
+		"where they cut the dowel",
+		"at which hour they cut the dowel",
+		"who cut the tongue",
+		"where they cut the tongue",
+		"at which hour they cut the tongue",
+		"who scratched the quirk",
+		"where they scratched the quirk",
+		"at which hour they scratched the quirk",
+		"who cut the chamfer",
+		"where they cut the chamfer",
+		"at which hour they cut the chamfer",
+		"who cut the scotia",
+		"where they cut the scotia",
+		"at which hour they cut the scotia",
+	]
+
+	var cases := [
+		{"theory": {"who": "", "place": "bolection", "hour": "153"}, "present": ["who cut the cyma"], "absent": ["where they cut the cyma", "at which hour they cut the cyma"]},
+		{"theory": {"who": "Ruth", "place": "", "hour": "153"}, "present": ["where they cut the cyma"], "absent": ["who cut the cyma", "at which hour they cut the cyma"]},
+		{"theory": {"who": "Ruth", "place": "bolection", "hour": ""}, "present": ["at which hour they cut the cyma"], "absent": ["who cut the cyma", "where they cut the cyma"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who cut the cyma", "where they cut the cyma", "at which hour they cut the cyma"], "absent": []},
+		{"theory": {}, "present": ["who cut the cyma", "where they cut the cyma", "at which hour they cut the cyma"], "absent": []},
+		{"theory": {"who": "Lena", "place": "", "hour": "155"}, "present": ["where they cut the cyma"], "absent": ["who cut the cyma", "at which hour they cut the cyma"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Cyma)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "cyma incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "cyma incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "cyma incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "cyma incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "cyma incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "cyma missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "cyma named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "cyma incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("cyma incomplete submissions refused with the missing slot")
+
 func _test_solutions_differ() -> void:
 	var spare := {"who": "Nell", "place": "kitchen", "hour": "7"}
 	_expect(spare["who"] != REHEARSAL_TRUE["who"], "rehearsal copied the spare-key taker")
@@ -16454,7 +17328,443 @@ func _test_solutions_differ() -> void:
 	_expect(not Chamfer.HOURS.has("139"), "chamfer hours must not take 139")
 	_expect(not Chamfer.HOURS.has("140"), "chamfer hours must not take 140")
 
-	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal", "The orchard graft", "The dye vat", "The tar kettle", "The cork press", "The net loft", "The cask hoop", "The linen fold", "The dovetail", "The mortise", "The rebate", "The housing", "The tenon", "The bridle", "The dado", "The spline", "The mitre", "The lap", "The scarf", "The finger", "The haunch", "The dowel", "The tongue", "The quirk", "The chamfer"], "case list is %s" % str(titles))
+	_expect(SCOTIA_TRUE["who"] == "Willa", "scotia taker")
+	_expect(SCOTIA_TRUE["place"] == "hollow", "scotia room")
+	_expect(SCOTIA_TRUE["hour"] == "148", "scotia hour")
+	for forbidden in ["Merrick", "Enid", "Petra", "Ross", "Pia", "Jude", "Shay", "Dell", "Glen", "Faye", "Kerr", "Brynn", "Lisle", "Mab", "Rhys", "Clem", "Gale", "Boyd", "Hob", "Nairn", "Cole", "Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(SCOTIA_TRUE["who"] != forbidden, "scotia accepted %s" % forbidden)
+	for forbidden_place in ["block", "file", "travisher", "scratch", "snib", "veiner", "knife", "punch", "scribe", "bit", "auger", "brace", "jointer", "smoother", "fore", "pad", "badger", "jack", "drawknife", "spokeshave", "firmer", "plough", "float", "gimlet", "router", "scraper", "adze", "gouge", "rasp", "bevel", "saw", "square", "bead", "plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(SCOTIA_TRUE["place"] != forbidden_place, "scotia accepted the %s" % forbidden_place)
+	_expect(SCOTIA_TRUE["place"] != "punch", "scotia accepted the punch")
+	_expect(SCOTIA_TRUE["place"] != "scribe", "scotia accepted the scribe")
+	_expect(SCOTIA_TRUE["place"] != "snib", "scotia accepted the snib")
+	_expect(SCOTIA_TRUE["place"] != "veiner", "scotia accepted the veiner")
+	_expect(SCOTIA_TRUE["place"] != "file", "scotia accepted the file")
+	_expect(SCOTIA_TRUE["place"] != "travisher", "scotia accepted the travisher")
+	_expect(SCOTIA_TRUE["place"] != "block", "scotia accepted the block")
+	_expect(SCOTIA_TRUE["place"] != "riffler", "scotia accepted the riffler")
+	_expect(SCOTIA_TRUE["place"] != "scorp", "scotia accepted the scorp")
+	_expect(SCOTIA_TRUE["hour"] != "111", "scotia accepted 111")
+	_expect(SCOTIA_TRUE["hour"] != "112", "scotia accepted 112")
+	_expect(SCOTIA_TRUE["hour"] != "114", "scotia accepted 114")
+	_expect(SCOTIA_TRUE["hour"] != "115", "scotia accepted 115")
+	_expect(SCOTIA_TRUE["hour"] != "106", "scotia accepted 106")
+	_expect(SCOTIA_TRUE["hour"] != "107", "scotia accepted 107")
+	_expect(SCOTIA_TRUE["hour"] != "108", "scotia accepted 108")
+	_expect(SCOTIA_TRUE["hour"] != "109", "scotia accepted 109")
+	_expect(SCOTIA_TRUE["hour"] != "110", "scotia accepted 110")
+	_expect(SCOTIA_TRUE["hour"] != "101", "scotia accepted 101")
+	_expect(SCOTIA_TRUE["hour"] != "102", "scotia accepted 102")
+	_expect(SCOTIA_TRUE["hour"] != "103", "scotia accepted 103")
+	_expect(SCOTIA_TRUE["hour"] != "104", "scotia accepted 104")
+	_expect(SCOTIA_TRUE["hour"] != "105", "scotia accepted 105")
+	_expect(SCOTIA_TRUE["hour"] != "96", "scotia accepted 96")
+	_expect(SCOTIA_TRUE["hour"] != "97", "scotia accepted 97")
+	_expect(SCOTIA_TRUE["hour"] != "98", "scotia accepted 98")
+	_expect(SCOTIA_TRUE["hour"] != "99", "scotia accepted 99")
+	_expect(SCOTIA_TRUE["hour"] != "100", "scotia accepted 100")
+	_expect(SCOTIA_TRUE["hour"] != "91", "scotia accepted 91")
+	_expect(SCOTIA_TRUE["hour"] != "92", "scotia accepted 92")
+	_expect(SCOTIA_TRUE["hour"] != "93", "scotia accepted 93")
+	_expect(SCOTIA_TRUE["hour"] != "94", "scotia accepted 94")
+	_expect(SCOTIA_TRUE["hour"] != "95", "scotia accepted 95")
+	_expect(SCOTIA_TRUE["hour"] != "88", "scotia accepted 88")
+	_expect(SCOTIA_TRUE["hour"] != "83", "scotia accepted 83")
+	_expect(SCOTIA_TRUE["hour"] != "78", "scotia accepted 78")
+	_expect(SCOTIA_TRUE["hour"] != "73", "scotia accepted 73")
+	_expect(SCOTIA_TRUE["hour"] != "68", "scotia accepted 68")
+	_expect(SCOTIA_TRUE["hour"] != "63", "scotia accepted 63")
+	_expect(SCOTIA_TRUE["hour"] != "8", "scotia accepted 8")
+	_expect(SCOTIA_TRUE["hour"] != "6", "scotia accepted 6")
+	_expect(SCOTIA_TRUE["hour"] != "3", "scotia accepted 3")
+	_expect(SCOTIA_TRUE["hour"] != "16", "scotia accepted 16")
+	_expect(SCOTIA_TRUE["hour"] != "19", "scotia accepted 19")
+	_expect(SCOTIA_TRUE["hour"] != "113", "scotia accepted 113")
+	_expect(SCOTIA_TRUE["hour"] != "121", "scotia accepted 121")
+	_expect(SCOTIA_TRUE["hour"] != "122", "scotia accepted 122")
+	_expect(SCOTIA_TRUE["hour"] != "124", "scotia accepted 124")
+	_expect(SCOTIA_TRUE["hour"] != "125", "scotia accepted 125")
+	_expect(SCOTIA_TRUE["hour"] != "116", "scotia accepted 116")
+	_expect(SCOTIA_TRUE["hour"] != "117", "scotia accepted 117")
+	_expect(SCOTIA_TRUE["hour"] != "118", "scotia accepted 118")
+	_expect(SCOTIA_TRUE["hour"] != "119", "scotia accepted 119")
+	_expect(SCOTIA_TRUE["hour"] != "120", "scotia accepted 120")
+	_expect(SCOTIA_TRUE["hour"] != "123", "scotia accepted 123")
+	_expect(SCOTIA_TRUE["hour"] != "126", "scotia accepted 126")
+	_expect(SCOTIA_TRUE["hour"] != "127", "scotia accepted 127")
+	_expect(SCOTIA_TRUE["hour"] != "129", "scotia accepted 129")
+	_expect(SCOTIA_TRUE["hour"] != "130", "scotia accepted 130")
+	_expect(SCOTIA_TRUE["hour"] != "128", "scotia accepted 128")
+	_expect(SCOTIA_TRUE["hour"] != "131", "scotia accepted 131")
+	_expect(SCOTIA_TRUE["hour"] != "132", "scotia accepted 132")
+	_expect(SCOTIA_TRUE["hour"] != "134", "scotia accepted 134")
+	_expect(SCOTIA_TRUE["hour"] != "135", "scotia accepted 135")
+	_expect(SCOTIA_TRUE["hour"] != "133", "scotia accepted 133")
+	_expect(SCOTIA_TRUE["hour"] != "136", "scotia accepted 136")
+	_expect(SCOTIA_TRUE["hour"] != "137", "scotia accepted 137")
+	_expect(SCOTIA_TRUE["hour"] != "139", "scotia accepted 139")
+	_expect(SCOTIA_TRUE["hour"] != "140", "scotia accepted 140")
+	_expect(SCOTIA_TRUE["hour"] != "138", "scotia accepted 138")
+	_expect(SCOTIA_TRUE["hour"] != "141", "scotia accepted 141")
+	_expect(SCOTIA_TRUE["hour"] != "142", "scotia accepted 142")
+	_expect(SCOTIA_TRUE["hour"] != "144", "scotia accepted 144")
+	_expect(SCOTIA_TRUE["hour"] != "145", "scotia accepted 145")
+	_expect(SCOTIA_TRUE["hour"] != "143", "scotia accepted 143")
+	_expect(SCOTIA_TRUE["hour"] != "146", "scotia accepted 146")
+	_expect(SCOTIA_TRUE["hour"] != "147", "scotia accepted 147")
+	_expect(SCOTIA_TRUE["hour"] != "149", "scotia accepted 149")
+	_expect(SCOTIA_TRUE["hour"] != "150", "scotia accepted 150")
+	var before_scotia: Array = before_chamfer.duplicate()
+	before_scotia.append([Chamfer, CHAMFER_TRUE, "chamfer"])
+	for row in before_scotia:
+		var book = row[0]
+		var truth: Dictionary = row[1]
+		var name := str(row[2])
+		_expect(SCOTIA_TRUE["who"] != truth["who"], "scotia copied the %s taker" % name)
+		_expect(SCOTIA_TRUE["place"] != truth["place"], "scotia copied the %s room" % name)
+		_expect(SCOTIA_TRUE["hour"] != str(truth["hour"]), "scotia copied the %s hour" % name)
+		_expect_rejected(SCOTIA_TRUE, book)
+		_expect_rejected(truth, Scotia)
+	_expect(CHAMFER_TRUE["who"] == "Merrick" and CHAMFER_TRUE["place"] == "block" and CHAMFER_TRUE["hour"] == "143", "the chamfer should still accept Merrick in the block at 143")
+	_expect(QUIRK_TRUE["who"] == "Ross" and QUIRK_TRUE["place"] == "scratch" and QUIRK_TRUE["hour"] == "138", "the quirk should still accept Ross in the scratch at 138")
+	_expect(DOWEL_TRUE["who"] == "Faye" and DOWEL_TRUE["place"] == "bit" and DOWEL_TRUE["hour"] == "128", "the dowel should still accept Faye in the bit at 128")
+	_expect(TONGUE_TRUE["who"] == "Shay" and TONGUE_TRUE["place"] == "knife" and TONGUE_TRUE["hour"] == "133", "the tongue should still accept Shay in the knife at 133")
+	_expect(HAUNCH_TRUE["who"] == "Rhys" and HAUNCH_TRUE["place"] == "fore" and HAUNCH_TRUE["hour"] == "123", "the haunch should still accept Rhys in the fore at 123")
+	_expect(FINGER_TRUE["who"] == "Clem" and FINGER_TRUE["place"] == "pad" and FINGER_TRUE["hour"] == "118", "the finger should still accept Clem in the pad at 118")
+	for row in before_scotia:
+		var book = row[0]
+		var name := str(row[2])
+		for person in Scotia.PEOPLE:
+			_expect(not book.PEOPLE.has(person), "scotia cast repeats %s from the %s" % [person, name])
+		for place in Scotia.PLACES:
+			_expect(not book.PLACES.has(place), "scotia rooms repeat %s from the %s" % [place, name])
+		for hour in Scotia.HOURS:
+			_expect(not book.HOURS.has(hour), "scotia hours repeat %s from the %s" % [hour, name])
+	for forbidden_person in ["Merrick", "Enid", "Petra", "Ross", "Pia", "Jude", "Shay", "Dell", "Glen", "Faye", "Kerr", "Brynn", "Lisle", "Mab", "Rhys", "Clem", "Gale", "Boyd", "Hob", "Nairn", "Cole", "Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(not Scotia.PEOPLE.has(forbidden_person), "scotia cast must not take %s" % forbidden_person)
+	_expect(Scotia.role_phrase("Willa") == "the scotia hand", "the scotia should call Willa the scotia hand")
+	_expect(Scotia.role_phrase("Nils") == "the torus hand", "the scotia should call Nils the torus hand")
+	_expect(Scotia.role_phrase("Cora") == "the riffler clerk", "the scotia should call Cora the riffler clerk")
+	for forbidden_place in ["block", "file", "travisher", "scratch", "snib", "veiner", "knife", "punch", "scribe", "bit", "auger", "brace", "jointer", "smoother", "fore", "drawknife", "spokeshave", "firmer", "plough", "float", "gimlet", "router", "scraper", "adze", "gouge", "rasp", "bevel", "saw", "square", "bead", "plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(not Scotia.PLACES.has(forbidden_place), "scotia rooms must not take the %s" % forbidden_place)
+	_expect(not Scotia.HOURS.has("6"), "scotia hours must not take 6")
+	_expect(not Scotia.HOURS.has("7"), "scotia hours must not take 7")
+	_expect(not Scotia.HOURS.has("8"), "scotia hours must not take 8")
+	_expect(not Scotia.HOURS.has("9"), "scotia hours must not take 9")
+	_expect(not Scotia.HOURS.has("10"), "scotia hours must not take 10")
+	_expect(not Scotia.HOURS.has("60"), "scotia hours must not take 60")
+	_expect(not Scotia.HOURS.has("61"), "scotia hours must not take 61")
+	_expect(not Scotia.HOURS.has("62"), "scotia hours must not take 62")
+	_expect(not Scotia.HOURS.has("63"), "scotia hours must not take 63")
+	_expect(not Scotia.HOURS.has("64"), "scotia hours must not take 64")
+	_expect(not Scotia.HOURS.has("65"), "scotia hours must not take 65")
+	_expect(not Scotia.HOURS.has("66"), "scotia hours must not take 66")
+	_expect(not Scotia.HOURS.has("67"), "scotia hours must not take 67")
+	_expect(not Scotia.HOURS.has("68"), "scotia hours must not take 68")
+	_expect(not Scotia.HOURS.has("69"), "scotia hours must not take 69")
+	_expect(not Scotia.HOURS.has("70"), "scotia hours must not take 70")
+	_expect(not Scotia.HOURS.has("71"), "scotia hours must not take 71")
+	_expect(not Scotia.HOURS.has("72"), "scotia hours must not take 72")
+	_expect(not Scotia.HOURS.has("73"), "scotia hours must not take 73")
+	_expect(not Scotia.HOURS.has("74"), "scotia hours must not take 74")
+	_expect(not Scotia.HOURS.has("75"), "scotia hours must not take 75")
+	_expect(not Scotia.HOURS.has("76"), "scotia hours must not take 76")
+	_expect(not Scotia.HOURS.has("77"), "scotia hours must not take 77")
+	_expect(not Scotia.HOURS.has("78"), "scotia hours must not take 78")
+	_expect(not Scotia.HOURS.has("79"), "scotia hours must not take 79")
+	_expect(not Scotia.HOURS.has("80"), "scotia hours must not take 80")
+	_expect(not Scotia.HOURS.has("81"), "scotia hours must not take 81")
+	_expect(not Scotia.HOURS.has("82"), "scotia hours must not take 82")
+	_expect(not Scotia.HOURS.has("83"), "scotia hours must not take 83")
+	_expect(not Scotia.HOURS.has("84"), "scotia hours must not take 84")
+	_expect(not Scotia.HOURS.has("85"), "scotia hours must not take 85")
+	_expect(not Scotia.HOURS.has("86"), "scotia hours must not take 86")
+	_expect(not Scotia.HOURS.has("87"), "scotia hours must not take 87")
+	_expect(not Scotia.HOURS.has("88"), "scotia hours must not take 88")
+	_expect(not Scotia.HOURS.has("89"), "scotia hours must not take 89")
+	_expect(not Scotia.HOURS.has("90"), "scotia hours must not take 90")
+	_expect(not Scotia.HOURS.has("91"), "scotia hours must not take 91")
+	_expect(not Scotia.HOURS.has("92"), "scotia hours must not take 92")
+	_expect(not Scotia.HOURS.has("93"), "scotia hours must not take 93")
+	_expect(not Scotia.HOURS.has("94"), "scotia hours must not take 94")
+	_expect(not Scotia.HOURS.has("95"), "scotia hours must not take 95")
+	_expect(not Scotia.HOURS.has("96"), "scotia hours must not take 96")
+	_expect(not Scotia.HOURS.has("97"), "scotia hours must not take 97")
+	_expect(not Scotia.HOURS.has("98"), "scotia hours must not take 98")
+	_expect(not Scotia.HOURS.has("99"), "scotia hours must not take 99")
+	_expect(not Scotia.HOURS.has("100"), "scotia hours must not take 100")
+	_expect(not Scotia.HOURS.has("101"), "scotia hours must not take 101")
+	_expect(not Scotia.HOURS.has("102"), "scotia hours must not take 102")
+	_expect(not Scotia.HOURS.has("103"), "scotia hours must not take 103")
+	_expect(not Scotia.HOURS.has("104"), "scotia hours must not take 104")
+	_expect(not Scotia.HOURS.has("105"), "scotia hours must not take 105")
+	_expect(not Scotia.HOURS.has("106"), "scotia hours must not take 106")
+	_expect(not Scotia.HOURS.has("107"), "scotia hours must not take 107")
+	_expect(not Scotia.HOURS.has("108"), "scotia hours must not take 108")
+	_expect(not Scotia.HOURS.has("109"), "scotia hours must not take 109")
+	_expect(not Scotia.HOURS.has("110"), "scotia hours must not take 110")
+	_expect(not Scotia.HOURS.has("111"), "scotia hours must not take 111")
+	_expect(not Scotia.HOURS.has("112"), "scotia hours must not take 112")
+	_expect(not Scotia.HOURS.has("113"), "scotia hours must not take 113")
+	_expect(not Scotia.HOURS.has("114"), "scotia hours must not take 114")
+	_expect(not Scotia.HOURS.has("115"), "scotia hours must not take 115")
+	_expect(not Scotia.HOURS.has("116"), "scotia hours must not take 116")
+	_expect(not Scotia.HOURS.has("117"), "scotia hours must not take 117")
+	_expect(not Scotia.HOURS.has("118"), "scotia hours must not take 118")
+	_expect(not Scotia.HOURS.has("119"), "scotia hours must not take 119")
+	_expect(not Scotia.HOURS.has("120"), "scotia hours must not take 120")
+	_expect(not Scotia.HOURS.has("121"), "scotia hours must not take 121")
+	_expect(not Scotia.HOURS.has("122"), "scotia hours must not take 122")
+	_expect(not Scotia.HOURS.has("123"), "scotia hours must not take 123")
+	_expect(not Scotia.HOURS.has("124"), "scotia hours must not take 124")
+	_expect(not Scotia.HOURS.has("125"), "scotia hours must not take 125")
+	_expect(not Scotia.HOURS.has("126"), "scotia hours must not take 126")
+	_expect(not Scotia.HOURS.has("127"), "scotia hours must not take 127")
+	_expect(not Scotia.HOURS.has("128"), "scotia hours must not take 128")
+	_expect(not Scotia.HOURS.has("129"), "scotia hours must not take 129")
+	_expect(not Scotia.HOURS.has("130"), "scotia hours must not take 130")
+	_expect(not Scotia.HOURS.has("131"), "scotia hours must not take 131")
+	_expect(not Scotia.HOURS.has("132"), "scotia hours must not take 132")
+	_expect(not Scotia.HOURS.has("133"), "scotia hours must not take 133")
+	_expect(not Scotia.HOURS.has("134"), "scotia hours must not take 134")
+	_expect(not Scotia.HOURS.has("135"), "scotia hours must not take 135")
+	_expect(not Scotia.HOURS.has("136"), "scotia hours must not take 136")
+	_expect(not Scotia.HOURS.has("137"), "scotia hours must not take 137")
+	_expect(not Scotia.HOURS.has("138"), "scotia hours must not take 138")
+	_expect(not Scotia.HOURS.has("139"), "scotia hours must not take 139")
+	_expect(not Scotia.HOURS.has("140"), "scotia hours must not take 140")
+	_expect(not Scotia.HOURS.has("141"), "scotia hours must not take 141")
+	_expect(not Scotia.HOURS.has("142"), "scotia hours must not take 142")
+	_expect(not Scotia.HOURS.has("143"), "scotia hours must not take 143")
+	_expect(not Scotia.HOURS.has("144"), "scotia hours must not take 144")
+	_expect(not Scotia.HOURS.has("145"), "scotia hours must not take 145")
+
+	_expect(CYMA_TRUE["who"] == "Ruth", "cyma taker")
+	_expect(CYMA_TRUE["place"] == "bolection", "cyma room")
+	_expect(CYMA_TRUE["hour"] == "153", "cyma hour")
+	for forbidden in ["Willa", "Nils", "Cora", "Merrick", "Enid", "Petra", "Ross", "Pia", "Jude", "Shay", "Dell", "Glen", "Faye", "Kerr", "Brynn", "Lisle", "Mab", "Rhys", "Clem", "Gale", "Boyd", "Hob", "Nairn", "Cole", "Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(CYMA_TRUE["who"] != forbidden, "cyma accepted %s" % forbidden)
+	for forbidden_place in ["hollow", "riffler", "scorp", "block", "file", "travisher", "scratch", "snib", "veiner", "knife", "punch", "scribe", "bit", "auger", "brace", "jointer", "smoother", "fore", "pad", "badger", "jack", "drawknife", "spokeshave", "firmer", "plough", "float", "gimlet", "router", "scraper", "adze", "gouge", "rasp", "bevel", "saw", "square", "bead", "plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(CYMA_TRUE["place"] != forbidden_place, "cyma accepted the %s" % forbidden_place)
+	_expect(CYMA_TRUE["place"] != "punch", "cyma accepted the punch")
+	_expect(CYMA_TRUE["place"] != "scribe", "cyma accepted the scribe")
+	_expect(CYMA_TRUE["place"] != "snib", "cyma accepted the snib")
+	_expect(CYMA_TRUE["place"] != "veiner", "cyma accepted the veiner")
+	_expect(CYMA_TRUE["place"] != "file", "cyma accepted the file")
+	_expect(CYMA_TRUE["place"] != "travisher", "cyma accepted the travisher")
+	_expect(CYMA_TRUE["place"] != "block", "cyma accepted the block")
+	_expect(CYMA_TRUE["place"] != "riffler", "cyma accepted the riffler")
+	_expect(CYMA_TRUE["place"] != "scorp", "cyma accepted the scorp")
+	_expect(CYMA_TRUE["place"] != "hollow", "cyma accepted the hollow")
+	_expect(CYMA_TRUE["place"] != "inshave", "cyma accepted the inshave")
+	_expect(CYMA_TRUE["place"] != "froe", "cyma accepted the froe")
+	_expect(CYMA_TRUE["hour"] != "111", "cyma accepted 111")
+	_expect(CYMA_TRUE["hour"] != "112", "cyma accepted 112")
+	_expect(CYMA_TRUE["hour"] != "114", "cyma accepted 114")
+	_expect(CYMA_TRUE["hour"] != "115", "cyma accepted 115")
+	_expect(CYMA_TRUE["hour"] != "106", "cyma accepted 106")
+	_expect(CYMA_TRUE["hour"] != "107", "cyma accepted 107")
+	_expect(CYMA_TRUE["hour"] != "108", "cyma accepted 108")
+	_expect(CYMA_TRUE["hour"] != "109", "cyma accepted 109")
+	_expect(CYMA_TRUE["hour"] != "110", "cyma accepted 110")
+	_expect(CYMA_TRUE["hour"] != "101", "cyma accepted 101")
+	_expect(CYMA_TRUE["hour"] != "102", "cyma accepted 102")
+	_expect(CYMA_TRUE["hour"] != "103", "cyma accepted 103")
+	_expect(CYMA_TRUE["hour"] != "104", "cyma accepted 104")
+	_expect(CYMA_TRUE["hour"] != "105", "cyma accepted 105")
+	_expect(CYMA_TRUE["hour"] != "96", "cyma accepted 96")
+	_expect(CYMA_TRUE["hour"] != "97", "cyma accepted 97")
+	_expect(CYMA_TRUE["hour"] != "98", "cyma accepted 98")
+	_expect(CYMA_TRUE["hour"] != "99", "cyma accepted 99")
+	_expect(CYMA_TRUE["hour"] != "100", "cyma accepted 100")
+	_expect(CYMA_TRUE["hour"] != "91", "cyma accepted 91")
+	_expect(CYMA_TRUE["hour"] != "92", "cyma accepted 92")
+	_expect(CYMA_TRUE["hour"] != "93", "cyma accepted 93")
+	_expect(CYMA_TRUE["hour"] != "94", "cyma accepted 94")
+	_expect(CYMA_TRUE["hour"] != "95", "cyma accepted 95")
+	_expect(CYMA_TRUE["hour"] != "88", "cyma accepted 88")
+	_expect(CYMA_TRUE["hour"] != "83", "cyma accepted 83")
+	_expect(CYMA_TRUE["hour"] != "78", "cyma accepted 78")
+	_expect(CYMA_TRUE["hour"] != "73", "cyma accepted 73")
+	_expect(CYMA_TRUE["hour"] != "68", "cyma accepted 68")
+	_expect(CYMA_TRUE["hour"] != "63", "cyma accepted 63")
+	_expect(CYMA_TRUE["hour"] != "8", "cyma accepted 8")
+	_expect(CYMA_TRUE["hour"] != "6", "cyma accepted 6")
+	_expect(CYMA_TRUE["hour"] != "3", "cyma accepted 3")
+	_expect(CYMA_TRUE["hour"] != "16", "cyma accepted 16")
+	_expect(CYMA_TRUE["hour"] != "19", "cyma accepted 19")
+	_expect(CYMA_TRUE["hour"] != "113", "cyma accepted 113")
+	_expect(CYMA_TRUE["hour"] != "121", "cyma accepted 121")
+	_expect(CYMA_TRUE["hour"] != "122", "cyma accepted 122")
+	_expect(CYMA_TRUE["hour"] != "124", "cyma accepted 124")
+	_expect(CYMA_TRUE["hour"] != "125", "cyma accepted 125")
+	_expect(CYMA_TRUE["hour"] != "116", "cyma accepted 116")
+	_expect(CYMA_TRUE["hour"] != "117", "cyma accepted 117")
+	_expect(CYMA_TRUE["hour"] != "118", "cyma accepted 118")
+	_expect(CYMA_TRUE["hour"] != "119", "cyma accepted 119")
+	_expect(CYMA_TRUE["hour"] != "120", "cyma accepted 120")
+	_expect(CYMA_TRUE["hour"] != "123", "cyma accepted 123")
+	_expect(CYMA_TRUE["hour"] != "126", "cyma accepted 126")
+	_expect(CYMA_TRUE["hour"] != "127", "cyma accepted 127")
+	_expect(CYMA_TRUE["hour"] != "129", "cyma accepted 129")
+	_expect(CYMA_TRUE["hour"] != "130", "cyma accepted 130")
+	_expect(CYMA_TRUE["hour"] != "128", "cyma accepted 128")
+	_expect(CYMA_TRUE["hour"] != "131", "cyma accepted 131")
+	_expect(CYMA_TRUE["hour"] != "132", "cyma accepted 132")
+	_expect(CYMA_TRUE["hour"] != "134", "cyma accepted 134")
+	_expect(CYMA_TRUE["hour"] != "135", "cyma accepted 135")
+	_expect(CYMA_TRUE["hour"] != "133", "cyma accepted 133")
+	_expect(CYMA_TRUE["hour"] != "136", "cyma accepted 136")
+	_expect(CYMA_TRUE["hour"] != "137", "cyma accepted 137")
+	_expect(CYMA_TRUE["hour"] != "139", "cyma accepted 139")
+	_expect(CYMA_TRUE["hour"] != "140", "cyma accepted 140")
+	_expect(CYMA_TRUE["hour"] != "138", "cyma accepted 138")
+	_expect(CYMA_TRUE["hour"] != "141", "cyma accepted 141")
+	_expect(CYMA_TRUE["hour"] != "142", "cyma accepted 142")
+	_expect(CYMA_TRUE["hour"] != "144", "cyma accepted 144")
+	_expect(CYMA_TRUE["hour"] != "145", "cyma accepted 145")
+	_expect(CYMA_TRUE["hour"] != "143", "cyma accepted 143")
+	_expect(CYMA_TRUE["hour"] != "146", "cyma accepted 146")
+	_expect(CYMA_TRUE["hour"] != "147", "cyma accepted 147")
+	_expect(CYMA_TRUE["hour"] != "149", "cyma accepted 149")
+	_expect(CYMA_TRUE["hour"] != "150", "cyma accepted 150")
+	_expect(CYMA_TRUE["hour"] != "148", "cyma accepted 148")
+	_expect(CYMA_TRUE["hour"] != "151", "cyma accepted 151")
+	_expect(CYMA_TRUE["hour"] != "152", "cyma accepted 152")
+	_expect(CYMA_TRUE["hour"] != "154", "cyma accepted 154")
+	_expect(CYMA_TRUE["hour"] != "155", "cyma accepted 155")
+	var before_cyma: Array = before_scotia.duplicate()
+	before_cyma.append([Scotia, SCOTIA_TRUE, "scotia"])
+	for row in before_cyma:
+		var book = row[0]
+		var truth: Dictionary = row[1]
+		var name := str(row[2])
+		_expect(CYMA_TRUE["who"] != truth["who"], "cyma copied the %s taker" % name)
+		_expect(CYMA_TRUE["place"] != truth["place"], "cyma copied the %s room" % name)
+		_expect(CYMA_TRUE["hour"] != str(truth["hour"]), "cyma copied the %s hour" % name)
+		_expect_rejected(CYMA_TRUE, book)
+		_expect_rejected(truth, Cyma)
+	_expect(SCOTIA_TRUE["who"] == "Willa" and SCOTIA_TRUE["place"] == "hollow" and SCOTIA_TRUE["hour"] == "148", "the scotia should still accept Willa in the hollow at 148")
+	_expect(CHAMFER_TRUE["who"] == "Merrick" and CHAMFER_TRUE["place"] == "block" and CHAMFER_TRUE["hour"] == "143", "the chamfer should still accept Merrick in the block at 143")
+	_expect(QUIRK_TRUE["who"] == "Ross" and QUIRK_TRUE["place"] == "scratch" and QUIRK_TRUE["hour"] == "138", "the quirk should still accept Ross in the scratch at 138")
+	_expect(DOWEL_TRUE["who"] == "Faye" and DOWEL_TRUE["place"] == "bit" and DOWEL_TRUE["hour"] == "128", "the dowel should still accept Faye in the bit at 128")
+	_expect(TONGUE_TRUE["who"] == "Shay" and TONGUE_TRUE["place"] == "knife" and TONGUE_TRUE["hour"] == "133", "the tongue should still accept Shay in the knife at 133")
+	_expect(HAUNCH_TRUE["who"] == "Rhys" and HAUNCH_TRUE["place"] == "fore" and HAUNCH_TRUE["hour"] == "123", "the haunch should still accept Rhys in the fore at 123")
+	_expect(FINGER_TRUE["who"] == "Clem" and FINGER_TRUE["place"] == "pad" and FINGER_TRUE["hour"] == "118", "the finger should still accept Clem in the pad at 118")
+	for row in before_cyma:
+		var book = row[0]
+		var name := str(row[2])
+		for person in Cyma.PEOPLE:
+			_expect(not book.PEOPLE.has(person), "cyma cast repeats %s from the %s" % [person, name])
+		for place in Cyma.PLACES:
+			_expect(not book.PLACES.has(place), "cyma rooms repeat %s from the %s" % [place, name])
+		for hour in Cyma.HOURS:
+			_expect(not book.HOURS.has(hour), "cyma hours repeat %s from the %s" % [hour, name])
+	for forbidden_person in ["Willa", "Nils", "Cora", "Merrick", "Enid", "Petra", "Ross", "Pia", "Jude", "Shay", "Dell", "Glen", "Faye", "Kerr", "Brynn", "Lisle", "Mab", "Rhys", "Clem", "Gale", "Boyd", "Hob", "Nairn", "Cole", "Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(not Cyma.PEOPLE.has(forbidden_person), "cyma cast must not take %s" % forbidden_person)
+	_expect(Cyma.role_phrase("Ruth") == "the cyma hand", "the cyma should call Ruth the cyma hand")
+	_expect(Cyma.role_phrase("Amos") == "the echinus hand", "the cyma should call Amos the echinus hand")
+	_expect(Cyma.role_phrase("Lena") == "the inshave clerk", "the cyma should call Lena the inshave clerk")
+	for forbidden_place in ["hollow", "riffler", "scorp", "block", "file", "travisher", "scratch", "snib", "veiner", "knife", "punch", "scribe", "bit", "auger", "brace", "jointer", "smoother", "fore", "drawknife", "spokeshave", "firmer", "plough", "float", "gimlet", "router", "scraper", "adze", "gouge", "rasp", "bevel", "saw", "square", "bead", "plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(not Cyma.PLACES.has(forbidden_place), "cyma rooms must not take the %s" % forbidden_place)
+	_expect(not Cyma.HOURS.has("6"), "cyma hours must not take 6")
+	_expect(not Cyma.HOURS.has("7"), "cyma hours must not take 7")
+	_expect(not Cyma.HOURS.has("8"), "cyma hours must not take 8")
+	_expect(not Cyma.HOURS.has("9"), "cyma hours must not take 9")
+	_expect(not Cyma.HOURS.has("10"), "cyma hours must not take 10")
+	_expect(not Cyma.HOURS.has("60"), "cyma hours must not take 60")
+	_expect(not Cyma.HOURS.has("61"), "cyma hours must not take 61")
+	_expect(not Cyma.HOURS.has("62"), "cyma hours must not take 62")
+	_expect(not Cyma.HOURS.has("63"), "cyma hours must not take 63")
+	_expect(not Cyma.HOURS.has("64"), "cyma hours must not take 64")
+	_expect(not Cyma.HOURS.has("65"), "cyma hours must not take 65")
+	_expect(not Cyma.HOURS.has("66"), "cyma hours must not take 66")
+	_expect(not Cyma.HOURS.has("67"), "cyma hours must not take 67")
+	_expect(not Cyma.HOURS.has("68"), "cyma hours must not take 68")
+	_expect(not Cyma.HOURS.has("69"), "cyma hours must not take 69")
+	_expect(not Cyma.HOURS.has("70"), "cyma hours must not take 70")
+	_expect(not Cyma.HOURS.has("71"), "cyma hours must not take 71")
+	_expect(not Cyma.HOURS.has("72"), "cyma hours must not take 72")
+	_expect(not Cyma.HOURS.has("73"), "cyma hours must not take 73")
+	_expect(not Cyma.HOURS.has("74"), "cyma hours must not take 74")
+	_expect(not Cyma.HOURS.has("75"), "cyma hours must not take 75")
+	_expect(not Cyma.HOURS.has("76"), "cyma hours must not take 76")
+	_expect(not Cyma.HOURS.has("77"), "cyma hours must not take 77")
+	_expect(not Cyma.HOURS.has("78"), "cyma hours must not take 78")
+	_expect(not Cyma.HOURS.has("79"), "cyma hours must not take 79")
+	_expect(not Cyma.HOURS.has("80"), "cyma hours must not take 80")
+	_expect(not Cyma.HOURS.has("81"), "cyma hours must not take 81")
+	_expect(not Cyma.HOURS.has("82"), "cyma hours must not take 82")
+	_expect(not Cyma.HOURS.has("83"), "cyma hours must not take 83")
+	_expect(not Cyma.HOURS.has("84"), "cyma hours must not take 84")
+	_expect(not Cyma.HOURS.has("85"), "cyma hours must not take 85")
+	_expect(not Cyma.HOURS.has("86"), "cyma hours must not take 86")
+	_expect(not Cyma.HOURS.has("87"), "cyma hours must not take 87")
+	_expect(not Cyma.HOURS.has("88"), "cyma hours must not take 88")
+	_expect(not Cyma.HOURS.has("89"), "cyma hours must not take 89")
+	_expect(not Cyma.HOURS.has("90"), "cyma hours must not take 90")
+	_expect(not Cyma.HOURS.has("91"), "cyma hours must not take 91")
+	_expect(not Cyma.HOURS.has("92"), "cyma hours must not take 92")
+	_expect(not Cyma.HOURS.has("93"), "cyma hours must not take 93")
+	_expect(not Cyma.HOURS.has("94"), "cyma hours must not take 94")
+	_expect(not Cyma.HOURS.has("95"), "cyma hours must not take 95")
+	_expect(not Cyma.HOURS.has("96"), "cyma hours must not take 96")
+	_expect(not Cyma.HOURS.has("97"), "cyma hours must not take 97")
+	_expect(not Cyma.HOURS.has("98"), "cyma hours must not take 98")
+	_expect(not Cyma.HOURS.has("99"), "cyma hours must not take 99")
+	_expect(not Cyma.HOURS.has("100"), "cyma hours must not take 100")
+	_expect(not Cyma.HOURS.has("101"), "cyma hours must not take 101")
+	_expect(not Cyma.HOURS.has("102"), "cyma hours must not take 102")
+	_expect(not Cyma.HOURS.has("103"), "cyma hours must not take 103")
+	_expect(not Cyma.HOURS.has("104"), "cyma hours must not take 104")
+	_expect(not Cyma.HOURS.has("105"), "cyma hours must not take 105")
+	_expect(not Cyma.HOURS.has("106"), "cyma hours must not take 106")
+	_expect(not Cyma.HOURS.has("107"), "cyma hours must not take 107")
+	_expect(not Cyma.HOURS.has("108"), "cyma hours must not take 108")
+	_expect(not Cyma.HOURS.has("109"), "cyma hours must not take 109")
+	_expect(not Cyma.HOURS.has("110"), "cyma hours must not take 110")
+	_expect(not Cyma.HOURS.has("111"), "cyma hours must not take 111")
+	_expect(not Cyma.HOURS.has("112"), "cyma hours must not take 112")
+	_expect(not Cyma.HOURS.has("113"), "cyma hours must not take 113")
+	_expect(not Cyma.HOURS.has("114"), "cyma hours must not take 114")
+	_expect(not Cyma.HOURS.has("115"), "cyma hours must not take 115")
+	_expect(not Cyma.HOURS.has("116"), "cyma hours must not take 116")
+	_expect(not Cyma.HOURS.has("117"), "cyma hours must not take 117")
+	_expect(not Cyma.HOURS.has("118"), "cyma hours must not take 118")
+	_expect(not Cyma.HOURS.has("119"), "cyma hours must not take 119")
+	_expect(not Cyma.HOURS.has("120"), "cyma hours must not take 120")
+	_expect(not Cyma.HOURS.has("121"), "cyma hours must not take 121")
+	_expect(not Cyma.HOURS.has("122"), "cyma hours must not take 122")
+	_expect(not Cyma.HOURS.has("123"), "cyma hours must not take 123")
+	_expect(not Cyma.HOURS.has("124"), "cyma hours must not take 124")
+	_expect(not Cyma.HOURS.has("125"), "cyma hours must not take 125")
+	_expect(not Cyma.HOURS.has("126"), "cyma hours must not take 126")
+	_expect(not Cyma.HOURS.has("127"), "cyma hours must not take 127")
+	_expect(not Cyma.HOURS.has("128"), "cyma hours must not take 128")
+	_expect(not Cyma.HOURS.has("129"), "cyma hours must not take 129")
+	_expect(not Cyma.HOURS.has("130"), "cyma hours must not take 130")
+	_expect(not Cyma.HOURS.has("131"), "cyma hours must not take 131")
+	_expect(not Cyma.HOURS.has("132"), "cyma hours must not take 132")
+	_expect(not Cyma.HOURS.has("133"), "cyma hours must not take 133")
+	_expect(not Cyma.HOURS.has("134"), "cyma hours must not take 134")
+	_expect(not Cyma.HOURS.has("135"), "cyma hours must not take 135")
+	_expect(not Cyma.HOURS.has("136"), "cyma hours must not take 136")
+	_expect(not Cyma.HOURS.has("137"), "cyma hours must not take 137")
+	_expect(not Cyma.HOURS.has("138"), "cyma hours must not take 138")
+	_expect(not Cyma.HOURS.has("139"), "cyma hours must not take 139")
+	_expect(not Cyma.HOURS.has("140"), "cyma hours must not take 140")
+	_expect(not Cyma.HOURS.has("141"), "cyma hours must not take 141")
+	_expect(not Cyma.HOURS.has("142"), "cyma hours must not take 142")
+	_expect(not Cyma.HOURS.has("143"), "cyma hours must not take 143")
+	_expect(not Cyma.HOURS.has("144"), "cyma hours must not take 144")
+	_expect(not Cyma.HOURS.has("145"), "cyma hours must not take 145")
+	_expect(not Cyma.HOURS.has("146"), "cyma hours must not take 146")
+	_expect(not Cyma.HOURS.has("147"), "cyma hours must not take 147")
+	_expect(not Cyma.HOURS.has("148"), "cyma hours must not take 148")
+	_expect(not Cyma.HOURS.has("149"), "cyma hours must not take 149")
+	_expect(not Cyma.HOURS.has("150"), "cyma hours must not take 150")
+
+	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal", "The orchard graft", "The dye vat", "The tar kettle", "The cork press", "The net loft", "The cask hoop", "The linen fold", "The dovetail", "The mortise", "The rebate", "The housing", "The tenon", "The bridle", "The dado", "The spline", "The mitre", "The lap", "The scarf", "The finger", "The haunch", "The dowel", "The tongue", "The quirk", "The chamfer", "The scotia", "The cyma"], "case list is %s" % str(titles))
 
 
 
@@ -16468,7 +17778,7 @@ func _test_menu_opens_either_case() -> void:
 		root._ready()
 	var menu_blob := _visible_label_blob(root)
 	_expect(get_root().size == Vector2i(1280, 800), "case window is %s" % str(get_root().size))
-	_expect(menu_blob.find("Forty files") >= 0, "menu does not offer forty files: %s" % menu_blob)
+	_expect(menu_blob.find("Forty-two files") >= 0, "menu does not offer forty-two files: %s" % menu_blob)
 	_expect(menu_blob.find("CW-07") >= 0, "menu omits CW-07")
 	_expect(menu_blob.find("The hive smoker") >= 0, "menu omits The hive smoker")
 	_expect(menu_blob.find("CW-08") >= 0, "menu omits CW-08")
@@ -16537,6 +17847,10 @@ func _test_menu_opens_either_case() -> void:
 	_expect(menu_blob.find("The quirk") >= 0, "menu omits The quirk")
 	_expect(menu_blob.find("CW-40") >= 0, "menu omits CW-40")
 	_expect(menu_blob.find("The chamfer") >= 0, "menu omits The chamfer")
+	_expect(menu_blob.find("CW-41") >= 0, "menu omits CW-41")
+	_expect(menu_blob.find("The scotia") >= 0, "menu omits The scotia")
+	_expect(menu_blob.find("CW-42") >= 0, "menu omits CW-42")
+	_expect(menu_blob.find("The cyma") >= 0, "menu omits The cyma")
 	_expect(root.get_child_count() > 0, "main scene built %d children" % root.get_child_count())
 	_press(root, "How to play")
 	var howto := _visible_label_blob(root)
@@ -16580,6 +17894,8 @@ func _test_menu_opens_either_case() -> void:
 	_expect(howto.find("The tongue") >= 0, "how to play omits The tongue")
 	_expect(howto.find("The quirk") >= 0, "how to play omits The quirk")
 	_expect(howto.find("The chamfer") >= 0, "how to play omits The chamfer")
+	_expect(howto.find("The scotia") >= 0, "how to play omits The scotia")
+	_expect(howto.find("The cyma") >= 0, "how to play omits The cyma")
 	_expect(howto.find("names that slot") >= 0, "how to play omits the empty-slot rule")
 	_press(root, "Back to the menu")
 	_expect(_find_visible_button(root, "Open The spare key") != null, "menu is missing The spare key")
@@ -16622,6 +17938,8 @@ func _test_menu_opens_either_case() -> void:
 	_expect(_find_visible_button(root, "Open The tongue") != null, "menu is missing The tongue")
 	_expect(_find_visible_button(root, "Open The quirk") != null, "menu is missing The quirk")
 	_expect(_find_visible_button(root, "Open The chamfer") != null, "menu is missing The chamfer")
+	_expect(_find_visible_button(root, "Open The scotia") != null, "menu is missing The scotia")
+	_expect(_find_visible_button(root, "Open The cyma") != null, "menu is missing The cyma")
 	_press(root, "Open The rehearsal score")
 	var rehearsal_open := _visible_label_blob(root)
 	_expect(rehearsal_open.find("Cut list") >= 0, "rehearsal file did not open")
@@ -20690,290 +22008,373 @@ func _test_menu_opens_either_case() -> void:
 	_expect(dowel_after_quirk.find("fits every exhibit") >= 0, "dowel board rejected the true theory after The quirk: %s" % dowel_after_quirk)
 	_expect(dowel_after_quirk.find("Faye (dowel hand) cut the dowel in the bit at 128") >= 0, "dowel board timeline after The quirk: %s" % dowel_after_quirk)
 	_press(root, "Menu")
+	_press(root, "Open The cyma")
+	var cyma_open := _visible_label_blob(root)
+	_expect(cyma_open.find("Echinus chit") >= 0, "cyma inshave did not open")
+	_expect(cyma_open.find("Jennet note") >= 0, "cyma inshave did not show its exhibits")
+	_expect(cyma_open.find("CW-42") >= 0, "cyma inshave omits CW-42")
+	_expect(cyma_open.find("Beak sight") >= 0, "cyma inshave omits Beak sight")
+	_expect(cyma_open.find("Corona bill") >= 0, "cyma inshave omits Corona bill")
+	_expect(cyma_open.find("Garnet slate") >= 0, "cyma inshave omits Garnet slate")
+	_expect(cyma_open.find("Inshave card") >= 0, "cyma inshave omits Inshave card")
+	_expect(cyma_open.find("Rouge slip") >= 0, "cyma inshave omits Rouge slip")
+	_expect(cyma_open.find("Cyma leaf") >= 0, "cyma inshave omits Cyma leaf")
+	_expect(cyma_open.find("Chase order") >= 0, "cyma inshave omits Chase order")
+	_expect(cyma_open.find("Froe card") >= 0, "cyma inshave omits the froe card")
+	_expect(cyma_open.find("Complaint slip") == -1, "spare key papers showed inside The cyma")
+	_expect(cyma_open.find("Cut list") == -1, "rehearsal papers showed inside The cyma")
+	_expect(cyma_open.find("Move order") == -1, "gilt stamp papers showed inside The cyma")
+	_expect(cyma_open.find("Whistle slip") == -1, "ferry bell papers showed inside The cyma")
+	_expect(cyma_open.find("Frost note") == -1, "weather slate papers showed inside The cyma")
+	_expect(cyma_open.find("Trough tag") == -1, "loom shuttle papers showed inside The cyma")
+	_expect(cyma_open.find("Fuel line") == -1, "hive smoker papers showed inside The cyma")
+	_expect(cyma_open.find("Weight line") == -1, "glass pontil papers showed inside The cyma")
+	_expect(cyma_open.find("Lock line") == -1, "press proof papers showed inside The cyma")
+	_expect(cyma_open.find("Cup line") == -1, "assay cup papers showed inside The cyma")
+	_expect(cyma_open.find("Mark line") == -1, "kiln chalk papers showed inside The cyma")
+	_expect(cyma_open.find("Ledger line") == -1, "tide ledger papers showed inside The cyma")
+	_expect(cyma_open.find("Bell line") == -1, "night bell papers showed inside The cyma")
+	_expect(cyma_open.find("Salt line") == -1, "salt mark papers showed inside The cyma")
+	_expect(cyma_open.find("Oil note") == -1, "wick trim papers showed inside The cyma")
+	_expect(cyma_open.find("Gather note") == -1, "glass anneal papers showed inside The cyma")
+	_expect(cyma_open.find("Scion note") == -1, "orchard graft papers showed inside The cyma")
+	_expect(cyma_open.find("Winder chit") == -1, "dye vat papers showed inside The cyma")
+	_expect(cyma_open.find("Rope chit") == -1, "tar kettle papers showed inside The cyma")
+	_expect(cyma_open.find("Cutter chit") == -1, "cork press papers showed inside The cyma")
+	_expect(cyma_open.find("Mesh chit") == -1, "net loft papers showed inside The cyma")
+	_expect(cyma_open.find("Hoop chit") == -1, "cask hoop papers showed inside The cyma")
+	_expect(cyma_open.find("Shears chit") == -1, "linen fold papers showed inside The cyma")
+	_expect(cyma_open.find("Apron sight") == -1, "dovetail papers showed inside The cyma")
+	_expect(cyma_open.find("Peg hook") == -1, "dovetail papers showed inside The cyma")
+	_expect(cyma_open.find("Joint slate") == -1, "dovetail papers showed inside The cyma")
+	_expect(cyma_open.find("Clamp card") == -1, "dovetail papers showed inside The cyma")
+	_expect(cyma_open.find("Sweep slip") == -1, "dovetail papers showed inside The cyma")
+	_expect(cyma_open.find("Cut leaf") == -1, "dovetail papers showed inside The cyma")
+	_expect(cyma_open.find("Joint note") == -1, "dovetail papers showed inside The cyma")
+	_expect(cyma_open.find("Jaw order") == -1, "dovetail papers showed inside The cyma")
+	_expect(cyma_open.find("CW-24") == -1, "dovetail file code stayed up inside The cyma")
+	_expect(cyma_open.find("Chisel chit") == -1, "mortise papers stayed up inside The cyma")
+	_expect(cyma_open.find("Awl sight") == -1, "mortise papers showed inside The cyma")
+	_expect(cyma_open.find("Wedge hook") == -1, "mortise papers showed inside The cyma")
+	_expect(cyma_open.find("Tenon slate") == -1, "mortise papers showed inside The cyma")
+	_expect(cyma_open.find("Brush slip") == -1, "mortise papers showed inside The cyma")
+	_expect(cyma_open.find("Bore leaf") == -1, "mortise papers showed inside The cyma")
+	_expect(cyma_open.find("Tenon note") == -1, "mortise papers showed inside The cyma")
+	_expect(cyma_open.find("Rack order") == -1, "mortise papers showed inside The cyma")
+	_expect(cyma_open.find("CW-25") == -1, "mortise file code stayed up inside The cyma")
+	_expect(cyma_open.find("Plane chit") == -1, "rebate papers stayed up inside The cyma")
+	_expect(cyma_open.find("Gauge sight") == -1, "rebate papers showed inside The cyma")
+	_expect(cyma_open.find("Shim hook") == -1, "rebate papers showed inside The cyma")
+	_expect(cyma_open.find("Shoulder slate") == -1, "rebate papers showed inside The cyma")
+	_expect(cyma_open.find("Fence card") == -1, "rebate papers showed inside The cyma")
+	_expect(cyma_open.find("Oil slip") == -1, "rebate papers showed inside The cyma")
+	_expect(cyma_open.find("Scribe leaf") == -1, "rebate papers showed inside The cyma")
+	_expect(cyma_open.find("Shoulder note") == -1, "rebate papers showed inside The cyma")
+	_expect(cyma_open.find("CW-26") == -1, "rebate file code stayed up inside The cyma")
+	_expect(cyma_open.find("Saw chit") == -1, "housing papers stayed up inside The cyma")
+	_expect(cyma_open.find("Square sight") == -1, "housing papers showed inside The cyma")
+	_expect(cyma_open.find("Fillet hook") == -1, "housing papers showed inside The cyma")
+	_expect(cyma_open.find("Trench slate") == -1, "housing papers showed inside The cyma")
+	_expect(cyma_open.find("Stock card") == -1, "housing papers showed inside The cyma")
+	_expect(cyma_open.find("Chalk slip") == -1, "housing papers showed inside The cyma")
+	_expect(cyma_open.find("Mark leaf") == -1, "housing papers showed inside The cyma")
+	_expect(cyma_open.find("Trench note") == -1, "housing papers showed inside The cyma")
+	_expect(cyma_open.find("CW-27") == -1, "housing file code stayed up inside The cyma")
+	_expect(cyma_open.find("Gouge chit") == -1, "tenon papers stayed up inside The cyma")
+	_expect(cyma_open.find("Rasp sight") == -1, "tenon papers showed inside The cyma")
+	_expect(cyma_open.find("Dowel hook") == -1, "tenon papers showed inside The cyma")
+	_expect(cyma_open.find("Haunch slate") == -1, "tenon papers showed inside The cyma")
+	_expect(cyma_open.find("Guide card") == -1, "tenon papers showed inside The cyma")
+	_expect(cyma_open.find("Hone slip") == -1, "tenon papers showed inside The cyma")
+	_expect(cyma_open.find("Nick leaf") == -1, "tenon papers showed inside The cyma")
+	_expect(cyma_open.find("CW-28") == -1, "tenon file code stayed up inside The cyma")
+	_expect(cyma_open.find("Router chit") == -1, "bridle papers stayed up inside The cyma")
+	_expect(cyma_open.find("Scraper sight") == -1, "bridle papers showed inside The cyma")
+	_expect(cyma_open.find("Spline hook") == -1, "bridle papers showed inside The cyma")
+	_expect(cyma_open.find("Tongue slate") == -1, "bridle papers showed inside The cyma")
+	_expect(cyma_open.find("Templet card") == -1, "bridle papers showed inside The cyma")
+	_expect(cyma_open.find("Strop slip") == -1, "bridle papers showed inside The cyma")
+	_expect(cyma_open.find("Notch leaf") == -1, "bridle papers showed inside The cyma")
+	_expect(cyma_open.find("Tongue note") == -1, "bridle papers showed inside The cyma")
+	_expect(cyma_open.find("CW-29") == -1, "bridle file code stayed up inside The cyma")
+	_expect(cyma_open.find("Plough chit") == -1, "dado papers stayed up inside The cyma")
+	_expect(cyma_open.find("Float sight") == -1, "dado papers showed inside The cyma")
+	_expect(cyma_open.find("Cleat hook") == -1, "dado papers showed inside The cyma")
+	_expect(cyma_open.find("Groove slate") == -1, "dado papers showed inside The cyma")
+	_expect(cyma_open.find("Spur card") == -1, "dado papers showed inside The cyma")
+	_expect(cyma_open.find("Whet slip") == -1, "dado papers showed inside The cyma")
+	_expect(cyma_open.find("Score leaf") == -1, "dado papers showed inside The cyma")
+	_expect(cyma_open.find("Groove note") == -1, "dado papers showed inside The cyma")
+	_expect(cyma_open.find("CW-30") == -1, "dado file code stayed up inside The cyma")
+	_expect(cyma_open.find("Slot chit") == -1, "spline papers stayed up inside The cyma")
+	_expect(cyma_open.find("Rest sight") == -1, "spline papers showed inside The cyma")
+	_expect(cyma_open.find("Feather hook") == -1, "spline papers showed inside The cyma")
+	_expect(cyma_open.find("Slot slate") == -1, "spline papers showed inside The cyma")
+	_expect(cyma_open.find("Key card") == -1, "spline papers showed inside The cyma")
+	_expect(cyma_open.find("Cheek slip") == -1, "spline papers showed inside The cyma")
+	_expect(cyma_open.find("Slot leaf") == -1, "spline papers showed inside The cyma")
+	_expect(cyma_open.find("Slot note") == -1, "spline papers showed inside The cyma")
+	_expect(cyma_open.find("Dry order") == -1, "spline papers showed inside The cyma")
+	_expect(cyma_open.find("CW-31") == -1, "spline file code stayed up inside The cyma")
+	_expect(cyma_open.find("Arris chit") == -1, "mitre papers stayed up inside The cyma")
+	_expect(cyma_open.find("Horn sight") == -1, "mitre papers showed inside The cyma")
+	_expect(cyma_open.find("Offcut hook") == -1, "mitre papers showed inside The cyma")
+	_expect(cyma_open.find("Arris slate") == -1, "mitre papers showed inside The cyma")
+	_expect(cyma_open.find("Stop card") == -1, "mitre papers showed inside The cyma")
+	_expect(cyma_open.find("Dress slip") == -1, "mitre papers showed inside The cyma")
+	_expect(cyma_open.find("Arris leaf") == -1, "mitre papers showed inside The cyma")
+	_expect(cyma_open.find("Arris note") == -1, "mitre papers showed inside The cyma")
+	_expect(cyma_open.find("Brush order") == -1, "mitre papers showed inside The cyma")
+	_expect(cyma_open.find("CW-32") == -1, "mitre file code stayed up inside The cyma")
+	_expect(cyma_open.find("Grain chit") == -1, "lap papers stayed up inside The cyma")
+	_expect(cyma_open.find("Crest sight") == -1, "lap papers showed inside The cyma")
+	_expect(cyma_open.find("Paring hook") == -1, "lap papers showed inside The cyma")
+	_expect(cyma_open.find("Grain slate") == -1, "lap papers showed inside The cyma")
+	_expect(cyma_open.find("Brad card") == -1, "lap papers showed inside The cyma")
+	_expect(cyma_open.find("Skim slip") == -1, "lap papers showed inside The cyma")
+	_expect(cyma_open.find("Grain leaf") == -1, "lap papers showed inside The cyma")
+	_expect(cyma_open.find("Grain note") == -1, "lap papers showed inside The cyma")
+	_expect(cyma_open.find("Oil order") == -1, "lap papers showed inside The cyma")
+	_expect(cyma_open.find("CW-33") == -1, "lap file code stayed up inside The cyma")
+	_expect(cyma_open.find("Shoulder chit") == -1, "scarf papers stayed up inside The cyma")
+	_expect(cyma_open.find("Sole sight") == -1, "scarf papers showed inside The cyma")
+	_expect(cyma_open.find("Shaving hook") == -1, "scarf papers showed inside The cyma")
+	_expect(cyma_open.find("Edge slate") == -1, "scarf papers showed inside The cyma")
+	_expect(cyma_open.find("Wedge card") == -1, "scarf papers showed inside The cyma")
+	_expect(cyma_open.find("Film slip") == -1, "scarf papers showed inside The cyma")
+	_expect(cyma_open.find("Scarf leaf") == -1, "scarf papers showed inside The cyma")
+	_expect(cyma_open.find("Scarf note") == -1, "scarf papers showed inside The cyma")
+	_expect(cyma_open.find("Finish order") == -1, "scarf papers showed inside The cyma")
+	_expect(cyma_open.find("CW-34") == -1, "scarf file code stayed up inside The cyma")
+	_expect(cyma_open.find("Socket chit") == -1, "finger papers showed inside The cyma")
+	_expect(cyma_open.find("Burr sight") == -1, "finger papers showed inside The cyma")
+	_expect(cyma_open.find("Chip bill") == -1, "finger papers showed inside The cyma")
+	_expect(cyma_open.find("Face slate") == -1, "finger papers showed inside The cyma")
+	_expect(cyma_open.find("Catch card") == -1, "finger papers showed inside The cyma")
+	_expect(cyma_open.find("Sheen slip") == -1, "finger papers showed inside The cyma")
+	_expect(cyma_open.find("Finger leaf") == -1, "finger papers showed inside The cyma")
+	_expect(cyma_open.find("Finger note") == -1, "finger papers showed inside The cyma")
+	_expect(cyma_open.find("Rub order") == -1, "finger papers showed inside The cyma")
+	_expect(cyma_open.find("CW-35") == -1, "finger file code stayed up inside The cyma")
+	_expect(cyma_open.find("so the bevel would take the haunch") == -1, "tenon aim stayed up inside The cyma")
+	_expect(cyma_open.find("Cheek chit") == -1, "haunch papers showed inside The cyma")
+	_expect(cyma_open.find("Toe sight") == -1, "haunch papers showed inside The cyma")
+	_expect(cyma_open.find("Sliver bill") == -1, "haunch papers showed inside The cyma")
+	_expect(cyma_open.find("Bed slate") == -1, "haunch papers showed inside The cyma")
+	_expect(cyma_open.find("Pin card") == -1, "haunch papers showed inside The cyma")
+	_expect(cyma_open.find("Wipe slip") == -1, "haunch papers showed inside The cyma")
+	_expect(cyma_open.find("Haunch leaf") == -1, "haunch papers showed inside The cyma")
+	_expect(cyma_open.find("Haunch note") == -1, "haunch papers showed inside The cyma")
+	_expect(cyma_open.find("Stone order") == -1, "haunch papers showed inside The cyma")
+	_expect(cyma_open.find("CW-36") == -1, "haunch file code stayed up inside The cyma")
+	_expect(cyma_open.find("so the cheek would take the haunch") == -1, "haunch aim stayed up inside The cyma")
+	_expect(cyma_open.find("Bore chit") == -1, "dowel papers showed inside The cyma")
+	_expect(cyma_open.find("Point sight") == -1, "dowel papers showed inside The cyma")
+	_expect(cyma_open.find("Curl bill") == -1, "dowel papers showed inside The cyma")
+	_expect(cyma_open.find("Flute slate") == -1, "dowel papers showed inside The cyma")
+	_expect(cyma_open.find("Chuck card") == -1, "dowel papers showed inside The cyma")
+	_expect(cyma_open.find("Wax slip") == -1, "dowel papers showed inside The cyma")
+	_expect(cyma_open.find("Dowel leaf") == -1, "dowel papers showed inside The cyma")
+	_expect(cyma_open.find("Dowel note") == -1, "dowel papers showed inside The cyma")
+	_expect(cyma_open.find("Hone order") == -1, "dowel papers showed inside The cyma")
+	_expect(cyma_open.find("CW-37") == -1, "dowel file code stayed up inside The cyma")
+	_expect(cyma_open.find("Brace card") == -1, "dowel papers showed inside The cyma")
+	_expect(cyma_open.find("so the bore would take the dowel") == -1, "dowel aim stayed up inside The cyma")
+	_expect(cyma_open.find("Groove chit") == -1, "tongue papers showed inside The cyma")
+	_expect(cyma_open.find("Face sight") == -1, "tongue papers showed inside The cyma")
+	_expect(cyma_open.find("Peel bill") == -1, "tongue papers showed inside The cyma")
+	_expect(cyma_open.find("Kerf slate") == -1, "tongue papers showed inside The cyma")
+	_expect(cyma_open.find("Turn card") == -1, "tongue papers showed inside The cyma")
+	_expect(cyma_open.find("Tallow slip") == -1, "tongue papers showed inside The cyma")
+	_expect(cyma_open.find("Tongue leaf") == -1, "tongue papers showed inside The cyma")
+	_expect(cyma_open.find("Filly note") == -1, "tongue papers showed inside The cyma")
+	_expect(cyma_open.find("Grind order") == -1, "tongue papers showed inside The cyma")
+	_expect(cyma_open.find("Scribe card") == -1, "tongue papers showed inside The cyma")
+	_expect(cyma_open.find("CW-38") == -1, "tongue file code stayed up inside The cyma")
+	_expect(cyma_open.find("so the groove would take the tongue") == -1, "tongue aim stayed up inside The cyma")
+	_expect(cyma_open.find("Ovolo chit") == -1, "quirk papers showed inside The cyma")
+	_expect(cyma_open.find("Bolt sight") == -1, "quirk papers showed inside The cyma")
+	_expect(cyma_open.find("Astragal bill") == -1, "quirk papers showed inside The cyma")
+	_expect(cyma_open.find("Score slate") == -1, "quirk papers showed inside The cyma")
+	_expect(cyma_open.find("Snib card") == -1, "quirk papers showed inside The cyma")
+	_expect(cyma_open.find("Grease slip") == -1, "quirk papers showed inside The cyma")
+	_expect(cyma_open.find("Quirk leaf") == -1, "quirk papers showed inside The cyma")
+	_expect(cyma_open.find("Gelding note") == -1, "quirk papers showed inside The cyma")
+	_expect(cyma_open.find("Whet order") == -1, "quirk papers showed inside The cyma")
+	_expect(cyma_open.find("Veiner card") == -1, "quirk papers showed inside The cyma")
+	_expect(cyma_open.find("CW-39") == -1, "quirk file code stayed up inside The cyma")
+	_expect(cyma_open.find("so the ovolo would take the quirk") == -1, "quirk aim stayed up inside The cyma")
+	_expect(cyma_open.find("Cove chit") == -1, "chamfer papers showed inside The cyma")
+	_expect(cyma_open.find("Tooth sight") == -1, "chamfer papers showed inside The cyma")
+	_expect(cyma_open.find("Cant bill") == -1, "chamfer papers showed inside The cyma")
+	_expect(cyma_open.find("Wisp slate") == -1, "chamfer papers showed inside The cyma")
+	_expect(cyma_open.find("File card") == -1, "chamfer papers showed inside The cyma")
+	_expect(cyma_open.find("Soap slip") == -1, "chamfer papers showed inside The cyma")
+	_expect(cyma_open.find("Chamfer leaf") == -1, "chamfer papers showed inside The cyma")
+	_expect(cyma_open.find("Stallion note") == -1, "chamfer papers showed inside The cyma")
+	_expect(cyma_open.find("Fettle order") == -1, "chamfer papers showed inside The cyma")
+	_expect(cyma_open.find("Travisher card") == -1, "chamfer papers showed inside The cyma")
+	_expect(cyma_open.find("CW-40") == -1, "chamfer file code stayed up inside The cyma")
+	_expect(cyma_open.find("so the cove would take the chamfer") == -1, "chamfer aim stayed up inside The cyma")
+	_expect(cyma_open.find("Torus chit") == -1, "scotia papers showed inside The cyma")
+	_expect(cyma_open.find("Cusp sight") == -1, "scotia papers showed inside The cyma")
+	_expect(cyma_open.find("Fascia bill") == -1, "scotia papers showed inside The cyma")
+	_expect(cyma_open.find("Soot slate") == -1, "scotia papers showed inside The cyma")
+	_expect(cyma_open.find("Riffler card") == -1, "scotia papers showed inside The cyma")
+	_expect(cyma_open.find("Pumice slip") == -1, "scotia papers showed inside The cyma")
+	_expect(cyma_open.find("Scotia leaf") == -1, "scotia papers showed inside The cyma")
+	_expect(cyma_open.find("Yearling note") == -1, "scotia papers showed inside The cyma")
+	_expect(cyma_open.find("Peen order") == -1, "scotia papers showed inside The cyma")
+	_expect(cyma_open.find("Scorp card") == -1, "scotia papers showed inside The cyma")
+	_expect(cyma_open.find("CW-41") == -1, "scotia file code stayed up inside The cyma")
+	_expect(cyma_open.find("so the torus would take the scotia") == -1, "scotia aim stayed up inside The cyma")
+	_press(root, "Submit theory")
+	var empty_cyma := _verdict_text(root)
+	_expect(empty_cyma.find("who cut the cyma") >= 0, "empty cyma board: %s" % empty_cyma)
+	_expect(empty_cyma.find("where they cut the cyma") >= 0, "empty cyma board: %s" % empty_cyma)
+	_expect(empty_cyma.find("at which hour they cut the cyma") >= 0, "empty cyma board: %s" % empty_cyma)
+	_expect(empty_cyma.find("who scratched the quirk") == -1, "empty chamfer board used a quirk slot: %s" % empty_cyma)
+	_expect(empty_cyma.find("who cut the tongue") == -1, "empty chamfer board used a tongue slot: %s" % empty_cyma)
+	_expect(empty_cyma.find("who cut the dowel") == -1, "empty chamfer board used a dowel slot: %s" % empty_cyma)
+	_expect(empty_cyma.find("who cut the chamfer") == -1, "empty scotia board used a chamfer slot: %s" % empty_cyma)
+	_expect(empty_cyma.find("where they cut the chamfer") == -1, "empty scotia board used a chamfer slot: %s" % empty_cyma)
+	_expect(empty_cyma.find("at which hour they cut the chamfer") == -1, "empty scotia board used a chamfer slot: %s" % empty_cyma)
+	_expect(empty_cyma.find("who cut the scotia") == -1, "empty cyma board used a scotia slot: %s" % empty_cyma)
+	_expect(empty_cyma.find("where they cut the scotia") == -1, "empty cyma board used a scotia slot: %s" % empty_cyma)
+	_expect(empty_cyma.find("at which hour they cut the scotia") == -1, "empty cyma board used a scotia slot: %s" % empty_cyma)
+	_expect(empty_cyma.to_lower().find("conflict") == -1, "empty chamfer board talked about a conflict: %s" % empty_cyma)
+	_press(root, "Amos")
+	_press(root, "Inshave")
+	_press(root, "151")
+	_press(root, "Submit theory")
+	var cyma_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(cyma_miss, Cyma, {"who": "Amos", "place": "inshave", "hour": "151"})
+	_expect(Cyma.conflicting_ids({"who": "Amos", "place": "inshave", "hour": "151"}).size() == 9, "Amos / inshave / 151 should contradict every exhibit")
+	_expect(cyma_miss.find("Echinus chit") >= 0, "wrong triple reply omits Echinus chit: %s" % cyma_miss)
+	_expect(cyma_miss.find("Beak sight") >= 0, "wrong triple reply omits Beak sight: %s" % cyma_miss)
+	_expect(cyma_miss.find("Corona bill") >= 0, "wrong triple reply omits Corona bill: %s" % cyma_miss)
+	_expect(cyma_miss.find("Garnet slate") >= 0, "wrong triple reply omits Garnet slate: %s" % cyma_miss)
+	_expect(cyma_miss.find("Inshave card") >= 0, "wrong triple reply omits Inshave card: %s" % cyma_miss)
+	_expect(cyma_miss.find("Rouge slip") >= 0, "wrong triple reply omits Rouge slip: %s" % cyma_miss)
+	_expect(cyma_miss.find("Cyma leaf") >= 0, "wrong triple reply omits Cyma leaf: %s" % cyma_miss)
+	_expect(cyma_miss.find("Jennet note") >= 0, "wrong triple reply omits Jennet note: %s" % cyma_miss)
+	_expect(cyma_miss.find("Chase order") >= 0, "wrong triple reply omits Chase order: %s" % cyma_miss)
+	_press(root, "Ruth")
+	_press(root, "Bolection")
+	_press(root, "153")
+	_press(root, "Submit theory")
+	var cyma_accepted := _verdict_text(root)
+	_expect(cyma_accepted.find("fits every exhibit") >= 0, "cyma board rejected the true theory: %s" % cyma_accepted)
+	_expect(cyma_accepted.find(CYMA_TIMELINE) >= 0, "cyma board timeline: %s" % cyma_accepted)
+	_expect(cyma_accepted.find("Ruth (cyma hand) cut the cyma in the bolection at 153") >= 0, "cyma board omits Ruth at 153: %s" % cyma_accepted)
+	_expect(cyma_accepted.find("in the bolection") >= 0, "cyma board omits the bolection: %s" % cyma_accepted)
+	_expect(cyma_accepted.find("so the echinus would take the cyma") >= 0, "cyma board omits the echinus: %s" % cyma_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var cyma_cleared := _verdict_text(root)
+	_expect(cyma_cleared.find("who cut the cyma") >= 0, "cleared cyma board: %s" % cyma_cleared)
+	_expect(cyma_cleared.find("fits every exhibit") == -1, "cleared chamfer board stayed accepted: %s" % cyma_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The scotia")
+	var scotia_from_cyma := _visible_label_blob(root)
+	_expect(scotia_from_cyma.find("Torus chit") >= 0, "could not return to The scotia from The cyma")
+	_expect(scotia_from_cyma.find("Yearling note") >= 0, "scotia exhibits did not return from The cyma")
+	_expect(scotia_from_cyma.find("CW-41") >= 0, "returned scotia omits CW-41")
+	_expect(scotia_from_cyma.find("Echinus chit") == -1, "cyma papers showed inside The scotia")
+	_expect(scotia_from_cyma.find("Jennet note") == -1, "cyma papers showed inside The scotia")
+	_expect(scotia_from_cyma.find("CW-42") == -1, "cyma file code stayed up inside The scotia")
+	_press(root, "Willa")
+	_press(root, "Hollow")
+	_press(root, "148")
+	_press(root, "Submit theory")
+	var scotia_after_cyma := _verdict_text(root)
+	_expect(scotia_after_cyma.find("fits every exhibit") >= 0, "scotia board rejected the true theory after The cyma: %s" % scotia_after_cyma)
+	_expect(scotia_after_cyma.find("Willa (scotia hand) cut the scotia in the hollow at 148") >= 0, "scotia board timeline after The cyma: %s" % scotia_after_cyma)
+	_press(root, "Menu")
 	_press(root, "Open The chamfer")
-	var chamfer_open := _visible_label_blob(root)
-	_expect(chamfer_open.find("Cove chit") >= 0, "chamfer file did not open")
-	_expect(chamfer_open.find("Stallion note") >= 0, "chamfer file did not show its exhibits")
-	_expect(chamfer_open.find("CW-40") >= 0, "chamfer file omits CW-40")
-	_expect(chamfer_open.find("Tooth sight") >= 0, "chamfer file omits Tooth sight")
-	_expect(chamfer_open.find("Cant bill") >= 0, "chamfer file omits Cant bill")
-	_expect(chamfer_open.find("Wisp slate") >= 0, "chamfer file omits Wisp slate")
-	_expect(chamfer_open.find("File card") >= 0, "chamfer file omits File card")
-	_expect(chamfer_open.find("Soap slip") >= 0, "chamfer file omits Soap slip")
-	_expect(chamfer_open.find("Chamfer leaf") >= 0, "chamfer file omits Chamfer leaf")
-	_expect(chamfer_open.find("Fettle order") >= 0, "chamfer file omits Fettle order")
-	_expect(chamfer_open.find("Travisher card") >= 0, "chamfer file omits the travisher card")
-	_expect(chamfer_open.find("Complaint slip") == -1, "spare key papers showed inside The chamfer")
-	_expect(chamfer_open.find("Cut list") == -1, "rehearsal papers showed inside The chamfer")
-	_expect(chamfer_open.find("Move order") == -1, "gilt stamp papers showed inside The chamfer")
-	_expect(chamfer_open.find("Whistle slip") == -1, "ferry bell papers showed inside The chamfer")
-	_expect(chamfer_open.find("Frost note") == -1, "weather slate papers showed inside The chamfer")
-	_expect(chamfer_open.find("Trough tag") == -1, "loom shuttle papers showed inside The chamfer")
-	_expect(chamfer_open.find("Fuel line") == -1, "hive smoker papers showed inside The chamfer")
-	_expect(chamfer_open.find("Weight line") == -1, "glass pontil papers showed inside The chamfer")
-	_expect(chamfer_open.find("Lock line") == -1, "press proof papers showed inside The chamfer")
-	_expect(chamfer_open.find("Cup line") == -1, "assay cup papers showed inside The chamfer")
-	_expect(chamfer_open.find("Mark line") == -1, "kiln chalk papers showed inside The chamfer")
-	_expect(chamfer_open.find("Ledger line") == -1, "tide ledger papers showed inside The chamfer")
-	_expect(chamfer_open.find("Bell line") == -1, "night bell papers showed inside The chamfer")
-	_expect(chamfer_open.find("Salt line") == -1, "salt mark papers showed inside The chamfer")
-	_expect(chamfer_open.find("Oil note") == -1, "wick trim papers showed inside The chamfer")
-	_expect(chamfer_open.find("Gather note") == -1, "glass anneal papers showed inside The chamfer")
-	_expect(chamfer_open.find("Scion note") == -1, "orchard graft papers showed inside The chamfer")
-	_expect(chamfer_open.find("Winder chit") == -1, "dye vat papers showed inside The chamfer")
-	_expect(chamfer_open.find("Rope chit") == -1, "tar kettle papers showed inside The chamfer")
-	_expect(chamfer_open.find("Cutter chit") == -1, "cork press papers showed inside The chamfer")
-	_expect(chamfer_open.find("Mesh chit") == -1, "net loft papers showed inside The chamfer")
-	_expect(chamfer_open.find("Hoop chit") == -1, "cask hoop papers showed inside The chamfer")
-	_expect(chamfer_open.find("Shears chit") == -1, "linen fold papers showed inside The chamfer")
-	_expect(chamfer_open.find("Apron sight") == -1, "dovetail papers showed inside The chamfer")
-	_expect(chamfer_open.find("Peg hook") == -1, "dovetail papers showed inside The chamfer")
-	_expect(chamfer_open.find("Joint slate") == -1, "dovetail papers showed inside The chamfer")
-	_expect(chamfer_open.find("Clamp card") == -1, "dovetail papers showed inside The chamfer")
-	_expect(chamfer_open.find("Sweep slip") == -1, "dovetail papers showed inside The chamfer")
-	_expect(chamfer_open.find("Cut leaf") == -1, "dovetail papers showed inside The chamfer")
-	_expect(chamfer_open.find("Joint note") == -1, "dovetail papers showed inside The chamfer")
-	_expect(chamfer_open.find("Jaw order") == -1, "dovetail papers showed inside The chamfer")
-	_expect(chamfer_open.find("CW-24") == -1, "dovetail file code stayed up inside The chamfer")
-	_expect(chamfer_open.find("Chisel chit") == -1, "mortise papers stayed up inside The chamfer")
-	_expect(chamfer_open.find("Awl sight") == -1, "mortise papers showed inside The chamfer")
-	_expect(chamfer_open.find("Wedge hook") == -1, "mortise papers showed inside The chamfer")
-	_expect(chamfer_open.find("Tenon slate") == -1, "mortise papers showed inside The chamfer")
-	_expect(chamfer_open.find("Brush slip") == -1, "mortise papers showed inside The chamfer")
-	_expect(chamfer_open.find("Bore leaf") == -1, "mortise papers showed inside The chamfer")
-	_expect(chamfer_open.find("Tenon note") == -1, "mortise papers showed inside The chamfer")
-	_expect(chamfer_open.find("Rack order") == -1, "mortise papers showed inside The chamfer")
-	_expect(chamfer_open.find("CW-25") == -1, "mortise file code stayed up inside The chamfer")
-	_expect(chamfer_open.find("Plane chit") == -1, "rebate papers stayed up inside The chamfer")
-	_expect(chamfer_open.find("Gauge sight") == -1, "rebate papers showed inside The chamfer")
-	_expect(chamfer_open.find("Shim hook") == -1, "rebate papers showed inside The chamfer")
-	_expect(chamfer_open.find("Shoulder slate") == -1, "rebate papers showed inside The chamfer")
-	_expect(chamfer_open.find("Fence card") == -1, "rebate papers showed inside The chamfer")
-	_expect(chamfer_open.find("Oil slip") == -1, "rebate papers showed inside The chamfer")
-	_expect(chamfer_open.find("Scribe leaf") == -1, "rebate papers showed inside The chamfer")
-	_expect(chamfer_open.find("Shoulder note") == -1, "rebate papers showed inside The chamfer")
-	_expect(chamfer_open.find("CW-26") == -1, "rebate file code stayed up inside The chamfer")
-	_expect(chamfer_open.find("Saw chit") == -1, "housing papers stayed up inside The chamfer")
-	_expect(chamfer_open.find("Square sight") == -1, "housing papers showed inside The chamfer")
-	_expect(chamfer_open.find("Fillet hook") == -1, "housing papers showed inside The chamfer")
-	_expect(chamfer_open.find("Trench slate") == -1, "housing papers showed inside The chamfer")
-	_expect(chamfer_open.find("Stock card") == -1, "housing papers showed inside The chamfer")
-	_expect(chamfer_open.find("Chalk slip") == -1, "housing papers showed inside The chamfer")
-	_expect(chamfer_open.find("Mark leaf") == -1, "housing papers showed inside The chamfer")
-	_expect(chamfer_open.find("Trench note") == -1, "housing papers showed inside The chamfer")
-	_expect(chamfer_open.find("CW-27") == -1, "housing file code stayed up inside The chamfer")
-	_expect(chamfer_open.find("Gouge chit") == -1, "tenon papers stayed up inside The chamfer")
-	_expect(chamfer_open.find("Rasp sight") == -1, "tenon papers showed inside The chamfer")
-	_expect(chamfer_open.find("Dowel hook") == -1, "tenon papers showed inside The chamfer")
-	_expect(chamfer_open.find("Haunch slate") == -1, "tenon papers showed inside The chamfer")
-	_expect(chamfer_open.find("Guide card") == -1, "tenon papers showed inside The chamfer")
-	_expect(chamfer_open.find("Hone slip") == -1, "tenon papers showed inside The chamfer")
-	_expect(chamfer_open.find("Nick leaf") == -1, "tenon papers showed inside The chamfer")
-	_expect(chamfer_open.find("CW-28") == -1, "tenon file code stayed up inside The chamfer")
-	_expect(chamfer_open.find("Router chit") == -1, "bridle papers stayed up inside The chamfer")
-	_expect(chamfer_open.find("Scraper sight") == -1, "bridle papers showed inside The chamfer")
-	_expect(chamfer_open.find("Spline hook") == -1, "bridle papers showed inside The chamfer")
-	_expect(chamfer_open.find("Tongue slate") == -1, "bridle papers showed inside The chamfer")
-	_expect(chamfer_open.find("Templet card") == -1, "bridle papers showed inside The chamfer")
-	_expect(chamfer_open.find("Strop slip") == -1, "bridle papers showed inside The chamfer")
-	_expect(chamfer_open.find("Notch leaf") == -1, "bridle papers showed inside The chamfer")
-	_expect(chamfer_open.find("Tongue note") == -1, "bridle papers showed inside The chamfer")
-	_expect(chamfer_open.find("CW-29") == -1, "bridle file code stayed up inside The chamfer")
-	_expect(chamfer_open.find("Plough chit") == -1, "dado papers stayed up inside The chamfer")
-	_expect(chamfer_open.find("Float sight") == -1, "dado papers showed inside The chamfer")
-	_expect(chamfer_open.find("Cleat hook") == -1, "dado papers showed inside The chamfer")
-	_expect(chamfer_open.find("Groove slate") == -1, "dado papers showed inside The chamfer")
-	_expect(chamfer_open.find("Spur card") == -1, "dado papers showed inside The chamfer")
-	_expect(chamfer_open.find("Whet slip") == -1, "dado papers showed inside The chamfer")
-	_expect(chamfer_open.find("Score leaf") == -1, "dado papers showed inside The chamfer")
-	_expect(chamfer_open.find("Groove note") == -1, "dado papers showed inside The chamfer")
-	_expect(chamfer_open.find("CW-30") == -1, "dado file code stayed up inside The chamfer")
-	_expect(chamfer_open.find("Slot chit") == -1, "spline papers stayed up inside The chamfer")
-	_expect(chamfer_open.find("Rest sight") == -1, "spline papers showed inside The chamfer")
-	_expect(chamfer_open.find("Feather hook") == -1, "spline papers showed inside The chamfer")
-	_expect(chamfer_open.find("Slot slate") == -1, "spline papers showed inside The chamfer")
-	_expect(chamfer_open.find("Key card") == -1, "spline papers showed inside The chamfer")
-	_expect(chamfer_open.find("Cheek slip") == -1, "spline papers showed inside The chamfer")
-	_expect(chamfer_open.find("Slot leaf") == -1, "spline papers showed inside The chamfer")
-	_expect(chamfer_open.find("Slot note") == -1, "spline papers showed inside The chamfer")
-	_expect(chamfer_open.find("Dry order") == -1, "spline papers showed inside The chamfer")
-	_expect(chamfer_open.find("CW-31") == -1, "spline file code stayed up inside The chamfer")
-	_expect(chamfer_open.find("Arris chit") == -1, "mitre papers stayed up inside The chamfer")
-	_expect(chamfer_open.find("Horn sight") == -1, "mitre papers showed inside The chamfer")
-	_expect(chamfer_open.find("Offcut hook") == -1, "mitre papers showed inside The chamfer")
-	_expect(chamfer_open.find("Arris slate") == -1, "mitre papers showed inside The chamfer")
-	_expect(chamfer_open.find("Stop card") == -1, "mitre papers showed inside The chamfer")
-	_expect(chamfer_open.find("Dress slip") == -1, "mitre papers showed inside The chamfer")
-	_expect(chamfer_open.find("Arris leaf") == -1, "mitre papers showed inside The chamfer")
-	_expect(chamfer_open.find("Arris note") == -1, "mitre papers showed inside The chamfer")
-	_expect(chamfer_open.find("Brush order") == -1, "mitre papers showed inside The chamfer")
-	_expect(chamfer_open.find("CW-32") == -1, "mitre file code stayed up inside The chamfer")
-	_expect(chamfer_open.find("Grain chit") == -1, "lap papers stayed up inside The chamfer")
-	_expect(chamfer_open.find("Crest sight") == -1, "lap papers showed inside The chamfer")
-	_expect(chamfer_open.find("Paring hook") == -1, "lap papers showed inside The chamfer")
-	_expect(chamfer_open.find("Grain slate") == -1, "lap papers showed inside The chamfer")
-	_expect(chamfer_open.find("Brad card") == -1, "lap papers showed inside The chamfer")
-	_expect(chamfer_open.find("Skim slip") == -1, "lap papers showed inside The chamfer")
-	_expect(chamfer_open.find("Grain leaf") == -1, "lap papers showed inside The chamfer")
-	_expect(chamfer_open.find("Grain note") == -1, "lap papers showed inside The chamfer")
-	_expect(chamfer_open.find("Oil order") == -1, "lap papers showed inside The chamfer")
-	_expect(chamfer_open.find("CW-33") == -1, "lap file code stayed up inside The chamfer")
-	_expect(chamfer_open.find("Shoulder chit") == -1, "scarf papers stayed up inside The chamfer")
-	_expect(chamfer_open.find("Sole sight") == -1, "scarf papers showed inside The chamfer")
-	_expect(chamfer_open.find("Shaving hook") == -1, "scarf papers showed inside The chamfer")
-	_expect(chamfer_open.find("Edge slate") == -1, "scarf papers showed inside The chamfer")
-	_expect(chamfer_open.find("Wedge card") == -1, "scarf papers showed inside The chamfer")
-	_expect(chamfer_open.find("Film slip") == -1, "scarf papers showed inside The chamfer")
-	_expect(chamfer_open.find("Scarf leaf") == -1, "scarf papers showed inside The chamfer")
-	_expect(chamfer_open.find("Scarf note") == -1, "scarf papers showed inside The chamfer")
-	_expect(chamfer_open.find("Finish order") == -1, "scarf papers showed inside The chamfer")
-	_expect(chamfer_open.find("CW-34") == -1, "scarf file code stayed up inside The chamfer")
-	_expect(chamfer_open.find("Socket chit") == -1, "finger papers showed inside The chamfer")
-	_expect(chamfer_open.find("Burr sight") == -1, "finger papers showed inside The chamfer")
-	_expect(chamfer_open.find("Chip bill") == -1, "finger papers showed inside The chamfer")
-	_expect(chamfer_open.find("Face slate") == -1, "finger papers showed inside The chamfer")
-	_expect(chamfer_open.find("Catch card") == -1, "finger papers showed inside The chamfer")
-	_expect(chamfer_open.find("Sheen slip") == -1, "finger papers showed inside The chamfer")
-	_expect(chamfer_open.find("Finger leaf") == -1, "finger papers showed inside The chamfer")
-	_expect(chamfer_open.find("Finger note") == -1, "finger papers showed inside The chamfer")
-	_expect(chamfer_open.find("Rub order") == -1, "finger papers showed inside The chamfer")
-	_expect(chamfer_open.find("CW-35") == -1, "finger file code stayed up inside The chamfer")
-	_expect(chamfer_open.find("so the bevel would take the haunch") == -1, "tenon aim stayed up inside The chamfer")
-	_expect(chamfer_open.find("Cheek chit") == -1, "haunch papers showed inside The chamfer")
-	_expect(chamfer_open.find("Toe sight") == -1, "haunch papers showed inside The chamfer")
-	_expect(chamfer_open.find("Sliver bill") == -1, "haunch papers showed inside The chamfer")
-	_expect(chamfer_open.find("Bed slate") == -1, "haunch papers showed inside The chamfer")
-	_expect(chamfer_open.find("Pin card") == -1, "haunch papers showed inside The chamfer")
-	_expect(chamfer_open.find("Wipe slip") == -1, "haunch papers showed inside The chamfer")
-	_expect(chamfer_open.find("Haunch leaf") == -1, "haunch papers showed inside The chamfer")
-	_expect(chamfer_open.find("Haunch note") == -1, "haunch papers showed inside The chamfer")
-	_expect(chamfer_open.find("Stone order") == -1, "haunch papers showed inside The chamfer")
-	_expect(chamfer_open.find("CW-36") == -1, "haunch file code stayed up inside The chamfer")
-	_expect(chamfer_open.find("so the cheek would take the haunch") == -1, "haunch aim stayed up inside The chamfer")
-	_expect(chamfer_open.find("Bore chit") == -1, "dowel papers showed inside The chamfer")
-	_expect(chamfer_open.find("Point sight") == -1, "dowel papers showed inside The chamfer")
-	_expect(chamfer_open.find("Curl bill") == -1, "dowel papers showed inside The chamfer")
-	_expect(chamfer_open.find("Flute slate") == -1, "dowel papers showed inside The chamfer")
-	_expect(chamfer_open.find("Chuck card") == -1, "dowel papers showed inside The chamfer")
-	_expect(chamfer_open.find("Wax slip") == -1, "dowel papers showed inside The chamfer")
-	_expect(chamfer_open.find("Dowel leaf") == -1, "dowel papers showed inside The chamfer")
-	_expect(chamfer_open.find("Dowel note") == -1, "dowel papers showed inside The chamfer")
-	_expect(chamfer_open.find("Hone order") == -1, "dowel papers showed inside The chamfer")
-	_expect(chamfer_open.find("CW-37") == -1, "dowel file code stayed up inside The chamfer")
-	_expect(chamfer_open.find("Brace card") == -1, "dowel papers showed inside The chamfer")
-	_expect(chamfer_open.find("so the bore would take the dowel") == -1, "dowel aim stayed up inside The chamfer")
-	_expect(chamfer_open.find("Groove chit") == -1, "tongue papers showed inside The chamfer")
-	_expect(chamfer_open.find("Face sight") == -1, "tongue papers showed inside The chamfer")
-	_expect(chamfer_open.find("Peel bill") == -1, "tongue papers showed inside The chamfer")
-	_expect(chamfer_open.find("Kerf slate") == -1, "tongue papers showed inside The chamfer")
-	_expect(chamfer_open.find("Turn card") == -1, "tongue papers showed inside The chamfer")
-	_expect(chamfer_open.find("Tallow slip") == -1, "tongue papers showed inside The chamfer")
-	_expect(chamfer_open.find("Tongue leaf") == -1, "tongue papers showed inside The chamfer")
-	_expect(chamfer_open.find("Filly note") == -1, "tongue papers showed inside The chamfer")
-	_expect(chamfer_open.find("Grind order") == -1, "tongue papers showed inside The chamfer")
-	_expect(chamfer_open.find("Scribe card") == -1, "tongue papers showed inside The chamfer")
-	_expect(chamfer_open.find("CW-38") == -1, "tongue file code stayed up inside The chamfer")
-	_expect(chamfer_open.find("so the groove would take the tongue") == -1, "tongue aim stayed up inside The chamfer")
-	_expect(chamfer_open.find("Ovolo chit") == -1, "quirk papers showed inside The chamfer")
-	_expect(chamfer_open.find("Bolt sight") == -1, "quirk papers showed inside The chamfer")
-	_expect(chamfer_open.find("Astragal bill") == -1, "quirk papers showed inside The chamfer")
-	_expect(chamfer_open.find("Score slate") == -1, "quirk papers showed inside The chamfer")
-	_expect(chamfer_open.find("Snib card") == -1, "quirk papers showed inside The chamfer")
-	_expect(chamfer_open.find("Grease slip") == -1, "quirk papers showed inside The chamfer")
-	_expect(chamfer_open.find("Quirk leaf") == -1, "quirk papers showed inside The chamfer")
-	_expect(chamfer_open.find("Gelding note") == -1, "quirk papers showed inside The chamfer")
-	_expect(chamfer_open.find("Whet order") == -1, "quirk papers showed inside The chamfer")
-	_expect(chamfer_open.find("Veiner card") == -1, "quirk papers showed inside The chamfer")
-	_expect(chamfer_open.find("CW-39") == -1, "quirk file code stayed up inside The chamfer")
-	_expect(chamfer_open.find("so the ovolo would take the quirk") == -1, "quirk aim stayed up inside The chamfer")
-	_press(root, "Submit theory")
-	var empty_chamfer := _verdict_text(root)
-	_expect(empty_chamfer.find("who cut the chamfer") >= 0, "empty chamfer board: %s" % empty_chamfer)
-	_expect(empty_chamfer.find("where they cut the chamfer") >= 0, "empty chamfer board: %s" % empty_chamfer)
-	_expect(empty_chamfer.find("at which hour they cut the chamfer") >= 0, "empty chamfer board: %s" % empty_chamfer)
-	_expect(empty_chamfer.find("who scratched the quirk") == -1, "empty chamfer board used a quirk slot: %s" % empty_chamfer)
-	_expect(empty_chamfer.find("who cut the tongue") == -1, "empty chamfer board used a tongue slot: %s" % empty_chamfer)
-	_expect(empty_chamfer.find("who cut the dowel") == -1, "empty chamfer board used a dowel slot: %s" % empty_chamfer)
-	_expect(empty_chamfer.to_lower().find("conflict") == -1, "empty chamfer board talked about a conflict: %s" % empty_chamfer)
-	_press(root, "Enid")
-	_press(root, "File")
-	_press(root, "141")
-	_press(root, "Submit theory")
-	var chamfer_miss := _verdict_text(root)
-	_expect_reply_names_conflicts(chamfer_miss, Chamfer, {"who": "Enid", "place": "file", "hour": "141"})
-	_expect(Chamfer.conflicting_ids({"who": "Enid", "place": "file", "hour": "141"}).size() == 9, "Enid / file / 141 should contradict every exhibit")
-	_expect(chamfer_miss.find("Cove chit") >= 0, "wrong triple reply omits Cove chit: %s" % chamfer_miss)
-	_expect(chamfer_miss.find("Tooth sight") >= 0, "wrong triple reply omits Tooth sight: %s" % chamfer_miss)
-	_expect(chamfer_miss.find("Cant bill") >= 0, "wrong triple reply omits Cant bill: %s" % chamfer_miss)
-	_expect(chamfer_miss.find("Wisp slate") >= 0, "wrong triple reply omits Wisp slate: %s" % chamfer_miss)
-	_expect(chamfer_miss.find("File card") >= 0, "wrong triple reply omits File card: %s" % chamfer_miss)
-	_expect(chamfer_miss.find("Soap slip") >= 0, "wrong triple reply omits Soap slip: %s" % chamfer_miss)
-	_expect(chamfer_miss.find("Chamfer leaf") >= 0, "wrong triple reply omits Chamfer leaf: %s" % chamfer_miss)
-	_expect(chamfer_miss.find("Stallion note") >= 0, "wrong triple reply omits Stallion note: %s" % chamfer_miss)
-	_expect(chamfer_miss.find("Fettle order") >= 0, "wrong triple reply omits Fettle order: %s" % chamfer_miss)
+	var chamfer_from_cyma := _visible_label_blob(root)
+	_expect(chamfer_from_cyma.find("Cove chit") >= 0, "could not return to The chamfer from The cyma")
+	_expect(chamfer_from_cyma.find("Stallion note") >= 0, "chamfer exhibits did not return from The cyma")
+	_expect(chamfer_from_cyma.find("CW-40") >= 0, "returned chamfer omits CW-40")
+	_expect(chamfer_from_cyma.find("Torus chit") == -1, "scotia papers showed inside The chamfer")
+	_expect(chamfer_from_cyma.find("Yearling note") == -1, "scotia papers showed inside The chamfer")
+	_expect(chamfer_from_cyma.find("CW-41") == -1, "scotia file code stayed up inside The chamfer")
+	_expect(chamfer_from_cyma.find("Echinus chit") == -1, "cyma papers showed inside The chamfer")
+	_expect(chamfer_from_cyma.find("Jennet note") == -1, "cyma papers showed inside The chamfer")
+	_expect(chamfer_from_cyma.find("CW-42") == -1, "cyma file code stayed up inside The chamfer")
 	_press(root, "Merrick")
 	_press(root, "Block")
 	_press(root, "143")
 	_press(root, "Submit theory")
-	var chamfer_accepted := _verdict_text(root)
-	_expect(chamfer_accepted.find("fits every exhibit") >= 0, "chamfer board rejected the true theory: %s" % chamfer_accepted)
-	_expect(chamfer_accepted.find(CHAMFER_TIMELINE) >= 0, "chamfer board timeline: %s" % chamfer_accepted)
-	_expect(chamfer_accepted.find("Merrick (chamfer hand) cut the chamfer in the block at 143") >= 0, "chamfer board omits Merrick at 143: %s" % chamfer_accepted)
-	_expect(chamfer_accepted.find("in the block") >= 0, "chamfer board omits the block: %s" % chamfer_accepted)
-	_expect(chamfer_accepted.find("so the cove would take the chamfer") >= 0, "chamfer board omits the cove: %s" % chamfer_accepted)
-	_press(root, "Clear")
-	_press(root, "Submit theory")
-	var chamfer_cleared := _verdict_text(root)
-	_expect(chamfer_cleared.find("who cut the chamfer") >= 0, "cleared chamfer board: %s" % chamfer_cleared)
-	_expect(chamfer_cleared.find("fits every exhibit") == -1, "cleared chamfer board stayed accepted: %s" % chamfer_cleared)
+	var chamfer_after_cyma := _verdict_text(root)
+	_expect(chamfer_after_cyma.find("fits every exhibit") >= 0, "chamfer board rejected the true theory after The cyma: %s" % chamfer_after_cyma)
+	_expect(chamfer_after_cyma.find("Merrick (chamfer hand) cut the chamfer in the block at 143") >= 0, "chamfer board timeline after The cyma: %s" % chamfer_after_cyma)
 	_press(root, "Menu")
 	_press(root, "Open The quirk")
-	var quirk_from_chamfer := _visible_label_blob(root)
-	_expect(quirk_from_chamfer.find("Ovolo chit") >= 0, "could not return to The quirk from The chamfer")
-	_expect(quirk_from_chamfer.find("Gelding note") >= 0, "quirk exhibits did not return from The chamfer")
-	_expect(quirk_from_chamfer.find("CW-39") >= 0, "returned quirk omits CW-39")
-	_expect(quirk_from_chamfer.find("Cove chit") == -1, "chamfer papers showed inside The quirk")
-	_expect(quirk_from_chamfer.find("Stallion note") == -1, "chamfer papers showed inside The quirk")
-	_expect(quirk_from_chamfer.find("CW-40") == -1, "chamfer file code stayed up inside The quirk")
+	var quirk_from_cyma := _visible_label_blob(root)
+	_expect(quirk_from_cyma.find("Ovolo chit") >= 0, "could not return to The quirk from The cyma")
+	_expect(quirk_from_cyma.find("Gelding note") >= 0, "quirk exhibits did not return from The cyma")
+	_expect(quirk_from_cyma.find("CW-39") >= 0, "returned quirk omits CW-39")
+	_expect(quirk_from_cyma.find("Cove chit") == -1, "chamfer papers showed inside The quirk")
+	_expect(quirk_from_cyma.find("Stallion note") == -1, "chamfer papers showed inside The quirk")
+	_expect(quirk_from_cyma.find("CW-40") == -1, "chamfer file code stayed up inside The quirk")
+	_expect(quirk_from_cyma.find("Torus chit") == -1, "scotia papers showed inside The quirk")
+	_expect(quirk_from_cyma.find("Yearling note") == -1, "scotia papers showed inside The quirk")
+	_expect(quirk_from_cyma.find("CW-41") == -1, "scotia file code stayed up inside The quirk")
+	_expect(quirk_from_cyma.find("Echinus chit") == -1, "cyma papers showed inside The quirk")
+	_expect(quirk_from_cyma.find("Jennet note") == -1, "cyma papers showed inside The quirk")
+	_expect(quirk_from_cyma.find("CW-42") == -1, "cyma file code stayed up inside The quirk")
 	_press(root, "Ross")
 	_press(root, "Scratch")
 	_press(root, "138")
 	_press(root, "Submit theory")
-	var quirk_after_chamfer := _verdict_text(root)
-	_expect(quirk_after_chamfer.find("fits every exhibit") >= 0, "quirk board rejected the true theory after The chamfer: %s" % quirk_after_chamfer)
-	_expect(quirk_after_chamfer.find("Ross (quirk hand) scratched the quirk in the scratch at 138") >= 0, "quirk board timeline after The chamfer: %s" % quirk_after_chamfer)
+	var quirk_after_cyma := _verdict_text(root)
+	_expect(quirk_after_cyma.find("fits every exhibit") >= 0, "quirk board rejected the true theory after The cyma: %s" % quirk_after_cyma)
+	_expect(quirk_after_cyma.find("Ross (quirk hand) scratched the quirk in the scratch at 138") >= 0, "quirk board timeline after The cyma: %s" % quirk_after_cyma)
 	_press(root, "Menu")
 	_press(root, "Open The tongue")
-	var tongue_from_chamfer := _visible_label_blob(root)
-	_expect(tongue_from_chamfer.find("Groove chit") >= 0, "could not return to The tongue from The chamfer")
-	_expect(tongue_from_chamfer.find("Filly note") >= 0, "tongue exhibits did not return from The chamfer")
-	_expect(tongue_from_chamfer.find("CW-38") >= 0, "returned tongue omits CW-38")
-	_expect(tongue_from_chamfer.find("Cove chit") == -1, "chamfer papers showed inside The tongue")
-	_expect(tongue_from_chamfer.find("Stallion note") == -1, "chamfer papers showed inside The tongue")
-	_expect(tongue_from_chamfer.find("CW-40") == -1, "chamfer file code stayed up inside The tongue")
+	var tongue_from_cyma := _visible_label_blob(root)
+	_expect(tongue_from_cyma.find("Groove chit") >= 0, "could not return to The tongue from The cyma")
+	_expect(tongue_from_cyma.find("Filly note") >= 0, "tongue exhibits did not return from The cyma")
+	_expect(tongue_from_cyma.find("CW-38") >= 0, "returned tongue omits CW-38")
+	_expect(tongue_from_cyma.find("Cove chit") == -1, "chamfer papers showed inside The tongue")
+	_expect(tongue_from_cyma.find("Stallion note") == -1, "chamfer papers showed inside The tongue")
+	_expect(tongue_from_cyma.find("CW-40") == -1, "chamfer file code stayed up inside The tongue")
+	_expect(tongue_from_cyma.find("Torus chit") == -1, "scotia papers showed inside The tongue")
+	_expect(tongue_from_cyma.find("Yearling note") == -1, "scotia papers showed inside The tongue")
+	_expect(tongue_from_cyma.find("CW-41") == -1, "scotia file code stayed up inside The tongue")
+	_expect(tongue_from_cyma.find("Echinus chit") == -1, "cyma papers showed inside The tongue")
+	_expect(tongue_from_cyma.find("Jennet note") == -1, "cyma papers showed inside The tongue")
+	_expect(tongue_from_cyma.find("CW-42") == -1, "cyma file code stayed up inside The tongue")
 	_press(root, "Shay")
 	_press(root, "Knife")
 	_press(root, "133")
 	_press(root, "Submit theory")
-	var tongue_after_chamfer := _verdict_text(root)
-	_expect(tongue_after_chamfer.find("fits every exhibit") >= 0, "tongue board rejected the true theory after The chamfer: %s" % tongue_after_chamfer)
-	_expect(tongue_after_chamfer.find("Shay (tongue hand) cut the tongue in the knife at 133") >= 0, "tongue board timeline after The chamfer: %s" % tongue_after_chamfer)
+	var tongue_after_cyma := _verdict_text(root)
+	_expect(tongue_after_cyma.find("fits every exhibit") >= 0, "tongue board rejected the true theory after The cyma: %s" % tongue_after_cyma)
+	_expect(tongue_after_cyma.find("Shay (tongue hand) cut the tongue in the knife at 133") >= 0, "tongue board timeline after The cyma: %s" % tongue_after_cyma)
 	_press(root, "Menu")
 	_press(root, "Open The dowel")
-	var dowel_from_chamfer := _visible_label_blob(root)
-	_expect(dowel_from_chamfer.find("Bore chit") >= 0, "could not return to The dowel from The chamfer")
-	_expect(dowel_from_chamfer.find("Dowel note") >= 0, "dowel exhibits did not return from The chamfer")
-	_expect(dowel_from_chamfer.find("CW-37") >= 0, "returned dowel omits CW-37")
-	_expect(dowel_from_chamfer.find("Cove chit") == -1, "chamfer papers showed inside The dowel")
-	_expect(dowel_from_chamfer.find("Stallion note") == -1, "chamfer papers showed inside The dowel")
-	_expect(dowel_from_chamfer.find("CW-40") == -1, "chamfer file code stayed up inside The dowel")
+	var dowel_from_cyma := _visible_label_blob(root)
+	_expect(dowel_from_cyma.find("Bore chit") >= 0, "could not return to The dowel from The cyma")
+	_expect(dowel_from_cyma.find("Dowel note") >= 0, "dowel exhibits did not return from The cyma")
+	_expect(dowel_from_cyma.find("CW-37") >= 0, "returned dowel omits CW-37")
+	_expect(dowel_from_cyma.find("Cove chit") == -1, "chamfer papers showed inside The dowel")
+	_expect(dowel_from_cyma.find("Stallion note") == -1, "chamfer papers showed inside The dowel")
+	_expect(dowel_from_cyma.find("CW-40") == -1, "chamfer file code stayed up inside The dowel")
+	_expect(dowel_from_cyma.find("Torus chit") == -1, "scotia papers showed inside The dowel")
+	_expect(dowel_from_cyma.find("Yearling note") == -1, "scotia papers showed inside The dowel")
+	_expect(dowel_from_cyma.find("CW-41") == -1, "scotia file code stayed up inside The dowel")
+	_expect(dowel_from_cyma.find("Echinus chit") == -1, "cyma papers showed inside The dowel")
+	_expect(dowel_from_cyma.find("Jennet note") == -1, "cyma papers showed inside The dowel")
+	_expect(dowel_from_cyma.find("CW-42") == -1, "cyma file code stayed up inside The dowel")
 	_press(root, "Faye")
 	_press(root, "Bit")
 	_press(root, "128")
 	_press(root, "Submit theory")
-	var dowel_after_chamfer := _verdict_text(root)
-	_expect(dowel_after_chamfer.find("fits every exhibit") >= 0, "dowel board rejected the true theory after The chamfer: %s" % dowel_after_chamfer)
-	_expect(dowel_after_chamfer.find("Faye (dowel hand) cut the dowel in the bit at 128") >= 0, "dowel board timeline after The chamfer: %s" % dowel_after_chamfer)
+	var dowel_after_cyma := _verdict_text(root)
+	_expect(dowel_after_cyma.find("fits every exhibit") >= 0, "dowel board rejected the true theory after The cyma: %s" % dowel_after_cyma)
+	_expect(dowel_after_cyma.find("Faye (dowel hand) cut the dowel in the bit at 128") >= 0, "dowel board timeline after The cyma: %s" % dowel_after_cyma)
 	_press(root, "Menu")
 	_menu_root = root
 
@@ -21130,13 +22531,13 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 				var code_bottom := code_top + code_rect.size.y
 				print("scrolled bottom CW-36 %s..%s page %s max %s" % [code_top, code_bottom, page, haunch_bar.max_value])
 				_expect(code_rect.position.x >= 0.0 and code_rect.position.x + code_rect.size.x <= 1280.0, "CW-36 is outside the window horizontally %s" % code_rect)
-				_expect(code_top >= -0.5, "CW-36 is above the window when the file list is scrolled to the bottom (%s)" % code_top)
+				_expect(code_top < 0.0, "CW-36 should sit above the window once The scotia is on the list (%s)" % code_top)
 				_expect(code_bottom <= page + 0.5, "CW-36 is below the window when the file list is scrolled to the bottom (%s)" % code_bottom)
 			var button_top := haunch_rect.position.y - max_scroll
 			var button_bottom := button_top + haunch_rect.size.y
 			print("scrolled bottom Open The haunch %s..%s" % [button_top, button_bottom])
 			_expect(haunch_rect.position.x >= 0.0 and haunch_rect.position.x + haunch_rect.size.x <= 1280.0, "Open The haunch is outside the window horizontally %s" % haunch_rect)
-			_expect(button_top >= -0.5, "Open The haunch is above the window when the file list is scrolled to the bottom (%s)" % button_top)
+			_expect(button_top < 0.0, "Open The haunch should sit above the window once The scotia is on the list (%s)" % button_top)
 			_expect(button_bottom <= page + 0.5, "Open The haunch is below the window when the file list is scrolled to the bottom (%s)" % button_bottom)
 
 
@@ -21174,13 +22575,13 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 					var dowel_code_bottom := dowel_code_top + dowel_code_rect.size.y
 					print("scrolled bottom CW-37 %s..%s page %s max %s" % [dowel_code_top, dowel_code_bottom, dowel_page, dowel_bar.max_value])
 					_expect(dowel_code_rect.position.x >= 0.0 and dowel_code_rect.position.x + dowel_code_rect.size.x <= 1280.0, "CW-37 is outside the window horizontally %s" % dowel_code_rect)
-					_expect(dowel_code_top >= -0.5, "CW-37 is above the window when the file list is scrolled to the bottom (%s)" % dowel_code_top)
+					_expect(dowel_code_top < 0.0, "CW-37 should sit above the window once The cyma is on the list (%s)" % dowel_code_top)
 					_expect(dowel_code_bottom <= dowel_page + 0.5, "CW-37 is below the window when the file list is scrolled to the bottom (%s)" % dowel_code_bottom)
 					var dowel_button_top := dowel_rect.position.y - dowel_max_scroll
 					var dowel_button_bottom := dowel_button_top + dowel_rect.size.y
 					print("scrolled bottom Open The dowel %s..%s" % [dowel_button_top, dowel_button_bottom])
 					_expect(dowel_rect.position.x >= 0.0 and dowel_rect.position.x + dowel_rect.size.x <= 1280.0, "Open The dowel is outside the window horizontally %s" % dowel_rect)
-					_expect(dowel_button_top >= -0.5, "Open The dowel is above the window when the file list is scrolled to the bottom (%s)" % dowel_button_top)
+					_expect(dowel_button_top < 0.0, "Open The dowel should sit above the window once The cyma is on the list (%s)" % dowel_button_top)
 					_expect(dowel_button_bottom <= dowel_page + 0.5, "Open The dowel is below the window when the file list is scrolled to the bottom (%s)" % dowel_button_bottom)
 				var tongue_button := _find_visible_button(root, "Open The tongue")
 				_expect(tongue_button != null, "file list is missing Open The tongue")
@@ -21315,6 +22716,102 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 								_expect(chamfer_rect.position.x >= 0.0 and chamfer_rect.position.x + chamfer_rect.size.x <= 1280.0, "Open The chamfer is outside the window horizontally %s" % chamfer_rect)
 								_expect(chamfer_button_top >= -0.5, "Open The chamfer is above the window when the file list is scrolled to the bottom (%s)" % chamfer_button_top)
 								_expect(chamfer_button_bottom <= chamfer_page + 0.5, "Open The chamfer is below the window when the file list is scrolled to the bottom (%s)" % chamfer_button_bottom)
+
+
+							var scotia_button := _find_visible_button(root, "Open The scotia")
+							_expect(scotia_button != null, "file list is missing Open The scotia")
+							if scotia_button != null:
+								var scotia_rect := _content_rect(scotia_button)
+								print("file list scotia %s stride %s" % [scotia_rect, card_stride])
+								_expect(scotia_rect.size.y >= 40.0, "Open The scotia has no height")
+								_expect(chamfer_rect.position.y + chamfer_rect.size.y <= scotia_rect.position.y, "Open The chamfer is not above Open The scotia")
+								_expect(scotia_rect.position.y == chamfer_rect.position.y + card_stride, "scotia content top is %s, one stride below the chamfer is %s" % [scotia_rect.position.y, chamfer_rect.position.y + card_stride])
+								_expect(chamfer_rect.position.y == 6045.0, "chamfer content top moved to %s" % chamfer_rect.position.y)
+								_expect(quirk_rect.position.y == 5898.0, "quirk content top moved to %s" % quirk_rect.position.y)
+								_expect(tongue_rect.position.y == 5751.0, "tongue content top moved to %s" % tongue_rect.position.y)
+								_expect(dowel_rect.position.y == 5604.0, "dowel content top moved to %s" % dowel_rect.position.y)
+								if card_stride == 147.0:
+									_expect(scotia_rect.position.y == 6192.0, "scotia content top is %s" % scotia_rect.position.y)
+									_expect(chamfer_rect.position.y == 6045.0, "chamfer content top is %s" % chamfer_rect.position.y)
+									_expect(quirk_rect.position.y == 5898.0, "quirk content top is %s" % quirk_rect.position.y)
+									_expect(tongue_rect.position.y == 5751.0, "tongue content top is %s" % tongue_rect.position.y)
+									_expect(dowel_rect.position.y == 5604.0, "dowel content top is %s" % dowel_rect.position.y)
+								var scotia_bottom := scotia_rect.position.y + scotia_rect.size.y
+								var scotia_visible_top := scotia_bottom - window_height
+								_expect(chamfer_rect.position.y >= scotia_visible_top, "Open The chamfer is not fully on screen above Open The scotia")
+								_expect(chamfer_rect.position.y + chamfer_rect.size.y <= scotia_bottom, "Open The chamfer extends past the window when Open The scotia sits at the bottom")
+								_expect(scotia_bottom > window_height, "Open The scotia already fits without scrolling")
+								var scotia_code := _find_visible_label(root, "CW-41   The scotia")
+								_expect(scotia_code != null, "file list omits the CW-41 label")
+								if scotia_code != null:
+									var scotia_page := window_height
+									var scotia_bar := scroll.get_v_scroll_bar()
+									var scotia_content_height := float(scotia_bar.max_value)
+									var scotia_max_scroll := scotia_content_height - scotia_page
+									if scotia_max_scroll < 0.0:
+										scotia_max_scroll = 0.0
+									var scotia_code_rect := _content_rect(scotia_code)
+									var scotia_code_top := scotia_code_rect.position.y - scotia_max_scroll
+									var scotia_code_bottom := scotia_code_top + scotia_code_rect.size.y
+									print("scrolled bottom CW-41 %s..%s page %s max %s" % [scotia_code_top, scotia_code_bottom, scotia_page, scotia_bar.max_value])
+									_expect(scotia_code_rect.position.x >= 0.0 and scotia_code_rect.position.x + scotia_code_rect.size.x <= 1280.0, "CW-41 is outside the window horizontally %s" % scotia_code_rect)
+									_expect(scotia_code_top >= -0.5, "CW-41 is above the window when the file list is scrolled to the bottom (%s)" % scotia_code_top)
+									_expect(scotia_code_bottom <= scotia_page + 0.5, "CW-41 is below the window when the file list is scrolled to the bottom (%s)" % scotia_code_bottom)
+									var scotia_button_top := scotia_rect.position.y - scotia_max_scroll
+									var scotia_button_bottom := scotia_button_top + scotia_rect.size.y
+									print("scrolled bottom Open The scotia %s..%s" % [scotia_button_top, scotia_button_bottom])
+									_expect(scotia_rect.position.x >= 0.0 and scotia_rect.position.x + scotia_rect.size.x <= 1280.0, "Open The scotia is outside the window horizontally %s" % scotia_rect)
+									_expect(scotia_button_top >= -0.5, "Open The scotia is above the window when the file list is scrolled to the bottom (%s)" % scotia_button_top)
+									_expect(scotia_button_bottom <= scotia_page + 0.5, "Open The scotia is below the window when the file list is scrolled to the bottom (%s)" % scotia_button_bottom)
+
+
+								var cyma_button := _find_visible_button(root, "Open The cyma")
+								_expect(cyma_button != null, "file list is missing Open The cyma")
+								if cyma_button != null:
+									var cyma_rect := _content_rect(cyma_button)
+									print("file list cyma %s stride %s" % [cyma_rect, card_stride])
+									_expect(cyma_rect.size.y >= 40.0, "Open The cyma has no height")
+									_expect(scotia_rect.position.y + scotia_rect.size.y <= cyma_rect.position.y, "Open The scotia is not above Open The cyma")
+									_expect(cyma_rect.position.y == scotia_rect.position.y + card_stride, "cyma content top is %s, one stride below the scotia is %s" % [cyma_rect.position.y, scotia_rect.position.y + card_stride])
+									_expect(scotia_rect.position.y == 6192.0, "scotia content top moved to %s" % scotia_rect.position.y)
+									_expect(chamfer_rect.position.y == 6045.0, "chamfer content top moved to %s" % chamfer_rect.position.y)
+									_expect(quirk_rect.position.y == 5898.0, "quirk content top moved to %s" % quirk_rect.position.y)
+									_expect(tongue_rect.position.y == 5751.0, "tongue content top moved to %s" % tongue_rect.position.y)
+									_expect(dowel_rect.position.y == 5604.0, "dowel content top moved to %s" % dowel_rect.position.y)
+									if card_stride == 147.0:
+										_expect(cyma_rect.position.y == 6339.0, "cyma content top is %s" % cyma_rect.position.y)
+										_expect(scotia_rect.position.y == 6192.0, "scotia content top is %s" % scotia_rect.position.y)
+										_expect(chamfer_rect.position.y == 6045.0, "chamfer content top is %s" % chamfer_rect.position.y)
+										_expect(quirk_rect.position.y == 5898.0, "quirk content top is %s" % quirk_rect.position.y)
+										_expect(tongue_rect.position.y == 5751.0, "tongue content top is %s" % tongue_rect.position.y)
+										_expect(dowel_rect.position.y == 5604.0, "dowel content top is %s" % dowel_rect.position.y)
+									var cyma_bottom := cyma_rect.position.y + cyma_rect.size.y
+									var cyma_visible_top := cyma_bottom - window_height
+									_expect(scotia_rect.position.y >= cyma_visible_top, "Open The scotia is not fully on screen above Open The cyma")
+									_expect(scotia_rect.position.y + scotia_rect.size.y <= cyma_bottom, "Open The scotia extends past the window when Open The cyma sits at the bottom")
+									_expect(cyma_bottom > window_height, "Open The cyma already fits without scrolling")
+									var cyma_code := _find_visible_label(root, "CW-42   The cyma")
+									_expect(cyma_code != null, "file list omits the CW-42 label")
+									if cyma_code != null:
+										var cyma_page := window_height
+										var cyma_bar := scroll.get_v_scroll_bar()
+										var cyma_content_height := float(cyma_bar.max_value)
+										var cyma_max_scroll := cyma_content_height - cyma_page
+										if cyma_max_scroll < 0.0:
+											cyma_max_scroll = 0.0
+										var cyma_code_rect := _content_rect(cyma_code)
+										var cyma_code_top := cyma_code_rect.position.y - cyma_max_scroll
+										var cyma_code_bottom := cyma_code_top + cyma_code_rect.size.y
+										print("scrolled bottom CW-42 %s..%s page %s max %s" % [cyma_code_top, cyma_code_bottom, cyma_page, cyma_bar.max_value])
+										_expect(cyma_code_rect.position.x >= 0.0 and cyma_code_rect.position.x + cyma_code_rect.size.x <= 1280.0, "CW-42 is outside the window horizontally %s" % cyma_code_rect)
+										_expect(cyma_code_top >= -0.5, "CW-42 is above the window when the file list is scrolled to the bottom (%s)" % cyma_code_top)
+										_expect(cyma_code_bottom <= cyma_page + 0.5, "CW-42 is below the window when the file list is scrolled to the bottom (%s)" % cyma_code_bottom)
+										var cyma_button_top := cyma_rect.position.y - cyma_max_scroll
+										var cyma_button_bottom := cyma_button_top + cyma_rect.size.y
+										print("scrolled bottom Open The cyma %s..%s" % [cyma_button_top, cyma_button_bottom])
+										_expect(cyma_rect.position.x >= 0.0 and cyma_rect.position.x + cyma_rect.size.x <= 1280.0, "Open The cyma is outside the window horizontally %s" % cyma_rect)
+										_expect(cyma_button_top >= -0.5, "Open The cyma is above the window when the file list is scrolled to the bottom (%s)" % cyma_button_top)
+										_expect(cyma_button_bottom <= cyma_page + 0.5, "Open The cyma is below the window when the file list is scrolled to the bottom (%s)" % cyma_button_bottom)
 
 func _content_rect(control: Control) -> Rect2:
 	var rect := control.get_global_rect()

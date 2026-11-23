@@ -68,6 +68,10 @@ func _run() -> void:
 	test_ogee_book()
 	test_ovolo_rule()
 	test_ovolo_book()
+	test_cavetto_rule()
+	test_cavetto_book()
+	test_fillet_rule()
+	test_fillet_book()
 	test_chart_4_boat()
 	test_one_rotation_is_not_solved()
 	test_hint_points_at_one_piece()
@@ -237,7 +241,9 @@ func test_charts() -> void:
 	check(Charts.torus().size() == 8, "torus adds eight charts")
 	check(Charts.ogee().size() == 8, "ogee adds eight charts")
 	check(Charts.ovolo().size() == 8, "ovolo adds eight charts")
-	check(book.size() == 190, "one hundred ninety charts")
+	check(Charts.cavetto().size() == 8, "cavetto adds eight charts")
+	check(Charts.fillet().size() == 8, "fillet adds eight charts")
+	check(book.size() == 206, "two hundred six charts")
 	check(str(book[13]["id"]) == "14" and str(book[13]["title"]) == "The Holding Line", "chart 14 stays the reach capstone")
 	check(str(book[14]["title"]) == "North Light", "chart 15 opens the basin")
 	check(str(book[21]["id"]) == "22" and str(book[21]["title"]) == "The Basin Mark", "chart 22 stays the basin capstone")
@@ -283,6 +289,10 @@ func test_charts() -> void:
 	check(str(book[181]["id"]) == "182" and str(book[181]["title"]) == "The Ogee Mark", "chart 182 stays the ogee capstone")
 	check(str(book[182]["title"]) == "The Dry Ovolo", "chart 183 opens the ovolo")
 	check(str(book[189]["id"]) == "190" and str(book[189]["title"]) == "The Ovolo Mark", "chart 190 stays the ovolo capstone")
+	check(str(book[190]["title"]) == "The Dry Cavetto", "chart 191 opens the cavetto")
+	check(str(book[197]["id"]) == "198" and str(book[197]["title"]) == "The Cavetto Mark", "chart 198 stays the cavetto capstone")
+	check(str(book[198]["title"]) == "The Dry Fillet", "chart 199 opens the fillet")
+	check(str(book[205]["id"]) == "206" and str(book[205]["title"]) == "The Fillet Mark", "chart 206 stays the fillet capstone")
 	var seen_ids := {}
 	var seen_titles := {}
 	var quay_titles := ["First Glass", "Around the Pilings", "High Water", "Sleeping Hull", "Split the White", "The Night Mark"]
@@ -294,7 +304,7 @@ func test_charts() -> void:
 		var title := str(chart["title"])
 		check(not seen_ids.has(id), "chart id %s is unique" % id)
 		if seen_titles.has(title):
-			var echoed := (title == "After the Color" and id == "81") or (title == "Above the Gate" and (id == "84" or id == "92" or id == "100" or id == "108")) or (title == "Side Entry" and (id == "88" or id == "96" or id == "104")) or (title == "White Through" and (id == "97" or id == "105")) or (title == "Dry Stop" and (id == "90" or id == "98" or id == "106")) or (title == "The Wet Stop" and (id == "120" or id == "128" or id == "136" or id == "144" or id == "152" or id == "160" or id == "168" or id == "176" or id == "184")) or (title == "Color Kept" and (id == "121" or id == "129" or id == "137" or id == "145" or id == "153" or id == "161" or id == "169" or id == "177" or id == "185")) or (title == "No Turn" and (id == "122" or id == "130" or id == "138" or id == "146" or id == "154" or id == "162" or id == "170" or id == "178" or id == "186")) or (title == "Beside the Flood" and (id == "131" or id == "139" or id == "147" or id == "155" or id == "163" or id == "171" or id == "179" or id == "187"))
+			var echoed := (title == "After the Color" and id == "81") or (title == "Above the Gate" and (id == "84" or id == "92" or id == "100" or id == "108")) or (title == "Side Entry" and (id == "88" or id == "96" or id == "104")) or (title == "White Through" and (id == "97" or id == "105")) or (title == "Dry Stop" and (id == "90" or id == "98" or id == "106")) or (title == "The Wet Stop" and (id == "120" or id == "128" or id == "136" or id == "144" or id == "152" or id == "160" or id == "168" or id == "176" or id == "184" or id == "192" or id == "200")) or (title == "Color Kept" and (id == "121" or id == "129" or id == "137" or id == "145" or id == "153" or id == "161" or id == "169" or id == "177" or id == "185" or id == "193" or id == "201")) or (title == "No Turn" and (id == "122" or id == "130" or id == "138" or id == "146" or id == "154" or id == "162" or id == "170" or id == "178" or id == "186" or id == "194" or id == "202")) or (title == "Beside the Flood" and (id == "131" or id == "139" or id == "147" or id == "155" or id == "163" or id == "171" or id == "179" or id == "187" or id == "195" or id == "203"))
 			check(echoed, "chart title %s is unique" % title)
 		else:
 			check(true, "chart title %s is unique" % title)
@@ -7547,6 +7557,789 @@ func _expect_ovolo_miss(index: int, piece_id: String, kind: String, rot: int, la
 		check(true, "%s misses ovolo chart %d" % [label, index + 183])
 
 
+func test_cavetto_rule() -> void:
+	check(Tracer.norm_rot("cavetto", 0) == 0 and Tracer.norm_rot("cavetto", 90) == 90, "a cavetto keeps a quarter turn")
+	check(Tracer.norm_rot("cavetto", 180) == 180 and Tracer.norm_rot("cavetto", 270) == 270, "a cavetto keeps a half turn")
+	check(Tracer.norm_rot("cavetto", 360) == 0 and Tracer.norm_rot("cavetto", 450) == 90, "a cavetto wraps a full turn")
+	check(Tracer.turn_rot("cavetto", 0) == 90 and Tracer.turn_rot("cavetto", 90) == 180, "clicking a cavetto walks the facing")
+	check(Tracer.turn_rot("cavetto", 180) == 270 and Tracer.turn_rot("cavetto", 270) == 0, "clicking a cavetto returns to north")
+	check(Tracer.cavetto_facing(0) == "N" and Tracer.cavetto_facing(90) == "E" and Tracer.cavetto_facing(180) == "S" and Tracer.cavetto_facing(270) == "W", "cavetto facing follows the quarter turn")
+	check(Tracer.cavetto_passes(0, "N") and Tracer.cavetto_passes(0, "E") and Tracer.cavetto_passes(0, "W") and not Tracer.cavetto_passes(0, "S"), "a north cavetto passes north, east, and west")
+	check(Tracer.ovolo_passes(0, "S") and not Tracer.ovolo_passes(0, "N") and Tracer.cavetto_passes(0, "N") and not Tracer.cavetto_passes(0, "S"), "a north cavetto is not a north ovolo")
+	check(Tracer.ogee_passes(0, "S") and Tracer.ogee_passes(0, "W") and not Tracer.ogee_passes(0, "N") and Tracer.cavetto_passes(0, "N"), "a north cavetto passes the north a north ogee stops")
+	check(Tracer.torus_passes(0, "S") and not Tracer.torus_passes(0, "W") and Tracer.cavetto_passes(0, "W") and not Tracer.cavetto_passes(0, "S"), "a north cavetto passes the west a north torus stops")
+	check(Tracer.casement_facing(0) == "N" and Tracer.cavetto_passes(0, "E") and Tracer.cavetto_passes(0, "W"), "a north cavetto passes more than the facing a north casement passes")
+	var hinted: Dictionary = Charts.cavetto()[6]
+	var solved_hint := Charts.make_state(hinted, true)
+	check(not Hints.wrong_pieces(hinted, solved_hint).has("O"), "a hint accepts the held north cavetto")
+	for spun in [90, 180, 270]:
+		var turned_hint := Charts.duplicate_state(solved_hint)
+		turned_hint["pieces"]["O"]["rot"] = spun
+		check(Hints.wrong_pieces(hinted, turned_hint).has("O"), "a hint rejects cavetto rotation %d" % spun)
+		check(not Tracer.is_cleared(hinted, turned_hint), "cavetto rotation %d is not the held open set" % spun)
+	var carried := {}
+	carried[Vector2i(0, 0)] = {"kind": "cavetto", "rot": 0}
+	check(not Tracer._flood_carries(carried, Vector2i(0, 0)), "a flooded cavetto does not carry the beam")
+	var north_lane := _blank(1, 5)
+	north_lane["lanterns"] = [_lamp("L", 0, 4, "N", "white")]
+	north_lane["docks"] = [_need("D", 0, 0, "white")]
+	north_lane["pieces"] = [_fixed_ovolo("V", 0, 2, 0)]
+	check(not _center_hit(Tracer.trace(north_lane, Charts.make_state(north_lane, true)), 0, 2), "a north ovolo refuses north")
+	north_lane["pieces"] = [_fixed_cavetto("O", 0, 2, 0)]
+	var north_cavetto: Dictionary = Tracer.trace(north_lane, Charts.make_state(north_lane, true))
+	check(_arrives_from(north_cavetto, 0, 2, "N", "white") and _leaves(north_cavetto, 0, 2, "N", "white") and north_cavetto["docks"]["D"].has("white"), "a north cavetto passes north")
+	var south_out := _blank(1, 5)
+	south_out["lanterns"] = [_lamp("L", 0, 0, "S", "red")]
+	south_out["docks"] = [_need("D", 0, 4, "red")]
+	south_out["pieces"] = [_fixed_ovolo("V", 0, 2, 0)]
+	check(_leaves(Tracer.trace(south_out, Charts.make_state(south_out, true)), 0, 2, "S", "red"), "a north ovolo passes south")
+	south_out["pieces"] = [_fixed_cavetto("O", 0, 2, 0)]
+	var south_stop: Dictionary = Tracer.trace(south_out, Charts.make_state(south_out, true))
+	check(not _center_hit(south_stop, 0, 2) and south_stop["docks"]["D"].is_empty(), "a north cavetto refuses south")
+	south_out["pieces"] = [_fixed_lintel("N", 0, 2)]
+	check(_leaves(Tracer.trace(south_out, Charts.make_state(south_out, true)), 0, 2, "S", "red"), "a lintel passes the south a north cavetto blocks")
+	var east_lane := _blank(5, 1)
+	east_lane["lanterns"] = [_lamp("L", 0, 0, "E", "red")]
+	east_lane["docks"] = [_need("D", 4, 0, "red")]
+	east_lane["pieces"] = [_fixed_cavetto("O", 2, 0, 0)]
+	check(_leaves(Tracer.trace(east_lane, Charts.make_state(east_lane, true)), 2, 0, "E", "red"), "a north cavetto passes east")
+	var west_lane := _blank(5, 1)
+	west_lane["lanterns"] = [_lamp("L", 4, 0, "W", "blue")]
+	west_lane["docks"] = [_need("D", 0, 0, "blue")]
+	west_lane["pieces"] = [_fixed_torus("T", 2, 0, 0)]
+	check(not _center_hit(Tracer.trace(west_lane, Charts.make_state(west_lane, true)), 2, 0), "a north torus refuses west")
+	west_lane["pieces"] = [_fixed_cavetto("O", 2, 0, 0)]
+	check(_leaves(Tracer.trace(west_lane, Charts.make_state(west_lane, true)), 2, 0, "W", "blue"), "a north cavetto passes west")
+	var mullion_west := _blank(5, 1)
+	mullion_west["lanterns"] = [_lamp("L", 4, 0, "W", "white")]
+	mullion_west["docks"] = [_need("D", 0, 0, "white")]
+	mullion_west["pieces"] = [_fixed_mullion("U", 2, 0)]
+	mullion_west["pieces"][0]["solution_rot"] = Tracer.turn_rot("mullion", 0)
+	check(Tracer.turn_rot("mullion", 0) == 0 and not _center_hit(Tracer.trace(mullion_west, Charts.make_state(mullion_west, true)), 2, 0), "a mullion cannot be turned so that it passes west")
+	mullion_west["pieces"] = [_fixed_cavetto("O", 2, 0, 0)]
+	check(_leaves(Tracer.trace(mullion_west, Charts.make_state(mullion_west, true)), 2, 0, "W", "white"), "a north cavetto passes the west a mullion cannot turn to")
+	var clicked := _blank(5, 5)
+	clicked["lanterns"] = [_lamp("L", 0, 2, "E", "red")]
+	clicked["docks"] = [_need("D", 4, 2, "red")]
+	clicked["pieces"] = [_fixed_cavetto("O", 2, 2, Tracer.turn_rot("cavetto", 0))]
+	var clicked_hit: Dictionary = Tracer.trace(clicked, Charts.make_state(clicked, true))
+	check(Tracer.cavetto_facing(Tracer.turn_rot("cavetto", 0)) == "E" and _leaves(clicked_hit, 2, 2, "E", "red"), "a cavetto clicked once from north faces east and passes east")
+	clicked["pieces"] = [_fixed_ovolo("V", 2, 2, 90)]
+	check(not _center_hit(Tracer.trace(clicked, Charts.make_state(clicked, true)), 2, 2), "an east ovolo refuses the east an east cavetto passes")
+	var clicked_west := _blank(5, 5)
+	clicked_west["lanterns"] = [_lamp("L", 4, 2, "W", "blue")]
+	clicked_west["docks"] = [_need("D", 0, 2, "blue")]
+	clicked_west["pieces"] = [_fixed_cavetto("O", 2, 2, 90)]
+	check(not _center_hit(Tracer.trace(clicked_west, Charts.make_state(clicked_west, true)), 2, 2), "an east cavetto refuses west")
+	clicked_west["pieces"] = [_fixed_ovolo("V", 2, 2, 90)]
+	check(_leaves(Tracer.trace(clicked_west, Charts.make_state(clicked_west, true)), 2, 2, "W", "blue"), "an east ovolo passes the west an east cavetto refuses")
+	for rot in [0, 90, 180, 270]:
+		var facing := Tracer.cavetto_facing(rot)
+		var stopped := Tracer.rotate_dir(facing, 2)
+		for color in ["red", "blue", "white"]:
+			for dir in ["N", "E", "S", "W"]:
+				var open: bool = dir != stopped
+				var lane := _blank(5, 5)
+				var at := Vector2i(2, 2)
+				var step: Vector2i = Tracer.VEC[dir]
+				var lamp_at := at - step
+				var dock_at := at + step * 2
+				lane["lanterns"] = [_lamp("L", lamp_at.x, lamp_at.y, dir, color)]
+				lane["docks"] = [_need("D", dock_at.x, dock_at.y, color)]
+				lane["pieces"] = [_fixed_cavetto("O", at.x, at.y, rot)]
+				var hit: Dictionary = Tracer.trace(lane, Charts.make_state(lane, true))
+				if open:
+					check(hit["docks"]["D"].has(color) and hit["docks"]["D"].size() == 1, "a dry %s cavetto keeps %s traveling %s" % [facing, color, dir])
+					check(_arrives_from(hit, at.x, at.y, dir, color) and _leaves(hit, at.x, at.y, dir, color), "a dry %s cavetto passes %s straight %s" % [facing, color, dir])
+					var other := "red" if color != "red" else "blue"
+					check(not _departs(hit, at.x, at.y, other), "a dry %s cavetto does not recolor %s traveling %s" % [facing, color, dir])
+					for other_dir in ["N", "E", "S", "W"]:
+						if other_dir == dir:
+							continue
+						check(not _leaves(hit, at.x, at.y, other_dir, color), "a dry %s cavetto does not turn %s from %s to %s" % [facing, color, dir, other_dir])
+				else:
+					check(not _center_hit(hit, at.x, at.y) and not _leaves(hit, at.x, at.y, dir, color) and hit["docks"]["D"].is_empty(), "a dry %s cavetto stops %s traveling %s before the cell" % [facing, color, dir])
+	check(Tracer.trace(_cavetto_row(20), Charts.make_state(_cavetto_row(20), true))["docks"]["D"].has("white"), "twenty dry north cavetti still pass an eastbound beam")
+	check(Tracer.trace(_cavetto_west_row(20), Charts.make_state(_cavetto_west_row(20), true))["docks"]["D"].has("white"), "twenty dry north cavetti still pass a westbound beam")
+	check(Tracer.trace(_cavetto_north_column(20), Charts.make_state(_cavetto_north_column(20), true))["docks"]["D"].has("white"), "twenty dry north cavetti still pass a northbound beam")
+	var south_column := _cavetto_south_column(20)
+	var south_column_hit: Dictionary = Tracer.trace(south_column, Charts.make_state(south_column, true))
+	check(south_column_hit["docks"]["D"].is_empty() and not _center_hit(south_column_hit, 0, 1), "twenty dry north cavetti stop a southbound beam")
+	var west_flood := _blank(5, 4)
+	west_flood["tide_phases"] = [2]
+	west_flood["lanterns"] = [_lamp("L", 0, 1, "S", "white")]
+	west_flood["fixtures"] = [
+		{"id": "S0", "kind": "shutter", "x": 0, "y": 2, "rot": 0},
+		{"id": "T0", "kind": "tide_mirror", "x": 0, "y": 3, "rot": 90},
+		{"id": "S1", "kind": "shutter", "x": 1, "y": 3, "rot": 0},
+	]
+	west_flood["pieces"] = [_fixed_cavetto("O", 2, 3, 0)]
+	var west_state := Charts.make_state(west_flood, true)
+	var west_flood_hit: Dictionary = Tracer.trace(west_flood, west_state)
+	check(Tracer.is_flooded(west_flood, west_state, Vector2i(2, 3)) and not _center_hit(west_flood_hit, 2, 3) and not _arrives_from(west_flood_hit, 2, 3, "E", "white"), "a flooded cavetto stops an eastbound beam before the cell")
+	west_flood["pieces"] = [_fixed_ovolo("V", 2, 3, 0)]
+	check(_trace_sig(Tracer.trace(west_flood, Charts.make_state(west_flood, true))) == _trace_sig(west_flood_hit), "a flooded cavetto stops the way a flooded ovolo stops")
+	west_flood["pieces"] = [_fixed_shutter("G", 2, 3)]
+	var west_open: Dictionary = Tracer.trace(west_flood, Charts.make_state(west_flood, true))
+	check(_center_hit(west_open, 2, 3) and _departs(west_open, 2, 3, "white"), "a flooded shutter passes the beam a cavetto stops")
+	var well_carry := _blank(5, 4)
+	well_carry["tide_phases"] = [2]
+	well_carry["lanterns"] = [_lamp("L", 2, 1, "S", "red")]
+	well_carry["fixtures"] = [{"id": "S0", "kind": "shutter", "x": 2, "y": 2, "rot": 0}]
+	well_carry["pieces"] = [_fixed_well("K", 2, 3)]
+	check(_center_hit(Tracer.trace(well_carry, Charts.make_state(well_carry, true)), 2, 3), "a flooded well carries the beam a cavetto stops")
+	var siphon_carry := _blank(5, 4)
+	siphon_carry["tide_phases"] = [2]
+	siphon_carry["lanterns"] = [_lamp("L", 2, 1, "S", "red")]
+	siphon_carry["fixtures"] = [{"id": "S0", "kind": "shutter", "x": 2, "y": 2, "rot": 0}]
+	siphon_carry["pieces"] = [_fixed_siphon("K", 2, 3)]
+	check(_center_hit(Tracer.trace(siphon_carry, Charts.make_state(siphon_carry, true)), 2, 3), "a flooded siphon carries the beam a cavetto stops")
+	var sluice_carry := _blank(5, 4)
+	sluice_carry["tide_phases"] = [2]
+	sluice_carry["lanterns"] = [_lamp("L", 2, 1, "S", "red")]
+	sluice_carry["fixtures"] = [{"id": "S0", "kind": "shutter", "x": 2, "y": 2, "rot": 0}]
+	sluice_carry["pieces"] = [_fixed_sluice("K", 2, 3, 180)]
+	check(_center_hit(Tracer.trace(sluice_carry, Charts.make_state(sluice_carry, true)), 2, 3), "a flooded sluice carries the beam a cavetto stops")
+	var weir_carry := _blank(5, 4)
+	weir_carry["tide_phases"] = [2]
+	weir_carry["lanterns"] = [_lamp("L", 2, 1, "S", "red")]
+	weir_carry["fixtures"] = [{"id": "S0", "kind": "shutter", "x": 2, "y": 2, "rot": 0}]
+	weir_carry["pieces"] = [_fixed_weir("K", 2, 3, 180)]
+	check(_center_hit(Tracer.trace(weir_carry, Charts.make_state(weir_carry, true)), 2, 3), "a flooded weir carries the beam a cavetto stops")
+	var painted := _blank(5, 1)
+	painted["lanterns"] = [_lamp("L", 4, 0, "W", "blue")]
+	painted["docks"] = [_need("D", 0, 0, "blue")]
+	painted["pieces"] = [_fixed_cavetto("O", 2, 0, 0)]
+	var kept_blue: Dictionary = Tracer.trace(painted, Charts.make_state(painted, true))
+	check(_leaves(kept_blue, 2, 0, "W", "blue") and kept_blue["docks"]["D"].has("blue") and not _departs(kept_blue, 2, 0, "red"), "a dry cavetto keeps blue")
+	painted["lanterns"][0]["color"] = "red"
+	painted["docks"][0]["color"] = "red"
+	var kept_red: Dictionary = Tracer.trace(painted, Charts.make_state(painted, true))
+	check(_leaves(kept_red, 2, 0, "W", "red") and kept_red["docks"]["D"].has("red") and not _departs(kept_red, 2, 0, "blue"), "a dry cavetto keeps red")
+	painted["lanterns"][0]["color"] = "white"
+	painted["docks"][0]["color"] = "white"
+	var kept_white: Dictionary = Tracer.trace(painted, Charts.make_state(painted, true))
+	check(_leaves(kept_white, 2, 0, "W", "white") and not _departs(kept_white, 2, 0, "red") and not _departs(kept_white, 2, 0, "blue"), "a dry cavetto keeps white")
+	painted["lanterns"][0]["color"] = "blue"
+	painted["docks"][0]["color"] = "blue"
+	painted["pieces"] = [_fixed_stain("K", 2, 0, 0)]
+	var stained: Dictionary = Tracer.trace(painted, Charts.make_state(painted, true))
+	check(_leaves(stained, 2, 0, "W", "red") and not _leaves(stained, 2, 0, "W", "blue"), "a stain recolors the pass a cavetto keeps")
+	var wet_color := _blank(5, 4)
+	wet_color["tide_phases"] = [2]
+	wet_color["lanterns"] = [_lamp("L", 0, 1, "S", "red")]
+	wet_color["fixtures"] = [
+		{"id": "S0", "kind": "shutter", "x": 0, "y": 2, "rot": 0},
+		{"id": "T0", "kind": "tide_mirror", "x": 0, "y": 3, "rot": 90},
+		{"id": "S1", "kind": "shutter", "x": 1, "y": 3, "rot": 0},
+	]
+	wet_color["docks"] = [_need("D", 4, 3, "blue")]
+	wet_color["pieces"] = [_fixed_weir("R", 2, 3, 90)]
+	var swapped: Dictionary = Tracer.trace(wet_color, Charts.make_state(wet_color, true))
+	check(_departs(swapped, 2, 3, "blue") and not _departs(swapped, 2, 3, "red"), "a flooded weir changes the color a cavetto would have kept")
+	wet_color["pieces"] = [_fixed_cavetto("O", 2, 3, 0)]
+	var held_color: Dictionary = Tracer.trace(wet_color, Charts.make_state(wet_color, true))
+	check(not _center_hit(held_color, 2, 3) and not _departs(held_color, 2, 3, "blue") and not _departs(held_color, 2, 3, "red"), "a flooded cavetto does not recolor")
+	var turned := _blank(5, 5)
+	turned["lanterns"] = [_lamp("L", 2, 4, "N", "white")]
+	turned["docks"] = [_need("D", 2, 0, "white")]
+	turned["pieces"] = [_fixed_cavetto("O", 2, 2, 0)]
+	var straight: Dictionary = Tracer.trace(turned, Charts.make_state(turned, true))
+	check(_leaves(straight, 2, 2, "N", "white") and not _leaves(straight, 2, 2, "E", "white") and not _leaves(straight, 2, 2, "W", "white") and not _leaves(straight, 2, 2, "S", "white"), "a dry cavetto does not turn")
+	turned["pieces"] = [_fixed_mirror(2, 2, 0)]
+	check(_leaves(Tracer.trace(turned, Charts.make_state(turned, true)), 2, 2, "E", "white"), "a mirror turns the beam a cavetto passes straight")
+	turned["pieces"] = [_fixed_vane("V", 2, 2, 90)]
+	check(_leaves(Tracer.trace(turned, Charts.make_state(turned, true)), 2, 2, "E", "white"), "a vane turns the beam a cavetto passes straight")
+	turned["pieces"] = [_fixed_prism(2, 2, 0)]
+	var split: Dictionary = Tracer.trace(turned, Charts.make_state(turned, true))
+	check(_leaves(split, 2, 2, "W", "red") and _leaves(split, 2, 2, "E", "blue") and not _leaves(split, 2, 2, "N", "white"), "a prism splits the beam a cavetto passes straight")
+	var sluice_turn := _blank(5, 4)
+	sluice_turn["tide_phases"] = [2]
+	sluice_turn["lanterns"] = [_lamp("L", 2, 1, "S", "white")]
+	sluice_turn["fixtures"] = [
+		{"id": "S0", "kind": "shutter", "x": 2, "y": 2, "rot": 0},
+		{"id": "S1", "kind": "shutter", "x": 3, "y": 3, "rot": 0},
+	]
+	sluice_turn["pieces"] = [_fixed_sluice("U", 2, 3, 90)]
+	check(_leaves(Tracer.trace(sluice_turn, Charts.make_state(sluice_turn, true)), 2, 3, "E", "white"), "a flooded sluice turns the beam a cavetto would pass straight")
+
+
+func test_cavetto_book() -> void:
+	var book: Array = Charts.cavetto()
+	check(book.size() == 8, "cavetto book has eight charts")
+	var titles := ["The Dry Cavetto", "The Wet Stop", "Color Kept", "No Turn", "Beside the Flood", "Two Cavettos", "The Held Cavetto", "The Cavetto Mark"]
+	for i in book.size():
+		var chart: Dictionary = book[i]
+		check(str(chart["id"]) == str(i + 191), "cavetto chart %d keeps its number" % (i + 191))
+		check(str(chart["title"]) == str(titles[i]), "cavetto chart %d keeps its title" % (i + 191))
+		check(str(chart["harbor"]) == Charts.CAVETTO, "chart %s belongs to the cavetto" % str(chart["id"]))
+		var cavetto_count := 0
+		for raw_piece in chart["pieces"]:
+			var piece: Dictionary = raw_piece
+			if str(piece["kind"]) == "cavetto":
+				cavetto_count += 1
+		check(cavetto_count >= 1, "chart %s needs the cavetto" % str(chart["id"]))
+	for older in Charts.all().slice(0, 190):
+		for raw_piece in older["pieces"]:
+			var older_piece: Dictionary = raw_piece
+			check(str(older_piece["kind"]) != "cavetto", "chart %s keeps its pieces" % str(older["id"]))
+		for raw_fix in older["fixtures"]:
+			var older_fix: Dictionary = raw_fix
+			check(str(older_fix["kind"]) != "cavetto", "chart %s keeps its fixed glass" % str(older["id"]))
+	for i in book.size():
+		for raw_piece in book[i]["pieces"]:
+			var piece: Dictionary = raw_piece
+			if str(piece["kind"]) != "cavetto":
+				continue
+			var piece_id := str(piece["id"])
+			_expect_cavetto_miss(i, piece_id, "casement", 0, "casement north")
+			_expect_cavetto_miss(i, piece_id, "casement", 90, "casement east")
+			_expect_cavetto_miss(i, piece_id, "casement", 180, "casement south")
+			_expect_cavetto_miss(i, piece_id, "casement", 270, "casement west")
+			_expect_cavetto_miss(i, piece_id, "jamb", 0, "jamb north")
+			_expect_cavetto_miss(i, piece_id, "jamb", 90, "jamb east")
+			_expect_cavetto_miss(i, piece_id, "jamb", 180, "jamb south")
+			_expect_cavetto_miss(i, piece_id, "jamb", 270, "jamb west")
+			_expect_cavetto_miss(i, piece_id, "mullion", 0, "mullion")
+			_expect_cavetto_miss(i, piece_id, "transom", 0, "transom")
+			_expect_cavetto_miss(i, piece_id, "lintel", 0, "lintel")
+			_expect_cavetto_miss(i, piece_id, "shutter", 0, "shutter")
+			_expect_cavetto_miss(i, piece_id, "well", 0, "well")
+			_expect_cavetto_miss(i, piece_id, "siphon", 0, "siphon")
+			_expect_cavetto_miss(i, piece_id, "stain", 0, "red stain")
+			_expect_cavetto_miss(i, piece_id, "stain", 90, "blue stain")
+			_expect_cavetto_miss(i, piece_id, "mirror", 0, "mirror")
+			_expect_cavetto_miss(i, piece_id, "mirror", 90, "turned mirror")
+			_expect_cavetto_miss(i, piece_id, "ovolo", int(piece["solution_rot"]), "ovolo same facing")
+			_expect_cavetto_miss(i, piece_id, "ogee", int(piece["solution_rot"]), "ogee same facing")
+			_expect_cavetto_miss(i, piece_id, "torus", int(piece["solution_rot"]), "torus same facing")
+			_expect_cavetto_miss(i, piece_id, "scotia", int(piece["solution_rot"]), "scotia same facing")
+			_expect_cavetto_miss(i, piece_id, "astragal", int(piece["solution_rot"]), "astragal same facing")
+			for facing in [0, 90, 180, 270]:
+				_expect_cavetto_miss(i, piece_id, "vane", facing, "vane %d" % facing)
+				_expect_cavetto_miss(i, piece_id, "weir", facing, "weir %d" % facing)
+				_expect_cavetto_miss(i, piece_id, "sluice", facing, "sluice %d" % facing)
+				_expect_cavetto_miss(i, piece_id, "prism", facing, "prism %d" % facing)
+	var dry: Dictionary = book[0]
+	check(int(dry["tide_phases"][0]) == 0 and int(dry["solution_tide_index"]) == 0, "chart 191 is tide index 0 and flood 0")
+	var dry_hit: Dictionary = Tracer.trace(dry, Charts.make_state(dry, true))
+	check(_leaves(dry_hit, 3, 3, "N", "white") and dry_hit["docks"]["Nd"].has("white") and dry_hit["docks"]["Nd"].size() == 1, "chart 191 passes the northbound beam")
+	check(_leaves(dry_hit, 3, 3, "E", "red") and dry_hit["docks"]["Ed"].has("red") and dry_hit["docks"]["Ed"].size() == 1, "chart 191 passes the eastbound beam")
+	check(_leaves(dry_hit, 3, 3, "W", "blue") and dry_hit["docks"]["Wd"].has("blue") and dry_hit["docks"]["Wd"].size() == 1, "chart 191 passes the westbound beam")
+	check(dry_hit["docks"]["Sd"].is_empty(), "chart 191 refuses the southbound return")
+	var dry_case: Dictionary = Charts.cavetto()[0]
+	_retarget(dry_case, "O", "casement", 180)
+	var dry_case_hit: Dictionary = Tracer.trace(dry_case, Charts.make_state(dry_case, true))
+	check(dry_case_hit["docks"]["Sd"].has("red") and dry_case_hit["docks"]["Wd"].is_empty() and dry_case_hit["docks"]["Nd"].is_empty() and not Tracer.is_cleared(dry_case, Charts.make_state(dry_case, true)), "chart 191 a casement refuses the westbound beam")
+	var dry_jamb: Dictionary = Charts.cavetto()[0]
+	_retarget(dry_jamb, "O", "jamb", 0)
+	var dry_jamb_hit: Dictionary = Tracer.trace(dry_jamb, Charts.make_state(dry_jamb, true))
+	check(dry_jamb_hit["docks"]["Wd"].is_empty() and dry_jamb_hit["docks"]["Sd"].has("red") and not Tracer.is_cleared(dry_jamb, Charts.make_state(dry_jamb, true)), "chart 191 a jamb refuses the westbound beam and passes the southbound return")
+	var dry_ovolo: Dictionary = Charts.cavetto()[0]
+	_retarget(dry_ovolo, "O", "ovolo", 0)
+	var dry_ovolo_hit: Dictionary = Tracer.trace(dry_ovolo, Charts.make_state(dry_ovolo, true))
+	check(dry_ovolo_hit["docks"]["Nd"].is_empty() and dry_ovolo_hit["docks"]["Sd"].has("red") and not Tracer.is_cleared(dry_ovolo, Charts.make_state(dry_ovolo, true)), "chart 191 an ovolo facing north refuses the northbound beam")
+	var dry_ogee: Dictionary = Charts.cavetto()[0]
+	_retarget(dry_ogee, "O", "ogee", 0)
+	var dry_ogee_hit: Dictionary = Tracer.trace(dry_ogee, Charts.make_state(dry_ogee, true))
+	check(dry_ogee_hit["docks"]["Nd"].is_empty() and dry_ogee_hit["docks"]["Ed"].is_empty() and not Tracer.is_cleared(dry_ogee, Charts.make_state(dry_ogee, true)), "chart 191 an ogee facing north refuses the northbound beam")
+	var dry_torus: Dictionary = Charts.cavetto()[0]
+	_retarget(dry_torus, "O", "torus", 0)
+	var dry_torus_hit: Dictionary = Tracer.trace(dry_torus, Charts.make_state(dry_torus, true))
+	check(dry_torus_hit["docks"]["Wd"].is_empty() and dry_torus_hit["docks"]["Sd"].has("red") and not Tracer.is_cleared(dry_torus, Charts.make_state(dry_torus, true)), "chart 191 a torus facing north refuses the westbound beam")
+	var dry_lintel: Dictionary = Charts.cavetto()[0]
+	_retarget(dry_lintel, "O", "lintel", 0)
+	var dry_lintel_hit: Dictionary = Tracer.trace(dry_lintel, Charts.make_state(dry_lintel, true))
+	check(dry_lintel_hit["docks"]["Sd"].has("red") and not Tracer.is_cleared(dry_lintel, Charts.make_state(dry_lintel, true)), "chart 191 a lintel lets the southbound return through")
+	var wet: Dictionary = book[1]
+	check(int(wet["start_tide_index"]) == 1 and int(wet["solution_tide_index"]) == 0 and int(wet["tide_phases"][1]) == 3, "chart 192 opens under water and solves dry")
+	var wet_start: Dictionary = Tracer.trace(wet, Charts.make_state(wet, false))
+	check(wet_start["docks"]["Nd"].is_empty() and wet_start["docks"]["Ed"].is_empty() and wet_start["docks"]["Wd"].is_empty() and wet_start["docks"]["Sd"].is_empty() and not _center_hit(wet_start, 3, 4), "chart 192 flooded row stops the beam at the waterline")
+	var wet_solved: Dictionary = Tracer.trace(wet, Charts.make_state(wet, true))
+	check(_leaves(wet_solved, 3, 4, "N", "white") and _leaves(wet_solved, 3, 4, "E", "red") and _leaves(wet_solved, 3, 4, "W", "blue") and wet_solved["docks"]["Nd"].has("white") and wet_solved["docks"]["Ed"].has("red") and wet_solved["docks"]["Wd"].has("blue") and wet_solved["docks"]["Sd"].is_empty(), "chart 192 dry tide passes north, east, and west")
+	var wet_open: Dictionary = Charts.cavetto()[1]
+	_retarget(wet_open, "O", "shutter", 0)
+	var wet_open_state := Charts.make_state(wet_open, false)
+	check(_center_hit(Tracer.trace(wet_open, wet_open_state), 3, 4), "chart 192 a shutter passes while flooded")
+	for carrier in ["well", "siphon", "sluice", "weir"]:
+		var wet_carry: Dictionary = Charts.cavetto()[1]
+		_retarget(wet_carry, "O", carrier, 180 if carrier == "sluice" or carrier == "weir" else 0)
+		var carry_state := Charts.make_state(wet_carry, false)
+		check(_center_hit(Tracer.trace(wet_carry, carry_state), 3, 4), "chart 192 a flooded %s carries the beam" % carrier)
+	var kept: Dictionary = Charts.cavetto()[2]
+	var kept_hit: Dictionary = Tracer.trace(kept, Charts.make_state(kept, true))
+	check(_leaves(kept_hit, 3, 3, "N", "red") and kept_hit["docks"]["Rd"].has("red") and kept_hit["docks"]["Rd"].size() == 1, "chart 193 keeps red")
+	check(_leaves(kept_hit, 3, 3, "W", "blue") and kept_hit["docks"]["Bd"].has("blue") and kept_hit["docks"]["Bd"].size() == 1, "chart 193 keeps blue")
+	check(_leaves(kept_hit, 3, 3, "E", "white") and kept_hit["docks"]["Ed"].has("white") and kept_hit["docks"]["Ed"].size() == 1, "chart 193 keeps white on the eastbound beam")
+	var white_pass: Dictionary = Charts.cavetto()[2]
+	white_pass["lanterns"][0]["color"] = "white"
+	white_pass["docks"][0]["color"] = "white"
+	var white_hit: Dictionary = Tracer.trace(white_pass, Charts.make_state(white_pass, true))
+	check(_leaves(white_hit, 3, 3, "N", "white") and not _leaves(white_hit, 3, 3, "N", "red") and not _leaves(white_hit, 3, 3, "N", "blue") and white_hit["docks"]["Rd"].has("white") and white_hit["docks"]["Rd"].size() == 1 and white_hit["docks"]["Bd"].has("blue") and Tracer.is_cleared(white_pass, Charts.make_state(white_pass, true)), "chart 193 keeps white")
+	var straight_chart: Dictionary = book[3]
+	var straight_hit: Dictionary = Tracer.trace(straight_chart, Charts.make_state(straight_chart, true))
+	check(_arrives_from(straight_hit, 3, 3, "N", "white") and _leaves(straight_hit, 3, 3, "N", "white") and not _leaves(straight_hit, 3, 3, "E", "white") and not _leaves(straight_hit, 3, 3, "S", "white") and not _leaves(straight_hit, 3, 3, "W", "white"), "chart 194 the northbound beam leaves on the same side it entered")
+	check(_arrives_from(straight_hit, 3, 3, "E", "red") and _leaves(straight_hit, 3, 3, "E", "red") and not _leaves(straight_hit, 3, 3, "N", "red") and not _leaves(straight_hit, 3, 3, "S", "red") and not _leaves(straight_hit, 3, 3, "W", "red"), "chart 194 the eastbound beam leaves on the same side it entered")
+	check(_arrives_from(straight_hit, 3, 3, "W", "blue") and _leaves(straight_hit, 3, 3, "W", "blue") and not _leaves(straight_hit, 3, 3, "N", "blue") and not _leaves(straight_hit, 3, 3, "S", "blue") and not _leaves(straight_hit, 3, 3, "E", "blue"), "chart 194 the westbound beam leaves on the same side it entered")
+	var beside: Dictionary = book[4]
+	check(int(beside["tide_phases"][0]) == 2, "chart 195 holds a flooded neighbor")
+	var beside_state := Charts.make_state(beside, true)
+	check(not Tracer.is_flooded(beside, beside_state, Vector2i(3, 2)) and Tracer.is_flooded(beside, beside_state, Vector2i(1, 6)), "chart 195 cavetto row is dry and the flood row is flooded")
+	var beside_hit: Dictionary = Tracer.trace(beside, beside_state)
+	check(_leaves(beside_hit, 3, 2, "N", "white") and _leaves(beside_hit, 3, 2, "E", "blue") and _leaves(beside_hit, 3, 2, "W", "red") and beside_hit["docks"]["Nd"].has("white") and beside_hit["docks"]["Ed"].has("blue") and beside_hit["docks"]["Wd"].has("red") and beside_hit["docks"]["Kd"].is_empty() and not _center_hit(beside_hit, 1, 6), "chart 195 the dry row passes and the flood beam stops at the waterline")
+	var pair: Dictionary = book[5]
+	var pair_hit: Dictionary = Tracer.trace(pair, Charts.make_state(pair, true))
+	check(_leaves(pair_hit, 2, 3, "S", "white") and _leaves(pair_hit, 2, 3, "E", "red") and _leaves(pair_hit, 2, 3, "W", "blue") and _leaves(pair_hit, 8, 5, "N", "white") and _leaves(pair_hit, 8, 5, "E", "blue") and _leaves(pair_hit, 8, 5, "W", "white"), "chart 196 each cavetto passes its open directions")
+	check(pair_hit["docks"]["Adn"].is_empty() and pair_hit["docks"]["Bds"].is_empty(), "chart 196 each blocked direction stays dark")
+	var swapped_pair := Charts.duplicate_state(Charts.make_state(pair, true))
+	swapped_pair["pieces"]["O"]["rot"] = 0
+	swapped_pair["pieces"]["U"]["rot"] = 180
+	check(not Tracer.is_cleared(pair, swapped_pair), "chart 196 swapping the facings fails")
+	var south_seat: Dictionary = Charts.cavetto()[5]
+	_retarget(south_seat, "O", "jamb", 0)
+	var south_seat_hit: Dictionary = Tracer.trace(south_seat, Charts.make_state(south_seat, true))
+	check(south_seat_hit["docks"]["Adn"].has("blue") and south_seat_hit["docks"]["Ade"].is_empty() and not Tracer.is_cleared(south_seat, Charts.make_state(south_seat, true)), "chart 196 a north jamb cannot take the south seat")
+	var held: Dictionary = book[6]
+	check(int(held["tide_phases"][0]) == 0 and int(held["tide_phases"][1]) == 1 and int(held["tide_phases"][2]) == 4 and int(held["solution_tide_index"]) == 1 and int(held["start_tide_index"]) == 0, "chart 197 follows the held tide marks")
+	var held_start := Charts.make_state(held, false)
+	check(int(held_start["pieces"]["O"]["rot"]) == 180, "chart 197 starts facing south")
+	var held_solved := Charts.make_state(held, true)
+	var held_hit: Dictionary = Tracer.trace(held, held_solved)
+	check(int(held_solved["pieces"]["O"]["rot"]) == 0 and _leaves(held_hit, 4, 3, "N", "white") and _leaves(held_hit, 4, 3, "E", "blue") and _leaves(held_hit, 4, 3, "W", "red") and held_hit["docks"]["Kd"].is_empty() and not bool(held_hit["boats"]["Hb"]), "chart 197 the held facing passes north, east, and west")
+	var held_low := Charts.duplicate_state(held_solved)
+	held_low["tide_index"] = 0
+	check(bool(Tracer.trace(held, held_low)["boats"]["Hb"]) and not Tracer.is_cleared(held, held_low), "chart 197 low water wakes the south hull")
+	var held_high := Charts.duplicate_state(held_solved)
+	held_high["tide_index"] = 2
+	var held_high_hit: Dictionary = Tracer.trace(held, held_high)
+	check(held_high_hit["docks"]["Nd"].is_empty() and not _center_hit(held_high_hit, 4, 3) and not Tracer.is_cleared(held, held_high), "chart 197 high water stops the beam outside the cavetto")
+	var mark: Dictionary = book[7]
+	var mark_solved := Charts.make_state(mark, true)
+	check(str(mark_solved["pieces"]["O"]["socket"]) == "line" and int(mark_solved["pieces"]["O"]["rot"]) == 0 and str(mark_solved["pieces"]["G"]["socket"]) == "side", "chart 198 puts the north cavetto on the line")
+	var mark_hit: Dictionary = Tracer.trace(mark, mark_solved)
+	check(_leaves(mark_hit, 3, 3, "N", "white") and _leaves(mark_hit, 3, 3, "E", "red") and _leaves(mark_hit, 3, 3, "W", "blue") and mark_hit["docks"]["Nd"].has("white") and mark_hit["docks"]["Ed"].has("red") and mark_hit["docks"]["Wd"].has("blue") and mark_hit["docks"]["Sd"].is_empty(), "chart 198 the open set satisfies the mark")
+	var mark_case: Dictionary = Charts.cavetto()[7]
+	_retarget(mark_case, "O", "casement", 0)
+	check(not Tracer.is_cleared(mark_case, Charts.make_state(mark_case, true)), "chart 198 a casement in that cell fails")
+	var mark_jamb: Dictionary = Charts.cavetto()[7]
+	_retarget(mark_jamb, "O", "jamb", 0)
+	check(not Tracer.is_cleared(mark_jamb, Charts.make_state(mark_jamb, true)), "chart 198 a jamb in that cell fails")
+	var mark_mullion: Dictionary = Charts.cavetto()[7]
+	_retarget(mark_mullion, "O", "mullion", 0)
+	check(not Tracer.is_cleared(mark_mullion, Charts.make_state(mark_mullion, true)), "chart 198 a mullion in that cell fails")
+	var mark_transom: Dictionary = Charts.cavetto()[7]
+	_retarget(mark_transom, "O", "transom", 0)
+	check(not Tracer.is_cleared(mark_transom, Charts.make_state(mark_transom, true)), "chart 198 a transom in that cell fails")
+	var mark_lintel: Dictionary = Charts.cavetto()[7]
+	_retarget(mark_lintel, "O", "lintel", 0)
+	check(not Tracer.is_cleared(mark_lintel, Charts.make_state(mark_lintel, true)), "chart 198 a lintel in that cell fails")
+	var mark_ovolo: Dictionary = Charts.cavetto()[7]
+	_retarget(mark_ovolo, "O", "ovolo", 0)
+	check(not Tracer.is_cleared(mark_ovolo, Charts.make_state(mark_ovolo, true)), "chart 198 an ovolo in that cell fails")
+	check(str(book[0]["teach"]).to_lower().contains("tide index 0") and str(book[0]["teach"]).to_lower().contains("casement") and str(book[0]["teach"]).to_lower().contains("jamb") and str(book[0]["teach"]).to_lower().contains("westbound") and str(book[0]["teach"]).to_lower().contains("return"), "chart 191 teaches the dry cavetto")
+	check(str(book[1]["teach"]).to_lower().contains("waterline") and str(book[1]["teach"]).to_lower().contains("shutter") and str(book[1]["teach"]).to_lower().contains("well") and str(book[1]["teach"]).to_lower().contains("siphon") and str(book[1]["teach"]).to_lower().contains("sluice") and str(book[1]["teach"]).to_lower().contains("weir"), "chart 192 teaches the wet stop")
+	check(str(book[2]["teach"]).to_lower().contains("red stays red") and str(book[2]["teach"]).to_lower().contains("blue stays blue") and str(book[2]["teach"]).to_lower().contains("white stays white") and str(book[2]["teach"]).to_lower().contains("stain") and str(book[2]["teach"]).to_lower().contains("weir"), "chart 193 teaches the kept color")
+	check(str(book[3]["teach"]).to_lower().contains("does not turn") and str(book[3]["teach"]).to_lower().contains("prism") and str(book[3]["teach"]).to_lower().contains("vane") and str(book[3]["teach"]).to_lower().contains("sluice") and str(book[3]["teach"]).to_lower().contains("mirror"), "chart 194 teaches the straight pass")
+	check(str(book[4]["teach"]).to_lower().contains("waterline") and str(book[4]["teach"]).to_lower().contains("dry"), "chart 195 teaches the dry row beside the flood")
+	check(str(book[5]["teach"]).to_lower().contains("south, east, and west") and str(book[5]["teach"]).to_lower().contains("north, east, and west") and str(book[5]["teach"]).to_lower().contains("jamb") and str(book[5]["teach"]).to_lower().contains("south"), "chart 196 teaches both cavetti")
+	check(str(book[6]["teach"]).to_lower().contains("facing") and str(book[6]["teach"]).to_lower().contains("waterline"), "chart 197 teaches the held cavetto")
+	check(str(book[7]["teach"]).to_lower().contains("casement") and str(book[7]["teach"]).to_lower().contains("jamb") and str(book[7]["teach"]).to_lower().contains("mullion") and str(book[7]["teach"]).to_lower().contains("transom") and str(book[7]["teach"]).to_lower().contains("lintel"), "chart 198 teaches the cavetto mark")
+
+
+func _expect_cavetto_miss(index: int, piece_id: String, kind: String, rot: int, label: String) -> void:
+	var chart: Dictionary = Charts.cavetto()[index]
+	_retarget(chart, piece_id, kind, rot)
+	var state := Charts.make_state(chart, true)
+	if Tracer.is_cleared(chart, state):
+		check(false, "%s clears cavetto chart %d" % [label, index + 191])
+	else:
+		check(true, "%s misses cavetto chart %d" % [label, index + 191])
+
+
+func test_fillet_rule() -> void:
+	check(Tracer.norm_rot("fillet", 0) == 0 and Tracer.norm_rot("fillet", 90) == 90, "a fillet keeps a quarter turn")
+	check(Tracer.norm_rot("fillet", 180) == 180 and Tracer.norm_rot("fillet", 270) == 270, "a fillet keeps a half turn")
+	check(Tracer.norm_rot("fillet", 360) == 0 and Tracer.norm_rot("fillet", 450) == 90, "a fillet wraps a full turn")
+	check(Tracer.turn_rot("fillet", 0) == 90 and Tracer.turn_rot("fillet", 90) == 180, "clicking a fillet walks the facing")
+	check(Tracer.turn_rot("fillet", 180) == 270 and Tracer.turn_rot("fillet", 270) == 0, "clicking a fillet returns to north")
+	check(Tracer.fillet_facing(0) == "N" and Tracer.fillet_facing(90) == "E" and Tracer.fillet_facing(180) == "S" and Tracer.fillet_facing(270) == "W", "fillet facing follows the quarter turn")
+	check(Tracer.fillet_passes(0, "S") and not Tracer.fillet_passes(0, "N") and not Tracer.fillet_passes(0, "E") and not Tracer.fillet_passes(0, "W"), "a north fillet passes only south")
+	check(Tracer.cavetto_passes(0, "N") and not Tracer.cavetto_passes(0, "S") and not Tracer.fillet_passes(0, "N") and Tracer.fillet_passes(0, "S"), "a north fillet is not a north cavetto")
+	check(Tracer.casement_facing(0) == "N" and not Tracer.fillet_passes(0, "N") and Tracer.fillet_passes(0, "S"), "a north fillet passes the south a north casement stops")
+	check(Tracer.ovolo_passes(0, "E") and Tracer.ovolo_passes(0, "W") and not Tracer.fillet_passes(0, "E") and not Tracer.fillet_passes(0, "W"), "a north fillet stops the sides a north ovolo passes")
+	var hinted: Dictionary = Charts.fillet()[6]
+	var solved_hint := Charts.make_state(hinted, true)
+	check(not Hints.wrong_pieces(hinted, solved_hint).has("O"), "a hint accepts the held north fillet")
+	for spun in [90, 180, 270]:
+		var turned_hint := Charts.duplicate_state(solved_hint)
+		turned_hint["pieces"]["O"]["rot"] = spun
+		check(Hints.wrong_pieces(hinted, turned_hint).has("O"), "a hint rejects fillet rotation %d" % spun)
+		check(not Tracer.is_cleared(hinted, turned_hint), "fillet rotation %d is not the held open set" % spun)
+	var carried := {}
+	carried[Vector2i(0, 0)] = {"kind": "fillet", "rot": 0}
+	check(not Tracer._flood_carries(carried, Vector2i(0, 0)), "a flooded fillet does not carry the beam")
+	var south_lane := _blank(1, 5)
+	south_lane["lanterns"] = [_lamp("L", 0, 0, "S", "white")]
+	south_lane["docks"] = [_need("D", 0, 4, "white")]
+	south_lane["pieces"] = [_fixed_cavetto("V", 0, 2, 0)]
+	check(not _center_hit(Tracer.trace(south_lane, Charts.make_state(south_lane, true)), 0, 2), "a north cavetto refuses south")
+	south_lane["pieces"] = [_fixed_fillet("O", 0, 2, 0)]
+	var south_fillet: Dictionary = Tracer.trace(south_lane, Charts.make_state(south_lane, true))
+	check(_arrives_from(south_fillet, 0, 2, "S", "white") and _leaves(south_fillet, 0, 2, "S", "white") and south_fillet["docks"]["D"].has("white"), "a north fillet passes south")
+	var north_stop := _blank(1, 5)
+	north_stop["lanterns"] = [_lamp("L", 0, 4, "N", "red")]
+	north_stop["docks"] = [_need("D", 0, 0, "red")]
+	north_stop["pieces"] = [_fixed_fillet("O", 0, 2, 0)]
+	var north_hit: Dictionary = Tracer.trace(north_stop, Charts.make_state(north_stop, true))
+	check(not _center_hit(north_hit, 0, 2) and north_hit["docks"]["D"].is_empty(), "a north fillet refuses north")
+	north_stop["pieces"] = [_fixed_lintel("N", 0, 2)]
+	check(_leaves(Tracer.trace(north_stop, Charts.make_state(north_stop, true)), 0, 2, "N", "red"), "a lintel passes the north a north fillet blocks")
+	var east_lane := _blank(5, 1)
+	east_lane["lanterns"] = [_lamp("L", 0, 0, "E", "blue")]
+	east_lane["docks"] = [_need("D", 4, 0, "blue")]
+	east_lane["pieces"] = [_fixed_fillet("O", 2, 0, 0)]
+	check(not _center_hit(Tracer.trace(east_lane, Charts.make_state(east_lane, true)), 2, 0), "a north fillet refuses east")
+	var west_lane := _blank(5, 1)
+	west_lane["lanterns"] = [_lamp("L", 4, 0, "W", "red")]
+	west_lane["docks"] = [_need("D", 0, 0, "red")]
+	west_lane["pieces"] = [_fixed_fillet("O", 2, 0, 0)]
+	check(not _center_hit(Tracer.trace(west_lane, Charts.make_state(west_lane, true)), 2, 0), "a north fillet refuses west")
+	var clicked := _blank(5, 5)
+	clicked["lanterns"] = [_lamp("L", 4, 2, "W", "blue")]
+	clicked["docks"] = [_need("D", 0, 2, "blue")]
+	clicked["pieces"] = [_fixed_fillet("O", 2, 2, Tracer.turn_rot("fillet", 0))]
+	var clicked_hit: Dictionary = Tracer.trace(clicked, Charts.make_state(clicked, true))
+	check(Tracer.fillet_facing(Tracer.turn_rot("fillet", 0)) == "E" and _leaves(clicked_hit, 2, 2, "W", "blue"), "a fillet clicked once from north faces east and passes west")
+	clicked["pieces"] = [_fixed_cavetto("V", 2, 2, 90)]
+	check(not _center_hit(Tracer.trace(clicked, Charts.make_state(clicked, true)), 2, 2), "an east cavetto refuses the west an east fillet passes")
+	var clicked_east := _blank(5, 5)
+	clicked_east["lanterns"] = [_lamp("L", 0, 2, "E", "red")]
+	clicked_east["docks"] = [_need("D", 4, 2, "red")]
+	clicked_east["pieces"] = [_fixed_fillet("O", 2, 2, 90)]
+	check(not _center_hit(Tracer.trace(clicked_east, Charts.make_state(clicked_east, true)), 2, 2), "an east fillet refuses east")
+	clicked_east["pieces"] = [_fixed_casement("C", 2, 2, 90)]
+	check(_leaves(Tracer.trace(clicked_east, Charts.make_state(clicked_east, true)), 2, 2, "E", "red"), "an east casement passes the east an east fillet refuses")
+	for rot in [0, 90, 180, 270]:
+		var facing := Tracer.fillet_facing(rot)
+		var opened := Tracer.rotate_dir(facing, 2)
+		for color in ["red", "blue", "white"]:
+			for dir in ["N", "E", "S", "W"]:
+				var open: bool = dir == opened
+				var lane := _blank(5, 5)
+				var at := Vector2i(2, 2)
+				var step: Vector2i = Tracer.VEC[dir]
+				var lamp_at := at - step
+				var dock_at := at + step * 2
+				lane["lanterns"] = [_lamp("L", lamp_at.x, lamp_at.y, dir, color)]
+				lane["docks"] = [_need("D", dock_at.x, dock_at.y, color)]
+				lane["pieces"] = [_fixed_fillet("O", at.x, at.y, rot)]
+				var hit: Dictionary = Tracer.trace(lane, Charts.make_state(lane, true))
+				if open:
+					check(hit["docks"]["D"].has(color) and hit["docks"]["D"].size() == 1, "a dry %s fillet keeps %s traveling %s" % [facing, color, dir])
+					check(_arrives_from(hit, at.x, at.y, dir, color) and _leaves(hit, at.x, at.y, dir, color), "a dry %s fillet passes %s straight %s" % [facing, color, dir])
+					var other := "red" if color != "red" else "blue"
+					check(not _departs(hit, at.x, at.y, other), "a dry %s fillet does not recolor %s traveling %s" % [facing, color, dir])
+					for other_dir in ["N", "E", "S", "W"]:
+						if other_dir == dir:
+							continue
+						check(not _leaves(hit, at.x, at.y, other_dir, color), "a dry %s fillet does not turn %s from %s to %s" % [facing, color, dir, other_dir])
+				else:
+					check(not _center_hit(hit, at.x, at.y) and not _leaves(hit, at.x, at.y, dir, color) and hit["docks"]["D"].is_empty(), "a dry %s fillet stops %s traveling %s before the cell" % [facing, color, dir])
+	check(Tracer.trace(_fillet_south_column(20), Charts.make_state(_fillet_south_column(20), true))["docks"]["D"].has("white"), "twenty dry north fillets still pass a southbound beam")
+	var north_column := _fillet_north_column(20)
+	var north_column_hit: Dictionary = Tracer.trace(north_column, Charts.make_state(north_column, true))
+	check(north_column_hit["docks"]["D"].is_empty() and not _center_hit(north_column_hit, 0, 20), "twenty dry north fillets stop a northbound beam")
+	check(not Tracer.trace(_fillet_row(20), Charts.make_state(_fillet_row(20), true))["docks"]["D"].has("white"), "twenty dry north fillets stop an eastbound beam")
+	check(not Tracer.trace(_fillet_west_row(20), Charts.make_state(_fillet_west_row(20), true))["docks"]["D"].has("white"), "twenty dry north fillets stop a westbound beam")
+	var west_flood := _blank(5, 4)
+	west_flood["tide_phases"] = [2]
+	west_flood["lanterns"] = [_lamp("L", 0, 1, "S", "white")]
+	west_flood["fixtures"] = [
+		{"id": "S0", "kind": "shutter", "x": 0, "y": 2, "rot": 0},
+		{"id": "T0", "kind": "tide_mirror", "x": 0, "y": 3, "rot": 90},
+		{"id": "S1", "kind": "shutter", "x": 1, "y": 3, "rot": 0},
+	]
+	west_flood["pieces"] = [_fixed_fillet("O", 2, 3, 0)]
+	var west_state := Charts.make_state(west_flood, true)
+	var west_flood_hit: Dictionary = Tracer.trace(west_flood, west_state)
+	check(Tracer.is_flooded(west_flood, west_state, Vector2i(2, 3)) and not _center_hit(west_flood_hit, 2, 3) and not _arrives_from(west_flood_hit, 2, 3, "E", "white"), "a flooded fillet stops an eastbound beam before the cell")
+	west_flood["pieces"] = [_fixed_cavetto("V", 2, 3, 0)]
+	check(_trace_sig(Tracer.trace(west_flood, Charts.make_state(west_flood, true))) == _trace_sig(west_flood_hit), "a flooded fillet stops the way a flooded cavetto stops")
+	west_flood["pieces"] = [_fixed_shutter("G", 2, 3)]
+	var west_open: Dictionary = Tracer.trace(west_flood, Charts.make_state(west_flood, true))
+	check(_center_hit(west_open, 2, 3) and _departs(west_open, 2, 3, "white"), "a flooded shutter passes the beam a fillet stops")
+	var well_carry := _blank(5, 4)
+	well_carry["tide_phases"] = [2]
+	well_carry["lanterns"] = [_lamp("L", 2, 1, "S", "red")]
+	well_carry["fixtures"] = [{"id": "S0", "kind": "shutter", "x": 2, "y": 2, "rot": 0}]
+	well_carry["pieces"] = [_fixed_well("K", 2, 3)]
+	check(_center_hit(Tracer.trace(well_carry, Charts.make_state(well_carry, true)), 2, 3), "a flooded well carries the beam a fillet stops")
+	var siphon_carry := _blank(5, 4)
+	siphon_carry["tide_phases"] = [2]
+	siphon_carry["lanterns"] = [_lamp("L", 2, 1, "S", "red")]
+	siphon_carry["fixtures"] = [{"id": "S0", "kind": "shutter", "x": 2, "y": 2, "rot": 0}]
+	siphon_carry["pieces"] = [_fixed_siphon("K", 2, 3)]
+	check(_center_hit(Tracer.trace(siphon_carry, Charts.make_state(siphon_carry, true)), 2, 3), "a flooded siphon carries the beam a fillet stops")
+	var sluice_carry := _blank(5, 4)
+	sluice_carry["tide_phases"] = [2]
+	sluice_carry["lanterns"] = [_lamp("L", 2, 1, "S", "red")]
+	sluice_carry["fixtures"] = [{"id": "S0", "kind": "shutter", "x": 2, "y": 2, "rot": 0}]
+	sluice_carry["pieces"] = [_fixed_sluice("K", 2, 3, 180)]
+	check(_center_hit(Tracer.trace(sluice_carry, Charts.make_state(sluice_carry, true)), 2, 3), "a flooded sluice carries the beam a fillet stops")
+	var weir_carry := _blank(5, 4)
+	weir_carry["tide_phases"] = [2]
+	weir_carry["lanterns"] = [_lamp("L", 2, 1, "S", "red")]
+	weir_carry["fixtures"] = [{"id": "S0", "kind": "shutter", "x": 2, "y": 2, "rot": 0}]
+	weir_carry["pieces"] = [_fixed_weir("K", 2, 3, 180)]
+	check(_center_hit(Tracer.trace(weir_carry, Charts.make_state(weir_carry, true)), 2, 3), "a flooded weir carries the beam a fillet stops")
+	var painted := _blank(5, 5)
+	painted["lanterns"] = [_lamp("L", 2, 0, "S", "blue")]
+	painted["docks"] = [_need("D", 2, 4, "blue")]
+	painted["pieces"] = [_fixed_fillet("O", 2, 2, 0)]
+	var kept_blue: Dictionary = Tracer.trace(painted, Charts.make_state(painted, true))
+	check(_leaves(kept_blue, 2, 2, "S", "blue") and kept_blue["docks"]["D"].has("blue") and not _departs(kept_blue, 2, 2, "red"), "a dry fillet keeps blue")
+	painted["lanterns"][0]["color"] = "red"
+	painted["docks"][0]["color"] = "red"
+	var kept_red: Dictionary = Tracer.trace(painted, Charts.make_state(painted, true))
+	check(_leaves(kept_red, 2, 2, "S", "red") and kept_red["docks"]["D"].has("red") and not _departs(kept_red, 2, 2, "blue"), "a dry fillet keeps red")
+	painted["lanterns"][0]["color"] = "white"
+	painted["docks"][0]["color"] = "white"
+	var kept_white: Dictionary = Tracer.trace(painted, Charts.make_state(painted, true))
+	check(_leaves(kept_white, 2, 2, "S", "white") and not _departs(kept_white, 2, 2, "red") and not _departs(kept_white, 2, 2, "blue"), "a dry fillet keeps white")
+	painted["lanterns"][0]["color"] = "blue"
+	painted["docks"][0]["color"] = "blue"
+	painted["pieces"] = [_fixed_stain("K", 2, 2, 0)]
+	var stained: Dictionary = Tracer.trace(painted, Charts.make_state(painted, true))
+	check(_leaves(stained, 2, 2, "S", "red") and not _leaves(stained, 2, 2, "S", "blue"), "a stain recolors the pass a fillet keeps")
+	var wet_color := _blank(5, 4)
+	wet_color["tide_phases"] = [2]
+	wet_color["lanterns"] = [_lamp("L", 0, 1, "S", "red")]
+	wet_color["fixtures"] = [
+		{"id": "S0", "kind": "shutter", "x": 0, "y": 2, "rot": 0},
+		{"id": "T0", "kind": "tide_mirror", "x": 0, "y": 3, "rot": 90},
+		{"id": "S1", "kind": "shutter", "x": 1, "y": 3, "rot": 0},
+	]
+	wet_color["docks"] = [_need("D", 4, 3, "blue")]
+	wet_color["pieces"] = [_fixed_weir("R", 2, 3, 90)]
+	var swapped: Dictionary = Tracer.trace(wet_color, Charts.make_state(wet_color, true))
+	check(_departs(swapped, 2, 3, "blue") and not _departs(swapped, 2, 3, "red"), "a flooded weir changes the color a fillet would have kept")
+	wet_color["pieces"] = [_fixed_fillet("O", 2, 3, 0)]
+	var held_color: Dictionary = Tracer.trace(wet_color, Charts.make_state(wet_color, true))
+	check(not _center_hit(held_color, 2, 3) and not _departs(held_color, 2, 3, "blue") and not _departs(held_color, 2, 3, "red"), "a flooded fillet does not recolor")
+	var turned := _blank(5, 5)
+	turned["lanterns"] = [_lamp("L", 2, 0, "S", "white")]
+	turned["docks"] = [_need("D", 2, 4, "white")]
+	turned["pieces"] = [_fixed_fillet("O", 2, 2, 0)]
+	var straight: Dictionary = Tracer.trace(turned, Charts.make_state(turned, true))
+	check(_leaves(straight, 2, 2, "S", "white") and not _leaves(straight, 2, 2, "E", "white") and not _leaves(straight, 2, 2, "W", "white") and not _leaves(straight, 2, 2, "N", "white"), "a dry fillet does not turn")
+	turned["pieces"] = [_fixed_mirror(2, 2, 90)]
+	check(_leaves(Tracer.trace(turned, Charts.make_state(turned, true)), 2, 2, "E", "white"), "a mirror turns the beam a fillet passes straight")
+	turned["pieces"] = [_fixed_vane("V", 2, 2, 90)]
+	check(_leaves(Tracer.trace(turned, Charts.make_state(turned, true)), 2, 2, "E", "white"), "a vane turns the beam a fillet passes straight")
+	turned["pieces"] = [_fixed_prism(2, 2, 180)]
+	var split: Dictionary = Tracer.trace(turned, Charts.make_state(turned, true))
+	check(_leaves(split, 2, 2, "E", "red") and _leaves(split, 2, 2, "W", "blue") and not _leaves(split, 2, 2, "S", "white"), "a prism splits the beam a fillet passes straight")
+	var sluice_turn := _blank(5, 4)
+	sluice_turn["tide_phases"] = [2]
+	sluice_turn["lanterns"] = [_lamp("L", 2, 1, "S", "white")]
+	sluice_turn["fixtures"] = [
+		{"id": "S0", "kind": "shutter", "x": 2, "y": 2, "rot": 0},
+		{"id": "S1", "kind": "shutter", "x": 3, "y": 3, "rot": 0},
+	]
+	sluice_turn["pieces"] = [_fixed_sluice("U", 2, 3, 90)]
+	check(_leaves(Tracer.trace(sluice_turn, Charts.make_state(sluice_turn, true)), 2, 3, "E", "white"), "a flooded sluice turns the beam a fillet would pass straight")
+
+
+func test_fillet_book() -> void:
+	var book: Array = Charts.fillet()
+	check(book.size() == 8, "fillet book has eight charts")
+	var titles := ["The Dry Fillet", "The Wet Stop", "Color Kept", "No Turn", "Beside the Flood", "Two Fillets", "The Held Fillet", "The Fillet Mark"]
+	for i in book.size():
+		var chart: Dictionary = book[i]
+		check(str(chart["id"]) == str(i + 199), "fillet chart %d keeps its number" % (i + 199))
+		check(str(chart["title"]) == str(titles[i]), "fillet chart %d keeps its title" % (i + 199))
+		check(str(chart["harbor"]) == Charts.FILLET, "chart %s belongs to the fillet" % str(chart["id"]))
+		var fillet_count := 0
+		for raw_piece in chart["pieces"]:
+			var piece: Dictionary = raw_piece
+			if str(piece["kind"]) == "fillet":
+				fillet_count += 1
+		check(fillet_count >= 1, "chart %s needs the fillet" % str(chart["id"]))
+	for older in Charts.all().slice(0, 198):
+		for raw_piece in older["pieces"]:
+			var older_piece: Dictionary = raw_piece
+			check(str(older_piece["kind"]) != "fillet", "chart %s keeps its pieces" % str(older["id"]))
+		for raw_fix in older["fixtures"]:
+			var older_fix: Dictionary = raw_fix
+			check(str(older_fix["kind"]) != "fillet", "chart %s keeps its fixed glass" % str(older["id"]))
+	for i in book.size():
+		for raw_piece in book[i]["pieces"]:
+			var piece: Dictionary = raw_piece
+			if str(piece["kind"]) != "fillet":
+				continue
+			var piece_id := str(piece["id"])
+			var open_dir := Tracer.rotate_dir(Tracer.fillet_facing(int(piece["solution_rot"])), 2)
+			for crot in [0, 90, 180, 270]:
+				if Tracer.casement_facing(crot) == open_dir:
+					continue
+				_expect_fillet_miss(i, piece_id, "casement", crot, "casement %d" % crot)
+			_expect_fillet_miss(i, piece_id, "jamb", 0, "jamb north")
+			_expect_fillet_miss(i, piece_id, "jamb", 90, "jamb east")
+			_expect_fillet_miss(i, piece_id, "jamb", 180, "jamb south")
+			_expect_fillet_miss(i, piece_id, "jamb", 270, "jamb west")
+			_expect_fillet_miss(i, piece_id, "mullion", 0, "mullion")
+			_expect_fillet_miss(i, piece_id, "transom", 0, "transom")
+			_expect_fillet_miss(i, piece_id, "lintel", 0, "lintel")
+			_expect_fillet_miss(i, piece_id, "shutter", 0, "shutter")
+			_expect_fillet_miss(i, piece_id, "well", 0, "well")
+			_expect_fillet_miss(i, piece_id, "siphon", 0, "siphon")
+			_expect_fillet_miss(i, piece_id, "stain", 0, "red stain")
+			_expect_fillet_miss(i, piece_id, "stain", 90, "blue stain")
+			_expect_fillet_miss(i, piece_id, "mirror", 0, "mirror")
+			_expect_fillet_miss(i, piece_id, "mirror", 90, "turned mirror")
+			_expect_fillet_miss(i, piece_id, "cavetto", int(piece["solution_rot"]), "cavetto same facing")
+			_expect_fillet_miss(i, piece_id, "ovolo", int(piece["solution_rot"]), "ovolo same facing")
+			_expect_fillet_miss(i, piece_id, "ogee", int(piece["solution_rot"]), "ogee same facing")
+			_expect_fillet_miss(i, piece_id, "torus", int(piece["solution_rot"]), "torus same facing")
+			_expect_fillet_miss(i, piece_id, "scotia", int(piece["solution_rot"]), "scotia same facing")
+			_expect_fillet_miss(i, piece_id, "astragal", int(piece["solution_rot"]), "astragal same facing")
+			for facing in [0, 90, 180, 270]:
+				if i == 2 and Tracer.vane_facing(facing) == open_dir:
+					continue
+				_expect_fillet_miss(i, piece_id, "vane", facing, "vane %d" % facing)
+				_expect_fillet_miss(i, piece_id, "weir", facing, "weir %d" % facing)
+				_expect_fillet_miss(i, piece_id, "sluice", facing, "sluice %d" % facing)
+				_expect_fillet_miss(i, piece_id, "prism", facing, "prism %d" % facing)
+	var dry: Dictionary = book[0]
+	check(int(dry["tide_phases"][0]) == 0 and int(dry["solution_tide_index"]) == 0, "chart 199 is tide index 0 and flood 0")
+	var dry_hit: Dictionary = Tracer.trace(dry, Charts.make_state(dry, true))
+	check(_leaves(dry_hit, 3, 3, "S", "white") and dry_hit["docks"]["Sd"].has("white") and dry_hit["docks"]["Sd"].size() == 1, "chart 199 passes the southbound beam")
+	check(dry_hit["docks"]["Nd"].is_empty() and dry_hit["docks"]["Ed"].is_empty() and dry_hit["docks"]["Wd"].is_empty() and dry_hit["docks"]["Td"].is_empty(), "chart 199 refuses north, east, and west")
+	var dry_case: Dictionary = Charts.fillet()[0]
+	_retarget(dry_case, "O", "casement", 0)
+	var dry_case_hit: Dictionary = Tracer.trace(dry_case, Charts.make_state(dry_case, true))
+	check(dry_case_hit["docks"]["Sd"].is_empty() and dry_case_hit["docks"]["Nd"].has("red") and not Tracer.is_cleared(dry_case, Charts.make_state(dry_case, true)), "chart 199 a casement facing north refuses the southbound beam")
+	var dry_jamb: Dictionary = Charts.fillet()[0]
+	_retarget(dry_jamb, "O", "jamb", 0)
+	var dry_jamb_hit: Dictionary = Tracer.trace(dry_jamb, Charts.make_state(dry_jamb, true))
+	check(dry_jamb_hit["docks"]["Nd"].has("red") and dry_jamb_hit["docks"]["Sd"].has("white") and not Tracer.is_cleared(dry_jamb, Charts.make_state(dry_jamb, true)), "chart 199 a jamb passes the northbound return")
+	var dry_cavetto: Dictionary = Charts.fillet()[0]
+	_retarget(dry_cavetto, "O", "cavetto", 0)
+	check(Tracer.trace(dry_cavetto, Charts.make_state(dry_cavetto, true))["docks"]["Sd"].is_empty() and not Tracer.is_cleared(dry_cavetto, Charts.make_state(dry_cavetto, true)), "chart 199 a cavetto facing north refuses the southbound beam")
+	var dry_ovolo: Dictionary = Charts.fillet()[0]
+	_retarget(dry_ovolo, "O", "ovolo", 0)
+	var dry_ovolo_hit: Dictionary = Tracer.trace(dry_ovolo, Charts.make_state(dry_ovolo, true))
+	check(dry_ovolo_hit["docks"]["Ed"].has("blue") and dry_ovolo_hit["docks"]["Wd"].has("red") and dry_ovolo_hit["docks"]["Sd"].has("white") and not Tracer.is_cleared(dry_ovolo, Charts.make_state(dry_ovolo, true)), "chart 199 an ovolo facing north also passes east and west")
+	var dry_ogee: Dictionary = Charts.fillet()[0]
+	_retarget(dry_ogee, "O", "ogee", 0)
+	var dry_ogee_hit: Dictionary = Tracer.trace(dry_ogee, Charts.make_state(dry_ogee, true))
+	check(dry_ogee_hit["docks"]["Wd"].has("red") and dry_ogee_hit["docks"]["Sd"].has("white") and dry_ogee_hit["docks"]["Ed"].is_empty() and not Tracer.is_cleared(dry_ogee, Charts.make_state(dry_ogee, true)), "chart 199 an ogee facing north also passes west")
+	var dry_lintel: Dictionary = Charts.fillet()[0]
+	_retarget(dry_lintel, "O", "lintel", 0)
+	check(Tracer.trace(dry_lintel, Charts.make_state(dry_lintel, true))["docks"]["Nd"].has("red") and not Tracer.is_cleared(dry_lintel, Charts.make_state(dry_lintel, true)), "chart 199 a lintel lets the northbound return through")
+	var wet: Dictionary = book[1]
+	check(int(wet["start_tide_index"]) == 1 and int(wet["solution_tide_index"]) == 0 and int(wet["tide_phases"][1]) == 4, "chart 200 opens under water and solves dry")
+	var wet_start: Dictionary = Tracer.trace(wet, Charts.make_state(wet, false))
+	check(wet_start["docks"]["Nd"].is_empty() and wet_start["docks"]["Ed"].is_empty() and wet_start["docks"]["Wd"].is_empty() and wet_start["docks"]["Sd"].is_empty() and not _center_hit(wet_start, 3, 4), "chart 200 flooded row stops the beam at the waterline")
+	var wet_solved: Dictionary = Tracer.trace(wet, Charts.make_state(wet, true))
+	check(_leaves(wet_solved, 3, 4, "S", "white") and wet_solved["docks"]["Sd"].has("white") and wet_solved["docks"]["Nd"].is_empty() and wet_solved["docks"]["Ed"].is_empty() and wet_solved["docks"]["Wd"].is_empty(), "chart 200 dry tide passes only south")
+	var wet_open: Dictionary = Charts.fillet()[1]
+	_retarget(wet_open, "O", "shutter", 0)
+	check(_center_hit(Tracer.trace(wet_open, Charts.make_state(wet_open, false)), 3, 4), "chart 200 a shutter passes while flooded")
+	for carrier in ["well", "siphon", "sluice", "weir"]:
+		var wet_carry: Dictionary = Charts.fillet()[1]
+		_retarget(wet_carry, "O", carrier, 180 if carrier == "sluice" or carrier == "weir" else 0)
+		check(_center_hit(Tracer.trace(wet_carry, Charts.make_state(wet_carry, false)), 3, 4), "chart 200 a flooded %s carries the beam" % carrier)
+	var kept: Dictionary = Charts.fillet()[2]
+	var kept_hit: Dictionary = Tracer.trace(kept, Charts.make_state(kept, true))
+	check(_leaves(kept_hit, 3, 3, "S", "red") and kept_hit["docks"]["Sd"].has("red") and kept_hit["docks"]["Sd"].size() == 1, "chart 201 keeps red")
+	var white_pass: Dictionary = Charts.fillet()[2]
+	white_pass["lanterns"][0]["color"] = "white"
+	white_pass["docks"][0]["color"] = "white"
+	var white_hit: Dictionary = Tracer.trace(white_pass, Charts.make_state(white_pass, true))
+	check(_leaves(white_hit, 3, 3, "S", "white") and not _leaves(white_hit, 3, 3, "S", "red") and not _leaves(white_hit, 3, 3, "S", "blue") and white_hit["docks"]["Sd"].has("white") and white_hit["docks"]["Sd"].size() == 1 and white_hit["docks"]["Nd"].is_empty() and Tracer.is_cleared(white_pass, Charts.make_state(white_pass, true)), "chart 201 keeps white")
+	var straight_chart: Dictionary = book[3]
+	var straight_hit: Dictionary = Tracer.trace(straight_chart, Charts.make_state(straight_chart, true))
+	check(_arrives_from(straight_hit, 3, 3, "S", "white") and _leaves(straight_hit, 3, 3, "S", "white") and not _leaves(straight_hit, 3, 3, "N", "white") and not _leaves(straight_hit, 3, 3, "E", "white") and not _leaves(straight_hit, 3, 3, "W", "white"), "chart 202 the southbound beam leaves on the same side it entered")
+	check(not _leaves(straight_hit, 3, 3, "N", "red") and not _leaves(straight_hit, 3, 3, "E", "blue") and not _leaves(straight_hit, 3, 3, "W", "red"), "chart 202 the stopped beams do not leave")
+	var beside: Dictionary = book[4]
+	check(int(beside["tide_phases"][0]) == 2, "chart 203 holds a flooded neighbor")
+	var beside_state := Charts.make_state(beside, true)
+	check(not Tracer.is_flooded(beside, beside_state, Vector2i(3, 2)) and Tracer.is_flooded(beside, beside_state, Vector2i(1, 6)), "chart 203 fillet row is dry and the flood row is flooded")
+	var beside_hit: Dictionary = Tracer.trace(beside, beside_state)
+	check(_leaves(beside_hit, 3, 2, "S", "white") and beside_hit["docks"]["Sd"].has("white") and beside_hit["docks"]["Nd"].is_empty() and beside_hit["docks"]["Ed"].is_empty() and beside_hit["docks"]["Wd"].is_empty() and not _center_hit(beside_hit, 1, 6), "chart 203 the dry row passes south and the flood beam stops at the waterline")
+	var pair: Dictionary = book[5]
+	var pair_hit: Dictionary = Tracer.trace(pair, Charts.make_state(pair, true))
+	check(_leaves(pair_hit, 2, 3, "S", "white") and _leaves(pair_hit, 8, 5, "N", "white"), "chart 204 each fillet passes its open direction")
+	check(pair_hit["docks"]["Adn"].is_empty() and pair_hit["docks"]["Bds"].is_empty() and pair_hit["docks"]["Ade"].is_empty() and pair_hit["docks"]["Bde"].is_empty(), "chart 204 each blocked direction stays dark")
+	var swapped_pair := Charts.duplicate_state(Charts.make_state(pair, true))
+	swapped_pair["pieces"]["O"]["rot"] = 180
+	swapped_pair["pieces"]["U"]["rot"] = 0
+	check(not Tracer.is_cleared(pair, swapped_pair), "chart 204 swapping the facings fails")
+	var south_seat: Dictionary = Charts.fillet()[5]
+	_retarget(south_seat, "O", "jamb", 0)
+	var south_seat_hit: Dictionary = Tracer.trace(south_seat, Charts.make_state(south_seat, true))
+	check(south_seat_hit["docks"]["Adn"].has("red") and south_seat_hit["docks"]["Ade"].is_empty() and not Tracer.is_cleared(south_seat, Charts.make_state(south_seat, true)), "chart 204 a north jamb cannot take the south seat")
+	var held: Dictionary = book[6]
+	check(int(held["tide_phases"][0]) == 0 and int(held["tide_phases"][1]) == 1 and int(held["tide_phases"][2]) == 5 and int(held["solution_tide_index"]) == 1 and int(held["start_tide_index"]) == 0, "chart 205 follows the held tide marks")
+	var held_start := Charts.make_state(held, false)
+	check(int(held_start["pieces"]["O"]["rot"]) == 180, "chart 205 starts facing south")
+	var held_solved := Charts.make_state(held, true)
+	var held_hit: Dictionary = Tracer.trace(held, held_solved)
+	check(int(held_solved["pieces"]["O"]["rot"]) == 0 and _leaves(held_hit, 4, 3, "S", "white") and held_hit["docks"]["Sd"].has("white") and held_hit["docks"]["Nd"].is_empty() and not bool(held_hit["boats"]["Hb"]), "chart 205 the held facing passes south")
+	var held_low := Charts.duplicate_state(held_solved)
+	held_low["tide_index"] = 0
+	check(bool(Tracer.trace(held, held_low)["boats"]["Hb"]) and not Tracer.is_cleared(held, held_low), "chart 205 low water wakes the south hull")
+	var held_high := Charts.duplicate_state(held_solved)
+	held_high["tide_index"] = 2
+	var held_high_hit: Dictionary = Tracer.trace(held, held_high)
+	check(held_high_hit["docks"]["Nd"].is_empty() and not _center_hit(held_high_hit, 4, 3) and not Tracer.is_cleared(held, held_high), "chart 205 high water stops the beam outside the fillet")
+	var mark: Dictionary = book[7]
+	var mark_solved := Charts.make_state(mark, true)
+	check(str(mark_solved["pieces"]["O"]["socket"]) == "line" and int(mark_solved["pieces"]["O"]["rot"]) == 0 and str(mark_solved["pieces"]["G"]["socket"]) == "side", "chart 206 puts the north fillet on the line")
+	var mark_hit: Dictionary = Tracer.trace(mark, mark_solved)
+	check(_leaves(mark_hit, 3, 3, "S", "white") and mark_hit["docks"]["Sd"].has("white") and mark_hit["docks"]["Nd"].is_empty() and mark_hit["docks"]["Ed"].is_empty() and mark_hit["docks"]["Wd"].is_empty(), "chart 206 the open set satisfies the mark")
+	var mark_case: Dictionary = Charts.fillet()[7]
+	_retarget(mark_case, "O", "casement", 0)
+	check(not Tracer.is_cleared(mark_case, Charts.make_state(mark_case, true)), "chart 206 a casement facing north in that cell fails")
+	var mark_jamb: Dictionary = Charts.fillet()[7]
+	_retarget(mark_jamb, "O", "jamb", 0)
+	check(not Tracer.is_cleared(mark_jamb, Charts.make_state(mark_jamb, true)), "chart 206 a jamb in that cell fails")
+	var mark_mullion: Dictionary = Charts.fillet()[7]
+	_retarget(mark_mullion, "O", "mullion", 0)
+	check(not Tracer.is_cleared(mark_mullion, Charts.make_state(mark_mullion, true)), "chart 206 a mullion in that cell fails")
+	var mark_transom: Dictionary = Charts.fillet()[7]
+	_retarget(mark_transom, "O", "transom", 0)
+	check(not Tracer.is_cleared(mark_transom, Charts.make_state(mark_transom, true)), "chart 206 a transom in that cell fails")
+	var mark_lintel: Dictionary = Charts.fillet()[7]
+	_retarget(mark_lintel, "O", "lintel", 0)
+	check(not Tracer.is_cleared(mark_lintel, Charts.make_state(mark_lintel, true)), "chart 206 a lintel in that cell fails")
+	var mark_cavetto: Dictionary = Charts.fillet()[7]
+	_retarget(mark_cavetto, "O", "cavetto", 0)
+	check(not Tracer.is_cleared(mark_cavetto, Charts.make_state(mark_cavetto, true)), "chart 206 a cavetto in that cell fails")
+	var mark_ovolo: Dictionary = Charts.fillet()[7]
+	_retarget(mark_ovolo, "O", "ovolo", 0)
+	check(not Tracer.is_cleared(mark_ovolo, Charts.make_state(mark_ovolo, true)), "chart 206 an ovolo in that cell fails")
+	check(str(book[0]["teach"]).to_lower().contains("tide index 0") and str(book[0]["teach"]).to_lower().contains("casement") and str(book[0]["teach"]).to_lower().contains("jamb") and str(book[0]["teach"]).to_lower().contains("southbound") and str(book[0]["teach"]).to_lower().contains("return"), "chart 199 teaches the dry fillet")
+	check(str(book[1]["teach"]).to_lower().contains("waterline") and str(book[1]["teach"]).to_lower().contains("shutter") and str(book[1]["teach"]).to_lower().contains("well") and str(book[1]["teach"]).to_lower().contains("siphon") and str(book[1]["teach"]).to_lower().contains("sluice") and str(book[1]["teach"]).to_lower().contains("weir"), "chart 200 teaches the wet stop")
+	check(str(book[2]["teach"]).to_lower().contains("red stays red") and str(book[2]["teach"]).to_lower().contains("blue stays blue") and str(book[2]["teach"]).to_lower().contains("white stays white") and str(book[2]["teach"]).to_lower().contains("stain") and str(book[2]["teach"]).to_lower().contains("weir"), "chart 201 teaches the kept color")
+	check(str(book[3]["teach"]).to_lower().contains("does not turn") and str(book[3]["teach"]).to_lower().contains("prism") and str(book[3]["teach"]).to_lower().contains("vane") and str(book[3]["teach"]).to_lower().contains("sluice") and str(book[3]["teach"]).to_lower().contains("mirror"), "chart 202 teaches the straight pass")
+	check(str(book[4]["teach"]).to_lower().contains("waterline") and str(book[4]["teach"]).to_lower().contains("dry"), "chart 203 teaches the dry row beside the flood")
+	check(str(book[5]["teach"]).to_lower().contains("only on south") and str(book[5]["teach"]).to_lower().contains("only on north") and str(book[5]["teach"]).to_lower().contains("jamb") and str(book[5]["teach"]).to_lower().contains("south"), "chart 204 teaches both fillets")
+	check(str(book[6]["teach"]).to_lower().contains("facing") and str(book[6]["teach"]).to_lower().contains("waterline"), "chart 205 teaches the held fillet")
+	check(str(book[7]["teach"]).to_lower().contains("casement") and str(book[7]["teach"]).to_lower().contains("jamb") and str(book[7]["teach"]).to_lower().contains("mullion") and str(book[7]["teach"]).to_lower().contains("transom") and str(book[7]["teach"]).to_lower().contains("lintel"), "chart 206 teaches the fillet mark")
+
+
+func _expect_fillet_miss(index: int, piece_id: String, kind: String, rot: int, label: String) -> void:
+	var chart: Dictionary = Charts.fillet()[index]
+	_retarget(chart, piece_id, kind, rot)
+	var state := Charts.make_state(chart, true)
+	if Tracer.is_cleared(chart, state):
+		check(false, "%s clears fillet chart %d" % [label, index + 199])
+	else:
+		check(true, "%s misses fillet chart %d" % [label, index + 199])
+
+
 func test_smoke() -> void:
 	var main_script: Script = load("res://scripts/main.gd")
 	main_script.persist_progress = false
@@ -8047,10 +8840,12 @@ func test_smoke() -> void:
 	var torus_rect: Rect2 = main.torus_book_button.get_global_rect()
 	var ogee_rect: Rect2 = main.ogee_book_button.get_global_rect()
 	var ovolo_rect: Rect2 = main.ovolo_book_button.get_global_rect()
+	var cavetto_rect: Rect2 = main.cavetto_book_button.get_global_rect()
+	var fillet_rect: Rect2 = main.fillet_book_button.get_global_rect()
 	var side_rect: Rect2 = main._side.get_global_rect()
-	check(side_rect.grow(1.0).encloses(sluice_rect) and side_rect.grow(1.0).encloses(weir_rect) and side_rect.grow(1.0).encloses(lintel_rect) and side_rect.grow(1.0).encloses(mullion_rect) and side_rect.grow(1.0).encloses(transom_rect) and side_rect.grow(1.0).encloses(casement_rect) and side_rect.grow(1.0).encloses(jamb_rect) and side_rect.grow(1.0).encloses(astragal_rect) and side_rect.grow(1.0).encloses(scotia_rect) and side_rect.grow(1.0).encloses(torus_rect) and side_rect.grow(1.0).encloses(ogee_rect) and side_rect.grow(1.0).encloses(ovolo_rect), "the sluice, weir, lintel, mullion, transom, casement, jamb, astragal, scotia, torus, ogee, and ovolo book buttons sit inside the side panel")
-	check(not sluice_rect.intersects(weir_rect) and not weir_rect.intersects(lintel_rect) and not lintel_rect.intersects(mullion_rect) and not mullion_rect.intersects(transom_rect) and not transom_rect.intersects(casement_rect) and not casement_rect.intersects(jamb_rect) and not jamb_rect.intersects(astragal_rect) and not astragal_rect.intersects(scotia_rect) and not scotia_rect.intersects(torus_rect) and not torus_rect.intersects(ogee_rect) and not ogee_rect.intersects(ovolo_rect) and not sluice_rect.intersects(lintel_rect), "the transom button stays beside the mullion button, with the casement button, and the jamb button sits beside the astragal button, with the scotia button beside it, the torus button beside the scotia, the ogee button beside the torus, and the ovolo button beside the ogee")
-	check(sluice_rect.size.x + 0.5 >= main.sluice_book_button.get_minimum_size().x and weir_rect.size.x + 0.5 >= main.weir_book_button.get_minimum_size().x and lintel_rect.size.x + 0.5 >= main.lintel_book_button.get_minimum_size().x and mullion_rect.size.x + 0.5 >= main.mullion_book_button.get_minimum_size().x and transom_rect.size.x + 0.5 >= main.transom_book_button.get_minimum_size().x and casement_rect.size.x + 0.5 >= main.casement_book_button.get_minimum_size().x and jamb_rect.size.x + 0.5 >= main.jamb_book_button.get_minimum_size().x and astragal_rect.size.x + 0.5 >= main.astragal_book_button.get_minimum_size().x and scotia_rect.size.x + 0.5 >= main.scotia_book_button.get_minimum_size().x and torus_rect.size.x + 0.5 >= main.torus_book_button.get_minimum_size().x and ogee_rect.size.x + 0.5 >= main.ogee_book_button.get_minimum_size().x and ovolo_rect.size.x + 0.5 >= main.ovolo_book_button.get_minimum_size().x, "the sluice, weir, lintel, mullion, transom, casement, jamb, astragal, scotia, torus, ogee, and ovolo labels have room")
+	check(side_rect.grow(1.0).encloses(sluice_rect) and side_rect.grow(1.0).encloses(weir_rect) and side_rect.grow(1.0).encloses(lintel_rect) and side_rect.grow(1.0).encloses(mullion_rect) and side_rect.grow(1.0).encloses(transom_rect) and side_rect.grow(1.0).encloses(casement_rect) and side_rect.grow(1.0).encloses(jamb_rect) and side_rect.grow(1.0).encloses(astragal_rect) and side_rect.grow(1.0).encloses(scotia_rect) and side_rect.grow(1.0).encloses(torus_rect) and side_rect.grow(1.0).encloses(ogee_rect) and side_rect.grow(1.0).encloses(ovolo_rect) and side_rect.grow(1.0).encloses(cavetto_rect) and side_rect.grow(1.0).encloses(fillet_rect), "the sluice, weir, lintel, mullion, transom, casement, jamb, astragal, scotia, torus, ogee, ovolo, cavetto, and fillet book buttons sit inside the side panel")
+	check(not sluice_rect.intersects(weir_rect) and not weir_rect.intersects(lintel_rect) and not lintel_rect.intersects(mullion_rect) and not mullion_rect.intersects(transom_rect) and not transom_rect.intersects(casement_rect) and not casement_rect.intersects(jamb_rect) and not jamb_rect.intersects(astragal_rect) and not astragal_rect.intersects(scotia_rect) and not scotia_rect.intersects(torus_rect) and not torus_rect.intersects(ogee_rect) and not ogee_rect.intersects(ovolo_rect) and not ovolo_rect.intersects(cavetto_rect) and not cavetto_rect.intersects(fillet_rect) and not sluice_rect.intersects(lintel_rect), "the transom button stays beside the mullion button, with the casement button, and the jamb button sits beside the astragal button, with the scotia button beside it, the torus button beside the scotia, the ogee button beside the torus, the ovolo button beside the ogee, the cavetto button on the next row, and the fillet button beside the cavetto")
+	check(sluice_rect.size.x + 0.5 >= main.sluice_book_button.get_minimum_size().x and weir_rect.size.x + 0.5 >= main.weir_book_button.get_minimum_size().x and lintel_rect.size.x + 0.5 >= main.lintel_book_button.get_minimum_size().x and mullion_rect.size.x + 0.5 >= main.mullion_book_button.get_minimum_size().x and transom_rect.size.x + 0.5 >= main.transom_book_button.get_minimum_size().x and casement_rect.size.x + 0.5 >= main.casement_book_button.get_minimum_size().x and jamb_rect.size.x + 0.5 >= main.jamb_book_button.get_minimum_size().x and astragal_rect.size.x + 0.5 >= main.astragal_book_button.get_minimum_size().x and scotia_rect.size.x + 0.5 >= main.scotia_book_button.get_minimum_size().x and torus_rect.size.x + 0.5 >= main.torus_book_button.get_minimum_size().x and ogee_rect.size.x + 0.5 >= main.ogee_book_button.get_minimum_size().x and ovolo_rect.size.x + 0.5 >= main.ovolo_book_button.get_minimum_size().x and cavetto_rect.size.x + 0.5 >= main.cavetto_book_button.get_minimum_size().x and fillet_rect.size.x + 0.5 >= main.fillet_book_button.get_minimum_size().x, "the sluice, weir, lintel, mullion, transom, casement, jamb, astragal, scotia, torus, ogee, ovolo, cavetto, and fillet labels have room")
 	var window_w := int(ProjectSettings.get_setting("display/window/size/viewport_width"))
 	var window_h := int(ProjectSettings.get_setting("display/window/size/viewport_height"))
 	check(window_w == 1280 and window_h == 720, "the window stays 1280 by 720")
@@ -8341,8 +9136,68 @@ func test_smoke() -> void:
 	await process_frame
 	check(str(main.chart["id"]) == "183", "Ovolo returns to The Dry Ovolo")
 	check(_chart_row_fits(main.ovolo_grid, main._side), "the ovolo chart row fits in the window")
+	main.unlocked[190] = false
+	main._refresh_chrome()
+	check(main.cavetto_book_button.disabled, "the cavetto stays locked until the ovolo mark is held")
+	main.unlocked[189] = true
+	check(main.select_chart(189), "chart 190 opens when unlocked")
+	check(main.cavetto_book_button.disabled, "opening the ovolo mark does not unlock the cavetto")
+	main.state = Charts.duplicate_state(Charts.make_state(main.chart, true))
+	main._refresh()
+	main.try_lock()
+	check(main.board_locked and main.unlocked[190], "holding the ovolo mark opens the cavetto")
+	main._advance_from_win()
+	check(str(main.chart["id"]) == "191", "next chart from the ovolo mark enters The Dry Cavetto")
+	check(main.cavetto_grid.visible and not main.ovolo_grid.visible and not main.ogee_grid.visible, "the cavetto grid opens with The Dry Cavetto")
+	check(str(main.harbor_label.text) == Charts.CAVETTO, "the harbor name follows the cavetto")
+	check(str(main.tide_readout.text).to_lower().contains("cavetto"), "chart 191 names the cavetto in the water readout")
+	var cavetto_cell := Charts.piece_cell(main.chart, main.state, "O")
+	check(str(main.selected_id) == "O" and int(main.state["pieces"]["O"]["rot"]) == 180, "chart 191 starts facing south")
+	_click_cell(main, cavetto_cell.x, cavetto_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 270, "a click turns the cavetto from south to west")
+	check(str(main.status_label.text).to_lower().contains("clockwise") and str(main.status_label.text).to_lower().contains("opposite") and str(main.status_label.text).to_lower().contains("except"), "the cavetto says it turns and passes every direction except the opposite")
+	_click_cell(main, cavetto_cell.x, cavetto_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 0, "the next click turns the cavetto north")
+	_click_cell(main, cavetto_cell.x, cavetto_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 90, "the next click turns the cavetto east")
+	_click_cell(main, cavetto_cell.x, cavetto_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 180, "four clicks restore the south facing")
+	main._on_book_pressed(24)
+	await process_frame
+	check(str(main.chart["id"]) == "191", "Cavetto returns to The Dry Cavetto")
+	check(_chart_row_fits(main.cavetto_grid, main._side), "the cavetto chart row fits in the window")
+	main.unlocked[198] = false
+	main._refresh_chrome()
+	check(main.fillet_book_button.disabled, "the fillet stays locked until the cavetto mark is held")
+	main.unlocked[197] = true
+	check(main.select_chart(197), "chart 198 opens when unlocked")
+	check(main.fillet_book_button.disabled, "opening the cavetto mark does not unlock the fillet")
+	main.state = Charts.duplicate_state(Charts.make_state(main.chart, true))
+	main._refresh()
+	main.try_lock()
+	check(main.board_locked and main.unlocked[198], "holding the cavetto mark opens the fillet")
+	main._advance_from_win()
+	check(str(main.chart["id"]) == "199", "next chart from the cavetto mark enters The Dry Fillet")
+	check(main.fillet_grid.visible and not main.cavetto_grid.visible and not main.ovolo_grid.visible, "the fillet grid opens with The Dry Fillet")
+	check(str(main.harbor_label.text) == Charts.FILLET, "the harbor name follows the fillet")
+	check(str(main.tide_readout.text).to_lower().contains("fillet"), "chart 199 names the fillet in the water readout")
+	var fillet_cell := Charts.piece_cell(main.chart, main.state, "O")
+	check(str(main.selected_id) == "O" and int(main.state["pieces"]["O"]["rot"]) == 180, "chart 199 starts facing south")
+	_click_cell(main, fillet_cell.x, fillet_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 270, "a click turns the fillet from south to west")
+	check(str(main.status_label.text).to_lower().contains("clockwise") and str(main.status_label.text).to_lower().contains("opposite") and str(main.status_label.text).to_lower().contains("only"), "the fillet says it turns and passes only the opposite")
+	_click_cell(main, fillet_cell.x, fillet_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 0, "the next click turns the fillet north")
+	_click_cell(main, fillet_cell.x, fillet_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 90, "the next click turns the fillet east")
+	_click_cell(main, fillet_cell.x, fillet_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 180, "four clicks restore the south facing")
+	main._on_book_pressed(25)
+	await process_frame
+	check(str(main.chart["id"]) == "199", "Fillet returns to The Dry Fillet")
+	check(_chart_row_fits(main.fillet_grid, main._side), "the fillet chart row fits in the window")
 	main._on_book_pressed(13)
-	check(main.weir_grid.visible and not main.lintel_grid.visible and not main.mullion_grid.visible and not main.transom_grid.visible and not main.casement_grid.visible and not main.jamb_grid.visible and not main.astragal_grid.visible and not main.scotia_grid.visible and not main.torus_grid.visible and not main.ogee_grid.visible and not main.ovolo_grid.visible, "the weir book still opens")
+	check(main.weir_grid.visible and not main.lintel_grid.visible and not main.mullion_grid.visible and not main.transom_grid.visible and not main.casement_grid.visible and not main.jamb_grid.visible and not main.astragal_grid.visible and not main.scotia_grid.visible and not main.torus_grid.visible and not main.ogee_grid.visible and not main.ovolo_grid.visible and not main.cavetto_grid.visible and not main.fillet_grid.visible, "the weir book still opens")
 	main.select_chart(0)
 	main.restart_chart()
 	var before_rot := int(main.state["pieces"]["M"]["rot"])
@@ -8435,8 +9290,10 @@ func _walk(chart: Dictionary, state: Dictionary, index: int, found: Array) -> vo
 	# A torus has four facings. Each facing opens the opposite pair.
 	# An ogee has four facings. Each facing opens the mirrored opposite pair.
 	# An ovolo has four facings. Each facing stops only itself.
+	# A cavetto has four facings. Each facing stops only its opposite.
+	# A fillet has four facings. Each facing passes only its opposite.
 	var rots: Array = [0]
-	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo":
+	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet":
 		rots = [0, 90, 180, 270]
 	elif kind != "shutter" and kind != "well" and kind != "siphon" and kind != "lintel" and kind != "mullion" and kind != "transom":
 		rots = [0, 90]
@@ -8761,6 +9618,122 @@ func _ovolo_column(count: int) -> Dictionary:
 	var pieces: Array = []
 	for y in range(1, count + 1):
 		pieces.append(_fixed_ovolo("O%d" % y, 0, y, 0))
+	chart["pieces"] = pieces
+	return chart
+
+
+func _fixed_cavetto(id: String, x: int, y: int, rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": "Cavetto",
+		"kind": "cavetto",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": rot,
+		"solution_socket": "a",
+		"solution_rot": rot,
+	}
+
+
+func _cavetto_row(count: int) -> Dictionary:
+	var chart := _blank(count + 2, 1)
+	chart["lanterns"] = [_lamp("L", 0, 0, "E", "white")]
+	chart["docks"] = [_need("D", count + 1, 0, "white")]
+	var pieces: Array = []
+	for x in range(1, count + 1):
+		pieces.append(_fixed_cavetto("C%d" % x, x, 0, 0))
+	chart["pieces"] = pieces
+	return chart
+
+
+func _cavetto_west_row(count: int) -> Dictionary:
+	var chart := _blank(count + 2, 1)
+	chart["lanterns"] = [_lamp("L", count + 1, 0, "W", "white")]
+	chart["docks"] = [_need("D", 0, 0, "white")]
+	var pieces: Array = []
+	for x in range(1, count + 1):
+		pieces.append(_fixed_cavetto("C%d" % x, x, 0, 0))
+	chart["pieces"] = pieces
+	return chart
+
+
+func _cavetto_north_column(count: int) -> Dictionary:
+	var chart := _blank(1, count + 2)
+	chart["lanterns"] = [_lamp("L", 0, count + 1, "N", "white")]
+	chart["docks"] = [_need("D", 0, 0, "white")]
+	var pieces: Array = []
+	for y in range(1, count + 1):
+		pieces.append(_fixed_cavetto("C%d" % y, 0, y, 0))
+	chart["pieces"] = pieces
+	return chart
+
+
+func _cavetto_south_column(count: int) -> Dictionary:
+	var chart := _blank(1, count + 2)
+	chart["lanterns"] = [_lamp("L", 0, 0, "S", "white")]
+	chart["docks"] = [_need("D", 0, count + 1, "white")]
+	var pieces: Array = []
+	for y in range(1, count + 1):
+		pieces.append(_fixed_cavetto("C%d" % y, 0, y, 0))
+	chart["pieces"] = pieces
+	return chart
+
+
+func _fixed_fillet(id: String, x: int, y: int, rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": "Fillet",
+		"kind": "fillet",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": rot,
+		"solution_socket": "a",
+		"solution_rot": rot,
+	}
+
+
+func _fillet_row(count: int) -> Dictionary:
+	var chart := _blank(count + 2, 1)
+	chart["lanterns"] = [_lamp("L", 0, 0, "E", "white")]
+	chart["docks"] = [_need("D", count + 1, 0, "white")]
+	var pieces: Array = []
+	for x in range(1, count + 1):
+		pieces.append(_fixed_fillet("F%d" % x, x, 0, 0))
+	chart["pieces"] = pieces
+	return chart
+
+
+func _fillet_west_row(count: int) -> Dictionary:
+	var chart := _blank(count + 2, 1)
+	chart["lanterns"] = [_lamp("L", count + 1, 0, "W", "white")]
+	chart["docks"] = [_need("D", 0, 0, "white")]
+	var pieces: Array = []
+	for x in range(1, count + 1):
+		pieces.append(_fixed_fillet("F%d" % x, x, 0, 0))
+	chart["pieces"] = pieces
+	return chart
+
+
+func _fillet_south_column(count: int) -> Dictionary:
+	var chart := _blank(1, count + 2)
+	chart["lanterns"] = [_lamp("L", 0, 0, "S", "white")]
+	chart["docks"] = [_need("D", 0, count + 1, "white")]
+	var pieces: Array = []
+	for y in range(1, count + 1):
+		pieces.append(_fixed_fillet("F%d" % y, 0, y, 0))
+	chart["pieces"] = pieces
+	return chart
+
+
+func _fillet_north_column(count: int) -> Dictionary:
+	var chart := _blank(1, count + 2)
+	chart["lanterns"] = [_lamp("L", 0, count + 1, "N", "white")]
+	chart["docks"] = [_need("D", 0, 0, "white")]
+	var pieces: Array = []
+	for y in range(1, count + 1):
+		pieces.append(_fixed_fillet("F%d" % y, 0, y, 0))
 	chart["pieces"] = pieces
 	return chart
 

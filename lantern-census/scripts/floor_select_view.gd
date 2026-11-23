@@ -36,7 +36,9 @@ const LADY_CHAPEL_AWNING := Color(0.18, 0.32, 0.68)
 const FERETORY_AWNING := Color(0.70, 0.66, 0.58)
 const CHANTRY_AWNING := Color(0.64, 0.15, 0.22)
 const SACRISTY_AWNING := Color(0.30, 0.16, 0.08)
-const WINDOW_W := 1784.0
+const PYX_AWNING := Color(0.55, 0.40, 0.12)
+const AUMBRY_AWNING := Color(0.58, 0.54, 0.46)
+const WINDOW_W := 1920.0
 
 var notice_label: Label
 var purse_label: Label
@@ -194,6 +196,10 @@ func _awning_for(floor_id: String) -> Color:
 		return CHANTRY_AWNING
 	if floor_id == "sacristy":
 		return SACRISTY_AWNING
+	if floor_id == "pyx":
+		return PYX_AWNING
+	if floor_id == "aumbry":
+		return AUMBRY_AWNING
 	return CHART_AWNING
 
 

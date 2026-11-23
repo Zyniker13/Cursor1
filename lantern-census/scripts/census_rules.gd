@@ -44,6 +44,8 @@ extends RefCounted
 ## The feretory's ring is the walk around the feretory.
 ## The chantry's ring is the same walk, left where the feretory put it.
 ## The sacristy's ring is that same walk, left where the chantry left it.
+## The pyx's ring is that same walk, left where the sacristy left it.
+## The aumbry's ring is that same walk, left where the pyx left it.
 ## A census is accepted only when every corridor and hazard is marked truly
 ## and no tile is marked as something it is not.
 
@@ -57,7 +59,7 @@ const HAZARD_VALUE := 8
 const LOOP_VALUE := 15
 
 const TOWN_LINE := "Arrows turn and step, Q and E strafe, M marks the tile you face, and Space waits out the warden's swing."
-const RATE_CARD := "A true corridor pays 3. A true hazard pays 8. The cellar's east square, the cistern ring, the cloister walk, the crypt ring, the ossuary ring, the reliquary ring, the undercroft ring, the well ring, the scriptorium ring, the binding ring, the chart room ring, the bell loft ring, the clock room ring, the font ring, the apse ring, the choir ring, the rood ring, the crossing ring, the transept ring, the ambulatory ring, the chevet ring, the retrochoir ring, the lady chapel ring, the feretory ring, the chantry ring, and the sacristy ring each pay 15 only when every tile of that ring is marked corridor. A false mark pays nothing."
+const RATE_CARD := "A true corridor pays 3. A true hazard pays 8. The cellar's east square, the cistern ring, the cloister walk, the crypt ring, the ossuary ring, the reliquary ring, the undercroft ring, the well ring, the scriptorium ring, the binding ring, the chart room ring, the bell loft ring, the clock room ring, the font ring, the apse ring, the choir ring, the rood ring, the crossing ring, the transept ring, the ambulatory ring, the chevet ring, the retrochoir ring, the lady chapel ring, the feretory ring, the chantry ring, the sacristy ring, the pyx ring, and the aumbry ring each pay 15 only when every tile of that ring is marked corridor. A false mark pays nothing."
 
 const CELLAR_RECORD := "Record every corridor, both hazard cracks, and the east square."
 const CISTERN_RECORD := "Record every corridor, the three seep cracks, and the cistern ring around the pit."
@@ -85,6 +87,8 @@ const LADY_CHAPEL_RECORD := "Record every corridor, the twenty-three lady-chapel
 const FERETORY_RECORD := "Record every corridor, the twenty-four feretory cracks, and the ring around the feretory."
 const CHANTRY_RECORD := "Record every corridor, the twenty-five chantry cracks, and the ring around the chantry."
 const SACRISTY_RECORD := "Record every corridor, the twenty-six sacristy cracks, and the ring around the sacristy."
+const PYX_RECORD := "Record every corridor, the twenty-seven pyx cracks, and the ring around the pyx."
+const AUMBRY_RECORD := "Record every corridor, the twenty-eight aumbry cracks, and the ring around the aumbry."
 
 const CELLAR_ROWS: PackedStringArray = [
 	"#############",
@@ -735,6 +739,93 @@ const SACRISTY_ROWS: PackedStringArray = [
 	"#############################",
 ]
 
+# The pyx is the 14x6 block of 'F' at columns 7-20, rows 4-9.
+# The paid ring is the same 44-tile corridor cycle the sacristy walks.
+# F is the next free letter walking backward from G. H is a crack, so it is
+# not free. G stays the sacristy. I stays the chantry. J stays the feretory.
+# L is the lift, K is the clock, M is the lady chapel, O is the retrochoir,
+# P is the binding press, Q is the chevet, and N is the font. S and E are the
+# start and the warden.
+# The sheet grows the sacristy one column to the east. The press, the ring,
+# the warden, the lift, the start, and the 19-step path stay on their cells.
+# The sacristy's closures stay: (3,12) closed, (26,15) a crack, (2,1) and
+# (3,1) closed, (6,12) and (4,12) open. The new crack is (28,16), on the new
+# column, immediately east of (27,16). With those closures carried forward,
+# that single new crack surveys at 122 oil. No new cell brings the survey to
+# 120. Closing (6,12) raises it to 126. Closing (4,12) would bring it to 120,
+# and so would closing a ring tile or the warden's east swing. (4,12), the
+# ring, and the east swing stay open, because another way reaches 120.
+# Reopening (2,1) raises the survey. Closing the dead-end crack (25,2) returns
+# the survey to 120 and drops the count to 26. (27,15) is opened as a crack
+# between (26,15) and (27,16), which adds the crack back without lengthening
+# the survey. (1,12), (1,13), and (1,14) stay ordinary walls. Start, lift, and
+# warden stay on (1,1), (10,11), and (9,12).
+const PYX_ROWS: PackedStringArray = [
+	"##############################",
+	"#S############################",
+	"#.############################",
+	"#H####...................H####",
+	"#.####.FFFFFFFFFFFFFF.###H####",
+	"#H####.FFFFFFFFFFFFFF.###H####",
+	"#.####.FFFFFFFFFFFFFF.###H####",
+	"#H####.FFFFFFFFFFFFFF.###H####",
+	"#.####.FFFFFFFFFFFFFF.###H####",
+	"#H####.FFFFFFFFFFFFFF.###H####",
+	"#.####................###H####",
+	"#H........L########.#####H####",
+	"####.H.H.E.########H.....H####",
+	"#########################H####",
+	"#########################H####",
+	"#########################HHH##",
+	"#########################HHHH#",
+	"##############################",
+	"##############################",
+	"##############################",
+	"##############################",
+]
+
+# The aumbry is the 14x6 block of 'Z' at columns 7-20, rows 4-9.
+# The paid ring is the same 44-tile corridor cycle the pyx walks.
+# Z is the next free letter walking backward from F. H is a crack, so it
+# is not free. E is the warden. D is the scriptorium desk, C is the choir,
+# B is the undercroft trough, and A is the apse. F stays the pyx. G stays
+# the sacristy. I stays the chantry. J stays the feretory.
+# The sheet grows the pyx one column to the east. The pyx, the ring, the
+# warden, the lift, the start, and the 19-step path stay on their cells.
+# The pyx's closures stay, except (4,12). (25,2) stays closed. (27,15),
+# (26,15), and (28,16) stay cracks. (3,12) and (2,1) stay closed. (6,12)
+# stays open. The new crack is (29,16), on the new column, immediately east
+# of (28,16). With those closures carried forward, that single new crack
+# surveys at 122 oil. No new cell brings the survey to 120. Closing (6,12)
+# raises it to 126. Reopening (2,1) raises it. Closing a ring tile or the
+# warden's east swing would bring it to 120 and would break the sheet.
+# Every other legal cell fails, so (4,12) is closed and the survey is 120.
+# (1,12), (1,13), and (1,14) stay ordinary walls. Start, lift, and warden
+# stay on (1,1), (10,11), and (9,12).
+const AUMBRY_ROWS: PackedStringArray = [
+	"###############################",
+	"#S#############################",
+	"#.#############################",
+	"#H####...................H#####",
+	"#.####.ZZZZZZZZZZZZZZ.###H#####",
+	"#H####.ZZZZZZZZZZZZZZ.###H#####",
+	"#.####.ZZZZZZZZZZZZZZ.###H#####",
+	"#H####.ZZZZZZZZZZZZZZ.###H#####",
+	"#.####.ZZZZZZZZZZZZZZ.###H#####",
+	"#H####.ZZZZZZZZZZZZZZ.###H#####",
+	"#.####................###H#####",
+	"#H........L########.#####H#####",
+	"#####H.H.E.########H.....H#####",
+	"#########################H#####",
+	"#########################H#####",
+	"#########################HHH###",
+	"#########################HHHHH#",
+	"###############################",
+	"###############################",
+	"###############################",
+	"###############################",
+]
+
 enum Tile { WALL, FLOOR, HAZARD, LIFT }
 enum Mark { NONE, CORRIDOR, WALL, HAZARD }
 enum EndReason { NONE, EXTRACTED, LAMP_OUT, ABANDONED }
@@ -775,7 +866,7 @@ static var _floor_list: Array = []
 
 static func floors() -> Array:
 	if _floor_list.is_empty():
-		_floor_list = [_make_cellar(), _make_cistern(), _make_cloister(), _make_crypt(), _make_ossuary(), _make_reliquary(), _make_undercroft(), _make_wellhouse(), _make_scriptorium(), _make_binding(), _make_chartroom(), _make_bellloft(), _make_clockroom(), _make_font(), _make_apse(), _make_choir(), _make_rood(), _make_crossing(), _make_transept(), _make_ambulatory(), _make_chevet(), _make_retrochoir(), _make_ladychapel(), _make_feretory(), _make_chantry(), _make_sacristy()]
+		_floor_list = [_make_cellar(), _make_cistern(), _make_cloister(), _make_crypt(), _make_ossuary(), _make_reliquary(), _make_undercroft(), _make_wellhouse(), _make_scriptorium(), _make_binding(), _make_chartroom(), _make_bellloft(), _make_clockroom(), _make_font(), _make_apse(), _make_choir(), _make_rood(), _make_crossing(), _make_transept(), _make_ambulatory(), _make_chevet(), _make_retrochoir(), _make_ladychapel(), _make_feretory(), _make_chantry(), _make_sacristy(), _make_pyx(), _make_aumbry()]
 	return _floor_list
 
 
@@ -1286,6 +1377,42 @@ static func _make_sacristy() -> Floor:
 	floor.record = SACRISTY_RECORD
 	return floor
 
+static func _make_pyx() -> Floor:
+	var floor := Floor.new()
+	floor.id = "pyx"
+	floor.title = "The Pyx Chamber"
+	floor.rows = PYX_ROWS
+	floor.loop_name = "Pyx ring"
+	var ring: Array = []
+	for x in range(6, 22):
+		ring.append(Vector2i(x, 3))
+	for y in range(4, 10):
+		ring.append(Vector2i(6, y))
+		ring.append(Vector2i(21, y))
+	for x in range(6, 22):
+		ring.append(Vector2i(x, 10))
+	floor.loop = ring
+	floor.record = PYX_RECORD
+	return floor
+
+static func _make_aumbry() -> Floor:
+	var floor := Floor.new()
+	floor.id = "aumbry"
+	floor.title = "The Aumbry"
+	floor.rows = AUMBRY_ROWS
+	floor.loop_name = "Aumbry ring"
+	var ring: Array = []
+	for x in range(6, 22):
+		ring.append(Vector2i(x, 3))
+	for y in range(4, 10):
+		ring.append(Vector2i(6, y))
+		ring.append(Vector2i(21, y))
+	for x in range(6, 22):
+		ring.append(Vector2i(x, 10))
+	floor.loop = ring
+	floor.record = AUMBRY_RECORD
+	return floor
+
 
 static func width(floor: Floor = null) -> int:
 	return _use(floor).rows[0].length()
@@ -1710,6 +1837,10 @@ static func ahead_line(state: RunState) -> String:
 				return "Ahead: the chantry. It inks as a wall."
 			if glyph_at(n, plan) == "G":
 				return "Ahead: the sacristy. It inks as a wall."
+			if glyph_at(n, plan) == "F":
+				return "Ahead: the pyx. It inks as a wall."
+			if glyph_at(n, plan) == "Z":
+				return "Ahead: the aumbry. It inks as a wall."
 			return "Ahead: wall."
 		Tile.HAZARD:
 			if plan != null and plan.id == "cistern":
@@ -1762,6 +1893,10 @@ static func ahead_line(state: RunState) -> String:
 				return "Ahead: a chantry crack. Stepping inks it and costs no extra oil."
 			if plan != null and plan.id == "sacristy":
 				return "Ahead: a sacristy crack. Stepping inks it and costs no extra oil."
+			if plan != null and plan.id == "pyx":
+				return "Ahead: a pyx crack. Stepping inks it and costs no extra oil."
+			if plan != null and plan.id == "aumbry":
+				return "Ahead: an aumbry crack. Stepping inks it and costs no extra oil."
 			return "Ahead: a hazard crack. Stepping inks it and costs no extra oil."
 		Tile.LIFT:
 			return "Ahead: the lift. Stepping on carries the sheet out."
@@ -1885,6 +2020,10 @@ static func step(state: RunState, dir: Vector2i) -> Dictionary:
 				return _pack(state, false, false, false, 0, true, "You tap the chantry and ink it if the square was blank.")
 			if glyph_at(target, plan) == "G":
 				return _pack(state, false, false, false, 0, true, "You tap the sacristy and ink it if the square was blank.")
+			if glyph_at(target, plan) == "F":
+				return _pack(state, false, false, false, 0, true, "You tap the pyx and ink it if the square was blank.")
+			if glyph_at(target, plan) == "Z":
+				return _pack(state, false, false, false, 0, true, "You tap the aumbry and ink it if the square was blank.")
 			return _pack(state, false, false, false, 0, true, "You tap a wall and ink it if the square was blank.")
 		if target == enemy_pos(plan):
 			return _pack(state, false, false, false, 0, true, "The warden occupies that tile.")
@@ -1956,6 +2095,10 @@ static func step(state: RunState, dir: Vector2i) -> Dictionary:
 			message = "You cross a chantry crack. It is inked if the square was blank."
 		elif plan != null and plan.id == "sacristy":
 			message = "You cross a sacristy crack. It is inked if the square was blank."
+		elif plan != null and plan.id == "pyx":
+			message = "You cross a pyx crack. It is inked if the square was blank."
+		elif plan != null and plan.id == "aumbry":
+			message = "You cross an aumbry crack. It is inked if the square was blank."
 		else:
 			message = "You cross a hazard crack. It is inked if the square was blank."
 	return _pack(state, true, true, hit, MOVE_OIL + (HIT_OIL if hit else 0), false, message)
