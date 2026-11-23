@@ -15,7 +15,8 @@ class_name ChartBook
 # The Ogee holds eight more. The Ovolo holds eight more.
 # The Cavetto holds eight more. The Fillet holds eight more.
 # The Corona holds eight more. The Bead holds eight more. The Quirk holds eight more.
-# The Cyma holds eight more. The Fascia holds eight more. The Soffit holds the last eight.
+# The Cyma holds eight more. The Fascia holds eight more. The Soffit holds eight more.
+# The Drip holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
@@ -187,6 +188,16 @@ class_name ChartBook
 # A north fascia stops east and passes west. A north quirk passes only west.
 # A north cyma passes only north. While that row is flooded, every beam stops
 # at the waterline, the same way a flooded fascia stops.
+# A drip has a facing. Rotation changes it the same way: 0 north, 90 east,
+# 180 south, 270 west. Opposite facings are not the same piece. While its row
+# is dry, it uses the soffit's rule: every direction except the next
+# counterclockwise one passes straight through in the same direction and the
+# same color, and that pass costs no bounce. It does not turn, it does not
+# recolor, and it does not split. Facing north, west stops and north, east,
+# and south pass. One click faces east and, while dry, stops north. While that
+# row is flooded, the dry rule flips. The one dry-stopped direction passes,
+# and the three dry passes stop at the waterline and do not enter. A flooded
+# north drip passes only west. A flooded soffit in that cell stops every beam.
 # See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
@@ -225,6 +236,7 @@ const QUIRK := "The Quirk"
 const CYMA := "The Cyma"
 const FASCIA := "The Fascia"
 const SOFFIT := "The Soffit"
+const DRIP := "The Drip"
 
 static func all() -> Array:
 	var book: Array = []
@@ -260,6 +272,7 @@ static func all() -> Array:
 	book.append_array(cyma())
 	book.append_array(fascia())
 	book.append_array(soffit())
+	book.append_array(drip())
 	return book
 
 
@@ -389,6 +402,10 @@ static func fascia() -> Array:
 
 static func soffit() -> Array:
 	return [chart_247(), chart_248(), chart_249(), chart_250(), chart_251(), chart_252(), chart_253(), chart_254()]
+
+
+static func drip() -> Array:
+	return [chart_255(), chart_256(), chart_257(), chart_258(), chart_259(), chart_260(), chart_261(), chart_262()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -9504,6 +9521,305 @@ static func chart_254() -> Dictionary:
 	}
 
 
+static func chart_255() -> Dictionary:
+	# A dry north drip passes north, east, and south. West stops.
+	return {
+		"id": "255",
+		"harbor": DRIP,
+		"title": "The Dry Drip",
+		"teach": "Tide index 0, flood 0. A dry north drip passes north, east, and south. West stops. One click faces east and stops north. A north fascia stops east and passes west. A north quirk passes only west. A north cyma passes only north.",
+		"win": "The drip faces north. West stays dark, and the other three beams pass.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 6, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Ww", 6, 3, "W", "blue"),
+		],
+		"docks": [
+			_dock("Nd", 3, 1, "white", true),
+			_dock("Sd", 3, 5, "blue", true),
+			_dock("Ed", 5, 3, "red", true),
+			_dock("Wd", 1, 3, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_drip("O", "Drip", 3, 3, 180, 0),
+		],
+	}
+
+
+static func chart_256() -> Dictionary:
+	# Under water the dry stop opens. Only west passes.
+	return {
+		"id": "256",
+		"harbor": DRIP,
+		"title": "The Wet Stop",
+		"teach": "A flooded north drip passes only west. North, east, and south stop at the waterline. A flooded soffit stops that west beam. A flooded shutter passes every direction. A flooded fascia stops every beam. Lower the tide and west stops while the other three pass.",
+		"win": "High water opens only west. The other three beams stop at the waterline.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [0, 4],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Gw", 6, 2, "S", "blue"),
+			_lantern("Gs", 4, 1, "S", "red"),
+		],
+		"docks": [
+			_dock("Wd", 3, 2, "blue", true),
+			_dock("Tr", 3, 3, "red", true, true),
+			_dock("Kr", 0, 3, "red", true, true),
+			_dock("Kb", 0, 2, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [
+			{"id": "Ma", "kind": "tide_mirror", "x": 6, "y": 4, "rot": 0},
+			{"id": "Sa", "kind": "shutter", "x": 5, "y": 4, "rot": 0},
+			{"id": "Mb", "kind": "tide_mirror", "x": 3, "y": 4, "rot": 90},
+			{"id": "Mc", "kind": "tide_mirror", "x": 4, "y": 5, "rot": 0},
+			{"id": "S3", "kind": "shutter", "x": 3, "y": 5, "rot": 0},
+			{"id": "S2", "kind": "shutter", "x": 2, "y": 5, "rot": 0},
+			{"id": "S1", "kind": "shutter", "x": 1, "y": 5, "rot": 0},
+			{"id": "Md", "kind": "tide_mirror", "x": 0, "y": 5, "rot": 90},
+			{"id": "S0", "kind": "shutter", "x": 0, "y": 4, "rot": 0},
+		],
+		"pieces": [
+			_drip("O", "Drip", 4, 4, 180, 0),
+		],
+	}
+
+
+static func chart_257() -> Dictionary:
+	# North stays red. The other open beams keep their own colors.
+	return {
+		"id": "257",
+		"harbor": DRIP,
+		"title": "Color Kept",
+		"teach": "North, east, and south keep their colors. Red stays red, blue stays blue, and white stays white. West still stops. A stain would paint those passes. A weir recolors a flooded beam. This drip stays dry and does not recolor.",
+		"win": "North stays red. The drip did not paint the beams.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 7, "N", "red"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+			_lantern("Ee", 0, 4, "E", "red"),
+			_lantern("Ww", 7, 4, "W", "white"),
+		],
+		"docks": [
+			_dock("Nd", 3, 2, "red", true),
+			_dock("Tw", 3, 1, "white", true, true),
+			_dock("Sd", 3, 6, "blue", true),
+			_dock("Ed", 5, 4, "red", true),
+			_dock("Wd", 1, 4, "white", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_drip("O", "Drip", 3, 4, 180, 0),
+		],
+	}
+
+
+static func chart_258() -> Dictionary:
+	# The open beams leave the way they entered.
+	return {
+		"id": "258",
+		"harbor": DRIP,
+		"title": "No Turn",
+		"teach": "North leaves north, east leaves east, and south leaves south. West stops. The drip does not turn. A prism would split a white beam. A vane or a mirror would send a beam aside. A flooded sluice would turn it.",
+		"win": "The open beams leave the way they entered. Nothing was turned.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 6, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Ww", 6, 3, "W", "blue"),
+		],
+		"docks": [
+			_dock("Nd", 3, 1, "white", true),
+			_dock("Sd", 3, 5, "blue", true),
+			_dock("Ed", 5, 3, "red", true),
+			_dock("Wd", 1, 3, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_drip("O", "Drip", 3, 3, 270, 0),
+		],
+	}
+
+
+static func chart_259() -> Dictionary:
+	# The drip row is dry. A neighbor beam dies on the flood.
+	return {
+		"id": "259",
+		"harbor": DRIP,
+		"title": "Beside the Flood",
+		"teach": "The drip row is dry, so north, east, and south pass. West stops. The flood beam stops at the waterline and never enters the flooded cell.",
+		"win": "The dry row passes north, east, and south. The flood beam stops at the waterline.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [2],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 5, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Ww", 6, 3, "W", "blue"),
+			_lantern("Fl", 1, 5, "S", "white"),
+		],
+		"docks": [
+			_dock("Nd", 3, 1, "white", true),
+			_dock("Sd", 3, 4, "blue", true),
+			_dock("Ed", 5, 3, "red", true),
+			_dock("Wd", 1, 3, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_drip("O", "Drip", 3, 3, 180, 0),
+		],
+	}
+
+
+static func chart_260() -> Dictionary:
+	# One drip stops west. The other stops south.
+	return {
+		"id": "260",
+		"harbor": DRIP,
+		"title": "Two Drips",
+		"teach": "One drip passes north, east, and south. The other passes north, east, and west. Those open sets are not the same. Swapping the facings fails. A north cyma cannot take the north seat, because a north cyma passes only north.",
+		"win": "West stays dark on the first seat. South stays dark on the second.",
+		"cols": 12,
+		"rows": 9,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("An", 3, 6, "N", "white"),
+			_lantern("As", 3, 0, "S", "blue"),
+			_lantern("Ae", 0, 3, "E", "red"),
+			_lantern("Aw", 6, 3, "W", "blue"),
+			_lantern("Bn", 8, 8, "N", "white"),
+			_lantern("Bs", 8, 2, "S", "red"),
+			_lantern("Be", 5, 5, "E", "white"),
+			_lantern("Bw", 11, 5, "W", "blue"),
+		],
+		"docks": [
+			_dock("Adn", 3, 1, "white", true),
+			_dock("Ads", 3, 5, "blue", true),
+			_dock("Ade", 5, 3, "red", true),
+			_dock("Adw", 1, 3, "blue", true, true),
+			_dock("Bdn", 8, 3, "white", true),
+			_dock("Bds", 8, 7, "red", true, true),
+			_dock("Bde", 10, 5, "white", true),
+			_dock("Bdw", 6, 5, "blue", true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_drip("O", "North drip", 3, 3, 180, 0),
+			_drip("U", "West drip", 8, 5, 0, 270),
+		],
+	}
+
+
+static func chart_261() -> Dictionary:
+	# Three tide marks. High water flips the dry stop open.
+	return {
+		"id": "261",
+		"harbor": DRIP,
+		"title": "The Held Drip",
+		"teach": "The held facing is part of the solution. The chart starts on a facing that stops east. Place the tide on the middle mark and face the drip north. Low water wakes the south hull. High water covers the drip, so only west passes and the other three stop at the waterline.",
+		"win": "The middle mark holds the north drip. West stays dark, and the hull stays dark.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [0, 1, 5],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 4, 6, "N", "white"),
+			_lantern("Ss", 4, 0, "S", "blue"),
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Ww", 7, 3, "W", "blue"),
+			_lantern("Hl", 0, 7, "E", "white"),
+			_lantern("Rt", 5, 1, "S", "blue"),
+		],
+		"docks": [
+			_dock("Nd", 4, 1, "white", true),
+			_dock("Sd", 4, 5, "blue", true),
+			_dock("Ed", 6, 3, "red", true),
+			_dock("Wd", 2, 3, "blue", true, true),
+		],
+		"boats": [
+			_boat("Hb", 3, 7),
+		],
+		"fixtures": [
+			{"id": "Me", "kind": "tide_mirror", "x": 5, "y": 3, "rot": 0},
+			{"id": "Mw", "kind": "tide_mirror", "x": 3, "y": 3, "rot": 0},
+		],
+		"pieces": [
+			_drip("O", "Drip", 4, 3, 180, 0),
+		],
+	}
+
+
+static func chart_262() -> Dictionary:
+	# The drip and the shutter trade places. On the line it faces north.
+	return {
+		"id": "262",
+		"harbor": DRIP,
+		"title": "The Drip Mark",
+		"teach": "Move the drip from the side socket onto the line and face it north. North, east, and south pass. West must not count. A north fascia, a north quirk, a north cyma, or a lintel in that cell fails.",
+		"win": "The drip stands on the line, open north, east, and south. West stays dark.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 6, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Ww", 6, 3, "W", "blue"),
+		],
+		"docks": [
+			_dock("Nd", 3, 1, "white", true),
+			_dock("Sd", 3, 5, "blue", true),
+			_dock("Ed", 5, 3, "red", true),
+			_dock("Wd", 1, 3, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_placed("O", "Drip", "drip", [["side", 5, 5], ["line", 3, 3]], "side", "line", 180, 0),
+			_placed("G", "Line shutter", "shutter", [["line", 3, 3], ["side", 5, 5]], "line", "side", 0, 0),
+		],
+	}
+
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -9896,6 +10212,20 @@ static func _soffit(id: String, name: String, x: int, y: int, start_rot: int, so
 		"id": id,
 		"name": name,
 		"kind": "soffit",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _drip(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "drip",
 		"movable": false,
 		"sockets": [{"id": "a", "x": x, "y": y}],
 		"start_socket": "a",
