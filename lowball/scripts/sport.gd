@@ -3,14 +3,14 @@ extends RefCounted
 # Lowball — sport model
 #
 # Lowball is an invented three-inning bat-and-ball sport. It is not baseball,
-# cricket, or any real league. This slice has twenty fictional clubs in the
+# cricket, or any real league. This slice has twenty-two fictional clubs in the
 # town of Lumen Quay: Lumen Reedmice, Southspur Glass, Pellwick Cinders,
 # Marrowgate Herons, Saltmere Kites, Ashfen Moths, Reedfen Larks, Cinderwharf
 # Pikes, Saltwharf Gulls, Marrowfen Owls, Ashwharf Swifts, Pellfen Terns,
 # Southfen Coots, Tidefen Grebes, Brinefen Curlews, Quayfen Knots, Millfen
-# Ruffs, Wickfen Dunlins, Lockfen Snipes, Quaywharf Godwits, and Tidewharf
-# Whimbrels. Players are generated. Nothing here is a real club, crest, or
-# athlete.
+# Ruffs, Wickfen Dunlins, Lockfen Snipes, Quaywharf Godwits, Tidewharf
+# Whimbrels, and Brinewharf Avocets. Players are generated. Nothing here is a
+# real club, crest, or athlete.
 #
 # A match
 #   * 3 innings. Each inning has a top half and a bottom half.
@@ -39,20 +39,24 @@ extends RefCounted
 #   * Before a week the club picks one stat as the focus.
 #   * After the week, every player on the roster gains TRAINING_GAIN (+1) in
 #     that stat. The result is clamped to STAT_CAP. Stats never fall below
-#     STAT_FLOOR. A bye week still drills. Forty-two weeks means forty-two
-#     drills, including the two bye weeks. The same focus each week takes a
+#     STAT_FLOOR. The twenty-two-club season has no bye. A bye week in the
+#     twenty-one-club season still drills. Forty-two weeks means forty-two
+#     drills. The same focus each week takes a
 #     generated stat to the cap of 20, and a stat already at 20 stays at 20.
 #   * Each final game, when Lumen Reedmice reach the final, is one more drill.
 #     Every club drills after that game, including the clubs left out of the
 #     final. A missed final adds no further drill. Training still stops at 20.
 #
 # Series
-#   * The office season is twenty-one clubs: Tidewharf Whimbrels joined the
-#     circle. Forty-two weeks, ten matches and one bye a week. SERIES_WEEKS is
-#     42, MATCHES_PER_WEEK is 10, BYES_EACH is 2, and GAMES_EACH is 40.
-#     use_season(20) restores the twenty-club game: thirty-eight weeks, ten
-#     matches, zero byes, and seed 349 still finishes 1st and beats
-#     Cinderwharf Pikes 2-11, 7-3, 5-1.
+#   * The office season is twenty-two clubs: Brinewharf Avocets joined the
+#     circle. Twenty-two is even, so the ring has no bye. Forty-two weeks,
+#     eleven matches a week, and zero byes. SERIES_WEEKS is 42,
+#     MATCHES_PER_WEEK is 11, BYES_EACH is 0, and GAMES_EACH is 42.
+#     use_season(21) restores the twenty-one-club game: forty-two weeks, ten
+#     matches and one bye, and seed 651 still finishes 1st and beats Ashfen
+#     Moths 4-2 and 5-3. use_season(20) restores the twenty-club game:
+#     thirty-eight weeks, ten matches, zero byes, and seed 349 still finishes
+#     1st and beats Cinderwharf Pikes 2-11, 7-3, 5-1.
 #   * Twenty-one is odd, so the ring has a bye seat. The seats are
 #     [0, 1, 2, 3, 4, 5, 12, 14, 16, 18, 19, 20, 17, 15, 13, 6, 7, 8, 9, 10, 11, bye].
 #     Index 20, Tidewharf Whimbrels, sits immediately after Quaywharf Godwits
@@ -64,6 +68,17 @@ extends RefCounted
 #     Appending Tidewharf Whimbrels to the twenty-club ring and pairing that
 #     21-list from the outside in is not week 1. That appended list is
 #     [0, 1, 2, 3, 4, 5, 12, 14, 16, 18, 19, 17, 15, 13, 6, 7, 8, 9, 10, 11, 20].
+#   * The twenty-two-club ring extends that even pattern. The bye seat is
+#     gone. Index 21, Brinewharf Avocets, sits immediately after Tidewharf
+#     Whimbrels and immediately before Wickfen Dunlins. The seats are
+#     [0, 1, 2, 3, 4, 5, 12, 14, 16, 18, 19, 20, 21, 17, 15, 13, 6, 7, 8, 9, 10, 11].
+#     The last seat stays put. The other twenty-one seats, including the first,
+#     rotate one place left. Pair from the outside in. Weeks 1-21 are one
+#     circle. Weeks 22-42 repeat those pairings with home and away reversed.
+#     Every club plays 42 games and has zero byes.
+#   * Appending Brinewharf Avocets to the twenty-one-club ring, which still
+#     ends in the bye, and pairing that list from the outside in is not week 1.
+#     Rotating all twenty-two seats, including the last, is not the season.
 #   * The twenty-club ring, kept for use_season(20), is
 #     [0, 1, 2, 3, 4, 5, 12, 14, 16, 18, 19, 17, 15, 13, 6, 7, 8, 9, 10, 11].
 #     Its last seat stays. The other nineteen, including the first, rotate one
@@ -85,9 +100,10 @@ extends RefCounted
 #   * Table order is points per game, then run difference, then the series
 #     seed. Rates are compared as fractions. An equal rate is not ahead.
 #     Divide the series seed by the club count. Remainder 0 starts with Lumen
-#     Reedmice. In the twenty-one-club season, remainder 20 starts with
-#     Tidewharf Whimbrels. In the twenty-club game, remainder 19 starts with
-#     Quaywharf Godwits.
+#     Reedmice. In the twenty-two-club season, remainder 21 starts with
+#     Brinewharf Avocets. In the twenty-one-club season, remainder 20 starts
+#     with Tidewharf Whimbrels. In the twenty-club game, remainder 19 starts
+#     with Quaywharf Godwits.
 #   * After the league the top two play a best-of-three final. The club that
 #     led is home for game 1, game 3, and every later odd game. The other
 #     finalist is home for the even games. If Lumen Reedmice are in the final
@@ -166,6 +182,7 @@ const EIGHTEENTH_CLUB := "Wickfen Dunlins"
 const NINETEENTH_CLUB := "Lockfen Snipes"
 const TWENTIETH_CLUB := "Quaywharf Godwits"
 const TWENTY_FIRST_CLUB := "Tidewharf Whimbrels"
+const TWENTY_SECOND_CLUB := "Brinewharf Avocets"
 const PLAYER_INDEX := 0
 const BYE := -1
 
@@ -178,13 +195,13 @@ const TRAINING_GAIN := 1
 const ROSTER_SIZE := 6
 const LINEUP_SIZE := 4
 const INNINGS := 3
-const MATCHES_PER_WEEK := 10
 const FINAL_WINS_NEEDED := 2
 
-static var CLUB_COUNT: int = 21
+static var CLUB_COUNT: int = 22
 static var SERIES_WEEKS: int = 42
-static var BYES_EACH: int = 2
-static var GAMES_EACH: int = 40
+static var MATCHES_PER_WEEK: int = 11
+static var BYES_EACH: int = 0
+static var GAMES_EACH: int = 42
 static var RING: Array = []
 static var APPENDED_RING: Array = []
 static var CLUB_NAMES: Array = []
@@ -201,10 +218,12 @@ const TIE_RULE := "Ties in the table break by run difference, then by the existi
 
 const _NAMES_TWENTY: Array = ["Lumen Reedmice", "Southspur Glass", "Pellwick Cinders", "Marrowgate Herons", "Saltmere Kites", "Ashfen Moths", "Reedfen Larks", "Cinderwharf Pikes", "Saltwharf Gulls", "Marrowfen Owls", "Ashwharf Swifts", "Pellfen Terns", "Southfen Coots", "Tidefen Grebes", "Brinefen Curlews", "Quayfen Knots", "Millfen Ruffs", "Wickfen Dunlins", "Lockfen Snipes", "Quaywharf Godwits"]
 const _NAMES_TWENTY_ONE: Array = ["Lumen Reedmice", "Southspur Glass", "Pellwick Cinders", "Marrowgate Herons", "Saltmere Kites", "Ashfen Moths", "Reedfen Larks", "Cinderwharf Pikes", "Saltwharf Gulls", "Marrowfen Owls", "Ashwharf Swifts", "Pellfen Terns", "Southfen Coots", "Tidefen Grebes", "Brinefen Curlews", "Quayfen Knots", "Millfen Ruffs", "Wickfen Dunlins", "Lockfen Snipes", "Quaywharf Godwits", "Tidewharf Whimbrels"]
+const _NAMES_TWENTY_TWO: Array = ["Lumen Reedmice", "Southspur Glass", "Pellwick Cinders", "Marrowgate Herons", "Saltmere Kites", "Ashfen Moths", "Reedfen Larks", "Cinderwharf Pikes", "Saltwharf Gulls", "Marrowfen Owls", "Ashwharf Swifts", "Pellfen Terns", "Southfen Coots", "Tidefen Grebes", "Brinefen Curlews", "Quayfen Knots", "Millfen Ruffs", "Wickfen Dunlins", "Lockfen Snipes", "Quaywharf Godwits", "Tidewharf Whimbrels", "Brinewharf Avocets"]
 
 const SEASONS := {
 	20: {
 		"weeks": 38,
+		"matches": 10,
 		"byes_each": 0,
 		"ring": [0, 1, 2, 3, 4, 5, 12, 14, 16, 18, 19, 17, 15, 13, 6, 7, 8, 9, 10, 11],
 		"appended": [0, 1, 2, 3, 4, 5, 12, 14, 16, 17, 15, 13, 6, 7, 8, 9, 10, 11, 18, 19],
@@ -215,6 +234,7 @@ const SEASONS := {
 	},
 	21: {
 		"weeks": 42,
+		"matches": 10,
 		"byes_each": 2,
 		"ring": [0, 1, 2, 3, 4, 5, 12, 14, 16, 18, 19, 20, 17, 15, 13, 6, 7, 8, 9, 10, 11, BYE],
 		"appended": [0, 1, 2, 3, 4, 5, 12, 14, 16, 18, 19, 17, 15, 13, 6, 7, 8, 9, 10, 11, 20],
@@ -223,17 +243,29 @@ const SEASONS := {
 		"seed_rule": "Run difference is runs scored minus runs allowed. Divide the series seed by 21 and keep the remainder. Remainder 0 starts with Lumen Reedmice, remainder 1 with Southspur Glass, remainder 2 with Pellwick Cinders, remainder 3 with Marrowgate Herons, remainder 4 with Saltmere Kites, remainder 5 with Ashfen Moths, remainder 6 with Reedfen Larks, remainder 7 with Cinderwharf Pikes, remainder 8 with Saltwharf Gulls, remainder 9 with Marrowfen Owls, remainder 10 with Ashwharf Swifts, remainder 11 with Pellfen Terns, remainder 12 with Southfen Coots, remainder 13 with Tidefen Grebes, remainder 14 with Brinefen Curlews, remainder 15 with Quayfen Knots, remainder 16 with Millfen Ruffs, remainder 17 with Wickfen Dunlins, remainder 18 with Lockfen Snipes, remainder 19 with Quaywharf Godwits, and remainder 20 with Tidewharf Whimbrels. The order then walks that club list and wraps, and the earlier club is ahead.",
 		"final_text": "After week 42 the top two clubs play a best-of-three final. The first club to two wins takes the series. The club that led after the league is home for game 1 and, if needed, game 3. Home alternates. A win is 2 points and a tie is 1. An equal rate is not ahead. If Lumen Reedmice finish 3rd through 21st, the season ends with no final. The final does not change the table.",
 	},
+	22: {
+		"weeks": 42,
+		"matches": 11,
+		"byes_each": 0,
+		"ring": [0, 1, 2, 3, 4, 5, 12, 14, 16, 18, 19, 20, 21, 17, 15, 13, 6, 7, 8, 9, 10, 11],
+		"appended": [0, 1, 2, 3, 4, 5, 12, 14, 16, 18, 19, 20, 17, 15, 13, 6, 7, 8, 9, 10, 11, BYE, 21],
+		"names": _NAMES_TWENTY_TWO,
+		"schedule": "Forty-two weeks. Each week has eleven matches and no bye. A double round-robin: every club plays every other club once at home and once away, and every club has zero byes. Home is listed first and bats second.",
+		"seed_rule": "Run difference is runs scored minus runs allowed. Divide the series seed by 22 and keep the remainder. Remainder 0 starts with Lumen Reedmice, remainder 1 with Southspur Glass, remainder 2 with Pellwick Cinders, remainder 3 with Marrowgate Herons, remainder 4 with Saltmere Kites, remainder 5 with Ashfen Moths, remainder 6 with Reedfen Larks, remainder 7 with Cinderwharf Pikes, remainder 8 with Saltwharf Gulls, remainder 9 with Marrowfen Owls, remainder 10 with Ashwharf Swifts, remainder 11 with Pellfen Terns, remainder 12 with Southfen Coots, remainder 13 with Tidefen Grebes, remainder 14 with Brinefen Curlews, remainder 15 with Quayfen Knots, remainder 16 with Millfen Ruffs, remainder 17 with Wickfen Dunlins, remainder 18 with Lockfen Snipes, remainder 19 with Quaywharf Godwits, remainder 20 with Tidewharf Whimbrels, and remainder 21 with Brinewharf Avocets. The order then walks that club list and wraps, and the earlier club is ahead.",
+		"final_text": "After week 42 the top two clubs play a best-of-three final. The first club to two wins takes the series. The club that led after the league is home for game 1 and, if needed, game 3. Home alternates. A win is 2 points and a tie is 1. An equal rate is not ahead. If Lumen Reedmice finish 3rd through 22nd, the season ends with no final. The final does not change the table.",
+	},
 }
 
 
 static func _static_init() -> void:
-	use_season(21)
+	use_season(22)
 
 
 static func use_season(clubs: int) -> void:
 	var spec: Dictionary = SEASONS[clubs]
 	CLUB_COUNT = clubs
 	SERIES_WEEKS = int(spec["weeks"])
+	MATCHES_PER_WEEK = int(spec["matches"])
 	BYES_EACH = int(spec["byes_each"])
 	GAMES_EACH = SERIES_WEEKS - BYES_EACH
 	RING = (spec["ring"] as Array).duplicate()
@@ -381,8 +413,9 @@ static func create_clubs(series_seed: int) -> Dictionary:
 	# so no club is generated stronger than another, and none share objects.
 	# Each later club is one more shuffle, so the earlier sheets stay put.
 	# Quaywharf Godwits are the shuffle after Lockfen Snipes. Tidewharf Whimbrels
-	# are one more shuffle after Quaywharf Godwits. The twenty-club game stops
-	# before that extra shuffle.
+	# are one more shuffle after Quaywharf Godwits. Brinewharf Avocets are one
+	# more shuffle after Tidewharf Whimbrels. A smaller season stops before the
+	# extra shuffle, so the earlier sheets stay put.
 	var sheets: Array = [lines]
 	for _club in CLUB_COUNT - 1:
 		var copy_lines: Array = []
@@ -425,6 +458,7 @@ static func create_clubs(series_seed: int) -> Dictionary:
 		"nineteenth_club": NINETEENTH_CLUB,
 		"twentieth_club": TWENTIETH_CLUB,
 		"twenty_first_club": TWENTY_FIRST_CLUB if CLUB_COUNT > 20 else "",
+		"twenty_second_club": TWENTY_SECOND_CLUB if CLUB_COUNT > 21 else "",
 		"player_roster": rosters[0],
 		"opponent_roster": rosters[1],
 		"third_roster": rosters[2],
@@ -446,6 +480,7 @@ static func create_clubs(series_seed: int) -> Dictionary:
 		"nineteenth_roster": rosters[18],
 		"twentieth_roster": rosters[19],
 		"twenty_first_roster": rosters[20] if rosters.size() > 20 else [],
+		"twenty_second_roster": rosters[21] if rosters.size() > 21 else [],
 	}
 
 
@@ -561,7 +596,8 @@ static func opponent_plan(roster: Array, week: int, club_index: int = 0) -> Dict
 
 # Hold the last seat. Left-rotate the other seats, including the first.
 # The last seat is a club in an even circle and the bye in the twenty-one-club
-# circle. Rotating every seat, including the last, is not the season.
+# circle. The twenty-two-club circle is even, so its last seat is Pellfen Terns
+# and there is no bye. Rotating every seat, including the last, is not the season.
 static func rotate_ring(ring: Array) -> void:
 	var last = ring[ring.size() - 1]
 	ring.remove_at(ring.size() - 1)

@@ -31,7 +31,8 @@ const WIMPLE := 22
 const ALB := 23
 const AMICE := 24
 const ORPHREY := 25
-const COUNT := 26
+const MANIPLE := 26
+const COUNT := 27
 
 # fire_ticks and slow_ticks are sim ticks of length DT.
 # light_radius, weapon_range, projectile_speed, and splash_radius are pixels.
@@ -58,7 +59,8 @@ const COUNT := 26
 # albs_rust: this plant's radius marks tiles as albed. It is not a light.
 # amices_scab: this plant's radius marks tiles as amiced. It is not a light.
 # orphreys_spot: this plant's radius marks tiles as orphreyed. It is not a light.
-# casts_light: false means the radius does not light tiles. The shade, the cowl, the hood, the cloak, the cape, the shawl, the stole, the mantle, the tippet, the wimple, the alb, the amice, and the orphrey use this.
+# maniples_scald: this plant's radius marks tiles as manipled. It is not a light.
+# casts_light: false means the radius does not light tiles. The shade, the cowl, the hood, the cloak, the cape, the shawl, the stole, the mantle, the tippet, the wimple, the alb, the amice, the orphrey, and the maniple use this.
 const DEFS := [
 	{
 		"name": "Pea",
@@ -93,6 +95,7 @@ const DEFS := [
 		"albs_rust": false,
 		"amices_scab": false,
 		"orphreys_spot": false,
+		"maniples_scald": false,
 		"casts_light": true,
 	},
 	{
@@ -128,6 +131,7 @@ const DEFS := [
 		"albs_rust": false,
 		"amices_scab": false,
 		"orphreys_spot": false,
+		"maniples_scald": false,
 		"casts_light": true,
 	},
 	{
@@ -163,6 +167,7 @@ const DEFS := [
 		"albs_rust": false,
 		"amices_scab": false,
 		"orphreys_spot": false,
+		"maniples_scald": false,
 		"casts_light": true,
 	},
 	{
@@ -198,6 +203,7 @@ const DEFS := [
 		"albs_rust": false,
 		"amices_scab": false,
 		"orphreys_spot": false,
+		"maniples_scald": false,
 		"casts_light": true,
 	},
 	{
@@ -233,6 +239,7 @@ const DEFS := [
 		"albs_rust": false,
 		"amices_scab": false,
 		"orphreys_spot": false,
+		"maniples_scald": false,
 		"casts_light": true,
 	},
 	{
@@ -268,6 +275,7 @@ const DEFS := [
 		"albs_rust": false,
 		"amices_scab": false,
 		"orphreys_spot": false,
+		"maniples_scald": false,
 		"casts_light": true,
 	},
 	{
@@ -303,6 +311,7 @@ const DEFS := [
 		"albs_rust": false,
 		"amices_scab": false,
 		"orphreys_spot": false,
+		"maniples_scald": false,
 		"casts_light": true,
 	},
 	{
@@ -338,6 +347,7 @@ const DEFS := [
 		"albs_rust": false,
 		"amices_scab": false,
 		"orphreys_spot": false,
+		"maniples_scald": false,
 		"casts_light": true,
 	},
 	{
@@ -373,6 +383,7 @@ const DEFS := [
 		"albs_rust": false,
 		"amices_scab": false,
 		"orphreys_spot": false,
+		"maniples_scald": false,
 		"casts_light": true,
 	},
 	{
@@ -408,6 +419,7 @@ const DEFS := [
 		"albs_rust": false,
 		"amices_scab": false,
 		"orphreys_spot": false,
+		"maniples_scald": false,
 		"casts_light": true,
 	},
 	{
@@ -443,6 +455,7 @@ const DEFS := [
 		"albs_rust": false,
 		"amices_scab": false,
 		"orphreys_spot": false,
+		"maniples_scald": false,
 		"casts_light": true,
 	},
 	{
@@ -478,6 +491,7 @@ const DEFS := [
 		"albs_rust": false,
 		"amices_scab": false,
 		"orphreys_spot": false,
+		"maniples_scald": false,
 		"casts_light": true,
 	},
 	{
@@ -513,6 +527,7 @@ const DEFS := [
 		"albs_rust": false,
 		"amices_scab": false,
 		"orphreys_spot": false,
+		"maniples_scald": false,
 		"casts_light": true,
 	},
 	{
@@ -548,6 +563,7 @@ const DEFS := [
 		"albs_rust": false,
 		"amices_scab": false,
 		"orphreys_spot": false,
+		"maniples_scald": false,
 		"casts_light": false,
 	},
 	{
@@ -583,6 +599,7 @@ const DEFS := [
 		"albs_rust": false,
 		"amices_scab": false,
 		"orphreys_spot": false,
+		"maniples_scald": false,
 		"casts_light": false,
 	},
 	{
@@ -618,6 +635,7 @@ const DEFS := [
 		"albs_rust": false,
 		"amices_scab": false,
 		"orphreys_spot": false,
+		"maniples_scald": false,
 		"casts_light": false,
 	},
 	{
@@ -653,6 +671,7 @@ const DEFS := [
 		"albs_rust": false,
 		"amices_scab": false,
 		"orphreys_spot": false,
+		"maniples_scald": false,
 		"casts_light": false,
 	},
 	{
@@ -688,6 +707,7 @@ const DEFS := [
 		"albs_rust": false,
 		"amices_scab": false,
 		"orphreys_spot": false,
+		"maniples_scald": false,
 		"casts_light": false,
 	},
 	{
@@ -723,6 +743,7 @@ const DEFS := [
 		"albs_rust": false,
 		"amices_scab": false,
 		"orphreys_spot": false,
+		"maniples_scald": false,
 		"casts_light": false,
 	},
 	{
@@ -758,6 +779,7 @@ const DEFS := [
 		"albs_rust": false,
 		"amices_scab": false,
 		"orphreys_spot": false,
+		"maniples_scald": false,
 		"casts_light": false,
 	},
 	{
@@ -793,6 +815,7 @@ const DEFS := [
 		"albs_rust": false,
 		"amices_scab": false,
 		"orphreys_spot": false,
+		"maniples_scald": false,
 		"casts_light": false,
 	},
 	{
@@ -828,6 +851,7 @@ const DEFS := [
 		"albs_rust": false,
 		"amices_scab": false,
 		"orphreys_spot": false,
+		"maniples_scald": false,
 		"casts_light": false,
 	},
 	{
@@ -863,6 +887,7 @@ const DEFS := [
 		"albs_rust": false,
 		"amices_scab": false,
 		"orphreys_spot": false,
+		"maniples_scald": false,
 		"casts_light": false,
 	},
 	{
@@ -898,6 +923,7 @@ const DEFS := [
 		"albs_rust": true,
 		"amices_scab": false,
 		"orphreys_spot": false,
+		"maniples_scald": false,
 		"casts_light": false,
 	},
 	{
@@ -933,6 +959,7 @@ const DEFS := [
 		"albs_rust": false,
 		"amices_scab": true,
 		"orphreys_spot": false,
+		"maniples_scald": false,
 		"casts_light": false,
 	},
 	{
@@ -968,6 +995,43 @@ const DEFS := [
 		"albs_rust": false,
 		"amices_scab": false,
 		"orphreys_spot": true,
+		"maniples_scald": false,
+		"casts_light": false,
+	},
+	{
+		"name": "Maniple",
+		"role": "Maniples scald, modest shots, no light.",
+		"damage": 2,
+		"fire_ticks": 114,
+		"light_radius": 432.0,
+		"weapon_range": 12.0,
+		"projectile_speed": 60.0,
+		"slow_factor": 1.0,
+		"slow_ticks": 0,
+		"splash_radius": 0.0,
+		"burns_shroud": false,
+		"cracks_rind": false,
+		"melts_pitch": false,
+		"thaws_frost": false,
+		"cuts_web": false,
+		"cracks_glass": false,
+		"strips_scale": false,
+		"cracks_mail": false,
+		"splits_hide": false,
+		"shades_dusk": false,
+		"cowls_veil": false,
+		"hoods_pall": false,
+		"cloaks_gloom": false,
+		"capes_murk": false,
+		"shawls_dread": false,
+		"stoles_woe": false,
+		"mantles_blight": false,
+		"tippets_rot": false,
+		"wimples_mildew": false,
+		"albs_rust": false,
+		"amices_scab": false,
+		"orphreys_spot": false,
+		"maniples_scald": true,
 		"casts_light": false,
 	},
 ]
