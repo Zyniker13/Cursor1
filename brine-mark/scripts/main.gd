@@ -7,8 +7,8 @@ const Sim = preload("res://scripts/sim.gd")
 
 const CELL := 42.0
 const MAP_ORIGIN := Vector2(20, 58)
-const PANEL_POS := Vector2(1255, 12)
-const PANEL_SIZE := Vector2(1451, 1607)
+const PANEL_POS := Vector2(1332, 12)
+const PANEL_SIZE := Vector2(1544, 1649)
 
 const SAND := Color("f3e4c4")
 const SHORE := Color("e7d3a4")
@@ -110,7 +110,7 @@ func _draw() -> void:
 	if sim != null and beat == Sim.DRY and not sim.is_over():
 		opening = ticks_left > Sim.DRY_TICK - Sim.TICK_HZ * 3
 	# The cart beat is clear weather. Rain shows for the season changes and the end.
-	if sim != null and beat != Sim.CART and beat != Sim.SHIPPING and beat != Sim.MARKET and beat != Sim.YARDING and beat != Sim.BUNKING and beat != Sim.LOFTING and beat != Sim.GATING and beat != Sim.WAGING and beat != Sim.RELIEVING and beat != Sim.WATCHING and beat != Sim.LAMPING and beat != Sim.BELLING and beat != Sim.HORNING and beat != Sim.FLAGGING and beat != Sim.BANNERING and beat != Sim.PENNANTING and beat != Sim.STANDARDING and beat != Sim.JACKING and beat != Sim.ENSIGNING and beat != Sim.BURGEEING and beat != Sim.CORNETING and beat != Sim.GUIDONING and beat != Sim.FANIONING and beat != Sim.PENNONING and beat != Sim.GONFALONING and beat != Sim.STREAMERING and beat != Sim.SIGNUMING and beat != Sim.LABARUMING and beat != Sim.VEXILLUMING and beat != Sim.ORIFLAMMING and (sim.is_over() or ticks_left < Sim.TICK_HZ * 3 or opening):
+	if sim != null and beat != Sim.CART and beat != Sim.SHIPPING and beat != Sim.MARKET and beat != Sim.YARDING and beat != Sim.BUNKING and beat != Sim.LOFTING and beat != Sim.GATING and beat != Sim.WAGING and beat != Sim.RELIEVING and beat != Sim.WATCHING and beat != Sim.LAMPING and beat != Sim.BELLING and beat != Sim.HORNING and beat != Sim.FLAGGING and beat != Sim.BANNERING and beat != Sim.PENNANTING and beat != Sim.STANDARDING and beat != Sim.JACKING and beat != Sim.ENSIGNING and beat != Sim.BURGEEING and beat != Sim.CORNETING and beat != Sim.GUIDONING and beat != Sim.FANIONING and beat != Sim.PENNONING and beat != Sim.GONFALONING and beat != Sim.BANNEROLING and beat != Sim.STREAMERING and beat != Sim.SIGNUMING and beat != Sim.LABARUMING and beat != Sim.VEXILLUMING and beat != Sim.ORIFLAMMING and (sim.is_over() or ticks_left < Sim.TICK_HZ * 3 or opening):
 		_draw_rain(sim.is_over() or opening)
 
 
@@ -121,7 +121,10 @@ func _draw_bars() -> void:
 	var beat := int(sim.get_beat())
 	var span := Sim.RAIN_TICK
 	var rain_color := Color("2f7590")
-	if beat == Sim.STREAMERING:
+	if beat == Sim.BANNEROLING:
+		span = Sim.BANNEROL_TICK
+		rain_color = Color("6e2f4a")
+	elif beat == Sim.STREAMERING:
 		span = Sim.STREAMER_TICK
 		rain_color = Color("1f6f78")
 	elif beat == Sim.SIGNUMING:
@@ -216,7 +219,10 @@ func _draw_bars() -> void:
 		rain_color = Color("c47a3a")
 	var rain_frac := clampf(float(sim.get_ticks_until_rain()) / float(maxi(span, 1)), 0.0, 1.0)
 	var quota_frac := clampf(float(sim.get_stored_salt()) / float(Sim.QUOTA), 0.0, 1.0)
-	if beat == Sim.STREAMERING:
+	if beat == Sim.BANNEROLING:
+		var room := mini(int(sim.get_streamer_rolled()), int(Sim.BANNEROL_CAP))
+		quota_frac = 0.0 if room <= 0 else clampf(float(sim.get_bannerol_bent()) / float(room), 0.0, 1.0)
+	elif beat == Sim.STREAMERING:
 		var room := mini(int(sim.get_signum_sleeved()), int(Sim.STREAMER_CAP))
 		quota_frac = 0.0 if room <= 0 else clampf(float(sim.get_streamer_rolled()) / float(room), 0.0, 1.0)
 	elif beat == Sim.SIGNUMING:
@@ -385,6 +391,8 @@ func _draw_cell(x: int, y: int) -> void:
 			_draw_pennon(rect, sim.get_beat() >= Sim.PENNONING)
 		Sim.GONFALON:
 			_draw_gonfalon(rect, sim.get_beat() >= Sim.GONFALONING)
+		Sim.BANNEROL:
+			_draw_bannerol(rect, sim.get_beat() >= Sim.BANNEROLING)
 		Sim.STREAMER:
 			_draw_streamer(rect, sim.get_beat() >= Sim.STREAMERING)
 		Sim.SIGNUM:
@@ -398,7 +406,7 @@ func _draw_cell(x: int, y: int) -> void:
 	if Vector2i(x, y) == Sim.ANTHILL:
 		_draw_anthill(rect)
 	var salt: Dictionary = sim.get_cell_salt(x, y)
-	_draw_salt(rect, int(salt["loose"]), int(salt["stacked"]), int(salt["covered"]), int(salt["crib"]), int(salt["ship"]), int(salt["stall"]), int(salt["yard"]), int(salt["bunk"]), int(salt["loft"]), int(salt["gate"]), int(salt["wage"]), int(salt["relief"]), int(salt["watch"]), int(salt["lamp"]), int(salt["bell"]), int(salt["horn"]), int(salt["flag"]), int(salt["banner"]), int(salt["pennant"]), int(salt["standard"]), int(salt["jack"]), int(salt["ensign"]), int(salt["burgee"]), int(salt["cornet"]), int(salt["guidon"]), int(salt["fanion"]), int(salt["pennon"]), int(salt["gonfalon"]), int(salt["oriflamme"]), int(salt["vexillum"]), int(salt["labarum"]), int(salt["signum"]), int(salt["streamer"]))
+	_draw_salt(rect, int(salt["loose"]), int(salt["stacked"]), int(salt["covered"]), int(salt["crib"]), int(salt["ship"]), int(salt["stall"]), int(salt["yard"]), int(salt["bunk"]), int(salt["loft"]), int(salt["gate"]), int(salt["wage"]), int(salt["relief"]), int(salt["watch"]), int(salt["lamp"]), int(salt["bell"]), int(salt["horn"]), int(salt["flag"]), int(salt["banner"]), int(salt["pennant"]), int(salt["standard"]), int(salt["jack"]), int(salt["ensign"]), int(salt["burgee"]), int(salt["cornet"]), int(salt["guidon"]), int(salt["fanion"]), int(salt["pennon"]), int(salt["gonfalon"]), int(salt["oriflamme"]), int(salt["vexillum"]), int(salt["labarum"]), int(salt["signum"]), int(salt["streamer"]), int(salt["bannerol"]))
 
 
 func _draw_coast(rect: Rect2, dry: bool) -> void:
@@ -823,6 +831,35 @@ func _draw_jack(rect: Rect2, open: bool) -> void:
 	]), edge, 1.5)
 
 
+func _draw_bannerol(rect: Rect2, open: bool) -> void:
+	var wood := Color("1a1612") if open else Color("8a8178")
+	var cloth := Color("6e2f4a") if open else Color("b7a48a")
+	var edge := Color("f4efe6") if open else Color("8a8178")
+	var wash := Color(0.43, 0.18, 0.29, 0.22) if open else Color(0.35, 0.32, 0.28, 0.12)
+	draw_rect(rect, wash)
+	var left := rect.position.x
+	var top := rect.position.y
+	# A short staff and a cloth bent once at a sharp angle. No roll, no discs,
+	# and no hanging fly. Distinct from the streamer's rolled cloth, the
+	# signum's discs and spear, the cornet's long tapering fly, the labarum's
+	# purple cloth, the vexillum's fringed square, the oriflamme's flame, the
+	# gonfalon's hanging cloth, the pennon's taper, the fanion's square, and
+	# the guidon's fork.
+	draw_rect(Rect2(Vector2(left + 8.0, top + 30.0), Vector2(3.0, 8.0)), wood)
+	var cloth_bend := PackedVector2Array([
+		Vector2(left + 11.0, top + 32.0),
+		Vector2(left + 24.0, top + 18.0),
+		Vector2(left + 36.0, top + 32.0),
+		Vector2(left + 32.0, top + 34.0),
+		Vector2(left + 24.0, top + 24.0),
+		Vector2(left + 15.0, top + 34.0),
+	])
+	draw_colored_polygon(cloth_bend, cloth)
+	draw_polyline(PackedVector2Array([
+		cloth_bend[0], cloth_bend[1], cloth_bend[2], cloth_bend[3], cloth_bend[4], cloth_bend[5], cloth_bend[0],
+	]), edge, 1.5)
+
+
 func _draw_streamer(rect: Rect2, open: bool) -> void:
 	var wood := Color("1a1612") if open else Color("8a8178")
 	var cloth := Color("1f6f78") if open else Color("b7a48a")
@@ -1151,7 +1188,7 @@ func _draw_anthill(rect: Rect2) -> void:
 	draw_circle(center + Vector2(1, 5), 3.0, Color("1a100c"))
 
 
-func _draw_salt(rect: Rect2, loose: int, stacked: int, covered: int, crib: int, ship: int, stall: int, yard: int, bunk: int, loft: int, gate: int, wage: int, relief: int, watch: int, lamp: int, bell: int, horn: int, flag: int, banner: int, pennant: int, standard: int, jack: int, ensign: int, burgee: int, cornet: int, guidon: int, fanion: int, pennon: int, gonfalon: int, oriflamme: int, vexillum: int, labarum: int, signum: int, streamer: int) -> void:
+func _draw_salt(rect: Rect2, loose: int, stacked: int, covered: int, crib: int, ship: int, stall: int, yard: int, bunk: int, loft: int, gate: int, wage: int, relief: int, watch: int, lamp: int, bell: int, horn: int, flag: int, banner: int, pennant: int, standard: int, jack: int, ensign: int, burgee: int, cornet: int, guidon: int, fanion: int, pennon: int, gonfalon: int, oriflamme: int, vexillum: int, labarum: int, signum: int, streamer: int, bannerol: int) -> void:
 	for i in mini(loose, 4):
 		var col := i % 2
 		var row := int(i / 2)
@@ -1220,7 +1257,9 @@ func _draw_salt(rect: Rect2, loose: int, stacked: int, covered: int, crib: int, 
 		_diamond(rect.position + Vector2(12 + i * 10, rect.size.y - 12), 4.2, Color("e0a060"))
 	for i in mini(streamer, 3):
 		_diamond(rect.position + Vector2(12 + i * 10, rect.size.y - 12), 4.2, Color("7ec8c3"))
-	var total := loose + stacked + covered + crib + ship + stall + yard + bunk + loft + gate + wage + relief + watch + lamp + bell + horn + flag + banner + pennant + standard + jack + ensign + burgee + cornet + guidon + fanion + pennon + gonfalon + oriflamme + vexillum + labarum + signum + streamer
+	for i in mini(bannerol, 3):
+		_diamond(rect.position + Vector2(12 + i * 10, rect.size.y - 12), 4.2, Color("e090a8"))
+	var total := loose + stacked + covered + crib + ship + stall + yard + bunk + loft + gate + wage + relief + watch + lamp + bell + horn + flag + banner + pennant + standard + jack + ensign + burgee + cornet + guidon + fanion + pennon + gonfalon + oriflamme + vexillum + labarum + signum + streamer + bannerol
 	if total > 0:
 		var digits := str(total)
 		var badge := Rect2(rect.position + Vector2(2, 2), Vector2(6.0 + 7.0 * digits.length(), 13))
@@ -1320,7 +1359,7 @@ func _build_hud() -> void:
 	hud.add_child(rain_label)
 
 	var hint_a := _make_label("Drag to paint. Right-click erases. Arrows or WASD move the cursor.", 14, INK)
-	hint_a.position = Vector2(20, 1614)
+	hint_a.position = Vector2(20, 1656)
 	hint_a.size = Vector2(748, 22)
 	hud.add_child(hint_a)
 	# Font size and autowrap are set before the text. Otherwise the label caches
@@ -1328,18 +1367,18 @@ func _build_hud() -> void:
 	# this box, which pushes the last line under the side panel.
 	var hint_b := Label.new()
 	hint_b.name = "HintLine"
-	hint_b.position = Vector2(20, 1638)
+	hint_b.position = Vector2(20, 1680)
 	hint_b.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hint_b.add_theme_font_size_override("font_size", 14)
 	hint_b.add_theme_color_override("font_color", INK)
 	hint_b.clip_text = true
 	hint_b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hint_b.custom_minimum_size = Vector2(1235, 88)
-	hint_b.text = "1 rake, 2 stack, 3 cover, 4 trail, 5 pan, 6 crib, 7 ship,\n8 stall, 9 yard, 0 bunk, B loft, C gate, E wage, F relief,\nG watch, H lamp, I bell, J horn, K flag, L banner,\nM pennant, N standard, O jack, P ensign, Q burgee, T cornet, U guidon, V fanion, X pennon, Y gonfalon, Z oriflamme, ; vexillum, ' labarum, , signum, . streamer. Space paints. R restarts."
-	hint_b.size = Vector2(1235, 100)
+	hint_b.custom_minimum_size = Vector2(1312, 88)
+	hint_b.text = "1 rake, 2 stack, 3 cover, 4 trail, 5 pan, 6 crib, 7 ship,\n8 stall, 9 yard, 0 bunk, B loft, C gate, E wage, F relief,\nG watch, H lamp, I bell, J horn, K flag, L banner,\nM pennant, N standard, O jack, P ensign, Q burgee, T cornet, U guidon, V fanion, X pennon, Y gonfalon, Z oriflamme, ; vexillum, ' labarum, , signum, . streamer, / bannerol. Space paints. R restarts."
+	hint_b.size = Vector2(1312, 100)
 	hint_b.clip_contents = true
 	hud.add_child(hint_b)
-	hint_b.size = Vector2(1235, 100)
+	hint_b.size = Vector2(1312, 100)
 
 	var panel := PanelContainer.new()
 	panel.name = "Panel"
@@ -1364,7 +1403,7 @@ func _build_hud() -> void:
 
 	box.add_child(_make_label("BRINE MARK", 26, PAPER))
 	box.add_child(_make_label("Salt Coast", 16, GOLD))
-	var rules := _make_label("Paint the flats. Workers follow the mark under their feet and are not selectable.\nWet season: rake the shore, stack the loose salt, cover the stacks. The first rain banks covered salt and pulls the brine back. Dry season: shore rakes go idle. Paint pans and workers crystallize salt until the second rain. Then paint a crib. Workers move the banked salt into it. Then paint a ship. Workers load that crib onto it. Then paint a stall. Workers sell that cargo, one coin a unit. Then paint a yard. Workers bank those coins, one at a time. Then paint a bunk. Workers hire from those coins, one hundred a hire. Then paint a loft. Workers move those hires into it, one at a time. Then paint a gate. Workers let ten of those hires through, one at a time. Then paint a wage. Workers pay those hires from the yard, four coins a hire. Then paint a relief. Workers post six of the hires who were already paid, one at a time. Then paint a watch. Workers stand four of the hires who were already posted, one at a time. Then paint a lamp. Workers light three of the hires who were already stood, one at a time. Then paint a bell. Workers ring two of the hires who were already lit, one at a time. Then paint a horn. Workers sound one of the hires who were already rung, one at a time. Then paint a flag. Workers raise one of the hires who were already sounded, one at a time. Then paint a banner. Workers hoist one of the hires who were already raised, one at a time. Then paint a pennant. Workers fly one of the hires who were already hoisted, one at a time. Then paint a standard. Workers carry one of the hires who were already flown, one at a time. Then paint a jack. Workers show one of the hires who were already carried, one at a time. Then paint an ensign. Workers break one of the hires who were already shown, one at a time. Then paint a burgee. Workers strike one of the hires who were already broken, one at a time. Then paint a cornet. Workers dip one of the hires who were already struck, one at a time. Then paint a guidon. Workers salute one of the hires who were already dipped, one at a time. Then paint a fanion. Workers present one of the hires who were already saluted, one at a time. Then paint a pennon. Workers furl one of the hires who were already presented, one at a time. Then paint a gonfalon. Workers dip one of the hires who were already furled, one at a time. Then paint an oriflamme. Workers lower one of the hires who were already dipped, one at a time. Then paint a vexillum. Workers house one of the hires who were already lowered, one at a time. Then paint a labarum. Workers case one of the hires who were already housed, one at a time. Then paint a signum. Workers sleeve one of the hires who were already cased, one at a time. Then paint a streamer. Workers roll one of the hires who were already sleeved, one at a time. Trail is how they cross.", 13, PAPER)
+	var rules := _make_label("Paint the flats. Workers follow the mark under their feet and are not selectable.\nWet season: rake the shore, stack the loose salt, cover the stacks. The first rain banks covered salt and pulls the brine back. Dry season: shore rakes go idle. Paint pans and workers crystallize salt until the second rain. Then paint a crib. Workers move the banked salt into it. Then paint a ship. Workers load that crib onto it. Then paint a stall. Workers sell that cargo, one coin a unit. Then paint a yard. Workers bank those coins, one at a time. Then paint a bunk. Workers hire from those coins, one hundred a hire. Then paint a loft. Workers move those hires into it, one at a time. Then paint a gate. Workers let ten of those hires through, one at a time. Then paint a wage. Workers pay those hires from the yard, four coins a hire. Then paint a relief. Workers post six of the hires who were already paid, one at a time. Then paint a watch. Workers stand four of the hires who were already posted, one at a time. Then paint a lamp. Workers light three of the hires who were already stood, one at a time. Then paint a bell. Workers ring two of the hires who were already lit, one at a time. Then paint a horn. Workers sound one of the hires who were already rung, one at a time. Then paint a flag. Workers raise one of the hires who were already sounded, one at a time. Then paint a banner. Workers hoist one of the hires who were already raised, one at a time. Then paint a pennant. Workers fly one of the hires who were already hoisted, one at a time. Then paint a standard. Workers carry one of the hires who were already flown, one at a time. Then paint a jack. Workers show one of the hires who were already carried, one at a time. Then paint an ensign. Workers break one of the hires who were already shown, one at a time. Then paint a burgee. Workers strike one of the hires who were already broken, one at a time. Then paint a cornet. Workers dip one of the hires who were already struck, one at a time. Then paint a guidon. Workers salute one of the hires who were already dipped, one at a time. Then paint a fanion. Workers present one of the hires who were already saluted, one at a time. Then paint a pennon. Workers furl one of the hires who were already presented, one at a time. Then paint a gonfalon. Workers dip one of the hires who were already furled, one at a time. Then paint an oriflamme. Workers lower one of the hires who were already dipped, one at a time. Then paint a vexillum. Workers house one of the hires who were already lowered, one at a time. Then paint a labarum. Workers case one of the hires who were already housed, one at a time. Then paint a signum. Workers sleeve one of the hires who were already cased, one at a time. Then paint a streamer. Workers roll one of the hires who were already sleeved, one at a time. Then paint a bannerol. Workers bend one of the hires who were already rolled, one at a time. Trail is how they cross.", 13, PAPER)
 	rules.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	rules.custom_minimum_size = Vector2(430, 560)
 	rules.name = "RulesNote"
@@ -1431,6 +1470,7 @@ func _build_hud() -> void:
 		["'  Labarum", Sim.LABARUM, Color("e6d4f2")],
 		[",  Signum", Sim.SIGNUM, Color("f3d2b4")],
 		[".  Streamer", Sim.STREAMER, Color("c5ebe4")],
+		["/  Bannerol", Sim.BANNEROL, Color("f3d0dc")],
 	]))
 
 	cursor_label = _make_label("", 14, PAPER)
@@ -1472,7 +1512,7 @@ func _button_row(specs: Array) -> HBoxContainer:
 		button.text = spec[0]
 		button.focus_mode = Control.FOCUS_NONE
 		var label := String(spec[0])
-		var min_w := 0 if label.contains("Streamer") or label.contains("Signum") or label.contains("Labarum") or label.contains("Vexillum") or label.contains("Oriflamme") else 98 if label.contains("Gonfalon") else 88 if label.contains("Guidon") or label.contains("Fanion") or label.contains("Pennon") else 0
+		var min_w := 0 if label.contains("Bannerol") or label.contains("Streamer") or label.contains("Signum") or label.contains("Labarum") or label.contains("Vexillum") or label.contains("Oriflamme") else 98 if label.contains("Gonfalon") else 88 if label.contains("Guidon") or label.contains("Fanion") or label.contains("Pennon") else 0
 		button.custom_minimum_size = Vector2(min_w, 36)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var mode := int(spec[1])
@@ -1519,7 +1559,10 @@ func _refresh() -> void:
 		return
 	var seconds := 0.0
 	if sim.is_over():
-		if int(sim.get_streamer_rolled()) > 0:
+		if int(sim.get_bannerol_bent()) > 0:
+			rain_label.text = "The crew has bent the bannerol"
+			rain_label.add_theme_color_override("font_color", Color("6e2f4a"))
+		elif int(sim.get_streamer_rolled()) > 0:
 			rain_label.text = "The crew has rolled the streamer"
 			rain_label.add_theme_color_override("font_color", Color("1f6f78"))
 		elif int(sim.get_signum_sleeved()) > 0:
@@ -1617,7 +1660,10 @@ func _refresh() -> void:
 		if seconds < 0.0:
 			seconds = 0.0
 		var urgent := seconds < 10.0
-		if sim.get_beat() == Sim.STREAMERING:
+		if sim.get_beat() == Sim.BANNEROLING:
+			rain_label.text = "Bend the bannerol. %.1fs" % seconds
+			rain_label.add_theme_color_override("font_color", Color("a33b2b") if urgent else Color("6e2f4a"))
+		elif sim.get_beat() == Sim.STREAMERING:
 			rain_label.text = "Roll the streamer. %.1fs" % seconds
 			rain_label.add_theme_color_override("font_color", Color("a33b2b") if urgent else Color("1f6f78"))
 		elif sim.get_beat() == Sim.SIGNUMING:
@@ -1716,6 +1762,8 @@ func _refresh() -> void:
 	var season_name := "wet"
 	if sim.is_over():
 		season_name = "settled"
+	elif sim.get_beat() == Sim.BANNEROLING:
+		season_name = "bannerol"
 	elif sim.get_beat() == Sim.STREAMERING:
 		season_name = "streamer"
 	elif sim.get_beat() == Sim.SIGNUMING:
@@ -1782,7 +1830,11 @@ func _refresh() -> void:
 		season_name, sim.get_stored_salt(), Sim.QUOTA, sim.get_population(), Sim.POP_CAP,
 	]
 	covered_label.text = "Covered salt  %d / %d" % [sim.get_stored_salt(), Sim.QUOTA]
-	if sim.get_beat() == Sim.STREAMERING or (sim.is_over() and int(sim.get_streamer_rolled()) > 0):
+	if sim.get_beat() == Sim.BANNEROLING or (sim.is_over() and int(sim.get_bannerol_bent()) > 0):
+		salt_label.text = "Loose %d    stacked %d    streamer %d    bent %d" % [
+			sim.get_loose_salt(), sim.get_stacked_salt(), sim.get_streamer_left(), sim.get_bannerol_bent(),
+		]
+	elif sim.get_beat() == Sim.STREAMERING or (sim.is_over() and int(sim.get_streamer_rolled()) > 0):
 		salt_label.text = "Loose %d    stacked %d    signum %d    rolled %d" % [
 			sim.get_loose_salt(), sim.get_stacked_salt(), sim.get_signum_left(), sim.get_streamer_rolled(),
 		]
@@ -1908,14 +1960,20 @@ func _refresh() -> void:
 		]
 	ants_label.text = "Ants %d / %d" % [sim.get_population(), Sim.POP_CAP]
 	mode_label.text = "Mark: %s" % _mode_name(current_mode)
-	if sim.get_beat() == Sim.STREAMERING and not sim.is_over():
+	if sim.get_beat() == Sim.BANNEROLING and not sim.is_over():
+		season_label.text = "Streamer %d. Bent %d. Paint a bannerol and workers bend the hires." % [
+			sim.get_streamer_left(), sim.get_bannerol_bent(),
+		]
+	elif sim.is_over() and int(sim.get_bannerol_bent()) > 0:
+		season_label.text = "Bent %d on the bannerol. Left %d on the streamer." % [
+			sim.get_bannerol_bent(), sim.get_streamer_left(),
+		]
+	elif sim.get_beat() == Sim.STREAMERING and not sim.is_over():
 		season_label.text = "Signum %d. Rolled %d. Paint a streamer and workers roll the hires." % [
 			sim.get_signum_left(), sim.get_streamer_rolled(),
 		]
 	elif sim.is_over() and int(sim.get_streamer_rolled()) > 0:
-		season_label.text = "Rolled %d on the streamer. Left %d on the signum." % [
-			sim.get_streamer_rolled(), sim.get_signum_left(),
-		]
+		season_label.text = "The crew was not bent. A bannerol is where workers bend them."
 	elif sim.get_beat() == Sim.SIGNUMING and not sim.is_over():
 		season_label.text = "Labarum %d. Sleeved %d. Paint a signum and workers sleeve the hires." % [
 			sim.get_labarum_left(), sim.get_signum_sleeved(),
@@ -2105,6 +2163,9 @@ func _refresh() -> void:
 		var won: bool = sim.get_stored_salt() >= Sim.QUOTA
 		summary_label.add_theme_color_override("font_color", Color("b7e2c2") if won else Color("ffb4a8"))
 		status_label.text = "Restart scenario to mark the flats again."
+	elif sim.get_beat() == Sim.BANNEROLING:
+		summary_label.text = "The streamer beat has ended. Paint a bannerol. Workers bend the hires who were already rolled."
+		summary_label.add_theme_color_override("font_color", Color("f0d7b0"))
 	elif sim.get_beat() == Sim.STREAMERING:
 		summary_label.text = "The signum beat has ended. Paint a streamer. Workers roll the hires who were already sleeved."
 		summary_label.add_theme_color_override("font_color", Color("f0d7b0"))
@@ -2316,6 +2377,8 @@ func _on_key(keycode: Key) -> void:
 			_set_mode(Sim.SIGNUM)
 		KEY_PERIOD:
 			_set_mode(Sim.STREAMER)
+		KEY_SLASH:
+			_set_mode(Sim.BANNEROL)
 		KEY_SPACE, KEY_ENTER, KEY_KP_ENTER:
 			_paint_cell(cursor.x, cursor.y, current_mode)
 		KEY_R:
@@ -2398,6 +2461,8 @@ func _mode_color(mode: int) -> Color:
 			return Color("8d7350")
 		Sim.GONFALON:
 			return Color("7a6848")
+		Sim.BANNEROL:
+			return Color("6e2f4a")
 		Sim.STREAMER:
 			return Color("1f6f78")
 		Sim.SIGNUM:
@@ -2474,6 +2539,8 @@ func _mode_name(mode: int) -> String:
 			return "Pennon"
 		Sim.GONFALON:
 			return "Gonfalon"
+		Sim.BANNEROL:
+			return "Bannerol"
 		Sim.STREAMER:
 			return "Streamer"
 		Sim.SIGNUM:
