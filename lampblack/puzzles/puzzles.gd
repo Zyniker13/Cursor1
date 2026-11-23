@@ -3,7 +3,7 @@ extends RefCounted
 
 const Rules = preload("res://rules/rules.gd")
 
-## Nineteen wings of the closed museum. Each solution is a list of actions the rules
+## Twenty wings of the closed museum. Each solution is a list of actions the rules
 ## accept. Tokens are R L U D, W for wait, and T0 / T1 for lamps.
 
 
@@ -95,6 +95,8 @@ static func _puzzle(number: int, title: String, lesson: String, rows: PackedStri
 		wing_number = number - 104
 	elif wing == "Scrim Wing":
 		wing_number = number - 110
+	elif wing == "Gauze Wing":
+		wing_number = number - 116
 	return {
 		"number": number,
 		"wing": wing,
@@ -143,6 +145,7 @@ static func _all() -> Array:
 	puzzles.append_array(_mica_wing())
 	puzzles.append_array(_baize_wing())
 	puzzles.append_array(_scrim_wing())
+	puzzles.append_array(_gauze_wing())
 	return puzzles
 
 
@@ -2255,5 +2258,112 @@ static func _scrim_wing() -> Array:
 			[_guard(8, 1, [Vector2i(8, 1)], 2)],
 			"R T0 R R R R",
 			"Scrim Wing"
+		),
+	]
+
+
+static func _gauze_wing() -> Array:
+	return [
+		_puzzle(
+			117,
+			"The Lit Gauze",
+			"This room is about the rule that the gauze is lit.",
+			PackedStringArray([
+				"#######",
+				"#.....#",
+				"#..X..#",
+				"#..Q..#",
+				"#..S..#",
+				"#######",
+			]),
+			[_lamp(3, 3, "n", 2)],
+			[_guard(5, 4, [Vector2i(5, 4)], 0)],
+			"L U U R",
+			"Gauze Wing"
+		),
+		_puzzle(
+			118,
+			"The Seen Mesh",
+			"This room is about the rule that the guard sees a lit tile through the lit gauze.",
+			PackedStringArray([
+				"########",
+				"#X.G...#",
+				"##.Q####",
+				"#......#",
+				"#......#",
+				"#...S..#",
+				"########",
+			]),
+			[_lamp(4, 4, "n", 3), _lamp(3, 1, "w", 0)],
+			[_guard(5, 4, [Vector2i(5, 4)], 1), _guard(4, 2, [Vector2i(4, 2)], 3)],
+			"T0 L U U U U L L",
+			"Gauze Wing"
+		),
+		_puzzle(
+			119,
+			"The Passed Flame",
+			"This room is about the rule that a second lamp's light passes the gauze.",
+			PackedStringArray([
+				"########",
+				"#.X....#",
+				"#.G#...#",
+				"#.Q....#",
+				"#..S...#",
+				"#......#",
+				"########",
+			]),
+			[_lamp(6, 5, "w", 0), _lamp(3, 3, "n", 2)],
+			[_guard(2, 2, [Vector2i(2, 2)], 3)],
+			"T1 L U T1 U U",
+			"Gauze Wing"
+		),
+		_puzzle(
+			120,
+			"The Open Gauze",
+			"This room is about the rule that a guard cannot enter the gauze.",
+			PackedStringArray([
+				"#########",
+				"#S.Q.X..#",
+				"#######.#",
+				"#.......#",
+				"#########",
+			]),
+			[_lamp(3, 1, "e", 1)],
+			[_guard(6, 1, [Vector2i(6, 1)], 2)],
+			"R T0 R R R",
+			"Gauze Wing"
+		),
+		_puzzle(
+			121,
+			"The Early Mesh",
+			"This room is about the rule that the early step onto the lit gauze fails.",
+			PackedStringArray([
+				"#########",
+				"#..X....#",
+				"#..Q....#",
+				"#..S....#",
+				"#.......#",
+				"#########",
+			]),
+			[_lamp(3, 4, "n", 3)],
+			[_guard(3, 1, [Vector2i(3, 1)], 0)],
+			"T0 U U",
+			"Gauze Wing"
+		),
+		_puzzle(
+			122,
+			"The Last Gauze",
+			"This room is about the rule that you leave by stepping on the dark gauze.",
+			PackedStringArray([
+				"##########",
+				"#S.Q..X..#",
+				"########.#",
+				"#........#",
+				"##########",
+			]),
+			[_lamp(3, 1, "e", 2)],
+			[_guard(8, 1, [Vector2i(8, 1)], 2)],
+			"R T0 R R R R",
+			"Gauze Wing"
 		),
 	]
