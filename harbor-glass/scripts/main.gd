@@ -5,7 +5,7 @@ extends Control
 # Mirror, then the Shutter, then the Stain, then the Vane, then the Well,
 # then the Siphon, then the Sluice, then the Weir, then the Lintel,
 # then the Mullion, then the Transom, then the Casement, then the Jamb,
-# then the Astragal, then the Scotia, then the Torus, then the Ogee, then the Ovolo, then the Cavetto, then the Fillet, then the Corona, then the Bead, then the Quirk, then the Cyma, then the Fascia, then the Soffit, then the Drip, then the Beak, then the Hood, then the Throat, then the Larmier, then the Cill, then the Threshold, then the Impost, then the Architrave, then the Archivolt, then the Abacus, then the Rebate, then the Echinus, then the Annulet.
+# then the Astragal, then the Scotia, then the Torus, then the Ogee, then the Ovolo, then the Cavetto, then the Fillet, then the Corona, then the Bead, then the Quirk, then the Cyma, then the Fascia, then the Soffit, then the Drip, then the Beak, then the Hood, then the Throat, then the Larmier, then the Cill, then the Threshold, then the Impost, then the Architrave, then the Archivolt, then the Abacus, then the Rebate, then the Echinus, then the Annulet, then the Listel.
 # Pieces turn in place; a loose piece may also move
 # between the sockets authored for that chart. Lock Chart asks the beam tracer
 # whether every dock has its color and every hull is dark.
@@ -94,6 +94,7 @@ var abacus_grid: GridContainer
 var rebate_grid: GridContainer
 var echinus_grid: GridContainer
 var annulet_grid: GridContainer
+var listel_grid: GridContainer
 var quay_book_button: Button
 var reach_book_button: Button
 var basin_book_button: Button
@@ -140,8 +141,9 @@ var abacus_book_button: Button
 var rebate_book_button: Button
 var echinus_book_button: Button
 var annulet_book_button: Button
+var listel_book_button: Button
 var harbor_label: Label
-var _book_place: Array[int] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+var _book_place: Array[int] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 var tide_clock: TideClock
 var _side: Panel
 
@@ -247,6 +249,9 @@ func _build_ui() -> void:
 	var book_row_p := HBoxContainer.new()
 	book_row_p.add_theme_constant_override("separation", 6)
 	book_col.add_child(book_row_p)
+	var book_row_q := HBoxContainer.new()
+	book_row_q.add_theme_constant_override("separation", 6)
+	book_col.add_child(book_row_q)
 	quay_book_button = _button("Quay")
 	quay_book_button.tooltip_text = Charts.HARBOR
 	quay_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -477,7 +482,12 @@ func _build_ui() -> void:
 	annulet_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	annulet_book_button.pressed.connect(_on_book_pressed.bind(45))
 	book_row_p.add_child(annulet_book_button)
-	for book_button in [quay_book_button, reach_book_button, basin_book_button, paint_book_button, west_book_button, meet_book_button, tide_book_button, shutter_book_button, stain_book_button, vane_book_button, well_book_button, siphon_book_button, sluice_book_button, weir_book_button, lintel_book_button, mullion_book_button, transom_book_button, casement_book_button, jamb_book_button, astragal_book_button, scotia_book_button, torus_book_button, ogee_book_button, ovolo_book_button, cavetto_book_button, fillet_book_button, corona_book_button, bead_book_button, quirk_book_button, cyma_book_button, fascia_book_button, soffit_book_button, drip_book_button, beak_book_button, hood_book_button, throat_book_button, larmier_book_button, cill_book_button, threshold_book_button, impost_book_button, architrave_book_button, archivolt_book_button, abacus_book_button, rebate_book_button, echinus_book_button, annulet_book_button]:
+	listel_book_button = _button("Listel")
+	listel_book_button.tooltip_text = Charts.LISTEL
+	listel_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	listel_book_button.pressed.connect(_on_book_pressed.bind(46))
+	book_row_q.add_child(listel_book_button)
+	for book_button in [quay_book_button, reach_book_button, basin_book_button, paint_book_button, west_book_button, meet_book_button, tide_book_button, shutter_book_button, stain_book_button, vane_book_button, well_book_button, siphon_book_button, sluice_book_button, weir_book_button, lintel_book_button, mullion_book_button, transom_book_button, casement_book_button, jamb_book_button, astragal_book_button, scotia_book_button, torus_book_button, ogee_book_button, ovolo_book_button, cavetto_book_button, fillet_book_button, corona_book_button, bead_book_button, quirk_book_button, cyma_book_button, fascia_book_button, soffit_book_button, drip_book_button, beak_book_button, hood_book_button, throat_book_button, larmier_book_button, cill_book_button, threshold_book_button, impost_book_button, architrave_book_button, archivolt_book_button, abacus_book_button, rebate_book_button, echinus_book_button, annulet_book_button, listel_book_button]:
 		book_button.add_theme_font_size_override("font_size", 13)
 
 	quay_grid = _chart_grid()
@@ -617,6 +627,9 @@ func _build_ui() -> void:
 	annulet_grid = _chart_grid()
 	annulet_grid.visible = false
 	box.add_child(annulet_grid)
+	listel_grid = _chart_grid()
+	listel_grid.visible = false
+	box.add_child(listel_grid)
 	var bounds: Array = _book_bounds()
 	for i in charts.size():
 		var button := _button("Chart %d" % (i + 1))
@@ -713,8 +726,10 @@ func _build_ui() -> void:
 			rebate_grid.add_child(button)
 		elif i < int(bounds[45]):
 			echinus_grid.add_child(button)
-		else:
+		elif i < int(bounds[46]):
 			annulet_grid.add_child(button)
+		else:
+			listel_grid.add_child(button)
 		chart_buttons.append(button)
 
 	title_label = _label("", 20, Palette.TEXT)
@@ -760,7 +775,7 @@ func _build_ui() -> void:
 	status_label.custom_minimum_size = Vector2(340, 0)
 	box.add_child(status_label)
 
-	var legend := _label("Warm beam, red, and blue. A lamp may already burn one color. One mirror can take two lamps. A tide mirror reflects only while its row is flooded, and lets the beam pass while that row is dry. A shutter stops a beam while its row is dry, and lets the beam pass straight through while that row is flooded. A stain recolors a beam to its own color and lets it pass straight through, on a dry row and under water. A vane turns a beam into its facing, and a head-on beam stops. Water shuts a vane the way it shuts a mirror. A well stops a beam while its row is dry. While that row is flooded, the beam leaves north and keeps its color. A well does not turn. A siphon stops a beam while its row is dry. While that row is flooded, the beam leaves north and swaps red with blue. White stays white. A siphon does not turn. A sluice stops a beam while its row is dry. While that row is flooded, the beam leaves along the sluice's facing and keeps its color. A weir stops a beam while its row is dry. While that row is flooded, the beam leaves along the weir's facing and swaps red with blue. White stays white. A lintel lets a beam pass straight through while its row is dry, and stops the beam while that row is flooded. A lintel does not turn. A mullion lets a north-south beam pass straight through while its row is dry, and an east-west beam stops before it enters. A flooded mullion stops every beam. A mullion does not turn. A transom lets an east-west beam pass straight through while its row is dry, and a north-south beam stops before it enters. A flooded transom stops every beam. A transom does not turn. A casement lets a beam pass straight through while its row is dry, but only in the direction it faces. Every other direction stops before the cell. A flooded casement stops every beam. The casement turns. A jamb passes both directions of the axis it faces while its row is dry, and the other axis stops before the cell. North and south open the north-south axis. East and west open the east-west axis. A flooded jamb stops every beam. The jamb turns. An astragal passes the direction it faces and the next clockwise direction while its row is dry. The other two directions stop before the cell. A flooded astragal stops every beam. The astragal turns. A scotia passes the direction it faces and the next counterclockwise direction while its row is dry. The other two directions stop before the cell. A flooded scotia stops every beam. The scotia turns. A torus passes the direction opposite its facing and the next clockwise direction while its row is dry. The other two directions stop before the cell. A flooded torus stops every beam. The torus turns. An ogee passes the direction opposite its facing and the next counterclockwise direction while its row is dry. The other two directions stop before the cell. A flooded ogee stops every beam. The ogee turns. An ovolo passes every direction except the one it faces while its row is dry. That facing stops before the cell. A flooded ovolo stops every beam. The ovolo turns. A cavetto passes every direction except the opposite of its facing while its row is dry. That opposite direction stops before the cell. A flooded cavetto stops every beam. The cavetto turns. A fillet passes only the opposite of its facing while its row is dry. The facing and both sides stop before the cell. A flooded fillet stops every beam. The fillet turns. A corona passes the two directions perpendicular to its facing while its row is dry. The facing and the opposite stop before the cell. A flooded corona stops every beam. The corona turns. A bead passes only the next clockwise direction while its row is dry. The other three directions stop before the cell. A flooded bead stops every beam. The bead turns. A quirk passes only the next counterclockwise direction while its row is dry. The other three directions stop before the cell. A flooded quirk stops every beam. The quirk turns. A cyma passes only its facing while its row is dry. The other three directions stop before the cell. A flooded cyma stops every beam. The cyma turns. A fascia passes every direction except the next clockwise one while its row is dry. That clockwise direction stops before the cell. A flooded fascia stops every beam. The fascia turns. A soffit passes every direction except the next counterclockwise one while its row is dry. That counterclockwise direction stops before the cell. A flooded soffit stops every beam. The soffit turns. A dry drip passes every direction except the next counterclockwise one. A flooded drip passes only that stopped direction, and the other three stop at the waterline. The drip turns. A dry beak passes every direction except the next clockwise one. A flooded beak passes only that stopped direction, and the other three stop at the waterline. The beak turns. A dry hood passes every direction except its facing. A flooded hood passes only that facing, and the other three stop at the waterline. The hood turns. A dry throat passes every direction except the opposite of its facing. A flooded throat passes only that opposite, and the other three stop at the waterline. The throat turns. A dry larmier passes the two directions perpendicular to its facing. A flooded larmier passes only the facing and the opposite, and the other two stop at the waterline. The larmier turns. The cill turns. While it is dry, a cill passes its facing and the opposite. While it is flooded, only the two perpendicular directions pass. A threshold turns. While it is dry, only the opposite of its facing passes. While it is flooded, every direction except that opposite passes. An impost turns. While it is dry, only its facing passes. While it is flooded, every direction except that facing passes. An architrave turns. While it is dry, the two perpendicular directions pass. While it is flooded, only the facing passes. An archivolt turns. While it is dry, every heading stops. While it is flooded, the two perpendicular directions pass. An abacus turns. While it is dry, every heading stops. While it is flooded, only the facing passes. A rebate turns. While it is dry, every heading stops. While it is flooded, only the opposite of its facing passes. An echinus turns. While it is dry, every heading except the opposite passes. While it is flooded, only the next clockwise heading passes. An annulet turns. While it is dry, every heading except the opposite passes. While it is flooded, only the next counterclockwise heading passes. Docks take only their marked color. Hulls stay dark. Water shuts the other glass it covers.", 13, Palette.MUTED)
+	var legend := _label("Warm beam, red, and blue. A lamp may already burn one color. One mirror can take two lamps. A tide mirror reflects only while its row is flooded, and lets the beam pass while that row is dry. A shutter stops a beam while its row is dry, and lets the beam pass straight through while that row is flooded. A stain recolors a beam to its own color and lets it pass straight through, on a dry row and under water. A vane turns a beam into its facing, and a head-on beam stops. Water shuts a vane the way it shuts a mirror. A well stops a beam while its row is dry. While that row is flooded, the beam leaves north and keeps its color. A well does not turn. A siphon stops a beam while its row is dry. While that row is flooded, the beam leaves north and swaps red with blue. White stays white. A siphon does not turn. A sluice stops a beam while its row is dry. While that row is flooded, the beam leaves along the sluice's facing and keeps its color. A weir stops a beam while its row is dry. While that row is flooded, the beam leaves along the weir's facing and swaps red with blue. White stays white. A lintel lets a beam pass straight through while its row is dry, and stops the beam while that row is flooded. A lintel does not turn. A mullion lets a north-south beam pass straight through while its row is dry, and an east-west beam stops before it enters. A flooded mullion stops every beam. A mullion does not turn. A transom lets an east-west beam pass straight through while its row is dry, and a north-south beam stops before it enters. A flooded transom stops every beam. A transom does not turn. A casement lets a beam pass straight through while its row is dry, but only in the direction it faces. Every other direction stops before the cell. A flooded casement stops every beam. The casement turns. A jamb passes both directions of the axis it faces while its row is dry, and the other axis stops before the cell. North and south open the north-south axis. East and west open the east-west axis. A flooded jamb stops every beam. The jamb turns. An astragal passes the direction it faces and the next clockwise direction while its row is dry. The other two directions stop before the cell. A flooded astragal stops every beam. The astragal turns. A scotia passes the direction it faces and the next counterclockwise direction while its row is dry. The other two directions stop before the cell. A flooded scotia stops every beam. The scotia turns. A torus passes the direction opposite its facing and the next clockwise direction while its row is dry. The other two directions stop before the cell. A flooded torus stops every beam. The torus turns. An ogee passes the direction opposite its facing and the next counterclockwise direction while its row is dry. The other two directions stop before the cell. A flooded ogee stops every beam. The ogee turns. An ovolo passes every direction except the one it faces while its row is dry. That facing stops before the cell. A flooded ovolo stops every beam. The ovolo turns. A cavetto passes every direction except the opposite of its facing while its row is dry. That opposite direction stops before the cell. A flooded cavetto stops every beam. The cavetto turns. A fillet passes only the opposite of its facing while its row is dry. The facing and both sides stop before the cell. A flooded fillet stops every beam. The fillet turns. A corona passes the two directions perpendicular to its facing while its row is dry. The facing and the opposite stop before the cell. A flooded corona stops every beam. The corona turns. A bead passes only the next clockwise direction while its row is dry. The other three directions stop before the cell. A flooded bead stops every beam. The bead turns. A quirk passes only the next counterclockwise direction while its row is dry. The other three directions stop before the cell. A flooded quirk stops every beam. The quirk turns. A cyma passes only its facing while its row is dry. The other three directions stop before the cell. A flooded cyma stops every beam. The cyma turns. A fascia passes every direction except the next clockwise one while its row is dry. That clockwise direction stops before the cell. A flooded fascia stops every beam. The fascia turns. A soffit passes every direction except the next counterclockwise one while its row is dry. That counterclockwise direction stops before the cell. A flooded soffit stops every beam. The soffit turns. A dry drip passes every direction except the next counterclockwise one. A flooded drip passes only that stopped direction, and the other three stop at the waterline. The drip turns. A dry beak passes every direction except the next clockwise one. A flooded beak passes only that stopped direction, and the other three stop at the waterline. The beak turns. A dry hood passes every direction except its facing. A flooded hood passes only that facing, and the other three stop at the waterline. The hood turns. A dry throat passes every direction except the opposite of its facing. A flooded throat passes only that opposite, and the other three stop at the waterline. The throat turns. A dry larmier passes the two directions perpendicular to its facing. A flooded larmier passes only the facing and the opposite, and the other two stop at the waterline. The larmier turns. The cill turns. While it is dry, a cill passes its facing and the opposite. While it is flooded, only the two perpendicular directions pass. A threshold turns. While it is dry, only the opposite of its facing passes. While it is flooded, every direction except that opposite passes. An impost turns. While it is dry, only its facing passes. While it is flooded, every direction except that facing passes. An architrave turns. While it is dry, the two perpendicular directions pass. While it is flooded, only the facing passes. An archivolt turns. While it is dry, every heading stops. While it is flooded, the two perpendicular directions pass. An abacus turns. While it is dry, every heading stops. While it is flooded, only the facing passes. A rebate turns. While it is dry, every heading stops. While it is flooded, only the opposite of its facing passes. An echinus turns. While it is dry, every heading except the opposite passes. While it is flooded, only the next clockwise heading passes. An annulet turns. While it is dry, every heading except the opposite passes. While it is flooded, only the next counterclockwise heading passes. A listel turns. While it is dry, every heading stops. While it is flooded, the facing and the next clockwise heading pass. Docks take only their marked color. Hulls stay dark. Water shuts the other glass it covers.", 13, Palette.MUTED)
 	legend.custom_minimum_size = Vector2(360, 0)
 	box.add_child(legend)
 	var keys := _label("Arrows or Tab select. R turns. M moves a loose piece. Space locks. H hints. T raises tide, Shift+T lowers it. Backspace restarts.", 12, Palette.MUTED)
@@ -1124,6 +1139,13 @@ func rotate_selected() -> void:
 		_clear_hint_if_resolved()
 		_refresh()
 		return
+	if str(piece["kind"]) == "listel":
+		var listel_rot := int(state["pieces"][selected_id]["rot"])
+		state["pieces"][selected_id]["rot"] = Tracer.turn_rot("listel", listel_rot)
+		status_label.text = "The listel turns clockwise. While it is dry, every heading stops. While it is flooded, the facing and the next clockwise heading pass."
+		_clear_hint_if_resolved()
+		_refresh()
+		return
 	var cur := int(state["pieces"][selected_id]["rot"])
 	state["pieces"][selected_id]["rot"] = Tracer.turn_rot(str(piece["kind"]), cur)
 	_clear_hint_if_resolved()
@@ -1358,6 +1380,8 @@ func _refresh_chrome() -> void:
 		water += " A dry echinus passes every heading except the opposite. A flooded echinus passes only the next clockwise heading."
 	if _has_annulet():
 		water += " A dry annulet passes every heading except the opposite. A flooded annulet passes only the next counterclockwise heading."
+	if _has_listel():
+		water += " A dry listel stops every heading. A flooded listel passes its facing and the next clockwise heading."
 	tide_readout.text = "%s. %s" % [phase, water]
 	var phases: Array = chart["tide_phases"]
 	var multi := phases.size() > 1
@@ -1431,6 +1455,7 @@ func _refresh_chrome() -> void:
 	rebate_grid.visible = book == 43
 	echinus_grid.visible = book == 44
 	annulet_grid.visible = book == 45
+	listel_grid.visible = book == 46
 	reach_book_button.disabled = not unlocked[int(bounds[1])]
 	basin_book_button.disabled = not unlocked[int(bounds[2])]
 	paint_book_button.disabled = not unlocked[int(bounds[3])]
@@ -1476,6 +1501,7 @@ func _refresh_chrome() -> void:
 	rebate_book_button.disabled = not unlocked[int(bounds[43])]
 	echinus_book_button.disabled = not unlocked[int(bounds[44])]
 	annulet_book_button.disabled = not unlocked[int(bounds[45])]
+	listel_book_button.disabled = not unlocked[int(bounds[46])]
 	_paint_button(quay_book_button, book == 0)
 	_paint_button(reach_book_button, book == 1)
 	_paint_button(basin_book_button, book == 2)
@@ -1522,6 +1548,7 @@ func _refresh_chrome() -> void:
 	_paint_button(rebate_book_button, book == 43)
 	_paint_button(echinus_book_button, book == 44)
 	_paint_button(annulet_book_button, book == 45)
+	_paint_button(listel_book_button, book == 46)
 
 func _show_win() -> void:
 	win_body.text = str(chart["win"])
@@ -1598,11 +1625,14 @@ func _book_bounds() -> Array:
 	var abacus := archivolt + Charts.abacus().size()
 	var rebate := abacus + Charts.rebate().size()
 	var echinus := rebate + Charts.echinus().size()
-	return [0, q, r, b, p, w, m, t, s, n, v, well, siphon, sluice, weir, lintel, mullion, transom, casement, jamb, astragal, scotia, torus, ogee, ovolo, cavetto, fillet, corona, bead, quirk, cyma, fascia, soffit, drip, beak, hood, throat, larmier, cill, threshold, impost, architrave, archivolt, abacus, rebate, echinus, charts.size()]
+	var annulet := echinus + Charts.annulet().size()
+	return [0, q, r, b, p, w, m, t, s, n, v, well, siphon, sluice, weir, lintel, mullion, transom, casement, jamb, astragal, scotia, torus, ogee, ovolo, cavetto, fillet, corona, bead, quirk, cyma, fascia, soffit, drip, beak, hood, throat, larmier, cill, threshold, impost, architrave, archivolt, abacus, rebate, echinus, annulet, charts.size()]
 
 
 func _book_of(index: int) -> int:
 	var bounds: Array = _book_bounds()
+	if index >= int(bounds[46]):
+		return 46
 	if index >= int(bounds[45]):
 		return 45
 	if index >= int(bounds[44]):
@@ -1791,8 +1821,10 @@ func _on_book_pressed(book: int) -> void:
 			status_label.text = "The rebate is still locked."
 		elif book == 44:
 			status_label.text = "The echinus is still locked."
-		else:
+		elif book == 45:
 			status_label.text = "The annulet is still locked."
+		else:
+			status_label.text = "The listel is still locked."
 		return
 	_book_place[here] = chart_index
 	var last := int(bounds[book + 1])
@@ -2062,6 +2094,17 @@ func _has_throat() -> bool:
 	for raw in chart["fixtures"]:
 		var fix: Dictionary = raw
 		if str(fix["kind"]) == "throat":
+			return true
+	return false
+
+func _has_listel() -> bool:
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		if str(piece["kind"]) == "listel":
+			return true
+	for raw in chart["fixtures"]:
+		var fix: Dictionary = raw
+		if str(fix["kind"]) == "listel":
 			return true
 	return false
 
