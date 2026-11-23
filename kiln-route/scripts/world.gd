@@ -138,6 +138,14 @@ extends RefCounted
 ## is empty after that tick. If either exit refuses, neither item leaves.
 ## A point accepts from ahead and sends the waiter right. Nothing stays in
 ## the throat.
+## A wrest does not forward in step 2 on its own. The first item stays.
+## Only an arrival from ahead is accepted. The same material does not
+## release the waiter. When a later item of a different material arrives
+## from ahead, the waiter moves one cell left and the arrival moves one
+## cell right, and only if both of those cells can take them. Neither
+## leaves forward. The wrest is empty after that tick. If either exit
+## refuses, neither item leaves. A throat accepts from ahead and sends
+## the waiter behind. Nothing stays in the wrest.
 
 const Rules = preload("res://scripts/foundry.gd")
 
@@ -169,7 +177,7 @@ class Machine:
 	## Second lane on a bridge. -1 is empty. Other machines leave it empty.
 	var cross := -1
 	var cross_moved := false
-	## True while a twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, a clevis, a beam, a hake, a sole, a frog, a shin, a point, or a throat is resolving an arrival, so a loop cannot re-enter.
+	## True while a twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, a clevis, a beam, a hake, a sole, a frog, a shin, a point, a throat, or a wrest is resolving an arrival, so a loop cannot re-enter.
 	var pairing := false
 
 class Source:
@@ -565,8 +573,9 @@ func _can_take(machine: Machine, mat: int, arrival: int) -> bool:
 		or machine.kind == Rules.Kind.SHIN
 		or machine.kind == Rules.Kind.POINT
 		or machine.kind == Rules.Kind.THROAT
+		or machine.kind == Rules.Kind.WREST
 	):
-		# Pairing is handled in _accept. A twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, a clevis, a beam, a hake, a sole, a frog, a shin, a point, or a throat may already be holding.
+		# Pairing is handled in _accept. A twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, a clevis, a beam, a hake, a sole, a frog, a shin, a point, a throat, or a wrest may already be holding.
 		return false
 	if machine.kind == Rules.Kind.BRIDGE:
 		if arrival == machine.dir:
@@ -658,6 +667,8 @@ func _accept(dest: Vector2i, mat: int, arrival: int) -> bool:
 		return _accept_point(dest, machine, mat, arrival)
 	if machine.kind == Rules.Kind.THROAT:
 		return _accept_throat(dest, machine, mat, arrival)
+	if machine.kind == Rules.Kind.WREST:
+		return _accept_wrest(dest, machine, mat, arrival)
 	if not _can_take(machine, mat, arrival):
 		return false
 	if _holder(machine.kind):
@@ -1546,6 +1557,47 @@ func _accept_throat(pos: Vector2i, machine: Machine, mat: int, arrival: int) -> 
 	if behind_sent:
 		forward_sent = _accept(pos + Rules.vec(forward_dir), mat, forward_dir)
 	if not behind_sent or not forward_sent:
+		_restore(mark)
+		return false
+	machine.pairing = false
+	machine.hold = -1
+	machine.moved = false
+	return true
+
+
+## From ahead only. The first item waits and never leaves on its own. The
+## same material does not release the waiter. A later item of a different
+## material from ahead may leave on that tick: the waiter moves one cell
+## left and the arrival moves one cell right, if both cells can take them.
+## Neither leaves forward. Left is the wrest's left. Right is the wrest's
+## right. The wrest is empty afterwards. If either exit refuses, neither
+## item leaves and the arrival is not accepted. A lone item never leaves,
+## including on the next tick and the tick after that. The wrest does not
+## accept from the left, from the right, or from behind. It does not spill,
+## rotate, alternate, or keep either item. A throat sends the waiter behind
+## and the arrival forward. A shin sends the waiter left and the arrival
+## forward. A point sends the waiter right and the arrival forward. A beam
+## sends the waiter backward and the arrival left.
+func _accept_wrest(pos: Vector2i, machine: Machine, mat: int, arrival: int) -> bool:
+	if arrival != Rules.opposite(machine.dir):
+		return false
+	if machine.hold < 0:
+		machine.hold = mat
+		machine.moved = true
+		return true
+	if machine.moved or machine.pairing:
+		return false
+	if mat == machine.hold:
+		return false
+	var left_dir := Rules.left(machine.dir)
+	var right_dir := Rules.right(machine.dir)
+	var mark := _checkpoint()
+	machine.pairing = true
+	var left_sent: bool = _accept(pos + Rules.vec(left_dir), machine.hold, left_dir)
+	var right_sent := false
+	if left_sent:
+		right_sent = _accept(pos + Rules.vec(right_dir), mat, right_dir)
+	if not left_sent or not right_sent:
 		_restore(mark)
 		return false
 	machine.pairing = false
