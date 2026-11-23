@@ -1,9 +1,9 @@
 extends RefCounted
 
-## Buildings 1 through 22. Directions: 0 east, 1 south, 2 west, 3 north.
+## Buildings 1 through 25. Directions: 0 east, 1 south, 2 west, 3 north.
 ## `unlocks` is the single new block this puzzle introduces, or "".
 
-const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook", "return", "pause", "chute", "shunt", "bias", "vault", "sling", "cant", "balk", "loft", "keel", "sheer", "strake", "wale"]
+const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook", "return", "pause", "chute", "shunt", "bias", "vault", "sling", "cant", "balk", "loft", "keel", "sheer", "strake", "wale", "garboard", "stealer", "rabbet"]
 
 
 static func all() -> Array:
@@ -3248,6 +3248,441 @@ static func all() -> Array:
 				_block("conveyor", 5, 3, 3),
 			]
 		),
+		_puzzle(
+			163, "First Garboard", "garboard",
+			"Step one cell to the left, then follow the facing you kept.",
+			"",
+			"The parcel comes in facing east. The garboard jumps it one cell north and leaves it facing east. The pause then steps east onto the dock. The brick two cells north is not entered. A wale jumps one cell south. A strake jumps two cells north onto the brick. A hook faces north, so the pause steps into the brick. A turn faces south. A sheer jumps three cells south. A loft jumps three cells east. A balk jumps two cells west. A keel jumps three cells west. A return reverses the facing and steps one cell west.",
+			6, 4,
+			[_cell(4, 0)],
+			[_source(2, 2, 0, ["gray"])],
+			{"x": 5, "y": 1},
+			[{"color": "gray"}],
+			[
+				_block("conveyor", 3, 2, 0),
+				_block("garboard", 4, 2, 0),
+				_block("pause", 4, 1, 0),
+			]
+		),
+		_puzzle(
+			164, "Let Garboard", "",
+			"Wait until the landing is free, then jump one cell to the left.",
+			"",
+			"Blue is standing on the landing. The garboard holds red until that cell is free, then jumps one cell north and leaves red facing east. The pause steps east onto the dock. A wale jumps one cell south. A strake jumps two cells north. A hook changes the facing. A turn faces south. A sheer jumps three cells south. A loft jumps east. A balk jumps west. A keel jumps three cells west. A return steps one cell back.",
+			6, 4, [],
+			[
+				_source(2, 2, 0, ["red"]),
+				_source(1, 1, 0, ["blue"]),
+			],
+			{"x": 5, "y": 1},
+			[{"color": "blue"}, {"color": "red"}],
+			[
+				_block("conveyor", 3, 2, 0),
+				_block("garboard", 4, 2, 0),
+				_block("conveyor", 2, 1, 0),
+				_block("conveyor", 3, 1, 0),
+				_block("pause", 4, 1, 0),
+			]
+		),
+		_puzzle(
+			165, "Garboard Count", "",
+			"Stamp blue 1 and red 2. The garboard's wait is what makes the counter read 2.",
+			"",
+			"The garboard waits, then jumps the east-facing parcel one cell north. The pause carries that facing east onto the counter after blue has been stamped 1, so red is stamped 2. A wale jumps south. A strake jumps two cells north. A hook faces north and misses the counter. A turn faces south. A sheer jumps three cells south. A loft jumps east. A balk jumps west. A keel jumps three cells west. A return steps one cell back.",
+			6, 4, [],
+			[
+				_source(1, 2, 0, ["red"]),
+				_source(3, 0, 1, ["blue"]),
+			],
+			{"x": 5, "y": 1},
+			[{"color": "blue", "count": 1}, {"color": "red", "count": 2}],
+			[
+				_block("garboard", 2, 2, 0),
+				_block("pause", 2, 1, 0),
+				_block("counter", 3, 1, 0),
+				_block("conveyor", 4, 1, 0),
+			]
+		),
+		_puzzle(
+			166, "Clear the North", "",
+			"Land one cell to the left. The brick beyond that is for a longer jump.",
+			"",
+			"The garboard jumps one cell north and leaves the parcel facing east. The pause steps east onto the dock and does not enter the brick. A strake tries to land on that brick. A hook faces north and the pause steps into the brick. A wale jumps one cell south. A turn faces south. A sheer jumps three cells south. A loft jumps east. A balk jumps west. A keel jumps three cells west. A return steps one cell back.",
+			4, 4,
+			[_cell(2, 0)],
+			[_source(0, 2, 0, ["gray"])],
+			{"x": 3, "y": 1},
+			[{"color": "gray"}],
+			[
+				_block("conveyor", 1, 2, 0),
+				_block("garboard", 2, 2, 0),
+				_block("pause", 2, 1, 0),
+			]
+		),
+		_puzzle(
+			167, "Two Garboards", "",
+			"Deliver red, then blue. Each jump is to the left of a different facing.",
+			"",
+			"Red arrives facing east, jumps one cell north, and the pause steps east onto the dock. Blue arrives facing north, jumps one cell west, and the pause steps north onto the dock. Each jump keeps the arrival facing. A wale jumps the other way. A strake jumps two cells to the left. A hook changes the facing, so the pause steps the wrong way. A turn faces the other way. A sheer jumps three cells to the right. A loft jumps forward. A balk jumps backward. A keel jumps three cells backward. A return reverses the facing and steps one cell back.",
+			7, 6, [],
+			[
+				_source(3, 2, 0, ["red"]),
+				_source(6, 4, 3, ["blue"]),
+			],
+			{"x": 5, "y": 1},
+			[{"color": "red"}, {"color": "blue"}],
+			[
+				_block("garboard", 4, 2, 0),
+				_block("pause", 4, 1, 0),
+				_block("conveyor", 6, 3, 3),
+				_block("garboard", 6, 2, 0),
+				_block("pause", 5, 2, 0),
+			]
+		),
+		_puzzle(
+			168, "Second Garboard", "",
+			"Jump to the left, hook, then jump to the left on the new facing.",
+			"",
+			"The first garboard jumps the east-facing parcel one cell north and leaves it facing east. The hook sends it north onto the second garboard. That garboard jumps one cell west, still facing north, onto the dock. One garboard cannot do both jumps. A wale jumps south. A strake jumps two cells north. A turn faces south. A sheer jumps three cells south. A loft jumps east. A balk jumps west. A keel jumps three cells west. A return steps one cell back.",
+			5, 4, [],
+			[_source(2, 2, 0, ["gray"])],
+			{"x": 2, "y": 0},
+			[{"color": "gray"}],
+			[
+				_block("garboard", 3, 2, 0),
+				_block("hook", 3, 1, 0),
+				_block("garboard", 3, 0, 0),
+			]
+		),
+		_puzzle(
+			169, "Night Garboard", "",
+			"Deliver red 1, yellow 2, and blue 3.",
+			"",
+			"Red takes the filter. The garboard jumps it one cell north and leaves it facing east. The pause carries that facing onto the counter for stamp 1. Gray takes the long belt, crosses the bridge, and is primed yellow. Blue keeps its color. A wale jumps south. A strake jumps two cells north. A hook changes the facing. A turn faces south. A sheer jumps three cells south. A loft jumps east. A balk jumps west. A keel jumps three cells west. A return steps one cell back.",
+			10, 7, [],
+			[_source(0, 3, 0, ["gray", "blue", "red"])],
+			{"x": 8, "y": 2},
+			[{"color": "red", "count": 1}, {"color": "yellow", "count": 2}, {"color": "blue", "count": 3}],
+			[
+				_block("filter", 1, 3, 0, "red"),
+				_block("conveyor", 2, 3, 0),
+				_block("conveyor", 3, 3, 0),
+				_block("garboard", 4, 3, 0),
+				_block("pause", 4, 2, 0),
+				_block("conveyor", 5, 2, 0),
+				_block("counter", 6, 2, 0),
+				_block("conveyor", 7, 2, 0),
+				_block("pause", 1, 4, 0),
+				_block("primer", 1, 5, 0, "yellow"),
+				_block("conveyor", 2, 5, 0),
+				_block("conveyor", 3, 5, 1),
+				_block("conveyor", 3, 6, 0),
+				_block("conveyor", 4, 6, 0),
+				_block("conveyor", 5, 6, 0),
+				_block("conveyor", 6, 6, 0),
+				_block("conveyor", 7, 6, 0),
+				_block("conveyor", 8, 6, 3),
+				_block("conveyor", 8, 5, 3),
+				_block("conveyor", 8, 4, 3),
+				_block("bridge", 8, 3, 3),
+				_block("conveyor", 8, 1, 2),
+				_block("conveyor", 7, 1, 2),
+				_block("conveyor", 6, 1, 1),
+			]
+		),
+		_puzzle(
+			170, "First Stealer", "stealer",
+			"Jump three cells to the left, then follow the facing you kept.",
+			"",
+			"The parcel comes in facing east. The stealer jumps it three cells north and leaves it facing east. The two cells between are not entered. The pause then steps east onto the dock. A garboard lands on the first brick. A strake lands on the second brick. A wale jumps one cell south. A hook faces north and steps into the first brick. A turn faces south. A sheer jumps three cells south. A loft jumps three cells east. A balk jumps two cells west. A keel jumps three cells west. A return reverses the facing and steps one cell west.",
+			6, 4,
+			[_cell(4, 2), _cell(4, 1)],
+			[_source(2, 3, 0, ["gray"])],
+			{"x": 5, "y": 0},
+			[{"color": "gray"}],
+			[
+				_block("conveyor", 3, 3, 0),
+				_block("stealer", 4, 3, 0),
+				_block("pause", 4, 0, 0),
+			]
+		),
+		_puzzle(
+			171, "Let Stealer", "",
+			"Wait until the landing is free, then jump three cells to the left.",
+			"",
+			"Blue is standing on the landing. The stealer holds red until that cell is free, then jumps three cells north and leaves red facing east. The cells between are not entered. The pause steps east onto the dock. A garboard lands one cell short. A strake lands two cells short. A wale jumps south. A hook changes the facing. A turn faces south. A sheer jumps three cells south. A loft jumps east. A balk jumps west. A keel jumps three cells west. A return steps one cell back.",
+			6, 4,
+			[_cell(4, 2), _cell(4, 1)],
+			[
+				_source(2, 3, 0, ["red"]),
+				_source(1, 0, 0, ["blue"]),
+			],
+			{"x": 5, "y": 0},
+			[{"color": "blue"}, {"color": "red"}],
+			[
+				_block("conveyor", 3, 3, 0),
+				_block("stealer", 4, 3, 0),
+				_block("conveyor", 2, 0, 0),
+				_block("conveyor", 3, 0, 0),
+				_block("pause", 4, 0, 0),
+			]
+		),
+		_puzzle(
+			172, "Stealer Count", "",
+			"Stamp blue 1 and red 2. The stealer's wait is what makes the counter read 2.",
+			"",
+			"The stealer waits, then jumps the east-facing parcel three cells north. The pause carries that facing east onto the counter after blue has been stamped 1, so red is stamped 2. The cells between are not entered. A garboard lands one cell short. A strake lands two cells short. A wale jumps south. A hook faces north. A turn faces south. A sheer jumps three cells south. A loft jumps east. A balk jumps west. A keel jumps three cells west. A return steps one cell back.",
+			6, 4,
+			[_cell(2, 2), _cell(2, 1)],
+			[
+				_source(1, 3, 0, ["red"]),
+				_source(3, 1, 3, ["blue"]),
+			],
+			{"x": 5, "y": 0},
+			[{"color": "blue", "count": 1}, {"color": "red", "count": 2}],
+			[
+				_block("stealer", 2, 3, 0),
+				_block("pause", 2, 0, 0),
+				_block("counter", 3, 0, 0),
+				_block("conveyor", 4, 0, 0),
+			]
+		),
+		_puzzle(
+			173, "Skip the Bricks", "",
+			"Jump three cells to the left. The bricks between are not entered.",
+			"",
+			"The stealer jumps three cells north and leaves the parcel facing east. The pause steps east onto the dock and does not enter either brick. A garboard tries to land on the near brick. A strake tries to land on the far brick. A wale jumps one cell south. A hook steps into the near brick. A turn faces south. A sheer jumps three cells south. A loft jumps east. A balk jumps west. A keel jumps three cells west. A return steps one cell back.",
+			4, 4,
+			[_cell(2, 2), _cell(2, 1)],
+			[_source(0, 3, 0, ["gray"])],
+			{"x": 3, "y": 0},
+			[{"color": "gray"}],
+			[
+				_block("conveyor", 1, 3, 0),
+				_block("stealer", 2, 3, 0),
+				_block("pause", 2, 0, 0),
+			]
+		),
+		_puzzle(
+			174, "Two Stealers", "",
+			"Deliver red, then blue. Each jump is three cells to the left of a different facing.",
+			"",
+			"Red arrives facing east, jumps three cells north, and the pause steps east onto the dock. Blue arrives facing north, jumps three cells west, and the pause steps north onto the dock. Each jump keeps the arrival facing and skips the two cells beside it. A garboard lands one cell short. A strake lands two cells short. A wale jumps the other way. A hook changes the facing. A turn faces the other way. A sheer jumps three cells to the right. A loft jumps forward. A balk jumps backward. A keel jumps three cells backward. A return reverses the facing and steps one cell back.",
+			9, 6,
+			[_cell(4, 4), _cell(4, 3), _cell(7, 3), _cell(6, 3)],
+			[
+				_source(3, 5, 0, ["red"]),
+				_source(8, 5, 3, ["blue"]),
+			],
+			{"x": 5, "y": 2},
+			[{"color": "red"}, {"color": "blue"}],
+			[
+				_block("stealer", 4, 5, 0),
+				_block("pause", 4, 2, 0),
+				_block("conveyor", 8, 4, 3),
+				_block("stealer", 8, 3, 0),
+				_block("pause", 5, 3, 0),
+			]
+		),
+		_puzzle(
+			175, "Second Stealer", "",
+			"Jump three cells to the left, hook, then jump three cells to the left on the new facing.",
+			"",
+			"The first stealer jumps the east-facing parcel three cells north and leaves it facing east. The hook sends it north onto the second stealer. That stealer jumps three cells west, still facing north, onto the dock. One stealer cannot do both jumps. A garboard lands one cell short. A strake lands two cells short. A wale jumps south. A turn faces south. A sheer jumps three cells south. A loft jumps east. A balk jumps west. A keel jumps three cells west. A return steps one cell back.",
+			4, 6,
+			[_cell(3, 4), _cell(3, 3)],
+			[_source(2, 5, 0, ["gray"])],
+			{"x": 0, "y": 1},
+			[{"color": "gray"}],
+			[
+				_block("stealer", 3, 5, 0),
+				_block("hook", 3, 2, 0),
+				_block("stealer", 3, 1, 0),
+			]
+		),
+		_puzzle(
+			176, "Night Stealer", "",
+			"Deliver red 1, yellow 2, and blue 3.",
+			"",
+			"Red takes the filter. The stealer jumps it three cells north and leaves it facing east. The pause carries that facing onto the counter for stamp 1. The two cells between are not entered. Gray takes the long belt, crosses the bridges, and is primed yellow. Blue keeps its color. A garboard lands one cell short. A strake lands two cells short. A wale jumps south. A hook changes the facing. A turn faces south. A sheer jumps three cells south. A loft jumps east. A balk jumps west. A keel jumps three cells west. A return steps one cell back.",
+			8, 6, [],
+			[_source(0, 3, 0, ["gray", "blue", "red"])],
+			{"x": 7, "y": 0},
+			[{"color": "red", "count": 1}, {"color": "yellow", "count": 2}, {"color": "blue", "count": 3}],
+			[
+				_block("filter", 1, 3, 0, "red"),
+				_block("conveyor", 2, 3, 0),
+				_block("conveyor", 3, 3, 0),
+				_block("stealer", 4, 3, 0),
+				_block("pause", 4, 0, 0),
+				_block("conveyor", 5, 0, 0),
+				_block("counter", 6, 0, 0),
+				_block("pause", 1, 4, 0),
+				_block("primer", 1, 5, 0, "yellow"),
+				_block("conveyor", 2, 5, 0),
+				_block("bridge", 3, 5, 0),
+				_block("conveyor", 5, 5, 3),
+				_block("bridge", 5, 4, 3),
+				_block("pause", 5, 2, 0),
+				_block("conveyor", 5, 1, 3),
+			]
+		),
+		_puzzle(
+			177, "First Rabbet", "rabbet",
+			"Jump one cell backward, and keep the facing.",
+			"",
+			"The parcel comes in facing east. The rabbet jumps it one cell west and leaves it facing east. The hook reads that facing and steps north onto the dock. A return reverses the facing, so the hook steps south. A balk lands on the brick two cells back. A keel lands on the brick three cells back. A stealer jumps three cells north. A garboard jumps one cell north. A turn faces south.",
+			6, 5,
+			[_cell(2, 2), _cell(1, 2), _cell(4, 1), _cell(4, 0), _cell(5, 2), _cell(4, 4)],
+			[_source(3, 3, 0, ["gray"])],
+			{"x": 3, "y": 1},
+			[{"color": "gray"}],
+			[
+				_block("garboard", 4, 3, 0),
+				_block("rabbet", 4, 2, 0),
+				_block("hook", 3, 2, 0),
+			]
+		),
+		_puzzle(
+			178, "Let Rabbet", "",
+			"Wait until the landing is free, then jump one cell backward.",
+			"",
+			"Blue is standing on the hook. The rabbet holds red until that cell is free, then jumps one cell west and leaves red facing east. The hook steps north onto the dock. A return reverses the facing, so the hook steps south. A balk lands on the brick two cells back. A keel lands on the brick three cells back. A stealer jumps three cells north. A garboard jumps one cell north. A turn faces south.",
+			7, 5,
+			[_cell(3, 2), _cell(2, 2), _cell(5, 1), _cell(6, 2), _cell(5, 0)],
+			[
+				_source(4, 3, 0, ["red"]),
+				_source(0, 2, 0, ["blue"]),
+			],
+			{"x": 4, "y": 1},
+			[{"color": "blue"}, {"color": "red"}],
+			[
+				_block("garboard", 5, 3, 0),
+				_block("rabbet", 5, 2, 0),
+				_block("hook", 4, 2, 0),
+				_block("loft", 1, 2, 0),
+			]
+		),
+		_puzzle(
+			179, "Rabbet Count", "",
+			"Stamp blue 1 and red 2. The rabbet's wait is what makes the counter read 2.",
+			"",
+			"The rabbet waits, then jumps the east-facing parcel one cell west. The hook sends that facing north onto the counter after blue has been stamped 1, so red is stamped 2. A return reverses the facing. A balk jumps two cells west. A keel jumps three cells west. A stealer jumps three cells north. A garboard jumps one cell north. A turn faces south.",
+			6, 5,
+			[_cell(2, 2), _cell(1, 2), _cell(5, 2), _cell(4, 0), _cell(4, 4)],
+			[
+				_source(3, 3, 0, ["red"]),
+				_source(0, 1, 0, ["blue"]),
+			],
+			{"x": 5, "y": 1},
+			[{"color": "blue", "count": 1}, {"color": "red", "count": 2}],
+			[
+				_block("garboard", 4, 3, 0),
+				_block("rabbet", 4, 2, 0),
+				_block("hook", 3, 2, 0),
+				_block("conveyor", 1, 1, 0),
+				_block("pause", 2, 1, 0),
+				_block("counter", 3, 1, 0),
+				_block("conveyor", 4, 1, 0),
+			]
+		),
+		_puzzle(
+			180, "One Cell Back", "",
+			"Land one cell back. The bricks farther back are for longer jumps.",
+			"",
+			"The rabbet jumps one cell west and leaves the parcel facing east. The hook steps north onto the dock. A balk tries to land on the first brick. A keel tries to land on the brick beyond it. A garboard jumps one cell north. A stealer jumps three cells north. A return reverses the facing, so the hook steps south. A turn faces south.",
+			5, 5,
+			[_cell(1, 2), _cell(0, 2), _cell(3, 1), _cell(3, 0), _cell(4, 2)],
+			[_source(2, 3, 0, ["gray"])],
+			{"x": 2, "y": 1},
+			[{"color": "gray"}],
+			[
+				_block("garboard", 3, 3, 0),
+				_block("rabbet", 3, 2, 0),
+				_block("hook", 2, 2, 0),
+			]
+		),
+		_puzzle(
+			181, "Two Rabbets", "",
+			"Deliver red, then blue. Each jump is one cell backward from a different facing.",
+			"",
+			"Red arrives facing east, jumps one cell west, and the hook steps north toward the dock. Blue arrives facing north, jumps one cell south, and the hook steps west toward the dock. Each jump keeps the arrival facing. A return reverses that facing, so the hook steps the other way. A balk jumps two cells back. A keel jumps three cells back. A stealer jumps three cells to the left. A garboard jumps one cell to the left. A turn faces the other way.",
+			9, 6,
+			[_cell(4, 3), _cell(3, 3), _cell(6, 0), _cell(7, 3), _cell(5, 1), _cell(8, 3), _cell(7, 0)],
+			[
+				_source(5, 4, 0, ["red"]),
+				_source(8, 2, 3, ["blue"]),
+			],
+			{"x": 4, "y": 2},
+			[{"color": "red"}, {"color": "blue"}],
+			[
+				_block("garboard", 6, 4, 0),
+				_block("rabbet", 6, 3, 0),
+				_block("hook", 5, 3, 0),
+				_block("conveyor", 5, 2, 2),
+				_block("garboard", 8, 1, 0),
+				_block("rabbet", 7, 1, 0),
+				_block("hook", 7, 2, 0),
+				_block("pause", 6, 2, 0),
+			]
+		),
+		_puzzle(
+			182, "Second Rabbet", "",
+			"Jump one cell back, hook, then jump one cell back on the new facing.",
+			"",
+			"The first rabbet jumps the east-facing parcel one cell west and leaves it facing east. The hook sends it north. The garboard carries that north facing onto the second rabbet. That rabbet jumps one cell south, still facing north, and the last hook steps west onto the dock. One rabbet cannot do both jumps. A return reverses the facing. A balk jumps two cells back. A keel jumps three cells back. A stealer jumps three cells to the left. A garboard jumps one cell to the left. A turn faces south.",
+			6, 6,
+			[_cell(3, 3), _cell(2, 3), _cell(5, 2), _cell(5, 0), _cell(5, 5), _cell(1, 1)],
+			[_source(4, 4, 0, ["gray"])],
+			{"x": 2, "y": 2},
+			[{"color": "gray"}],
+			[
+				_block("garboard", 5, 4, 0),
+				_block("rabbet", 5, 3, 0),
+				_block("hook", 4, 3, 0),
+				_block("conveyor", 4, 2, 3),
+				_block("garboard", 4, 1, 0),
+				_block("rabbet", 3, 1, 0),
+				_block("hook", 3, 2, 0),
+			]
+		),
+		_puzzle(
+			183, "Night Rabbet", "",
+			"Deliver red 1, yellow 2, and blue 3.",
+			"",
+			"Red takes the filter. The rabbet jumps it one cell west and leaves it facing east. The hook sends that facing north, and the bridge carries red onto the counter for stamp 1. Gray takes the long belt, crosses the bridge, and is primed yellow. Blue keeps its color. A return reverses the facing, so the hook steps south. A balk jumps two cells west. A keel jumps three cells west. A stealer jumps three cells north. A garboard jumps one cell north. A turn faces south.",
+			8, 6,
+			[_cell(1, 2), _cell(0, 2), _cell(3, 1), _cell(3, 0), _cell(4, 2), _cell(3, 4)],
+			[_source(0, 3, 0, ["gray", "blue", "red"])],
+			{"x": 6, "y": 0},
+			[{"color": "red", "count": 1}, {"color": "yellow", "count": 2}, {"color": "blue", "count": 3}],
+			[
+				_block("filter", 1, 3, 0, "red"),
+				_block("conveyor", 2, 3, 0),
+				_block("garboard", 3, 3, 0),
+				_block("rabbet", 3, 2, 0),
+				_block("hook", 2, 2, 0),
+				_block("conveyor", 2, 1, 3),
+				_block("bridge", 2, 0, 0),
+				_block("counter", 4, 0, 0),
+				_block("conveyor", 5, 0, 0),
+				_block("pause", 1, 4, 0),
+				_block("primer", 1, 5, 0, "yellow"),
+				_block("conveyor", 2, 5, 0),
+				_block("conveyor", 3, 5, 0),
+				_block("conveyor", 4, 5, 0),
+				_block("conveyor", 5, 5, 0),
+				_block("conveyor", 6, 5, 0),
+				_block("conveyor", 7, 5, 3),
+				_block("conveyor", 7, 4, 3),
+				_block("conveyor", 7, 3, 3),
+				_block("conveyor", 7, 2, 3),
+				_block("conveyor", 7, 1, 2),
+				_block("conveyor", 6, 1, 2),
+				_block("conveyor", 5, 1, 2),
+				_block("bridge", 4, 1, 2),
+			]
+		),
 	]
 
 
@@ -3277,7 +3712,7 @@ static func _puzzle(id: int, title: String, unlocks: String, brief: String, how_
 		"dock": dock,
 		"order": order,
 		"reference": reference,
-		"building": 22 if id >= 156 else 21 if id >= 149 else 20 if id >= 142 else 19 if id >= 135 else 18 if id >= 128 else 17 if id >= 121 else 16 if id >= 114 else 15 if id >= 107 else 14 if id >= 100 else 13 if id >= 93 else 12 if id >= 86 else 11 if id >= 79 else 10 if id >= 72 else 9 if id >= 65 else 8 if id >= 58 else 7 if id >= 51 else 6 if id >= 44 else 5 if id >= 37 else 4 if id >= 30 else 3 if id >= 23 else 2 if id >= 16 else 1,
+		"building": 25 if id >= 177 else 24 if id >= 170 else 23 if id >= 163 else 22 if id >= 156 else 21 if id >= 149 else 20 if id >= 142 else 19 if id >= 135 else 18 if id >= 128 else 17 if id >= 121 else 16 if id >= 114 else 15 if id >= 107 else 14 if id >= 100 else 13 if id >= 93 else 12 if id >= 86 else 11 if id >= 79 else 10 if id >= 72 else 9 if id >= 65 else 8 if id >= 58 else 7 if id >= 51 else 6 if id >= 44 else 5 if id >= 37 else 4 if id >= 30 else 3 if id >= 23 else 2 if id >= 16 else 1,
 	}
 
 

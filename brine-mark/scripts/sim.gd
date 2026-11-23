@@ -1049,6 +1049,8 @@ const GUIDON := 27
 const FANION := 28
 const PENNON := 29
 const GONFALON := 30
+const ORIFLAMME := 31
+const VEXILLUM := 32
 
 const WET := 0
 const DRY := 1
@@ -1080,6 +1082,8 @@ const GUIDONING := 23
 const FANIONING := 24
 const PENNONING := 25
 const GONFALONING := 26
+const ORIFLAMMING := 27
+const VEXILLUMING := 28
 
 const GRID_W := 17
 const GRID_H := 12
@@ -1088,8 +1092,8 @@ const GRID_H := 12
 # watch is row -5, the lamp is row -6, the bell is row -7, the horn is row -8,
 # the flag is row -9, the banner is row -10, the pennant is row -11, the
 # standard is row -12, the jack is row -13, the ensign is row -14, the
-# burgee is row -15, the cornet is row -16, the guidon is row -17, the fanion is row -18, the pennon is row -19, and the gonfalon is row -20.
-const GRID_NORTH := -20
+# burgee is row -15, the cornet is row -16, the guidon is row -17, the fanion is row -18, the pennon is row -19, the gonfalon is row -20, the oriflamme is row -21, and the vexillum is row -22.
+const GRID_NORTH := -22
 # The only cell that accepts a pennant. One cell north of the banner at (14, -10).
 const PENNANT_CELL := Vector2i(14, -11)
 # The only cell that accepts a standard. One cell north of the pennant.
@@ -1110,6 +1114,10 @@ const FANION_CELL := Vector2i(14, -18)
 const PENNON_CELL := Vector2i(14, -19)
 # The only cell that accepts a gonfalon. One cell north of the pennon.
 const GONFALON_CELL := Vector2i(14, -20)
+# The only cell that accepts an oriflamme. One cell north of the gonfalon.
+const ORIFLAMME_CELL := Vector2i(14, -21)
+# The only cell that accepts a vexillum. One cell north of the oriflamme.
+const VEXILLUM_CELL := Vector2i(14, -22)
 const COAST_X := 0
 const ANTHILL := Vector2i(14, 5)
 
@@ -1144,6 +1152,8 @@ const GUIDON_TICK := 100
 const FANION_TICK := 100
 const PENNON_TICK := 100
 const GONFALON_TICK := 100
+const ORIFLAMME_TICK := 100
+const VEXILLUM_TICK := 100
 const TICK_HZ := 10
 const HIRE_COST := 100
 # Coins one payment takes from the yard. A shorter purse pays nobody.
@@ -1195,6 +1205,10 @@ const FANION_CAP := 1
 const PENNON_CAP := 1
 # Total furled hires the gonfalon dips. Past this the beat stops moving them.
 const GONFALON_CAP := 1
+# Total dipped hires the oriflamme lowers. Past this the beat stops moving them.
+const ORIFLAMME_CAP := 1
+# Total lowered hires the vexillum houses. Past this the beat stops moving them.
+const VEXILLUM_CAP := 1
 
 const JOB_GATHER := 0
 const JOB_STACK := 1
@@ -1232,6 +1246,8 @@ var _guidon: Dictionary = {}
 var _fanion: Dictionary = {}
 var _pennon: Dictionary = {}
 var _gonfalon: Dictionary = {}
+var _oriflamme: Dictionary = {}
+var _vexillum: Dictionary = {}
 var _workers: Array = []
 
 var _next_id: int = 0
@@ -1288,6 +1304,8 @@ func restart() -> void:
 	_fanion.clear()
 	_pennon.clear()
 	_gonfalon.clear()
+	_oriflamme.clear()
+	_vexillum.clear()
 	_workers.clear()
 	_next_id = 0
 	_tick_index = 0
@@ -1310,7 +1328,7 @@ func paint_cell(x: int, y: int, mode: int) -> bool:
 		return false
 	if not _paintable(x, y):
 		return false
-	if mode < EMPTY or mode > GONFALON:
+	if mode < EMPTY or mode > VEXILLUM:
 		return false
 	# The pennant row accepts a pennant only at PENNANT_CELL. A banner stays
 	# one cell south, and that cell rejects a pennant. The standard row accepts
@@ -1323,6 +1341,8 @@ func paint_cell(x: int, y: int, mode: int) -> bool:
 	# The fanion row accepts a fanion only at FANION_CELL, one cell north of the guidon.
 	# The pennon row accepts a pennon only at PENNON_CELL, one cell north of the fanion.
 	# The gonfalon row accepts a gonfalon only at GONFALON_CELL, one cell north of the pennon.
+	# The oriflamme row accepts an oriflamme only at ORIFLAMME_CELL, one cell north of the gonfalon.
+	# The vexillum row accepts a vexillum only at VEXILLUM_CELL, one cell north of the oriflamme.
 	if mode == PENNANT and Vector2i(x, y) != PENNANT_CELL:
 		return false
 	if y == PENNANT_CELL.y and mode != PENNANT and mode != EMPTY:
@@ -1363,6 +1383,14 @@ func paint_cell(x: int, y: int, mode: int) -> bool:
 		return false
 	if y == GONFALON_CELL.y and mode != GONFALON and mode != EMPTY:
 		return false
+	if mode == ORIFLAMME and Vector2i(x, y) != ORIFLAMME_CELL:
+		return false
+	if y == ORIFLAMME_CELL.y and mode != ORIFLAMME and mode != EMPTY:
+		return false
+	if mode == VEXILLUM and Vector2i(x, y) != VEXILLUM_CELL:
+		return false
+	if y == VEXILLUM_CELL.y and mode != VEXILLUM and mode != EMPTY:
+		return false
 	var cell := Vector2i(x, y)
 	if mode == EMPTY:
 		_paint.erase(cell)
@@ -1383,14 +1411,28 @@ func _gonfalon_painted() -> bool:
 	return _paint_at(GONFALON_CELL) == GONFALON
 
 
+func _oriflamme_painted() -> bool:
+	return _paint_at(ORIFLAMME_CELL) == ORIFLAMME
+
+
+func _vexillum_painted() -> bool:
+	return _paint_at(VEXILLUM_CELL) == VEXILLUM
+
+
 func _scenario_end_tick() -> int:
 	var end_tick := RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK + FANION_TICK
 	# A painted pennon opens one more beat. With no pennon, the fanion still ends the scenario.
-	if _phase == PENNONING or _pennon_painted() or _phase == GONFALONING or _gonfalon_painted():
+	if _phase == PENNONING or _pennon_painted() or _phase == GONFALONING or _gonfalon_painted() or _phase == ORIFLAMMING or _oriflamme_painted() or _phase == VEXILLUMING or _vexillum_painted():
 		end_tick += PENNON_TICK
 	# A painted gonfalon opens one more beat after the pennon. With no gonfalon, the pennon still ends the scenario.
-	if _phase == GONFALONING or _gonfalon_painted():
+	if _phase == GONFALONING or _gonfalon_painted() or _phase == ORIFLAMMING or _oriflamme_painted() or _phase == VEXILLUMING or _vexillum_painted():
 		end_tick += GONFALON_TICK
+	# A painted oriflamme opens one more beat after the gonfalon. With no oriflamme, the gonfalon still ends the scenario.
+	if _phase == ORIFLAMMING or _oriflamme_painted() or _phase == VEXILLUMING or _vexillum_painted():
+		end_tick += ORIFLAMME_TICK
+	# A painted vexillum opens one more beat after the oriflamme. With no vexillum, the oriflamme still ends the scenario.
+	if _phase == VEXILLUMING or _vexillum_painted():
+		end_tick += VEXILLUM_TICK
 	return end_tick
 
 
@@ -1466,13 +1508,23 @@ func tick() -> void:
 			_open_gonfalon()
 		else:
 			_finish()
+	elif _tick_index == RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK + FANION_TICK + PENNON_TICK + GONFALON_TICK:
+		if _oriflamme_painted():
+			_open_oriflamme()
+		else:
+			_finish()
+	elif _tick_index == RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK + FANION_TICK + PENNON_TICK + GONFALON_TICK + ORIFLAMME_TICK:
+		if _vexillum_painted():
+			_open_vexillum()
+		else:
+			_finish()
 	elif _tick_index >= end_tick:
 		_finish()
 
 
 func run_until_rain() -> void:
 	var guard := 0
-	var limit := RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK + FANION_TICK + PENNON_TICK + GONFALON_TICK + 2
+	var limit := RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK + FANION_TICK + PENNON_TICK + GONFALON_TICK + ORIFLAMME_TICK + VEXILLUM_TICK + 2
 	while not _rain_done and guard < limit:
 		tick()
 		guard += 1
@@ -1498,7 +1550,7 @@ func get_season() -> int:
 	return _season
 
 
-# WET, DRY, CART, SHIPPING, MARKET, YARDING, BUNKING, LOFTING, GATING, WAGING, RELIEVING, WATCHING, LAMPING, BELLING, HORNING, FLAGGING, BANNERING, PENNANTING, STANDARDING, JACKING, ENSIGNING, BURGEEING, CORNETING, GUIDONING, FANIONING, PENNONING, or GONFALONING. Weather stays dry after the first rain.
+# WET, DRY, CART, SHIPPING, MARKET, YARDING, BUNKING, LOFTING, GATING, WAGING, RELIEVING, WATCHING, LAMPING, BELLING, HORNING, FLAGGING, BANNERING, PENNANTING, STANDARDING, JACKING, ENSIGNING, BURGEEING, CORNETING, GUIDONING, FANIONING, PENNONING, GONFALONING, ORIFLAMMING, or VEXILLUMING. Weather stays dry after the first rain.
 func get_beat() -> int:
 	return _phase
 
@@ -1547,7 +1599,7 @@ func get_yard_left() -> int:
 # posted to a relief, hires later stood on a watch, and hires later lit
 # by a lamp. One hire costs HIRE_COST. Nothing is rolled.
 func get_hired() -> int:
-	return _sum(_bunk) + _sum(_loft) + _sum(_gate) + _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon)
+	return _sum(_bunk) + _sum(_loft) + _sum(_gate) + _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum)
 
 
 # Hires still sitting at a bunk. Lofting moves these one at a time.
@@ -1559,7 +1611,7 @@ func get_bunk_left() -> int:
 # hires later paid a wage, hires later posted, hires later stood, and hires
 # later lit. The hire total still counts these.
 func get_lofted() -> int:
-	return _sum(_loft) + _sum(_gate) + _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon)
+	return _sum(_loft) + _sum(_gate) + _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum)
 
 
 # Hires still sitting in a loft. The gate moves these one at a time.
@@ -1571,7 +1623,7 @@ func get_loft_left() -> int:
 # hires later posted, hires later stood, and hires later lit. Nothing is
 # rolled. The loft total and the hire total still count these.
 func get_gated() -> int:
-	return _sum(_gate) + _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon)
+	return _sum(_gate) + _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum)
 
 
 # Hires who passed a gate and have not been paid. The wage pays these one at a time.
@@ -1583,7 +1635,7 @@ func get_gate_left() -> int:
 # hires later lit. Pay is WAGE_COST coins from the yard. Nothing is rolled.
 # The gate total and the hire total still count these.
 func get_paid() -> int:
-	return _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon)
+	return _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum)
 
 
 # Hires who were paid and have not been posted. The relief posts these one at a time.
@@ -1595,7 +1647,7 @@ func get_wage_left() -> int:
 # on a watch and hires later lit by a lamp. Nothing is rolled. The paid
 # total and the hire total still count these. Posting spends no coins.
 func get_posted() -> int:
-	return _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon)
+	return _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum)
 
 
 # Hires who were posted and have not been stood. The watch stands these one at a time.
@@ -1607,7 +1659,7 @@ func get_relief_left() -> int:
 # lamp. Nothing is rolled. The posted total and the hire total still count
 # these. Standing spends no coins and does not change the posted count.
 func get_stood() -> int:
-	return _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon)
+	return _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum)
 
 
 # Hires who were stood and have not been lit. The lamp lights these one at a time.
@@ -1620,7 +1672,7 @@ func get_watch_left() -> int:
 # and the hire total still count these. Lighting spends no coins and does not
 # change the stood count or the posted count.
 func get_lit() -> int:
-	return _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon)
+	return _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum)
 
 
 # Hires who were lit and have not been rung. The bell rings these one at a time.
@@ -1633,7 +1685,7 @@ func get_lamp_left() -> int:
 # Ringing spends no coins and does not change the lit count, the stood count,
 # or the posted count.
 func get_rung() -> int:
-	return _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon)
+	return _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum)
 
 
 # Hires who were rung and have not been sounded. The horn sounds these one at a time.
@@ -1647,7 +1699,7 @@ func get_bell_left() -> int:
 # does not change the rung count, the lit count, the stood count, or the
 # posted count.
 func get_sounded() -> int:
-	return _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon)
+	return _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum)
 
 
 # Hires who were sounded and have not been raised. The flag raises these one at a time.
@@ -1661,7 +1713,7 @@ func get_horn_left() -> int:
 # the rung count, the lit count, the stood count, or the posted count.
 # The raised total still counts a hire who was later hoisted.
 func get_raised() -> int:
-	return _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon)
+	return _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum)
 
 
 # Hires who were raised and have not been hoisted. The banner hoists these one at a time.
@@ -1675,7 +1727,7 @@ func get_flag_left() -> int:
 # the sounded count, the rung count, the lit count, the stood count, or the
 # posted count. The hoisted total still counts a hire who was later flown.
 func get_hoisted() -> int:
-	return _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon)
+	return _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum)
 
 
 # Hires who were hoisted and have not been flown. The pennant flies these one at a time.
@@ -1690,7 +1742,7 @@ func get_banner_left() -> int:
 # count, or the posted count. The flown total still counts a hire who was later
 # carried.
 func get_flown() -> int:
-	return _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon)
+	return _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum)
 
 
 # Hires who were flown and have not been carried. The standard carries these one at a time.
@@ -1705,7 +1757,7 @@ func get_pennant_left() -> int:
 # lit count, the stood count, or the posted count. The carried total still
 # counts a hire who was later shown.
 func get_carried() -> int:
-	return _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon)
+	return _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum)
 
 
 # Hires who were carried and have not been shown. The jack shows these one at a time.
@@ -1721,7 +1773,7 @@ func get_standard_left() -> int:
 # count, the lit count, the stood count, or the posted count. The shown total
 # still counts a hire who was later broken, struck, or dipped.
 func get_shown() -> int:
-	return _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon)
+	return _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum)
 
 
 # Hires who were shown and have not been broken. The ensign breaks these one at a time.
@@ -1737,7 +1789,7 @@ func get_jack_left() -> int:
 # the stood count, or the posted count. The broken total still counts a hire
 # who was later struck or dipped.
 func get_broken() -> int:
-	return _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon)
+	return _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum)
 
 
 # Hires who were broken and have not been struck. The burgee strikes these one at a time.
@@ -1753,7 +1805,7 @@ func get_ensign_left() -> int:
 # the rung count, the lit count, the stood count, or the posted count. The
 # struck total still counts a hire who was later dipped or saluted.
 func get_struck() -> int:
-	return _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon)
+	return _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum)
 
 
 # Hires who were struck and have not been dipped. The cornet dips these one at a time.
@@ -1769,7 +1821,7 @@ func get_burgee_left() -> int:
 # count, the stood count, or the posted count. The dipped total still counts
 # a hire who was later saluted.
 func get_dipped() -> int:
-	return _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon)
+	return _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum)
 
 
 # Hires who were dipped and have not been saluted. The guidon salutes these one at a time.
@@ -1785,7 +1837,7 @@ func get_cornet_left() -> int:
 # count, the lit count, the stood count, or the posted count. The saluted total
 # still counts a hire who was later presented.
 func get_saluted() -> int:
-	return _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon)
+	return _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum)
 
 
 # Hires who were saluted and have not been presented. The fanion presents these one at a time.
@@ -1801,7 +1853,7 @@ func get_guidon_left() -> int:
 # sounded count, the rung count, the lit count, the stood count, or the posted
 # count. The presented total still counts a hire who was later furled.
 func get_presented() -> int:
-	return _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon)
+	return _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum)
 
 
 # Hires who were presented and have not been furled. The pennon furls these one at a time.
@@ -1814,7 +1866,7 @@ func get_fanion_left() -> int:
 # count these. Furling spends no coins and does not change the presented count
 # or any earlier count. The furled total still counts a hire who was later dipped.
 func get_furled() -> int:
-	return _sum(_pennon) + _sum(_gonfalon)
+	return _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum)
 
 
 # Hires who were furled and have not been dipped on a gonfalon. The gonfalon dips these one at a time.
@@ -1822,12 +1874,41 @@ func get_pennon_left() -> int:
 	return _sum(_pennon)
 
 
-# Hires dipped on a gonfalon, at most GONFALON_CAP. Nothing is rolled. The furled
+# Hires dipped on a gonfalon, at most GONFALON_CAP, including hires later lowered
+# on an oriflamme and later housed on a vexillum. Nothing is rolled. The furled
 # total and the hire total still count these. Dipping spends no coins and does
-# not change the furled count, the presented count, or any earlier count.
-# The cornet's dipped total is get_dipped(); this count is only the gonfalon.
+# not change the furled count, the presented count, or any earlier count. The
+# dipped total still counts a hire who was later lowered. The cornet's dipped
+# total is get_dipped().
 func get_gonfalon_dipped() -> int:
+	return _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum)
+
+
+# Hires who were dipped on a gonfalon and have not been lowered. The oriflamme lowers these one at a time.
+func get_gonfalon_left() -> int:
 	return _sum(_gonfalon)
+
+
+# Hires lowered on an oriflamme, at most ORIFLAMME_CAP, including hires later
+# housed on a vexillum. Nothing is rolled. The gonfalon dipped total and the
+# hire total still count these. Lowering spends no coins and does not change
+# the gonfalon dipped count, the furled count, the presented count, or any
+# earlier count. The lowered total still counts a hire who was later housed.
+func get_oriflamme_lowered() -> int:
+	return _sum(_oriflamme) + _sum(_vexillum)
+
+
+# Hires who were lowered on an oriflamme and have not been housed. The vexillum houses these one at a time.
+func get_oriflamme_left() -> int:
+	return _sum(_oriflamme)
+
+
+# Hires housed on a vexillum, at most VEXILLUM_CAP. Nothing is rolled. The
+# oriflamme lowered total and the hire total still count these. Housing spends
+# no coins and does not change the lowered count, the gonfalon dipped count,
+# the furled count, the presented count, or any earlier count.
+func get_vexillum_housed() -> int:
+	return _sum(_vexillum)
 
 
 func _hired_coins() -> int:
@@ -1918,6 +1999,10 @@ func get_ticks_until_rain() -> int:
 		horizon = RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK + FANION_TICK + PENNON_TICK
 	elif _phase == GONFALONING:
 		horizon = RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK + FANION_TICK + PENNON_TICK + GONFALON_TICK
+	elif _phase == VEXILLUMING:
+		horizon = RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK + FANION_TICK + PENNON_TICK + GONFALON_TICK + ORIFLAMME_TICK + VEXILLUM_TICK
+	elif _phase == ORIFLAMMING:
+		horizon = RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK + FANION_TICK + PENNON_TICK + GONFALON_TICK + ORIFLAMME_TICK
 	return maxi(horizon - _tick_index, 0)
 
 
@@ -1960,6 +2045,8 @@ func get_cell_salt(x: int, y: int) -> Dictionary:
 		"fanion": _amount(_fanion, cell),
 		"pennon": _amount(_pennon, cell),
 		"gonfalon": _amount(_gonfalon, cell),
+		"oriflamme": _amount(_oriflamme, cell),
+		"vexillum": _amount(_vexillum, cell),
 	}
 
 
@@ -2038,6 +2125,10 @@ func rules_api() -> PackedStringArray:
 		"get_furled",
 		"get_pennon_left",
 		"get_gonfalon_dipped",
+		"get_gonfalon_left",
+		"get_oriflamme_lowered",
+		"get_oriflamme_left",
+		"get_vexillum_housed",
 		"get_bank_left",
 		"get_population",
 		"get_max_population",
@@ -2163,6 +2254,10 @@ func _walkable(x: int, y: int) -> bool:
 	if paint == PENNON and _phase < PENNONING:
 		return false
 	if paint == GONFALON and _phase < GONFALONING:
+		return false
+	if paint == ORIFLAMME and _phase < ORIFLAMMING:
+		return false
+	if paint == VEXILLUM and _phase < VEXILLUMING:
 		return false
 	return true
 
@@ -2378,6 +2473,20 @@ func _flows() -> Dictionary:
 			JOB_GATHER: dipping,
 			JOB_STACK: dipping,
 			JOB_COVER: dipping,
+		}
+	if _phase == VEXILLUMING:
+		var housing := _build_flow(_vexillum_goals())
+		return {
+			JOB_GATHER: housing,
+			JOB_STACK: housing,
+			JOB_COVER: housing,
+		}
+	if _phase == ORIFLAMMING:
+		var lowering := _build_flow(_oriflamme_goals())
+		return {
+			JOB_GATHER: lowering,
+			JOB_STACK: lowering,
+			JOB_COVER: lowering,
 		}
 	return {
 		JOB_GATHER: _build_flow(_gather_goals()),
@@ -2735,6 +2844,36 @@ func _fanion_goals() -> Array:
 	return goals
 
 
+func _vexillum_goals() -> Array:
+	var goals: Array = []
+	if get_vexillum_housed() >= VEXILLUM_CAP or get_oriflamme_left() <= 0:
+		return goals
+	for y in range(GRID_NORTH, GRID_H):
+		for x in GRID_W:
+			var cell := Vector2i(x, y)
+			if _paint_at(cell) != VEXILLUM:
+				continue
+			if _amount(_vexillum, cell) >= VEXILLUM_CAP:
+				continue
+			goals.append(cell)
+	return goals
+
+
+func _oriflamme_goals() -> Array:
+	var goals: Array = []
+	if get_oriflamme_lowered() >= ORIFLAMME_CAP or get_gonfalon_left() <= 0:
+		return goals
+	for y in range(GRID_NORTH, GRID_H):
+		for x in GRID_W:
+			var cell := Vector2i(x, y)
+			if _paint_at(cell) != ORIFLAMME:
+				continue
+			if _amount(_oriflamme, cell) >= ORIFLAMME_CAP:
+				continue
+			goals.append(cell)
+	return goals
+
+
 func _gonfalon_goals() -> Array:
 	var goals: Array = []
 	if get_gonfalon_dipped() >= GONFALON_CAP or get_pennon_left() <= 0:
@@ -2935,6 +3074,12 @@ func _work(worker: Worker) -> void:
 		return
 	if _phase == GONFALONING:
 		_dip_gonfalon(worker)
+		return
+	if _phase == VEXILLUMING:
+		_house_vexillum(worker)
+		return
+	if _phase == ORIFLAMMING:
+		_lower_oriflamme(worker)
 		return
 	var cell := Vector2i(worker.x, worker.y)
 	if worker.job == JOB_GATHER:
@@ -3283,6 +3428,46 @@ func _hoist_banner(worker: Worker) -> void:
 				continue
 			_put(_flag, src, amount - 1)
 			_put(_banner, cell, held + 1)
+			return
+
+
+func _house_vexillum(worker: Worker) -> void:
+	var cell := Vector2i(worker.x, worker.y)
+	if _paint_at(cell) != VEXILLUM:
+		return
+	if get_vexillum_housed() >= VEXILLUM_CAP:
+		return
+	var held := _amount(_vexillum, cell)
+	if held >= VEXILLUM_CAP:
+		return
+	for y in range(GRID_NORTH, GRID_H):
+		for x in GRID_W:
+			var src := Vector2i(x, y)
+			var amount := _amount(_oriflamme, src)
+			if amount <= 0:
+				continue
+			_put(_oriflamme, src, amount - 1)
+			_put(_vexillum, cell, held + 1)
+			return
+
+
+func _lower_oriflamme(worker: Worker) -> void:
+	var cell := Vector2i(worker.x, worker.y)
+	if _paint_at(cell) != ORIFLAMME:
+		return
+	if get_oriflamme_lowered() >= ORIFLAMME_CAP:
+		return
+	var held := _amount(_oriflamme, cell)
+	if held >= ORIFLAMME_CAP:
+		return
+	for y in range(GRID_NORTH, GRID_H):
+		for x in GRID_W:
+			var src := Vector2i(x, y)
+			var amount := _amount(_gonfalon, src)
+			if amount <= 0:
+				continue
+			_put(_gonfalon, src, amount - 1)
+			_put(_oriflamme, cell, held + 1)
 			return
 
 
@@ -3685,6 +3870,18 @@ func _open_gonfalon() -> void:
 	_phase = GONFALONING
 
 
+func _open_oriflamme() -> void:
+	if _phase != GONFALONING or _rain_done or not _oriflamme_painted():
+		return
+	_phase = ORIFLAMMING
+
+
+func _open_vexillum() -> void:
+	if _phase != ORIFLAMMING or _rain_done or not _vexillum_painted():
+		return
+	_phase = VEXILLUMING
+
+
 func _finish() -> void:
 	if _rain_done:
 		return
@@ -3785,4 +3982,8 @@ func _make_summary() -> String:
 		message += " Furled %d on the pennon. Left %d at the fanion." % [get_furled(), get_fanion_left()]
 	if get_gonfalon_dipped() > 0:
 		message += " Dipped %d on the gonfalon. Left %d at the pennon." % [get_gonfalon_dipped(), get_pennon_left()]
+	if get_oriflamme_lowered() > 0:
+		message += " Lowered %d on the oriflamme. Left %d at the gonfalon." % [get_oriflamme_lowered(), get_gonfalon_left()]
+	if get_vexillum_housed() > 0:
+		message += " Housed %d on the vexillum. Left %d at the oriflamme." % [get_vexillum_housed(), get_oriflamme_left()]
 	return message

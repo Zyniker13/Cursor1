@@ -271,6 +271,14 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_cavetto(at, rot)
 		"fillet":
 			_draw_fillet(at, rot)
+		"corona":
+			_draw_corona(at, rot)
+		"bead":
+			_draw_bead(at, rot)
+		"quirk":
+			_draw_quirk(at, rot)
+		"cyma":
+			_draw_cyma(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -933,6 +941,129 @@ func _fillet_band(center: Vector2, dir: String, band: Color) -> void:
 		inner - along * half,
 	])
 	draw_colored_polygon(rect, band)
+
+func _draw_corona(at: Vector2i, rot: int) -> void:
+	# A thin pale shelf on each passing edge. A north corona shelves the east
+	# and west edges. Each shelf is a flat ledge. It is not the fillet's
+	# single band and not the cavetto's inward V-notch.
+	var center := _center(at)
+	var facing := Tracer.corona_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var shelf := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var lip := Palette.GLASS if not flooded else Palette.TIDE
+	for turn in [1, -1]:
+		_corona_shelf(center, Tracer.rotate_dir(facing, turn), shelf, lip)
+
+func _corona_shelf(center: Vector2, dir: String, shelf: Color, lip: Color) -> void:
+	var along := Vector2.RIGHT
+	var outward := Vector2.DOWN
+	match dir:
+		"N":
+			along = Vector2.RIGHT
+			outward = Vector2.UP
+		"S":
+			along = Vector2.RIGHT
+			outward = Vector2.DOWN
+		"E":
+			along = Vector2.DOWN
+			outward = Vector2.RIGHT
+		_:
+			along = Vector2.DOWN
+			outward = Vector2.LEFT
+	var edge := cell * 0.40
+	var thick := cell * 0.05
+	var half := cell * 0.32
+	var outer := center + outward * edge
+	var inner := outer - outward * thick
+	var rect := PackedVector2Array([
+		outer - along * half,
+		outer + along * half,
+		inner + along * half,
+		inner - along * half,
+	])
+	draw_colored_polygon(rect, shelf)
+	draw_line(inner - along * half, inner + along * half, lip, 1.4)
+
+func _draw_bead(at: Vector2i, rot: int) -> void:
+	# One small square pip on the single clockwise edge. A north bead marks
+	# the east edge. The pip is square. It is not the torus's two round beads,
+	# not the fillet's band, and not the corona's two shelves.
+	var center := _center(at)
+	var passing := Tracer.rotate_dir(Tracer.bead_facing(rot), 1)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var pip := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var outward := Vector2.DOWN
+	match passing:
+		"N":
+			outward = Vector2.UP
+		"S":
+			outward = Vector2.DOWN
+		"E":
+			outward = Vector2.RIGHT
+		_:
+			outward = Vector2.LEFT
+	var half := cell * 0.07
+	var spot := center + outward * cell * 0.34
+	var rect := Rect2(spot - Vector2(half, half), Vector2(half * 2.0, half * 2.0))
+	draw_rect(rect, pip)
+
+func _draw_quirk(at: Vector2i, rot: int) -> void:
+	# One small pale diamond on the single counterclockwise edge. A north quirk
+	# marks the west edge. The mark is a diamond. It is not the bead's square
+	# pip, not the fillet's band, and not the corona's two shelves.
+	var center := _center(at)
+	var passing := Tracer.rotate_dir(Tracer.quirk_facing(rot), -1)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var pip := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var outward := Vector2.LEFT
+	match passing:
+		"N":
+			outward = Vector2.UP
+		"S":
+			outward = Vector2.DOWN
+		"E":
+			outward = Vector2.RIGHT
+		_:
+			outward = Vector2.LEFT
+	var half := cell * 0.08
+	var spot := center + outward * cell * 0.34
+	var diamond := PackedVector2Array([
+		spot + Vector2(0, -half),
+		spot + Vector2(half, 0),
+		spot + Vector2(0, half),
+		spot + Vector2(-half, 0),
+	])
+	draw_colored_polygon(diamond, pip)
+
+func _draw_cyma(at: Vector2i, rot: int) -> void:
+	# A short pale wave on the facing edge. A north cyma marks the north edge.
+	# The wave is not the quirk's diamond and not the bead's square pip.
+	var center := _center(at)
+	var passing := Tracer.cyma_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var wave := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var outward := Vector2.UP
+	var along := Vector2.RIGHT
+	match passing:
+		"N":
+			outward = Vector2.UP
+			along = Vector2.RIGHT
+		"S":
+			outward = Vector2.DOWN
+			along = Vector2.RIGHT
+		"E":
+			outward = Vector2.RIGHT
+			along = Vector2.DOWN
+		_:
+			outward = Vector2.LEFT
+			along = Vector2.DOWN
+	var half := cell * 0.16
+	var spot := center + outward * cell * 0.30
+	var left := spot - along * half + outward * cell * 0.06
+	var mid := spot - outward * cell * 0.05
+	var right := spot + along * half + outward * cell * 0.06
+	draw_line(left, mid, wave, 2.2)
+	draw_line(mid, right, wave, 2.2)
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
 	if dir == "N" or dir == "S":
