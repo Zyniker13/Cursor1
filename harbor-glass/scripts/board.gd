@@ -287,6 +287,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_drip(at, rot)
 		"beak":
 			_draw_beak(at, rot)
+		"hood":
+			_draw_hood(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -1176,6 +1178,40 @@ func _draw_beak(at: Vector2i, rot: int) -> void:
 		base + along * cell * 0.08,
 		base - along * cell * 0.08,
 	]), tip)
+
+func _draw_hood(at: Vector2i, rot: int) -> void:
+	# A wide pale cap on the facing edge, the edge that opens under water.
+	# A north hood caps the north edge. The cap is not the beak's point and
+	# not the ovolo's bow.
+	var center := _center(at)
+	var marked := Tracer.hood_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var cap := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var outward := Vector2.UP
+	var along := Vector2.RIGHT
+	match marked:
+		"N":
+			outward = Vector2.UP
+			along = Vector2.RIGHT
+		"S":
+			outward = Vector2.DOWN
+			along = Vector2.RIGHT
+		"E":
+			outward = Vector2.RIGHT
+			along = Vector2.DOWN
+		_:
+			outward = Vector2.LEFT
+			along = Vector2.DOWN
+	var brim := center + outward * cell * 0.22
+	var eave := center + outward * cell * 0.34
+	var half := cell * 0.22
+	var lip := cell * 0.12
+	draw_colored_polygon(PackedVector2Array([
+		brim - along * half,
+		brim + along * half,
+		eave + along * lip,
+		eave - along * lip,
+	]), cap)
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
 	if dir == "N" or dir == "S":
