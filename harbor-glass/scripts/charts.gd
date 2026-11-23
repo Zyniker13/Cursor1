@@ -17,7 +17,7 @@ class_name ChartBook
 # The Corona holds eight more. The Bead holds eight more. The Quirk holds eight more.
 # The Cyma holds eight more. The Fascia holds eight more. The Soffit holds eight more.
 # The Drip holds eight more. The Beak holds eight more. The Hood holds eight more.
-# The Throat holds eight more. The Larmier holds eight more. The Cill holds eight more. The Threshold holds eight more. The Impost holds eight more. The Architrave holds eight more. The Archivolt holds the last eight.
+# The Throat holds eight more. The Larmier holds eight more. The Cill holds eight more. The Threshold holds eight more. The Impost holds eight more. The Architrave holds eight more. The Archivolt holds eight more. The Abacus holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
@@ -304,6 +304,17 @@ class_name ChartBook
 # north throat passes north, east, and west, and a flooded north throat
 # passes only south. That pair is the throat's. A flooded north cill passes
 # the same east and west, and while it is dry it passes north and south.
+# An abacus has a facing. Rotation changes it the same way: 0 north, 90 east,
+# 180 south, 270 west. While its row is dry, every heading stops on the edge
+# and the beam does not enter. While that row is flooded, only the facing
+# passes straight through in the same direction and the same color, and that
+# pass costs no bounce. It does not turn, it does not recolor, and it does
+# not split. A flooded north abacus passes only north. One click faces east
+# and only east passes. A flooded south abacus passes only south. A dry lintel
+# passes every heading and stays shut under water, so this piece does not
+# repeat that pair. A flooded north archivolt passes east and west. A dry
+# throat passes every heading except the opposite. A dry cyma passes only
+# north and stays shut under water.
 # See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
@@ -352,6 +363,7 @@ const THRESHOLD := "The Threshold"
 const IMPOST := "The Impost"
 const ARCHITRAVE := "The Architrave"
 const ARCHIVOLT := "The Archivolt"
+const ABACUS := "The Abacus"
 
 static func all() -> Array:
 	var book: Array = []
@@ -397,6 +409,7 @@ static func all() -> Array:
 	book.append_array(impost())
 	book.append_array(architrave())
 	book.append_array(archivolt())
+	book.append_array(abacus())
 	return book
 
 
@@ -566,6 +579,10 @@ static func architrave() -> Array:
 
 static func archivolt() -> Array:
 	return [chart_327(), chart_328(), chart_329(), chart_330(), chart_331(), chart_332(), chart_333(), chart_334()]
+
+
+static func abacus() -> Array:
+	return [chart_335(), chart_336(), chart_337(), chart_338(), chart_339(), chart_340(), chart_341(), chart_342()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -12618,6 +12635,197 @@ static func chart_334() -> Dictionary:
 	)
 
 
+static func _abacus_lane(prefix: String, ox: int, open_east: bool) -> Dictionary:
+	var lanterns: Array = [
+		_lantern(prefix + "Tn", ox + 2, 1, "S", "white"),
+		_lantern(prefix + "Ts", ox + 4, 1, "S", "red"),
+		_lantern(prefix + "Te", ox + 1, 2, "S", "blue"),
+		_lantern(prefix + "Tw", ox + 8, 1 if open_east else 2, "S", "red"),
+	]
+	var docks: Array = [
+		_dock(prefix + "Nd", ox + 4, 3, "white", true, open_east),
+		_dock(prefix + "Kb", ox + 4, 2, "blue", true, true),
+		_dock(prefix + "Ks", ox + 2, 3, "red", true, true),
+		_dock(prefix + "Ke", ox + 8, 3, "blue", true, not open_east),
+		_dock(prefix + "Kw", ox + 1, 3, "red", true, true),
+	]
+	if open_east:
+		docks.append(_dock(prefix + "Kx", ox + 8, 2, "white", true, true))
+	return {
+		"lanterns": lanterns,
+		"docks": docks,
+		"fixtures": [
+			_fixture(prefix + "S24", "shutter", ox + 2, 4, 0),
+			_fixture(prefix + "S25", "shutter", ox + 2, 5, 0),
+			_fixture(prefix + "S26", "shutter", ox + 2, 6, 0),
+			_fixture(prefix + "M27", "tide_mirror", ox + 2, 7, 90),
+			_fixture(prefix + "S37", "shutter", ox + 3, 7, 0),
+			_fixture(prefix + "M47", "tide_mirror", ox + 4, 7, 0),
+			_fixture(prefix + "S46", "shutter", ox + 4, 6, 0),
+			_fixture(prefix + "S45", "shutter", ox + 4, 5, 0),
+			_fixture(prefix + "M14", "tide_mirror", ox + 1, 4, 90),
+			_fixture(prefix + "S34", "shutter", ox + 3, 4, 0),
+			_fixture(prefix + "S54", "shutter", ox + 5, 4, 0),
+			_fixture(prefix + "S64", "shutter", ox + 6, 4, 0),
+			_fixture(prefix + "S74", "shutter", ox + 7, 4, 0),
+			_fixture(prefix + "M84", "tide_mirror", ox + 8, 4, 0),
+		],
+	}
+
+
+static func _abacus_chart(id: String, title: String, teach: String, win: String, start_rot: int, sol_rot: int, open_east: bool, boat: bool) -> Dictionary:
+	var lane := _abacus_lane("", 0, open_east)
+	var boats: Array = []
+	if boat:
+		boats.append(_boat("Hb", 1, 7))
+	return {
+		"id": id,
+		"title": title,
+		"harbor": ABACUS,
+		"win": win,
+		"teach": teach,
+		"cols": 9,
+		"rows": 8,
+		"tide_phases": [0, 4],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": lane["lanterns"],
+		"docks": lane["docks"],
+		"boats": boats,
+		"fixtures": lane["fixtures"],
+		"pieces": [
+			_abacus("O", "Abacus", 4, 4, start_rot, sol_rot),
+		],
+	}
+
+
+static func chart_335() -> Dictionary:
+	return _abacus_chart(
+		"335",
+		"The Flooded Abacus",
+		"A flooded north abacus passes only north. East, west, and south stop. While the row is dry, every heading stops. One click faces east and only east passes.",
+		"High water opens only north. Low water stops every heading.",
+		90,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_336() -> Dictionary:
+	return _abacus_chart(
+		"336",
+		"The Turned Abacus",
+		"One click from north faces east. A flooded east abacus passes only east and stops west, north, and south.",
+		"The abacus faces east. Only east passes.",
+		0,
+		90,
+		true,
+		false
+	)
+
+
+static func chart_337() -> Dictionary:
+	return _abacus_chart(
+		"337",
+		"The Archivolt Miss",
+		"A flooded archivolt passes only the perpendicular headings, so it misses north. A dry archivolt stops every heading.",
+		"Only north passes. The archivolt misses that beam.",
+		180,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_338() -> Dictionary:
+	return _abacus_chart(
+		"338",
+		"The Throat Stop",
+		"A dry throat passes every heading except the opposite. A flooded north throat passes only south, so it misses north.",
+		"Only north passes. The throat misses that beam.",
+		270,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_339() -> Dictionary:
+	return _abacus_chart(
+		"339",
+		"The Cyma Shut",
+		"A dry cyma passes only the facing and stays shut under water, so it misses the flooded north pass.",
+		"Only north passes. The cyma stays shut.",
+		90,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_340() -> Dictionary:
+	var west := _abacus_lane("", 0, false)
+	var east := _abacus_lane("U", 10, true)
+	var lanterns: Array = []
+	lanterns.append_array(west["lanterns"])
+	lanterns.append_array(east["lanterns"])
+	var docks: Array = []
+	docks.append_array(west["docks"])
+	docks.append_array(east["docks"])
+	var fixtures: Array = []
+	fixtures.append_array(west["fixtures"])
+	fixtures.append_array(east["fixtures"])
+	return {
+		"id": "340",
+		"title": "Two Abacuses",
+		"harbor": ABACUS,
+		"win": "The west abacus passes only north. The east abacus passes only east.",
+		"teach": "Two abacuses. The west one passes only north. The east one passes only east. Swapping the facings misses.",
+		"cols": 19,
+		"rows": 8,
+		"tide_phases": [0, 4],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": lanterns,
+		"docks": docks,
+		"boats": [],
+		"fixtures": fixtures,
+		"pieces": [
+			_abacus("O", "West abacus", 4, 4, 90, 0),
+			_abacus("U", "East abacus", 14, 4, 0, 90),
+		],
+	}
+
+
+static func chart_341() -> Dictionary:
+	return _abacus_chart(
+		"341",
+		"The Shut Abacus",
+		"While the abacus is dry, every heading stops. Raise the tide and only north passes.",
+		"Low water stops the abacus. High water opens only north.",
+		270,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_342() -> Dictionary:
+	return _abacus_chart(
+		"342",
+		"The Abacus Line",
+		"Raise the tide to the abacus's row. Under water, only north passes. Low water lights the hull and leaves the north dock dark.",
+		"The flood line stands on the abacus. The hull stays dark.",
+		90,
+		0,
+		false,
+		true
+	)
+
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -13066,6 +13274,20 @@ static func _throat(id: String, name: String, x: int, y: int, start_rot: int, so
 		"id": id,
 		"name": name,
 		"kind": "throat",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _abacus(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "abacus",
 		"movable": false,
 		"sockets": [{"id": "a", "x": x, "y": y}],
 		"start_socket": "a",
