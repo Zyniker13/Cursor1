@@ -2451,6 +2451,7 @@ const SHIFT_CONTENTS := 31
 const SHIFT_INTRODUCTION := 32
 const SHIFT_PROLOGUE := 33
 const SHIFT_ACKNOWLEDGMENTS := 34
+const SHIFT_GLOSSARY := 35
 
 const ROW_NAMES := ["top row", "middle row", "bottom row"]
 const COL_NAMES := ["column 1", "column 2", "column 3"]
@@ -4192,6 +4193,54 @@ const ACKNOWLEDGMENTS_BELL := [
 ]
 
 
+const GLOSSARY_BELL := [
+	{
+		"id": "sybil_hale",
+		"name": "Sybil Hale",
+		"form_name": "Peak Toll",
+		"rule_text": "Patience drops by 2 when the number of filled cells is 8 or 9.",
+		"rule": "drop_if_peak_count",
+		"lane": 1,
+		"exemption_row": 2,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "leif_voss",
+		"name": "Leif Voss",
+		"form_name": "Pitch Fill",
+		"rule_text": "A stamp scores twice only when the queue cell seven places after it is filled. The top-right cell has no cell seven places after it, so it does not double. The middle-left cell has no cell seven places after it, so it does not double. The center cell has no cell seven places after it, so it does not double. The middle-right cell has no cell seven places after it, so it does not double. The bottom-left cell has no cell seven places after it, so it does not double. The bottom-middle cell has no cell seven places after it, so it does not double. The bottom-right cell has no cell seven places after it, so it does not double.",
+		"rule": "double_pitch_fill",
+		"lane": 2,
+		"exemption_row": 1,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "auden_brant",
+		"name": "Auden Brant",
+		"form_name": "Single Pay",
+		"rule_text": "Each stamp with exactly one side neighbor scores +2 once. Two side neighbors score their own number. Exactly three side neighbors score their own number. Four side neighbors score their own number. A corner neighbor is not a side. A lone stamp scores its own number.",
+		"rule": "yield_single_pay",
+		"lane": 0,
+		"exemption_row": 0,
+		"goal": 16,
+		"patience": 5,
+	},
+	{
+		"id": "torin_okell",
+		"name": "Torin Okell",
+		"form_name": "Pitch Gap",
+		"rule_text": "A stamp scores twice only when the queue cell seven places before it is empty. The top-left cell has no cell seven places before it, so it does not double. The top-middle cell has no cell seven places before it, so it does not double. The top-right cell has no cell seven places before it, so it does not double. The middle-left cell has no cell seven places before it, so it does not double. The center cell has no cell seven places before it, so it does not double. The middle-right cell has no cell seven places before it, so it does not double. The bottom-left cell has no cell seven places before it, so it does not double.",
+		"rule": "double_pitch_gap",
+		"lane": 2,
+		"exemption_row": 0,
+		"goal": 22,
+		"patience": 5,
+	},
+]
+
+
 class NightState:
 	extends RefCounted
 	var seed: int = 1
@@ -4289,6 +4338,8 @@ static func _canonical_shift(shift_index: int) -> int:
 		return SHIFT_TITLEPAGE
 	if shift_index == SHIFT_COPYRIGHT:
 		return SHIFT_COPYRIGHT
+	if shift_index == SHIFT_GLOSSARY:
+		return SHIFT_GLOSSARY
 	if shift_index == SHIFT_ACKNOWLEDGMENTS:
 		return SHIFT_ACKNOWLEDGMENTS
 	if shift_index == SHIFT_PROLOGUE:
@@ -4320,6 +4371,8 @@ static func new_run(seed_value: int, shift_index: int = SHIFT_FIRST) -> NightSta
 	state.next_iid = 0
 	for card_id in STARTING_DECK:
 		_add_library_card(state, String(card_id))
+	if state.shift == SHIFT_GLOSSARY:
+		_log(state, "The glossary bell begins. Seed %d." % state.seed)
 	if state.shift == SHIFT_ACKNOWLEDGMENTS:
 		_log(state, "The acknowledgments bell begins. Seed %d." % state.seed)
 	if state.shift == SHIFT_PROLOGUE:
@@ -4430,6 +4483,8 @@ static func restart_encounter(state: NightState) -> void:
 
 
 static func shift_label(state: NightState) -> String:
+	if state.shift == SHIFT_GLOSSARY:
+		return "Glossary bell"
 	if state.shift == SHIFT_ACKNOWLEDGMENTS:
 		return "Acknowledgments bell"
 	if state.shift == SHIFT_PROLOGUE:
@@ -4516,6 +4571,8 @@ static func traveler(state: NightState) -> Dictionary:
 
 
 static func _roster(state: NightState) -> Array:
+	if state.shift == SHIFT_GLOSSARY:
+		return GLOSSARY_BELL
 	if state.shift == SHIFT_ACKNOWLEDGMENTS:
 		return ACKNOWLEDGMENTS_BELL
 	if state.shift == SHIFT_PROLOGUE:
@@ -4946,6 +5003,12 @@ static func stamp_progress(state: NightState, card_id: String, row: int, col: in
 		return amount + 2
 	if rule == "double_deep_gap" and _deep_gap(state, row, col):
 		return amount * 2
+	if rule == "double_pitch_fill" and _pitch_fill(state, row, col):
+		return amount * 2
+	if rule == "yield_single_pay" and _single_pay(state, row, col):
+		return amount + 2
+	if rule == "double_pitch_gap" and _pitch_gap(state, row, col):
+		return amount * 2
 	return amount
 
 
@@ -5089,6 +5152,8 @@ static func patience_loss(state: NightState) -> int:
 		elif rule == "drop_if_band_count" and _is_band_count(_stamp_count(state)):
 			loss = 2
 		elif rule == "drop_if_crest_count" and _is_crest_count(_stamp_count(state)):
+			loss = 2
+		elif rule == "drop_if_peak_count" and _is_peak_count(_stamp_count(state)):
 			loss = 2
 	return loss
 
@@ -5429,6 +5494,12 @@ static func _resolve_stamp(state: NightState, row: int, col: int, hush: bool) ->
 				_log(state, "%s on the %s, %s grants %d. Four side neighbors pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			elif tail_rule == "double_deep_gap" and _deep_gap(state, row, col) and amount > raw:
 				_log(state, "%s on the %s, %s grants %d. The empty cell six places before it doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_pitch_fill" and _pitch_fill(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The filled cell seven places after it doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_single_pay" and _single_pay(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. One side neighbor pays +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_pitch_gap" and _pitch_gap(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The empty cell seven places before it doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			else:
 				_log(state, "%s on the %s, %s grants %d." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 	state.turn_progress += amount
@@ -5652,6 +5723,56 @@ static func _deep_gap(state: NightState, row: int, col: int) -> bool:
 		return false
 	var back_row := row
 	var back_col := col - 6
+	while back_col < 0:
+		back_row -= 1
+		back_col += 3
+	if back_row < 0:
+		return false
+	return state.form[back_row][back_col] == null
+
+
+static func _is_peak_count(count: int) -> bool:
+	return count == 8 or count == 9
+
+
+static func _pitch_fill(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var ahead_row := row
+	var ahead_col := col + 7
+	while ahead_col > 2:
+		ahead_row += 1
+		ahead_col -= 3
+	if ahead_row > 2:
+		return false
+	return state.form[ahead_row][ahead_col] != null
+
+
+static func _single_pay(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var sides := 0
+	for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+		var side_row = row + delta.x
+		var side_col = col + delta.y
+		if side_row < 0 or side_col < 0 or side_row > 2 or side_col > 2:
+			continue
+		if state.form[side_row][side_col] != null:
+			sides += 1
+	return sides == 1
+
+
+static func _pitch_gap(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var back_row := row
+	var back_col := col - 7
 	while back_col < 0:
 		back_row -= 1
 		back_col += 3
@@ -6489,6 +6610,8 @@ static func _apply_result(state: NightState, result: Dictionary) -> void:
 		state.encounters_cleared += 1
 		if state.traveler_index >= _roster(state).size() - 1:
 			state.phase = "victory"
+			if state.shift == SHIFT_GLOSSARY:
+				_log(state, "The queue is empty. The glossary bell is clear.")
 			if state.shift == SHIFT_ACKNOWLEDGMENTS:
 				_log(state, "The queue is empty. The acknowledgments bell is clear.")
 			if state.shift == SHIFT_PROLOGUE:
