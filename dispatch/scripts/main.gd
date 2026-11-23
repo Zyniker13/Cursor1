@@ -534,6 +534,8 @@ func _building_mark_name(building: int) -> String:
 			return "BuildingThirtyEightMark"
 		39:
 			return "BuildingThirtyNineMark"
+		40:
+			return "BuildingFortyMark"
 		_:
 			return "Building%dMark" % building
 
@@ -686,7 +688,7 @@ func _sync_facing() -> void:
 			_facing.text = "Facing   counterclockwise"
 		elif _selected == "slide":
 			_facing.text = "Facing   with the parcel"
-		elif _selected == "bin" or _selected == "return" or _selected == "pause" or _selected == "shunt" or _selected == "bias" or _selected == "vault" or _selected == "sling" or _selected == "cant" or _selected == "balk" or _selected == "loft" or _selected == "keel" or _selected == "sheer" or _selected == "strake" or _selected == "wale" or _selected == "garboard" or _selected == "stealer" or _selected == "rabbet" or _selected == "futtock" or _selected == "keelson" or _selected == "stemson" or _selected == "apron" or _selected == "deadwood" or _selected == "gripe" or _selected == "forefoot" or _selected == "knighthead" or _selected == "hawse" or _selected == "breasthook" or _selected == "cathead" or _selected == "gammon" or _selected == "bobstay" or _selected == "bumpkin":
+		elif _selected == "bin" or _selected == "return" or _selected == "pause" or _selected == "shunt" or _selected == "bias" or _selected == "vault" or _selected == "sling" or _selected == "cant" or _selected == "balk" or _selected == "loft" or _selected == "keel" or _selected == "sheer" or _selected == "strake" or _selected == "wale" or _selected == "garboard" or _selected == "stealer" or _selected == "rabbet" or _selected == "futtock" or _selected == "keelson" or _selected == "stemson" or _selected == "apron" or _selected == "deadwood" or _selected == "gripe" or _selected == "forefoot" or _selected == "knighthead" or _selected == "hawse" or _selected == "breasthook" or _selected == "cathead" or _selected == "gammon" or _selected == "bobstay" or _selected == "bumpkin" or _selected == "dolphin":
 			_facing.text = "Facing   none"
 		else:
 			_facing.text = "Facing   %s" % Sim.DIR_NAMES[_ghost_dir]
@@ -1025,6 +1027,8 @@ func _draw_block(block: Dictionary, alpha: float) -> void:
 		_bobstay_mark(rect, ink)
 	elif typ == "bumpkin":
 		_bumpkin_mark(rect, ink)
+	elif typ == "dolphin":
+		_dolphin_mark(rect, ink)
 	elif typ == "slide":
 		_slide_mark(rect, ink)
 	elif typ == "bin":
@@ -1354,6 +1358,16 @@ func _stealer_mark(rect: Rect2, color: Color) -> void:
 		draw_line(back + Vector2(0.0, span * 0.14), tip, color, 2.5)
 
 
+func _dolphin_mark(rect: Rect2, color: Color) -> void:
+	var center := rect.get_center()
+	var span := rect.size.x
+	for i in 18:
+		var tip := center + Vector2(-span * 0.50 + float(i) * span * 0.052, 0.0)
+		var back := tip + Vector2(-span * 0.024, 0.0)
+		draw_line(back + Vector2(0.0, -span * 0.08), tip, color, 2.5)
+		draw_line(back + Vector2(0.0, span * 0.08), tip, color, 2.5)
+
+
 func _bumpkin_mark(rect: Rect2, color: Color) -> void:
 	var center := rect.get_center()
 	var span := rect.size.x
@@ -1667,6 +1681,8 @@ func _tool_color(tool: String) -> Color:
 			return Color("#4a3a8a")
 		"bumpkin":
 			return Color("#8a3a4a")
+		"dolphin":
+			return Color("#3a6a5a")
 		"slide":
 			return Color("#d06b86")
 		"bin":
@@ -1777,6 +1793,8 @@ func _tool_tip(tool: String) -> String:
 			return "Waits one tick, then jumps a parcel sixteen cells forward. The fifteen cells in front are not entered, and the parcel keeps the facing it arrived with."
 		"bumpkin":
 			return "Waits one tick, then jumps a parcel seventeen cells forward. The sixteen cells in front are not entered, and the parcel keeps the facing it arrived with."
+		"dolphin":
+			return "Waits one tick, then jumps a parcel eighteen cells forward. The seventeen cells in front are not entered, and the parcel keeps the facing it arrived with."
 		"slide":
 			return "Moves a parcel two cells in its facing and does not rotate it. The cell between can be a brick, a belt, or another parcel."
 		"bin":
