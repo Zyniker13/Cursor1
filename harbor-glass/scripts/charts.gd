@@ -14,7 +14,7 @@ class_name ChartBook
 # The Scotia holds eight more. The Torus holds eight more.
 # The Ogee holds eight more. The Ovolo holds eight more.
 # The Cavetto holds eight more. The Fillet holds eight more.
-# The Corona holds eight more. The Bead holds the last eight.
+# The Corona holds eight more. The Bead holds eight more. The Quirk holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
@@ -141,6 +141,18 @@ class_name ChartBook
 # A north corona passes east and west. A north astragal passes north and east.
 # While that row is flooded, every beam stops at the waterline, the same way a
 # flooded corona stops.
+# A quirk has a facing. Rotation changes it the same way: 0 north, 90 east,
+# 180 south, 270 west. Opposite facings are not the same piece. While its row
+# is dry, only the next counterclockwise direction passes straight through in
+# the same direction and the same color, and that pass costs no bounce. It does
+# not turn, it does not recolor, and it does not split. The facing, the
+# opposite, and the clockwise direction stop and do not enter. Facing north,
+# only west passes. One click faces east and passes only north. Two clicks face
+# south and pass only east. Three clicks face west and pass only south. A north
+# bead passes only east. A north casement passes only north. A north fillet
+# passes only south. A north corona passes east and west. A north scotia passes
+# north and west. While that row is flooded, every beam stops at the waterline,
+# the same way a flooded bead stops.
 # See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
@@ -175,6 +187,7 @@ const CAVETTO := "The Cavetto"
 const FILLET := "The Fillet"
 const CORONA := "The Corona"
 const BEAD := "The Bead"
+const QUIRK := "The Quirk"
 
 static func all() -> Array:
 	var book: Array = []
@@ -206,6 +219,7 @@ static func all() -> Array:
 	book.append_array(fillet())
 	book.append_array(corona())
 	book.append_array(bead())
+	book.append_array(quirk())
 	return book
 
 
@@ -319,6 +333,10 @@ static func corona() -> Array:
 
 static func bead() -> Array:
 	return [chart_215(), chart_216(), chart_217(), chart_218(), chart_219(), chart_220(), chart_221(), chart_222()]
+
+
+static func quirk() -> Array:
+	return [chart_223(), chart_224(), chart_225(), chart_226(), chart_227(), chart_228(), chart_229(), chart_230()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -8268,6 +8286,302 @@ static func chart_222() -> Dictionary:
 	}
 
 
+static func chart_223() -> Dictionary:
+	# A dry north quirk passes only west. The other three directions stop.
+	return {
+		"id": "223",
+		"harbor": QUIRK,
+		"title": "The Dry Quirk",
+		"teach": "Tide index 0, flood 0. A dry north quirk passes only the next counterclockwise direction, the westbound beam. North, east, and south stop. One click faces east and passes only north. A north bead passes only east. A north casement passes only north. A north fillet passes only south. A north corona passes east and west. A north scotia passes north and west.",
+		"win": "The quirk faces north. Only west passes, and the other three beams stay dark.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ww", 6, 3, "W", "white"),
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Nn", 3, 6, "N", "red"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+		],
+		"docks": [
+			_dock("Wd", 1, 3, "white", true),
+			_dock("Tw", 2, 3, "blue", true, true),
+			_dock("Ed", 5, 3, "red", true, true),
+			_dock("Nd", 3, 1, "red", true, true),
+			_dock("Sd", 3, 5, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_quirk("O", "Quirk", 3, 3, 180, 0),
+		],
+	}
+
+
+static func chart_224() -> Dictionary:
+	# The quirk starts under water. Dry, only west passes.
+	return {
+		"id": "224",
+		"harbor": QUIRK,
+		"title": "The Wet Stop",
+		"teach": "The quirk opens under water, so every beam stops at the waterline. Lower the tide and face it north. Only the westbound beam passes. North, east, and south stop. A shutter, a well, a siphon, a sluice, or a weir would carry the flooded beam into the cell.",
+		"win": "Low water opens only west. The flooded row had stopped every beam at the waterline.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [0, 4],
+		"start_tide_index": 1,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ww", 7, 4, "W", "white"),
+			_lantern("Ee", 0, 4, "E", "red"),
+			_lantern("Nn", 3, 7, "N", "red"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+		],
+		"docks": [
+			_dock("Wd", 1, 4, "white", true),
+			_dock("Tw", 2, 4, "blue", true, true),
+			_dock("Ed", 5, 4, "red", true, true),
+			_dock("Nd", 3, 2, "red", true, true),
+			_dock("Sd", 3, 6, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_quirk("O", "Quirk", 3, 4, 180, 0),
+		],
+	}
+
+
+static func chart_225() -> Dictionary:
+	# West stays red. A stain paints the other exits the same color.
+	return {
+		"id": "225",
+		"harbor": QUIRK,
+		"title": "Color Kept",
+		"teach": "The westbound beam is the only counterclockwise pass. Red stays red, blue stays blue, and white stays white. A stain would paint that pass. A weir recolors a flooded beam. This quirk stays dry and does not recolor.",
+		"win": "West stays red. The quirk did not paint the beam.",
+		"cols": 8,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ww", 7, 3, "W", "red"),
+			_lantern("Ee", 0, 3, "E", "blue"),
+			_lantern("Nn", 4, 6, "N", "white"),
+			_lantern("Ss", 4, 0, "S", "blue"),
+		],
+		"docks": [
+			_dock("Wd", 2, 3, "red", true),
+			_dock("Tw", 1, 3, "white", true, true),
+			_dock("Ed", 6, 3, "blue", true, true),
+			_dock("Tn", 4, 2, "red", true, true),
+			_dock("Nd", 4, 1, "white", true, true),
+			_dock("Sd", 4, 5, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_quirk("O", "Quirk", 4, 3, 180, 0),
+		],
+	}
+
+
+static func chart_226() -> Dictionary:
+	# The westbound beam leaves west. It does not turn.
+	return {
+		"id": "226",
+		"harbor": QUIRK,
+		"title": "No Turn",
+		"teach": "The westbound beam leaves west. The quirk does not turn. A prism would split the white beam. A vane or a mirror would send it aside. A flooded sluice would turn it.",
+		"win": "West leaves west. Nothing was turned.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ww", 6, 3, "W", "white"),
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Nn", 3, 6, "N", "red"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+		],
+		"docks": [
+			_dock("Wd", 1, 3, "white", true),
+			_dock("Tw", 2, 3, "blue", true, true),
+			_dock("Ed", 5, 3, "red", true, true),
+			_dock("Nd", 3, 1, "red", true, true),
+			_dock("Sd", 3, 5, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_quirk("O", "Quirk", 3, 3, 270, 0),
+		],
+	}
+
+
+static func chart_227() -> Dictionary:
+	# The quirk row is dry. A neighbor beam dies on the flood.
+	return {
+		"id": "227",
+		"harbor": QUIRK,
+		"title": "Beside the Flood",
+		"teach": "The quirk row is dry, so only the westbound beam passes. The flood beam stops at the waterline and never enters the flooded cell.",
+		"win": "The dry row passes only west. The flood beam stops at the waterline.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [2],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ww", 6, 2, "W", "white"),
+			_lantern("Ee", 0, 2, "E", "red"),
+			_lantern("Nn", 3, 5, "N", "red"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+			_lantern("Fl", 5, 5, "S", "white"),
+		],
+		"docks": [
+			_dock("Wd", 1, 2, "white", true),
+			_dock("Tw", 2, 2, "blue", true, true),
+			_dock("Ed", 5, 2, "red", true, true),
+			_dock("Nd", 3, 1, "red", true, true),
+			_dock("Sd", 3, 4, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_quirk("O", "Quirk", 3, 2, 180, 0),
+		],
+	}
+
+
+static func chart_228() -> Dictionary:
+	# One quirk passes only west. The other passes only north.
+	return {
+		"id": "228",
+		"harbor": QUIRK,
+		"title": "Two Quirks",
+		"teach": "One quirk passes only west. The other passes only north. Those open directions are not the same. Swapping the facings fails. A north bead cannot take the west seat, because a north bead passes only east.",
+		"win": "West stays on the first seat. North stays on the second.",
+		"cols": 11,
+		"rows": 9,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Aw", 6, 3, "W", "white"),
+			_lantern("Ae", 0, 3, "E", "red"),
+			_lantern("An", 3, 6, "N", "red"),
+			_lantern("As", 3, 0, "S", "blue"),
+			_lantern("Bn", 8, 8, "N", "white"),
+			_lantern("Bs", 8, 1, "S", "red"),
+			_lantern("Be", 6, 5, "E", "blue"),
+			_lantern("Bw", 10, 5, "W", "red"),
+		],
+		"docks": [
+			_dock("Adw", 1, 3, "white", true),
+			_dock("At", 2, 3, "blue", true, true),
+			_dock("Ade", 5, 3, "red", true, true),
+			_dock("Adn", 3, 1, "red", true, true),
+			_dock("Ads", 3, 5, "blue", true, true),
+			_dock("Bdn", 8, 3, "white", true),
+			_dock("Bt", 8, 4, "blue", true, true),
+			_dock("Bds", 8, 7, "red", true, true),
+			_dock("Bde", 9, 5, "blue", true, true),
+			_dock("Bdw", 7, 5, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_quirk("O", "West quirk", 3, 3, 180, 0),
+			_quirk("U", "North quirk", 8, 5, 0, 90),
+		],
+	}
+
+
+static func chart_229() -> Dictionary:
+	# Three tide marks. The middle mark leaves the quirk dry, facing north.
+	return {
+		"id": "229",
+		"harbor": QUIRK,
+		"title": "The Held Quirk",
+		"teach": "The held facing is part of the solution. The chart starts on a facing that stops west. Place the tide on the middle mark and face the quirk north. Low water wakes the south hull. High water covers the quirk and the beam stops at the waterline.",
+		"win": "The middle mark holds the north quirk. Only west passes, and the hull stays dark.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [0, 1, 5],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ww", 7, 3, "W", "white"),
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Nn", 4, 6, "N", "red"),
+			_lantern("Ss", 4, 0, "S", "blue"),
+			_lantern("Hl", 0, 7, "E", "white"),
+		],
+		"docks": [
+			_dock("Wd", 2, 3, "white", true),
+			_dock("Tw", 3, 3, "blue", true, true),
+			_dock("Ed", 6, 3, "red", true, true),
+			_dock("Nd", 4, 1, "red", true, true),
+			_dock("Sd", 4, 5, "blue", true, true),
+		],
+		"boats": [
+			_boat("Hb", 3, 7),
+		],
+		"fixtures": [],
+		"pieces": [
+			_quirk("O", "Quirk", 4, 3, 180, 0),
+		],
+	}
+
+
+static func chart_230() -> Dictionary:
+	# The quirk and the shutter trade places. On the line it faces north.
+	return {
+		"id": "230",
+		"harbor": QUIRK,
+		"title": "The Quirk Mark",
+		"teach": "Move the quirk from the side socket onto the line and face it north. Only the westbound beam passes. North, east, and south must not count. A north bead, a north casement, a north fillet, a north corona, a north scotia, or a lintel in that cell fails.",
+		"win": "The quirk stands on the line, open only west. The other beams stay dark.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ww", 6, 3, "W", "white"),
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Nn", 3, 6, "N", "red"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+		],
+		"docks": [
+			_dock("Wd", 1, 3, "white", true),
+			_dock("Tw", 2, 3, "blue", true, true),
+			_dock("Ed", 5, 3, "red", true, true),
+			_dock("Nd", 3, 1, "red", true, true),
+			_dock("Sd", 3, 5, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_placed("O", "Quirk", "quirk", [["side", 5, 5], ["line", 3, 3]], "side", "line", 180, 0),
+			_placed("G", "Line shutter", "shutter", [["line", 3, 3], ["side", 5, 5]], "line", "side", 0, 0),
+		],
+	}
+
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -8604,6 +8918,20 @@ static func _bead(id: String, name: String, x: int, y: int, start_rot: int, sol_
 		"id": id,
 		"name": name,
 		"kind": "bead",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _quirk(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "quirk",
 		"movable": false,
 		"sockets": [{"id": "a", "x": x, "y": y}],
 		"start_socket": "a",
