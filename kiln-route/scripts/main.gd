@@ -216,6 +216,7 @@ func _kind_for_key(code: int) -> int:
 		KEY_K: Rules.Kind.HEEL,
 		KEY_L: Rules.Kind.STILT,
 		KEY_M: Rules.Kind.CLEVIS,
+		KEY_N: Rules.Kind.BEAM,
 	}
 	if not map.has(code):
 		return -1
@@ -391,6 +392,7 @@ func _kind_order() -> Array:
 		Rules.Kind.HEEL,
 		Rules.Kind.STILT,
 		Rules.Kind.CLEVIS,
+		Rules.Kind.BEAM,
 	]
 
 
@@ -429,6 +431,7 @@ func _layout() -> Dictionary:
 	# The twenty-fourth wing adds a twentieth row. One pixel shorter keeps a six-row board drawable.
 	# The twenty-fifth wing fills that row. Tab width stays 116 unless a label is wider.
 	# The twenty-sixth wing adds a twenty-first row. One pixel shorter keeps a six-row board drawable.
+	# The twenty-seventh wing adds a twenty-second row. Fourteen pixels still leaves a six-row board drawable.
 	# Shorter tabs give that row back so the rule text keeps its space.
 	var per_row := 8
 	var tab_h := 30.0
@@ -530,7 +533,7 @@ func _draw() -> void:
 	var size: Vector2 = lay.size
 	draw_rect(Rect2(Vector2.ZERO, size), COL_BG)
 	_text(Vector2(24, 14), "KILN ROUTE", 28, COL_TEXT)
-	_text(Vector2(236, 26), "twenty-six wings", 15, COL_DIM)
+	_text(Vector2(236, 26), "twenty-seven wings", 15, COL_DIM)
 	var minute := "minute  %d / %d" % [_shown_tick(), Rules.SIM_TICKS]
 	var minute_w := font.get_string_size(minute, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
 	_text(Vector2(size.x - 24 - minute_w, 26), minute, 15, COL_DIM)
@@ -540,7 +543,7 @@ func _draw() -> void:
 	_draw_grid(lay)
 	_draw_side(lay)
 	_draw_tray(lay)
-	_text(Vector2(24, size.y - 28), "1-9 0 - = \\ ; , ' . / ` y u i o p t g h j k l m select   R rotate   LMB place or pick up   RMB rotate   Space run   F skip   Bksp restart", 13, COL_DIM)
+	_text(Vector2(24, size.y - 28), "1-9 0 - = \\ ; , ' . / ` y u i o p t g h j k l m n select   R rotate   LMB place or pick up   RMB rotate   Space run   F skip   Bksp restart", 13, COL_DIM)
 
 
 func _draw_tabs(lay: Dictionary) -> void:
@@ -985,6 +988,20 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 		draw_line(hip, hip + right_v * body.size.x * 0.16, ink, thick)
 		draw_line(rear, rear + along * reach, ink, thick)
 		draw_line(ahead, ahead + back_v * reach, ink, thick)
+	elif kind == Rules.Kind.BEAM:
+		# Entry is from ahead. The waiter leaves backward. The arrival leaves left.
+		var along := Vector2(Rules.vec(dir))
+		var back_v := -along
+		var left_v := Vector2(Rules.vec(Rules.left(dir)))
+		var ink := Color("e6dcf3", 0.95 * alpha)
+		var thick := maxf(2.0, body.size.x * 0.07)
+		var rear := center - along * body.size.x * 0.2
+		var reach := body.size.x * 0.24
+		var nose := center + along * body.size.x * 0.16
+		var hip := center + left_v * body.size.x * 0.1
+		draw_line(nose, nose + along * body.size.x * 0.16, ink, thick)
+		draw_line(rear, rear + back_v * reach, ink, thick)
+		draw_line(hip, hip + left_v * reach, ink, thick)
 	elif kind == Rules.Kind.GRATE:
 		var along := Vector2(Rules.vec(dir))
 		var across := Vector2(Rules.vec(Rules.right(dir)))
@@ -1004,7 +1021,7 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 	var forward := light
 	if kind == Rules.Kind.GRATE:
 		forward = Color("d7dee6")
-	if kind != Rules.Kind.HOOK and kind != Rules.Kind.DROP and kind != Rules.Kind.LIFT and kind != Rules.Kind.SHED and kind != Rules.Kind.RAKE and kind != Rules.Kind.HOE and kind != Rules.Kind.HARROW and kind != Rules.Kind.FORK and kind != Rules.Kind.PRONG and kind != Rules.Kind.SHARE and kind != Rules.Kind.COULTER and kind != Rules.Kind.MOLDBOARD and kind != Rules.Kind.LANDSIDE and kind != Rules.Kind.SLADE and kind != Rules.Kind.HEEL and kind != Rules.Kind.STILT and kind != Rules.Kind.CLEVIS:
+	if kind != Rules.Kind.HOOK and kind != Rules.Kind.DROP and kind != Rules.Kind.LIFT and kind != Rules.Kind.SHED and kind != Rules.Kind.RAKE and kind != Rules.Kind.HOE and kind != Rules.Kind.HARROW and kind != Rules.Kind.FORK and kind != Rules.Kind.PRONG and kind != Rules.Kind.SHARE and kind != Rules.Kind.COULTER and kind != Rules.Kind.MOLDBOARD and kind != Rules.Kind.LANDSIDE and kind != Rules.Kind.SLADE and kind != Rules.Kind.HEEL and kind != Rules.Kind.STILT and kind != Rules.Kind.CLEVIS and kind != Rules.Kind.BEAM:
 		_arrow(front, dir, body.size.x * 0.2, body.size.x * 0.12, Color(forward.r, forward.g, forward.b, forward_alpha))
 	if kind == Rules.Kind.HOOK:
 		var turn := Rules.left(dir)
@@ -1105,6 +1122,14 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 		var back_side := center + Vector2(Rules.vec(back_turn)) * body.size.x * 0.28
 		_arrow(forward_side, dir, body.size.x * 0.14, body.size.x * 0.09, Color(clevis_mark.r, clevis_mark.g, clevis_mark.b, alpha))
 		_arrow(back_side, back_turn, body.size.x * 0.14, body.size.x * 0.09, Color(clevis_mark.r, clevis_mark.g, clevis_mark.b, alpha))
+	elif kind == Rules.Kind.BEAM:
+		var beam_mark := Color("e6dcf3")
+		var back_turn := Rules.opposite(dir)
+		var left_turn := Rules.left(dir)
+		var back_side := center + Vector2(Rules.vec(back_turn)) * body.size.x * 0.32
+		var left_side := center + Vector2(Rules.vec(left_turn)) * body.size.x * 0.28
+		_arrow(back_side, back_turn, body.size.x * 0.14, body.size.x * 0.09, Color(beam_mark.r, beam_mark.g, beam_mark.b, alpha))
+		_arrow(left_side, left_turn, body.size.x * 0.14, body.size.x * 0.09, Color(beam_mark.r, beam_mark.g, beam_mark.b, alpha))
 	elif kind == Rules.Kind.DROP:
 		var turn := Rules.right(dir)
 		var side := center + Vector2(Rules.vec(turn)) * body.size.x * 0.2
@@ -1292,6 +1317,8 @@ func _key_label(kind: int) -> String:
 		return "l"
 	if kind == Rules.Kind.CLEVIS:
 		return "m"
+	if kind == Rules.Kind.BEAM:
+		return "n"
 	return str(kind + 1)
 
 
@@ -1299,6 +1326,9 @@ func _tray_count_line(kind: int, count: int) -> String:
 	# The clevis count reads "right" so room 201 shows "1 right" beside Clevis and its key.
 	if kind == Rules.Kind.CLEVIS:
 		return "%d right" % count
+	# The beam count reads "ahead" so room 209 shows "1 ahead" beside Beam and its key.
+	if kind == Rules.Kind.BEAM:
+		return "%d ahead" % count
 	return "%d left" % count
 
 
@@ -1365,6 +1395,8 @@ func _kind_color(kind: int) -> Color:
 		return Color("355e62")
 	if kind == Rules.Kind.CLEVIS:
 		return Color("6a3a4a")
+	if kind == Rules.Kind.BEAM:
+		return Color("4a3d62")
 	return Color("c792ef")
 
 
