@@ -1,9 +1,9 @@
 extends RefCounted
 
-## Buildings 1 through 25. Directions: 0 east, 1 south, 2 west, 3 north.
+## Buildings 1 through 26. Directions: 0 east, 1 south, 2 west, 3 north.
 ## `unlocks` is the single new block this puzzle introduces, or "".
 
-const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook", "return", "pause", "chute", "shunt", "bias", "vault", "sling", "cant", "balk", "loft", "keel", "sheer", "strake", "wale", "garboard", "stealer", "rabbet"]
+const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook", "return", "pause", "chute", "shunt", "bias", "vault", "sling", "cant", "balk", "loft", "keel", "sheer", "strake", "wale", "garboard", "stealer", "rabbet", "futtock"]
 
 
 static func all() -> Array:
@@ -3683,6 +3683,143 @@ static func all() -> Array:
 				_block("bridge", 4, 1, 2),
 			]
 		),
+		_puzzle(
+			184, "First Futtock", "futtock",
+			"Jump four cells forward, and keep the facing.",
+			"",
+			"The parcel comes in facing east. The futtock jumps it four cells east and leaves it facing east. The three cells in front are bricks and are not entered. The pause then steps east onto the dock. A loft lands on the last brick. A vault lands on the middle brick. A pause tries to enter the first brick. A keel jumps three cells west. A rabbet jumps one cell west.",
+			8, 3,
+			[_cell(3, 1), _cell(4, 1), _cell(5, 1), _cell(2, 0), _cell(2, 2)],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 7, "y": 1},
+			[{"color": "gray"}],
+			[
+				_block("conveyor", 1, 1, 0),
+				_block("futtock", 2, 1, 0),
+				_block("pause", 6, 1, 0),
+			]
+		),
+		_puzzle(
+			185, "Let Futtock", "",
+			"Wait until the landing is free, then jump four cells forward.",
+			"",
+			"Blue is standing on the landing. The futtock holds red until that cell is free, then jumps four cells east and leaves red facing east. The cells in front are not entered. The pause steps east onto the dock. A loft lands one cell short. A vault lands two cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			8, 3,
+			[_cell(3, 1), _cell(4, 1), _cell(5, 1)],
+			[
+				_source(0, 1, 0, ["red"]),
+				_source(5, 2, 0, ["blue"]),
+			],
+			{"x": 7, "y": 1},
+			[{"color": "blue"}, {"color": "red"}],
+			[
+				_block("conveyor", 1, 1, 0),
+				_block("futtock", 2, 1, 0),
+				_block("garboard", 6, 2, 0),
+				_block("pause", 6, 1, 0),
+			]
+		),
+		_puzzle(
+			186, "Futtock Count", "",
+			"Stamp blue 1 and red 2. The futtock's wait is what makes the counter read 2.",
+			"",
+			"The futtock waits, then jumps the east-facing parcel four cells east. The pause carries that facing onto the counter after blue has been stamped 1, so red is stamped 2. The cells in front are not entered. A loft lands one cell short. A vault lands two cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			9, 4,
+			[_cell(2, 1), _cell(3, 1), _cell(4, 1), _cell(1, 0), _cell(1, 2)],
+			[
+				_source(0, 1, 0, ["red"]),
+				_source(6, 3, 3, ["blue"]),
+			],
+			{"x": 8, "y": 1},
+			[{"color": "blue", "count": 1}, {"color": "red", "count": 2}],
+			[
+				_block("futtock", 1, 1, 0),
+				_block("pause", 5, 1, 0),
+				_block("conveyor", 6, 2, 3),
+				_block("counter", 6, 1, 0),
+				_block("conveyor", 7, 1, 0),
+			]
+		),
+		_puzzle(
+			187, "Skip the Span", "",
+			"Jump four cells forward. The three bricks in front are not entered.",
+			"",
+			"The futtock jumps four cells east and leaves the parcel facing east. The pause steps east onto the dock and does not enter any of the three bricks. A loft tries to land on the last brick. A vault tries to land on the middle brick. A pause tries to enter the first brick. A keel jumps three cells west. A rabbet jumps one cell west.",
+			7, 3,
+			[_cell(2, 1), _cell(3, 1), _cell(4, 1)],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 6, "y": 1},
+			[{"color": "gray"}],
+			[
+				_block("futtock", 1, 1, 0),
+				_block("pause", 5, 1, 0),
+			]
+		),
+		_puzzle(
+			188, "Two Futtocks", "",
+			"Deliver red, then blue. Each jump is four cells forward from a different facing.",
+			"",
+			"Red arrives facing east, jumps four cells east, and the pause steps east onto the dock. Blue arrives facing south, jumps four cells south, and the pause steps south onto the dock. Each jump keeps the arrival facing and skips the three cells in front. A loft lands one cell short. A vault lands two cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			7, 8,
+			[_cell(2, 7), _cell(3, 7), _cell(4, 7), _cell(6, 3), _cell(6, 4), _cell(6, 5), _cell(1, 6)],
+			[
+				_source(0, 7, 0, ["red"]),
+				_source(6, 0, 1, ["blue"]),
+			],
+			{"x": 6, "y": 7},
+			[{"color": "red"}, {"color": "blue"}],
+			[
+				_block("futtock", 1, 7, 0),
+				_block("pause", 5, 7, 0),
+				_block("pause", 6, 1, 0),
+				_block("futtock", 6, 2, 0),
+				_block("pause", 6, 6, 0),
+			]
+		),
+		_puzzle(
+			189, "Second Futtock", "",
+			"Jump four cells forward, hook, then jump four cells forward on the new facing.",
+			"",
+			"The first futtock jumps the east-facing parcel four cells east and leaves it facing east. The hook sends it north onto the second futtock. That futtock jumps four cells north, still facing north, onto the dock. One futtock cannot do both jumps. A loft lands one cell short. A vault lands two cells short. A keel jumps three cells back. A rabbet jumps one cell back. A turn faces south.",
+			6, 6,
+			[_cell(2, 5), _cell(3, 5), _cell(4, 5), _cell(5, 3), _cell(5, 2), _cell(5, 1)],
+			[_source(0, 5, 0, ["gray"])],
+			{"x": 5, "y": 0},
+			[{"color": "gray"}],
+			[
+				_block("futtock", 1, 5, 0),
+				_block("hook", 5, 5, 0),
+				_block("futtock", 5, 4, 0),
+			]
+		),
+		_puzzle(
+			190, "Night Futtock", "",
+			"Deliver red 1, yellow 2, and blue 3.",
+			"",
+			"Red takes the filter. The futtock jumps it four cells east and leaves it facing east. The pause carries that facing onto the counter for stamp 1. The three cells in front are not entered. Gray takes the long belt and is primed yellow. Blue keeps its color. A loft lands one cell short. A vault lands two cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			10, 6,
+			[_cell(4, 3), _cell(5, 3), _cell(6, 3)],
+			[_source(0, 3, 0, ["gray", "blue", "red"])],
+			{"x": 9, "y": 3},
+			[{"color": "red", "count": 1}, {"color": "yellow", "count": 2}, {"color": "blue", "count": 3}],
+			[
+				_block("filter", 1, 3, 0, "red"),
+				_block("conveyor", 2, 3, 0),
+				_block("futtock", 3, 3, 0),
+				_block("pause", 7, 3, 0),
+				_block("counter", 8, 3, 0),
+				_block("pause", 1, 4, 0),
+				_block("primer", 1, 5, 0, "yellow"),
+				_block("conveyor", 2, 5, 0),
+				_block("conveyor", 3, 5, 0),
+				_block("conveyor", 4, 5, 0),
+				_block("conveyor", 5, 5, 0),
+				_block("conveyor", 6, 5, 0),
+				_block("conveyor", 7, 5, 0),
+				_block("conveyor", 8, 5, 3),
+				_block("conveyor", 8, 4, 3),
+			]
+		),
 	]
 
 
@@ -3712,7 +3849,7 @@ static func _puzzle(id: int, title: String, unlocks: String, brief: String, how_
 		"dock": dock,
 		"order": order,
 		"reference": reference,
-		"building": 25 if id >= 177 else 24 if id >= 170 else 23 if id >= 163 else 22 if id >= 156 else 21 if id >= 149 else 20 if id >= 142 else 19 if id >= 135 else 18 if id >= 128 else 17 if id >= 121 else 16 if id >= 114 else 15 if id >= 107 else 14 if id >= 100 else 13 if id >= 93 else 12 if id >= 86 else 11 if id >= 79 else 10 if id >= 72 else 9 if id >= 65 else 8 if id >= 58 else 7 if id >= 51 else 6 if id >= 44 else 5 if id >= 37 else 4 if id >= 30 else 3 if id >= 23 else 2 if id >= 16 else 1,
+		"building": 26 if id >= 184 else 25 if id >= 177 else 24 if id >= 170 else 23 if id >= 163 else 22 if id >= 156 else 21 if id >= 149 else 20 if id >= 142 else 19 if id >= 135 else 18 if id >= 128 else 17 if id >= 121 else 16 if id >= 114 else 15 if id >= 107 else 14 if id >= 100 else 13 if id >= 93 else 12 if id >= 86 else 11 if id >= 79 else 10 if id >= 72 else 9 if id >= 65 else 8 if id >= 58 else 7 if id >= 51 else 6 if id >= 44 else 5 if id >= 37 else 4 if id >= 30 else 3 if id >= 23 else 2 if id >= 16 else 1,
 	}
 
 

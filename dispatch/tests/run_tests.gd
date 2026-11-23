@@ -70,6 +70,8 @@ func _run() -> void:
 	_building_twenty_four()
 	_rabbet_rules()
 	_building_twenty_five()
+	_futtock_rules()
+	_building_twenty_six()
 	_ui_uses_simulated_par()
 	if _failures.is_empty():
 		print("ALL TESTS PASSED")
@@ -6096,10 +6098,10 @@ func _rabbet_rules() -> void:
 func _building_twenty_five() -> void:
 	print("building 25")
 	var puzzles := Puzzles.all()
-	_check(puzzles.size() == 183, "building 25 adds routes 177 through 183")
+	_check(puzzles.size() >= 183, "building 25 adds routes 177 through 183")
 	_check(int(puzzles[175]["id"]) == 176, "route 176 is the last route before the rabbet")
 	_check(int(puzzles[176]["id"]) == 177, "the rabbet begins at route 177")
-	_check(Puzzles.INTRO.size() == 29 and Puzzles.INTRO[28] == "rabbet", "the rabbet is the block building 25 teaches")
+	_check(Puzzles.INTRO.size() >= 29 and Puzzles.INTRO[28] == "rabbet", "the rabbet is the block building 25 teaches")
 	_check(not Puzzles.unlocked_at(175).has("rabbet"), "the rabbet stays locked through route 176")
 	_check(Puzzles.unlocked_at(176).has("rabbet"), "route 177 unlocks the rabbet")
 	_check(Puzzles.unlocked_at(182).size() == 29, "building 25 ends with every block")
@@ -6118,6 +6120,8 @@ func _building_twenty_five() -> void:
 			_check(int(puzzle.get("building", 1)) < 25, "route %d stays out of building 25" % id)
 			if id >= 170:
 				_check(int(puzzle.get("building", 1)) == 24, "route %d stays in building 24" % id)
+			continue
+		if id > 183:
 			continue
 		_check(int(puzzle.get("building", 1)) == 25, "route %d is building 25" % id)
 		var result: Dictionary = Sim.run(puzzle, puzzle["reference"])
@@ -6221,6 +6225,259 @@ func _building_twenty_five() -> void:
 	_check(not bool(Sim.run(_by_id(183), _swap(_by_id(183), "counter", "conveyor"))["success"]), "route 183 fails without the counter")
 
 
+func _futtock_rules() -> void:
+	print("futtock")
+	var hop := {
+		"width": 6, "height": 3, "walls": [],
+		"sources": [{"x": 0, "y": 1, "dir": 0, "parcels": [{"color": "gray"}]}],
+		"dock": {"x": 5, "y": 1},
+		"order": [{"color": "gray"}],
+	}
+	var graph := [{"type": "futtock", "x": 1, "y": 1, "dir": 0}]
+	var sent: Dictionary = Sim.run(hop, graph)
+	_check(bool(sent["success"]), "a futtock jumps four cells forward and delivers")
+	_check(int(sent["cycles"]) == 3 and int(sent["blocks"]) == 1, "the futtock waits a tick and delivers on tick 3")
+	var born := _frame(sent, 1)
+	var waited := _frame(sent, 2)
+	_check(not born.is_empty() and _at(born, 1, 1) and _dir_at(born, 1, 1) == 0, "the parcel arrives facing east")
+	_check(not waited.is_empty() and _at(waited, 1, 1) and _dir_at(waited, 1, 1) == 0 and not _at(waited, 5, 1), "the futtock does not move the parcel on that tick")
+	_check(_count_at(waited, 1, 1) == 0 and _color_at(waited, 1, 1) == "gray", "a futtock does not stamp or paint")
+	var tinted: Dictionary = Sim.run(hop, [{"type": "futtock", "x": 1, "y": 1, "dir": 0, "color": "red"}])
+	_check(bool(tinted["success"]) and str(tinted["delivered"][0]["color"]) == "gray" and int(tinted["delivered"][0]["count"]) == 0, "a color on a futtock is ignored")
+	for dir in range(4):
+		var spun: Array = graph.duplicate(true)
+		spun[0]["dir"] = dir
+		var spun_run: Dictionary = Sim.run(hop, spun)
+		_check(bool(spun_run["success"]) and int(spun_run["cycles"]) == 3, "rotating a futtock does not change the jump")
+	var over_bin: Dictionary = Sim.run(hop, [
+		{"type": "futtock", "x": 1, "y": 1, "dir": 0},
+		{"type": "bin", "x": 2, "y": 1, "dir": 0},
+		{"type": "bin", "x": 3, "y": 1, "dir": 0},
+		{"type": "bin", "x": 4, "y": 1, "dir": 0},
+	])
+	_check(bool(over_bin["success"]) and int(over_bin["cycles"]) == 3, "bins in the skipped cells do not stop the futtock")
+	var skipped := false
+	for frame in over_bin["frames"]:
+		if _at(frame, 2, 1) or _at(frame, 3, 1) or _at(frame, 4, 1):
+			skipped = true
+	_check(not skipped, "the futtock does not enter any of the three cells in front")
+	var lofted: Dictionary = Sim.run(hop, [{"type": "loft", "x": 1, "y": 1, "dir": 0}])
+	_check(not bool(lofted["success"]) and str(lofted["reason"]) == "stuck", "a loft lands one cell short of a futtock")
+	var shorted: Dictionary = Sim.run(hop, [
+		{"type": "loft", "x": 1, "y": 1, "dir": 0},
+		{"type": "bin", "x": 4, "y": 1, "dir": 0},
+	])
+	_check(not bool(shorted["success"]) and _at(_frame(shorted, 3), 4, 1) and _dir_at(_frame(shorted, 3), 4, 1) == 0, "a loft lands on the last cell a futtock skips")
+	var vaulted: Dictionary = Sim.run(hop, [{"type": "vault", "x": 1, "y": 1, "dir": 0}])
+	_check(not bool(vaulted["success"]) and str(vaulted["reason"]) == "stuck", "a vault lands two cells short of a futtock")
+	var keeled: Dictionary = Sim.run(hop, [{"type": "keel", "x": 1, "y": 1, "dir": 0}])
+	_check(not bool(keeled["success"]) and str(keeled["reason"]) == "stuck", "a keel jumps three cells back and misses the forward jump")
+	var rabbeted: Dictionary = Sim.run(hop, [{"type": "rabbet", "x": 1, "y": 1, "dir": 0}])
+	_check(not bool(rabbeted["success"]) and str(rabbeted["reason"]) == "stuck", "a rabbet jumps one cell back and misses the forward jump")
+	var jumps := [
+		{"name": "east", "src": Vector2i(0, 4), "arrival": 0, "futtock": Vector2i(1, 4), "land": Vector2i(5, 4), "dock": Vector2i(6, 4), "size": Vector2i(7, 6)},
+		{"name": "south", "src": Vector2i(1, 0), "arrival": 1, "futtock": Vector2i(1, 1), "land": Vector2i(1, 5), "dock": Vector2i(1, 6), "size": Vector2i(3, 7)},
+		{"name": "west", "src": Vector2i(6, 1), "arrival": 2, "futtock": Vector2i(5, 1), "land": Vector2i(1, 1), "dock": Vector2i(0, 1), "size": Vector2i(7, 3)},
+		{"name": "north", "src": Vector2i(2, 6), "arrival": 3, "futtock": Vector2i(2, 5), "land": Vector2i(2, 1), "dock": Vector2i(2, 0), "size": Vector2i(3, 7)},
+	]
+	for spec in jumps:
+		var src_at: Vector2i = spec["src"]
+		var futtock_at: Vector2i = spec["futtock"]
+		var land_at: Vector2i = spec["land"]
+		var dock_at: Vector2i = spec["dock"]
+		var size_at: Vector2i = spec["size"]
+		var arrival := int(spec["arrival"])
+		var strip := {
+			"width": size_at.x, "height": size_at.y, "walls": [],
+			"sources": [{"x": src_at.x, "y": src_at.y, "dir": arrival, "parcels": [{"color": "gray"}]}],
+			"dock": {"x": dock_at.x, "y": dock_at.y},
+			"order": [{"color": "gray"}],
+		}
+		var blocks := [
+			{"type": "futtock", "x": futtock_at.x, "y": futtock_at.y, "dir": 0},
+			{"type": "pause", "x": land_at.x, "y": land_at.y, "dir": 0},
+		]
+		var side_run: Dictionary = Sim.run(strip, blocks)
+		var moved := _frame(side_run, 3)
+		_check(bool(side_run["success"]) and int(side_run["cycles"]) == 5, "a %s parcel jumps four cells forward and the pause follows the old facing" % str(spec["name"]))
+		_check(not moved.is_empty() and _at(moved, land_at.x, land_at.y) and _dir_at(moved, land_at.x, land_at.y) == arrival, "a %s parcel still faces %s after the four-cell jump" % [str(spec["name"]), str(spec["name"])])
+	var held_board := {
+		"width": 7, "height": 6, "walls": [{"x": 6, "y": 4}],
+		"sources": [
+			{"x": 0, "y": 4, "dir": 0, "parcels": [{"color": "gray"}]},
+			{"x": 4, "y": 4, "dir": 0, "parcels": [{"color": "blue"}]},
+		],
+		"dock": {"x": 6, "y": 5},
+		"order": [{"color": "gray"}],
+	}
+	var waiting: Dictionary = Sim.run(held_board, [
+		{"type": "futtock", "x": 1, "y": 4, "dir": 0},
+		{"type": "pause", "x": 5, "y": 4, "dir": 0},
+	])
+	_check(not bool(waiting["success"]) and str(waiting["reason"]) == "tick_cap", "a futtock keeps waiting while its landing stays blocked")
+	_check(_at(_frame(waiting, 3), 1, 4) and _dir_at(_frame(waiting, 3), 1, 4) == 0 and _color_at(_frame(waiting, 5), 5, 4) == "blue", "the futtock keeps the arrival facing while the other parcel stays")
+	var gap := {
+		"width": 7, "height": 6, "walls": [],
+		"sources": [
+			{"x": 0, "y": 4, "dir": 0, "parcels": [{"color": "gray"}]},
+			{"x": 3, "y": 4, "dir": 0, "parcels": [{"color": "blue"}]},
+		],
+		"dock": {"x": 6, "y": 4},
+		"order": [{"color": "blue"}, {"color": "gray"}],
+	}
+	var followed: Dictionary = Sim.run(gap, [
+		{"type": "futtock", "x": 1, "y": 4, "dir": 0},
+		{"type": "conveyor", "x": 4, "y": 4, "dir": 0},
+		{"type": "pause", "x": 5, "y": 4, "dir": 0},
+	])
+	_check(bool(followed["success"]) and int(followed["cycles"]) == 6, "a futtock can land in a cell another parcel is leaving")
+	var into := _frame(followed, 4)
+	_check(not into.is_empty() and _color_at(into, 5, 4) == "gray" and _dir_at(into, 5, 4) == 0 and into.get("delivered", []).size() == 1, "the jump lands in the cell the other parcel left and still faces east")
+
+
+func _building_twenty_six() -> void:
+	print("building 26")
+	var puzzles := Puzzles.all()
+	_check(puzzles.size() == 190, "building 26 adds routes 184 through 190")
+	_check(int(puzzles[182]["id"]) == 183, "route 183 is the last route before the futtock")
+	_check(int(puzzles[183]["id"]) == 184, "the futtock begins at route 184")
+	_check(Puzzles.INTRO.size() == 30 and Puzzles.INTRO[29] == "futtock", "the futtock is the block building 26 teaches")
+	_check(not Puzzles.unlocked_at(182).has("futtock"), "the futtock stays locked through route 183")
+	_check(Puzzles.unlocked_at(183).has("futtock"), "route 184 unlocks the futtock")
+	_check(Puzzles.unlocked_at(189).size() == 30, "building 26 ends with every block")
+	var pars := {
+		184: [6, 3],
+		185: [7, 4],
+		186: [7, 5],
+		187: [5, 2],
+		188: [7, 5],
+		189: [7, 3],
+		190: [16, 15],
+	}
+	for puzzle in puzzles:
+		var id := int(puzzle["id"])
+		if id <= 183:
+			_check(int(puzzle.get("building", 1)) < 26, "route %d stays out of building 26" % id)
+			if id >= 177:
+				_check(int(puzzle.get("building", 1)) == 25, "route %d stays in building 25" % id)
+			continue
+		_check(int(puzzle.get("building", 1)) == 26, "route %d is building 26" % id)
+		var result: Dictionary = Sim.run(puzzle, puzzle["reference"])
+		var par: Dictionary = Scoring.compute_par(puzzle)
+		_check(bool(result["success"]), "route %d reference delivers" % id)
+		_check(int(result["cycles"]) == int(par["cycles"]), "route %d reference meets par cycles" % id)
+		_check(int(result["blocks"]) == int(par["blocks"]), "route %d reference meets par blocks" % id)
+		_check(int(result["blocks"]) == puzzle["reference"].size(), "route %d plays the reference block count" % id)
+		var locked: Array = pars[id]
+		_check(int(par["cycles"]) == int(locked[0]) and int(par["blocks"]) == int(locked[1]), "route %d par is %d cycles and %d blocks" % [id, int(locked[0]), int(locked[1])])
+		if id == 184:
+			_check(str(puzzle.get("unlocks", "")) == "futtock", "route 184 teaches the futtock")
+		else:
+			_check(str(puzzle.get("unlocks", "")) == "", "route %d adds no further block" % id)
+		var uses_futtock := false
+		for block in puzzle["reference"]:
+			if str(block["type"]) == "futtock":
+				uses_futtock = true
+		_check(uses_futtock, "route %d reference uses the futtock" % id)
+		if not bool(result["success"]):
+			_dump(result)
+		print("    par route %d  cycles %d  blocks %d" % [id, int(par["cycles"]), int(par["blocks"])])
+
+	for id in [184, 185, 186, 187, 188, 189, 190]:
+		for dir in range(4):
+			var spun: Array = _by_id(id)["reference"].duplicate(true)
+			for block in spun:
+				if str(block["type"]) == "futtock":
+					block["dir"] = dir
+			var spun_run: Dictionary = Sim.run(_by_id(id), spun)
+			_check(bool(spun_run["success"]) and int(spun_run["cycles"]) == int(pars[id][0]), "route %d ignores which way the futtock block is rotated" % id)
+		for kind in ["loft", "vault", "keel", "rabbet", "balk", "return", "turn", "hook", "pause", "conveyor", "slide", "garboard", "stealer", "bias", "cant", "strake", "wale", "shunt", "sheer", "sling", "bridge", "chute"]:
+			var swapped: Dictionary = Sim.run(_by_id(id), _swap(_by_id(id), "futtock", kind))
+			_check(not bool(swapped["success"]), "route %d fails if the futtock is a %s" % [id, kind])
+		var omitted: Array = []
+		for block in _by_id(id)["reference"]:
+			if str(block["type"]) != "futtock":
+				omitted.append(block)
+		_check(not bool(Sim.run(_by_id(id), omitted)["success"]), "route %d fails if the futtock is missing" % id)
+
+	var lesson: Dictionary = Sim.run(_by_id(184), _by_id(184)["reference"])
+	_check(_at(_frame(lesson, 2), 2, 1) and _dir_at(_frame(lesson, 2), 2, 1) == 0, "route 184 starts the parcel facing east on the futtock")
+	_check(_at(_frame(lesson, 3), 2, 1) and _dir_at(_frame(lesson, 3), 2, 1) == 0, "route 184 keeps the parcel facing east without moving it")
+	_check(_at(_frame(lesson, 4), 6, 1) and _dir_at(_frame(lesson, 4), 6, 1) == 0, "route 184 jumps four cells east and still faces east")
+	var lesson_entered := false
+	for frame in lesson["frames"]:
+		if _at(frame, 3, 1) or _at(frame, 4, 1) or _at(frame, 5, 1):
+			lesson_entered = true
+	_check(not lesson_entered, "route 184 does not enter the cells in front")
+	_check(str(Sim.run(_by_id(184), _swap(_by_id(184), "futtock", "loft"))["reason"]) == "stuck", "route 184's loft lands on the last brick")
+	_check(str(Sim.run(_by_id(184), _swap(_by_id(184), "futtock", "vault"))["reason"]) == "stuck", "route 184's vault lands on the middle brick")
+	_check(str(Sim.run(_by_id(184), _swap(_by_id(184), "futtock", "keel"))["reason"]) == "stuck", "route 184's keel jumps three cells back")
+
+	var let_futtock: Dictionary = Sim.run(_by_id(185), _by_id(185)["reference"])
+	_check(_color_at(_frame(let_futtock, 4), 2, 1) == "red" and _dir_at(_frame(let_futtock, 4), 2, 1) == 0 and _color_at(_frame(let_futtock, 4), 6, 1) == "blue", "route 185 holds red while blue stands on the landing")
+	_check(_color_at(_frame(let_futtock, 5), 6, 1) == "red" and _dir_at(_frame(let_futtock, 5), 6, 1) == 0 and _frame(let_futtock, 5).get("delivered", []).size() == 1, "route 185 jumps once the landing is free and still faces east")
+
+	var counted: Dictionary = Sim.run(_by_id(186), _by_id(186)["reference"])
+	_check(str(counted["delivered"][0]["color"]) == "blue" and int(counted["delivered"][0]["count"]) == 1, "route 186 delivers blue count 1")
+	_check(str(counted["delivered"][1]["color"]) == "red" and int(counted["delivered"][1]["count"]) == 2, "route 186 delivers red count 2")
+	_check(_color_at(_frame(counted, 3), 5, 1) == "red" and _dir_at(_frame(counted, 3), 5, 1) == 0, "route 186 jumps four cells east and still faces east")
+	_check(_color_at(_frame(counted, 6), 7, 1) == "red" and _count_at(_frame(counted, 6), 7, 1) == 2, "route 186's counter stamps 2")
+
+	var clear: Dictionary = Sim.run(_by_id(187), _by_id(187)["reference"])
+	_check(_at(_frame(clear, 2), 1, 1) and _dir_at(_frame(clear, 2), 1, 1) == 0, "route 187 waits facing east")
+	_check(_at(_frame(clear, 3), 5, 1) and _dir_at(_frame(clear, 3), 5, 1) == 0, "route 187 lands four cells east and still faces east")
+	var brick_entered := false
+	for frame in clear["frames"]:
+		if _at(frame, 2, 1) or _at(frame, 3, 1) or _at(frame, 4, 1):
+			brick_entered = true
+	_check(not brick_entered, "route 187 does not enter any brick")
+	_check(str(Sim.run(_by_id(187), _swap(_by_id(187), "futtock", "loft"))["reason"]) == "stuck", "route 187's loft tries to land on the last brick")
+	_check(str(Sim.run(_by_id(187), _swap(_by_id(187), "futtock", "vault"))["reason"]) == "stuck", "route 187's vault tries to land on the middle brick")
+
+	var paired: Dictionary = Sim.run(_by_id(188), _by_id(188)["reference"])
+	_check(_color_at(_frame(paired, 2), 1, 7) == "red" and _dir_at(_frame(paired, 2), 1, 7) == 0, "route 188 holds the east-facing parcel")
+	_check(_color_at(_frame(paired, 4), 6, 2) == "blue" and _dir_at(_frame(paired, 4), 6, 2) == 1, "route 188 holds the south-facing parcel")
+	_check(_frame(paired, 5).get("delivered", []).size() == 1 and str(_frame(paired, 5)["delivered"][0]["color"]) == "red", "route 188 delivers the east-facing parcel first")
+	_check(int(paired["cycles"]) == 7, "route 188 delivers the south-facing parcel second")
+	for cell in [Vector2i(1, 7), Vector2i(6, 2)]:
+		for kind in ["loft", "vault", "keel"]:
+			var one: Dictionary = Sim.run(_by_id(188), _swap_cell(_by_id(188), cell.x, cell.y, kind))
+			_check(not bool(one["success"]), "route 188 misses the dock if the futtock at %d,%d is a %s" % [cell.x, cell.y, kind])
+
+	var second: Dictionary = Sim.run(_by_id(189), _by_id(189)["reference"])
+	_check(_at(_frame(second, 2), 1, 5) and _dir_at(_frame(second, 2), 1, 5) == 0, "route 189 waits on the first futtock facing east")
+	_check(_at(_frame(second, 3), 5, 5) and _dir_at(_frame(second, 3), 5, 5) == 0, "route 189 jumps four cells forward and still faces east")
+	_check(_at(_frame(second, 5), 5, 4) and _dir_at(_frame(second, 5), 5, 4) == 3, "route 189 reaches the second futtock facing north")
+	_check(_at(_frame(second, 6), 5, 4) and _dir_at(_frame(second, 6), 5, 4) == 3, "route 189 waits on the second futtock facing north")
+	_check(int(second["cycles"]) == 7, "route 189 jumps four cells forward on the new facing")
+	_check(not bool(Sim.run(_by_id(189), _omit_cell(_by_id(189), 1, 5))["success"]), "route 189 fails without the first futtock")
+	_check(not bool(Sim.run(_by_id(189), _omit_cell(_by_id(189), 5, 4))["success"]), "route 189 fails without the second futtock")
+	for cell in [Vector2i(1, 5), Vector2i(5, 4)]:
+		for kind in ["loft", "vault", "keel"]:
+			var missed: Dictionary = Sim.run(_by_id(189), _swap_cell(_by_id(189), cell.x, cell.y, kind))
+			_check(not bool(missed["success"]), "route 189 misses the dock if the futtock at %d,%d is a %s" % [cell.x, cell.y, kind])
+
+	var night: Dictionary = Sim.run(_by_id(190), _by_id(190)["reference"])
+	_check(int(night["cycles"]) < 250, "route 190 finishes before tick 250")
+	_check(str(night["delivered"][0]["color"]) == "red" and int(night["delivered"][0]["count"]) == 1, "route 190 stamps red 1")
+	_check(str(night["delivered"][1]["color"]) == "yellow" and int(night["delivered"][1]["count"]) == 2, "route 190 stamps yellow 2")
+	_check(str(night["delivered"][2]["color"]) == "blue" and int(night["delivered"][2]["count"]) == 3, "route 190 stamps blue 3")
+	_check(_color_at(_frame(night, 6), 3, 3) == "red" and _dir_at(_frame(night, 6), 3, 3) == 0, "route 190 holds red facing east")
+	_check(_color_at(_frame(night, 8), 7, 3) == "red" and _dir_at(_frame(night, 8), 7, 3) == 0, "route 190 jumps red four cells east and leaves it facing east")
+	_check(_color_at(_frame(night, 10), 8, 3) == "red" and _dir_at(_frame(night, 10), 8, 3) == 0 and _count_at(_frame(night, 10), 8, 3) == 0, "route 190 reaches the counter still facing east")
+	var night_entered := false
+	for frame in night["frames"]:
+		if _color_at(frame, 4, 3) == "red" or _color_at(frame, 5, 3) == "red" or _color_at(frame, 6, 3) == "red":
+			night_entered = true
+	_check(not night_entered, "route 190 does not enter the cells in front")
+	_check(not bool(Sim.run(_by_id(190), _swap(_by_id(190), "futtock", "loft"))["success"]), "route 190's loft misses the pause")
+	_check(not bool(Sim.run(_by_id(190), _swap(_by_id(190), "futtock", "vault"))["success"]), "route 190's vault misses the pause")
+	_check(not bool(Sim.run(_by_id(190), _swap(_by_id(190), "futtock", "keel"))["success"]), "route 190's keel misses the pause")
+	_check(not bool(Sim.run(_by_id(190), _swap(_by_id(190), "primer", "painter"))["success"]), "route 190 fails if blue is painted yellow")
+	_check(not bool(Sim.run(_by_id(190), _swap(_by_id(190), "filter", "conveyor"))["success"]), "route 190 fails if red is not pulled ahead")
+	_check(not bool(Sim.run(_by_id(190), _swap(_by_id(190), "counter", "conveyor"))["success"]), "route 190 fails without the counter")
+
+
 func _ui_uses_simulated_par() -> void:
 	print("scoreboard ui")
 	var scene := load("res://scenes/main.tscn")
@@ -6249,12 +6506,12 @@ func _ui_uses_simulated_par() -> void:
 				routes += 1
 		if row.get_child_count() > 1:
 			width += float(row.get_theme_constant("separation")) * float(row.get_child_count() - 1)
-	_check(routes == 183, "all 183 routes are on the board")
+	_check(routes == 190, "all 190 routes are on the board")
 	print("    route row width ", width)
-	_check(width == 4108.0, "the route row minimum width is 4108 (%s)" % width)
-	_check(int(ProjectSettings.get_setting("display/window/size/viewport_width")) == 4148, "the window is 4148 wide")
+	_check(width == 4284.0, "the route row minimum width is 4284 (%s)" % width)
+	_check(int(ProjectSettings.get_setting("display/window/size/viewport_width")) == 4324, "the window is 4324 wide")
 	_check(int(ProjectSettings.get_setting("display/window/size/viewport_height")) == 720, "the window is 720 tall")
-	_check(width + 40.0 == 4148.0, "the window keeps 20 pixels of spare on each side of the route row")
+	_check(width + 40.0 == 4324.0, "the window keeps 20 pixels of spare on each side of the route row")
 	_check(node.find_child("BuildingTwelveMark", true, false) != null, "building 12's mark stays on the route row")
 	_check(node.find_child("BuildingThirteenMark", true, false) != null, "the route row marks building 13")
 	node.select_puzzle(15)
@@ -7197,6 +7454,72 @@ func _ui_uses_simulated_par() -> void:
 				saw_stealer = true
 	_check(saw_rabbet, "route 183 still offers the rabbet")
 	_check(saw_stealer, "route 183 still offers the stealer")
+	var saw_futtock := false
+	if tools != null:
+		for child in tools.get_children():
+			if child.is_queued_for_deletion():
+				continue
+			if str(child.text).begins_with("Futtock"):
+				saw_futtock = true
+	_check(not saw_futtock, "route 183 keeps the futtock locked")
+	node.select_puzzle(183)
+	_check(building != null and building.text == "BUILDING 26", "route 184 opens building 26")
+	_check(node.find_child("BuildingTwentySixMark", true, false) != null, "the route row marks building 26")
+	_check(node.find_child("BuildingTwentyFiveMark", true, false) != null, "building 25's mark stays beside building 26")
+	tools = node.find_child("ToolBox", true, false)
+	saw_futtock = false
+	saw_rabbet = false
+	var futtock_button: Button = null
+	var rabbet_again: Button = null
+	if tools != null:
+		for child in tools.get_children():
+			if child.is_queued_for_deletion():
+				continue
+			if str(child.text).begins_with("Futtock"):
+				saw_futtock = true
+				futtock_button = child
+			if str(child.text).begins_with("Rabbet"):
+				saw_rabbet = true
+				rabbet_again = child
+	_check(saw_futtock, "route 184 offers the futtock")
+	_check(saw_rabbet, "route 184 still offers the rabbet")
+	if futtock_button != null:
+		_check(str(futtock_button.tooltip_text).begins_with("Waits one tick, then jumps a parcel four cells forward"), "the futtock tooltip describes the four-cell jump")
+		_check(str(futtock_button.text).begins_with("Futtock"), "the futtock button reads Futtock")
+		_check(node._tool_color("futtock") == Color("#6a8f3e"), "the futtock is #6a8f3e")
+		_check(node._tool_color("rabbet") == Color("#8f4e6a"), "the rabbet stays #8f4e6a")
+		_check(node._tool_color("stealer") == Color("#2f6f8f"), "the stealer stays #2f6f8f")
+		_check(node._tool_color("garboard") == Color("#3e8f6a"), "the garboard stays #3e8f6a")
+		_check(node._tool_color("wale") == Color("#c47a3a"), "the wale stays #c47a3a")
+		_check(node._tool_color("strake") == Color("#7a4e8a"), "the strake stays #7a4e8a")
+		_check(node._tool_color("sheer") == Color("#3d5bd4"), "the sheer stays #3d5bd4")
+		var futtock_rect: Rect2 = futtock_button.get_global_rect()
+		var futtock_view: Rect2 = node.get_viewport().get_visible_rect()
+		_check(futtock_rect.position.x >= futtock_view.position.x and futtock_rect.position.y >= futtock_view.position.y and futtock_rect.end.x <= futtock_view.end.x and futtock_rect.end.y <= futtock_view.end.y, "the futtock button is fully on screen")
+	if rabbet_again != null:
+		var rabbet_again_rect: Rect2 = rabbet_again.get_global_rect()
+		var rabbet_again_view: Rect2 = node.get_viewport().get_visible_rect()
+		_check(rabbet_again_rect.position.x >= rabbet_again_view.position.x and rabbet_again_rect.position.y >= rabbet_again_view.position.y and rabbet_again_rect.end.x <= rabbet_again_view.end.x and rabbet_again_rect.end.y <= rabbet_again_view.end.y, "the rabbet button stays fully on screen")
+	var futtock_mark: Control = node.find_child("BuildingTwentySixMark", true, false)
+	if futtock_mark != null:
+		var futtock_mark_rect: Rect2 = futtock_mark.get_global_rect()
+		var futtock_mark_view: Rect2 = node.get_viewport().get_visible_rect()
+		_check(futtock_mark_rect.size.x > 1.0 and futtock_mark_rect.position.x >= futtock_mark_view.position.x and futtock_mark_rect.end.x <= futtock_mark_view.end.x and futtock_mark_rect.position.y >= futtock_mark_view.position.y and futtock_mark_rect.end.y <= futtock_mark_view.end.y, "the building 26 mark is fully on screen")
+	node.select_puzzle(189)
+	_check(building != null and building.text == "BUILDING 26", "route 190 stays in building 26")
+	tools = node.find_child("ToolBox", true, false)
+	saw_futtock = false
+	saw_rabbet = false
+	if tools != null:
+		for child in tools.get_children():
+			if child.is_queued_for_deletion():
+				continue
+			if str(child.text).begins_with("Futtock"):
+				saw_futtock = true
+			if str(child.text).begins_with("Rabbet"):
+				saw_rabbet = true
+	_check(saw_futtock, "route 190 still offers the futtock")
+	_check(saw_rabbet, "route 190 still offers the rabbet")
 	node.select_puzzle(0)
 	node._unhandled_input(_key_press(KEY_8))
 	_check(int(node.get_puzzle()["id"]) == 8, "key 8 still selects route 8")

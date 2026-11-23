@@ -15,7 +15,7 @@ class_name ChartBook
 # The Ogee holds eight more. The Ovolo holds eight more.
 # The Cavetto holds eight more. The Fillet holds eight more.
 # The Corona holds eight more. The Bead holds eight more. The Quirk holds eight more.
-# The Cyma holds the last eight.
+# The Cyma holds eight more. The Fascia holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
@@ -165,6 +165,17 @@ class_name ChartBook
 # east. A north fillet passes only south. A north astragal passes north and
 # east. A north scotia passes north and west. While that row is flooded, every
 # beam stops at the waterline, the same way a flooded quirk stops.
+# A fascia has a facing. Rotation changes it the same way: 0 north, 90 east,
+# 180 south, 270 west. Opposite facings are not the same piece. While its row
+# is dry, every direction except the next clockwise one passes straight through
+# in the same direction and the same color, and that pass costs no bounce. It
+# does not turn, it does not recolor, and it does not split. The clockwise
+# direction stops and does not enter. Facing north, east stops and north,
+# south, and west pass. One click faces east and stops south. Two clicks face
+# south and stop west. Three clicks face west and stop north. A north cyma
+# passes only north. A north ovolo stops only north. A north cavetto stops only
+# south. A north bead passes only east. While that row is flooded, every beam
+# stops at the waterline, the same way a flooded cyma stops.
 # See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
@@ -201,6 +212,7 @@ const CORONA := "The Corona"
 const BEAD := "The Bead"
 const QUIRK := "The Quirk"
 const CYMA := "The Cyma"
+const FASCIA := "The Fascia"
 
 static func all() -> Array:
 	var book: Array = []
@@ -234,6 +246,7 @@ static func all() -> Array:
 	book.append_array(bead())
 	book.append_array(quirk())
 	book.append_array(cyma())
+	book.append_array(fascia())
 	return book
 
 
@@ -355,6 +368,10 @@ static func quirk() -> Array:
 
 static func cyma() -> Array:
 	return [chart_231(), chart_232(), chart_233(), chart_234(), chart_235(), chart_236(), chart_237(), chart_238()]
+
+
+static func fascia() -> Array:
+	return [chart_239(), chart_240(), chart_241(), chart_242(), chart_243(), chart_244(), chart_245(), chart_246()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -8896,6 +8913,293 @@ static func chart_238() -> Dictionary:
 	}
 
 
+static func chart_239() -> Dictionary:
+	# A dry north fascia passes north, south, and west. East stops.
+	return {
+		"id": "239",
+		"harbor": FASCIA,
+		"title": "The Dry Fascia",
+		"teach": "Tide index 0, flood 0. A dry north fascia passes north, south, and west. East stops. One click faces east and stops south. A north cyma passes only north. A north ovolo stops only north. A north cavetto stops only south.",
+		"win": "The fascia faces north. East stays dark, and the other three beams pass.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 6, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+			_lantern("Ww", 6, 3, "W", "red"),
+			_lantern("Ee", 0, 3, "E", "blue"),
+		],
+		"docks": [
+			_dock("Nd", 3, 1, "white", true),
+			_dock("Sd", 3, 5, "blue", true),
+			_dock("Wd", 1, 3, "red", true),
+			_dock("Ed", 5, 3, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_fascia("O", "Fascia", 3, 3, 180, 0),
+		],
+	}
+
+
+static func chart_240() -> Dictionary:
+	# The fascia starts under water. Dry, east still stops.
+	return {
+		"id": "240",
+		"harbor": FASCIA,
+		"title": "The Wet Stop",
+		"teach": "The fascia opens under water, so every beam stops at the waterline. Lower the tide and face it north. North, south, and west pass. East stops. A shutter, a well, a siphon, a sluice, or a weir would carry the flooded beam into the cell.",
+		"win": "Low water opens north, south, and west. The flooded row had stopped every beam at the waterline.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [0, 4],
+		"start_tide_index": 1,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 7, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+			_lantern("Ww", 7, 4, "W", "red"),
+			_lantern("Ee", 0, 4, "E", "blue"),
+		],
+		"docks": [
+			_dock("Nd", 3, 2, "white", true),
+			_dock("Sd", 3, 6, "blue", true),
+			_dock("Wd", 1, 4, "red", true),
+			_dock("Ed", 5, 4, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_fascia("O", "Fascia", 3, 4, 180, 0),
+		],
+	}
+
+
+static func chart_241() -> Dictionary:
+	# North stays red. The other open beams keep their own colors.
+	return {
+		"id": "241",
+		"harbor": FASCIA,
+		"title": "Color Kept",
+		"teach": "North, south, and west keep their colors. Red stays red, blue stays blue, and white stays white. East still stops. A stain would paint those passes. A weir recolors a flooded beam. This fascia stays dry and does not recolor.",
+		"win": "North stays red. The fascia did not paint the beams.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 7, "N", "red"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+			_lantern("Ww", 7, 4, "W", "red"),
+			_lantern("Ee", 0, 4, "E", "white"),
+		],
+		"docks": [
+			_dock("Nd", 3, 2, "red", true),
+			_dock("Tw", 3, 1, "white", true, true),
+			_dock("Sd", 3, 6, "blue", true),
+			_dock("Wd", 1, 4, "red", true),
+			_dock("Ed", 5, 4, "white", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_fascia("O", "Fascia", 3, 4, 180, 0),
+		],
+	}
+
+
+static func chart_242() -> Dictionary:
+	# The open beams leave the way they entered.
+	return {
+		"id": "242",
+		"harbor": FASCIA,
+		"title": "No Turn",
+		"teach": "North leaves north, south leaves south, and west leaves west. East stops. The fascia does not turn. A prism would split a white beam. A vane or a mirror would send a beam aside. A flooded sluice would turn it.",
+		"win": "The open beams leave the way they entered. Nothing was turned.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 6, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+			_lantern("Ww", 6, 3, "W", "red"),
+			_lantern("Ee", 0, 3, "E", "blue"),
+		],
+		"docks": [
+			_dock("Nd", 3, 1, "white", true),
+			_dock("Sd", 3, 5, "blue", true),
+			_dock("Wd", 1, 3, "red", true),
+			_dock("Ed", 5, 3, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_fascia("O", "Fascia", 3, 3, 270, 0),
+		],
+	}
+
+
+static func chart_243() -> Dictionary:
+	# The fascia row is dry. A neighbor beam dies on the flood.
+	return {
+		"id": "243",
+		"harbor": FASCIA,
+		"title": "Beside the Flood",
+		"teach": "The fascia row is dry, so north, south, and west pass. East stops. The flood beam stops at the waterline and never enters the flooded cell.",
+		"win": "The dry row passes north, south, and west. The flood beam stops at the waterline.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [2],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 5, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+			_lantern("Ww", 6, 3, "W", "red"),
+			_lantern("Ee", 0, 3, "E", "blue"),
+			_lantern("Fl", 1, 5, "S", "white"),
+		],
+		"docks": [
+			_dock("Nd", 3, 1, "white", true),
+			_dock("Sd", 3, 4, "blue", true),
+			_dock("Wd", 1, 3, "red", true),
+			_dock("Ed", 5, 3, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_fascia("O", "Fascia", 3, 3, 180, 0),
+		],
+	}
+
+
+static func chart_244() -> Dictionary:
+	# One fascia stops east. The other stops south.
+	return {
+		"id": "244",
+		"harbor": FASCIA,
+		"title": "Two Fascias",
+		"teach": "One fascia passes north, south, and west. The other passes north, east, and west. Those open sets are not the same. Swapping the facings fails. A north cyma cannot take the north seat, because a north cyma passes only north.",
+		"win": "East stays dark on the first seat. South stays dark on the second.",
+		"cols": 12,
+		"rows": 9,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("An", 3, 6, "N", "white"),
+			_lantern("As", 3, 0, "S", "blue"),
+			_lantern("Aw", 6, 3, "W", "red"),
+			_lantern("Ae", 0, 3, "E", "blue"),
+			_lantern("Bn", 8, 8, "N", "white"),
+			_lantern("Bs", 8, 2, "S", "red"),
+			_lantern("Be", 5, 5, "E", "white"),
+			_lantern("Bw", 11, 5, "W", "blue"),
+		],
+		"docks": [
+			_dock("Adn", 3, 1, "white", true),
+			_dock("Ads", 3, 5, "blue", true),
+			_dock("Adw", 1, 3, "red", true),
+			_dock("Ade", 5, 3, "blue", true, true),
+			_dock("Bdn", 8, 3, "white", true),
+			_dock("Bds", 8, 7, "red", true, true),
+			_dock("Bde", 10, 5, "white", true),
+			_dock("Bdw", 6, 5, "blue", true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_fascia("O", "North fascia", 3, 3, 180, 0),
+			_fascia("U", "East fascia", 8, 5, 0, 90),
+		],
+	}
+
+
+static func chart_245() -> Dictionary:
+	# Three tide marks. The middle mark leaves the fascia dry, facing north.
+	return {
+		"id": "245",
+		"harbor": FASCIA,
+		"title": "The Held Fascia",
+		"teach": "The held facing is part of the solution. The chart starts on a facing that stops north. Place the tide on the middle mark and face the fascia north. Low water wakes the south hull. High water covers the fascia and the beam stops at the waterline.",
+		"win": "The middle mark holds the north fascia. East stays dark, and the hull stays dark.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [0, 1, 5],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 4, 6, "N", "white"),
+			_lantern("Ss", 4, 0, "S", "blue"),
+			_lantern("Ww", 7, 3, "W", "red"),
+			_lantern("Ee", 0, 3, "E", "blue"),
+			_lantern("Hl", 0, 7, "E", "white"),
+		],
+		"docks": [
+			_dock("Nd", 4, 1, "white", true),
+			_dock("Sd", 4, 5, "blue", true),
+			_dock("Wd", 2, 3, "red", true),
+			_dock("Ed", 6, 3, "blue", true, true),
+		],
+		"boats": [
+			_boat("Hb", 3, 7),
+		],
+		"fixtures": [],
+		"pieces": [
+			_fascia("O", "Fascia", 4, 3, 180, 0),
+		],
+	}
+
+
+static func chart_246() -> Dictionary:
+	# The fascia and the shutter trade places. On the line it faces north.
+	return {
+		"id": "246",
+		"harbor": FASCIA,
+		"title": "The Fascia Mark",
+		"teach": "Move the fascia from the side socket onto the line and face it north. North, south, and west pass. East must not count. A north cyma, a north ovolo, a north cavetto, or a lintel in that cell fails.",
+		"win": "The fascia stands on the line, open north, south, and west. East stays dark.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 6, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+			_lantern("Ww", 6, 3, "W", "red"),
+			_lantern("Ee", 0, 3, "E", "blue"),
+		],
+		"docks": [
+			_dock("Nd", 3, 1, "white", true),
+			_dock("Sd", 3, 5, "blue", true),
+			_dock("Wd", 1, 3, "red", true),
+			_dock("Ed", 5, 3, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_placed("O", "Fascia", "fascia", [["side", 5, 5], ["line", 3, 3]], "side", "line", 180, 0),
+			_placed("G", "Line shutter", "shutter", [["line", 3, 3], ["side", 5, 5]], "line", "side", 0, 0),
+		],
+	}
+
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -9260,6 +9564,20 @@ static func _cyma(id: String, name: String, x: int, y: int, start_rot: int, sol_
 		"id": id,
 		"name": name,
 		"kind": "cyma",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _fascia(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "fascia",
 		"movable": false,
 		"sockets": [{"id": "a", "x": x, "y": y}],
 		"start_socket": "a",
