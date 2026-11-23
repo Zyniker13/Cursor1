@@ -295,6 +295,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_larmier(at, rot)
 		"cill":
 			_draw_cill(at, rot)
+		"threshold":
+			_draw_threshold(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -1311,6 +1313,46 @@ func _draw_cill(at: Vector2i, rot: int) -> void:
 		center + along * half + along.orthogonal() * thick,
 		center - along * half + along.orthogonal() * thick,
 	]), bar)
+
+func _draw_threshold(at: Vector2i, rot: int) -> void:
+	# A low broken step on the opposite edge, the dry pass. A north threshold
+	# steps the south edge. The gap in the step is not the fillet's solid band
+	# and not the throat's two posts.
+	var center := _center(at)
+	var passing := Tracer.rotate_dir(Tracer.threshold_facing(rot), 2)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var step := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var along := Vector2.RIGHT
+	var outward := Vector2.DOWN
+	match passing:
+		"N":
+			along = Vector2.RIGHT
+			outward = Vector2.UP
+		"S":
+			along = Vector2.RIGHT
+			outward = Vector2.DOWN
+		"E":
+			along = Vector2.DOWN
+			outward = Vector2.RIGHT
+		_:
+			along = Vector2.DOWN
+			outward = Vector2.LEFT
+	var edge := center + outward * cell * 0.36
+	var inner := center + outward * cell * 0.18
+	var gap := cell * 0.05
+	var reach := cell * 0.16
+	draw_colored_polygon(PackedVector2Array([
+		inner + along * gap,
+		inner + along * reach,
+		edge + along * reach,
+		edge + along * gap,
+	]), step)
+	draw_colored_polygon(PackedVector2Array([
+		inner - along * gap,
+		inner - along * reach,
+		edge - along * reach,
+		edge - along * gap,
+	]), step)
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
 	if dir == "N" or dir == "S":

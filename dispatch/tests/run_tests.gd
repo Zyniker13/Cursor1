@@ -108,6 +108,8 @@ func _run() -> void:
 	_building_forty_three()
 	_cranse_rules()
 	_building_forty_four()
+	_bees_rules()
+	_building_forty_five()
 	_ui_uses_simulated_par()
 	if _failures.is_empty():
 		print("ALL TESTS PASSED")
@@ -11324,10 +11326,10 @@ func _cranse_rules() -> void:
 func _building_forty_four() -> void:
 	print("building 44")
 	var puzzles := Puzzles.all()
-	_check(puzzles.size() == 316, "building 44 adds routes 310 through 316")
+	_check(puzzles.size() >= 316, "building 44 adds routes 310 through 316")
 	_check(int(puzzles[308]["id"]) == 309, "route 309 is the last route before the cranse")
 	_check(int(puzzles[309]["id"]) == 310, "the cranse begins at route 310")
-	_check(Puzzles.INTRO.size() == 48 and Puzzles.INTRO[47] == "cranse", "the cranse is the block building 44 teaches")
+	_check(Puzzles.INTRO.size() >= 48 and Puzzles.INTRO[47] == "cranse", "the cranse is the block building 44 teaches")
 	_check(not Puzzles.unlocked_at(308).has("cranse"), "the cranse stays locked through route 309")
 	_check(Puzzles.unlocked_at(309).has("cranse"), "route 310 unlocks the cranse")
 	_check(Puzzles.unlocked_at(315).size() == 48, "building 44 ends with every block")
@@ -11346,6 +11348,8 @@ func _building_forty_four() -> void:
 			_check(int(puzzle.get("building", 1)) < 44, "route %d stays out of building 44" % id)
 			if id >= 303:
 				_check(int(puzzle.get("building", 1)) == 43, "route %d stays in building 43" % id)
+			continue
+		if id > 316:
 			continue
 		_check(int(puzzle.get("building", 1)) == 44, "route %d is building 44" % id)
 		var result: Dictionary = Sim.run(puzzle, puzzle["reference"])
@@ -11462,6 +11466,307 @@ func _building_forty_four() -> void:
 	_check(not bool(Sim.run(_by_id(316), _swap(_by_id(316), "counter", "conveyor"))["success"]), "route 316 fails without the counter")
 
 
+func _bees_rules() -> void:
+	print("bees")
+	var hop := {
+		"width": 25, "height": 3, "walls": [],
+		"sources": [{"x": 0, "y": 1, "dir": 0, "parcels": [{"color": "gray"}]}],
+		"dock": {"x": 24, "y": 1},
+		"order": [{"color": "gray"}],
+	}
+	var graph := [{"type": "bees", "x": 1, "y": 1, "dir": 0}]
+	var sent: Dictionary = Sim.run(hop, graph)
+	_check(bool(sent["success"]), "a bees jumps twenty-three cells forward and delivers")
+	_check(int(sent["cycles"]) == 3 and int(sent["blocks"]) == 1, "the bees waits a tick and delivers on tick 3")
+	var born := _frame(sent, 1)
+	var waited := _frame(sent, 2)
+	_check(not born.is_empty() and _at(born, 1, 1) and _dir_at(born, 1, 1) == 0, "the parcel arrives facing east")
+	_check(not waited.is_empty() and _at(waited, 1, 1) and _dir_at(waited, 1, 1) == 0 and not _at(waited, 24, 1), "the bees does not move the parcel on that tick")
+	_check(_count_at(waited, 1, 1) == 0 and _color_at(waited, 1, 1) == "gray", "a bees does not stamp or paint")
+	var tinted: Dictionary = Sim.run(hop, [{"type": "bees", "x": 1, "y": 1, "dir": 0, "color": "red"}])
+	_check(bool(tinted["success"]) and str(tinted["delivered"][0]["color"]) == "gray" and int(tinted["delivered"][0]["count"]) == 0, "a color on a bees is ignored")
+	for dir in range(4):
+		var spun: Array = graph.duplicate(true)
+		spun[0]["dir"] = dir
+		var spun_run: Dictionary = Sim.run(hop, spun)
+		_check(bool(spun_run["success"]) and int(spun_run["cycles"]) == 3, "rotating a bees does not change the jump")
+	var over_bin: Dictionary = Sim.run(hop, [
+		{"type": "bees", "x": 1, "y": 1, "dir": 0},
+		{"type": "bin", "x": 2, "y": 1, "dir": 0},
+		{"type": "bin", "x": 3, "y": 1, "dir": 0},
+		{"type": "bin", "x": 4, "y": 1, "dir": 0},
+		{"type": "bin", "x": 5, "y": 1, "dir": 0},
+		{"type": "bin", "x": 6, "y": 1, "dir": 0},
+		{"type": "bin", "x": 7, "y": 1, "dir": 0},
+		{"type": "bin", "x": 8, "y": 1, "dir": 0},
+		{"type": "bin", "x": 9, "y": 1, "dir": 0},
+		{"type": "bin", "x": 10, "y": 1, "dir": 0},
+		{"type": "bin", "x": 11, "y": 1, "dir": 0},
+		{"type": "bin", "x": 12, "y": 1, "dir": 0},
+		{"type": "bin", "x": 13, "y": 1, "dir": 0},
+		{"type": "bin", "x": 14, "y": 1, "dir": 0},
+		{"type": "bin", "x": 15, "y": 1, "dir": 0},
+		{"type": "bin", "x": 16, "y": 1, "dir": 0},
+		{"type": "bin", "x": 17, "y": 1, "dir": 0},
+		{"type": "bin", "x": 18, "y": 1, "dir": 0},
+		{"type": "bin", "x": 19, "y": 1, "dir": 0},
+		{"type": "bin", "x": 20, "y": 1, "dir": 0},
+		{"type": "bin", "x": 21, "y": 1, "dir": 0},
+		{"type": "bin", "x": 22, "y": 1, "dir": 0},
+		{"type": "bin", "x": 23, "y": 1, "dir": 0},
+	])
+	_check(bool(over_bin["success"]) and int(over_bin["cycles"]) == 3, "bins in the skipped cells do not stop the bees")
+	var skipped := false
+	for frame in over_bin["frames"]:
+		if _at(frame, 2, 1) or _at(frame, 3, 1) or _at(frame, 4, 1) or _at(frame, 5, 1) or _at(frame, 6, 1) or _at(frame, 7, 1) or _at(frame, 8, 1) or _at(frame, 9, 1) or _at(frame, 10, 1) or _at(frame, 11, 1) or _at(frame, 12, 1) or _at(frame, 13, 1) or _at(frame, 14, 1) or _at(frame, 15, 1) or _at(frame, 16, 1) or _at(frame, 17, 1) or _at(frame, 18, 1) or _at(frame, 19, 1) or _at(frame, 20, 1) or _at(frame, 21, 1) or _at(frame, 22, 1) or _at(frame, 23, 1):
+			skipped = true
+	_check(not skipped, "the bees does not enter any of the twenty-two cells in front")
+	var short_cranse: Dictionary = Sim.run(hop, [
+		{"type": "cranse", "x": 1, "y": 1, "dir": 0},
+		{"type": "bin", "x": 23, "y": 1, "dir": 0},
+	])
+	_check(not bool(short_cranse["success"]) and _at(_frame(short_cranse, 3), 23, 1) and _dir_at(_frame(short_cranse, 3), 23, 1) == 0, "a cranse lands one cell short of a bees")
+	var short_whisker: Dictionary = Sim.run(hop, [
+		{"type": "whisker", "x": 1, "y": 1, "dir": 0},
+		{"type": "bin", "x": 22, "y": 1, "dir": 0},
+	])
+	_check(not bool(short_whisker["success"]) and _at(_frame(short_whisker, 3), 22, 1) and _dir_at(_frame(short_whisker, 3), 22, 1) == 0, "a whisker lands two cells short of a bees")
+	var short_jibboom: Dictionary = Sim.run(hop, [
+		{"type": "jibboom", "x": 1, "y": 1, "dir": 0},
+		{"type": "bin", "x": 21, "y": 1, "dir": 0},
+	])
+	_check(not bool(short_jibboom["success"]) and _at(_frame(short_jibboom, 3), 21, 1) and _dir_at(_frame(short_jibboom, 3), 21, 1) == 0, "a jibboom lands three cells short of a bees")
+	var short_martingale: Dictionary = Sim.run(hop, [
+		{"type": "martingale", "x": 1, "y": 1, "dir": 0},
+		{"type": "bin", "x": 20, "y": 1, "dir": 0},
+	])
+	_check(not bool(short_martingale["success"]) and _at(_frame(short_martingale, 3), 20, 1) and _dir_at(_frame(short_martingale, 3), 20, 1) == 0, "a martingale lands four cells short of a bees")
+	var short_dolphin: Dictionary = Sim.run(hop, [
+		{"type": "dolphin", "x": 1, "y": 1, "dir": 0},
+		{"type": "bin", "x": 19, "y": 1, "dir": 0},
+	])
+	_check(not bool(short_dolphin["success"]) and _at(_frame(short_dolphin, 3), 19, 1) and _dir_at(_frame(short_dolphin, 3), 19, 1) == 0, "a dolphin lands five cells short of a bees")
+	var short_bumpkin: Dictionary = Sim.run(hop, [
+		{"type": "bumpkin", "x": 1, "y": 1, "dir": 0},
+		{"type": "bin", "x": 18, "y": 1, "dir": 0},
+	])
+	_check(not bool(short_bumpkin["success"]) and _at(_frame(short_bumpkin, 3), 18, 1) and _dir_at(_frame(short_bumpkin, 3), 18, 1) == 0, "a bumpkin lands six cells short of a bees")
+	var short_bobstay: Dictionary = Sim.run(hop, [
+		{"type": "bobstay", "x": 1, "y": 1, "dir": 0},
+		{"type": "bin", "x": 17, "y": 1, "dir": 0},
+	])
+	_check(not bool(short_bobstay["success"]) and _at(_frame(short_bobstay, 3), 17, 1) and _dir_at(_frame(short_bobstay, 3), 17, 1) == 0, "a bobstay lands seven cells short of a bees")
+	var short_gammon: Dictionary = Sim.run(hop, [
+		{"type": "gammon", "x": 1, "y": 1, "dir": 0},
+		{"type": "bin", "x": 16, "y": 1, "dir": 0},
+	])
+	_check(not bool(short_gammon["success"]) and _at(_frame(short_gammon, 3), 16, 1) and _dir_at(_frame(short_gammon, 3), 16, 1) == 0, "a gammon lands eight cells short of a bees")
+	var keeled: Dictionary = Sim.run(hop, [{"type": "keel", "x": 1, "y": 1, "dir": 0}])
+	_check(not bool(keeled["success"]) and str(keeled["reason"]) == "stuck", "a keel jumps three cells back and misses the forward jump")
+	var rabbeted: Dictionary = Sim.run(hop, [{"type": "rabbet", "x": 1, "y": 1, "dir": 0}])
+	_check(not bool(rabbeted["success"]) and str(rabbeted["reason"]) == "stuck", "a rabbet jumps one cell back and misses the forward jump")
+	var jumps := [
+		{"name": "east", "src": Vector2i(0, 4), "arrival": 0, "block": Vector2i(1, 4), "land": Vector2i(24, 4), "dock": Vector2i(25, 4), "size": Vector2i(26, 6)},
+		{"name": "south", "src": Vector2i(1, 0), "arrival": 1, "block": Vector2i(1, 1), "land": Vector2i(1, 24), "dock": Vector2i(1, 25), "size": Vector2i(3, 26)},
+		{"name": "west", "src": Vector2i(25, 1), "arrival": 2, "block": Vector2i(24, 1), "land": Vector2i(1, 1), "dock": Vector2i(0, 1), "size": Vector2i(26, 3)},
+		{"name": "north", "src": Vector2i(2, 25), "arrival": 3, "block": Vector2i(2, 24), "land": Vector2i(2, 1), "dock": Vector2i(2, 0), "size": Vector2i(3, 26)},
+	]
+	for spec in jumps:
+		var src_at: Vector2i = spec["src"]
+		var block_at: Vector2i = spec["block"]
+		var land_at: Vector2i = spec["land"]
+		var dock_at: Vector2i = spec["dock"]
+		var size_at: Vector2i = spec["size"]
+		var arrival := int(spec["arrival"])
+		var strip := {
+			"width": size_at.x, "height": size_at.y, "walls": [],
+			"sources": [{"x": src_at.x, "y": src_at.y, "dir": arrival, "parcels": [{"color": "gray"}]}],
+			"dock": {"x": dock_at.x, "y": dock_at.y},
+			"order": [{"color": "gray"}],
+		}
+		var blocks := [
+			{"type": "bees", "x": block_at.x, "y": block_at.y, "dir": 0},
+			{"type": "pause", "x": land_at.x, "y": land_at.y, "dir": 0},
+		]
+		var side_run: Dictionary = Sim.run(strip, blocks)
+		var moved := _frame(side_run, 3)
+		_check(bool(side_run["success"]) and int(side_run["cycles"]) == 5, "a %s parcel jumps twenty-three cells forward and the pause follows the old facing" % str(spec["name"]))
+		_check(not moved.is_empty() and _at(moved, land_at.x, land_at.y) and _dir_at(moved, land_at.x, land_at.y) == arrival, "a %s parcel still faces %s after the twenty-three-cell jump" % [str(spec["name"]), str(spec["name"])])
+	var held_board := {
+		"width": 26, "height": 6, "walls": [{"x": 25, "y": 4}],
+		"sources": [
+			{"x": 0, "y": 4, "dir": 0, "parcels": [{"color": "gray"}]},
+			{"x": 23, "y": 4, "dir": 0, "parcels": [{"color": "blue"}]},
+		],
+		"dock": {"x": 25, "y": 5},
+		"order": [{"color": "gray"}],
+	}
+	var waiting: Dictionary = Sim.run(held_board, [
+		{"type": "bees", "x": 1, "y": 4, "dir": 0},
+		{"type": "pause", "x": 24, "y": 4, "dir": 0},
+	])
+	_check(not bool(waiting["success"]) and str(waiting["reason"]) == "tick_cap", "a bees keeps waiting while its landing stays blocked")
+	_check(_at(_frame(waiting, 3), 1, 4) and _dir_at(_frame(waiting, 3), 1, 4) == 0 and _color_at(_frame(waiting, 5), 24, 4) == "blue", "the bees keeps the arrival facing while the other parcel stays")
+	var gap := {
+		"width": 26, "height": 6, "walls": [],
+		"sources": [
+			{"x": 0, "y": 4, "dir": 0, "parcels": [{"color": "gray"}]},
+			{"x": 22, "y": 4, "dir": 0, "parcels": [{"color": "blue"}]},
+		],
+		"dock": {"x": 25, "y": 4},
+		"order": [{"color": "blue"}, {"color": "gray"}],
+	}
+	var followed: Dictionary = Sim.run(gap, [
+		{"type": "bees", "x": 1, "y": 4, "dir": 0},
+		{"type": "conveyor", "x": 23, "y": 4, "dir": 0},
+		{"type": "pause", "x": 24, "y": 4, "dir": 0},
+	])
+	_check(bool(followed["success"]) and int(followed["cycles"]) == 6, "a bees can land in a cell another parcel is leaving")
+	var into := _frame(followed, 4)
+	_check(not into.is_empty() and _color_at(into, 24, 4) == "gray" and _dir_at(into, 24, 4) == 0 and into.get("delivered", []).size() == 1, "the jump lands in the cell the other parcel left and still faces east")
+
+
+func _building_forty_five() -> void:
+	print("building 45")
+	var puzzles := Puzzles.all()
+	_check(puzzles.size() == 323, "building 45 adds routes 317 through 323")
+	_check(int(puzzles[315]["id"]) == 316, "route 316 is the last route before the bees")
+	_check(int(puzzles[316]["id"]) == 317, "the bees begins at route 317")
+	_check(Puzzles.INTRO.size() == 49 and Puzzles.INTRO[48] == "bees", "the bees is the block building 45 teaches")
+	_check(not Puzzles.unlocked_at(315).has("bees"), "the bees stays locked through route 316")
+	_check(Puzzles.unlocked_at(316).has("bees"), "route 317 unlocks the bees")
+	_check(Puzzles.unlocked_at(322).size() == 49, "building 45 ends with every block")
+	var pars := {
+		317: [6, 3],
+		318: [7, 4],
+		319: [7, 5],
+		320: [5, 2],
+		321: [7, 5],
+		322: [7, 3],
+		323: [35, 34],
+	}
+	for puzzle in puzzles:
+		var id := int(puzzle["id"])
+		if id <= 316:
+			_check(int(puzzle.get("building", 1)) < 45, "route %d stays out of building 45" % id)
+			if id >= 310:
+				_check(int(puzzle.get("building", 1)) == 44, "route %d stays in building 44" % id)
+			continue
+		_check(int(puzzle.get("building", 1)) == 45, "route %d is building 45" % id)
+		var result: Dictionary = Sim.run(puzzle, puzzle["reference"])
+		var par: Dictionary = Scoring.compute_par(puzzle)
+		_check(bool(result["success"]), "route %d reference delivers" % id)
+		_check(int(result["cycles"]) == int(par["cycles"]), "route %d reference meets par cycles" % id)
+		_check(int(result["blocks"]) == int(par["blocks"]), "route %d reference meets par blocks" % id)
+		_check(int(result["blocks"]) == puzzle["reference"].size(), "route %d plays the reference block count" % id)
+		var locked: Array = pars[id]
+		_check(int(par["cycles"]) == int(locked[0]) and int(par["blocks"]) == int(locked[1]), "route %d par is %d cycles and %d blocks" % [id, int(locked[0]), int(locked[1])])
+		if id == 317:
+			_check(str(puzzle.get("unlocks", "")) == "bees", "route 317 teaches the bees")
+		else:
+			_check(str(puzzle.get("unlocks", "")) == "", "route %d adds no further block" % id)
+		var uses_bees := false
+		for block in puzzle["reference"]:
+			if str(block["type"]) == "bees":
+				uses_bees = true
+		_check(uses_bees, "route %d reference uses the bees" % id)
+		if not bool(result["success"]):
+			_dump(result)
+		print("    par route %d  cycles %d  blocks %d" % [id, int(par["cycles"]), int(par["blocks"])])
+
+	for id in [317, 318, 319, 320, 321, 322, 323]:
+		for dir in range(4):
+			var spun: Array = _by_id(id)["reference"].duplicate(true)
+			for block in spun:
+				if str(block["type"]) == "bees":
+					block["dir"] = dir
+			var spun_run: Dictionary = Sim.run(_by_id(id), spun)
+			_check(bool(spun_run["success"]) and int(spun_run["cycles"]) == int(pars[id][0]), "route %d ignores which way the bees block is rotated" % id)
+		for kind in ["cranse", "whisker", "jibboom", "martingale", "dolphin", "bumpkin", "bobstay", "gammon", "cathead", "breasthook", "hawse", "knighthead", "forefoot", "gripe", "deadwood", "apron", "stemson", "keelson", "futtock", "loft", "vault", "keel", "rabbet", "balk", "return", "turn", "hook", "pause", "conveyor", "slide", "garboard", "stealer", "bias", "cant", "strake", "wale", "shunt", "sheer", "sling", "bridge", "chute"]:
+			var swapped: Dictionary = Sim.run(_by_id(id), _swap(_by_id(id), "bees", kind))
+			_check(not bool(swapped["success"]), "route %d fails if the bees is a %s" % [id, kind])
+		var omitted: Array = []
+		for block in _by_id(id)["reference"]:
+			if str(block["type"]) != "bees":
+				omitted.append(block)
+		_check(not bool(Sim.run(_by_id(id), omitted)["success"]), "route %d fails if the bees is missing" % id)
+
+	var lesson: Dictionary = Sim.run(_by_id(317), _by_id(317)["reference"])
+	_check(_at(_frame(lesson, 2), 2, 1) and _dir_at(_frame(lesson, 2), 2, 1) == 0, "route 317 starts the parcel facing east on the bees")
+	_check(_at(_frame(lesson, 3), 2, 1) and _dir_at(_frame(lesson, 3), 2, 1) == 0, "route 317 keeps the parcel facing east without moving it")
+	_check(_at(_frame(lesson, 4), 25, 1) and _dir_at(_frame(lesson, 4), 25, 1) == 0, "route 317 jumps twenty-three cells east and still faces east")
+	var lesson_entered := false
+	for frame in lesson["frames"]:
+		if _at(frame, 3, 1) or _at(frame, 4, 1) or _at(frame, 5, 1) or _at(frame, 6, 1) or _at(frame, 7, 1) or _at(frame, 8, 1) or _at(frame, 9, 1) or _at(frame, 10, 1) or _at(frame, 11, 1) or _at(frame, 12, 1) or _at(frame, 13, 1) or _at(frame, 14, 1) or _at(frame, 15, 1) or _at(frame, 16, 1) or _at(frame, 17, 1) or _at(frame, 18, 1) or _at(frame, 19, 1) or _at(frame, 20, 1) or _at(frame, 21, 1) or _at(frame, 22, 1) or _at(frame, 23, 1) or _at(frame, 24, 1):
+			lesson_entered = true
+	_check(not lesson_entered, "route 317 does not enter the cells in front")
+	_check(str(Sim.run(_by_id(317), _swap(_by_id(317), "bees", "cranse"))["reason"]) == "stuck", "route 317's cranse lands on the last brick")
+	_check(str(Sim.run(_by_id(317), _swap(_by_id(317), "bees", "whisker"))["reason"]) == "stuck", "route 317's whisker lands two cells short")
+
+	var let_bees: Dictionary = Sim.run(_by_id(318), _by_id(318)["reference"])
+	_check(_color_at(_frame(let_bees, 4), 2, 1) == "red" and _dir_at(_frame(let_bees, 4), 2, 1) == 0 and _color_at(_frame(let_bees, 4), 25, 1) == "blue", "route 318 holds red while blue stands on the landing")
+	_check(_color_at(_frame(let_bees, 5), 25, 1) == "red" and _dir_at(_frame(let_bees, 5), 25, 1) == 0 and _frame(let_bees, 5).get("delivered", []).size() == 1, "route 318 jumps once the landing is free and still faces east")
+
+	var counted: Dictionary = Sim.run(_by_id(319), _by_id(319)["reference"])
+	_check(str(counted["delivered"][0]["color"]) == "blue" and int(counted["delivered"][0]["count"]) == 1, "route 319 delivers blue count 1")
+	_check(str(counted["delivered"][1]["color"]) == "red" and int(counted["delivered"][1]["count"]) == 2, "route 319 delivers red count 2")
+	_check(_color_at(_frame(counted, 3), 24, 1) == "red" and _dir_at(_frame(counted, 3), 24, 1) == 0, "route 319 jumps twenty-three cells east and still faces east")
+	_check(_color_at(_frame(counted, 6), 26, 1) == "red" and _count_at(_frame(counted, 6), 26, 1) == 2, "route 319's counter stamps 2")
+
+	var clear: Dictionary = Sim.run(_by_id(320), _by_id(320)["reference"])
+	_check(_at(_frame(clear, 2), 1, 1) and _dir_at(_frame(clear, 2), 1, 1) == 0, "route 320 waits facing east")
+	_check(_at(_frame(clear, 3), 24, 1) and _dir_at(_frame(clear, 3), 24, 1) == 0, "route 320 lands twenty-three cells east and still faces east")
+	var brick_entered := false
+	for frame in clear["frames"]:
+		if _at(frame, 2, 1) or _at(frame, 3, 1) or _at(frame, 4, 1) or _at(frame, 5, 1) or _at(frame, 6, 1) or _at(frame, 7, 1) or _at(frame, 8, 1) or _at(frame, 9, 1) or _at(frame, 10, 1) or _at(frame, 11, 1) or _at(frame, 12, 1) or _at(frame, 13, 1) or _at(frame, 14, 1) or _at(frame, 15, 1) or _at(frame, 16, 1) or _at(frame, 17, 1) or _at(frame, 18, 1) or _at(frame, 19, 1) or _at(frame, 20, 1) or _at(frame, 21, 1) or _at(frame, 22, 1) or _at(frame, 23, 1):
+			brick_entered = true
+	_check(not brick_entered, "route 320 does not enter any brick")
+	_check(str(Sim.run(_by_id(320), _swap(_by_id(320), "bees", "cranse"))["reason"]) == "stuck", "route 320's cranse tries to land on the last brick")
+	_check(str(Sim.run(_by_id(320), _swap(_by_id(320), "bees", "pause"))["reason"]) == "stuck", "route 320's pause tries to enter the first brick")
+
+	var paired: Dictionary = Sim.run(_by_id(321), _by_id(321)["reference"])
+	_check(_color_at(_frame(paired, 2), 1, 26) == "red" and _dir_at(_frame(paired, 2), 1, 26) == 0, "route 321 holds the east-facing parcel")
+	_check(_color_at(_frame(paired, 4), 25, 2) == "blue" and _dir_at(_frame(paired, 4), 25, 2) == 1, "route 321 holds the south-facing parcel")
+	_check(_frame(paired, 5).get("delivered", []).size() == 1 and str(_frame(paired, 5)["delivered"][0]["color"]) == "red", "route 321 delivers the east-facing parcel first")
+	_check(int(paired["cycles"]) == 7, "route 321 delivers the south-facing parcel second")
+	for cell in [Vector2i(1, 26), Vector2i(25, 2)]:
+		for kind in ["cranse", "whisker", "jibboom"]:
+			var one: Dictionary = Sim.run(_by_id(321), _swap_cell(_by_id(321), cell.x, cell.y, kind))
+			_check(not bool(one["success"]), "route 321 misses the dock if the bees at %d,%d is a %s" % [cell.x, cell.y, kind])
+
+	var second: Dictionary = Sim.run(_by_id(322), _by_id(322)["reference"])
+	_check(_at(_frame(second, 2), 1, 24) and _dir_at(_frame(second, 2), 1, 24) == 0, "route 322 waits on the first bees facing east")
+	_check(_at(_frame(second, 3), 24, 24) and _dir_at(_frame(second, 3), 24, 24) == 0, "route 322 jumps twenty-three cells forward and still faces east")
+	_check(_at(_frame(second, 5), 24, 23) and _dir_at(_frame(second, 5), 24, 23) == 3, "route 322 reaches the second bees facing north")
+	_check(_at(_frame(second, 6), 24, 23) and _dir_at(_frame(second, 6), 24, 23) == 3, "route 322 waits on the second bees facing north")
+	_check(int(second["cycles"]) == 7, "route 322 jumps twenty-three cells forward on the new facing")
+	_check(not bool(Sim.run(_by_id(322), _omit_cell(_by_id(322), 1, 24))["success"]), "route 322 fails without the first bees")
+	_check(not bool(Sim.run(_by_id(322), _omit_cell(_by_id(322), 24, 23))["success"]), "route 322 fails without the second bees")
+	for cell in [Vector2i(1, 24), Vector2i(24, 23)]:
+		for kind in ["cranse", "whisker", "jibboom"]:
+			var missed: Dictionary = Sim.run(_by_id(322), _swap_cell(_by_id(322), cell.x, cell.y, kind))
+			_check(not bool(missed["success"]), "route 322 misses the dock if the bees at %d,%d is a %s" % [cell.x, cell.y, kind])
+
+	var night: Dictionary = Sim.run(_by_id(323), _by_id(323)["reference"])
+	_check(int(night["cycles"]) < 250, "route 323 finishes before tick 250")
+	_check(str(night["delivered"][0]["color"]) == "red" and int(night["delivered"][0]["count"]) == 1, "route 323 stamps red 1")
+	_check(str(night["delivered"][1]["color"]) == "yellow" and int(night["delivered"][1]["count"]) == 2, "route 323 stamps yellow 2")
+	_check(str(night["delivered"][2]["color"]) == "blue" and int(night["delivered"][2]["count"]) == 3, "route 323 stamps blue 3")
+	_check(_color_at(_frame(night, 6), 3, 3) == "red" and _dir_at(_frame(night, 6), 3, 3) == 0, "route 323 holds red facing east")
+	_check(_color_at(_frame(night, 8), 26, 3) == "red" and _dir_at(_frame(night, 8), 26, 3) == 0, "route 323 jumps red twenty-three cells east and leaves it facing east")
+	_check(_color_at(_frame(night, 10), 27, 3) == "red" and _dir_at(_frame(night, 10), 27, 3) == 0 and _count_at(_frame(night, 10), 27, 3) == 0, "route 323 reaches the counter still facing east")
+	var night_entered := false
+	for frame in night["frames"]:
+		if _color_at(frame, 4, 3) == "red" or _color_at(frame, 5, 3) == "red" or _color_at(frame, 6, 3) == "red" or _color_at(frame, 7, 3) == "red" or _color_at(frame, 8, 3) == "red" or _color_at(frame, 9, 3) == "red" or _color_at(frame, 10, 3) == "red" or _color_at(frame, 11, 3) == "red" or _color_at(frame, 12, 3) == "red" or _color_at(frame, 13, 3) == "red" or _color_at(frame, 14, 3) == "red" or _color_at(frame, 15, 3) == "red" or _color_at(frame, 16, 3) == "red" or _color_at(frame, 17, 3) == "red" or _color_at(frame, 18, 3) == "red" or _color_at(frame, 19, 3) == "red" or _color_at(frame, 20, 3) == "red" or _color_at(frame, 21, 3) == "red" or _color_at(frame, 22, 3) == "red" or _color_at(frame, 23, 3) == "red" or _color_at(frame, 24, 3) == "red" or _color_at(frame, 25, 3) == "red":
+			night_entered = true
+	_check(not night_entered, "route 323 does not enter the cells in front")
+	_check(not bool(Sim.run(_by_id(323), _swap(_by_id(323), "bees", "cranse"))["success"]), "route 323's cranse misses the pause")
+	_check(not bool(Sim.run(_by_id(323), _swap(_by_id(323), "bees", "whisker"))["success"]), "route 323's whisker misses the pause")
+	_check(not bool(Sim.run(_by_id(323), _swap(_by_id(323), "primer", "painter"))["success"]), "route 323 fails if blue is painted yellow")
+	_check(not bool(Sim.run(_by_id(323), _swap(_by_id(323), "filter", "conveyor"))["success"]), "route 323 fails if red is not pulled ahead")
+	_check(not bool(Sim.run(_by_id(323), _swap(_by_id(323), "counter", "conveyor"))["success"]), "route 323 fails without the counter")
+
+
 func _ui_uses_simulated_par() -> void:
 	print("scoreboard ui")
 	var scene := load("res://scenes/main.tscn")
@@ -11490,12 +11795,12 @@ func _ui_uses_simulated_par() -> void:
 				routes += 1
 		if row.get_child_count() > 1:
 			width += float(row.get_theme_constant("separation")) * float(row.get_child_count() - 1)
-	_check(routes == 316, "all 316 routes are on the board")
+	_check(routes == 323, "all 323 routes are on the board")
 	print("    route row width ", width)
-	_check(width == 7452.0, "the route row minimum width is 7452 (%s)" % width)
-	_check(int(ProjectSettings.get_setting("display/window/size/viewport_width")) == 7492, "the window is 7492 wide")
+	_check(width == 7628.0, "the route row minimum width is 7628 (%s)" % width)
+	_check(int(ProjectSettings.get_setting("display/window/size/viewport_width")) == 7668, "the window is 7668 wide")
 	_check(int(ProjectSettings.get_setting("display/window/size/viewport_height")) == 720, "the window is 720 tall")
-	_check(width + 40.0 == 7492.0, "the window keeps 20 pixels of spare on each side of the route row")
+	_check(width + 40.0 == 7668.0, "the window keeps 20 pixels of spare on each side of the route row")
 	_check(node.find_child("BuildingTwelveMark", true, false) != null, "building 12's mark stays on the route row")
 	_check(node.find_child("BuildingThirteenMark", true, false) != null, "the route row marks building 13")
 	node.select_puzzle(15)
@@ -13777,6 +14082,86 @@ func _ui_uses_simulated_par() -> void:
 				saw_whisker = true
 	_check(saw_cranse, "route 316 still offers the cranse")
 	_check(saw_whisker, "route 316 still offers the whisker")
+	var saw_bees := false
+	if tools != null:
+		for child in tools.get_children():
+			if child.is_queued_for_deletion():
+				continue
+			if str(child.text).begins_with("Bees"):
+				saw_bees = true
+	_check(not saw_bees, "route 316 keeps the bees locked")
+	node.select_puzzle(316)
+	_check(building != null and building.text == "BUILDING 45", "route 317 opens building 45")
+	_check(node.find_child("BuildingFortyFiveMark", true, false) != null, "the route row marks building 45")
+	_check(node.find_child("BuildingFortyFourMark", true, false) != null, "building 44's mark stays beside building 45")
+	tools = node.find_child("ToolBox", true, false)
+	saw_bees = false
+	saw_cranse = false
+	var bees_button: Button = null
+	var cranse_again: Button = null
+	if tools != null:
+		for child in tools.get_children():
+			if child.is_queued_for_deletion():
+				continue
+			if str(child.text).begins_with("Bees"):
+				saw_bees = true
+				bees_button = child
+			if str(child.text).begins_with("Cranse"):
+				saw_cranse = true
+				cranse_again = child
+	_check(saw_bees, "route 317 offers the bees")
+	_check(saw_cranse, "route 317 still offers the cranse")
+	if bees_button != null:
+		_check(str(bees_button.tooltip_text).begins_with("Waits one tick, then jumps a parcel twenty-three cells forward"), "the bees tooltip describes the twenty-three-cell jump")
+		_check(str(bees_button.text).begins_with("Bees"), "the bees button reads Bees")
+		_check(node._tool_color("bees") == Color("#5a4a3a"), "the bees is #5a4a3a")
+		_check(node._tool_color("cranse") == Color("#8a4a6a"), "the cranse stays #8a4a6a")
+		_check(node._tool_color("whisker") == Color("#3a4a6a"), "the whisker stays #3a4a6a")
+		_check(node._tool_color("jibboom") == Color("#4a6a3a"), "the jibboom stays #4a6a3a")
+		_check(node._tool_color("martingale") == Color("#6a3a4a"), "the martingale stays #6a3a4a")
+		_check(node._tool_color("dolphin") == Color("#3a6a5a"), "the dolphin stays #3a6a5a")
+		_check(node._tool_color("bumpkin") == Color("#8a3a4a"), "the bumpkin stays #8a3a4a")
+		_check(node._tool_color("bobstay") == Color("#4a3a8a"), "the bobstay stays #4a3a8a")
+		_check(node._tool_color("gammon") == Color("#5a3e8a"), "the gammon stays #5a3e8a")
+		_check(node._tool_color("cathead") == Color("#9a3e7a"), "the cathead stays #9a3e7a")
+		_check(node._tool_color("breasthook") == Color("#8a5a3e"), "the breasthook stays #8a5a3e")
+		_check(node._tool_color("hawse") == Color("#9a6a3e"), "the hawse stays #9a6a3e")
+		_check(node._tool_color("knighthead") == Color("#6a8a3e"), "the knighthead stays #6a8a3e")
+		_check(node._tool_color("forefoot") == Color("#3e6a8a"), "the forefoot stays #3e6a8a")
+		_check(node._tool_color("gripe") == Color("#8a3e6a"), "the gripe stays #8a3e6a")
+		_check(node._tool_color("deadwood") == Color("#3e7a6a"), "the deadwood stays #3e7a6a")
+		_check(node._tool_color("apron") == Color("#7a4a9a"), "the apron stays #7a4a9a")
+		_check(node._tool_color("stemson") == Color("#9a4a6a"), "the stemson stays #9a4a6a")
+		_check(node._tool_color("keelson") == Color("#4a8f9a"), "the keelson stays #4a8f9a")
+		_check(node._tool_color("futtock") == Color("#6a8f3e"), "the futtock stays #6a8f3e")
+		_check(node._tool_color("garboard") == Color("#3e8f6a"), "the garboard stays #3e8f6a")
+		var bees_rect: Rect2 = bees_button.get_global_rect()
+		var bees_view: Rect2 = node.get_viewport().get_visible_rect()
+		_check(bees_rect.position.x >= bees_view.position.x and bees_rect.position.y >= bees_view.position.y and bees_rect.end.x <= bees_view.end.x and bees_rect.end.y <= bees_view.end.y, "the bees button is fully on screen")
+	if cranse_again != null:
+		var cranse_again_rect: Rect2 = cranse_again.get_global_rect()
+		var cranse_again_view: Rect2 = node.get_viewport().get_visible_rect()
+		_check(cranse_again_rect.position.x >= cranse_again_view.position.x and cranse_again_rect.position.y >= cranse_again_view.position.y and cranse_again_rect.end.x <= cranse_again_view.end.x and cranse_again_rect.end.y <= cranse_again_view.end.y, "the cranse button stays fully on screen")
+	var bees_mark: Control = node.find_child("BuildingFortyFiveMark", true, false)
+	if bees_mark != null:
+		var bees_mark_rect: Rect2 = bees_mark.get_global_rect()
+		var bees_mark_view: Rect2 = node.get_viewport().get_visible_rect()
+		_check(bees_mark_rect.size.x > 1.0 and bees_mark_rect.position.x >= bees_mark_view.position.x and bees_mark_rect.end.x <= bees_mark_view.end.x and bees_mark_rect.position.y >= bees_mark_view.position.y and bees_mark_rect.end.y <= bees_mark_view.end.y, "the building 45 mark is fully on screen")
+	node.select_puzzle(322)
+	_check(building != null and building.text == "BUILDING 45", "route 323 stays in building 45")
+	tools = node.find_child("ToolBox", true, false)
+	saw_bees = false
+	saw_cranse = false
+	if tools != null:
+		for child in tools.get_children():
+			if child.is_queued_for_deletion():
+				continue
+			if str(child.text).begins_with("Bees"):
+				saw_bees = true
+			if str(child.text).begins_with("Cranse"):
+				saw_cranse = true
+	_check(saw_bees, "route 323 still offers the bees")
+	_check(saw_cranse, "route 323 still offers the cranse")
 	node.select_puzzle(0)
 	node._unhandled_input(_key_press(KEY_8))
 	_check(int(node.get_puzzle()["id"]) == 8, "key 8 still selects route 8")
