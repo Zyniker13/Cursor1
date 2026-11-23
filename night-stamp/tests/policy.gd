@@ -3634,6 +3634,186 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 				pegb_later_after_col -= 3
 			if pegb_later_after_row <= 2 and state.form[pegb_later_after_row][pegb_later_after_col] == null:
 				guess -= _stamp_number(state, String(pegb_later["card_id"]), pegb_after_row, pegb_after_col)
+	if rule == "drop_if_gash_count":
+		var gash_filled = 0
+		for gash_row in 3:
+			for gash_col in 3:
+				if state.form[gash_row][gash_col] != null:
+					gash_filled += 1
+		var gash_next = gash_filled + 1
+		if gash_next == 2 or gash_next == 5:
+			guess -= 4
+		elif gash_filled == 2 or gash_filled == 5:
+			guess += 5
+	if rule == "double_hitch_fill":
+		var hitch_before_row = row
+		var hitch_before_col = col - 2
+		while hitch_before_col < 0:
+			hitch_before_row -= 1
+			hitch_before_col += 3
+		var hitch_after_row = row
+		var hitch_after_col = col + 1
+		while hitch_after_col > 2:
+			hitch_after_row += 1
+			hitch_after_col -= 3
+		var hitch_before_filled = hitch_before_row >= 0 and state.form[hitch_before_row][hitch_before_col] != null
+		var hitch_after_filled = hitch_after_row <= 2 and state.form[hitch_after_row][hitch_after_col] != null
+		if hitch_before_filled and hitch_after_filled:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+		var hitch_prior_row = row
+		var hitch_prior_col = col - 1
+		while hitch_prior_col < 0:
+			hitch_prior_row -= 1
+			hitch_prior_col += 3
+		if hitch_prior_row >= 0 and state.form[hitch_prior_row][hitch_prior_col] != null:
+			var hitch_prior = state.form[hitch_prior_row][hitch_prior_col]
+			var hitch_prior_before_row = hitch_prior_row
+			var hitch_prior_before_col = hitch_prior_col - 2
+			while hitch_prior_before_col < 0:
+				hitch_prior_before_row -= 1
+				hitch_prior_before_col += 3
+			if hitch_prior_before_row >= 0 and state.form[hitch_prior_before_row][hitch_prior_before_col] != null:
+				guess += _stamp_number(state, String(hitch_prior["card_id"]), hitch_prior_row, hitch_prior_col)
+		var hitch_later_row = row
+		var hitch_later_col = col + 2
+		while hitch_later_col > 2:
+			hitch_later_row += 1
+			hitch_later_col -= 3
+		if hitch_later_row <= 2 and state.form[hitch_later_row][hitch_later_col] != null:
+			var hitch_later = state.form[hitch_later_row][hitch_later_col]
+			var hitch_later_after_row = hitch_later_row
+			var hitch_later_after_col = hitch_later_col + 1
+			while hitch_later_after_col > 2:
+				hitch_later_after_row += 1
+				hitch_later_after_col -= 3
+			if hitch_later_after_row <= 2 and state.form[hitch_later_after_row][hitch_later_after_col] != null:
+				guess += _stamp_number(state, String(hitch_later["card_id"]), hitch_later_row, hitch_later_col)
+	if rule == "yield_pin_pay":
+		var pin_sides = 0
+		var pin_corners = 0
+		for pin_side in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var pin_side_row = row + pin_side.x
+			var pin_side_col = col + pin_side.y
+			if pin_side_row < 0 or pin_side_col < 0 or pin_side_row > 2 or pin_side_col > 2:
+				continue
+			if state.form[pin_side_row][pin_side_col] != null:
+				pin_sides += 1
+		for pin_corner in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var pin_corner_row = row + pin_corner.x
+			var pin_corner_col = col + pin_corner.y
+			if pin_corner_row < 0 or pin_corner_col < 0 or pin_corner_row > 2 or pin_corner_col > 2:
+				continue
+			if state.form[pin_corner_row][pin_corner_col] != null:
+				pin_corners += 1
+		if pin_sides == 4 and pin_corners == 3:
+			guess += 4
+		else:
+			guess -= 1
+		for pin_side in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var pin_near_row = row + pin_side.x
+			var pin_near_col = col + pin_side.y
+			if pin_near_row < 0 or pin_near_col < 0 or pin_near_row > 2 or pin_near_col > 2:
+				continue
+			if state.form[pin_near_row][pin_near_col] == null:
+				continue
+			var pin_other_sides = 0
+			var pin_other_corners = 0
+			for pin_other in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+				var pin_other_row = pin_near_row + pin_other.x
+				var pin_other_col = pin_near_col + pin_other.y
+				if pin_other_row < 0 or pin_other_col < 0 or pin_other_row > 2 or pin_other_col > 2:
+					continue
+				if pin_other_row == row and pin_other_col == col:
+					continue
+				if state.form[pin_other_row][pin_other_col] != null:
+					pin_other_sides += 1
+			for pin_other in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+				var pin_other_row = pin_near_row + pin_other.x
+				var pin_other_col = pin_near_col + pin_other.y
+				if pin_other_row < 0 or pin_other_col < 0 or pin_other_row > 2 or pin_other_col > 2:
+					continue
+				if state.form[pin_other_row][pin_other_col] != null:
+					pin_other_corners += 1
+			if pin_other_sides == 3 and pin_other_corners == 3:
+				guess += 2
+			elif pin_other_sides == 4 and pin_other_corners == 3:
+				guess -= 2
+		for pin_corner in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var pin_diag_row = row + pin_corner.x
+			var pin_diag_col = col + pin_corner.y
+			if pin_diag_row < 0 or pin_diag_col < 0 or pin_diag_row > 2 or pin_diag_col > 2:
+				continue
+			if state.form[pin_diag_row][pin_diag_col] == null:
+				continue
+			var pin_diag_sides = 0
+			var pin_diag_corners = 0
+			for pin_other in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+				var pin_other_row = pin_diag_row + pin_other.x
+				var pin_other_col = pin_diag_col + pin_other.y
+				if pin_other_row < 0 or pin_other_col < 0 or pin_other_row > 2 or pin_other_col > 2:
+					continue
+				if state.form[pin_other_row][pin_other_col] != null:
+					pin_diag_sides += 1
+			for pin_other in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+				var pin_other_row = pin_diag_row + pin_other.x
+				var pin_other_col = pin_diag_col + pin_other.y
+				if pin_other_row < 0 or pin_other_col < 0 or pin_other_row > 2 or pin_other_col > 2:
+					continue
+				if pin_other_row == row and pin_other_col == col:
+					continue
+				if state.form[pin_other_row][pin_other_col] != null:
+					pin_diag_corners += 1
+			if pin_diag_corners == 2 and pin_diag_sides == 4:
+				guess += 2
+			elif pin_diag_corners == 3 and pin_diag_sides == 4:
+				guess -= 2
+	if rule == "double_hitch_blank":
+		var hitchb_before_row = row
+		var hitchb_before_col = col - 2
+		while hitchb_before_col < 0:
+			hitchb_before_row -= 1
+			hitchb_before_col += 3
+		var hitchb_after_row = row
+		var hitchb_after_col = col + 1
+		while hitchb_after_col > 2:
+			hitchb_after_row += 1
+			hitchb_after_col -= 3
+		var hitchb_before_empty = hitchb_before_row >= 0 and state.form[hitchb_before_row][hitchb_before_col] == null
+		var hitchb_after_empty = hitchb_after_row <= 2 and state.form[hitchb_after_row][hitchb_after_col] == null
+		if hitchb_before_empty and hitchb_after_empty:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+		var hitchb_prior_row = row
+		var hitchb_prior_col = col - 1
+		while hitchb_prior_col < 0:
+			hitchb_prior_row -= 1
+			hitchb_prior_col += 3
+		if hitchb_prior_row >= 0 and state.form[hitchb_prior_row][hitchb_prior_col] != null:
+			var hitchb_prior = state.form[hitchb_prior_row][hitchb_prior_col]
+			var hitchb_prior_before_row = hitchb_prior_row
+			var hitchb_prior_before_col = hitchb_prior_col - 2
+			while hitchb_prior_before_col < 0:
+				hitchb_prior_before_row -= 1
+				hitchb_prior_before_col += 3
+			if hitchb_prior_before_row >= 0 and state.form[hitchb_prior_before_row][hitchb_prior_before_col] == null:
+				guess -= _stamp_number(state, String(hitchb_prior["card_id"]), hitchb_prior_row, hitchb_prior_col)
+		var hitchb_later_row = row
+		var hitchb_later_col = col + 2
+		while hitchb_later_col > 2:
+			hitchb_later_row += 1
+			hitchb_later_col -= 3
+		if hitchb_later_row <= 2 and state.form[hitchb_later_row][hitchb_later_col] != null:
+			var hitchb_later = state.form[hitchb_later_row][hitchb_later_col]
+			var hitchb_later_after_row = hitchb_later_row
+			var hitchb_later_after_col = hitchb_later_col + 1
+			while hitchb_later_after_col > 2:
+				hitchb_later_after_row += 1
+				hitchb_later_after_col -= 3
+			if hitchb_later_after_row <= 2 and state.form[hitchb_later_after_row][hitchb_later_after_col] == null:
+				guess -= _stamp_number(state, String(hitchb_later["card_id"]), hitchb_later_row, hitchb_later_col)
 	if rule == "ignore_isolated":
 		var neighbors = 0
 		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
