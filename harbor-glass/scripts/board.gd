@@ -263,6 +263,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_scotia(at, rot)
 		"torus":
 			_draw_torus(at, rot)
+		"ogee":
+			_draw_ogee(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -750,6 +752,53 @@ func _draw_torus(at: Vector2i, rot: int) -> void:
 		draw_circle(bead_at, bead_r, bead)
 		draw_arc(bead_at, bead_r, 0.0, TAU, 20, rim, 2.5)
 		draw_circle(bead_at + Vector2(-bead_r * 0.28, -bead_r * 0.28), bead_r * 0.32, highlight)
+
+func _draw_ogee(at: Vector2i, rot: int) -> void:
+	# A pale S-curve on the opposite edge and the counterclockwise edge.
+	# A north ogee puts the curve on the south and west edges. The curve is
+	# an S of pale glass. It is not the torus's round beads, and it is not
+	# the scotia's two dark posts.
+	var center := _center(at)
+	var facing := Tracer.ogee_facing(rot)
+	var opposite := Tracer.rotate_dir(facing, 2)
+	var back := Tracer.rotate_dir(facing, -1)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var curve := Palette.GLASS if not flooded else Palette.FOAM
+	var shade := Palette.TIDE if not flooded else Palette.WOOD
+	_ogee_curve(center, opposite, curve, shade)
+	_ogee_curve(center, back, curve, shade)
+
+func _ogee_curve(center: Vector2, dir: String, curve: Color, shade: Color) -> void:
+	var along := Vector2.RIGHT
+	var outward := Vector2.DOWN
+	match dir:
+		"N":
+			along = Vector2.RIGHT
+			outward = Vector2.UP
+		"S":
+			along = Vector2.RIGHT
+			outward = Vector2.DOWN
+		"E":
+			along = Vector2.DOWN
+			outward = Vector2.RIGHT
+		_:
+			along = Vector2.DOWN
+			outward = Vector2.LEFT
+	var edge := cell * 0.36
+	var amp := cell * 0.11
+	var half := cell * 0.28
+	var origin := center + outward * edge - along * half
+	var steps := 16
+	var spine := PackedVector2Array()
+	var inner := PackedVector2Array()
+	for i in steps + 1:
+		var t := float(i) / float(steps)
+		var bow := sin(t * TAU)
+		var at := origin + along * (half * 2.0 * t) + outward * (amp * bow)
+		spine.append(at)
+		inner.append(at - outward * (cell * 0.035))
+	draw_polyline(spine, curve, 3.5)
+	draw_polyline(inner, shade, 1.75)
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
 	if dir == "N" or dir == "S":
