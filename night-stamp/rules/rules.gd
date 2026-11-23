@@ -2460,6 +2460,8 @@ const SHIFT_ENVOI := 40
 const SHIFT_CORRIGENDA := 41
 const SHIFT_EPILOGUE := 42
 const SHIFT_CODA := 43
+const SHIFT_EXPLICIT := 44
+const SHIFT_FINIS := 45
 
 const ROW_NAMES := ["top row", "middle row", "bottom row"]
 const COL_NAMES := ["column 1", "column 2", "column 3"]
@@ -4633,6 +4635,102 @@ const CODA_BELL := [
 ]
 
 
+const EXPLICIT_BELL := [
+	{
+		"id": "edgar_hale",
+		"name": "Edgar Hale",
+		"form_name": "Stride Toll",
+		"rule_text": "Patience drops by 2 when the number of filled cells is 4 or 6.",
+		"rule": "drop_if_stride_count",
+		"lane": 1,
+		"exemption_row": 2,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "helen_voss",
+		"name": "Helen Voss",
+		"form_name": "Stride Blank",
+		"rule_text": "A stamp scores twice only when the queue cell two places after it is empty and the queue cell two places before it is filled. The top-left cell has no cell two places before it, so it does not double. The top-middle cell has no cell two places before it, so it does not double. The bottom-middle cell has no cell two places after it, so it does not double. The bottom-right cell has no cell two places after it, so it does not double.",
+		"rule": "double_stride_blank",
+		"lane": 2,
+		"exemption_row": 1,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "mira_brant",
+		"name": "Mira Brant",
+		"form_name": "Bevel Pay",
+		"rule_text": "Each stamp with exactly two corner neighbors and exactly one side neighbor scores +2 once. Any other count scores its own number. Exactly one side neighbor with a different corner count scores its own number. Exactly one corner neighbor with a different side count scores its own number. A lone stamp scores its own number.",
+		"rule": "yield_bevel_pay",
+		"lane": 0,
+		"exemption_row": 0,
+		"goal": 16,
+		"patience": 5,
+	},
+	{
+		"id": "celia_okell",
+		"name": "Celia Okell",
+		"form_name": "Stride Fill",
+		"rule_text": "A stamp scores twice only when the queue cell two places after it is filled and the queue cell two places before it is empty. The top-left cell has no cell two places before it, so it does not double. The top-middle cell has no cell two places before it, so it does not double. The bottom-middle cell has no cell two places after it, so it does not double. The bottom-right cell has no cell two places after it, so it does not double.",
+		"rule": "double_stride_fill",
+		"lane": 2,
+		"exemption_row": 0,
+		"goal": 22,
+		"patience": 5,
+	},
+]
+
+
+const FINIS_BELL := [
+	{
+		"id": "ruth_hale",
+		"name": "Ruth Hale",
+		"form_name": "Helm Toll",
+		"rule_text": "Patience drops by 2 when the number of filled cells is 5 or 7.",
+		"rule": "drop_if_helm_count",
+		"lane": 2,
+		"exemption_row": 0,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "tomas_voss",
+		"name": "Tomas Voss",
+		"form_name": "Helm Blank",
+		"rule_text": "A stamp scores twice only when the queue cell three places after it is empty and the queue cell three places before it is filled. The top-left cell has no cell three places before it, so it does not double. The top-middle cell has no cell three places before it, so it does not double. The top-right cell has no cell three places before it, so it does not double. The bottom-left cell has no cell three places after it, so it does not double. The bottom-middle cell has no cell three places after it, so it does not double. The bottom-right cell has no cell three places after it, so it does not double.",
+		"rule": "double_helm_blank",
+		"lane": 0,
+		"exemption_row": 2,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "piers_brant",
+		"name": "Piers Brant",
+		"form_name": "Chevron Pay",
+		"rule_text": "Each stamp with exactly two corner neighbors and exactly zero side neighbors scores +2 once. Any other count scores its own number. Exactly two corner neighbors with one or more side neighbors score their own number. A lone stamp scores its own number.",
+		"rule": "yield_chevron_pay",
+		"lane": 1,
+		"exemption_row": 1,
+		"goal": 16,
+		"patience": 5,
+	},
+	{
+		"id": "nesta_okell",
+		"name": "Nesta Okell",
+		"form_name": "Helm Fill",
+		"rule_text": "A stamp scores twice only when the queue cell three places after it is filled and the queue cell three places before it is empty. The top-left cell has no cell three places before it, so it does not double. The top-middle cell has no cell three places before it, so it does not double. The top-right cell has no cell three places before it, so it does not double. The bottom-left cell has no cell three places after it, so it does not double. The bottom-middle cell has no cell three places after it, so it does not double. The bottom-right cell has no cell three places after it, so it does not double.",
+		"rule": "double_helm_fill",
+		"lane": 0,
+		"exemption_row": 1,
+		"goal": 22,
+		"patience": 5,
+	},
+]
+
+
 class NightState:
 	extends RefCounted
 	var seed: int = 1
@@ -4730,6 +4828,10 @@ static func _canonical_shift(shift_index: int) -> int:
 		return SHIFT_TITLEPAGE
 	if shift_index == SHIFT_COPYRIGHT:
 		return SHIFT_COPYRIGHT
+	if shift_index == SHIFT_FINIS:
+		return SHIFT_FINIS
+	if shift_index == SHIFT_EXPLICIT:
+		return SHIFT_EXPLICIT
 	if shift_index == SHIFT_CODA:
 		return SHIFT_CODA
 	if shift_index == SHIFT_EPILOGUE:
@@ -4779,6 +4881,10 @@ static func new_run(seed_value: int, shift_index: int = SHIFT_FIRST) -> NightSta
 	state.next_iid = 0
 	for card_id in STARTING_DECK:
 		_add_library_card(state, String(card_id))
+	if state.shift == SHIFT_FINIS:
+		_log(state, "The finis bell begins. Seed %d." % state.seed)
+	if state.shift == SHIFT_EXPLICIT:
+		_log(state, "The explicit bell begins. Seed %d." % state.seed)
 	if state.shift == SHIFT_CODA:
 		_log(state, "The coda bell begins. Seed %d." % state.seed)
 	if state.shift == SHIFT_EPILOGUE:
@@ -4907,6 +5013,10 @@ static func restart_encounter(state: NightState) -> void:
 
 
 static func shift_label(state: NightState) -> String:
+	if state.shift == SHIFT_FINIS:
+		return "Finis bell"
+	if state.shift == SHIFT_EXPLICIT:
+		return "Explicit bell"
 	if state.shift == SHIFT_CODA:
 		return "Coda bell"
 	if state.shift == SHIFT_EPILOGUE:
@@ -5011,6 +5121,10 @@ static func traveler(state: NightState) -> Dictionary:
 
 
 static func _roster(state: NightState) -> Array:
+	if state.shift == SHIFT_FINIS:
+		return FINIS_BELL
+	if state.shift == SHIFT_EXPLICIT:
+		return EXPLICIT_BELL
 	if state.shift == SHIFT_CODA:
 		return CODA_BELL
 	if state.shift == SHIFT_EPILOGUE:
@@ -5513,6 +5627,18 @@ static func stamp_progress(state: NightState, card_id: String, row: int, col: in
 		return amount + 2
 	if rule == "double_skew_fill" and _skew_fill(state, row, col):
 		return amount * 2
+	if rule == "double_stride_blank" and _stride_blank(state, row, col):
+		return amount * 2
+	if rule == "yield_bevel_pay" and _bevel_pay(state, row, col):
+		return amount + 2
+	if rule == "double_stride_fill" and _stride_fill(state, row, col):
+		return amount * 2
+	if rule == "double_helm_blank" and _helm_blank(state, row, col):
+		return amount * 2
+	if rule == "yield_chevron_pay" and _chevron_pay(state, row, col):
+		return amount + 2
+	if rule == "double_helm_fill" and _helm_fill(state, row, col):
+		return amount * 2
 	return amount
 
 
@@ -5674,6 +5800,10 @@ static func patience_loss(state: NightState) -> int:
 		elif rule == "drop_if_rift_count" and _is_rift_count(_stamp_count(state)):
 			loss = 2
 		elif rule == "drop_if_split_count" and _is_split_count(_stamp_count(state)):
+			loss = 2
+		elif rule == "drop_if_stride_count" and _is_stride_count(_stamp_count(state)):
+			loss = 2
+		elif rule == "drop_if_helm_count" and _is_helm_count(_stamp_count(state)):
 			loss = 2
 	return loss
 
@@ -6068,6 +6198,18 @@ static func _resolve_stamp(state: NightState, row: int, col: int, hush: bool) ->
 				_log(state, "%s on the %s, %s grants %d. One side neighbor and one corner neighbor pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			elif tail_rule == "double_skew_fill" and _skew_fill(state, row, col) and amount > raw:
 				_log(state, "%s on the %s, %s grants %d. The empty cell one place before it and the filled cell one place after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_stride_blank" and _stride_blank(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The filled cell two places before it and the empty cell two places after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_bevel_pay" and _bevel_pay(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. Two corner neighbors and one side neighbor pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_stride_fill" and _stride_fill(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The empty cell two places before it and the filled cell two places after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_helm_blank" and _helm_blank(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The filled cell three places before it and the empty cell three places after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_chevron_pay" and _chevron_pay(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. Two corner neighbors and no side neighbor pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_helm_fill" and _helm_fill(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The empty cell three places before it and the filled cell three places after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			else:
 				_log(state, "%s on the %s, %s grants %d." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 	state.turn_progress += amount
@@ -6436,6 +6578,46 @@ static func _wedge_pay(state: NightState, row: int, col: int) -> bool:
 	if state.form[row][col] == null:
 		return false
 	return _diagonal_count(state, row, col) == 2
+
+
+static func _is_helm_count(count: int) -> bool:
+	return count == 5 or count == 7
+
+
+static func _helm_blank(state: NightState, row: int, col: int) -> bool:
+	return _near_fill(state, row, col) and _far_blank(state, row, col)
+
+
+static func _chevron_pay(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	return orthogonal_count(state, row, col) == 0 and _diagonal_count(state, row, col) == 2
+
+
+static func _helm_fill(state: NightState, row: int, col: int) -> bool:
+	return _near_blank(state, row, col) and _far_fill(state, row, col)
+
+
+static func _is_stride_count(count: int) -> bool:
+	return count == 4 or count == 6
+
+
+static func _stride_blank(state: NightState, row: int, col: int) -> bool:
+	return _skip_fill(state, row, col) and _skip_gap(state, row, col)
+
+
+static func _bevel_pay(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	return orthogonal_count(state, row, col) == 1 and _diagonal_count(state, row, col) == 2
+
+
+static func _stride_fill(state: NightState, row: int, col: int) -> bool:
+	return _skip_blank(state, row, col) and _step_fill(state, row, col)
 
 
 static func _is_split_count(count: int) -> bool:
@@ -7478,6 +7660,10 @@ static func _apply_result(state: NightState, result: Dictionary) -> void:
 		state.encounters_cleared += 1
 		if state.traveler_index >= _roster(state).size() - 1:
 			state.phase = "victory"
+			if state.shift == SHIFT_FINIS:
+				_log(state, "The queue is empty. The finis bell is clear.")
+			if state.shift == SHIFT_EXPLICIT:
+				_log(state, "The queue is empty. The explicit bell is clear.")
 			if state.shift == SHIFT_CODA:
 				_log(state, "The queue is empty. The coda bell is clear.")
 			if state.shift == SHIFT_EPILOGUE:
