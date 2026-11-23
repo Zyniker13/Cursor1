@@ -82,6 +82,8 @@ func _run() -> void:
 	test_cyma_book()
 	test_fascia_rule()
 	test_fascia_book()
+	test_soffit_rule()
+	test_soffit_book()
 	test_chart_4_boat()
 	test_one_rotation_is_not_solved()
 	test_hint_points_at_one_piece()
@@ -258,7 +260,8 @@ func test_charts() -> void:
 	check(Charts.quirk().size() == 8, "quirk adds eight charts")
 	check(Charts.cyma().size() == 8, "cyma adds eight charts")
 	check(Charts.fascia().size() == 8, "fascia adds eight charts")
-	check(book.size() == 246, "two hundred forty-six charts")
+	check(Charts.soffit().size() == 8, "soffit adds eight charts")
+	check(book.size() == 254, "two hundred fifty-four charts")
 	check(str(book[13]["id"]) == "14" and str(book[13]["title"]) == "The Holding Line", "chart 14 stays the reach capstone")
 	check(str(book[14]["title"]) == "North Light", "chart 15 opens the basin")
 	check(str(book[21]["id"]) == "22" and str(book[21]["title"]) == "The Basin Mark", "chart 22 stays the basin capstone")
@@ -318,6 +321,8 @@ func test_charts() -> void:
 	check(str(book[237]["id"]) == "238" and str(book[237]["title"]) == "The Cyma Mark", "chart 238 stays the cyma capstone")
 	check(str(book[238]["title"]) == "The Dry Fascia", "chart 239 opens the fascia")
 	check(str(book[245]["id"]) == "246" and str(book[245]["title"]) == "The Fascia Mark", "chart 246 stays the fascia capstone")
+	check(str(book[246]["title"]) == "The Dry Soffit", "chart 247 opens the soffit")
+	check(str(book[253]["id"]) == "254" and str(book[253]["title"]) == "The Soffit Mark", "chart 254 stays the soffit capstone")
 	var seen_ids := {}
 	var seen_titles := {}
 	var quay_titles := ["First Glass", "Around the Pilings", "High Water", "Sleeping Hull", "Split the White", "The Night Mark"]
@@ -329,7 +334,7 @@ func test_charts() -> void:
 		var title := str(chart["title"])
 		check(not seen_ids.has(id), "chart id %s is unique" % id)
 		if seen_titles.has(title):
-			var echoed := (title == "After the Color" and id == "81") or (title == "Above the Gate" and (id == "84" or id == "92" or id == "100" or id == "108")) or (title == "Side Entry" and (id == "88" or id == "96" or id == "104")) or (title == "White Through" and (id == "97" or id == "105")) or (title == "Dry Stop" and (id == "90" or id == "98" or id == "106")) or (title == "The Wet Stop" and (id == "120" or id == "128" or id == "136" or id == "144" or id == "152" or id == "160" or id == "168" or id == "176" or id == "184" or id == "192" or id == "200" or id == "208" or id == "216" or id == "224" or id == "232" or id == "240")) or (title == "Color Kept" and (id == "121" or id == "129" or id == "137" or id == "145" or id == "153" or id == "161" or id == "169" or id == "177" or id == "185" or id == "193" or id == "201" or id == "209" or id == "217" or id == "225" or id == "233" or id == "241")) or (title == "No Turn" and (id == "122" or id == "130" or id == "138" or id == "146" or id == "154" or id == "162" or id == "170" or id == "178" or id == "186" or id == "194" or id == "202" or id == "210" or id == "218" or id == "226" or id == "234" or id == "242")) or (title == "Beside the Flood" and (id == "131" or id == "139" or id == "147" or id == "155" or id == "163" or id == "171" or id == "179" or id == "187" or id == "195" or id == "203" or id == "211" or id == "219" or id == "227" or id == "235" or id == "243"))
+			var echoed := (title == "After the Color" and id == "81") or (title == "Above the Gate" and (id == "84" or id == "92" or id == "100" or id == "108")) or (title == "Side Entry" and (id == "88" or id == "96" or id == "104")) or (title == "White Through" and (id == "97" or id == "105")) or (title == "Dry Stop" and (id == "90" or id == "98" or id == "106")) or (title == "The Wet Stop" and (id == "120" or id == "128" or id == "136" or id == "144" or id == "152" or id == "160" or id == "168" or id == "176" or id == "184" or id == "192" or id == "200" or id == "208" or id == "216" or id == "224" or id == "232" or id == "240" or id == "248")) or (title == "Color Kept" and (id == "121" or id == "129" or id == "137" or id == "145" or id == "153" or id == "161" or id == "169" or id == "177" or id == "185" or id == "193" or id == "201" or id == "209" or id == "217" or id == "225" or id == "233" or id == "241" or id == "249")) or (title == "No Turn" and (id == "122" or id == "130" or id == "138" or id == "146" or id == "154" or id == "162" or id == "170" or id == "178" or id == "186" or id == "194" or id == "202" or id == "210" or id == "218" or id == "226" or id == "234" or id == "242" or id == "250")) or (title == "Beside the Flood" and (id == "131" or id == "139" or id == "147" or id == "155" or id == "163" or id == "171" or id == "179" or id == "187" or id == "195" or id == "203" or id == "211" or id == "219" or id == "227" or id == "235" or id == "243" or id == "251"))
 			check(echoed, "chart title %s is unique" % title)
 		else:
 			check(true, "chart title %s is unique" % title)
@@ -10288,6 +10293,362 @@ func _expect_fascia_miss(index: int, piece_id: String, kind: String, rot: int, l
 		check(true, "%s misses fascia chart %d" % [label, index + 239])
 
 
+func test_soffit_rule() -> void:
+	check(Tracer.norm_rot("soffit", 0) == 0 and Tracer.norm_rot("soffit", 90) == 90, "a soffit keeps a quarter turn")
+	check(Tracer.norm_rot("soffit", 180) == 180 and Tracer.norm_rot("soffit", 270) == 270, "a soffit keeps a half turn")
+	check(Tracer.norm_rot("soffit", 360) == 0 and Tracer.norm_rot("soffit", 450) == 90, "a soffit wraps a full turn")
+	check(Tracer.turn_rot("soffit", 0) == 90 and Tracer.turn_rot("soffit", 90) == 180, "clicking a soffit walks the facing")
+	check(Tracer.turn_rot("soffit", 180) == 270 and Tracer.turn_rot("soffit", 270) == 0, "clicking a soffit returns to north")
+	check(Tracer.soffit_facing(0) == "N" and Tracer.soffit_facing(90) == "E" and Tracer.soffit_facing(180) == "S" and Tracer.soffit_facing(270) == "W", "soffit facing follows the quarter turn")
+	check(Tracer.soffit_passes(0, "N") and Tracer.soffit_passes(0, "E") and Tracer.soffit_passes(0, "S") and not Tracer.soffit_passes(0, "W"), "a north soffit passes north, east, and south")
+	check(Tracer.soffit_passes(90, "E") and Tracer.soffit_passes(90, "S") and Tracer.soffit_passes(90, "W") and not Tracer.soffit_passes(90, "N"), "a soffit turned once from north stops only north")
+	check(not Tracer.soffit_passes(180, "E") and Tracer.soffit_passes(180, "W"), "two clicks face south and stop east")
+	check(not Tracer.soffit_passes(270, "S") and Tracer.soffit_passes(270, "N"), "three clicks face west and stop south")
+	check(Tracer.fascia_passes(0, "W") and not Tracer.fascia_passes(0, "E") and not Tracer.soffit_passes(0, "W") and Tracer.soffit_passes(0, "E"), "a north fascia stops east and passes the west a north soffit stops")
+	check(Tracer.quirk_passes(0, "W") and not Tracer.soffit_passes(0, "W") and not Tracer.quirk_passes(0, "E"), "a north quirk passes only the west a north soffit stops")
+	check(Tracer.cyma_passes(0, "N") and not Tracer.cyma_passes(0, "E") and not Tracer.cyma_passes(0, "S"), "a north cyma passes only the north a north soffit shares")
+	var hinted: Dictionary = Charts.soffit()[6]
+	var solved_hint := Charts.make_state(hinted, true)
+	check(not Hints.wrong_pieces(hinted, solved_hint).has("O"), "a hint accepts the held north soffit")
+	for spun in [90, 180, 270]:
+		var turned_hint := Charts.duplicate_state(solved_hint)
+		turned_hint["pieces"]["O"]["rot"] = spun
+		check(Hints.wrong_pieces(hinted, turned_hint).has("O"), "a hint rejects soffit rotation %d" % spun)
+		check(not Tracer.is_cleared(hinted, turned_hint), "soffit rotation %d is not the held open set" % spun)
+	var carried := {}
+	carried[Vector2i(0, 0)] = {"kind": "soffit", "rot": 0}
+	check(not Tracer._flood_carries(carried, Vector2i(0, 0)), "a flooded soffit does not carry the beam")
+	var east_lane := _blank(5, 1)
+	east_lane["lanterns"] = [_lamp("L", 0, 0, "E", "red")]
+	east_lane["docks"] = [_need("D", 4, 0, "red")]
+	east_lane["pieces"] = [_fixed_soffit("O", 2, 0, 0)]
+	check(_leaves(Tracer.trace(east_lane, Charts.make_state(east_lane, true)), 2, 0, "E", "red"), "a north soffit passes east")
+	east_lane["pieces"] = [_fixed_fascia("O", 2, 0, 0)]
+	check(not _center_hit(Tracer.trace(east_lane, Charts.make_state(east_lane, true)), 2, 0), "a north fascia refuses the east a north soffit passes")
+	var west_stop := _blank(5, 1)
+	west_stop["lanterns"] = [_lamp("L", 4, 0, "W", "blue")]
+	west_stop["docks"] = [_need("D", 0, 0, "blue")]
+	west_stop["pieces"] = [_fixed_soffit("O", 2, 0, 0)]
+	check(not _center_hit(Tracer.trace(west_stop, Charts.make_state(west_stop, true)), 2, 0), "a north soffit refuses west")
+	west_stop["pieces"] = [_fixed_fascia("O", 2, 0, 0)]
+	check(_leaves(Tracer.trace(west_stop, Charts.make_state(west_stop, true)), 2, 0, "W", "blue"), "a north fascia passes the west a north soffit blocks")
+	west_stop["pieces"] = [_fixed_quirk("O", 2, 0, 0)]
+	check(_leaves(Tracer.trace(west_stop, Charts.make_state(west_stop, true)), 2, 0, "W", "blue"), "a north quirk passes the west a north soffit blocks")
+	var clicked := _blank(1, 5)
+	clicked["lanterns"] = [_lamp("L", 0, 4, "N", "white")]
+	clicked["docks"] = [_need("D", 0, 0, "white")]
+	clicked["pieces"] = [_fixed_soffit("O", 0, 2, Tracer.turn_rot("soffit", 0))]
+	var clicked_hit: Dictionary = Tracer.trace(clicked, Charts.make_state(clicked, true))
+	check(Tracer.soffit_facing(Tracer.turn_rot("soffit", 0)) == "E" and not _center_hit(clicked_hit, 0, 2), "a soffit clicked once from north faces east and stops north")
+	clicked["pieces"] = [_fixed_soffit("O", 0, 2, 0)]
+	check(_leaves(Tracer.trace(clicked, Charts.make_state(clicked, true)), 0, 2, "N", "white"), "a north soffit still passes that northbound beam")
+	for rot in [0, 90, 180, 270]:
+		var facing := Tracer.soffit_facing(rot)
+		for color in ["red", "blue", "white"]:
+			for dir in ["N", "E", "S", "W"]:
+				var open := Tracer.soffit_passes(rot, dir)
+				var lane := _blank(5, 5)
+				var at := Vector2i(2, 2)
+				var step: Vector2i = Tracer.VEC[dir]
+				var lamp_at := at - step
+				var dock_at := at + step * 2
+				lane["lanterns"] = [_lamp("L", lamp_at.x, lamp_at.y, dir, color)]
+				lane["docks"] = [_need("D", dock_at.x, dock_at.y, color)]
+				lane["pieces"] = [_fixed_soffit("O", at.x, at.y, rot)]
+				var hit: Dictionary = Tracer.trace(lane, Charts.make_state(lane, true))
+				if open:
+					check(hit["docks"]["D"].has(color) and hit["docks"]["D"].size() == 1, "a dry %s soffit keeps %s traveling %s" % [facing, color, dir])
+					check(_arrives_from(hit, at.x, at.y, dir, color) and _leaves(hit, at.x, at.y, dir, color), "a dry %s soffit passes %s straight %s" % [facing, color, dir])
+					var other := "red" if color != "red" else "blue"
+					check(not _departs(hit, at.x, at.y, other), "a dry %s soffit does not recolor %s traveling %s" % [facing, color, dir])
+					for other_dir in ["N", "E", "S", "W"]:
+						if other_dir == dir:
+							continue
+						check(not _leaves(hit, at.x, at.y, other_dir, color), "a dry %s soffit does not turn %s from %s to %s" % [facing, color, dir, other_dir])
+				else:
+					check(not _center_hit(hit, at.x, at.y) and not _leaves(hit, at.x, at.y, dir, color) and hit["docks"]["D"].is_empty(), "a dry %s soffit stops %s traveling %s before the cell" % [facing, color, dir])
+	check(Tracer.trace(_soffit_column(20), Charts.make_state(_soffit_column(20), true))["docks"]["D"].has("white"), "twenty dry north soffits still pass a northbound beam")
+	check(Tracer.trace(_soffit_south_column(20), Charts.make_state(_soffit_south_column(20), true))["docks"]["D"].has("white"), "twenty dry north soffits still pass a southbound beam")
+	check(Tracer.trace(_soffit_east_row(20), Charts.make_state(_soffit_east_row(20), true))["docks"]["D"].has("white"), "twenty dry north soffits still pass an eastbound beam")
+	var west_row := _soffit_west_row(20)
+	var west_row_hit: Dictionary = Tracer.trace(west_row, Charts.make_state(west_row, true))
+	check(west_row_hit["docks"]["D"].is_empty() and not _center_hit(west_row_hit, 20, 0), "twenty dry north soffits stop a westbound beam")
+	var flood_lane := _blank(5, 4)
+	flood_lane["tide_phases"] = [2]
+	flood_lane["lanterns"] = [_lamp("L", 0, 1, "S", "white")]
+	flood_lane["fixtures"] = [
+		{"id": "S0", "kind": "shutter", "x": 0, "y": 2, "rot": 0},
+		{"id": "T0", "kind": "tide_mirror", "x": 0, "y": 3, "rot": 90},
+		{"id": "S1", "kind": "shutter", "x": 1, "y": 3, "rot": 0},
+	]
+	flood_lane["pieces"] = [_fixed_soffit("O", 2, 3, 0)]
+	var flood_state := Charts.make_state(flood_lane, true)
+	var flood_hit: Dictionary = Tracer.trace(flood_lane, flood_state)
+	check(Tracer.is_flooded(flood_lane, flood_state, Vector2i(2, 3)) and not _center_hit(flood_hit, 2, 3), "a flooded soffit stops a beam before the cell")
+	flood_lane["pieces"] = [_fixed_fascia("O", 2, 3, 0)]
+	check(_trace_sig(Tracer.trace(flood_lane, Charts.make_state(flood_lane, true))) == _trace_sig(flood_hit), "a flooded soffit stops the way a flooded fascia stops")
+	flood_lane["pieces"] = [_fixed_shutter("G", 2, 3)]
+	var flood_open: Dictionary = Tracer.trace(flood_lane, Charts.make_state(flood_lane, true))
+	check(_center_hit(flood_open, 2, 3) and _departs(flood_open, 2, 3, "white"), "a flooded shutter passes the beam a soffit stops")
+	var well_carry := _blank(5, 4)
+	well_carry["tide_phases"] = [2]
+	well_carry["lanterns"] = [_lamp("L", 2, 1, "S", "red")]
+	well_carry["fixtures"] = [{"id": "S0", "kind": "shutter", "x": 2, "y": 2, "rot": 0}]
+	well_carry["pieces"] = [_fixed_well("K", 2, 3)]
+	check(_center_hit(Tracer.trace(well_carry, Charts.make_state(well_carry, true)), 2, 3), "a flooded well carries the beam a soffit stops")
+	var siphon_carry := _blank(5, 4)
+	siphon_carry["tide_phases"] = [2]
+	siphon_carry["lanterns"] = [_lamp("L", 2, 1, "S", "red")]
+	siphon_carry["fixtures"] = [{"id": "S0", "kind": "shutter", "x": 2, "y": 2, "rot": 0}]
+	siphon_carry["pieces"] = [_fixed_siphon("K", 2, 3)]
+	check(_center_hit(Tracer.trace(siphon_carry, Charts.make_state(siphon_carry, true)), 2, 3), "a flooded siphon carries the beam a soffit stops")
+	var sluice_carry := _blank(5, 4)
+	sluice_carry["tide_phases"] = [2]
+	sluice_carry["lanterns"] = [_lamp("L", 2, 1, "S", "red")]
+	sluice_carry["fixtures"] = [{"id": "S0", "kind": "shutter", "x": 2, "y": 2, "rot": 0}]
+	sluice_carry["pieces"] = [_fixed_sluice("K", 2, 3, 180)]
+	check(_center_hit(Tracer.trace(sluice_carry, Charts.make_state(sluice_carry, true)), 2, 3), "a flooded sluice carries the beam a soffit stops")
+	var weir_carry := _blank(5, 4)
+	weir_carry["tide_phases"] = [2]
+	weir_carry["lanterns"] = [_lamp("L", 2, 1, "S", "red")]
+	weir_carry["fixtures"] = [{"id": "S0", "kind": "shutter", "x": 2, "y": 2, "rot": 0}]
+	weir_carry["pieces"] = [_fixed_weir("K", 2, 3, 180)]
+	check(_center_hit(Tracer.trace(weir_carry, Charts.make_state(weir_carry, true)), 2, 3), "a flooded weir carries the beam a soffit stops")
+	var painted := _blank(1, 5)
+	painted["lanterns"] = [_lamp("L", 0, 4, "N", "blue")]
+	painted["docks"] = [_need("D", 0, 0, "blue")]
+	painted["pieces"] = [_fixed_soffit("O", 0, 2, 0)]
+	var kept_blue: Dictionary = Tracer.trace(painted, Charts.make_state(painted, true))
+	check(_leaves(kept_blue, 0, 2, "N", "blue") and kept_blue["docks"]["D"].has("blue") and not _departs(kept_blue, 0, 2, "red"), "a dry soffit keeps blue")
+	painted["lanterns"][0]["color"] = "red"
+	painted["docks"][0]["color"] = "red"
+	var kept_red: Dictionary = Tracer.trace(painted, Charts.make_state(painted, true))
+	check(_leaves(kept_red, 0, 2, "N", "red") and kept_red["docks"]["D"].has("red") and not _departs(kept_red, 0, 2, "blue"), "a dry soffit keeps red")
+	painted["lanterns"][0]["color"] = "white"
+	painted["docks"][0]["color"] = "white"
+	var kept_white: Dictionary = Tracer.trace(painted, Charts.make_state(painted, true))
+	check(_leaves(kept_white, 0, 2, "N", "white") and not _departs(kept_white, 0, 2, "red") and not _departs(kept_white, 0, 2, "blue"), "a dry soffit keeps white")
+	painted["lanterns"][0]["color"] = "blue"
+	painted["docks"][0]["color"] = "blue"
+	painted["pieces"] = [_fixed_stain("K", 0, 2, 0)]
+	var stained: Dictionary = Tracer.trace(painted, Charts.make_state(painted, true))
+	check(_leaves(stained, 0, 2, "N", "red") and not _leaves(stained, 0, 2, "N", "blue"), "a stain recolors the pass a soffit keeps")
+	var wet_color := _blank(5, 4)
+	wet_color["tide_phases"] = [2]
+	wet_color["lanterns"] = [_lamp("L", 0, 1, "S", "red")]
+	wet_color["fixtures"] = [
+		{"id": "S0", "kind": "shutter", "x": 0, "y": 2, "rot": 0},
+		{"id": "T0", "kind": "tide_mirror", "x": 0, "y": 3, "rot": 90},
+		{"id": "S1", "kind": "shutter", "x": 1, "y": 3, "rot": 0},
+	]
+	wet_color["docks"] = [_need("D", 4, 3, "blue")]
+	wet_color["pieces"] = [_fixed_weir("R", 2, 3, 90)]
+	var swapped: Dictionary = Tracer.trace(wet_color, Charts.make_state(wet_color, true))
+	check(_departs(swapped, 2, 3, "blue") and not _departs(swapped, 2, 3, "red"), "a flooded weir changes the color a soffit would have kept")
+	wet_color["pieces"] = [_fixed_soffit("O", 2, 3, 0)]
+	var held_color: Dictionary = Tracer.trace(wet_color, Charts.make_state(wet_color, true))
+	check(not _center_hit(held_color, 2, 3) and not _departs(held_color, 2, 3, "blue") and not _departs(held_color, 2, 3, "red"), "a flooded soffit does not recolor")
+	var turned := _blank(5, 5)
+	turned["lanterns"] = [_lamp("L", 2, 4, "N", "white")]
+	turned["docks"] = [_need("D", 2, 0, "white")]
+	turned["pieces"] = [_fixed_soffit("O", 2, 2, 0)]
+	var straight: Dictionary = Tracer.trace(turned, Charts.make_state(turned, true))
+	check(_leaves(straight, 2, 2, "N", "white") and not _leaves(straight, 2, 2, "E", "white") and not _leaves(straight, 2, 2, "S", "white") and not _leaves(straight, 2, 2, "W", "white"), "a dry soffit does not turn")
+	turned["pieces"] = [_fixed_mirror(2, 2, 0)]
+	check(_leaves(Tracer.trace(turned, Charts.make_state(turned, true)), 2, 2, "E", "white"), "a mirror turns the beam a soffit passes straight")
+	turned["pieces"] = [_fixed_vane("V", 2, 2, 90)]
+	check(_leaves(Tracer.trace(turned, Charts.make_state(turned, true)), 2, 2, "E", "white"), "a vane turns the beam a soffit passes straight")
+	turned["pieces"] = [_fixed_prism(2, 2, 0)]
+	var split: Dictionary = Tracer.trace(turned, Charts.make_state(turned, true))
+	check(_leaves(split, 2, 2, "W", "red") and _leaves(split, 2, 2, "E", "blue") and not _leaves(split, 2, 2, "N", "white"), "a prism splits the beam a soffit passes straight")
+	var sluice_turn := _blank(5, 5)
+	sluice_turn["tide_phases"] = [3]
+	sluice_turn["lanterns"] = [_lamp("L", 0, 1, "S", "white")]
+	sluice_turn["fixtures"] = [
+		{"id": "S0", "kind": "shutter", "x": 0, "y": 2, "rot": 0},
+		{"id": "T0", "kind": "tide_mirror", "x": 0, "y": 3, "rot": 90},
+		{"id": "S1", "kind": "shutter", "x": 1, "y": 3, "rot": 0},
+		{"id": "T1", "kind": "tide_mirror", "x": 2, "y": 3, "rot": 0},
+		{"id": "S2", "kind": "shutter", "x": 3, "y": 2, "rot": 0},
+	]
+	sluice_turn["pieces"] = [_fixed_sluice("U", 2, 2, 90)]
+	check(_leaves(Tracer.trace(sluice_turn, Charts.make_state(sluice_turn, true)), 2, 2, "E", "white"), "a flooded sluice turns the beam a soffit would pass straight")
+
+
+func test_soffit_book() -> void:
+	var book: Array = Charts.soffit()
+	check(book.size() == 8, "soffit book has eight charts")
+	var titles := ["The Dry Soffit", "The Wet Stop", "Color Kept", "No Turn", "Beside the Flood", "Two Soffits", "The Held Soffit", "The Soffit Mark"]
+	for i in book.size():
+		var chart: Dictionary = book[i]
+		check(str(chart["id"]) == str(i + 247), "soffit chart %d keeps its number" % (i + 247))
+		check(str(chart["title"]) == str(titles[i]), "soffit chart %d keeps its title" % (i + 247))
+		check(str(chart["harbor"]) == Charts.SOFFIT, "chart %s belongs to the soffit" % str(chart["id"]))
+		var soffit_count := 0
+		for raw_piece in chart["pieces"]:
+			var piece: Dictionary = raw_piece
+			if str(piece["kind"]) == "soffit":
+				soffit_count += 1
+		check(soffit_count >= 1, "chart %s needs the soffit" % str(chart["id"]))
+	for older in Charts.all().slice(0, 246):
+		for raw_piece in older["pieces"]:
+			var older_piece: Dictionary = raw_piece
+			check(str(older_piece["kind"]) != "soffit", "chart %s keeps its pieces" % str(older["id"]))
+		for raw_fix in older["fixtures"]:
+			var older_fix: Dictionary = raw_fix
+			check(str(older_fix["kind"]) != "soffit", "chart %s keeps its fixed glass" % str(older["id"]))
+	for i in book.size():
+		for raw_piece in book[i]["pieces"]:
+			var piece: Dictionary = raw_piece
+			if str(piece["kind"]) != "soffit":
+				continue
+			var piece_id := str(piece["id"])
+			var stopped := Tracer.rotate_dir(Tracer.soffit_facing(int(piece["solution_rot"])), -1)
+			for crot in [0, 90, 180, 270]:
+				if Tracer.ovolo_facing(crot) != stopped:
+					_expect_soffit_miss(i, piece_id, "ovolo", crot, "ovolo %d" % crot)
+				if Tracer.rotate_dir(Tracer.cavetto_facing(crot), 2) != stopped:
+					_expect_soffit_miss(i, piece_id, "cavetto", crot, "cavetto %d" % crot)
+				if Tracer.rotate_dir(Tracer.fascia_facing(crot), 1) != stopped:
+					_expect_soffit_miss(i, piece_id, "fascia", crot, "fascia %d" % crot)
+				_expect_soffit_miss(i, piece_id, "cyma", crot, "cyma %d" % crot)
+				_expect_soffit_miss(i, piece_id, "quirk", crot, "quirk %d" % crot)
+				_expect_soffit_miss(i, piece_id, "bead", crot, "bead %d" % crot)
+				_expect_soffit_miss(i, piece_id, "fillet", crot, "fillet %d" % crot)
+			_expect_soffit_miss(i, piece_id, "jamb", 0, "jamb north")
+			_expect_soffit_miss(i, piece_id, "jamb", 90, "jamb east")
+			_expect_soffit_miss(i, piece_id, "mullion", 0, "mullion")
+			_expect_soffit_miss(i, piece_id, "transom", 0, "transom")
+			_expect_soffit_miss(i, piece_id, "lintel", 0, "lintel")
+			_expect_soffit_miss(i, piece_id, "shutter", 0, "shutter")
+			_expect_soffit_miss(i, piece_id, "well", 0, "well")
+			_expect_soffit_miss(i, piece_id, "siphon", 0, "siphon")
+			_expect_soffit_miss(i, piece_id, "stain", 0, "red stain")
+			_expect_soffit_miss(i, piece_id, "stain", 90, "blue stain")
+			_expect_soffit_miss(i, piece_id, "mirror", 0, "mirror")
+			_expect_soffit_miss(i, piece_id, "mirror", 90, "turned mirror")
+			_expect_soffit_miss(i, piece_id, "corona", int(piece["solution_rot"]), "corona same facing")
+			_expect_soffit_miss(i, piece_id, "ogee", int(piece["solution_rot"]), "ogee same facing")
+			_expect_soffit_miss(i, piece_id, "torus", int(piece["solution_rot"]), "torus same facing")
+			_expect_soffit_miss(i, piece_id, "scotia", int(piece["solution_rot"]), "scotia same facing")
+			_expect_soffit_miss(i, piece_id, "astragal", int(piece["solution_rot"]), "astragal same facing")
+			_expect_soffit_miss(i, piece_id, "casement", int(piece["solution_rot"]), "casement same facing")
+			for facing in [0, 90, 180, 270]:
+				_expect_soffit_miss(i, piece_id, "vane", facing, "vane %d" % facing)
+				_expect_soffit_miss(i, piece_id, "weir", facing, "weir %d" % facing)
+				_expect_soffit_miss(i, piece_id, "sluice", facing, "sluice %d" % facing)
+				_expect_soffit_miss(i, piece_id, "prism", facing, "prism %d" % facing)
+	var dry: Dictionary = book[0]
+	check(int(dry["tide_phases"][0]) == 0 and int(dry["solution_tide_index"]) == 0, "chart 247 is tide index 0 and flood 0")
+	var dry_hit: Dictionary = Tracer.trace(dry, Charts.make_state(dry, true))
+	check(_leaves(dry_hit, 3, 3, "N", "white") and _leaves(dry_hit, 3, 3, "E", "red") and _leaves(dry_hit, 3, 3, "S", "blue") and not _leaves(dry_hit, 3, 3, "W", "blue"), "chart 247 passes north, east, and south")
+	check(dry_hit["docks"]["Nd"].has("white") and dry_hit["docks"]["Ed"].has("red") and dry_hit["docks"]["Sd"].has("blue") and dry_hit["docks"]["Wd"].is_empty(), "chart 247 keeps west dark")
+	var dry_once := Charts.duplicate_state(Charts.make_state(dry, true))
+	dry_once["pieces"]["O"]["rot"] = 90
+	var dry_once_hit: Dictionary = Tracer.trace(dry, dry_once)
+	check(not _leaves(dry_once_hit, 3, 3, "N", "white") and _leaves(dry_once_hit, 3, 3, "W", "blue") and not Tracer.is_cleared(dry, dry_once), "chart 247 one click from north stops north")
+	var dry_fascia: Dictionary = Charts.soffit()[0]
+	_retarget(dry_fascia, "O", "fascia", 0)
+	check(not Tracer.is_cleared(dry_fascia, Charts.make_state(dry_fascia, true)), "chart 247 a north fascia stops east and passes west")
+	var dry_quirk: Dictionary = Charts.soffit()[0]
+	_retarget(dry_quirk, "O", "quirk", 0)
+	check(not Tracer.is_cleared(dry_quirk, Charts.make_state(dry_quirk, true)), "chart 247 a north quirk passes only west")
+	var dry_cyma: Dictionary = Charts.soffit()[0]
+	_retarget(dry_cyma, "O", "cyma", 0)
+	check(not Tracer.is_cleared(dry_cyma, Charts.make_state(dry_cyma, true)), "chart 247 a north cyma passes only north")
+	var wet: Dictionary = book[1]
+	check(int(wet["start_tide_index"]) == 1 and int(wet["solution_tide_index"]) == 0 and int(wet["tide_phases"][1]) == 4, "chart 248 opens under water and solves dry")
+	var wet_start: Dictionary = Tracer.trace(wet, Charts.make_state(wet, false))
+	check(wet_start["docks"]["Nd"].is_empty() and wet_start["docks"]["Sd"].is_empty() and wet_start["docks"]["Ed"].is_empty() and wet_start["docks"]["Wd"].is_empty() and not _center_hit(wet_start, 3, 4), "chart 248 flooded row stops the beam at the waterline")
+	var wet_solved: Dictionary = Tracer.trace(wet, Charts.make_state(wet, true))
+	check(_leaves(wet_solved, 3, 4, "N", "white") and _leaves(wet_solved, 3, 4, "E", "red") and _leaves(wet_solved, 3, 4, "S", "blue") and wet_solved["docks"]["Wd"].is_empty(), "chart 248 dry tide passes north, east, and south")
+	var wet_open: Dictionary = Charts.soffit()[1]
+	_retarget(wet_open, "O", "shutter", 0)
+	check(_center_hit(Tracer.trace(wet_open, Charts.make_state(wet_open, false)), 3, 4), "chart 248 a shutter passes while flooded")
+	for carrier in ["well", "siphon", "sluice", "weir"]:
+		var wet_carry: Dictionary = Charts.soffit()[1]
+		_retarget(wet_carry, "O", carrier, 180 if carrier == "sluice" or carrier == "weir" else 0)
+		check(_center_hit(Tracer.trace(wet_carry, Charts.make_state(wet_carry, false)), 3, 4), "chart 248 a flooded %s carries the beam" % carrier)
+	var kept: Dictionary = Charts.soffit()[2]
+	var kept_hit: Dictionary = Tracer.trace(kept, Charts.make_state(kept, true))
+	check(_leaves(kept_hit, 3, 4, "N", "red") and kept_hit["docks"]["Nd"].has("red") and kept_hit["docks"]["Nd"].size() == 1 and kept_hit["docks"]["Tw"].is_empty() and kept_hit["docks"]["Sd"].has("blue") and kept_hit["docks"]["Ed"].has("red") and kept_hit["docks"]["Wd"].is_empty(), "chart 249 keeps red")
+	var white_pass: Dictionary = Charts.soffit()[2]
+	white_pass["lanterns"][0]["color"] = "white"
+	white_pass["docks"][0]["color"] = "white"
+	var white_hit: Dictionary = Tracer.trace(white_pass, Charts.make_state(white_pass, true))
+	check(_leaves(white_hit, 3, 4, "N", "white") and not _leaves(white_hit, 3, 4, "N", "red") and white_hit["docks"]["Nd"].has("white") and white_hit["docks"]["Nd"].size() == 1 and white_hit["docks"]["Tw"].is_empty() and white_hit["docks"]["Sd"].has("blue") and white_hit["docks"]["Wd"].is_empty() and Tracer.is_cleared(white_pass, Charts.make_state(white_pass, true)), "chart 249 keeps white")
+	var straight_chart: Dictionary = book[3]
+	var straight_hit: Dictionary = Tracer.trace(straight_chart, Charts.make_state(straight_chart, true))
+	check(_arrives_from(straight_hit, 3, 3, "N", "white") and _leaves(straight_hit, 3, 3, "N", "white") and _leaves(straight_hit, 3, 3, "E", "red") and _leaves(straight_hit, 3, 3, "S", "blue") and not _leaves(straight_hit, 3, 3, "W", "blue"), "chart 250 the open beams leave the way they entered")
+	var beside: Dictionary = book[4]
+	check(int(beside["tide_phases"][0]) == 2, "chart 251 holds a flooded neighbor")
+	var beside_state := Charts.make_state(beside, true)
+	check(not Tracer.is_flooded(beside, beside_state, Vector2i(3, 3)) and Tracer.is_flooded(beside, beside_state, Vector2i(1, 6)), "chart 251 soffit row is dry and the flood row is flooded")
+	var beside_hit: Dictionary = Tracer.trace(beside, beside_state)
+	check(_leaves(beside_hit, 3, 3, "N", "white") and beside_hit["docks"]["Sd"].has("blue") and beside_hit["docks"]["Wd"].is_empty() and not _center_hit(beside_hit, 1, 6), "chart 251 the dry row passes and the flood beam stops at the waterline")
+	var pair: Dictionary = book[5]
+	var pair_hit: Dictionary = Tracer.trace(pair, Charts.make_state(pair, true))
+	check(_leaves(pair_hit, 3, 3, "N", "white") and _leaves(pair_hit, 3, 3, "E", "red") and _leaves(pair_hit, 3, 3, "S", "blue") and not _leaves(pair_hit, 3, 3, "W", "blue"), "chart 252 the north seat passes north, east, and south")
+	check(_leaves(pair_hit, 8, 5, "N", "white") and _leaves(pair_hit, 8, 5, "E", "white") and _leaves(pair_hit, 8, 5, "W", "blue") and not _leaves(pair_hit, 8, 5, "S", "red"), "chart 252 the west seat passes north, east, and west")
+	check(pair_hit["docks"]["Adw"].is_empty() and pair_hit["docks"]["Bds"].is_empty(), "chart 252 each stopped direction stays dark")
+	var swapped_pair := Charts.duplicate_state(Charts.make_state(pair, true))
+	swapped_pair["pieces"]["O"]["rot"] = 270
+	swapped_pair["pieces"]["U"]["rot"] = 0
+	check(not Tracer.is_cleared(pair, swapped_pair), "chart 252 swapping the facings fails")
+	var north_seat: Dictionary = Charts.soffit()[5]
+	_retarget(north_seat, "O", "cyma", 0)
+	check(not Tracer.is_cleared(north_seat, Charts.make_state(north_seat, true)), "chart 252 a north cyma cannot take the north seat")
+	var held: Dictionary = book[6]
+	check(int(held["tide_phases"][0]) == 0 and int(held["tide_phases"][1]) == 1 and int(held["tide_phases"][2]) == 5 and int(held["solution_tide_index"]) == 1 and int(held["start_tide_index"]) == 0, "chart 253 follows the held tide marks")
+	var held_start := Charts.make_state(held, false)
+	check(int(held_start["pieces"]["O"]["rot"]) == 180, "chart 253 starts facing south")
+	var held_solved := Charts.make_state(held, true)
+	var held_hit: Dictionary = Tracer.trace(held, held_solved)
+	check(int(held_solved["pieces"]["O"]["rot"]) == 0 and _leaves(held_hit, 4, 3, "N", "white") and held_hit["docks"]["Sd"].has("blue") and held_hit["docks"]["Wd"].is_empty() and not bool(held_hit["boats"]["Hb"]), "chart 253 the held facing passes north, east, and south")
+	var held_low := Charts.duplicate_state(held_solved)
+	held_low["tide_index"] = 0
+	check(bool(Tracer.trace(held, held_low)["boats"]["Hb"]) and not Tracer.is_cleared(held, held_low), "chart 253 low water wakes the south hull")
+	var held_high := Charts.duplicate_state(held_solved)
+	held_high["tide_index"] = 2
+	var held_high_hit: Dictionary = Tracer.trace(held, held_high)
+	check(held_high_hit["docks"]["Nd"].is_empty() and not _center_hit(held_high_hit, 4, 3) and not Tracer.is_cleared(held, held_high), "chart 253 high water stops the beam outside the soffit")
+	var mark: Dictionary = book[7]
+	var mark_solved := Charts.make_state(mark, true)
+	check(str(mark_solved["pieces"]["O"]["socket"]) == "line" and int(mark_solved["pieces"]["O"]["rot"]) == 0 and str(mark_solved["pieces"]["G"]["socket"]) == "side", "chart 254 puts the north soffit on the line")
+	var mark_hit: Dictionary = Tracer.trace(mark, mark_solved)
+	check(_leaves(mark_hit, 3, 3, "N", "white") and mark_hit["docks"]["Ed"].has("red") and mark_hit["docks"]["Sd"].has("blue") and mark_hit["docks"]["Wd"].is_empty(), "chart 254 the open set satisfies the mark")
+	var mark_fascia: Dictionary = Charts.soffit()[7]
+	_retarget(mark_fascia, "O", "fascia", 0)
+	check(not Tracer.is_cleared(mark_fascia, Charts.make_state(mark_fascia, true)), "chart 254 a north fascia in that cell fails")
+	var mark_quirk: Dictionary = Charts.soffit()[7]
+	_retarget(mark_quirk, "O", "quirk", 0)
+	check(not Tracer.is_cleared(mark_quirk, Charts.make_state(mark_quirk, true)), "chart 254 a north quirk in that cell fails")
+	var mark_cyma: Dictionary = Charts.soffit()[7]
+	_retarget(mark_cyma, "O", "cyma", 0)
+	check(not Tracer.is_cleared(mark_cyma, Charts.make_state(mark_cyma, true)), "chart 254 a north cyma in that cell fails")
+	var mark_lintel: Dictionary = Charts.soffit()[7]
+	_retarget(mark_lintel, "O", "lintel", 0)
+	check(not Tracer.is_cleared(mark_lintel, Charts.make_state(mark_lintel, true)), "chart 254 a lintel in that cell fails")
+	check(str(book[0]["teach"]).to_lower().contains("tide index 0") and str(book[0]["teach"]).to_lower().contains("west stops") and str(book[0]["teach"]).to_lower().contains("fascia") and str(book[0]["teach"]).to_lower().contains("quirk") and str(book[0]["teach"]).to_lower().contains("cyma"), "chart 247 teaches the dry soffit")
+	check(str(book[1]["teach"]).to_lower().contains("waterline") and str(book[1]["teach"]).to_lower().contains("shutter") and str(book[1]["teach"]).to_lower().contains("well") and str(book[1]["teach"]).to_lower().contains("siphon") and str(book[1]["teach"]).to_lower().contains("sluice") and str(book[1]["teach"]).to_lower().contains("weir"), "chart 248 teaches the wet stop")
+	check(str(book[2]["teach"]).to_lower().contains("red stays red") and str(book[2]["teach"]).to_lower().contains("blue stays blue") and str(book[2]["teach"]).to_lower().contains("white stays white") and str(book[2]["teach"]).to_lower().contains("stain") and str(book[2]["teach"]).to_lower().contains("weir"), "chart 249 teaches the kept color")
+	check(str(book[3]["teach"]).to_lower().contains("does not turn") and str(book[3]["teach"]).to_lower().contains("prism") and str(book[3]["teach"]).to_lower().contains("vane") and str(book[3]["teach"]).to_lower().contains("sluice") and str(book[3]["teach"]).to_lower().contains("mirror"), "chart 250 teaches the straight pass")
+	check(str(book[4]["teach"]).to_lower().contains("waterline") and str(book[4]["teach"]).to_lower().contains("dry"), "chart 251 teaches the dry row beside the flood")
+	check(str(book[5]["teach"]).to_lower().contains("north, east, and south") and str(book[5]["teach"]).to_lower().contains("north, east, and west") and str(book[5]["teach"]).to_lower().contains("not the same") and str(book[5]["teach"]).to_lower().contains("cyma"), "chart 252 teaches both soffits")
+	check(str(book[6]["teach"]).to_lower().contains("facing") and str(book[6]["teach"]).to_lower().contains("waterline"), "chart 253 teaches the held soffit")
+	check(str(book[7]["teach"]).to_lower().contains("fascia") and str(book[7]["teach"]).to_lower().contains("quirk") and str(book[7]["teach"]).to_lower().contains("cyma") and str(book[7]["teach"]).to_lower().contains("lintel"), "chart 254 teaches the soffit mark")
+
+
+func _expect_soffit_miss(index: int, piece_id: String, kind: String, rot: int, label: String) -> void:
+	var chart: Dictionary = Charts.soffit()[index]
+	_retarget(chart, piece_id, kind, rot)
+	var state := Charts.make_state(chart, true)
+	if Tracer.is_cleared(chart, state):
+		check(false, "%s clears soffit chart %d" % [label, index + 247])
+	else:
+		check(true, "%s misses soffit chart %d" % [label, index + 247])
+
+
 func test_smoke() -> void:
 	var main_script: Script = load("res://scripts/main.gd")
 	main_script.persist_progress = false
@@ -11322,8 +11683,42 @@ func test_smoke() -> void:
 	await process_frame
 	check(str(main.chart["id"]) == "239", "Fascia returns to The Dry Fascia")
 	check(_chart_row_fits(main.fascia_grid, main._side), "the fascia chart row fits in the window")
+	var soffit_rect: Rect2 = main.soffit_book_button.get_global_rect()
+	var soffit_side: Rect2 = main._side.get_global_rect()
+	check(soffit_side.grow(1.0).encloses(soffit_rect), "the soffit book button sits inside the side panel")
+	check(soffit_rect.size.x + 0.5 >= main.soffit_book_button.get_minimum_size().x, "the soffit label has room")
+	main.unlocked[246] = false
+	main._refresh_chrome()
+	check(main.soffit_book_button.disabled, "the soffit stays locked until the fascia mark is held")
+	main.unlocked[245] = true
+	check(main.select_chart(245), "chart 246 opens when unlocked")
+	check(main.soffit_book_button.disabled, "opening the fascia mark does not unlock the soffit")
+	main.state = Charts.duplicate_state(Charts.make_state(main.chart, true))
+	main._refresh()
+	main.try_lock()
+	check(main.board_locked and main.unlocked[246], "holding the fascia mark opens the soffit")
+	main._advance_from_win()
+	check(str(main.chart["id"]) == "247", "next chart from the fascia mark enters The Dry Soffit")
+	check(main.soffit_grid.visible and not main.fascia_grid.visible and not main.cyma_grid.visible, "the soffit grid opens with The Dry Soffit")
+	check(str(main.harbor_label.text) == Charts.SOFFIT, "the harbor name follows the soffit")
+	check(str(main.tide_readout.text).to_lower().contains("soffit"), "chart 247 names the soffit in the water readout")
+	var soffit_cell := Charts.piece_cell(main.chart, main.state, "O")
+	check(str(main.selected_id) == "O" and int(main.state["pieces"]["O"]["rot"]) == 180, "chart 247 starts facing south")
+	_click_cell(main, soffit_cell.x, soffit_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 270, "a click turns the soffit from south to west")
+	check(str(main.status_label.text).to_lower().contains("counterclockwise"), "the soffit says it passes every direction except the next counterclockwise one")
+	_click_cell(main, soffit_cell.x, soffit_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 0, "the next click turns the soffit north")
+	_click_cell(main, soffit_cell.x, soffit_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 90, "the next click turns the soffit east")
+	_click_cell(main, soffit_cell.x, soffit_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 180, "four clicks restore the south facing")
+	main._on_book_pressed(31)
+	await process_frame
+	check(str(main.chart["id"]) == "247", "Soffit returns to The Dry Soffit")
+	check(_chart_row_fits(main.soffit_grid, main._side), "the soffit chart row fits in the window")
 	main._on_book_pressed(13)
-	check(main.weir_grid.visible and not main.lintel_grid.visible and not main.mullion_grid.visible and not main.transom_grid.visible and not main.casement_grid.visible and not main.jamb_grid.visible and not main.astragal_grid.visible and not main.scotia_grid.visible and not main.torus_grid.visible and not main.ogee_grid.visible and not main.ovolo_grid.visible and not main.cavetto_grid.visible and not main.fillet_grid.visible and not main.corona_grid.visible and not main.bead_grid.visible and not main.quirk_grid.visible and not main.cyma_grid.visible and not main.fascia_grid.visible, "the weir book still opens")
+	check(main.weir_grid.visible and not main.lintel_grid.visible and not main.mullion_grid.visible and not main.transom_grid.visible and not main.casement_grid.visible and not main.jamb_grid.visible and not main.astragal_grid.visible and not main.scotia_grid.visible and not main.torus_grid.visible and not main.ogee_grid.visible and not main.ovolo_grid.visible and not main.cavetto_grid.visible and not main.fillet_grid.visible and not main.corona_grid.visible and not main.bead_grid.visible and not main.quirk_grid.visible and not main.cyma_grid.visible and not main.fascia_grid.visible and not main.soffit_grid.visible, "the weir book still opens")
 	main.select_chart(0)
 	main.restart_chart()
 	var before_rot := int(main.state["pieces"]["M"]["rot"])
@@ -11423,8 +11818,9 @@ func _walk(chart: Dictionary, state: Dictionary, index: int, found: Array) -> vo
 	# A quirk has four facings. Each facing passes only the next counterclockwise direction.
 	# A cyma has four facings. Each facing passes only that facing.
 	# A fascia has four facings. Each facing stops only the next clockwise direction.
+	# A soffit has four facings. Each facing stops only the next counterclockwise direction.
 	var rots: Array = [0]
-	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma" or kind == "fascia":
+	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma" or kind == "fascia" or kind == "soffit":
 		rots = [0, 90, 180, 270]
 	elif kind != "shutter" and kind != "well" and kind != "siphon" and kind != "lintel" and kind != "mullion" and kind != "transom":
 		rots = [0, 90]
@@ -12155,6 +12551,64 @@ func _fascia_east_row(count: int) -> Dictionary:
 	var pieces: Array = []
 	for x in range(1, count + 1):
 		pieces.append(_fixed_fascia("F%d" % x, x, 0, 0))
+	chart["pieces"] = pieces
+	return chart
+
+
+func _fixed_soffit(id: String, x: int, y: int, rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": "Soffit",
+		"kind": "soffit",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": rot,
+		"solution_socket": "a",
+		"solution_rot": rot,
+	}
+
+
+func _soffit_column(count: int) -> Dictionary:
+	var chart := _blank(1, count + 2)
+	chart["lanterns"] = [_lamp("L", 0, count + 1, "N", "white")]
+	chart["docks"] = [_need("D", 0, 0, "white")]
+	var pieces: Array = []
+	for y in range(1, count + 1):
+		pieces.append(_fixed_soffit("F%d" % y, 0, y, 0))
+	chart["pieces"] = pieces
+	return chart
+
+
+func _soffit_south_column(count: int) -> Dictionary:
+	var chart := _blank(1, count + 2)
+	chart["lanterns"] = [_lamp("L", 0, 0, "S", "white")]
+	chart["docks"] = [_need("D", 0, count + 1, "white")]
+	var pieces: Array = []
+	for y in range(1, count + 1):
+		pieces.append(_fixed_soffit("F%d" % y, 0, y, 0))
+	chart["pieces"] = pieces
+	return chart
+
+
+func _soffit_east_row(count: int) -> Dictionary:
+	var chart := _blank(count + 2, 1)
+	chart["lanterns"] = [_lamp("L", 0, 0, "E", "white")]
+	chart["docks"] = [_need("D", count + 1, 0, "white")]
+	var pieces: Array = []
+	for x in range(1, count + 1):
+		pieces.append(_fixed_soffit("F%d" % x, x, 0, 0))
+	chart["pieces"] = pieces
+	return chart
+
+
+func _soffit_west_row(count: int) -> Dictionary:
+	var chart := _blank(count + 2, 1)
+	chart["lanterns"] = [_lamp("L", count + 1, 0, "W", "white")]
+	chart["docks"] = [_need("D", 0, 0, "white")]
+	var pieces: Array = []
+	for x in range(1, count + 1):
+		pieces.append(_fixed_soffit("F%d" % x, x, 0, 0))
 	chart["pieces"] = pieces
 	return chart
 

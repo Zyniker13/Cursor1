@@ -2458,6 +2458,7 @@ const SHIFT_POSTSCRIPT := 38
 const SHIFT_ADDENDA := 39
 const SHIFT_ENVOI := 40
 const SHIFT_CORRIGENDA := 41
+const SHIFT_EPILOGUE := 42
 
 const ROW_NAMES := ["top row", "middle row", "bottom row"]
 const COL_NAMES := ["column 1", "column 2", "column 3"]
@@ -4535,6 +4536,54 @@ const CORRIGENDA_BELL := [
 ]
 
 
+const EPILOGUE_BELL := [
+	{
+		"id": "sigrid_hale",
+		"name": "Sigrid Hale",
+		"form_name": "Rift Toll",
+		"rule_text": "Patience drops by 2 when the number of filled cells is 2 or 4.",
+		"rule": "drop_if_rift_count",
+		"lane": 2,
+		"exemption_row": 0,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "oscar_voss",
+		"name": "Oscar Voss",
+		"form_name": "Twin Blank",
+		"rule_text": "A stamp scores twice only when the queue cell one place after it and the queue cell one place before it are empty. The top-left cell has no cell one place before it, so it does not double. The bottom-right cell has no cell one place after it, so it does not double.",
+		"rule": "double_twin_blank",
+		"lane": 0,
+		"exemption_row": 2,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "yara_brant",
+		"name": "Yara Brant",
+		"form_name": "Flank Pay",
+		"rule_text": "Each stamp with exactly one side neighbor scores +2 once. Exactly zero side neighbors score their own number. Exactly two side neighbors score their own number. Exactly three side neighbors score their own number. Exactly four side neighbors score their own number. A corner neighbor is not a side. A lone stamp scores its own number.",
+		"rule": "yield_flank_pay",
+		"lane": 1,
+		"exemption_row": 1,
+		"goal": 16,
+		"patience": 5,
+	},
+	{
+		"id": "ines_okell",
+		"name": "Ines Okell",
+		"form_name": "Twin Fill",
+		"rule_text": "A stamp scores twice only when the queue cell one place after it and the queue cell one place before it are filled. The top-left cell has no cell one place before it, so it does not double. The bottom-right cell has no cell one place after it, so it does not double.",
+		"rule": "double_twin_fill",
+		"lane": 0,
+		"exemption_row": 1,
+		"goal": 22,
+		"patience": 5,
+	},
+]
+
+
 class NightState:
 	extends RefCounted
 	var seed: int = 1
@@ -4632,6 +4681,8 @@ static func _canonical_shift(shift_index: int) -> int:
 		return SHIFT_TITLEPAGE
 	if shift_index == SHIFT_COPYRIGHT:
 		return SHIFT_COPYRIGHT
+	if shift_index == SHIFT_EPILOGUE:
+		return SHIFT_EPILOGUE
 	if shift_index == SHIFT_CORRIGENDA:
 		return SHIFT_CORRIGENDA
 	if shift_index == SHIFT_ENVOI:
@@ -4677,6 +4728,8 @@ static func new_run(seed_value: int, shift_index: int = SHIFT_FIRST) -> NightSta
 	state.next_iid = 0
 	for card_id in STARTING_DECK:
 		_add_library_card(state, String(card_id))
+	if state.shift == SHIFT_EPILOGUE:
+		_log(state, "The epilogue bell begins. Seed %d." % state.seed)
 	if state.shift == SHIFT_CORRIGENDA:
 		_log(state, "The corrigenda bell begins. Seed %d." % state.seed)
 	if state.shift == SHIFT_ENVOI:
@@ -4801,6 +4854,8 @@ static func restart_encounter(state: NightState) -> void:
 
 
 static func shift_label(state: NightState) -> String:
+	if state.shift == SHIFT_EPILOGUE:
+		return "Epilogue bell"
 	if state.shift == SHIFT_CORRIGENDA:
 		return "Corrigenda bell"
 	if state.shift == SHIFT_ENVOI:
@@ -4901,6 +4956,8 @@ static func traveler(state: NightState) -> Dictionary:
 
 
 static func _roster(state: NightState) -> Array:
+	if state.shift == SHIFT_EPILOGUE:
+		return EPILOGUE_BELL
 	if state.shift == SHIFT_CORRIGENDA:
 		return CORRIGENDA_BELL
 	if state.shift == SHIFT_ENVOI:
@@ -5387,6 +5444,12 @@ static func stamp_progress(state: NightState, card_id: String, row: int, col: in
 		return amount + 2
 	if rule == "double_pace_gap" and _pace_gap(state, row, col):
 		return amount * 2
+	if rule == "double_twin_blank" and _twin_blank(state, row, col):
+		return amount * 2
+	if rule == "yield_flank_pay" and _flank_pay(state, row, col):
+		return amount + 2
+	if rule == "double_twin_fill" and _twin_fill(state, row, col):
+		return amount * 2
 	return amount
 
 
@@ -5544,6 +5607,8 @@ static func patience_loss(state: NightState) -> int:
 		elif rule == "drop_if_cleft_count" and _is_cleft_count(_stamp_count(state)):
 			loss = 2
 		elif rule == "drop_if_notch_count" and _is_notch_count(_stamp_count(state)):
+			loss = 2
+		elif rule == "drop_if_rift_count" and _is_rift_count(_stamp_count(state)):
 			loss = 2
 	return loss
 
@@ -5926,6 +5991,12 @@ static func _resolve_stamp(state: NightState, row: int, col: int, hush: bool) ->
 				_log(state, "%s on the %s, %s grants %d. No corner neighbors pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			elif tail_rule == "double_pace_gap" and _pace_gap(state, row, col) and amount > raw:
 				_log(state, "%s on the %s, %s grants %d. The empty cell one place before it doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_twin_blank" and _twin_blank(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The empty cells one place before and after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_flank_pay" and _flank_pay(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. One side neighbor pays +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_twin_fill" and _twin_fill(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The filled cells one place before and after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			else:
 				_log(state, "%s on the %s, %s grants %d." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 	state.turn_progress += amount
@@ -6294,6 +6365,26 @@ static func _wedge_pay(state: NightState, row: int, col: int) -> bool:
 	if state.form[row][col] == null:
 		return false
 	return _diagonal_count(state, row, col) == 2
+
+
+static func _is_rift_count(count: int) -> bool:
+	return count == 2 or count == 4
+
+
+static func _twin_blank(state: NightState, row: int, col: int) -> bool:
+	return _prev_cell_empty(state, row, col) and _next_cell_empty(state, row, col)
+
+
+static func _flank_pay(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	return orthogonal_count(state, row, col) == 1
+
+
+static func _twin_fill(state: NightState, row: int, col: int) -> bool:
+	return _prev_cell_filled(state, row, col) and _next_cell_filled(state, row, col)
 
 
 static func _is_notch_count(count: int) -> bool:
@@ -7296,6 +7387,8 @@ static func _apply_result(state: NightState, result: Dictionary) -> void:
 		state.encounters_cleared += 1
 		if state.traveler_index >= _roster(state).size() - 1:
 			state.phase = "victory"
+			if state.shift == SHIFT_EPILOGUE:
+				_log(state, "The queue is empty. The epilogue bell is clear.")
 			if state.shift == SHIFT_CORRIGENDA:
 				_log(state, "The queue is empty. The corrigenda bell is clear.")
 			if state.shift == SHIFT_ENVOI:
