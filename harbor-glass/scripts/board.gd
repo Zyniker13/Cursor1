@@ -289,6 +289,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_beak(at, rot)
 		"hood":
 			_draw_hood(at, rot)
+		"throat":
+			_draw_throat(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -1212,6 +1214,46 @@ func _draw_hood(at: Vector2i, rot: int) -> void:
 		eave + along * lip,
 		eave - along * lip,
 	]), cap)
+
+func _draw_throat(at: Vector2i, rot: int) -> void:
+	# Two pale posts with a gap on the opposite edge, the edge that opens
+	# under water. A north throat marks the south edge. The gap is not the
+	# hood's cap and not the beak's point.
+	var center := _center(at)
+	var marked := Tracer.rotate_dir(Tracer.throat_facing(rot), 2)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var post := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var outward := Vector2.DOWN
+	var along := Vector2.RIGHT
+	match marked:
+		"N":
+			outward = Vector2.UP
+			along = Vector2.RIGHT
+		"S":
+			outward = Vector2.DOWN
+			along = Vector2.RIGHT
+		"E":
+			outward = Vector2.RIGHT
+			along = Vector2.DOWN
+		_:
+			outward = Vector2.LEFT
+			along = Vector2.DOWN
+	var edge := center + outward * cell * 0.30
+	var inner := center + outward * cell * 0.16
+	var gap := cell * 0.06
+	var reach := cell * 0.18
+	draw_colored_polygon(PackedVector2Array([
+		inner + along * gap,
+		inner + along * reach,
+		edge + along * reach,
+		edge + along * gap,
+	]), post)
+	draw_colored_polygon(PackedVector2Array([
+		inner - along * gap,
+		inner - along * reach,
+		edge - along * reach,
+		edge - along * gap,
+	]), post)
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
 	if dir == "N" or dir == "S":
