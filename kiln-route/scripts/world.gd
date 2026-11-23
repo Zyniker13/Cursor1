@@ -512,6 +512,26 @@ extends RefCounted
 ## left. A sledge sends the waiter behind and the arrival right. A breast
 ## steps the waiter behind and the arrival forward. Nothing stays in the
 ## crosspeen.
+## A sethammer does not forward in step 2 on its own. The first item stays.
+## Only an arrival from ahead is accepted. The same material does not
+## release the waiter. When a later item of a different material arrives
+## from ahead, the waiter moves one cell behind and the arrival moves one
+## cell left, and only if both of those cells can take them. Behind is
+## opposite the facing. Left is one turn counter-clockwise. The sethammer
+## is empty after that tick. If either exit refuses, neither item leaves.
+## When the cell directly behind is only a source, the waiter moves through
+## that cell into the next cell behind. When the cell directly left is only
+## a source, the arrival moves through that cell into the next cell left.
+## A bick steps the waiter through a behind source and does not step the
+## arrival through a left source. A beam sends the waiter behind and the
+## arrival left without stepping either one. A crosspeen steps the waiter
+## through a right source and the arrival through a left source. A header
+## steps the waiter through a left source and the arrival through a right
+## source. A pritchel steps the waiter through a right source and does not
+## step the arrival. A breast steps the waiter through a behind source and
+## the arrival through a forward source. A sledge steps the waiter through
+## a behind source and sends the arrival right. Nothing stays in the
+## sethammer.
 
 const Rules = preload("res://scripts/foundry.gd")
 
@@ -964,8 +984,9 @@ func _can_take(machine: Machine, mat: int, arrival: int) -> bool:
 		or machine.kind == Rules.Kind.ROUNDER
 		or machine.kind == Rules.Kind.HEADER
 		or machine.kind == Rules.Kind.CROSSPEEN
+		or machine.kind == Rules.Kind.SETHAMMER
 	):
-		# Pairing is handled in _accept. A twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, a clevis, a beam, a hake, a sole, a frog, a shin, a point, a throat, a wrest, a jointer, a bridle, a trashboard, a gauge, a breast, a hardie, a fuller, a swage, a flatter, a drift, a punch, a sett, a bolster, a snap, an anvil, a sledge, a bick, a pritchel, a mandrel, a stake, a creaser, a rounder, a header, or a crosspeen may already be holding.
+		# Pairing is handled in _accept. A twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, a clevis, a beam, a hake, a sole, a frog, a shin, a point, a throat, a wrest, a jointer, a bridle, a trashboard, a gauge, a breast, a hardie, a fuller, a swage, a flatter, a drift, a punch, a sett, a bolster, a snap, an anvil, a sledge, a bick, a pritchel, a mandrel, a stake, a creaser, a rounder, a header, a crosspeen, or a sethammer may already be holding.
 		return false
 	if machine.kind == Rules.Kind.BRIDGE:
 		if arrival == machine.dir:
@@ -1107,6 +1128,8 @@ func _accept(dest: Vector2i, mat: int, arrival: int) -> bool:
 		return _accept_header(dest, machine, mat, arrival)
 	if machine.kind == Rules.Kind.CROSSPEEN:
 		return _accept_crosspeen(dest, machine, mat, arrival)
+	if machine.kind == Rules.Kind.SETHAMMER:
+		return _accept_sethammer(dest, machine, mat, arrival)
 	if not _can_take(machine, mat, arrival):
 		return false
 	if _holder(machine.kind):
@@ -3311,6 +3334,60 @@ func _accept_crosspeen(pos: Vector2i, machine: Machine, mat: int, arrival: int) 
 		if not left_sent and _source_only(left_pos):
 			left_sent = _accept(left_pos + Rules.vec(left_dir), mat, left_dir)
 	if not right_sent or not left_sent:
+		_restore(mark)
+		return false
+	machine.pairing = false
+	machine.hold = -1
+	machine.moved = false
+	return true
+
+
+## From ahead only. The first item waits and never leaves on its own. The
+## same material does not release the waiter. A later item of a different
+## material from ahead may leave on that tick: the waiter moves one cell
+## behind and the arrival moves one cell left, if both cells can take them.
+## Behind is opposite the facing. Left is one turn counter-clockwise. The
+## sethammer is empty afterwards. If either exit refuses, neither item
+## leaves and the arrival is not accepted. When the cell directly behind is
+## only a source, the waiter moves through that cell into the next cell
+## behind. When the cell directly left is only a source, the arrival moves
+## through that cell into the next cell left. A lone item never leaves,
+## including on the next tick and the tick after that. The sethammer does
+## not accept from the left, from the right, or from behind. It does not
+## spill, rotate, alternate, or keep either item. A bick steps the waiter
+## through a behind source and sends the arrival left without stepping
+## through a source. A beam sends both without stepping. A crosspeen steps
+## the waiter through a right source and the arrival through a left source.
+## A header steps the waiter left and the arrival right. A pritchel steps
+## the waiter right and does not step the arrival. A breast steps the waiter
+## behind and the arrival forward. A sledge steps the waiter behind and
+## sends the arrival right.
+func _accept_sethammer(pos: Vector2i, machine: Machine, mat: int, arrival: int) -> bool:
+	if arrival != Rules.opposite(machine.dir):
+		return false
+	if machine.hold < 0:
+		machine.hold = mat
+		machine.moved = true
+		return true
+	if machine.moved or machine.pairing:
+		return false
+	if mat == machine.hold:
+		return false
+	var behind_dir := Rules.opposite(machine.dir)
+	var left_dir := Rules.left(machine.dir)
+	var mark := _checkpoint()
+	machine.pairing = true
+	var behind_pos := pos + Rules.vec(behind_dir)
+	var behind_sent: bool = _accept(behind_pos, machine.hold, behind_dir)
+	if not behind_sent and _source_only(behind_pos):
+		behind_sent = _accept(behind_pos + Rules.vec(behind_dir), machine.hold, behind_dir)
+	var left_sent := false
+	if behind_sent:
+		var left_pos := pos + Rules.vec(left_dir)
+		left_sent = _accept(left_pos, mat, left_dir)
+		if not left_sent and _source_only(left_pos):
+			left_sent = _accept(left_pos + Rules.vec(left_dir), mat, left_dir)
+	if not behind_sent or not left_sent:
 		_restore(mark)
 		return false
 	machine.pairing = false
