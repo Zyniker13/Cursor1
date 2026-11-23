@@ -9,7 +9,7 @@ Playable slices, Godot 4. Steam packaging comes later.
 - [Orchard Surge](orchard-surge/) — a dark-orchard wave game through night 63
 - [Lantern Census](lantern-census/) — a forty-seven-floor map survey through the Cenotaph
 - [Lowball](lowball/) — a sixty-two-week thirty-one-club circle through Holmfen Dowitchers
-- [Casework](casework/) — a sixty-two-case deduction board through the bowtell
+- [Casework](casework/) — a sixty-three-case deduction board through the cable
 - [Lampblack](lampblack/) — turn-based museum stealth through the denim
 - [Kiln Route](kiln-route/) — a three-hundred-and-ninety-two-room foundry puzzle through the anvil
 
