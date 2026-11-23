@@ -62,9 +62,9 @@ const HURT_TICKS := 12
 const PEST_HP := 12
 const PEST_SPEED := 42.0
 const PEST_RADIUS := 11.0
-const START_SEEDS := 33
+const START_SEEDS := 34
 const PLANT_TICKS := 240
-const WAVE_COUNT := 67
+const WAVE_COUNT := 69
 const START_CELL := Vector2i(7, 5)
 const PROJECTILE_RADIUS := 4.0
 const PROJECTILE_LIFE := 75
@@ -97,7 +97,7 @@ const PROJECTILE_LIFE := 75
 # Nights 54 and 55 bring scorch moths. Night 54 is scorch alone. Night 55 sends scorch together with every Singe lock. The moth count stays 16; scorch is a lock on every one of those moths. Night 47 stays named Scorch and carries no scorch.
 # Nights 56 and 57 bring sear moths. Night 56 is sear alone. Night 57 sends sear together with every Cinder lock. The moth count stays 16; sear is a lock on every one of those moths. Night 49 stays named Sear and carries no sear, so night 56 is named Parch.
 # Nights 58 and 59 bring singe moths. Night 58 is singe alone. Night 59 sends singe together with every Ember lock. The moth count stays 16; singe is a lock on every one of those moths. Night 53 stays named Singe and carries no singe. Night 5 stays named Ash, so night 58 is named Soot.
-# shroud_every / rind_every / pitch_every / frost_every / web_every / glass_every / scale_every / mail_every / hide_every / dusk_every / veil_every / pall_every / gloom_every / murk_every / dread_every / woe_every / blight_every / rot_every / mildew_every / rust_every / scab_every / spot_every / scald_every / blister_every / char_every / scorch_every / sear_every / singe_every / brand_every / scathe_every / cauter_every / blain_every 0: none. 1: every spawn. N: every Nth spawn, the Nth included.
+# shroud_every / rind_every / pitch_every / frost_every / web_every / glass_every / scale_every / mail_every / hide_every / dusk_every / veil_every / pall_every / gloom_every / murk_every / dread_every / woe_every / blight_every / rot_every / mildew_every / rust_every / scab_every / spot_every / scald_every / blister_every / char_every / scorch_every / sear_every / singe_every / brand_every / scathe_every / cauter_every / blain_every / scurf_every 0: none. 1: every spawn. N: every Nth spawn, the Nth included.
 # Nights 1–21 omit dusk_every; a missing key spawns no dusk.
 # Nights 1–23 omit veil_every; a missing key spawns no veil.
 # Nights 1–25 omit pall_every; a missing key spawns no pall.
@@ -121,6 +121,7 @@ const PROJECTILE_LIFE := 75
 # Nights 1–61 omit scathe_every; a missing key spawns no scathe. Night 60 stays Flake and keeps brand with no scathe. Night 61 stays Slag, keeps brand, and carries no scathe. Night 58 stays Soot. Night 59 stays Coal. Night 43 stays named Brand and carries no brand lock.
 # Nights 1–63 omit cauter_every; a missing key spawns no cauter. Night 62 stays Clinker and keeps scathe with no cauter. Night 63 stays Dross, keeps scathe, and carries no cauter. Night 60 stays Flake. Night 61 stays Slag. Night 43 stays named Brand and carries no brand lock.
 # Nights 1–65 omit blain_every; a missing key spawns no blain. Night 64 stays Skim and keeps cauter with no blain. Night 65 stays Sinter, keeps cauter, and carries no blain. Night 62 stays Clinker. Night 63 stays Dross. Night 16 stays named Scale. Night 43 stays named Brand and carries no brand lock.
+# Nights 1–67 omit scurf_every; a missing key spawns no scurf. Night 66 stays Grit and keeps blain with no scurf. Night 67 stays Chaff, keeps blain, and carries no scurf. Night 64 stays Skim. Night 65 stays Sinter. Night 16 stays named Scale. Night 43 stays named Brand and carries no brand lock.
 const WAVES := [
 	{"count": 8, "interval": 72, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "hide_every": 0, "name": ""},
 	{"count": 12, "interval": 66, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "hide_every": 0, "name": ""},
@@ -181,14 +182,16 @@ const WAVES := [
 	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 1, "scale_every": 1, "mail_every": 1, "hide_every": 1, "dusk_every": 1, "veil_every": 1, "pall_every": 1, "gloom_every": 1, "murk_every": 1, "dread_every": 1, "woe_every": 1, "blight_every": 1, "rot_every": 1, "mildew_every": 1, "rust_every": 1, "scab_every": 1, "spot_every": 1, "scald_every": 1, "blister_every": 1, "char_every": 1, "scorch_every": 1, "sear_every": 1, "name": "Ember"},
 	{"count": 10, "interval": 144, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "hide_every": 0, "dusk_every": 0, "veil_every": 0, "pall_every": 0, "gloom_every": 0, "murk_every": 0, "dread_every": 0, "woe_every": 0, "blight_every": 0, "rot_every": 0, "mildew_every": 0, "rust_every": 0, "scab_every": 0, "spot_every": 0, "scald_every": 0, "blister_every": 0, "char_every": 0, "scorch_every": 0, "sear_every": 0, "singe_every": 1, "brand_every": 0, "name": "Soot"},
 	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 1, "scale_every": 1, "mail_every": 1, "hide_every": 1, "dusk_every": 1, "veil_every": 1, "pall_every": 1, "gloom_every": 1, "murk_every": 1, "dread_every": 1, "woe_every": 1, "blight_every": 1, "rot_every": 1, "mildew_every": 1, "rust_every": 1, "scab_every": 1, "spot_every": 1, "scald_every": 1, "blister_every": 1, "char_every": 1, "scorch_every": 1, "sear_every": 1, "singe_every": 1, "brand_every": 0, "name": "Coal"},
-	{"count": 10, "interval": 150, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "hide_every": 0, "dusk_every": 0, "veil_every": 0, "pall_every": 0, "gloom_every": 0, "murk_every": 0, "dread_every": 0, "woe_every": 0, "blight_every": 0, "rot_every": 0, "mildew_every": 0, "rust_every": 0, "scab_every": 0, "spot_every": 0, "scald_every": 0, "blister_every": 0, "char_every": 0, "scorch_every": 0, "sear_every": 0, "singe_every": 0, "brand_every": 1, "scathe_every": 0, "cauter_every": 0, "blain_every": 0, "name": "Flake"},
-	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 1, "scale_every": 1, "mail_every": 1, "hide_every": 1, "dusk_every": 1, "veil_every": 1, "pall_every": 1, "gloom_every": 1, "murk_every": 1, "dread_every": 1, "woe_every": 1, "blight_every": 1, "rot_every": 1, "mildew_every": 1, "rust_every": 1, "scab_every": 1, "spot_every": 1, "scald_every": 1, "blister_every": 1, "char_every": 1, "scorch_every": 1, "sear_every": 1, "singe_every": 1, "brand_every": 1, "scathe_every": 0, "cauter_every": 0, "blain_every": 0, "name": "Slag"},
-	{"count": 10, "interval": 156, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "hide_every": 0, "dusk_every": 0, "veil_every": 0, "pall_every": 0, "gloom_every": 0, "murk_every": 0, "dread_every": 0, "woe_every": 0, "blight_every": 0, "rot_every": 0, "mildew_every": 0, "rust_every": 0, "scab_every": 0, "spot_every": 0, "scald_every": 0, "blister_every": 0, "char_every": 0, "scorch_every": 0, "sear_every": 0, "singe_every": 0, "brand_every": 0, "scathe_every": 1, "cauter_every": 0, "blain_every": 0, "name": "Clinker"},
-	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 1, "scale_every": 1, "mail_every": 1, "hide_every": 1, "dusk_every": 1, "veil_every": 1, "pall_every": 1, "gloom_every": 1, "murk_every": 1, "dread_every": 1, "woe_every": 1, "blight_every": 1, "rot_every": 1, "mildew_every": 1, "rust_every": 1, "scab_every": 1, "spot_every": 1, "scald_every": 1, "blister_every": 1, "char_every": 1, "scorch_every": 1, "sear_every": 1, "singe_every": 1, "brand_every": 1, "scathe_every": 1, "cauter_every": 0, "blain_every": 0, "name": "Dross"},
-	{"count": 10, "interval": 162, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "hide_every": 0, "dusk_every": 0, "veil_every": 0, "pall_every": 0, "gloom_every": 0, "murk_every": 0, "dread_every": 0, "woe_every": 0, "blight_every": 0, "rot_every": 0, "mildew_every": 0, "rust_every": 0, "scab_every": 0, "spot_every": 0, "scald_every": 0, "blister_every": 0, "char_every": 0, "scorch_every": 0, "sear_every": 0, "singe_every": 0, "brand_every": 0, "scathe_every": 0, "cauter_every": 1, "blain_every": 0, "name": "Skim"},
-	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 1, "scale_every": 1, "mail_every": 1, "hide_every": 1, "dusk_every": 1, "veil_every": 1, "pall_every": 1, "gloom_every": 1, "murk_every": 1, "dread_every": 1, "woe_every": 1, "blight_every": 1, "rot_every": 1, "mildew_every": 1, "rust_every": 1, "scab_every": 1, "spot_every": 1, "scald_every": 1, "blister_every": 1, "char_every": 1, "scorch_every": 1, "sear_every": 1, "singe_every": 1, "brand_every": 1, "scathe_every": 1, "cauter_every": 1, "blain_every": 0, "name": "Sinter"},
-	{"count": 10, "interval": 168, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "hide_every": 0, "dusk_every": 0, "veil_every": 0, "pall_every": 0, "gloom_every": 0, "murk_every": 0, "dread_every": 0, "woe_every": 0, "blight_every": 0, "rot_every": 0, "mildew_every": 0, "rust_every": 0, "scab_every": 0, "spot_every": 0, "scald_every": 0, "blister_every": 0, "char_every": 0, "scorch_every": 0, "sear_every": 0, "singe_every": 0, "brand_every": 0, "scathe_every": 0, "cauter_every": 0, "blain_every": 1, "name": "Grit"},
-	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 1, "scale_every": 1, "mail_every": 1, "hide_every": 1, "dusk_every": 1, "veil_every": 1, "pall_every": 1, "gloom_every": 1, "murk_every": 1, "dread_every": 1, "woe_every": 1, "blight_every": 1, "rot_every": 1, "mildew_every": 1, "rust_every": 1, "scab_every": 1, "spot_every": 1, "scald_every": 1, "blister_every": 1, "char_every": 1, "scorch_every": 1, "sear_every": 1, "singe_every": 1, "brand_every": 1, "scathe_every": 1, "cauter_every": 1, "blain_every": 1, "name": "Chaff"},
+	{"count": 10, "interval": 150, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "hide_every": 0, "dusk_every": 0, "veil_every": 0, "pall_every": 0, "gloom_every": 0, "murk_every": 0, "dread_every": 0, "woe_every": 0, "blight_every": 0, "rot_every": 0, "mildew_every": 0, "rust_every": 0, "scab_every": 0, "spot_every": 0, "scald_every": 0, "blister_every": 0, "char_every": 0, "scorch_every": 0, "sear_every": 0, "singe_every": 0, "brand_every": 1, "scathe_every": 0, "cauter_every": 0, "blain_every": 0, "scurf_every": 0, "name": "Flake"},
+	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 1, "scale_every": 1, "mail_every": 1, "hide_every": 1, "dusk_every": 1, "veil_every": 1, "pall_every": 1, "gloom_every": 1, "murk_every": 1, "dread_every": 1, "woe_every": 1, "blight_every": 1, "rot_every": 1, "mildew_every": 1, "rust_every": 1, "scab_every": 1, "spot_every": 1, "scald_every": 1, "blister_every": 1, "char_every": 1, "scorch_every": 1, "sear_every": 1, "singe_every": 1, "brand_every": 1, "scathe_every": 0, "cauter_every": 0, "blain_every": 0, "scurf_every": 0, "name": "Slag"},
+	{"count": 10, "interval": 156, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "hide_every": 0, "dusk_every": 0, "veil_every": 0, "pall_every": 0, "gloom_every": 0, "murk_every": 0, "dread_every": 0, "woe_every": 0, "blight_every": 0, "rot_every": 0, "mildew_every": 0, "rust_every": 0, "scab_every": 0, "spot_every": 0, "scald_every": 0, "blister_every": 0, "char_every": 0, "scorch_every": 0, "sear_every": 0, "singe_every": 0, "brand_every": 0, "scathe_every": 1, "cauter_every": 0, "blain_every": 0, "scurf_every": 0, "name": "Clinker"},
+	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 1, "scale_every": 1, "mail_every": 1, "hide_every": 1, "dusk_every": 1, "veil_every": 1, "pall_every": 1, "gloom_every": 1, "murk_every": 1, "dread_every": 1, "woe_every": 1, "blight_every": 1, "rot_every": 1, "mildew_every": 1, "rust_every": 1, "scab_every": 1, "spot_every": 1, "scald_every": 1, "blister_every": 1, "char_every": 1, "scorch_every": 1, "sear_every": 1, "singe_every": 1, "brand_every": 1, "scathe_every": 1, "cauter_every": 0, "blain_every": 0, "scurf_every": 0, "name": "Dross"},
+	{"count": 10, "interval": 162, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "hide_every": 0, "dusk_every": 0, "veil_every": 0, "pall_every": 0, "gloom_every": 0, "murk_every": 0, "dread_every": 0, "woe_every": 0, "blight_every": 0, "rot_every": 0, "mildew_every": 0, "rust_every": 0, "scab_every": 0, "spot_every": 0, "scald_every": 0, "blister_every": 0, "char_every": 0, "scorch_every": 0, "sear_every": 0, "singe_every": 0, "brand_every": 0, "scathe_every": 0, "cauter_every": 1, "blain_every": 0, "scurf_every": 0, "name": "Skim"},
+	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 1, "scale_every": 1, "mail_every": 1, "hide_every": 1, "dusk_every": 1, "veil_every": 1, "pall_every": 1, "gloom_every": 1, "murk_every": 1, "dread_every": 1, "woe_every": 1, "blight_every": 1, "rot_every": 1, "mildew_every": 1, "rust_every": 1, "scab_every": 1, "spot_every": 1, "scald_every": 1, "blister_every": 1, "char_every": 1, "scorch_every": 1, "sear_every": 1, "singe_every": 1, "brand_every": 1, "scathe_every": 1, "cauter_every": 1, "blain_every": 0, "scurf_every": 0, "name": "Sinter"},
+	{"count": 10, "interval": 168, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "hide_every": 0, "dusk_every": 0, "veil_every": 0, "pall_every": 0, "gloom_every": 0, "murk_every": 0, "dread_every": 0, "woe_every": 0, "blight_every": 0, "rot_every": 0, "mildew_every": 0, "rust_every": 0, "scab_every": 0, "spot_every": 0, "scald_every": 0, "blister_every": 0, "char_every": 0, "scorch_every": 0, "sear_every": 0, "singe_every": 0, "brand_every": 0, "scathe_every": 0, "cauter_every": 0, "blain_every": 1, "scurf_every": 0, "name": "Grit"},
+	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 1, "scale_every": 1, "mail_every": 1, "hide_every": 1, "dusk_every": 1, "veil_every": 1, "pall_every": 1, "gloom_every": 1, "murk_every": 1, "dread_every": 1, "woe_every": 1, "blight_every": 1, "rot_every": 1, "mildew_every": 1, "rust_every": 1, "scab_every": 1, "spot_every": 1, "scald_every": 1, "blister_every": 1, "char_every": 1, "scorch_every": 1, "sear_every": 1, "singe_every": 1, "brand_every": 1, "scathe_every": 1, "cauter_every": 1, "blain_every": 1, "scurf_every": 0, "name": "Chaff"},
+	{"count": 10, "interval": 174, "shroud_every": 0, "rind_every": 0, "pitch_every": 0, "frost_every": 0, "web_every": 0, "glass_every": 0, "scale_every": 0, "mail_every": 0, "hide_every": 0, "dusk_every": 0, "veil_every": 0, "pall_every": 0, "gloom_every": 0, "murk_every": 0, "dread_every": 0, "woe_every": 0, "blight_every": 0, "rot_every": 0, "mildew_every": 0, "rust_every": 0, "scab_every": 0, "spot_every": 0, "scald_every": 0, "blister_every": 0, "char_every": 0, "scorch_every": 0, "sear_every": 0, "singe_every": 0, "brand_every": 0, "scathe_every": 0, "cauter_every": 0, "blain_every": 0, "scurf_every": 1, "name": "Lees"},
+	{"count": 16, "interval": 60, "shroud_every": 2, "rind_every": 1, "pitch_every": 1, "frost_every": 1, "web_every": 1, "glass_every": 1, "scale_every": 1, "mail_every": 1, "hide_every": 1, "dusk_every": 1, "veil_every": 1, "pall_every": 1, "gloom_every": 1, "murk_every": 1, "dread_every": 1, "woe_every": 1, "blight_every": 1, "rot_every": 1, "mildew_every": 1, "rust_every": 1, "scab_every": 1, "spot_every": 1, "scald_every": 1, "blister_every": 1, "char_every": 1, "scorch_every": 1, "sear_every": 1, "singe_every": 1, "brand_every": 1, "scathe_every": 1, "cauter_every": 1, "blain_every": 1, "scurf_every": 1, "name": "Draff"},
 ]
 
 
@@ -245,6 +248,7 @@ class Plant:
 	var cottas_scathe: bool = false
 	var chimeres_cauter: bool = false
 	var mozzettas_blain: bool = false
+	var birettas_scurf: bool = false
 	var casts_light: bool = true
 
 
@@ -286,6 +290,7 @@ class Pest:
 	var scathed: bool = false
 	var cautered: bool = false
 	var blained: bool = false
+	var scurfed: bool = false
 	var speed: float = 0.0
 	var slow_factor: float = 1.0
 	var slow_ticks: int = 0
@@ -383,6 +388,8 @@ var cauters_spawned: int = 0
 var cauters_killed: int = 0
 var blains_spawned: int = 0
 var blains_killed: int = 0
+var scurfs_spawned: int = 0
+var scurfs_killed: int = 0
 var plants: Array = []
 var pests: Array = []
 var projectiles: Array = []
@@ -561,8 +568,11 @@ func tile_chimeres_cauter(tx: int, ty: int) -> bool:
 func tile_mozzettas_blain(tx: int, ty: int) -> bool:
 	return _tile_in_light(tx, ty, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true)
 
+func tile_birettas_scurf(tx: int, ty: int) -> bool:
+	return _tile_in_light(tx, ty, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true)
 
-func _tile_in_light(tx: int, ty: int, shroud_only: bool, rind_only: bool, pitch_only: bool, frost_only: bool, web_only: bool, glass_only: bool, scale_only: bool, mail_only: bool, hide_only: bool, dusk_only: bool, veil_only: bool = false, pall_only: bool = false, gloom_only: bool = false, murk_only: bool = false, dread_only: bool = false, woe_only: bool = false, blight_only: bool = false, rot_only: bool = false, mildew_only: bool = false, rust_only: bool = false, scab_only: bool = false, spot_only: bool = false, scald_only: bool = false, blister_only: bool = false, char_only: bool = false, scorch_only: bool = false, sear_only: bool = false, singe_only: bool = false, brand_only: bool = false, scathe_only: bool = false, cauter_only: bool = false, blain_only: bool = false) -> bool:
+
+func _tile_in_light(tx: int, ty: int, shroud_only: bool, rind_only: bool, pitch_only: bool, frost_only: bool, web_only: bool, glass_only: bool, scale_only: bool, mail_only: bool, hide_only: bool, dusk_only: bool, veil_only: bool = false, pall_only: bool = false, gloom_only: bool = false, murk_only: bool = false, dread_only: bool = false, woe_only: bool = false, blight_only: bool = false, rot_only: bool = false, mildew_only: bool = false, rust_only: bool = false, scab_only: bool = false, spot_only: bool = false, scald_only: bool = false, blister_only: bool = false, char_only: bool = false, scorch_only: bool = false, sear_only: bool = false, singe_only: bool = false, brand_only: bool = false, scathe_only: bool = false, cauter_only: bool = false, blain_only: bool = false, scurf_only: bool = false) -> bool:
 	if tx < 0 or ty < 0 or tx >= MAP_W or ty >= MAP_H:
 		return false
 	var rect_min := Vector2(float(tx) * TILE, float(ty) * TILE)
@@ -635,7 +645,9 @@ func _tile_in_light(tx: int, ty: int, shroud_only: bool, rind_only: bool, pitch_
 			continue
 		if blain_only and not grown.mozzettas_blain:
 			continue
-		var special := shroud_only or rind_only or pitch_only or frost_only or web_only or glass_only or scale_only or mail_only or hide_only or dusk_only or veil_only or pall_only or gloom_only or murk_only or dread_only or woe_only or blight_only or rot_only or mildew_only or rust_only or scab_only or spot_only or scald_only or blister_only or char_only or scorch_only or sear_only or singe_only or brand_only or scathe_only or cauter_only or blain_only
+		if scurf_only and not grown.birettas_scurf:
+			continue
+		var special := shroud_only or rind_only or pitch_only or frost_only or web_only or glass_only or scale_only or mail_only or hide_only or dusk_only or veil_only or pall_only or gloom_only or murk_only or dread_only or woe_only or blight_only or rot_only or mildew_only or rust_only or scab_only or spot_only or scald_only or blister_only or char_only or scorch_only or sear_only or singe_only or brand_only or scathe_only or cauter_only or blain_only or scurf_only
 		if not special and not grown.casts_light:
 			continue
 		var source: Vector2 = grown.pos
@@ -713,7 +725,7 @@ func _night_suffix(index: int) -> String:
 
 
 ## Shared entry for wave spawns and the visibility test. Does not alter damage or health.
-func spawn_pest(pos: Vector2, shrouded: bool = false, rinded: bool = false, pitched: bool = false, frosted: bool = false, webbed: bool = false, glassed: bool = false, scaled: bool = false, mailed: bool = false, hided: bool = false, dusked: bool = false, veiled: bool = false, palled: bool = false, gloomed: bool = false, murked: bool = false, dreaded: bool = false, woed: bool = false, blighted: bool = false, rotted: bool = false, mildewed: bool = false, rusted: bool = false, scabbed: bool = false, spotted: bool = false, scalded: bool = false, blistered: bool = false, charred: bool = false, scorched: bool = false, seared: bool = false, singed: bool = false, branded: bool = false, scathed: bool = false, cautered: bool = false, blained: bool = false):
+func spawn_pest(pos: Vector2, shrouded: bool = false, rinded: bool = false, pitched: bool = false, frosted: bool = false, webbed: bool = false, glassed: bool = false, scaled: bool = false, mailed: bool = false, hided: bool = false, dusked: bool = false, veiled: bool = false, palled: bool = false, gloomed: bool = false, murked: bool = false, dreaded: bool = false, woed: bool = false, blighted: bool = false, rotted: bool = false, mildewed: bool = false, rusted: bool = false, scabbed: bool = false, spotted: bool = false, scalded: bool = false, blistered: bool = false, charred: bool = false, scorched: bool = false, seared: bool = false, singed: bool = false, branded: bool = false, scathed: bool = false, cautered: bool = false, blained: bool = false, scurfed: bool = false):
 	var pest := Pest.new()
 	pest.id = _next_pest_id
 	_next_pest_id += 1
@@ -755,6 +767,7 @@ func spawn_pest(pos: Vector2, shrouded: bool = false, rinded: bool = false, pitc
 	pest.scathed = scathed
 	pest.cautered = cautered
 	pest.blained = blained
+	pest.scurfed = scurfed
 	if shrouded:
 		shrouds_spawned += 1
 	if rinded:
@@ -819,6 +832,8 @@ func spawn_pest(pos: Vector2, shrouded: bool = false, rinded: bool = false, pitc
 		cauters_spawned += 1
 	if blained:
 		blains_spawned += 1
+	if scurfed:
+		scurfs_spawned += 1
 	_apply_visibility(pest)
 	pests.append(pest)
 	return pest
@@ -902,6 +917,7 @@ func _try_plant(cmd: Command) -> void:
 	plant.cottas_scathe = bool(stats["cottas_scathe"])
 	plant.chimeres_cauter = bool(stats["chimeres_cauter"])
 	plant.mozzettas_blain = bool(stats["mozzettas_blain"])
+	plant.birettas_scurf = bool(stats["birettas_scurf"])
 	plant.casts_light = bool(stats["casts_light"])
 	plants.append(plant)
 	seeds -= 1
@@ -969,6 +985,7 @@ func _wave_spawns() -> void:
 	var scathe_every := int(spec.get("scathe_every", 0))
 	var cauter_every := int(spec.get("cauter_every", 0))
 	var blain_every := int(spec.get("blain_every", 0))
+	var scurf_every := int(spec.get("scurf_every", 0))
 	var index := int(spec["count"]) - spawns_left
 	var shrouded := shroud_every > 0 and index % shroud_every == shroud_every - 1
 	var rinded := rind_every > 0 and index % rind_every == rind_every - 1
@@ -1002,7 +1019,8 @@ func _wave_spawns() -> void:
 	var scathed := scathe_every > 0 and index % scathe_every == scathe_every - 1
 	var cautered := cauter_every > 0 and index % cauter_every == cauter_every - 1
 	var blained := blain_every > 0 and index % blain_every == blain_every - 1
-	spawn_pest(tile_center(cell.x, cell.y), shrouded, rinded, pitched, frosted, webbed, glassed, scaled, mailed, hided, dusked, veiled, palled, gloomed, murked, dreaded, woed, blighted, rotted, mildewed, rusted, scabbed, spotted, scalded, blistered, charred, scorched, seared, singed, branded, scathed, cautered, blained)
+	var scurfed := scurf_every > 0 and index % scurf_every == scurf_every - 1
+	spawn_pest(tile_center(cell.x, cell.y), shrouded, rinded, pitched, frosted, webbed, glassed, scaled, mailed, hided, dusked, veiled, palled, gloomed, murked, dreaded, woed, blighted, rotted, mildewed, rusted, scabbed, spotted, scalded, blistered, charred, scorched, seared, singed, branded, scathed, cautered, blained, scurfed)
 	spawns_left -= 1
 	spawn_wait = spawn_interval
 
@@ -1037,7 +1055,7 @@ func _apply_visibility(pest: Pest) -> void:
 		pest.hidden = true
 		return
 	var cell := cell_of(pest.pos)
-	if pest.shrouded or pest.rinded or pest.pitched or pest.frosted or pest.webbed or pest.glassed or pest.scaled or pest.mailed or pest.hided or pest.dusked or pest.veiled or pest.palled or pest.gloomed or pest.murked or pest.dreaded or pest.woed or pest.blighted or pest.rotted or pest.mildewed or pest.rusted or pest.scabbed or pest.spotted or pest.scalded or pest.blistered or pest.charred or pest.scorched or pest.seared or pest.singed or pest.branded or pest.scathed or pest.cautered or pest.blained:
+	if pest.shrouded or pest.rinded or pest.pitched or pest.frosted or pest.webbed or pest.glassed or pest.scaled or pest.mailed or pest.hided or pest.dusked or pest.veiled or pest.palled or pest.gloomed or pest.murked or pest.dreaded or pest.woed or pest.blighted or pest.rotted or pest.mildewed or pest.rusted or pest.scabbed or pest.spotted or pest.scalded or pest.blistered or pest.charred or pest.scorched or pest.seared or pest.singed or pest.branded or pest.scathed or pest.cautered or pest.blained or pest.scurfed:
 		var open := true
 		if pest.shrouded:
 			open = open and tile_burns_shroud(cell.x, cell.y)
@@ -1103,6 +1121,8 @@ func _apply_visibility(pest: Pest) -> void:
 			open = open and tile_chimeres_cauter(cell.x, cell.y)
 		if pest.blained:
 			open = open and tile_mozzettas_blain(cell.x, cell.y)
+		if pest.scurfed:
+			open = open and tile_birettas_scurf(cell.x, cell.y)
 		pest.hidden = not open
 	else:
 		pest.hidden = not tile_lit(cell.x, cell.y)
@@ -1332,6 +1352,13 @@ func _blain_up(pest: Pest) -> bool:
 	return not tile_mozzettas_blain(cell.x, cell.y)
 
 
+func _scurf_up(pest: Pest) -> bool:
+	if not pest.scurfed:
+		return false
+	var cell := cell_of(pest.pos)
+	return not tile_birettas_scurf(cell.x, cell.y)
+
+
 func _plants_fire() -> void:
 	for entry in plants:
 		var plant := entry as Plant
@@ -1417,7 +1444,7 @@ func _impact(shot: Projectile, target: Pest) -> void:
 
 
 func _damage_pest(pest: Pest, shot: Projectile) -> void:
-	if _shroud_up(pest) or _rind_up(pest) or _pitch_up(pest) or _frost_up(pest) or _web_up(pest) or _glass_up(pest) or _scale_up(pest) or _mail_up(pest) or _hide_up(pest) or _dusk_up(pest) or _veil_up(pest) or _pall_up(pest) or _gloom_up(pest) or _murk_up(pest) or _dread_up(pest) or _woe_up(pest) or _blight_up(pest) or _rot_up(pest) or _mildew_up(pest) or _rust_up(pest) or _scab_up(pest) or _spot_up(pest) or _scald_up(pest) or _blister_up(pest) or _char_up(pest) or _scorch_up(pest) or _sear_up(pest) or _singe_up(pest) or _brand_up(pest) or _scathe_up(pest) or _cauter_up(pest) or _blain_up(pest):
+	if _shroud_up(pest) or _rind_up(pest) or _pitch_up(pest) or _frost_up(pest) or _web_up(pest) or _glass_up(pest) or _scale_up(pest) or _mail_up(pest) or _hide_up(pest) or _dusk_up(pest) or _veil_up(pest) or _pall_up(pest) or _gloom_up(pest) or _murk_up(pest) or _dread_up(pest) or _woe_up(pest) or _blight_up(pest) or _rot_up(pest) or _mildew_up(pest) or _rust_up(pest) or _scab_up(pest) or _spot_up(pest) or _scald_up(pest) or _blister_up(pest) or _char_up(pest) or _scorch_up(pest) or _sear_up(pest) or _singe_up(pest) or _brand_up(pest) or _scathe_up(pest) or _cauter_up(pest) or _blain_up(pest) or _scurf_up(pest):
 		return
 	pest.hp -= shot.damage
 	if shot.slow_ticks > 0:
@@ -1498,6 +1525,8 @@ func _damage_pest(pest: Pest, shot: Projectile) -> void:
 			cauters_killed += 1
 		if pest.blained:
 			blains_killed += 1
+		if pest.scurfed:
+			scurfs_killed += 1
 		events.append({
 			"type": "died",
 			"x": pest.pos.x,
@@ -1544,7 +1573,8 @@ func _cull() -> void:
 
 
 func _in_orchard(cell: Vector2i) -> bool:
-	return cell.x >= 1 and cell.y >= 1 and cell.x <= MAP_W - 2 and cell.y <= MAP_H - 2
+	# (14, 9) is the east file, one column past the old interior edge. It is plantable. West, north, and south borders stay closed.
+	return cell.x >= 1 and cell.y >= 1 and cell.x <= MAP_W - 1 and cell.y <= MAP_H - 2
 
 
 func _plant_on(cell: Vector2i):
