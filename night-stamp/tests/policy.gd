@@ -4718,6 +4718,68 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 		var jogb_after_empty = jogb_after_row <= 2 and state.form[jogb_after_row][jogb_after_col] == null
 		if jogb_before_empty and jogb_after_empty:
 			guess += _stamp_number(state, card_id, row, col)
+	if rule == "drop_if_gimlet_count":
+		var gimlet_filled = 0
+		for gimlet_row in 3:
+			for gimlet_col in 3:
+				if state.form[gimlet_row][gimlet_col] != null:
+					gimlet_filled += 1
+		var gimlet_next = gimlet_filled + 1
+		if gimlet_next == 12 or gimlet_next == 15:
+			guess -= 4
+		elif gimlet_filled == 12 or gimlet_filled == 15:
+			guess += 5
+	if rule == "double_flute_fill":
+		var flute_before_row = row
+		var flute_before_col = col - 12
+		while flute_before_col < 0:
+			flute_before_row -= 1
+			flute_before_col += 3
+		var flute_after_row = row
+		var flute_after_col = col + 1
+		while flute_after_col > 2:
+			flute_after_row += 1
+			flute_after_col -= 3
+		var flute_before_filled = flute_before_row >= 0 and state.form[flute_before_row][flute_before_col] != null
+		var flute_after_filled = flute_after_row <= 2 and state.form[flute_after_row][flute_after_col] != null
+		if flute_before_filled and flute_after_filled:
+			guess += _stamp_number(state, card_id, row, col)
+	if rule == "yield_tack_pay":
+		var tack_sides = 0
+		var tack_corners = 0
+		for tack_side in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var tack_side_row = row + tack_side.x
+			var tack_side_col = col + tack_side.y
+			if tack_side_row < 0 or tack_side_col < 0 or tack_side_row > 2 or tack_side_col > 2:
+				continue
+			if state.form[tack_side_row][tack_side_col] != null:
+				tack_sides += 1
+		for tack_corner in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var tack_corner_row = row + tack_corner.x
+			var tack_corner_col = col + tack_corner.y
+			if tack_corner_row < 0 or tack_corner_col < 0 or tack_corner_row > 2 or tack_corner_col > 2:
+				continue
+			if state.form[tack_corner_row][tack_corner_col] != null:
+				tack_corners += 1
+		if tack_sides == 10 and tack_corners == 4:
+			guess += 4
+		else:
+			guess -= 1
+	if rule == "double_flute_blank":
+		var fluteb_before_row = row
+		var fluteb_before_col = col - 12
+		while fluteb_before_col < 0:
+			fluteb_before_row -= 1
+			fluteb_before_col += 3
+		var fluteb_after_row = row
+		var fluteb_after_col = col + 1
+		while fluteb_after_col > 2:
+			fluteb_after_row += 1
+			fluteb_after_col -= 3
+		var fluteb_before_empty = fluteb_before_row >= 0 and state.form[fluteb_before_row][fluteb_before_col] == null
+		var fluteb_after_empty = fluteb_after_row <= 2 and state.form[fluteb_after_row][fluteb_after_col] == null
+		if fluteb_before_empty and fluteb_after_empty:
+			guess += _stamp_number(state, card_id, row, col)
 	if rule == "drop_if_auger_count":
 		var auger_filled = 0
 		for auger_row in 3:
