@@ -333,6 +333,34 @@ class_name BeamTracer
 # axis. A mullion passes north and south. A transom passes east and west. A
 # lintel passes every dry direction. None of those is the dry torus pair.
 #
+# Ogee
+# ----
+# An ogee is not a torus, a scotia, an astragal, a casement, a jamb, a mullion,
+# a transom, or a lintel, and it does not replace one. It is not a weir, a
+# sluice, a shutter, a stain, a vane, a well, or a siphon either. It has a
+# facing. Rotation changes the facing. Clicking cycles it the same way a
+# torus is rotated: 0 north, 90 east, 180 south, 270 west.
+# While its own row is dry, a beam traveling opposite the facing passes
+# straight through, and a beam traveling in the next counterclockwise direction
+# from the facing also passes straight through. South and west when it faces
+# north. North and west when it faces east. North and east when it faces south.
+# East and south when it faces west. Each pass keeps the same direction and the
+# same color and costs no bounce. It does not turn, it does not recolor, and it
+# does not split.
+# The other two directions stop at the edge and do not enter. A north ogee
+# refuses north and east. That stopped pair is what a north astragal passes.
+# South and west, the open pair, is what a north torus does not pass together:
+# a north torus passes south and refuses west.
+# It does not recolor. Red stays red, blue stays blue, and white stays white.
+# While that row is flooded, every beam stops at the waterline and does not
+# enter the cell. A flooded ogee does not carry the beam. It is shut under
+# water, the same way a flooded torus is shut.
+# A north torus passes south and east. A north scotia passes north and west.
+# A north ogee passes neither of those pairs. It passes south and west.
+# A casement passes only the facing. A jamb passes both directions on its open
+# axis. A mullion passes north and south. A transom passes east and west. A
+# lintel passes every dry direction. None of those is the dry ogee pair.
+#
 # Docks and boats
 # ---------------
 # A dock records every color that enters its cell. It is satisfied only when
@@ -362,6 +390,9 @@ class_name BeamTracer
 # A dry torus does not cost a bounce when the beam is traveling opposite its
 # facing or in the next clockwise direction. The other two directions stop
 # before the cell. A flooded torus is not entered.
+# A dry ogee does not cost a bounce when the beam is traveling opposite its
+# facing or in the next counterclockwise direction. The other two directions
+# stop before the cell. A flooded ogee is not entered.
 # A (cell, direction, color) triple is never entered twice, and each cast also
 # stops after MAX_STEPS cells. Those caps are what make a mirror loop return.
 
@@ -401,7 +432,10 @@ static func norm_rot(kind: String, rot: int) -> int:
 	# A torus uses the same four facings. Each one is its own open pair:
 	# the opposite of the facing and the next clockwise direction. A north
 	# torus passes south and east, which a north scotia stops.
-	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus":
+	# An ogee uses the same four facings. Each one is its own open pair:
+	# the opposite of the facing and the next counterclockwise direction. A
+	# north ogee passes south and west, which a north torus does not.
+	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee":
 		return posmod(rot, 360)
 	# A shutter has no facing. Dry stops the beam; flooded water lets it pass.
 	# A well has no facing either. Dry stops the beam; flooded water sends it north.
@@ -522,6 +556,16 @@ static func torus_passes(rot: int, dir: String) -> bool:
 	# North opens south and east. That is the pair a north scotia stops.
 	var facing := torus_facing(rot)
 	return dir == rotate_dir(facing, 2) or dir == rotate_dir(facing, 1)
+
+static func ogee_facing(rot: int) -> String:
+	# 0 north, 90 east, 180 south, 270 west. The dry pass is not this facing.
+	return rotate_dir("N", posmod(int(norm_rot("ogee", rot) / 90.0), 4))
+
+static func ogee_passes(rot: int, dir: String) -> bool:
+	# Opposite the facing, and the next counterclockwise direction from the
+	# facing. North opens south and west. That is not the north torus pair.
+	var facing := ogee_facing(rot)
+	return dir == rotate_dir(facing, 2) or dir == rotate_dir(facing, -1)
 
 static func sluice_facing(rot: int) -> String:
 	# 0 north, 90 east, 180 south, 270 west. The exit follows this facing.
@@ -767,6 +811,12 @@ static func _cast(
 		if _dry_torus_blocks(occupants, cell, dir):
 			segments.append(_boundary_seg(prev, cell, color))
 			return
+		# A dry ogee passes the opposite of its facing and the next
+		# counterclockwise direction. The other two directions stop on the edge
+		# and never enter the cell. Flooded ogees already returned above.
+		if _dry_ogee_blocks(occupants, cell, dir):
+			segments.append(_boundary_seg(prev, cell, color))
+			return
 		segments.append(_center_seg(prev, cell, color))
 		if not occupants.has(cell):
 			prev = cell
@@ -933,6 +983,15 @@ static func _cast(
 			prev = cell
 			cell = cell + VEC[dir]
 			continue
+		if kind == "ogee":
+			# Dry opposite and the next counterclockwise direction pass
+			# straight, same direction and same color. That pass costs no
+			# bounce. It does not turn, it does not recolor, and it does not
+			# split. The other two dry directions never reach here. A flooded
+			# ogee never reaches here either.
+			prev = cell
+			cell = cell + VEC[dir]
+			continue
 		if kind == "pane":
 			if color != pane_color(int(occ["rot"])):
 				return
@@ -966,7 +1025,8 @@ static func _flood_carries(occupants: Dictionary, cell: Vector2i) -> bool:
 	# An astragal is shut under water the same way, so _flood_carries stays
 	# false for it. A scotia is shut under water the same way, so
 	# _flood_carries stays false for it. A torus is shut under water the same
-	# way, so _flood_carries stays false for it.
+	# way, so _flood_carries stays false for it. An ogee is shut under water
+	# the same way, so _flood_carries stays false for it.
 	# Every other flooded cell stops.
 	if not occupants.has(cell):
 		return false
@@ -1022,6 +1082,13 @@ static func _dry_torus_blocks(occupants: Dictionary, cell: Vector2i, dir: String
 	if str(occupants[cell]["kind"]) != "torus":
 		return false
 	return not torus_passes(int(occupants[cell]["rot"]), dir)
+
+static func _dry_ogee_blocks(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "ogee":
+		return false
+	return not ogee_passes(int(occupants[cell]["rot"]), dir)
 
 static func _in_bounds(chart: Dictionary, cell: Vector2i) -> bool:
 	return cell.x >= 0 and cell.y >= 0 and cell.x < int(chart["cols"]) and cell.y < int(chart["rows"])
