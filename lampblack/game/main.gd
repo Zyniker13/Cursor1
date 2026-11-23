@@ -73,7 +73,7 @@ func _build_hud() -> void:
 	layer.add_child(bottom_panel)
 
 	controls_label = Label.new()
-	controls_label.text = "Arrows move    F lamp you face    Space wait    U undo    R restart    click a neighbor or a lamp\n1–8 east    Shift+1–6 west    Ctrl+1–6 north    Alt+1–6 south    F1–F6 attic    F7–F12 cellar    Keypad 1–6 gallery\nShift+F1–F6 court    Alt+F1–F6 nave    Ctrl+F1–F6 cloister    Ctrl+Shift+F1–F6 porch    Alt+Shift+F1–F6 oriel    Alt+Shift+1–6 veil    Ctrl+Alt+1–6 shade    Ctrl+Shift+1–6 screen    Ctrl+Alt+Shift+1–6 glaze    Ctrl+Alt+Shift+F1–F6 mica    Meta+Ctrl+Alt+Shift+F1–F6 baize    Meta+Ctrl+Alt+Shift+1–6 scrim"
+	controls_label.text = "Arrows move    F lamp you face    Space wait    U undo    R restart    click a neighbor or a lamp\n1–8 east    Shift+1–6 west    Ctrl+1–6 north    Alt+1–6 south    F1–F6 attic    F7–F12 cellar    Keypad 1–6 gallery\nShift+F1–F6 court    Alt+F1–F6 nave    Ctrl+F1–F6 cloister    Ctrl+Shift+F1–F6 porch    Alt+Shift+F1–F6 oriel    Alt+Shift+1–6 veil    Ctrl+Alt+1–6 shade    Ctrl+Shift+1–6 screen    Ctrl+Alt+Shift+1–6 glaze    Ctrl+Alt+Shift+F1–F6 mica    Meta+Ctrl+Alt+Shift+F1–F6 baize    Meta+Ctrl+Alt+Shift+1–6 scrim    Meta+Ctrl+Alt+1–6 gauze"
 	controls_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	controls_label.add_theme_font_size_override("font_size", 14)
 	controls_label.add_theme_color_override("font_color", MUTED)
@@ -118,10 +118,10 @@ func _build_hud() -> void:
 		row_y += 36.0
 
 	legend_label = Label.new()
-	legend_label.text = "Gold diamond — lamplight, you cannot walk it.    Red diamond — a guard is watching.    Arrow — that guard's next step.    Brass disc — a plate. Step on it in the dark and the nearest guard is called.    Iron cup — a bell. Step on it in the dark and every guard who can reach it is called.    Iron bars — a grate. It stays dark, you may enter it, and a guard cannot.    Stone sill — a lamp lights it, light stops there, and a guard cannot enter or see through it.    Pale sheet — a pane. Light and sight pass through it, and neither you nor a guard can step on it.    Dark cloth — a curtain. A lamp lights it, light passes, sight stops, and a guard can step on it.    Dark louver — a shade. It stays dark, light stops, sight stops, you may step on it, and a guard cannot.    Pale lattice — a screen. A lamp lights it, light passes, sight stops, you may step on it, and a guard cannot.    Ivory sheet, bright cross — a glaze. A lamp lights it, light passes, sight passes while it is lit, you may step on it, and a guard cannot.    Pale gray sheet, dark ring — a mica. It stays dark, light passes, sight passes, you may step on it, and a guard cannot.    Deep green cloth, pale hem — a baize. It stays dark, light stops, sight passes, you may step on it, and a guard cannot.    Pale gold cloth, dark thread — a scrim. A lamp lights it, light stops, sight passes while it is lit, you may step on it only while it is dark, and a guard cannot."
+	legend_label.text = "Gold diamond — lamplight, you cannot walk it.    Red diamond — a guard is watching.    Arrow — that guard's next step.    Brass disc — a plate. Step on it in the dark and the nearest guard is called.    Iron cup — a bell. Step on it in the dark and every guard who can reach it is called.    Iron bars — a grate. It stays dark, you may enter it, and a guard cannot.    Stone sill — a lamp lights it, light stops there, and a guard cannot enter or see through it.    Pale sheet — a pane. Light and sight pass through it, and neither you nor a guard can step on it.    Dark cloth — a curtain. A lamp lights it, light passes, sight stops, and a guard can step on it.    Dark louver — a shade. It stays dark, light stops, sight stops, you may step on it, and a guard cannot.    Pale lattice — a screen. A lamp lights it, light passes, sight stops, you may step on it, and a guard cannot.    Ivory sheet, bright cross — a glaze. A lamp lights it, light passes, sight passes while it is lit, you may step on it, and a guard cannot.    Pale gray sheet, dark ring — a mica. It stays dark, light passes, sight passes, you may step on it, and a guard cannot.    Deep green cloth, pale hem — a baize. It stays dark, light stops, sight passes, you may step on it, and a guard cannot.    Pale gold cloth, dark thread — a scrim. A lamp lights it, light stops, sight passes while it is lit, you may step on it only while it is dark, and a guard cannot.    Pale cloth, open stitches — a gauze. A lamp lights it, a second lamp's light passes, sight passes while it is lit, you may step on it only while it is dark, and a guard cannot."
 	legend_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	legend_label.position = Vector2(20, row_y + 2.0)
-	legend_label.size = Vector2(1240, 160)
+	legend_label.size = Vector2(1240, 180)
 	legend_label.add_theme_font_size_override("font_size", 14)
 	legend_label.add_theme_color_override("font_color", MUTED)
 	bottom_panel.add_child(legend_label)
@@ -133,7 +133,7 @@ func _build_hud() -> void:
 	status_label.position = Vector2(20, row_y + 2.0)
 	status_label.size = Vector2(1240, 52)
 	bottom_panel.add_child(status_label)
-	bottom_h = row_y + 170.0
+	bottom_h = row_y + 190.0
 
 	turn_label = Label.new()
 	turn_label.add_theme_font_size_override("font_size", 16)
@@ -170,7 +170,7 @@ func _layout() -> void:
 	if controls_label:
 		controls_label.size = Vector2(maxf(200.0, view.x - 40.0), 89)
 	if legend_label:
-		legend_label.size = Vector2(maxf(200.0, view.x - 40.0), 160)
+		legend_label.size = Vector2(maxf(200.0, view.x - 40.0), 180)
 	if status_label:
 		status_label.size = Vector2(maxf(200.0, view.x - 40.0), 52)
 	title_label.position = Vector2(24, 16)
@@ -330,6 +330,12 @@ func _puzzle_index_for_key(event: InputEventKey) -> int:
 	var veil := _veil_index(event)
 	if veil >= 0:
 		return 74 + veil
+	# Meta+Ctrl+Alt on 1–6 without Shift selected nothing, because Alt combined
+	# with Ctrl returns -1. Claim it before that fallthrough. Shift stays the
+	# scrim. Ctrl+Alt without Meta and without Shift stays the shade.
+	var gauze := _gauze_index(event)
+	if gauze >= 0:
+		return 116 + gauze
 	# Alt alone is the south wing. Alt combined with Ctrl, Meta, or a leftover
 	# Shift selects nothing, so the other wings stay where they were.
 	if event.alt_pressed:
@@ -348,6 +354,15 @@ func _puzzle_index_for_key(event: InputEventKey) -> int:
 			return -1
 		return 8 + digit
 	if digit > 7:
+		return -1
+	return digit
+
+
+func _gauze_index(event: InputEventKey) -> int:
+	if not event.ctrl_pressed or not event.alt_pressed or not event.meta_pressed or event.shift_pressed or _is_shifted_digit(event.keycode):
+		return -1
+	var digit := _digit_from_key(event)
+	if digit < 0 or digit > 5:
 		return -1
 	return digit
 
@@ -713,6 +728,8 @@ func _draw_tile(state: Dictionary, x: int, y: int, lit: Dictionary, watched: Dic
 		_draw_baize(inset)
 	if kind == Rules.Tile.SCRIM:
 		_draw_scrim_cloth(inset)
+	if kind == Rules.Tile.GAUZE:
+		_draw_gauze_cloth(inset)
 	if kind == Rules.Tile.SILL:
 		_draw_sill(inset)
 	if kind == Rules.Tile.CURTAIN:
@@ -748,6 +765,8 @@ func _draw_tile(state: Dictionary, x: int, y: int, lit: Dictionary, watched: Dic
 		_draw_glaze_cross(inset)
 	if kind == Rules.Tile.SCRIM:
 		_draw_scrim_thread(inset)
+	if kind == Rules.Tile.GAUZE:
+		_draw_gauze_stitches(inset)
 	if hover == cell:
 		draw_rect(inset, Color(1, 1, 1, 0.08), false, 2.0)
 
@@ -775,6 +794,27 @@ func _draw_plate(center: Vector2) -> void:
 	draw_rect(Rect2(center + Vector2(-tile * 0.07, -tile * 0.018), Vector2(tile * 0.14, tile * 0.036)), Color("3a2c16"))
 	draw_circle(center, tile * 0.045, Color("8d7344"))
 	draw_circle(center, tile * 0.02, Color("3a2c16"))
+
+
+func _draw_gauze_cloth(inset: Rect2) -> void:
+	# Pale sheer cloth. The open stitches are drawn after the lamp diamond.
+	draw_rect(inset, Color("f4f7f2"))
+
+
+func _draw_gauze_stitches(inset: Rect2) -> void:
+	# Short offset stitches. They do not span the tile and do not form a grid.
+	var stitch := Color("5c6b62")
+	var thick := maxf(1.4, tile * 0.03)
+	var spans := [
+		[0.08, 0.28, 0.32],
+		[0.46, 0.48, 0.26],
+		[0.16, 0.70, 0.30],
+	]
+	for span in spans:
+		var x := inset.position.x + inset.size.x * float(span[0])
+		var y := inset.position.y + inset.size.y * float(span[1]) - thick * 0.5
+		var w := inset.size.x * float(span[2])
+		draw_rect(Rect2(Vector2(x, y), Vector2(w, thick)), stitch)
 
 
 func _draw_scrim_cloth(inset: Rect2) -> void:
