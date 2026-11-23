@@ -271,6 +271,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_cavetto(at, rot)
 		"fillet":
 			_draw_fillet(at, rot)
+		"corona":
+			_draw_corona(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -933,6 +935,48 @@ func _fillet_band(center: Vector2, dir: String, band: Color) -> void:
 		inner - along * half,
 	])
 	draw_colored_polygon(rect, band)
+
+func _draw_corona(at: Vector2i, rot: int) -> void:
+	# A thin pale shelf on each passing edge. A north corona shelves the east
+	# and west edges. Each shelf is a flat ledge. It is not the fillet's
+	# single band and not the cavetto's inward V-notch.
+	var center := _center(at)
+	var facing := Tracer.corona_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var shelf := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var lip := Palette.GLASS if not flooded else Palette.TIDE
+	for turn in [1, -1]:
+		_corona_shelf(center, Tracer.rotate_dir(facing, turn), shelf, lip)
+
+func _corona_shelf(center: Vector2, dir: String, shelf: Color, lip: Color) -> void:
+	var along := Vector2.RIGHT
+	var outward := Vector2.DOWN
+	match dir:
+		"N":
+			along = Vector2.RIGHT
+			outward = Vector2.UP
+		"S":
+			along = Vector2.RIGHT
+			outward = Vector2.DOWN
+		"E":
+			along = Vector2.DOWN
+			outward = Vector2.RIGHT
+		_:
+			along = Vector2.DOWN
+			outward = Vector2.LEFT
+	var edge := cell * 0.40
+	var thick := cell * 0.05
+	var half := cell * 0.32
+	var outer := center + outward * edge
+	var inner := outer - outward * thick
+	var rect := PackedVector2Array([
+		outer - along * half,
+		outer + along * half,
+		inner + along * half,
+		inner - along * half,
+	])
+	draw_colored_polygon(rect, shelf)
+	draw_line(inner - along * half, inner + along * half, lip, 1.4)
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
 	if dir == "N" or dir == "S":

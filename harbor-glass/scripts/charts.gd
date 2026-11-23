@@ -13,7 +13,8 @@ class_name ChartBook
 # The Jamb holds eight more. The Astragal holds eight more.
 # The Scotia holds eight more. The Torus holds eight more.
 # The Ogee holds eight more. The Ovolo holds eight more.
-# The Cavetto holds eight more. The Fillet holds the last eight.
+# The Cavetto holds eight more. The Fillet holds eight more.
+# The Corona holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
@@ -117,6 +118,17 @@ class_name ChartBook
 # flooded cavetto stops. A jamb passes both directions on its open axis. A
 # mullion passes north and south. A transom passes east and west. A lintel
 # passes every dry direction.
+# A corona has a facing. Rotation changes it the same way: 0 north, 90 east,
+# 180 south, 270 west. While its row is dry, the two directions perpendicular
+# to the facing pass straight through in the same direction and the same
+# color, and that pass costs no bounce. It does not turn, it does not recolor,
+# and it does not split. The facing and the opposite stop and do not enter.
+# Facing north, east and west pass, and north and south stop. Turned once from
+# north, north and south pass, and east and west stop. A transom stays east
+# and west when clicked. A mullion stays north and south when clicked. A north
+# jamb passes north and south, so a north corona is not a north jamb. A north
+# fillet passes only south. While that row is flooded, every beam stops at the
+# waterline, the same way a flooded fillet stops.
 # See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
@@ -149,6 +161,7 @@ const OGEE := "The Ogee"
 const OVOLO := "The Ovolo"
 const CAVETTO := "The Cavetto"
 const FILLET := "The Fillet"
+const CORONA := "The Corona"
 
 static func all() -> Array:
 	var book: Array = []
@@ -178,6 +191,7 @@ static func all() -> Array:
 	book.append_array(ovolo())
 	book.append_array(cavetto())
 	book.append_array(fillet())
+	book.append_array(corona())
 	return book
 
 
@@ -283,6 +297,10 @@ static func cavetto() -> Array:
 
 static func fillet() -> Array:
 	return [chart_199(), chart_200(), chart_201(), chart_202(), chart_203(), chart_204(), chart_205(), chart_206()]
+
+
+static func corona() -> Array:
+	return [chart_207(), chart_208(), chart_209(), chart_210(), chart_211(), chart_212(), chart_213(), chart_214()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -7650,6 +7668,292 @@ static func chart_206() -> Dictionary:
 	}
 
 
+static func chart_207() -> Dictionary:
+	# A dry north corona passes east and west. North and south stop.
+	return {
+		"id": "207",
+		"harbor": CORONA,
+		"title": "The Dry Corona",
+		"teach": "Tide index 0, flood 0. A dry north corona passes the eastbound beam and the westbound beam. North and south stop. Clicking it once opens north and south. A transom stays east and west when clicked. A mullion passes north and south and cannot be turned. A jamb facing north passes the northbound return. A fillet facing north passes only south. A casement facing east passes only the eastbound beam.",
+		"win": "The corona faces north. East and west pass, and north and south stay dark.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ee", 0, 3, "E", "white"),
+			_lantern("Ww", 6, 3, "W", "blue"),
+			_lantern("Nn", 3, 6, "N", "red"),
+			_lantern("Ss", 3, 0, "S", "white"),
+		],
+		"docks": [
+			_dock("Ed", 5, 3, "white", true),
+			_dock("Wd", 1, 3, "blue", true),
+			_dock("Nd", 3, 1, "red", true, true),
+			_dock("Sd", 3, 5, "white", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_corona("O", "Corona", 3, 3, 90, 0),
+		],
+	}
+
+
+static func chart_208() -> Dictionary:
+	# The corona starts under water. Dry, east and west pass.
+	return {
+		"id": "208",
+		"harbor": CORONA,
+		"title": "The Wet Stop",
+		"teach": "The corona opens under water, so every beam stops at the waterline. Lower the tide and face it north. East and west pass. North and south stop. A shutter, a well, a siphon, a sluice, or a weir would carry the flooded beam into the cell.",
+		"win": "Low water opens east and west. The flooded row had stopped every beam at the waterline.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [0, 4],
+		"start_tide_index": 1,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ee", 0, 4, "E", "white"),
+			_lantern("Ww", 7, 4, "W", "blue"),
+			_lantern("Nn", 3, 7, "N", "red"),
+			_lantern("Ss", 3, 0, "S", "white"),
+		],
+		"docks": [
+			_dock("Ed", 5, 4, "white", true),
+			_dock("Wd", 1, 4, "blue", true),
+			_dock("Nd", 3, 2, "red", true, true),
+			_dock("Sd", 3, 6, "white", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_corona("O", "Corona", 3, 4, 90, 0),
+		],
+	}
+
+
+static func chart_209() -> Dictionary:
+	# East stays red and west stays blue. A stain paints both the same color.
+	return {
+		"id": "209",
+		"harbor": CORONA,
+		"title": "Color Kept",
+		"teach": "The eastbound beam is red and the westbound beam is blue. Red stays red, blue stays blue, and white stays white. A stain would paint both passes the same color. A weir recolors a flooded beam. This corona stays dry and does not recolor.",
+		"win": "East stays red and west stays blue. The corona did not paint either beam.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Ww", 6, 3, "W", "blue"),
+			_lantern("Nn", 3, 6, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+		],
+		"docks": [
+			_dock("Ed", 5, 3, "red", true),
+			_dock("Wd", 1, 3, "blue", true),
+			_dock("Nd", 3, 1, "white", true, true),
+			_dock("Sd", 3, 5, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_corona("O", "Corona", 3, 3, 90, 0),
+		],
+	}
+
+
+static func chart_210() -> Dictionary:
+	# Same seats as the dry corona. The passes do not turn.
+	return {
+		"id": "210",
+		"harbor": CORONA,
+		"title": "No Turn",
+		"teach": "The eastbound beam leaves east and the westbound beam leaves west. The corona does not turn. A prism would split the white beam. A vane or a mirror would send it aside. A flooded sluice would turn it.",
+		"win": "East leaves east and west leaves west. Nothing was turned.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ee", 0, 3, "E", "white"),
+			_lantern("Ww", 6, 3, "W", "blue"),
+			_lantern("Nn", 3, 6, "N", "red"),
+			_lantern("Ss", 3, 0, "S", "white"),
+		],
+		"docks": [
+			_dock("Ed", 5, 3, "white", true),
+			_dock("Wd", 1, 3, "blue", true),
+			_dock("Nd", 3, 1, "red", true, true),
+			_dock("Sd", 3, 5, "white", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_corona("O", "Corona", 3, 3, 270, 0),
+		],
+	}
+
+
+static func chart_211() -> Dictionary:
+	# The corona row is dry. A neighbor beam dies on the flood.
+	return {
+		"id": "211",
+		"harbor": CORONA,
+		"title": "Beside the Flood",
+		"teach": "The corona row is dry, so east and west pass. The flood beam stops at the waterline and never enters the flooded cell.",
+		"win": "The dry row passes east and west. The flood beam stops at the waterline.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [2],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ee", 0, 2, "E", "white"),
+			_lantern("Ww", 6, 2, "W", "blue"),
+			_lantern("Nn", 3, 5, "N", "red"),
+			_lantern("Ss", 3, 0, "S", "white"),
+			_lantern("Fl", 1, 5, "S", "white"),
+		],
+		"docks": [
+			_dock("Ed", 5, 2, "white", true),
+			_dock("Wd", 1, 2, "blue", true),
+			_dock("Nd", 3, 1, "red", true, true),
+			_dock("Sd", 3, 4, "white", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_corona("O", "Corona", 3, 2, 90, 0),
+		],
+	}
+
+
+static func chart_212() -> Dictionary:
+	# One corona opens east-west. The other opens north-south.
+	return {
+		"id": "212",
+		"harbor": CORONA,
+		"title": "Two Coronas",
+		"teach": "One corona passes east and west. The other passes north and south. Swapping the facings closes both seats. A transom stays east and west, so it cannot take the north-south seat. A mullion stays north and south, so it cannot take the east-west seat. A north jamb opens north and south.",
+		"win": "Each corona holds its own axis. The other axis stays dark.",
+		"cols": 11,
+		"rows": 9,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ae", 0, 3, "E", "white"),
+			_lantern("Aw", 5, 3, "W", "blue"),
+			_lantern("An", 2, 6, "N", "red"),
+			_lantern("As", 2, 0, "S", "white"),
+			_lantern("Bn", 8, 8, "N", "white"),
+			_lantern("Bs", 8, 2, "S", "blue"),
+			_lantern("Be", 6, 5, "E", "red"),
+			_lantern("Bw", 10, 5, "W", "white"),
+		],
+		"docks": [
+			_dock("Ade", 4, 3, "white", true),
+			_dock("Adw", 1, 3, "blue", true),
+			_dock("Adn", 2, 1, "red", true, true),
+			_dock("Ads", 2, 5, "white", true, true),
+			_dock("Bdn", 8, 3, "white", true),
+			_dock("Bds", 8, 7, "blue", true),
+			_dock("Bde", 9, 5, "red", true, true),
+			_dock("Bdw", 7, 5, "white", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_corona("O", "East-west corona", 2, 3, 90, 0),
+			_corona("U", "North-south corona", 8, 5, 0, 90),
+		],
+	}
+
+
+static func chart_213() -> Dictionary:
+	# Three tide marks. The middle mark leaves the corona dry, facing north.
+	return {
+		"id": "213",
+		"harbor": CORONA,
+		"title": "The Held Corona",
+		"teach": "The held facing is part of the solution. The chart starts on a facing that stops east and west. Place the tide on the middle mark and face the corona north. Low water wakes the south hull. High water covers the corona and the beam stops at the waterline.",
+		"win": "The middle mark holds the north corona. East and west pass, and the hull stays dark.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [0, 1, 5],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ee", 0, 3, "E", "white"),
+			_lantern("Ww", 7, 3, "W", "blue"),
+			_lantern("Nn", 4, 6, "N", "red"),
+			_lantern("Ss", 4, 0, "S", "white"),
+			_lantern("Hl", 0, 7, "E", "white"),
+		],
+		"docks": [
+			_dock("Ed", 6, 3, "white", true),
+			_dock("Wd", 2, 3, "blue", true),
+			_dock("Nd", 4, 1, "red", true, true),
+			_dock("Sd", 4, 5, "white", true, true),
+		],
+		"boats": [
+			_boat("Hb", 3, 7),
+		],
+		"fixtures": [],
+		"pieces": [
+			_corona("O", "Corona", 4, 3, 90, 0),
+		],
+	}
+
+
+static func chart_214() -> Dictionary:
+	# The corona and the shutter trade places. On the line it faces north.
+	return {
+		"id": "214",
+		"harbor": CORONA,
+		"title": "The Corona Mark",
+		"teach": "Move the corona from the side socket onto the line and face it north. East and west pass. North and south must not count. A transom also passes east and west, and a click does not turn it. A corona turned once from north passes north and south. A mullion, a north jamb, a fillet, a lintel, or a casement in that cell fails.",
+		"win": "The corona stands on the line, open east and west. The other axis stays dark.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ee", 0, 3, "E", "white"),
+			_lantern("Ww", 6, 3, "W", "blue"),
+			_lantern("Nn", 3, 6, "N", "red"),
+			_lantern("Ss", 3, 0, "S", "white"),
+		],
+		"docks": [
+			_dock("Ed", 5, 3, "white", true),
+			_dock("Wd", 1, 3, "blue", true),
+			_dock("Nd", 3, 1, "red", true, true),
+			_dock("Sd", 3, 5, "white", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_placed("O", "Corona", "corona", [["side", 5, 5], ["line", 3, 3]], "side", "line", 90, 0),
+			_placed("G", "Line shutter", "shutter", [["line", 3, 3], ["side", 5, 5]], "line", "side", 0, 0),
+		],
+	}
+
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -7958,6 +8262,20 @@ static func _fillet(id: String, name: String, x: int, y: int, start_rot: int, so
 		"id": id,
 		"name": name,
 		"kind": "fillet",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _corona(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "corona",
 		"movable": false,
 		"sockets": [{"id": "a", "x": x, "y": y}],
 		"start_socket": "a",
