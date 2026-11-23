@@ -299,6 +299,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_threshold(at, rot)
 		"impost":
 			_draw_impost(at, rot)
+		"architrave":
+			_draw_architrave(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -1389,6 +1391,68 @@ func _draw_impost(at: Vector2i, rot: int) -> void:
 		outer - along * wide,
 		outer + along * wide,
 	]), stone)
+
+func _draw_architrave(at: Vector2i, rot: int) -> void:
+	# Two short posts on the perpendicular edges, the dry pass, and a cap on
+	# the facing. A north architrave posts the east and west edges. The posts
+	# are narrower than the corona's shelves.
+	var center := _center(at)
+	var facing := Tracer.architrave_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	for turn in [1, -1]:
+		_architrave_post(center, Tracer.rotate_dir(facing, turn), mark)
+	_architrave_cap(center, facing, mark)
+
+func _architrave_post(center: Vector2, dir: String, mark: Color) -> void:
+	var along := Vector2.RIGHT
+	var outward := Vector2.DOWN
+	match dir:
+		"N":
+			along = Vector2.RIGHT
+			outward = Vector2.UP
+		"S":
+			along = Vector2.RIGHT
+			outward = Vector2.DOWN
+		"E":
+			along = Vector2.DOWN
+			outward = Vector2.RIGHT
+		_:
+			along = Vector2.DOWN
+			outward = Vector2.LEFT
+	var edge := center + outward * cell * 0.34
+	var inner := center + outward * cell * 0.18
+	var half := cell * 0.07
+	draw_colored_polygon(PackedVector2Array([
+		inner - along * half,
+		inner + along * half,
+		edge + along * half,
+		edge - along * half,
+	]), mark)
+
+func _architrave_cap(center: Vector2, dir: String, mark: Color) -> void:
+	var along := Vector2.RIGHT
+	var outward := Vector2.UP
+	match dir:
+		"N":
+			along = Vector2.RIGHT
+			outward = Vector2.UP
+		"S":
+			along = Vector2.RIGHT
+			outward = Vector2.DOWN
+		"E":
+			along = Vector2.DOWN
+			outward = Vector2.RIGHT
+		_:
+			along = Vector2.DOWN
+			outward = Vector2.LEFT
+	var tip := center + outward * cell * 0.22
+	var base := center + outward * cell * 0.08
+	draw_colored_polygon(PackedVector2Array([
+		base - along * cell * 0.05,
+		base + along * cell * 0.05,
+		tip,
+	]), mark)
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
 	if dir == "N" or dir == "S":

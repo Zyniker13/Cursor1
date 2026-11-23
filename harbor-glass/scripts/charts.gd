@@ -17,7 +17,7 @@ class_name ChartBook
 # The Corona holds eight more. The Bead holds eight more. The Quirk holds eight more.
 # The Cyma holds eight more. The Fascia holds eight more. The Soffit holds eight more.
 # The Drip holds eight more. The Beak holds eight more. The Hood holds eight more.
-# The Throat holds eight more. The Larmier holds eight more. The Cill holds eight more. The Threshold holds eight more. The Impost holds the last eight.
+# The Throat holds eight more. The Larmier holds eight more. The Cill holds eight more. The Threshold holds eight more. The Impost holds eight more. The Architrave holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
@@ -279,6 +279,20 @@ class_name ChartBook
 # north threshold passes only south. A flooded north threshold passes north,
 # east, and west, and stops south. A dry fillet passes only south and stays
 # shut under water. A dry cyma passes only north and stays shut under water.
+# An architrave has a facing. Rotation changes it the same way: 0 north, 90
+# east, 180 south, 270 west. While its row is dry, the two perpendicular
+# headings pass straight through in the same direction and the same color,
+# and that pass costs no bounce. It does not turn, it does not recolor, and
+# it does not split. Facing north, east and west pass, and north and south
+# stop. One click faces east and only north and south pass. A south
+# architrave passes the same east and west. While that row is flooded, only
+# the facing passes, and the other three stop at the waterline and do not
+# enter. A flooded north architrave passes only north. One click faces east
+# and only east passes. A flooded south architrave passes only south. A dry
+# impost passes only the facing. A flooded impost passes every heading except
+# the facing. A dry threshold passes only the opposite. A cyma stays shut
+# under water. A dry corona passes the same perpendicular pair and stays shut
+# under water.
 # See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
@@ -325,6 +339,7 @@ const LARMIER := "The Larmier"
 const CILL := "The Cill"
 const THRESHOLD := "The Threshold"
 const IMPOST := "The Impost"
+const ARCHITRAVE := "The Architrave"
 
 static func all() -> Array:
 	var book: Array = []
@@ -368,6 +383,7 @@ static func all() -> Array:
 	book.append_array(cill())
 	book.append_array(threshold())
 	book.append_array(impost())
+	book.append_array(architrave())
 	return book
 
 
@@ -529,6 +545,10 @@ static func threshold() -> Array:
 
 static func impost() -> Array:
 	return [chart_311(), chart_312(), chart_313(), chart_314(), chart_315(), chart_316(), chart_317(), chart_318()]
+
+
+static func architrave() -> Array:
+	return [chart_319(), chart_320(), chart_321(), chart_322(), chart_323(), chart_324(), chart_325(), chart_326()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -12062,6 +12082,337 @@ static func chart_318() -> Dictionary:
 	}
 
 
+static func chart_319() -> Dictionary:
+	# Dry north architrave. East and west pass. North and south stop.
+	return {
+		"id": "319",
+		"title": "The Dry Architrave",
+		"harbor": ARCHITRAVE,
+		"win": "The architrave faces north. East and west pass.",
+		"teach": "A dry north architrave passes east and west and stops north and south. One click faces east and only north and south pass. A south architrave passes the same east and west.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Ww", 6, 3, "W", "blue"),
+			_lantern("Nn", 3, 6, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "red"),
+		],
+		"docks": [
+			_dock("Ed", 5, 3, "red", true),
+			_dock("Wd", 1, 3, "blue", true),
+			_dock("Nd", 3, 1, "white", true, true),
+			_dock("Sd", 3, 5, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_architrave("O", "Architrave", 3, 3, 90, 0),
+		],
+	}
+
+
+static func chart_320() -> Dictionary:
+	# Flooded north architrave. Only north passes.
+	return {
+		"id": "320",
+		"title": "The Flooded Architrave",
+		"harbor": ARCHITRAVE,
+		"win": "The architrave is flooded and faces north. Only north passes.",
+		"teach": "A flooded north architrave passes only north. East, west, and south stop. A flooded north impost passes every heading except north.",
+		"cols": 9,
+		"rows": 8,
+		"tide_phases": [0, 4],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Tn", 2, 1, "S", "white"),
+			_lantern("Ts", 4, 1, "S", "red"),
+			_lantern("Te", 1, 2, "S", "blue"),
+			_lantern("Tw", 8, 2, "S", "red"),
+		],
+		"docks": [
+			_dock("Nd", 4, 3, "white", true),
+			_dock("Kb", 4, 2, "blue", true, true),
+			_dock("Ks", 2, 3, "red", true, true),
+			_dock("Ke", 8, 3, "blue", true, true),
+			_dock("Kw", 1, 3, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [
+			_fixture("S24", "shutter", 2, 4, 0),
+			_fixture("S25", "shutter", 2, 5, 0),
+			_fixture("S26", "shutter", 2, 6, 0),
+			_fixture("M27", "tide_mirror", 2, 7, 90),
+			_fixture("S37", "shutter", 3, 7, 0),
+			_fixture("M47", "tide_mirror", 4, 7, 0),
+			_fixture("S46", "shutter", 4, 6, 0),
+			_fixture("S45", "shutter", 4, 5, 0),
+			_fixture("M14", "tide_mirror", 1, 4, 90),
+			_fixture("S34", "shutter", 3, 4, 0),
+			_fixture("S54", "shutter", 5, 4, 0),
+			_fixture("S64", "shutter", 6, 4, 0),
+			_fixture("S74", "shutter", 7, 4, 0),
+			_fixture("M84", "tide_mirror", 8, 4, 0),
+		],
+		"pieces": [
+			_architrave("O", "Architrave", 4, 4, 90, 0),
+		],
+	}
+
+
+static func chart_321() -> Dictionary:
+	# Turned once from north. Dry east architrave. Only north and south pass.
+	return {
+		"id": "321",
+		"title": "The Turned Architrave",
+		"harbor": ARCHITRAVE,
+		"win": "The architrave faces east. North and south pass.",
+		"teach": "One click from north faces east. A dry east architrave passes only north and south and stops east and west.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ss", 3, 0, "S", "red"),
+			_lantern("Nn", 3, 6, "N", "blue"),
+			_lantern("Ee", 0, 3, "E", "white"),
+			_lantern("Ww", 6, 3, "W", "red"),
+		],
+		"docks": [
+			_dock("Sd", 3, 5, "red", true),
+			_dock("Nd", 3, 1, "blue", true),
+			_dock("Ed", 5, 3, "white", true, true),
+			_dock("Wd", 1, 3, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_architrave("O", "Architrave", 3, 3, 0, 90),
+		],
+	}
+
+
+static func chart_322() -> Dictionary:
+	# A dry impost passes only the facing and misses east and west.
+	return {
+		"id": "322",
+		"title": "The Impost Miss",
+		"harbor": ARCHITRAVE,
+		"win": "East and west pass. The impost misses those beams.",
+		"teach": "A dry north impost passes only north. It misses east and west. A flooded impost passes every heading except the facing.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Ww", 6, 3, "W", "blue"),
+			_lantern("Nn", 3, 6, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "red"),
+		],
+		"docks": [
+			_dock("Ed", 5, 3, "red", true),
+			_dock("Wd", 1, 3, "blue", true),
+			_dock("Nd", 3, 1, "white", true, true),
+			_dock("Sd", 3, 5, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_architrave("O", "Architrave", 3, 3, 270, 0),
+		],
+	}
+
+
+static func chart_323() -> Dictionary:
+	# A dry threshold passes only the opposite and misses east and west.
+	return {
+		"id": "323",
+		"title": "The Threshold Stop",
+		"harbor": ARCHITRAVE,
+		"win": "East and west pass. The threshold misses those beams.",
+		"teach": "A dry north threshold passes only south. It misses east and west. A flooded north threshold passes north, east, and west, and stops south.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Ww", 6, 3, "W", "blue"),
+			_lantern("Nn", 3, 6, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "red"),
+		],
+		"docks": [
+			_dock("Ed", 5, 3, "red", true),
+			_dock("Wd", 1, 3, "blue", true),
+			_dock("Nd", 3, 1, "white", true, true),
+			_dock("Sd", 3, 5, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_architrave("O", "Architrave", 3, 3, 90, 0),
+		],
+	}
+
+
+static func chart_324() -> Dictionary:
+	# Under water a cyma stays shut, so it misses the north pass.
+	return {
+		"id": "324",
+		"title": "The Cyma Miss",
+		"harbor": ARCHITRAVE,
+		"win": "Only north passes. The cyma stays shut.",
+		"teach": "A cyma stays shut under water, so it misses the north pass. A flooded north architrave passes only north.",
+		"cols": 9,
+		"rows": 8,
+		"tide_phases": [0, 4],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Tn", 2, 1, "S", "white"),
+			_lantern("Ts", 4, 1, "S", "red"),
+			_lantern("Te", 1, 2, "S", "blue"),
+			_lantern("Tw", 8, 2, "S", "red"),
+		],
+		"docks": [
+			_dock("Nd", 4, 3, "white", true),
+			_dock("Kb", 4, 2, "blue", true, true),
+			_dock("Ks", 2, 3, "red", true, true),
+			_dock("Ke", 8, 3, "blue", true, true),
+			_dock("Kw", 1, 3, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [
+			_fixture("S24", "shutter", 2, 4, 0),
+			_fixture("S25", "shutter", 2, 5, 0),
+			_fixture("S26", "shutter", 2, 6, 0),
+			_fixture("M27", "tide_mirror", 2, 7, 90),
+			_fixture("S37", "shutter", 3, 7, 0),
+			_fixture("M47", "tide_mirror", 4, 7, 0),
+			_fixture("S46", "shutter", 4, 6, 0),
+			_fixture("S45", "shutter", 4, 5, 0),
+			_fixture("M14", "tide_mirror", 1, 4, 90),
+			_fixture("S34", "shutter", 3, 4, 0),
+			_fixture("S54", "shutter", 5, 4, 0),
+			_fixture("S64", "shutter", 6, 4, 0),
+			_fixture("S74", "shutter", 7, 4, 0),
+			_fixture("M84", "tide_mirror", 8, 4, 0),
+		],
+		"pieces": [
+			_architrave("O", "Architrave", 4, 4, 270, 0),
+		],
+	}
+
+
+static func chart_325() -> Dictionary:
+	# Two architraves. West seat passes east and west. East seat passes north and south.
+	return {
+		"id": "325",
+		"title": "Two Architraves",
+		"harbor": ARCHITRAVE,
+		"win": "The west architrave passes east and west. The east architrave passes north and south.",
+		"teach": "Two architraves. The west one passes east and west. The east one passes north and south. Swapping the facings misses.",
+		"cols": 14,
+		"rows": 9,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Ww", 6, 3, "W", "blue"),
+			_lantern("Nn", 3, 6, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "red"),
+			_lantern("Us", 10, 2, "S", "red"),
+			_lantern("Un", 10, 8, "N", "blue"),
+			_lantern("Ue", 7, 5, "E", "white"),
+			_lantern("Uw", 13, 5, "W", "red"),
+		],
+		"docks": [
+			_dock("Ed", 5, 3, "red", true),
+			_dock("Wd", 1, 3, "blue", true),
+			_dock("Nd", 3, 1, "white", true, true),
+			_dock("Sd", 3, 5, "red", true, true),
+			_dock("Bds", 10, 7, "red", true),
+			_dock("Bdn", 10, 3, "blue", true),
+			_dock("Bde", 12, 5, "white", true, true),
+			_dock("Bdw", 8, 5, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_architrave("O", "West architrave", 3, 3, 90, 0),
+			_architrave("U", "East architrave", 10, 5, 0, 90),
+		],
+	}
+
+
+static func chart_326() -> Dictionary:
+	# The flood line is the architrave's row. Low water keeps the dry pair.
+	return {
+		"id": "326",
+		"title": "The Architrave Line",
+		"harbor": ARCHITRAVE,
+		"win": "Raise the tide to the architrave's row. Only north passes.",
+		"teach": "Raise the tide to the architrave's row. Under water only north passes. Low water lights the hull and leaves the north dock dark.",
+		"cols": 9,
+		"rows": 8,
+		"tide_phases": [0, 4],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Tn", 2, 1, "S", "white"),
+			_lantern("Ts", 4, 1, "S", "red"),
+			_lantern("Te", 1, 2, "S", "blue"),
+			_lantern("Tw", 8, 2, "S", "red"),
+		],
+		"docks": [
+			_dock("Nd", 4, 3, "white", true),
+			_dock("Kb", 4, 2, "blue", true, true),
+			_dock("Ks", 2, 3, "red", true, true),
+			_dock("Ke", 8, 3, "blue", true, true),
+			_dock("Kw", 1, 3, "red", true, true),
+		],
+		"boats": [
+			_boat("Hb", 1, 7),
+		],
+		"fixtures": [
+			_fixture("S24", "shutter", 2, 4, 0),
+			_fixture("S25", "shutter", 2, 5, 0),
+			_fixture("S26", "shutter", 2, 6, 0),
+			_fixture("M27", "tide_mirror", 2, 7, 90),
+			_fixture("S37", "shutter", 3, 7, 0),
+			_fixture("M47", "tide_mirror", 4, 7, 0),
+			_fixture("S46", "shutter", 4, 6, 0),
+			_fixture("S45", "shutter", 4, 5, 0),
+			_fixture("M14", "tide_mirror", 1, 4, 90),
+			_fixture("S34", "shutter", 3, 4, 0),
+			_fixture("S54", "shutter", 5, 4, 0),
+			_fixture("S64", "shutter", 6, 4, 0),
+			_fixture("S74", "shutter", 7, 4, 0),
+			_fixture("M84", "tide_mirror", 8, 4, 0),
+		],
+		"pieces": [
+			_architrave("O", "Architrave", 4, 4, 90, 0),
+		],
+	}
+
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -12510,6 +12861,20 @@ static func _throat(id: String, name: String, x: int, y: int, start_rot: int, so
 		"id": id,
 		"name": name,
 		"kind": "throat",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _architrave(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "architrave",
 		"movable": false,
 		"sockets": [{"id": "a", "x": x, "y": y}],
 		"start_socket": "a",
