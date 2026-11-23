@@ -74,6 +74,8 @@ func _run() -> void:
 	test_fillet_book()
 	test_corona_rule()
 	test_corona_book()
+	test_bead_rule()
+	test_bead_book()
 	test_chart_4_boat()
 	test_one_rotation_is_not_solved()
 	test_hint_points_at_one_piece()
@@ -246,7 +248,8 @@ func test_charts() -> void:
 	check(Charts.cavetto().size() == 8, "cavetto adds eight charts")
 	check(Charts.fillet().size() == 8, "fillet adds eight charts")
 	check(Charts.corona().size() == 8, "corona adds eight charts")
-	check(book.size() == 214, "two hundred fourteen charts")
+	check(Charts.bead().size() == 8, "bead adds eight charts")
+	check(book.size() == 222, "two hundred twenty-two charts")
 	check(str(book[13]["id"]) == "14" and str(book[13]["title"]) == "The Holding Line", "chart 14 stays the reach capstone")
 	check(str(book[14]["title"]) == "North Light", "chart 15 opens the basin")
 	check(str(book[21]["id"]) == "22" and str(book[21]["title"]) == "The Basin Mark", "chart 22 stays the basin capstone")
@@ -298,6 +301,8 @@ func test_charts() -> void:
 	check(str(book[205]["id"]) == "206" and str(book[205]["title"]) == "The Fillet Mark", "chart 206 stays the fillet capstone")
 	check(str(book[206]["title"]) == "The Dry Corona", "chart 207 opens the corona")
 	check(str(book[213]["id"]) == "214" and str(book[213]["title"]) == "The Corona Mark", "chart 214 stays the corona capstone")
+	check(str(book[214]["title"]) == "The Dry Bead", "chart 215 opens the bead")
+	check(str(book[221]["id"]) == "222" and str(book[221]["title"]) == "The Bead Mark", "chart 222 stays the bead capstone")
 	var seen_ids := {}
 	var seen_titles := {}
 	var quay_titles := ["First Glass", "Around the Pilings", "High Water", "Sleeping Hull", "Split the White", "The Night Mark"]
@@ -309,7 +314,7 @@ func test_charts() -> void:
 		var title := str(chart["title"])
 		check(not seen_ids.has(id), "chart id %s is unique" % id)
 		if seen_titles.has(title):
-			var echoed := (title == "After the Color" and id == "81") or (title == "Above the Gate" and (id == "84" or id == "92" or id == "100" or id == "108")) or (title == "Side Entry" and (id == "88" or id == "96" or id == "104")) or (title == "White Through" and (id == "97" or id == "105")) or (title == "Dry Stop" and (id == "90" or id == "98" or id == "106")) or (title == "The Wet Stop" and (id == "120" or id == "128" or id == "136" or id == "144" or id == "152" or id == "160" or id == "168" or id == "176" or id == "184" or id == "192" or id == "200" or id == "208")) or (title == "Color Kept" and (id == "121" or id == "129" or id == "137" or id == "145" or id == "153" or id == "161" or id == "169" or id == "177" or id == "185" or id == "193" or id == "201" or id == "209")) or (title == "No Turn" and (id == "122" or id == "130" or id == "138" or id == "146" or id == "154" or id == "162" or id == "170" or id == "178" or id == "186" or id == "194" or id == "202" or id == "210")) or (title == "Beside the Flood" and (id == "131" or id == "139" or id == "147" or id == "155" or id == "163" or id == "171" or id == "179" or id == "187" or id == "195" or id == "203" or id == "211"))
+			var echoed := (title == "After the Color" and id == "81") or (title == "Above the Gate" and (id == "84" or id == "92" or id == "100" or id == "108")) or (title == "Side Entry" and (id == "88" or id == "96" or id == "104")) or (title == "White Through" and (id == "97" or id == "105")) or (title == "Dry Stop" and (id == "90" or id == "98" or id == "106")) or (title == "The Wet Stop" and (id == "120" or id == "128" or id == "136" or id == "144" or id == "152" or id == "160" or id == "168" or id == "176" or id == "184" or id == "192" or id == "200" or id == "208" or id == "216")) or (title == "Color Kept" and (id == "121" or id == "129" or id == "137" or id == "145" or id == "153" or id == "161" or id == "169" or id == "177" or id == "185" or id == "193" or id == "201" or id == "209" or id == "217")) or (title == "No Turn" and (id == "122" or id == "130" or id == "138" or id == "146" or id == "154" or id == "162" or id == "170" or id == "178" or id == "186" or id == "194" or id == "202" or id == "210" or id == "218")) or (title == "Beside the Flood" and (id == "131" or id == "139" or id == "147" or id == "155" or id == "163" or id == "171" or id == "179" or id == "187" or id == "195" or id == "203" or id == "211" or id == "219"))
 			check(echoed, "chart title %s is unique" % title)
 		else:
 			check(true, "chart title %s is unique" % title)
@@ -8761,6 +8766,378 @@ func _expect_corona_miss(index: int, piece_id: String, kind: String, rot: int, l
 		check(true, "%s misses corona chart %d" % [label, index + 207])
 
 
+func test_bead_rule() -> void:
+	check(Tracer.norm_rot("bead", 0) == 0 and Tracer.norm_rot("bead", 90) == 90, "a bead keeps a quarter turn")
+	check(Tracer.norm_rot("bead", 180) == 180 and Tracer.norm_rot("bead", 270) == 270, "a bead keeps a half turn")
+	check(Tracer.norm_rot("bead", 360) == 0 and Tracer.norm_rot("bead", 450) == 90, "a bead wraps a full turn")
+	check(Tracer.turn_rot("bead", 0) == 90 and Tracer.turn_rot("bead", 90) == 180, "clicking a bead walks the facing")
+	check(Tracer.turn_rot("bead", 180) == 270 and Tracer.turn_rot("bead", 270) == 0, "clicking a bead returns to north")
+	check(Tracer.bead_facing(0) == "N" and Tracer.bead_facing(90) == "E" and Tracer.bead_facing(180) == "S" and Tracer.bead_facing(270) == "W", "bead facing follows the quarter turn")
+	check(Tracer.bead_passes(0, "E") and not Tracer.bead_passes(0, "N") and not Tracer.bead_passes(0, "S") and not Tracer.bead_passes(0, "W"), "a north bead passes only east")
+	check(Tracer.bead_passes(90, "S") and not Tracer.bead_passes(90, "E") and not Tracer.bead_passes(90, "N") and not Tracer.bead_passes(90, "W"), "a bead turned once from north passes only south")
+	check(Tracer.bead_passes(180, "W") and not Tracer.bead_passes(180, "E"), "two clicks face south and pass only west")
+	check(Tracer.bead_passes(270, "N") and not Tracer.bead_passes(270, "W"), "three clicks face west and pass only north")
+	check(Tracer.casement_facing(0) == "N" and not Tracer.bead_passes(0, "N"), "a north casement passes the north a north bead stops")
+	check(Tracer.fillet_passes(0, "S") and not Tracer.bead_passes(0, "S"), "a north fillet passes the south a north bead stops")
+	check(Tracer.corona_passes(0, "E") and Tracer.corona_passes(0, "W") and not Tracer.bead_passes(0, "W"), "a north corona passes the west a north bead stops")
+	check(Tracer.astragal_passes(0, "N") and Tracer.astragal_passes(0, "E") and not Tracer.bead_passes(0, "N"), "a north astragal passes the north a north bead stops")
+	var hinted: Dictionary = Charts.bead()[6]
+	var solved_hint := Charts.make_state(hinted, true)
+	check(not Hints.wrong_pieces(hinted, solved_hint).has("O"), "a hint accepts the held north bead")
+	for spun in [90, 180, 270]:
+		var turned_hint := Charts.duplicate_state(solved_hint)
+		turned_hint["pieces"]["O"]["rot"] = spun
+		check(Hints.wrong_pieces(hinted, turned_hint).has("O"), "a hint rejects bead rotation %d" % spun)
+		check(not Tracer.is_cleared(hinted, turned_hint), "bead rotation %d is not the held open direction" % spun)
+	var carried := {}
+	carried[Vector2i(0, 0)] = {"kind": "bead", "rot": 0}
+	check(not Tracer._flood_carries(carried, Vector2i(0, 0)), "a flooded bead does not carry the beam")
+	var east_lane := _blank(5, 1)
+	east_lane["lanterns"] = [_lamp("L", 0, 0, "E", "white")]
+	east_lane["docks"] = [_need("D", 4, 0, "white")]
+	east_lane["pieces"] = [_fixed_bead("O", 2, 0, 0)]
+	var east_hit: Dictionary = Tracer.trace(east_lane, Charts.make_state(east_lane, true))
+	check(_arrives_from(east_hit, 2, 0, "E", "white") and _leaves(east_hit, 2, 0, "E", "white") and east_hit["docks"]["D"].has("white"), "a north bead passes east")
+	east_lane["pieces"] = [_fixed_fillet("O", 2, 0, 0)]
+	check(not _center_hit(Tracer.trace(east_lane, Charts.make_state(east_lane, true)), 2, 0), "a north fillet refuses the east a north bead passes")
+	east_lane["pieces"] = [_fixed_casement("C", 2, 0, 90)]
+	check(_leaves(Tracer.trace(east_lane, Charts.make_state(east_lane, true)), 2, 0, "E", "white"), "an east casement also passes east")
+	var north_stop := _blank(1, 5)
+	north_stop["lanterns"] = [_lamp("L", 0, 4, "N", "red")]
+	north_stop["docks"] = [_need("D", 0, 0, "red")]
+	north_stop["pieces"] = [_fixed_bead("O", 0, 2, 0)]
+	check(not _center_hit(Tracer.trace(north_stop, Charts.make_state(north_stop, true)), 0, 2), "a north bead refuses north")
+	north_stop["pieces"] = [_fixed_casement("C", 0, 2, 0)]
+	check(_leaves(Tracer.trace(north_stop, Charts.make_state(north_stop, true)), 0, 2, "N", "red"), "a north casement passes the north a north bead blocks")
+	var south_stop := _blank(1, 5)
+	south_stop["lanterns"] = [_lamp("L", 0, 0, "S", "white")]
+	south_stop["docks"] = [_need("D", 0, 4, "white")]
+	south_stop["pieces"] = [_fixed_bead("O", 0, 2, 0)]
+	check(not _center_hit(Tracer.trace(south_stop, Charts.make_state(south_stop, true)), 0, 2), "a north bead refuses south")
+	south_stop["pieces"] = [_fixed_fillet("O", 0, 2, 0)]
+	check(_leaves(Tracer.trace(south_stop, Charts.make_state(south_stop, true)), 0, 2, "S", "white"), "a north fillet passes the south a north bead blocks")
+	var west_stop := _blank(5, 1)
+	west_stop["lanterns"] = [_lamp("L", 4, 0, "W", "blue")]
+	west_stop["docks"] = [_need("D", 0, 0, "blue")]
+	west_stop["pieces"] = [_fixed_bead("O", 2, 0, 0)]
+	check(not _center_hit(Tracer.trace(west_stop, Charts.make_state(west_stop, true)), 2, 0), "a north bead refuses west")
+	west_stop["pieces"] = [_fixed_corona("O", 2, 0, 0)]
+	check(_leaves(Tracer.trace(west_stop, Charts.make_state(west_stop, true)), 2, 0, "W", "blue"), "a north corona passes the west a north bead blocks")
+	var clicked := _blank(1, 5)
+	clicked["lanterns"] = [_lamp("L", 0, 0, "S", "white")]
+	clicked["docks"] = [_need("D", 0, 4, "white")]
+	clicked["pieces"] = [_fixed_bead("O", 0, 2, Tracer.turn_rot("bead", 0))]
+	var clicked_hit: Dictionary = Tracer.trace(clicked, Charts.make_state(clicked, true))
+	check(Tracer.bead_facing(Tracer.turn_rot("bead", 0)) == "E" and _leaves(clicked_hit, 0, 2, "S", "white"), "a bead clicked once from north faces east and passes only south")
+	clicked["pieces"] = [_fixed_bead("O", 0, 2, 0)]
+	check(not _center_hit(Tracer.trace(clicked, Charts.make_state(clicked, true)), 0, 2), "a north bead still refuses that southbound beam")
+	for rot in [0, 90, 180, 270]:
+		var facing := Tracer.bead_facing(rot)
+		for color in ["red", "blue", "white"]:
+			for dir in ["N", "E", "S", "W"]:
+				var open := Tracer.bead_passes(rot, dir)
+				var lane := _blank(5, 5)
+				var at := Vector2i(2, 2)
+				var step: Vector2i = Tracer.VEC[dir]
+				var lamp_at := at - step
+				var dock_at := at + step * 2
+				lane["lanterns"] = [_lamp("L", lamp_at.x, lamp_at.y, dir, color)]
+				lane["docks"] = [_need("D", dock_at.x, dock_at.y, color)]
+				lane["pieces"] = [_fixed_bead("O", at.x, at.y, rot)]
+				var hit: Dictionary = Tracer.trace(lane, Charts.make_state(lane, true))
+				if open:
+					check(hit["docks"]["D"].has(color) and hit["docks"]["D"].size() == 1, "a dry %s bead keeps %s traveling %s" % [facing, color, dir])
+					check(_arrives_from(hit, at.x, at.y, dir, color) and _leaves(hit, at.x, at.y, dir, color), "a dry %s bead passes %s straight %s" % [facing, color, dir])
+					var other := "red" if color != "red" else "blue"
+					check(not _departs(hit, at.x, at.y, other), "a dry %s bead does not recolor %s traveling %s" % [facing, color, dir])
+					for other_dir in ["N", "E", "S", "W"]:
+						if other_dir == dir:
+							continue
+						check(not _leaves(hit, at.x, at.y, other_dir, color), "a dry %s bead does not turn %s from %s to %s" % [facing, color, dir, other_dir])
+				else:
+					check(not _center_hit(hit, at.x, at.y) and not _leaves(hit, at.x, at.y, dir, color) and hit["docks"]["D"].is_empty(), "a dry %s bead stops %s traveling %s before the cell" % [facing, color, dir])
+	check(Tracer.trace(_bead_row(20), Charts.make_state(_bead_row(20), true))["docks"]["D"].has("white"), "twenty dry north beads still pass an eastbound beam")
+	check(not Tracer.trace(_bead_west_row(20), Charts.make_state(_bead_west_row(20), true))["docks"]["D"].has("white"), "twenty dry north beads stop a westbound beam")
+	var north_column := _bead_north_column(20)
+	var north_column_hit: Dictionary = Tracer.trace(north_column, Charts.make_state(north_column, true))
+	check(north_column_hit["docks"]["D"].is_empty() and not _center_hit(north_column_hit, 0, 20), "twenty dry north beads stop a northbound beam")
+	check(not Tracer.trace(_bead_south_column(20), Charts.make_state(_bead_south_column(20), true))["docks"]["D"].has("white"), "twenty dry north beads stop a southbound beam")
+	var west_flood := _blank(5, 4)
+	west_flood["tide_phases"] = [2]
+	west_flood["lanterns"] = [_lamp("L", 0, 1, "S", "white")]
+	west_flood["fixtures"] = [
+		{"id": "S0", "kind": "shutter", "x": 0, "y": 2, "rot": 0},
+		{"id": "T0", "kind": "tide_mirror", "x": 0, "y": 3, "rot": 90},
+		{"id": "S1", "kind": "shutter", "x": 1, "y": 3, "rot": 0},
+	]
+	west_flood["pieces"] = [_fixed_bead("O", 2, 3, 0)]
+	var west_state := Charts.make_state(west_flood, true)
+	var west_flood_hit: Dictionary = Tracer.trace(west_flood, west_state)
+	check(Tracer.is_flooded(west_flood, west_state, Vector2i(2, 3)) and not _center_hit(west_flood_hit, 2, 3) and not _arrives_from(west_flood_hit, 2, 3, "E", "white"), "a flooded bead stops an eastbound beam before the cell")
+	west_flood["pieces"] = [_fixed_corona("O", 2, 3, 0)]
+	check(_trace_sig(Tracer.trace(west_flood, Charts.make_state(west_flood, true))) == _trace_sig(west_flood_hit), "a flooded bead stops the way a flooded corona stops")
+	west_flood["pieces"] = [_fixed_shutter("G", 2, 3)]
+	var west_open: Dictionary = Tracer.trace(west_flood, Charts.make_state(west_flood, true))
+	check(_center_hit(west_open, 2, 3) and _departs(west_open, 2, 3, "white"), "a flooded shutter passes the beam a bead stops")
+	var well_carry := _blank(5, 4)
+	well_carry["tide_phases"] = [2]
+	well_carry["lanterns"] = [_lamp("L", 2, 1, "S", "red")]
+	well_carry["fixtures"] = [{"id": "S0", "kind": "shutter", "x": 2, "y": 2, "rot": 0}]
+	well_carry["pieces"] = [_fixed_well("K", 2, 3)]
+	check(_center_hit(Tracer.trace(well_carry, Charts.make_state(well_carry, true)), 2, 3), "a flooded well carries the beam a bead stops")
+	var siphon_carry := _blank(5, 4)
+	siphon_carry["tide_phases"] = [2]
+	siphon_carry["lanterns"] = [_lamp("L", 2, 1, "S", "red")]
+	siphon_carry["fixtures"] = [{"id": "S0", "kind": "shutter", "x": 2, "y": 2, "rot": 0}]
+	siphon_carry["pieces"] = [_fixed_siphon("K", 2, 3)]
+	check(_center_hit(Tracer.trace(siphon_carry, Charts.make_state(siphon_carry, true)), 2, 3), "a flooded siphon carries the beam a bead stops")
+	var sluice_carry := _blank(5, 4)
+	sluice_carry["tide_phases"] = [2]
+	sluice_carry["lanterns"] = [_lamp("L", 2, 1, "S", "red")]
+	sluice_carry["fixtures"] = [{"id": "S0", "kind": "shutter", "x": 2, "y": 2, "rot": 0}]
+	sluice_carry["pieces"] = [_fixed_sluice("K", 2, 3, 180)]
+	check(_center_hit(Tracer.trace(sluice_carry, Charts.make_state(sluice_carry, true)), 2, 3), "a flooded sluice carries the beam a bead stops")
+	var weir_carry := _blank(5, 4)
+	weir_carry["tide_phases"] = [2]
+	weir_carry["lanterns"] = [_lamp("L", 2, 1, "S", "red")]
+	weir_carry["fixtures"] = [{"id": "S0", "kind": "shutter", "x": 2, "y": 2, "rot": 0}]
+	weir_carry["pieces"] = [_fixed_weir("K", 2, 3, 180)]
+	check(_center_hit(Tracer.trace(weir_carry, Charts.make_state(weir_carry, true)), 2, 3), "a flooded weir carries the beam a bead stops")
+	var painted := _blank(5, 5)
+	painted["lanterns"] = [_lamp("L", 0, 2, "E", "blue")]
+	painted["docks"] = [_need("D", 4, 2, "blue")]
+	painted["pieces"] = [_fixed_bead("O", 2, 2, 0)]
+	var kept_blue: Dictionary = Tracer.trace(painted, Charts.make_state(painted, true))
+	check(_leaves(kept_blue, 2, 2, "E", "blue") and kept_blue["docks"]["D"].has("blue") and not _departs(kept_blue, 2, 2, "red"), "a dry bead keeps blue")
+	painted["lanterns"][0]["color"] = "red"
+	painted["docks"][0]["color"] = "red"
+	var kept_red: Dictionary = Tracer.trace(painted, Charts.make_state(painted, true))
+	check(_leaves(kept_red, 2, 2, "E", "red") and kept_red["docks"]["D"].has("red") and not _departs(kept_red, 2, 2, "blue"), "a dry bead keeps red")
+	painted["lanterns"][0]["color"] = "white"
+	painted["docks"][0]["color"] = "white"
+	var kept_white: Dictionary = Tracer.trace(painted, Charts.make_state(painted, true))
+	check(_leaves(kept_white, 2, 2, "E", "white") and not _departs(kept_white, 2, 2, "red") and not _departs(kept_white, 2, 2, "blue"), "a dry bead keeps white")
+	painted["lanterns"][0]["color"] = "blue"
+	painted["docks"][0]["color"] = "blue"
+	painted["pieces"] = [_fixed_stain("K", 2, 2, 0)]
+	var stained: Dictionary = Tracer.trace(painted, Charts.make_state(painted, true))
+	check(_leaves(stained, 2, 2, "E", "red") and not _leaves(stained, 2, 2, "E", "blue"), "a stain recolors the pass a bead keeps")
+	var wet_color := _blank(5, 4)
+	wet_color["tide_phases"] = [2]
+	wet_color["lanterns"] = [_lamp("L", 0, 1, "S", "red")]
+	wet_color["fixtures"] = [
+		{"id": "S0", "kind": "shutter", "x": 0, "y": 2, "rot": 0},
+		{"id": "T0", "kind": "tide_mirror", "x": 0, "y": 3, "rot": 90},
+		{"id": "S1", "kind": "shutter", "x": 1, "y": 3, "rot": 0},
+	]
+	wet_color["docks"] = [_need("D", 4, 3, "blue")]
+	wet_color["pieces"] = [_fixed_weir("R", 2, 3, 90)]
+	var swapped: Dictionary = Tracer.trace(wet_color, Charts.make_state(wet_color, true))
+	check(_departs(swapped, 2, 3, "blue") and not _departs(swapped, 2, 3, "red"), "a flooded weir changes the color a bead would have kept")
+	wet_color["pieces"] = [_fixed_bead("O", 2, 3, 0)]
+	var held_color: Dictionary = Tracer.trace(wet_color, Charts.make_state(wet_color, true))
+	check(not _center_hit(held_color, 2, 3) and not _departs(held_color, 2, 3, "blue") and not _departs(held_color, 2, 3, "red"), "a flooded bead does not recolor")
+	var turned := _blank(5, 5)
+	turned["lanterns"] = [_lamp("L", 0, 2, "E", "white")]
+	turned["docks"] = [_need("D", 4, 2, "white")]
+	turned["pieces"] = [_fixed_bead("O", 2, 2, 0)]
+	var straight: Dictionary = Tracer.trace(turned, Charts.make_state(turned, true))
+	check(_leaves(straight, 2, 2, "E", "white") and not _leaves(straight, 2, 2, "N", "white") and not _leaves(straight, 2, 2, "S", "white") and not _leaves(straight, 2, 2, "W", "white"), "a dry bead does not turn")
+	turned["pieces"] = [_fixed_mirror(2, 2, 0)]
+	check(_leaves(Tracer.trace(turned, Charts.make_state(turned, true)), 2, 2, "N", "white"), "a mirror turns the beam a bead passes straight")
+	turned["pieces"] = [_fixed_vane("V", 2, 2, 0)]
+	check(_leaves(Tracer.trace(turned, Charts.make_state(turned, true)), 2, 2, "N", "white"), "a vane turns the beam a bead passes straight")
+	turned["pieces"] = [_fixed_prism(2, 2, 90)]
+	var split: Dictionary = Tracer.trace(turned, Charts.make_state(turned, true))
+	check(_leaves(split, 2, 2, "N", "red") and _leaves(split, 2, 2, "S", "blue") and not _leaves(split, 2, 2, "E", "white"), "a prism splits the beam a bead passes straight")
+	var sluice_turn := _blank(5, 4)
+	sluice_turn["tide_phases"] = [2]
+	sluice_turn["lanterns"] = [_lamp("L", 0, 1, "S", "white")]
+	sluice_turn["fixtures"] = [
+		{"id": "S0", "kind": "shutter", "x": 0, "y": 2, "rot": 0},
+		{"id": "T0", "kind": "tide_mirror", "x": 0, "y": 3, "rot": 90},
+		{"id": "S1", "kind": "shutter", "x": 1, "y": 3, "rot": 0},
+		{"id": "S2", "kind": "shutter", "x": 2, "y": 2, "rot": 0},
+	]
+	sluice_turn["pieces"] = [_fixed_sluice("U", 2, 3, 0)]
+	check(_leaves(Tracer.trace(sluice_turn, Charts.make_state(sluice_turn, true)), 2, 3, "N", "white"), "a flooded sluice turns the beam a bead would pass straight")
+
+
+func test_bead_book() -> void:
+	var book: Array = Charts.bead()
+	check(book.size() == 8, "bead book has eight charts")
+	var titles := ["The Dry Bead", "The Wet Stop", "Color Kept", "No Turn", "Beside the Flood", "Two Beads", "The Held Bead", "The Bead Mark"]
+	for i in book.size():
+		var chart: Dictionary = book[i]
+		check(str(chart["id"]) == str(i + 215), "bead chart %d keeps its number" % (i + 215))
+		check(str(chart["title"]) == str(titles[i]), "bead chart %d keeps its title" % (i + 215))
+		check(str(chart["harbor"]) == Charts.BEAD, "chart %s belongs to the bead" % str(chart["id"]))
+		var bead_count := 0
+		for raw_piece in chart["pieces"]:
+			var piece: Dictionary = raw_piece
+			if str(piece["kind"]) == "bead":
+				bead_count += 1
+		check(bead_count >= 1, "chart %s needs the bead" % str(chart["id"]))
+	for older in Charts.all().slice(0, 214):
+		for raw_piece in older["pieces"]:
+			var older_piece: Dictionary = raw_piece
+			check(str(older_piece["kind"]) != "bead", "chart %s keeps its pieces" % str(older["id"]))
+		for raw_fix in older["fixtures"]:
+			var older_fix: Dictionary = raw_fix
+			check(str(older_fix["kind"]) != "bead", "chart %s keeps its fixed glass" % str(older["id"]))
+	for i in book.size():
+		for raw_piece in book[i]["pieces"]:
+			var piece: Dictionary = raw_piece
+			if str(piece["kind"]) != "bead":
+				continue
+			var piece_id := str(piece["id"])
+			var open_dir := Tracer.rotate_dir(Tracer.bead_facing(int(piece["solution_rot"])), 1)
+			for crot in [0, 90, 180, 270]:
+				if Tracer.casement_facing(crot) != open_dir:
+					_expect_bead_miss(i, piece_id, "casement", crot, "casement %d" % crot)
+				if Tracer.rotate_dir(Tracer.fillet_facing(crot), 2) != open_dir:
+					_expect_bead_miss(i, piece_id, "fillet", crot, "fillet %d" % crot)
+			_expect_bead_miss(i, piece_id, "jamb", 0, "jamb north")
+			_expect_bead_miss(i, piece_id, "jamb", 90, "jamb east")
+			_expect_bead_miss(i, piece_id, "mullion", 0, "mullion")
+			_expect_bead_miss(i, piece_id, "transom", 0, "transom")
+			_expect_bead_miss(i, piece_id, "lintel", 0, "lintel")
+			_expect_bead_miss(i, piece_id, "shutter", 0, "shutter")
+			_expect_bead_miss(i, piece_id, "well", 0, "well")
+			_expect_bead_miss(i, piece_id, "siphon", 0, "siphon")
+			_expect_bead_miss(i, piece_id, "stain", 0, "red stain")
+			_expect_bead_miss(i, piece_id, "stain", 90, "blue stain")
+			_expect_bead_miss(i, piece_id, "mirror", 0, "mirror")
+			_expect_bead_miss(i, piece_id, "mirror", 90, "turned mirror")
+			_expect_bead_miss(i, piece_id, "corona", int(piece["solution_rot"]), "corona same facing")
+			_expect_bead_miss(i, piece_id, "cavetto", int(piece["solution_rot"]), "cavetto same facing")
+			_expect_bead_miss(i, piece_id, "ovolo", int(piece["solution_rot"]), "ovolo same facing")
+			_expect_bead_miss(i, piece_id, "ogee", int(piece["solution_rot"]), "ogee same facing")
+			_expect_bead_miss(i, piece_id, "torus", int(piece["solution_rot"]), "torus same facing")
+			_expect_bead_miss(i, piece_id, "scotia", int(piece["solution_rot"]), "scotia same facing")
+			_expect_bead_miss(i, piece_id, "astragal", int(piece["solution_rot"]), "astragal same facing")
+			for facing in [0, 90, 180, 270]:
+				_expect_bead_miss(i, piece_id, "vane", facing, "vane %d" % facing)
+				_expect_bead_miss(i, piece_id, "weir", facing, "weir %d" % facing)
+				_expect_bead_miss(i, piece_id, "sluice", facing, "sluice %d" % facing)
+				_expect_bead_miss(i, piece_id, "prism", facing, "prism %d" % facing)
+	var dry: Dictionary = book[0]
+	check(int(dry["tide_phases"][0]) == 0 and int(dry["solution_tide_index"]) == 0, "chart 215 is tide index 0 and flood 0")
+	var dry_hit: Dictionary = Tracer.trace(dry, Charts.make_state(dry, true))
+	check(_leaves(dry_hit, 3, 3, "E", "white") and dry_hit["docks"]["Ed"].has("white") and dry_hit["docks"]["Ed"].size() == 1, "chart 215 passes only the eastbound beam")
+	check(dry_hit["docks"]["Nd"].is_empty() and dry_hit["docks"]["Sd"].is_empty() and dry_hit["docks"]["Wd"].is_empty() and dry_hit["docks"]["Te"].is_empty(), "chart 215 refuses north, south, and west")
+	var dry_once := Charts.duplicate_state(Charts.make_state(dry, true))
+	dry_once["pieces"]["O"]["rot"] = 90
+	var dry_once_hit: Dictionary = Tracer.trace(dry, dry_once)
+	check(_leaves(dry_once_hit, 3, 3, "S", "blue") and not _leaves(dry_once_hit, 3, 3, "E", "white") and not Tracer.is_cleared(dry, dry_once), "chart 215 one click from north passes only south")
+	var dry_case: Dictionary = Charts.bead()[0]
+	_retarget(dry_case, "O", "casement", 0)
+	check(Tracer.trace(dry_case, Charts.make_state(dry_case, true))["docks"]["Ed"].is_empty() and not Tracer.is_cleared(dry_case, Charts.make_state(dry_case, true)), "chart 215 a north casement passes only north")
+	var dry_fillet: Dictionary = Charts.bead()[0]
+	_retarget(dry_fillet, "O", "fillet", 0)
+	check(Tracer.trace(dry_fillet, Charts.make_state(dry_fillet, true))["docks"]["Sd"].has("blue") and not Tracer.is_cleared(dry_fillet, Charts.make_state(dry_fillet, true)), "chart 215 a north fillet passes only south")
+	var dry_corona: Dictionary = Charts.bead()[0]
+	_retarget(dry_corona, "O", "corona", 0)
+	check(Tracer.trace(dry_corona, Charts.make_state(dry_corona, true))["docks"]["Wd"].has("red") and not Tracer.is_cleared(dry_corona, Charts.make_state(dry_corona, true)), "chart 215 a north corona passes east and west")
+	var dry_astra: Dictionary = Charts.bead()[0]
+	_retarget(dry_astra, "O", "astragal", 0)
+	check(Tracer.trace(dry_astra, Charts.make_state(dry_astra, true))["docks"]["Nd"].has("red") and not Tracer.is_cleared(dry_astra, Charts.make_state(dry_astra, true)), "chart 215 a north astragal passes north and east")
+	var wet: Dictionary = book[1]
+	check(int(wet["start_tide_index"]) == 1 and int(wet["solution_tide_index"]) == 0 and int(wet["tide_phases"][1]) == 4, "chart 216 opens under water and solves dry")
+	var wet_start: Dictionary = Tracer.trace(wet, Charts.make_state(wet, false))
+	check(wet_start["docks"]["Nd"].is_empty() and wet_start["docks"]["Ed"].is_empty() and wet_start["docks"]["Wd"].is_empty() and wet_start["docks"]["Sd"].is_empty() and not _center_hit(wet_start, 3, 4), "chart 216 flooded row stops the beam at the waterline")
+	var wet_solved: Dictionary = Tracer.trace(wet, Charts.make_state(wet, true))
+	check(_leaves(wet_solved, 3, 4, "E", "white") and wet_solved["docks"]["Ed"].has("white") and wet_solved["docks"]["Nd"].is_empty() and wet_solved["docks"]["Sd"].is_empty() and wet_solved["docks"]["Wd"].is_empty(), "chart 216 dry tide passes only east")
+	var wet_open: Dictionary = Charts.bead()[1]
+	_retarget(wet_open, "O", "shutter", 0)
+	check(_center_hit(Tracer.trace(wet_open, Charts.make_state(wet_open, false)), 3, 4), "chart 216 a shutter passes while flooded")
+	for carrier in ["well", "siphon", "sluice", "weir"]:
+		var wet_carry: Dictionary = Charts.bead()[1]
+		_retarget(wet_carry, "O", carrier, 180 if carrier == "sluice" or carrier == "weir" else 0)
+		check(_center_hit(Tracer.trace(wet_carry, Charts.make_state(wet_carry, false)), 3, 4), "chart 216 a flooded %s carries the beam" % carrier)
+	var kept: Dictionary = Charts.bead()[2]
+	var kept_hit: Dictionary = Tracer.trace(kept, Charts.make_state(kept, true))
+	check(_leaves(kept_hit, 3, 3, "E", "red") and kept_hit["docks"]["Ed"].has("red") and kept_hit["docks"]["Ed"].size() == 1 and kept_hit["docks"]["Nd"].is_empty() and kept_hit["docks"]["Tw"].is_empty(), "chart 217 keeps red")
+	var white_pass: Dictionary = Charts.bead()[2]
+	white_pass["lanterns"][0]["color"] = "white"
+	white_pass["docks"][0]["color"] = "white"
+	var white_hit: Dictionary = Tracer.trace(white_pass, Charts.make_state(white_pass, true))
+	check(_leaves(white_hit, 3, 3, "E", "white") and not _leaves(white_hit, 3, 3, "E", "red") and not _leaves(white_hit, 3, 3, "E", "blue") and white_hit["docks"]["Ed"].has("white") and white_hit["docks"]["Ed"].size() == 1 and white_hit["docks"]["Nd"].is_empty() and white_hit["docks"]["Tw"].is_empty() and white_hit["docks"]["Tn"].is_empty() and Tracer.is_cleared(white_pass, Charts.make_state(white_pass, true)), "chart 217 keeps white")
+	var straight_chart: Dictionary = book[3]
+	var straight_hit: Dictionary = Tracer.trace(straight_chart, Charts.make_state(straight_chart, true))
+	check(_arrives_from(straight_hit, 3, 3, "E", "white") and _leaves(straight_hit, 3, 3, "E", "white") and not _leaves(straight_hit, 3, 3, "N", "white") and not _leaves(straight_hit, 3, 3, "S", "white") and not _leaves(straight_hit, 3, 3, "W", "white"), "chart 218 the eastbound beam leaves on the same side it entered")
+	check(not _leaves(straight_hit, 3, 3, "N", "red") and not _leaves(straight_hit, 3, 3, "S", "blue") and not _leaves(straight_hit, 3, 3, "W", "red"), "chart 218 the stopped beams do not leave")
+	var beside: Dictionary = book[4]
+	check(int(beside["tide_phases"][0]) == 2, "chart 219 holds a flooded neighbor")
+	var beside_state := Charts.make_state(beside, true)
+	check(not Tracer.is_flooded(beside, beside_state, Vector2i(3, 2)) and Tracer.is_flooded(beside, beside_state, Vector2i(1, 6)), "chart 219 bead row is dry and the flood row is flooded")
+	var beside_hit: Dictionary = Tracer.trace(beside, beside_state)
+	check(_leaves(beside_hit, 3, 2, "E", "white") and beside_hit["docks"]["Ed"].has("white") and beside_hit["docks"]["Nd"].is_empty() and beside_hit["docks"]["Sd"].is_empty() and beside_hit["docks"]["Wd"].is_empty() and not _center_hit(beside_hit, 1, 6), "chart 219 the dry row passes only east and the flood beam stops at the waterline")
+	var pair: Dictionary = book[5]
+	var pair_hit: Dictionary = Tracer.trace(pair, Charts.make_state(pair, true))
+	check(_leaves(pair_hit, 2, 3, "E", "white") and not _leaves(pair_hit, 2, 3, "W", "red") and _leaves(pair_hit, 8, 5, "S", "white") and not _leaves(pair_hit, 8, 5, "N", "red"), "chart 220 each bead passes its own clockwise direction")
+	check(pair_hit["docks"]["Adn"].is_empty() and pair_hit["docks"]["Adw"].is_empty() and pair_hit["docks"]["Bdn"].is_empty() and pair_hit["docks"]["Bde"].is_empty(), "chart 220 each blocked direction stays dark")
+	var swapped_pair := Charts.duplicate_state(Charts.make_state(pair, true))
+	swapped_pair["pieces"]["O"]["rot"] = 90
+	swapped_pair["pieces"]["U"]["rot"] = 0
+	check(not Tracer.is_cleared(pair, swapped_pair), "chart 220 swapping the facings fails")
+	var east_seat: Dictionary = Charts.bead()[5]
+	_retarget(east_seat, "O", "corona", 0)
+	check(not Tracer.is_cleared(east_seat, Charts.make_state(east_seat, true)), "chart 220 a north corona cannot take the east seat")
+	var held: Dictionary = book[6]
+	check(int(held["tide_phases"][0]) == 0 and int(held["tide_phases"][1]) == 1 and int(held["tide_phases"][2]) == 5 and int(held["solution_tide_index"]) == 1 and int(held["start_tide_index"]) == 0, "chart 221 follows the held tide marks")
+	var held_start := Charts.make_state(held, false)
+	check(int(held_start["pieces"]["O"]["rot"]) == 180, "chart 221 starts facing south")
+	var held_solved := Charts.make_state(held, true)
+	var held_hit: Dictionary = Tracer.trace(held, held_solved)
+	check(int(held_solved["pieces"]["O"]["rot"]) == 0 and _leaves(held_hit, 4, 3, "E", "white") and held_hit["docks"]["Ed"].has("white") and held_hit["docks"]["Nd"].is_empty() and not bool(held_hit["boats"]["Hb"]), "chart 221 the held facing passes only east")
+	var held_low := Charts.duplicate_state(held_solved)
+	held_low["tide_index"] = 0
+	check(bool(Tracer.trace(held, held_low)["boats"]["Hb"]) and not Tracer.is_cleared(held, held_low), "chart 221 low water wakes the south hull")
+	var held_high := Charts.duplicate_state(held_solved)
+	held_high["tide_index"] = 2
+	var held_high_hit: Dictionary = Tracer.trace(held, held_high)
+	check(held_high_hit["docks"]["Ed"].is_empty() and not _center_hit(held_high_hit, 4, 3) and not Tracer.is_cleared(held, held_high), "chart 221 high water stops the beam outside the bead")
+	var mark: Dictionary = book[7]
+	var mark_solved := Charts.make_state(mark, true)
+	check(str(mark_solved["pieces"]["O"]["socket"]) == "line" and int(mark_solved["pieces"]["O"]["rot"]) == 0 and str(mark_solved["pieces"]["G"]["socket"]) == "side", "chart 222 puts the north bead on the line")
+	var mark_hit: Dictionary = Tracer.trace(mark, mark_solved)
+	check(_leaves(mark_hit, 3, 3, "E", "white") and mark_hit["docks"]["Ed"].has("white") and mark_hit["docks"]["Nd"].is_empty() and mark_hit["docks"]["Sd"].is_empty() and mark_hit["docks"]["Wd"].is_empty(), "chart 222 the open direction satisfies the mark")
+	var mark_case: Dictionary = Charts.bead()[7]
+	_retarget(mark_case, "O", "casement", 0)
+	check(not Tracer.is_cleared(mark_case, Charts.make_state(mark_case, true)), "chart 222 a north casement in that cell fails")
+	var mark_fillet: Dictionary = Charts.bead()[7]
+	_retarget(mark_fillet, "O", "fillet", 0)
+	check(not Tracer.is_cleared(mark_fillet, Charts.make_state(mark_fillet, true)), "chart 222 a north fillet in that cell fails")
+	var mark_corona: Dictionary = Charts.bead()[7]
+	_retarget(mark_corona, "O", "corona", 0)
+	check(not Tracer.is_cleared(mark_corona, Charts.make_state(mark_corona, true)), "chart 222 a north corona in that cell fails")
+	var mark_astra: Dictionary = Charts.bead()[7]
+	_retarget(mark_astra, "O", "astragal", 0)
+	check(not Tracer.is_cleared(mark_astra, Charts.make_state(mark_astra, true)), "chart 222 a north astragal in that cell fails")
+	var mark_lintel: Dictionary = Charts.bead()[7]
+	_retarget(mark_lintel, "O", "lintel", 0)
+	check(not Tracer.is_cleared(mark_lintel, Charts.make_state(mark_lintel, true)), "chart 222 a lintel in that cell fails")
+	check(str(book[0]["teach"]).to_lower().contains("tide index 0") and str(book[0]["teach"]).to_lower().contains("clockwise") and str(book[0]["teach"]).to_lower().contains("casement") and str(book[0]["teach"]).to_lower().contains("fillet") and str(book[0]["teach"]).to_lower().contains("corona") and str(book[0]["teach"]).to_lower().contains("astragal") and str(book[0]["teach"]).to_lower().contains("eastbound"), "chart 215 teaches the dry bead")
+	check(str(book[1]["teach"]).to_lower().contains("waterline") and str(book[1]["teach"]).to_lower().contains("shutter") and str(book[1]["teach"]).to_lower().contains("well") and str(book[1]["teach"]).to_lower().contains("siphon") and str(book[1]["teach"]).to_lower().contains("sluice") and str(book[1]["teach"]).to_lower().contains("weir"), "chart 216 teaches the wet stop")
+	check(str(book[2]["teach"]).to_lower().contains("red stays red") and str(book[2]["teach"]).to_lower().contains("blue stays blue") and str(book[2]["teach"]).to_lower().contains("white stays white") and str(book[2]["teach"]).to_lower().contains("stain") and str(book[2]["teach"]).to_lower().contains("weir"), "chart 217 teaches the kept color")
+	check(str(book[3]["teach"]).to_lower().contains("does not turn") and str(book[3]["teach"]).to_lower().contains("prism") and str(book[3]["teach"]).to_lower().contains("vane") and str(book[3]["teach"]).to_lower().contains("sluice") and str(book[3]["teach"]).to_lower().contains("mirror"), "chart 218 teaches the straight pass")
+	check(str(book[4]["teach"]).to_lower().contains("waterline") and str(book[4]["teach"]).to_lower().contains("dry"), "chart 219 teaches the dry row beside the flood")
+	check(str(book[5]["teach"]).to_lower().contains("only east") and str(book[5]["teach"]).to_lower().contains("only south") and str(book[5]["teach"]).to_lower().contains("not the same") and str(book[5]["teach"]).to_lower().contains("corona"), "chart 220 teaches both beads")
+	check(str(book[6]["teach"]).to_lower().contains("facing") and str(book[6]["teach"]).to_lower().contains("waterline"), "chart 221 teaches the held bead")
+	check(str(book[7]["teach"]).to_lower().contains("casement") and str(book[7]["teach"]).to_lower().contains("fillet") and str(book[7]["teach"]).to_lower().contains("corona") and str(book[7]["teach"]).to_lower().contains("astragal") and str(book[7]["teach"]).to_lower().contains("lintel"), "chart 222 teaches the bead mark")
+
+
+func _expect_bead_miss(index: int, piece_id: String, kind: String, rot: int, label: String) -> void:
+	var chart: Dictionary = Charts.bead()[index]
+	_retarget(chart, piece_id, kind, rot)
+	var state := Charts.make_state(chart, true)
+	if Tracer.is_cleared(chart, state):
+		check(false, "%s clears bead chart %d" % [label, index + 215])
+	else:
+		check(true, "%s misses bead chart %d" % [label, index + 215])
+
+
 func test_smoke() -> void:
 	var main_script: Script = load("res://scripts/main.gd")
 	main_script.persist_progress = false
@@ -9653,8 +10030,42 @@ func test_smoke() -> void:
 	await process_frame
 	check(str(main.chart["id"]) == "207", "Corona returns to The Dry Corona")
 	check(_chart_row_fits(main.corona_grid, main._side), "the corona chart row fits in the window")
+	var bead_rect: Rect2 = main.bead_book_button.get_global_rect()
+	var bead_side: Rect2 = main._side.get_global_rect()
+	check(bead_side.grow(1.0).encloses(bead_rect), "the bead book button sits inside the side panel")
+	check(bead_rect.size.x + 0.5 >= main.bead_book_button.get_minimum_size().x, "the bead label has room")
+	main.unlocked[214] = false
+	main._refresh_chrome()
+	check(main.bead_book_button.disabled, "the bead stays locked until the corona mark is held")
+	main.unlocked[213] = true
+	check(main.select_chart(213), "chart 214 opens when unlocked")
+	check(main.bead_book_button.disabled, "opening the corona mark does not unlock the bead")
+	main.state = Charts.duplicate_state(Charts.make_state(main.chart, true))
+	main._refresh()
+	main.try_lock()
+	check(main.board_locked and main.unlocked[214], "holding the corona mark opens the bead")
+	main._advance_from_win()
+	check(str(main.chart["id"]) == "215", "next chart from the corona mark enters The Dry Bead")
+	check(main.bead_grid.visible and not main.corona_grid.visible and not main.fillet_grid.visible, "the bead grid opens with The Dry Bead")
+	check(str(main.harbor_label.text) == Charts.BEAD, "the harbor name follows the bead")
+	check(str(main.tide_readout.text).to_lower().contains("bead"), "chart 215 names the bead in the water readout")
+	var bead_cell := Charts.piece_cell(main.chart, main.state, "O")
+	check(str(main.selected_id) == "O" and int(main.state["pieces"]["O"]["rot"]) == 180, "chart 215 starts facing south")
+	_click_cell(main, bead_cell.x, bead_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 270, "a click turns the bead from south to west")
+	check(str(main.status_label.text).to_lower().contains("clockwise") and str(main.status_label.text).to_lower().contains("only"), "the bead says it turns and passes only the next clockwise direction")
+	_click_cell(main, bead_cell.x, bead_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 0, "the next click turns the bead north")
+	_click_cell(main, bead_cell.x, bead_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 90, "the next click turns the bead east")
+	_click_cell(main, bead_cell.x, bead_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 180, "four clicks restore the south facing")
+	main._on_book_pressed(27)
+	await process_frame
+	check(str(main.chart["id"]) == "215", "Bead returns to The Dry Bead")
+	check(_chart_row_fits(main.bead_grid, main._side), "the bead chart row fits in the window")
 	main._on_book_pressed(13)
-	check(main.weir_grid.visible and not main.lintel_grid.visible and not main.mullion_grid.visible and not main.transom_grid.visible and not main.casement_grid.visible and not main.jamb_grid.visible and not main.astragal_grid.visible and not main.scotia_grid.visible and not main.torus_grid.visible and not main.ogee_grid.visible and not main.ovolo_grid.visible and not main.cavetto_grid.visible and not main.fillet_grid.visible and not main.corona_grid.visible, "the weir book still opens")
+	check(main.weir_grid.visible and not main.lintel_grid.visible and not main.mullion_grid.visible and not main.transom_grid.visible and not main.casement_grid.visible and not main.jamb_grid.visible and not main.astragal_grid.visible and not main.scotia_grid.visible and not main.torus_grid.visible and not main.ogee_grid.visible and not main.ovolo_grid.visible and not main.cavetto_grid.visible and not main.fillet_grid.visible and not main.corona_grid.visible and not main.bead_grid.visible, "the weir book still opens")
 	main.select_chart(0)
 	main.restart_chart()
 	var before_rot := int(main.state["pieces"]["M"]["rot"])
@@ -9750,8 +10161,9 @@ func _walk(chart: Dictionary, state: Dictionary, index: int, found: Array) -> vo
 	# A cavetto has four facings. Each facing stops only its opposite.
 	# A fillet has four facings. Each facing passes only its opposite.
 	# A corona has four facings. Opposite facings open the same perpendicular axis.
+	# A bead has four facings. Each facing passes only the next clockwise direction.
 	var rots: Array = [0]
-	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona":
+	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead":
 		rots = [0, 90, 180, 270]
 	elif kind != "shutter" and kind != "well" and kind != "siphon" and kind != "lintel" and kind != "mullion" and kind != "transom":
 		rots = [0, 90]
@@ -10250,6 +10662,64 @@ func _corona_south_column(count: int) -> Dictionary:
 	var pieces: Array = []
 	for y in range(1, count + 1):
 		pieces.append(_fixed_corona("C%d" % y, 0, y, 0))
+	chart["pieces"] = pieces
+	return chart
+
+
+func _fixed_bead(id: String, x: int, y: int, rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": "Bead",
+		"kind": "bead",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": rot,
+		"solution_socket": "a",
+		"solution_rot": rot,
+	}
+
+
+func _bead_row(count: int) -> Dictionary:
+	var chart := _blank(count + 2, 1)
+	chart["lanterns"] = [_lamp("L", 0, 0, "E", "white")]
+	chart["docks"] = [_need("D", count + 1, 0, "white")]
+	var pieces: Array = []
+	for x in range(1, count + 1):
+		pieces.append(_fixed_bead("B%d" % x, x, 0, 0))
+	chart["pieces"] = pieces
+	return chart
+
+
+func _bead_west_row(count: int) -> Dictionary:
+	var chart := _blank(count + 2, 1)
+	chart["lanterns"] = [_lamp("L", count + 1, 0, "W", "white")]
+	chart["docks"] = [_need("D", 0, 0, "white")]
+	var pieces: Array = []
+	for x in range(1, count + 1):
+		pieces.append(_fixed_bead("B%d" % x, x, 0, 0))
+	chart["pieces"] = pieces
+	return chart
+
+
+func _bead_north_column(count: int) -> Dictionary:
+	var chart := _blank(1, count + 2)
+	chart["lanterns"] = [_lamp("L", 0, count + 1, "N", "white")]
+	chart["docks"] = [_need("D", 0, 0, "white")]
+	var pieces: Array = []
+	for y in range(1, count + 1):
+		pieces.append(_fixed_bead("B%d" % y, 0, y, 0))
+	chart["pieces"] = pieces
+	return chart
+
+
+func _bead_south_column(count: int) -> Dictionary:
+	var chart := _blank(1, count + 2)
+	chart["lanterns"] = [_lamp("L", 0, 0, "S", "white")]
+	chart["docks"] = [_need("D", 0, count + 1, "white")]
+	var pieces: Array = []
+	for y in range(1, count + 1):
+		pieces.append(_fixed_bead("B%d" % y, 0, y, 0))
 	chart["pieces"] = pieces
 	return chart
 

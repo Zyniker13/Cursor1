@@ -273,6 +273,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_fillet(at, rot)
 		"corona":
 			_draw_corona(at, rot)
+		"bead":
+			_draw_bead(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -977,6 +979,29 @@ func _corona_shelf(center: Vector2, dir: String, shelf: Color, lip: Color) -> vo
 	])
 	draw_colored_polygon(rect, shelf)
 	draw_line(inner - along * half, inner + along * half, lip, 1.4)
+
+func _draw_bead(at: Vector2i, rot: int) -> void:
+	# One small square pip on the single clockwise edge. A north bead marks
+	# the east edge. The pip is square. It is not the torus's two round beads,
+	# not the fillet's band, and not the corona's two shelves.
+	var center := _center(at)
+	var passing := Tracer.rotate_dir(Tracer.bead_facing(rot), 1)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var pip := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var outward := Vector2.DOWN
+	match passing:
+		"N":
+			outward = Vector2.UP
+		"S":
+			outward = Vector2.DOWN
+		"E":
+			outward = Vector2.RIGHT
+		_:
+			outward = Vector2.LEFT
+	var half := cell * 0.07
+	var spot := center + outward * cell * 0.34
+	var rect := Rect2(spot - Vector2(half, half), Vector2(half * 2.0, half * 2.0))
+	draw_rect(rect, pip)
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
 	if dir == "N" or dir == "S":
