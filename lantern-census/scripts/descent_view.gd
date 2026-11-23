@@ -144,7 +144,7 @@ func _draw() -> void:
 	if _font == null:
 		_font = ThemeDB.fallback_font
 	var layout := _layout()
-	draw_rect(Rect2(Vector2.ZERO, size if size.x > 32.0 else Vector2(4196, 720)), NIGHT)
+	draw_rect(Rect2(Vector2.ZERO, size if size.x > 32.0 else Vector2(4272, 720)), NIGHT)
 	if state == null or state.floor == null:
 		return
 	_draw_view(layout.view)
@@ -155,7 +155,7 @@ func _draw() -> void:
 func _layout() -> Dictionary:
 	var vp := size
 	if vp.x < 200.0:
-		vp = Vector2(4196, 720)
+		vp = Vector2(4272, 720)
 	var margin := 16.0
 	var hud_h := 200.0
 	var sheet_w := minf(488.0, vp.x * 0.38)
@@ -392,10 +392,12 @@ func _draw_view(view: Rect2) -> void:
 			col = Color(0.42, 0.56, 0.50)
 		elif glyph == "`":
 			col = Color(0.72, 0.56, 0.42)
+		elif glyph == "a":
+			col = Color(0.86, 0.78, 0.58)
 		col *= shade
 		if int(hit.side) == 1:
 			col *= 0.74
-		if glyph != "*" and glyph != "+" and glyph != "=" and glyph != "x" and glyph != "R" and glyph != "B" and glyph != "W" and glyph != "D" and glyph != "P" and glyph != "T" and glyph != "Y" and glyph != "K" and glyph != "N" and glyph != "A" and glyph != "C" and glyph != "X" and glyph != "V" and glyph != "U" and glyph != "Q" and glyph != "O" and glyph != "M" and glyph != "J" and glyph != "I" and glyph != "G" and glyph != "F" and glyph != "Z" and glyph != "@" and glyph != "?" and glyph != ">" and glyph != "<" and glyph != "[" and glyph != "{" and glyph != "]" and glyph != "}" and glyph != "~" and glyph != "!" and glyph != "\"" and glyph != "$" and glyph != "%" and glyph != "&" and glyph != "'" and glyph != "(" and glyph != ")" and glyph != "," and glyph != ";" and glyph != ":" and glyph != "-" and glyph != "_" and glyph != "^" and glyph != "/" and glyph != "\\" and glyph != "|" and glyph != "`" and (cell.x + cell.y) % 2 == 0:
+		if glyph != "*" and glyph != "+" and glyph != "=" and glyph != "x" and glyph != "R" and glyph != "B" and glyph != "W" and glyph != "D" and glyph != "P" and glyph != "T" and glyph != "Y" and glyph != "K" and glyph != "N" and glyph != "A" and glyph != "C" and glyph != "X" and glyph != "V" and glyph != "U" and glyph != "Q" and glyph != "O" and glyph != "M" and glyph != "J" and glyph != "I" and glyph != "G" and glyph != "F" and glyph != "Z" and glyph != "@" and glyph != "?" and glyph != ">" and glyph != "<" and glyph != "[" and glyph != "{" and glyph != "]" and glyph != "}" and glyph != "~" and glyph != "!" and glyph != "\"" and glyph != "$" and glyph != "%" and glyph != "&" and glyph != "'" and glyph != "(" and glyph != ")" and glyph != "," and glyph != ";" and glyph != ":" and glyph != "-" and glyph != "_" and glyph != "^" and glyph != "/" and glyph != "\\" and glyph != "|" and glyph != "`" and glyph != "a" and (cell.x + cell.y) % 2 == 0:
 			if state.floor.id == "cloister":
 				col = col.lerp(Color(0.42, 0.34, 0.22), 0.22)
 			elif state.floor.id == "crypt":
@@ -502,6 +504,8 @@ func _draw_view(view: Rect2) -> void:
 				col = col.lerp(Color(0.20, 0.28, 0.24), 0.22)
 			elif state.floor.id == "arcosolium":
 				col = col.lerp(Color(0.34, 0.24, 0.20), 0.22)
+			elif state.floor.id == "cubiculum":
+				col = col.lerp(Color(0.42, 0.36, 0.26), 0.22)
 			else:
 				col = col.lerp(Color(0.32, 0.20, 0.14), 0.22)
 		var wall_x := origin.y + dist * ray.y if int(hit.side) == 0 else origin.x + dist * ray.x
@@ -745,6 +749,13 @@ func _draw_view(view: Rect2) -> void:
 				col = Color(0.48, 0.32, 0.24)
 			else:
 				col = Color(0.28, 0.18, 0.14)
+		if glyph == "a":
+			if wall_x > 0.68:
+				col = Color(0.92, 0.84, 0.66)
+			elif int(wall_x * 4.0) % 2 == 0:
+				col = Color(0.70, 0.60, 0.42)
+			else:
+				col = Color(0.40, 0.32, 0.22)
 		if state.oil <= 2:
 			col *= 0.45
 		elif state.oil <= 4:
@@ -1045,6 +1056,11 @@ func _draw_sky_floor(view: Rect2) -> void:
 		sky_lo = Color(0.40, 0.26, 0.18)
 		ground_hi = Color(0.12, 0.10, 0.07)
 		ground_lo = Color(0.44, 0.36, 0.22)
+	elif state.floor.id == "cubiculum":
+		sky_hi = Color(0.18, 0.14, 0.08)
+		sky_lo = Color(0.48, 0.40, 0.24)
+		ground_hi = Color(0.12, 0.10, 0.07)
+		ground_lo = Color(0.44, 0.36, 0.22)
 	for i in bands:
 		var t := float(i) / float(bands)
 		var sky := sky_hi.lerp(sky_lo, t)
@@ -1256,6 +1272,12 @@ func _draw_sky_floor(view: Rect2) -> void:
 			draw_rect(Rect2(view.position + arch, Vector2(84, 18)), Color(0.36, 0.24, 0.18, 0.95))
 			draw_rect(Rect2(view.position + arch + Vector2(10, -12), Vector2(64, 12)), Color(0.58, 0.40, 0.28, 0.95))
 			draw_rect(Rect2(view.position + arch + Vector2(26, -20), Vector2(32, 8)), Color(0.78, 0.62, 0.46, 0.95))
+	elif state.floor.id == "cubiculum":
+		var niche := Vector2(168, 24)
+		if niche.y < half:
+			draw_rect(Rect2(view.position + niche, Vector2(56, 26)), Color(0.48, 0.40, 0.28, 0.95))
+			draw_rect(Rect2(view.position + niche + Vector2(8, 6), Vector2(40, 16)), Color(0.74, 0.64, 0.44, 0.95))
+			draw_rect(Rect2(view.position + niche + Vector2(18, -8), Vector2(20, 8)), Color(0.90, 0.82, 0.64, 0.95))
 
 
 func _cast(origin: Vector2, ray_dir: Vector2) -> Dictionary:
@@ -1401,6 +1423,8 @@ func _draw_sprites(view: Rect2, origin: Vector2, dir: Vector2, plane: Vector2, z
 		hazard_kind = "loculus"
 	elif state.floor.id == "arcosolium":
 		hazard_kind = "arcosolium"
+	elif state.floor.id == "cubiculum":
+		hazard_kind = "cubiculum"
 	for hazard in Rules.hazard_cells(state.floor):
 		items.append({"pos": hazard, "kind": hazard_kind})
 	var drawn: Array = []
@@ -1695,6 +1719,10 @@ func _sprite_column(view: Rect2, column: int, col_w: float, top: float, sprite_h
 			if u > 0.18 and u < 0.82:
 				slices.append([0.32, 0.74, Color(0.36, 0.24, 0.18)])
 				slices.append([0.18, 0.32, Color(0.78, 0.62, 0.46)])
+		"cubiculum":
+			if u > 0.20 and u < 0.80:
+				slices.append([0.40, 0.78, Color(0.48, 0.40, 0.28)])
+				slices.append([0.24, 0.38, Color(0.90, 0.82, 0.64)])
 		"hazard":
 			if u > 0.22 and u < 0.78:
 				slices.append([0.62, 0.70, Color(0.72, 0.34, 0.14)])
@@ -1856,6 +1884,8 @@ func _draw_sheet(sheet: Rect2) -> void:
 		legend = "Square wall    dot corridor    stone loculus"
 	elif state.floor.id == "arcosolium":
 		legend = "Square wall    dot corridor    arched tomb"
+	elif state.floor.id == "cubiculum":
+		legend = "Square wall    dot corridor    plaster niche"
 	draw_string(_font, Vector2(sheet.position.x + 16, legend_y), legend, HORIZONTAL_ALIGNMENT_LEFT, sheet.size.x - 32, 14, INK)
 	var swing_note := "Ring is the swing, not ink. Hood is the warden."
 	if state.floor.id == "cistern":
@@ -2031,6 +2061,8 @@ func _draw_hud(hud: Rect2) -> void:
 			lines.append("You are standing on a loculus crack.")
 		elif state.floor.id == "arcosolium":
 			lines.append("You are standing on an arcosolium crack.")
+		elif state.floor.id == "cubiculum":
+			lines.append("You are standing on a cubiculum crack.")
 		else:
 			lines.append("You are standing on a hazard crack.")
 	var y := hud.position.y + 46
