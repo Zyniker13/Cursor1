@@ -14,7 +14,7 @@ class_name ChartBook
 # The Scotia holds eight more. The Torus holds eight more.
 # The Ogee holds eight more. The Ovolo holds eight more.
 # The Cavetto holds eight more. The Fillet holds eight more.
-# The Corona holds the last eight.
+# The Corona holds eight more. The Bead holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
@@ -129,6 +129,18 @@ class_name ChartBook
 # jamb passes north and south, so a north corona is not a north jamb. A north
 # fillet passes only south. While that row is flooded, every beam stops at the
 # waterline, the same way a flooded fillet stops.
+# A bead has a facing. Rotation changes it the same way: 0 north, 90 east,
+# 180 south, 270 west. Opposite facings are not the same piece. While its row
+# is dry, only the next clockwise direction passes straight through in the
+# same direction and the same color, and that pass costs no bounce. It does
+# not turn, it does not recolor, and it does not split. The facing, the
+# opposite, and the counterclockwise direction stop and do not enter. Facing
+# north, only east passes. One click faces east and passes only south. Two
+# clicks face south and pass only west. Three clicks face west and pass only
+# north. A north casement passes only north. A north fillet passes only south.
+# A north corona passes east and west. A north astragal passes north and east.
+# While that row is flooded, every beam stops at the waterline, the same way a
+# flooded corona stops.
 # See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
@@ -162,6 +174,7 @@ const OVOLO := "The Ovolo"
 const CAVETTO := "The Cavetto"
 const FILLET := "The Fillet"
 const CORONA := "The Corona"
+const BEAD := "The Bead"
 
 static func all() -> Array:
 	var book: Array = []
@@ -192,6 +205,7 @@ static func all() -> Array:
 	book.append_array(cavetto())
 	book.append_array(fillet())
 	book.append_array(corona())
+	book.append_array(bead())
 	return book
 
 
@@ -301,6 +315,10 @@ static func fillet() -> Array:
 
 static func corona() -> Array:
 	return [chart_207(), chart_208(), chart_209(), chart_210(), chart_211(), chart_212(), chart_213(), chart_214()]
+
+
+static func bead() -> Array:
+	return [chart_215(), chart_216(), chart_217(), chart_218(), chart_219(), chart_220(), chart_221(), chart_222()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -7954,6 +7972,302 @@ static func chart_214() -> Dictionary:
 	}
 
 
+static func chart_215() -> Dictionary:
+	# A dry north bead passes only east. The other three directions stop.
+	return {
+		"id": "215",
+		"harbor": BEAD,
+		"title": "The Dry Bead",
+		"teach": "Tide index 0, flood 0. A dry north bead passes only the next clockwise direction, the eastbound beam. North, south, and west stop. One click faces east and passes only south. A north casement passes only north. A north fillet passes only south. A north corona passes east and west. A north astragal passes north and east.",
+		"win": "The bead faces north. Only east passes, and the other three beams stay dark.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ee", 0, 3, "E", "white"),
+			_lantern("Ww", 6, 3, "W", "red"),
+			_lantern("Nn", 3, 6, "N", "red"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+		],
+		"docks": [
+			_dock("Ed", 5, 3, "white", true),
+			_dock("Te", 4, 3, "blue", true, true),
+			_dock("Wd", 1, 3, "red", true, true),
+			_dock("Nd", 3, 1, "red", true, true),
+			_dock("Sd", 3, 5, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_bead("O", "Bead", 3, 3, 180, 0),
+		],
+	}
+
+
+static func chart_216() -> Dictionary:
+	# The bead starts under water. Dry, only east passes.
+	return {
+		"id": "216",
+		"harbor": BEAD,
+		"title": "The Wet Stop",
+		"teach": "The bead opens under water, so every beam stops at the waterline. Lower the tide and face it north. Only the eastbound beam passes. North, south, and west stop. A shutter, a well, a siphon, a sluice, or a weir would carry the flooded beam into the cell.",
+		"win": "Low water opens only east. The flooded row had stopped every beam at the waterline.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [0, 4],
+		"start_tide_index": 1,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ee", 0, 4, "E", "white"),
+			_lantern("Ww", 7, 4, "W", "red"),
+			_lantern("Nn", 3, 7, "N", "red"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+		],
+		"docks": [
+			_dock("Ed", 5, 4, "white", true),
+			_dock("Te", 4, 4, "blue", true, true),
+			_dock("Wd", 1, 4, "red", true, true),
+			_dock("Nd", 3, 2, "red", true, true),
+			_dock("Sd", 3, 6, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_bead("O", "Bead", 3, 4, 180, 0),
+		],
+	}
+
+
+static func chart_217() -> Dictionary:
+	# East stays red. A stain paints the other exits the same color.
+	return {
+		"id": "217",
+		"harbor": BEAD,
+		"title": "Color Kept",
+		"teach": "The eastbound beam is the only clockwise pass. Red stays red, blue stays blue, and white stays white. A stain would paint that pass. A weir recolors a flooded beam. This bead stays dry and does not recolor.",
+		"win": "East stays red. The bead did not paint the beam.",
+		"cols": 8,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Ww", 7, 3, "W", "blue"),
+			_lantern("Nn", 3, 6, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+		],
+		"docks": [
+			_dock("Ed", 5, 3, "red", true),
+			_dock("Tw", 6, 3, "white", true, true),
+			_dock("Wd", 1, 3, "blue", true, true),
+			_dock("Tn", 3, 2, "red", true, true),
+			_dock("Nd", 3, 1, "white", true, true),
+			_dock("Sd", 3, 5, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_bead("O", "Bead", 3, 3, 180, 0),
+		],
+	}
+
+
+static func chart_218() -> Dictionary:
+	# The eastbound beam leaves east. It does not turn.
+	return {
+		"id": "218",
+		"harbor": BEAD,
+		"title": "No Turn",
+		"teach": "The eastbound beam leaves east. The bead does not turn. A prism would split the white beam. A vane or a mirror would send it aside. A flooded sluice would turn it.",
+		"win": "East leaves east. Nothing was turned.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ee", 0, 3, "E", "white"),
+			_lantern("Ww", 6, 3, "W", "red"),
+			_lantern("Nn", 3, 6, "N", "red"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+		],
+		"docks": [
+			_dock("Ed", 5, 3, "white", true),
+			_dock("Te", 4, 3, "blue", true, true),
+			_dock("Wd", 1, 3, "red", true, true),
+			_dock("Nd", 3, 1, "red", true, true),
+			_dock("Sd", 3, 5, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_bead("O", "Bead", 3, 3, 270, 0),
+		],
+	}
+
+
+static func chart_219() -> Dictionary:
+	# The bead row is dry. A neighbor beam dies on the flood.
+	return {
+		"id": "219",
+		"harbor": BEAD,
+		"title": "Beside the Flood",
+		"teach": "The bead row is dry, so only the eastbound beam passes. The flood beam stops at the waterline and never enters the flooded cell.",
+		"win": "The dry row passes only east. The flood beam stops at the waterline.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [2],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ee", 0, 2, "E", "white"),
+			_lantern("Ww", 6, 2, "W", "red"),
+			_lantern("Nn", 3, 5, "N", "red"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+			_lantern("Fl", 1, 5, "S", "white"),
+		],
+		"docks": [
+			_dock("Ed", 5, 2, "white", true),
+			_dock("Te", 4, 2, "blue", true, true),
+			_dock("Wd", 1, 2, "red", true, true),
+			_dock("Nd", 3, 1, "red", true, true),
+			_dock("Sd", 3, 4, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_bead("O", "Bead", 3, 2, 180, 0),
+		],
+	}
+
+
+static func chart_220() -> Dictionary:
+	# One bead passes only east. The other passes only south.
+	return {
+		"id": "220",
+		"harbor": BEAD,
+		"title": "Two Beads",
+		"teach": "One bead passes only east. The other passes only south. Those open directions are not the same. Swapping the facings fails. A north corona cannot take the east seat, because a north corona also passes west.",
+		"win": "East stays on the first seat. South stays on the second.",
+		"cols": 11,
+		"rows": 9,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ae", 0, 3, "E", "white"),
+			_lantern("Aw", 5, 3, "W", "red"),
+			_lantern("An", 2, 6, "N", "red"),
+			_lantern("As", 2, 0, "S", "blue"),
+			_lantern("Bs", 8, 2, "S", "white"),
+			_lantern("Bn", 8, 8, "N", "red"),
+			_lantern("Be", 6, 5, "E", "blue"),
+			_lantern("Bw", 10, 5, "W", "red"),
+		],
+		"docks": [
+			_dock("Ade", 4, 3, "white", true),
+			_dock("At", 3, 3, "blue", true, true),
+			_dock("Adw", 1, 3, "red", true, true),
+			_dock("Adn", 2, 1, "red", true, true),
+			_dock("Ads", 2, 5, "blue", true, true),
+			_dock("Bds", 8, 7, "white", true),
+			_dock("Bt", 8, 6, "blue", true, true),
+			_dock("Bdn", 8, 3, "red", true, true),
+			_dock("Bde", 9, 5, "blue", true, true),
+			_dock("Bdw", 7, 5, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_bead("O", "East bead", 2, 3, 180, 0),
+			_bead("U", "South bead", 8, 5, 0, 90),
+		],
+	}
+
+
+static func chart_221() -> Dictionary:
+	# Three tide marks. The middle mark leaves the bead dry, facing north.
+	return {
+		"id": "221",
+		"harbor": BEAD,
+		"title": "The Held Bead",
+		"teach": "The held facing is part of the solution. The chart starts on a facing that stops east. Place the tide on the middle mark and face the bead north. Low water wakes the south hull. High water covers the bead and the beam stops at the waterline.",
+		"win": "The middle mark holds the north bead. Only east passes, and the hull stays dark.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [0, 1, 5],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ee", 0, 3, "E", "white"),
+			_lantern("Ww", 7, 3, "W", "red"),
+			_lantern("Nn", 4, 6, "N", "red"),
+			_lantern("Ss", 4, 0, "S", "blue"),
+			_lantern("Hl", 0, 7, "E", "white"),
+		],
+		"docks": [
+			_dock("Ed", 6, 3, "white", true),
+			_dock("Te", 5, 3, "blue", true, true),
+			_dock("Wd", 2, 3, "red", true, true),
+			_dock("Nd", 4, 1, "red", true, true),
+			_dock("Sd", 4, 5, "blue", true, true),
+		],
+		"boats": [
+			_boat("Hb", 3, 7),
+		],
+		"fixtures": [],
+		"pieces": [
+			_bead("O", "Bead", 4, 3, 180, 0),
+		],
+	}
+
+
+static func chart_222() -> Dictionary:
+	# The bead and the shutter trade places. On the line it faces north.
+	return {
+		"id": "222",
+		"harbor": BEAD,
+		"title": "The Bead Mark",
+		"teach": "Move the bead from the side socket onto the line and face it north. Only the eastbound beam passes. North, south, and west must not count. A north casement, a north fillet, a north corona, a north astragal, or a lintel in that cell fails.",
+		"win": "The bead stands on the line, open only east. The other beams stay dark.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ee", 0, 3, "E", "white"),
+			_lantern("Ww", 6, 3, "W", "red"),
+			_lantern("Nn", 3, 6, "N", "red"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+		],
+		"docks": [
+			_dock("Ed", 5, 3, "white", true),
+			_dock("Te", 4, 3, "blue", true, true),
+			_dock("Wd", 1, 3, "red", true, true),
+			_dock("Nd", 3, 1, "red", true, true),
+			_dock("Sd", 3, 5, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_placed("O", "Bead", "bead", [["side", 5, 5], ["line", 3, 3]], "side", "line", 180, 0),
+			_placed("G", "Line shutter", "shutter", [["line", 3, 3], ["side", 5, 5]], "line", "side", 0, 0),
+		],
+	}
+
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -8276,6 +8590,20 @@ static func _corona(id: String, name: String, x: int, y: int, start_rot: int, so
 		"id": id,
 		"name": name,
 		"kind": "corona",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _bead(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "bead",
 		"movable": false,
 		"sockets": [{"id": "a", "x": x, "y": y}],
 		"start_socket": "a",
