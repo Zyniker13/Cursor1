@@ -11,7 +11,7 @@ Playable slices, Godot 4. Steam packaging comes later.
 - [Lowball](lowball/) — a sixty-two-week thirty-two-club circle through Peatfen Phalaropes
 - [Casework](casework/) — a seventy-five-case deduction board through the pelta
 - [Lampblack](lampblack/) — turn-based museum stealth through the dimity
-- [Kiln Route](kiln-route/) — a four-hundred-and-sixty-four-room foundry puzzle through the crosspeen
+- [Kiln Route](kiln-route/) — a four-hundred-and-seventy-two-room foundry puzzle through the sethammer
 
 ```bash
 godot --path harbor-glass

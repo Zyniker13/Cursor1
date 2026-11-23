@@ -50,6 +50,7 @@ extends RefCounted
 ## Wing 56 is rooms 441-448.
 ## Wing 57 is rooms 449-456.
 ## Wing 58 is rooms 457-464.
+## Wing 59 is rooms 465-472.
 ## The dwell is taught before a later room depends on it.
 ## The twin is taught before a later room depends on it.
 ## The pass is taught before a later room depends on it.
@@ -95,7 +96,7 @@ extends RefCounted
 ## The bick is taught before a later room depends on it.
 ## The pritchel is taught before a later room depends on it.
 ## The mandrel is taught before a later room depends on it.
-## The roller, the weir, the bridge, the grate, the hook, the arm, the drop, the lift, the dwell, the twin, the pass, the slip, the shed, the rake, the hoe, the harrow, the fork, the prong, the share, the coulter, the moldboard, the landside, the slade, the heel, the stilt, the clevis, the beam, the hake, the sole, the frog, the shin, the point, the throat, the wrest, the jointer, the bridle, the trashboard, the gauge, the breast, the hardie, the fuller, the swage, the flatter, the drift, the punch, the sett, the bolster, the snap, the anvil, the sledge, the bick, the pritchel, the mandrel, the stake, the creaser, the rounder, the header, and the crosspeen are taught before a later room depends on them.
+## The roller, the weir, the bridge, the grate, the hook, the arm, the drop, the lift, the dwell, the twin, the pass, the slip, the shed, the rake, the hoe, the harrow, the fork, the prong, the share, the coulter, the moldboard, the landside, the slade, the heel, the stilt, the clevis, the beam, the hake, the sole, the frog, the shin, the point, the throat, the wrest, the jointer, the bridle, the trashboard, the gauge, the breast, the hardie, the fuller, the swage, the flatter, the drift, the punch, the sett, the bolster, the snap, the anvil, the sledge, the bick, the pritchel, the mandrel, the stake, the creaser, the rounder, the header, the crosspeen, and the sethammer are taught before a later room depends on them.
 ## Each solution is a full layout, not a delta from the initial pieces.
 ## Quotas are minimums inside SIM_TICKS.
 
@@ -568,6 +569,14 @@ static func all() -> Array:
 		crosspeen_scrap(),
 		crosspeen_bin(),
 		crosspeen_hold(),
+		sethammer_step(),
+		still_sethammer(),
+		seat_sethammer(),
+		sethammer_gate(),
+		two_sethammers(),
+		sethammer_scrap(),
+		sethammer_bin(),
+		sethammer_hold(),
 	]
 
 
@@ -17471,6 +17480,302 @@ static func crosspeen_hold() -> Dictionary:
 		"initial": [],
 		"solution": [
 			piece(rules.Kind.CROSSPEEN, 3, 2, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 3, 5, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 3, 4, rules.Dir.SOUTH),
+		],
+	}
+
+
+static func sethammer_step() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 465,
+		"name": "Sethammer Step",
+		"blurb": "The first item arrives from ahead and leaves behind, through a source, into a kiln. The plate leaves left, through a source.",
+		"rule": "The first item is ore. It arrives from ahead and leaves behind. The cell directly behind is only a source, so the ore steps through into the kiln. The plate leaves left and steps through a source onto the plate bin. A bick steps the ore through the behind source and does not step the plate through the left source. A crosspeen sends the ore right into the wall. A header sends the ore left onto the plate bin. A rounder sends the ore left onto the plate bin. A creaser sends the ore forward into the wall. An anvil sends the ore forward into the wall. A stake sends the ore right into the wall. A punch sends the ore right into the wall. A mandrel sends the ore left onto the plate bin. A pritchel sends the ore right into the wall. A sledge sends the plate right into the wall. A breast sends the plate forward into the wall. A belt refuses an arrival from ahead.",
+		"w": 6,
+		"h": 6,
+		"sources": [
+			source(3, 1, rules.Dir.SOUTH, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+			source(2, 2, rules.Dir.EAST, [rules.Mat.INGOT], 80),
+			source(3, 3, rules.Dir.NORTH, [rules.Mat.INGOT], 80),
+		],
+		"sinks": [
+			sink(1, 2, [rules.Mat.PLATE]),
+			sink(3, 5, [rules.Mat.INGOT]),
+		],
+		"chutes": [],
+		"walls": [cell(3, 0), cell(4, 2)],
+		"budget": kv([
+			rules.Kind.KILN, 1,
+			rules.Kind.SETHAMMER, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 30]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.SETHAMMER, 3, 2, rules.Dir.NORTH),
+			piece(rules.Kind.KILN, 3, 4, rules.Dir.SOUTH),
+		],
+	}
+
+
+static func still_sethammer() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 466,
+		"name": "Still Sethammer",
+		"blurb": "The tray has one belt, on the crossing. The sethammer faces north. The first item arrives from ahead and leaves behind, and the later item leaves left.",
+		"rule": "The tray has one belt, on the crossing. The sethammer faces north and takes the pair from ahead. The ore leaves behind, through a source, into the kiln, and the plate leaves left through a source onto the plate bin. The belt turns the ingot off that lane. A filter scraps a side stream. A bick does not step the plate through the left source. A crosspeen sends the ore right into the wall. A header sends the ore left onto the plate bin. A rounder sends the ore left onto the plate bin. A creaser sends the ore forward into the wall. An anvil sends the ore forward into the wall. A stake and a punch send the ore right into the wall. A mandrel sends the ore left onto the plate bin. A pritchel sends the ore right into the wall. A sledge sends the plate right into the wall. A breast sends the plate forward into the wall. A belt on the sethammer cell refuses an arrival from ahead.",
+		"w": 8,
+		"h": 6,
+		"sources": [
+			source(3, 1, rules.Dir.SOUTH, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+			source(2, 2, rules.Dir.EAST, [rules.Mat.INGOT], 80),
+			source(3, 3, rules.Dir.NORTH, [rules.Mat.INGOT], 80),
+			source(0, 5, rules.Dir.NORTH, [rules.Mat.INGOT], 4),
+		],
+		"sinks": [
+			sink(4, 5, [rules.Mat.INGOT]),
+			sink(1, 2, [rules.Mat.PLATE]),
+		],
+		"chutes": [cell(1, 4)],
+		"walls": [cell(3, 0), cell(4, 2)],
+		"budget": kv([
+			rules.Kind.BELT, 1,
+			rules.Kind.SETHAMMER, 1,
+			rules.Kind.KILN, 1,
+			rules.Kind.FILTER, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 30]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.SETHAMMER, 3, 2, rules.Dir.NORTH),
+			piece(rules.Kind.KILN, 3, 4, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 5, rules.Dir.EAST),
+			piece(rules.Kind.FILTER, 0, 4, rules.Dir.NORTH),
+		],
+	}
+
+
+static func seat_sethammer() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 467,
+		"name": "Seat Sethammer",
+		"blurb": "The sethammer starts off the lane. Seat it where the ore arrives from ahead and leaves behind.",
+		"rule": "The sethammer starts off the lane. Pick it up and seat it where the ore arrives from ahead and leaves behind, through a source, into the kiln, and the plate leaves left through a source. Leaving it parked misses. A bick does not step the plate. A crosspeen sends the ore right into the wall. A header sends the ore left onto the plate bin. A rounder sends the ore left onto the plate bin. A creaser sends the ore forward into the wall. An anvil sends the ore forward into the wall. A stake and a punch send the ore right into the wall. A mandrel sends the ore left onto the plate bin. A pritchel sends the ore right into the wall. A sledge sends the plate right into the wall. A breast sends the plate forward into the wall.",
+		"w": 6,
+		"h": 6,
+		"sources": [
+			source(3, 1, rules.Dir.SOUTH, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+			source(2, 2, rules.Dir.EAST, [rules.Mat.INGOT], 80),
+			source(3, 3, rules.Dir.NORTH, [rules.Mat.INGOT], 80),
+		],
+		"sinks": [
+			sink(1, 2, [rules.Mat.PLATE]),
+			sink(3, 5, [rules.Mat.INGOT]),
+		],
+		"chutes": [],
+		"walls": [cell(3, 0), cell(4, 2)],
+		"budget": kv([
+			rules.Kind.KILN, 1,
+			rules.Kind.SETHAMMER, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 30]),
+		"initial": [
+			piece(rules.Kind.SETHAMMER, 5, 0, rules.Dir.NORTH),
+		],
+		"solution": [
+			piece(rules.Kind.SETHAMMER, 3, 2, rules.Dir.NORTH),
+			piece(rules.Kind.KILN, 3, 4, rules.Dir.SOUTH),
+		],
+	}
+
+
+static func sethammer_gate() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 468,
+		"name": "Sethammer Gate",
+		"blurb": "A wall closes the side. The ore still leaves behind, through a source, into the kiln, and the plate leaves left.",
+		"rule": "A wall closes the side. The first item arrives from ahead and leaves behind. The cell directly behind is only a source, so the ore steps through into the kiln. The plate leaves left and steps through a source. A bick does not step the plate. A crosspeen sends the ore right into the wall. A header sends the ore left onto the plate bin. A rounder sends the ore left onto the plate bin. A creaser sends the ore forward into the wall. An anvil sends the ore forward into the wall. A stake and a punch send the ore right into the wall. A mandrel sends the ore left onto the plate bin. A pritchel sends the ore right into the wall. A sledge sends the plate right into the wall. A breast sends the plate forward into the wall.",
+		"w": 6,
+		"h": 6,
+		"sources": [
+			source(3, 1, rules.Dir.SOUTH, [rules.Mat.ORE, rules.Mat.PLATE], 1),
+			source(2, 2, rules.Dir.EAST, [rules.Mat.INGOT], 80),
+			source(3, 3, rules.Dir.NORTH, [rules.Mat.INGOT], 80),
+		],
+		"sinks": [
+			sink(1, 2, [rules.Mat.PLATE]),
+			sink(3, 5, [rules.Mat.INGOT]),
+		],
+		"chutes": [],
+		"walls": [cell(3, 0), cell(4, 2)],
+		"budget": kv([
+			rules.Kind.KILN, 1,
+			rules.Kind.SETHAMMER, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 59, rules.Mat.PLATE, 60]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.SETHAMMER, 3, 2, rules.Dir.NORTH),
+			piece(rules.Kind.KILN, 3, 4, rules.Dir.SOUTH),
+		],
+	}
+
+
+static func two_sethammers() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 469,
+		"name": "Two Sethammers",
+		"blurb": "Two sethammers take two lanes from ahead. Each ore leaves behind, through a source, and each plate leaves left.",
+		"rule": "Two sethammers take two lanes from ahead. Each first item leaves behind and steps through a source into its kiln. Each plate leaves left and steps through a source onto its plate bin. One lane is half. A bick does not step the plate. A crosspeen sends the ore right into the wall. A header sends the ore left onto the plate bin. A rounder sends the ore left onto the plate bin. A creaser sends the ore forward into the wall. An anvil sends the ore forward into the wall. A stake and a punch send the ore right into the wall. A mandrel sends the ore left onto the plate bin. A pritchel sends the ore right into the wall. A sledge sends the plate right into the wall. A breast sends the plate forward into the wall.",
+		"w": 8,
+		"h": 6,
+		"sources": [
+			source(2, 1, rules.Dir.SOUTH, [rules.Mat.ORE, rules.Mat.PLATE], 1),
+			source(1, 2, rules.Dir.EAST, [rules.Mat.INGOT], 80),
+			source(2, 3, rules.Dir.NORTH, [rules.Mat.INGOT], 80),
+			source(6, 1, rules.Dir.SOUTH, [rules.Mat.ORE, rules.Mat.PLATE], 1),
+			source(5, 2, rules.Dir.EAST, [rules.Mat.INGOT], 80),
+			source(6, 3, rules.Dir.NORTH, [rules.Mat.INGOT], 80),
+		],
+		"sinks": [
+			sink(0, 2, [rules.Mat.PLATE]),
+			sink(4, 2, [rules.Mat.PLATE]),
+			sink(2, 5, [rules.Mat.INGOT]),
+			sink(6, 5, [rules.Mat.INGOT]),
+		],
+		"chutes": [],
+		"walls": [cell(2, 0), cell(3, 2), cell(6, 0), cell(7, 2)],
+		"budget": kv([
+			rules.Kind.KILN, 2,
+			rules.Kind.SETHAMMER, 2,
+		]),
+		"quota": kv([rules.Mat.INGOT, 118, rules.Mat.PLATE, 120]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.SETHAMMER, 2, 2, rules.Dir.NORTH),
+			piece(rules.Kind.KILN, 2, 4, rules.Dir.SOUTH),
+			piece(rules.Kind.SETHAMMER, 6, 2, rules.Dir.NORTH),
+			piece(rules.Kind.KILN, 6, 4, rules.Dir.SOUTH),
+		],
+	}
+
+
+static func sethammer_scrap() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 470,
+		"name": "Sethammer Scrap",
+		"blurb": "The ore leaves behind, away from the scrap, and the plate leaves left.",
+		"rule": "The first item arrives from ahead and leaves behind, through a source, into the kiln, away from the scrap. The plate leaves left through a source onto the plate bin. A filter throws its own stream east into the chute. A bick does not step the plate. A crosspeen sends the ore right into the wall. A header sends the ore left onto the plate bin. A rounder sends the ore left onto the plate bin. A creaser sends the ore forward into the wall. An anvil sends the ore forward into the wall. A stake and a punch send the ore right into the wall. A mandrel sends the ore left onto the plate bin. A pritchel sends the ore right into the wall. A sledge sends the plate right into the wall. A breast sends the plate forward into the wall.",
+		"w": 8,
+		"h": 6,
+		"sources": [
+			source(3, 1, rules.Dir.SOUTH, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+			source(2, 2, rules.Dir.EAST, [rules.Mat.INGOT], 80),
+			source(3, 3, rules.Dir.NORTH, [rules.Mat.INGOT], 80),
+			source(0, 5, rules.Dir.NORTH, [rules.Mat.INGOT], 4),
+		],
+		"sinks": [
+			sink(4, 5, [rules.Mat.INGOT]),
+			sink(1, 2, [rules.Mat.PLATE]),
+		],
+		"chutes": [cell(1, 4)],
+		"walls": [cell(3, 0), cell(4, 2)],
+		"budget": kv([
+			rules.Kind.BELT, 1,
+			rules.Kind.SETHAMMER, 1,
+			rules.Kind.KILN, 1,
+			rules.Kind.FILTER, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 30]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.SETHAMMER, 3, 2, rules.Dir.NORTH),
+			piece(rules.Kind.KILN, 3, 4, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 5, rules.Dir.EAST),
+			piece(rules.Kind.FILTER, 0, 4, rules.Dir.NORTH),
+		],
+	}
+
+
+static func sethammer_bin() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 471,
+		"name": "Sethammer Bin",
+		"blurb": "The ore leaves behind, through a source, into the split, and the plate leaves left. The lower stream is not enough on its own.",
+		"rule": "The first item arrives from ahead and leaves behind. The cell directly behind is only a source, so the ore steps through into the kiln. The plate leaves left through a source onto the plate bin. The kiln feeds a splitter, and the press plates join a lower stream that is not enough on its own. Pressing every ingot misses the ingot quota. A bick does not step the plate. A crosspeen sends the ore right into the wall. A header sends the ore left onto the plate bin. A rounder sends the ore left onto the plate bin. A creaser sends the ore forward into the wall. An anvil sends the ore forward into the wall. A stake and a punch send the ore right into the wall. A mandrel sends the ore left onto the plate bin. A pritchel sends the ore right into the wall. A sledge sends the plate right into the wall. A breast sends the plate forward into the wall.",
+		"w": 8,
+		"h": 7,
+		"sources": [
+			source(3, 1, rules.Dir.SOUTH, [rules.Mat.ORE, rules.Mat.PLATE], 1),
+			source(2, 2, rules.Dir.EAST, [rules.Mat.INGOT], 80),
+			source(3, 3, rules.Dir.NORTH, [rules.Mat.INGOT], 80),
+			source(0, 6, rules.Dir.EAST, [rules.Mat.PLATE], 4),
+		],
+		"sinks": [
+			sink(4, 6, [rules.Mat.INGOT]),
+			sink(1, 2, [rules.Mat.PLATE]),
+			sink(0, 5, [rules.Mat.PLATE]),
+			sink(2, 6, [rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [cell(3, 0), cell(4, 2)],
+		"budget": kv([
+			rules.Kind.BELT, 3,
+			rules.Kind.SETHAMMER, 1,
+			rules.Kind.KILN, 1,
+			rules.Kind.SPLITTER, 1,
+			rules.Kind.PRESS, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 104]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.SETHAMMER, 3, 2, rules.Dir.NORTH),
+			piece(rules.Kind.KILN, 3, 4, rules.Dir.SOUTH),
+			piece(rules.Kind.SPLITTER, 3, 5, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 6, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 2, 5, rules.Dir.WEST),
+			piece(rules.Kind.PRESS, 1, 5, rules.Dir.WEST),
+			piece(rules.Kind.BELT, 1, 6, rules.Dir.EAST),
+		],
+	}
+
+
+static func sethammer_hold() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 472,
+		"name": "Sethammer Hold",
+		"blurb": "The pair leaves on the arrival tick, waiter behind and arrival left, and the cell is empty afterward.",
+		"rule": "The first item arrives from ahead and waits through a tick with nothing beside it, then the pair leaves on the arrival tick, the waiter behind through a source and the arrival left through a source, and the cell is empty afterward. A belt refuses that arrival from ahead, so the first item never steps onto the next cell. A bick would not step the arrival through the left source. A crosspeen would send the waiter right into the wall. A header would send the waiter left onto the plate bin. A rounder would send the waiter left onto the plate bin. A creaser would send the waiter forward into the wall. An anvil would send the waiter forward. A stake would send the waiter right into the wall. A punch would send the waiter right into the wall. A mandrel would send the waiter left onto the plate bin. A pritchel would send the waiter right into the wall. A sledge would send the arrival right into the wall. A breast would send the arrival forward into the wall. A lone item never leaves.",
+		"w": 7,
+		"h": 6,
+		"sources": [
+			source(3, 1, rules.Dir.SOUTH, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+			source(2, 2, rules.Dir.EAST, [rules.Mat.INGOT], 80),
+			source(3, 3, rules.Dir.NORTH, [rules.Mat.INGOT], 80),
+		],
+		"sinks": [
+			sink(4, 5, [rules.Mat.INGOT]),
+			sink(1, 2, [rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [cell(3, 0), cell(4, 2)],
+		"budget": kv([
+			rules.Kind.BELT, 1,
+			rules.Kind.KILN, 1,
+			rules.Kind.SETHAMMER, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 30]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.SETHAMMER, 3, 2, rules.Dir.NORTH),
 			piece(rules.Kind.BELT, 3, 5, rules.Dir.EAST),
 			piece(rules.Kind.KILN, 3, 4, rules.Dir.SOUTH),
 		],
