@@ -17,7 +17,7 @@ class_name ChartBook
 # The Corona holds eight more. The Bead holds eight more. The Quirk holds eight more.
 # The Cyma holds eight more. The Fascia holds eight more. The Soffit holds eight more.
 # The Drip holds eight more. The Beak holds eight more. The Hood holds eight more.
-# The Throat holds eight more. The Larmier holds eight more. The Cill holds eight more. The Threshold holds eight more. The Impost holds eight more. The Architrave holds eight more. The Archivolt holds eight more. The Abacus holds eight more. The Rebate holds eight more. The Echinus holds eight more. The Annulet holds eight more. The Listel holds eight more. The Necking holds eight more. The Taenia holds eight more. The Baguette holds the last eight.
+# The Throat holds eight more. The Larmier holds eight more. The Cill holds eight more. The Threshold holds eight more. The Impost holds eight more. The Architrave holds eight more. The Archivolt holds eight more. The Abacus holds eight more. The Rebate holds eight more. The Echinus holds eight more. The Annulet holds eight more. The Listel holds eight more. The Necking holds eight more. The Taenia holds eight more. The Baguette holds eight more. The Reglet holds eight more. The Billet holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
@@ -406,6 +406,40 @@ class_name ChartBook
 # only west. A flooded north echinus passes only east. A flooded north rebate
 # passes only south. A flooded north abacus passes only north. A flooded north
 # throat passes only south.
+# A reglet has a facing. Rotation changes it the same way: 0 north, 90 east,
+# 180 south, 270 west. While its row is dry, every heading stops on the edge
+# and the beam does not enter. One click still stops every heading. Opposite
+# dry facings share that shut state. While that row is flooded, the facing,
+# the opposite, and the next clockwise heading pass straight through, and that
+# pass costs no bounce. A flooded north reglet passes north, south, and east,
+# and stops west. One click faces east and east, west, and south pass while
+# north stops. A flooded south reglet passes south, north, and west, and stops
+# east. A dry soffit passes north, east, and south and stays shut under water,
+# so this piece does not repeat that dry set. A flooded north drip passes only
+# west. A flooded north baguette passes north, east, and west, and stops south.
+# A flooded north listel passes north and east. A flooded north necking passes
+# north and west. A flooded north taenia passes north and south. A flooded
+# north annulet passes only west. A flooded north echinus passes only east. A
+# flooded north rebate passes only south. A flooded north abacus passes only
+# north. A flooded north throat passes only south.
+# A billet has a facing. Rotation changes it the same way: 0 north, 90 east,
+# 180 south, 270 west. While its row is dry, every heading stops on the edge
+# and the beam does not enter. One click still stops every heading. Opposite
+# dry facings share that shut state. While that row is flooded, the facing,
+# the opposite, and the next counterclockwise heading pass straight through,
+# and that pass costs no bounce. A flooded north billet passes north, south,
+# and west, and stops east. One click faces east and east, west, and north
+# pass while south stops. A flooded south billet passes south, north, and
+# east, and stops west. A dry fascia passes north, south, and west and stays
+# shut under water, so this piece is the flooded version of that set. A
+# flooded north beak passes only east. A flooded north reglet passes north,
+# south, and east, and stops west. A flooded north baguette passes north,
+# east, and west, and stops south. A flooded north listel passes north and
+# east. A flooded north necking passes north and west. A flooded north taenia
+# passes north and south. A flooded north annulet passes only west. A flooded
+# north echinus passes only east. A flooded north rebate passes only south. A
+# flooded north abacus passes only north. A flooded north throat passes only
+# south.
 # See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
@@ -462,6 +496,8 @@ const LISTEL := "The Listel"
 const NECKING := "The Necking"
 const TAENIA := "The Taenia"
 const BAGUETTE := "The Baguette"
+const REGLET := "The Reglet"
+const BILLET := "The Billet"
 
 static func all() -> Array:
 	var book: Array = []
@@ -515,6 +551,8 @@ static func all() -> Array:
 	book.append_array(necking())
 	book.append_array(taenia())
 	book.append_array(baguette())
+	book.append_array(reglet())
+	book.append_array(billet())
 	return book
 
 
@@ -716,6 +754,14 @@ static func taenia() -> Array:
 
 static func baguette() -> Array:
 	return [chart_391(), chart_392(), chart_393(), chart_394(), chart_395(), chart_396(), chart_397(), chart_398()]
+
+
+static func reglet() -> Array:
+	return [chart_399(), chart_400(), chart_401(), chart_402(), chart_403(), chart_404(), chart_405(), chart_406()]
+
+
+static func billet() -> Array:
+	return [chart_407(), chart_408(), chart_409(), chart_410(), chart_411(), chart_412(), chart_413(), chart_414()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -14180,6 +14226,336 @@ static func chart_398() -> Dictionary:
 	)
 
 
+static func _reglet_lane(prefix: String, ox: int, open_east: bool) -> Dictionary:
+	return {
+		"lanterns": [
+			_lantern(prefix + "Tn", ox + 2, 1, "S", "white"),
+			_lantern(prefix + "Ts", ox + 4, 1, "S", "red"),
+			_lantern(prefix + "Te", ox + 1, 2, "S", "blue"),
+			_lantern(prefix + "Tw", ox + 8, 2, "S", "red"),
+		],
+		"docks": [
+			_dock(prefix + "Nd", ox + 4, 3, "white", true, open_east),
+			_dock(prefix + "Kb", ox + 4, 2, "blue", true, true),
+			_dock(prefix + "Ks", ox + 2, 3, "red", true, false),
+			_dock(prefix + "Ke", ox + 8, 3, "blue", true, false),
+			_dock(prefix + "Kw", ox + 1, 3, "red", true, not open_east),
+		],
+		"fixtures": [
+			_fixture(prefix + "S24", "shutter", ox + 2, 4, 0),
+			_fixture(prefix + "S25", "shutter", ox + 2, 5, 0),
+			_fixture(prefix + "S26", "shutter", ox + 2, 6, 0),
+			_fixture(prefix + "M27", "tide_mirror", ox + 2, 7, 90),
+			_fixture(prefix + "S37", "shutter", ox + 3, 7, 0),
+			_fixture(prefix + "M47", "tide_mirror", ox + 4, 7, 0),
+			_fixture(prefix + "S46", "shutter", ox + 4, 6, 0),
+			_fixture(prefix + "S45", "shutter", ox + 4, 5, 0),
+			_fixture(prefix + "M14", "tide_mirror", ox + 1, 4, 90),
+			_fixture(prefix + "S34", "shutter", ox + 3, 4, 0),
+			_fixture(prefix + "S54", "shutter", ox + 5, 4, 0),
+			_fixture(prefix + "S64", "shutter", ox + 6, 4, 0),
+			_fixture(prefix + "S74", "shutter", ox + 7, 4, 0),
+			_fixture(prefix + "M84", "tide_mirror", ox + 8, 4, 0),
+		],
+	}
+
+
+static func _reglet_chart(id: String, title: String, teach: String, win: String, start_rot: int, sol_rot: int, open_east: bool, boat: bool) -> Dictionary:
+	var lane := _reglet_lane("", 0, open_east)
+	var boats: Array = []
+	if boat:
+		boats.append(_boat("Hb", 1, 7))
+	return {
+		"id": id,
+		"title": title,
+		"harbor": REGLET,
+		"win": win,
+		"teach": teach,
+		"cols": 9,
+		"rows": 8,
+		"tide_phases": [0, 4],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": lane["lanterns"],
+		"docks": lane["docks"],
+		"boats": boats,
+		"fixtures": lane["fixtures"],
+		"pieces": [
+			_reglet("O", "Reglet", 4, 4, start_rot, sol_rot),
+		],
+	}
+
+
+static func chart_399() -> Dictionary:
+	return _reglet_chart(
+		"399",
+		"The Flooded Reglet",
+		"A flooded north reglet passes north, south, and east, and stops west. While it is dry, every heading stops.",
+		"High water opens north, south, and east. Low water stops every heading.",
+		90,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_400() -> Dictionary:
+	return _reglet_chart(
+		"400",
+		"The Turned Reglet",
+		"One click from north faces east. A flooded east reglet passes east, west, and south, and stops north.",
+		"The reglet faces east. East, west, and south pass.",
+		0,
+		90,
+		true,
+		false
+	)
+
+
+static func chart_401() -> Dictionary:
+	return _reglet_chart(
+		"401",
+		"The Listel West",
+		"A flooded north listel passes north and east, so the south dock stays dark.",
+		"North, south, and east pass. The listel misses that set.",
+		180,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_402() -> Dictionary:
+	return _reglet_chart(
+		"402",
+		"The Necking East",
+		"A flooded north necking passes north and west, so the west keep lights and the south and east docks stay dark.",
+		"North, south, and east pass. The necking misses that set.",
+		270,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_403() -> Dictionary:
+	return _reglet_chart(
+		"403",
+		"The Taenia East",
+		"A flooded north taenia passes north and south, so the east dock stays dark.",
+		"North, south, and east pass. The taenia misses that set.",
+		90,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_404() -> Dictionary:
+	return _reglet_chart(
+		"404",
+		"The Baguette South",
+		"A flooded north baguette passes north, east, and west, and stops south, so the south dock stays dark.",
+		"North, south, and east pass. The baguette misses that set.",
+		180,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_405() -> Dictionary:
+	return _reglet_chart(
+		"405",
+		"The Annulet Dark",
+		"A flooded north annulet passes only west, which is a keep, so the north, south, and east docks stay dark.",
+		"North, south, and east pass. The annulet misses that set.",
+		270,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_406() -> Dictionary:
+	return _reglet_chart(
+		"406",
+		"The Reglet Line",
+		"Raise the tide to the reglet's row. Under water, north, south, and east pass. A flooded north echinus passes only east and misses north and south. A flooded north rebate passes only south and misses north and east. A flooded north abacus passes only north and misses south and east. A flooded north throat passes only south and misses north and east. Low water lights the hull and leaves those docks dark.",
+		"The flood line stands on the reglet. The hull stays dark.",
+		90,
+		0,
+		false,
+		true
+	)
+
+
+static func _billet_lane(prefix: String, ox: int, east_facing: bool) -> Dictionary:
+	return {
+		"lanterns": [
+			_lantern(prefix + "Tn", ox + 2, 1, "S", "white"),
+			_lantern(prefix + "Ts", ox + 4, 1, "S", "red"),
+			_lantern(prefix + "Te", ox + 1, 2, "S", "blue"),
+			_lantern(prefix + "Tw", ox + 8, 2, "S", "red"),
+		],
+		"docks": [
+			_dock(prefix + "Nd", ox + 4, 3, "white", true, false),
+			_dock(prefix + "Kb", ox + 4, 2, "blue", true, true),
+			_dock(prefix + "Ks", ox + 2, 3, "red", true, east_facing),
+			_dock(prefix + "Ke", ox + 8, 3, "blue", true, not east_facing),
+			_dock(prefix + "Kw", ox + 1, 3, "red", true, false),
+		],
+		"fixtures": [
+			_fixture(prefix + "S24", "shutter", ox + 2, 4, 0),
+			_fixture(prefix + "S25", "shutter", ox + 2, 5, 0),
+			_fixture(prefix + "S26", "shutter", ox + 2, 6, 0),
+			_fixture(prefix + "M27", "tide_mirror", ox + 2, 7, 90),
+			_fixture(prefix + "S37", "shutter", ox + 3, 7, 0),
+			_fixture(prefix + "M47", "tide_mirror", ox + 4, 7, 0),
+			_fixture(prefix + "S46", "shutter", ox + 4, 6, 0),
+			_fixture(prefix + "S45", "shutter", ox + 4, 5, 0),
+			_fixture(prefix + "M14", "tide_mirror", ox + 1, 4, 90),
+			_fixture(prefix + "S34", "shutter", ox + 3, 4, 0),
+			_fixture(prefix + "S54", "shutter", ox + 5, 4, 0),
+			_fixture(prefix + "S64", "shutter", ox + 6, 4, 0),
+			_fixture(prefix + "S74", "shutter", ox + 7, 4, 0),
+			_fixture(prefix + "M84", "tide_mirror", ox + 8, 4, 0),
+		],
+	}
+
+
+static func _billet_chart(id: String, title: String, teach: String, win: String, start_rot: int, sol_rot: int, east_facing: bool, boat: bool) -> Dictionary:
+	var lane := _billet_lane("", 0, east_facing)
+	var boats: Array = []
+	if boat:
+		boats.append(_boat("Hb", 1, 7))
+	return {
+		"id": id,
+		"title": title,
+		"harbor": BILLET,
+		"win": win,
+		"teach": teach,
+		"cols": 9,
+		"rows": 8,
+		"tide_phases": [0, 4],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": lane["lanterns"],
+		"docks": lane["docks"],
+		"boats": boats,
+		"fixtures": lane["fixtures"],
+		"pieces": [
+			_billet("O", "Billet", 4, 4, start_rot, sol_rot),
+		],
+	}
+
+
+static func chart_407() -> Dictionary:
+	return _billet_chart(
+		"407",
+		"The Flooded Billet",
+		"A flooded north billet passes north, south, and west, and stops east. While it is dry, every heading stops.",
+		"High water opens north, south, and west. Low water stops every heading.",
+		90,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_408() -> Dictionary:
+	return _billet_chart(
+		"408",
+		"The Turned Billet",
+		"One click from north faces east. A flooded east billet passes east, west, and north, and stops south.",
+		"The billet faces east. East, west, and north pass.",
+		0,
+		90,
+		true,
+		false
+	)
+
+
+static func chart_409() -> Dictionary:
+	return _billet_chart(
+		"409",
+		"The Listel South",
+		"A flooded north listel passes north and east, so the east keep lights and the south and west docks stay dark.",
+		"North, south, and west pass. The listel misses that set.",
+		180,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_410() -> Dictionary:
+	return _billet_chart(
+		"410",
+		"The Necking South",
+		"A flooded north necking passes north and west, so the south dock stays dark.",
+		"North, south, and west pass. The necking misses that set.",
+		270,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_411() -> Dictionary:
+	return _billet_chart(
+		"411",
+		"The Taenia West",
+		"A flooded north taenia passes north and south, so the west dock stays dark.",
+		"North, south, and west pass. The taenia misses that set.",
+		90,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_412() -> Dictionary:
+	return _billet_chart(
+		"412",
+		"The Baguette Dark",
+		"A flooded north baguette passes north, east, and west, and stops south, so the east keep lights and the south dock stays dark.",
+		"North, south, and west pass. The baguette misses that set.",
+		180,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_413() -> Dictionary:
+	return _billet_chart(
+		"413",
+		"The Reglet West",
+		"A flooded north reglet passes north, south, and east, and stops west, so the east keep lights and the west dock stays dark.",
+		"North, south, and west pass. The reglet misses that set.",
+		270,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_414() -> Dictionary:
+	return _billet_chart(
+		"414",
+		"The Billet Line",
+		"Raise the tide to the billet's row. Under water, north, south, and west pass. A flooded north annulet passes only west and misses north and south. A flooded north echinus passes only east, which is a keep, and misses north, south, and west. A flooded north rebate passes only south and misses north and west. A flooded north abacus passes only north and misses south and west. A flooded north throat passes only south and misses north and west. Low water lights the hull and leaves those docks dark.",
+		"The flood line stands on the billet. The hull stays dark.",
+		90,
+		0,
+		false,
+		true
+	)
+
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -14628,6 +15004,34 @@ static func _throat(id: String, name: String, x: int, y: int, start_rot: int, so
 		"id": id,
 		"name": name,
 		"kind": "throat",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _billet(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "billet",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _reglet(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "reglet",
 		"movable": false,
 		"sockets": [{"id": "a", "x": x, "y": y}],
 		"start_socket": "a",
