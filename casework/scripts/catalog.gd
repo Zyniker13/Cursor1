@@ -40,8 +40,9 @@ const Dowel = preload("res://scripts/dowel.gd")
 const Tongue = preload("res://scripts/tongue.gd")
 const Quirk = preload("res://scripts/quirk.gd")
 const Chamfer = preload("res://scripts/chamfer.gd")
+const Scotia = preload("res://scripts/scotia.gd")
 
-const CASES: Array = [SpareKey, RehearsalScore, GiltStamp, FerryBell, WeatherSlate, LoomShuttle, HiveSmoker, GlassPontil, PressProof, AssayCup, KilnChalk, TideLedger, NightBell, SaltMark, WickTrim, GlassAnneal, OrchardGraft, DyeVat, TarKettle, CorkPress, NetLoft, CaskHoop, LinenFold, Dovetail, Mortise, Rebate, Housing, Tenon, Bridle, Dado, Spline, Mitre, Lap, Scarf, Finger, Haunch, Dowel, Tongue, Quirk, Chamfer]
+const CASES: Array = [SpareKey, RehearsalScore, GiltStamp, FerryBell, WeatherSlate, LoomShuttle, HiveSmoker, GlassPontil, PressProof, AssayCup, KilnChalk, TideLedger, NightBell, SaltMark, WickTrim, GlassAnneal, OrchardGraft, DyeVat, TarKettle, CorkPress, NetLoft, CaskHoop, LinenFold, Dovetail, Mortise, Rebate, Housing, Tenon, Bridle, Dado, Spline, Mitre, Lap, Scarf, Finger, Haunch, Dowel, Tongue, Quirk, Chamfer, Scotia]
 
 
 static func all() -> Array:
