@@ -321,6 +321,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_baguette(at, rot)
 		"reglet":
 			_draw_reglet(at, rot)
+		"billet":
+			_draw_billet(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -2071,6 +2073,52 @@ func _reglet_tick(center: Vector2, dir: String, mark: Color) -> void:
 		inner + across * half,
 		outer + across * half,
 		outer - across * half,
+	]), mark)
+
+func _draw_billet(at: Vector2i, rot: int) -> void:
+	# Three short bricks on the flooded headings and a gap on the stopped
+	# clockwise heading. The bricks stay separate, unlike the reglet strip.
+	var center := _center(at)
+	var facing := Tracer.billet_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var stop := "E"
+	match facing:
+		"N":
+			stop = "E"
+		"E":
+			stop = "S"
+		"S":
+			stop = "W"
+		_:
+			stop = "N"
+	var brick := cell * 0.11
+	draw_rect(Rect2(center - Vector2(brick, brick) * 0.45, Vector2(brick, brick) * 0.9), mark, true)
+	for dir in ["N", "E", "S", "W"]:
+		if dir == stop:
+			continue
+		_billet_brick(center, dir, mark)
+
+func _billet_brick(center: Vector2, dir: String, mark: Color) -> void:
+	var outward := Vector2.UP
+	match dir:
+		"N":
+			outward = Vector2.UP
+		"E":
+			outward = Vector2.RIGHT
+		"S":
+			outward = Vector2.DOWN
+		_:
+			outward = Vector2.LEFT
+	var across := Vector2(-outward.y, outward.x)
+	var mid := center + outward * cell * 0.28
+	var half_along := cell * 0.07
+	var half_across := cell * 0.09
+	draw_colored_polygon(PackedVector2Array([
+		mid - outward * half_along - across * half_across,
+		mid + outward * half_along - across * half_across,
+		mid + outward * half_along + across * half_across,
+		mid - outward * half_along + across * half_across,
 	]), mark)
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
