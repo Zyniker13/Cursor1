@@ -3,7 +3,7 @@ extends RefCounted
 ## Buildings 1 through 52. Directions: 0 east, 1 south, 2 west, 3 north.
 ## `unlocks` is the single new block this puzzle introduces, or "".
 
-const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook", "return", "pause", "chute", "shunt", "bias", "vault", "sling", "cant", "balk", "loft", "keel", "sheer", "strake", "wale", "garboard", "stealer", "rabbet", "futtock", "keelson", "stemson", "apron", "deadwood", "gripe", "forefoot", "knighthead", "hawse", "breasthook", "cathead", "gammon", "bobstay", "bumpkin", "dolphin", "martingale", "jibboom", "whisker", "cranse", "bees", "sprit", "bumkin", "vangs", "clew", "sheet", "tack", "cleat", "belay", "bitt", "bollard", "samson", "kevel", "norman", "range"]
+const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook", "return", "pause", "chute", "shunt", "bias", "vault", "sling", "cant", "balk", "loft", "keel", "sheer", "strake", "wale", "garboard", "stealer", "rabbet", "futtock", "keelson", "stemson", "apron", "deadwood", "gripe", "forefoot", "knighthead", "hawse", "breasthook", "cathead", "gammon", "bobstay", "bumpkin", "dolphin", "martingale", "jibboom", "whisker", "cranse", "bees", "sprit", "bumkin", "vangs", "clew", "sheet", "tack", "cleat", "belay", "bitt", "bollard", "samson", "kevel", "norman", "range", "cavil"]
 
 
 static func all() -> Array:
@@ -8902,6 +8902,177 @@ static func all() -> Array:
 				_block("conveyor", 41, 4, 3),
 			]
 		),
+		_puzzle(
+			422, "First Cavil", "cavil",
+			"Jump thirty-eight cells forward, and keep the facing.",
+			"",
+			"The parcel comes in facing east. The cavil jumps it thirty-eight cells east and leaves it facing east. The thirty-seven cells in front are bricks and are not entered. The pause then steps east onto the dock. A range lands on the last brick. A norman lands two cells short. A kevel lands three cells short. A samson lands four cells short. A bollard lands five cells short. A bitt lands six cells short. A belay lands seven cells short. A cleat lands eight cells short. A tack lands nine cells short. A sheet lands ten cells short. A clew lands eleven cells short. A vangs lands twelve cells short. A bumkin lands thirteen cells short. A sprit lands fourteen cells short. A bees lands fifteen cells short. A cranse lands sixteen cells short. A whisker lands seventeen cells short. A jibboom lands eighteen cells short. A martingale lands nineteen cells short. A dolphin lands twenty cells short. A bumpkin lands twenty-one cells short. A bobstay lands twenty-two cells short. A gammon lands twenty-three cells short. A cathead lands twenty-four cells short. A keel jumps three cells west. A rabbet jumps one cell west.",
+			42, 3,
+			[_cell(3, 1), _cell(4, 1), _cell(5, 1), _cell(6, 1), _cell(7, 1), _cell(8, 1), _cell(9, 1), _cell(10, 1), _cell(11, 1), _cell(12, 1), _cell(13, 1), _cell(14, 1), _cell(15, 1), _cell(16, 1), _cell(17, 1), _cell(18, 1), _cell(19, 1), _cell(20, 1), _cell(21, 1), _cell(22, 1), _cell(23, 1), _cell(24, 1), _cell(25, 1), _cell(26, 1), _cell(27, 1), _cell(28, 1), _cell(29, 1), _cell(30, 1), _cell(31, 1), _cell(32, 1), _cell(33, 1), _cell(34, 1), _cell(35, 1), _cell(36, 1), _cell(37, 1), _cell(38, 1), _cell(39, 1), _cell(2, 0), _cell(2, 2)],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 41, "y": 1},
+			[{"color": "gray"}],
+			[
+				_block("conveyor", 1, 1, 0),
+				_block("cavil", 2, 1, 0),
+				_block("pause", 40, 1, 0),
+			]
+		),
+		_puzzle(
+			423, "Let Cavil", "",
+			"Wait until the landing is free, then jump thirty-eight cells forward.",
+			"",
+			"Blue is standing on the landing. The cavil holds red until that cell is free, then jumps thirty-eight cells east and leaves red facing east. The cells in front are not entered. The pause steps east onto the dock. A range lands one cell short. A norman lands two cells short. A kevel lands three cells short. A samson lands four cells short. A bollard lands five cells short. A bitt lands six cells short. A belay lands seven cells short. A cleat lands eight cells short. A tack lands nine cells short. A sheet lands ten cells short. A clew lands eleven cells short. A vangs lands twelve cells short. A bumkin lands thirteen cells short. A sprit lands fourteen cells short. A bees lands fifteen cells short. A cranse lands sixteen cells short. A whisker lands seventeen cells short. A jibboom lands eighteen cells short. A martingale lands nineteen cells short. A dolphin lands twenty cells short. A bumpkin lands twenty-one cells short. A bobstay lands twenty-two cells short. A gammon lands twenty-three cells short. A cathead lands twenty-four cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			42, 3,
+			[_cell(3, 1), _cell(4, 1), _cell(5, 1), _cell(6, 1), _cell(7, 1), _cell(8, 1), _cell(9, 1), _cell(10, 1), _cell(11, 1), _cell(12, 1), _cell(13, 1), _cell(14, 1), _cell(15, 1), _cell(16, 1), _cell(17, 1), _cell(18, 1), _cell(19, 1), _cell(20, 1), _cell(21, 1), _cell(22, 1), _cell(23, 1), _cell(24, 1), _cell(25, 1), _cell(26, 1), _cell(27, 1), _cell(28, 1), _cell(29, 1), _cell(30, 1), _cell(31, 1), _cell(32, 1), _cell(33, 1), _cell(34, 1), _cell(35, 1), _cell(36, 1), _cell(37, 1), _cell(38, 1), _cell(39, 1)],
+			[
+				_source(0, 1, 0, ["red"]),
+				_source(39, 2, 0, ["blue"]),
+			],
+			{"x": 41, "y": 1},
+			[{"color": "blue"}, {"color": "red"}],
+			[
+				_block("conveyor", 1, 1, 0),
+				_block("cavil", 2, 1, 0),
+				_block("garboard", 40, 2, 0),
+				_block("pause", 40, 1, 0),
+			]
+		),
+		_puzzle(
+			424, "Cavil Count", "",
+			"Stamp blue 1 and red 2. The cavil's wait is what makes the counter read 2.",
+			"",
+			"The cavil waits, then jumps the east-facing parcel thirty-eight cells east. The pause carries that facing onto the counter after blue has been stamped 1, so red is stamped 2. The cells in front are not entered. A range lands one cell short. A norman lands two cells short. A kevel lands three cells short. A samson lands four cells short. A bollard lands five cells short. A bitt lands six cells short. A belay lands seven cells short. A cleat lands eight cells short. A tack lands nine cells short. A sheet lands ten cells short. A clew lands eleven cells short. A vangs lands twelve cells short. A bumkin lands thirteen cells short. A sprit lands fourteen cells short. A bees lands fifteen cells short. A cranse lands sixteen cells short. A whisker lands seventeen cells short. A jibboom lands eighteen cells short. A martingale lands nineteen cells short. A dolphin lands twenty cells short. A bumpkin lands twenty-one cells short. A bobstay lands twenty-two cells short. A gammon lands twenty-three cells short. A cathead lands twenty-four cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			43, 4,
+			[_cell(2, 1), _cell(3, 1), _cell(4, 1), _cell(5, 1), _cell(6, 1), _cell(7, 1), _cell(8, 1), _cell(9, 1), _cell(10, 1), _cell(11, 1), _cell(12, 1), _cell(13, 1), _cell(14, 1), _cell(15, 1), _cell(16, 1), _cell(17, 1), _cell(18, 1), _cell(19, 1), _cell(20, 1), _cell(21, 1), _cell(22, 1), _cell(23, 1), _cell(24, 1), _cell(25, 1), _cell(26, 1), _cell(27, 1), _cell(28, 1), _cell(29, 1), _cell(30, 1), _cell(31, 1), _cell(32, 1), _cell(33, 1), _cell(34, 1), _cell(35, 1), _cell(36, 1), _cell(37, 1), _cell(38, 1), _cell(1, 0), _cell(1, 2)],
+			[
+				_source(0, 1, 0, ["red"]),
+				_source(40, 3, 3, ["blue"]),
+			],
+			{"x": 42, "y": 1},
+			[{"color": "blue", "count": 1}, {"color": "red", "count": 2}],
+			[
+				_block("cavil", 1, 1, 0),
+				_block("pause", 39, 1, 0),
+				_block("conveyor", 40, 2, 3),
+				_block("counter", 40, 1, 0),
+				_block("conveyor", 41, 1, 0),
+			]
+		),
+		_puzzle(
+			425, "Thirty-Eight Ahead", "",
+			"Jump thirty-eight cells forward. The thirty-seven bricks in front are not entered.",
+			"",
+			"The cavil jumps thirty-eight cells east and leaves the parcel facing east. The pause steps east onto the dock and does not enter any of the thirty-seven bricks. A range tries to land on the last brick. A norman lands two cells short. A kevel lands three cells short. A samson lands four cells short. A bollard lands five cells short. A bitt lands six cells short. A belay lands seven cells short. A cleat lands eight cells short. A tack lands nine cells short. A sheet lands ten cells short. A clew lands eleven cells short. A vangs lands twelve cells short. A bumkin lands thirteen cells short. A sprit lands fourteen cells short. A bees lands fifteen cells short. A cranse lands sixteen cells short. A whisker lands seventeen cells short. A jibboom lands eighteen cells short. A martingale lands nineteen cells short. A dolphin lands twenty cells short. A bumpkin lands twenty-one cells short. A bobstay lands twenty-two cells short. A gammon lands twenty-three cells short. A cathead lands twenty-four cells short. A pause tries to enter the first brick. A keel jumps three cells west. A rabbet jumps one cell west.",
+			41, 3,
+			[_cell(2, 1), _cell(3, 1), _cell(4, 1), _cell(5, 1), _cell(6, 1), _cell(7, 1), _cell(8, 1), _cell(9, 1), _cell(10, 1), _cell(11, 1), _cell(12, 1), _cell(13, 1), _cell(14, 1), _cell(15, 1), _cell(16, 1), _cell(17, 1), _cell(18, 1), _cell(19, 1), _cell(20, 1), _cell(21, 1), _cell(22, 1), _cell(23, 1), _cell(24, 1), _cell(25, 1), _cell(26, 1), _cell(27, 1), _cell(28, 1), _cell(29, 1), _cell(30, 1), _cell(31, 1), _cell(32, 1), _cell(33, 1), _cell(34, 1), _cell(35, 1), _cell(36, 1), _cell(37, 1), _cell(38, 1)],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 40, "y": 1},
+			[{"color": "gray"}],
+			[
+				_block("cavil", 1, 1, 0),
+				_block("pause", 39, 1, 0),
+			]
+		),
+		_puzzle(
+			426, "Two Cavils", "",
+			"Deliver red, then blue. Each jump is thirty-eight cells forward from a different facing.",
+			"",
+			"Red arrives facing east, jumps thirty-eight cells east, and the pause steps east onto the dock. Blue arrives facing south, jumps thirty-eight cells south, and the pause steps south onto the dock. Each jump keeps the arrival facing and skips the thirty-seven cells in front. A range lands one cell short. A norman lands two cells short. A kevel lands three cells short. A samson lands four cells short. A bollard lands five cells short. A bitt lands six cells short. A belay lands seven cells short. A cleat lands eight cells short. A tack lands nine cells short. A sheet lands ten cells short. A clew lands eleven cells short. A vangs lands twelve cells short. A bumkin lands thirteen cells short. A sprit lands fourteen cells short. A bees lands fifteen cells short. A cranse lands sixteen cells short. A whisker lands seventeen cells short. A jibboom lands eighteen cells short. A martingale lands nineteen cells short. A dolphin lands twenty cells short. A bumpkin lands twenty-one cells short. A bobstay lands twenty-two cells short. A gammon lands twenty-three cells short. A cathead lands twenty-four cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			41, 42,
+			[_cell(2, 41), _cell(3, 41), _cell(4, 41), _cell(5, 41), _cell(6, 41), _cell(7, 41), _cell(8, 41), _cell(9, 41), _cell(10, 41), _cell(11, 41), _cell(12, 41), _cell(13, 41), _cell(14, 41), _cell(15, 41), _cell(16, 41), _cell(17, 41), _cell(18, 41), _cell(19, 41), _cell(20, 41), _cell(21, 41), _cell(22, 41), _cell(23, 41), _cell(24, 41), _cell(25, 41), _cell(26, 41), _cell(27, 41), _cell(28, 41), _cell(29, 41), _cell(30, 41), _cell(31, 41), _cell(32, 41), _cell(33, 41), _cell(34, 41), _cell(35, 41), _cell(36, 41), _cell(37, 41), _cell(38, 41), _cell(1, 40)],
+			[
+				_source(0, 41, 0, ["red"]),
+				_source(40, 0, 1, ["blue"]),
+			],
+			{"x": 40, "y": 41},
+			[{"color": "red"}, {"color": "blue"}],
+			[
+				_block("cavil", 1, 41, 0),
+				_block("pause", 39, 41, 0),
+				_block("pause", 40, 1, 0),
+				_block("cavil", 40, 2, 0),
+				_block("pause", 40, 40, 0),
+			]
+		),
+		_puzzle(
+			427, "Second Cavil", "",
+			"Jump thirty-eight cells forward, hook, then jump thirty-eight cells forward on the new facing.",
+			"",
+			"The first cavil jumps the east-facing parcel thirty-eight cells east and leaves it facing east. The hook sends it north onto the second cavil. That cavil jumps thirty-eight cells north, still facing north, onto the dock. One cavil cannot do both jumps. A range lands one cell short. A norman lands two cells short. A kevel lands three cells short. A samson lands four cells short. A bollard lands five cells short. A bitt lands six cells short. A belay lands seven cells short. A cleat lands eight cells short. A tack lands nine cells short. A sheet lands ten cells short. A clew lands eleven cells short. A vangs lands twelve cells short. A bumkin lands thirteen cells short. A sprit lands fourteen cells short. A bees lands fifteen cells short. A cranse lands sixteen cells short. A whisker lands seventeen cells short. A jibboom lands eighteen cells short. A martingale lands nineteen cells short. A dolphin lands twenty cells short. A bumpkin lands twenty-one cells short. A bobstay lands twenty-two cells short. A gammon lands twenty-three cells short. A cathead lands twenty-four cells short. A keel jumps three cells back. A rabbet jumps one cell back. A turn faces south.",
+			40, 40,
+			[_cell(2, 39), _cell(3, 39), _cell(4, 39), _cell(5, 39), _cell(6, 39), _cell(7, 39), _cell(8, 39), _cell(9, 39), _cell(10, 39), _cell(11, 39), _cell(12, 39), _cell(13, 39), _cell(14, 39), _cell(15, 39), _cell(16, 39), _cell(17, 39), _cell(18, 39), _cell(19, 39), _cell(20, 39), _cell(21, 39), _cell(22, 39), _cell(23, 39), _cell(24, 39), _cell(25, 39), _cell(26, 39), _cell(27, 39), _cell(28, 39), _cell(29, 39), _cell(30, 39), _cell(31, 39), _cell(32, 39), _cell(33, 39), _cell(34, 39), _cell(35, 39), _cell(36, 39), _cell(37, 39), _cell(38, 39), _cell(39, 37), _cell(39, 36), _cell(39, 35), _cell(39, 34), _cell(39, 33), _cell(39, 32), _cell(39, 31), _cell(39, 30), _cell(39, 29), _cell(39, 28), _cell(39, 27), _cell(39, 26), _cell(39, 25), _cell(39, 24), _cell(39, 23), _cell(39, 22), _cell(39, 21), _cell(39, 20), _cell(39, 19), _cell(39, 18), _cell(39, 17), _cell(39, 16), _cell(39, 15), _cell(39, 14), _cell(39, 13), _cell(39, 12), _cell(39, 11), _cell(39, 10), _cell(39, 9), _cell(39, 8), _cell(39, 7), _cell(39, 6), _cell(39, 5), _cell(39, 4), _cell(39, 3), _cell(39, 2), _cell(39, 1)],
+			[_source(0, 39, 0, ["gray"])],
+			{"x": 39, "y": 0},
+			[{"color": "gray"}],
+			[
+				_block("cavil", 1, 39, 0),
+				_block("hook", 39, 39, 0),
+				_block("cavil", 39, 38, 0),
+			]
+		),
+		_puzzle(
+			428, "Night Cavil", "",
+			"Deliver red 1, yellow 2, and blue 3.",
+			"",
+			"Red takes the filter. The cavil jumps it thirty-eight cells east and leaves it facing east. The pause carries that facing onto the counter for stamp 1. The thirty-seven cells in front are not entered. Gray takes the long belt and is primed yellow. Blue keeps its color. A range lands one cell short. A norman lands two cells short. A kevel lands three cells short. A samson lands four cells short. A bollard lands five cells short. A bitt lands six cells short. A belay lands seven cells short. A cleat lands eight cells short. A tack lands nine cells short. A sheet lands ten cells short. A clew lands eleven cells short. A vangs lands twelve cells short. A bumkin lands thirteen cells short. A sprit lands fourteen cells short. A bees lands fifteen cells short. A cranse lands sixteen cells short. A whisker lands seventeen cells short. A jibboom lands eighteen cells short. A martingale lands nineteen cells short. A dolphin lands twenty cells short. A bumpkin lands twenty-one cells short. A bobstay lands twenty-two cells short. A gammon lands twenty-three cells short. A cathead lands twenty-four cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			44, 6,
+			[_cell(4, 3), _cell(5, 3), _cell(6, 3), _cell(7, 3), _cell(8, 3), _cell(9, 3), _cell(10, 3), _cell(11, 3), _cell(12, 3), _cell(13, 3), _cell(14, 3), _cell(15, 3), _cell(16, 3), _cell(17, 3), _cell(18, 3), _cell(19, 3), _cell(20, 3), _cell(21, 3), _cell(22, 3), _cell(23, 3), _cell(24, 3), _cell(25, 3), _cell(26, 3), _cell(27, 3), _cell(28, 3), _cell(29, 3), _cell(30, 3), _cell(31, 3), _cell(32, 3), _cell(33, 3), _cell(34, 3), _cell(35, 3), _cell(36, 3), _cell(37, 3), _cell(38, 3), _cell(39, 3), _cell(40, 3)],
+			[_source(0, 3, 0, ["gray", "blue", "red"])],
+			{"x": 43, "y": 3},
+			[{"color": "red", "count": 1}, {"color": "yellow", "count": 2}, {"color": "blue", "count": 3}],
+			[
+				_block("filter", 1, 3, 0, "red"),
+				_block("conveyor", 2, 3, 0),
+				_block("cavil", 3, 3, 0),
+				_block("pause", 41, 3, 0),
+				_block("counter", 42, 3, 0),
+				_block("pause", 1, 4, 0),
+				_block("primer", 1, 5, 0, "yellow"),
+				_block("conveyor", 2, 5, 0),
+				_block("conveyor", 3, 5, 0),
+				_block("conveyor", 4, 5, 0),
+				_block("conveyor", 5, 5, 0),
+				_block("conveyor", 6, 5, 0),
+				_block("conveyor", 7, 5, 0),
+				_block("conveyor", 8, 5, 0),
+				_block("conveyor", 9, 5, 0),
+				_block("conveyor", 10, 5, 0),
+				_block("conveyor", 11, 5, 0),
+				_block("conveyor", 12, 5, 0),
+				_block("conveyor", 13, 5, 0),
+				_block("conveyor", 14, 5, 0),
+				_block("conveyor", 15, 5, 0),
+				_block("conveyor", 16, 5, 0),
+				_block("conveyor", 17, 5, 0),
+				_block("conveyor", 18, 5, 0),
+				_block("conveyor", 19, 5, 0),
+				_block("conveyor", 20, 5, 0),
+				_block("conveyor", 21, 5, 0),
+				_block("conveyor", 22, 5, 0),
+				_block("conveyor", 23, 5, 0),
+				_block("conveyor", 24, 5, 0),
+				_block("conveyor", 25, 5, 0),
+				_block("conveyor", 26, 5, 0),
+				_block("conveyor", 27, 5, 0),
+				_block("conveyor", 28, 5, 0),
+				_block("conveyor", 29, 5, 0),
+				_block("conveyor", 30, 5, 0),
+				_block("conveyor", 31, 5, 0),
+				_block("conveyor", 32, 5, 0),
+				_block("conveyor", 33, 5, 0),
+				_block("conveyor", 34, 5, 0),
+				_block("conveyor", 35, 5, 0),
+				_block("conveyor", 36, 5, 0),
+				_block("conveyor", 37, 5, 0),
+				_block("conveyor", 38, 5, 0),
+				_block("conveyor", 39, 5, 0),
+				_block("conveyor", 40, 5, 0),
+				_block("conveyor", 41, 5, 0),
+				_block("conveyor", 42, 5, 3),
+				_block("conveyor", 42, 4, 3),
+			]
+		),
 	]
 
 
@@ -8931,7 +9102,7 @@ static func _puzzle(id: int, title: String, unlocks: String, brief: String, how_
 		"dock": dock,
 		"order": order,
 		"reference": reference,
-		"building": 59 if id >= 415 else 58 if id >= 408 else 57 if id >= 401 else 56 if id >= 394 else 55 if id >= 387 else 54 if id >= 380 else 53 if id >= 373 else 52 if id >= 366 else 51 if id >= 359 else 50 if id >= 352 else 49 if id >= 345 else 48 if id >= 338 else 47 if id >= 331 else 46 if id >= 324 else 45 if id >= 317 else 44 if id >= 310 else 43 if id >= 303 else 42 if id >= 296 else 41 if id >= 289 else 40 if id >= 282 else 39 if id >= 275 else 38 if id >= 268 else 37 if id >= 261 else 36 if id >= 254 else 35 if id >= 247 else 34 if id >= 240 else 33 if id >= 233 else 32 if id >= 226 else 31 if id >= 219 else 30 if id >= 212 else 29 if id >= 205 else 28 if id >= 198 else 27 if id >= 191 else 26 if id >= 184 else 25 if id >= 177 else 24 if id >= 170 else 23 if id >= 163 else 22 if id >= 156 else 21 if id >= 149 else 20 if id >= 142 else 19 if id >= 135 else 18 if id >= 128 else 17 if id >= 121 else 16 if id >= 114 else 15 if id >= 107 else 14 if id >= 100 else 13 if id >= 93 else 12 if id >= 86 else 11 if id >= 79 else 10 if id >= 72 else 9 if id >= 65 else 8 if id >= 58 else 7 if id >= 51 else 6 if id >= 44 else 5 if id >= 37 else 4 if id >= 30 else 3 if id >= 23 else 2 if id >= 16 else 1,
+		"building": 60 if id >= 422 else 59 if id >= 415 else 58 if id >= 408 else 57 if id >= 401 else 56 if id >= 394 else 55 if id >= 387 else 54 if id >= 380 else 53 if id >= 373 else 52 if id >= 366 else 51 if id >= 359 else 50 if id >= 352 else 49 if id >= 345 else 48 if id >= 338 else 47 if id >= 331 else 46 if id >= 324 else 45 if id >= 317 else 44 if id >= 310 else 43 if id >= 303 else 42 if id >= 296 else 41 if id >= 289 else 40 if id >= 282 else 39 if id >= 275 else 38 if id >= 268 else 37 if id >= 261 else 36 if id >= 254 else 35 if id >= 247 else 34 if id >= 240 else 33 if id >= 233 else 32 if id >= 226 else 31 if id >= 219 else 30 if id >= 212 else 29 if id >= 205 else 28 if id >= 198 else 27 if id >= 191 else 26 if id >= 184 else 25 if id >= 177 else 24 if id >= 170 else 23 if id >= 163 else 22 if id >= 156 else 21 if id >= 149 else 20 if id >= 142 else 19 if id >= 135 else 18 if id >= 128 else 17 if id >= 121 else 16 if id >= 114 else 15 if id >= 107 else 14 if id >= 100 else 13 if id >= 93 else 12 if id >= 86 else 11 if id >= 79 else 10 if id >= 72 else 9 if id >= 65 else 8 if id >= 58 else 7 if id >= 51 else 6 if id >= 44 else 5 if id >= 37 else 4 if id >= 30 else 3 if id >= 23 else 2 if id >= 16 else 1,
 	}
 
 
