@@ -441,7 +441,7 @@ static func norm_rot(kind: String, rot: int) -> int:
 	# A cavetto uses the same four facings. Each one stops only the opposite
 	# of the facing and passes the other three directions. A north cavetto
 	# passes north, east, and west, which a north ovolo does not.
-	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto":
+	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet":
 		return posmod(rot, 360)
 	# A shutter has no facing. Dry stops the beam; flooded water lets it pass.
 	# A well has no facing either. Dry stops the beam; flooded water sends it north.
@@ -592,6 +592,16 @@ static func cavetto_passes(rot: int, dir: String) -> bool:
 	# passes north, east, and west. That is not an ovolo, an ogee, a torus, a
 	# scotia, an astragal, a casement, a jamb, a mullion, a transom, or a lintel.
 	return dir != rotate_dir(cavetto_facing(rot), 2)
+
+static func fillet_facing(rot: int) -> String:
+	# 0 north, 90 east, 180 south, 270 west. The dry pass is opposite this facing.
+	return rotate_dir("N", posmod(int(norm_rot("fillet", rot) / 90.0), 4))
+
+static func fillet_passes(rot: int, dir: String) -> bool:
+	# Only the opposite of the facing. North passes south and stops north, east,
+	# and west. That is not a cavetto, an ovolo, an ogee, a torus, a scotia, an
+	# astragal, a casement, a jamb, a mullion, a transom, or a lintel.
+	return dir == rotate_dir(fillet_facing(rot), 2)
 
 static func sluice_facing(rot: int) -> String:
 	# 0 north, 90 east, 180 south, 270 west. The exit follows this facing.
@@ -855,6 +865,12 @@ static func _cast(
 		if _dry_cavetto_blocks(occupants, cell, dir):
 			segments.append(_boundary_seg(prev, cell, color))
 			return
+		# A dry fillet passes only the opposite of its facing. The facing and
+		# both sides stop on the edge and never enter the cell. Flooded
+		# fillets already returned above.
+		if _dry_fillet_blocks(occupants, cell, dir):
+			segments.append(_boundary_seg(prev, cell, color))
+			return
 		segments.append(_center_seg(prev, cell, color))
 		if not occupants.has(cell):
 			prev = cell
@@ -1047,6 +1063,15 @@ static func _cast(
 			prev = cell
 			cell = cell + VEC[dir]
 			continue
+		if kind == "fillet":
+			# Dry, only the opposite of the facing passes straight, same
+			# direction and same color. That pass costs no bounce. It does not
+			# turn, it does not recolor, and it does not split. The facing and
+			# both sides never reach here. A flooded fillet never reaches here
+			# either.
+			prev = cell
+			cell = cell + VEC[dir]
+			continue
 		if kind == "pane":
 			if color != pane_color(int(occ["rot"])):
 				return
@@ -1084,7 +1109,8 @@ static func _flood_carries(occupants: Dictionary, cell: Vector2i) -> bool:
 	# the same way, so _flood_carries stays false for it. An ovolo is shut
 	# under water the same way, so _flood_carries stays false for it. A
 	# cavetto is shut under water the same way, so _flood_carries stays false
-	# for it.
+	# for it. A fillet is shut under water the same way, so _flood_carries
+	# stays false for it.
 	# Every other flooded cell stops.
 	if not occupants.has(cell):
 		return false
@@ -1161,6 +1187,13 @@ static func _dry_cavetto_blocks(occupants: Dictionary, cell: Vector2i, dir: Stri
 	if str(occupants[cell]["kind"]) != "cavetto":
 		return false
 	return not cavetto_passes(int(occupants[cell]["rot"]), dir)
+
+static func _dry_fillet_blocks(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "fillet":
+		return false
+	return not fillet_passes(int(occupants[cell]["rot"]), dir)
 
 static func _in_bounds(chart: Dictionary, cell: Vector2i) -> bool:
 	return cell.x >= 0 and cell.y >= 0 and cell.x < int(chart["cols"]) and cell.y < int(chart["rows"])
