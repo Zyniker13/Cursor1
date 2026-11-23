@@ -17,7 +17,7 @@ class_name ChartBook
 # The Corona holds eight more. The Bead holds eight more. The Quirk holds eight more.
 # The Cyma holds eight more. The Fascia holds eight more. The Soffit holds eight more.
 # The Drip holds eight more. The Beak holds eight more. The Hood holds eight more.
-# The Throat holds eight more. The Larmier holds eight more. The Cill holds eight more. The Threshold holds eight more. The Impost holds eight more. The Architrave holds eight more. The Archivolt holds eight more. The Abacus holds eight more. The Rebate holds eight more. The Echinus holds eight more. The Annulet holds eight more. The Listel holds eight more. The Necking holds the last eight.
+# The Throat holds eight more. The Larmier holds eight more. The Cill holds eight more. The Threshold holds eight more. The Impost holds eight more. The Architrave holds eight more. The Archivolt holds eight more. The Abacus holds eight more. The Rebate holds eight more. The Echinus holds eight more. The Annulet holds eight more. The Listel holds eight more. The Necking holds eight more. The Taenia holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
@@ -375,6 +375,20 @@ class_name ChartBook
 # flooded north echinus passes only east. A flooded north rebate passes only
 # south. A flooded north abacus passes only north. A flooded north throat
 # passes only south.
+# A taenia has a facing. Rotation changes it the same way: 0 north, 90 east,
+# 180 south, 270 west. While its row is dry, every heading stops on the edge
+# and the beam does not enter. One click still stops every heading. Opposite
+# dry facings share that shut state. While that row is flooded, the facing and
+# the opposite pass straight through, and that pass costs no bounce. A flooded
+# north taenia passes north and south. East and west stop. One click faces
+# east and only east and west pass. A flooded south taenia passes the same
+# north and south. A dry cill passes north and south, so this piece does not
+# repeat that dry pair. A flooded north larmier passes this same pair and,
+# while dry, passes east and west. A flooded north listel passes north and
+# east. A flooded north necking passes north and west. A flooded north annulet
+# passes only west. A flooded north echinus passes only east. A flooded north
+# rebate passes only south. A flooded north abacus passes only north. A flooded
+# north throat passes only south.
 # See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
@@ -429,6 +443,7 @@ const ECHINUS := "The Echinus"
 const ANNULET := "The Annulet"
 const LISTEL := "The Listel"
 const NECKING := "The Necking"
+const TAENIA := "The Taenia"
 
 static func all() -> Array:
 	var book: Array = []
@@ -480,6 +495,7 @@ static func all() -> Array:
 	book.append_array(annulet())
 	book.append_array(listel())
 	book.append_array(necking())
+	book.append_array(taenia())
 	return book
 
 
@@ -673,6 +689,10 @@ static func listel() -> Array:
 
 static func necking() -> Array:
 	return [chart_375(), chart_376(), chart_377(), chart_378(), chart_379(), chart_380(), chart_381(), chart_382()]
+
+
+static func taenia() -> Array:
+	return [chart_383(), chart_384(), chart_385(), chart_386(), chart_387(), chart_388(), chart_389(), chart_390()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -13807,6 +13827,171 @@ static func chart_382() -> Dictionary:
 	)
 
 
+static func _taenia_lane(prefix: String, ox: int, open_ew: bool) -> Dictionary:
+	return {
+		"lanterns": [
+			_lantern(prefix + "Tn", ox + 2, 1, "S", "white"),
+			_lantern(prefix + "Ts", ox + 4, 1, "S", "red"),
+			_lantern(prefix + "Te", ox + 1, 2, "S", "blue"),
+			_lantern(prefix + "Tw", ox + 8, 2, "S", "red"),
+		],
+		"docks": [
+			_dock(prefix + "Nd", ox + 4, 3, "white", true, open_ew),
+			_dock(prefix + "Kb", ox + 4, 2, "blue", true, true),
+			_dock(prefix + "Ks", ox + 2, 3, "red", true, open_ew),
+			_dock(prefix + "Ke", ox + 8, 3, "blue", true, not open_ew),
+			_dock(prefix + "Kw", ox + 1, 3, "red", true, not open_ew),
+		],
+		"fixtures": [
+			_fixture(prefix + "S24", "shutter", ox + 2, 4, 0),
+			_fixture(prefix + "S25", "shutter", ox + 2, 5, 0),
+			_fixture(prefix + "S26", "shutter", ox + 2, 6, 0),
+			_fixture(prefix + "M27", "tide_mirror", ox + 2, 7, 90),
+			_fixture(prefix + "S37", "shutter", ox + 3, 7, 0),
+			_fixture(prefix + "M47", "tide_mirror", ox + 4, 7, 0),
+			_fixture(prefix + "S46", "shutter", ox + 4, 6, 0),
+			_fixture(prefix + "S45", "shutter", ox + 4, 5, 0),
+			_fixture(prefix + "M14", "tide_mirror", ox + 1, 4, 90),
+			_fixture(prefix + "S34", "shutter", ox + 3, 4, 0),
+			_fixture(prefix + "S54", "shutter", ox + 5, 4, 0),
+			_fixture(prefix + "S64", "shutter", ox + 6, 4, 0),
+			_fixture(prefix + "S74", "shutter", ox + 7, 4, 0),
+			_fixture(prefix + "M84", "tide_mirror", ox + 8, 4, 0),
+		],
+	}
+
+
+static func _taenia_chart(id: String, title: String, teach: String, win: String, start_rot: int, sol_rot: int, open_ew: bool, boat: bool) -> Dictionary:
+	var lane := _taenia_lane("", 0, open_ew)
+	var boats: Array = []
+	if boat:
+		boats.append(_boat("Hb", 1, 7))
+	return {
+		"id": id,
+		"title": title,
+		"harbor": TAENIA,
+		"win": win,
+		"teach": teach,
+		"cols": 9,
+		"rows": 8,
+		"tide_phases": [0, 4],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": lane["lanterns"],
+		"docks": lane["docks"],
+		"boats": boats,
+		"fixtures": lane["fixtures"],
+		"pieces": [
+			_taenia("O", "Taenia", 4, 4, start_rot, sol_rot),
+		],
+	}
+
+
+static func chart_383() -> Dictionary:
+	return _taenia_chart(
+		"383",
+		"The Flooded Taenia",
+		"A flooded north taenia passes north and south. East and west stop. While it is dry, every heading stops. A flooded south taenia passes the same pair.",
+		"High water opens north and south. Low water stops every heading.",
+		90,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_384() -> Dictionary:
+	return _taenia_chart(
+		"384",
+		"The Turned Taenia",
+		"One click from north faces east. A flooded east taenia passes east and west and stops north and south. A flooded west taenia passes the same pair.",
+		"The taenia faces east. East and west pass.",
+		0,
+		90,
+		true,
+		false
+	)
+
+
+static func chart_385() -> Dictionary:
+	return _taenia_chart(
+		"385",
+		"The Listel Axis",
+		"A flooded north listel passes north and east, so the east keep lights and the south dock stays dark.",
+		"North and south pass. The listel misses that pair.",
+		180,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_386() -> Dictionary:
+	return _taenia_chart(
+		"386",
+		"The Necking Miss",
+		"A flooded north necking passes north and west, so the west keep lights and the south dock stays dark.",
+		"North and south pass. The necking misses that pair.",
+		270,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_387() -> Dictionary:
+	return _taenia_chart(
+		"387",
+		"The Annulet Pair",
+		"A flooded north annulet passes only west, which is a keep, and misses the south beam.",
+		"North and south pass. The annulet misses that pair.",
+		90,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_388() -> Dictionary:
+	return _taenia_chart(
+		"388",
+		"The Echinus Pair",
+		"A flooded north echinus passes only east, which is a keep, and misses both open docks.",
+		"North and south pass. The echinus misses that pair.",
+		180,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_389() -> Dictionary:
+	return _taenia_chart(
+		"389",
+		"The Rebate Axis",
+		"A flooded north rebate passes only south, so it misses the north beam. A dry rebate stops every heading.",
+		"North and south pass. The rebate misses that pair.",
+		270,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_390() -> Dictionary:
+	return _taenia_chart(
+		"390",
+		"The Taenia Line",
+		"Raise the tide to the taenia's row. Under water, north and south pass. A flooded north abacus passes only north and misses the south beam. A flooded north throat passes only south and misses the north beam. Low water lights the hull and leaves those docks dark.",
+		"The flood line stands on the taenia. The hull stays dark.",
+		90,
+		0,
+		false,
+		true
+	)
+
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -14255,6 +14440,20 @@ static func _throat(id: String, name: String, x: int, y: int, start_rot: int, so
 		"id": id,
 		"name": name,
 		"kind": "throat",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _taenia(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "taenia",
 		"movable": false,
 		"sockets": [{"id": "a", "x": x, "y": y}],
 		"start_socket": "a",

@@ -116,6 +116,8 @@ func _run() -> void:
 	test_listel_book()
 	test_necking_rule()
 	test_necking_book()
+	test_taenia_rule()
+	test_taenia_book()
 	test_chart_4_boat()
 	test_one_rotation_is_not_solved()
 	test_hint_points_at_one_piece()
@@ -309,7 +311,8 @@ func test_charts() -> void:
 	check(Charts.annulet().size() == 8, "annulet adds eight charts")
 	check(Charts.listel().size() == 8, "listel adds eight charts")
 	check(Charts.necking().size() == 8, "necking adds eight charts")
-	check(book.size() == 382, "three hundred eighty-two charts")
+	check(Charts.taenia().size() == 8, "taenia adds eight charts")
+	check(book.size() == 390, "three hundred ninety charts")
 	check(str(book[13]["id"]) == "14" and str(book[13]["title"]) == "The Holding Line", "chart 14 stays the reach capstone")
 	check(str(book[14]["title"]) == "North Light", "chart 15 opens the basin")
 	check(str(book[21]["id"]) == "22" and str(book[21]["title"]) == "The Basin Mark", "chart 22 stays the basin capstone")
@@ -403,6 +406,8 @@ func test_charts() -> void:
 	check(str(book[373]["id"]) == "374" and str(book[373]["title"]) == "The Listel Line", "chart 374 stays the listel capstone")
 	check(str(book[374]["title"]) == "The Flooded Necking", "chart 375 opens the necking")
 	check(str(book[381]["id"]) == "382" and str(book[381]["title"]) == "The Necking Line", "chart 382 stays the necking capstone")
+	check(str(book[382]["title"]) == "The Flooded Taenia", "chart 383 opens the taenia")
+	check(str(book[389]["id"]) == "390" and str(book[389]["title"]) == "The Taenia Line", "chart 390 stays the taenia capstone")
 	var seen_ids := {}
 	var seen_titles := {}
 	var quay_titles := ["First Glass", "Around the Pilings", "High Water", "Sleeping Hull", "Split the White", "The Night Mark"]
@@ -503,6 +508,8 @@ func test_charts() -> void:
 			_check_architrave_clears(chart, clears, solved)
 		elif _chart_has_kind(chart, "archivolt"):
 			_check_archivolt_clears(chart, clears, solved)
+		elif _chart_has_kind(chart, "taenia"):
+			_check_taenia_clears(chart, clears, solved)
 		elif clears.size() == 1:
 			check(true, "chart %s has one clearing state" % id)
 			check(_same_solution(chart, clears[0], solved), "chart %s clearing state is the authored solution" % id)
@@ -13665,6 +13672,129 @@ func _expect_necking_miss(chart: Dictionary, piece_id: String, kind: String, rot
 	check(not Tracer.is_cleared(copy, Charts.make_state(copy, true)), label)
 
 
+func test_taenia_rule() -> void:
+	for dir in ["N", "E", "S", "W"]:
+		check(not Tracer.taenia_passes(0, dir), "a dry taenia stops %s" % dir)
+		check(not Tracer.taenia_passes(90, dir), "a turned dry taenia still stops %s" % dir)
+	check(Tracer.taenia_flood_passes(0, "N") and Tracer.taenia_flood_passes(0, "S"), "a flooded north taenia passes north and south")
+	check(not Tracer.taenia_flood_passes(0, "E") and not Tracer.taenia_flood_passes(0, "W"), "a flooded north taenia stops east and west")
+	check(Tracer.taenia_flood_passes(90, "E") and Tracer.taenia_flood_passes(90, "W"), "one click faces the taenia east and only east and west pass")
+	check(not Tracer.taenia_flood_passes(90, "N") and not Tracer.taenia_flood_passes(90, "S"), "a flooded east taenia stops north and south")
+	check(Tracer.taenia_flood_passes(180, "N") and Tracer.taenia_flood_passes(180, "S"), "a flooded south taenia passes the same north and south")
+	check(Tracer.cill_passes(0, "N") and Tracer.cill_passes(0, "S") and not Tracer.cill_passes(0, "E"), "a dry cill still passes north and south")
+	check(Tracer.larmier_flood_passes(0, "N") and Tracer.larmier_flood_passes(0, "S") and not Tracer.larmier_flood_passes(0, "E"), "a flooded north larmier still passes north and south")
+	check(Tracer.larmier_passes(0, "E") and Tracer.larmier_passes(0, "W") and not Tracer.larmier_passes(0, "N"), "a dry north larmier still passes east and west")
+	check(Tracer.listel_flood_passes(0, "N") and Tracer.listel_flood_passes(0, "E") and not Tracer.listel_flood_passes(0, "S"), "a flooded north listel still passes north and east")
+	check(Tracer.necking_flood_passes(0, "N") and Tracer.necking_flood_passes(0, "W") and not Tracer.necking_flood_passes(0, "S"), "a flooded north necking still passes north and west")
+	check(Tracer.annulet_flood_passes(0, "W") and not Tracer.annulet_flood_passes(0, "S"), "a flooded north annulet still passes only west")
+	check(Tracer.echinus_flood_passes(0, "E") and not Tracer.echinus_flood_passes(0, "S"), "a flooded north echinus still passes only east")
+	check(Tracer.rebate_flood_passes(0, "S") and not Tracer.rebate_flood_passes(0, "N"), "a flooded north rebate still passes only south")
+	check(Tracer.abacus_flood_passes(0, "N") and not Tracer.abacus_flood_passes(0, "S"), "a flooded north abacus still passes only north")
+	check(Tracer.throat_flood_passes(0, "S") and not Tracer.throat_flood_passes(0, "N"), "a flooded north throat still passes only south")
+
+
+func test_taenia_book() -> void:
+	var book := Charts.taenia()
+	check(book.size() == 8, "the taenia book has eight charts")
+	var titles := ["The Flooded Taenia", "The Turned Taenia", "The Listel Axis", "The Necking Miss", "The Annulet Pair", "The Echinus Pair", "The Rebate Axis", "The Taenia Line"]
+	for i in book.size():
+		var chart: Dictionary = book[i]
+		check(str(chart["harbor"]) == Charts.TAENIA, "chart %s belongs to the taenia" % str(chart["id"]))
+		check(str(chart["title"]) == titles[i], "chart %s keeps its title" % str(chart["id"]))
+		_expect_taenia_misses(chart)
+	check(str(book[2]["teach"]).to_lower().contains("listel"), "chart 385 names the listel")
+	check(str(book[3]["teach"]).to_lower().contains("necking"), "chart 386 names the necking")
+	check(str(book[4]["teach"]).to_lower().contains("annulet"), "chart 387 names the annulet")
+	check(str(book[5]["teach"]).to_lower().contains("echinus"), "chart 388 names the echinus")
+	check(str(book[6]["teach"]).to_lower().contains("rebate"), "chart 389 names the rebate")
+	check(str(book[7]["teach"]).to_lower().contains("abacus") and str(book[7]["teach"]).to_lower().contains("throat"), "chart 390 names the abacus and the throat")
+	_expect_taenia_miss(book[2], "O", "listel", 0, "a flooded north listel misses chart 385")
+	_expect_taenia_miss(book[3], "O", "necking", 0, "a flooded north necking misses chart 386")
+	_expect_taenia_miss(book[4], "O", "annulet", 0, "a flooded north annulet misses chart 387")
+	_expect_taenia_miss(book[5], "O", "echinus", 0, "a flooded north echinus misses chart 388")
+	_expect_taenia_miss(book[6], "O", "rebate", 0, "a flooded north rebate misses chart 389")
+	_expect_taenia_miss(book[7], "O", "abacus", 0, "a flooded north abacus misses chart 390")
+	_expect_taenia_miss(book[7], "O", "throat", 0, "a flooded north throat misses chart 390")
+	_expect_taenia_miss(book[1], "O", "listel", 0, "a flooded north listel misses the turned taenia")
+	_expect_taenia_miss(book[1], "O", "necking", 0, "a flooded north necking misses the turned taenia")
+	var line: Dictionary = book[7]
+	var lit: Dictionary = Tracer.trace(line, Charts.make_state(line, true))
+	check(not bool(lit["boats"]["Hb"]), "the taenia line keeps the hull dark")
+	var ebb: Dictionary = Charts.duplicate_state(Charts.make_state(line, true))
+	ebb["tide_index"] = 0
+	var ebb_trace: Dictionary = Tracer.trace(line, ebb)
+	check(bool(ebb_trace["boats"]["Hb"]) and not Tracer.is_cleared(line, ebb), "low water lights the hull and does not clear")
+
+
+func _taenia_pair_matches(kind: String, rot: int, sol_rot: int) -> bool:
+	for dir in ["N", "E", "S", "W"]:
+		var theirs: bool = false
+		if kind == "larmier":
+			theirs = Tracer.larmier_flood_passes(rot, dir)
+		elif kind == "cill":
+			theirs = Tracer.cill_flood_passes(rot, dir)
+		elif kind == "archivolt":
+			theirs = Tracer.archivolt_flood_passes(rot, dir)
+		var ours: bool = Tracer.taenia_flood_passes(sol_rot, dir)
+		if theirs != ours:
+			return false
+	return true
+
+
+func _expect_taenia_misses(chart: Dictionary) -> void:
+	var kinds: Array = ["listel", "necking", "annulet", "echinus", "rebate", "abacus", "throat", "larmier", "cill", "archivolt", "scotia", "hood", "architrave", "beak", "drip", "weir", "sluice", "impost", "threshold", "astragal", "cyma", "corona", "fillet", "quirk", "bead"]
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		var pid := str(piece["id"])
+		var sol := int(piece["solution_rot"])
+		for kind in kinds:
+			for rot in [0, 90, 180, 270]:
+				if (kind == "larmier" or kind == "cill" or kind == "archivolt") and _taenia_pair_matches(kind, rot, sol):
+					continue
+				_expect_taenia_miss(chart, pid, kind, rot, "chart %s %s %s at %d misses" % [str(chart["id"]), pid, kind, rot])
+
+
+func _expect_taenia_miss(chart: Dictionary, piece_id: String, kind: String, rot: int, label: String) -> void:
+	var copy: Dictionary = chart.duplicate(true)
+	_retarget(copy, piece_id, kind, rot)
+	check(not Tracer.is_cleared(copy, Charts.make_state(copy, true)), label)
+
+
+func _check_taenia_clears(chart: Dictionary, clears: Array, solved: Dictionary) -> void:
+	var id := str(chart["id"])
+	var expected := 1
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		if str(piece["kind"]) != "taenia":
+			continue
+		var cell := Charts.piece_cell(chart, solved, str(piece["id"]))
+		if Tracer.is_flooded(chart, solved, cell):
+			expected *= 2
+	check(clears.size() == expected, "chart %s clears on the flooded axis (found %d)" % [id, clears.size()])
+	var authored := false
+	for raw_clear in clears:
+		var clearing: Dictionary = raw_clear
+		if _same_solution(chart, clearing, solved):
+			authored = true
+		check(int(clearing["tide_index"]) == int(solved["tide_index"]), "chart %s clear stays on the solved tide" % id)
+		for raw_piece in chart["pieces"]:
+			var piece: Dictionary = raw_piece
+			var pid := str(piece["id"])
+			var got: Dictionary = clearing["pieces"][pid]
+			var want: Dictionary = solved["pieces"][pid]
+			check(str(got["socket"]) == str(want["socket"]), "chart %s clear keeps %s on its socket" % [id, pid])
+			if str(piece["kind"]) == "taenia":
+				var flooded: bool = Tracer.is_flooded(chart, solved, Charts.piece_cell(chart, solved, pid))
+				if flooded:
+					check(posmod(int(got["rot"]), 180) == posmod(int(want["rot"]), 180), "chart %s clear keeps %s on its flooded axis" % [id, pid])
+				else:
+					check(Tracer.norm_rot("taenia", int(got["rot"])) == Tracer.norm_rot("taenia", int(want["rot"])), "chart %s clear keeps %s facing" % [id, pid])
+			else:
+				var kind := str(piece["kind"])
+				check(Tracer.norm_rot(kind, int(got["rot"])) == Tracer.norm_rot(kind, int(want["rot"])), "chart %s clear keeps %s" % [id, pid])
+	check(authored, "chart %s authored solution is one flooded facing" % id)
+
+
 func test_smoke() -> void:
 	var main_script: Script = load("res://scripts/main.gd")
 	main_script.persist_progress = false
@@ -15314,8 +15444,44 @@ func test_smoke() -> void:
 	await process_frame
 	check(str(main.chart["id"]) == "375", "Necking returns to The Flooded Necking")
 	check(_chart_row_fits(main.necking_grid, main._side), "the necking chart row fits in the window")
+	var taenia_rect: Rect2 = main.taenia_book_button.get_global_rect()
+	var taenia_side: Rect2 = main._side.get_global_rect()
+	check(taenia_side.grow(1.0).encloses(taenia_rect), "the taenia book button sits inside the side panel")
+	check(not taenia_rect.intersects(necking_rect), "the taenia book button stays off the necking")
+	check(taenia_rect.size.x + 0.5 >= main.taenia_book_button.get_minimum_size().x, "the taenia label has room")
+	check(necking_rect.size.x + 0.5 >= main.necking_book_button.get_minimum_size().x, "the necking label still has room")
+	main.unlocked[382] = false
+	main._refresh_chrome()
+	check(main.taenia_book_button.disabled, "the taenia stays locked until the necking line is held")
+	main.unlocked[381] = true
+	check(main.select_chart(381), "chart 382 opens when unlocked")
+	check(main.taenia_book_button.disabled, "opening the necking line does not unlock the taenia")
+	main.state = Charts.duplicate_state(Charts.make_state(main.chart, true))
+	main._refresh()
+	main.try_lock()
+	check(main.board_locked and main.unlocked[382], "holding the necking line opens the taenia")
+	main._advance_from_win()
+	check(str(main.chart["id"]) == "383", "next chart from the necking line enters The Flooded Taenia")
+	check(main.taenia_grid.visible and not main.necking_grid.visible and not main.listel_grid.visible, "the taenia grid opens with The Flooded Taenia")
+	check(str(main.harbor_label.text) == Charts.TAENIA, "the harbor name follows the taenia")
+	check(str(main.tide_readout.text).to_lower().contains("taenia"), "chart 383 names the taenia in the water readout")
+	var taenia_cell := Charts.piece_cell(main.chart, main.state, "O")
+	check(str(main.selected_id) == "O" and int(main.state["pieces"]["O"]["rot"]) == 90, "chart 383 starts facing east")
+	_click_cell(main, taenia_cell.x, taenia_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 180, "a click turns the taenia from east to south")
+	check(str(main.status_label.text).to_lower().contains("stops") and str(main.status_label.text).to_lower().contains("opposite"), "the taenia says every dry heading stops and the flood opens the facing and the opposite")
+	_click_cell(main, taenia_cell.x, taenia_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 270, "the next click turns the taenia west")
+	_click_cell(main, taenia_cell.x, taenia_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 0, "the next click turns the taenia north")
+	_click_cell(main, taenia_cell.x, taenia_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 90, "four clicks restore the east facing")
+	main._on_book_pressed(48)
+	await process_frame
+	check(str(main.chart["id"]) == "383", "Taenia returns to The Flooded Taenia")
+	check(_chart_row_fits(main.taenia_grid, main._side), "the taenia chart row fits in the window")
 	main._on_book_pressed(13)
-	check(main.weir_grid.visible and not main.lintel_grid.visible and not main.mullion_grid.visible and not main.transom_grid.visible and not main.casement_grid.visible and not main.jamb_grid.visible and not main.astragal_grid.visible and not main.scotia_grid.visible and not main.torus_grid.visible and not main.ogee_grid.visible and not main.ovolo_grid.visible and not main.cavetto_grid.visible and not main.fillet_grid.visible and not main.corona_grid.visible and not main.bead_grid.visible and not main.quirk_grid.visible and not main.cyma_grid.visible and not main.fascia_grid.visible and not main.soffit_grid.visible and not main.drip_grid.visible and not main.beak_grid.visible and not main.hood_grid.visible and not main.throat_grid.visible and not main.larmier_grid.visible and not main.cill_grid.visible and not main.threshold_grid.visible and not main.impost_grid.visible and not main.architrave_grid.visible and not main.archivolt_grid.visible and not main.abacus_grid.visible and not main.rebate_grid.visible and not main.echinus_grid.visible and not main.annulet_grid.visible and not main.listel_grid.visible and not main.necking_grid.visible, "the weir book still opens")
+	check(main.weir_grid.visible and not main.lintel_grid.visible and not main.mullion_grid.visible and not main.transom_grid.visible and not main.casement_grid.visible and not main.jamb_grid.visible and not main.astragal_grid.visible and not main.scotia_grid.visible and not main.torus_grid.visible and not main.ogee_grid.visible and not main.ovolo_grid.visible and not main.cavetto_grid.visible and not main.fillet_grid.visible and not main.corona_grid.visible and not main.bead_grid.visible and not main.quirk_grid.visible and not main.cyma_grid.visible and not main.fascia_grid.visible and not main.soffit_grid.visible and not main.drip_grid.visible and not main.beak_grid.visible and not main.hood_grid.visible and not main.throat_grid.visible and not main.larmier_grid.visible and not main.cill_grid.visible and not main.threshold_grid.visible and not main.impost_grid.visible and not main.architrave_grid.visible and not main.archivolt_grid.visible and not main.abacus_grid.visible and not main.rebate_grid.visible and not main.echinus_grid.visible and not main.annulet_grid.visible and not main.listel_grid.visible and not main.necking_grid.visible and not main.taenia_grid.visible, "the weir book still opens")
 	main.select_chart(0)
 	main.restart_chart()
 	var before_rot := int(main.state["pieces"]["M"]["rot"])
@@ -15425,7 +15591,7 @@ func _walk(chart: Dictionary, state: Dictionary, index: int, found: Array) -> vo
 	# A threshold has four facings. Opposite facings do not share the open set. Dry, only the opposite of the facing passes. Flooded, every direction except that opposite passes.
 	# An impost has four facings. Opposite facings do not share the open set. Dry, only the facing passes. Flooded, every direction except that facing passes.
 	var rots: Array = [0]
-	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma" or kind == "fascia" or kind == "soffit" or kind == "drip" or kind == "beak" or kind == "hood" or kind == "throat" or kind == "larmier" or kind == "cill" or kind == "threshold" or kind == "impost" or kind == "architrave" or kind == "archivolt" or kind == "abacus" or kind == "rebate" or kind == "echinus" or kind == "annulet" or kind == "listel" or kind == "necking":
+	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma" or kind == "fascia" or kind == "soffit" or kind == "drip" or kind == "beak" or kind == "hood" or kind == "throat" or kind == "larmier" or kind == "cill" or kind == "threshold" or kind == "impost" or kind == "architrave" or kind == "archivolt" or kind == "abacus" or kind == "rebate" or kind == "echinus" or kind == "annulet" or kind == "listel" or kind == "necking" or kind == "taenia":
 		rots = [0, 90, 180, 270]
 	elif kind != "shutter" and kind != "well" and kind != "siphon" and kind != "lintel" and kind != "mullion" and kind != "transom":
 		rots = [0, 90]
