@@ -1,6 +1,6 @@
 # Casework
 
-A deduction game with fifty-five cases, **The spare key**, **The rehearsal score**, **The gilt stamp**, **The ferry bell**, **The weather slate**, **The loom shuttle**, **The hive smoker**, **The glass pontil**, **The press proof**, **The assay cup**, **The kiln chalk**, **The tide ledger**, **The night bell**, **The salt mark**, **The wick trim**, **The glass anneal**, **The orchard graft**, **The dye vat**, **The tar kettle**, **The cork press**, **The net loft**, **The cask hoop**, **The linen fold**, **The dovetail**, **The mortise**, **The rebate**, **The housing**, **The tenon**, **The bridle**, **The dado**, **The spline**, **The mitre**, **The lap**, **The scarf**, **The finger**, **The haunch**, **The dowel**, **The tongue**, **The quirk**, **The chamfer**, **The scotia**, **The cyma**, **The cavetto**, **The reed**, **The annulet**, **The hood**, **The listel**, **The abacus**, **The girdle**, **The reglet**, **The gutta**, **The mutule**, **The modillion**, **The taenia**, and **The apophyge**.
+A deduction game with fifty-seven cases, **The spare key**, **The rehearsal score**, **The gilt stamp**, **The ferry bell**, **The weather slate**, **The loom shuttle**, **The hive smoker**, **The glass pontil**, **The press proof**, **The assay cup**, **The kiln chalk**, **The tide ledger**, **The night bell**, **The salt mark**, **The wick trim**, **The glass anneal**, **The orchard graft**, **The dye vat**, **The tar kettle**, **The cork press**, **The net loft**, **The cask hoop**, **The linen fold**, **The dovetail**, **The mortise**, **The rebate**, **The housing**, **The tenon**, **The bridle**, **The dado**, **The spline**, **The mitre**, **The lap**, **The scarf**, **The finger**, **The haunch**, **The dowel**, **The tongue**, **The quirk**, **The chamfer**, **The scotia**, **The cyma**, **The cavetto**, **The reed**, **The annulet**, **The hood**, **The listel**, **The abacus**, **The girdle**, **The reglet**, **The gutta**, **The mutule**, **The modillion**, **The taenia**, **The apophyge**, **The trochilus**, and **The talon**.
 
 Pick a file. That file keeps a single timeline. You read the exhibits and pin who, the room, and the hour. A theory is accepted only when it fits every exhibit. A theory that does not fit comes back naming the exhibits it contradicts. An empty pin is refused by the name of the missing slot.
 
@@ -117,6 +117,10 @@ There is no voice. The papers and the board are the whole case.
 **The taenia.** The taenia left its peg at the joiner's aglet. Name who cut the taenia, the room they cut it in, and the hour.
 
 **The apophyge.** The apophyge left its peg at the joiner's ferrule. Name who cut the apophyge, the room they cut it in, and the hour.
+
+**The trochilus.** The trochilus left its peg at the joiner's grommet. Name who cut the trochilus, the room they cut it in, and the hour.
+
+**The talon.** The talon left its peg at the joiner's gudgeon. Name who cut the talon, the room they cut it in, and the hour.
 
 ## Play
 

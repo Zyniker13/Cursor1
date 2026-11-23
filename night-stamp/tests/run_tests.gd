@@ -119,6 +119,10 @@ func _init() -> void:
 	test_valediction_bell_opens()
 	test_recessional_bell_rules()
 	test_recessional_bell_opens()
+	test_nocturne_bell_rules()
+	test_nocturne_bell_opens()
+	test_compline_bell_rules()
+	test_compline_bell_opens()
 	test_reward_flow_and_restart()
 	test_policy_clears_act()
 	test_policy_clears_late_shift()
@@ -171,6 +175,8 @@ func _init() -> void:
 	test_policy_clears_epode_bell()
 	test_policy_clears_valediction_bell()
 	test_policy_clears_recessional_bell()
+	test_policy_clears_nocturne_bell()
+	test_policy_clears_compline_bell()
 	_layout_viewport = SubViewport.new()
 	_layout_viewport.size = Vector2i(int(ProjectSettings.get_setting("display/window/size/viewport_width")), int(ProjectSettings.get_setting("display/window/size/viewport_height")))
 	_layout_viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
@@ -12001,7 +12007,9 @@ func test_halftitle_header_row() -> void:
 	var epode_bell: Button = desk.epode_button
 	var valediction_bell: Button = desk.valediction_button
 	var recessional_bell: Button = desk.recessional_button
-	check(header == fly.get_parent() and header == endpaper.get_parent() and header == halftitle.get_parent() and header == titlepage.get_parent() and header == copyright.get_parent() and header == dedication.get_parent() and header == epigraph.get_parent() and header == preface.get_parent() and header == foreword.get_parent() and header == contents.get_parent() and header == introduction.get_parent() and header == prologue.get_parent() and header == acknowledgments.get_parent() and header == glossary.get_parent() and header == appendix.get_parent() and header == afterword.get_parent() and header == postscript.get_parent() and header == addenda.get_parent() and header == envoi.get_parent() and header == corrigenda.get_parent() and header == epilogue.get_parent() and header == coda.get_parent() and header == explicit_bell.get_parent() and header == finis_bell.get_parent() and header == envoy_bell.get_parent() and header == finale_bell.get_parent() and header == epode_bell.get_parent() and header == valediction_bell.get_parent() and header == recessional_bell.get_parent(), "the recessional, valediction, epode, finale, envoy, finis, explicit, coda, epilogue, corrigenda, envoi, addenda, postscript, afterword, appendix, glossary, acknowledgments, prologue, introduction, contents, foreword, preface, epigraph, dedication, copyright, title-page, half-title, and endpaper buttons stay on the night row")
+	var nocturne_bell: Button = desk.nocturne_button
+	var compline_bell: Button = desk.compline_button
+	check(header == fly.get_parent() and header == endpaper.get_parent() and header == halftitle.get_parent() and header == titlepage.get_parent() and header == copyright.get_parent() and header == dedication.get_parent() and header == epigraph.get_parent() and header == preface.get_parent() and header == foreword.get_parent() and header == contents.get_parent() and header == introduction.get_parent() and header == prologue.get_parent() and header == acknowledgments.get_parent() and header == glossary.get_parent() and header == appendix.get_parent() and header == afterword.get_parent() and header == postscript.get_parent() and header == addenda.get_parent() and header == envoi.get_parent() and header == corrigenda.get_parent() and header == epilogue.get_parent() and header == coda.get_parent() and header == explicit_bell.get_parent() and header == finis_bell.get_parent() and header == envoy_bell.get_parent() and header == finale_bell.get_parent() and header == epode_bell.get_parent() and header == valediction_bell.get_parent() and header == recessional_bell.get_parent() and header == nocturne_bell.get_parent() and header == compline_bell.get_parent(), "the compline, nocturne, recessional, valediction, epode, finale, envoy, finis, explicit, coda, epilogue, corrigenda, envoi, addenda, postscript, afterword, appendix, glossary, acknowledgments, prologue, introduction, contents, foreword, preface, epigraph, dedication, copyright, title-page, half-title, and endpaper buttons stay on the night row")
 	check(fly.text == "Flyleaf bell", "the laid-out desk still shows the flyleaf button")
 	check(endpaper.text == "Endpaper bell", "the laid-out desk still shows the endpaper button")
 	check(halftitle.text == "Half-title bell", "the laid-out desk still shows the half-title button")
@@ -12031,6 +12039,8 @@ func test_halftitle_header_row() -> void:
 	check(epode_bell.text == "Epode bell", "the laid-out desk shows the epode button")
 	check(valediction_bell.text == "Valediction bell", "the laid-out desk shows the valediction button")
 	check(recessional_bell.text == "Recessional bell", "the laid-out desk shows the recessional button")
+	check(nocturne_bell.text == "Nocturne bell", "the laid-out desk shows the nocturne button")
+	check(compline_bell.text == "Compline bell", "the laid-out desk shows the compline button")
 	check(fly.size.x + 0.5 >= fly.get_combined_minimum_size().x, "the flyleaf button is not squeezed")
 	check(endpaper.size.x + 0.5 >= endpaper.get_combined_minimum_size().x, "the endpaper button is not squeezed")
 	check(halftitle.size.x + 0.5 >= halftitle.get_combined_minimum_size().x, "the half-title button is not squeezed")
@@ -12060,6 +12070,8 @@ func test_halftitle_header_row() -> void:
 	check(epode_bell.size.x + 0.5 >= epode_bell.get_combined_minimum_size().x, "the epode button is not squeezed")
 	check(valediction_bell.size.x + 0.5 >= valediction_bell.get_combined_minimum_size().x, "the valediction button is not squeezed")
 	check(recessional_bell.size.x + 0.5 >= recessional_bell.get_combined_minimum_size().x, "the recessional button is not squeezed")
+	check(nocturne_bell.size.x + 0.5 >= nocturne_bell.get_combined_minimum_size().x, "the nocturne button is not squeezed")
+	check(compline_bell.size.x + 0.5 >= compline_bell.get_combined_minimum_size().x, "the compline button is not squeezed")
 	check(fly.global_position.x + fly.size.x <= float(window_width), "the flyleaf button is inside the window")
 	check(endpaper.global_position.x + endpaper.size.x <= float(window_width), "the endpaper button is inside the window")
 	check(halftitle.global_position.x + halftitle.size.x <= float(window_width), "the half-title button is inside the window")
@@ -12089,6 +12101,8 @@ func test_halftitle_header_row() -> void:
 	check(epode_bell.global_position.x + epode_bell.size.x <= float(window_width) - 28.0, "the epode button keeps at least 28 pixels of spare on the right")
 	check(valediction_bell.global_position.x + valediction_bell.size.x <= float(window_width) - 28.0, "the valediction button keeps at least 28 pixels of spare on the right")
 	check(recessional_bell.global_position.x + recessional_bell.size.x <= float(window_width) - 28.0, "the recessional button keeps at least 28 pixels of spare on the right")
+	check(nocturne_bell.global_position.x + nocturne_bell.size.x <= float(window_width) - 28.0, "the nocturne button keeps at least 28 pixels of spare on the right")
+	check(compline_bell.global_position.x + compline_bell.size.x <= float(window_width) - 28.0, "the compline button keeps at least 28 pixels of spare on the right")
 	check(dedication.global_position.x >= 0.0 and dedication.size.y > 0.0, "the dedication button is visible")
 	check(epigraph.global_position.x >= 0.0 and epigraph.size.y > 0.0, "the epigraph button is visible")
 	check(preface.global_position.x >= 0.0 and preface.size.y > 0.0, "the preface button is visible")
@@ -12113,6 +12127,8 @@ func test_halftitle_header_row() -> void:
 	check(epode_bell.global_position.x >= 0.0 and epode_bell.size.y > 0.0, "the epode button is visible")
 	check(valediction_bell.global_position.x >= 0.0 and valediction_bell.size.y > 0.0, "the valediction button is visible")
 	check(recessional_bell.global_position.x >= 0.0 and recessional_bell.size.y > 0.0, "the recessional button is visible")
+	check(nocturne_bell.global_position.x >= 0.0 and nocturne_bell.size.y > 0.0, "the nocturne button is visible")
+	check(compline_bell.global_position.x >= 0.0 and compline_bell.size.y > 0.0, "the compline button is visible")
 	check(endpaper.global_position.x + endpaper.size.x <= halftitle.global_position.x, "the endpaper button stays left of the half-title button")
 	check(halftitle.global_position.x + halftitle.size.x <= titlepage.global_position.x, "the half-title button stays left of the title-page button")
 	check(titlepage.global_position.x + titlepage.size.x <= copyright.global_position.x, "the title-page button stays left of the copyright button")
@@ -12156,6 +12172,10 @@ func test_halftitle_header_row() -> void:
 	check(epode_bell.get_index() + 1 == valediction_bell.get_index(), "no night button sits between epode and valediction")
 	check(valediction_bell.global_position.x + valediction_bell.size.x <= recessional_bell.global_position.x, "the recessional button stays immediately right of the valediction button")
 	check(valediction_bell.get_index() + 1 == recessional_bell.get_index(), "no night button sits between valediction and recessional")
+	check(recessional_bell.global_position.x + recessional_bell.size.x <= nocturne_bell.global_position.x, "the nocturne button stays immediately right of the recessional button")
+	check(recessional_bell.get_index() + 1 == nocturne_bell.get_index(), "no night button sits between recessional and nocturne")
+	check(nocturne_bell.global_position.x + nocturne_bell.size.x <= compline_bell.global_position.x, "the compline button stays immediately right of the nocturne button")
+	check(nocturne_bell.get_index() + 1 == compline_bell.get_index(), "no night button sits between nocturne and compline")
 	var spare := int(header.global_position.x * 2.0)
 	var openers = [
 		"_begin_first_bell",
@@ -12209,6 +12229,8 @@ func test_halftitle_header_row() -> void:
 		"_begin_epode_bell",
 		"_begin_valediction_bell",
 		"_begin_recessional_bell",
+		"_begin_nocturne_bell",
+		"_begin_compline_bell",
 	]
 	var widest := 0
 	for opener in openers:
@@ -12218,7 +12240,7 @@ func test_halftitle_header_row() -> void:
 		if row_width > widest:
 			widest = row_width
 		check(row_width + spare <= window_width, "%s header fits (%d + %d <= %d)" % [opener, row_width, spare, window_width])
-	check(widest == 6459, "the header row's minimum is 6459 (%d)" % widest)
+	check(widest == 6727, "the header row's minimum is 6727 (%d)" % widest)
 	check(spare == 56, "the header row's spare inside the window is 56")
 	check(spare / 2 >= 28, "each side keeps at least 28 pixels of spare")
 	check(window_width >= widest + spare, "the window is at least the row minimum plus that spare")
@@ -12628,6 +12650,49 @@ func test_halftitle_header_row() -> void:
 		check(rule.get_line_count() == 1, "recessional traveler %d's rule stays on one line (%d)" % [index, rule.get_line_count()])
 		check(rule.size.y + 0.5 >= rule.get_minimum_size().y, "recessional traveler %d's rule line fits" % index)
 		check(rule.global_position.y >= 0.0 and rule.global_position.y + rule.size.y <= float(window_height), "recessional traveler %d's rule is inside the window" % index)
+
+
+	desk._begin_nocturne_bell()
+	desk._refresh_ui()
+	check(desk.nocturne_button.text == "First bell", "the open nocturne bell returns through the same button")
+	check(desk.recessional_button.text == "Recessional bell", "the recessional button stays beside the open nocturne bell")
+	check(desk.valediction_button.text == "Valediction bell", "the valediction button stays to the left of the open nocturne bell")
+	check(desk.epode_button.text == "Epode bell", "the epode button stays to the left of valediction")
+	var nocturne_rules = [
+		"\"Patience drops by 2 when the number of filled cells is 3 or 6.\"",
+		"\"A stamp scores twice only when the queue cell one place after it is filled and the queue cell three places before it is filled. The top-left cell has no cell three places before it, so it does not double. The top-middle cell has no cell three places before it, so it does not double. The top-right cell has no cell three places before it, so it does not double. The bottom-right cell has no cell one place after it, so it does not double.\"",
+		"\"Each stamp with exactly four corner neighbors and exactly one side neighbor scores +2 once. Any other count scores its own number. Exactly three corner neighbors with exactly four side neighbors score their own number. A lone stamp scores its own number.\"",
+		"\"A stamp scores twice only when the queue cell one place after it is empty and the queue cell three places before it is empty. The top-left cell has no cell three places before it, so it does not double. The top-middle cell has no cell three places before it, so it does not double. The top-right cell has no cell three places before it, so it does not double. The bottom-right cell has no cell one place after it, so it does not double.\"",
+	]
+	for index in nocturne_rules.size():
+		desk.state.traveler_index = index
+		desk._refresh_ui()
+		check(rule.text == String(nocturne_rules[index]), "the open nocturne bell shows traveler %d's rule" % index)
+		check(rule.get_line_count() == 1, "nocturne traveler %d's rule stays on one line (%d)" % [index, rule.get_line_count()])
+		check(rule.size.y + 0.5 >= rule.get_minimum_size().y, "nocturne traveler %d's rule line fits" % index)
+		check(rule.global_position.y >= 0.0 and rule.global_position.y + rule.size.y <= float(window_height), "nocturne traveler %d's rule is inside the window" % index)
+
+
+
+	desk._begin_compline_bell()
+	desk._refresh_ui()
+	check(desk.compline_button.text == "First bell", "the open compline bell returns through the same button")
+	check(desk.nocturne_button.text == "Nocturne bell", "the nocturne button stays beside the open compline bell")
+	check(desk.recessional_button.text == "Recessional bell", "the recessional button stays to the left of the open compline bell")
+	check(desk.valediction_button.text == "Valediction bell", "the valediction button stays to the left of recessional")
+	var compline_rules = [
+		"\"Patience drops by 2 when the number of filled cells is 4 or 7.\"",
+		"\"A stamp scores twice only when the queue cell one place after it is filled and the queue cell four places before it is filled. The top-left cell has no cell four places before it, so it does not double. The top-middle cell has no cell four places before it, so it does not double. The top-right cell has no cell four places before it, so it does not double. The middle-left cell has no cell four places before it, so it does not double. The bottom-right cell has no cell one place after it, so it does not double.\"",
+		"\"Each stamp with exactly four corner neighbors and exactly two side neighbors scores +2 once. Any other count scores its own number. Exactly four corner neighbors with exactly one side neighbor score their own number. Exactly three corner neighbors with exactly four side neighbors score their own number. A lone stamp scores its own number.\"",
+		"\"A stamp scores twice only when the queue cell one place after it is empty and the queue cell four places before it is empty. The top-left cell has no cell four places before it, so it does not double. The top-middle cell has no cell four places before it, so it does not double. The top-right cell has no cell four places before it, so it does not double. The middle-left cell has no cell four places before it, so it does not double. The bottom-right cell has no cell one place after it, so it does not double.\"",
+	]
+	for index in compline_rules.size():
+		desk.state.traveler_index = index
+		desk._refresh_ui()
+		check(rule.text == String(compline_rules[index]), "the open compline bell shows traveler %d's rule" % index)
+		check(rule.get_line_count() == 1, "compline traveler %d's rule stays on one line (%d)" % [index, rule.get_line_count()])
+		check(rule.size.y + 0.5 >= rule.get_minimum_size().y, "compline traveler %d's rule line fits" % index)
+		check(rule.global_position.y >= 0.0 and rule.global_position.y + rule.size.y <= float(window_height), "compline traveler %d's rule is inside the window" % index)
 
 
 func test_policy_clears_flyleaf_bell() -> void:
@@ -28192,6 +28257,588 @@ func test_recessional_bell_opens() -> void:
 	desk.free()
 
 
+func test_compline_bell_opens() -> void:
+	check(Rules.SHIFT_COMPLINE == 52, "the compline bell is night 53")
+	check(Rules.SHIFT_NOCTURNE == 51, "the nocturne bell stays night 52")
+	check(Rules.SHIFT_RECESSIONAL == 50, "the recessional bell stays night 51")
+	check(Rules.SHIFT_VALEDICTION == 49, "the valediction bell stays night 50")
+	check(Rules.SHIFT_CORRIGENDA == 41, "the corrigenda bell stays night 42")
+	check(Rules.SHIFT_ENVOI == 40, "the envoi bell stays night 41")
+	check(Rules.SHIFT_ADDENDA == 39, "the addenda bell stays night 40")
+	check(Rules.COMPLINE_BELL.size() == 4, "the compline bell has four travelers")
+	check(String(Rules.COMPLINE_BELL[0]["name"]) == "Arvid Hale", "the compline bell begins with Arvid Hale")
+	check(String(Rules.COMPLINE_BELL[1]["name"]) == "Hedda Voss", "the compline bell's second traveler is Hedda Voss")
+	check(String(Rules.COMPLINE_BELL[2]["name"]) == "Kajsa Brant", "the compline bell's third traveler is Kajsa Brant")
+	check(String(Rules.COMPLINE_BELL[3]["name"]) == "Bodil Okell", "the compline bell ends with Bodil Okell")
+	check(int(Rules.COMPLINE_BELL[0]["goal"]) == 18 and int(Rules.COMPLINE_BELL[1]["goal"]) == 20 and int(Rules.COMPLINE_BELL[2]["goal"]) == 16 and int(Rules.COMPLINE_BELL[3]["goal"]) == 22, "the compline goals stay 18, 20, 16, and 22")
+	check(Rules.CORRIGENDA_BELL.size() == 4 and String(Rules.CORRIGENDA_BELL[0]["name"]) == "Vera Hale", "the corrigenda bell still begins with Vera Hale")
+	check(String(Rules.CORRIGENDA_BELL[1]["name"]) == "Felix Voss" and String(Rules.CORRIGENDA_BELL[2]["name"]) == "Rhea Brant" and String(Rules.CORRIGENDA_BELL[3]["name"]) == "Jasper Okell", "the corrigenda bell still ends with Jasper Okell")
+	var compline_run = Rules.new_run(89, Rules.SHIFT_COMPLINE)
+	check(compline_run.shift == Rules.SHIFT_COMPLINE, "the compline bell is a separate night")
+	check(Rules.shift_label(compline_run) == "Compline bell", "the compline bell keeps its name")
+	check(String(Rules.traveler(compline_run)["name"]) == "Arvid Hale", "the compline bell begins with Arvid Hale")
+	check(compline_run.hand.size() == Rules.HAND_SIZE, "the compline bell draws 5")
+	check(compline_run.ink == Rules.BASE_INK, "the compline bell starts at 3 ink")
+	check(compline_run.library.size() == Rules.STARTING_DECK.size(), "the compline bell deals the starting deck")
+	check(compline_run.relic_id == "", "an earlier night's relic does not carry")
+	check(compline_run.phase == "play", "the compline bell opens in play")
+	var dealt: Array = []
+	for iid in compline_run.hand:
+		dealt.append(Rules.card_id_of(compline_run, int(iid)))
+	var before = compline_run.library.size()
+	compline_run.progress = 4
+	compline_run.patience = 1
+	Rules.restart_encounter(compline_run)
+	check(compline_run.shift == Rules.SHIFT_COMPLINE and compline_run.traveler_index == 0, "restart encounter stays on the compline bell")
+	check(compline_run.progress == 0 and compline_run.patience == int(Rules.COMPLINE_BELL[0]["patience"]), "restart encounter resets Arvid")
+	check(compline_run.library.size() == before and compline_run.hand.size() == 5 and compline_run.phase == "play", "restart keeps the compline-bell deck and deals a hand")
+	var redealt: Array = []
+	for iid in compline_run.hand:
+		redealt.append(Rules.card_id_of(compline_run, int(iid)))
+	check(redealt == dealt, "restart deals Arvid the same hand")
+
+	var packed = load("res://game/main.tscn")
+	var desk = packed.instantiate()
+	root.add_child(desk)
+	if desk.state == null:
+		desk._ready()
+	check(desk.state.shift == Rules.SHIFT_FIRST, "the desk still opens on Act 1")
+	check(Rules.SHIFT_EPILOGUE == 42, "the epilogue bell stays night 43")
+	check(Rules.SHIFT_CODA == 43, "the coda bell stays night 44")
+	check(Rules.SHIFT_EPODE == 48, "the epode bell stays night 49")
+	check(Rules.SHIFT_FINALE == 47, "the finale bell stays night 48")
+	check(Rules.SHIFT_ENVOY == 46, "the envoy bell stays night 47")
+	check(Rules.SHIFT_FINIS == 45, "the finis bell stays night 46")
+	check(desk.compline_button != desk.nocturne_button, "the compline button does not replace the nocturne button")
+	check(desk.nocturne_button.text == "Nocturne bell", "the desk still offers the nocturne bell")
+	check(desk.compline_button.text == "Compline bell", "the desk offers the compline bell")
+	check(desk.recessional_button.text == "Recessional bell", "the desk still offers the recessional bell")
+	check(desk.valediction_button.text == "Valediction bell", "the desk still offers the valediction bell")
+	check(desk.epode_button.text == "Epode bell", "the desk still offers the epode bell")
+	check(desk.nocturne_button.get_index() + 1 == desk.compline_button.get_index(), "the compline button sits immediately right of nocturne")
+	check(desk.recessional_button.get_index() + 1 == desk.nocturne_button.get_index(), "recessional stays left of nocturne")
+	check(desk.valediction_button.get_index() + 1 == desk.recessional_button.get_index(), "valediction stays left of recessional")
+	check(desk.epode_button.get_index() + 1 == desk.valediction_button.get_index(), "epode stays left of valediction")
+	desk.compline_button.pressed.emit()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_COMPLINE, "the desk can open the compline bell")
+	check(String(Rules.traveler(desk.state)["name"]) == "Arvid Hale", "the open desk shows Arvid")
+	check(String(desk.desk_label.text).begins_with("Compline bell"), "the desk title follows the compline bell")
+	check(desk.meta_label.text.contains("Kerf Toll"), "the desk shows Arvid's form")
+	check(desk.compline_button.text == "First bell", "the compline bell can return to the first bell")
+	check(desk.recessional_button.text == "Recessional bell", "the recessional bell stays available from the compline bell")
+	check(desk.valediction_button.text == "Valediction bell", "the valediction bell stays available from the compline bell")
+	desk.recessional_button.pressed.emit()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_RECESSIONAL and String(Rules.traveler(desk.state)["name"]) == "Peder Hale", "from the compline bell the recessional button opens the recessional bell")
+	check(desk.compline_button.text == "Compline bell", "the recessional desk still offers the compline bell")
+	desk.compline_button.pressed.emit()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_COMPLINE and String(Rules.traveler(desk.state)["name"]) == "Arvid Hale", "from the recessional desk the compline button opens the compline bell")
+	desk.nocturne_button.pressed.emit()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_NOCTURNE and String(Rules.traveler(desk.state)["name"]) == "Halvar Hale", "from the compline bell the nocturne button opens the nocturne bell")
+	desk.compline_button.pressed.emit()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_COMPLINE and String(Rules.traveler(desk.state)["name"]) == "Arvid Hale", "from the nocturne desk the compline button opens the compline bell")
+	desk.valediction_button.pressed.emit()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_VALEDICTION and String(Rules.traveler(desk.state)["name"]) == "Theo Hale", "from the compline bell the valediction button opens the valediction bell")
+	desk._begin_compline_bell()
+	desk._refresh_ui()
+	desk.epode_button.pressed.emit()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_EPODE and String(Rules.traveler(desk.state)["name"]) == "Alma Hale", "from the compline bell the epode button opens the epode bell")
+	desk._begin_compline_bell()
+	desk._refresh_ui()
+	desk._restart_act()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_COMPLINE and String(Rules.traveler(desk.state)["name"]) == "Arvid Hale", "restart act replays the compline bell")
+	desk.compline_button.pressed.emit()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_FIRST and String(Rules.traveler(desk.state)["name"]) == "Ada Quill", "the compline bell returns to Ada")
+	check(desk.compline_button.text == "Compline bell", "the first bell offers the compline bell again")
+	var doors = [
+		["_begin_late_shift", "Nell Parr", "the late shift"],
+		["_begin_closing_bell", "Moss Quen", "the closing bell"],
+		["_begin_ash_watch", "Orla Fen", "the ash watch"],
+		["_begin_gutter_lamp", "Ivo Dane", "the gutter lamp"],
+		["_begin_vellum_bell", "Edda Voss", "the vellum bell"],
+		["_begin_quire_watch", "Tess Quern", "the quire watch"],
+		["_begin_salt_watch", "Pell Voss", "the salt watch"],
+		["_begin_quay_bell", "Mara Quill", "the quay bell"],
+		["_begin_folio_bell", "Ness Hart", "the folio bell"],
+		["_begin_wick_bell", "Odell Voss", "the wick bell"],
+		["_begin_margin_bell", "Nim Voss", "the margin bell"],
+		["_begin_index_bell", "Len Quill", "the index bell"],
+		["_begin_ledger_bell", "Nell Voss", "the ledger bell"],
+		["_begin_spine_bell", "Wynn Quill", "the spine bell"],
+		["_begin_headband_bell", "Len Hart", "the headband bell"],
+		["_begin_clasp_bell", "Noll Hart", "the clasp bell"],
+		["_begin_signature_bell", "Dory Hart", "the signature bell"],
+		["_begin_catchword_bell", "Gwyn Brant", "the catchword bell"],
+		["_begin_colophon_bell", "Nia Soren", "the colophon bell"],
+		["_begin_errata_bell", "Una Pell", "the errata bell"],
+		["_begin_frontispiece_bell", "Soren Hale", "the frontispiece bell"],
+		["_begin_flyleaf_bell", "Hollin Voss", "the flyleaf bell"],
+		["_begin_endpaper_bell", "Isla Voss", "the endpaper bell"],
+		["_begin_halftitle_bell", "Tamsin Keel", "the half-title bell"],
+		["_begin_titlepage_bell", "Nessa Voss", "the title-page bell"],
+		["_begin_copyright_bell", "Merrick Hale", "the copyright bell"],
+		["_begin_dedication_bell", "Maud Hale", "the dedication bell"],
+		["_begin_epigraph_bell", "Enid Hale", "the epigraph bell"],
+		["_begin_preface_bell", "Neve Hale", "the preface bell"],
+		["_begin_foreword_bell", "Shay Hale", "the foreword bell"],
+		["_begin_contents_bell", "Ross Hale", "the contents bell"],
+		["_begin_introduction_bell", "Quin Hale", "the introduction bell"],
+		["_begin_prologue_bell", "Nola Hale", "the prologue bell"],
+		["_begin_acknowledgments_bell", "Maris Hale", "the acknowledgments bell"],
+		["_begin_glossary_bell", "Sybil Hale", "the glossary bell"],
+		["_begin_appendix_bell", "Briony Hale", "the appendix bell"],
+		["_begin_afterword_bell", "Catrin Hale", "the afterword bell"],
+		["_begin_postscript_bell", "Isolde Hale", "the postscript bell"],
+		["_begin_addenda_bell", "Freya Hale", "the addenda bell"],
+		["_begin_envoi_bell", "Elspeth Hale", "the envoi bell"],
+		["_begin_corrigenda_bell", "Vera Hale", "the corrigenda bell"],
+		["_begin_epilogue_bell", "Sigrid Hale", "the epilogue bell"],
+		["_begin_coda_bell", "Kira Hale", "the coda bell"],
+		["_begin_explicit_bell", "Edgar Hale", "the explicit bell"],
+		["_begin_finis_bell", "Ruth Hale", "the finis bell"],
+		["_begin_envoy_bell", "Agnes Hale", "the envoy bell"],
+		["_begin_finale_bell", "Cedric Hale", "the finale bell"],
+		["_begin_epode_bell", "Alma Hale", "the epode bell"],
+		["_begin_valediction_bell", "Theo Hale", "the valediction bell"],
+		["_begin_recessional_bell", "Peder Hale", "the recessional bell"],
+		["_begin_nocturne_bell", "Halvar Hale", "the nocturne bell"],
+	]
+	for door in doors:
+		desk.call(String(door[0]))
+		desk._refresh_ui()
+		check(desk.state.shift != Rules.SHIFT_COMPLINE and String(Rules.traveler(desk.state)["name"]) == String(door[1]), "%s still opens" % String(door[2]))
+		check(desk.compline_button.text == "Compline bell", "%s offers the compline bell" % String(door[2]))
+		desk._begin_compline_bell()
+		desk._refresh_ui()
+		check(desk.state.shift == Rules.SHIFT_COMPLINE and String(Rules.traveler(desk.state)["name"]) == "Arvid Hale", "%s can open the compline bell" % String(door[2]))
+	var victories = [
+		[Rules.SHIFT_FIRST, "Act 1"],
+		[Rules.SHIFT_LATE, "the late shift"],
+		[Rules.SHIFT_CLOSING, "the closing bell"],
+		[Rules.SHIFT_ASH, "the ash watch"],
+		[Rules.SHIFT_GUTTER, "the gutter lamp"],
+		[Rules.SHIFT_VELLUM, "the vellum bell"],
+		[Rules.SHIFT_QUIRE, "the quire watch"],
+		[Rules.SHIFT_SALT, "the salt watch"],
+		[Rules.SHIFT_QUAY, "the quay bell"],
+		[Rules.SHIFT_FOLIO, "the folio bell"],
+		[Rules.SHIFT_WICK, "the wick bell"],
+		[Rules.SHIFT_MARGIN, "the margin bell"],
+		[Rules.SHIFT_INDEX, "the index bell"],
+		[Rules.SHIFT_LEDGER, "the ledger bell"],
+		[Rules.SHIFT_SPINE, "the spine bell"],
+		[Rules.SHIFT_HEADBAND, "the headband bell"],
+		[Rules.SHIFT_CLASP, "the clasp bell"],
+		[Rules.SHIFT_SIGNATURE, "the signature bell"],
+		[Rules.SHIFT_CATCHWORD, "the catchword bell"],
+		[Rules.SHIFT_COLOPHON, "the colophon bell"],
+		[Rules.SHIFT_ERRATA, "the errata bell"],
+		[Rules.SHIFT_FRONTISPIECE, "the frontispiece bell"],
+		[Rules.SHIFT_FLYLEAF, "the flyleaf bell"],
+		[Rules.SHIFT_ENDPAPER, "the endpaper bell"],
+		[Rules.SHIFT_HALFTITLE, "the half-title bell"],
+		[Rules.SHIFT_TITLEPAGE, "the title-page bell"],
+		[Rules.SHIFT_COPYRIGHT, "the copyright bell"],
+		[Rules.SHIFT_DEDICATION, "the dedication bell"],
+		[Rules.SHIFT_EPIGRAPH, "the epigraph bell"],
+		[Rules.SHIFT_PREFACE, "the preface bell"],
+		[Rules.SHIFT_FOREWORD, "the foreword bell"],
+		[Rules.SHIFT_CONTENTS, "the contents bell"],
+		[Rules.SHIFT_INTRODUCTION, "the introduction bell"],
+		[Rules.SHIFT_PROLOGUE, "the prologue bell"],
+		[Rules.SHIFT_ACKNOWLEDGMENTS, "the acknowledgments bell"],
+		[Rules.SHIFT_GLOSSARY, "the glossary bell"],
+		[Rules.SHIFT_APPENDIX, "the appendix bell"],
+		[Rules.SHIFT_AFTERWORD, "the afterword bell"],
+		[Rules.SHIFT_POSTSCRIPT, "the postscript bell"],
+		[Rules.SHIFT_ADDENDA, "the addenda bell"],
+		[Rules.SHIFT_ENVOI, "the envoi bell"],
+		[Rules.SHIFT_CORRIGENDA, "the corrigenda bell"],
+		[Rules.SHIFT_EPILOGUE, "the epilogue bell"],
+		[Rules.SHIFT_CODA, "the coda bell"],
+		[Rules.SHIFT_EXPLICIT, "the explicit bell"],
+		[Rules.SHIFT_FINIS, "the finis bell"],
+		[Rules.SHIFT_ENVOY, "the envoy bell"],
+		[Rules.SHIFT_FINALE, "the finale bell"],
+		[Rules.SHIFT_EPODE, "the epode bell"],
+		[Rules.SHIFT_VALEDICTION, "the valediction bell"],
+		[Rules.SHIFT_RECESSIONAL, "the recessional bell"],
+		[Rules.SHIFT_NOCTURNE, "the nocturne bell"],
+	]
+	for victory in victories:
+		desk._open_shift(int(victory[0]), desk.state.seed)
+		desk._refresh_ui()
+		desk.state.phase = "victory"
+		desk._refresh_ui()
+		var victory_epilogue = _button_named(desk, "Open the compline bell")
+		check(victory_epilogue != null, "%s's victory desk offers the compline bell" % String(victory[1]))
+		if victory_epilogue != null:
+			victory_epilogue.pressed.emit()
+			desk._refresh_ui()
+			check(desk.state.shift == Rules.SHIFT_COMPLINE and String(Rules.traveler(desk.state)["name"]) == "Arvid Hale", "%s's victory desk opens the compline bell" % String(victory[1]))
+	var earlier = [
+		["Open the nocturne bell", Rules.SHIFT_NOCTURNE, "Halvar Hale", "the nocturne bell"],
+		["Open the recessional bell", Rules.SHIFT_RECESSIONAL, "Peder Hale", "the recessional bell"],
+		["Open the valediction bell", Rules.SHIFT_VALEDICTION, "Theo Hale", "the valediction bell"],
+		["Open the epode bell", Rules.SHIFT_EPODE, "Alma Hale", "the epode bell"],
+		["Open the finale bell", Rules.SHIFT_FINALE, "Cedric Hale", "the finale bell"],
+		["Open the envoy bell", Rules.SHIFT_ENVOY, "Agnes Hale", "the envoy bell"],
+		["Open the finis bell", Rules.SHIFT_FINIS, "Ruth Hale", "the finis bell"],
+		["Open the explicit bell", Rules.SHIFT_EXPLICIT, "Edgar Hale", "the explicit bell"],
+		["Open the coda bell", Rules.SHIFT_CODA, "Kira Hale", "the coda bell"],
+		["Open the epilogue bell", Rules.SHIFT_EPILOGUE, "Sigrid Hale", "the epilogue bell"],
+		["Open the corrigenda bell", Rules.SHIFT_CORRIGENDA, "Vera Hale", "the corrigenda bell"],
+		["Open the envoi bell", Rules.SHIFT_ENVOI, "Elspeth Hale", "the envoi bell"],
+		["Open the addenda bell", Rules.SHIFT_ADDENDA, "Freya Hale", "the addenda bell"],
+		["Open the postscript bell", Rules.SHIFT_POSTSCRIPT, "Isolde Hale", "the postscript bell"],
+		["Open the afterword bell", Rules.SHIFT_AFTERWORD, "Catrin Hale", "the afterword bell"],
+		["Open the appendix bell", Rules.SHIFT_APPENDIX, "Briony Hale", "the appendix bell"],
+		["Open the glossary bell", Rules.SHIFT_GLOSSARY, "Sybil Hale", "the glossary bell"],
+		["Open the acknowledgments bell", Rules.SHIFT_ACKNOWLEDGMENTS, "Maris Hale", "the acknowledgments bell"],
+		["Open the prologue bell", Rules.SHIFT_PROLOGUE, "Nola Hale", "the prologue bell"],
+		["Open the introduction bell", Rules.SHIFT_INTRODUCTION, "Quin Hale", "the introduction bell"],
+		["Open the contents bell", Rules.SHIFT_CONTENTS, "Ross Hale", "the contents bell"],
+		["Open the foreword bell", Rules.SHIFT_FOREWORD, "Shay Hale", "the foreword bell"],
+		["Open the preface bell", Rules.SHIFT_PREFACE, "Neve Hale", "the preface bell"],
+		["Open the epigraph bell", Rules.SHIFT_EPIGRAPH, "Enid Hale", "the epigraph bell"],
+		["Open the dedication bell", Rules.SHIFT_DEDICATION, "Maud Hale", "the dedication bell"],
+		["Open the copyright bell", Rules.SHIFT_COPYRIGHT, "Merrick Hale", "the copyright bell"],
+		["Open the title-page bell", Rules.SHIFT_TITLEPAGE, "Nessa Voss", "the title-page bell"],
+		["Open the half-title bell", Rules.SHIFT_HALFTITLE, "Tamsin Keel", "the half-title bell"],
+		["Open the endpaper bell", Rules.SHIFT_ENDPAPER, "Isla Voss", "the endpaper bell"],
+		["Open the flyleaf bell", Rules.SHIFT_FLYLEAF, "Hollin Voss", "the flyleaf bell"],
+		["Open the frontispiece bell", Rules.SHIFT_FRONTISPIECE, "Soren Hale", "the frontispiece bell"],
+		["Open the errata bell", Rules.SHIFT_ERRATA, "Una Pell", "the errata bell"],
+		["Open the colophon bell", Rules.SHIFT_COLOPHON, "Nia Soren", "the colophon bell"],
+		["Open the catchword bell", Rules.SHIFT_CATCHWORD, "Gwyn Brant", "the catchword bell"],
+		["Open the signature bell", Rules.SHIFT_SIGNATURE, "Dory Hart", "the signature bell"],
+		["Open the clasp bell", Rules.SHIFT_CLASP, "Noll Hart", "the clasp bell"],
+		["Open the headband bell", Rules.SHIFT_HEADBAND, "Len Hart", "the headband bell"],
+		["Open the spine bell", Rules.SHIFT_SPINE, "Wynn Quill", "the spine bell"],
+		["Open the ledger bell", Rules.SHIFT_LEDGER, "Nell Voss", "the ledger bell"],
+		["Open the index bell", Rules.SHIFT_INDEX, "Len Quill", "the index bell"],
+		["Open the margin bell", Rules.SHIFT_MARGIN, "Nim Voss", "the margin bell"],
+		["Open the wick bell", Rules.SHIFT_WICK, "Odell Voss", "the wick bell"],
+		["Open the folio bell", Rules.SHIFT_FOLIO, "Ness Hart", "the folio bell"],
+		["Open the quay bell", Rules.SHIFT_QUAY, "Mara Quill", "the quay bell"],
+		["Open the salt watch", Rules.SHIFT_SALT, "Pell Voss", "the salt watch"],
+		["Open the quire watch", Rules.SHIFT_QUIRE, "Tess Quern", "the quire watch"],
+		["Open the vellum bell", Rules.SHIFT_VELLUM, "Edda Voss", "the vellum bell"],
+		["Open the gutter lamp", Rules.SHIFT_GUTTER, "Ivo Dane", "the gutter lamp"],
+		["Open the ash watch", Rules.SHIFT_ASH, "Orla Fen", "the ash watch"],
+		["Open the closing bell", Rules.SHIFT_CLOSING, "Moss Quen", "the closing bell"],
+		["Open the late shift", Rules.SHIFT_LATE, "Nell Parr", "the late shift"],
+		["Open the first bell", Rules.SHIFT_FIRST, "Ada Quill", "the first bell"],
+	]
+	for night in earlier:
+		desk._begin_compline_bell()
+		desk._refresh_ui()
+		desk.state.phase = "victory"
+		desk._refresh_ui()
+		var opener = _button_named(desk, String(night[0]))
+		check(opener != null, "the compline bell victory desk offers %s" % String(night[3]))
+		check(_button_named(desk, "Open the compline bell") == null, "the compline bell victory desk does not offer itself")
+		if opener != null:
+			opener.pressed.emit()
+			desk._refresh_ui()
+			check(desk.state.shift == int(night[1]) and String(Rules.traveler(desk.state)["name"]) == String(night[2]), "the compline bell victory desk opens %s" % String(night[3]))
+	root.remove_child(desk)
+	desk.free()
+
+
+func test_nocturne_bell_opens() -> void:
+	check(Rules.SHIFT_NOCTURNE == 51, "the nocturne bell is night 52")
+	check(Rules.SHIFT_RECESSIONAL == 50, "the recessional bell stays night 51")
+	check(Rules.SHIFT_VALEDICTION == 49, "the valediction bell stays night 50")
+	check(Rules.SHIFT_CORRIGENDA == 41, "the corrigenda bell stays night 42")
+	check(Rules.SHIFT_ENVOI == 40, "the envoi bell stays night 41")
+	check(Rules.SHIFT_ADDENDA == 39, "the addenda bell stays night 40")
+	check(Rules.NOCTURNE_BELL.size() == 4, "the nocturne bell has four travelers")
+	check(String(Rules.NOCTURNE_BELL[0]["name"]) == "Halvar Hale", "the nocturne bell begins with Halvar Hale")
+	check(String(Rules.NOCTURNE_BELL[1]["name"]) == "Maja Voss", "the nocturne bell's second traveler is Maja Voss")
+	check(String(Rules.NOCTURNE_BELL[2]["name"]) == "Ebba Brant", "the nocturne bell's third traveler is Ebba Brant")
+	check(String(Rules.NOCTURNE_BELL[3]["name"]) == "Sten Okell", "the nocturne bell ends with Sten Okell")
+	check(int(Rules.NOCTURNE_BELL[0]["goal"]) == 18 and int(Rules.NOCTURNE_BELL[1]["goal"]) == 20 and int(Rules.NOCTURNE_BELL[2]["goal"]) == 16 and int(Rules.NOCTURNE_BELL[3]["goal"]) == 22, "the nocturne goals stay 18, 20, 16, and 22")
+	check(Rules.CORRIGENDA_BELL.size() == 4 and String(Rules.CORRIGENDA_BELL[0]["name"]) == "Vera Hale", "the corrigenda bell still begins with Vera Hale")
+	check(String(Rules.CORRIGENDA_BELL[1]["name"]) == "Felix Voss" and String(Rules.CORRIGENDA_BELL[2]["name"]) == "Rhea Brant" and String(Rules.CORRIGENDA_BELL[3]["name"]) == "Jasper Okell", "the corrigenda bell still ends with Jasper Okell")
+	var nocturne_run = Rules.new_run(89, Rules.SHIFT_NOCTURNE)
+	check(nocturne_run.shift == Rules.SHIFT_NOCTURNE, "the nocturne bell is a separate night")
+	check(Rules.shift_label(nocturne_run) == "Nocturne bell", "the nocturne bell keeps its name")
+	check(String(Rules.traveler(nocturne_run)["name"]) == "Halvar Hale", "the nocturne bell begins with Halvar Hale")
+	check(nocturne_run.hand.size() == Rules.HAND_SIZE, "the nocturne bell draws 5")
+	check(nocturne_run.ink == Rules.BASE_INK, "the nocturne bell starts at 3 ink")
+	check(nocturne_run.library.size() == Rules.STARTING_DECK.size(), "the nocturne bell deals the starting deck")
+	check(nocturne_run.relic_id == "", "an earlier night's relic does not carry")
+	check(nocturne_run.phase == "play", "the nocturne bell opens in play")
+	var dealt: Array = []
+	for iid in nocturne_run.hand:
+		dealt.append(Rules.card_id_of(nocturne_run, int(iid)))
+	var before = nocturne_run.library.size()
+	nocturne_run.progress = 4
+	nocturne_run.patience = 1
+	Rules.restart_encounter(nocturne_run)
+	check(nocturne_run.shift == Rules.SHIFT_NOCTURNE and nocturne_run.traveler_index == 0, "restart encounter stays on the nocturne bell")
+	check(nocturne_run.progress == 0 and nocturne_run.patience == int(Rules.NOCTURNE_BELL[0]["patience"]), "restart encounter resets Halvar")
+	check(nocturne_run.library.size() == before and nocturne_run.hand.size() == 5 and nocturne_run.phase == "play", "restart keeps the nocturne-bell deck and deals a hand")
+	var redealt: Array = []
+	for iid in nocturne_run.hand:
+		redealt.append(Rules.card_id_of(nocturne_run, int(iid)))
+	check(redealt == dealt, "restart deals Halvar the same hand")
+
+	var packed = load("res://game/main.tscn")
+	var desk = packed.instantiate()
+	root.add_child(desk)
+	if desk.state == null:
+		desk._ready()
+	check(desk.state.shift == Rules.SHIFT_FIRST, "the desk still opens on Act 1")
+	check(Rules.SHIFT_EPILOGUE == 42, "the epilogue bell stays night 43")
+	check(Rules.SHIFT_CODA == 43, "the coda bell stays night 44")
+	check(Rules.SHIFT_EPODE == 48, "the epode bell stays night 49")
+	check(Rules.SHIFT_FINALE == 47, "the finale bell stays night 48")
+	check(Rules.SHIFT_ENVOY == 46, "the envoy bell stays night 47")
+	check(Rules.SHIFT_FINIS == 45, "the finis bell stays night 46")
+	check(desk.nocturne_button != desk.recessional_button, "the nocturne button does not replace the recessional button")
+	check(desk.nocturne_button.text == "Nocturne bell", "the desk offers the nocturne bell")
+	check(desk.recessional_button.text == "Recessional bell", "the desk still offers the recessional bell")
+	check(desk.valediction_button.text == "Valediction bell", "the desk still offers the valediction bell")
+	check(desk.epode_button.text == "Epode bell", "the desk still offers the epode bell")
+	check(desk.recessional_button.get_index() + 1 == desk.nocturne_button.get_index(), "the nocturne button sits immediately right of recessional")
+	check(desk.valediction_button.get_index() + 1 == desk.recessional_button.get_index(), "valediction stays left of recessional")
+	check(desk.epode_button.get_index() + 1 == desk.valediction_button.get_index(), "epode stays left of valediction")
+	desk.nocturne_button.pressed.emit()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_NOCTURNE, "the desk can open the nocturne bell")
+	check(String(Rules.traveler(desk.state)["name"]) == "Halvar Hale", "the open desk shows Halvar")
+	check(String(desk.desk_label.text).begins_with("Nocturne bell"), "the desk title follows the nocturne bell")
+	check(desk.meta_label.text.contains("Gouge Toll"), "the desk shows Halvar's form")
+	check(desk.nocturne_button.text == "First bell", "the nocturne bell can return to the first bell")
+	check(desk.recessional_button.text == "Recessional bell", "the recessional bell stays available from the nocturne bell")
+	check(desk.valediction_button.text == "Valediction bell", "the valediction bell stays available from the nocturne bell")
+	desk.recessional_button.pressed.emit()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_RECESSIONAL and String(Rules.traveler(desk.state)["name"]) == "Peder Hale", "from the nocturne bell the recessional button opens the recessional bell")
+	check(desk.nocturne_button.text == "Nocturne bell", "the recessional desk still offers the nocturne bell")
+	desk.nocturne_button.pressed.emit()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_NOCTURNE and String(Rules.traveler(desk.state)["name"]) == "Halvar Hale", "from the recessional desk the nocturne button opens the nocturne bell")
+	desk.valediction_button.pressed.emit()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_VALEDICTION and String(Rules.traveler(desk.state)["name"]) == "Theo Hale", "from the nocturne bell the valediction button opens the valediction bell")
+	desk._begin_nocturne_bell()
+	desk._refresh_ui()
+	desk.epode_button.pressed.emit()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_EPODE and String(Rules.traveler(desk.state)["name"]) == "Alma Hale", "from the nocturne bell the epode button opens the epode bell")
+	desk._begin_nocturne_bell()
+	desk._refresh_ui()
+	desk._restart_act()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_NOCTURNE and String(Rules.traveler(desk.state)["name"]) == "Halvar Hale", "restart act replays the nocturne bell")
+	desk.nocturne_button.pressed.emit()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_FIRST and String(Rules.traveler(desk.state)["name"]) == "Ada Quill", "the nocturne bell returns to Ada")
+	check(desk.nocturne_button.text == "Nocturne bell", "the first bell offers the nocturne bell again")
+	var doors = [
+		["_begin_late_shift", "Nell Parr", "the late shift"],
+		["_begin_closing_bell", "Moss Quen", "the closing bell"],
+		["_begin_ash_watch", "Orla Fen", "the ash watch"],
+		["_begin_gutter_lamp", "Ivo Dane", "the gutter lamp"],
+		["_begin_vellum_bell", "Edda Voss", "the vellum bell"],
+		["_begin_quire_watch", "Tess Quern", "the quire watch"],
+		["_begin_salt_watch", "Pell Voss", "the salt watch"],
+		["_begin_quay_bell", "Mara Quill", "the quay bell"],
+		["_begin_folio_bell", "Ness Hart", "the folio bell"],
+		["_begin_wick_bell", "Odell Voss", "the wick bell"],
+		["_begin_margin_bell", "Nim Voss", "the margin bell"],
+		["_begin_index_bell", "Len Quill", "the index bell"],
+		["_begin_ledger_bell", "Nell Voss", "the ledger bell"],
+		["_begin_spine_bell", "Wynn Quill", "the spine bell"],
+		["_begin_headband_bell", "Len Hart", "the headband bell"],
+		["_begin_clasp_bell", "Noll Hart", "the clasp bell"],
+		["_begin_signature_bell", "Dory Hart", "the signature bell"],
+		["_begin_catchword_bell", "Gwyn Brant", "the catchword bell"],
+		["_begin_colophon_bell", "Nia Soren", "the colophon bell"],
+		["_begin_errata_bell", "Una Pell", "the errata bell"],
+		["_begin_frontispiece_bell", "Soren Hale", "the frontispiece bell"],
+		["_begin_flyleaf_bell", "Hollin Voss", "the flyleaf bell"],
+		["_begin_endpaper_bell", "Isla Voss", "the endpaper bell"],
+		["_begin_halftitle_bell", "Tamsin Keel", "the half-title bell"],
+		["_begin_titlepage_bell", "Nessa Voss", "the title-page bell"],
+		["_begin_copyright_bell", "Merrick Hale", "the copyright bell"],
+		["_begin_dedication_bell", "Maud Hale", "the dedication bell"],
+		["_begin_epigraph_bell", "Enid Hale", "the epigraph bell"],
+		["_begin_preface_bell", "Neve Hale", "the preface bell"],
+		["_begin_foreword_bell", "Shay Hale", "the foreword bell"],
+		["_begin_contents_bell", "Ross Hale", "the contents bell"],
+		["_begin_introduction_bell", "Quin Hale", "the introduction bell"],
+		["_begin_prologue_bell", "Nola Hale", "the prologue bell"],
+		["_begin_acknowledgments_bell", "Maris Hale", "the acknowledgments bell"],
+		["_begin_glossary_bell", "Sybil Hale", "the glossary bell"],
+		["_begin_appendix_bell", "Briony Hale", "the appendix bell"],
+		["_begin_afterword_bell", "Catrin Hale", "the afterword bell"],
+		["_begin_postscript_bell", "Isolde Hale", "the postscript bell"],
+		["_begin_addenda_bell", "Freya Hale", "the addenda bell"],
+		["_begin_envoi_bell", "Elspeth Hale", "the envoi bell"],
+		["_begin_corrigenda_bell", "Vera Hale", "the corrigenda bell"],
+		["_begin_epilogue_bell", "Sigrid Hale", "the epilogue bell"],
+		["_begin_coda_bell", "Kira Hale", "the coda bell"],
+		["_begin_explicit_bell", "Edgar Hale", "the explicit bell"],
+		["_begin_finis_bell", "Ruth Hale", "the finis bell"],
+		["_begin_envoy_bell", "Agnes Hale", "the envoy bell"],
+		["_begin_finale_bell", "Cedric Hale", "the finale bell"],
+		["_begin_epode_bell", "Alma Hale", "the epode bell"],
+		["_begin_valediction_bell", "Theo Hale", "the valediction bell"],
+		["_begin_recessional_bell", "Peder Hale", "the recessional bell"],
+	]
+	for door in doors:
+		desk.call(String(door[0]))
+		desk._refresh_ui()
+		check(desk.state.shift != Rules.SHIFT_NOCTURNE and String(Rules.traveler(desk.state)["name"]) == String(door[1]), "%s still opens" % String(door[2]))
+		check(desk.nocturne_button.text == "Nocturne bell", "%s offers the nocturne bell" % String(door[2]))
+		desk._begin_nocturne_bell()
+		desk._refresh_ui()
+		check(desk.state.shift == Rules.SHIFT_NOCTURNE and String(Rules.traveler(desk.state)["name"]) == "Halvar Hale", "%s can open the nocturne bell" % String(door[2]))
+	var victories = [
+		[Rules.SHIFT_FIRST, "Act 1"],
+		[Rules.SHIFT_LATE, "the late shift"],
+		[Rules.SHIFT_CLOSING, "the closing bell"],
+		[Rules.SHIFT_ASH, "the ash watch"],
+		[Rules.SHIFT_GUTTER, "the gutter lamp"],
+		[Rules.SHIFT_VELLUM, "the vellum bell"],
+		[Rules.SHIFT_QUIRE, "the quire watch"],
+		[Rules.SHIFT_SALT, "the salt watch"],
+		[Rules.SHIFT_QUAY, "the quay bell"],
+		[Rules.SHIFT_FOLIO, "the folio bell"],
+		[Rules.SHIFT_WICK, "the wick bell"],
+		[Rules.SHIFT_MARGIN, "the margin bell"],
+		[Rules.SHIFT_INDEX, "the index bell"],
+		[Rules.SHIFT_LEDGER, "the ledger bell"],
+		[Rules.SHIFT_SPINE, "the spine bell"],
+		[Rules.SHIFT_HEADBAND, "the headband bell"],
+		[Rules.SHIFT_CLASP, "the clasp bell"],
+		[Rules.SHIFT_SIGNATURE, "the signature bell"],
+		[Rules.SHIFT_CATCHWORD, "the catchword bell"],
+		[Rules.SHIFT_COLOPHON, "the colophon bell"],
+		[Rules.SHIFT_ERRATA, "the errata bell"],
+		[Rules.SHIFT_FRONTISPIECE, "the frontispiece bell"],
+		[Rules.SHIFT_FLYLEAF, "the flyleaf bell"],
+		[Rules.SHIFT_ENDPAPER, "the endpaper bell"],
+		[Rules.SHIFT_HALFTITLE, "the half-title bell"],
+		[Rules.SHIFT_TITLEPAGE, "the title-page bell"],
+		[Rules.SHIFT_COPYRIGHT, "the copyright bell"],
+		[Rules.SHIFT_DEDICATION, "the dedication bell"],
+		[Rules.SHIFT_EPIGRAPH, "the epigraph bell"],
+		[Rules.SHIFT_PREFACE, "the preface bell"],
+		[Rules.SHIFT_FOREWORD, "the foreword bell"],
+		[Rules.SHIFT_CONTENTS, "the contents bell"],
+		[Rules.SHIFT_INTRODUCTION, "the introduction bell"],
+		[Rules.SHIFT_PROLOGUE, "the prologue bell"],
+		[Rules.SHIFT_ACKNOWLEDGMENTS, "the acknowledgments bell"],
+		[Rules.SHIFT_GLOSSARY, "the glossary bell"],
+		[Rules.SHIFT_APPENDIX, "the appendix bell"],
+		[Rules.SHIFT_AFTERWORD, "the afterword bell"],
+		[Rules.SHIFT_POSTSCRIPT, "the postscript bell"],
+		[Rules.SHIFT_ADDENDA, "the addenda bell"],
+		[Rules.SHIFT_ENVOI, "the envoi bell"],
+		[Rules.SHIFT_CORRIGENDA, "the corrigenda bell"],
+		[Rules.SHIFT_EPILOGUE, "the epilogue bell"],
+		[Rules.SHIFT_CODA, "the coda bell"],
+		[Rules.SHIFT_EXPLICIT, "the explicit bell"],
+		[Rules.SHIFT_FINIS, "the finis bell"],
+		[Rules.SHIFT_ENVOY, "the envoy bell"],
+		[Rules.SHIFT_FINALE, "the finale bell"],
+		[Rules.SHIFT_EPODE, "the epode bell"],
+		[Rules.SHIFT_VALEDICTION, "the valediction bell"],
+		[Rules.SHIFT_RECESSIONAL, "the recessional bell"],
+	]
+	for victory in victories:
+		desk._open_shift(int(victory[0]), desk.state.seed)
+		desk._refresh_ui()
+		desk.state.phase = "victory"
+		desk._refresh_ui()
+		var victory_epilogue = _button_named(desk, "Open the nocturne bell")
+		check(victory_epilogue != null, "%s's victory desk offers the nocturne bell" % String(victory[1]))
+		if victory_epilogue != null:
+			victory_epilogue.pressed.emit()
+			desk._refresh_ui()
+			check(desk.state.shift == Rules.SHIFT_NOCTURNE and String(Rules.traveler(desk.state)["name"]) == "Halvar Hale", "%s's victory desk opens the nocturne bell" % String(victory[1]))
+	var earlier = [
+		["Open the recessional bell", Rules.SHIFT_RECESSIONAL, "Peder Hale", "the recessional bell"],
+		["Open the valediction bell", Rules.SHIFT_VALEDICTION, "Theo Hale", "the valediction bell"],
+		["Open the epode bell", Rules.SHIFT_EPODE, "Alma Hale", "the epode bell"],
+		["Open the finale bell", Rules.SHIFT_FINALE, "Cedric Hale", "the finale bell"],
+		["Open the envoy bell", Rules.SHIFT_ENVOY, "Agnes Hale", "the envoy bell"],
+		["Open the finis bell", Rules.SHIFT_FINIS, "Ruth Hale", "the finis bell"],
+		["Open the explicit bell", Rules.SHIFT_EXPLICIT, "Edgar Hale", "the explicit bell"],
+		["Open the coda bell", Rules.SHIFT_CODA, "Kira Hale", "the coda bell"],
+		["Open the epilogue bell", Rules.SHIFT_EPILOGUE, "Sigrid Hale", "the epilogue bell"],
+		["Open the corrigenda bell", Rules.SHIFT_CORRIGENDA, "Vera Hale", "the corrigenda bell"],
+		["Open the envoi bell", Rules.SHIFT_ENVOI, "Elspeth Hale", "the envoi bell"],
+		["Open the addenda bell", Rules.SHIFT_ADDENDA, "Freya Hale", "the addenda bell"],
+		["Open the postscript bell", Rules.SHIFT_POSTSCRIPT, "Isolde Hale", "the postscript bell"],
+		["Open the afterword bell", Rules.SHIFT_AFTERWORD, "Catrin Hale", "the afterword bell"],
+		["Open the appendix bell", Rules.SHIFT_APPENDIX, "Briony Hale", "the appendix bell"],
+		["Open the glossary bell", Rules.SHIFT_GLOSSARY, "Sybil Hale", "the glossary bell"],
+		["Open the acknowledgments bell", Rules.SHIFT_ACKNOWLEDGMENTS, "Maris Hale", "the acknowledgments bell"],
+		["Open the prologue bell", Rules.SHIFT_PROLOGUE, "Nola Hale", "the prologue bell"],
+		["Open the introduction bell", Rules.SHIFT_INTRODUCTION, "Quin Hale", "the introduction bell"],
+		["Open the contents bell", Rules.SHIFT_CONTENTS, "Ross Hale", "the contents bell"],
+		["Open the foreword bell", Rules.SHIFT_FOREWORD, "Shay Hale", "the foreword bell"],
+		["Open the preface bell", Rules.SHIFT_PREFACE, "Neve Hale", "the preface bell"],
+		["Open the epigraph bell", Rules.SHIFT_EPIGRAPH, "Enid Hale", "the epigraph bell"],
+		["Open the dedication bell", Rules.SHIFT_DEDICATION, "Maud Hale", "the dedication bell"],
+		["Open the copyright bell", Rules.SHIFT_COPYRIGHT, "Merrick Hale", "the copyright bell"],
+		["Open the title-page bell", Rules.SHIFT_TITLEPAGE, "Nessa Voss", "the title-page bell"],
+		["Open the half-title bell", Rules.SHIFT_HALFTITLE, "Tamsin Keel", "the half-title bell"],
+		["Open the endpaper bell", Rules.SHIFT_ENDPAPER, "Isla Voss", "the endpaper bell"],
+		["Open the flyleaf bell", Rules.SHIFT_FLYLEAF, "Hollin Voss", "the flyleaf bell"],
+		["Open the frontispiece bell", Rules.SHIFT_FRONTISPIECE, "Soren Hale", "the frontispiece bell"],
+		["Open the errata bell", Rules.SHIFT_ERRATA, "Una Pell", "the errata bell"],
+		["Open the colophon bell", Rules.SHIFT_COLOPHON, "Nia Soren", "the colophon bell"],
+		["Open the catchword bell", Rules.SHIFT_CATCHWORD, "Gwyn Brant", "the catchword bell"],
+		["Open the signature bell", Rules.SHIFT_SIGNATURE, "Dory Hart", "the signature bell"],
+		["Open the clasp bell", Rules.SHIFT_CLASP, "Noll Hart", "the clasp bell"],
+		["Open the headband bell", Rules.SHIFT_HEADBAND, "Len Hart", "the headband bell"],
+		["Open the spine bell", Rules.SHIFT_SPINE, "Wynn Quill", "the spine bell"],
+		["Open the ledger bell", Rules.SHIFT_LEDGER, "Nell Voss", "the ledger bell"],
+		["Open the index bell", Rules.SHIFT_INDEX, "Len Quill", "the index bell"],
+		["Open the margin bell", Rules.SHIFT_MARGIN, "Nim Voss", "the margin bell"],
+		["Open the wick bell", Rules.SHIFT_WICK, "Odell Voss", "the wick bell"],
+		["Open the folio bell", Rules.SHIFT_FOLIO, "Ness Hart", "the folio bell"],
+		["Open the quay bell", Rules.SHIFT_QUAY, "Mara Quill", "the quay bell"],
+		["Open the salt watch", Rules.SHIFT_SALT, "Pell Voss", "the salt watch"],
+		["Open the quire watch", Rules.SHIFT_QUIRE, "Tess Quern", "the quire watch"],
+		["Open the vellum bell", Rules.SHIFT_VELLUM, "Edda Voss", "the vellum bell"],
+		["Open the gutter lamp", Rules.SHIFT_GUTTER, "Ivo Dane", "the gutter lamp"],
+		["Open the ash watch", Rules.SHIFT_ASH, "Orla Fen", "the ash watch"],
+		["Open the closing bell", Rules.SHIFT_CLOSING, "Moss Quen", "the closing bell"],
+		["Open the late shift", Rules.SHIFT_LATE, "Nell Parr", "the late shift"],
+		["Open the first bell", Rules.SHIFT_FIRST, "Ada Quill", "the first bell"],
+	]
+	for night in earlier:
+		desk._begin_nocturne_bell()
+		desk._refresh_ui()
+		desk.state.phase = "victory"
+		desk._refresh_ui()
+		var opener = _button_named(desk, String(night[0]))
+		check(opener != null, "the nocturne bell victory desk offers %s" % String(night[3]))
+		check(_button_named(desk, "Open the nocturne bell") == null, "the nocturne bell victory desk does not offer itself")
+		if opener != null:
+			opener.pressed.emit()
+			desk._refresh_ui()
+			check(desk.state.shift == int(night[1]) and String(Rules.traveler(desk.state)["name"]) == String(night[2]), "the nocturne bell victory desk opens %s" % String(night[3]))
+	root.remove_child(desk)
+	desk.free()
+
+
 func test_explicit_bell_rules() -> void:
 	check(Rules.EXPLICIT_BELL.size() == 4, "the explicit bell has four travelers")
 	check(String(Rules.EXPLICIT_BELL[0]["name"]) == "Edgar Hale" and String(Rules.EXPLICIT_BELL[0]["form_name"]) == "Stride Toll", "Edgar Hale brings Stride Toll")
@@ -30045,3 +30692,523 @@ func test_policy_clears_recessional_bell() -> void:
 	check(state.shift == Rules.SHIFT_RECESSIONAL, "the clear stayed on the recessional bell")
 	check(steps == 32, "seed 12345 clears the recessional bell in 32 actions")
 	print("recessional bell finished in %d actions, %d ms" % [steps, elapsed])
+
+func test_nocturne_bell_rules() -> void:
+	check(Rules.NOCTURNE_BELL.size() == 4, "the nocturne bell has four travelers")
+	check(String(Rules.NOCTURNE_BELL[0]["name"]) == "Halvar Hale" and String(Rules.NOCTURNE_BELL[0]["form_name"]) == "Gouge Toll", "Halvar Hale brings Gouge Toll")
+	check(String(Rules.NOCTURNE_BELL[1]["name"]) == "Maja Voss" and String(Rules.NOCTURNE_BELL[1]["form_name"]) == "Bight Fill", "Maja Voss brings Bight Fill")
+	check(String(Rules.NOCTURNE_BELL[2]["name"]) == "Ebba Brant" and String(Rules.NOCTURNE_BELL[2]["form_name"]) == "Brad Pay", "Ebba Brant brings Brad Pay")
+	check(String(Rules.NOCTURNE_BELL[3]["name"]) == "Sten Okell" and String(Rules.NOCTURNE_BELL[3]["form_name"]) == "Bight Blank", "Sten Okell brings Bight Blank")
+	check(int(Rules.NOCTURNE_BELL[0]["goal"]) == 18 and int(Rules.NOCTURNE_BELL[1]["goal"]) == 20 and int(Rules.NOCTURNE_BELL[2]["goal"]) == 16 and int(Rules.NOCTURNE_BELL[3]["goal"]) == 22, "the nocturne goals stay 18, 20, 16, and 22")
+	check(int(Rules.NOCTURNE_BELL[0]["patience"]) == 5 and int(Rules.NOCTURNE_BELL[1]["patience"]) == 5 and int(Rules.NOCTURNE_BELL[2]["patience"]) == 5 and int(Rules.NOCTURNE_BELL[3]["patience"]) == 5, "nocturne patience stays 5")
+	check(int(Rules.NOCTURNE_BELL[0]["lane"]) == 2 and int(Rules.NOCTURNE_BELL[0]["exemption_row"]) == 0, "Halvar stands in column 3 with a top exemption")
+	check(int(Rules.NOCTURNE_BELL[1]["lane"]) == 0 and int(Rules.NOCTURNE_BELL[1]["exemption_row"]) == 2, "Maja stands in column 1 with a bottom exemption")
+	check(int(Rules.NOCTURNE_BELL[2]["lane"]) == 1 and int(Rules.NOCTURNE_BELL[2]["exemption_row"]) == 0, "Ebba stands in column 2 with a top exemption")
+	check(int(Rules.NOCTURNE_BELL[3]["lane"]) == 0 and int(Rules.NOCTURNE_BELL[3]["exemption_row"]) == 1, "Sten stands in column 1 with a middle exemption")
+	check(String(Rules.RECESSIONAL_BELL[0]["name"]) == "Peder Hale" and String(Rules.RECESSIONAL_BELL[0]["form_name"]) == "Gash Toll", "the recessional bell still begins with Peder Hale")
+	check(String(Rules.RECESSIONAL_BELL[1]["form_name"]) == "Hitch Fill" and String(Rules.RECESSIONAL_BELL[2]["form_name"]) == "Pin Pay" and String(Rules.RECESSIONAL_BELL[3]["form_name"]) == "Hitch Blank", "the recessional forms stay Gash Toll, Hitch Fill, Pin Pay, and Hitch Blank")
+	var empty = Rules.scripted_encounter(52, 0, [], 0, Rules.SHIFT_NOCTURNE)
+	Rules.end_turn(empty)
+	check(empty.last_progress_gained == 0 and empty.last_patience_loss == 1, "an empty form does not drop Gouge Toll")
+	var gash_empty = Rules.scripted_encounter(52, 0, [], 0, Rules.SHIFT_RECESSIONAL)
+	Rules.end_turn(gash_empty)
+	check(gash_empty.last_patience_loss == 1, "Gash Toll does not drop on an empty form")
+	var two = Rules.scripted_encounter(52, 0, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_NOCTURNE)
+	for cell in [[0, 0], [0, 1]]:
+		check(play_named(two, "entry_mark", cell[0], cell[1]), "Halvar fills a two-count cell")
+	check(two.last_progress_gained == 4 and two.last_patience_loss == 1, "two filled cells do not drop Gouge Toll")
+	var gash_two = Rules.scripted_encounter(52, 0, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_RECESSIONAL)
+	for cell in [[0, 0], [0, 1]]:
+		check(play_named(gash_two, "entry_mark", cell[0], cell[1]), "Peder fills a two-count cell")
+	check(gash_two.last_patience_loss == 2, "Gash Toll drops on two filled cells")
+	var three = Rules.scripted_encounter(52, 0, ["entry_mark", "entry_mark", "entry_mark"], 3, Rules.SHIFT_NOCTURNE)
+	for cell in [[0, 0], [0, 1], [0, 2]]:
+		check(play_named(three, "entry_mark", cell[0], cell[1]), "Halvar fills a three-count cell")
+	check(three.last_progress_gained == 6 and three.last_patience_loss == 2, "three filled cells drop Gouge Toll")
+	var gash_three = Rules.scripted_encounter(52, 0, ["entry_mark", "entry_mark", "entry_mark"], 3, Rules.SHIFT_RECESSIONAL)
+	for cell in [[0, 0], [0, 1], [0, 2]]:
+		check(play_named(gash_three, "entry_mark", cell[0], cell[1]), "Peder fills a three-count cell")
+	check(gash_three.last_patience_loss == 1, "Gash Toll does not drop on three filled cells")
+	var five = Rules.scripted_encounter(52, 0, ["entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 5, Rules.SHIFT_NOCTURNE)
+	for cell in [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1]]:
+		check(play_named(five, "entry_mark", cell[0], cell[1]), "Halvar fills a five-count cell")
+	check(five.last_progress_gained == 10 and five.last_patience_loss == 1, "five filled cells do not drop Gouge Toll")
+	var gash_five = Rules.scripted_encounter(52, 0, ["entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 5, Rules.SHIFT_RECESSIONAL)
+	for cell in [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1]]:
+		check(play_named(gash_five, "entry_mark", cell[0], cell[1]), "Peder fills a five-count cell")
+	check(gash_five.last_patience_loss == 2, "Gash Toll drops on five filled cells")
+	var six = Rules.scripted_encounter(52, 0, ["entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 6, Rules.SHIFT_NOCTURNE)
+	for cell in [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2]]:
+		check(play_named(six, "entry_mark", cell[0], cell[1]), "Halvar fills a six-count cell")
+	check(six.last_progress_gained == 12 and six.last_patience_loss == 2, "six filled cells drop Gouge Toll")
+	var gash_six = Rules.scripted_encounter(52, 0, ["entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 6, Rules.SHIFT_RECESSIONAL)
+	for cell in [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2]]:
+		check(play_named(gash_six, "entry_mark", cell[0], cell[1]), "Peder fills a six-count cell")
+	check(gash_six.last_patience_loss == 1, "Gash Toll does not drop on six filled cells")
+	var spared = Rules.scripted_encounter(52, 0, ["exemption", "entry_mark", "entry_mark"], 3, Rules.SHIFT_NOCTURNE)
+	check(play_named(spared, "exemption", 0, 0), "exemption on Halvar's top row")
+	check(play_named(spared, "entry_mark", 1, 0), "a stamp beside the top exemption")
+	check(play_named(spared, "entry_mark", 1, 1), "a second stamp beside the top exemption")
+	check(spared.last_progress_gained == 5 and spared.last_patience_loss == 1, "a top-row exemption cancels Gouge Toll")
+	var open = Rules.scripted_encounter(52, 0, ["exemption", "entry_mark", "entry_mark"], 3, Rules.SHIFT_NOCTURNE)
+	check(play_named(open, "exemption", 2, 0), "exemption off Halvar's top row")
+	check(play_named(open, "entry_mark", 1, 0), "a stamp beside the off-row exemption")
+	check(play_named(open, "entry_mark", 1, 1), "a second stamp beside the off-row exemption")
+	check(open.last_progress_gained == 5 and open.last_patience_loss == 2, "an exemption off the top row does not cancel Gouge Toll")
+	var held = Rules.scripted_encounter(52, 0, ["hold", "entry_mark", "entry_mark"], 3, Rules.SHIFT_NOCTURNE)
+	check(play_named(held, "hold", 1, 2), "hold in Halvar's column")
+	check(play_named(held, "entry_mark", 1, 0), "a stamp beside that hold")
+	check(play_named(held, "entry_mark", 1, 1), "a second stamp beside that hold")
+	check(held.last_progress_gained == 5 and held.last_patience_loss == 0, "hold in column 3 comes before Gouge Toll")
+	var missed = Rules.scripted_encounter(52, 0, ["hold", "entry_mark", "entry_mark"], 3, Rules.SHIFT_NOCTURNE)
+	check(play_named(missed, "hold", 2, 0), "hold outside Halvar's column")
+	check(play_named(missed, "entry_mark", 1, 0), "a stamp beside the missed hold")
+	check(play_named(missed, "entry_mark", 1, 1), "a second stamp beside the missed hold")
+	check(missed.last_progress_gained == 5 and missed.last_patience_loss == 2, "hold in another column does not spare Gouge Toll")
+	var trio = Rules.scripted_encounter(52, 1, ["entry_mark", "entry_mark", "entry_mark"], 3, Rules.SHIFT_NOCTURNE)
+	check(play_named(trio, "entry_mark", 0, 1), "Maja receives the filled cell three places before")
+	check(play_named(trio, "entry_mark", 1, 1), "Maja receives the center stamp")
+	check(play_named(trio, "entry_mark", 1, 2), "Maja receives the filled cell one place after")
+	check(trio.last_progress_gained == 8, "the filled cell three places before it and the filled cell one place after it double the center")
+	var hitch = Rules.scripted_encounter(52, 1, ["entry_mark", "entry_mark", "entry_mark"], 3, Rules.SHIFT_RECESSIONAL)
+	check(play_named(hitch, "entry_mark", 0, 1), "Svea receives the same earlier stamp")
+	check(play_named(hitch, "entry_mark", 1, 1), "Svea receives the same center stamp")
+	check(play_named(hitch, "entry_mark", 1, 2), "Svea receives the same later stamp")
+	check(hitch.last_progress_gained == 6, "Hitch Fill does not double a stamp whose cell two places before it is empty")
+	var hitch_trio = Rules.scripted_encounter(52, 1, ["entry_mark", "entry_mark", "entry_mark"], 3, Rules.SHIFT_RECESSIONAL)
+	check(play_named(hitch_trio, "entry_mark", 0, 2), "Svea receives the cell two places before")
+	check(play_named(hitch_trio, "entry_mark", 1, 1), "Svea receives that center")
+	check(play_named(hitch_trio, "entry_mark", 1, 2), "Svea receives the cell one place after")
+	check(hitch_trio.last_progress_gained == 8, "Hitch Fill doubles when the cell two places before it and the cell one place after it are filled")
+	var bight_hitch = Rules.scripted_encounter(52, 1, ["entry_mark", "entry_mark", "entry_mark"], 3, Rules.SHIFT_NOCTURNE)
+	check(play_named(bight_hitch, "entry_mark", 0, 2), "Maja receives the cell two places before")
+	check(play_named(bight_hitch, "entry_mark", 1, 1), "Maja receives that center")
+	check(play_named(bight_hitch, "entry_mark", 1, 2), "Maja receives the cell one place after")
+	check(bight_hitch.last_progress_gained == 6, "Bight Fill does not double a stamp whose cell three places before it is empty")
+	var fill_spared = Rules.scripted_encounter(52, 1, ["exemption", "entry_mark", "entry_mark", "entry_mark"], 4, Rules.SHIFT_NOCTURNE)
+	check(play_named(fill_spared, "exemption", 2, 0), "exemption on Maja's bottom row")
+	check(play_named(fill_spared, "entry_mark", 0, 1), "the earlier stamp beside the bottom exemption")
+	check(play_named(fill_spared, "entry_mark", 1, 1), "the center beside the bottom exemption")
+	check(play_named(fill_spared, "entry_mark", 1, 2), "the later stamp beside the bottom exemption")
+	check(fill_spared.last_progress_gained == 7, "a bottom-row exemption cancels Bight Fill")
+	var fill_open = Rules.scripted_encounter(52, 1, ["exemption", "entry_mark", "entry_mark", "entry_mark"], 4, Rules.SHIFT_NOCTURNE)
+	check(play_named(fill_open, "exemption", 0, 0), "exemption off Maja's bottom row")
+	check(play_named(fill_open, "entry_mark", 0, 1), "a stamp beside the off-row exemption")
+	check(play_named(fill_open, "entry_mark", 1, 1), "the center that still doubles")
+	check(play_named(fill_open, "entry_mark", 1, 2), "the later filled stamp")
+	check(fill_open.last_progress_gained == 9, "an exemption off the bottom row does not cancel Bight Fill")
+	var fill_held = Rules.scripted_encounter(52, 1, ["hold", "entry_mark", "entry_mark", "entry_mark"], 4, Rules.SHIFT_NOCTURNE)
+	check(play_named(fill_held, "hold", 2, 0), "hold in Maja's column")
+	check(play_named(fill_held, "entry_mark", 0, 1), "a stamp beside that hold")
+	check(play_named(fill_held, "entry_mark", 1, 1), "the doubled center")
+	check(play_named(fill_held, "entry_mark", 1, 2), "the later filled stamp")
+	check(fill_held.last_progress_gained == 9 and fill_held.last_patience_loss == 0, "hold in column 1 comes before Bight Fill")
+	var fill_missed = Rules.scripted_encounter(52, 1, ["hold", "entry_mark", "entry_mark", "entry_mark"], 4, Rules.SHIFT_NOCTURNE)
+	check(play_named(fill_missed, "hold", 2, 2), "hold outside Maja's column")
+	check(play_named(fill_missed, "entry_mark", 0, 1), "a stamp beside the missed hold")
+	check(play_named(fill_missed, "entry_mark", 1, 1), "the doubled center")
+	check(play_named(fill_missed, "entry_mark", 1, 2), "the later filled stamp")
+	check(fill_missed.last_progress_gained == 9 and fill_missed.last_patience_loss == 1, "hold in another column does not spare Bight Fill")
+	var fill_echo = Rules.scripted_encounter(52, 1, ["echo", "entry_mark", "entry_mark"], 3, Rules.SHIFT_NOCTURNE)
+	check(play_named(fill_echo, "echo", 0, 1), "echo three places before the center")
+	check(play_named(fill_echo, "entry_mark", 1, 1), "the center an echo retriggers")
+	check(play_named(fill_echo, "entry_mark", 1, 2), "the filled cell one place after it")
+	check(fill_echo.last_progress_gained == 11 and fill_echo.last_chain_count == 1, "a retrigger of a bight-fill stamp scores twice again")
+	var fill_wax = Rules.scripted_encounter(52, 1, ["wax_seal", "wax_seal", "wax_seal"], 6, Rules.SHIFT_NOCTURNE)
+	check(play_named(fill_wax, "wax_seal", 0, 1), "Maja's first wax")
+	check(play_named(fill_wax, "wax_seal", 1, 1), "Maja's second wax")
+	check(play_named(fill_wax, "wax_seal", 1, 2), "Maja's third wax")
+	check(fill_wax.last_progress_gained == 24 and fill_wax.phase == "relic", "three wax seals clear Bight Fill")
+	var hitch_wax = Rules.scripted_encounter(52, 1, ["wax_seal", "wax_seal", "wax_seal"], 6, Rules.SHIFT_RECESSIONAL)
+	check(play_named(hitch_wax, "wax_seal", 0, 1), "Svea's first wax")
+	check(play_named(hitch_wax, "wax_seal", 1, 1), "Svea's second wax")
+	check(play_named(hitch_wax, "wax_seal", 1, 2), "Svea's third wax")
+	check(hitch_wax.last_progress_gained == 18 and hitch_wax.phase == "play", "Hitch Fill does not clear the same three wax seals")
+	var brad_lone = Rules.scripted_encounter(52, 2, ["entry_mark"], 1, Rules.SHIFT_NOCTURNE)
+	check(play_named(brad_lone, "entry_mark", 1, 1), "Ebba receives a lone stamp")
+	check(brad_lone.last_progress_gained == 2, "a lone stamp scores its own number")
+	var brad_pin = Rules.scripted_encounter(52, 2, ["exemption", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 8, Rules.SHIFT_NOCTURNE)
+	check(play_named(brad_pin, "exemption", 1, 0), "exemption off Ebba's top row in the pin layout")
+	for cell in [[1, 1], [0, 1], [1, 2], [2, 1], [0, 0], [0, 2], [2, 0]]:
+		check(play_named(brad_pin, "entry_mark", cell[0], cell[1]), "Ebba receives a three-corner neighbor")
+	check(brad_pin.last_progress_gained == 15 and brad_pin.phase == "play", "exactly three corner neighbors and four side neighbors score their own number")
+	var pin_pin = Rules.scripted_encounter(52, 2, ["exemption", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 8, Rules.SHIFT_RECESSIONAL)
+	check(play_named(pin_pin, "exemption", 1, 0), "exemption off Asta's bottom row")
+	for cell in [[1, 1], [0, 1], [1, 2], [2, 1], [0, 0], [0, 2], [2, 0]]:
+		check(play_named(pin_pin, "entry_mark", cell[0], cell[1]), "Asta receives the same three-corner neighbor")
+	check(pin_pin.last_progress_gained == 17 and pin_pin.phase == "draft", "Pin Pay adds 2 for three corners and four sides")
+	var brad_pay = Rules.scripted_encounter(52, 2, ["exemption", "wax_seal", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 7, Rules.SHIFT_NOCTURNE)
+	check(play_named(brad_pay, "exemption", 1, 0), "exemption off Ebba's top row")
+	check(play_named(brad_pay, "wax_seal", 1, 1), "Ebba receives the center wax")
+	for cell in [[0, 0], [0, 2], [2, 0], [2, 2]]:
+		check(play_named(brad_pay, "entry_mark", cell[0], cell[1]), "Ebba receives a corner")
+	check(brad_pay.last_progress_gained == 17 and brad_pay.phase == "draft", "exactly four corner neighbors and one side neighbor score +2 once")
+	var pin_pay = Rules.scripted_encounter(52, 2, ["exemption", "wax_seal", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 7, Rules.SHIFT_RECESSIONAL)
+	check(play_named(pin_pay, "exemption", 1, 0), "exemption off Asta's bottom row in the brad layout")
+	check(play_named(pin_pay, "wax_seal", 1, 1), "Asta receives the same center wax")
+	for cell in [[0, 0], [0, 2], [2, 0], [2, 2]]:
+		check(play_named(pin_pay, "entry_mark", cell[0], cell[1]), "Asta receives the same corner")
+	check(pin_pay.last_progress_gained == 15 and pin_pay.phase == "play", "Pin Pay does not add 2 for four corners and one side")
+	var brad_echo = Rules.scripted_encounter(52, 2, ["echo", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 6, Rules.SHIFT_NOCTURNE)
+	check(play_named(brad_echo, "echo", 0, 1), "echo above the center")
+	for cell in [[1, 1], [0, 0], [0, 2], [2, 0], [2, 2]]:
+		check(play_named(brad_echo, "entry_mark", cell[0], cell[1]), "a corner under the echo")
+	check(brad_echo.last_progress_gained == 17 and brad_echo.last_chain_count == 1 and brad_echo.phase == "draft", "a retrigger of a brad stamp scores +2 again")
+	var brad_spared = Rules.scripted_encounter(52, 2, ["exemption", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 6, Rules.SHIFT_NOCTURNE)
+	check(play_named(brad_spared, "exemption", 0, 1), "exemption on Ebba's top row")
+	for cell in [[1, 1], [0, 0], [0, 2], [2, 0], [2, 2]]:
+		check(play_named(brad_spared, "entry_mark", cell[0], cell[1]), "a stamp beside the top exemption")
+	check(brad_spared.last_progress_gained == 11, "a top-row exemption cancels Brad Pay")
+	var brad_held = Rules.scripted_encounter(52, 2, ["hold", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 6, Rules.SHIFT_NOCTURNE)
+	check(play_named(brad_held, "hold", 2, 1), "hold in Ebba's column")
+	for cell in [[1, 1], [0, 0], [0, 2], [2, 0], [2, 2]]:
+		check(play_named(brad_held, "entry_mark", cell[0], cell[1]), "a stamp beside that hold")
+	check(brad_held.last_progress_gained == 13 and brad_held.last_patience_loss == 0, "hold in column 2 comes before Brad Pay")
+	var brad_missed = Rules.scripted_encounter(52, 2, ["hold", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 6, Rules.SHIFT_NOCTURNE)
+	check(play_named(brad_missed, "hold", 1, 0), "hold outside Ebba's column")
+	for cell in [[1, 1], [0, 0], [0, 2], [2, 0], [2, 2]]:
+		check(play_named(brad_missed, "entry_mark", cell[0], cell[1]), "a stamp beside the missed hold")
+	check(brad_missed.last_progress_gained == 13 and brad_missed.last_patience_loss == 1, "hold in another column does not spare Brad Pay")
+	var brad_wax = Rules.scripted_encounter(52, 2, ["wax_seal", "wax_seal", "wax_seal"], 6, Rules.SHIFT_NOCTURNE)
+	check(play_named(brad_wax, "wax_seal", 1, 1), "Ebba's first wax")
+	check(play_named(brad_wax, "wax_seal", 0, 0), "Ebba's second wax")
+	check(play_named(brad_wax, "wax_seal", 0, 2), "Ebba's third wax")
+	check(brad_wax.last_progress_gained == 18 and brad_wax.phase == "draft", "three wax seals clear Brad Pay")
+	var blank_right = Rules.scripted_encounter(52, 3, ["entry_mark"], 1, Rules.SHIFT_NOCTURNE)
+	check(play_named(blank_right, "entry_mark", 0, 2), "Sten receives a lone top-right stamp")
+	check(blank_right.last_progress_gained == 2, "a lone top-right stamp has no cell three places before it, so it does not double")
+	var hitch_right = Rules.scripted_encounter(52, 3, ["entry_mark"], 1, Rules.SHIFT_RECESSIONAL)
+	check(play_named(hitch_right, "entry_mark", 0, 2), "Liv receives a lone top-right stamp")
+	check(hitch_right.last_progress_gained == 4, "Hitch Blank doubles a lone top-right stamp")
+	for edge in [[0, 0], [0, 1], [0, 2], [2, 2]]:
+		var edge_state = Rules.scripted_encounter(52, 3, ["entry_mark"], 1, Rules.SHIFT_NOCTURNE)
+		check(play_named(edge_state, "entry_mark", edge[0], edge[1]), "Sten receives a stamp with a missing offset")
+		check(edge_state.last_progress_gained == 2, "the top-left, top-middle, top-right, and bottom-right cells never double (%d,%d)" % [edge[0], edge[1]])
+	var blank_pair = Rules.scripted_encounter(52, 3, ["wax_seal", "entry_mark"], 3, Rules.SHIFT_NOCTURNE)
+	check(play_named(blank_pair, "wax_seal", 1, 1), "Sten receives the center wax")
+	check(play_named(blank_pair, "entry_mark", 0, 2), "Sten receives the filled cell two places before")
+	check(blank_pair.last_progress_gained == 14, "an empty cell three places before it and an empty cell one place after it double the center")
+	var hitch_pair = Rules.scripted_encounter(52, 3, ["wax_seal", "entry_mark"], 3, Rules.SHIFT_RECESSIONAL)
+	check(play_named(hitch_pair, "wax_seal", 1, 1), "Liv receives the same center wax")
+	check(play_named(hitch_pair, "entry_mark", 0, 2), "Liv receives the same earlier stamp")
+	check(hitch_pair.last_progress_gained == 10, "Hitch Blank does not double a center whose cell two places before it is filled")
+	var blank_mid = Rules.scripted_encounter(52, 3, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_NOCTURNE)
+	check(play_named(blank_mid, "entry_mark", 0, 1), "Sten receives the filled cell three places before")
+	check(play_named(blank_mid, "entry_mark", 1, 1), "Sten receives the center")
+	check(blank_mid.last_progress_gained == 4, "a filled cell three places before it stops Bight Blank")
+	var hitch_mid = Rules.scripted_encounter(52, 3, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_RECESSIONAL)
+	check(play_named(hitch_mid, "entry_mark", 0, 1), "Liv receives the same earlier stamp")
+	check(play_named(hitch_mid, "entry_mark", 1, 1), "Liv receives the same center")
+	check(hitch_mid.last_progress_gained == 6, "Hitch Blank still doubles that center")
+	var blank_spared = Rules.scripted_encounter(52, 3, ["exemption", "wax_seal", "entry_mark"], 4, Rules.SHIFT_NOCTURNE)
+	check(play_named(blank_spared, "exemption", 1, 0), "exemption on Sten's middle row")
+	check(play_named(blank_spared, "wax_seal", 1, 1), "the center beside the middle exemption")
+	check(play_named(blank_spared, "entry_mark", 0, 2), "the earlier stamp beside the middle exemption")
+	check(blank_spared.last_progress_gained == 9, "a middle-row exemption cancels Bight Blank")
+	var blank_open = Rules.scripted_encounter(52, 3, ["exemption", "wax_seal", "entry_mark"], 4, Rules.SHIFT_NOCTURNE)
+	check(play_named(blank_open, "exemption", 2, 2), "exemption off Sten's middle row")
+	check(play_named(blank_open, "wax_seal", 1, 1), "the center that still doubles")
+	check(play_named(blank_open, "entry_mark", 0, 2), "the earlier stamp")
+	check(blank_open.last_progress_gained == 15, "an exemption off the middle row does not cancel Bight Blank")
+	var blank_held = Rules.scripted_encounter(52, 3, ["hold", "wax_seal", "entry_mark"], 4, Rules.SHIFT_NOCTURNE)
+	check(play_named(blank_held, "hold", 0, 0), "hold in Sten's column")
+	check(play_named(blank_held, "wax_seal", 1, 1), "the doubled center")
+	check(play_named(blank_held, "entry_mark", 0, 2), "the earlier stamp")
+	check(blank_held.last_progress_gained == 15 and blank_held.last_patience_loss == 0, "hold in column 1 comes before Bight Blank")
+	var blank_missed = Rules.scripted_encounter(52, 3, ["hold", "wax_seal", "entry_mark"], 4, Rules.SHIFT_NOCTURNE)
+	check(play_named(blank_missed, "hold", 2, 2), "hold outside Sten's column")
+	check(play_named(blank_missed, "wax_seal", 1, 1), "the doubled center")
+	check(play_named(blank_missed, "entry_mark", 0, 2), "the earlier stamp")
+	check(blank_missed.last_progress_gained == 15 and blank_missed.last_patience_loss == 1, "hold in another column does not spare Bight Blank")
+	var blank_reply = Rules.scripted_encounter(52, 3, ["reply", "entry_mark"], 2, Rules.SHIFT_NOCTURNE)
+	check(play_named(blank_reply, "reply", 2, 1), "reply below the center")
+	check(play_named(blank_reply, "entry_mark", 1, 1), "the center a reply retriggers")
+	check(blank_reply.last_progress_gained == 9 and blank_reply.last_chain_count == 1, "a retrigger of a bight-blank stamp scores twice again")
+	var blank_clear = Rules.scripted_encounter(52, 3, ["wax_seal", "wax_seal", "entry_mark"], 5, Rules.SHIFT_NOCTURNE)
+	check(play_named(blank_clear, "wax_seal", 1, 1), "Sten's first wax")
+	check(play_named(blank_clear, "wax_seal", 2, 0), "Sten's second wax")
+	check(play_named(blank_clear, "entry_mark", 0, 2), "Sten's entry stamp")
+	check(blank_clear.last_progress_gained == 26 and blank_clear.phase == "victory", "wax seals clear Bight Blank")
+	var hitch_clear = Rules.scripted_encounter(52, 3, ["wax_seal", "wax_seal", "entry_mark"], 5, Rules.SHIFT_RECESSIONAL)
+	check(play_named(hitch_clear, "wax_seal", 1, 1), "Liv's first wax")
+	check(play_named(hitch_clear, "wax_seal", 2, 0), "Liv's second wax")
+	check(play_named(hitch_clear, "entry_mark", 0, 2), "Liv's entry stamp")
+	check(hitch_clear.last_progress_gained == 16 and hitch_clear.phase == "play", "Hitch Blank does not clear the same wax seals")
+
+
+func test_policy_clears_nocturne_bell() -> void:
+	var started = Time.get_ticks_msec()
+	var state = Rules.new_run(12345, Rules.SHIFT_NOCTURNE)
+	var steps = 0
+	var seen = 0
+	while state.phase != "victory":
+		steps += 1
+		if steps > 500 or state.phase == "defeat":
+			check(false, "policy lost or stalled on the nocturne bell, seed 12345: " + Rules.debug_summary(state))
+			return
+		var action = Policy.choose(state)
+		if not Rules.apply_action(state, action):
+			check(false, "nocturne-bell policy action was rejected: %s / %s" % [str(action), Rules.debug_summary(state)])
+			return
+		if state.encounters_cleared != seen:
+			seen = state.encounters_cleared
+			print("cleared nocturne encounter %d after %d actions" % [seen, steps])
+	var elapsed = Time.get_ticks_msec() - started
+	check(state.encounters_cleared == 4, "policy cleared all 4 nocturne-bell encounters on seed 12345")
+	check(state.phase == "victory", "nocturne bell ends in victory")
+	check(state.shift == Rules.SHIFT_NOCTURNE, "the clear stayed on the nocturne bell")
+	check(steps == 31, "seed 12345 clears the nocturne bell in 31 actions")
+	print("nocturne bell finished in %d actions, %d ms" % [steps, elapsed])
+
+func test_compline_bell_rules() -> void:
+	check(Rules.COMPLINE_BELL.size() == 4, "the compline bell has four travelers")
+	check(String(Rules.COMPLINE_BELL[0]["name"]) == "Arvid Hale" and String(Rules.COMPLINE_BELL[0]["form_name"]) == "Kerf Toll", "Arvid Hale brings Kerf Toll")
+	check(String(Rules.COMPLINE_BELL[1]["name"]) == "Hedda Voss" and String(Rules.COMPLINE_BELL[1]["form_name"]) == "Crook Fill", "Hedda Voss brings Crook Fill")
+	check(String(Rules.COMPLINE_BELL[2]["name"]) == "Kajsa Brant" and String(Rules.COMPLINE_BELL[2]["form_name"]) == "Rivet Pay", "Kajsa Brant brings Rivet Pay")
+	check(String(Rules.COMPLINE_BELL[3]["name"]) == "Bodil Okell" and String(Rules.COMPLINE_BELL[3]["form_name"]) == "Crook Blank", "Bodil Okell brings Crook Blank")
+	check(int(Rules.COMPLINE_BELL[0]["goal"]) == 18 and int(Rules.COMPLINE_BELL[1]["goal"]) == 20 and int(Rules.COMPLINE_BELL[2]["goal"]) == 16 and int(Rules.COMPLINE_BELL[3]["goal"]) == 22, "the compline goals stay 18, 20, 16, and 22")
+	check(int(Rules.COMPLINE_BELL[0]["patience"]) == 5 and int(Rules.COMPLINE_BELL[1]["patience"]) == 5 and int(Rules.COMPLINE_BELL[2]["patience"]) == 5 and int(Rules.COMPLINE_BELL[3]["patience"]) == 5, "compline patience stays 5")
+	check(int(Rules.COMPLINE_BELL[0]["lane"]) == 0 and int(Rules.COMPLINE_BELL[0]["exemption_row"]) == 1, "Arvid stands in column 1 with a middle exemption")
+	check(int(Rules.COMPLINE_BELL[1]["lane"]) == 1 and int(Rules.COMPLINE_BELL[1]["exemption_row"]) == 0, "Hedda stands in column 2 with a top exemption")
+	check(int(Rules.COMPLINE_BELL[2]["lane"]) == 2 and int(Rules.COMPLINE_BELL[2]["exemption_row"]) == 1, "Kajsa stands in column 3 with a middle exemption")
+	check(int(Rules.COMPLINE_BELL[3]["lane"]) == 1 and int(Rules.COMPLINE_BELL[3]["exemption_row"]) == 2, "Bodil stands in column 2 with a bottom exemption")
+	check(String(Rules.NOCTURNE_BELL[0]["name"]) == "Halvar Hale" and String(Rules.NOCTURNE_BELL[0]["form_name"]) == "Gouge Toll", "Halvar Hale still brings Gouge Toll")
+	check(String(Rules.NOCTURNE_BELL[1]["name"]) == "Maja Voss" and String(Rules.NOCTURNE_BELL[1]["form_name"]) == "Bight Fill", "Maja Voss still brings Bight Fill")
+	check(String(Rules.NOCTURNE_BELL[2]["name"]) == "Ebba Brant" and String(Rules.NOCTURNE_BELL[2]["form_name"]) == "Brad Pay", "Ebba Brant still brings Brad Pay")
+	check(String(Rules.NOCTURNE_BELL[3]["name"]) == "Sten Okell" and String(Rules.NOCTURNE_BELL[3]["form_name"]) == "Bight Blank", "Sten Okell still brings Bight Blank")
+
+	var empty = Rules.scripted_encounter(53, 0, [], 0, Rules.SHIFT_COMPLINE)
+	Rules.end_turn(empty)
+	check(empty.last_patience_loss == 1, "an empty form does not drop for Kerf Toll")
+	var two = Rules.scripted_encounter(53, 0, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_COMPLINE)
+	check(play_named(two, "entry_mark", 0, 0), "Arvid's first of two")
+	check(play_named(two, "entry_mark", 0, 1), "Arvid's second of two")
+	check(two.last_progress_gained == 4 and two.last_patience_loss == 1, "two filled cells do not drop for Kerf Toll")
+	var three = Rules.scripted_encounter(53, 0, ["entry_mark", "entry_mark", "entry_mark"], 3, Rules.SHIFT_COMPLINE)
+	check(play_named(three, "entry_mark", 0, 0) and play_named(three, "entry_mark", 0, 1) and play_named(three, "entry_mark", 0, 2), "Arvid fills three cells")
+	check(three.last_progress_gained == 6 and three.last_patience_loss == 1, "three filled cells do not drop for Kerf Toll")
+	var gouge_three = Rules.scripted_encounter(53, 0, ["entry_mark", "entry_mark", "entry_mark"], 3, Rules.SHIFT_NOCTURNE)
+	check(play_named(gouge_three, "entry_mark", 0, 0) and play_named(gouge_three, "entry_mark", 0, 1) and play_named(gouge_three, "entry_mark", 0, 2), "Halvar fills three cells")
+	check(gouge_three.last_patience_loss == 2, "Gouge Toll still drops on three")
+	var four = Rules.scripted_encounter(53, 0, ["entry_mark", "entry_mark", "entry_mark", "entry_mark"], 4, Rules.SHIFT_COMPLINE)
+	check(play_named(four, "entry_mark", 0, 0) and play_named(four, "entry_mark", 0, 1) and play_named(four, "entry_mark", 0, 2) and play_named(four, "entry_mark", 1, 0), "Arvid fills four cells")
+	check(four.last_progress_gained == 8 and four.last_patience_loss == 2 and four.patience == 3, "four filled cells drop patience by 2")
+	var gouge_four = Rules.scripted_encounter(53, 0, ["entry_mark", "entry_mark", "entry_mark", "entry_mark"], 4, Rules.SHIFT_NOCTURNE)
+	check(play_named(gouge_four, "entry_mark", 0, 0) and play_named(gouge_four, "entry_mark", 0, 1) and play_named(gouge_four, "entry_mark", 0, 2) and play_named(gouge_four, "entry_mark", 1, 0), "Halvar fills four cells")
+	check(gouge_four.last_patience_loss == 1, "Gouge Toll does not drop on four")
+	var five = Rules.scripted_encounter(53, 0, ["entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 5, Rules.SHIFT_COMPLINE)
+	for cell in [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1]]:
+		check(play_named(five, "entry_mark", cell[0], cell[1]), "Arvid fills a five-count cell")
+	check(five.last_patience_loss == 1, "five filled cells do not drop for Kerf Toll")
+	var six = Rules.scripted_encounter(53, 0, ["entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 6, Rules.SHIFT_COMPLINE)
+	for cell in [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2]]:
+		check(play_named(six, "entry_mark", cell[0], cell[1]), "Arvid fills a six-count cell")
+	check(six.last_patience_loss == 1, "six filled cells do not drop for Kerf Toll")
+	var gouge_six = Rules.scripted_encounter(53, 0, ["entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 6, Rules.SHIFT_NOCTURNE)
+	for cell in [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2]]:
+		check(play_named(gouge_six, "entry_mark", cell[0], cell[1]), "Halvar fills a six-count cell")
+	check(gouge_six.last_patience_loss == 2, "Gouge Toll still drops on six")
+	var seven = Rules.scripted_encounter(53, 0, ["entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 7, Rules.SHIFT_COMPLINE)
+	for cell in [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2], [2, 0]]:
+		check(play_named(seven, "entry_mark", cell[0], cell[1]), "Arvid fills a seven-count cell")
+	check(seven.last_progress_gained == 14 and seven.last_patience_loss == 2 and seven.phase == "play", "seven filled cells drop patience by 2 and stay under the goal")
+	var gouge_seven = Rules.scripted_encounter(53, 0, ["entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 7, Rules.SHIFT_NOCTURNE)
+	for cell in [[0, 0], [0, 1], [0, 2], [1, 0], [1, 1], [1, 2], [2, 0]]:
+		check(play_named(gouge_seven, "entry_mark", cell[0], cell[1]), "Halvar fills a seven-count cell")
+	check(gouge_seven.last_patience_loss == 1, "Gouge Toll does not drop on seven")
+	var spared = Rules.scripted_encounter(53, 0, ["exemption", "entry_mark", "entry_mark", "entry_mark"], 4, Rules.SHIFT_COMPLINE)
+	check(play_named(spared, "exemption", 1, 0), "exemption on Arvid's middle row")
+	check(play_named(spared, "entry_mark", 0, 0) and play_named(spared, "entry_mark", 0, 1) and play_named(spared, "entry_mark", 0, 2), "Arvid's spared stamps")
+	check(spared.last_progress_gained == 7 and spared.last_patience_loss == 1, "a middle-row exemption cancels Kerf Toll")
+	var opened = Rules.scripted_encounter(53, 0, ["exemption", "entry_mark", "entry_mark", "entry_mark"], 4, Rules.SHIFT_COMPLINE)
+	check(play_named(opened, "exemption", 0, 0), "exemption off Arvid's middle row")
+	check(play_named(opened, "entry_mark", 0, 1) and play_named(opened, "entry_mark", 0, 2) and play_named(opened, "entry_mark", 2, 0), "Arvid's open stamps")
+	check(opened.last_progress_gained == 7 and opened.last_patience_loss == 2, "an exemption off the middle row does not cancel Kerf Toll")
+	var held = Rules.scripted_encounter(53, 0, ["hold", "entry_mark", "entry_mark", "entry_mark"], 4, Rules.SHIFT_COMPLINE)
+	check(play_named(held, "hold", 0, 0), "hold in Arvid's column")
+	check(play_named(held, "entry_mark", 0, 1) and play_named(held, "entry_mark", 0, 2) and play_named(held, "entry_mark", 2, 0), "Arvid's held stamps")
+	check(held.last_progress_gained == 7 and held.last_patience_loss == 0, "hold in column 1 comes first")
+	var missed = Rules.scripted_encounter(53, 0, ["hold", "entry_mark", "entry_mark", "entry_mark"], 4, Rules.SHIFT_COMPLINE)
+	check(play_named(missed, "hold", 0, 1), "hold outside Arvid's column")
+	check(play_named(missed, "entry_mark", 0, 0) and play_named(missed, "entry_mark", 0, 2) and play_named(missed, "entry_mark", 2, 0), "Arvid's missed stamps")
+	check(missed.last_patience_loss == 2, "hold in another column does not delay Arvid")
+
+	var trio = Rules.scripted_encounter(53, 1, ["entry_mark", "entry_mark", "entry_mark"], 3, Rules.SHIFT_COMPLINE)
+	check(play_named(trio, "entry_mark", 0, 0), "Hedda receives the filled cell four places before")
+	check(play_named(trio, "entry_mark", 1, 1), "Hedda receives the center stamp")
+	check(play_named(trio, "entry_mark", 1, 2), "Hedda receives the filled cell one place after")
+	check(trio.last_progress_gained == 8, "one place after and four places before double the center (%d)" % trio.last_progress_gained)
+	var bight_same = Rules.scripted_encounter(53, 1, ["entry_mark", "entry_mark", "entry_mark"], 3, Rules.SHIFT_NOCTURNE)
+	check(play_named(bight_same, "entry_mark", 0, 0) and play_named(bight_same, "entry_mark", 1, 1) and play_named(bight_same, "entry_mark", 1, 2), "Maja receives the four-before trio")
+	check(bight_same.last_progress_gained == 6, "Bight Fill does not double one place after plus four places before")
+	var full_same = Rules.scripted_encounter(53, 1, ["entry_mark", "entry_mark", "entry_mark"], 3, Rules.SHIFT_FINALE)
+	check(play_named(full_same, "entry_mark", 0, 0) and play_named(full_same, "entry_mark", 1, 1) and play_named(full_same, "entry_mark", 1, 2), "Rhys receives the four-before trio")
+	check(full_same.last_progress_gained == 6, "Full Fill does not double one place after plus four places before")
+	var bight_trio = Rules.scripted_encounter(53, 1, ["entry_mark", "entry_mark", "entry_mark"], 3, Rules.SHIFT_NOCTURNE)
+	check(play_named(bight_trio, "entry_mark", 0, 1) and play_named(bight_trio, "entry_mark", 1, 1) and play_named(bight_trio, "entry_mark", 1, 2), "Maja receives the three-before trio")
+	check(bight_trio.last_progress_gained == 8, "Bight Fill still doubles one place after plus three places before")
+	var crook_bight = Rules.scripted_encounter(53, 1, ["entry_mark", "entry_mark", "entry_mark"], 3, Rules.SHIFT_COMPLINE)
+	check(play_named(crook_bight, "entry_mark", 0, 1) and play_named(crook_bight, "entry_mark", 1, 1) and play_named(crook_bight, "entry_mark", 1, 2), "Hedda receives the three-before trio")
+	check(crook_bight.last_progress_gained == 6, "Crook Fill does not double one place after plus three places before")
+	var fill_spared = Rules.scripted_encounter(53, 1, ["exemption", "entry_mark", "entry_mark", "entry_mark"], 4, Rules.SHIFT_COMPLINE)
+	check(play_named(fill_spared, "exemption", 0, 0), "exemption on Hedda's top row")
+	check(play_named(fill_spared, "entry_mark", 1, 1) and play_named(fill_spared, "entry_mark", 1, 2) and play_named(fill_spared, "entry_mark", 2, 2), "Hedda's spared stamps")
+	check(fill_spared.last_progress_gained == 7, "a top-row exemption cancels Crook Fill")
+	var fill_open = Rules.scripted_encounter(53, 1, ["exemption", "entry_mark", "entry_mark", "entry_mark"], 4, Rules.SHIFT_COMPLINE)
+	check(play_named(fill_open, "exemption", 2, 2), "exemption off Hedda's top row")
+	check(play_named(fill_open, "entry_mark", 0, 0) and play_named(fill_open, "entry_mark", 1, 1) and play_named(fill_open, "entry_mark", 1, 2), "Hedda's open stamps")
+	check(fill_open.last_progress_gained == 9, "an exemption off the top row does not cancel Crook Fill")
+	var fill_held = Rules.scripted_encounter(53, 1, ["hold", "entry_mark", "entry_mark", "entry_mark"], 4, Rules.SHIFT_COMPLINE)
+	check(play_named(fill_held, "hold", 0, 1), "hold in Hedda's column")
+	check(play_named(fill_held, "entry_mark", 0, 0) and play_named(fill_held, "entry_mark", 1, 1) and play_named(fill_held, "entry_mark", 1, 2), "Hedda's held stamps")
+	check(fill_held.last_progress_gained == 9 and fill_held.last_patience_loss == 0, "hold in column 2 delays Hedda")
+	var fill_missed = Rules.scripted_encounter(53, 1, ["hold", "entry_mark", "entry_mark", "entry_mark"], 4, Rules.SHIFT_COMPLINE)
+	check(play_named(fill_missed, "hold", 2, 0), "hold outside Hedda's column")
+	check(play_named(fill_missed, "entry_mark", 0, 0) and play_named(fill_missed, "entry_mark", 1, 1) and play_named(fill_missed, "entry_mark", 1, 2), "Hedda's missed stamps")
+	check(fill_missed.last_progress_gained == 9 and fill_missed.last_patience_loss == 1, "hold in another column does not delay Hedda")
+	var fill_echo = Rules.scripted_encounter(53, 1, ["echo", "entry_mark", "entry_mark", "entry_mark"], 4, Rules.SHIFT_COMPLINE)
+	check(play_named(fill_echo, "echo", 0, 1), "Hedda's echo")
+	check(play_named(fill_echo, "entry_mark", 0, 0) and play_named(fill_echo, "entry_mark", 1, 1) and play_named(fill_echo, "entry_mark", 1, 2), "Hedda's echoed stamps")
+	check(fill_echo.last_progress_gained == 13 and fill_echo.last_chain_count == 1, "a retrigger of a qualifying Crook Fill stamp scores twice again")
+	var fill_wax = Rules.scripted_encounter(53, 1, ["wax_seal", "wax_seal", "wax_seal"], 6, Rules.SHIFT_COMPLINE)
+	check(play_named(fill_wax, "wax_seal", 0, 0) and play_named(fill_wax, "wax_seal", 1, 1) and play_named(fill_wax, "wax_seal", 1, 2), "Hedda's wax")
+	check(fill_wax.last_progress_gained == 24 and fill_wax.phase == "relic", "Crook Fill wax clears Hedda")
+	var bight_wax = Rules.scripted_encounter(53, 1, ["wax_seal", "wax_seal", "wax_seal"], 6, Rules.SHIFT_NOCTURNE)
+	check(play_named(bight_wax, "wax_seal", 0, 0) and play_named(bight_wax, "wax_seal", 1, 1) and play_named(bight_wax, "wax_seal", 1, 2), "Maja's wax on the same cells")
+	check(bight_wax.last_progress_gained == 18 and bight_wax.phase == "play", "Bight Fill does not clear the same wax seals")
+
+	var rivet = Rules.scripted_encounter(53, 2, ["entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 7, Rules.SHIFT_COMPLINE)
+	for cell in [[1, 1], [0, 0], [0, 2], [2, 0], [2, 2], [0, 1], [1, 0]]:
+		check(play_named(rivet, "entry_mark", cell[0], cell[1]), "Kajsa receives a four-corner two-side stamp")
+	check(rivet.last_progress_gained == 16 and rivet.phase == "draft", "four corners and two sides clear Rivet Pay")
+	var brad_same = Rules.scripted_encounter(53, 2, ["entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 7, Rules.SHIFT_NOCTURNE)
+	for cell in [[1, 1], [0, 0], [0, 2], [2, 0], [2, 2], [0, 1], [1, 0]]:
+		check(play_named(brad_same, "entry_mark", cell[0], cell[1]), "Ebba receives the two-side layout")
+	check(brad_same.last_progress_gained == 14 and brad_same.phase == "play", "Brad Pay does not add 2 for four corners and two sides")
+	var brad_layout = Rules.scripted_encounter(53, 2, ["exemption", "wax_seal", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 7, Rules.SHIFT_NOCTURNE)
+	check(play_named(brad_layout, "exemption", 2, 1), "exemption off Ebba's top row")
+	check(play_named(brad_layout, "wax_seal", 1, 1), "Ebba receives the center wax")
+	for cell in [[0, 0], [0, 2], [2, 0], [2, 2]]:
+		check(play_named(brad_layout, "entry_mark", cell[0], cell[1]), "Ebba receives a corner")
+	check(brad_layout.last_progress_gained == 17 and brad_layout.phase == "draft", "Brad Pay still adds 2 for four corners and one side")
+	var rivet_brad = Rules.scripted_encounter(53, 2, ["exemption", "wax_seal", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 7, Rules.SHIFT_COMPLINE)
+	check(play_named(rivet_brad, "exemption", 2, 1), "exemption off Kajsa's middle row")
+	check(play_named(rivet_brad, "wax_seal", 1, 1), "Kajsa receives the one-side center")
+	for cell in [[0, 0], [0, 2], [2, 0], [2, 2]]:
+		check(play_named(rivet_brad, "entry_mark", cell[0], cell[1]), "Kajsa receives a one-side corner")
+	check(rivet_brad.last_progress_gained == 15 and rivet_brad.phase == "play", "Rivet Pay does not add 2 for four corners and one side")
+	var pin_layout = Rules.scripted_encounter(53, 2, ["exemption", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 8, Rules.SHIFT_RECESSIONAL)
+	check(play_named(pin_layout, "exemption", 0, 0), "exemption off Asta's bottom row")
+	for cell in [[1, 1], [0, 1], [1, 0], [1, 2], [2, 1], [0, 2], [2, 0]]:
+		check(play_named(pin_layout, "entry_mark", cell[0], cell[1]), "Asta receives a three-corner neighbor")
+	check(pin_layout.last_progress_gained == 17 and pin_layout.phase == "draft", "Pin Pay still adds 2 for three corners and four sides")
+	var rivet_pin = Rules.scripted_encounter(53, 2, ["exemption", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 8, Rules.SHIFT_COMPLINE)
+	check(play_named(rivet_pin, "exemption", 0, 0), "exemption off Kajsa's middle row in the pin layout")
+	for cell in [[1, 1], [0, 1], [1, 0], [1, 2], [2, 1], [0, 2], [2, 0]]:
+		check(play_named(rivet_pin, "entry_mark", cell[0], cell[1]), "Kajsa receives a three-corner neighbor")
+	check(rivet_pin.last_progress_gained == 15 and rivet_pin.phase == "play", "Rivet Pay does not add 2 for three corners and four sides")
+	var rivet_lone = Rules.scripted_encounter(53, 2, ["entry_mark"], 1, Rules.SHIFT_COMPLINE)
+	check(play_named(rivet_lone, "entry_mark", 1, 1), "Kajsa receives a lone stamp")
+	check(rivet_lone.last_progress_gained == 2, "a lone stamp scores its own number")
+	var rivet_spared = Rules.scripted_encounter(53, 2, ["exemption", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 7, Rules.SHIFT_COMPLINE)
+	check(play_named(rivet_spared, "exemption", 1, 0), "exemption on Kajsa's middle row")
+	for cell in [[0, 1], [1, 1], [0, 0], [0, 2], [2, 0], [2, 2]]:
+		check(play_named(rivet_spared, "entry_mark", cell[0], cell[1]), "Kajsa's spared neighbor")
+	check(rivet_spared.last_progress_gained == 13, "a middle-row exemption cancels Rivet Pay")
+	var rivet_open = Rules.scripted_encounter(53, 2, ["exemption", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 7, Rules.SHIFT_COMPLINE)
+	check(play_named(rivet_open, "exemption", 2, 0), "exemption off Kajsa's middle row")
+	for cell in [[0, 0], [0, 2], [2, 2], [0, 1], [1, 0], [1, 1]]:
+		check(play_named(rivet_open, "entry_mark", cell[0], cell[1]), "Kajsa's open neighbor")
+	check(rivet_open.last_progress_gained == 15, "an exemption off the middle row does not cancel Rivet Pay")
+	var rivet_held = Rules.scripted_encounter(53, 2, ["hold", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 7, Rules.SHIFT_COMPLINE)
+	check(play_named(rivet_held, "hold", 1, 2), "hold in Kajsa's column")
+	for cell in [[0, 1], [1, 1], [0, 0], [0, 2], [2, 0], [2, 2]]:
+		check(play_named(rivet_held, "entry_mark", cell[0], cell[1]), "Kajsa's held neighbor")
+	check(rivet_held.last_progress_gained == 15 and rivet_held.last_patience_loss == 0, "hold in column 3 delays Kajsa")
+	var rivet_missed = Rules.scripted_encounter(53, 2, ["hold", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 7, Rules.SHIFT_COMPLINE)
+	check(play_named(rivet_missed, "hold", 1, 0), "hold outside Kajsa's column")
+	for cell in [[0, 1], [1, 1], [0, 0], [0, 2], [2, 0], [2, 2]]:
+		check(play_named(rivet_missed, "entry_mark", cell[0], cell[1]), "Kajsa's missed neighbor")
+	check(rivet_missed.last_progress_gained == 15 and rivet_missed.last_patience_loss == 1, "hold in another column does not delay Kajsa")
+	var rivet_echo = Rules.scripted_encounter(53, 2, ["echo", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 7, Rules.SHIFT_COMPLINE)
+	check(play_named(rivet_echo, "echo", 0, 1), "Kajsa's echo")
+	for cell in [[1, 0], [1, 1], [0, 0], [0, 2], [2, 0], [2, 2]]:
+		check(play_named(rivet_echo, "entry_mark", cell[0], cell[1]), "Kajsa's echoed neighbor")
+	check(rivet_echo.last_progress_gained == 19 and rivet_echo.last_chain_count == 1 and rivet_echo.phase == "draft", "a retrigger of four corners and two sides scores +2 again")
+	var rivet_wax = Rules.scripted_encounter(53, 2, ["wax_seal", "wax_seal", "wax_seal"], 6, Rules.SHIFT_COMPLINE)
+	check(play_named(rivet_wax, "wax_seal", 1, 1) and play_named(rivet_wax, "wax_seal", 0, 0) and play_named(rivet_wax, "wax_seal", 0, 2), "Kajsa's three wax seals")
+	check(rivet_wax.last_progress_gained == 18 and rivet_wax.phase == "draft", "three wax seals clear Rivet Pay without the bonus")
+
+	for cell in [[0, 0], [0, 1], [0, 2], [1, 0], [2, 2]]:
+		var edge = Rules.scripted_encounter(53, 3, ["entry_mark"], 1, Rules.SHIFT_COMPLINE)
+		check(play_named(edge, "entry_mark", cell[0], cell[1]), "Bodil receives a stamp with a missing offset")
+		check(edge.last_progress_gained == 2, "the five cells with a missing offset do not double for Crook Blank")
+	var left = Rules.scripted_encounter(53, 3, ["entry_mark"], 1, Rules.SHIFT_NOCTURNE)
+	check(play_named(left, "entry_mark", 1, 0), "Sten receives a lone middle-left stamp")
+	check(left.last_progress_gained == 4, "Bight Blank still doubles a lone middle-left stamp")
+	var crook_left = Rules.scripted_encounter(53, 3, ["entry_mark"], 1, Rules.SHIFT_COMPLINE)
+	check(play_named(crook_left, "entry_mark", 1, 0), "Bodil receives a lone middle-left stamp")
+	check(crook_left.last_progress_gained == 2, "Crook Blank does not double a lone middle-left stamp")
+	var blank_mid = Rules.scripted_encounter(53, 3, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_COMPLINE)
+	check(play_named(blank_mid, "entry_mark", 0, 1) and play_named(blank_mid, "entry_mark", 1, 1), "Bodil receives the empty four-before")
+	check(blank_mid.last_progress_gained == 6, "one place after empty and four places before empty double the center")
+	var bight_mid = Rules.scripted_encounter(53, 3, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_NOCTURNE)
+	check(play_named(bight_mid, "entry_mark", 0, 1) and play_named(bight_mid, "entry_mark", 1, 1), "Sten receives the filled three-before")
+	check(bight_mid.last_progress_gained == 4, "Bight Blank does not double when the cell three places before is filled")
+	var blank_four = Rules.scripted_encounter(53, 3, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_COMPLINE)
+	check(play_named(blank_four, "entry_mark", 0, 0) and play_named(blank_four, "entry_mark", 1, 1), "Bodil receives the filled four-before")
+	check(blank_four.last_progress_gained == 4, "Crook Blank does not double when the cell four places before is filled")
+	var bight_four = Rules.scripted_encounter(53, 3, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_NOCTURNE)
+	check(play_named(bight_four, "entry_mark", 0, 0) and play_named(bight_four, "entry_mark", 1, 1), "Sten receives the empty three-before")
+	check(bight_four.last_progress_gained == 6, "Bight Blank still doubles one place after empty and three places before empty")
+	var blank_spared = Rules.scripted_encounter(53, 3, ["exemption", "wax_seal", "entry_mark"], 4, Rules.SHIFT_COMPLINE)
+	check(play_named(blank_spared, "exemption", 2, 0), "exemption on Bodil's bottom row")
+	check(play_named(blank_spared, "wax_seal", 1, 1) and play_named(blank_spared, "entry_mark", 0, 1), "Bodil's spared stamps")
+	check(blank_spared.last_progress_gained == 9, "a bottom-row exemption cancels Crook Blank")
+	var blank_open = Rules.scripted_encounter(53, 3, ["exemption", "wax_seal", "entry_mark"], 4, Rules.SHIFT_COMPLINE)
+	check(play_named(blank_open, "exemption", 0, 2), "exemption off Bodil's bottom row")
+	check(play_named(blank_open, "wax_seal", 1, 1) and play_named(blank_open, "entry_mark", 0, 1), "Bodil's open stamps")
+	check(blank_open.last_progress_gained == 15, "an exemption off the bottom row does not cancel Crook Blank")
+	var blank_held = Rules.scripted_encounter(53, 3, ["hold", "wax_seal"], 3, Rules.SHIFT_COMPLINE)
+	check(play_named(blank_held, "hold", 0, 1), "hold in Bodil's column")
+	check(play_named(blank_held, "wax_seal", 1, 1), "Bodil's held wax")
+	check(blank_held.last_progress_gained == 13 and blank_held.last_patience_loss == 0, "hold in column 2 delays Bodil")
+	var blank_missed = Rules.scripted_encounter(53, 3, ["hold", "wax_seal"], 3, Rules.SHIFT_COMPLINE)
+	check(play_named(blank_missed, "hold", 2, 2), "hold outside Bodil's column")
+	check(play_named(blank_missed, "wax_seal", 1, 1), "Bodil's missed wax")
+	check(blank_missed.last_progress_gained == 13 and blank_missed.last_patience_loss == 1, "hold in another column does not delay Bodil")
+	var blank_echo = Rules.scripted_encounter(53, 3, ["echo", "entry_mark"], 2, Rules.SHIFT_COMPLINE)
+	check(play_named(blank_echo, "echo", 0, 1), "Bodil's echo")
+	check(play_named(blank_echo, "entry_mark", 1, 1), "Bodil's echoed center")
+	check(blank_echo.last_progress_gained == 9 and blank_echo.last_chain_count == 1, "a retrigger of a qualifying Crook Blank stamp scores twice again")
+	var blank_wax = Rules.scripted_encounter(53, 3, ["wax_seal", "wax_seal", "entry_mark"], 5, Rules.SHIFT_COMPLINE)
+	check(play_named(blank_wax, "wax_seal", 1, 1) and play_named(blank_wax, "wax_seal", 2, 1) and play_named(blank_wax, "entry_mark", 0, 1), "Bodil's clearing stamps")
+	check(blank_wax.last_progress_gained == 26 and blank_wax.phase == "victory", "Crook Blank wax clears Bodil")
+	var bight_wax_blank = Rules.scripted_encounter(53, 3, ["wax_seal", "wax_seal", "entry_mark"], 5, Rules.SHIFT_NOCTURNE)
+	check(play_named(bight_wax_blank, "wax_seal", 1, 1) and play_named(bight_wax_blank, "wax_seal", 2, 1) and play_named(bight_wax_blank, "entry_mark", 0, 1), "Sten's wax on the same cells")
+	check(bight_wax_blank.last_progress_gained == 14 and bight_wax_blank.phase == "play", "Bight Blank does not clear the same wax seals")
+
+
+func test_policy_clears_compline_bell() -> void:
+	var started = Time.get_ticks_msec()
+	var state = Rules.new_run(12345, Rules.SHIFT_COMPLINE)
+	var steps = 0
+	var seen = 0
+	while state.phase != "victory":
+		steps += 1
+		if steps > 500 or state.phase == "defeat":
+			check(false, "policy lost or stalled on the compline bell, seed 12345: " + Rules.debug_summary(state))
+			return
+		var action = Policy.choose(state)
+		if not Rules.apply_action(state, action):
+			check(false, "compline-bell policy action was rejected: %s / %s" % [str(action), Rules.debug_summary(state)])
+			return
+		if state.encounters_cleared != seen:
+			seen = state.encounters_cleared
+			print("cleared compline encounter %d after %d actions" % [seen, steps])
+	var elapsed = Time.get_ticks_msec() - started
+	check(state.encounters_cleared == 4, "policy cleared all 4 compline-bell encounters on seed 12345")
+	check(state.phase == "victory", "compline bell ends in victory")
+	check(state.shift == Rules.SHIFT_COMPLINE, "the clear stayed on the compline bell")
+	check(steps == 33, "seed 12345 clears the compline bell in 33 actions")
+	print("compline bell finished in %d actions, %d ms" % [steps, elapsed])
