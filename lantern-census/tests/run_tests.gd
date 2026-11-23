@@ -66,6 +66,8 @@ func _boot() -> void:
 	_check("a finished predella census returns to the floor select", _predella_return())
 	_check("a finished dossal census returns to the floor select", _dossal_return())
 	_check("a finished retable census returns to the floor select", _retable_return())
+	_check("a finished tester census returns to the floor select", _tester_return())
+	_check("a finished riddel census returns to the floor select", _riddel_return())
 	_print_summary()
 	quit(0 if _failed == 0 else 1)
 
@@ -161,6 +163,10 @@ func _run() -> int:
 	_check("dossal census accepts the true sheet and rejects a wrong one", _dossal_census())
 	_check("retable layout, ring, and oil", _retable_layout())
 	_check("retable census accepts the true sheet and rejects a wrong one", _retable_census())
+	_check("tester layout, ring, and oil", _tester_layout())
+	_check("tester census accepts the true sheet and rejects a wrong one", _tester_census())
+	_check("riddel layout, ring, and oil", _riddel_layout())
+	_check("riddel census accepts the true sheet and rejects a wrong one", _riddel_census())
 	if _failed > 0:
 		return 1
 	return 0
@@ -506,10 +512,10 @@ func _cistern_layout() -> String:
 	if Rules.SMALL_FLASK_OIL != 24 or Rules.LARGE_FLASK_OIL != 120 or Rules.LARGE_FLASK_COST != 40:
 		return "flask sizes changed"
 	var listed: Array = Rules.floors()
-	if listed.size() != 35:
-		return "expected the cellar, the cistern, the cloister, the crypt, the ossuary, the reliquary, the undercroft, the well house, the scriptorium, the binding, the chart room, the bell loft, the clock room, the font, the apse, the choir, the rood, the crossing, the transept, the ambulatory, the chevet, the retrochoir, the lady chapel, the feretory, the chantry, the sacristy, the pyx chamber, the aumbry, the piscina, the sedilia, the credence, the reredos, the predella, the dossal, and the retable, found %d" % listed.size()
-	if str(listed[0].id) != "cellar" or str(listed[1].id) != "cistern" or str(listed[2].id) != "cloister" or str(listed[3].id) != "crypt" or str(listed[4].id) != "ossuary" or str(listed[5].id) != "reliquary" or str(listed[6].id) != "undercroft" or str(listed[7].id) != "wellhouse" or str(listed[8].id) != "scriptorium" or str(listed[9].id) != "binding" or str(listed[10].id) != "chartroom" or str(listed[11].id) != "bellloft" or str(listed[12].id) != "clockroom" or str(listed[13].id) != "font" or str(listed[14].id) != "apse" or str(listed[15].id) != "choir" or str(listed[16].id) != "rood" or str(listed[17].id) != "crossing" or str(listed[18].id) != "transept" or str(listed[19].id) != "ambulatory" or str(listed[20].id) != "chevet" or str(listed[21].id) != "retrochoir" or str(listed[22].id) != "ladychapel" or str(listed[23].id) != "feretory" or str(listed[24].id) != "chantry" or str(listed[25].id) != "sacristy" or str(listed[26].id) != "pyx" or str(listed[27].id) != "aumbry" or str(listed[28].id) != "piscina" or str(listed[29].id) != "sedilia" or str(listed[30].id) != "credence" or str(listed[31].id) != "reredos" or str(listed[32].id) != "predella" or str(listed[33].id) != "dossal" or str(listed[34].id) != "retable":
-		return "floor order is not cellar, cistern, cloister, crypt, ossuary, reliquary, undercroft, well house, scriptorium, binding, chart room, bell loft, clock room, font, apse, choir, rood, crossing, transept, ambulatory, chevet, retrochoir, lady chapel, then feretory, then chantry, then sacristy, then pyx, then aumbry, then piscina, then sedilia, then credence, then reredos, then predella, then dossal, then retable"
+	if listed.size() != 37:
+		return "expected the cellar, the cistern, the cloister, the crypt, the ossuary, the reliquary, the undercroft, the well house, the scriptorium, the binding, the chart room, the bell loft, the clock room, the font, the apse, the choir, the rood, the crossing, the transept, the ambulatory, the chevet, the retrochoir, the lady chapel, the feretory, the chantry, the sacristy, the pyx chamber, the aumbry, the piscina, the sedilia, the credence, the reredos, the predella, the dossal, the retable, the tester, and the riddel, found %d" % listed.size()
+	if str(listed[0].id) != "cellar" or str(listed[1].id) != "cistern" or str(listed[2].id) != "cloister" or str(listed[3].id) != "crypt" or str(listed[4].id) != "ossuary" or str(listed[5].id) != "reliquary" or str(listed[6].id) != "undercroft" or str(listed[7].id) != "wellhouse" or str(listed[8].id) != "scriptorium" or str(listed[9].id) != "binding" or str(listed[10].id) != "chartroom" or str(listed[11].id) != "bellloft" or str(listed[12].id) != "clockroom" or str(listed[13].id) != "font" or str(listed[14].id) != "apse" or str(listed[15].id) != "choir" or str(listed[16].id) != "rood" or str(listed[17].id) != "crossing" or str(listed[18].id) != "transept" or str(listed[19].id) != "ambulatory" or str(listed[20].id) != "chevet" or str(listed[21].id) != "retrochoir" or str(listed[22].id) != "ladychapel" or str(listed[23].id) != "feretory" or str(listed[24].id) != "chantry" or str(listed[25].id) != "sacristy" or str(listed[26].id) != "pyx" or str(listed[27].id) != "aumbry" or str(listed[28].id) != "piscina" or str(listed[29].id) != "sedilia" or str(listed[30].id) != "credence" or str(listed[31].id) != "reredos" or str(listed[32].id) != "predella" or str(listed[33].id) != "dossal" or str(listed[34].id) != "retable" or str(listed[35].id) != "tester" or str(listed[36].id) != "riddel":
+		return "floor order is not cellar, cistern, cloister, crypt, ossuary, reliquary, undercroft, well house, scriptorium, binding, chart room, bell loft, clock room, font, apse, choir, rood, crossing, transept, ambulatory, chevet, retrochoir, lady chapel, then feretory, then chantry, then sacristy, then pyx, then aumbry, then piscina, then sedilia, then credence, then reredos, then predella, then dossal, then retable, then tester, then riddel"
 	if Rules.default_floor().id != "cellar":
 		return "the default floor is no longer the cellar"
 	var floor = Rules.floor_named("cistern")
@@ -5632,6 +5638,8 @@ func _clockroom_census() -> String:
 		"predella": 480,
 		"dossal": 488,
 		"retable": 496,
+		"tester": 504,
+		"riddel": 512,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -5668,6 +5676,8 @@ func _clockroom_census() -> String:
 		"predella": "Predella ring",
 		"dossal": "Dossal ring",
 		"retable": "Retable ring",
+		"tester": "Tester ring",
+		"riddel": "Riddel ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -5908,7 +5918,7 @@ func _font_layout() -> String:
 			return "the font copies %s" % other.id
 		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
 			return "the font reuses the %s grid" % other.id
-		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable":
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the font reuses the %s warden cell" % other.id
 		if _ring_key(floor) == _ring_key(other):
 			return "the font reuses the %s ring" % other.id
@@ -6168,6 +6178,8 @@ func _font_census() -> String:
 		"predella": 480,
 		"dossal": 488,
 		"retable": 496,
+		"tester": 504,
+		"riddel": 512,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -6204,6 +6216,8 @@ func _font_census() -> String:
 		"predella": "Predella ring",
 		"dossal": "Dossal ring",
 		"retable": "Retable ring",
+		"tester": "Tester ring",
+		"riddel": "Riddel ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -6447,7 +6461,7 @@ func _apse_layout() -> String:
 			return "the apse copies %s" % other.id
 		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
 			return "the apse reuses the %s grid" % other.id
-		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable":
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the apse reuses the %s warden cell" % other.id
 		if _ring_key(floor) == _ring_key(other):
 			return "the apse reuses the %s ring" % other.id
@@ -6716,6 +6730,8 @@ func _apse_census() -> String:
 		"predella": 480,
 		"dossal": 488,
 		"retable": 496,
+		"tester": 504,
+		"riddel": 512,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -6752,6 +6768,8 @@ func _apse_census() -> String:
 		"predella": "Predella ring",
 		"dossal": "Dossal ring",
 		"retable": "Retable ring",
+		"tester": "Tester ring",
+		"riddel": "Riddel ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -6809,9 +6827,9 @@ func _apse_return() -> String:
 		if game.floor_select.status_for(other.id) != "Census open":
 			game.free()
 			return "the %s card did not open" % other.title
-	if Rules.floors().size() != 35:
+	if Rules.floors().size() != 37:
 		game.free()
-		return "floor select does not list thirty-five floors"
+		return "floor select does not list thirty-seven floors"
 	game._on_descend_floor("apse")
 	if game.descent.state == null or game.descent.state.floor.id != "apse":
 		game.free()
@@ -7005,7 +7023,7 @@ func _choir_layout() -> String:
 			return "the choir copies %s" % other.id
 		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
 			return "the choir reuses the %s grid" % other.id
-		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable":
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the choir reuses the %s warden cell" % other.id
 		if _ring_key(floor) == _ring_key(other):
 			return "the choir reuses the %s ring" % other.id
@@ -7290,6 +7308,8 @@ func _choir_census() -> String:
 		"predella": 480,
 		"dossal": 488,
 		"retable": 496,
+		"tester": 504,
+		"riddel": 512,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -7326,6 +7346,8 @@ func _choir_census() -> String:
 		"predella": "Predella ring",
 		"dossal": "Dossal ring",
 		"retable": "Retable ring",
+		"tester": "Tester ring",
+		"riddel": "Riddel ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -7383,9 +7405,9 @@ func _choir_return() -> String:
 		if game.floor_select.status_for(other.id) != "Census open":
 			game.free()
 			return "the %s card did not open" % other.title
-	if Rules.floors().size() != 35:
+	if Rules.floors().size() != 37:
 		game.free()
-		return "floor select does not list thirty-five floors"
+		return "floor select does not list thirty-seven floors"
 	game._on_descend_floor("choir")
 	if game.descent.state == null or game.descent.state.floor.id != "choir":
 		game.free()
@@ -7591,7 +7613,7 @@ func _rood_layout() -> String:
 			return "the rood copies %s" % other.id
 		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
 			return "the rood reuses the %s grid" % other.id
-		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable":
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the rood reuses the %s warden cell" % other.id
 		if _ring_key(floor) == _ring_key(other):
 			return "the rood reuses the %s ring" % other.id
@@ -7880,6 +7902,8 @@ func _rood_census() -> String:
 		"predella": 480,
 		"dossal": 488,
 		"retable": 496,
+		"tester": 504,
+		"riddel": 512,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -7916,6 +7940,8 @@ func _rood_census() -> String:
 		"predella": "Predella ring",
 		"dossal": "Dossal ring",
 		"retable": "Retable ring",
+		"tester": "Tester ring",
+		"riddel": "Riddel ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -7973,9 +7999,9 @@ func _rood_return() -> String:
 		if game.floor_select.status_for(other.id) != "Census open":
 			game.free()
 			return "the %s card did not open" % other.title
-	if Rules.floors().size() != 35:
+	if Rules.floors().size() != 37:
 		game.free()
-		return "floor select does not list thirty-five floors"
+		return "floor select does not list thirty-seven floors"
 	game._on_descend_floor("rood")
 	if game.descent.state == null or game.descent.state.floor.id != "rood":
 		game.free()
@@ -8187,7 +8213,7 @@ func _crossing_layout() -> String:
 			return "the crossing copies %s" % other.id
 		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
 			return "the crossing reuses the %s grid" % other.id
-		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable":
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the crossing reuses the %s warden cell" % other.id
 		if _ring_key(floor) == _ring_key(other):
 			return "the crossing reuses the %s ring" % other.id
@@ -8478,6 +8504,8 @@ func _crossing_census() -> String:
 		"predella": 480,
 		"dossal": 488,
 		"retable": 496,
+		"tester": 504,
+		"riddel": 512,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -8514,6 +8542,8 @@ func _crossing_census() -> String:
 		"predella": "Predella ring",
 		"dossal": "Dossal ring",
 		"retable": "Retable ring",
+		"tester": "Tester ring",
+		"riddel": "Riddel ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -8571,9 +8601,9 @@ func _crossing_return() -> String:
 		if game.floor_select.status_for(other.id) != "Census open":
 			game.free()
 			return "the %s card did not open" % other.title
-	if Rules.floors().size() != 35:
+	if Rules.floors().size() != 37:
 		game.free()
-		return "floor select does not list thirty-five floors"
+		return "floor select does not list thirty-seven floors"
 	game._on_descend_floor("crossing")
 	if game.descent.state == null or game.descent.state.floor.id != "crossing":
 		game.free()
@@ -8797,7 +8827,7 @@ func _transept_layout() -> String:
 			return "the transept copies %s" % other.id
 		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
 			return "the transept reuses the %s grid" % other.id
-		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable":
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the transept reuses the %s warden cell" % other.id
 		if _ring_key(floor) == _ring_key(other):
 			return "the transept reuses the %s ring" % other.id
@@ -9109,6 +9139,8 @@ func _transept_census() -> String:
 		"predella": 480,
 		"dossal": 488,
 		"retable": 496,
+		"tester": 504,
+		"riddel": 512,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -9145,6 +9177,8 @@ func _transept_census() -> String:
 		"predella": "Predella ring",
 		"dossal": "Dossal ring",
 		"retable": "Retable ring",
+		"tester": "Tester ring",
+		"riddel": "Riddel ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -9208,9 +9242,9 @@ func _transept_return() -> String:
 		if game.floor_select.status_for(other.id) != "Census open":
 			game.free()
 			return "the %s card did not open" % other.title
-	if Rules.floors().size() != 35:
+	if Rules.floors().size() != 37:
 		game.free()
-		return "floor select does not list thirty-five floors"
+		return "floor select does not list thirty-seven floors"
 	var cross_card: Control = game.floor_select._record["crossing"].get_parent()
 	var tran_card: Control = game.floor_select._record["transept"].get_parent()
 	var cross_rect := Rect2(cross_card.position, cross_card.size)
@@ -9463,7 +9497,7 @@ func _ambulatory_layout() -> String:
 			return "the ambulatory copies %s" % other.id
 		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
 			return "the ambulatory reuses the %s grid" % other.id
-		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable":
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the ambulatory reuses the %s warden cell" % other.id
 		if _ring_key(floor) == _ring_key(other):
 			return "the ambulatory reuses the %s ring" % other.id
@@ -9739,6 +9773,8 @@ func _ambulatory_census() -> String:
 		"predella": 480,
 		"dossal": 488,
 		"retable": 496,
+		"tester": 504,
+		"riddel": 512,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -9776,6 +9812,8 @@ func _ambulatory_census() -> String:
 		"predella": "Predella ring",
 		"dossal": "Dossal ring",
 		"retable": "Retable ring",
+		"tester": "Tester ring",
+		"riddel": "Riddel ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -9839,9 +9877,9 @@ func _ambulatory_return() -> String:
 		if game.floor_select.status_for(other.id) != "Census open":
 			game.free()
 			return "the %s card did not open" % other.title
-	if Rules.floors().size() != 35:
+	if Rules.floors().size() != 37:
 		game.free()
-		return "floor select does not list thirty-five floors"
+		return "floor select does not list thirty-seven floors"
 	var tran_card: Control = game.floor_select._record["transept"].get_parent()
 	var amb_card: Control = game.floor_select._record["ambulatory"].get_parent()
 	var tran_rect := Rect2(tran_card.position, tran_card.size)
@@ -10118,7 +10156,7 @@ func _chevet_layout() -> String:
 			return "the chevet copies %s" % other.id
 		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
 			return "the chevet reuses the %s grid" % other.id
-		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable":
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the chevet reuses the %s warden cell" % other.id
 		if _ring_key(floor) == _ring_key(other):
 			return "the chevet reuses the %s ring" % other.id
@@ -10402,6 +10440,8 @@ func _chevet_census() -> String:
 		"predella": 480,
 		"dossal": 488,
 		"retable": 496,
+		"tester": 504,
+		"riddel": 512,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -10438,6 +10478,8 @@ func _chevet_census() -> String:
 		"predella": "Predella ring",
 		"dossal": "Dossal ring",
 		"retable": "Retable ring",
+		"tester": "Tester ring",
+		"riddel": "Riddel ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -10501,9 +10543,9 @@ func _chevet_return() -> String:
 		if game.floor_select.status_for(other.id) != "Census open":
 			game.free()
 			return "the %s card did not open" % other.title
-	if Rules.floors().size() != 35:
+	if Rules.floors().size() != 37:
 		game.free()
-		return "floor select does not list thirty-five floors"
+		return "floor select does not list thirty-seven floors"
 	var amb_card: Control = game.floor_select._record["ambulatory"].get_parent()
 	var che_card: Control = game.floor_select._record["chevet"].get_parent()
 	var amb_rect := Rect2(amb_card.position, amb_card.size)
@@ -10794,7 +10836,7 @@ func _retrochoir_layout() -> String:
 			return "the retrochoir copies %s" % other.id
 		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
 			return "the retrochoir reuses the %s grid" % other.id
-		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable":
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the retrochoir reuses the %s warden cell" % other.id
 		if _ring_key(floor) == _ring_key(other):
 			return "the retrochoir reuses the %s ring" % other.id
@@ -11097,6 +11139,8 @@ func _retrochoir_census() -> String:
 		"predella": 480,
 		"dossal": 488,
 		"retable": 496,
+		"tester": 504,
+		"riddel": 512,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -11133,6 +11177,8 @@ func _retrochoir_census() -> String:
 		"predella": "Predella ring",
 		"dossal": "Dossal ring",
 		"retable": "Retable ring",
+		"tester": "Tester ring",
+		"riddel": "Riddel ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -11172,7 +11218,7 @@ func _retrochoir_return() -> String:
 	var select_script = load("res://scripts/floor_select_view.gd")
 	if game_script == null or select_script == null:
 		return "game or floor select did not load"
-	if float(select_script.WINDOW_W) != 2396.0:
+	if float(select_script.WINDOW_W) != 2532.0:
 		return "floor select window width is %s" % select_script.WINDOW_W
 	var game = game_script.new()
 	root.add_child(game)
@@ -11198,9 +11244,9 @@ func _retrochoir_return() -> String:
 		if game.floor_select.status_for(other.id) != "Census open":
 			game.free()
 			return "the %s card did not open" % other.title
-	if Rules.floors().size() != 35:
+	if Rules.floors().size() != 37:
 		game.free()
-		return "floor select does not list thirty-five floors"
+		return "floor select does not list thirty-seven floors"
 	var che_card: Control = game.floor_select._record["chevet"].get_parent()
 	var ret_card: Control = game.floor_select._record["retrochoir"].get_parent()
 	var che_rect := Rect2(che_card.position, che_card.size)
@@ -11508,7 +11554,7 @@ func _ladychapel_layout() -> String:
 			return "the lady chapel copies %s" % other.id
 		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
 			return "the lady chapel reuses the %s grid" % other.id
-		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable":
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the lady chapel reuses the %s warden cell" % other.id
 		if _ring_key(floor) == _ring_key(other):
 			return "the lady chapel reuses the %s ring" % other.id
@@ -11852,6 +11898,8 @@ func _ladychapel_census() -> String:
 		"predella": 480,
 		"dossal": 488,
 		"retable": 496,
+		"tester": 504,
+		"riddel": 512,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -11888,6 +11936,8 @@ func _ladychapel_census() -> String:
 		"predella": "Predella ring",
 		"dossal": "Dossal ring",
 		"retable": "Retable ring",
+		"tester": "Tester ring",
+		"riddel": "Riddel ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -11927,7 +11977,7 @@ func _ladychapel_return() -> String:
 	var select_script = load("res://scripts/floor_select_view.gd")
 	if game_script == null or select_script == null:
 		return "game or floor select did not load"
-	if float(select_script.WINDOW_W) != 2396.0:
+	if float(select_script.WINDOW_W) != 2532.0:
 		return "floor select window width is %s" % select_script.WINDOW_W
 	var game = game_script.new()
 	root.add_child(game)
@@ -11953,9 +12003,9 @@ func _ladychapel_return() -> String:
 		if game.floor_select.status_for(other.id) != "Census open":
 			game.free()
 			return "the %s card did not open" % other.title
-	if Rules.floors().size() != 35:
+	if Rules.floors().size() != 37:
 		game.free()
-		return "floor select does not list thirty-five floors"
+		return "floor select does not list thirty-seven floors"
 	var ret_card: Control = game.floor_select._record["retrochoir"].get_parent()
 	var lady_card: Control = game.floor_select._record["ladychapel"].get_parent()
 	var ret_rect := Rect2(ret_card.position, ret_card.size)
@@ -12292,9 +12342,9 @@ func _feretory_layout() -> String:
 			return "the feretory copies %s" % other.id
 		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
 			return "the feretory reuses the %s grid" % other.id
-		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable":
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the feretory reuses the %s warden cell" % other.id
-		if _ring_key(floor) == _ring_key(other) and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable":
+		if _ring_key(floor) == _ring_key(other) and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the feretory reuses the %s ring" % other.id
 	for y in range(1, 12):
 		if not Rules.is_walkable(Vector2i(1, y), floor):
@@ -12601,6 +12651,8 @@ func _feretory_census() -> String:
 		"predella": 480,
 		"dossal": 488,
 		"retable": 496,
+		"tester": 504,
+		"riddel": 512,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -12637,6 +12689,8 @@ func _feretory_census() -> String:
 		"predella": "Predella ring",
 		"dossal": "Dossal ring",
 		"retable": "Retable ring",
+		"tester": "Tester ring",
+		"riddel": "Riddel ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -12676,7 +12730,7 @@ func _feretory_return() -> String:
 	var select_script = load("res://scripts/floor_select_view.gd")
 	if game_script == null or select_script == null:
 		return "game or floor select did not load"
-	if float(select_script.WINDOW_W) != 2396.0:
+	if float(select_script.WINDOW_W) != 2532.0:
 		return "floor select window width is %s" % select_script.WINDOW_W
 	var game = game_script.new()
 	root.add_child(game)
@@ -12702,9 +12756,9 @@ func _feretory_return() -> String:
 		if game.floor_select.status_for(other.id) != "Census open":
 			game.free()
 			return "the %s card did not open" % other.title
-	if Rules.floors().size() != 35:
+	if Rules.floors().size() != 37:
 		game.free()
-		return "floor select does not list thirty-five floors"
+		return "floor select does not list thirty-seven floors"
 	var lady_card: Control = game.floor_select._record["ladychapel"].get_parent()
 	var fer_card: Control = game.floor_select._record["feretory"].get_parent()
 	var lady_rect := Rect2(lady_card.position, lady_card.size)
@@ -13020,9 +13074,9 @@ func _chantry_layout() -> String:
 			return "the chantry copies %s" % other.id
 		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
 			return "the chantry reuses the %s grid" % other.id
-		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable":
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the chantry reuses the %s warden cell" % other.id
-		if _ring_key(floor) == _ring_key(other) and str(other.id) != "feretory" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable":
+		if _ring_key(floor) == _ring_key(other) and str(other.id) != "feretory" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the chantry reuses the %s ring" % other.id
 	for y in range(1, 12):
 		if not Rules.is_walkable(Vector2i(1, y), floor):
@@ -13289,6 +13343,8 @@ func _chantry_census() -> String:
 		"predella": 480,
 		"dossal": 488,
 		"retable": 496,
+		"tester": 504,
+		"riddel": 512,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -13325,6 +13381,8 @@ func _chantry_census() -> String:
 		"predella": "Predella ring",
 		"dossal": "Dossal ring",
 		"retable": "Retable ring",
+		"tester": "Tester ring",
+		"riddel": "Riddel ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -13364,7 +13422,7 @@ func _chantry_return() -> String:
 	var select_script = load("res://scripts/floor_select_view.gd")
 	if game_script == null or select_script == null:
 		return "game or floor select did not load"
-	if float(select_script.WINDOW_W) != 2396.0:
+	if float(select_script.WINDOW_W) != 2532.0:
 		return "floor select window width is %s" % select_script.WINDOW_W
 	var game = game_script.new()
 	root.add_child(game)
@@ -13390,9 +13448,9 @@ func _chantry_return() -> String:
 		if game.floor_select.status_for(other.id) != "Census open":
 			game.free()
 			return "the %s card did not open" % other.title
-	if Rules.floors().size() != 35:
+	if Rules.floors().size() != 37:
 		game.free()
-		return "floor select does not list thirty-five floors"
+		return "floor select does not list thirty-seven floors"
 	var fer_card: Control = game.floor_select._record["feretory"].get_parent()
 	var chantry_card: Control = game.floor_select._record["chantry"].get_parent()
 	var fer_rect := Rect2(fer_card.position, fer_card.size)
@@ -13737,9 +13795,9 @@ func _sacristy_layout() -> String:
 			return "the sacristy copies %s" % other.id
 		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
 			return "the sacristy reuses the %s grid" % other.id
-		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable":
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the sacristy reuses the %s warden cell" % other.id
-		if _ring_key(floor) == _ring_key(other) and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable":
+		if _ring_key(floor) == _ring_key(other) and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the sacristy reuses the %s ring" % other.id
 	for y in range(1, 12):
 		if not Rules.is_walkable(Vector2i(1, y), floor):
@@ -14036,6 +14094,8 @@ func _sacristy_census() -> String:
 		"predella": 480,
 		"dossal": 488,
 		"retable": 496,
+		"tester": 504,
+		"riddel": 512,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -14072,6 +14132,8 @@ func _sacristy_census() -> String:
 		"predella": "Predella ring",
 		"dossal": "Dossal ring",
 		"retable": "Retable ring",
+		"tester": "Tester ring",
+		"riddel": "Riddel ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -14111,7 +14173,7 @@ func _sacristy_return() -> String:
 	var select_script = load("res://scripts/floor_select_view.gd")
 	if game_script == null or select_script == null:
 		return "game or floor select did not load"
-	if float(select_script.WINDOW_W) != 2396.0:
+	if float(select_script.WINDOW_W) != 2532.0:
 		return "floor select window width is %s" % select_script.WINDOW_W
 	var game = game_script.new()
 	root.add_child(game)
@@ -14137,9 +14199,9 @@ func _sacristy_return() -> String:
 		if game.floor_select.status_for(other.id) != "Census open":
 			game.free()
 			return "the %s card did not open" % other.title
-	if Rules.floors().size() != 35:
+	if Rules.floors().size() != 37:
 		game.free()
-		return "floor select does not list thirty-five floors"
+		return "floor select does not list thirty-seven floors"
 	var chantry_card: Control = game.floor_select._record["chantry"].get_parent()
 	var sacristy_card: Control = game.floor_select._record["sacristy"].get_parent()
 	var chantry_rect := Rect2(chantry_card.position, chantry_card.size)
@@ -14461,9 +14523,9 @@ func _pyx_layout() -> String:
 			return "the pyx copies %s" % other.id
 		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
 			return "the pyx reuses the %s grid" % other.id
-		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable":
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the pyx reuses the %s warden cell" % other.id
-		if _ring_key(floor) == _ring_key(other) and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable":
+		if _ring_key(floor) == _ring_key(other) and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the pyx reuses the %s ring" % other.id
 	var path: Array = Rules.shortest_path_cells(floor)
 	var sacristy_path: Array = Rules.shortest_path_cells(sacristy)
@@ -14668,6 +14730,8 @@ func _pyx_census() -> String:
 		"predella": 480,
 		"dossal": 488,
 		"retable": 496,
+		"tester": 504,
+		"riddel": 512,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -14704,6 +14768,8 @@ func _pyx_census() -> String:
 		"predella": "Predella ring",
 		"dossal": "Dossal ring",
 		"retable": "Retable ring",
+		"tester": "Tester ring",
+		"riddel": "Riddel ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -14741,7 +14807,7 @@ func _pyx_return() -> String:
 	var select_script = load("res://scripts/floor_select_view.gd")
 	if game_script == null or select_script == null:
 		return "game or floor select did not load"
-	if float(select_script.WINDOW_W) != 2396.0:
+	if float(select_script.WINDOW_W) != 2532.0:
 		return "floor select window width is %s" % select_script.WINDOW_W
 	var game = game_script.new()
 	root.add_child(game)
@@ -14754,9 +14820,9 @@ func _pyx_return() -> String:
 	if Rules.floor_named("pyx").title != "The Pyx Chamber":
 		game.free()
 		return "floor select does not name the Pyx Chamber"
-	if Rules.floors().size() != 35:
+	if Rules.floors().size() != 37:
 		game.free()
-		return "floor select does not list thirty-five floors"
+		return "floor select does not list thirty-seven floors"
 	var sacristy_card: Control = game.floor_select._record["sacristy"].get_parent()
 	var pyx_card: Control = game.floor_select._record["pyx"].get_parent()
 	var sacristy_rect := Rect2(sacristy_card.position, sacristy_card.size)
@@ -14962,9 +15028,9 @@ func _aumbry_layout() -> String:
 			return "the aumbry copies %s" % other.id
 		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
 			return "the aumbry reuses the %s grid" % other.id
-		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable":
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the aumbry reuses the %s warden cell" % other.id
-		if _ring_key(floor) == _ring_key(other) and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable":
+		if _ring_key(floor) == _ring_key(other) and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the aumbry reuses the %s ring" % other.id
 	var path: Array = Rules.shortest_path_cells(floor)
 	var pyx_path: Array = Rules.shortest_path_cells(pyx)
@@ -15158,6 +15224,8 @@ func _aumbry_census() -> String:
 		"predella": 480,
 		"dossal": 488,
 		"retable": 496,
+		"tester": 504,
+		"riddel": 512,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -15194,6 +15262,8 @@ func _aumbry_census() -> String:
 		"predella": "Predella ring",
 		"dossal": "Dossal ring",
 		"retable": "Retable ring",
+		"tester": "Tester ring",
+		"riddel": "Riddel ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -15231,7 +15301,7 @@ func _aumbry_return() -> String:
 	var select_script = load("res://scripts/floor_select_view.gd")
 	if game_script == null or select_script == null:
 		return "game or floor select did not load"
-	if float(select_script.WINDOW_W) != 2396.0:
+	if float(select_script.WINDOW_W) != 2532.0:
 		return "floor select window width is %s" % select_script.WINDOW_W
 	var game = game_script.new()
 	root.add_child(game)
@@ -15244,9 +15314,9 @@ func _aumbry_return() -> String:
 	if Rules.floor_named("aumbry").title != "The Aumbry":
 		game.free()
 		return "floor select does not name the Aumbry"
-	if Rules.floors().size() != 35:
+	if Rules.floors().size() != 37:
 		game.free()
-		return "floor select does not list thirty-five floors"
+		return "floor select does not list thirty-seven floors"
 	var pyx_card: Control = game.floor_select._record["pyx"].get_parent()
 	var aumbry_card: Control = game.floor_select._record["aumbry"].get_parent()
 	var pyx_rect := Rect2(pyx_card.position, pyx_card.size)
@@ -15466,9 +15536,9 @@ func _piscina_layout() -> String:
 			return "the piscina copies %s" % other.id
 		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
 			return "the piscina reuses the %s grid" % other.id
-		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable":
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the piscina reuses the %s warden cell" % other.id
-		if _ring_key(floor) == _ring_key(other) and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable":
+		if _ring_key(floor) == _ring_key(other) and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the piscina reuses the %s ring" % other.id
 	var path: Array = Rules.shortest_path_cells(floor)
 	var aumbry_path: Array = Rules.shortest_path_cells(aumbry)
@@ -15694,6 +15764,8 @@ func _piscina_census() -> String:
 		"predella": 480,
 		"dossal": 488,
 		"retable": 496,
+		"tester": 504,
+		"riddel": 512,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -15730,6 +15802,8 @@ func _piscina_census() -> String:
 		"predella": "Predella ring",
 		"dossal": "Dossal ring",
 		"retable": "Retable ring",
+		"tester": "Tester ring",
+		"riddel": "Riddel ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -15767,7 +15841,7 @@ func _piscina_return() -> String:
 	var select_script = load("res://scripts/floor_select_view.gd")
 	if game_script == null or select_script == null:
 		return "game or floor select did not load"
-	if float(select_script.WINDOW_W) != 2396.0:
+	if float(select_script.WINDOW_W) != 2532.0:
 		return "floor select window width is %s" % select_script.WINDOW_W
 	var game = game_script.new()
 	root.add_child(game)
@@ -15780,9 +15854,9 @@ func _piscina_return() -> String:
 	if Rules.floor_named("piscina").title != "The Piscina":
 		game.free()
 		return "floor select does not name the Piscina"
-	if Rules.floors().size() != 35:
+	if Rules.floors().size() != 37:
 		game.free()
-		return "floor select does not list thirty-five floors"
+		return "floor select does not list thirty-seven floors"
 	var aumbry_card: Control = game.floor_select._record["aumbry"].get_parent()
 	var piscina_card: Control = game.floor_select._record["piscina"].get_parent()
 	var aumbry_rect := Rect2(aumbry_card.position, aumbry_card.size)
@@ -15994,9 +16068,9 @@ func _sedilia_layout() -> String:
 			return "the sedilia copies %s" % other.id
 		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
 			return "the sedilia reuses the %s grid" % other.id
-		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable":
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the sedilia reuses the %s warden cell" % other.id
-		if _ring_key(floor) == _ring_key(other) and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable":
+		if _ring_key(floor) == _ring_key(other) and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the sedilia reuses the %s ring" % other.id
 	var path: Array = Rules.shortest_path_cells(floor)
 	var piscina_path: Array = Rules.shortest_path_cells(piscina)
@@ -16260,6 +16334,8 @@ func _sedilia_census() -> String:
 		"predella": 480,
 		"dossal": 488,
 		"retable": 496,
+		"tester": 504,
+		"riddel": 512,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -16296,6 +16372,8 @@ func _sedilia_census() -> String:
 		"predella": "Predella ring",
 		"dossal": "Dossal ring",
 		"retable": "Retable ring",
+		"tester": "Tester ring",
+		"riddel": "Riddel ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -16333,7 +16411,7 @@ func _sedilia_return() -> String:
 	var select_script = load("res://scripts/floor_select_view.gd")
 	if game_script == null or select_script == null:
 		return "game or floor select did not load"
-	if float(select_script.WINDOW_W) != 2396.0:
+	if float(select_script.WINDOW_W) != 2532.0:
 		return "floor select window width is %s" % select_script.WINDOW_W
 	var game = game_script.new()
 	root.add_child(game)
@@ -16346,9 +16424,9 @@ func _sedilia_return() -> String:
 	if Rules.floor_named("sedilia").title != "The Sedilia":
 		game.free()
 		return "floor select does not name the Sedilia"
-	if Rules.floors().size() != 35:
+	if Rules.floors().size() != 37:
 		game.free()
-		return "floor select does not list thirty-five floors"
+		return "floor select does not list thirty-seven floors"
 	var piscina_card: Control = game.floor_select._record["piscina"].get_parent()
 	var sedilia_card: Control = game.floor_select._record["sedilia"].get_parent()
 	var piscina_rect := Rect2(piscina_card.position, piscina_card.size)
@@ -16560,9 +16638,9 @@ func _credence_layout() -> String:
 			return "the credence copies %s" % other.id
 		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
 			return "the credence reuses the %s grid" % other.id
-		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable":
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the credence reuses the %s warden cell" % other.id
-		if _ring_key(floor) == _ring_key(other) and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable":
+		if _ring_key(floor) == _ring_key(other) and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the credence reuses the %s ring" % other.id
 	var path: Array = Rules.shortest_path_cells(floor)
 	var sedilia_path: Array = Rules.shortest_path_cells(sedilia)
@@ -16817,6 +16895,8 @@ func _credence_census() -> String:
 		"predella": 480,
 		"dossal": 488,
 		"retable": 496,
+		"tester": 504,
+		"riddel": 512,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -16853,6 +16933,8 @@ func _credence_census() -> String:
 		"predella": "Predella ring",
 		"dossal": "Dossal ring",
 		"retable": "Retable ring",
+		"tester": "Tester ring",
+		"riddel": "Riddel ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -16890,7 +16972,7 @@ func _credence_return() -> String:
 	var select_script = load("res://scripts/floor_select_view.gd")
 	if game_script == null or select_script == null:
 		return "game or floor select did not load"
-	if float(select_script.WINDOW_W) != 2396.0:
+	if float(select_script.WINDOW_W) != 2532.0:
 		return "floor select window width is %s" % select_script.WINDOW_W
 	var game = game_script.new()
 	root.add_child(game)
@@ -16903,9 +16985,9 @@ func _credence_return() -> String:
 	if Rules.floor_named("credence").title != "The Credence":
 		game.free()
 		return "floor select does not name the Credence"
-	if Rules.floors().size() != 35:
+	if Rules.floors().size() != 37:
 		game.free()
-		return "floor select does not list thirty-five floors"
+		return "floor select does not list thirty-seven floors"
 	var sedilia_card: Control = game.floor_select._record["sedilia"].get_parent()
 	var credence_card: Control = game.floor_select._record["credence"].get_parent()
 	var sedilia_rect := Rect2(sedilia_card.position, sedilia_card.size)
@@ -17084,9 +17166,9 @@ func _reredos_layout() -> String:
 			return "the reredos copies %s" % other.id
 		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
 			return "the reredos reuses the %s grid" % other.id
-		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable":
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the reredos reuses the %s warden cell" % other.id
-		if _ring_key(floor) == _ring_key(other) and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable":
+		if _ring_key(floor) == _ring_key(other) and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the reredos reuses the %s ring" % other.id
 	var path: Array = Rules.shortest_path_cells(floor)
 	var credence_path: Array = Rules.shortest_path_cells(credence)
@@ -17334,6 +17416,8 @@ func _reredos_census() -> String:
 		"predella": 480,
 		"dossal": 488,
 		"retable": 496,
+		"tester": 504,
+		"riddel": 512,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -17370,6 +17454,8 @@ func _reredos_census() -> String:
 		"predella": "Predella ring",
 		"dossal": "Dossal ring",
 		"retable": "Retable ring",
+		"tester": "Tester ring",
+		"riddel": "Riddel ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -17407,7 +17493,7 @@ func _reredos_return() -> String:
 	var select_script = load("res://scripts/floor_select_view.gd")
 	if game_script == null or select_script == null:
 		return "game or floor select did not load"
-	if float(select_script.WINDOW_W) != 2396.0:
+	if float(select_script.WINDOW_W) != 2532.0:
 		return "floor select window width is %s" % select_script.WINDOW_W
 	var game = game_script.new()
 	root.add_child(game)
@@ -17420,9 +17506,9 @@ func _reredos_return() -> String:
 	if Rules.floor_named("reredos").title != "The Reredos":
 		game.free()
 		return "floor select does not name the Reredos"
-	if Rules.floors().size() != 35:
+	if Rules.floors().size() != 37:
 		game.free()
-		return "floor select does not list thirty-five floors"
+		return "floor select does not list thirty-seven floors"
 	var credence_card: Control = game.floor_select._record["credence"].get_parent()
 	var reredos_card: Control = game.floor_select._record["reredos"].get_parent()
 	var credence_rect := Rect2(credence_card.position, credence_card.size)
@@ -17591,7 +17677,7 @@ func _predella_layout() -> String:
 			return "the predella copies %s" % other.id
 		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
 			return "the predella reuses the %s grid" % other.id
-		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "dossal" and str(other.id) != "retable":
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the predella reuses the %s warden cell" % other.id
 		if _ring_key(floor) == _ring_key(other):
 			return "the predella reuses the %s ring" % other.id
@@ -17796,6 +17882,8 @@ func _predella_census() -> String:
 		"reredos": 475,
 		"dossal": 488,
 		"retable": 496,
+		"tester": 504,
+		"riddel": 512,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -17832,6 +17920,8 @@ func _predella_census() -> String:
 		"reredos": "Reredos ring",
 		"dossal": "Dossal ring",
 		"retable": "Retable ring",
+		"tester": "Tester ring",
+		"riddel": "Riddel ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -17869,7 +17959,7 @@ func _predella_return() -> String:
 	var select_script = load("res://scripts/floor_select_view.gd")
 	if game_script == null or select_script == null:
 		return "game or floor select did not load"
-	if float(select_script.WINDOW_W) != 2396.0:
+	if float(select_script.WINDOW_W) != 2532.0:
 		return "floor select window width is %s" % select_script.WINDOW_W
 	var game = game_script.new()
 	root.add_child(game)
@@ -17882,9 +17972,9 @@ func _predella_return() -> String:
 	if Rules.floor_named("predella").title != "The Predella":
 		game.free()
 		return "floor select does not name the Predella"
-	if Rules.floors().size() != 35:
+	if Rules.floors().size() != 37:
 		game.free()
-		return "floor select does not list thirty-five floors"
+		return "floor select does not list thirty-seven floors"
 	var reredos_card: Control = game.floor_select._record["reredos"].get_parent()
 	var predella_card: Control = game.floor_select._record["predella"].get_parent()
 	var reredos_rect := Rect2(reredos_card.position, reredos_card.size)
@@ -18061,9 +18151,9 @@ func _dossal_layout() -> String:
 			return "the dossal copies %s" % other.id
 		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
 			return "the dossal reuses the %s grid" % other.id
-		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "retable":
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the dossal reuses the %s warden cell" % other.id
-		if _ring_key(floor) == _ring_key(other) and str(other.id) != "retable":
+		if _ring_key(floor) == _ring_key(other) and str(other.id) != "retable" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the dossal reuses the %s ring" % other.id
 	var path: Array = Rules.shortest_path_cells(floor)
 	var predella_path: Array = Rules.shortest_path_cells(predella)
@@ -18294,6 +18384,8 @@ func _dossal_census() -> String:
 		"predella": 480,
 		"dossal": 488,
 		"retable": 496,
+		"tester": 504,
+		"riddel": 512,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -18331,6 +18423,8 @@ func _dossal_census() -> String:
 		"predella": "Predella ring",
 		"dossal": "Dossal ring",
 		"retable": "Retable ring",
+		"tester": "Tester ring",
+		"riddel": "Riddel ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -18368,7 +18462,7 @@ func _dossal_return() -> String:
 	var select_script = load("res://scripts/floor_select_view.gd")
 	if game_script == null or select_script == null:
 		return "game or floor select did not load"
-	if float(select_script.WINDOW_W) != 2396.0:
+	if float(select_script.WINDOW_W) != 2532.0:
 		return "floor select window width is %s" % select_script.WINDOW_W
 	var game = game_script.new()
 	root.add_child(game)
@@ -18381,9 +18475,9 @@ func _dossal_return() -> String:
 	if Rules.floor_named("dossal").title != "The Dossal":
 		game.free()
 		return "floor select does not name the Dossal"
-	if Rules.floors().size() != 35:
+	if Rules.floors().size() != 37:
 		game.free()
-		return "floor select does not list thirty-five floors"
+		return "floor select does not list thirty-seven floors"
 	var predella_card: Control = game.floor_select._record["predella"].get_parent()
 	var dossal_card: Control = game.floor_select._record["dossal"].get_parent()
 	var predella_rect := Rect2(predella_card.position, predella_card.size)
@@ -18561,9 +18655,9 @@ func _retable_layout() -> String:
 			return "the retable copies %s" % other.id
 		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
 			return "the retable reuses the %s grid" % other.id
-		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal":
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the retable reuses the %s warden cell" % other.id
-		if _ring_key(floor) == _ring_key(other) and str(other.id) != "dossal":
+		if _ring_key(floor) == _ring_key(other) and str(other.id) != "dossal" and str(other.id) != "tester" and str(other.id) != "riddel":
 			return "the retable reuses the %s ring" % other.id
 	var path: Array = Rules.shortest_path_cells(floor)
 	var dossal_path: Array = Rules.shortest_path_cells(dossal)
@@ -18779,6 +18873,9 @@ func _retable_census() -> String:
 		"reredos": 475,
 		"predella": 480,
 		"dossal": 488,
+		"retable": 496,
+		"tester": 504,
+		"riddel": 512,
 	}
 	var expect_loop := {
 		"cellar": "East square",
@@ -18815,6 +18912,9 @@ func _retable_census() -> String:
 		"reredos": "Reredos ring",
 		"predella": "Predella ring",
 		"dossal": "Dossal ring",
+		"retable": "Retable ring",
+		"tester": "Tester ring",
+		"riddel": "Riddel ring",
 	}
 	for other in Rules.floors():
 		if other.id == floor.id:
@@ -18852,7 +18952,7 @@ func _retable_return() -> String:
 	var select_script = load("res://scripts/floor_select_view.gd")
 	if game_script == null or select_script == null:
 		return "game or floor select did not load"
-	if float(select_script.WINDOW_W) != 2396.0:
+	if float(select_script.WINDOW_W) != 2532.0:
 		return "floor select window width is %s" % select_script.WINDOW_W
 	var game = game_script.new()
 	root.add_child(game)
@@ -18865,9 +18965,9 @@ func _retable_return() -> String:
 	if Rules.floor_named("retable").title != "The Retable":
 		game.free()
 		return "floor select does not name the Retable"
-	if Rules.floors().size() != 35:
+	if Rules.floors().size() != 37:
 		game.free()
-		return "floor select does not list thirty-five floors"
+		return "floor select does not list thirty-seven floors"
 	var dossal_card: Control = game.floor_select._record["dossal"].get_parent()
 	var retable_card: Control = game.floor_select._record["retable"].get_parent()
 	var dossal_rect := Rect2(dossal_card.position, dossal_card.size)
@@ -18965,6 +19065,996 @@ func _retable_return() -> String:
 		game.free()
 		return "the finished retable census also closed the dossal"
 	if int(game.campaign.last_bill.total) != 496 or game.campaign.purse < 496:
+		game.free()
+		return "the finished census was not paid"
+	game.free()
+	return ""
+
+func _tester_layout() -> String:
+	if Rules.CORRIDOR_VALUE != 3 or Rules.HAZARD_VALUE != 8 or Rules.LOOP_VALUE != 15:
+		return "payout rates changed"
+	if Rules.MOVE_OIL != 1 or Rules.HIT_OIL != 3:
+		return "oil costs changed"
+	if Rules.SMALL_FLASK_OIL != 24 or Rules.LARGE_FLASK_OIL != 120 or Rules.LARGE_FLASK_COST != 40:
+		return "flask sizes changed"
+	var floor = Rules.floor_named("tester")
+	if floor == null:
+		return "tester floor is missing"
+	if floor.record != Rules.TESTER_RECORD:
+		return "tester record drifted from its constant"
+	if Rules.TESTER_RECORD != "Record every corridor, the thirty-six tester cracks, and the ring around the tester.":
+		return "the tester no longer asks for the tester cracks and the ring"
+	if Rules.width(floor) != 39 or Rules.height(floor) != 21:
+		return "tester sheet is %d by %d" % [Rules.width(floor), Rules.height(floor)]
+	var mark_count := 0
+	for row in floor.rows:
+		mark_count += str(row).count("}")
+		if str(row).find("]") >= 0:
+			return "the tester sheet still uses the retable glyph"
+	if mark_count != 84:
+		return "the tester block is not 14 by 6"
+	for other in Rules.floors():
+		if other.id == floor.id:
+			continue
+		for row in other.rows:
+			if str(row).find("}") >= 0:
+				return "glyph } is already used on %s" % other.id
+	var retable = Rules.floor_named("retable")
+	var dossal = Rules.floor_named("dossal")
+	var predella = Rules.floor_named("predella")
+	var reredos = Rules.floor_named("reredos")
+	var credence = Rules.floor_named("credence")
+	var sedilia = Rules.floor_named("sedilia")
+	if retable == null or dossal == null or predella == null or reredos == null or credence == null or sedilia == null:
+		return "an earlier floor is missing"
+	if Rules.glyph_at(Vector2i(7, 4), retable) != "]":
+		return "] is no longer the retable"
+	if Rules.glyph_at(Vector2i(7, 4), floor) != "}":
+		return "} is not the tester"
+	if Rules.start_pos(floor) != Vector2i(1, 1) or Rules.lift_pos(floor) != Vector2i(10, 11) or Rules.enemy_pos(floor) != Vector2i(9, 12):
+		return "start, lift, or warden moved"
+	if Rules.glyph_at(Vector2i(32, 15), floor) != "H":
+		return "the new crack is not (32,15)"
+	if Rules.glyph_at(Vector2i(31, 15), floor) != "H" or Rules.glyph_at(Vector2i(30, 15), floor) != "H" or Rules.glyph_at(Vector2i(33, 16), floor) != "H":
+		return "a carried crack was closed"
+	if Rules.glyph_at(Vector2i(33, 15), floor) != "#":
+		return "the next wall east of the new crack was opened"
+	if Rules.glyph_at(Vector2i(10, 10), floor) != "#" or Rules.glyph_at(Vector2i(11, 11), floor) != ".":
+		return "the dossal closure pair moved"
+	if Rules.glyph_at(Vector2i(8, 10), floor) != "#" or Rules.glyph_at(Vector2i(9, 10), floor) != "#" or Rules.glyph_at(Vector2i(10, 12), floor) != "#" or Rules.glyph_at(Vector2i(6, 12), floor) != "#" or Rules.glyph_at(Vector2i(5, 12), floor) != "#" or Rules.glyph_at(Vector2i(4, 12), floor) != "#" or Rules.glyph_at(Vector2i(25, 2), floor) != "#" or Rules.glyph_at(Vector2i(3, 12), floor) != "#" or Rules.glyph_at(Vector2i(2, 1), floor) != "#" or Rules.glyph_at(Vector2i(3, 1), floor) != "#":
+		return "a carried closure was reopened"
+	if Rules.glyph_at(Vector2i(21, 4), floor) != "." or Rules.glyph_at(Vector2i(7, 10), floor) != ".":
+		return "a kept ring tile was closed"
+	if Rules.glyph_at(Vector2i(24, 13), floor) != "#" or Rules.glyph_at(Vector2i(26, 14), floor) != "#":
+		return "an absorbed spare crack was opened"
+	if Rules.glyph_at(Vector2i(8, 12), floor) != "." or Rules.is_walkable(Vector2i(10, 12), floor):
+		return "a swing moved"
+	var hazards := Rules.hazard_cells(floor)
+	if hazards.size() != 36:
+		return "expected thirty-six tester cracks, found %d" % hazards.size()
+	if not hazards.has(Vector2i(32, 15)) or not hazards.has(Vector2i(31, 15)) or not hazards.has(Vector2i(33, 16)):
+		return "the crack set drifted"
+	if Rules.corridor_cells(floor).size() != 67:
+		return "corridors %d" % Rules.corridor_cells(floor).size()
+	var ring_err := _tester_ring(floor)
+	if ring_err != "":
+		return ring_err
+	for other in Rules.floors():
+		if other.id == floor.id:
+			continue
+		if floor.rows == other.rows:
+			return "the tester copies %s" % other.id
+		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
+			return "the tester reuses the %s grid" % other.id
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "riddel":
+			return "the tester reuses the %s warden cell" % other.id
+		if _ring_key(floor) == _ring_key(other) and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "riddel":
+			return "the tester reuses the %s ring" % other.id
+	var path: Array = Rules.shortest_path_cells(floor)
+	var retable_path: Array = Rules.shortest_path_cells(retable)
+	if path.size() != 20 or path.size() != retable_path.size():
+		return "the 19-step path cells changed"
+	for i in path.size():
+		if path[i] != retable_path[i]:
+			return "the 19-step path moved at %s" % path[i]
+	if Rules.shortest_path_steps(floor) != 19:
+		return "shortest tester path is %d, expected 19" % Rules.shortest_path_steps(floor)
+	var cover := Rules.safe_survey_steps(floor)
+	if cover != 120:
+		return "safe survey is %d, expected 120" % cover
+	if cover > Rules.LARGE_FLASK_OIL:
+		return "large flask cannot finish the tester"
+	var bare := Rules.Floor.new()
+	var bare_rows := PackedStringArray()
+	for i in floor.rows.size():
+		var bare_row := str(floor.rows[i])
+		if i == 15:
+			bare_row = bare_row.left(32) + "#" + bare_row.substr(33)
+		bare_rows.append(bare_row)
+	bare.rows = bare_rows
+	if Rules.glyph_at(Vector2i(32, 15), bare) != "#" or Rules.glyph_at(Vector2i(31, 15), bare) != "H":
+		return "the sheet without the new crack was not built"
+	if Rules.safe_survey_steps(bare) != 120 or Rules.shortest_path_cells(bare) != path:
+		return "removing the new crack surveys at %d" % Rules.safe_survey_steps(bare)
+	if Rules.hazard_cells(bare).size() != 35 or Rules.corridor_cells(bare).size() != 67:
+		return "the wider retable sheet counts drifted"
+	for alt in [Vector2i(24, 13), Vector2i(26, 14)]:
+		var absorbed := Rules.Floor.new()
+		var absorbed_rows := PackedStringArray()
+		for i in bare.rows.size():
+			var absorbed_row := str(bare.rows[i])
+			if i == alt.y:
+				absorbed_row = absorbed_row.left(alt.x) + "H" + absorbed_row.substr(alt.x + 1)
+			absorbed_rows.append(absorbed_row)
+		absorbed.rows = absorbed_rows
+		if Rules.glyph_at(alt, absorbed) != "H" or Rules.glyph_at(Vector2i(32, 15), absorbed) != "#":
+			return "the absorbed spare %s was not built" % alt
+		if Rules.safe_survey_steps(absorbed) != 120 or Rules.shortest_path_cells(absorbed) != path:
+			return "absorbed crack %s surveys at %d" % [alt, Rules.safe_survey_steps(absorbed)]
+	var tip := Rules.Floor.new()
+	var tip_rows := PackedStringArray()
+	for i in bare.rows.size():
+		var tip_row := str(bare.rows[i])
+		if i == 16:
+			tip_row = tip_row.left(34) + "H" + tip_row.substr(35)
+		tip_rows.append(tip_row)
+	tip.rows = tip_rows
+	if Rules.glyph_at(Vector2i(34, 16), tip) != "H" or Rules.glyph_at(Vector2i(32, 15), tip) != "#" or Rules.glyph_at(Vector2i(21, 4), tip) != "." or Rules.glyph_at(Vector2i(7, 10), tip) != ".":
+		return "the off-tour crack sheet was not built"
+	if Rules.safe_survey_steps(tip) != 122 or Rules.shortest_path_cells(tip) != path:
+		return "off-tour crack surveys at %d while (21,4) and (7,10) stay open" % Rules.safe_survey_steps(tip)
+	var tip_kept := Rules.Floor.new()
+	var kept_rows := PackedStringArray()
+	for i in tip.rows.size():
+		var kept_row := str(tip.rows[i])
+		if i == 10:
+			kept_row = kept_row.left(7) + "#" + kept_row.substr(8)
+		kept_rows.append(kept_row)
+	tip_kept.rows = kept_rows
+	if Rules.safe_survey_steps(tip_kept) != 120 or Rules.shortest_path_cells(tip_kept) != path:
+		return "closing (7,10) on the off-tour crack surveys at %d" % Rules.safe_survey_steps(tip_kept)
+	var tip_spur := Rules.Floor.new()
+	var spur_rows := PackedStringArray()
+	for i in tip.rows.size():
+		var spur_row := str(tip.rows[i])
+		if i == 4:
+			spur_row = spur_row.left(21) + "#" + spur_row.substr(22)
+		spur_rows.append(spur_row)
+	tip_spur.rows = spur_rows
+	if Rules.safe_survey_steps(tip_spur) != 120 or Rules.shortest_path_cells(tip_spur) != path:
+		return "closing (21,4) on the off-tour crack surveys at %d" % Rules.safe_survey_steps(tip_spur)
+	if Rules.safe_survey_steps(retable) != 120 or Rules.corridor_cells(retable).size() != 67 or Rules.hazard_cells(retable).size() != 35:
+		return "the retable solution changed"
+	if Rules.safe_survey_steps(dossal) != 120 or Rules.corridor_cells(dossal).size() != 67 or Rules.hazard_cells(dossal).size() != 34:
+		return "the dossal solution changed"
+	if Rules.safe_survey_steps(predella) != 120 or Rules.corridor_cells(predella).size() != 67 or Rules.hazard_cells(predella).size() != 33:
+		return "the predella solution changed"
+	if Rules.safe_survey_steps(reredos) != 120 or Rules.corridor_cells(reredos).size() != 68 or Rules.hazard_cells(reredos).size() != 32:
+		return "the reredos solution changed"
+	if Rules.safe_survey_steps(credence) != 120 or Rules.corridor_cells(credence).size() != 69 or Rules.hazard_cells(credence).size() != 31:
+		return "the credence solution changed"
+	if Rules.safe_survey_steps(sedilia) != 120 or Rules.corridor_cells(sedilia).size() != 70 or Rules.hazard_cells(sedilia).size() != 30:
+		return "the sedilia solution changed"
+	var retable_bill: Dictionary = Rules.payout(Rules.accurate_sheet(retable), retable)
+	var dossal_bill: Dictionary = Rules.payout(Rules.accurate_sheet(dossal), dossal)
+	var predella_bill: Dictionary = Rules.payout(Rules.accurate_sheet(predella), predella)
+	var reredos_bill: Dictionary = Rules.payout(Rules.accurate_sheet(reredos), reredos)
+	var credence_bill: Dictionary = Rules.payout(Rules.accurate_sheet(credence), credence)
+	var sedilia_bill: Dictionary = Rules.payout(Rules.accurate_sheet(sedilia), sedilia)
+	if int(retable_bill.total) != 496 or int(dossal_bill.total) != 488 or int(predella_bill.total) != 480 or int(reredos_bill.total) != 475 or int(credence_bill.total) != 470 or int(sedilia_bill.total) != 465:
+		return "an earlier payout changed"
+	var bumper = Rules.new_run(Rules.SMALL_FLASK_OIL, floor)
+	bumper.pos = Vector2i(6, 4)
+	var before_oil: int = bumper.oil
+	var tap: Dictionary = Rules.step(bumper, Vector2i(1, 0))
+	if bool(tap.moved) or bumper.oil != before_oil:
+		return "bumping the tester spent oil or moved"
+	if int(bumper.marks.get(Vector2i(7, 4), Rules.Mark.NONE)) != Rules.Mark.WALL:
+		return "bumping the tester did not ink a wall"
+	if str(tap.message).find("tester") < 0:
+		return "bumping the tester did not name it"
+	var facing = Rules.new_run(Rules.SMALL_FLASK_OIL, floor)
+	facing.pos = Vector2i(1, 2)
+	facing.facing = Rules.facing_from_vector(Vector2i(0, 1))
+	if Rules.ahead_line(facing).find("tester crack") < 0:
+		return "facing a tester crack did not name it"
+	print("  tester shortest 19  survey %d  corridors %d  cracks %d" % [cover, Rules.corridor_cells(floor).size(), hazards.size()])
+	return ""
+
+
+func _tester_ring(floor) -> String:
+	var cells: Array = Rules.loop_cells(floor)
+	if cells.size() != 46:
+		return "ring size %d" % cells.size()
+	var have := {}
+	for cell in cells:
+		if have.has(cell):
+			return "duplicate ring tile %s" % cell
+		have[cell] = true
+		if cell == Vector2i(8, 10) or cell == Vector2i(9, 10) or cell == Vector2i(10, 10):
+			return "closed ring tile %s is still on the ring" % cell
+		if cell == Rules.lift_pos(floor):
+			if Rules.glyph_at(cell, floor) != "L" or not Rules.is_corridor_cell(cell, floor):
+				return "the lift is not the ring's corridor"
+		elif Rules.glyph_at(cell, floor) != "." or not Rules.is_corridor_cell(cell, floor):
+			return "ring tile %s is not an open corridor" % cell
+		if cell == Rules.enemy_pos(floor):
+			return "ring tile %s is the warden" % cell
+	for cell in cells:
+		var degree := 0
+		for dir in Rules.cardinals():
+			if have.has(cell + dir):
+				degree += 1
+		if degree != 2:
+			return "ring tile %s has %d neighbors in the ring" % [cell, degree]
+	if not have.has(Vector2i(11, 11)) or not have.has(Vector2i(7, 11)) or not have.has(Vector2i(8, 11)) or not have.has(Vector2i(21, 4)) or not have.has(Vector2i(7, 10)):
+		return "the ring does not step around the closed tiles"
+	if str(floor.loop_name) != "Tester ring":
+		return "ring name is %s" % floor.loop_name
+	var bill: Dictionary = Rules.payout(Rules.accurate_sheet(floor), floor)
+	if int(bill.loop) != 1:
+		return "the ring did not pay"
+	return ""
+
+
+func _tester_census() -> String:
+	var floor = Rules.floor_named("tester")
+	var truth: Dictionary = Rules.accurate_sheet(floor)
+	if not Rules.census_accepted(truth, floor):
+		return "the true tester census was rejected"
+	var bill: Dictionary = Rules.payout(truth, floor)
+	if int(bill.corridors) != 67 or int(bill.hazards) != 36 or int(bill.loop) != 1:
+		return "true counts %s/%s loop %s" % [bill.corridors, bill.hazards, bill.loop]
+	if int(bill.total) != 504 or str(bill.loop_name) != "Tester ring":
+		return "full tester payout is %s" % bill.total
+	var crack: Vector2i = Vector2i(32, 15)
+	var missing: Dictionary = truth.duplicate()
+	missing.erase(crack)
+	if Rules.census_accepted(missing, floor):
+		return "a sheet missing a tester crack was accepted"
+	var mislabeled: Dictionary = truth.duplicate()
+	mislabeled[crack] = Rules.Mark.CORRIDOR
+	if Rules.census_accepted(mislabeled, floor):
+		return "a tester crack marked as a corridor was accepted"
+	var swapped: Dictionary = truth.duplicate()
+	swapped[crack] = Rules.Mark.WALL
+	swapped[Vector2i(7, 4)] = Rules.Mark.HAZARD
+	if Rules.census_accepted(swapped, floor):
+		return "a swapped tester sheet was accepted"
+	var short_sheet: Dictionary = truth.duplicate()
+	short_sheet.erase(Vector2i(1, 2))
+	if Rules.census_accepted(short_sheet, floor):
+		return "a short tester sheet was accepted"
+	var canopy_wall: Dictionary = truth.duplicate()
+	canopy_wall[Vector2i(7, 4)] = Rules.Mark.WALL
+	if not Rules.census_accepted(canopy_wall, floor):
+		return "inking the tester as a wall rejected a true census"
+	canopy_wall[Vector2i(7, 4)] = Rules.Mark.HAZARD
+	if Rules.census_accepted(canopy_wall, floor):
+		return "calling the tester a hazard was accepted"
+	var expect_pay := {
+		"cellar": 211,
+		"cistern": 288,
+		"cloister": 242,
+		"crypt": 316,
+		"ossuary": 240,
+		"reliquary": 251,
+		"undercroft": 238,
+		"wellhouse": 225,
+		"scriptorium": 263,
+		"binding": 343,
+		"chartroom": 306,
+		"bellloft": 326,
+		"clockroom": 352,
+		"font": 354,
+		"apse": 374,
+		"choir": 394,
+		"rood": 405,
+		"crossing": 410,
+		"transept": 413,
+		"ambulatory": 376,
+		"chevet": 402,
+		"retrochoir": 392,
+		"ladychapel": 409,
+		"feretory": 426,
+		"chantry": 431,
+		"sacristy": 439,
+		"pyx": 447,
+		"aumbry": 452,
+		"piscina": 460,
+		"sedilia": 465,
+		"credence": 470,
+		"reredos": 475,
+		"predella": 480,
+		"dossal": 488,
+		"retable": 496,
+		"tester": 504,
+		"riddel": 512,
+	}
+	var expect_loop := {
+		"cellar": "East square",
+		"cistern": "Cistern ring",
+		"cloister": "Cloister walk",
+		"crypt": "Crypt ring",
+		"ossuary": "Ossuary ring",
+		"reliquary": "Reliquary ring",
+		"undercroft": "Undercroft ring",
+		"wellhouse": "Well ring",
+		"scriptorium": "Scriptorium ring",
+		"binding": "Binding ring",
+		"chartroom": "Chart room ring",
+		"bellloft": "Bell loft ring",
+		"clockroom": "Clock room ring",
+		"font": "Font ring",
+		"apse": "Apse ring",
+		"choir": "Choir ring",
+		"rood": "Rood ring",
+		"crossing": "Crossing ring",
+		"transept": "Transept ring",
+		"ambulatory": "Ambulatory ring",
+		"chevet": "Chevet ring",
+		"retrochoir": "Retrochoir ring",
+		"ladychapel": "Lady chapel ring",
+		"feretory": "Feretory ring",
+		"chantry": "Chantry ring",
+		"sacristy": "Sacristy ring",
+		"pyx": "Pyx ring",
+		"aumbry": "Aumbry ring",
+		"piscina": "Piscina ring",
+		"sedilia": "Sedilia ring",
+		"credence": "Credence ring",
+		"reredos": "Reredos ring",
+		"predella": "Predella ring",
+		"dossal": "Dossal ring",
+		"retable": "Retable ring",
+		"tester": "Tester ring",
+		"riddel": "Riddel ring",
+	}
+	for other in Rules.floors():
+		if other.id == floor.id:
+			continue
+		if Rules.census_accepted(truth, other):
+			return "the tester sheet was accepted as %s" % other.title
+		if Rules.census_accepted(Rules.accurate_sheet(other), floor):
+			return "the %s sheet was accepted as the tester" % other.title
+		if not Rules.census_accepted(Rules.accurate_sheet(other), other):
+			return "the %s true census was rejected" % other.title
+		var other_bill: Dictionary = Rules.payout(Rules.accurate_sheet(other), other)
+		if int(other_bill.total) != int(expect_pay[other.id]):
+			return "the %s payout changed to %s" % [other.title, other_bill.total]
+		if str(other_bill.loop_name) != str(expect_loop[other.id]):
+			return "the %s ring name changed" % other.title
+	var approach: Vector2i = Rules.walkable_approach(crack, floor)
+	if approach.x < 0:
+		return "tester crack has no approach"
+	var walker = Rules.new_run(Rules.SMALL_FLASK_OIL, floor)
+	walker.pos = approach
+	walker.oil = 10
+	var before: int = walker.oil
+	var stepped: Dictionary = Rules.step(walker, crack - approach)
+	if bool(stepped.hit) or walker.oil != before - Rules.MOVE_OIL:
+		return "a tester crack burned extra oil"
+	if int(walker.marks.get(crack, Rules.Mark.NONE)) != Rules.Mark.HAZARD:
+		return "a tester crack was not inked as a hazard"
+	if str(stepped.message).find("tester crack") < 0:
+		return "stepping on a tester crack did not name it"
+	return ""
+
+
+func _tester_return() -> String:
+	var game_script = load("res://scripts/game.gd")
+	var select_script = load("res://scripts/floor_select_view.gd")
+	if game_script == null or select_script == null:
+		return "game or floor select did not load"
+	if float(select_script.WINDOW_W) != 2532.0:
+		return "floor select window width is %s" % select_script.WINDOW_W
+	var game = game_script.new()
+	root.add_child(game)
+	if game.town == null or game.floor_select == null or game.descent == null:
+		game.free()
+		return "the game did not build its screens"
+	if game.floor_select.record_for("tester") != Rules.TESTER_RECORD:
+		game.free()
+		return "floor select does not offer the tester census"
+	if Rules.floor_named("tester").title != "The Tester":
+		game.free()
+		return "floor select does not name the Tester"
+	if Rules.floors().size() != 37:
+		game.free()
+		return "floor select does not list thirty-seven floors"
+	var retable_card: Control = game.floor_select._record["retable"].get_parent()
+	var tester_card: Control = game.floor_select._record["tester"].get_parent()
+	var retable_rect := Rect2(retable_card.position, retable_card.size)
+	var tester_rect := Rect2(tester_card.position, tester_card.size)
+	if tester_rect.intersects(retable_rect):
+		game.free()
+		return "the tester card covers the retable card"
+	if absf(tester_rect.position.x - (retable_rect.position.x + retable_rect.size.x + 8.0)) > 0.5:
+		game.free()
+		return "the tester card is not immediately to the right of the retable"
+	var window_w: float = select_script.WINDOW_W
+	if tester_rect.position.x + tester_rect.size.x > window_w + 0.5:
+		game.free()
+		return "the tester card sits outside the window"
+	if tester_rect.position.x < 12.0 or window_w - (tester_rect.position.x + tester_rect.size.x) < 11.5:
+		game.free()
+		return "the tester card has no spare at the window edge"
+	var saw := {}
+	var previous: Control = null
+	for listed in Rules.floors():
+		var card: Control = game.floor_select._record[listed.id].get_parent()
+		var card_rect := Rect2(card.position, card.size)
+		if card_rect.position.x < 0.0 or card_rect.position.x + card_rect.size.x > window_w + 0.5:
+			game.free()
+			return "the %s card sits outside the window" % listed.title
+		if card_rect.position.y < 0.0 or card_rect.position.y + card_rect.size.y > 720.0:
+			game.free()
+			return "the %s card is clipped by the window height" % listed.title
+		if previous != null and card_rect.intersects(Rect2(previous.position, previous.size)):
+			game.free()
+			return "the %s card covers another card" % listed.title
+		var heading: Label = card.get_child(2)
+		if heading == null or heading.text != listed.title:
+			game.free()
+			return "the %s card title is missing" % listed.title
+		for glyph_i in heading.text.length():
+			var glyph := heading.text.substr(glyph_i, 1)
+			if glyph == " ":
+				continue
+			var glyph_bounds := heading.get_character_bounds(glyph_i)
+			if glyph_bounds.size.x <= 0.0 or glyph_bounds.position.y + glyph_bounds.size.y > heading.size.y + 0.01 or glyph_bounds.position.x + glyph_bounds.size.x > heading.size.x + 0.01:
+				game.free()
+				return "the %s title hides %s" % [listed.title, glyph]
+		saw[listed.title] = true
+		previous = card
+	for title in ["The Scriptorium", "The Ambulatory", "The Chevet", "The Retrochoir", "The Lady Chapel", "The Feretory", "The Chantry", "The Sacristy", "The Pyx Chamber", "The Aumbry", "The Piscina", "The Sedilia", "The Credence", "The Reredos", "The Predella", "The Dossal", "The Retable", "The Tester"]:
+		if not saw.has(title):
+			game.free()
+			return "the floor select is missing %s" % title
+	var narrow_w := (2463.0 - 24.0 - 8.0 * 35.0) / 36.0
+	var narrow_heading := narrow_w - 8.0
+	var probe := Label.new()
+	probe.add_theme_font_size_override("font_size", 9)
+	probe.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	probe.clip_text = true
+	probe.size = Vector2(narrow_heading, 44)
+	game.add_child(probe)
+	probe.text = "The Scriptorium"
+	if probe.get_character_bounds(probe.text.length() - 1).size.x > 0.0:
+		probe.free()
+		game.free()
+		return "2463 already shows the last letter of The Scriptorium, so 2464 is not the smallest width"
+	probe.text = "The Ambulatory"
+	if probe.get_character_bounds(probe.text.length() - 1).size.x > 0.0:
+		probe.free()
+		game.free()
+		return "2463 already shows the last letter of The Ambulatory, so 2464 is not the smallest width"
+	probe.free()
+	game._on_descend_floor("tester")
+	if game.descent.state == null or game.descent.state.floor.id != "tester":
+		game.free()
+		return "descend did not open the tester"
+	var state = game.descent.state
+	state.marks = Rules.accurate_sheet(state.floor)
+	var lift: Vector2i = Rules.lift_pos(state.floor)
+	var approach: Vector2i = Rules.walkable_approach(lift, state.floor)
+	state.pos = approach
+	state.oil = 5
+	var done: Dictionary = Rules.step(state, lift - approach)
+	if not bool(done.extracted) or not Rules.census_accepted(state.marks, state.floor):
+		game.free()
+		return "the finished sheet did not extract as an accepted census"
+	game.descent._open_return()
+	if game.descent.return_button.text != "Return to floor select":
+		game.free()
+		return "a finished census did not offer the floor select"
+	game._on_return(state)
+	if not game.floor_select.visible or game.town.visible or game.descent.visible:
+		game.free()
+		return "a finished census did not return to the floor select"
+	if not bool(game.campaign.completed.get("tester", false)):
+		game.free()
+		return "the finished census was not recorded"
+	if bool(game.campaign.completed.get("retable", false)):
+		game.free()
+		return "the finished tester census also closed the retable"
+	if int(game.campaign.last_bill.total) != 504 or game.campaign.purse < 504:
+		game.free()
+		return "the finished census was not paid"
+	game.free()
+	return ""
+
+func _riddel_layout() -> String:
+	if Rules.CORRIDOR_VALUE != 3 or Rules.HAZARD_VALUE != 8 or Rules.LOOP_VALUE != 15:
+		return "payout rates changed"
+	if Rules.MOVE_OIL != 1 or Rules.HIT_OIL != 3:
+		return "oil costs changed"
+	if Rules.SMALL_FLASK_OIL != 24 or Rules.LARGE_FLASK_OIL != 120 or Rules.LARGE_FLASK_COST != 40:
+		return "flask sizes changed"
+	var floor = Rules.floor_named("riddel")
+	if floor == null:
+		return "riddel floor is missing"
+	if floor.record != Rules.RIDDEL_RECORD:
+		return "riddel record drifted from its constant"
+	if Rules.RIDDEL_RECORD != "Record every corridor, the thirty-seven riddel cracks, and the ring around the riddel.":
+		return "the riddel no longer asks for the riddel cracks and the ring"
+	if Rules.width(floor) != 40 or Rules.height(floor) != 21:
+		return "riddel sheet is %d by %d" % [Rules.width(floor), Rules.height(floor)]
+	var mark_count := 0
+	for row in floor.rows:
+		mark_count += str(row).count("~")
+		if str(row).find("}") >= 0:
+			return "the riddel sheet still uses the tester glyph"
+	if mark_count != 84:
+		return "the riddel block is not 14 by 6"
+	for other in Rules.floors():
+		if other.id == floor.id:
+			continue
+		for row in other.rows:
+			if str(row).find("~") >= 0:
+				return "glyph ~ is already used on %s" % other.id
+	var tester = Rules.floor_named("tester")
+	var retable = Rules.floor_named("retable")
+	var dossal = Rules.floor_named("dossal")
+	var predella = Rules.floor_named("predella")
+	var reredos = Rules.floor_named("reredos")
+	var credence = Rules.floor_named("credence")
+	var sedilia = Rules.floor_named("sedilia")
+	if tester == null or retable == null or dossal == null or predella == null or reredos == null or credence == null or sedilia == null:
+		return "an earlier floor is missing"
+	if Rules.glyph_at(Vector2i(7, 4), tester) != "}":
+		return "} is no longer the tester"
+	if Rules.glyph_at(Vector2i(7, 4), floor) != "~":
+		return "~ is not the riddel"
+	if Rules.start_pos(floor) != Vector2i(1, 1) or Rules.lift_pos(floor) != Vector2i(10, 11) or Rules.enemy_pos(floor) != Vector2i(9, 12):
+		return "start, lift, or warden moved"
+	if Rules.glyph_at(Vector2i(33, 15), floor) != "H":
+		return "the new crack is not (33,15)"
+	if Rules.glyph_at(Vector2i(32, 15), floor) != "H" or Rules.glyph_at(Vector2i(31, 15), floor) != "H" or Rules.glyph_at(Vector2i(33, 16), floor) != "H":
+		return "a carried crack was closed"
+	if Rules.glyph_at(Vector2i(34, 15), floor) != "#":
+		return "the next wall east of the new crack was opened"
+	if Rules.glyph_at(Vector2i(10, 10), floor) != "#" or Rules.glyph_at(Vector2i(11, 11), floor) != ".":
+		return "the dossal closure pair moved"
+	if Rules.glyph_at(Vector2i(8, 10), floor) != "#" or Rules.glyph_at(Vector2i(9, 10), floor) != "#" or Rules.glyph_at(Vector2i(10, 12), floor) != "#" or Rules.glyph_at(Vector2i(6, 12), floor) != "#" or Rules.glyph_at(Vector2i(5, 12), floor) != "#" or Rules.glyph_at(Vector2i(4, 12), floor) != "#" or Rules.glyph_at(Vector2i(25, 2), floor) != "#" or Rules.glyph_at(Vector2i(3, 12), floor) != "#" or Rules.glyph_at(Vector2i(2, 1), floor) != "#" or Rules.glyph_at(Vector2i(3, 1), floor) != "#":
+		return "a carried closure was reopened"
+	if Rules.glyph_at(Vector2i(21, 4), floor) != "." or Rules.glyph_at(Vector2i(7, 10), floor) != ".":
+		return "a kept ring tile was closed"
+	if Rules.glyph_at(Vector2i(24, 13), floor) != "#" or Rules.glyph_at(Vector2i(26, 14), floor) != "#":
+		return "an absorbed spare crack was opened"
+	if Rules.glyph_at(Vector2i(8, 12), floor) != "." or Rules.is_walkable(Vector2i(10, 12), floor):
+		return "a swing moved"
+	var hazards := Rules.hazard_cells(floor)
+	if hazards.size() != 37:
+		return "expected thirty-seven riddel cracks, found %d" % hazards.size()
+	if not hazards.has(Vector2i(33, 15)) or not hazards.has(Vector2i(32, 15)) or not hazards.has(Vector2i(33, 16)):
+		return "the crack set drifted"
+	if Rules.corridor_cells(floor).size() != 67:
+		return "corridors %d" % Rules.corridor_cells(floor).size()
+	var ring_err := _riddel_ring(floor)
+	if ring_err != "":
+		return ring_err
+	for other in Rules.floors():
+		if other.id == floor.id:
+			continue
+		if floor.rows == other.rows:
+			return "the riddel copies %s" % other.id
+		if Rules.width(floor) == Rules.width(other) and Rules.height(floor) == Rules.height(other):
+			return "the riddel reuses the %s grid" % other.id
+		if Rules.enemy_pos(floor) == Rules.enemy_pos(other) and str(other.id) != "font" and str(other.id) != "apse" and str(other.id) != "choir" and str(other.id) != "rood" and str(other.id) != "crossing" and str(other.id) != "transept" and str(other.id) != "ambulatory" and str(other.id) != "chevet" and str(other.id) != "retrochoir" and str(other.id) != "ladychapel" and str(other.id) != "feretory" and str(other.id) != "chantry" and str(other.id) != "sacristy" and str(other.id) != "pyx" and str(other.id) != "aumbry" and str(other.id) != "piscina" and str(other.id) != "sedilia" and str(other.id) != "credence" and str(other.id) != "reredos" and str(other.id) != "predella" and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester":
+			return "the riddel reuses the %s warden cell" % other.id
+		if _ring_key(floor) == _ring_key(other) and str(other.id) != "dossal" and str(other.id) != "retable" and str(other.id) != "tester":
+			return "the riddel reuses the %s ring" % other.id
+	var path: Array = Rules.shortest_path_cells(floor)
+	var tester_path: Array = Rules.shortest_path_cells(tester)
+	if path.size() != 20 or path.size() != tester_path.size():
+		return "the 19-step path cells changed"
+	for i in path.size():
+		if path[i] != tester_path[i]:
+			return "the 19-step path moved at %s" % path[i]
+	if Rules.shortest_path_steps(floor) != 19:
+		return "shortest riddel path is %d, expected 19" % Rules.shortest_path_steps(floor)
+	var cover := Rules.safe_survey_steps(floor)
+	if cover != 120:
+		return "safe survey is %d, expected 120" % cover
+	if cover > Rules.LARGE_FLASK_OIL:
+		return "large flask cannot finish the riddel"
+	var bare := Rules.Floor.new()
+	var bare_rows := PackedStringArray()
+	for i in floor.rows.size():
+		var bare_row := str(floor.rows[i])
+		if i == 15:
+			bare_row = bare_row.left(33) + "#" + bare_row.substr(34)
+		bare_rows.append(bare_row)
+	bare.rows = bare_rows
+	if Rules.glyph_at(Vector2i(33, 15), bare) != "#" or Rules.glyph_at(Vector2i(32, 15), bare) != "H":
+		return "the sheet without the new crack was not built"
+	if Rules.safe_survey_steps(bare) != 120 or Rules.shortest_path_cells(bare) != path:
+		return "removing the new crack surveys at %d" % Rules.safe_survey_steps(bare)
+	if Rules.hazard_cells(bare).size() != 36 or Rules.corridor_cells(bare).size() != 67:
+		return "the wider tester sheet counts drifted"
+	for alt in [Vector2i(24, 13), Vector2i(26, 14)]:
+		var absorbed := Rules.Floor.new()
+		var absorbed_rows := PackedStringArray()
+		for i in bare.rows.size():
+			var absorbed_row := str(bare.rows[i])
+			if i == alt.y:
+				absorbed_row = absorbed_row.left(alt.x) + "H" + absorbed_row.substr(alt.x + 1)
+			absorbed_rows.append(absorbed_row)
+		absorbed.rows = absorbed_rows
+		if Rules.glyph_at(alt, absorbed) != "H" or Rules.glyph_at(Vector2i(33, 15), absorbed) != "#":
+			return "the absorbed spare %s was not built" % alt
+		if Rules.safe_survey_steps(absorbed) != 120 or Rules.shortest_path_cells(absorbed) != path:
+			return "absorbed crack %s surveys at %d" % [alt, Rules.safe_survey_steps(absorbed)]
+	var tip := Rules.Floor.new()
+	var tip_rows := PackedStringArray()
+	for i in bare.rows.size():
+		var tip_row := str(bare.rows[i])
+		if i == 16:
+			tip_row = tip_row.left(34) + "H" + tip_row.substr(35)
+		tip_rows.append(tip_row)
+	tip.rows = tip_rows
+	if Rules.glyph_at(Vector2i(34, 16), tip) != "H" or Rules.glyph_at(Vector2i(33, 15), tip) != "#" or Rules.glyph_at(Vector2i(21, 4), tip) != "." or Rules.glyph_at(Vector2i(7, 10), tip) != ".":
+		return "the off-tour crack sheet was not built"
+	if Rules.safe_survey_steps(tip) != 122 or Rules.shortest_path_cells(tip) != path:
+		return "off-tour crack surveys at %d while (21,4) and (7,10) stay open" % Rules.safe_survey_steps(tip)
+	var tip_kept := Rules.Floor.new()
+	var kept_rows := PackedStringArray()
+	for i in tip.rows.size():
+		var kept_row := str(tip.rows[i])
+		if i == 10:
+			kept_row = kept_row.left(7) + "#" + kept_row.substr(8)
+		kept_rows.append(kept_row)
+	tip_kept.rows = kept_rows
+	if Rules.safe_survey_steps(tip_kept) != 120 or Rules.shortest_path_cells(tip_kept) != path:
+		return "closing (7,10) on the off-tour crack surveys at %d" % Rules.safe_survey_steps(tip_kept)
+	var tip_spur := Rules.Floor.new()
+	var spur_rows := PackedStringArray()
+	for i in tip.rows.size():
+		var spur_row := str(tip.rows[i])
+		if i == 4:
+			spur_row = spur_row.left(21) + "#" + spur_row.substr(22)
+		spur_rows.append(spur_row)
+	tip_spur.rows = spur_rows
+	if Rules.safe_survey_steps(tip_spur) != 120 or Rules.shortest_path_cells(tip_spur) != path:
+		return "closing (21,4) on the off-tour crack surveys at %d" % Rules.safe_survey_steps(tip_spur)
+	if Rules.safe_survey_steps(tester) != 120 or Rules.corridor_cells(tester).size() != 67 or Rules.hazard_cells(tester).size() != 36:
+		return "the tester solution changed"
+	if Rules.safe_survey_steps(retable) != 120 or Rules.corridor_cells(retable).size() != 67 or Rules.hazard_cells(retable).size() != 35:
+		return "the retable solution changed"
+	if Rules.safe_survey_steps(dossal) != 120 or Rules.corridor_cells(dossal).size() != 67 or Rules.hazard_cells(dossal).size() != 34:
+		return "the dossal solution changed"
+	if Rules.safe_survey_steps(predella) != 120 or Rules.corridor_cells(predella).size() != 67 or Rules.hazard_cells(predella).size() != 33:
+		return "the predella solution changed"
+	if Rules.safe_survey_steps(reredos) != 120 or Rules.corridor_cells(reredos).size() != 68 or Rules.hazard_cells(reredos).size() != 32:
+		return "the reredos solution changed"
+	if Rules.safe_survey_steps(credence) != 120 or Rules.corridor_cells(credence).size() != 69 or Rules.hazard_cells(credence).size() != 31:
+		return "the credence solution changed"
+	if Rules.safe_survey_steps(sedilia) != 120 or Rules.corridor_cells(sedilia).size() != 70 or Rules.hazard_cells(sedilia).size() != 30:
+		return "the sedilia solution changed"
+	var tester_bill: Dictionary = Rules.payout(Rules.accurate_sheet(tester), tester)
+	var retable_bill: Dictionary = Rules.payout(Rules.accurate_sheet(retable), retable)
+	var dossal_bill: Dictionary = Rules.payout(Rules.accurate_sheet(dossal), dossal)
+	var predella_bill: Dictionary = Rules.payout(Rules.accurate_sheet(predella), predella)
+	var reredos_bill: Dictionary = Rules.payout(Rules.accurate_sheet(reredos), reredos)
+	var credence_bill: Dictionary = Rules.payout(Rules.accurate_sheet(credence), credence)
+	var sedilia_bill: Dictionary = Rules.payout(Rules.accurate_sheet(sedilia), sedilia)
+	if int(tester_bill.total) != 504 or int(retable_bill.total) != 496 or int(dossal_bill.total) != 488 or int(predella_bill.total) != 480 or int(reredos_bill.total) != 475 or int(credence_bill.total) != 470 or int(sedilia_bill.total) != 465:
+		return "an earlier payout changed"
+	var bumper = Rules.new_run(Rules.SMALL_FLASK_OIL, floor)
+	bumper.pos = Vector2i(6, 4)
+	var before_oil: int = bumper.oil
+	var tap: Dictionary = Rules.step(bumper, Vector2i(1, 0))
+	if bool(tap.moved) or bumper.oil != before_oil:
+		return "bumping the riddel spent oil or moved"
+	if int(bumper.marks.get(Vector2i(7, 4), Rules.Mark.NONE)) != Rules.Mark.WALL:
+		return "bumping the riddel did not ink a wall"
+	if str(tap.message).find("riddel") < 0:
+		return "bumping the riddel did not name it"
+	var facing = Rules.new_run(Rules.SMALL_FLASK_OIL, floor)
+	facing.pos = Vector2i(1, 2)
+	facing.facing = Rules.facing_from_vector(Vector2i(0, 1))
+	if Rules.ahead_line(facing).find("riddel crack") < 0:
+		return "facing a riddel crack did not name it"
+	print("  riddel shortest 19  survey %d  corridors %d  cracks %d" % [cover, Rules.corridor_cells(floor).size(), hazards.size()])
+	return ""
+
+
+func _riddel_ring(floor) -> String:
+	var cells: Array = Rules.loop_cells(floor)
+	if cells.size() != 46:
+		return "ring size %d" % cells.size()
+	var have := {}
+	for cell in cells:
+		if have.has(cell):
+			return "duplicate ring tile %s" % cell
+		have[cell] = true
+		if cell == Vector2i(8, 10) or cell == Vector2i(9, 10) or cell == Vector2i(10, 10):
+			return "closed ring tile %s is still on the ring" % cell
+		if cell == Rules.lift_pos(floor):
+			if Rules.glyph_at(cell, floor) != "L" or not Rules.is_corridor_cell(cell, floor):
+				return "the lift is not the ring's corridor"
+		elif Rules.glyph_at(cell, floor) != "." or not Rules.is_corridor_cell(cell, floor):
+			return "ring tile %s is not an open corridor" % cell
+		if cell == Rules.enemy_pos(floor):
+			return "ring tile %s is the warden" % cell
+	for cell in cells:
+		var degree := 0
+		for dir in Rules.cardinals():
+			if have.has(cell + dir):
+				degree += 1
+		if degree != 2:
+			return "ring tile %s has %d neighbors in the ring" % [cell, degree]
+	if not have.has(Vector2i(11, 11)) or not have.has(Vector2i(7, 11)) or not have.has(Vector2i(8, 11)) or not have.has(Vector2i(21, 4)) or not have.has(Vector2i(7, 10)):
+		return "the ring does not step around the closed tiles"
+	if str(floor.loop_name) != "Riddel ring":
+		return "ring name is %s" % floor.loop_name
+	var bill: Dictionary = Rules.payout(Rules.accurate_sheet(floor), floor)
+	if int(bill.loop) != 1:
+		return "the ring did not pay"
+	return ""
+
+
+func _riddel_census() -> String:
+	var floor = Rules.floor_named("riddel")
+	var truth: Dictionary = Rules.accurate_sheet(floor)
+	if not Rules.census_accepted(truth, floor):
+		return "the true riddel census was rejected"
+	var bill: Dictionary = Rules.payout(truth, floor)
+	if int(bill.corridors) != 67 or int(bill.hazards) != 37 or int(bill.loop) != 1:
+		return "true counts %s/%s loop %s" % [bill.corridors, bill.hazards, bill.loop]
+	if int(bill.total) != 512 or str(bill.loop_name) != "Riddel ring":
+		return "full riddel payout is %s" % bill.total
+	var crack: Vector2i = Vector2i(33, 15)
+	var missing: Dictionary = truth.duplicate()
+	missing.erase(crack)
+	if Rules.census_accepted(missing, floor):
+		return "a sheet missing a riddel crack was accepted"
+	var mislabeled: Dictionary = truth.duplicate()
+	mislabeled[crack] = Rules.Mark.CORRIDOR
+	if Rules.census_accepted(mislabeled, floor):
+		return "a riddel crack marked as a corridor was accepted"
+	var swapped: Dictionary = truth.duplicate()
+	swapped[crack] = Rules.Mark.WALL
+	swapped[Vector2i(7, 4)] = Rules.Mark.HAZARD
+	if Rules.census_accepted(swapped, floor):
+		return "a swapped riddel sheet was accepted"
+	var short_sheet: Dictionary = truth.duplicate()
+	short_sheet.erase(Vector2i(1, 2))
+	if Rules.census_accepted(short_sheet, floor):
+		return "a short riddel sheet was accepted"
+	var curtain_wall: Dictionary = truth.duplicate()
+	curtain_wall[Vector2i(7, 4)] = Rules.Mark.WALL
+	if not Rules.census_accepted(curtain_wall, floor):
+		return "inking the riddel as a wall rejected a true census"
+	curtain_wall[Vector2i(7, 4)] = Rules.Mark.HAZARD
+	if Rules.census_accepted(curtain_wall, floor):
+		return "calling the riddel a hazard was accepted"
+	var expect_pay := {
+		"cellar": 211,
+		"cistern": 288,
+		"cloister": 242,
+		"crypt": 316,
+		"ossuary": 240,
+		"reliquary": 251,
+		"undercroft": 238,
+		"wellhouse": 225,
+		"scriptorium": 263,
+		"binding": 343,
+		"chartroom": 306,
+		"bellloft": 326,
+		"clockroom": 352,
+		"font": 354,
+		"apse": 374,
+		"choir": 394,
+		"rood": 405,
+		"crossing": 410,
+		"transept": 413,
+		"ambulatory": 376,
+		"chevet": 402,
+		"retrochoir": 392,
+		"ladychapel": 409,
+		"feretory": 426,
+		"chantry": 431,
+		"sacristy": 439,
+		"pyx": 447,
+		"aumbry": 452,
+		"piscina": 460,
+		"sedilia": 465,
+		"credence": 470,
+		"reredos": 475,
+		"predella": 480,
+		"dossal": 488,
+		"retable": 496,
+		"tester": 504,
+	}
+	var expect_loop := {
+		"cellar": "East square",
+		"cistern": "Cistern ring",
+		"cloister": "Cloister walk",
+		"crypt": "Crypt ring",
+		"ossuary": "Ossuary ring",
+		"reliquary": "Reliquary ring",
+		"undercroft": "Undercroft ring",
+		"wellhouse": "Well ring",
+		"scriptorium": "Scriptorium ring",
+		"binding": "Binding ring",
+		"chartroom": "Chart room ring",
+		"bellloft": "Bell loft ring",
+		"clockroom": "Clock room ring",
+		"font": "Font ring",
+		"apse": "Apse ring",
+		"choir": "Choir ring",
+		"rood": "Rood ring",
+		"crossing": "Crossing ring",
+		"transept": "Transept ring",
+		"ambulatory": "Ambulatory ring",
+		"chevet": "Chevet ring",
+		"retrochoir": "Retrochoir ring",
+		"ladychapel": "Lady chapel ring",
+		"feretory": "Feretory ring",
+		"chantry": "Chantry ring",
+		"sacristy": "Sacristy ring",
+		"pyx": "Pyx ring",
+		"aumbry": "Aumbry ring",
+		"piscina": "Piscina ring",
+		"sedilia": "Sedilia ring",
+		"credence": "Credence ring",
+		"reredos": "Reredos ring",
+		"predella": "Predella ring",
+		"dossal": "Dossal ring",
+		"retable": "Retable ring",
+		"tester": "Tester ring",
+	}
+	for other in Rules.floors():
+		if other.id == floor.id:
+			continue
+		if Rules.census_accepted(truth, other):
+			return "the riddel sheet was accepted as %s" % other.title
+		if Rules.census_accepted(Rules.accurate_sheet(other), floor):
+			return "the %s sheet was accepted as the riddel" % other.title
+		if not Rules.census_accepted(Rules.accurate_sheet(other), other):
+			return "the %s true census was rejected" % other.title
+		var other_bill: Dictionary = Rules.payout(Rules.accurate_sheet(other), other)
+		if int(other_bill.total) != int(expect_pay[other.id]):
+			return "the %s payout changed to %s" % [other.title, other_bill.total]
+		if str(other_bill.loop_name) != str(expect_loop[other.id]):
+			return "the %s ring name changed" % other.title
+	var approach: Vector2i = Rules.walkable_approach(crack, floor)
+	if approach.x < 0:
+		return "riddel crack has no approach"
+	var walker = Rules.new_run(Rules.SMALL_FLASK_OIL, floor)
+	walker.pos = approach
+	walker.oil = 10
+	var before: int = walker.oil
+	var stepped: Dictionary = Rules.step(walker, crack - approach)
+	if bool(stepped.hit) or walker.oil != before - Rules.MOVE_OIL:
+		return "a riddel crack burned extra oil"
+	if int(walker.marks.get(crack, Rules.Mark.NONE)) != Rules.Mark.HAZARD:
+		return "a riddel crack was not inked as a hazard"
+	if str(stepped.message).find("riddel crack") < 0:
+		return "stepping on a riddel crack did not name it"
+	return ""
+
+
+func _riddel_return() -> String:
+	var game_script = load("res://scripts/game.gd")
+	var select_script = load("res://scripts/floor_select_view.gd")
+	if game_script == null or select_script == null:
+		return "game or floor select did not load"
+	if float(select_script.WINDOW_W) != 2532.0:
+		return "floor select window width is %s" % select_script.WINDOW_W
+	var game = game_script.new()
+	root.add_child(game)
+	if game.town == null or game.floor_select == null or game.descent == null:
+		game.free()
+		return "the game did not build its screens"
+	if game.floor_select.record_for("riddel") != Rules.RIDDEL_RECORD:
+		game.free()
+		return "floor select does not offer the riddel census"
+	if Rules.floor_named("riddel").title != "The Riddel":
+		game.free()
+		return "floor select does not name the Riddel"
+	if Rules.floors().size() != 37:
+		game.free()
+		return "floor select does not list thirty-seven floors"
+	var tester_card: Control = game.floor_select._record["tester"].get_parent()
+	var riddel_card: Control = game.floor_select._record["riddel"].get_parent()
+	var tester_rect := Rect2(tester_card.position, tester_card.size)
+	var riddel_rect := Rect2(riddel_card.position, riddel_card.size)
+	if riddel_rect.intersects(tester_rect):
+		game.free()
+		return "the riddel card covers the tester card"
+	if absf(riddel_rect.position.x - (tester_rect.position.x + tester_rect.size.x + 8.0)) > 0.5:
+		game.free()
+		return "the riddel card is not immediately to the right of the tester"
+	var window_w: float = select_script.WINDOW_W
+	if riddel_rect.position.x + riddel_rect.size.x > window_w + 0.5:
+		game.free()
+		return "the riddel card sits outside the window"
+	if riddel_rect.position.x < 12.0 or window_w - (riddel_rect.position.x + riddel_rect.size.x) < 11.5:
+		game.free()
+		return "the riddel card has no spare at the window edge"
+	var saw := {}
+	var previous: Control = null
+	for listed in Rules.floors():
+		var card: Control = game.floor_select._record[listed.id].get_parent()
+		var card_rect := Rect2(card.position, card.size)
+		if card_rect.position.x < 0.0 or card_rect.position.x + card_rect.size.x > window_w + 0.5:
+			game.free()
+			return "the %s card sits outside the window" % listed.title
+		if card_rect.position.y < 0.0 or card_rect.position.y + card_rect.size.y > 720.0:
+			game.free()
+			return "the %s card is clipped by the window height" % listed.title
+		if previous != null and card_rect.intersects(Rect2(previous.position, previous.size)):
+			game.free()
+			return "the %s card covers another card" % listed.title
+		var heading: Label = card.get_child(2)
+		if heading == null or heading.text != listed.title:
+			game.free()
+			return "the %s card title is missing" % listed.title
+		for glyph_i in heading.text.length():
+			var glyph := heading.text.substr(glyph_i, 1)
+			if glyph == " ":
+				continue
+			var glyph_bounds := heading.get_character_bounds(glyph_i)
+			if glyph_bounds.size.x <= 0.0 or glyph_bounds.position.y + glyph_bounds.size.y > heading.size.y + 0.01 or glyph_bounds.position.x + glyph_bounds.size.x > heading.size.x + 0.01:
+				game.free()
+				return "the %s title hides %s" % [listed.title, glyph]
+		saw[listed.title] = true
+		previous = card
+	for title in ["The Scriptorium", "The Ambulatory", "The Chevet", "The Retrochoir", "The Lady Chapel", "The Feretory", "The Chantry", "The Sacristy", "The Pyx Chamber", "The Aumbry", "The Piscina", "The Sedilia", "The Credence", "The Reredos", "The Predella", "The Dossal", "The Retable", "The Tester", "The Riddel"]:
+		if not saw.has(title):
+			game.free()
+			return "the floor select is missing %s" % title
+	var narrow_w := (2531.0 - 24.0 - 8.0 * 36.0) / 37.0
+	var narrow_heading := narrow_w - 8.0
+	var probe := Label.new()
+	probe.add_theme_font_size_override("font_size", 9)
+	probe.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	probe.clip_text = true
+	probe.size = Vector2(narrow_heading, 44)
+	game.add_child(probe)
+	probe.text = "The Scriptorium"
+	if probe.get_character_bounds(probe.text.length() - 1).size.x > 0.0:
+		probe.free()
+		game.free()
+		return "2531 already shows the last letter of The Scriptorium, so 2532 is not the smallest width"
+	probe.text = "The Ambulatory"
+	if probe.get_character_bounds(probe.text.length() - 1).size.x > 0.0:
+		probe.free()
+		game.free()
+		return "2531 already shows the last letter of The Ambulatory, so 2532 is not the smallest width"
+	probe.free()
+	game._on_descend_floor("riddel")
+	if game.descent.state == null or game.descent.state.floor.id != "riddel":
+		game.free()
+		return "descend did not open the riddel"
+	var state = game.descent.state
+	state.marks = Rules.accurate_sheet(state.floor)
+	var lift: Vector2i = Rules.lift_pos(state.floor)
+	var approach: Vector2i = Rules.walkable_approach(lift, state.floor)
+	state.pos = approach
+	state.oil = 5
+	var done: Dictionary = Rules.step(state, lift - approach)
+	if not bool(done.extracted) or not Rules.census_accepted(state.marks, state.floor):
+		game.free()
+		return "the finished sheet did not extract as an accepted census"
+	game.descent._open_return()
+	if game.descent.return_button.text != "Return to floor select":
+		game.free()
+		return "a finished census did not offer the floor select"
+	game._on_return(state)
+	if not game.floor_select.visible or game.town.visible or game.descent.visible:
+		game.free()
+		return "a finished census did not return to the floor select"
+	if not bool(game.campaign.completed.get("riddel", false)):
+		game.free()
+		return "the finished census was not recorded"
+	if bool(game.campaign.completed.get("tester", false)):
+		game.free()
+		return "the finished riddel census also closed the tester"
+	if int(game.campaign.last_bill.total) != 512 or game.campaign.purse < 512:
 		game.free()
 		return "the finished census was not paid"
 	game.free()

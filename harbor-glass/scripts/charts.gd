@@ -16,7 +16,8 @@ class_name ChartBook
 # The Cavetto holds eight more. The Fillet holds eight more.
 # The Corona holds eight more. The Bead holds eight more. The Quirk holds eight more.
 # The Cyma holds eight more. The Fascia holds eight more. The Soffit holds eight more.
-# The Drip holds eight more. The Beak holds eight more. The Hood holds the last eight.
+# The Drip holds eight more. The Beak holds eight more. The Hood holds eight more.
+# The Throat holds eight more. The Larmier holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
@@ -219,6 +220,29 @@ class_name ChartBook
 # hood passes only north. A flooded beak passes only east. A flooded drip
 # passes only west. A dry cyma passes only the facing, so it misses these
 # dry charts. An ovolo stops the facing while dry and stays shut under water.
+# A throat has a facing. Rotation changes it the same way: 0 north, 90 east,
+# 180 south, 270 west. Opposite facings are not the same piece. While its row
+# is dry, every direction except the opposite of the facing passes straight
+# through in the same direction and the same color, and that pass costs no
+# bounce. It does not turn, it does not recolor, and it does not split.
+# Facing north, south stops and north, east, and west pass. One click faces
+# east and stops west. While that row is flooded, the dry rule flips. Only
+# that opposite direction passes, and the other three stop at the waterline
+# and do not enter. A flooded north throat passes only south. A flooded hood
+# passes only its facing, so a north hood stops this south beam. A cavetto
+# stops the opposite while dry and stays shut under water.
+# A larmier has a facing. Rotation changes it the same way: 0 north, 90 east,
+# 180 south, 270 west. Opposite facings share the open set. While its row is
+# dry, the two directions perpendicular to the facing pass straight through in
+# the same direction and the same color, and that pass costs no bounce. It
+# does not turn, it does not recolor, and it does not split. Facing north,
+# east and west pass, and north and south stop. One click faces east and
+# passes north and south. While that row is flooded, the dry rule flips. Only
+# the facing and the opposite pass, and the two perpendicular beams stop at
+# the waterline and do not enter. A flooded north larmier passes only north
+# and south. A flooded corona stops that axis. A flooded north throat passes
+# only south, so it misses one of the two flooded beams. A dry corona passes
+# the same east and west and stays shut under water.
 # See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
@@ -260,6 +284,8 @@ const SOFFIT := "The Soffit"
 const DRIP := "The Drip"
 const BEAK := "The Beak"
 const HOOD := "The Hood"
+const THROAT := "The Throat"
+const LARMIER := "The Larmier"
 
 static func all() -> Array:
 	var book: Array = []
@@ -298,6 +324,8 @@ static func all() -> Array:
 	book.append_array(drip())
 	book.append_array(beak())
 	book.append_array(hood())
+	book.append_array(throat())
+	book.append_array(larmier())
 	return book
 
 
@@ -439,6 +467,14 @@ static func beak() -> Array:
 
 static func hood() -> Array:
 	return [chart_271(), chart_272(), chart_273(), chart_274(), chart_275(), chart_276(), chart_277(), chart_278()]
+
+
+static func throat() -> Array:
+	return [chart_279(), chart_280(), chart_281(), chart_282(), chart_283(), chart_284(), chart_285(), chart_286()]
+
+
+static func larmier() -> Array:
+	return [chart_287(), chart_288(), chart_289(), chart_290(), chart_291(), chart_292(), chart_293(), chart_294()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -10456,6 +10492,595 @@ static func chart_278() -> Dictionary:
 	}
 
 
+static func chart_279() -> Dictionary:
+	# A dry north throat passes north, east, and west. South stops.
+	return {
+		"id": "279",
+		"harbor": THROAT,
+		"title": "The Dry Throat",
+		"teach": "Tide index 0, flood 0. A dry north throat passes north, east, and west. South stops. One click faces east and stops west. A north hood stops north and passes south. A dry north drip stops west. A dry north beak stops east.",
+		"win": "The throat faces north. South stays dark, and north, east, and west pass.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 6, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "red"),
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Ww", 6, 3, "W", "blue"),
+		],
+		"docks": [
+			_dock("Nd", 3, 1, "white", true),
+			_dock("Sd", 3, 5, "red", true, true),
+			_dock("Ed", 5, 3, "red", true),
+			_dock("Wd", 1, 3, "blue", true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_throat("O", "Throat", 3, 3, 180, 0),
+		],
+	}
+
+
+static func chart_280() -> Dictionary:
+	# Under water only the opposite passes. A flooded north throat passes only south.
+	return {
+		"id": "280",
+		"harbor": THROAT,
+		"title": "The Wet Stop",
+		"teach": "A flooded north throat passes only south. North, east, and west stop at the waterline. A flooded north hood passes only north, so it misses this beam. A flooded beak passes only east. A flooded drip passes only west. Lower the tide and south stops while the other three pass.",
+		"win": "High water opens only south. The other three beams stop at the waterline.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [0, 4],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Gs", 4, 2, "S", "white"),
+			_lantern("Le", 0, 2, "S", "red"),
+		],
+		"docks": [
+			_dock("Sd", 6, 2, "white", true),
+			_dock("Kr", 6, 1, "red", true, true),
+			_dock("Kb", 6, 0, "blue", true, true),
+			_dock("Kre", 5, 3, "red", true, true),
+			_dock("Kbe", 5, 2, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [
+			{"id": "Mb", "kind": "tide_mirror", "x": 4, "y": 5, "rot": 90},
+			{"id": "S5", "kind": "shutter", "x": 5, "y": 5, "rot": 0},
+			{"id": "M6", "kind": "tide_mirror", "x": 6, "y": 5, "rot": 0},
+			{"id": "S6", "kind": "shutter", "x": 6, "y": 4, "rot": 0},
+			{"id": "Me", "kind": "tide_mirror", "x": 0, "y": 4, "rot": 90},
+			{"id": "S1", "kind": "shutter", "x": 1, "y": 4, "rot": 0},
+			{"id": "S2", "kind": "shutter", "x": 2, "y": 4, "rot": 0},
+			{"id": "S3", "kind": "shutter", "x": 3, "y": 4, "rot": 0},
+			{"id": "Mx", "kind": "tide_mirror", "x": 5, "y": 4, "rot": 0},
+		],
+		"pieces": [
+			_throat("O", "Throat", 4, 4, 180, 0),
+		],
+	}
+
+
+static func chart_281() -> Dictionary:
+	# North stays red. East and west keep their own colors. South still stops.
+	return {
+		"id": "281",
+		"harbor": THROAT,
+		"title": "Color Kept",
+		"teach": "North, east, and west keep their colors. Red stays red, blue stays blue, and white stays white. South still stops. A stain would paint those passes. A weir recolors a flooded beam. This throat stays dry and does not recolor.",
+		"win": "North stays red. The throat did not paint the beams.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 6, "N", "red"),
+			_lantern("Ee", 0, 3, "E", "white"),
+			_lantern("Ww", 6, 3, "W", "blue"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+		],
+		"docks": [
+			_dock("Nd", 3, 1, "red", true),
+			_dock("Ed", 5, 3, "white", true),
+			_dock("Wd", 1, 3, "blue", true),
+			_dock("Sd", 3, 5, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_throat("O", "Throat", 3, 3, 180, 0),
+		],
+	}
+
+
+static func chart_282() -> Dictionary:
+	# The open beams leave the way they entered.
+	return {
+		"id": "282",
+		"harbor": THROAT,
+		"title": "No Turn",
+		"teach": "North leaves north, east leaves east, and west leaves west. South stops. The throat does not turn. A prism would split a white beam. A vane or a mirror would send a beam aside. A flooded sluice would turn it.",
+		"win": "The open beams leave the way they entered. Nothing was turned.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 6, "N", "white"),
+			_lantern("Ee", 0, 3, "E", "blue"),
+			_lantern("Ww", 6, 3, "W", "red"),
+			_lantern("Ss", 3, 0, "S", "red"),
+		],
+		"docks": [
+			_dock("Nd", 3, 1, "white", true),
+			_dock("Ed", 5, 3, "blue", true),
+			_dock("Wd", 1, 3, "red", true),
+			_dock("Sd", 3, 5, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_throat("O", "Throat", 3, 3, 270, 0),
+		],
+	}
+
+
+static func chart_283() -> Dictionary:
+	# The throat row is dry. A neighbor beam dies on the flood.
+	return {
+		"id": "283",
+		"harbor": THROAT,
+		"title": "Beside the Flood",
+		"teach": "The throat row is dry, so north, east, and west pass. South stops. The flood beam stops at the waterline and never enters the flooded cell.",
+		"win": "The dry row passes north, east, and west. The flood beam stops at the waterline.",
+		"cols": 8,
+		"rows": 7,
+		"tide_phases": [1],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 5, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "red"),
+			_lantern("Ee", 0, 2, "E", "blue"),
+			_lantern("Ww", 6, 2, "W", "red"),
+			_lantern("F", 1, 5, "S", "white"),
+		],
+		"docks": [
+			_dock("Nd", 3, 1, "white", true),
+			_dock("Sd", 3, 4, "red", true, true),
+			_dock("Ed", 5, 2, "blue", true),
+			_dock("Wd", 1, 2, "red", true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_throat("O", "Throat", 3, 2, 180, 0),
+		],
+	}
+
+
+static func chart_284() -> Dictionary:
+	# One throat stops south. The other stops north.
+	return {
+		"id": "284",
+		"harbor": THROAT,
+		"title": "Two Throats",
+		"teach": "One throat passes north, east, and west. The other passes east, south, and west. Those open sets are not the same. Swapping the facings fails. A hood in either seat fails, because a hood stops its facing and this piece stops the opposite.",
+		"win": "South stays dark on the first seat. North stays dark on the second.",
+		"cols": 11,
+		"rows": 9,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("As", 2, 0, "S", "blue"),
+			_lantern("An", 2, 6, "N", "white"),
+			_lantern("Ae", 0, 3, "E", "red"),
+			_lantern("Aw", 5, 3, "W", "white"),
+			_lantern("Bs", 8, 2, "S", "white"),
+			_lantern("Bn", 8, 8, "N", "red"),
+			_lantern("Be", 6, 5, "E", "blue"),
+			_lantern("Bw", 10, 5, "W", "white"),
+		],
+		"docks": [
+			_dock("Adn", 2, 1, "white", true),
+			_dock("Ads", 2, 4, "blue", true, true),
+			_dock("Ade", 4, 3, "red", true),
+			_dock("Adw", 1, 3, "white", true),
+			_dock("Bds", 8, 7, "white", true),
+			_dock("Bdn", 8, 4, "red", true, true),
+			_dock("Bde", 9, 5, "blue", true),
+			_dock("Bdw", 7, 5, "white", true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_throat("O", "North throat", 2, 3, 180, 0),
+			_throat("U", "South throat", 8, 5, 0, 180),
+		],
+	}
+
+
+static func chart_285() -> Dictionary:
+	# Three tide marks. High water opens only the opposite.
+	return {
+		"id": "285",
+		"harbor": THROAT,
+		"title": "The Held Throat",
+		"teach": "The held facing is part of the solution. The chart starts on a facing that stops north. Place the tide on the middle mark and face the throat north. Low water wakes the south hull. High water covers the throat, so only south passes and the other three stop at the waterline. A flooded hood passes only its facing, so a north hood misses this south beam.",
+		"win": "The middle mark holds the north throat. South stays dark, and the hull stays dark.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [0, 1, 5],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 4, 6, "N", "white"),
+			_lantern("Ss", 4, 0, "S", "blue"),
+			_lantern("Ee", 1, 3, "E", "red"),
+			_lantern("Ww", 7, 3, "W", "blue"),
+			_lantern("Hl", 0, 7, "E", "white"),
+		],
+		"docks": [
+			_dock("Nd", 4, 1, "white", true),
+			_dock("Sd", 4, 5, "blue", true, true),
+			_dock("Ed", 6, 3, "red", true),
+			_dock("Wd", 3, 3, "blue", true),
+		],
+		"boats": [
+			_boat("Hb", 3, 7),
+		],
+		"fixtures": [
+			{"id": "Re", "kind": "tide_mirror", "x": 4, "y": 4, "rot": 0},
+		],
+		"pieces": [
+			_throat("O", "Throat", 4, 3, 180, 0),
+		],
+	}
+
+
+static func chart_286() -> Dictionary:
+	# The throat and the shutter trade places. On the line it faces north.
+	return {
+		"id": "286",
+		"harbor": THROAT,
+		"title": "The Throat Mark",
+		"teach": "Move the throat from the side socket onto the line and face it north. North, east, and west pass. South must not count. A north hood, a north drip, a north beak, or a lintel in that cell fails.",
+		"win": "The throat stands on the line, open north, east, and west. South stays dark.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 6, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "red"),
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Ww", 6, 3, "W", "blue"),
+		],
+		"docks": [
+			_dock("Nd", 3, 1, "white", true),
+			_dock("Sd", 3, 5, "red", true, true),
+			_dock("Ed", 5, 3, "red", true),
+			_dock("Wd", 1, 3, "blue", true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_placed("O", "Throat", "throat", [["side", 5, 5], ["line", 3, 3]], "side", "line", 180, 0),
+			_placed("G", "Line shutter", "shutter", [["line", 3, 3], ["side", 5, 5]], "line", "side", 0, 0),
+		],
+	}
+
+
+static func chart_287() -> Dictionary:
+	# A dry north larmier passes east and west. North and south stop.
+	return {
+		"id": "287",
+		"harbor": LARMIER,
+		"title": "The Dry Larmier",
+		"teach": "Tide index 0, flood 0. A dry north larmier passes east and west. North and south stop. One click faces east and passes north and south instead. A south larmier passes the same east and west. A north throat also passes north, so it lights the north keep. A flooded north throat passes only south.",
+		"win": "The larmier faces north. North and south stay dark, and east and west pass.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Ww", 6, 3, "W", "blue"),
+			_lantern("Nn", 3, 6, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "red"),
+		],
+		"docks": [
+			_dock("Ed", 5, 3, "red", true),
+			_dock("Wd", 1, 3, "blue", true),
+			_dock("Nd", 3, 1, "white", true, true),
+			_dock("Sd", 3, 5, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_larmier("O", "Larmier", 3, 3, 90, 0),
+		],
+	}
+
+
+static func chart_288() -> Dictionary:
+	# Under water only the facing and the opposite pass.
+	return {
+		"id": "288",
+		"harbor": LARMIER,
+		"title": "The Wet Stop",
+		"teach": "A flooded north larmier passes only north and south. East and west stop at the waterline. The white beam goes south, takes red from the stain, and comes back north. A flooded north throat passes only south, so the return stops. A flooded north hood stops the first south beam. Lower the tide and south stops while east and west pass.",
+		"win": "High water opens only north and south. East and west stop at the waterline.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [0, 4],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Gs", 4, 2, "S", "white"),
+			_lantern("Le", 0, 2, "S", "white"),
+		],
+		"docks": [
+			_dock("Nd", 4, 3, "red", true),
+			_dock("Ke", 5, 1, "white", false, true),
+		],
+		"boats": [],
+		"fixtures": [
+			{"id": "St", "kind": "stain", "x": 4, "y": 5, "rot": 0},
+			{"id": "Su", "kind": "sluice", "x": 4, "y": 6, "rot": 0},
+			{"id": "Me", "kind": "tide_mirror", "x": 0, "y": 4, "rot": 90},
+			{"id": "S1", "kind": "shutter", "x": 1, "y": 4, "rot": 0},
+			{"id": "S2", "kind": "shutter", "x": 2, "y": 4, "rot": 0},
+			{"id": "S3", "kind": "shutter", "x": 3, "y": 4, "rot": 0},
+			{"id": "Mx", "kind": "tide_mirror", "x": 5, "y": 4, "rot": 0},
+		],
+		"pieces": [
+			_larmier("O", "Larmier", 4, 4, 90, 0),
+		],
+	}
+
+
+static func chart_289() -> Dictionary:
+	# East and west keep their colors. North and south still stop.
+	return {
+		"id": "289",
+		"harbor": LARMIER,
+		"title": "Color Kept",
+		"teach": "East and west keep their colors. Red stays red and blue stays blue. North and south still stop. A stain would paint those passes. This larmier stays dry and does not recolor.",
+		"win": "East stays red. The larmier did not paint the beams.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Ww", 6, 3, "W", "blue"),
+			_lantern("Nn", 3, 6, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+		],
+		"docks": [
+			_dock("Ed", 5, 3, "red", true),
+			_dock("Wd", 1, 3, "blue", true),
+			_dock("Nd", 3, 1, "white", true, true),
+			_dock("Sd", 3, 5, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_larmier("O", "Larmier", 3, 3, 90, 0),
+		],
+	}
+
+
+static func chart_290() -> Dictionary:
+	# The open beams leave the way they entered.
+	return {
+		"id": "290",
+		"harbor": LARMIER,
+		"title": "No Turn",
+		"teach": "East leaves east and west leaves west. North and south stop. The larmier does not turn. A prism would split a white beam. A vane or a mirror would send a beam aside.",
+		"win": "The open beams leave the way they entered. Nothing was turned.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ee", 0, 3, "E", "blue"),
+			_lantern("Ww", 6, 3, "W", "red"),
+			_lantern("Nn", 3, 6, "N", "blue"),
+			_lantern("Ss", 3, 0, "S", "red"),
+		],
+		"docks": [
+			_dock("Ed", 5, 3, "blue", true),
+			_dock("Wd", 1, 3, "red", true),
+			_dock("Nd", 3, 1, "blue", true, true),
+			_dock("Sd", 3, 5, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_larmier("O", "Larmier", 3, 3, 270, 0),
+		],
+	}
+
+
+static func chart_291() -> Dictionary:
+	# The larmier row is dry. A neighbor beam dies on the flood.
+	return {
+		"id": "291",
+		"harbor": LARMIER,
+		"title": "Beside the Flood",
+		"teach": "The larmier row is dry, so east and west pass. North and south stop. The flood beam stops at the waterline and never enters the flooded cell.",
+		"win": "The dry row passes east and west. The flood beam stops at the waterline.",
+		"cols": 8,
+		"rows": 7,
+		"tide_phases": [1],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ee", 0, 2, "E", "blue"),
+			_lantern("Ww", 6, 2, "W", "red"),
+			_lantern("Nn", 3, 5, "N", "blue"),
+			_lantern("Ss", 3, 0, "S", "red"),
+			_lantern("F", 1, 5, "S", "white"),
+		],
+		"docks": [
+			_dock("Ed", 5, 2, "blue", true),
+			_dock("Wd", 1, 2, "red", true),
+			_dock("Nd", 3, 1, "blue", true, true),
+			_dock("Sd", 3, 4, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_larmier("O", "Larmier", 3, 2, 90, 0),
+		],
+	}
+
+
+static func chart_292() -> Dictionary:
+	# One larmier opens east and west. The other opens north and south.
+	return {
+		"id": "292",
+		"harbor": LARMIER,
+		"title": "Two Larmiers",
+		"teach": "One larmier passes east and west. The other passes north and south. Those open sets are not the same. Swapping the axes fails. A throat in either seat fails, because a throat opens three dry directions and this piece opens two.",
+		"win": "North and south stay dark on the first seat. East and west stay dark on the second.",
+		"cols": 11,
+		"rows": 9,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ae", 0, 3, "E", "red"),
+			_lantern("Aw", 5, 3, "W", "white"),
+			_lantern("An", 2, 6, "N", "white"),
+			_lantern("As", 2, 0, "S", "blue"),
+			_lantern("Bn", 8, 8, "N", "red"),
+			_lantern("Bs", 8, 2, "S", "white"),
+			_lantern("Be", 6, 5, "E", "blue"),
+			_lantern("Bw", 10, 5, "W", "white"),
+		],
+		"docks": [
+			_dock("Ade", 4, 3, "red", true),
+			_dock("Adw", 1, 3, "white", true),
+			_dock("Adn", 2, 1, "white", true, true),
+			_dock("Ads", 2, 4, "blue", true, true),
+			_dock("Bdn", 8, 3, "red", true),
+			_dock("Bds", 8, 7, "white", true),
+			_dock("Bde", 9, 5, "blue", true, true),
+			_dock("Bdw", 7, 5, "white", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_larmier("O", "North larmier", 2, 3, 90, 0),
+			_larmier("U", "East larmier", 8, 5, 0, 90),
+		],
+	}
+
+
+static func chart_293() -> Dictionary:
+	# Three tide marks. High water opens the facing and the opposite.
+	return {
+		"id": "293",
+		"harbor": LARMIER,
+		"title": "The Held Larmier",
+		"teach": "The held facing is part of the solution. The chart starts on a facing that passes north and south. Place the tide on the middle mark and face the larmier north. East and west pass. North and south stay dark. High water covers the larmier, so only north and south pass. A flooded hood passes only its facing, so a north hood misses this south beam.",
+		"win": "The middle mark holds the north larmier. North and south stay dark, and the hull stays dark.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [0, 1, 5],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 4, 6, "N", "white"),
+			_lantern("Ss", 4, 0, "S", "blue"),
+			_lantern("Ee", 1, 3, "E", "red"),
+			_lantern("Ww", 7, 3, "W", "blue"),
+			_lantern("Hl", 0, 7, "E", "white"),
+		],
+		"docks": [
+			_dock("Nd", 4, 1, "white", true, true),
+			_dock("Sd", 4, 5, "blue", true, true),
+			_dock("Ed", 6, 3, "red", true),
+			_dock("Wd", 3, 3, "blue", true),
+		],
+		"boats": [
+			_boat("Hb", 3, 7),
+		],
+		"fixtures": [
+			{"id": "Re", "kind": "tide_mirror", "x": 4, "y": 4, "rot": 0},
+		],
+		"pieces": [
+			_larmier("O", "Larmier", 4, 3, 90, 0),
+		],
+	}
+
+
+static func chart_294() -> Dictionary:
+	# The larmier and the shutter trade places. On the line it faces north.
+	return {
+		"id": "294",
+		"harbor": LARMIER,
+		"title": "The Larmier Mark",
+		"teach": "Move the larmier from the side socket onto the line and face it north. East and west pass. North and south must not count. A north throat, a north hood, or a lintel in that cell fails.",
+		"win": "The larmier stands on the line, open east and west. North and south stay dark.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Ww", 6, 3, "W", "blue"),
+			_lantern("Nn", 3, 6, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "red"),
+		],
+		"docks": [
+			_dock("Ed", 5, 3, "red", true),
+			_dock("Wd", 1, 3, "blue", true),
+			_dock("Nd", 3, 1, "white", true, true),
+			_dock("Sd", 3, 5, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_placed("O", "Larmier", "larmier", [["side", 5, 5], ["line", 3, 3]], "side", "line", 90, 0),
+			_placed("G", "Line shutter", "shutter", [["line", 3, 3], ["side", 5, 5]], "line", "side", 0, 0),
+		],
+	}
+
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -10890,6 +11515,34 @@ static func _hood(id: String, name: String, x: int, y: int, start_rot: int, sol_
 		"id": id,
 		"name": name,
 		"kind": "hood",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _throat(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "throat",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _larmier(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "larmier",
 		"movable": false,
 		"sockets": [{"id": "a", "x": x, "y": y}],
 		"start_socket": "a",
