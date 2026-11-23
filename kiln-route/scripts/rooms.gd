@@ -49,6 +49,7 @@ extends RefCounted
 ## Wing 55 is rooms 433-440.
 ## Wing 56 is rooms 441-448.
 ## Wing 57 is rooms 449-456.
+## Wing 58 is rooms 457-464.
 ## The dwell is taught before a later room depends on it.
 ## The twin is taught before a later room depends on it.
 ## The pass is taught before a later room depends on it.
@@ -94,7 +95,7 @@ extends RefCounted
 ## The bick is taught before a later room depends on it.
 ## The pritchel is taught before a later room depends on it.
 ## The mandrel is taught before a later room depends on it.
-## The roller, the weir, the bridge, the grate, the hook, the arm, the drop, the lift, the dwell, the twin, the pass, the slip, the shed, the rake, the hoe, the harrow, the fork, the prong, the share, the coulter, the moldboard, the landside, the slade, the heel, the stilt, the clevis, the beam, the hake, the sole, the frog, the shin, the point, the throat, the wrest, the jointer, the bridle, the trashboard, the gauge, the breast, the hardie, the fuller, the swage, the flatter, the drift, the punch, the sett, the bolster, the snap, the anvil, the sledge, the bick, the pritchel, the mandrel, the stake, the creaser, the rounder, and the header are taught before a later room depends on them.
+## The roller, the weir, the bridge, the grate, the hook, the arm, the drop, the lift, the dwell, the twin, the pass, the slip, the shed, the rake, the hoe, the harrow, the fork, the prong, the share, the coulter, the moldboard, the landside, the slade, the heel, the stilt, the clevis, the beam, the hake, the sole, the frog, the shin, the point, the throat, the wrest, the jointer, the bridle, the trashboard, the gauge, the breast, the hardie, the fuller, the swage, the flatter, the drift, the punch, the sett, the bolster, the snap, the anvil, the sledge, the bick, the pritchel, the mandrel, the stake, the creaser, the rounder, the header, and the crosspeen are taught before a later room depends on them.
 ## Each solution is a full layout, not a delta from the initial pieces.
 ## Quotas are minimums inside SIM_TICKS.
 
@@ -559,6 +560,14 @@ static func all() -> Array:
 		header_scrap(),
 		header_bin(),
 		header_hold(),
+		crosspeen_step(),
+		still_crosspeen(),
+		seat_crosspeen(),
+		crosspeen_gate(),
+		two_crosspeens(),
+		crosspeen_scrap(),
+		crosspeen_bin(),
+		crosspeen_hold(),
 	]
 
 
@@ -17168,5 +17177,301 @@ static func header_hold() -> Dictionary:
 			piece(rules.Kind.HEADER, 3, 3, rules.Dir.EAST),
 			piece(rules.Kind.BELT, 3, 0, rules.Dir.EAST),
 			piece(rules.Kind.KILN, 3, 1, rules.Dir.NORTH),
+		],
+	}
+
+
+static func crosspeen_step() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 457,
+		"name": "Crosspeen Step",
+		"blurb": "The first item arrives from ahead and leaves right, through a source, into a kiln. The plate leaves left, through a source.",
+		"rule": "The first item is ore. It arrives from ahead and leaves right. The cell directly right is only a source, so the ore steps through into the kiln. The plate leaves left and steps through a source onto the plate bin. A pritchel steps the ore through the right source and does not step the plate through the left source. A header sends the ore left onto the plate bin. A rounder sends the ore left onto the plate bin. A creaser sends the ore forward into the wall. An anvil sends the ore forward into the wall. A stake sends the plate forward into the wall. A punch does not step the plate through the ahead source. A mandrel sends the ore left onto the plate bin. A bick sends the ore behind into the wall. A sledge sends the ore behind into the wall. A breast sends the ore behind into the wall before the plate can step forward. A belt refuses an arrival from ahead.",
+		"w": 6,
+		"h": 6,
+		"sources": [
+			source(4, 2, rules.Dir.WEST, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+			source(3, 1, rules.Dir.SOUTH, [rules.Mat.INGOT], 80),
+			source(3, 3, rules.Dir.NORTH, [rules.Mat.INGOT], 80),
+		],
+		"sinks": [
+			sink(3, 0, [rules.Mat.PLATE]),
+			sink(3, 5, [rules.Mat.INGOT]),
+		],
+		"chutes": [],
+		"walls": [cell(2, 2), cell(5, 2)],
+		"budget": kv([
+			rules.Kind.KILN, 1,
+			rules.Kind.CROSSPEEN, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 30]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.CROSSPEEN, 3, 2, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 3, 4, rules.Dir.SOUTH),
+		],
+	}
+
+
+static func still_crosspeen() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 458,
+		"name": "Still Crosspeen",
+		"blurb": "The tray has one belt, on the crossing. The crosspeen faces east. The first item arrives from ahead and leaves right, and the later item leaves left.",
+		"rule": "The tray has one belt, on the crossing. The crosspeen faces east and takes the pair from ahead. The ore leaves right, through a source, into the kiln, and the plate leaves left through a source onto the plate bin. The belt turns the ingot off that lane. A filter scraps a side stream. A pritchel does not step the plate through the left source. A header sends the ore left onto the plate bin. A rounder sends the ore left onto the plate bin. A creaser sends the ore forward into the wall. An anvil sends the ore forward into the wall. A stake sends the plate forward into the wall. A punch does not step the plate. A mandrel sends the ore left onto the plate bin. A bick and a sledge send the ore behind into the wall. A breast sends the ore behind into the wall before the plate can step forward. A belt on the crosspeen cell refuses an arrival from ahead.",
+		"w": 8,
+		"h": 6,
+		"sources": [
+			source(4, 2, rules.Dir.WEST, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+			source(3, 1, rules.Dir.SOUTH, [rules.Mat.INGOT], 80),
+			source(3, 3, rules.Dir.NORTH, [rules.Mat.INGOT], 80),
+			source(0, 5, rules.Dir.NORTH, [rules.Mat.INGOT], 4),
+		],
+		"sinks": [
+			sink(4, 5, [rules.Mat.INGOT]),
+			sink(3, 0, [rules.Mat.PLATE]),
+		],
+		"chutes": [cell(1, 4)],
+		"walls": [cell(2, 2), cell(2, 1), cell(5, 2)],
+		"budget": kv([
+			rules.Kind.BELT, 1,
+			rules.Kind.CROSSPEEN, 1,
+			rules.Kind.KILN, 1,
+			rules.Kind.FILTER, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 30]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.CROSSPEEN, 3, 2, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 3, 4, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 5, rules.Dir.EAST),
+			piece(rules.Kind.FILTER, 0, 4, rules.Dir.NORTH),
+		],
+	}
+
+
+static func seat_crosspeen() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 459,
+		"name": "Seat Crosspeen",
+		"blurb": "The crosspeen starts off the lane. Seat it where the ore arrives from ahead and leaves right.",
+		"rule": "The crosspeen starts off the lane. Pick it up and seat it where the ore arrives from ahead and leaves right, through a source, into the kiln, and the plate leaves left through a source. Leaving it parked misses. A pritchel does not step the plate. A header sends the ore left onto the plate bin. A rounder sends the ore left onto the plate bin. A creaser sends the ore forward into the wall. An anvil sends the ore forward into the wall. A stake sends the plate forward into the wall. A punch does not step the plate. A mandrel sends the ore left onto the plate bin. A bick and a sledge send the ore behind into the wall. A breast sends the ore behind into the wall before the plate can step forward.",
+		"w": 6,
+		"h": 6,
+		"sources": [
+			source(4, 2, rules.Dir.WEST, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+			source(3, 1, rules.Dir.SOUTH, [rules.Mat.INGOT], 80),
+			source(3, 3, rules.Dir.NORTH, [rules.Mat.INGOT], 80),
+		],
+		"sinks": [
+			sink(3, 0, [rules.Mat.PLATE]),
+			sink(3, 5, [rules.Mat.INGOT]),
+		],
+		"chutes": [],
+		"walls": [cell(2, 2), cell(5, 2)],
+		"budget": kv([
+			rules.Kind.KILN, 1,
+			rules.Kind.CROSSPEEN, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 30]),
+		"initial": [
+			piece(rules.Kind.CROSSPEEN, 5, 0, rules.Dir.EAST),
+		],
+		"solution": [
+			piece(rules.Kind.CROSSPEEN, 3, 2, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 3, 4, rules.Dir.SOUTH),
+		],
+	}
+
+
+static func crosspeen_gate() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 460,
+		"name": "Crosspeen Gate",
+		"blurb": "A wall closes the side. The ore still leaves right, through a source, into the kiln, and the plate leaves left.",
+		"rule": "A wall closes the side. The first item arrives from ahead and leaves right. The cell directly right is only a source, so the ore steps through into the kiln. The plate leaves left and steps through a source. A pritchel does not step the plate. A header sends the ore left onto the plate bin. A rounder sends the ore left onto the plate bin. A creaser sends the ore forward into the wall. An anvil sends the ore forward into the wall. A stake sends the plate forward into the wall. A punch does not step the plate. A mandrel sends the ore left onto the plate bin. A bick and a sledge send the ore behind into the wall. A breast sends the ore behind into the wall before the plate can step forward.",
+		"w": 6,
+		"h": 6,
+		"sources": [
+			source(4, 2, rules.Dir.WEST, [rules.Mat.ORE, rules.Mat.PLATE], 1),
+			source(3, 1, rules.Dir.SOUTH, [rules.Mat.INGOT], 80),
+			source(3, 3, rules.Dir.NORTH, [rules.Mat.INGOT], 80),
+		],
+		"sinks": [
+			sink(3, 0, [rules.Mat.PLATE]),
+			sink(3, 5, [rules.Mat.INGOT]),
+		],
+		"chutes": [],
+		"walls": [cell(2, 2), cell(5, 2)],
+		"budget": kv([
+			rules.Kind.KILN, 1,
+			rules.Kind.CROSSPEEN, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 59, rules.Mat.PLATE, 60]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.CROSSPEEN, 3, 2, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 3, 4, rules.Dir.SOUTH),
+		],
+	}
+
+
+static func two_crosspeens() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 461,
+		"name": "Two Crosspeens",
+		"blurb": "Two crosspeens take two lanes from ahead. Each ore leaves right, through a source, and each plate leaves left.",
+		"rule": "Two crosspeens take two lanes from ahead. Each first item leaves right and steps through a source into its kiln. Each plate leaves left and steps through a source onto its plate bin. One lane is half. A pritchel does not step the plate. A header sends the ore left onto the plate bin. A rounder sends the ore left onto the plate bin. A creaser sends the ore forward into the wall. An anvil sends the ore forward into the wall. A stake sends the plate forward into the wall. A punch does not step the plate. A mandrel sends the ore left onto the plate bin. A bick and a sledge send the ore behind into the wall. A breast sends the ore behind into the wall before the plate can step forward.",
+		"w": 8,
+		"h": 6,
+		"sources": [
+			source(2, 2, rules.Dir.WEST, [rules.Mat.ORE, rules.Mat.PLATE], 1),
+			source(1, 1, rules.Dir.SOUTH, [rules.Mat.INGOT], 80),
+			source(1, 3, rules.Dir.NORTH, [rules.Mat.INGOT], 80),
+			source(6, 2, rules.Dir.WEST, [rules.Mat.ORE, rules.Mat.PLATE], 1),
+			source(5, 1, rules.Dir.SOUTH, [rules.Mat.INGOT], 80),
+			source(5, 3, rules.Dir.NORTH, [rules.Mat.INGOT], 80),
+		],
+		"sinks": [
+			sink(1, 0, [rules.Mat.PLATE]),
+			sink(5, 0, [rules.Mat.PLATE]),
+			sink(1, 5, [rules.Mat.INGOT]),
+			sink(5, 5, [rules.Mat.INGOT]),
+		],
+		"chutes": [],
+		"walls": [cell(0, 2), cell(3, 2), cell(4, 2), cell(7, 2)],
+		"budget": kv([
+			rules.Kind.KILN, 2,
+			rules.Kind.CROSSPEEN, 2,
+		]),
+		"quota": kv([rules.Mat.INGOT, 118, rules.Mat.PLATE, 120]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.CROSSPEEN, 1, 2, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 1, 4, rules.Dir.SOUTH),
+			piece(rules.Kind.CROSSPEEN, 5, 2, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 5, 4, rules.Dir.SOUTH),
+		],
+	}
+
+
+static func crosspeen_scrap() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 462,
+		"name": "Crosspeen Scrap",
+		"blurb": "The ore leaves right, away from the scrap, and the plate leaves left.",
+		"rule": "The first item arrives from ahead and leaves right, through a source, into the kiln, away from the scrap. The plate leaves left through a source onto the plate bin. A filter throws its own stream east into the chute. A pritchel does not step the plate. A header sends the ore left onto the plate bin. A rounder sends the ore left onto the plate bin. A creaser sends the ore forward into the wall. An anvil sends the ore forward into the wall. A stake sends the plate forward into the wall. A punch does not step the plate. A mandrel sends the ore left onto the plate bin. A bick and a sledge send the ore behind into the wall. A breast sends the ore behind into the wall before the plate can step forward.",
+		"w": 8,
+		"h": 6,
+		"sources": [
+			source(4, 2, rules.Dir.WEST, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+			source(3, 1, rules.Dir.SOUTH, [rules.Mat.INGOT], 80),
+			source(3, 3, rules.Dir.NORTH, [rules.Mat.INGOT], 80),
+			source(0, 5, rules.Dir.NORTH, [rules.Mat.INGOT], 4),
+		],
+		"sinks": [
+			sink(4, 5, [rules.Mat.INGOT]),
+			sink(3, 0, [rules.Mat.PLATE]),
+		],
+		"chutes": [cell(1, 4)],
+		"walls": [cell(2, 2), cell(2, 1), cell(5, 2)],
+		"budget": kv([
+			rules.Kind.BELT, 1,
+			rules.Kind.CROSSPEEN, 1,
+			rules.Kind.KILN, 1,
+			rules.Kind.FILTER, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 30]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.CROSSPEEN, 3, 2, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 3, 4, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 5, rules.Dir.EAST),
+			piece(rules.Kind.FILTER, 0, 4, rules.Dir.NORTH),
+		],
+	}
+
+
+static func crosspeen_bin() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 463,
+		"name": "Crosspeen Bin",
+		"blurb": "The ore leaves right, through a source, into the split, and the plate leaves left. The lower stream is not enough on its own.",
+		"rule": "The first item arrives from ahead and leaves right. The cell directly right is only a source, so the ore steps through into the kiln. The plate leaves left through a source onto the plate bin. The kiln feeds a splitter, and the press plates join a lower stream that is not enough on its own. Pressing every ingot misses the ingot quota. A pritchel does not step the plate. A header sends the ore left onto the plate bin. A rounder sends the ore left onto the plate bin. A creaser sends the ore forward into the wall. An anvil sends the ore forward into the wall. A stake sends the plate forward into the wall. A punch does not step the plate. A mandrel sends the ore left onto the plate bin. A bick and a sledge send the ore behind into the wall. A breast sends the ore behind into the wall before the plate can step forward.",
+		"w": 8,
+		"h": 7,
+		"sources": [
+			source(4, 2, rules.Dir.WEST, [rules.Mat.ORE, rules.Mat.PLATE], 1),
+			source(3, 1, rules.Dir.SOUTH, [rules.Mat.INGOT], 80),
+			source(3, 3, rules.Dir.NORTH, [rules.Mat.INGOT], 80),
+			source(0, 6, rules.Dir.EAST, [rules.Mat.PLATE], 4),
+		],
+		"sinks": [
+			sink(4, 6, [rules.Mat.INGOT]),
+			sink(3, 0, [rules.Mat.PLATE]),
+			sink(0, 5, [rules.Mat.PLATE]),
+			sink(2, 6, [rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [cell(2, 2), cell(5, 2)],
+		"budget": kv([
+			rules.Kind.BELT, 3,
+			rules.Kind.CROSSPEEN, 1,
+			rules.Kind.KILN, 1,
+			rules.Kind.SPLITTER, 1,
+			rules.Kind.PRESS, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 104]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.CROSSPEEN, 3, 2, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 3, 4, rules.Dir.SOUTH),
+			piece(rules.Kind.SPLITTER, 3, 5, rules.Dir.SOUTH),
+			piece(rules.Kind.BELT, 3, 6, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 2, 5, rules.Dir.WEST),
+			piece(rules.Kind.PRESS, 1, 5, rules.Dir.WEST),
+			piece(rules.Kind.BELT, 1, 6, rules.Dir.EAST),
+		],
+	}
+
+
+static func crosspeen_hold() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 464,
+		"name": "Crosspeen Hold",
+		"blurb": "The pair leaves on the arrival tick, waiter right and arrival left, and the cell is empty afterward.",
+		"rule": "The first item arrives from ahead and waits through a tick with nothing beside it, then the pair leaves on the arrival tick, the waiter right through a source and the arrival left through a source, and the cell is empty afterward. A belt refuses that arrival from ahead, so the first item never steps onto the next cell. A pritchel would not step the arrival through the left source. A header would send the waiter left onto the plate bin. A rounder would send the waiter left onto the plate bin. A creaser would send the waiter forward into the wall. An anvil would send the waiter forward. A stake would send the arrival forward into the wall. A punch would not step the arrival through the ahead source. A mandrel would send the waiter left onto the plate bin. A bick would send the waiter behind. A sledge would send the waiter behind. A breast would send the waiter behind into the wall before the plate can step forward. A lone item never leaves.",
+		"w": 7,
+		"h": 6,
+		"sources": [
+			source(4, 2, rules.Dir.WEST, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+			source(3, 1, rules.Dir.SOUTH, [rules.Mat.INGOT], 80),
+			source(3, 3, rules.Dir.NORTH, [rules.Mat.INGOT], 80),
+		],
+		"sinks": [
+			sink(4, 5, [rules.Mat.INGOT]),
+			sink(3, 0, [rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [cell(2, 2), cell(5, 2)],
+		"budget": kv([
+			rules.Kind.BELT, 1,
+			rules.Kind.KILN, 1,
+			rules.Kind.CROSSPEEN, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 30]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.CROSSPEEN, 3, 2, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 3, 5, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 3, 4, rules.Dir.SOUTH),
 		],
 	}
