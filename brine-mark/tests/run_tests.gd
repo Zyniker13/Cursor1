@@ -40,6 +40,7 @@ func _initialize() -> void:
 	_test_gonfalon(errors)
 	_test_oriflamme(errors)
 	_test_vexillum(errors)
+	_test_labarum(errors)
 	_test_determinism(errors)
 	_test_population(errors)
 	_test_no_select_ant(errors)
@@ -113,7 +114,7 @@ func _test_determinism(errors: Array) -> void:
 	var plans := _plans(errors)
 	if plans.is_empty():
 		return
-	for plan_name in ["winning", "all_rake", "dry_pans", "continued", "late_pans", "no_crib", "carted", "late_crib", "dry_crib", "no_ship", "shipped", "late_ship", "dry_ship", "no_stall", "sold", "late_sold", "dry_sold", "no_yard", "banked", "late_banked", "dry_banked", "no_bunk", "hired", "late_hired", "dry_hired", "no_loft", "lofted", "late_lofted", "dry_lofted", "no_gate", "gated", "late_gated", "dry_gated", "no_wage", "paid", "late_paid", "dry_paid", "no_relief", "posted", "late_posted", "dry_posted", "no_watch", "stood", "late_stood", "dry_stood", "watch_only", "no_lamp", "lit", "late_lit", "dry_lit", "lamp_only", "no_bell", "rung", "late_rung", "dry_rung", "bell_only", "no_horn", "sounded", "late_sounded", "dry_sounded", "horn_only", "no_flag", "raised", "late_raised", "dry_raised", "flag_only", "no_banner", "hoisted", "late_hoisted", "dry_hoisted", "banner_only", "no_pennant", "flown", "late_flown", "dry_flown", "pennant_only", "no_standard", "carried", "late_carried", "dry_carried", "standard_only", "no_jack", "shown", "late_shown", "dry_shown", "jack_only", "no_ensign", "broken", "late_broken", "dry_broken", "ensign_only", "no_burgee", "struck", "late_struck", "dry_struck", "burgee_only", "no_cornet", "dipped", "late_dipped", "dry_dipped", "cornet_only", "no_guidon", "saluted", "late_saluted", "dry_saluted", "guidon_only", "no_fanion", "presented", "late_presented", "dry_presented", "fanion_only", "furled", "late_furled", "dry_furled", "pennon_only", "gonfalon", "late_gonfalon", "dry_gonfalon", "gonfalon_only", "oriflamme", "late_oriflamme", "dry_oriflamme", "oriflamme_only", "vexillum", "late_vexillum", "dry_vexillum", "vexillum_only"]:
+	for plan_name in ["winning", "all_rake", "dry_pans", "continued", "late_pans", "no_crib", "carted", "late_crib", "dry_crib", "no_ship", "shipped", "late_ship", "dry_ship", "no_stall", "sold", "late_sold", "dry_sold", "no_yard", "banked", "late_banked", "dry_banked", "no_bunk", "hired", "late_hired", "dry_hired", "no_loft", "lofted", "late_lofted", "dry_lofted", "no_gate", "gated", "late_gated", "dry_gated", "no_wage", "paid", "late_paid", "dry_paid", "no_relief", "posted", "late_posted", "dry_posted", "no_watch", "stood", "late_stood", "dry_stood", "watch_only", "no_lamp", "lit", "late_lit", "dry_lit", "lamp_only", "no_bell", "rung", "late_rung", "dry_rung", "bell_only", "no_horn", "sounded", "late_sounded", "dry_sounded", "horn_only", "no_flag", "raised", "late_raised", "dry_raised", "flag_only", "no_banner", "hoisted", "late_hoisted", "dry_hoisted", "banner_only", "no_pennant", "flown", "late_flown", "dry_flown", "pennant_only", "no_standard", "carried", "late_carried", "dry_carried", "standard_only", "no_jack", "shown", "late_shown", "dry_shown", "jack_only", "no_ensign", "broken", "late_broken", "dry_broken", "ensign_only", "no_burgee", "struck", "late_struck", "dry_struck", "burgee_only", "no_cornet", "dipped", "late_dipped", "dry_dipped", "cornet_only", "no_guidon", "saluted", "late_saluted", "dry_saluted", "guidon_only", "no_fanion", "presented", "late_presented", "dry_presented", "fanion_only", "furled", "late_furled", "dry_furled", "pennon_only", "gonfalon", "late_gonfalon", "dry_gonfalon", "gonfalon_only", "oriflamme", "late_oriflamme", "dry_oriflamme", "oriflamme_only", "vexillum", "late_vexillum", "dry_vexillum", "vexillum_only", "labarum", "late_labarum", "dry_labarum", "labarum_only"]:
 		var before := errors.size()
 		var first = _run_plan(plans, plan_name, errors)
 		var second = _run_plan(plans, plan_name, errors)
@@ -225,6 +226,10 @@ func _test_determinism(errors: Array) -> void:
 		if int(first.get_vexillum_housed()) != int(second.get_vexillum_housed()) or int(first.get_oriflamme_left()) != int(second.get_oriflamme_left()):
 			_fail(errors, "%s vexillum runs differed (%d unhoused %d, and %d unhoused %d)" % [
 				plan_name, first.get_vexillum_housed(), first.get_oriflamme_left(), second.get_vexillum_housed(), second.get_oriflamme_left(),
+			])
+		if int(first.get_labarum_cased()) != int(second.get_labarum_cased()) or int(first.get_vexillum_left()) != int(second.get_vexillum_left()):
+			_fail(errors, "%s labarum runs differed (%d uncased %d, and %d uncased %d)" % [
+				plan_name, first.get_labarum_cased(), first.get_vexillum_left(), second.get_labarum_cased(), second.get_vexillum_left(),
 			])
 		if String(first.get_summary()) != String(second.get_summary()):
 			_fail(errors, "%s summaries differed" % plan_name)
@@ -757,6 +762,40 @@ func _test_scene_boots(errors: Array) -> void:
 	node._on_key(KEY_SPACE)
 	if int(node.sim.get_paint(14, -21)) != Sim.ORIFLAMME:
 		_fail(errors, "the oriflamme cell accepted a vexillum")
+	node._on_key(KEY_APOSTROPHE)
+	if not String(node.mode_label.text).contains("Labarum"):
+		_fail(errors, "labarum mark was not named")
+	var labarum_button: Button = null
+	vexillum_button = null
+	for entry in node.mode_buttons:
+		if int(entry["mode"]) == Sim.LABARUM:
+			labarum_button = entry["button"]
+		elif int(entry["mode"]) == Sim.VEXILLUM:
+			vexillum_button = entry["button"]
+	if labarum_button == null or vexillum_button == null:
+		_fail(errors, "labarum button is missing beside the vexillum")
+	elif not String(labarum_button.text).contains("Labarum") or not String(vexillum_button.text).contains("Vexillum"):
+		_fail(errors, "labarum button is not labeled beside the vexillum")
+	elif labarum_button.get_parent() != vexillum_button.get_parent() or labarum_button.get_index() != vexillum_button.get_index() + 1:
+		_fail(errors, "labarum button does not sit beside the vexillum")
+	else:
+		var labarum_style := labarum_button.get_theme_stylebox("normal") as StyleBoxFlat
+		if labarum_style == null or labarum_style.get_border_width(SIDE_LEFT) != 3 or labarum_style.border_color != Color("f0c14a"):
+			_fail(errors, "selected labarum has no gold outline")
+	node._on_key(KEY_UP)
+	node._on_key(KEY_UP)
+	node._on_key(KEY_SPACE)
+	if int(node.sim.get_paint(14, -23)) != Sim.LABARUM:
+		_fail(errors, "keyboard cursor did not paint a labarum at 14,-23")
+	node._on_key(KEY_SEMICOLON)
+	node._on_key(KEY_SPACE)
+	if int(node.sim.get_paint(14, -23)) != Sim.LABARUM:
+		_fail(errors, "the labarum cell accepted a vexillum")
+	node._on_key(KEY_DOWN)
+	node._on_key(KEY_APOSTROPHE)
+	node._on_key(KEY_SPACE)
+	if int(node.sim.get_paint(14, -22)) != Sim.VEXILLUM:
+		_fail(errors, "the vexillum cell accepted a labarum")
 	var season = node.find_child("SeasonNote", true, false)
 	if season == null or not String(season.text).to_lower().contains("pan"):
 		_fail(errors, "season note does not mention pans")
@@ -871,6 +910,10 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "rules text does not mention the vexillum")
 	if rules == null or not String(rules.text).to_lower().contains("house one"):
 		_fail(errors, "rules text does not name the vexillum house of one lowered hire")
+	if rules == null or not String(rules.text).to_lower().contains("labarum"):
+		_fail(errors, "rules text does not mention the labarum")
+	if rules == null or not String(rules.text).to_lower().contains("case one"):
+		_fail(errors, "rules text does not name the labarum case of one housed hire")
 	var hint = node.find_child("HintLine", true, false)
 	if hint == null or not String(hint.text).to_lower().contains("watch"):
 		_fail(errors, "hint line does not name the watch")
@@ -914,14 +957,16 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "hint's last line does not name the oriflamme after the gonfalon: %s" % hint_last)
 	if hint_last.find("; vexillum") < hint_last.find("z oriflamme") or not hint_last.contains("; vexillum"):
 		_fail(errors, "hint's last line does not name the vexillum after the oriflamme: %s" % hint_last)
-	if hint != null and (int(hint.position.y) != 1512 or int(hint.size.x) != 1022 or not hint.clip_contents):
+	if hint_last.find("' labarum") < hint_last.find("; vexillum") or not hint_last.contains("' labarum"):
+		_fail(errors, "hint's last line does not name the labarum after the vexillum: %s" % hint_last)
+	if hint != null and (int(hint.position.y) != 1554 or int(hint.size.x) != 1093 or not hint.clip_contents):
 		_fail(errors, "hint line left its box (y %s w %s clip %s)" % [hint.position.y, hint.size.x, hint.clip_contents])
 	if hint == null or not String(hint.text).contains("\n"):
 		_fail(errors, "hint line is still one long line")
 	var panel = node.find_child("Panel", true, false)
 	if hint != null and panel != null and hint.position.x + hint.size.x > panel.position.x:
 		_fail(errors, "hint line runs under the side panel")
-	if hint != null and hint.position.y + hint.size.y > 1616.0:
+	if hint != null and hint.position.y + hint.size.y > 1658.0:
 		_fail(errors, "hint line continues past the window")
 	var map_bottom := 58.0 + float(Sim.GRID_H - Sim.GRID_NORTH) * 42.0
 	if hint != null and hint.position.y < map_bottom:
@@ -1262,10 +1307,23 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "vexillum countdown started at %d, expected %d" % [node.sim.get_ticks_until_rain(), Sim.VEXILLUM_TICK])
 	elif not String(node.season_label.text).to_lower().contains("vexillum"):
 		_fail(errors, "vexillum note does not mention the vexillum: %s" % node.season_label.text)
+	var spun_labarum := 0
+	while int(node.sim.get_beat()) != Sim.LABARUMING and not node.sim.is_over() and spun_labarum < int(Sim.VEXILLUM_TICK) + 2:
+		node.sim.tick()
+		spun_labarum += 1
+	node._refresh()
+	if int(node.sim.get_beat()) != Sim.LABARUMING or node.sim.is_over():
+		_fail(errors, "the scene did not open the labarum beat")
+	elif not String(node.rain_label.text).to_lower().contains("labarum"):
+		_fail(errors, "labarum countdown was not named: %s" % node.rain_label.text)
+	elif int(node.sim.get_ticks_until_rain()) != int(Sim.LABARUM_TICK):
+		_fail(errors, "labarum countdown started at %d, expected %d" % [node.sim.get_ticks_until_rain(), Sim.LABARUM_TICK])
+	elif not String(node.season_label.text).to_lower().contains("labarum"):
+		_fail(errors, "labarum note does not mention the labarum: %s" % node.season_label.text)
 	node._on_key(KEY_R)
-	if int(node.sim.get_paint(9, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 5)) != Sim.EMPTY or int(node.sim.get_paint(7, 4)) != Sim.EMPTY or int(node.sim.get_paint(7, 3)) != Sim.EMPTY or int(node.sim.get_paint(7, 2)) != Sim.EMPTY or int(node.sim.get_paint(7, 1)) != Sim.EMPTY or int(node.sim.get_paint(7, 0)) != Sim.EMPTY or int(node.sim.get_paint(7, -1)) != Sim.EMPTY or int(node.sim.get_paint(7, -2)) != Sim.EMPTY or int(node.sim.get_paint(7, -3)) != Sim.EMPTY or int(node.sim.get_paint(7, -4)) != Sim.EMPTY or int(node.sim.get_paint(7, -5)) != Sim.EMPTY or int(node.sim.get_paint(7, -6)) != Sim.EMPTY or int(node.sim.get_paint(7, -7)) != Sim.EMPTY or int(node.sim.get_paint(14, -11)) != Sim.EMPTY or int(node.sim.get_paint(14, -12)) != Sim.EMPTY or int(node.sim.get_paint(14, -13)) != Sim.EMPTY or int(node.sim.get_paint(14, -14)) != Sim.EMPTY or int(node.sim.get_paint(14, -15)) != Sim.EMPTY or int(node.sim.get_paint(14, -16)) != Sim.EMPTY or int(node.sim.get_paint(14, -17)) != Sim.EMPTY or int(node.sim.get_paint(14, -18)) != Sim.EMPTY or int(node.sim.get_paint(14, -19)) != Sim.EMPTY or int(node.sim.get_paint(14, -20)) != Sim.EMPTY or int(node.sim.get_paint(14, -21)) != Sim.EMPTY or int(node.sim.get_paint(14, -22)) != Sim.EMPTY:
+	if int(node.sim.get_paint(9, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 5)) != Sim.EMPTY or int(node.sim.get_paint(7, 4)) != Sim.EMPTY or int(node.sim.get_paint(7, 3)) != Sim.EMPTY or int(node.sim.get_paint(7, 2)) != Sim.EMPTY or int(node.sim.get_paint(7, 1)) != Sim.EMPTY or int(node.sim.get_paint(7, 0)) != Sim.EMPTY or int(node.sim.get_paint(7, -1)) != Sim.EMPTY or int(node.sim.get_paint(7, -2)) != Sim.EMPTY or int(node.sim.get_paint(7, -3)) != Sim.EMPTY or int(node.sim.get_paint(7, -4)) != Sim.EMPTY or int(node.sim.get_paint(7, -5)) != Sim.EMPTY or int(node.sim.get_paint(7, -6)) != Sim.EMPTY or int(node.sim.get_paint(7, -7)) != Sim.EMPTY or int(node.sim.get_paint(14, -11)) != Sim.EMPTY or int(node.sim.get_paint(14, -12)) != Sim.EMPTY or int(node.sim.get_paint(14, -13)) != Sim.EMPTY or int(node.sim.get_paint(14, -14)) != Sim.EMPTY or int(node.sim.get_paint(14, -15)) != Sim.EMPTY or int(node.sim.get_paint(14, -16)) != Sim.EMPTY or int(node.sim.get_paint(14, -17)) != Sim.EMPTY or int(node.sim.get_paint(14, -18)) != Sim.EMPTY or int(node.sim.get_paint(14, -19)) != Sim.EMPTY or int(node.sim.get_paint(14, -20)) != Sim.EMPTY or int(node.sim.get_paint(14, -21)) != Sim.EMPTY or int(node.sim.get_paint(14, -22)) != Sim.EMPTY or int(node.sim.get_paint(14, -23)) != Sim.EMPTY:
 		_fail(errors, "restart scenario did not clear the marks")
-	if int(node.sim.get_season()) != Sim.WET or int(node.sim.get_wet_haul()) != 0 or int(node.sim.get_beat()) != Sim.WET or int(node.sim.get_carted()) != 0 or int(node.sim.get_shipped()) != 0 or int(node.sim.get_coins()) != 0 or int(node.sim.get_banked()) != 0 or int(node.sim.get_hired()) != 0 or int(node.sim.get_lofted()) != 0 or int(node.sim.get_gated()) != 0 or int(node.sim.get_paid()) != 0 or int(node.sim.get_posted()) != 0 or int(node.sim.get_stood()) != 0 or int(node.sim.get_lit()) != 0 or int(node.sim.get_rung()) != 0 or int(node.sim.get_sounded()) != 0 or int(node.sim.get_raised()) != 0 or int(node.sim.get_hoisted()) != 0 or int(node.sim.get_flown()) != 0 or int(node.sim.get_carried()) != 0 or int(node.sim.get_shown()) != 0 or int(node.sim.get_broken()) != 0 or int(node.sim.get_struck()) != 0 or int(node.sim.get_dipped()) != 0 or int(node.sim.get_saluted()) != 0 or int(node.sim.get_presented()) != 0 or int(node.sim.get_furled()) != 0 or int(node.sim.get_gonfalon_dipped()) != 0 or int(node.sim.get_oriflamme_lowered()) != 0 or int(node.sim.get_vexillum_housed()) != 0:
+	if int(node.sim.get_season()) != Sim.WET or int(node.sim.get_wet_haul()) != 0 or int(node.sim.get_beat()) != Sim.WET or int(node.sim.get_carted()) != 0 or int(node.sim.get_shipped()) != 0 or int(node.sim.get_coins()) != 0 or int(node.sim.get_banked()) != 0 or int(node.sim.get_hired()) != 0 or int(node.sim.get_lofted()) != 0 or int(node.sim.get_gated()) != 0 or int(node.sim.get_paid()) != 0 or int(node.sim.get_posted()) != 0 or int(node.sim.get_stood()) != 0 or int(node.sim.get_lit()) != 0 or int(node.sim.get_rung()) != 0 or int(node.sim.get_sounded()) != 0 or int(node.sim.get_raised()) != 0 or int(node.sim.get_hoisted()) != 0 or int(node.sim.get_flown()) != 0 or int(node.sim.get_carried()) != 0 or int(node.sim.get_shown()) != 0 or int(node.sim.get_broken()) != 0 or int(node.sim.get_struck()) != 0 or int(node.sim.get_dipped()) != 0 or int(node.sim.get_saluted()) != 0 or int(node.sim.get_presented()) != 0 or int(node.sim.get_furled()) != 0 or int(node.sim.get_gonfalon_dipped()) != 0 or int(node.sim.get_oriflamme_lowered()) != 0 or int(node.sim.get_vexillum_housed()) != 0 or int(node.sim.get_labarum_cased()) != 0:
 		_fail(errors, "restart scenario did not return to the wet season")
 	if int(node.sim.get_population()) > Sim.POP_CAP:
 		_fail(errors, "restart left the population over the cap")
@@ -3561,12 +3619,12 @@ func _test_lamp(errors: Array) -> void:
 	])
 
 
-func _assert_chain(sim, errors: Array, label: String, wet: int, stored: int, carted: int, shipped: int, coins: int, hired: int, yard: int, paid: int, posted: int, stood: int, lit: int, rung: int, sounded: int = 0, raised: int = 0, hoisted: int = 0, flown: int = 0, carried: int = 0, shown: int = 0, broken: int = 0, struck: int = 0, dipped: int = 0, saluted: int = 0, presented: int = 0, furled: int = 0, gonfalon: int = 0, oriflamme: int = 0, vexillum: int = 0) -> void:
+func _assert_chain(sim, errors: Array, label: String, wet: int, stored: int, carted: int, shipped: int, coins: int, hired: int, yard: int, paid: int, posted: int, stood: int, lit: int, rung: int, sounded: int = 0, raised: int = 0, hoisted: int = 0, flown: int = 0, carried: int = 0, shown: int = 0, broken: int = 0, struck: int = 0, dipped: int = 0, saluted: int = 0, presented: int = 0, furled: int = 0, gonfalon: int = 0, oriflamme: int = 0, vexillum: int = 0, labarum: int = 0) -> void:
 	if sim == null:
 		_fail(errors, "%s did not run" % label)
 		return
-	if int(sim.get_wet_haul()) != wet or int(sim.get_stored_salt()) != stored or int(sim.get_carted()) != carted or int(sim.get_shipped()) != shipped or int(sim.get_coins()) != coins or int(sim.get_hired()) != hired or int(sim.get_yard_left()) != yard or int(sim.get_paid()) != paid or int(sim.get_posted()) != posted or int(sim.get_stood()) != stood or int(sim.get_lit()) != lit or int(sim.get_rung()) != rung or int(sim.get_sounded()) != sounded or int(sim.get_raised()) != raised or int(sim.get_hoisted()) != hoisted or int(sim.get_flown()) != flown or int(sim.get_carried()) != carried or int(sim.get_shown()) != shown or int(sim.get_broken()) != broken or int(sim.get_struck()) != struck or int(sim.get_dipped()) != dipped or int(sim.get_saluted()) != saluted or int(sim.get_presented()) != presented or int(sim.get_furled()) != furled or int(sim.get_gonfalon_dipped()) != gonfalon or int(sim.get_oriflamme_lowered()) != oriflamme or int(sim.get_vexillum_housed()) != vexillum:
-		_fail(errors, "%s changed (wet %d stored %d carted %d shipped %d coins %d hired %d yard %d paid %d posted %d stood %d lit %d rung %d sounded %d raised %d hoisted %d flown %d carried %d shown %d broken %d struck %d dipped %d saluted %d presented %d furled %d gonfalon %d oriflamme %d vexillum %d)" % [label, sim.get_wet_haul(), sim.get_stored_salt(), sim.get_carted(), sim.get_shipped(), sim.get_coins(), sim.get_hired(), sim.get_yard_left(), sim.get_paid(), sim.get_posted(), sim.get_stood(), sim.get_lit(), sim.get_rung(), sim.get_sounded(), sim.get_raised(), sim.get_hoisted(), sim.get_flown(), sim.get_carried(), sim.get_shown(), sim.get_broken(), sim.get_struck(), sim.get_dipped(), sim.get_saluted(), sim.get_presented(), sim.get_furled(), sim.get_gonfalon_dipped(), sim.get_oriflamme_lowered(), sim.get_vexillum_housed()])
+	if int(sim.get_wet_haul()) != wet or int(sim.get_stored_salt()) != stored or int(sim.get_carted()) != carted or int(sim.get_shipped()) != shipped or int(sim.get_coins()) != coins or int(sim.get_hired()) != hired or int(sim.get_yard_left()) != yard or int(sim.get_paid()) != paid or int(sim.get_posted()) != posted or int(sim.get_stood()) != stood or int(sim.get_lit()) != lit or int(sim.get_rung()) != rung or int(sim.get_sounded()) != sounded or int(sim.get_raised()) != raised or int(sim.get_hoisted()) != hoisted or int(sim.get_flown()) != flown or int(sim.get_carried()) != carried or int(sim.get_shown()) != shown or int(sim.get_broken()) != broken or int(sim.get_struck()) != struck or int(sim.get_dipped()) != dipped or int(sim.get_saluted()) != saluted or int(sim.get_presented()) != presented or int(sim.get_furled()) != furled or int(sim.get_gonfalon_dipped()) != gonfalon or int(sim.get_oriflamme_lowered()) != oriflamme or int(sim.get_vexillum_housed()) != vexillum or int(sim.get_labarum_cased()) != labarum:
+		_fail(errors, "%s changed (wet %d stored %d carted %d shipped %d coins %d hired %d yard %d paid %d posted %d stood %d lit %d rung %d sounded %d raised %d hoisted %d flown %d carried %d shown %d broken %d struck %d dipped %d saluted %d presented %d furled %d gonfalon %d oriflamme %d vexillum %d labarum %d)" % [label, sim.get_wet_haul(), sim.get_stored_salt(), sim.get_carted(), sim.get_shipped(), sim.get_coins(), sim.get_hired(), sim.get_yard_left(), sim.get_paid(), sim.get_posted(), sim.get_stood(), sim.get_lit(), sim.get_rung(), sim.get_sounded(), sim.get_raised(), sim.get_hoisted(), sim.get_flown(), sim.get_carried(), sim.get_shown(), sim.get_broken(), sim.get_struck(), sim.get_dipped(), sim.get_saluted(), sim.get_presented(), sim.get_furled(), sim.get_gonfalon_dipped(), sim.get_oriflamme_lowered(), sim.get_vexillum_housed(), sim.get_labarum_cased()])
 
 
 func _test_bell(errors: Array) -> void:
@@ -6670,7 +6728,7 @@ func _test_vexillum(errors: Array) -> void:
 		_fail(errors, "vexillum cap is %s, expected 1" % Sim.VEXILLUM_CAP)
 	if int(Sim.ORIFLAMME_CAP) != 1:
 		_fail(errors, "oriflamme cap changed to %s" % Sim.ORIFLAMME_CAP)
-	if int(Sim.GRID_NORTH) != -22:
+	if int(Sim.GRID_NORTH) > -22:
 		_fail(errors, "the map was not extended to the vexillum row (north %s)" % Sim.GRID_NORTH)
 	if int(Sim.VEXILLUM_CELL.x) != 14 or int(Sim.VEXILLUM_CELL.y) != -22:
 		_fail(errors, "the vexillum cell is not at 14,-22")
@@ -6790,6 +6848,137 @@ func _test_vexillum(errors: Array) -> void:
 	if not shore.is_over():
 		_fail(errors, "the vexillum beat did not end the scenario")
 	print("vexillum housed %d left oriflamme %d lowered %d dipped left %d pennon %d furled %d presented %d coins %d hired %d; no vexillum housed %d lowered %d left %d dipped %d pennon %d furled %d presented %d coins %d hired %d; vexillum without a lowered hire housed %d coins %d hired %d" % [housed.get_vexillum_housed(), housed.get_oriflamme_left(), housed.get_oriflamme_lowered(), housed.get_gonfalon_left(), housed.get_pennon_left(), housed.get_furled(), housed.get_presented(), housed.get_coins(), housed.get_hired(), kept.get_vexillum_housed(), kept.get_oriflamme_lowered(), kept.get_oriflamme_left(), kept.get_gonfalon_left(), kept.get_pennon_left(), kept.get_furled(), kept.get_presented(), kept.get_coins(), kept.get_hired(), bare.get_vexillum_housed(), bare.get_coins(), bare.get_hired()])
+
+
+func _test_labarum(errors: Array) -> void:
+	if int(Sim.LABARUM_TICK) != 100 or int(Sim.LABARUM_TICK) != int(Sim.TICK_HZ) * 10:
+		_fail(errors, "labarum beat length %s is not 100 ticks (10 seconds)" % Sim.LABARUM_TICK)
+	if int(Sim.LABARUM_CAP) != 1:
+		_fail(errors, "labarum cap is %s, expected 1" % Sim.LABARUM_CAP)
+	if int(Sim.VEXILLUM_CAP) != 1:
+		_fail(errors, "vexillum cap changed to %s" % Sim.VEXILLUM_CAP)
+	if int(Sim.GRID_NORTH) != -23:
+		_fail(errors, "the map was not extended to the labarum row (north %s)" % Sim.GRID_NORTH)
+	if int(Sim.LABARUM_CELL.x) != 14 or int(Sim.LABARUM_CELL.y) != -23:
+		_fail(errors, "the labarum cell is not at 14,-23")
+	if int(Sim.VEXILLUM_CELL.x) != 14 or int(Sim.VEXILLUM_CELL.y) != -22:
+		_fail(errors, "the vexillum moved off 14,-22")
+	if int(Sim.ORIFLAMME_CELL.x) != 14 or int(Sim.ORIFLAMME_CELL.y) != -21:
+		_fail(errors, "the oriflamme moved off 14,-21")
+	if int(Sim.GONFALON_CELL.x) != 14 or int(Sim.GONFALON_CELL.y) != -20:
+		_fail(errors, "the gonfalon moved off 14,-20")
+	if int(Sim.PENNON_CELL.x) != 14 or int(Sim.PENNON_CELL.y) != -19:
+		_fail(errors, "the pennon moved off 14,-19")
+	var fresh = Sim.new()
+	if fresh.paint_cell(14, -23, Sim.LABARUM) == false or int(fresh.get_paint(14, -23)) != Sim.LABARUM:
+		_fail(errors, "the cell north of the vexillum rejected the labarum mark")
+	if fresh.paint_cell(14, -22, Sim.LABARUM):
+		_fail(errors, "the vexillum cell accepted a labarum")
+	if int(fresh.get_paint(14, -22)) != Sim.EMPTY:
+		_fail(errors, "a rejected labarum painted the vexillum cell")
+	if fresh.paint_cell(14, -23, Sim.VEXILLUM):
+		_fail(errors, "the labarum cell accepted a vexillum")
+	if int(fresh.get_paint(14, -23)) != Sim.LABARUM:
+		_fail(errors, "a rejected vexillum erased the labarum")
+	if fresh.paint_cell(14, -22, Sim.VEXILLUM) == false or int(fresh.get_paint(14, -22)) != Sim.VEXILLUM:
+		_fail(errors, "the vexillum cell no longer accepts a vexillum")
+	if fresh.paint_cell(14, -24, Sim.LABARUM) or fresh.paint_cell(13, -23, Sim.LABARUM) or fresh.paint_cell(15, -23, Sim.LABARUM) or fresh.paint_cell(14, -22, Sim.LABARUM) or fresh.paint_cell(14, -21, Sim.LABARUM):
+		_fail(errors, "a cell other than 14,-23 accepted a labarum")
+	if int(fresh.get_paint(14, -22)) != Sim.VEXILLUM:
+		_fail(errors, "a rejected labarum erased the vexillum")
+	if fresh.paint_cell(Sim.COAST_X, -23, Sim.LABARUM):
+		_fail(errors, "the brine accepted a labarum")
+	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.LABARUM):
+		_fail(errors, "the anthill accepted a labarum")
+	var plans := _plans(errors)
+	if plans.is_empty():
+		return
+	var kept = _run_plan(plans, "vexillum", errors)
+	var cased = _run_plan(plans, "labarum", errors)
+	var cased_again = _run_plan(plans, "labarum", errors)
+	var late = _run_plan(plans, "late_labarum", errors)
+	var dry_labarum = _run_plan(plans, "dry_labarum", errors)
+	var bare = _run_plan(plans, "labarum_only", errors)
+	var no_housed = _run_plan(plans, "vexillum_only", errors)
+	if kept == null or cased == null or cased_again == null or late == null or dry_labarum == null or bare == null or no_housed == null:
+		return
+	if not kept.is_over() or int(kept.get_beat()) == Sim.LABARUMING or int(kept.get_labarum_cased()) != 0 or int(kept.get_vexillum_housed()) != 1 or int(kept.get_vexillum_left()) != 1 or int(kept.get_oriflamme_left()) != 0 or int(kept.get_gonfalon_left()) != 0 or int(kept.get_pennon_left()) != 0 or int(kept.get_furled()) != 1 or int(kept.get_presented()) != 1 or int(kept.get_coins()) != 2997 or int(kept.get_hired()) != 29 or int(kept.get_yard_left()) != 57:
+		_fail(errors, "a vexillum with no labarum changed the locked counts (over %s beat %s cased %d housed %d left %d lowered %d dipped %d pennon %d furled %d presented %d coins %d hired %d yard %d)" % [kept.is_over(), kept.get_beat(), kept.get_labarum_cased(), kept.get_vexillum_housed(), kept.get_vexillum_left(), kept.get_oriflamme_left(), kept.get_gonfalon_left(), kept.get_pennon_left(), kept.get_furled(), kept.get_presented(), kept.get_coins(), kept.get_hired(), kept.get_yard_left()])
+	var kept_summary := String(kept.get_summary())
+	if kept_summary.to_lower().contains("labarum") or kept_summary.contains("Cased") or not kept_summary.contains("Housed 1 on the vexillum") or not kept_summary.contains("Left 0 at the oriflamme"):
+		_fail(errors, "a shut labarum changed the vexillum summary: %s" % kept_summary)
+	if int(cased.get_labarum_cased()) != 1 or int(cased.get_vexillum_left()) != 0 or int(cased.get_vexillum_housed()) != 1 or int(cased.get_oriflamme_left()) != 0 or int(cased.get_oriflamme_lowered()) != 1 or int(cased.get_gonfalon_left()) != 0 or int(cased.get_gonfalon_dipped()) != 1 or int(cased.get_pennon_left()) != 0 or int(cased.get_furled()) != 1 or int(cased.get_presented()) != 1 or int(cased.get_saluted()) != 1 or int(cased.get_dipped()) != 1 or int(cased.get_struck()) != 1 or int(cased.get_coins()) != 2997 or int(cased.get_hired()) != 29 or int(cased.get_yard_left()) != 57 or int(cased.get_stored_salt()) != int(kept.get_stored_salt()) or int(cased.get_carted()) != int(kept.get_carted()) or int(cased.get_shipped()) != int(kept.get_shipped()) or int(cased.get_wet_haul()) != int(kept.get_wet_haul()):
+		_fail(errors, "cased %d, housed left %d, housed %d, lowered left %d, dipped left %d, pennon %d, furled %d, presented %d, coins %d, hired %d, yard %d" % [cased.get_labarum_cased(), cased.get_vexillum_left(), cased.get_vexillum_housed(), cased.get_oriflamme_left(), cased.get_gonfalon_left(), cased.get_pennon_left(), cased.get_furled(), cased.get_presented(), cased.get_coins(), cased.get_hired(), cased.get_yard_left()])
+	if int(cased.get_labarum_cased()) > int(Sim.LABARUM_CAP):
+		_fail(errors, "labarum cased %d, over the cap of %d" % [cased.get_labarum_cased(), Sim.LABARUM_CAP])
+	var labarum_cell: Array = plans["labarum"]["labarum"][0]
+	var vexillum_cell: Array = plans["labarum"]["vexillum"][0]
+	var labarum_salt: Dictionary = cased.get_cell_salt(int(labarum_cell[0]), int(labarum_cell[1]))
+	var vexillum_salt: Dictionary = cased.get_cell_salt(int(vexillum_cell[0]), int(vexillum_cell[1]))
+	if int(labarum_salt.get("labarum", 0)) != 1 or int(vexillum_salt.get("vexillum", 0)) != 0 or int(labarum_salt.get("vexillum", 0)) != 0:
+		_fail(errors, "labarum cell holds %s, vexillum holds %s" % [labarum_salt.get("labarum", 0), vexillum_salt.get("vexillum", 0)])
+	var cased_summary := String(cased.get_summary())
+	if not cased_summary.contains("Cased 1 on the labarum") or not cased_summary.contains("Left 0 at the vexillum") or not cased_summary.contains("Housed 1 on the vexillum") or not cased_summary.contains("Left 0 at the oriflamme") or not cased_summary.contains("Lowered 1 on the oriflamme") or not cased_summary.contains("Left 0 at the gonfalon") or not cased_summary.contains("Dipped 1 on the gonfalon") or not cased_summary.contains("Left 0 at the pennon") or not cased_summary.contains("Furled 1 on the pennon") or not cased_summary.contains("Coins 2997") or not cased_summary.contains("Hired 29") or not cased_summary.contains("Left 57"):
+		_fail(errors, "labarum summary does not name the casing: %s" % cased_summary)
+	if int(cased_again.get_labarum_cased()) != 1 or int(cased_again.get_vexillum_left()) != 0 or int(cased_again.get_vexillum_housed()) != 1 or int(cased_again.get_furled()) != 1 or int(cased_again.get_presented()) != 1 or int(cased_again.get_coins()) != 2997 or int(cased_again.get_hired()) != 29 or String(cased_again.get_summary()) != cased_summary:
+		_fail(errors, "repeated labarum paint cased %d then %d" % [cased.get_labarum_cased(), cased_again.get_labarum_cased()])
+	if int(late.get_labarum_cased()) != 1 or int(late.get_vexillum_left()) != 0 or int(late.get_vexillum_housed()) != 1 or int(late.get_furled()) != 1 or int(late.get_presented()) != 1 or int(late.get_coins()) != 2997 or int(late.get_hired()) != 29 or int(late.get_yard_left()) != 57 or int(late.get_stored_salt()) != 2997:
+		_fail(errors, "painting the labarum at the vexillum beat (cased %d left %d housed %d) did not match painting it early" % [late.get_labarum_cased(), late.get_vexillum_left(), late.get_vexillum_housed()])
+	_assert_chain(dry_labarum, errors, "dry labarum", 0, 1032, 1032, 1032, 1032, 10, 0, 8, 6, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+	if int(dry_labarum.get_labarum_cased()) != 1 or int(dry_labarum.get_vexillum_left()) != 0 or int(dry_labarum.get_vexillum_housed()) != 1 or int(dry_labarum.get_furled()) != 1 or int(dry_labarum.get_presented()) != 1 or int(dry_labarum.get_yard_left()) != 0 or int(dry_labarum.get_wet_haul()) != 0:
+		_fail(errors, "dry labarum changed the short crew (wet %d cased %d left %d housed %d furled %d presented %d yard %d)" % [dry_labarum.get_wet_haul(), dry_labarum.get_labarum_cased(), dry_labarum.get_vexillum_left(), dry_labarum.get_vexillum_housed(), dry_labarum.get_furled(), dry_labarum.get_presented(), dry_labarum.get_yard_left()])
+	if not String(dry_labarum.get_summary()).contains("Cased 1 on the labarum") or not String(dry_labarum.get_summary()).contains("Left 0 at the vexillum"):
+		_fail(errors, "dry labarum summary does not name the cap: %s" % dry_labarum.get_summary())
+	if int(bare.get_labarum_cased()) != 0 or int(bare.get_vexillum_housed()) != 0 or int(bare.get_oriflamme_lowered()) != 0 or int(bare.get_furled()) != 0 or int(bare.get_presented()) != 0 or int(bare.get_coins()) != int(no_housed.get_coins()) or int(bare.get_hired()) != int(no_housed.get_hired()) or int(bare.get_stored_salt()) != int(no_housed.get_stored_salt()) or String(bare.get_summary()) != String(no_housed.get_summary()):
+		_fail(errors, "a labarum with nobody housed cased %d housed %d lowered %d furled %d presented %d coins %d hired %d" % [bare.get_labarum_cased(), bare.get_vexillum_housed(), bare.get_oriflamme_lowered(), bare.get_furled(), bare.get_presented(), bare.get_coins(), bare.get_hired()])
+	if String(bare.get_summary()).to_lower().contains("labarum") or String(bare.get_summary()).contains("Cased"):
+		_fail(errors, "an empty labarum was named: %s" % bare.get_summary())
+	_assert_pop(cased, errors, "labarum plan")
+	_assert_pop(late, errors, "late_labarum")
+	_assert_pop(dry_labarum, errors, "dry_labarum")
+	_assert_pop(bare, errors, "labarum_only")
+	_assert_pop(kept, errors, "vexillum without labarum")
+	var shore = _prepare_plan(plans, "labarum", errors)
+	if shore == null:
+		return
+	var shore_guard := 0
+	var shore_limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + int(Sim.SHIP_TICK) + int(Sim.MARKET_TICK) + int(Sim.YARD_TICK) + int(Sim.BUNK_TICK) + int(Sim.LOFT_TICK) + int(Sim.GATE_TICK) + int(Sim.WAGE_TICK) + int(Sim.RELIEF_TICK) + int(Sim.WATCH_TICK) + int(Sim.LAMP_TICK) + int(Sim.BELL_TICK) + int(Sim.HORN_TICK) + int(Sim.FLAG_TICK) + int(Sim.BANNER_TICK) + int(Sim.PENNANT_TICK) + int(Sim.STANDARD_TICK) + int(Sim.JACK_TICK) + int(Sim.ENSIGN_TICK) + int(Sim.BURGEE_TICK) + int(Sim.CORNET_TICK) + int(Sim.GUIDON_TICK) + int(Sim.FANION_TICK) + int(Sim.PENNON_TICK) + int(Sim.GONFALON_TICK) + int(Sim.ORIFLAMME_TICK) + int(Sim.VEXILLUM_TICK) + 2
+	while int(shore.get_beat()) != Sim.LABARUMING and not shore.is_over() and shore_guard < shore_limit:
+		shore.tick()
+		shore_guard += 1
+	if int(shore.get_beat()) != Sim.LABARUMING or shore.is_over():
+		_fail(errors, "the vexillum beat did not open a labarum beat for the cap check")
+		return
+	if int(shore.get_ticks_until_rain()) != int(Sim.LABARUM_TICK):
+		_fail(errors, "labarum countdown started at %d, expected %d" % [shore.get_ticks_until_rain(), Sim.LABARUM_TICK])
+	if int(shore.get_labarum_cased()) != 0 or int(shore.get_vexillum_left()) != 1 or int(shore.get_vexillum_housed()) != 1 or int(shore.get_oriflamme_left()) != 0 or int(shore.get_gonfalon_left()) != 0 or int(shore.get_pennon_left()) != 0 or int(shore.get_furled()) != 1 or int(shore.get_presented()) != 1 or int(shore.get_coins()) != 2997 or int(shore.get_hired()) != 29 or int(shore.get_yard_left()) != 57:
+		_fail(errors, "labarum opened early (cased %d left %d housed %d lowered %d dipped %d pennon %d furled %d presented %d coins %d hired %d)" % [shore.get_labarum_cased(), shore.get_vexillum_left(), shore.get_vexillum_housed(), shore.get_oriflamme_left(), shore.get_gonfalon_left(), shore.get_pennon_left(), shore.get_furled(), shore.get_presented(), shore.get_coins(), shore.get_hired()])
+	var saw_cap := false
+	var case_guard := 0
+	while not shore.is_over() and case_guard < int(Sim.LABARUM_TICK) + 2:
+		shore.tick()
+		case_guard += 1
+		if int(shore.get_labarum_cased()) == int(Sim.LABARUM_CAP) and int(shore.get_vexillum_left()) == 0 and int(shore.get_vexillum_housed()) == 1 and int(shore.get_furled()) == 1 and int(shore.get_presented()) == 1 and int(shore.get_coins()) == 2997 and int(shore.get_hired()) == 29 and int(shore.get_ticks_until_rain()) > 0:
+			saw_cap = true
+			var ticks_left := int(shore.get_ticks_until_rain())
+			shore.tick()
+			if int(shore.get_labarum_cased()) != int(Sim.LABARUM_CAP) or int(shore.get_vexillum_left()) != 0 or int(shore.get_vexillum_housed()) != 1 or int(shore.get_furled()) != 1 or int(shore.get_presented()) != 1 or int(shore.get_coins()) != 2997 or int(shore.get_hired()) != 29:
+				_fail(errors, "the labarum kept casing after the cap (cased %d left %d housed %d furled %d presented %d)" % [shore.get_labarum_cased(), shore.get_vexillum_left(), shore.get_vexillum_housed(), shore.get_furled(), shore.get_presented()])
+			elif not shore.is_over() and int(shore.get_ticks_until_rain()) >= ticks_left:
+				_fail(errors, "the labarum beat did not spend a tick after the cap")
+			break
+	if not saw_cap:
+		_fail(errors, "the labarum did not stop at %d while ticks remained (cased %d left %d housed %d ticks %d)" % [Sim.LABARUM_CAP, shore.get_labarum_cased(), shore.get_vexillum_left(), shore.get_vexillum_housed(), shore.get_ticks_until_rain()])
+	var end_guard := 0
+	while not shore.is_over() and end_guard < int(Sim.LABARUM_TICK) + 2:
+		shore.tick()
+		end_guard += 1
+		if int(shore.get_labarum_cased()) != 1 or int(shore.get_vexillum_left()) != 0 or int(shore.get_vexillum_housed()) != 1 or int(shore.get_furled()) != 1 or int(shore.get_presented()) != 1:
+			_fail(errors, "the labarum cased again after the cap (cased %d left %d housed %d furled %d presented %d)" % [shore.get_labarum_cased(), shore.get_vexillum_left(), shore.get_vexillum_housed(), shore.get_furled(), shore.get_presented()])
+			break
+	if not shore.is_over():
+		_fail(errors, "the labarum beat did not end the scenario")
+	print("labarum cased %d left vexillum %d housed %d lowered left %d dipped left %d pennon %d furled %d presented %d coins %d hired %d; no labarum cased %d housed %d left %d lowered left %d dipped %d pennon %d furled %d presented %d coins %d hired %d; labarum without a housed hire cased %d coins %d hired %d" % [cased.get_labarum_cased(), cased.get_vexillum_left(), cased.get_vexillum_housed(), cased.get_oriflamme_left(), cased.get_gonfalon_left(), cased.get_pennon_left(), cased.get_furled(), cased.get_presented(), cased.get_coins(), cased.get_hired(), kept.get_labarum_cased(), kept.get_vexillum_housed(), kept.get_vexillum_left(), kept.get_oriflamme_left(), kept.get_gonfalon_left(), kept.get_pennon_left(), kept.get_furled(), kept.get_presented(), kept.get_coins(), kept.get_hired(), bare.get_labarum_cased(), bare.get_coins(), bare.get_hired()])
 
 
 func _run_plan(plans: Dictionary, plan_name: String, errors: Array):
@@ -7296,6 +7485,24 @@ func _run_plan(plans: Dictionary, plan_name: String, errors: Array):
 		_apply_marks(sim, plan["after_oriflamme"], errors)
 		if errors.size() > vexillum_before:
 			return null
+	if plan.has("after_vexillum"):
+		var labarum_guard := 0
+		var labarum_limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + int(Sim.SHIP_TICK) + int(Sim.MARKET_TICK) + int(Sim.YARD_TICK) + int(Sim.BUNK_TICK) + int(Sim.LOFT_TICK) + int(Sim.GATE_TICK) + int(Sim.WAGE_TICK) + int(Sim.RELIEF_TICK) + int(Sim.WATCH_TICK) + int(Sim.LAMP_TICK) + int(Sim.BELL_TICK) + int(Sim.HORN_TICK) + int(Sim.FLAG_TICK) + int(Sim.BANNER_TICK) + int(Sim.PENNANT_TICK) + int(Sim.STANDARD_TICK) + int(Sim.JACK_TICK) + int(Sim.ENSIGN_TICK) + int(Sim.BURGEE_TICK) + int(Sim.CORNET_TICK) + int(Sim.GUIDON_TICK) + int(Sim.FANION_TICK) + int(Sim.PENNON_TICK) + int(Sim.GONFALON_TICK) + int(Sim.ORIFLAMME_TICK) + 2
+		while int(sim.get_beat()) != Sim.VEXILLUMING and not sim.is_over() and labarum_guard < labarum_limit:
+			sim.tick()
+			labarum_guard += 1
+		if int(sim.get_beat()) != Sim.VEXILLUMING or sim.is_over():
+			_fail(errors, "%s did not open the vexillum beat before the labarum" % plan_name)
+			return null
+		if int(sim.get_ticks_until_rain()) != int(Sim.VEXILLUM_TICK):
+			_fail(errors, "%s vexillum countdown started at %d, expected %d" % [
+				plan_name, sim.get_ticks_until_rain(), Sim.VEXILLUM_TICK,
+			])
+			return null
+		var labarum_before := errors.size()
+		_apply_marks(sim, plan["after_vexillum"], errors)
+		if errors.size() > labarum_before:
+			return null
 	sim.run_until_rain()
 	return sim
 
@@ -7365,6 +7572,8 @@ func _apply_marks(sim, plan: Dictionary, errors: Array) -> void:
 		_apply_cells(sim, plan["oriflamme"], Sim.ORIFLAMME, errors)
 	if plan.has("vexillum"):
 		_apply_cells(sim, plan["vexillum"], Sim.VEXILLUM, errors)
+	if plan.has("labarum"):
+		_apply_cells(sim, plan["labarum"], Sim.LABARUM, errors)
 	if plan.has("rake_rect"):
 		_apply_rect(sim, plan["rake_rect"], Sim.RAKE, errors)
 
