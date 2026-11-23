@@ -95,6 +95,8 @@ func _init() -> void:
 	test_afterword_bell_opens()
 	test_postscript_bell_rules()
 	test_postscript_bell_opens()
+	test_addenda_bell_rules()
+	test_addenda_bell_opens()
 	test_reward_flow_and_restart()
 	test_policy_clears_act()
 	test_policy_clears_late_shift()
@@ -135,6 +137,7 @@ func _init() -> void:
 	test_policy_clears_appendix_bell()
 	test_policy_clears_afterword_bell()
 	test_policy_clears_postscript_bell()
+	test_policy_clears_addenda_bell()
 	_layout_viewport = SubViewport.new()
 	_layout_viewport.size = Vector2i(int(ProjectSettings.get_setting("display/window/size/viewport_width")), int(ProjectSettings.get_setting("display/window/size/viewport_height")))
 	_layout_viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
@@ -11953,7 +11956,8 @@ func test_halftitle_header_row() -> void:
 	var appendix: Button = desk.appendix_button
 	var afterword: Button = desk.afterword_button
 	var postscript: Button = desk.postscript_button
-	check(header == fly.get_parent() and header == endpaper.get_parent() and header == halftitle.get_parent() and header == titlepage.get_parent() and header == copyright.get_parent() and header == dedication.get_parent() and header == epigraph.get_parent() and header == preface.get_parent() and header == foreword.get_parent() and header == contents.get_parent() and header == introduction.get_parent() and header == prologue.get_parent() and header == acknowledgments.get_parent() and header == glossary.get_parent() and header == appendix.get_parent() and header == afterword.get_parent() and header == postscript.get_parent(), "the postscript, afterword, appendix, glossary, acknowledgments, prologue, introduction, contents, foreword, preface, epigraph, dedication, copyright, title-page, half-title, and endpaper buttons stay on the night row")
+	var addenda: Button = desk.addenda_button
+	check(header == fly.get_parent() and header == endpaper.get_parent() and header == halftitle.get_parent() and header == titlepage.get_parent() and header == copyright.get_parent() and header == dedication.get_parent() and header == epigraph.get_parent() and header == preface.get_parent() and header == foreword.get_parent() and header == contents.get_parent() and header == introduction.get_parent() and header == prologue.get_parent() and header == acknowledgments.get_parent() and header == glossary.get_parent() and header == appendix.get_parent() and header == afterword.get_parent() and header == postscript.get_parent() and header == addenda.get_parent(), "the addenda, postscript, afterword, appendix, glossary, acknowledgments, prologue, introduction, contents, foreword, preface, epigraph, dedication, copyright, title-page, half-title, and endpaper buttons stay on the night row")
 	check(fly.text == "Flyleaf bell", "the laid-out desk still shows the flyleaf button")
 	check(endpaper.text == "Endpaper bell", "the laid-out desk still shows the endpaper button")
 	check(halftitle.text == "Half-title bell", "the laid-out desk still shows the half-title button")
@@ -11971,6 +11975,7 @@ func test_halftitle_header_row() -> void:
 	check(appendix.text == "Appendix bell", "the laid-out desk shows the appendix button")
 	check(afterword.text == "Afterword bell", "the laid-out desk shows the afterword button")
 	check(postscript.text == "Postscript bell", "the laid-out desk shows the postscript button")
+	check(addenda.text == "Addenda bell", "the laid-out desk shows the addenda button")
 	check(fly.size.x + 0.5 >= fly.get_combined_minimum_size().x, "the flyleaf button is not squeezed")
 	check(endpaper.size.x + 0.5 >= endpaper.get_combined_minimum_size().x, "the endpaper button is not squeezed")
 	check(halftitle.size.x + 0.5 >= halftitle.get_combined_minimum_size().x, "the half-title button is not squeezed")
@@ -11988,6 +11993,7 @@ func test_halftitle_header_row() -> void:
 	check(appendix.size.x + 0.5 >= appendix.get_combined_minimum_size().x, "the appendix button is not squeezed")
 	check(afterword.size.x + 0.5 >= afterword.get_combined_minimum_size().x, "the afterword button is not squeezed")
 	check(postscript.size.x + 0.5 >= postscript.get_combined_minimum_size().x, "the postscript button is not squeezed")
+	check(addenda.size.x + 0.5 >= addenda.get_combined_minimum_size().x, "the addenda button is not squeezed")
 	check(fly.global_position.x + fly.size.x <= float(window_width), "the flyleaf button is inside the window")
 	check(endpaper.global_position.x + endpaper.size.x <= float(window_width), "the endpaper button is inside the window")
 	check(halftitle.global_position.x + halftitle.size.x <= float(window_width), "the half-title button is inside the window")
@@ -12005,6 +12011,7 @@ func test_halftitle_header_row() -> void:
 	check(appendix.global_position.x + appendix.size.x <= float(window_width) - 28.0, "the appendix button keeps at least 28 pixels of spare on the right")
 	check(afterword.global_position.x + afterword.size.x <= float(window_width) - 28.0, "the afterword button keeps at least 28 pixels of spare on the right")
 	check(postscript.global_position.x + postscript.size.x <= float(window_width) - 28.0, "the postscript button keeps at least 28 pixels of spare on the right")
+	check(addenda.global_position.x + addenda.size.x <= float(window_width) - 28.0, "the addenda button keeps at least 28 pixels of spare on the right")
 	check(dedication.global_position.x >= 0.0 and dedication.size.y > 0.0, "the dedication button is visible")
 	check(epigraph.global_position.x >= 0.0 and epigraph.size.y > 0.0, "the epigraph button is visible")
 	check(preface.global_position.x >= 0.0 and preface.size.y > 0.0, "the preface button is visible")
@@ -12017,6 +12024,7 @@ func test_halftitle_header_row() -> void:
 	check(appendix.global_position.x >= 0.0 and appendix.size.y > 0.0, "the appendix button is visible")
 	check(afterword.global_position.x >= 0.0 and afterword.size.y > 0.0, "the afterword button is visible")
 	check(postscript.global_position.x >= 0.0 and postscript.size.y > 0.0, "the postscript button is visible")
+	check(addenda.global_position.x >= 0.0 and addenda.size.y > 0.0, "the addenda button is visible")
 	check(endpaper.global_position.x + endpaper.size.x <= halftitle.global_position.x, "the endpaper button stays left of the half-title button")
 	check(halftitle.global_position.x + halftitle.size.x <= titlepage.global_position.x, "the half-title button stays left of the title-page button")
 	check(titlepage.global_position.x + titlepage.size.x <= copyright.global_position.x, "the title-page button stays left of the copyright button")
@@ -12036,6 +12044,8 @@ func test_halftitle_header_row() -> void:
 	check(appendix.get_index() + 1 == afterword.get_index(), "no night button sits between appendix and afterword")
 	check(afterword.global_position.x + afterword.size.x <= postscript.global_position.x, "the postscript button stays immediately right of the afterword button")
 	check(afterword.get_index() + 1 == postscript.get_index(), "no night button sits between afterword and postscript")
+	check(postscript.global_position.x + postscript.size.x <= addenda.global_position.x, "the addenda button stays immediately right of the postscript button")
+	check(postscript.get_index() + 1 == addenda.get_index(), "no night button sits between postscript and addenda")
 	var spare := int(header.global_position.x * 2.0)
 	var openers = [
 		"_begin_first_bell",
@@ -12077,6 +12087,7 @@ func test_halftitle_header_row() -> void:
 		"_begin_appendix_bell",
 		"_begin_afterword_bell",
 		"_begin_postscript_bell",
+		"_begin_addenda_bell",
 	]
 	var widest := 0
 	for opener in openers:
@@ -12086,7 +12097,7 @@ func test_halftitle_header_row() -> void:
 		if row_width > widest:
 			widest = row_width
 		check(row_width + spare <= window_width, "%s header fits (%d + %d <= %d)" % [opener, row_width, spare, window_width])
-	check(widest == 5001, "the header row's minimum is 5001 (%d)" % widest)
+	check(widest == 5131, "the header row's minimum is 5131 (%d)" % widest)
 	check(spare == 56, "the header row's spare inside the window is 56")
 	check(spare / 2 >= 28, "each side keeps at least 28 pixels of spare")
 	check(window_width >= widest + spare, "the window is at least the row minimum plus that spare")
@@ -12277,6 +12288,24 @@ func test_halftitle_header_row() -> void:
 		check(rule.get_line_count() == 1, "postscript traveler %d's rule stays on one line (%d)" % [index, rule.get_line_count()])
 		check(rule.size.y + 0.5 >= rule.get_minimum_size().y, "postscript traveler %d's rule line fits" % index)
 		check(rule.global_position.y >= 0.0 and rule.global_position.y + rule.size.y <= float(window_height), "postscript traveler %d's rule is inside the window" % index)
+	desk._begin_addenda_bell()
+	desk._refresh_ui()
+	check(desk.addenda_button.text == "First bell", "the open addenda bell returns through the same button")
+	check(desk.postscript_button.text == "Postscript bell", "the postscript button stays beside the open addenda bell")
+	check(desk.afterword_button.text == "Afterword bell", "the afterword button stays to the left of the open addenda bell")
+	var addenda_rules = [
+		"\"Patience drops by 2 when the number of filled cells is 7 or 8.\"",
+		"\"A stamp scores twice only when the queue cell eight places after it is empty. The top-middle cell has no cell eight places after it, so it does not double. The top-right cell has no cell eight places after it, so it does not double. The middle-left cell has no cell eight places after it, so it does not double. The center cell has no cell eight places after it, so it does not double. The middle-right cell has no cell eight places after it, so it does not double. The bottom-left cell has no cell eight places after it, so it does not double. The bottom-middle cell has no cell eight places after it, so it does not double. The bottom-right cell has no cell eight places after it, so it does not double.\"",
+		"\"Each stamp with exactly three corner neighbors scores +2 once. Exactly one corner neighbor scores its own number. Exactly two corner neighbors score their own number. Four corner neighbors score their own number. A side neighbor is not a corner. A lone stamp scores its own number.\"",
+		"\"A stamp scores twice only when the queue cell eight places before it is filled. The top-left cell has no cell eight places before it, so it does not double. The top-middle cell has no cell eight places before it, so it does not double. The top-right cell has no cell eight places before it, so it does not double. The middle-left cell has no cell eight places before it, so it does not double. The center cell has no cell eight places before it, so it does not double. The middle-right cell has no cell eight places before it, so it does not double. The bottom-left cell has no cell eight places before it, so it does not double. The bottom-middle cell has no cell eight places before it, so it does not double.\"",
+	]
+	for index in addenda_rules.size():
+		desk.state.traveler_index = index
+		desk._refresh_ui()
+		check(rule.text == String(addenda_rules[index]), "the open addenda bell shows traveler %d's rule" % index)
+		check(rule.get_line_count() == 1, "addenda traveler %d's rule stays on one line (%d)" % [index, rule.get_line_count()])
+		check(rule.size.y + 0.5 >= rule.get_minimum_size().y, "addenda traveler %d's rule line fits" % index)
+		check(rule.global_position.y >= 0.0 and rule.global_position.y + rule.size.y <= float(window_height), "addenda traveler %d's rule is inside the window" % index)
 
 
 func test_policy_clears_flyleaf_bell() -> void:
@@ -23390,3 +23419,540 @@ func test_policy_clears_postscript_bell() -> void:
 	check(state.shift == Rules.SHIFT_POSTSCRIPT, "the clear stayed on the postscript bell")
 	check(steps == 27, "seed 12345 clears the postscript bell in 27 actions")
 	print("postscript bell finished in %d actions, %d ms" % [steps, elapsed])
+
+
+func test_addenda_bell_rules() -> void:
+	var freya = Rules.scripted_encounter(401, 0, ["entry_mark"], 1, Rules.SHIFT_ADDENDA)
+	check(String(Rules.traveler(freya)["name"]) == "Freya Hale", "the addenda bell's first form is Freya Hale")
+	check(String(Rules.traveler(freya)["form_name"]) == "Brow Toll", "Freya brings the Brow Toll")
+	check(String(Rules.traveler(freya)["rule_text"]) == "Patience drops by 2 when the number of filled cells is 7 or 8.", "Freya's form states the brow toll")
+	check(String(Rules.traveler(freya)["rule"]) == "drop_if_brow_count", "Freya's rule is the brow toll")
+	check(int(Rules.traveler(freya)["lane"]) == 2 and int(Rules.traveler(freya)["exemption_row"]) == 0, "Freya waits in column 3 and exempts the top row")
+	check(int(Rules.traveler(freya)["goal"]) == 18 and int(Rules.traveler(freya)["patience"]) == 5, "Freya's goal is 18 and her patience is 5")
+	var freya_six = Rules.scripted_encounter(401, 0, mark_hand(6), 6, Rules.SHIFT_ADDENDA)
+	fill_marks(freya_six, 6)
+	check(freya_six.last_progress_gained == 12 and freya_six.last_patience_loss == 1, "six filled cells are the wrong count for Brow Toll")
+	var freya_seven = Rules.scripted_encounter(401, 0, mark_hand(7), 7, Rules.SHIFT_ADDENDA)
+	fill_marks(freya_seven, 7)
+	check(freya_seven.last_progress_gained == 14 and freya_seven.last_patience_loss == 2 and freya_seven.phase == "play", "seven filled cells are the correct stamp for Brow Toll")
+	var freya_eight = Rules.scripted_encounter(401, 0, mark_hand(8), 8, Rules.SHIFT_ADDENDA)
+	fill_marks(freya_eight, 8)
+	check(freya_eight.last_progress_gained == 16 and freya_eight.last_patience_loss == 2 and freya_eight.phase == "play", "eight filled cells are the correct stamp for Brow Toll")
+	var freya_nine = Rules.scripted_encounter(401, 0, mark_hand(9, true), 9, Rules.SHIFT_ADDENDA)
+	fill_marks(freya_nine, 9, 1, 1)
+	check(freya_nine.last_progress_gained == 17 and freya_nine.last_patience_loss == 1 and freya_nine.phase == "play", "nine filled cells are the wrong count for Brow Toll")
+	var freya_spared = Rules.scripted_encounter(401, 0, ["exemption", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 7, Rules.SHIFT_ADDENDA)
+	check(play_named(freya_spared, "exemption", 0, 2), "exemption on Freya's top row")
+	check(play_named(freya_spared, "entry_mark", 0, 0), "Freya's first entry")
+	check(play_named(freya_spared, "entry_mark", 0, 1), "Freya's second entry")
+	check(play_named(freya_spared, "entry_mark", 1, 0), "Freya's third entry")
+	check(play_named(freya_spared, "entry_mark", 1, 1), "Freya's fourth entry")
+	check(play_named(freya_spared, "entry_mark", 1, 2), "Freya's fifth entry")
+	check(play_named(freya_spared, "entry_mark", 2, 0), "Freya's sixth entry")
+	check(freya_spared.last_progress_gained == 13 and freya_spared.last_patience_loss == 1, "a top-row exemption keeps Brow Toll at 1")
+	var freya_open = Rules.scripted_encounter(401, 0, ["exemption", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 7, Rules.SHIFT_ADDENDA)
+	check(play_named(freya_open, "exemption", 2, 2), "exemption off Freya's top row")
+	check(play_named(freya_open, "entry_mark", 0, 0), "an entry beside the off-row exemption")
+	check(play_named(freya_open, "entry_mark", 0, 1), "a second entry")
+	check(play_named(freya_open, "entry_mark", 1, 0), "a third entry")
+	check(play_named(freya_open, "entry_mark", 1, 1), "a fourth entry")
+	check(play_named(freya_open, "entry_mark", 1, 2), "a fifth entry")
+	check(play_named(freya_open, "entry_mark", 2, 0), "a sixth entry")
+	check(freya_open.last_progress_gained == 13 and freya_open.last_patience_loss == 2, "an exemption off the top row does not spare Brow Toll")
+	var freya_held = Rules.scripted_encounter(401, 0, ["hold", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 7, Rules.SHIFT_ADDENDA)
+	check(play_named(freya_held, "hold", 1, 2), "hold in Freya's column")
+	check(play_named(freya_held, "entry_mark", 0, 0), "a stamp beside that hold")
+	check(play_named(freya_held, "entry_mark", 0, 1), "a second stamp")
+	check(play_named(freya_held, "entry_mark", 1, 0), "a third stamp")
+	check(play_named(freya_held, "entry_mark", 1, 1), "a fourth stamp")
+	check(play_named(freya_held, "entry_mark", 2, 0), "a fifth stamp")
+	check(play_named(freya_held, "entry_mark", 2, 1), "a sixth stamp")
+	check(freya_held.last_progress_gained == 13 and freya_held.last_patience_loss == 0, "hold in column 3 comes before Brow Toll")
+	var freya_missed = Rules.scripted_encounter(401, 0, ["hold", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 7, Rules.SHIFT_ADDENDA)
+	check(play_named(freya_missed, "hold", 1, 0), "hold outside Freya's column")
+	check(play_named(freya_missed, "entry_mark", 0, 0), "a stamp beside the missed hold")
+	check(play_named(freya_missed, "entry_mark", 0, 1), "a second stamp")
+	check(play_named(freya_missed, "entry_mark", 1, 1), "a third stamp")
+	check(play_named(freya_missed, "entry_mark", 1, 2), "a fourth stamp")
+	check(play_named(freya_missed, "entry_mark", 2, 0), "a fifth stamp")
+	check(play_named(freya_missed, "entry_mark", 2, 1), "a sixth stamp")
+	check(freya_missed.last_progress_gained == 13 and freya_missed.last_patience_loss == 2, "hold in another column does not spare Brow Toll")
+	var freya_wax = Rules.scripted_encounter(401, 0, ["wax_seal", "wax_seal", "wax_seal"], 6, Rules.SHIFT_ADDENDA)
+	check(play_named(freya_wax, "wax_seal", 0, 0), "Freya's first wax")
+	check(play_named(freya_wax, "wax_seal", 0, 1), "Freya's second wax")
+	check(play_named(freya_wax, "wax_seal", 0, 2), "Freya's third wax")
+	check(freya_wax.last_progress_gained == 18 and freya_wax.phase == "draft", "three wax seals clear Brow Toll")
+	var maris = Rules.scripted_encounter(401, 0, mark_hand(6), 6, Rules.SHIFT_ACKNOWLEDGMENTS)
+	fill_marks(maris, 6)
+	check(maris.last_patience_loss == 2, "Crest Toll still drops on 6")
+	var isolde = Rules.scripted_encounter(401, 0, mark_hand(7), 7, Rules.SHIFT_POSTSCRIPT)
+	fill_marks(isolde, 7)
+	check(isolde.last_patience_loss == 1, "Ledge Toll does not drop on 7")
+	var sybil = Rules.scripted_encounter(401, 0, mark_hand(9, true), 9, Rules.SHIFT_GLOSSARY)
+	fill_marks(sybil, 9, 1, 1)
+	check(sybil.last_patience_loss == 2, "Peak Toll still drops on 9")
+	var nessa = Rules.scripted_encounter(401, 0, mark_hand(9, true), 9, Rules.SHIFT_TITLEPAGE)
+	fill_marks(nessa, 9, 1, 1)
+	check(nessa.last_patience_loss == 2, "High Toll still drops on 9")
+
+	var hugo = Rules.scripted_encounter(402, 1, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_ADDENDA)
+	check(String(Rules.traveler(hugo)["name"]) == "Hugo Voss", "the addenda bell's second form is Hugo Voss")
+	check(String(Rules.traveler(hugo)["form_name"]) == "Reach Blank", "Hugo brings Reach Blank")
+	check(String(Rules.traveler(hugo)["rule"]) == "double_reach_blank", "Hugo's rule is reach blank")
+	check(int(Rules.traveler(hugo)["lane"]) == 0 and int(Rules.traveler(hugo)["exemption_row"]) == 2, "Hugo waits in column 1 and exempts the bottom row")
+	check(int(Rules.traveler(hugo)["goal"]) == 20 and int(Rules.traveler(hugo)["patience"]) == 5, "Hugo's goal is 20 and his patience is 5")
+	check(play_named(hugo, "entry_mark", 0, 0), "Hugo's earlier stamp")
+	check(play_named(hugo, "entry_mark", 2, 2), "the filled cell eight ahead")
+	check(hugo.last_progress_gained == 4, "a filled cell eight ahead is the wrong stamp for Reach Blank")
+	var hugo_lone = Rules.scripted_encounter(402, 1, ["entry_mark"], 1, Rules.SHIFT_ADDENDA)
+	check(play_named(hugo_lone, "entry_mark", 0, 0), "Hugo's lone top-left stamp")
+	check(hugo_lone.last_progress_gained == 4 and hugo_lone.last_patience_loss == 1, "an empty cell eight ahead is the correct stamp for Reach Blank")
+	var hugo_other = Rules.scripted_encounter(402, 1, ["entry_mark"], 1, Rules.SHIFT_ADDENDA)
+	check(play_named(hugo_other, "entry_mark", 0, 1), "a top-middle stamp")
+	check(hugo_other.last_progress_gained == 2, "the top-middle cell has no cell eight ahead, so Reach Blank does not double")
+	var hugo_exempt = Rules.scripted_encounter(402, 1, ["exemption", "entry_mark"], 2, Rules.SHIFT_ADDENDA)
+	check(play_named(hugo_exempt, "exemption", 2, 0), "exemption on Hugo's bottom row")
+	check(play_named(hugo_exempt, "entry_mark", 0, 0), "a stamp that would reach")
+	check(hugo_exempt.last_progress_gained == 3, "a bottom-row exemption cancels Reach Blank")
+	var hugo_off = Rules.scripted_encounter(402, 1, ["exemption", "entry_mark"], 2, Rules.SHIFT_ADDENDA)
+	check(play_named(hugo_off, "exemption", 1, 1), "exemption off Hugo's bottom row")
+	check(play_named(hugo_off, "entry_mark", 0, 0), "a qualifying stamp")
+	check(hugo_off.last_progress_gained == 5, "an exemption off the bottom row does not cancel Reach Blank")
+	var hugo_held = Rules.scripted_encounter(402, 1, ["hold", "entry_mark"], 2, Rules.SHIFT_ADDENDA)
+	check(play_named(hugo_held, "hold", 1, 0), "hold in Hugo's column")
+	check(play_named(hugo_held, "entry_mark", 0, 0), "a stamp beside that hold")
+	check(hugo_held.last_progress_gained == 5 and hugo_held.last_patience_loss == 0, "hold in column 1 comes before Reach Blank")
+	var hugo_missed = Rules.scripted_encounter(402, 1, ["hold", "entry_mark"], 2, Rules.SHIFT_ADDENDA)
+	check(play_named(hugo_missed, "hold", 1, 2), "hold outside Hugo's column")
+	check(play_named(hugo_missed, "entry_mark", 0, 0), "a stamp beside the missed hold")
+	check(hugo_missed.last_progress_gained == 5 and hugo_missed.last_patience_loss == 1, "hold in another column does not spare Reach Blank")
+	var hugo_reply = Rules.scripted_encounter(402, 1, ["entry_mark", "reply"], 2, Rules.SHIFT_ADDENDA)
+	check(play_named(hugo_reply, "entry_mark", 0, 0), "the stamp above reply")
+	check(play_named(hugo_reply, "reply", 1, 0), "reply under an empty eight ahead")
+	check(hugo_reply.last_progress_gained == 9 and hugo_reply.last_chain_count == 1, "a retrigger of a qualifying Reach Blank scores twice again")
+	var hugo_reply_filled = Rules.scripted_encounter(402, 1, ["entry_mark", "reply", "entry_mark"], 3, Rules.SHIFT_ADDENDA)
+	check(play_named(hugo_reply_filled, "entry_mark", 0, 0), "a stamp with a filled cell eight ahead")
+	check(play_named(hugo_reply_filled, "reply", 1, 0), "reply under that stamp")
+	check(play_named(hugo_reply_filled, "entry_mark", 2, 2), "the filled cell eight ahead")
+	check(hugo_reply_filled.last_progress_gained == 7 and hugo_reply_filled.last_chain_count == 1, "a filled cell eight ahead does not double the retrigger")
+	var hugo_wax = Rules.scripted_encounter(402, 1, ["wax_seal", "wax_seal", "wax_seal"], 6, Rules.SHIFT_ADDENDA)
+	check(play_named(hugo_wax, "wax_seal", 0, 0), "Hugo's reaching wax")
+	check(play_named(hugo_wax, "wax_seal", 0, 1), "a wax with no cell eight ahead")
+	check(play_named(hugo_wax, "wax_seal", 0, 2), "another wax with no cell eight ahead")
+	check(hugo_wax.last_progress_gained == 24 and hugo_wax.phase == "relic", "Reach Blank clears into the relic drawer")
+	var nils = Rules.scripted_encounter(402, 1, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_APPENDIX)
+	check(play_named(nils, "entry_mark", 0, 0), "Nils's earlier stamp")
+	check(play_named(nils, "entry_mark", 2, 2), "Nils's filled cell eight ahead")
+	check(nils.last_progress_gained == 6, "Reach Fill still doubles when the cell eight ahead is filled")
+	var nils_lone = Rules.scripted_encounter(402, 1, ["entry_mark"], 1, Rules.SHIFT_APPENDIX)
+	check(play_named(nils_lone, "entry_mark", 0, 0), "Nils's lone stamp")
+	check(nils_lone.last_progress_gained == 2, "Reach Fill does not double an empty cell eight ahead")
+	var miles = Rules.scripted_encounter(402, 1, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_POSTSCRIPT)
+	check(play_named(miles, "entry_mark", 0, 0), "Miles's earlier stamp")
+	check(play_named(miles, "entry_mark", 2, 2), "Miles's later stamp")
+	check(miles.last_progress_gained == 6, "Pitch Blank still doubles when the cell seven ahead is empty")
+
+	var marta = Rules.scripted_encounter(403, 2, ["entry_mark", "entry_mark", "entry_mark", "entry_mark"], 4, Rules.SHIFT_ADDENDA)
+	check(String(Rules.traveler(marta)["name"]) == "Marta Brant", "the addenda bell's third form is Marta Brant")
+	check(String(Rules.traveler(marta)["form_name"]) == "Apex Pay", "Marta brings Apex Pay")
+	check(String(Rules.traveler(marta)["rule"]) == "yield_apex_pay", "Marta's rule is apex pay")
+	check(int(Rules.traveler(marta)["lane"]) == 1 and int(Rules.traveler(marta)["exemption_row"]) == 1, "Marta waits in column 2 and exempts the middle row")
+	check(int(Rules.traveler(marta)["goal"]) == 16 and int(Rules.traveler(marta)["patience"]) == 5, "Marta's goal is 16 and her patience is 5")
+	check(play_named(marta, "entry_mark", 0, 0), "Marta's first corner")
+	check(play_named(marta, "entry_mark", 0, 2), "Marta's second corner")
+	check(play_named(marta, "entry_mark", 2, 0), "Marta's third corner")
+	check(play_named(marta, "entry_mark", 1, 1), "the center with three corners")
+	check(marta.last_progress_gained == 10, "exactly three corner neighbors are the correct stamp for Apex Pay (%d)" % marta.last_progress_gained)
+	var marta_two = Rules.scripted_encounter(403, 2, ["entry_mark", "entry_mark", "entry_mark"], 3, Rules.SHIFT_ADDENDA)
+	check(play_named(marta_two, "entry_mark", 0, 0), "one corner")
+	check(play_named(marta_two, "entry_mark", 2, 2), "a second corner")
+	check(play_named(marta_two, "entry_mark", 1, 1), "the center with two corners")
+	check(marta_two.last_progress_gained == 6, "exactly two corner neighbors score their own number")
+	var marta_lone = Rules.scripted_encounter(403, 2, ["entry_mark"], 1, Rules.SHIFT_ADDENDA)
+	check(play_named(marta_lone, "entry_mark", 1, 1), "a lone center stamp")
+	check(marta_lone.last_progress_gained == 2, "a lone stamp is the wrong stamp for Apex Pay")
+	var marta_four = Rules.scripted_encounter(403, 2, ["entry_mark", "entry_mark", "entry_mark", "entry_mark", "hold"], 5, Rules.SHIFT_ADDENDA)
+	check(play_named(marta_four, "entry_mark", 0, 0), "the first of four corners")
+	check(play_named(marta_four, "entry_mark", 0, 2), "the second of four corners")
+	check(play_named(marta_four, "entry_mark", 2, 0), "the third of four corners")
+	check(play_named(marta_four, "entry_mark", 1, 1), "the center")
+	check(play_named(marta_four, "hold", 2, 2), "the fourth corner")
+	check(marta_four.last_progress_gained == 9, "four corner neighbors score their own number")
+	var marta_echo = Rules.scripted_encounter(403, 2, ["entry_mark", "entry_mark", "echo", "entry_mark", "entry_mark"], 5, Rules.SHIFT_ADDENDA)
+	check(play_named(marta_echo, "entry_mark", 0, 0), "a corner stamp")
+	check(play_named(marta_echo, "entry_mark", 0, 2), "another corner")
+	check(play_named(marta_echo, "echo", 0, 1), "echo above the center")
+	check(play_named(marta_echo, "entry_mark", 1, 1), "the center stamp")
+	check(play_named(marta_echo, "entry_mark", 2, 0), "the third corner")
+	check(marta_echo.last_progress_gained == 15 and marta_echo.last_chain_count == 1, "a retrigger of a qualifying Apex Pay scores +2 again (%d)" % marta_echo.last_progress_gained)
+	var marta_echo_two = Rules.scripted_encounter(403, 2, ["entry_mark", "echo", "entry_mark", "entry_mark"], 4, Rules.SHIFT_ADDENDA)
+	check(play_named(marta_echo_two, "entry_mark", 0, 0), "one corner only")
+	check(play_named(marta_echo_two, "echo", 0, 1), "echo above two corners")
+	check(play_named(marta_echo_two, "entry_mark", 1, 1), "the center")
+	check(play_named(marta_echo_two, "entry_mark", 2, 2), "the second corner")
+	check(marta_echo_two.last_progress_gained == 9 and marta_echo_two.last_chain_count == 1, "exactly two corner neighbors do not gain +2 when retriggered")
+	var marta_exempt = Rules.scripted_encounter(403, 2, ["exemption", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 5, Rules.SHIFT_ADDENDA)
+	check(play_named(marta_exempt, "exemption", 1, 0), "exemption on Marta's middle row")
+	check(play_named(marta_exempt, "entry_mark", 0, 0), "a corner stamp")
+	check(play_named(marta_exempt, "entry_mark", 0, 2), "a second corner")
+	check(play_named(marta_exempt, "entry_mark", 2, 0), "a third corner")
+	check(play_named(marta_exempt, "entry_mark", 1, 1), "the center")
+	check(marta_exempt.last_progress_gained == 9, "a middle-row exemption cancels Apex Pay")
+	var marta_off = Rules.scripted_encounter(403, 2, ["exemption", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 5, Rules.SHIFT_ADDENDA)
+	check(play_named(marta_off, "exemption", 2, 1), "exemption off Marta's middle row")
+	check(play_named(marta_off, "entry_mark", 0, 0), "a qualifying corner")
+	check(play_named(marta_off, "entry_mark", 0, 2), "a second corner")
+	check(play_named(marta_off, "entry_mark", 2, 0), "a third corner")
+	check(play_named(marta_off, "entry_mark", 1, 1), "the center")
+	check(marta_off.last_progress_gained == 11, "an exemption off the middle row does not cancel Apex Pay")
+	var marta_held = Rules.scripted_encounter(403, 2, ["hold", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 5, Rules.SHIFT_ADDENDA)
+	check(play_named(marta_held, "hold", 0, 1), "hold in Marta's column")
+	check(play_named(marta_held, "entry_mark", 0, 0), "a stamp beside that hold")
+	check(play_named(marta_held, "entry_mark", 0, 2), "a second corner")
+	check(play_named(marta_held, "entry_mark", 2, 0), "a third corner")
+	check(play_named(marta_held, "entry_mark", 1, 1), "the center")
+	check(marta_held.last_progress_gained == 11 and marta_held.last_patience_loss == 0, "hold in column 2 comes before Apex Pay")
+	var marta_missed = Rules.scripted_encounter(403, 2, ["hold", "entry_mark", "entry_mark", "entry_mark", "entry_mark"], 5, Rules.SHIFT_ADDENDA)
+	check(play_named(marta_missed, "hold", 1, 0), "hold outside Marta's column")
+	check(play_named(marta_missed, "entry_mark", 0, 0), "a stamp beside the missed hold")
+	check(play_named(marta_missed, "entry_mark", 0, 2), "a second corner")
+	check(play_named(marta_missed, "entry_mark", 2, 0), "a third corner")
+	check(play_named(marta_missed, "entry_mark", 1, 1), "the center")
+	check(marta_missed.last_progress_gained == 11 and marta_missed.last_patience_loss == 1, "hold in another column does not spare Apex Pay")
+	var marta_wax = Rules.scripted_encounter(403, 2, ["wax_seal", "wax_seal", "entry_mark", "entry_mark"], 6, Rules.SHIFT_ADDENDA)
+	check(play_named(marta_wax, "wax_seal", 1, 1), "Marta's center wax")
+	check(play_named(marta_wax, "wax_seal", 0, 0), "Marta's corner wax")
+	check(play_named(marta_wax, "entry_mark", 0, 2), "a corner entry")
+	check(play_named(marta_wax, "entry_mark", 2, 0), "another corner entry")
+	check(marta_wax.last_progress_gained == 18 and marta_wax.phase == "draft", "Apex Pay clears into the draft")
+	var tilda = Rules.scripted_encounter(403, 2, ["entry_mark", "entry_mark", "entry_mark", "entry_mark"], 4, Rules.SHIFT_POSTSCRIPT)
+	check(play_named(tilda, "entry_mark", 0, 0), "Tilda's first corner")
+	check(play_named(tilda, "entry_mark", 0, 2), "Tilda's second corner")
+	check(play_named(tilda, "entry_mark", 2, 0), "Tilda's third corner")
+	check(play_named(tilda, "entry_mark", 1, 1), "Tilda's center")
+	check(tilda.last_progress_gained == 8, "Wedge Pay does not pay exactly three corner neighbors")
+	var greta = Rules.scripted_encounter(403, 2, ["entry_mark", "entry_mark", "entry_mark", "entry_mark"], 4, Rules.SHIFT_AFTERWORD)
+	check(play_named(greta, "entry_mark", 0, 0), "Greta's first corner")
+	check(play_named(greta, "entry_mark", 0, 2), "Greta's second corner")
+	check(play_named(greta, "entry_mark", 2, 0), "Greta's third corner")
+	check(play_named(greta, "entry_mark", 1, 1), "Greta's center")
+	check(greta.last_progress_gained == 14, "Slant Pay still adds 2 for exactly one corner neighbor")
+
+	var klaus = Rules.scripted_encounter(404, 3, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_ADDENDA)
+	check(String(Rules.traveler(klaus)["name"]) == "Klaus Okell", "the addenda bell's fourth form is Klaus Okell")
+	check(String(Rules.traveler(klaus)["form_name"]) == "Reach Back", "Klaus brings Reach Back")
+	check(String(Rules.traveler(klaus)["rule"]) == "double_reach_back", "Klaus's rule is reach back")
+	check(int(Rules.traveler(klaus)["lane"]) == 0 and int(Rules.traveler(klaus)["exemption_row"]) == 1, "Klaus waits in column 1 and exempts the middle row")
+	check(int(Rules.traveler(klaus)["goal"]) == 22 and int(Rules.traveler(klaus)["patience"]) == 5, "Klaus's goal is 22 and his patience is 5")
+	check(play_named(klaus, "entry_mark", 0, 0), "Klaus's earlier stamp")
+	check(play_named(klaus, "entry_mark", 2, 2), "the cell eight places after it")
+	check(klaus.last_progress_gained == 6 and klaus.last_patience_loss == 1, "a filled cell eight back is the correct stamp for Reach Back (%d)" % klaus.last_progress_gained)
+	var klaus_lone = Rules.scripted_encounter(404, 3, ["entry_mark"], 1, Rules.SHIFT_ADDENDA)
+	check(play_named(klaus_lone, "entry_mark", 2, 2), "Klaus's lone bottom-right stamp")
+	check(klaus_lone.last_progress_gained == 2, "an empty cell eight back is the wrong stamp for Reach Back")
+	var klaus_other = Rules.scripted_encounter(404, 3, ["entry_mark"], 1, Rules.SHIFT_ADDENDA)
+	check(play_named(klaus_other, "entry_mark", 2, 1), "a bottom-middle stamp")
+	check(klaus_other.last_progress_gained == 2, "the bottom-middle cell has no cell eight back, so Reach Back does not double")
+	var klaus_exempt = Rules.scripted_encounter(404, 3, ["exemption", "entry_mark", "entry_mark"], 3, Rules.SHIFT_ADDENDA)
+	check(play_named(klaus_exempt, "exemption", 1, 1), "exemption on Klaus's middle row")
+	check(play_named(klaus_exempt, "entry_mark", 0, 0), "a stamp eight back")
+	check(play_named(klaus_exempt, "entry_mark", 2, 2), "a stamp that would double")
+	check(klaus_exempt.last_progress_gained == 5, "a middle-row exemption cancels Reach Back")
+	var klaus_off = Rules.scripted_encounter(404, 3, ["exemption", "entry_mark", "entry_mark"], 3, Rules.SHIFT_ADDENDA)
+	check(play_named(klaus_off, "exemption", 0, 2), "exemption off Klaus's middle row")
+	check(play_named(klaus_off, "entry_mark", 0, 0), "a filled cell eight back")
+	check(play_named(klaus_off, "entry_mark", 2, 2), "a qualifying stamp")
+	check(klaus_off.last_progress_gained == 7, "an exemption off the middle row does not cancel Reach Back")
+	var klaus_held = Rules.scripted_encounter(404, 3, ["hold", "entry_mark", "entry_mark"], 3, Rules.SHIFT_ADDENDA)
+	check(play_named(klaus_held, "hold", 1, 0), "hold in Klaus's column")
+	check(play_named(klaus_held, "entry_mark", 0, 0), "a stamp beside that hold")
+	check(play_named(klaus_held, "entry_mark", 2, 2), "its filled cell eight back")
+	check(klaus_held.last_progress_gained == 7 and klaus_held.last_patience_loss == 0, "hold in column 1 comes before Reach Back")
+	var klaus_missed = Rules.scripted_encounter(404, 3, ["hold", "entry_mark", "entry_mark"], 3, Rules.SHIFT_ADDENDA)
+	check(play_named(klaus_missed, "hold", 1, 2), "hold outside Klaus's column")
+	check(play_named(klaus_missed, "entry_mark", 0, 0), "a stamp beside the missed hold")
+	check(play_named(klaus_missed, "entry_mark", 2, 2), "its filled cell eight back")
+	check(klaus_missed.last_progress_gained == 7 and klaus_missed.last_patience_loss == 1, "hold in another column does not spare Reach Back")
+	var klaus_echo = Rules.scripted_encounter(404, 3, ["entry_mark", "echo", "entry_mark"], 3, Rules.SHIFT_ADDENDA)
+	check(play_named(klaus_echo, "entry_mark", 0, 0), "the filled cell eight back")
+	check(play_named(klaus_echo, "echo", 1, 2), "echo above a reach back")
+	check(play_named(klaus_echo, "entry_mark", 2, 2), "the doubled stamp")
+	check(klaus_echo.last_progress_gained == 11 and klaus_echo.last_chain_count == 1, "a retrigger of a qualifying Reach Back scores twice again")
+	var klaus_echo_empty = Rules.scripted_encounter(404, 3, ["echo", "entry_mark"], 2, Rules.SHIFT_ADDENDA)
+	check(play_named(klaus_echo_empty, "echo", 1, 2), "echo above an empty eight back")
+	check(play_named(klaus_echo_empty, "entry_mark", 2, 2), "a stamp with an empty cell eight back")
+	check(klaus_echo_empty.last_progress_gained == 5 and klaus_echo_empty.last_chain_count == 1, "an empty cell eight back does not double the retrigger")
+	var klaus_wax = Rules.scripted_encounter(404, 3, ["wax_seal", "wax_seal", "wax_seal"], 6, Rules.SHIFT_ADDENDA)
+	check(play_named(klaus_wax, "wax_seal", 0, 0), "Klaus's wax eight back")
+	check(play_named(klaus_wax, "wax_seal", 2, 2), "Klaus's doubled wax")
+	check(play_named(klaus_wax, "wax_seal", 2, 1), "a wax with no cell eight back")
+	check(klaus_wax.last_progress_gained == 24 and klaus_wax.phase == "victory", "Reach Back clears the addenda bell")
+	var hadrian_lone = Rules.scripted_encounter(404, 3, ["entry_mark"], 1, Rules.SHIFT_APPENDIX)
+	check(play_named(hadrian_lone, "entry_mark", 2, 2), "Hadrian's lone stamp")
+	check(hadrian_lone.last_progress_gained == 4, "Reach Gap still doubles a lone bottom-right stamp")
+	var hadrian = Rules.scripted_encounter(404, 3, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_APPENDIX)
+	check(play_named(hadrian, "entry_mark", 0, 0), "Hadrian's earlier stamp")
+	check(play_named(hadrian, "entry_mark", 2, 2), "Hadrian's later stamp")
+	check(hadrian.last_progress_gained == 4, "Reach Gap does not double when the cell eight back is filled")
+	var ulric = Rules.scripted_encounter(404, 3, ["entry_mark", "entry_mark"], 2, Rules.SHIFT_POSTSCRIPT)
+	check(play_named(ulric, "entry_mark", 0, 0), "Ulric's earlier stamp")
+	check(play_named(ulric, "entry_mark", 2, 2), "Ulric's later stamp")
+	check(ulric.last_progress_gained == 4, "Pitch Back does not double on a filled cell eight back")
+
+
+func test_addenda_bell_opens() -> void:
+	check(Rules.SHIFT_ADDENDA == 39, "the addenda bell is night 40")
+	check(Rules.SHIFT_POSTSCRIPT == 38, "the postscript bell stays night 39")
+	check(Rules.SHIFT_AFTERWORD == 37, "the afterword bell stays night 38")
+	check(Rules.ADDENDA_BELL.size() == 4, "the addenda bell has four travelers")
+	check(String(Rules.ADDENDA_BELL[0]["name"]) == "Freya Hale", "the addenda bell begins with Freya Hale")
+	check(String(Rules.ADDENDA_BELL[1]["name"]) == "Hugo Voss", "the addenda bell's second traveler is Hugo Voss")
+	check(String(Rules.ADDENDA_BELL[2]["name"]) == "Marta Brant", "the addenda bell's third traveler is Marta Brant")
+	check(String(Rules.ADDENDA_BELL[3]["name"]) == "Klaus Okell", "the addenda bell ends with Klaus Okell")
+	check(int(Rules.ADDENDA_BELL[0]["goal"]) == 18 and int(Rules.ADDENDA_BELL[1]["goal"]) == 20 and int(Rules.ADDENDA_BELL[2]["goal"]) == 16 and int(Rules.ADDENDA_BELL[3]["goal"]) == 22, "the addenda goals stay 18, 20, 16, and 22")
+	check(Rules.POSTSCRIPT_BELL.size() == 4 and String(Rules.POSTSCRIPT_BELL[0]["name"]) == "Isolde Hale", "the postscript bell still begins with Isolde Hale")
+	check(String(Rules.POSTSCRIPT_BELL[1]["name"]) == "Miles Voss" and String(Rules.POSTSCRIPT_BELL[2]["name"]) == "Tilda Brant" and String(Rules.POSTSCRIPT_BELL[3]["name"]) == "Ulric Okell", "the postscript bell still ends with Ulric Okell")
+	var addenda_run = Rules.new_run(89, Rules.SHIFT_ADDENDA)
+	check(addenda_run.shift == Rules.SHIFT_ADDENDA, "the addenda bell is a separate night")
+	check(Rules.shift_label(addenda_run) == "Addenda bell", "the addenda bell keeps its name")
+	check(String(Rules.traveler(addenda_run)["name"]) == "Freya Hale", "the addenda bell begins with Freya Hale")
+	check(addenda_run.hand.size() == Rules.HAND_SIZE, "the addenda bell draws 5")
+	check(addenda_run.ink == Rules.BASE_INK, "the addenda bell starts at 3 ink")
+	check(addenda_run.library.size() == Rules.STARTING_DECK.size(), "the addenda bell deals the starting deck")
+	check(addenda_run.relic_id == "", "an earlier night's relic does not carry")
+	check(addenda_run.phase == "play", "the addenda bell opens in play")
+	var dealt: Array = []
+	for iid in addenda_run.hand:
+		dealt.append(Rules.card_id_of(addenda_run, int(iid)))
+	var before = addenda_run.library.size()
+	addenda_run.progress = 4
+	addenda_run.patience = 1
+	Rules.restart_encounter(addenda_run)
+	check(addenda_run.shift == Rules.SHIFT_ADDENDA and addenda_run.traveler_index == 0, "restart encounter stays on the addenda bell")
+	check(addenda_run.progress == 0 and addenda_run.patience == int(Rules.ADDENDA_BELL[0]["patience"]), "restart encounter resets Freya")
+	check(addenda_run.library.size() == before and addenda_run.hand.size() == 5 and addenda_run.phase == "play", "restart keeps the addenda-bell deck and deals a hand")
+	var redealt: Array = []
+	for iid in addenda_run.hand:
+		redealt.append(Rules.card_id_of(addenda_run, int(iid)))
+	check(redealt == dealt, "restart deals Freya the same hand")
+
+	var packed = load("res://game/main.tscn")
+	var desk = packed.instantiate()
+	root.add_child(desk)
+	if desk.state == null:
+		desk._ready()
+	check(desk.state.shift == Rules.SHIFT_FIRST, "the desk still opens on Act 1")
+	check(desk.addenda_button != desk.postscript_button, "the addenda button does not replace the postscript button")
+	check(desk.addenda_button.text == "Addenda bell", "the desk offers the addenda bell")
+	check(desk.postscript_button.text == "Postscript bell", "the desk still offers the postscript bell")
+	check(desk.afterword_button.text == "Afterword bell", "the desk still offers the afterword bell")
+	check(desk.appendix_button.text == "Appendix bell", "the desk still offers the appendix bell")
+	check(desk.glossary_button.text == "Glossary bell", "the desk still offers the glossary bell")
+	check(desk.postscript_button.get_index() + 1 == desk.addenda_button.get_index(), "the addenda button sits immediately right of postscript")
+	check(desk.afterword_button.get_index() + 1 == desk.postscript_button.get_index(), "afterword stays left of postscript")
+	check(desk.appendix_button.get_index() + 1 == desk.afterword_button.get_index(), "appendix stays left of afterword")
+	check(desk.glossary_button.get_index() + 1 == desk.appendix_button.get_index(), "glossary stays left of appendix")
+	desk.addenda_button.pressed.emit()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_ADDENDA, "the desk can open the addenda bell")
+	check(String(Rules.traveler(desk.state)["name"]) == "Freya Hale", "the open desk shows Freya")
+	check(String(desk.desk_label.text).begins_with("Addenda bell"), "the desk title follows the addenda bell")
+	check(desk.meta_label.text.contains("Brow Toll"), "the desk shows Freya's form")
+	check(desk.addenda_button.text == "First bell", "the addenda bell can return to the first bell")
+	check(desk.postscript_button.text == "Postscript bell", "the postscript bell stays available from the addenda bell")
+	desk.postscript_button.pressed.emit()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_POSTSCRIPT and String(Rules.traveler(desk.state)["name"]) == "Isolde Hale", "from the addenda bell the postscript button opens the postscript bell")
+	check(desk.addenda_button.text == "Addenda bell", "the postscript desk still offers the addenda bell")
+	desk.addenda_button.pressed.emit()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_ADDENDA and String(Rules.traveler(desk.state)["name"]) == "Freya Hale", "from the postscript desk the addenda button opens the addenda bell")
+	desk._begin_addenda_bell()
+	desk._refresh_ui()
+	desk._restart_act()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_ADDENDA and String(Rules.traveler(desk.state)["name"]) == "Freya Hale", "restart act replays the addenda bell")
+	desk.addenda_button.pressed.emit()
+	desk._refresh_ui()
+	check(desk.state.shift == Rules.SHIFT_FIRST and String(Rules.traveler(desk.state)["name"]) == "Ada Quill", "the addenda bell returns to Ada")
+	check(desk.addenda_button.text == "Addenda bell", "the first bell offers the addenda bell again")
+	var doors = [
+		["_begin_late_shift", "Nell Parr", "the late shift"],
+		["_begin_closing_bell", "Moss Quen", "the closing bell"],
+		["_begin_ash_watch", "Orla Fen", "the ash watch"],
+		["_begin_gutter_lamp", "Ivo Dane", "the gutter lamp"],
+		["_begin_vellum_bell", "Edda Voss", "the vellum bell"],
+		["_begin_quire_watch", "Tess Quern", "the quire watch"],
+		["_begin_salt_watch", "Pell Voss", "the salt watch"],
+		["_begin_quay_bell", "Mara Quill", "the quay bell"],
+		["_begin_folio_bell", "Ness Hart", "the folio bell"],
+		["_begin_wick_bell", "Odell Voss", "the wick bell"],
+		["_begin_margin_bell", "Nim Voss", "the margin bell"],
+		["_begin_index_bell", "Len Quill", "the index bell"],
+		["_begin_ledger_bell", "Nell Voss", "the ledger bell"],
+		["_begin_spine_bell", "Wynn Quill", "the spine bell"],
+		["_begin_headband_bell", "Len Hart", "the headband bell"],
+		["_begin_clasp_bell", "Noll Hart", "the clasp bell"],
+		["_begin_signature_bell", "Dory Hart", "the signature bell"],
+		["_begin_catchword_bell", "Gwyn Brant", "the catchword bell"],
+		["_begin_colophon_bell", "Nia Soren", "the colophon bell"],
+		["_begin_errata_bell", "Una Pell", "the errata bell"],
+		["_begin_frontispiece_bell", "Soren Hale", "the frontispiece bell"],
+		["_begin_flyleaf_bell", "Hollin Voss", "the flyleaf bell"],
+		["_begin_endpaper_bell", "Isla Voss", "the endpaper bell"],
+		["_begin_halftitle_bell", "Tamsin Keel", "the half-title bell"],
+		["_begin_titlepage_bell", "Nessa Voss", "the title-page bell"],
+		["_begin_copyright_bell", "Merrick Hale", "the copyright bell"],
+		["_begin_dedication_bell", "Maud Hale", "the dedication bell"],
+		["_begin_epigraph_bell", "Enid Hale", "the epigraph bell"],
+		["_begin_preface_bell", "Neve Hale", "the preface bell"],
+		["_begin_foreword_bell", "Shay Hale", "the foreword bell"],
+		["_begin_contents_bell", "Ross Hale", "the contents bell"],
+		["_begin_introduction_bell", "Quin Hale", "the introduction bell"],
+		["_begin_prologue_bell", "Nola Hale", "the prologue bell"],
+		["_begin_acknowledgments_bell", "Maris Hale", "the acknowledgments bell"],
+		["_begin_glossary_bell", "Sybil Hale", "the glossary bell"],
+		["_begin_appendix_bell", "Briony Hale", "the appendix bell"],
+		["_begin_afterword_bell", "Catrin Hale", "the afterword bell"],
+		["_begin_postscript_bell", "Isolde Hale", "the postscript bell"],
+	]
+	for door in doors:
+		desk.call(String(door[0]))
+		desk._refresh_ui()
+		check(desk.state.shift != Rules.SHIFT_ADDENDA and String(Rules.traveler(desk.state)["name"]) == String(door[1]), "%s still opens" % String(door[2]))
+		check(desk.addenda_button.text == "Addenda bell", "%s offers the addenda bell" % String(door[2]))
+		desk._begin_addenda_bell()
+		desk._refresh_ui()
+		check(desk.state.shift == Rules.SHIFT_ADDENDA and String(Rules.traveler(desk.state)["name"]) == "Freya Hale", "%s can open the addenda bell" % String(door[2]))
+	var victories = [
+		[Rules.SHIFT_FIRST, "Act 1"],
+		[Rules.SHIFT_LATE, "the late shift"],
+		[Rules.SHIFT_CLOSING, "the closing bell"],
+		[Rules.SHIFT_ASH, "the ash watch"],
+		[Rules.SHIFT_GUTTER, "the gutter lamp"],
+		[Rules.SHIFT_VELLUM, "the vellum bell"],
+		[Rules.SHIFT_QUIRE, "the quire watch"],
+		[Rules.SHIFT_SALT, "the salt watch"],
+		[Rules.SHIFT_QUAY, "the quay bell"],
+		[Rules.SHIFT_FOLIO, "the folio bell"],
+		[Rules.SHIFT_WICK, "the wick bell"],
+		[Rules.SHIFT_MARGIN, "the margin bell"],
+		[Rules.SHIFT_INDEX, "the index bell"],
+		[Rules.SHIFT_LEDGER, "the ledger bell"],
+		[Rules.SHIFT_SPINE, "the spine bell"],
+		[Rules.SHIFT_HEADBAND, "the headband bell"],
+		[Rules.SHIFT_CLASP, "the clasp bell"],
+		[Rules.SHIFT_SIGNATURE, "the signature bell"],
+		[Rules.SHIFT_CATCHWORD, "the catchword bell"],
+		[Rules.SHIFT_COLOPHON, "the colophon bell"],
+		[Rules.SHIFT_ERRATA, "the errata bell"],
+		[Rules.SHIFT_FRONTISPIECE, "the frontispiece bell"],
+		[Rules.SHIFT_FLYLEAF, "the flyleaf bell"],
+		[Rules.SHIFT_ENDPAPER, "the endpaper bell"],
+		[Rules.SHIFT_HALFTITLE, "the half-title bell"],
+		[Rules.SHIFT_TITLEPAGE, "the title-page bell"],
+		[Rules.SHIFT_COPYRIGHT, "the copyright bell"],
+		[Rules.SHIFT_DEDICATION, "the dedication bell"],
+		[Rules.SHIFT_EPIGRAPH, "the epigraph bell"],
+		[Rules.SHIFT_PREFACE, "the preface bell"],
+		[Rules.SHIFT_FOREWORD, "the foreword bell"],
+		[Rules.SHIFT_CONTENTS, "the contents bell"],
+		[Rules.SHIFT_INTRODUCTION, "the introduction bell"],
+		[Rules.SHIFT_PROLOGUE, "the prologue bell"],
+		[Rules.SHIFT_ACKNOWLEDGMENTS, "the acknowledgments bell"],
+		[Rules.SHIFT_GLOSSARY, "the glossary bell"],
+		[Rules.SHIFT_APPENDIX, "the appendix bell"],
+		[Rules.SHIFT_AFTERWORD, "the afterword bell"],
+		[Rules.SHIFT_POSTSCRIPT, "the postscript bell"],
+	]
+	for victory in victories:
+		desk._open_shift(int(victory[0]), desk.state.seed)
+		desk._refresh_ui()
+		desk.state.phase = "victory"
+		desk._refresh_ui()
+		var victory_addenda = _button_named(desk, "Open the addenda bell")
+		check(victory_addenda != null, "%s's victory desk offers the addenda bell" % String(victory[1]))
+		if victory_addenda != null:
+			victory_addenda.pressed.emit()
+			desk._refresh_ui()
+			check(desk.state.shift == Rules.SHIFT_ADDENDA and String(Rules.traveler(desk.state)["name"]) == "Freya Hale", "%s's victory desk opens the addenda bell" % String(victory[1]))
+	var earlier = [
+		["Open the postscript bell", Rules.SHIFT_POSTSCRIPT, "Isolde Hale", "the postscript bell"],
+		["Open the afterword bell", Rules.SHIFT_AFTERWORD, "Catrin Hale", "the afterword bell"],
+		["Open the appendix bell", Rules.SHIFT_APPENDIX, "Briony Hale", "the appendix bell"],
+		["Open the glossary bell", Rules.SHIFT_GLOSSARY, "Sybil Hale", "the glossary bell"],
+		["Open the acknowledgments bell", Rules.SHIFT_ACKNOWLEDGMENTS, "Maris Hale", "the acknowledgments bell"],
+		["Open the prologue bell", Rules.SHIFT_PROLOGUE, "Nola Hale", "the prologue bell"],
+		["Open the introduction bell", Rules.SHIFT_INTRODUCTION, "Quin Hale", "the introduction bell"],
+		["Open the contents bell", Rules.SHIFT_CONTENTS, "Ross Hale", "the contents bell"],
+		["Open the foreword bell", Rules.SHIFT_FOREWORD, "Shay Hale", "the foreword bell"],
+		["Open the preface bell", Rules.SHIFT_PREFACE, "Neve Hale", "the preface bell"],
+		["Open the epigraph bell", Rules.SHIFT_EPIGRAPH, "Enid Hale", "the epigraph bell"],
+		["Open the dedication bell", Rules.SHIFT_DEDICATION, "Maud Hale", "the dedication bell"],
+		["Open the copyright bell", Rules.SHIFT_COPYRIGHT, "Merrick Hale", "the copyright bell"],
+		["Open the title-page bell", Rules.SHIFT_TITLEPAGE, "Nessa Voss", "the title-page bell"],
+		["Open the half-title bell", Rules.SHIFT_HALFTITLE, "Tamsin Keel", "the half-title bell"],
+		["Open the endpaper bell", Rules.SHIFT_ENDPAPER, "Isla Voss", "the endpaper bell"],
+		["Open the flyleaf bell", Rules.SHIFT_FLYLEAF, "Hollin Voss", "the flyleaf bell"],
+		["Open the frontispiece bell", Rules.SHIFT_FRONTISPIECE, "Soren Hale", "the frontispiece bell"],
+		["Open the errata bell", Rules.SHIFT_ERRATA, "Una Pell", "the errata bell"],
+		["Open the colophon bell", Rules.SHIFT_COLOPHON, "Nia Soren", "the colophon bell"],
+		["Open the catchword bell", Rules.SHIFT_CATCHWORD, "Gwyn Brant", "the catchword bell"],
+		["Open the signature bell", Rules.SHIFT_SIGNATURE, "Dory Hart", "the signature bell"],
+		["Open the clasp bell", Rules.SHIFT_CLASP, "Noll Hart", "the clasp bell"],
+		["Open the headband bell", Rules.SHIFT_HEADBAND, "Len Hart", "the headband bell"],
+		["Open the spine bell", Rules.SHIFT_SPINE, "Wynn Quill", "the spine bell"],
+		["Open the ledger bell", Rules.SHIFT_LEDGER, "Nell Voss", "the ledger bell"],
+		["Open the index bell", Rules.SHIFT_INDEX, "Len Quill", "the index bell"],
+		["Open the margin bell", Rules.SHIFT_MARGIN, "Nim Voss", "the margin bell"],
+		["Open the wick bell", Rules.SHIFT_WICK, "Odell Voss", "the wick bell"],
+		["Open the folio bell", Rules.SHIFT_FOLIO, "Ness Hart", "the folio bell"],
+		["Open the quay bell", Rules.SHIFT_QUAY, "Mara Quill", "the quay bell"],
+		["Open the salt watch", Rules.SHIFT_SALT, "Pell Voss", "the salt watch"],
+		["Open the quire watch", Rules.SHIFT_QUIRE, "Tess Quern", "the quire watch"],
+		["Open the vellum bell", Rules.SHIFT_VELLUM, "Edda Voss", "the vellum bell"],
+		["Open the gutter lamp", Rules.SHIFT_GUTTER, "Ivo Dane", "the gutter lamp"],
+		["Open the ash watch", Rules.SHIFT_ASH, "Orla Fen", "the ash watch"],
+		["Open the closing bell", Rules.SHIFT_CLOSING, "Moss Quen", "the closing bell"],
+		["Open the late shift", Rules.SHIFT_LATE, "Nell Parr", "the late shift"],
+		["Open the first bell", Rules.SHIFT_FIRST, "Ada Quill", "the first bell"],
+	]
+	for night in earlier:
+		desk._begin_addenda_bell()
+		desk._refresh_ui()
+		desk.state.phase = "victory"
+		desk._refresh_ui()
+		var opener = _button_named(desk, String(night[0]))
+		check(opener != null, "the addenda bell victory desk offers %s" % String(night[3]))
+		check(_button_named(desk, "Open the addenda bell") == null, "the addenda bell victory desk does not offer itself")
+		if opener != null:
+			opener.pressed.emit()
+			desk._refresh_ui()
+			check(desk.state.shift == int(night[1]) and String(Rules.traveler(desk.state)["name"]) == String(night[2]), "the addenda bell victory desk opens %s" % String(night[3]))
+	root.remove_child(desk)
+	desk.free()
+
+
+func test_policy_clears_addenda_bell() -> void:
+	var started = Time.get_ticks_msec()
+	var state = Rules.new_run(12345, Rules.SHIFT_ADDENDA)
+	var steps = 0
+	var seen = 0
+	while state.phase != "victory":
+		steps += 1
+		if steps > 500 or state.phase == "defeat":
+			check(false, "policy lost or stalled on the addenda bell, seed 12345: " + Rules.debug_summary(state))
+			return
+		var action = Policy.choose(state)
+		if not Rules.apply_action(state, action):
+			check(false, "addenda-bell policy action was rejected: %s / %s" % [str(action), Rules.debug_summary(state)])
+			return
+		if state.encounters_cleared != seen:
+			seen = state.encounters_cleared
+			print("cleared addenda encounter %d after %d actions" % [seen, steps])
+	var elapsed = Time.get_ticks_msec() - started
+	check(state.encounters_cleared == 4, "policy cleared all 4 addenda-bell encounters on seed 12345")
+	check(state.phase == "victory", "addenda bell ends in victory")
+	check(state.shift == Rules.SHIFT_ADDENDA, "the clear stayed on the addenda bell")
+	check(steps == 31, "seed 12345 clears the addenda bell in 31 actions")
+	print("addenda bell finished in %d actions, %d ms" % [steps, elapsed])
