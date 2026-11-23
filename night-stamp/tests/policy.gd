@@ -2570,6 +2570,160 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 				fill_later_after_col -= 3
 			if fill_later_after_row <= 2 and state.form[fill_later_after_row][fill_later_after_col] != null:
 				guess += _stamp_number(state, String(fill_later["card_id"]), fill_after_row, fill_after_col)
+	if rule == "drop_if_split_count":
+		var split_filled = 0
+		for split_row in 3:
+			for split_col in 3:
+				if state.form[split_row][split_col] != null:
+					split_filled += 1
+		var split_next = split_filled + 1
+		if split_next == 3 or split_next == 5:
+			guess -= 4
+		elif split_filled == 3 or split_filled == 5:
+			guess += 5
+	if rule == "double_skew_blank":
+		var skew_before_row = row
+		var skew_before_col = col - 1
+		while skew_before_col < 0:
+			skew_before_row -= 1
+			skew_before_col += 3
+		var skew_after_row = row
+		var skew_after_col = col + 1
+		while skew_after_col > 2:
+			skew_after_row += 1
+			skew_after_col -= 3
+		var skew_before_filled = skew_before_row >= 0 and state.form[skew_before_row][skew_before_col] != null
+		var skew_after_empty = skew_after_row <= 2 and state.form[skew_after_row][skew_after_col] == null
+		if skew_before_filled and skew_after_empty:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+		if skew_before_row >= 0 and state.form[skew_before_row][skew_before_col] != null:
+			var skew_earlier = state.form[skew_before_row][skew_before_col]
+			var skew_earlier_before_row = skew_before_row
+			var skew_earlier_before_col = skew_before_col - 1
+			while skew_earlier_before_col < 0:
+				skew_earlier_before_row -= 1
+				skew_earlier_before_col += 3
+			if skew_earlier_before_row >= 0 and state.form[skew_earlier_before_row][skew_earlier_before_col] != null:
+				guess -= _stamp_number(state, String(skew_earlier["card_id"]), skew_before_row, skew_before_col)
+		if skew_after_row <= 2 and state.form[skew_after_row][skew_after_col] != null:
+			var skew_later = state.form[skew_after_row][skew_after_col]
+			var skew_later_after_row = skew_after_row
+			var skew_later_after_col = skew_after_col + 1
+			while skew_later_after_col > 2:
+				skew_later_after_row += 1
+				skew_later_after_col -= 3
+			if skew_later_after_row <= 2 and state.form[skew_later_after_row][skew_later_after_col] == null:
+				guess += _stamp_number(state, String(skew_later["card_id"]), skew_after_row, skew_after_col)
+	if rule == "yield_hinge_pay":
+		var hinge_sides = 0
+		var hinge_corners = 0
+		for hinge_side in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var hinge_row = row + hinge_side.x
+			var hinge_col = col + hinge_side.y
+			if hinge_row < 0 or hinge_col < 0 or hinge_row > 2 or hinge_col > 2:
+				continue
+			if state.form[hinge_row][hinge_col] != null:
+				hinge_sides += 1
+		for hinge_corner in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var hinge_corner_row = row + hinge_corner.x
+			var hinge_corner_col = col + hinge_corner.y
+			if hinge_corner_row < 0 or hinge_corner_col < 0 or hinge_corner_row > 2 or hinge_corner_col > 2:
+				continue
+			if state.form[hinge_corner_row][hinge_corner_col] != null:
+				hinge_corners += 1
+		if hinge_sides == 1 and hinge_corners == 1:
+			guess += 4
+		else:
+			guess -= 1
+		for hinge_side in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var hinge_near_row = row + hinge_side.x
+			var hinge_near_col = col + hinge_side.y
+			if hinge_near_row < 0 or hinge_near_col < 0 or hinge_near_row > 2 or hinge_near_col > 2:
+				continue
+			if state.form[hinge_near_row][hinge_near_col] == null:
+				continue
+			var hinge_other_sides = 0
+			var hinge_other_corners = 0
+			for hinge_other in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+				var hinge_other_row = hinge_near_row + hinge_other.x
+				var hinge_other_col = hinge_near_col + hinge_other.y
+				if hinge_other_row < 0 or hinge_other_col < 0 or hinge_other_row > 2 or hinge_other_col > 2:
+					continue
+				if hinge_other_row == row and hinge_other_col == col:
+					continue
+				if state.form[hinge_other_row][hinge_other_col] != null:
+					hinge_other_sides += 1
+			for hinge_other in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+				var hinge_other_row = hinge_near_row + hinge_other.x
+				var hinge_other_col = hinge_near_col + hinge_other.y
+				if hinge_other_row < 0 or hinge_other_col < 0 or hinge_other_row > 2 or hinge_other_col > 2:
+					continue
+				if state.form[hinge_other_row][hinge_other_col] != null:
+					hinge_other_corners += 1
+			if hinge_other_sides == 0 and hinge_other_corners == 1:
+				guess += 2
+			elif hinge_other_sides == 1 and hinge_other_corners == 1:
+				guess -= 2
+		for hinge_corner in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var hinge_near_row = row + hinge_corner.x
+			var hinge_near_col = col + hinge_corner.y
+			if hinge_near_row < 0 or hinge_near_col < 0 or hinge_near_row > 2 or hinge_near_col > 2:
+				continue
+			if state.form[hinge_near_row][hinge_near_col] == null:
+				continue
+			var hinge_other_sides = 0
+			var hinge_other_corners = 0
+			for hinge_other in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+				var hinge_other_row = hinge_near_row + hinge_other.x
+				var hinge_other_col = hinge_near_col + hinge_other.y
+				if hinge_other_row < 0 or hinge_other_col < 0 or hinge_other_row > 2 or hinge_other_col > 2:
+					continue
+				if state.form[hinge_other_row][hinge_other_col] != null:
+					hinge_other_sides += 1
+			for hinge_other in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+				var hinge_other_row = hinge_near_row + hinge_other.x
+				var hinge_other_col = hinge_near_col + hinge_other.y
+				if hinge_other_row < 0 or hinge_other_col < 0 or hinge_other_row > 2 or hinge_other_col > 2:
+					continue
+				if hinge_other_row == row and hinge_other_col == col:
+					continue
+				if state.form[hinge_other_row][hinge_other_col] != null:
+					hinge_other_corners += 1
+			if hinge_other_corners == 0 and hinge_other_sides == 1:
+				guess += 2
+			elif hinge_other_corners == 1 and hinge_other_sides == 1:
+				guess -= 2
+	if rule == "double_skew_fill":
+		var fill_before_row = row
+		var fill_before_col = col - 1
+		while fill_before_col < 0:
+			fill_before_row -= 1
+			fill_before_col += 3
+		var fill_after_row = row
+		var fill_after_col = col + 1
+		while fill_after_col > 2:
+			fill_after_row += 1
+			fill_after_col -= 3
+		var fill_before_empty = fill_before_row >= 0 and state.form[fill_before_row][fill_before_col] == null
+		var fill_after_filled = fill_after_row <= 2 and state.form[fill_after_row][fill_after_col] != null
+		if fill_before_empty and fill_after_filled:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+		if fill_before_row >= 0 and state.form[fill_before_row][fill_before_col] != null:
+			var fill_earlier = state.form[fill_before_row][fill_before_col]
+			var fill_earlier_before_row = fill_before_row
+			var fill_earlier_before_col = fill_before_col - 1
+			while fill_earlier_before_col < 0:
+				fill_earlier_before_row -= 1
+				fill_earlier_before_col += 3
+			if fill_earlier_before_row >= 0 and state.form[fill_earlier_before_row][fill_earlier_before_col] == null:
+				guess += _stamp_number(state, String(fill_earlier["card_id"]), fill_before_row, fill_before_col)
+		if fill_after_filled:
+			var fill_later = state.form[fill_after_row][fill_after_col]
+			guess -= _stamp_number(state, String(fill_later["card_id"]), fill_after_row, fill_after_col)
 	if rule == "ignore_isolated":
 		var neighbors = 0
 		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
