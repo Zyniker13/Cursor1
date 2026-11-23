@@ -2466,6 +2466,7 @@ const SHIFT_ENVOY := 46
 const SHIFT_FINALE := 47
 const SHIFT_EPODE := 48
 const SHIFT_RECESSIONAL := 50
+const SHIFT_VESPERS := 53
 const SHIFT_COMPLINE := 52
 const SHIFT_NOCTURNE := 51
 const SHIFT_VALEDICTION := 49
@@ -4838,6 +4839,55 @@ const FINALE_BELL := [
 
 
 
+
+const VESPERS_BELL := [
+	{
+		"id": "gunnar_hale",
+		"name": "Gunnar Hale",
+		"form_name": "Ream Toll",
+		"rule_text": "Patience drops by 2 when the number of filled cells is 5 or 8.",
+		"rule": "drop_if_ream_count",
+		"lane": 1,
+		"exemption_row": 2,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "torun_voss",
+		"name": "Torun Voss",
+		"form_name": "Bend Fill",
+		"rule_text": "A stamp scores twice only when the queue cell one place after it is filled and the queue cell five places before it is filled. The top-left cell has no cell five places before it, so it does not double. The top-middle cell has no cell five places before it, so it does not double. The top-right cell has no cell five places before it, so it does not double. The middle-left cell has no cell five places before it, so it does not double. The center cell has no cell five places before it, so it does not double. The bottom-right cell has no cell one place after it, so it does not double.",
+		"rule": "double_bend_fill",
+		"lane": 2,
+		"exemption_row": 1,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "solveig_brant",
+		"name": "Solveig Brant",
+		"form_name": "Clinch Pay",
+		"rule_text": "Each stamp with exactly four corner neighbors and exactly three side neighbors scores +2 once. Any other count scores its own number. Exactly four corner neighbors with exactly two side neighbors score their own number. Exactly four corner neighbors with exactly one side neighbor score their own number. A lone stamp scores its own number.",
+		"rule": "yield_clinch_pay",
+		"lane": 0,
+		"exemption_row": 2,
+		"goal": 16,
+		"patience": 5,
+	},
+	{
+		"id": "einar_okell",
+		"name": "Einar Okell",
+		"form_name": "Bend Blank",
+		"rule_text": "A stamp scores twice only when the queue cell one place after it is empty and the queue cell five places before it is empty. The top-left cell has no cell five places before it, so it does not double. The top-middle cell has no cell five places before it, so it does not double. The top-right cell has no cell five places before it, so it does not double. The middle-left cell has no cell five places before it, so it does not double. The center cell has no cell five places before it, so it does not double. The bottom-right cell has no cell one place after it, so it does not double.",
+		"rule": "double_bend_blank",
+		"lane": 2,
+		"exemption_row": 0,
+		"goal": 22,
+		"patience": 5,
+	},
+]
+
+
 const COMPLINE_BELL := [
 	{
 		"id": "arvid_hale",
@@ -5175,6 +5225,8 @@ static func _canonical_shift(shift_index: int) -> int:
 		return SHIFT_TITLEPAGE
 	if shift_index == SHIFT_COPYRIGHT:
 		return SHIFT_COPYRIGHT
+	if shift_index == SHIFT_VESPERS:
+		return SHIFT_VESPERS
 	if shift_index == SHIFT_COMPLINE:
 		return SHIFT_COMPLINE
 	if shift_index == SHIFT_NOCTURNE:
@@ -5242,6 +5294,8 @@ static func new_run(seed_value: int, shift_index: int = SHIFT_FIRST) -> NightSta
 	state.next_iid = 0
 	for card_id in STARTING_DECK:
 		_add_library_card(state, String(card_id))
+	if state.shift == SHIFT_VESPERS:
+		_log(state, "The vespers bell begins. Seed %d." % state.seed)
 	if state.shift == SHIFT_COMPLINE:
 		_log(state, "The compline bell begins. Seed %d." % state.seed)
 	if state.shift == SHIFT_NOCTURNE:
@@ -5388,6 +5442,8 @@ static func restart_encounter(state: NightState) -> void:
 
 
 static func shift_label(state: NightState) -> String:
+	if state.shift == SHIFT_VESPERS:
+		return "Vespers bell"
 	if state.shift == SHIFT_COMPLINE:
 		return "Compline bell"
 	if state.shift == SHIFT_NOCTURNE:
@@ -5510,6 +5566,8 @@ static func traveler(state: NightState) -> Dictionary:
 
 
 static func _roster(state: NightState) -> Array:
+	if state.shift == SHIFT_VESPERS:
+		return VESPERS_BELL
 	if state.shift == SHIFT_COMPLINE:
 		return COMPLINE_BELL
 	if state.shift == SHIFT_NOCTURNE:
@@ -6082,6 +6140,12 @@ static func stamp_progress(state: NightState, card_id: String, row: int, col: in
 		return amount + 2
 	if rule == "double_crook_blank" and _crook_blank(state, row, col):
 		return amount * 2
+	if rule == "double_bend_fill" and _bend_fill(state, row, col):
+		return amount * 2
+	if rule == "yield_clinch_pay" and _clinch_pay(state, row, col):
+		return amount + 2
+	if rule == "double_bend_blank" and _bend_blank(state, row, col):
+		return amount * 2
 	if rule == "double_yoke_blank" and _yoke_blank(state, row, col):
 		return amount * 2
 	return amount
@@ -6253,6 +6317,8 @@ static func patience_loss(state: NightState) -> int:
 		elif rule == "drop_if_gauge_count" and _is_gauge_count(_stamp_count(state)):
 			loss = 2
 		elif rule == "drop_if_latch_count" and _is_latch_count(_stamp_count(state)):
+			loss = 2
+		elif rule == "drop_if_ream_count" and _is_ream_count(_stamp_count(state)):
 			loss = 2
 		elif rule == "drop_if_kerf_count" and _is_kerf_count(_stamp_count(state)):
 			loss = 2
@@ -6711,6 +6777,12 @@ static func _resolve_stamp(state: NightState, row: int, col: int, hush: bool) ->
 				_log(state, "%s on the %s, %s grants %d. Four corner neighbors and two side neighbors pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			elif tail_rule == "double_crook_blank" and _crook_blank(state, row, col) and amount > raw:
 				_log(state, "%s on the %s, %s grants %d. The empty cell four places before it and the empty cell one place after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_bend_fill" and _bend_fill(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The filled cell five places before it and the filled cell one place after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_clinch_pay" and _clinch_pay(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. Four corner neighbors and three side neighbors pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_bend_blank" and _bend_blank(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The empty cell five places before it and the empty cell one place after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			else:
 				_log(state, "%s on the %s, %s grants %d." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 	state.turn_progress += amount
@@ -7079,6 +7151,26 @@ static func _wedge_pay(state: NightState, row: int, col: int) -> bool:
 	if state.form[row][col] == null:
 		return false
 	return _diagonal_count(state, row, col) == 2
+
+
+static func _is_ream_count(count: int) -> bool:
+	return count == 5 or count == 8
+
+
+static func _bend_fill(state: NightState, row: int, col: int) -> bool:
+	return _farther_back(state, row, col) and _pace_fill(state, row, col)
+
+
+static func _clinch_pay(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	return orthogonal_count(state, row, col) == 3 and _diagonal_count(state, row, col) == 4
+
+
+static func _bend_blank(state: NightState, row: int, col: int) -> bool:
+	return _farther_gap(state, row, col) and _pace_blank(state, row, col)
 
 
 static func _is_kerf_count(count: int) -> bool:
@@ -8301,6 +8393,8 @@ static func _apply_result(state: NightState, result: Dictionary) -> void:
 		state.encounters_cleared += 1
 		if state.traveler_index >= _roster(state).size() - 1:
 			state.phase = "victory"
+			if state.shift == SHIFT_VESPERS:
+				_log(state, "The queue is empty. The vespers bell is clear.")
 			if state.shift == SHIFT_COMPLINE:
 				_log(state, "The queue is empty. The compline bell is clear.")
 			if state.shift == SHIFT_NOCTURNE:
