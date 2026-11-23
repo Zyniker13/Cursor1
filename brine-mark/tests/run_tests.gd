@@ -42,6 +42,7 @@ func _initialize() -> void:
 	_test_vexillum(errors)
 	_test_labarum(errors)
 	_test_signum(errors)
+	_test_streamer(errors)
 	_test_determinism(errors)
 	_test_population(errors)
 	_test_no_select_ant(errors)
@@ -115,7 +116,7 @@ func _test_determinism(errors: Array) -> void:
 	var plans := _plans(errors)
 	if plans.is_empty():
 		return
-	for plan_name in ["winning", "all_rake", "dry_pans", "continued", "late_pans", "no_crib", "carted", "late_crib", "dry_crib", "no_ship", "shipped", "late_ship", "dry_ship", "no_stall", "sold", "late_sold", "dry_sold", "no_yard", "banked", "late_banked", "dry_banked", "no_bunk", "hired", "late_hired", "dry_hired", "no_loft", "lofted", "late_lofted", "dry_lofted", "no_gate", "gated", "late_gated", "dry_gated", "no_wage", "paid", "late_paid", "dry_paid", "no_relief", "posted", "late_posted", "dry_posted", "no_watch", "stood", "late_stood", "dry_stood", "watch_only", "no_lamp", "lit", "late_lit", "dry_lit", "lamp_only", "no_bell", "rung", "late_rung", "dry_rung", "bell_only", "no_horn", "sounded", "late_sounded", "dry_sounded", "horn_only", "no_flag", "raised", "late_raised", "dry_raised", "flag_only", "no_banner", "hoisted", "late_hoisted", "dry_hoisted", "banner_only", "no_pennant", "flown", "late_flown", "dry_flown", "pennant_only", "no_standard", "carried", "late_carried", "dry_carried", "standard_only", "no_jack", "shown", "late_shown", "dry_shown", "jack_only", "no_ensign", "broken", "late_broken", "dry_broken", "ensign_only", "no_burgee", "struck", "late_struck", "dry_struck", "burgee_only", "no_cornet", "dipped", "late_dipped", "dry_dipped", "cornet_only", "no_guidon", "saluted", "late_saluted", "dry_saluted", "guidon_only", "no_fanion", "presented", "late_presented", "dry_presented", "fanion_only", "furled", "late_furled", "dry_furled", "pennon_only", "gonfalon", "late_gonfalon", "dry_gonfalon", "gonfalon_only", "oriflamme", "late_oriflamme", "dry_oriflamme", "oriflamme_only", "vexillum", "late_vexillum", "dry_vexillum", "vexillum_only", "labarum", "late_labarum", "dry_labarum", "labarum_only", "signum", "late_signum", "dry_signum", "signum_only"]:
+	for plan_name in ["winning", "all_rake", "dry_pans", "continued", "late_pans", "no_crib", "carted", "late_crib", "dry_crib", "no_ship", "shipped", "late_ship", "dry_ship", "no_stall", "sold", "late_sold", "dry_sold", "no_yard", "banked", "late_banked", "dry_banked", "no_bunk", "hired", "late_hired", "dry_hired", "no_loft", "lofted", "late_lofted", "dry_lofted", "no_gate", "gated", "late_gated", "dry_gated", "no_wage", "paid", "late_paid", "dry_paid", "no_relief", "posted", "late_posted", "dry_posted", "no_watch", "stood", "late_stood", "dry_stood", "watch_only", "no_lamp", "lit", "late_lit", "dry_lit", "lamp_only", "no_bell", "rung", "late_rung", "dry_rung", "bell_only", "no_horn", "sounded", "late_sounded", "dry_sounded", "horn_only", "no_flag", "raised", "late_raised", "dry_raised", "flag_only", "no_banner", "hoisted", "late_hoisted", "dry_hoisted", "banner_only", "no_pennant", "flown", "late_flown", "dry_flown", "pennant_only", "no_standard", "carried", "late_carried", "dry_carried", "standard_only", "no_jack", "shown", "late_shown", "dry_shown", "jack_only", "no_ensign", "broken", "late_broken", "dry_broken", "ensign_only", "no_burgee", "struck", "late_struck", "dry_struck", "burgee_only", "no_cornet", "dipped", "late_dipped", "dry_dipped", "cornet_only", "no_guidon", "saluted", "late_saluted", "dry_saluted", "guidon_only", "no_fanion", "presented", "late_presented", "dry_presented", "fanion_only", "furled", "late_furled", "dry_furled", "pennon_only", "gonfalon", "late_gonfalon", "dry_gonfalon", "gonfalon_only", "oriflamme", "late_oriflamme", "dry_oriflamme", "oriflamme_only", "vexillum", "late_vexillum", "dry_vexillum", "vexillum_only", "labarum", "late_labarum", "dry_labarum", "labarum_only", "signum", "late_signum", "dry_signum", "signum_only", "streamer", "late_streamer", "dry_streamer", "streamer_only"]:
 		var before := errors.size()
 		var first = _run_plan(plans, plan_name, errors)
 		var second = _run_plan(plans, plan_name, errors)
@@ -235,6 +236,10 @@ func _test_determinism(errors: Array) -> void:
 		if int(first.get_signum_sleeved()) != int(second.get_signum_sleeved()) or int(first.get_labarum_left()) != int(second.get_labarum_left()):
 			_fail(errors, "%s signum runs differed (%d unsleeved %d, and %d unsleeved %d)" % [
 				plan_name, first.get_signum_sleeved(), first.get_labarum_left(), second.get_signum_sleeved(), second.get_labarum_left(),
+			])
+		if int(first.get_streamer_rolled()) != int(second.get_streamer_rolled()) or int(first.get_signum_left()) != int(second.get_signum_left()):
+			_fail(errors, "%s streamer runs differed (%d unrolled %d, and %d unrolled %d)" % [
+				plan_name, first.get_streamer_rolled(), first.get_signum_left(), second.get_streamer_rolled(), second.get_signum_left(),
 			])
 		if String(first.get_summary()) != String(second.get_summary()):
 			_fail(errors, "%s summaries differed" % plan_name)
@@ -835,6 +840,40 @@ func _test_scene_boots(errors: Array) -> void:
 	node._on_key(KEY_SPACE)
 	if int(node.sim.get_paint(14, -23)) != Sim.LABARUM:
 		_fail(errors, "the labarum cell accepted a signum")
+	node._on_key(KEY_PERIOD)
+	if not String(node.mode_label.text).contains("Streamer"):
+		_fail(errors, "streamer mark was not named")
+	var streamer_button: Button = null
+	signum_button = null
+	for entry in node.mode_buttons:
+		if int(entry["mode"]) == Sim.STREAMER:
+			streamer_button = entry["button"]
+		elif int(entry["mode"]) == Sim.SIGNUM:
+			signum_button = entry["button"]
+	if streamer_button == null or signum_button == null:
+		_fail(errors, "streamer button is missing beside the signum")
+	elif not String(streamer_button.text).contains("Streamer") or not String(signum_button.text).contains("Signum"):
+		_fail(errors, "streamer button is not labeled beside the signum")
+	elif streamer_button.get_parent() != signum_button.get_parent() or streamer_button.get_index() != signum_button.get_index() + 1:
+		_fail(errors, "streamer button does not sit beside the signum")
+	else:
+		var streamer_style := streamer_button.get_theme_stylebox("normal") as StyleBoxFlat
+		if streamer_style == null or streamer_style.get_border_width(SIDE_LEFT) != 3 or streamer_style.border_color != Color("f0c14a"):
+			_fail(errors, "selected streamer has no gold outline")
+	node._on_key(KEY_UP)
+	node._on_key(KEY_UP)
+	node._on_key(KEY_SPACE)
+	if int(node.sim.get_paint(14, -25)) != Sim.STREAMER:
+		_fail(errors, "keyboard cursor did not paint a streamer at 14,-25")
+	node._on_key(KEY_COMMA)
+	node._on_key(KEY_SPACE)
+	if int(node.sim.get_paint(14, -25)) != Sim.STREAMER:
+		_fail(errors, "the streamer cell accepted a signum")
+	node._on_key(KEY_DOWN)
+	node._on_key(KEY_PERIOD)
+	node._on_key(KEY_SPACE)
+	if int(node.sim.get_paint(14, -24)) != Sim.SIGNUM:
+		_fail(errors, "the signum cell accepted a streamer")
 	var season = node.find_child("SeasonNote", true, false)
 	if season == null or not String(season.text).to_lower().contains("pan"):
 		_fail(errors, "season note does not mention pans")
@@ -957,6 +996,10 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "rules text does not mention the signum")
 	if rules == null or not String(rules.text).to_lower().contains("sleeve one"):
 		_fail(errors, "rules text does not name the signum sleeve of one cased hire")
+	if rules == null or not String(rules.text).to_lower().contains("streamer"):
+		_fail(errors, "rules text does not mention the streamer")
+	if rules == null or not String(rules.text).to_lower().contains("roll one"):
+		_fail(errors, "rules text does not name the streamer roll of one sleeved hire")
 	var hint = node.find_child("HintLine", true, false)
 	if hint == null or not String(hint.text).to_lower().contains("watch"):
 		_fail(errors, "hint line does not name the watch")
@@ -1004,14 +1047,16 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "hint's last line does not name the labarum after the vexillum: %s" % hint_last)
 	if hint_last.find(", signum") < hint_last.find("' labarum") or not hint_last.contains(", signum"):
 		_fail(errors, "hint's last line does not name the signum after the labarum: %s" % hint_last)
-	if hint != null and (int(hint.position.y) != 1596 or int(hint.size.x) != 1158 or not hint.clip_contents):
+	if hint_last.find(". streamer") < hint_last.find(", signum") or not hint_last.contains(". streamer"):
+		_fail(errors, "hint's last line does not name the streamer after the signum: %s" % hint_last)
+	if hint != null and (int(hint.position.y) != 1638 or int(hint.size.x) != 1235 or not hint.clip_contents):
 		_fail(errors, "hint line left its box (y %s w %s clip %s)" % [hint.position.y, hint.size.x, hint.clip_contents])
 	if hint == null or not String(hint.text).contains("\n"):
 		_fail(errors, "hint line is still one long line")
 	var panel = node.find_child("Panel", true, false)
 	if hint != null and panel != null and hint.position.x + hint.size.x > panel.position.x:
 		_fail(errors, "hint line runs under the side panel")
-	if hint != null and hint.position.y + hint.size.y > 1700.0:
+	if hint != null and hint.position.y + hint.size.y > 1742.0:
 		_fail(errors, "hint line continues past the window")
 	var map_bottom := 58.0 + float(Sim.GRID_H - Sim.GRID_NORTH) * 42.0
 	if hint != null and hint.position.y < map_bottom:
@@ -1378,10 +1423,23 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "signum countdown started at %d, expected %d" % [node.sim.get_ticks_until_rain(), Sim.SIGNUM_TICK])
 	elif not String(node.season_label.text).to_lower().contains("signum"):
 		_fail(errors, "signum note does not mention the signum: %s" % node.season_label.text)
+	var spun_streamer := 0
+	while int(node.sim.get_beat()) != Sim.STREAMERING and not node.sim.is_over() and spun_streamer < int(Sim.SIGNUM_TICK) + 2:
+		node.sim.tick()
+		spun_streamer += 1
+	node._refresh()
+	if int(node.sim.get_beat()) != Sim.STREAMERING or node.sim.is_over():
+		_fail(errors, "the scene did not open the streamer beat")
+	elif not String(node.rain_label.text).to_lower().contains("streamer"):
+		_fail(errors, "streamer countdown was not named: %s" % node.rain_label.text)
+	elif int(node.sim.get_ticks_until_rain()) != int(Sim.STREAMER_TICK):
+		_fail(errors, "streamer countdown started at %d, expected %d" % [node.sim.get_ticks_until_rain(), Sim.STREAMER_TICK])
+	elif not String(node.season_label.text).to_lower().contains("streamer"):
+		_fail(errors, "streamer note does not mention the streamer: %s" % node.season_label.text)
 	node._on_key(KEY_R)
-	if int(node.sim.get_paint(9, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 5)) != Sim.EMPTY or int(node.sim.get_paint(7, 4)) != Sim.EMPTY or int(node.sim.get_paint(7, 3)) != Sim.EMPTY or int(node.sim.get_paint(7, 2)) != Sim.EMPTY or int(node.sim.get_paint(7, 1)) != Sim.EMPTY or int(node.sim.get_paint(7, 0)) != Sim.EMPTY or int(node.sim.get_paint(7, -1)) != Sim.EMPTY or int(node.sim.get_paint(7, -2)) != Sim.EMPTY or int(node.sim.get_paint(7, -3)) != Sim.EMPTY or int(node.sim.get_paint(7, -4)) != Sim.EMPTY or int(node.sim.get_paint(7, -5)) != Sim.EMPTY or int(node.sim.get_paint(7, -6)) != Sim.EMPTY or int(node.sim.get_paint(7, -7)) != Sim.EMPTY or int(node.sim.get_paint(14, -11)) != Sim.EMPTY or int(node.sim.get_paint(14, -12)) != Sim.EMPTY or int(node.sim.get_paint(14, -13)) != Sim.EMPTY or int(node.sim.get_paint(14, -14)) != Sim.EMPTY or int(node.sim.get_paint(14, -15)) != Sim.EMPTY or int(node.sim.get_paint(14, -16)) != Sim.EMPTY or int(node.sim.get_paint(14, -17)) != Sim.EMPTY or int(node.sim.get_paint(14, -18)) != Sim.EMPTY or int(node.sim.get_paint(14, -19)) != Sim.EMPTY or int(node.sim.get_paint(14, -20)) != Sim.EMPTY or int(node.sim.get_paint(14, -21)) != Sim.EMPTY or int(node.sim.get_paint(14, -22)) != Sim.EMPTY or int(node.sim.get_paint(14, -23)) != Sim.EMPTY or int(node.sim.get_paint(14, -24)) != Sim.EMPTY:
+	if int(node.sim.get_paint(9, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 5)) != Sim.EMPTY or int(node.sim.get_paint(7, 4)) != Sim.EMPTY or int(node.sim.get_paint(7, 3)) != Sim.EMPTY or int(node.sim.get_paint(7, 2)) != Sim.EMPTY or int(node.sim.get_paint(7, 1)) != Sim.EMPTY or int(node.sim.get_paint(7, 0)) != Sim.EMPTY or int(node.sim.get_paint(7, -1)) != Sim.EMPTY or int(node.sim.get_paint(7, -2)) != Sim.EMPTY or int(node.sim.get_paint(7, -3)) != Sim.EMPTY or int(node.sim.get_paint(7, -4)) != Sim.EMPTY or int(node.sim.get_paint(7, -5)) != Sim.EMPTY or int(node.sim.get_paint(7, -6)) != Sim.EMPTY or int(node.sim.get_paint(7, -7)) != Sim.EMPTY or int(node.sim.get_paint(14, -11)) != Sim.EMPTY or int(node.sim.get_paint(14, -12)) != Sim.EMPTY or int(node.sim.get_paint(14, -13)) != Sim.EMPTY or int(node.sim.get_paint(14, -14)) != Sim.EMPTY or int(node.sim.get_paint(14, -15)) != Sim.EMPTY or int(node.sim.get_paint(14, -16)) != Sim.EMPTY or int(node.sim.get_paint(14, -17)) != Sim.EMPTY or int(node.sim.get_paint(14, -18)) != Sim.EMPTY or int(node.sim.get_paint(14, -19)) != Sim.EMPTY or int(node.sim.get_paint(14, -20)) != Sim.EMPTY or int(node.sim.get_paint(14, -21)) != Sim.EMPTY or int(node.sim.get_paint(14, -22)) != Sim.EMPTY or int(node.sim.get_paint(14, -23)) != Sim.EMPTY or int(node.sim.get_paint(14, -24)) != Sim.EMPTY or int(node.sim.get_paint(14, -25)) != Sim.EMPTY:
 		_fail(errors, "restart scenario did not clear the marks")
-	if int(node.sim.get_season()) != Sim.WET or int(node.sim.get_wet_haul()) != 0 or int(node.sim.get_beat()) != Sim.WET or int(node.sim.get_carted()) != 0 or int(node.sim.get_shipped()) != 0 or int(node.sim.get_coins()) != 0 or int(node.sim.get_banked()) != 0 or int(node.sim.get_hired()) != 0 or int(node.sim.get_lofted()) != 0 or int(node.sim.get_gated()) != 0 or int(node.sim.get_paid()) != 0 or int(node.sim.get_posted()) != 0 or int(node.sim.get_stood()) != 0 or int(node.sim.get_lit()) != 0 or int(node.sim.get_rung()) != 0 or int(node.sim.get_sounded()) != 0 or int(node.sim.get_raised()) != 0 or int(node.sim.get_hoisted()) != 0 or int(node.sim.get_flown()) != 0 or int(node.sim.get_carried()) != 0 or int(node.sim.get_shown()) != 0 or int(node.sim.get_broken()) != 0 or int(node.sim.get_struck()) != 0 or int(node.sim.get_dipped()) != 0 or int(node.sim.get_saluted()) != 0 or int(node.sim.get_presented()) != 0 or int(node.sim.get_furled()) != 0 or int(node.sim.get_gonfalon_dipped()) != 0 or int(node.sim.get_oriflamme_lowered()) != 0 or int(node.sim.get_vexillum_housed()) != 0 or int(node.sim.get_labarum_cased()) != 0 or int(node.sim.get_signum_sleeved()) != 0:
+	if int(node.sim.get_season()) != Sim.WET or int(node.sim.get_wet_haul()) != 0 or int(node.sim.get_beat()) != Sim.WET or int(node.sim.get_carted()) != 0 or int(node.sim.get_shipped()) != 0 or int(node.sim.get_coins()) != 0 or int(node.sim.get_banked()) != 0 or int(node.sim.get_hired()) != 0 or int(node.sim.get_lofted()) != 0 or int(node.sim.get_gated()) != 0 or int(node.sim.get_paid()) != 0 or int(node.sim.get_posted()) != 0 or int(node.sim.get_stood()) != 0 or int(node.sim.get_lit()) != 0 or int(node.sim.get_rung()) != 0 or int(node.sim.get_sounded()) != 0 or int(node.sim.get_raised()) != 0 or int(node.sim.get_hoisted()) != 0 or int(node.sim.get_flown()) != 0 or int(node.sim.get_carried()) != 0 or int(node.sim.get_shown()) != 0 or int(node.sim.get_broken()) != 0 or int(node.sim.get_struck()) != 0 or int(node.sim.get_dipped()) != 0 or int(node.sim.get_saluted()) != 0 or int(node.sim.get_presented()) != 0 or int(node.sim.get_furled()) != 0 or int(node.sim.get_gonfalon_dipped()) != 0 or int(node.sim.get_oriflamme_lowered()) != 0 or int(node.sim.get_vexillum_housed()) != 0 or int(node.sim.get_labarum_cased()) != 0 or int(node.sim.get_signum_sleeved()) != 0 or int(node.sim.get_streamer_rolled()) != 0:
 		_fail(errors, "restart scenario did not return to the wet season")
 	if int(node.sim.get_population()) > Sim.POP_CAP:
 		_fail(errors, "restart left the population over the cap")
@@ -3677,12 +3735,12 @@ func _test_lamp(errors: Array) -> void:
 	])
 
 
-func _assert_chain(sim, errors: Array, label: String, wet: int, stored: int, carted: int, shipped: int, coins: int, hired: int, yard: int, paid: int, posted: int, stood: int, lit: int, rung: int, sounded: int = 0, raised: int = 0, hoisted: int = 0, flown: int = 0, carried: int = 0, shown: int = 0, broken: int = 0, struck: int = 0, dipped: int = 0, saluted: int = 0, presented: int = 0, furled: int = 0, gonfalon: int = 0, oriflamme: int = 0, vexillum: int = 0, labarum: int = 0, signum: int = 0) -> void:
+func _assert_chain(sim, errors: Array, label: String, wet: int, stored: int, carted: int, shipped: int, coins: int, hired: int, yard: int, paid: int, posted: int, stood: int, lit: int, rung: int, sounded: int = 0, raised: int = 0, hoisted: int = 0, flown: int = 0, carried: int = 0, shown: int = 0, broken: int = 0, struck: int = 0, dipped: int = 0, saluted: int = 0, presented: int = 0, furled: int = 0, gonfalon: int = 0, oriflamme: int = 0, vexillum: int = 0, labarum: int = 0, signum: int = 0, streamer: int = 0) -> void:
 	if sim == null:
 		_fail(errors, "%s did not run" % label)
 		return
-	if int(sim.get_wet_haul()) != wet or int(sim.get_stored_salt()) != stored or int(sim.get_carted()) != carted or int(sim.get_shipped()) != shipped or int(sim.get_coins()) != coins or int(sim.get_hired()) != hired or int(sim.get_yard_left()) != yard or int(sim.get_paid()) != paid or int(sim.get_posted()) != posted or int(sim.get_stood()) != stood or int(sim.get_lit()) != lit or int(sim.get_rung()) != rung or int(sim.get_sounded()) != sounded or int(sim.get_raised()) != raised or int(sim.get_hoisted()) != hoisted or int(sim.get_flown()) != flown or int(sim.get_carried()) != carried or int(sim.get_shown()) != shown or int(sim.get_broken()) != broken or int(sim.get_struck()) != struck or int(sim.get_dipped()) != dipped or int(sim.get_saluted()) != saluted or int(sim.get_presented()) != presented or int(sim.get_furled()) != furled or int(sim.get_gonfalon_dipped()) != gonfalon or int(sim.get_oriflamme_lowered()) != oriflamme or int(sim.get_vexillum_housed()) != vexillum or int(sim.get_labarum_cased()) != labarum or int(sim.get_signum_sleeved()) != signum:
-		_fail(errors, "%s changed (wet %d stored %d carted %d shipped %d coins %d hired %d yard %d paid %d posted %d stood %d lit %d rung %d sounded %d raised %d hoisted %d flown %d carried %d shown %d broken %d struck %d dipped %d saluted %d presented %d furled %d gonfalon %d oriflamme %d vexillum %d labarum %d signum %d)" % [label, sim.get_wet_haul(), sim.get_stored_salt(), sim.get_carted(), sim.get_shipped(), sim.get_coins(), sim.get_hired(), sim.get_yard_left(), sim.get_paid(), sim.get_posted(), sim.get_stood(), sim.get_lit(), sim.get_rung(), sim.get_sounded(), sim.get_raised(), sim.get_hoisted(), sim.get_flown(), sim.get_carried(), sim.get_shown(), sim.get_broken(), sim.get_struck(), sim.get_dipped(), sim.get_saluted(), sim.get_presented(), sim.get_furled(), sim.get_gonfalon_dipped(), sim.get_oriflamme_lowered(), sim.get_vexillum_housed(), sim.get_labarum_cased(), sim.get_signum_sleeved()])
+	if int(sim.get_wet_haul()) != wet or int(sim.get_stored_salt()) != stored or int(sim.get_carted()) != carted or int(sim.get_shipped()) != shipped or int(sim.get_coins()) != coins or int(sim.get_hired()) != hired or int(sim.get_yard_left()) != yard or int(sim.get_paid()) != paid or int(sim.get_posted()) != posted or int(sim.get_stood()) != stood or int(sim.get_lit()) != lit or int(sim.get_rung()) != rung or int(sim.get_sounded()) != sounded or int(sim.get_raised()) != raised or int(sim.get_hoisted()) != hoisted or int(sim.get_flown()) != flown or int(sim.get_carried()) != carried or int(sim.get_shown()) != shown or int(sim.get_broken()) != broken or int(sim.get_struck()) != struck or int(sim.get_dipped()) != dipped or int(sim.get_saluted()) != saluted or int(sim.get_presented()) != presented or int(sim.get_furled()) != furled or int(sim.get_gonfalon_dipped()) != gonfalon or int(sim.get_oriflamme_lowered()) != oriflamme or int(sim.get_vexillum_housed()) != vexillum or int(sim.get_labarum_cased()) != labarum or int(sim.get_signum_sleeved()) != signum or int(sim.get_streamer_rolled()) != streamer:
+		_fail(errors, "%s changed (wet %d stored %d carted %d shipped %d coins %d hired %d yard %d paid %d posted %d stood %d lit %d rung %d sounded %d raised %d hoisted %d flown %d carried %d shown %d broken %d struck %d dipped %d saluted %d presented %d furled %d gonfalon %d oriflamme %d vexillum %d labarum %d signum %d streamer %d)" % [label, sim.get_wet_haul(), sim.get_stored_salt(), sim.get_carted(), sim.get_shipped(), sim.get_coins(), sim.get_hired(), sim.get_yard_left(), sim.get_paid(), sim.get_posted(), sim.get_stood(), sim.get_lit(), sim.get_rung(), sim.get_sounded(), sim.get_raised(), sim.get_hoisted(), sim.get_flown(), sim.get_carried(), sim.get_shown(), sim.get_broken(), sim.get_struck(), sim.get_dipped(), sim.get_saluted(), sim.get_presented(), sim.get_furled(), sim.get_gonfalon_dipped(), sim.get_oriflamme_lowered(), sim.get_vexillum_housed(), sim.get_labarum_cased(), sim.get_signum_sleeved(), sim.get_streamer_rolled()])
 
 
 func _test_bell(errors: Array) -> void:
@@ -7042,7 +7100,7 @@ func _test_labarum(errors: Array) -> void:
 func _test_signum(errors: Array) -> void:
 	if int(Sim.SIGNUM_CAP) != 1 or int(Sim.SIGNUM_TICK) != 100 or int(Sim.SIGNUM) != 34:
 		_fail(errors, "signum constants drifted")
-	if int(Sim.GRID_NORTH) != -24:
+	if int(Sim.GRID_NORTH) > -24:
 		_fail(errors, "the map was not extended to the signum row (north %s)" % Sim.GRID_NORTH)
 	var fresh = Sim.new()
 	fresh.restart()
@@ -7146,6 +7204,115 @@ func _test_signum(errors: Array) -> void:
 	if not shore.is_over():
 		_fail(errors, "the signum beat did not end the scenario")
 	print("signum sleeved %d left labarum %d cased %d housed %d vexillum left %d coins %d hired %d yard %d; no signum sleeved %d left %d cased %d; signum without a cased hire sleeved %d coins %d hired %d" % [sleeved.get_signum_sleeved(), sleeved.get_labarum_left(), sleeved.get_labarum_cased(), sleeved.get_vexillum_housed(), sleeved.get_vexillum_left(), sleeved.get_coins(), sleeved.get_hired(), sleeved.get_yard_left(), kept.get_signum_sleeved(), kept.get_labarum_left(), kept.get_labarum_cased(), bare.get_signum_sleeved(), bare.get_coins(), bare.get_hired()])
+
+
+func _test_streamer(errors: Array) -> void:
+	if int(Sim.STREAMER_CAP) != 1 or int(Sim.STREAMER_TICK) != 100 or int(Sim.STREAMER) != 35:
+		_fail(errors, "streamer constants drifted")
+	if int(Sim.GRID_NORTH) != -25:
+		_fail(errors, "the map was not extended to the streamer row (north %s)" % Sim.GRID_NORTH)
+	var fresh = Sim.new()
+	fresh.restart()
+	if not fresh.paint_cell(14, -25, Sim.STREAMER):
+		_fail(errors, "the streamer cell rejected a streamer")
+	if fresh.paint_cell(14, -24, Sim.STREAMER):
+		_fail(errors, "the signum cell accepted a streamer")
+	if int(fresh.get_paint(14, -25)) != Sim.STREAMER:
+		_fail(errors, "a rejected streamer erased the streamer")
+	fresh.restart()
+	if not fresh.paint_cell(14, -24, Sim.SIGNUM):
+		_fail(errors, "the signum cell rejected a signum")
+	if fresh.paint_cell(14, -25, Sim.SIGNUM):
+		_fail(errors, "the streamer cell accepted a signum")
+	if int(fresh.get_paint(14, -24)) != Sim.SIGNUM:
+		_fail(errors, "a rejected signum erased the signum")
+	if fresh.paint_cell(14, -23, Sim.STREAMER):
+		_fail(errors, "the labarum cell accepted a streamer")
+	if fresh.paint_cell(Sim.COAST_X, -25, Sim.STREAMER):
+		_fail(errors, "the brine accepted a streamer")
+	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.STREAMER):
+		_fail(errors, "the anthill accepted a streamer")
+	var plans := _plans(errors)
+	if plans.is_empty():
+		return
+	var kept = _run_plan(plans, "signum", errors)
+	var rolled = _run_plan(plans, "streamer", errors)
+	var rolled_again = _run_plan(plans, "streamer", errors)
+	var late = _run_plan(plans, "late_streamer", errors)
+	var dry_streamer = _run_plan(plans, "dry_streamer", errors)
+	var bare = _run_plan(plans, "streamer_only", errors)
+	var no_sleeved = _run_plan(plans, "signum_only", errors)
+	if kept == null or rolled == null or rolled_again == null or late == null or dry_streamer == null or bare == null or no_sleeved == null:
+		return
+	if not kept.is_over() or int(kept.get_beat()) == Sim.STREAMERING or int(kept.get_streamer_rolled()) != 0 or int(kept.get_signum_left()) != 1 or int(kept.get_signum_sleeved()) != 1 or int(kept.get_labarum_cased()) != 1 or int(kept.get_vexillum_housed()) != 1 or int(kept.get_vexillum_left()) != 0 or int(kept.get_coins()) != 2997 or int(kept.get_hired()) != 29 or int(kept.get_yard_left()) != 57:
+		_fail(errors, "a signum with no streamer changed the locked counts (over %s beat %s rolled %d left %d sleeved %d cased %d housed %d vexillum left %d coins %d hired %d yard %d)" % [kept.is_over(), kept.get_beat(), kept.get_streamer_rolled(), kept.get_signum_left(), kept.get_signum_sleeved(), kept.get_labarum_cased(), kept.get_vexillum_housed(), kept.get_vexillum_left(), kept.get_coins(), kept.get_hired(), kept.get_yard_left()])
+	var kept_summary := String(kept.get_summary())
+	if kept_summary.to_lower().contains("streamer") or kept_summary.contains("Rolled") or not kept_summary.contains("Sleeved 1 on the signum"):
+		_fail(errors, "a signum with no streamer changed the summary: %s" % kept_summary)
+	if int(rolled.get_streamer_rolled()) != 1 or int(rolled.get_signum_left()) != 0 or int(rolled.get_signum_sleeved()) != 1 or int(rolled.get_labarum_cased()) != 1 or int(rolled.get_vexillum_housed()) != 1 or int(rolled.get_vexillum_left()) != 0 or int(rolled.get_oriflamme_lowered()) != 1 or int(rolled.get_furled()) != 1 or int(rolled.get_presented()) != 1 or int(rolled.get_struck()) != 1 or int(rolled.get_coins()) != 2997 or int(rolled.get_hired()) != 29 or int(rolled.get_yard_left()) != 57 or int(rolled.get_stored_salt()) != int(kept.get_stored_salt()):
+		_fail(errors, "rolled %d, signum left %d, sleeved %d, cased %d, housed %d, vexillum left %d, furled %d, presented %d, coins %d, hired %d, yard %d" % [rolled.get_streamer_rolled(), rolled.get_signum_left(), rolled.get_signum_sleeved(), rolled.get_labarum_cased(), rolled.get_vexillum_housed(), rolled.get_vexillum_left(), rolled.get_furled(), rolled.get_presented(), rolled.get_coins(), rolled.get_hired(), rolled.get_yard_left()])
+	if int(rolled.get_streamer_rolled()) > int(Sim.STREAMER_CAP):
+		_fail(errors, "streamer rolled %d, over the cap of %d" % [rolled.get_streamer_rolled(), Sim.STREAMER_CAP])
+	var streamer_cell: Array = plans["streamer"]["streamer"][0]
+	var signum_cell: Array = plans["streamer"]["signum"][0]
+	var streamer_salt: Dictionary = rolled.get_cell_salt(int(streamer_cell[0]), int(streamer_cell[1]))
+	var signum_salt: Dictionary = rolled.get_cell_salt(int(signum_cell[0]), int(signum_cell[1]))
+	if int(streamer_salt.get("streamer", 0)) != 1 or int(signum_salt.get("signum", 0)) != 0:
+		_fail(errors, "streamer cell holds %s, signum holds %s" % [streamer_salt.get("streamer", 0), signum_salt.get("signum", 0)])
+	var rolled_summary := String(rolled.get_summary())
+	if not rolled_summary.contains("Rolled 1 on the streamer") or not rolled_summary.contains("Left 0 at the signum") or not rolled_summary.contains("Sleeved 1 on the signum"):
+		_fail(errors, "streamer summary missed the roll: %s" % rolled_summary)
+	if int(rolled_again.get_streamer_rolled()) != 1 or int(rolled_again.get_signum_left()) != 0 or int(rolled_again.get_signum_sleeved()) != 1 or int(rolled_again.get_coins()) != 2997 or int(rolled_again.get_hired()) != 29 or String(rolled_again.get_summary()) != rolled_summary:
+		_fail(errors, "repeated streamer paint rolled %d then %d" % [rolled.get_streamer_rolled(), rolled_again.get_streamer_rolled()])
+	if int(late.get_streamer_rolled()) != 1 or int(late.get_signum_left()) != 0 or int(late.get_signum_sleeved()) != 1 or int(late.get_vexillum_housed()) != 1 or int(late.get_vexillum_left()) != 0 or int(late.get_coins()) != 2997 or int(late.get_hired()) != 29 or int(late.get_yard_left()) != 57:
+		_fail(errors, "painting the streamer at the signum beat (rolled %d left %d sleeved %d) did not match painting it early" % [late.get_streamer_rolled(), late.get_signum_left(), late.get_signum_sleeved()])
+	_assert_chain(dry_streamer, errors, "dry streamer", 0, 1032, 1032, 1032, 1032, 10, 0, 8, 6, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+	if int(dry_streamer.get_streamer_rolled()) != 1 or int(dry_streamer.get_signum_left()) != 0 or int(dry_streamer.get_signum_sleeved()) != 1 or int(dry_streamer.get_yard_left()) != 0 or int(dry_streamer.get_wet_haul()) != 0:
+		_fail(errors, "dry streamer changed the short crew (wet %d rolled %d left %d sleeved %d yard %d)" % [dry_streamer.get_wet_haul(), dry_streamer.get_streamer_rolled(), dry_streamer.get_signum_left(), dry_streamer.get_signum_sleeved(), dry_streamer.get_yard_left()])
+	if int(bare.get_streamer_rolled()) != 0 or int(bare.get_signum_sleeved()) != 0 or int(bare.get_coins()) != int(no_sleeved.get_coins()) or int(bare.get_hired()) != int(no_sleeved.get_hired()) or String(bare.get_summary()) != String(no_sleeved.get_summary()):
+		_fail(errors, "a streamer with nobody sleeved rolled %d coins %d hired %d" % [bare.get_streamer_rolled(), bare.get_coins(), bare.get_hired()])
+	if String(bare.get_summary()).to_lower().contains("streamer") or String(bare.get_summary()).contains("Rolled"):
+		_fail(errors, "a streamer with nobody sleeved changed the summary: %s" % bare.get_summary())
+	_assert_pop(rolled, errors, "streamer")
+	_assert_pop(late, errors, "late_streamer")
+	_assert_pop(dry_streamer, errors, "dry_streamer")
+	_assert_pop(bare, errors, "streamer_only")
+	var shore = _prepare_plan(plans, "streamer", errors)
+	if shore == null:
+		return
+	var open_guard := 0
+	var open_limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + int(Sim.SHIP_TICK) + int(Sim.MARKET_TICK) + int(Sim.YARD_TICK) + int(Sim.BUNK_TICK) + int(Sim.LOFT_TICK) + int(Sim.GATE_TICK) + int(Sim.WAGE_TICK) + int(Sim.RELIEF_TICK) + int(Sim.WATCH_TICK) + int(Sim.LAMP_TICK) + int(Sim.BELL_TICK) + int(Sim.HORN_TICK) + int(Sim.FLAG_TICK) + int(Sim.BANNER_TICK) + int(Sim.PENNANT_TICK) + int(Sim.STANDARD_TICK) + int(Sim.JACK_TICK) + int(Sim.ENSIGN_TICK) + int(Sim.BURGEE_TICK) + int(Sim.CORNET_TICK) + int(Sim.GUIDON_TICK) + int(Sim.FANION_TICK) + int(Sim.PENNON_TICK) + int(Sim.GONFALON_TICK) + int(Sim.ORIFLAMME_TICK) + int(Sim.VEXILLUM_TICK) + int(Sim.LABARUM_TICK) + int(Sim.SIGNUM_TICK) + 2
+	while int(shore.get_beat()) != Sim.STREAMERING and not shore.is_over() and open_guard < open_limit:
+		shore.tick()
+		open_guard += 1
+	if int(shore.get_beat()) != Sim.STREAMERING or shore.is_over() or int(shore.get_ticks_until_rain()) != int(Sim.STREAMER_TICK):
+		_fail(errors, "streamer opened early (beat %s ticks %d rolled %d left %d sleeved %d)" % [shore.get_beat(), shore.get_ticks_until_rain(), shore.get_streamer_rolled(), shore.get_signum_left(), shore.get_signum_sleeved()])
+		return
+	if int(shore.get_streamer_rolled()) != 0 or int(shore.get_signum_left()) != 1 or int(shore.get_signum_sleeved()) != 1 or int(shore.get_vexillum_left()) != 0 or int(shore.get_vexillum_housed()) != 1 or int(shore.get_coins()) != 2997 or int(shore.get_hired()) != 29 or int(shore.get_yard_left()) != 57:
+		_fail(errors, "streamer opened with a hire already moved (rolled %d left %d sleeved %d)" % [shore.get_streamer_rolled(), shore.get_signum_left(), shore.get_signum_sleeved()])
+	var saw_cap := false
+	var cap_guard := 0
+	while not shore.is_over() and cap_guard < int(Sim.STREAMER_TICK) + 2:
+		shore.tick()
+		cap_guard += 1
+		if int(shore.get_streamer_rolled()) == int(Sim.STREAMER_CAP) and int(shore.get_signum_left()) == 0 and int(shore.get_signum_sleeved()) == 1 and int(shore.get_ticks_until_rain()) > 0:
+			saw_cap = true
+			shore.tick()
+			if int(shore.get_streamer_rolled()) != 1 or int(shore.get_signum_left()) != 0 or int(shore.get_signum_sleeved()) != 1 or int(shore.get_vexillum_housed()) != 1:
+				_fail(errors, "the streamer kept rolling after the cap (rolled %d left %d sleeved %d)" % [shore.get_streamer_rolled(), shore.get_signum_left(), shore.get_signum_sleeved()])
+			break
+	if not saw_cap:
+		_fail(errors, "the streamer did not stop at %d while ticks remained (rolled %d left %d ticks %d)" % [Sim.STREAMER_CAP, shore.get_streamer_rolled(), shore.get_signum_left(), shore.get_ticks_until_rain()])
+	var end_guard := 0
+	while not shore.is_over() and end_guard < int(Sim.STREAMER_TICK) + 2:
+		shore.tick()
+		end_guard += 1
+		if int(shore.get_streamer_rolled()) != 1 or int(shore.get_signum_left()) != 0 or int(shore.get_signum_sleeved()) != 1:
+			_fail(errors, "the streamer rolled again after the cap (rolled %d left %d sleeved %d)" % [shore.get_streamer_rolled(), shore.get_signum_left(), shore.get_signum_sleeved()])
+			break
+	if not shore.is_over():
+		_fail(errors, "the streamer beat did not end the scenario")
+	print("streamer rolled %d left signum %d sleeved %d cased %d housed %d vexillum left %d coins %d hired %d yard %d; no streamer rolled %d left %d sleeved %d; streamer without a sleeved hire rolled %d coins %d hired %d" % [rolled.get_streamer_rolled(), rolled.get_signum_left(), rolled.get_signum_sleeved(), rolled.get_labarum_cased(), rolled.get_vexillum_housed(), rolled.get_vexillum_left(), rolled.get_coins(), rolled.get_hired(), rolled.get_yard_left(), kept.get_streamer_rolled(), kept.get_signum_left(), kept.get_signum_sleeved(), bare.get_streamer_rolled(), bare.get_coins(), bare.get_hired()])
 
 
 func _run_plan(plans: Dictionary, plan_name: String, errors: Array):
@@ -7688,6 +7855,24 @@ func _run_plan(plans: Dictionary, plan_name: String, errors: Array):
 		_apply_marks(sim, plan["after_labarum"], errors)
 		if errors.size() > signum_before:
 			return null
+	if plan.has("after_signum"):
+		var streamer_guard := 0
+		var streamer_limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + int(Sim.SHIP_TICK) + int(Sim.MARKET_TICK) + int(Sim.YARD_TICK) + int(Sim.BUNK_TICK) + int(Sim.LOFT_TICK) + int(Sim.GATE_TICK) + int(Sim.WAGE_TICK) + int(Sim.RELIEF_TICK) + int(Sim.WATCH_TICK) + int(Sim.LAMP_TICK) + int(Sim.BELL_TICK) + int(Sim.HORN_TICK) + int(Sim.FLAG_TICK) + int(Sim.BANNER_TICK) + int(Sim.PENNANT_TICK) + int(Sim.STANDARD_TICK) + int(Sim.JACK_TICK) + int(Sim.ENSIGN_TICK) + int(Sim.BURGEE_TICK) + int(Sim.CORNET_TICK) + int(Sim.GUIDON_TICK) + int(Sim.FANION_TICK) + int(Sim.PENNON_TICK) + int(Sim.GONFALON_TICK) + int(Sim.ORIFLAMME_TICK) + int(Sim.VEXILLUM_TICK) + int(Sim.LABARUM_TICK) + 2
+		while int(sim.get_beat()) != Sim.SIGNUMING and not sim.is_over() and streamer_guard < streamer_limit:
+			sim.tick()
+			streamer_guard += 1
+		if int(sim.get_beat()) != Sim.SIGNUMING or sim.is_over():
+			_fail(errors, "%s did not open the signum beat before the streamer" % plan_name)
+			return null
+		if int(sim.get_ticks_until_rain()) != int(Sim.SIGNUM_TICK):
+			_fail(errors, "%s signum countdown started at %d, expected %d" % [
+				plan_name, sim.get_ticks_until_rain(), Sim.SIGNUM_TICK,
+			])
+			return null
+		var streamer_before := errors.size()
+		_apply_marks(sim, plan["after_signum"], errors)
+		if errors.size() > streamer_before:
+			return null
 	sim.run_until_rain()
 	return sim
 
@@ -7761,6 +7946,8 @@ func _apply_marks(sim, plan: Dictionary, errors: Array) -> void:
 		_apply_cells(sim, plan["labarum"], Sim.LABARUM, errors)
 	if plan.has("signum"):
 		_apply_cells(sim, plan["signum"], Sim.SIGNUM, errors)
+	if plan.has("streamer"):
+		_apply_cells(sim, plan["streamer"], Sim.STREAMER, errors)
 	if plan.has("rake_rect"):
 		_apply_rect(sim, plan["rake_rect"], Sim.RAKE, errors)
 
