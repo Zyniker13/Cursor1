@@ -124,6 +124,8 @@ func _run() -> void:
 	test_reglet_book()
 	test_billet_rule()
 	test_billet_book()
+	test_reed_rule()
+	test_reed_book()
 	test_chart_4_boat()
 	test_one_rotation_is_not_solved()
 	test_hint_points_at_one_piece()
@@ -321,7 +323,8 @@ func test_charts() -> void:
 	check(Charts.baguette().size() == 8, "baguette adds eight charts")
 	check(Charts.reglet().size() == 8, "reglet adds eight charts")
 	check(Charts.billet().size() == 8, "billet adds eight charts")
-	check(book.size() == 414, "four hundred fourteen charts")
+	check(Charts.reed().size() == 8, "reed adds eight charts")
+	check(book.size() == 422, "four hundred twenty-two charts")
 	check(str(book[13]["id"]) == "14" and str(book[13]["title"]) == "The Holding Line", "chart 14 stays the reach capstone")
 	check(str(book[14]["title"]) == "North Light", "chart 15 opens the basin")
 	check(str(book[21]["id"]) == "22" and str(book[21]["title"]) == "The Basin Mark", "chart 22 stays the basin capstone")
@@ -423,6 +426,8 @@ func test_charts() -> void:
 	check(str(book[405]["id"]) == "406" and str(book[405]["title"]) == "The Reglet Line", "chart 406 stays the reglet capstone")
 	check(str(book[406]["title"]) == "The Flooded Billet", "chart 407 opens the billet")
 	check(str(book[413]["id"]) == "414" and str(book[413]["title"]) == "The Billet Line", "chart 414 stays the billet capstone")
+	check(str(book[414]["title"]) == "The Flooded Reed", "chart 415 opens the reed")
+	check(str(book[421]["id"]) == "422" and str(book[421]["title"]) == "The Reed Line", "chart 422 stays the reed capstone")
 	var seen_ids := {}
 	var seen_titles := {}
 	var quay_titles := ["First Glass", "Around the Pilings", "High Water", "Sleeping Hull", "Split the White", "The Night Mark"]
@@ -525,6 +530,20 @@ func test_charts() -> void:
 			_check_archivolt_clears(chart, clears, solved)
 		elif _chart_has_kind(chart, "taenia"):
 			_check_taenia_clears(chart, clears, solved)
+		elif _chart_has_kind(chart, "reed"):
+			# A flooded reed passes every heading, so all four facings clear
+			# once the tide covers its row. Low water stops every heading.
+			check(clears.size() == 4, "chart %s has four flooded facings that clear (found %d)" % [id, clears.size()])
+			var reed_facings := {}
+			var reed_authored := false
+			for raw_clear in clears:
+				var clearing: Dictionary = raw_clear
+				check(int(clearing["tide_index"]) == 1, "chart %s clear stays at high water" % id)
+				reed_facings[int(clearing["pieces"]["O"]["rot"])] = true
+				if _same_solution(chart, clearing, solved):
+					reed_authored = true
+			check(reed_facings.has(0) and reed_facings.has(90) and reed_facings.has(180) and reed_facings.has(270), "chart %s every flooded facing clears" % id)
+			check(reed_authored, "chart %s authored solution is one of the flooded facings" % id)
 		elif clears.size() == 1:
 			check(true, "chart %s has one clearing state" % id)
 			check(_same_solution(chart, clears[0], solved), "chart %s clearing state is the authored solution" % id)
@@ -14082,6 +14101,78 @@ func _expect_billet_miss(chart: Dictionary, piece_id: String, kind: String, rot:
 	check(not Tracer.is_cleared(copy, Charts.make_state(copy, true)), label)
 
 
+func test_reed_rule() -> void:
+	for dir in ["N", "E", "S", "W"]:
+		check(not Tracer.reed_passes(0, dir), "a dry reed stops %s" % dir)
+		check(not Tracer.reed_passes(90, dir), "a turned dry reed still stops %s" % dir)
+		check(Tracer.reed_flood_passes(0, dir), "a flooded reed passes %s" % dir)
+		check(Tracer.reed_flood_passes(90, dir), "a turned flooded reed still passes %s" % dir)
+	check(not Tracer.impost_flood_passes(0, "N") and Tracer.impost_flood_passes(0, "S") and Tracer.impost_flood_passes(0, "E") and Tracer.impost_flood_passes(0, "W"), "a flooded north impost still stops north")
+	check(Tracer.ovolo_passes(0, "S") and Tracer.ovolo_passes(0, "E") and Tracer.ovolo_passes(0, "W") and not Tracer.ovolo_passes(0, "N"), "a dry ovolo still passes every heading except north")
+	check(Tracer.billet_flood_passes(0, "N") and Tracer.billet_flood_passes(0, "S") and Tracer.billet_flood_passes(0, "W") and not Tracer.billet_flood_passes(0, "E"), "a flooded north billet still passes north, south, and west")
+	check(Tracer.reglet_flood_passes(0, "N") and Tracer.reglet_flood_passes(0, "S") and Tracer.reglet_flood_passes(0, "E") and not Tracer.reglet_flood_passes(0, "W"), "a flooded north reglet still passes north, south, and east")
+	check(Tracer.baguette_flood_passes(0, "N") and Tracer.baguette_flood_passes(0, "E") and Tracer.baguette_flood_passes(0, "W") and not Tracer.baguette_flood_passes(0, "S"), "a flooded north baguette still passes north, east, and west")
+	check(Tracer.listel_flood_passes(0, "N") and Tracer.listel_flood_passes(0, "E") and not Tracer.listel_flood_passes(0, "S"), "a flooded north listel still passes north and east")
+	check(Tracer.necking_flood_passes(0, "N") and Tracer.necking_flood_passes(0, "W") and not Tracer.necking_flood_passes(0, "S"), "a flooded north necking still passes north and west")
+	check(Tracer.taenia_flood_passes(0, "N") and Tracer.taenia_flood_passes(0, "S") and not Tracer.taenia_flood_passes(0, "E"), "a flooded north taenia still passes north and south")
+	check(Tracer.annulet_flood_passes(0, "W") and not Tracer.annulet_flood_passes(0, "N"), "a flooded north annulet still passes only west")
+	check(Tracer.echinus_flood_passes(0, "E") and not Tracer.echinus_flood_passes(0, "N"), "a flooded north echinus still passes only east")
+	check(Tracer.rebate_flood_passes(0, "S") and not Tracer.rebate_flood_passes(0, "N"), "a flooded north rebate still passes only south")
+	check(Tracer.abacus_flood_passes(0, "N") and not Tracer.abacus_flood_passes(0, "E"), "a flooded north abacus still passes only north")
+	check(Tracer.throat_flood_passes(0, "S") and not Tracer.throat_flood_passes(0, "E"), "a flooded north throat still passes only south")
+
+
+func test_reed_book() -> void:
+	var book := Charts.reed()
+	check(book.size() == 8, "the reed book has eight charts")
+	var titles := ["The Flooded Reed", "The Turned Reed", "The Listel Pair", "The Necking Pair", "The Taenia Pair", "The Baguette Dock", "The Reglet Dock", "The Reed Line"]
+	for i in book.size():
+		var chart: Dictionary = book[i]
+		check(str(chart["harbor"]) == Charts.REED, "chart %s belongs to the reed" % str(chart["id"]))
+		check(str(chart["title"]) == titles[i], "chart %s keeps its title" % str(chart["id"]))
+		_expect_reed_misses(chart)
+	check(str(book[2]["teach"]).to_lower().contains("listel"), "chart 417 names the listel")
+	check(str(book[3]["teach"]).to_lower().contains("necking"), "chart 418 names the necking")
+	check(str(book[4]["teach"]).to_lower().contains("taenia"), "chart 419 names the taenia")
+	check(str(book[5]["teach"]).to_lower().contains("baguette"), "chart 420 names the baguette")
+	check(str(book[6]["teach"]).to_lower().contains("reglet"), "chart 421 names the reglet")
+	check(str(book[7]["teach"]).to_lower().contains("billet") and str(book[7]["teach"]).to_lower().contains("annulet") and str(book[7]["teach"]).to_lower().contains("echinus") and str(book[7]["teach"]).to_lower().contains("rebate") and str(book[7]["teach"]).to_lower().contains("abacus") and str(book[7]["teach"]).to_lower().contains("throat"), "chart 422 names the billet, the annulet, the echinus, the rebate, the abacus, and the throat")
+	_expect_reed_miss(book[2], "O", "listel", 0, "a flooded north listel misses chart 417")
+	_expect_reed_miss(book[3], "O", "necking", 0, "a flooded north necking misses chart 418")
+	_expect_reed_miss(book[4], "O", "taenia", 0, "a flooded north taenia misses chart 419")
+	_expect_reed_miss(book[5], "O", "baguette", 0, "a flooded north baguette misses chart 420")
+	_expect_reed_miss(book[6], "O", "reglet", 0, "a flooded north reglet misses chart 421")
+	_expect_reed_miss(book[7], "O", "billet", 0, "a flooded north billet misses chart 422")
+	_expect_reed_miss(book[7], "O", "annulet", 0, "a flooded north annulet misses chart 422")
+	_expect_reed_miss(book[7], "O", "echinus", 0, "a flooded north echinus misses chart 422")
+	_expect_reed_miss(book[7], "O", "rebate", 0, "a flooded north rebate misses chart 422")
+	_expect_reed_miss(book[7], "O", "abacus", 0, "a flooded north abacus misses chart 422")
+	_expect_reed_miss(book[7], "O", "throat", 0, "a flooded north throat misses chart 422")
+	var line: Dictionary = book[7]
+	var lit: Dictionary = Tracer.trace(line, Charts.make_state(line, true))
+	check(not bool(lit["boats"]["Hb"]), "the reed line keeps the hull dark")
+	var ebb: Dictionary = Charts.duplicate_state(Charts.make_state(line, true))
+	ebb["tide_index"] = 0
+	var ebb_trace: Dictionary = Tracer.trace(line, ebb)
+	check(bool(ebb_trace["boats"]["Hb"]) and not Tracer.is_cleared(line, ebb), "low water lights the hull and does not clear")
+
+
+func _expect_reed_misses(chart: Dictionary) -> void:
+	var kinds: Array = ["listel", "necking", "taenia", "baguette", "reglet", "billet", "annulet", "echinus", "rebate", "abacus", "throat", "impost", "threshold", "ovolo", "fascia", "soffit", "lintel", "hood", "archivolt", "cill", "larmier", "scotia", "architrave", "beak", "drip"]
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		var pid := str(piece["id"])
+		for kind in kinds:
+			for rot in [0, 90, 180, 270]:
+				_expect_reed_miss(chart, pid, kind, rot, "chart %s %s %s at %d misses" % [str(chart["id"]), pid, kind, rot])
+
+
+func _expect_reed_miss(chart: Dictionary, piece_id: String, kind: String, rot: int, label: String) -> void:
+	var copy: Dictionary = chart.duplicate(true)
+	_retarget(copy, piece_id, kind, rot)
+	check(not Tracer.is_cleared(copy, Charts.make_state(copy, true)), label)
+
+
 func test_smoke() -> void:
 	var main_script: Script = load("res://scripts/main.gd")
 	main_script.persist_progress = false
@@ -15875,8 +15966,44 @@ func test_smoke() -> void:
 	await process_frame
 	check(str(main.chart["id"]) == "407", "Billet returns to The Flooded Billet")
 	check(_chart_row_fits(main.billet_grid, main._side), "the billet chart row fits in the window")
+	var reed_rect: Rect2 = main.reed_book_button.get_global_rect()
+	var reed_side: Rect2 = main._side.get_global_rect()
+	check(reed_side.grow(1.0).encloses(reed_rect), "the reed book button sits inside the side panel")
+	check(not reed_rect.intersects(billet_rect), "the reed book button stays off the billet")
+	check(reed_rect.size.x + 0.5 >= main.reed_book_button.get_minimum_size().x, "the reed label has room")
+	check(billet_rect.size.x + 0.5 >= main.billet_book_button.get_minimum_size().x, "the billet label still has room")
+	main.unlocked[414] = false
+	main._refresh_chrome()
+	check(main.reed_book_button.disabled, "the reed stays locked until the billet line is held")
+	main.unlocked[413] = true
+	check(main.select_chart(413), "chart 414 opens when unlocked")
+	check(main.reed_book_button.disabled, "opening the billet line does not unlock the reed")
+	main.state = Charts.duplicate_state(Charts.make_state(main.chart, true))
+	main._refresh()
+	main.try_lock()
+	check(main.board_locked and main.unlocked[414], "holding the billet line opens the reed")
+	main._advance_from_win()
+	check(str(main.chart["id"]) == "415", "next chart from the billet line enters The Flooded Reed")
+	check(main.reed_grid.visible and not main.billet_grid.visible and not main.reglet_grid.visible, "the reed grid opens with The Flooded Reed")
+	check(str(main.harbor_label.text) == Charts.REED, "the harbor name follows the reed")
+	check(str(main.tide_readout.text).to_lower().contains("reed"), "chart 415 names the reed in the water readout")
+	var reed_cell := Charts.piece_cell(main.chart, main.state, "O")
+	check(str(main.selected_id) == "O" and int(main.state["pieces"]["O"]["rot"]) == 90, "chart 415 starts facing east")
+	_click_cell(main, reed_cell.x, reed_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 180, "a click turns the reed from east to south")
+	check(str(main.status_label.text).to_lower().contains("stops") and str(main.status_label.text).to_lower().contains("every heading passes"), "the reed says every dry heading stops and the flood opens every heading")
+	_click_cell(main, reed_cell.x, reed_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 270, "the next click turns the reed west")
+	_click_cell(main, reed_cell.x, reed_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 0, "the next click turns the reed north")
+	_click_cell(main, reed_cell.x, reed_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 90, "four clicks restore the east facing")
+	main._on_book_pressed(52)
+	await process_frame
+	check(str(main.chart["id"]) == "415", "Reed returns to The Flooded Reed")
+	check(_chart_row_fits(main.reed_grid, main._side), "the reed chart row fits in the window")
 	main._on_book_pressed(13)
-	check(main.weir_grid.visible and not main.lintel_grid.visible and not main.mullion_grid.visible and not main.transom_grid.visible and not main.casement_grid.visible and not main.jamb_grid.visible and not main.astragal_grid.visible and not main.scotia_grid.visible and not main.torus_grid.visible and not main.ogee_grid.visible and not main.ovolo_grid.visible and not main.cavetto_grid.visible and not main.fillet_grid.visible and not main.corona_grid.visible and not main.bead_grid.visible and not main.quirk_grid.visible and not main.cyma_grid.visible and not main.fascia_grid.visible and not main.soffit_grid.visible and not main.drip_grid.visible and not main.beak_grid.visible and not main.hood_grid.visible and not main.throat_grid.visible and not main.larmier_grid.visible and not main.cill_grid.visible and not main.threshold_grid.visible and not main.impost_grid.visible and not main.architrave_grid.visible and not main.archivolt_grid.visible and not main.abacus_grid.visible and not main.rebate_grid.visible and not main.echinus_grid.visible and not main.annulet_grid.visible and not main.listel_grid.visible and not main.necking_grid.visible and not main.taenia_grid.visible and not main.baguette_grid.visible and not main.reglet_grid.visible and not main.billet_grid.visible, "the weir book still opens")
+	check(main.weir_grid.visible and not main.lintel_grid.visible and not main.mullion_grid.visible and not main.transom_grid.visible and not main.casement_grid.visible and not main.jamb_grid.visible and not main.astragal_grid.visible and not main.scotia_grid.visible and not main.torus_grid.visible and not main.ogee_grid.visible and not main.ovolo_grid.visible and not main.cavetto_grid.visible and not main.fillet_grid.visible and not main.corona_grid.visible and not main.bead_grid.visible and not main.quirk_grid.visible and not main.cyma_grid.visible and not main.fascia_grid.visible and not main.soffit_grid.visible and not main.drip_grid.visible and not main.beak_grid.visible and not main.hood_grid.visible and not main.throat_grid.visible and not main.larmier_grid.visible and not main.cill_grid.visible and not main.threshold_grid.visible and not main.impost_grid.visible and not main.architrave_grid.visible and not main.archivolt_grid.visible and not main.abacus_grid.visible and not main.rebate_grid.visible and not main.echinus_grid.visible and not main.annulet_grid.visible and not main.listel_grid.visible and not main.necking_grid.visible and not main.taenia_grid.visible and not main.baguette_grid.visible and not main.reglet_grid.visible and not main.billet_grid.visible and not main.reed_grid.visible, "the weir book still opens")
 	main.select_chart(0)
 	main.restart_chart()
 	var before_rot := int(main.state["pieces"]["M"]["rot"])
@@ -15985,8 +16112,9 @@ func _walk(chart: Dictionary, state: Dictionary, index: int, found: Array) -> vo
 	# A cill has four facings. Opposite facings share the open set. Dry, it passes the facing and the opposite. Flooded, only the two perpendicular directions pass.
 	# A threshold has four facings. Opposite facings do not share the open set. Dry, only the opposite of the facing passes. Flooded, every direction except that opposite passes.
 	# An impost has four facings. Opposite facings do not share the open set. Dry, only the facing passes. Flooded, every direction except that facing passes.
+	# A reed has four facings. Dry, every heading stops. Flooded, every heading passes, so every facing shares that open set.
 	var rots: Array = [0]
-	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma" or kind == "fascia" or kind == "soffit" or kind == "drip" or kind == "beak" or kind == "hood" or kind == "throat" or kind == "larmier" or kind == "cill" or kind == "threshold" or kind == "impost" or kind == "architrave" or kind == "archivolt" or kind == "abacus" or kind == "rebate" or kind == "echinus" or kind == "annulet" or kind == "listel" or kind == "necking" or kind == "taenia" or kind == "baguette" or kind == "reglet" or kind == "billet":
+	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma" or kind == "fascia" or kind == "soffit" or kind == "drip" or kind == "beak" or kind == "hood" or kind == "throat" or kind == "larmier" or kind == "cill" or kind == "threshold" or kind == "impost" or kind == "architrave" or kind == "archivolt" or kind == "abacus" or kind == "rebate" or kind == "echinus" or kind == "annulet" or kind == "listel" or kind == "necking" or kind == "taenia" or kind == "baguette" or kind == "reglet" or kind == "billet" or kind == "reed":
 		rots = [0, 90, 180, 270]
 	elif kind != "shutter" and kind != "well" and kind != "siphon" and kind != "lintel" and kind != "mullion" and kind != "transom":
 		rots = [0, 90]

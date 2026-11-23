@@ -62,7 +62,8 @@ const CHARNEL_AWNING := Color(0.58, 0.50, 0.42)
 const SEPULCHRE_AWNING := Color(0.46, 0.44, 0.50)
 const VAULT_AWNING := Color(0.32, 0.40, 0.48)
 const CAIRN_AWNING := Color(0.50, 0.42, 0.30)
-const WINDOW_W := 3552.0
+const COLUMBARIUM_AWNING := Color(0.46, 0.44, 0.48)
+const WINDOW_W := 4044.0
 
 var notice_label: Label
 var purse_label: Label
@@ -272,6 +273,8 @@ func _awning_for(floor_id: String) -> Color:
 		return VAULT_AWNING
 	if floor_id == "cairn":
 		return CAIRN_AWNING
+	if floor_id == "columbarium":
+		return COLUMBARIUM_AWNING
 	return CHART_AWNING
 
 
