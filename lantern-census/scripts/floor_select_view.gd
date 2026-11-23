@@ -48,7 +48,9 @@ const RETABLE_AWNING := Color(0.74, 0.56, 0.18)
 const TESTER_AWNING := Color(0.28, 0.16, 0.36)
 const RIDDEL_AWNING := Color(0.34, 0.38, 0.50)
 const FRONTAL_AWNING := Color(0.16, 0.34, 0.28)
-const WINDOW_W := 2600.0
+const PALL_AWNING := Color(0.86, 0.82, 0.70)
+const HERSE_AWNING := Color(0.32, 0.34, 0.38)
+const WINDOW_W := 2736.0
 
 var notice_label: Label
 var purse_label: Label
@@ -230,6 +232,10 @@ func _awning_for(floor_id: String) -> Color:
 		return RIDDEL_AWNING
 	if floor_id == "frontal":
 		return FRONTAL_AWNING
+	if floor_id == "pall":
+		return PALL_AWNING
+	if floor_id == "herse":
+		return HERSE_AWNING
 	return CHART_AWNING
 
 
