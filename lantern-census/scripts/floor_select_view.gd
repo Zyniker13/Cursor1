@@ -40,7 +40,8 @@ const PYX_AWNING := Color(0.55, 0.40, 0.12)
 const AUMBRY_AWNING := Color(0.58, 0.54, 0.46)
 const PISCINA_AWNING := Color(0.34, 0.48, 0.52)
 const SEDILIA_AWNING := Color(0.46, 0.40, 0.32)
-const WINDOW_W := 2056.0
+const CREDENCE_AWNING := Color(0.64, 0.54, 0.38)
+const WINDOW_W := 2124.0
 
 var notice_label: Label
 var purse_label: Label
@@ -206,6 +207,8 @@ func _awning_for(floor_id: String) -> Color:
 		return PISCINA_AWNING
 	if floor_id == "sedilia":
 		return SEDILIA_AWNING
+	if floor_id == "credence":
+		return CREDENCE_AWNING
 	return CHART_AWNING
 
 
