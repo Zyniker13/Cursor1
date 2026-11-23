@@ -4718,6 +4718,68 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 		var jogb_after_empty = jogb_after_row <= 2 and state.form[jogb_after_row][jogb_after_col] == null
 		if jogb_before_empty and jogb_after_empty:
 			guess += _stamp_number(state, card_id, row, col)
+	if rule == "drop_if_awl_count":
+		var awl_filled = 0
+		for awl_row in 3:
+			for awl_col in 3:
+				if state.form[awl_row][awl_col] != null:
+					awl_filled += 1
+		var awl_next = awl_filled + 1
+		if awl_next == 13 or awl_next == 16:
+			guess -= 4
+		elif awl_filled == 13 or awl_filled == 16:
+			guess += 5
+	if rule == "double_groove_fill":
+		var groove_before_row = row
+		var groove_before_col = col - 13
+		while groove_before_col < 0:
+			groove_before_row -= 1
+			groove_before_col += 3
+		var groove_after_row = row
+		var groove_after_col = col + 1
+		while groove_after_col > 2:
+			groove_after_row += 1
+			groove_after_col -= 3
+		var groove_before_filled = groove_before_row >= 0 and state.form[groove_before_row][groove_before_col] != null
+		var groove_after_filled = groove_after_row <= 2 and state.form[groove_after_row][groove_after_col] != null
+		if groove_before_filled and groove_after_filled:
+			guess += _stamp_number(state, card_id, row, col)
+	if rule == "yield_sprig_pay":
+		var sprig_sides = 0
+		var sprig_corners = 0
+		for sprig_side in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var sprig_side_row = row + sprig_side.x
+			var sprig_side_col = col + sprig_side.y
+			if sprig_side_row < 0 or sprig_side_col < 0 or sprig_side_row > 2 or sprig_side_col > 2:
+				continue
+			if state.form[sprig_side_row][sprig_side_col] != null:
+				sprig_sides += 1
+		for sprig_corner in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var sprig_corner_row = row + sprig_corner.x
+			var sprig_corner_col = col + sprig_corner.y
+			if sprig_corner_row < 0 or sprig_corner_col < 0 or sprig_corner_row > 2 or sprig_corner_col > 2:
+				continue
+			if state.form[sprig_corner_row][sprig_corner_col] != null:
+				sprig_corners += 1
+		if sprig_sides == 11 and sprig_corners == 4:
+			guess += 4
+		else:
+			guess -= 1
+	if rule == "double_groove_blank":
+		var grooveb_before_row = row
+		var grooveb_before_col = col - 13
+		while grooveb_before_col < 0:
+			grooveb_before_row -= 1
+			grooveb_before_col += 3
+		var grooveb_after_row = row
+		var grooveb_after_col = col + 1
+		while grooveb_after_col > 2:
+			grooveb_after_row += 1
+			grooveb_after_col -= 3
+		var grooveb_before_empty = grooveb_before_row >= 0 and state.form[grooveb_before_row][grooveb_before_col] == null
+		var grooveb_after_empty = grooveb_after_row <= 2 and state.form[grooveb_after_row][grooveb_after_col] == null
+		if grooveb_before_empty and grooveb_after_empty:
+			guess += _stamp_number(state, card_id, row, col)
 	if rule == "drop_if_gimlet_count":
 		var gimlet_filled = 0
 		for gimlet_row in 3:
