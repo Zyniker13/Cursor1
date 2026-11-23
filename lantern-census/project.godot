@@ -6,14 +6,14 @@ config_version=5
 [application]
 
 config/name="Lantern Census"
-config/description="Thirty-four dark floors. The guild pays for the map you carry out."
+config/description="Thirty-five dark floors. The guild pays for the map you carry out."
 run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
 [display]
 
-window/size/viewport_width=2328
+window/size/viewport_width=2396
 window/size/viewport_height=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
