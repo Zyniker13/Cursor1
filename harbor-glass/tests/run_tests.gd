@@ -98,6 +98,8 @@ func _run() -> void:
 	test_cill_book()
 	test_threshold_rule()
 	test_threshold_book()
+	test_impost_rule()
+	test_impost_book()
 	test_chart_4_boat()
 	test_one_rotation_is_not_solved()
 	test_hint_points_at_one_piece()
@@ -282,7 +284,8 @@ func test_charts() -> void:
 	check(Charts.larmier().size() == 8, "larmier adds eight charts")
 	check(Charts.cill().size() == 8, "cill adds eight charts")
 	check(Charts.threshold().size() == 8, "threshold adds eight charts")
-	check(book.size() == 310, "three hundred ten charts")
+	check(Charts.impost().size() == 8, "impost adds eight charts")
+	check(book.size() == 318, "three hundred eighteen charts")
 	check(str(book[13]["id"]) == "14" and str(book[13]["title"]) == "The Holding Line", "chart 14 stays the reach capstone")
 	check(str(book[14]["title"]) == "North Light", "chart 15 opens the basin")
 	check(str(book[21]["id"]) == "22" and str(book[21]["title"]) == "The Basin Mark", "chart 22 stays the basin capstone")
@@ -358,6 +361,8 @@ func test_charts() -> void:
 	check(str(book[301]["id"]) == "302" and str(book[301]["title"]) == "The Cill Mark", "chart 302 stays the cill capstone")
 	check(str(book[302]["title"]) == "The Dry Threshold", "chart 303 opens the threshold")
 	check(str(book[309]["id"]) == "310" and str(book[309]["title"]) == "The Flood Line", "chart 310 stays the threshold capstone")
+	check(str(book[310]["title"]) == "The Dry Impost", "chart 311 opens the impost")
+	check(str(book[317]["id"]) == "318" and str(book[317]["title"]) == "The Impost Line", "chart 318 stays the impost capstone")
 	var seen_ids := {}
 	var seen_titles := {}
 	var quay_titles := ["First Glass", "Around the Pilings", "High Water", "Sleeping Hull", "Split the White", "The Night Mark"]
@@ -12344,6 +12349,240 @@ func _fixed_threshold(id: String, x: int, y: int, rot: int) -> Dictionary:
 	}
 
 
+func test_impost_rule() -> void:
+	check(Tracer.norm_rot("impost", 0) == 0 and Tracer.norm_rot("impost", 90) == 90 and Tracer.norm_rot("impost", 180) == 180 and Tracer.norm_rot("impost", 270) == 270, "an impost keeps each quarter turn")
+	check(Tracer.turn_rot("impost", 0) == 90 and Tracer.turn_rot("impost", 270) == 0, "clicking an impost walks the facing")
+	check(Tracer.impost_facing(0) == "N" and Tracer.impost_facing(90) == "E" and Tracer.impost_facing(180) == "S" and Tracer.impost_facing(270) == "W", "impost facing follows the quarter turn")
+	check(Tracer.impost_passes(0, "N") and not Tracer.impost_passes(0, "E") and not Tracer.impost_passes(0, "W") and not Tracer.impost_passes(0, "S"), "a dry north impost passes only north")
+	check(Tracer.impost_passes(90, "E") and not Tracer.impost_passes(90, "W") and not Tracer.impost_passes(90, "N") and not Tracer.impost_passes(90, "S"), "one click faces an impost east and only east passes")
+	check(Tracer.impost_passes(180, "S") and not Tracer.impost_passes(180, "N"), "a dry south impost passes only south")
+	check(Tracer.impost_flood_passes(0, "S") and Tracer.impost_flood_passes(0, "E") and Tracer.impost_flood_passes(0, "W") and not Tracer.impost_flood_passes(0, "N"), "a flooded north impost passes south, east, and west")
+	check(Tracer.impost_flood_passes(90, "W") and Tracer.impost_flood_passes(90, "N") and Tracer.impost_flood_passes(90, "S") and not Tracer.impost_flood_passes(90, "E"), "a flooded east impost passes west, north, and south")
+	check(Tracer.threshold_passes(0, "S") and not Tracer.threshold_passes(0, "N"), "a dry north threshold still passes only south")
+	check(Tracer.threshold_flood_passes(0, "N") and Tracer.threshold_flood_passes(0, "E") and Tracer.threshold_flood_passes(0, "W") and not Tracer.threshold_flood_passes(0, "S"), "a flooded north threshold still passes north, east, and west")
+	check(Tracer.fillet_passes(0, "S") and not Tracer.fillet_passes(0, "N"), "a dry fillet still passes only south")
+	check(Tracer.cill_passes(0, "N") and Tracer.cill_passes(0, "S") and not Tracer.cill_passes(0, "E"), "a dry north cill still passes north and south")
+	check(Tracer.cill_flood_passes(0, "E") and Tracer.cill_flood_passes(0, "W") and not Tracer.cill_flood_passes(0, "N"), "a flooded north cill still passes only east and west")
+	check(Tracer.cyma_passes(0, "N") and not Tracer.cyma_passes(0, "S"), "a dry north cyma still passes only north")
+	var hinted: Dictionary = Charts.impost()[0]
+	var solved_hint := Charts.make_state(hinted, true)
+	check(not Hints.wrong_pieces(hinted, solved_hint).has("O"), "a hint accepts the north impost")
+	for spun in [90, 180, 270]:
+		var turned_hint := Charts.duplicate_state(solved_hint)
+		turned_hint["pieces"]["O"]["rot"] = spun
+		check(Hints.wrong_pieces(hinted, turned_hint).has("O"), "a hint rejects impost rotation %d" % spun)
+		check(not Tracer.is_cleared(hinted, turned_hint), "impost rotation %d is not the dry north open set" % spun)
+	var carried := {}
+	carried[Vector2i(0, 0)] = {"kind": "impost", "rot": 0}
+	check(not Tracer._flood_carries(carried, Vector2i(0, 0)), "an impost is not a full flood carrier")
+	var dry_south := _blank(1, 5)
+	dry_south["lanterns"] = [_lamp("L", 0, 0, "S", "white")]
+	dry_south["pieces"] = [_fixed_impost("O", 0, 2, 0)]
+	check(not _center_hit(Tracer.trace(dry_south, Charts.make_state(dry_south, true)), 0, 2), "a dry north impost refuses south")
+	var dry_north := _blank(1, 5)
+	dry_north["lanterns"] = [_lamp("L", 0, 4, "N", "white")]
+	dry_north["pieces"] = [_fixed_impost("O", 0, 2, 0)]
+	check(_leaves(Tracer.trace(dry_north, Charts.make_state(dry_north, true)), 0, 2, "N", "white"), "a dry north impost passes north")
+	var flood_stop := _blank(8, 8)
+	flood_stop["tide_phases"] = [4]
+	flood_stop["lanterns"] = [_lamp("L", 4, 2, "S", "blue")]
+	flood_stop["fixtures"] = [{"id": "X", "kind": "shutter", "x": 4, "y": 5, "rot": 0}]
+	flood_stop["pieces"] = [_fixed_impost("O", 4, 4, 0)]
+	check(_leaves(Tracer.trace(flood_stop, Charts.make_state(flood_stop, true)), 4, 4, "S", "blue"), "a flooded north impost passes south")
+	flood_stop["lanterns"] = [_lamp("L", 2, 2, "S", "white")]
+	flood_stop["fixtures"] = [
+		{"id": "A", "kind": "shutter", "x": 2, "y": 4, "rot": 0},
+		{"id": "B", "kind": "shutter", "x": 2, "y": 5, "rot": 0},
+		{"id": "C", "kind": "shutter", "x": 2, "y": 6, "rot": 0},
+		{"id": "M", "kind": "tide_mirror", "x": 2, "y": 7, "rot": 90},
+		{"id": "D", "kind": "shutter", "x": 3, "y": 7, "rot": 0},
+		{"id": "N", "kind": "tide_mirror", "x": 4, "y": 7, "rot": 0},
+		{"id": "E", "kind": "shutter", "x": 4, "y": 6, "rot": 0},
+		{"id": "F", "kind": "shutter", "x": 4, "y": 5, "rot": 0},
+	]
+	check(not _center_hit(Tracer.trace(flood_stop, Charts.make_state(flood_stop, true)), 4, 4), "a flooded north impost stops north at the waterline")
+
+
+func test_impost_book() -> void:
+	var book: Array = Charts.impost()
+	check(book.size() == 8, "impost book has eight charts")
+	var titles := ["The Dry Impost", "The Flooded Impost", "The Turned Impost", "The Threshold Miss", "The Fillet Miss", "The Cill Keep", "Two Imposts", "The Impost Line"]
+	for i in book.size():
+		var chart: Dictionary = book[i]
+		check(str(chart["id"]) == str(i + 311), "impost chart %d keeps its number" % (i + 311))
+		check(str(chart["title"]) == str(titles[i]), "impost chart %d keeps its title" % (i + 311))
+		check(str(chart["harbor"]) == Charts.IMPOST, "chart %s belongs to the impost" % str(chart["id"]))
+		check(str(chart["teach"]) != "" and str(chart["win"]) != "", "chart %s has a teach line and a win line" % str(chart["id"]))
+	for older in Charts.all().slice(0, 310):
+		for raw_older in older["pieces"]:
+			var older_piece: Dictionary = raw_older
+			check(str(older_piece["kind"]) != "impost", "chart %s keeps its pieces" % str(older["id"]))
+	for i in book.size():
+		var chart: Dictionary = book[i]
+		var solved := Charts.make_state(chart, true)
+		for raw in chart["pieces"]:
+			var piece: Dictionary = raw
+			if str(piece["kind"]) != "impost":
+				continue
+			var piece_id := str(piece["id"])
+			var cell := Charts.piece_cell(chart, solved, piece_id)
+			var facing := Tracer.impost_facing(int(piece["solution_rot"]))
+			var wet := Tracer.is_flooded(chart, solved, cell)
+			_expect_impost_miss(i, piece_id, "threshold", int(piece["solution_rot"]), "threshold")
+			_expect_impost_miss(i, piece_id, "fillet", int(piece["solution_rot"]), "fillet")
+			_expect_impost_miss(i, piece_id, "cill", int(piece["solution_rot"]), "cill")
+			for crot in [0, 90, 180, 270]:
+				var cyma_same: bool = (not wet) and Tracer.cyma_facing(crot) == facing
+				if not cyma_same:
+					_expect_impost_miss(i, piece_id, "cyma", crot, "cyma %d" % crot)
+				var case_same: bool = (not wet) and Tracer.casement_facing(crot) == facing
+				if not case_same:
+					_expect_impost_miss(i, piece_id, "casement", crot, "casement %d" % crot)
+				var bead_same: bool = (not wet) and Tracer.rotate_dir(Tracer.bead_facing(crot), 1) == facing
+				if not bead_same:
+					_expect_impost_miss(i, piece_id, "bead", crot, "bead %d" % crot)
+				var quirk_same: bool = (not wet) and Tracer.rotate_dir(Tracer.quirk_facing(crot), -1) == facing
+				if not quirk_same:
+					_expect_impost_miss(i, piece_id, "quirk", crot, "quirk %d" % crot)
+				_expect_impost_miss(i, piece_id, "hood", crot, "hood %d" % crot)
+				_expect_impost_miss(i, piece_id, "throat", crot, "throat %d" % crot)
+				_expect_impost_miss(i, piece_id, "larmier", crot, "larmier %d" % crot)
+				_expect_impost_miss(i, piece_id, "drip", crot, "drip %d" % crot)
+				_expect_impost_miss(i, piece_id, "beak", crot, "beak %d" % crot)
+				_expect_impost_miss(i, piece_id, "ovolo", crot, "ovolo %d" % crot)
+				_expect_impost_miss(i, piece_id, "cavetto", crot, "cavetto %d" % crot)
+				_expect_impost_miss(i, piece_id, "fascia", crot, "fascia %d" % crot)
+				_expect_impost_miss(i, piece_id, "soffit", crot, "soffit %d" % crot)
+				_expect_impost_miss(i, piece_id, "corona", crot, "corona %d" % crot)
+				_expect_impost_miss(i, piece_id, "astragal", crot, "astragal %d" % crot)
+				_expect_impost_miss(i, piece_id, "scotia", crot, "scotia %d" % crot)
+				_expect_impost_miss(i, piece_id, "torus", crot, "torus %d" % crot)
+				_expect_impost_miss(i, piece_id, "ogee", crot, "ogee %d" % crot)
+				_expect_impost_miss(i, piece_id, "jamb", crot, "jamb %d" % crot)
+				_expect_impost_miss(i, piece_id, "vane", crot, "vane %d" % crot)
+				_expect_impost_miss(i, piece_id, "weir", crot, "weir %d" % crot)
+				_expect_impost_miss(i, piece_id, "sluice", crot, "sluice %d" % crot)
+				_expect_impost_miss(i, piece_id, "prism", crot, "prism %d" % crot)
+			_expect_impost_miss(i, piece_id, "lintel", 0, "lintel")
+			_expect_impost_miss(i, piece_id, "shutter", 0, "shutter")
+			_expect_impost_miss(i, piece_id, "stain", 0, "red stain")
+			_expect_impost_miss(i, piece_id, "stain", 90, "blue stain")
+			_expect_impost_miss(i, piece_id, "mullion", 0, "mullion")
+			_expect_impost_miss(i, piece_id, "transom", 0, "transom")
+	var dry: Dictionary = book[0]
+	var dry_hit: Dictionary = Tracer.trace(dry, Charts.make_state(dry, true))
+	check(_leaves(dry_hit, 3, 3, "N", "white") and not _leaves(dry_hit, 3, 3, "S", "red") and not _leaves(dry_hit, 3, 3, "E", "blue") and not _leaves(dry_hit, 3, 3, "W", "red") and dry_hit["docks"]["Sd"].is_empty() and dry_hit["docks"]["Ed"].is_empty() and dry_hit["docks"]["Wd"].is_empty() and dry_hit["docks"]["Td"].is_empty(), "chart 311 passes only north")
+	var dry_once := Charts.duplicate_state(Charts.make_state(dry, true))
+	dry_once["pieces"]["O"]["rot"] = 90
+	check(not Tracer.is_cleared(dry, dry_once), "chart 311 one click from north passes only east")
+	var dry_opposite := Charts.duplicate_state(Charts.make_state(dry, true))
+	dry_opposite["pieces"]["O"]["rot"] = 180
+	check(not Tracer.is_cleared(dry, dry_opposite), "chart 311 the opposite facing is a different piece")
+	var dry_cyma: Dictionary = Charts.impost()[0]
+	_retarget(dry_cyma, "O", "cyma", 0)
+	check(Tracer.is_cleared(dry_cyma, Charts.make_state(dry_cyma, true)), "chart 311 a dry north cyma passes the same north beam and stays shut under water")
+	var dry_threshold: Dictionary = Charts.impost()[0]
+	_retarget(dry_threshold, "O", "threshold", 0)
+	check(not Tracer.is_cleared(dry_threshold, Charts.make_state(dry_threshold, true)), "chart 311 a dry north threshold misses the only north pass")
+	var dry_fillet: Dictionary = Charts.impost()[0]
+	_retarget(dry_fillet, "O", "fillet", 0)
+	check(not Tracer.is_cleared(dry_fillet, Charts.make_state(dry_fillet, true)), "chart 311 a dry fillet misses north")
+	var dry_cill: Dictionary = Charts.impost()[0]
+	_retarget(dry_cill, "O", "cill", 0)
+	check(not Tracer.is_cleared(dry_cill, Charts.make_state(dry_cill, true)), "chart 311 a dry north cill lights the south keep")
+	var wet: Dictionary = book[1]
+	var wet_state := Charts.make_state(wet, true)
+	check(int(wet["solution_tide_index"]) == 1 and Tracer.is_flooded(wet, wet_state, Vector2i(4, 4)), "chart 312 solves while the impost is flooded")
+	var wet_hit: Dictionary = Tracer.trace(wet, wet_state)
+	check(_leaves(wet_hit, 4, 4, "S", "blue") and _leaves(wet_hit, 4, 4, "E", "white") and _leaves(wet_hit, 4, 4, "W", "red") and not _leaves(wet_hit, 4, 4, "N", "white") and wet_hit["docks"]["Sd"].has("blue") and wet_hit["docks"]["Rd"].has("red") and wet_hit["docks"]["Kn"].is_empty() and Tracer.is_cleared(wet, wet_state), "chart 312 a flooded north impost passes south, east, and west")
+	var wet_low := Charts.duplicate_state(wet_state)
+	wet_low["tide_index"] = 0
+	check(not Tracer.is_cleared(wet, wet_low), "chart 312 low water is not the flooded open set")
+	var wet_opposite := Charts.duplicate_state(wet_state)
+	wet_opposite["pieces"]["O"]["rot"] = 180
+	check(not Tracer.is_cleared(wet, wet_opposite), "chart 312 the opposite flooded facing stops south")
+	var wet_threshold: Dictionary = Charts.impost()[1]
+	_retarget(wet_threshold, "O", "threshold", 0)
+	check(not Tracer.is_cleared(wet_threshold, Charts.make_state(wet_threshold, true)), "chart 312 a flooded north threshold stops south")
+	var wet_fillet: Dictionary = Charts.impost()[1]
+	_retarget(wet_fillet, "O", "fillet", 0)
+	check(not Tracer.is_cleared(wet_fillet, Charts.make_state(wet_fillet, true)), "chart 312 a flooded fillet stays shut")
+	var wet_cill: Dictionary = Charts.impost()[1]
+	_retarget(wet_cill, "O", "cill", 0)
+	check(not Tracer.is_cleared(wet_cill, Charts.make_state(wet_cill, true)), "chart 312 a flooded north cill misses south")
+	var turned: Dictionary = book[2]
+	var turned_hit: Dictionary = Tracer.trace(turned, Charts.make_state(turned, true))
+	check(_leaves(turned_hit, 3, 3, "E", "white") and not _leaves(turned_hit, 3, 3, "W", "red") and not _leaves(turned_hit, 3, 3, "N", "red") and not _leaves(turned_hit, 3, 3, "S", "blue"), "chart 313 one click faces east and only east passes")
+	var turned_north := Charts.duplicate_state(Charts.make_state(turned, true))
+	turned_north["pieces"]["O"]["rot"] = 0
+	check(not Tracer.is_cleared(turned, turned_north), "chart 313 the north facing misses east")
+	var turned_opposite := Charts.duplicate_state(Charts.make_state(turned, true))
+	turned_opposite["pieces"]["O"]["rot"] = 270
+	check(not Tracer.is_cleared(turned, turned_opposite), "chart 313 the opposite facing misses east")
+	var threshold_chart: Dictionary = book[3]
+	check(str(threshold_chart["teach"]).to_lower().contains("threshold"), "chart 314 names the threshold")
+	var threshold_miss: Dictionary = Charts.impost()[3]
+	_retarget(threshold_miss, "O", "threshold", 0)
+	check(not Tracer.is_cleared(threshold_miss, Charts.make_state(threshold_miss, true)), "chart 314 a north threshold misses")
+	var fillet_chart: Dictionary = book[4]
+	check(str(fillet_chart["teach"]).to_lower().contains("fillet"), "chart 315 names the fillet")
+	var fillet_miss: Dictionary = Charts.impost()[4]
+	_retarget(fillet_miss, "O", "fillet", 0)
+	check(not Tracer.is_cleared(fillet_miss, Charts.make_state(fillet_miss, true)), "chart 315 a fillet misses")
+	var cill_chart: Dictionary = book[5]
+	check(str(cill_chart["teach"]).to_lower().contains("cill"), "chart 316 names the cill")
+	var cill_miss: Dictionary = Charts.impost()[5]
+	_retarget(cill_miss, "O", "cill", 0)
+	check(not Tracer.is_cleared(cill_miss, Charts.make_state(cill_miss, true)), "chart 316 a north cill misses")
+	var pair: Dictionary = book[6]
+	var pair_hit: Dictionary = Tracer.trace(pair, Charts.make_state(pair, true))
+	check(_leaves(pair_hit, 3, 3, "N", "white") and not _leaves(pair_hit, 3, 3, "S", "red") and not _leaves(pair_hit, 3, 3, "E", "blue") and not _leaves(pair_hit, 3, 3, "W", "red") and _leaves(pair_hit, 10, 5, "E", "white") and not _leaves(pair_hit, 10, 5, "W", "red") and not _leaves(pair_hit, 10, 5, "N", "red") and not _leaves(pair_hit, 10, 5, "S", "blue"), "chart 317 the two imposts open different single directions")
+	var swapped_pair := Charts.duplicate_state(Charts.make_state(pair, true))
+	swapped_pair["pieces"]["O"]["rot"] = 90
+	swapped_pair["pieces"]["U"]["rot"] = 0
+	check(not Tracer.is_cleared(pair, swapped_pair), "chart 317 swapping the facings fails")
+	var pair_opposite := Charts.duplicate_state(Charts.make_state(pair, true))
+	pair_opposite["pieces"]["O"]["rot"] = 180
+	check(not Tracer.is_cleared(pair, pair_opposite), "chart 317 the opposite west impost is a different piece")
+	pair_opposite = Charts.duplicate_state(Charts.make_state(pair, true))
+	pair_opposite["pieces"]["U"]["rot"] = 270
+	check(not Tracer.is_cleared(pair, pair_opposite), "chart 317 the opposite east impost is a different piece")
+	var line: Dictionary = book[7]
+	var line_state := Charts.make_state(line, true)
+	check(int(line["solution_tide_index"]) == 1 and Tracer.is_flooded(line, line_state, Vector2i(4, 4)), "chart 318 the flood line covers the impost")
+	var line_hit: Dictionary = Tracer.trace(line, line_state)
+	check(_leaves(line_hit, 4, 4, "S", "blue") and _leaves(line_hit, 4, 4, "E", "white") and _leaves(line_hit, 4, 4, "W", "red") and not _leaves(line_hit, 4, 4, "N", "white") and not bool(line_hit["boats"]["Hb"]), "chart 318 the flooded open set leaves and the hull stays dark")
+	var line_low := Charts.duplicate_state(line_state)
+	line_low["tide_index"] = 0
+	var line_low_hit: Dictionary = Tracer.trace(line, line_low)
+	check(bool(line_low_hit["boats"]["Hb"]) and not Tracer.is_cleared(line, line_low), "chart 318 low water passes only north and wakes the hull")
+	check(str(book[0]["teach"]).to_lower().contains("only north") and str(book[1]["teach"]).to_lower().contains("south, east, and west") and str(book[2]["teach"]).to_lower().contains("only east") and str(book[7]["teach"]).to_lower().contains("flood"), "the impost charts teach the dry pass and the flood flip")
+
+
+func _expect_impost_miss(index: int, piece_id: String, kind: String, rot: int, label: String) -> void:
+	var chart: Dictionary = Charts.impost()[index]
+	_retarget(chart, piece_id, kind, rot)
+	var state := Charts.make_state(chart, true)
+	if Tracer.is_cleared(chart, state):
+		check(false, "%s clears impost chart %d" % [label, index + 311])
+	else:
+		check(true, "%s misses impost chart %d" % [label, index + 311])
+
+
+func _fixed_impost(id: String, x: int, y: int, rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": "Impost",
+		"kind": "impost",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": rot,
+		"solution_socket": "a",
+		"solution_rot": rot,
+	}
+
+
 func test_smoke() -> void:
 	var main_script: Script = load("res://scripts/main.gd")
 	main_script.persist_progress = false
@@ -13666,8 +13905,45 @@ func test_smoke() -> void:
 	await process_frame
 	check(str(main.chart["id"]) == "303", "Threshold returns to The Dry Threshold")
 	check(_chart_row_fits(main.threshold_grid, main._side), "the threshold chart row fits in the window")
+	var impost_rect: Rect2 = main.impost_book_button.get_global_rect()
+	var impost_side: Rect2 = main._side.get_global_rect()
+	check(impost_side.grow(1.0).encloses(impost_rect), "the impost book button sits inside the side panel")
+	check(not impost_rect.intersects(threshold_rect), "the impost book button stays off the threshold")
+	check(impost_rect.size.x + 0.5 >= main.impost_book_button.get_minimum_size().x, "the impost label has room")
+	check(threshold_rect.size.x + 0.5 >= main.threshold_book_button.get_minimum_size().x, "the threshold label still has room beside the impost")
+	check(int(ProjectSettings.get_setting("display/window/size/viewport_width")) == 1280 and int(ProjectSettings.get_setting("display/window/size/viewport_height")) == 720, "the window stays 1280 by 720")
+	main.unlocked[310] = false
+	main._refresh_chrome()
+	check(main.impost_book_button.disabled, "the impost stays locked until the threshold mark is held")
+	main.unlocked[309] = true
+	check(main.select_chart(309), "chart 310 opens when unlocked")
+	check(main.impost_book_button.disabled, "opening the threshold mark does not unlock the impost")
+	main.state = Charts.duplicate_state(Charts.make_state(main.chart, true))
+	main._refresh()
+	main.try_lock()
+	check(main.board_locked and main.unlocked[310], "holding the threshold mark opens the impost")
+	main._advance_from_win()
+	check(str(main.chart["id"]) == "311", "next chart from the threshold mark enters The Dry Impost")
+	check(main.impost_grid.visible and not main.threshold_grid.visible and not main.cill_grid.visible, "the impost grid opens with The Dry Impost")
+	check(str(main.harbor_label.text) == Charts.IMPOST, "the harbor name follows the impost")
+	check(str(main.tide_readout.text).to_lower().contains("impost"), "chart 311 names the impost in the water readout")
+	var impost_cell := Charts.piece_cell(main.chart, main.state, "O")
+	check(str(main.selected_id) == "O" and int(main.state["pieces"]["O"]["rot"]) == 90, "chart 311 starts facing east")
+	_click_cell(main, impost_cell.x, impost_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 180, "a click turns the impost from east to south")
+	check(str(main.status_label.text).to_lower().contains("facing") and str(main.status_label.text).to_lower().contains("flooded"), "the impost says only the facing passes while dry and the other directions pass while flooded")
+	_click_cell(main, impost_cell.x, impost_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 270, "the next click turns the impost west")
+	_click_cell(main, impost_cell.x, impost_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 0, "the next click turns the impost north")
+	_click_cell(main, impost_cell.x, impost_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 90, "four clicks restore the east facing")
+	main._on_book_pressed(39)
+	await process_frame
+	check(str(main.chart["id"]) == "311", "Impost returns to The Dry Impost")
+	check(_chart_row_fits(main.impost_grid, main._side), "the impost chart row fits in the window")
 	main._on_book_pressed(13)
-	check(main.weir_grid.visible and not main.lintel_grid.visible and not main.mullion_grid.visible and not main.transom_grid.visible and not main.casement_grid.visible and not main.jamb_grid.visible and not main.astragal_grid.visible and not main.scotia_grid.visible and not main.torus_grid.visible and not main.ogee_grid.visible and not main.ovolo_grid.visible and not main.cavetto_grid.visible and not main.fillet_grid.visible and not main.corona_grid.visible and not main.bead_grid.visible and not main.quirk_grid.visible and not main.cyma_grid.visible and not main.fascia_grid.visible and not main.soffit_grid.visible and not main.drip_grid.visible and not main.beak_grid.visible and not main.hood_grid.visible and not main.throat_grid.visible and not main.larmier_grid.visible and not main.cill_grid.visible and not main.threshold_grid.visible, "the weir book still opens")
+	check(main.weir_grid.visible and not main.lintel_grid.visible and not main.mullion_grid.visible and not main.transom_grid.visible and not main.casement_grid.visible and not main.jamb_grid.visible and not main.astragal_grid.visible and not main.scotia_grid.visible and not main.torus_grid.visible and not main.ogee_grid.visible and not main.ovolo_grid.visible and not main.cavetto_grid.visible and not main.fillet_grid.visible and not main.corona_grid.visible and not main.bead_grid.visible and not main.quirk_grid.visible and not main.cyma_grid.visible and not main.fascia_grid.visible and not main.soffit_grid.visible and not main.drip_grid.visible and not main.beak_grid.visible and not main.hood_grid.visible and not main.throat_grid.visible and not main.larmier_grid.visible and not main.cill_grid.visible and not main.threshold_grid.visible and not main.impost_grid.visible, "the weir book still opens")
 	main.select_chart(0)
 	main.restart_chart()
 	var before_rot := int(main.state["pieces"]["M"]["rot"])
@@ -13775,8 +14051,9 @@ func _walk(chart: Dictionary, state: Dictionary, index: int, found: Array) -> vo
 	# A larmier has four facings. Dry, it passes the two perpendicular directions. Flooded, only the facing and the opposite pass. Opposite facings share that open set.
 	# A cill has four facings. Opposite facings share the open set. Dry, it passes the facing and the opposite. Flooded, only the two perpendicular directions pass.
 	# A threshold has four facings. Opposite facings do not share the open set. Dry, only the opposite of the facing passes. Flooded, every direction except that opposite passes.
+	# An impost has four facings. Opposite facings do not share the open set. Dry, only the facing passes. Flooded, every direction except that facing passes.
 	var rots: Array = [0]
-	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma" or kind == "fascia" or kind == "soffit" or kind == "drip" or kind == "beak" or kind == "hood" or kind == "throat" or kind == "larmier" or kind == "cill" or kind == "threshold":
+	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma" or kind == "fascia" or kind == "soffit" or kind == "drip" or kind == "beak" or kind == "hood" or kind == "throat" or kind == "larmier" or kind == "cill" or kind == "threshold" or kind == "impost":
 		rots = [0, 90, 180, 270]
 	elif kind != "shutter" and kind != "well" and kind != "siphon" and kind != "lintel" and kind != "mullion" and kind != "transom":
 		rots = [0, 90]
