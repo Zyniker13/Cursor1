@@ -152,6 +152,9 @@ func _run() -> void:
 	_test_trashboard_splits_right_and_behind()
 	_test_trashboard_refuses_left_right_and_behind()
 	_test_trashboard_blocked_does_not_spill()
+	_test_gauge_splits_forward_and_behind()
+	_test_gauge_refuses_left_right_and_behind()
+	_test_gauge_blocked_does_not_spill()
 	_test_rooms()
 	_test_over_budget()
 	_test_pickup()
@@ -196,6 +199,7 @@ func _run() -> void:
 	_test_wing35_lessons()
 	_test_wing36_lessons()
 	_test_wing37_lessons()
+	_test_wing38_lessons()
 	_test_game_object()
 
 
@@ -1050,7 +1054,7 @@ func _arm_lane(pattern: Array) -> Dictionary:
 
 func _test_rooms() -> void:
 	var catalog := Rooms.all()
-	check(catalog.size() == 296, "thirty-seven wings have 296 rooms")
+	check(catalog.size() == 304, "thirty-eight wings have 304 rooms")
 	check(catalog[0].name == "Haul" and catalog[7].name == "Two Orders", "rooms 1 through 8 stay the first wing")
 	check(catalog[8].name == "Straight" and catalog[15].name == "Balance", "rooms 9 through 16 are the second wing")
 	check(catalog[16].name == "Span" and catalog[23].name == "Ledger", "rooms 17 through 24 are the third wing")
@@ -1088,6 +1092,7 @@ func _test_rooms() -> void:
 	check(catalog[272].name == "Ahead Ore" and catalog[279].name == "Held Pair", "rooms 273 through 280 are the thirty-fifth wing")
 	check(catalog[280].name == "Ahead Ore" and catalog[287].name == "Held Pair", "rooms 281 through 288 are the thirty-sixth wing")
 	check(catalog[288].name == "Ahead Ore" and catalog[295].name == "Held Pair", "rooms 289 through 296 are the thirty-seventh wing")
+	check(catalog[296].name == "Ahead Ore" and catalog[303].name == "Held Pair", "rooms 297 through 304 are the thirty-eighth wing")
 	for index in catalog.size():
 		var bridge_count := int(catalog[index].budget.get(Rules.Kind.BRIDGE, 0))
 		var grate_count := int(catalog[index].budget.get(Rules.Kind.GRATE, 0))
@@ -1124,6 +1129,9 @@ func _test_rooms() -> void:
 		var jointer_count := int(catalog[index].budget.get(Rules.Kind.JOINTER, 0))
 		var bridle_count := int(catalog[index].budget.get(Rules.Kind.BRIDLE, 0))
 		var trashboard_count := int(catalog[index].budget.get(Rules.Kind.TRASHBOARD, 0))
+		var gauge_count := int(catalog[index].budget.get(Rules.Kind.GAUGE, 0))
+		if index < 296:
+			check(gauge_count == 0, "room %d does not use the gauge" % (index + 1))
 		if index < 288:
 			check(trashboard_count == 0, "room %d does not use the trashboard" % (index + 1))
 		if index < 280:
@@ -1769,8 +1777,43 @@ func _test_rooms() -> void:
 			check(drop_count == 0, "room %d does not use the drop" % (index + 1))
 			check(arm_count == 0, "room %d does not use the arm" % (index + 1))
 			check(hook_count == 0, "room %d does not use the hook" % (index + 1))
-		else:
+		elif index < 296:
 			check(trashboard_count >= 1, "room %d depends on the trashboard" % (index + 1))
+			check(bridle_count == 0, "room %d does not use the bridle" % (index + 1))
+			check(jointer_count == 0, "room %d does not use the jointer" % (index + 1))
+			check(wrest_count == 0, "room %d does not use the wrest" % (index + 1))
+			check(throat_count == 0, "room %d does not use the throat" % (index + 1))
+			check(point_count == 0, "room %d does not use the point" % (index + 1))
+			check(shin_count == 0, "room %d does not use the shin" % (index + 1))
+			check(frog_count == 0, "room %d does not use the frog" % (index + 1))
+			check(sole_count == 0, "room %d does not use the sole" % (index + 1))
+			check(hake_count == 0, "room %d does not use the hake" % (index + 1))
+			check(beam_count == 0, "room %d does not use the beam" % (index + 1))
+			check(clevis_count == 0, "room %d does not use the clevis" % (index + 1))
+			check(stilt_count == 0, "room %d does not use the stilt" % (index + 1))
+			check(heel_count == 0, "room %d does not use the heel" % (index + 1))
+			check(slade_count == 0, "room %d does not use the slade" % (index + 1))
+			check(landside_count == 0, "room %d does not use the landside" % (index + 1))
+			check(moldboard_count == 0, "room %d does not use the moldboard" % (index + 1))
+			check(coulter_count == 0, "room %d does not use the coulter" % (index + 1))
+			check(share_count == 0, "room %d does not use the share" % (index + 1))
+			check(prong_count == 0, "room %d does not use the prong" % (index + 1))
+			check(fork_count == 0, "room %d does not use the fork" % (index + 1))
+			check(harrow_count == 0, "room %d does not use the harrow" % (index + 1))
+			check(hoe_count == 0, "room %d does not use the hoe" % (index + 1))
+			check(rake_count == 0, "room %d does not use the rake" % (index + 1))
+			check(shed_count == 0, "room %d does not use the shed" % (index + 1))
+			check(slip_count == 0, "room %d does not use the slip" % (index + 1))
+			check(pass_count == 0, "room %d does not use the pass" % (index + 1))
+			check(twin_count == 0, "room %d does not use the twin" % (index + 1))
+			check(dwell_count == 0, "room %d does not use the dwell" % (index + 1))
+			check(lift_count == 0, "room %d does not use the lift" % (index + 1))
+			check(drop_count == 0, "room %d does not use the drop" % (index + 1))
+			check(arm_count == 0, "room %d does not use the arm" % (index + 1))
+			check(hook_count == 0, "room %d does not use the hook" % (index + 1))
+		else:
+			check(gauge_count >= 1, "room %d depends on the gauge" % (index + 1))
+			check(trashboard_count == 0, "room %d does not use the trashboard" % (index + 1))
 			check(bridle_count == 0, "room %d does not use the bridle" % (index + 1))
 			check(jointer_count == 0, "room %d does not use the jointer" % (index + 1))
 			check(wrest_count == 0, "room %d does not use the wrest" % (index + 1))
@@ -4606,6 +4649,36 @@ func _test_game_object() -> void:
 	check(main._kind_for_key(KEY_BRACKETLEFT) == -1, "the left bracket stays a room step beside the trashboard")
 	check(main._kind_for_key(KEY_BRACKETRIGHT) == -1, "the right bracket stays a room step beside the trashboard")
 	check(main._kind_for_key(KEY_KP_ENTER) == -1, "there is no second keypad key for the trashboard")
+	check(main._kind_for_key(KEY_HOME) == Rules.Kind.GAUGE, "Home selects the gauge")
+	check(main._key_label(Rules.Kind.GAUGE) == "Home", "gauge key is Home")
+	check(Rules.KIND_NAME[Rules.Kind.GAUGE] == "Gauge", "the tray labels the gauge")
+	check(main._tray_count_line(Rules.Kind.GAUGE, 1) == "1 ahead", "the gauge count reads 1 ahead")
+	check(main._tray_count_line(Rules.Kind.TRASHBOARD, 1) == "1 ahead", "the trashboard count still reads 1 ahead")
+	check(main._key_label(Rules.Kind.GAUGE) != "Tab", "gauge does not take the trashboard key")
+	check(main._key_label(Rules.Kind.GAUGE) != "w", "gauge does not take the bridle key")
+	check(main._key_label(Rules.Kind.GAUGE) != "q", "gauge does not take Q")
+	check(main._key_label(Rules.Kind.GAUGE) != "e", "gauge does not take E")
+	check(main._key_label(Rules.Kind.GAUGE) != "r", "gauge does not take R")
+	check(main._key_label(Rules.Kind.GAUGE) != "f", "gauge does not take F")
+	check(main._kind_for_key(KEY_TAB) == Rules.Kind.TRASHBOARD, "Tab stays the trashboard beside the gauge")
+	check(main._kind_for_key(KEY_W) == Rules.Kind.BRIDLE, "W stays the bridle beside the gauge")
+	check(main._kind_for_key(KEY_S) == Rules.Kind.JOINTER, "S stays the jointer beside the gauge")
+	check(main._kind_for_key(KEY_A) == Rules.Kind.WREST, "A stays the wrest beside the gauge")
+	check(main._kind_for_key(KEY_D) == Rules.Kind.THROAT, "D stays the throat beside the gauge")
+	check(main._kind_for_key(KEY_Z) == Rules.Kind.POINT, "Z stays the point beside the gauge")
+	check(main._kind_for_key(KEY_X) == Rules.Kind.SHIN, "X stays the shin beside the gauge")
+	check(main._kind_for_key(KEY_C) == Rules.Kind.FROG, "C stays the frog beside the gauge")
+	check(main._kind_for_key(KEY_V) == Rules.Kind.SOLE, "V stays the sole beside the gauge")
+	check(main._kind_for_key(KEY_B) == Rules.Kind.HAKE, "B stays the hake beside the gauge")
+	check(main._kind_for_key(KEY_N) == Rules.Kind.BEAM, "N stays the beam beside the gauge")
+	check(main._kind_for_key(KEY_Q) == -1, "Q stays a control beside the gauge")
+	check(main._kind_for_key(KEY_E) == -1, "E stays a control beside the gauge")
+	check(main._kind_for_key(KEY_R) == -1, "R stays a control beside the gauge")
+	check(main._kind_for_key(KEY_F) == -1, "F stays a control beside the gauge")
+	check(main._kind_for_key(KEY_BRACKETLEFT) == -1, "the left bracket stays a room step beside the gauge")
+	check(main._kind_for_key(KEY_BRACKETRIGHT) == -1, "the right bracket stays a room step beside the gauge")
+	check(main._kind_for_key(KEY_END) == -1, "End is not the gauge key")
+	check(main._kind_for_key(KEY_KP_ENTER) == -1, "there is no second keypad key for the gauge")
 	check(main._kind_for_key(KEY_COMMA) == Rules.Kind.TWIN, "comma stays on the twin beside the pass")
 	check(main._kind_for_key(KEY_MINUS) == Rules.Kind.ARM, "minus stays on the arm beside the pass")
 	check(main._kind_for_key(KEY_EQUAL) == Rules.Kind.DROP, "equals stays on the drop beside the pass")
@@ -4658,6 +4731,7 @@ func _test_game_object() -> void:
 	check(not main.is_unlocked(273), "room 273 stays locked until room 272 is cleared")
 	check(not main.is_unlocked(281), "room 281 stays locked until room 280 is cleared")
 	check(not main.is_unlocked(289), "room 289 stays locked until room 288 is cleared")
+	check(not main.is_unlocked(297), "room 297 stays locked until room 296 is cleared")
 	check(not main.testing_select(8), "locked room 9 cannot be selected")
 	check(main.testing_select(0), "room 1 can be selected")
 	var before: int = main.testing_tray(Rules.Kind.BELT)
@@ -4805,7 +4879,11 @@ func _test_game_object() -> void:
 			check(not main.is_unlocked(290), "room 290 stays locked until room 289 is cleared")
 		if index == 295:
 			check(main.is_unlocked(296), "clearing room 295 unlocks room 296")
-			check(not main.is_unlocked(297), "room 297 stays locked until room 296 is cleared")
+			check(main.is_unlocked(297), "clearing room 296 unlocks room 297")
+			check(not main.is_unlocked(298), "room 298 stays locked until room 297 is cleared")
+		if index == 303:
+			check(main.is_unlocked(304), "clearing room 303 unlocks room 304")
+			check(not main.is_unlocked(305), "room 305 stays locked until room 304 is cleared")
 	check(main.is_unlocked(72), "clearing room 71 unlocks room 72")
 	check(main.is_unlocked(80), "clearing room 79 unlocks room 80")
 	check(main.is_unlocked(88), "clearing room 87 unlocks room 88")
@@ -4857,8 +4935,10 @@ func _test_game_object() -> void:
 	check(main.is_unlocked(288), "clearing room 287 unlocks room 288")
 	check(main.is_unlocked(289), "clearing room 288 unlocks room 289")
 	check(main.is_unlocked(296), "clearing room 295 unlocks room 296")
-	check(not main.is_unlocked(297), "there is no room 297 to unlock")
-	check(not main.testing_select(296), "room select rejects an unknown room")
+	check(main.is_unlocked(297), "clearing room 296 unlocks room 297")
+	check(main.is_unlocked(304), "clearing room 303 unlocks room 304")
+	check(not main.is_unlocked(305), "there is no room 305 to unlock")
+	check(not main.testing_select(304), "room select rejects an unknown room")
 	_check_window(main)
 	main.queue_free()
 
@@ -5713,7 +5793,7 @@ func _check_window(main) -> void:
 	var beam_tab: Rect2 = beam_lay.tabs[208]
 	check(beam_tab.position.y + beam_tab.size.y < (beam_lay.play as Rect2).position.y, "the beam room tab stays above the board")
 	check(clevis_held_tab.position.y + clevis_held_tab.size.y < (beam_lay.play as Rect2).position.y, "the clevis held pair tab stays above the board beside the beam")
-	check(absf(beam_tab.size.y - 10.0) < 0.01, "the twenty-fourth tab row is 10 px tall (%s)" % beam_tab.size.y)
+	check(absf(beam_tab.size.y - 9.0) < 0.01, "the twenty-fourth tab row is 9 px tall (%s)" % beam_tab.size.y)
 	check(main.testing_pickup(2, 1), "pickup returns the room 209 beam")
 	check(main.testing_tray(Rules.Kind.BEAM) == 1, "room 209 tray holds one beam")
 	check(Rules.KIND_NAME[Rules.Kind.BEAM] == "Beam", "room 209 tray labels the beam")
@@ -5731,7 +5811,7 @@ func _check_window(main) -> void:
 	var hake_tab: Rect2 = hake_lay.tabs[216]
 	check(hake_tab.position.y + hake_tab.size.y < (hake_lay.play as Rect2).position.y, "the hake room tab stays above the board")
 	check(beam_held_tab.position.y + beam_held_tab.size.y < (hake_lay.play as Rect2).position.y, "the beam held pair tab stays above the board beside the hake")
-	check(absf(hake_tab.size.y - 10.0) < 0.01, "the twenty-fourth tab row is 10 px tall beside the hake (%s)" % hake_tab.size.y)
+	check(absf(hake_tab.size.y - 9.0) < 0.01, "the twenty-fourth tab row is 9 px tall beside the hake (%s)" % hake_tab.size.y)
 	check(main.testing_pickup(2, 1), "pickup returns the room 217 hake")
 	check(main.testing_tray(Rules.Kind.HAKE) == 1, "room 217 tray holds one hake")
 	check(Rules.KIND_NAME[Rules.Kind.HAKE] == "Hake", "room 217 tray labels the hake")
@@ -5749,8 +5829,8 @@ func _check_window(main) -> void:
 	var sole_tab: Rect2 = sole_lay.tabs[224]
 	check(sole_tab.position.y + sole_tab.size.y < (sole_lay.play as Rect2).position.y, "the sole room tab stays above the board")
 	check(hake_held_tab.position.y + hake_held_tab.size.y < (sole_lay.play as Rect2).position.y, "the hake held pair tab stays above the board beside the sole")
-	check(ceili(float(Rooms.all().size()) / 10.0) == 30, "the room strip has 30 rows")
-	check(absf(sole_tab.size.y - 10.0) < 0.01, "the sole tab stays 10 px tall (%s)" % sole_tab.size.y)
+	check(ceili(float(Rooms.all().size()) / 10.0) == 31, "the room strip has 31 rows")
+	check(absf(sole_tab.size.y - 9.0) < 0.01, "the sole tab stays 9 px tall (%s)" % sole_tab.size.y)
 	check(main.testing_pickup(2, 1), "pickup returns the room 225 sole")
 	check(main.testing_tray(Rules.Kind.SOLE) == 1, "room 225 tray holds one sole")
 	check(Rules.KIND_NAME[Rules.Kind.SOLE] == "Sole", "room 225 tray labels the sole")
@@ -5768,8 +5848,8 @@ func _check_window(main) -> void:
 	var frog_tab: Rect2 = frog_lay.tabs[232]
 	check(frog_tab.position.y + frog_tab.size.y < (frog_lay.play as Rect2).position.y, "the frog room tab stays above the board")
 	check(sole_held_tab.position.y + sole_held_tab.size.y < (frog_lay.play as Rect2).position.y, "the sole held pair tab stays above the board beside the frog")
-	check(ceili(float(Rooms.all().size()) / 10.0) == 30, "the room strip still has 30 rows")
-	check(absf(frog_tab.size.y - 10.0) < 0.01, "the frog tab stays 10 px tall (%s)" % frog_tab.size.y)
+	check(ceili(float(Rooms.all().size()) / 10.0) == 31, "the room strip still has 31 rows")
+	check(absf(frog_tab.size.y - 9.0) < 0.01, "the frog tab stays 9 px tall (%s)" % frog_tab.size.y)
 	check(main.testing_pickup(2, 2), "pickup returns the room 233 frog")
 	check(main.testing_tray(Rules.Kind.FROG) == 1, "room 233 tray holds one frog")
 	check(Rules.KIND_NAME[Rules.Kind.FROG] == "Frog", "room 233 tray labels the frog")
@@ -5787,7 +5867,7 @@ func _check_window(main) -> void:
 	var shin_tab: Rect2 = shin_lay.tabs[240]
 	check(shin_tab.position.y + shin_tab.size.y < (shin_lay.play as Rect2).position.y, "the shin room tab stays above the board")
 	check(frog_held_tab.position.y + frog_held_tab.size.y < (shin_lay.play as Rect2).position.y, "the frog held pair tab stays above the board beside the shin")
-	check(absf(shin_tab.size.y - 10.0) < 0.01, "the shin tab stays 10 px tall (%s)" % shin_tab.size.y)
+	check(absf(shin_tab.size.y - 9.0) < 0.01, "the shin tab stays 9 px tall (%s)" % shin_tab.size.y)
 	check(main.testing_pickup(2, 2), "pickup returns the room 241 shin")
 	check(main.testing_tray(Rules.Kind.SHIN) == 1, "room 241 tray holds one shin")
 	check(Rules.KIND_NAME[Rules.Kind.SHIN] == "Shin", "room 241 tray labels the shin")
@@ -5805,7 +5885,7 @@ func _check_window(main) -> void:
 	var point_tab: Rect2 = point_lay.tabs[248]
 	check(point_tab.position.y + point_tab.size.y < (point_lay.play as Rect2).position.y, "the point room tab stays above the board")
 	check(shin_held_tab.position.y + shin_held_tab.size.y < (point_lay.play as Rect2).position.y, "the shin held pair tab stays above the board beside the point")
-	check(absf(point_tab.size.y - 10.0) < 0.01, "the point tab stays 10 px tall (%s)" % point_tab.size.y)
+	check(absf(point_tab.size.y - 9.0) < 0.01, "the point tab stays 9 px tall (%s)" % point_tab.size.y)
 	check(main.testing_pickup(2, 2), "pickup returns the room 249 point")
 	check(main.testing_tray(Rules.Kind.POINT) == 1, "room 249 tray holds one point")
 	check(Rules.KIND_NAME[Rules.Kind.POINT] == "Point", "room 249 tray labels the point")
@@ -5823,7 +5903,7 @@ func _check_window(main) -> void:
 	var throat_tab: Rect2 = throat_lay.tabs[256]
 	check(throat_tab.position.y + throat_tab.size.y < (throat_lay.play as Rect2).position.y, "the throat room tab stays above the board")
 	check(point_held_tab.position.y + point_held_tab.size.y < (throat_lay.play as Rect2).position.y, "the point held pair tab stays above the board beside the throat")
-	check(absf(throat_tab.size.y - 10.0) < 0.01, "the throat tab stays 10 px tall (%s)" % throat_tab.size.y)
+	check(absf(throat_tab.size.y - 9.0) < 0.01, "the throat tab stays 9 px tall (%s)" % throat_tab.size.y)
 	check(main.testing_pickup(2, 2), "pickup returns the room 257 throat")
 	check(main.testing_tray(Rules.Kind.THROAT) == 1, "room 257 tray holds one throat")
 	check(Rules.KIND_NAME[Rules.Kind.THROAT] == "Throat", "room 257 tray labels the throat")
@@ -5841,7 +5921,7 @@ func _check_window(main) -> void:
 	var wrest_tab: Rect2 = wrest_lay.tabs[264]
 	check(wrest_tab.position.y + wrest_tab.size.y < (wrest_lay.play as Rect2).position.y, "the wrest room tab stays above the board")
 	check(throat_held_tab.position.y + throat_held_tab.size.y < (wrest_lay.play as Rect2).position.y, "the throat held pair tab stays above the board beside the wrest")
-	check(absf(wrest_tab.size.y - 10.0) < 0.01, "the wrest tab stays 10 px tall (%s)" % wrest_tab.size.y)
+	check(absf(wrest_tab.size.y - 9.0) < 0.01, "the wrest tab stays 9 px tall (%s)" % wrest_tab.size.y)
 	check(main.testing_pickup(2, 2), "pickup returns the room 265 wrest")
 	check(main.testing_tray(Rules.Kind.WREST) == 1, "room 265 tray holds one wrest")
 	check(Rules.KIND_NAME[Rules.Kind.WREST] == "Wrest", "room 265 tray labels the wrest")
@@ -5859,8 +5939,8 @@ func _check_window(main) -> void:
 	var jointer_tab: Rect2 = jointer_lay.tabs[272]
 	check(jointer_tab.position.y + jointer_tab.size.y < (jointer_lay.play as Rect2).position.y, "the jointer room tab stays above the board")
 	check(wrest_held_tab.position.y + wrest_held_tab.size.y < (jointer_lay.play as Rect2).position.y, "the wrest held pair tab stays above the board beside the jointer")
-	check(absf(jointer_tab.size.y - 10.0) < 0.01, "the jointer tab stays 10 px tall (%s)" % jointer_tab.size.y)
-	check(ceili(float(Rooms.all().size()) / 10.0) == 30, "the room strip still has 30 rows beside the jointer")
+	check(absf(jointer_tab.size.y - 9.0) < 0.01, "the jointer tab stays 9 px tall (%s)" % jointer_tab.size.y)
+	check(ceili(float(Rooms.all().size()) / 10.0) == 31, "the room strip still has 31 rows beside the jointer")
 	check(main.testing_pickup(2, 1), "pickup returns the room 273 jointer")
 	check(main.testing_tray(Rules.Kind.JOINTER) == 1, "room 273 tray holds one jointer")
 	check(Rules.KIND_NAME[Rules.Kind.JOINTER] == "Jointer", "room 273 tray labels the jointer")
@@ -5878,8 +5958,8 @@ func _check_window(main) -> void:
 	var bridle_tab: Rect2 = bridle_lay.tabs[280]
 	check(bridle_tab.position.y + bridle_tab.size.y < (bridle_lay.play as Rect2).position.y, "the bridle room tab stays above the board")
 	check(jointer_held_tab.position.y + jointer_held_tab.size.y < (bridle_lay.play as Rect2).position.y, "the jointer held pair tab stays above the board beside the bridle")
-	check(absf(bridle_tab.size.y - 10.0) < 0.01, "the bridle tab stays 10 px tall (%s)" % bridle_tab.size.y)
-	check(ceili(float(Rooms.all().size()) / 10.0) == 30, "the room strip still has 30 rows beside the bridle")
+	check(absf(bridle_tab.size.y - 9.0) < 0.01, "the bridle tab stays 9 px tall (%s)" % bridle_tab.size.y)
+	check(ceili(float(Rooms.all().size()) / 10.0) == 31, "the room strip still has 31 rows beside the bridle")
 	check(main.testing_pickup(2, 2), "pickup returns the room 281 bridle")
 	check(main.testing_tray(Rules.Kind.BRIDLE) == 1, "room 281 tray holds one bridle")
 	check(Rules.KIND_NAME[Rules.Kind.BRIDLE] == "Bridle", "room 281 tray labels the bridle")
@@ -5897,8 +5977,8 @@ func _check_window(main) -> void:
 	var trashboard_tab: Rect2 = trashboard_lay.tabs[288]
 	check(trashboard_tab.position.y + trashboard_tab.size.y < (trashboard_lay.play as Rect2).position.y, "the trashboard room tab stays above the board")
 	check(bridle_held_tab.position.y + bridle_held_tab.size.y < (trashboard_lay.play as Rect2).position.y, "the bridle held pair tab stays above the board beside the trashboard")
-	check(absf(trashboard_tab.size.y - 10.0) < 0.01, "the trashboard tab stays 10 px tall (%s)" % trashboard_tab.size.y)
-	check(ceili(float(Rooms.all().size()) / 10.0) == 30, "the room strip still has 30 rows beside the trashboard")
+	check(absf(trashboard_tab.size.y - 9.0) < 0.01, "the trashboard tab stays 9 px tall (%s)" % trashboard_tab.size.y)
+	check(ceili(float(Rooms.all().size()) / 10.0) == 31, "the room strip still has 31 rows beside the trashboard")
 	check(main.testing_pickup(2, 2), "pickup returns the room 289 trashboard")
 	check(main.testing_tray(Rules.Kind.TRASHBOARD) == 1, "room 289 tray holds one trashboard")
 	check(Rules.KIND_NAME[Rules.Kind.TRASHBOARD] == "Trashboard", "room 289 tray labels the trashboard")
@@ -5910,7 +5990,29 @@ func _check_window(main) -> void:
 	var trashboard_held_tab: Rect2 = trashboard_held_lay.tabs[295]
 	check(trashboard_held_tab.position.y + trashboard_held_tab.size.y < (trashboard_held_lay.play as Rect2).position.y, "the trashboard held pair tab stays above the board")
 	check(trashboard_tab.position.y + trashboard_tab.size.y < (trashboard_held_lay.play as Rect2).position.y, "the ahead ore tab stays above the board beside the trashboard held pair")
-	var footer := "1-9 0 - = \\ ; , ' . / ` y u i o p t g h j k l m n b v c x z d a s w Tab select   R rotate   LMB place or pick up   RMB rotate   Space run   F skip   Bksp restart"
+	check(main.testing_select(296), "select ahead ore to measure the gauge window")
+	var gauge_lay: Dictionary = main._layout()
+	_check_tray_fits(gauge_lay, "gauge ahead ore")
+	var gauge_tab: Rect2 = gauge_lay.tabs[296]
+	check(gauge_tab.position.y + gauge_tab.size.y < (gauge_lay.play as Rect2).position.y, "the gauge room tab stays above the board")
+	check(trashboard_held_tab.position.y + trashboard_held_tab.size.y < (gauge_lay.play as Rect2).position.y, "the trashboard held pair tab stays above the board beside the gauge")
+	check(absf(gauge_tab.size.y - 9.0) < 0.01, "the gauge tab stays 9 px tall (%s)" % gauge_tab.size.y)
+	check(ceili(float(Rooms.all().size()) / 10.0) == 31, "the room strip has 31 rows beside the gauge")
+	check(main.testing_pickup(1, 2), "pickup returns the room 297 gauge")
+	check(main.testing_tray(Rules.Kind.GAUGE) == 1, "room 297 tray holds one gauge")
+	check(Rules.KIND_NAME[Rules.Kind.GAUGE] == "Gauge", "room 297 tray labels the gauge")
+	check(main._tray_count_line(Rules.Kind.GAUGE, 1) == "1 ahead", "room 297 tray shows 1 ahead")
+	check(main._key_label(Rules.Kind.GAUGE) == "Home", "room 297 tray shows the gauge key")
+	check(main.testing_select(297), "select still gauge to measure a six-row board")
+	var gauge_still_lay: Dictionary = main._layout()
+	_check_tray_fits(gauge_still_lay, "gauge still")
+	check(main.testing_select(303), "select the gauge held pair to measure the window")
+	var gauge_held_lay: Dictionary = main._layout()
+	_check_tray_fits(gauge_held_lay, "gauge held pair")
+	var gauge_held_tab: Rect2 = gauge_held_lay.tabs[303]
+	check(gauge_held_tab.position.y + gauge_held_tab.size.y < (gauge_held_lay.play as Rect2).position.y, "the gauge held pair tab stays above the board")
+	check(gauge_tab.position.y + gauge_tab.size.y < (gauge_held_lay.play as Rect2).position.y, "the ahead ore tab stays above the board beside the gauge held pair")
+	var footer := "1-9 0 - = \\ ; , ' . / ` y u i o p t g h j k l m n b v c x z d a s w Tab Home select   R rotate   LMB place or pick up   RMB rotate   Space run   F skip   Bksp restart"
 	var footer_size: Vector2 = main.font.get_string_size(footer, HORIZONTAL_ALIGNMENT_LEFT, -1, 13)
 	var footer_w := footer_size.x
 	check(footer_w <= size.x - 48.0, "the footer fits the window (%s px)" % footer_w)
@@ -5958,6 +6060,7 @@ func _check_tray_fits(lay: Dictionary, label: String) -> void:
 	var saw_jointer := false
 	var saw_bridle := false
 	var saw_trashboard := false
+	var saw_gauge := false
 	for slot in lay.tray:
 		var rect: Rect2 = slot.rect
 		check(rect.position.x >= 0.0 and rect.position.y >= play.position.y + play.size.y, "%s tray stays below the board" % label)
@@ -6012,6 +6115,8 @@ func _check_tray_fits(lay: Dictionary, label: String) -> void:
 			saw_bridle = true
 		if int(slot.kind) == Rules.Kind.TRASHBOARD:
 			saw_trashboard = true
+		if int(slot.kind) == Rules.Kind.GAUGE:
+			saw_gauge = true
 	if label.begins_with("shed"):
 		check(saw_shed, "the shed tray slot is on the shed room")
 	elif label.begins_with("hoe"):
@@ -6060,6 +6165,8 @@ func _check_tray_fits(lay: Dictionary, label: String) -> void:
 		check(saw_bridle, "the bridle tray slot is on the bridle room")
 	elif label.begins_with("trashboard"):
 		check(saw_trashboard, "the trashboard tray slot is on the trashboard room")
+	elif label.begins_with("gauge"):
+		check(saw_gauge, "the gauge tray slot is on the gauge room")
 	else:
 		check(saw_rake, "the rake tray slot is on the rake room")
 
@@ -14417,3 +14524,299 @@ func _test_wing37_lessons() -> void:
 	check(belt_early.world.machines[Vector2i(3, 1)].hold < 0 and belt_early.world.machines[Vector2i(3, 2)].hold < 0 and int(belt_early.world.sources[0].pending) == Rules.Mat.ORE, "a belt refuses the ahead arrival, so the first ore stays on the source")
 	check(int(finished.counts[Rules.Mat.INGOT]) == 29 and int(finished.counts[Rules.Mat.PLATE]) == 30, "held pair feeds the kiln and the plate bin (%s)" % finished.text)
 	check(not held_bridle.quota_ok, "held pair's bridle misses the quota (%s)" % held_bridle.text)
+
+
+func _gauge_lane(pattern: Array, period: int) -> Dictionary:
+	return {
+		"id": 0,
+		"name": "gauge",
+		"blurb": "",
+		"rule": "",
+		"w": 3,
+		"h": 3,
+		"sources": [Rooms.source(2, 1, Rules.Dir.WEST, pattern, period)],
+		"sinks": [
+			Rooms.sink(2, 1, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+			Rooms.sink(0, 1, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+			Rooms.sink(1, 0, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+			Rooms.sink(1, 2, [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [],
+		"budget": Rooms.kv([Rules.Kind.GAUGE, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [],
+		"solution": [],
+	}
+
+
+func _test_gauge_splits_forward_and_behind() -> void:
+	var mixed := _gauge_lane([Rules.Mat.ORE, Rules.Mat.INGOT], 4)
+	var placed := [Rooms.piece(Rules.Kind.GAUGE, 1, 1, Rules.Dir.EAST)]
+	var early := World.simulate(mixed, placed, 4)
+	var mid := World.simulate(mixed, placed, 8)
+	var waiting := World.simulate(mixed, placed, 12)
+	var result := World.simulate(mixed, placed, 16)
+	var again := World.simulate(mixed, placed, 16)
+	check(_trace(early) == "" and early.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "a lone ore is still in the gauge after the belt tick and the dwell tick")
+	check(_trace(mid) == "5:2,1:0|5:0,1:1" and mid.world.machines[Vector2i(1, 1)].hold < 0, "the waiter leaves forward and the arrival leaves behind, got %s" % _trace(mid))
+	check(int(mid.counts[Rules.Mat.ORE]) == 1 and int(mid.counts[Rules.Mat.INGOT]) == 1, "the first gauge pair leaves on the arrival tick")
+	check(_trace(waiting) == "5:2,1:0|5:0,1:1" and waiting.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "the next lone ore does not leave the gauge, got %s" % _trace(waiting))
+	check(_trace(result) == "5:2,1:0|5:0,1:1|13:2,1:0|13:0,1:1", "the next gauge pair leaves forward and behind, got %s" % _trace(result))
+	check(result.world.machines[Vector2i(1, 1)].hold < 0, "the gauge is empty after the second pair")
+	check(not ("1,0:" in _trace(result)), "a gauge does not send the waiter left")
+	check(not ("1,2:" in _trace(result)), "a gauge does not send the waiter right")
+	check(int(result.world.machines[Vector2i(1, 1)].phase) == 0, "a gauge does not rotate or alternate")
+	check(_same(result, again), "the same gauge lane is deterministic (seed %d)" % result.seed)
+	var same := World.simulate(_gauge_lane([Rules.Mat.ORE], 4), placed, 16)
+	check(_trace(same) == "" and same.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "the same material does not release the waiter, got %s" % _trace(same))
+	var as_trashboard := World.simulate(mixed, [Rooms.piece(Rules.Kind.TRASHBOARD, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_trashboard) == "5:1,2:0|5:0,1:1", "a trashboard on the gauge lane sends the waiter right and the arrival behind, got %s" % _trace(as_trashboard))
+	var as_throat := World.simulate(mixed, [Rooms.piece(Rules.Kind.THROAT, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_throat) == "5:0,1:0|5:2,1:1", "a throat on the gauge lane sends the waiter behind and the arrival forward, got %s" % _trace(as_throat))
+	var as_bridle := World.simulate(mixed, [Rooms.piece(Rules.Kind.BRIDLE, 1, 1, Rules.Dir.EAST)], 8)
+	check(_trace(as_bridle) == "5:1,0:0|5:0,1:1", "a bridle on the gauge lane sends the waiter left and the arrival behind, got %s" % _trace(as_bridle))
+	var behind := {
+		"id": 0, "name": "gauge behind", "blurb": "", "rule": "", "w": 3, "h": 3,
+		"sources": [Rooms.source(0, 1, Rules.Dir.EAST, [Rules.Mat.ORE, Rules.Mat.INGOT], 4)],
+		"sinks": [
+			Rooms.sink(0, 1, [Rules.Mat.ORE, Rules.Mat.INGOT]), Rooms.sink(1, 0, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+			Rooms.sink(1, 2, [Rules.Mat.ORE, Rules.Mat.INGOT]), Rooms.sink(2, 1, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+		],
+		"chutes": [], "walls": [],
+		"budget": Rooms.kv([Rules.Kind.GAUGE, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [], "solution": [],
+	}
+	var from_behind := World.simulate(behind, placed, 8)
+	check(_trace(from_behind) == "" and from_behind.world.machines[Vector2i(1, 1)].hold < 0, "a gauge refuses an arrival from behind, got %s" % _trace(from_behind))
+	check(_trace(World.simulate(_stilt_lane([Rules.Mat.ORE, Rules.Mat.INGOT], 4), placed, 8)) == "", "a gauge refuses an arrival from the left")
+	check(_trace(World.simulate(_clevis_lane([Rules.Mat.ORE, Rules.Mat.INGOT], 4), placed, 8)) == "", "a gauge refuses an arrival from the right")
+	var belt := World.simulate(mixed, [Rooms.piece(Rules.Kind.BELT, 1, 1, Rules.Dir.EAST)], 12)
+	check(_trace(belt) == "" and belt.world.machines[Vector2i(1, 1)].hold < 0, "a belt refuses the gauge's ahead arrival, got %s" % _trace(belt))
+	for mat in [Rules.Mat.ORE, Rules.Mat.INGOT, Rules.Mat.PLATE]:
+		var lone := World.simulate(_gauge_lane([mat], 80), placed, 15)
+		check(_trace(lone) == "" and lone.world.machines[Vector2i(1, 1)].hold == mat, "a lone %s never leaves a gauge" % Rules.MAT_NAME[mat])
+	var south := {
+		"id": 0, "name": "gauge south", "blurb": "", "rule": "", "w": 3, "h": 3,
+		"sources": [Rooms.source(1, 2, Rules.Dir.NORTH, [Rules.Mat.ORE, Rules.Mat.INGOT], 4)],
+		"sinks": [
+			Rooms.sink(1, 0, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+			Rooms.sink(0, 1, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+			Rooms.sink(2, 1, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+			Rooms.sink(1, 2, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+		],
+		"chutes": [], "walls": [],
+		"budget": Rooms.kv([Rules.Kind.GAUGE, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [], "solution": [],
+	}
+	var turned := World.simulate(south, [Rooms.piece(Rules.Kind.GAUGE, 1, 1, Rules.Dir.SOUTH)], 8)
+	check(_trace(turned) == "5:1,2:0|5:1,0:1" and turned.world.machines[Vector2i(1, 1)].hold < 0, "a south-facing gauge sends the waiter forward and the arrival behind, got %s" % _trace(turned))
+	var through := {
+		"id": 0, "name": "gauge through", "blurb": "", "rule": "", "w": 4, "h": 3,
+		"sources": [Rooms.source(2, 1, Rules.Dir.WEST, [Rules.Mat.ORE, Rules.Mat.INGOT], 4)],
+		"sinks": [
+			Rooms.sink(3, 1, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+			Rooms.sink(0, 1, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+		],
+		"chutes": [], "walls": [],
+		"budget": Rooms.kv([Rules.Kind.GAUGE, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [], "solution": [],
+	}
+	var stepped := World.simulate(through, placed, 8)
+	check(_trace(stepped) == "5:3,1:0|5:0,1:1" and stepped.world.machines[Vector2i(1, 1)].hold < 0, "a source-only forward cell lets the waiter step through, got %s" % _trace(stepped))
+
+
+func _test_gauge_refuses_left_right_and_behind() -> void:
+	var left_side := {
+		"id": 0, "name": "gauge left", "blurb": "", "rule": "", "w": 3, "h": 3,
+		"sources": [Rooms.source(1, 0, Rules.Dir.SOUTH, [Rules.Mat.PLATE], 1)],
+		"sinks": [Rooms.sink(2, 1, [Rules.Mat.PLATE])],
+		"chutes": [], "walls": [],
+		"budget": Rooms.kv([Rules.Kind.GAUGE, 1, Rules.Kind.BELT, 1]),
+		"quota": Rooms.kv([Rules.Mat.PLATE, 1]),
+		"initial": [], "solution": [],
+	}
+	var belt_left := World.simulate(left_side, [Rooms.piece(Rules.Kind.BELT, 1, 1, Rules.Dir.EAST)], 4)
+	var board_left := World.simulate(left_side, [Rooms.piece(Rules.Kind.GAUGE, 1, 1, Rules.Dir.EAST)], 4)
+	check(int(belt_left.counts[Rules.Mat.PLATE]) >= 1, "a belt takes a plate from the left of the gauge cell, got %s" % _trace(belt_left))
+	check(int(board_left.counts[Rules.Mat.PLATE]) == 0 and int(board_left.world.sources[0].pending) == Rules.Mat.PLATE, "a gauge refuses that same plate from the left")
+	var right_side := {
+		"id": 0, "name": "gauge right", "blurb": "", "rule": "", "w": 3, "h": 3,
+		"sources": [Rooms.source(1, 2, Rules.Dir.NORTH, [Rules.Mat.INGOT], 1)],
+		"sinks": [Rooms.sink(2, 1, [Rules.Mat.INGOT])],
+		"chutes": [], "walls": [],
+		"budget": Rooms.kv([Rules.Kind.GAUGE, 1, Rules.Kind.BELT, 1]),
+		"quota": Rooms.kv([Rules.Mat.INGOT, 1]),
+		"initial": [], "solution": [],
+	}
+	var belt_right := World.simulate(right_side, [Rooms.piece(Rules.Kind.BELT, 1, 1, Rules.Dir.EAST)], 4)
+	var board_right := World.simulate(right_side, [Rooms.piece(Rules.Kind.GAUGE, 1, 1, Rules.Dir.EAST)], 4)
+	check(int(belt_right.counts[Rules.Mat.INGOT]) >= 1, "a belt takes an ingot from the right of the gauge cell, got %s" % _trace(belt_right))
+	check(int(board_right.counts[Rules.Mat.INGOT]) == 0 and int(board_right.world.sources[0].pending) == Rules.Mat.INGOT, "a gauge refuses that same ingot from the right")
+	var behind := {
+		"id": 0, "name": "gauge behind refuse", "blurb": "", "rule": "", "w": 3, "h": 1,
+		"sources": [Rooms.source(0, 0, Rules.Dir.EAST, [Rules.Mat.PLATE], 1)],
+		"sinks": [Rooms.sink(2, 0, [Rules.Mat.PLATE])],
+		"chutes": [], "walls": [],
+		"budget": Rooms.kv([Rules.Kind.GAUGE, 1, Rules.Kind.BELT, 1]),
+		"quota": Rooms.kv([Rules.Mat.PLATE, 1]),
+		"initial": [], "solution": [],
+	}
+	var belt := World.simulate(behind, [Rooms.piece(Rules.Kind.BELT, 1, 0, Rules.Dir.EAST)], 4)
+	var board_behind := World.simulate(behind, [Rooms.piece(Rules.Kind.GAUGE, 1, 0, Rules.Dir.EAST)], 4)
+	check(int(belt.counts[Rules.Mat.PLATE]) >= 1, "a belt takes a plate from behind the gauge cell, got %s" % _trace(belt))
+	check(int(board_behind.counts[Rules.Mat.PLATE]) == 0 and int(board_behind.world.sources[0].pending) == Rules.Mat.PLATE, "a gauge refuses that same plate from behind")
+
+
+func _test_gauge_blocked_does_not_spill() -> void:
+	var forward_wall := {
+		"id": 0, "name": "gauge forward wall", "blurb": "", "rule": "", "w": 3, "h": 3,
+		"sources": [Rooms.source(2, 1, Rules.Dir.WEST, [Rules.Mat.ORE, Rules.Mat.INGOT], 1)],
+		"sinks": [
+			Rooms.sink(0, 1, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+			Rooms.sink(1, 2, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+			Rooms.sink(1, 0, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+		],
+		"chutes": [Rooms.cell(0, 0), Rooms.cell(2, 0), Rooms.cell(0, 2), Rooms.cell(2, 2)],
+		"walls": [Rooms.cell(2, 1)],
+		"budget": Rooms.kv([Rules.Kind.GAUGE, 1, Rules.Kind.TRASHBOARD, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [], "solution": [],
+	}
+	var held := World.simulate(forward_wall, [Rooms.piece(Rules.Kind.GAUGE, 1, 1, Rules.Dir.EAST)], 6)
+	var trashboard := World.simulate(forward_wall, [Rooms.piece(Rules.Kind.TRASHBOARD, 1, 1, Rules.Dir.EAST)], 2)
+	check(held.error == "" and held.discarded == 0 and held.trace.is_empty(), "a gauge with a blocked forward cell does not spill behind or right")
+	check(held.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "blocked ore stays on the gauge when the forward cell refuses")
+	check(int(held.world.sources[0].pending) == Rules.Mat.INGOT, "the arrival is not accepted while the gauge's forward cell refuses")
+	check(int(held.counts[Rules.Mat.ORE]) == 0 and int(held.counts[Rules.Mat.INGOT]) == 0, "a blocked forward cell does not send the arrival behind")
+	check(_trace(trashboard) == "2:1,2:0|2:0,1:1", "a trashboard uses the open right cell the gauge refuses, got %s" % _trace(trashboard))
+	var behind_wall := {
+		"id": 0, "name": "gauge behind wall", "blurb": "", "rule": "", "w": 3, "h": 3,
+		"sources": [Rooms.source(2, 1, Rules.Dir.WEST, [Rules.Mat.ORE, Rules.Mat.INGOT], 1)],
+		"sinks": [
+			Rooms.sink(2, 1, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+			Rooms.sink(1, 2, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+			Rooms.sink(1, 0, [Rules.Mat.ORE, Rules.Mat.INGOT]),
+		],
+		"chutes": [Rooms.cell(0, 0), Rooms.cell(2, 0), Rooms.cell(0, 2), Rooms.cell(2, 2)],
+		"walls": [Rooms.cell(0, 1)],
+		"budget": Rooms.kv([Rules.Kind.GAUGE, 1, Rules.Kind.SHIN, 1]),
+		"quota": Rooms.kv([Rules.Mat.ORE, 1]),
+		"initial": [], "solution": [],
+	}
+	var behind_held := World.simulate(behind_wall, [Rooms.piece(Rules.Kind.GAUGE, 1, 1, Rules.Dir.EAST)], 6)
+	var shin := World.simulate(behind_wall, [Rooms.piece(Rules.Kind.SHIN, 1, 1, Rules.Dir.EAST)], 2)
+	check(behind_held.trace.is_empty() and behind_held.world.machines[Vector2i(1, 1)].hold == Rules.Mat.ORE, "a blocked behind cell keeps the waiter on the gauge")
+	check(int(behind_held.world.sources[0].pending) == Rules.Mat.INGOT, "the arrival is not accepted while the gauge's behind cell refuses")
+	check(int(behind_held.counts[Rules.Mat.ORE]) == 0 and int(behind_held.counts[Rules.Mat.INGOT]) == 0, "a blocked behind cell does not send the waiter forward")
+	check(_trace(shin) == "2:1,0:0|2:2,1:1", "a shin uses the open left cell the gauge refuses, got %s" % _trace(shin))
+
+
+func _test_wing38_lessons() -> void:
+	var wrong_kinds: Array = [
+		Rules.Kind.BELT, Rules.Kind.DWELL, Rules.Kind.TWIN, Rules.Kind.PASS,
+		Rules.Kind.SLIP, Rules.Kind.SHED, Rules.Kind.HOOK, Rules.Kind.RAKE,
+		Rules.Kind.HOE, Rules.Kind.HARROW, Rules.Kind.LANDSIDE, Rules.Kind.MOLDBOARD,
+		Rules.Kind.COULTER, Rules.Kind.SHARE, Rules.Kind.FORK, Rules.Kind.PRONG,
+		Rules.Kind.SLADE, Rules.Kind.HEEL, Rules.Kind.STILT, Rules.Kind.CLEVIS,
+		Rules.Kind.BEAM, Rules.Kind.HAKE, Rules.Kind.SOLE, Rules.Kind.FROG,
+		Rules.Kind.SHIN, Rules.Kind.POINT, Rules.Kind.THROAT, Rules.Kind.WREST,
+		Rules.Kind.JOINTER, Rules.Kind.BRIDLE, Rules.Kind.TRASHBOARD,
+	]
+	for index in range(296, 304):
+		var room: Dictionary = Rooms.all()[index]
+		for kind in wrong_kinds:
+			var swapped := _swap_kind(room.solution, Rules.Kind.GAUGE, int(kind))
+			var run: Dictionary = World.simulate(room, swapped)
+			check(run.error == "", "%s in place of the room %d gauge simulates (%s)" % [Rules.KIND_NAME[int(kind)], room.id, run.error])
+			check(not run.quota_ok, "%s in place of the room %d gauge misses the quota (%s)" % [Rules.KIND_NAME[int(kind)], room.id, run.text])
+			check(not run.success, "%s in place of the room %d gauge does not clear" % [Rules.KIND_NAME[int(kind)], room.id])
+			if int(kind) != Rules.Kind.BELT:
+				check(int(room.budget.get(int(kind), 0)) == 0, "room %d does not budget a %s" % [room.id, Rules.KIND_NAME[int(kind)]])
+		var planner = Planner.new(room)
+		for piece in room.initial:
+			check(planner.pickup(int(piece.x), int(piece.y)), "room %d picks up its starting piece" % room.id)
+		for piece in room.solution:
+			check(planner.place(int(piece.kind), int(piece.x), int(piece.y), int(piece.dir)), "room %d places its solution from the tray" % room.id)
+		var spare := _spare_cell(room)
+		check(spare.x >= 0, "room %d has an empty cell for an extra piece" % room.id)
+		check(not planner.place(Rules.Kind.BELT, spare.x, spare.y, Rules.Dir.EAST), "room %d rejects a belt past the tray" % room.id)
+		var extra: Array = room.solution.duplicate(true)
+		extra.append(Rooms.piece(Rules.Kind.BELT, spare.x, spare.y, Rules.Dir.EAST))
+		var over: Dictionary = World.simulate(room, extra)
+		check(over.quota_ok and not over.budget_ok and not over.success, "room %d extra belt meets the quota and is rejected (%s)" % [room.id, over.text])
+	var ore: Dictionary = Rooms.all()[296]
+	var smelted: Dictionary = World.simulate(ore, ore.solution)
+	check(int(smelted.counts[Rules.Mat.INGOT]) == 29 and int(smelted.counts[Rules.Mat.PLATE]) == 30, "ahead ore feeds the kiln and the plate bin (%s)" % smelted.text)
+	var ore_board: Dictionary = World.simulate(ore, _swap_kind(ore.solution, Rules.Kind.GAUGE, Rules.Kind.TRASHBOARD))
+	var ore_throat: Dictionary = World.simulate(ore, _swap_kind(ore.solution, Rules.Kind.GAUGE, Rules.Kind.THROAT))
+	var ore_bridle: Dictionary = World.simulate(ore, _swap_kind(ore.solution, Rules.Kind.GAUGE, Rules.Kind.BRIDLE))
+	check(not ore_board.quota_ok, "ahead ore's trashboard misses the quota (%s)" % ore_board.text)
+	check(not ore_throat.quota_ok, "ahead ore's throat misses the quota (%s)" % ore_throat.text)
+	check(not ore_bridle.quota_ok, "ahead ore's bridle misses the quota (%s)" % ore_bridle.text)
+	var still: Dictionary = Rooms.all()[297]
+	var stilled: Dictionary = World.simulate(still, still.solution)
+	check(int(still.budget[Rules.Kind.BELT]) == 1, "still gauge budgets one belt")
+	var still_belts := 0
+	var still_south := false
+	for piece in still.solution:
+		if int(piece.kind) == Rules.Kind.BELT:
+			still_belts += 1
+			check(int(piece.x) == 2 and int(piece.y) == 4, "still gauge's belt is on the crossing")
+		if int(piece.kind) == Rules.Kind.GAUGE:
+			still_south = int(piece.dir) == Rules.Dir.SOUTH
+	check(still_belts == 1 and still_south, "still gauge places one south-facing gauge")
+	check(int(stilled.counts[Rules.Mat.INGOT]) == 29 and int(stilled.counts[Rules.Mat.PLATE]) == 30 and int(stilled.discarded) > 0, "still gauge counts both exits and scraps the side stream (%s discarded %d)" % [stilled.text, stilled.discarded])
+	var seat: Dictionary = Rooms.all()[298]
+	var parked: Array = []
+	for piece in seat.solution:
+		if int(piece.kind) != Rules.Kind.GAUGE:
+			parked.append(piece)
+	parked.append(Rooms.piece(Rules.Kind.GAUGE, 5, 0, Rules.Dir.EAST))
+	var gap: Dictionary = World.simulate(seat, parked)
+	check(World.budget_met(parked, seat.budget) and not gap.quota_ok, "a parked gauge misses the seat (%s)" % gap.text)
+	var seated: Dictionary = World.simulate(seat, seat.solution)
+	check(int(seated.counts[Rules.Mat.INGOT]) == 29 and int(seated.counts[Rules.Mat.PLATE]) == 30, "seating the gauge clears the seat (%s)" % seated.text)
+	var corner: Dictionary = Rooms.all()[299]
+	var cornered: Dictionary = World.simulate(corner, corner.solution)
+	check(int(cornered.counts[Rules.Mat.INGOT]) == 59 and int(cornered.counts[Rules.Mat.PLATE]) == 60, "split corner counts both exits (%s)" % cornered.text)
+	var corner_board: Dictionary = World.simulate(corner, _swap_kind(corner.solution, Rules.Kind.GAUGE, Rules.Kind.TRASHBOARD))
+	check(not corner_board.quota_ok, "split corner's trashboard misses the quota (%s)" % corner_board.text)
+	var stocks: Dictionary = Rooms.all()[300]
+	var stocked: Dictionary = World.simulate(stocks, stocks.solution)
+	check(int(stocked.counts[Rules.Mat.INGOT]) == 118 and int(stocked.counts[Rules.Mat.PLATE]) == 120, "two stocks counts both lanes (%s)" % stocked.text)
+	var scrap: Dictionary = Rooms.all()[301]
+	var scraped: Dictionary = World.simulate(scrap, scrap.solution)
+	var scrap_south := false
+	for piece in scrap.solution:
+		if int(piece.kind) == Rules.Kind.GAUGE:
+			scrap_south = int(piece.dir) == Rules.Dir.SOUTH
+	check(scrap_south, "after the split's gauge faces south")
+	check(int(scraped.counts[Rules.Mat.INGOT]) == 29 and int(scraped.counts[Rules.Mat.PLATE]) == 30 and int(scraped.discarded) > 0, "after the split counts both exits and discards the scrap (%s discarded %d)" % [scraped.text, scraped.discarded])
+	var bin: Dictionary = Rooms.all()[302]
+	var solved: Dictionary = World.simulate(bin, bin.solution)
+	check(int(solved.counts[Rules.Mat.INGOT]) == 29 and int(solved.counts[Rules.Mat.PLATE]) == 104, "split bin hits both quotas (%s)" % solved.text)
+	check(solved.world.machines[Vector2i(2, 2)].hold < 0, "split bin's gauge is empty after the pairs")
+	var plates_only: Dictionary = World.simulate(bin, [Rooms.piece(Rules.Kind.BELT, 1, 5, Rules.Dir.EAST)])
+	check(int(plates_only.counts[Rules.Mat.INGOT]) == 0 and int(plates_only.counts[Rules.Mat.PLATE]) < int(bin.quota[Rules.Mat.PLATE]), "split bin's lower plates alone miss (%s)" % plates_only.text)
+	var pressed: Dictionary = World.simulate(bin, [
+		Rooms.piece(Rules.Kind.GAUGE, 2, 2, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.KILN, 4, 2, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.PRESS, 5, 2, Rules.Dir.EAST),
+		Rooms.piece(Rules.Kind.BELT, 1, 5, Rules.Dir.EAST),
+	])
+	check(int(pressed.counts[Rules.Mat.INGOT]) == 0 and not pressed.success, "pressing every ingot misses the split bin (%s)" % pressed.text)
+	var held_room: Dictionary = Rooms.all()[303]
+	var waiting: Dictionary = World.simulate(held_room, held_room.solution, 2)
+	var leaving: Dictionary = World.simulate(held_room, held_room.solution, 3)
+	var finished: Dictionary = World.simulate(held_room, held_room.solution)
+	var belt_early: Dictionary = World.simulate(held_room, _swap_kind(held_room.solution, Rules.Kind.GAUGE, Rules.Kind.BELT), 2)
+	var held_board: Dictionary = World.simulate(held_room, _swap_kind(held_room.solution, Rules.Kind.GAUGE, Rules.Kind.TRASHBOARD))
+	check(waiting.world.machines[Vector2i(1, 2)].hold == Rules.Mat.ORE and waiting.trace.is_empty(), "held pair keeps the first ore through the empty tick")
+	check(leaving.world.machines[Vector2i(1, 2)].hold < 0 and _trace(leaving) == "3:0,2:2", "held pair leaves on the arrival tick and the cell is empty, got %s" % _trace(leaving))
+	check(belt_early.world.machines[Vector2i(1, 2)].hold < 0 and belt_early.world.machines[Vector2i(3, 2)].hold < 0 and int(belt_early.world.sources[0].pending) == Rules.Mat.ORE, "a belt refuses the ahead arrival, so the first ore stays on the source")
+	check(int(finished.counts[Rules.Mat.INGOT]) == 29 and int(finished.counts[Rules.Mat.PLATE]) == 30, "held pair feeds the kiln and the plate bin (%s)" % finished.text)
+	check(not held_board.quota_ok, "held pair's trashboard misses the quota (%s)" % held_board.text)
