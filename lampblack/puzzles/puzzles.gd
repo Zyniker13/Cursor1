@@ -3,7 +3,7 @@ extends RefCounted
 
 const Rules = preload("res://rules/rules.gd")
 
-## Twenty-eight wings of the closed museum. Each solution is a list of actions the rules
+## Twenty-nine wings of the closed museum. Each solution is a list of actions the rules
 ## accept. Tokens are R L U D, W for wait, and T0 / T1 for lamps.
 
 
@@ -113,6 +113,8 @@ static func _puzzle(number: int, title: String, lesson: String, rows: PackedStri
 		wing_number = number - 158
 	elif wing == "Denim Wing":
 		wing_number = number - 164
+	elif wing == "Canvas Wing":
+		wing_number = number - 170
 	return {
 		"number": number,
 		"wing": wing,
@@ -170,6 +172,7 @@ static func _all() -> Array:
 	puzzles.append_array(_buckram_wing())
 	puzzles.append_array(_ticking_wing())
 	puzzles.append_array(_denim_wing())
+	puzzles.append_array(_canvas_wing())
 	return puzzles
 
 
@@ -3264,5 +3267,119 @@ static func _denim_wing() -> Array:
 			[_guard(1, 1, [Vector2i(1, 1)], 0)],
 			"L L R R U U T0 D D D L L L",
 			"Denim Wing"
+		),
+	]
+
+
+static func _canvas_wing() -> Array:
+	return [
+		_puzzle(
+			171,
+			"The Lit Canvas",
+			"This room is about the rule that the canvas is lit.",
+			PackedStringArray([
+				"#########",
+				"#GU.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L R U U T0 D D D L L L",
+			"Canvas Wing"
+		),
+		_puzzle(
+			172,
+			"The Seen Sail",
+			"This room is about the rule that the guard sees a lit tile through the lit canvas.",
+			PackedStringArray([
+				"#########",
+				"#GU.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+				"#.......#",
+				"#..U....#",
+				"#..G....#",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3), _lamp(3, 6, "s", 2)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0), _guard(3, 8, [Vector2i(3, 8)], 3)],
+			"L R U U T0 D D D L L L",
+			"Canvas Wing"
+		),
+		_puzzle(
+			173,
+			"The Passed Bolt",
+			"This room is about the rule that a second lamp's light passes through the canvas.",
+			PackedStringArray([
+				"#########",
+				"#########",
+				"#GU.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+			]),
+			[_lamp(3, 2, "w", 3)],
+			[_guard(1, 2, [Vector2i(1, 2)], 0)],
+			"L R U U T0 D D D L L L",
+			"Canvas Wing"
+		),
+		_puzzle(
+			174,
+			"The Open Canvas",
+			"This room is about the rule that a guard can enter the canvas.",
+			PackedStringArray([
+				"##########",
+				"#GU.....##",
+				"#..#....##",
+				"#..GS...##",
+				"#X......##",
+				"##########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L R U U T0 D D D L L L",
+			"Canvas Wing"
+		),
+		_puzzle(
+			175,
+			"The Quenched Step",
+			"This room is about the rule that the early step onto the lit canvas succeeds and puts it out.",
+			PackedStringArray([
+				"#########",
+				"#GU.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L R U U T0 D D D L L L",
+			"Canvas Wing"
+		),
+		_puzzle(
+			176,
+			"The Last Canvas",
+			"This room is about the rule that you leave by stepping on the canvas, and that step puts it out.",
+			PackedStringArray([
+				"#########",
+				"#GU.....#",
+				"#..#....#",
+				"#.UGS...#",
+				"#X......#",
+				"#.U.....#",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L L R R U U T0 D D D L L L",
+			"Canvas Wing"
 		),
 	]
