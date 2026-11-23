@@ -60,6 +60,14 @@ extends RefCounted
 ## exit refuses, neither item leaves. A moldboard sends the waiter left.
 ## A coulter sends the waiter forward and the arrival right. Nothing stays
 ## in the landside.
+## A slade does not forward in step 2 on its own. The first item stays.
+## When a later item arrives from behind, the waiter moves one cell backward
+## and the arrival moves one cell forward, and only if both of those cells
+## can take them. Backward is opposite the facing. The slade is empty after
+## that tick. If either exit refuses, neither item leaves. A source cell
+## cannot hold the returning item. When the cell backward is only that
+## source, the waiter moves through it into the next cell backward. A
+## landside sends the waiter right. Nothing stays in the slade.
 
 const Rules = preload("res://scripts/foundry.gd")
 
@@ -91,7 +99,7 @@ class Machine:
 	## Second lane on a bridge. -1 is empty. Other machines leave it empty.
 	var cross := -1
 	var cross_moved := false
-	## True while a twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, or a landside is resolving an arrival, so a loop cannot re-enter.
+	## True while a twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, or a slade is resolving an arrival, so a loop cannot re-enter.
 	var pairing := false
 
 class Source:
@@ -476,8 +484,9 @@ func _can_take(machine: Machine, mat: int, arrival: int) -> bool:
 		or machine.kind == Rules.Kind.COULTER
 		or machine.kind == Rules.Kind.MOLDBOARD
 		or machine.kind == Rules.Kind.LANDSIDE
+		or machine.kind == Rules.Kind.SLADE
 	):
-		# Pairing is handled in _accept. A twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, or a landside may already be holding.
+		# Pairing is handled in _accept. A twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, or a slade may already be holding.
 		return false
 	if machine.kind == Rules.Kind.BRIDGE:
 		if arrival == machine.dir:
@@ -547,6 +556,8 @@ func _accept(dest: Vector2i, mat: int, arrival: int) -> bool:
 		return _accept_moldboard(dest, machine, mat, arrival)
 	if machine.kind == Rules.Kind.LANDSIDE:
 		return _accept_landside(dest, machine, mat, arrival)
+	if machine.kind == Rules.Kind.SLADE:
+		return _accept_slade(dest, machine, mat, arrival)
 	if not _can_take(machine, mat, arrival):
 		return false
 	if _holder(machine.kind):
@@ -966,6 +977,66 @@ func _accept_landside(pos: Vector2i, machine: Machine, mat: int, arrival: int) -
 	machine.hold = -1
 	machine.moved = false
 	return true
+
+
+## Behind only. The first item waits and never leaves on its own. A later item
+## from behind may be a different material. On that tick the waiter moves one
+## cell backward and the arrival moves one cell forward, if both cells can
+## take them. Backward is opposite the facing. The slade is empty afterwards.
+## If either exit refuses, neither item leaves and the arrival is not accepted.
+## A source cell cannot hold the returning item. When the cell directly
+## backward is only the source that delivered the arrival, the waiter moves
+## through that cell into the next cell backward. A lone item never leaves,
+## including on the next tick and the tick after that. The slade does not
+## spill, rotate, alternate, or send left or right, and it does not keep
+## either item. A landside sends the waiter right and the arrival forward. A
+## moldboard sends the waiter left and the arrival forward. A coulter sends
+## the waiter forward and the arrival right. A share sends the waiter forward
+## and the arrival left. A fork sends the waiter left and the arrival right.
+## A prong sends the waiter right and the arrival left. A hoe sends the waiter
+## right and keeps the arrival. A slip sends the arrival forward and keeps
+## the waiter.
+func _accept_slade(pos: Vector2i, machine: Machine, mat: int, arrival: int) -> bool:
+	if arrival != machine.dir:
+		return false
+	if machine.hold < 0:
+		machine.hold = mat
+		machine.moved = true
+		return true
+	if machine.moved or machine.pairing:
+		return false
+	var back_dir := Rules.opposite(machine.dir)
+	var forward_dir := machine.dir
+	var mark := _checkpoint()
+	machine.pairing = true
+	var back_pos := pos + Rules.vec(back_dir)
+	var back_sent: bool = _accept(back_pos, machine.hold, back_dir)
+	if not back_sent and _source_only(back_pos):
+		back_sent = _accept(back_pos + Rules.vec(back_dir), machine.hold, back_dir)
+	var forward_sent := false
+	if back_sent:
+		forward_sent = _accept(pos + Rules.vec(forward_dir), mat, forward_dir)
+	if not back_sent or not forward_sent:
+		_restore(mark)
+		return false
+	machine.pairing = false
+	machine.hold = -1
+	machine.moved = false
+	return true
+
+
+## True when the cell is a source and nothing else. A source cannot hold the
+## item a slade sends backward, so the waiter may step through into the next cell.
+func _source_only(cell: Vector2i) -> bool:
+	if cell.x < 0 or cell.y < 0 or cell.x >= width or cell.y >= height:
+		return false
+	if walls.has(cell) or chutes.has(cell) or sinks.has(cell) or machines.has(cell):
+		return false
+	for source in sources:
+		var emitter: Source = source
+		if emitter.pos == cell:
+			return true
+	return false
 
 
 func _checkpoint() -> Dictionary:
