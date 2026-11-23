@@ -51,7 +51,7 @@ extends RefCounted
 ## A buckram does not stop the flood. The buckram itself is lit, and tiles past it light.
 ## A ticking does not stop the flood. The ticking itself is lit, and tiles past it light.
 ## A denim does not stop the flood. The denim itself is lit, and tiles past it light.
-## A denim does not stop the flood. The denim itself is lit, and tiles past it light.
+## A canvas does not stop the flood. The canvas itself is lit until you step on it.
 ##
 ## Movement
 ## Dark floor and a dark exit may be entered. A gap may be entered only while it is lit.
@@ -123,6 +123,11 @@ extends RefCounted
 ## second lamp and allows the early step, and a guard can enter it, so that
 ## light flip was already taken. You do not leave by stepping on the dark
 ## denim. You leave only by stepping on the lit denim.
+## A canvas is floor. A lamp lights it. The early step onto an unwatched lit
+## canvas succeeds, and that step puts the canvas out. Before the step, sight
+## passes, a second lamp's light passes, and a guard can enter. You leave by
+## stepping on the canvas, and that step is what makes it dark. A denim stays
+## lit under that step. A buckram refuses the early step.
 ##
 ## Plates
 ## The turn the player steps onto a plate calls the nearest guard, by the same rule as a
@@ -143,7 +148,7 @@ extends RefCounted
 ## floor path. A sill is not a floor path. A pane is not a floor path. A curtain is a
 ## floor path. A shade is not a floor path. A screen is not a floor path. A glaze is
 ## not a floor path. A mica is not a floor path. A baize is not a floor path.
-## A scrim is not a floor path. A gauze is not a floor path. A voile is not a floor path. A lawn is not a floor path. A muslin is a floor path. A cambric is a floor path. A holland is a floor path. A buckram is a floor path. A ticking is a floor path. A denim is a floor path.
+## A scrim is not a floor path. A gauze is not a floor path. A voile is not a floor path. A lawn is not a floor path. A muslin is a floor path. A cambric is a floor path. A holland is a floor path. A buckram is a floor path. A ticking is a floor path. A denim is a floor path. A canvas is a floor path.
 ##
 ## Grates
 ## A grate is floor you may enter. It is never lit, even when a lamp's diamond covers
@@ -527,6 +532,21 @@ extends RefCounted
 ## it succeeds, sight passes, a guard can enter it, and you leave only on the
 ## lit denim.
 ##
+## Canvases
+## A canvas is the denim with the leaving step flipped again: the step puts the
+## cloth out. No cloth already goes dark because you stepped on it. A canvas is
+## floor a lamp lights. Before the step, a second lamp's light passes, sight
+## passes, and a guard can enter. An unwatched lit canvas may be entered, and
+## that step puts it out, so the canvas itself is dark afterward while tiles
+## past it stay lit. You leave by stepping on the canvas, and that step is what
+## makes it dark. A denim stays lit under the same step, so you do not leave
+## while the canvas stays lit. A buckram refuses the early step. Stepping onto
+## a lit canvas a guard is watching is a loss, and that loss does not put it
+## out. A dark canvas may still be entered, and it is already dark. A lamp
+## standing on a canvas does not shine past that tile. A canvas calls nobody.
+## It is never a hold. A guard can enter it. A bell still calls every guard who
+## has a floor path, and a canvas is that path.
+##
 ## Vision
 ## Each guard watches a Manhattan diamond of their vision radius, and only on tiles that
 ## are currently lit. Walls and dark tiles block vision. A grate stays dark, so it blocks
@@ -573,6 +593,9 @@ extends RefCounted
 ## A lit denim does not block vision, so a guard sees lit tiles beyond it, and
 ## the lit denim itself can be watched. A dark denim blocks vision the same
 ## way any dark floor does.
+## A lit canvas does not block vision, so a guard sees lit tiles beyond it, and
+## the lit canvas itself can be watched. The step that puts a canvas out makes
+## that cell dark, and then sight stops there the same way any dark floor does.
 ## A guard standing in the dark can still look into an adjacent lit tile. The
 ## guard's own tile is not marked watched; standing on the guard is a separate loss.
 ##
@@ -580,7 +603,7 @@ extends RefCounted
 ## Alerted guards take one step along a shortest 4-neighbor path to the tile they were
 ## called to, a lamp, a plate, or a bell. Neighbors are expanded north, east, south,
 ## then west, and that order breaks ties. They may walk on floor, plate, bell, exit,
-## and curtain tiles, lit or dark, and through muslins, cambrics, hollands, buckrams, tickings, and denims, but not through walls, gaps, grates, sills, panes, shades, screens, glazes, micas, baizes, scrims, gauzes, voiles, or lawns. When they step onto that tile
+## and curtain tiles, lit or dark, and through muslins, cambrics, hollands, buckrams, tickings, denims, and canvases, but not through walls, gaps, grates, sills, panes, shades, screens, glazes, micas, baizes, scrims, gauzes, voiles, or lawns. When they step onto that tile
 ## they hold there. They do not resume the rail unless a later snuff, plate, or bell calls them.
 ## A guard who is not alert and not holding patrols their rail. The rail is a list of
 ## waypoints. rail_index is the waypoint they are walking toward, and rail_dir is +1 or -1.
@@ -592,7 +615,7 @@ extends RefCounted
 ## every lamp's lit flag, and every guard's position, rail index, rail direction, alert
 ## target, and hold flag.
 
-enum Tile { WALL, FLOOR, GAP, EXIT, PLATE, BELL, GRATE, SILL, PANE, CURTAIN, SHADE, SCREEN, GLAZE, MICA, BAIZE, SCRIM, GAUZE, VOILE, LAWN, MUSLIN, CAMBRIC, HOLLAND, BUCKRAM, TICKING, DENIM }
+enum Tile { WALL, FLOOR, GAP, EXIT, PLATE, BELL, GRATE, SILL, PANE, CURTAIN, SHADE, SCREEN, GLAZE, MICA, BAIZE, SCRIM, GAUZE, VOILE, LAWN, MUSLIN, CAMBRIC, HOLLAND, BUCKRAM, TICKING, DENIM, CANVAS }
 enum Result { OK, WIN, LOSS, ILLEGAL }
 
 const DIRS := [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]
@@ -671,6 +694,8 @@ static func build(rows: PackedStringArray, lamps: Array, guards: Array) -> Dicti
 					kind = Tile.TICKING
 				"D":
 					kind = Tile.DENIM
+				"U":
+					kind = Tile.CANVAS
 				_:
 					push_error("bad tile '%s'" % ch)
 			tiles[y * width + x] = kind
@@ -714,6 +739,7 @@ static func build(rows: PackedStringArray, lamps: Array, guards: Array) -> Dicti
 		"player": player,
 		"lamps": lamp_list,
 		"guards": guard_list,
+		"out": {},
 	}
 
 
@@ -743,6 +769,13 @@ static func signature(state: Dictionary) -> String:
 			alert_bit, guard["ax"], guard["ay"],
 			hold_bit, "+".join(rail_bits),
 		])
+	if state.has("out") and not state["out"].is_empty():
+		var out_bits: PackedStringArray = PackedStringArray()
+		for key in state["out"].keys():
+			var cell: Vector2i = key
+			out_bits.append("%d,%d" % [cell.x, cell.y])
+		out_bits.sort()
+		parts.append("O:" + "+".join(out_bits))
 	return "|".join(parts)
 
 
@@ -780,7 +813,7 @@ static func lamp_lights(state: Dictionary, lamp: Dictionary) -> Array:
 		queue.append(origin)
 	# A lamp standing on a sill, a shade, a baize, a scrim, or a gauze does not shine past that tile.
 	# Every other lamp still seeds its neighbors. A grate and a pane let the flood through.
-	if origin_kind != Tile.SILL and origin_kind != Tile.SHADE and origin_kind != Tile.BAIZE and origin_kind != Tile.SCRIM and origin_kind != Tile.GAUZE and origin_kind != Tile.VOILE and origin_kind != Tile.LAWN and origin_kind != Tile.MUSLIN and origin_kind != Tile.CAMBRIC and origin_kind != Tile.HOLLAND and origin_kind != Tile.BUCKRAM and origin_kind != Tile.TICKING and origin_kind != Tile.DENIM:
+	if origin_kind != Tile.SILL and origin_kind != Tile.SHADE and origin_kind != Tile.BAIZE and origin_kind != Tile.SCRIM and origin_kind != Tile.GAUZE and origin_kind != Tile.VOILE and origin_kind != Tile.LAWN and origin_kind != Tile.MUSLIN and origin_kind != Tile.CAMBRIC and origin_kind != Tile.HOLLAND and origin_kind != Tile.BUCKRAM and origin_kind != Tile.TICKING and origin_kind != Tile.DENIM and origin_kind != Tile.CANVAS:
 		for dir in DIRS:
 			var nxt: Vector2i = origin + dir
 			var seed_kind := tile_at(state, nxt.x, nxt.y)
@@ -825,10 +858,15 @@ static func lamp_lights(state: Dictionary, lamp: Dictionary) -> Array:
 		# lit. A flood that reaches the denim from another tile passes through.
 		# A lamp standing on the denim does not shine past it. The early step
 		# onto the lit denim succeeds. A dark denim is refused. Sight passes,
-		# and a guard can enter it.
-		if cell_kind != Tile.GRATE and cell_kind != Tile.PANE and cell_kind != Tile.SHADE and cell_kind != Tile.MICA and cell_kind != Tile.BAIZE:
+		# and a guard can enter it. A canvas is lit until a step puts it out.
+		# A flood that reaches the canvas from another tile passes through,
+		# and it still passes after the canvas itself is dark. A lamp standing
+		# on the canvas does not shine past it. The early step onto the lit
+		# canvas succeeds and puts that cell out.
+		var canvas_out: bool = cell_kind == Tile.CANVAS and state.has("out") and state["out"].has(cell)
+		if cell_kind != Tile.GRATE and cell_kind != Tile.PANE and cell_kind != Tile.SHADE and cell_kind != Tile.MICA and cell_kind != Tile.BAIZE and not canvas_out:
 			lit.append(cell)
-		if (cell_kind == Tile.GAUZE or cell_kind == Tile.VOILE or cell_kind == Tile.HOLLAND or cell_kind == Tile.BUCKRAM or cell_kind == Tile.TICKING or cell_kind == Tile.DENIM) and cell == origin:
+		if (cell_kind == Tile.GAUZE or cell_kind == Tile.VOILE or cell_kind == Tile.HOLLAND or cell_kind == Tile.BUCKRAM or cell_kind == Tile.TICKING or cell_kind == Tile.DENIM or cell_kind == Tile.CANVAS) and cell == origin:
 			continue
 		if cell_kind == Tile.SILL or cell_kind == Tile.SHADE or cell_kind == Tile.BAIZE or cell_kind == Tile.SCRIM or cell_kind == Tile.LAWN or cell_kind == Tile.MUSLIN or cell_kind == Tile.CAMBRIC:
 			continue
@@ -938,7 +976,7 @@ static func loss_reason(state: Dictionary, lit: Dictionary = {}) -> String:
 
 static func guard_walkable(state: Dictionary, x: int, y: int) -> bool:
 	var kind := tile_at(state, x, y)
-	return kind == Tile.FLOOR or kind == Tile.EXIT or kind == Tile.PLATE or kind == Tile.BELL or kind == Tile.CURTAIN or kind == Tile.MUSLIN or kind == Tile.CAMBRIC or kind == Tile.HOLLAND or kind == Tile.BUCKRAM or kind == Tile.TICKING or kind == Tile.DENIM
+	return kind == Tile.FLOOR or kind == Tile.EXIT or kind == Tile.PLATE or kind == Tile.BELL or kind == Tile.CURTAIN or kind == Tile.MUSLIN or kind == Tile.CAMBRIC or kind == Tile.HOLLAND or kind == Tile.BUCKRAM or kind == Tile.TICKING or kind == Tile.DENIM or kind == Tile.CANVAS
 
 
 static func bfs_path(state: Dictionary, sx: int, sy: int, gx: int, gy: int) -> Dictionary:
@@ -1100,7 +1138,7 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 		elif dest == Tile.GAP:
 			if not lit.has(Vector2i(nx, ny)):
 				return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "darkgap")
-		elif dest == Tile.GRATE or dest == Tile.SHADE or dest == Tile.MICA or dest == Tile.BAIZE or dest == Tile.VOILE or dest == Tile.LAWN or dest == Tile.CAMBRIC or dest == Tile.HOLLAND or dest == Tile.TICKING:
+		elif dest == Tile.GRATE or dest == Tile.SHADE or dest == Tile.MICA or dest == Tile.BAIZE or dest == Tile.VOILE or dest == Tile.LAWN or dest == Tile.CAMBRIC or dest == Tile.HOLLAND or dest == Tile.TICKING or dest == Tile.CANVAS:
 			pass
 		elif dest == Tile.FLOOR or dest == Tile.EXIT or dest == Tile.PLATE or dest == Tile.BELL or dest == Tile.SILL or dest == Tile.CURTAIN or dest == Tile.SCREEN or dest == Tile.GLAZE or dest == Tile.SCRIM or dest == Tile.GAUZE or dest == Tile.MUSLIN or dest == Tile.BUCKRAM:
 			if lit.has(Vector2i(nx, ny)):
@@ -1118,6 +1156,10 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 		player["y"] = ny
 		player["fx"] = dx
 		player["fy"] = dy
+		if dest == Tile.CANVAS and lit.has(Vector2i(nx, ny)):
+			if not st.has("out"):
+				st["out"] = {}
+			st["out"][Vector2i(nx, ny)] = true
 		if dest == Tile.PLATE:
 			var plate_guard := nearest_guard(st, {"x": nx, "y": ny})
 			if plate_guard >= 0:
@@ -1137,7 +1179,7 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 		if absi(int(lamp["x"]) - int(player["x"])) + absi(int(lamp["y"]) - int(player["y"])) != 1:
 			return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "range")
 		var here := tile_at(st, player["x"], player["y"])
-		if here != Tile.FLOOR and here != Tile.EXIT and here != Tile.PLATE and here != Tile.BELL and here != Tile.GRATE and here != Tile.SILL and here != Tile.CURTAIN and here != Tile.SHADE and here != Tile.SCREEN and here != Tile.GLAZE and here != Tile.MICA and here != Tile.BAIZE and here != Tile.SCRIM and here != Tile.GAUZE and here != Tile.VOILE and here != Tile.LAWN and here != Tile.MUSLIN and here != Tile.CAMBRIC and here != Tile.HOLLAND and here != Tile.BUCKRAM and here != Tile.TICKING and here != Tile.DENIM:
+		if here != Tile.FLOOR and here != Tile.EXIT and here != Tile.PLATE and here != Tile.BELL and here != Tile.GRATE and here != Tile.SILL and here != Tile.CURTAIN and here != Tile.SHADE and here != Tile.SCREEN and here != Tile.GLAZE and here != Tile.MICA and here != Tile.BAIZE and here != Tile.SCRIM and here != Tile.GAUZE and here != Tile.VOILE and here != Tile.LAWN and here != Tile.MUSLIN and here != Tile.CAMBRIC and here != Tile.HOLLAND and here != Tile.BUCKRAM and here != Tile.TICKING and here != Tile.DENIM and here != Tile.CANVAS:
 			return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "range")
 		var was_lit: bool = lamp["lit"]
 		lamp["lit"] = not was_lit

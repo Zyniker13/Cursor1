@@ -4718,6 +4718,68 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 		var jogb_after_empty = jogb_after_row <= 2 and state.form[jogb_after_row][jogb_after_col] == null
 		if jogb_before_empty and jogb_after_empty:
 			guess += _stamp_number(state, card_id, row, col)
+	if rule == "drop_if_auger_count":
+		var auger_filled = 0
+		for auger_row in 3:
+			for auger_col in 3:
+				if state.form[auger_row][auger_col] != null:
+					auger_filled += 1
+		var auger_next = auger_filled + 1
+		if auger_next == 11 or auger_next == 14:
+			guess -= 4
+		elif auger_filled == 11 or auger_filled == 14:
+			guess += 5
+	if rule == "double_wave_fill":
+		var wave_before_row = row
+		var wave_before_col = col - 11
+		while wave_before_col < 0:
+			wave_before_row -= 1
+			wave_before_col += 3
+		var wave_after_row = row
+		var wave_after_col = col + 1
+		while wave_after_col > 2:
+			wave_after_row += 1
+			wave_after_col -= 3
+		var wave_before_filled = wave_before_row >= 0 and state.form[wave_before_row][wave_before_col] != null
+		var wave_after_filled = wave_after_row <= 2 and state.form[wave_after_row][wave_after_col] != null
+		if wave_before_filled and wave_after_filled:
+			guess += _stamp_number(state, card_id, row, col)
+	if rule == "yield_nail_pay":
+		var nail_sides = 0
+		var nail_corners = 0
+		for nail_side in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var nail_side_row = row + nail_side.x
+			var nail_side_col = col + nail_side.y
+			if nail_side_row < 0 or nail_side_col < 0 or nail_side_row > 2 or nail_side_col > 2:
+				continue
+			if state.form[nail_side_row][nail_side_col] != null:
+				nail_sides += 1
+		for nail_corner in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var nail_corner_row = row + nail_corner.x
+			var nail_corner_col = col + nail_corner.y
+			if nail_corner_row < 0 or nail_corner_col < 0 or nail_corner_row > 2 or nail_corner_col > 2:
+				continue
+			if state.form[nail_corner_row][nail_corner_col] != null:
+				nail_corners += 1
+		if nail_sides == 9 and nail_corners == 4:
+			guess += 4
+		else:
+			guess -= 1
+	if rule == "double_wave_blank":
+		var waveb_before_row = row
+		var waveb_before_col = col - 11
+		while waveb_before_col < 0:
+			waveb_before_row -= 1
+			waveb_before_col += 3
+		var waveb_after_row = row
+		var waveb_after_col = col + 1
+		while waveb_after_col > 2:
+			waveb_after_row += 1
+			waveb_after_col -= 3
+		var waveb_before_empty = waveb_before_row >= 0 and state.form[waveb_before_row][waveb_before_col] == null
+		var waveb_after_empty = waveb_after_row <= 2 and state.form[waveb_after_row][waveb_after_col] == null
+		if waveb_before_empty and waveb_after_empty:
+			guess += _stamp_number(state, card_id, row, col)
 	if rule == "drop_if_countersink_count":
 		var countersink_filled = 0
 		for countersink_row in 3:

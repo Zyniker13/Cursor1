@@ -2466,6 +2466,7 @@ const SHIFT_ENVOY := 46
 const SHIFT_FINALE := 47
 const SHIFT_EPODE := 48
 const SHIFT_RECESSIONAL := 50
+const SHIFT_SEXT := 59
 const SHIFT_TERCE := 58
 const SHIFT_PRIME := 57
 const SHIFT_LAUDS := 56
@@ -4848,6 +4849,54 @@ const FINALE_BELL := [
 
 
 
+const SEXT_BELL := [
+	{
+		"id": "sondre_eide",
+		"name": "Sondre Eide",
+		"form_name": "Auger Toll",
+		"rule_text": "Patience drops by 2 when the number of filled cells is 11 or 14.",
+		"rule": "drop_if_auger_count",
+		"lane": 1,
+		"exemption_row": 2,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "iben_ruud",
+		"name": "Iben Ruud",
+		"form_name": "Wave Fill",
+		"rule_text": "A stamp scores twice only when the queue cell one place after it is filled and the queue cell eleven places before it is filled. Every cell on the form has no cell eleven places before it, so none of them double.",
+		"rule": "double_wave_fill",
+		"lane": 2,
+		"exemption_row": 1,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "unn_strand",
+		"name": "Unn Strand",
+		"form_name": "Nail Pay",
+		"rule_text": "Each stamp with exactly four corner neighbors and exactly nine side neighbors scores +2 once. Any other count scores its own number. Exactly four corner neighbors with four, five, six, seven, or eight side neighbors score their own number. A lone stamp scores its own number.",
+		"rule": "yield_nail_pay",
+		"lane": 0,
+		"exemption_row": 2,
+		"goal": 16,
+		"patience": 5,
+	},
+	{
+		"id": "guro_hagen",
+		"name": "Guro Hagen",
+		"form_name": "Wave Blank",
+		"rule_text": "A stamp scores twice only when the queue cell one place after it is empty and the queue cell eleven places before it is empty. Every cell on the form has no cell eleven places before it, so none of them double.",
+		"rule": "double_wave_blank",
+		"lane": 2,
+		"exemption_row": 0,
+		"goal": 22,
+		"patience": 5,
+	},
+]
+
+
 const TERCE_BELL := [
 	{
 		"id": "torsten_bjerke",
@@ -5473,6 +5522,8 @@ static func _canonical_shift(shift_index: int) -> int:
 		return SHIFT_TITLEPAGE
 	if shift_index == SHIFT_COPYRIGHT:
 		return SHIFT_COPYRIGHT
+	if shift_index == SHIFT_SEXT:
+		return SHIFT_SEXT
 	if shift_index == SHIFT_TERCE:
 		return SHIFT_TERCE
 	if shift_index == SHIFT_PRIME:
@@ -5552,6 +5603,8 @@ static func new_run(seed_value: int, shift_index: int = SHIFT_FIRST) -> NightSta
 	state.next_iid = 0
 	for card_id in STARTING_DECK:
 		_add_library_card(state, String(card_id))
+	if state.shift == SHIFT_SEXT:
+		_log(state, "The sext bell begins. Seed %d." % state.seed)
 	if state.shift == SHIFT_TERCE:
 		_log(state, "The terce bell begins. Seed %d." % state.seed)
 	if state.shift == SHIFT_PRIME:
@@ -5710,6 +5763,8 @@ static func restart_encounter(state: NightState) -> void:
 
 
 static func shift_label(state: NightState) -> String:
+	if state.shift == SHIFT_SEXT:
+		return "Sext bell"
 	if state.shift == SHIFT_TERCE:
 		return "Terce bell"
 	if state.shift == SHIFT_PRIME:
@@ -5844,6 +5899,8 @@ static func traveler(state: NightState) -> Dictionary:
 
 
 static func _roster(state: NightState) -> Array:
+	if state.shift == SHIFT_SEXT:
+		return SEXT_BELL
 	if state.shift == SHIFT_TERCE:
 		return TERCE_BELL
 	if state.shift == SHIFT_PRIME:
@@ -6442,6 +6499,12 @@ static func stamp_progress(state: NightState, card_id: String, row: int, col: in
 		return amount * 2
 	if rule == "yield_stake_pay" and _stake_pay(state, row, col):
 		return amount + 2
+	if rule == "double_wave_fill" and _wave_fill(state, row, col):
+		return amount * 2
+	if rule == "yield_nail_pay" and _nail_pay(state, row, col):
+		return amount + 2
+	if rule == "double_wave_blank" and _wave_blank(state, row, col):
+		return amount * 2
 	if rule == "double_crimp_fill" and _crimp_fill(state, row, col):
 		return amount * 2
 	if rule == "yield_cotter_pay" and _cotter_pay(state, row, col):
@@ -6635,6 +6698,8 @@ static func patience_loss(state: NightState) -> int:
 		elif rule == "drop_if_gauge_count" and _is_gauge_count(_stamp_count(state)):
 			loss = 2
 		elif rule == "drop_if_latch_count" and _is_latch_count(_stamp_count(state)):
+			loss = 2
+		elif rule == "drop_if_auger_count" and _is_auger_count(_stamp_count(state)):
 			loss = 2
 		elif rule == "drop_if_countersink_count" and _is_countersink_count(_stamp_count(state)):
 			loss = 2
@@ -7123,6 +7188,12 @@ static func _resolve_stamp(state: NightState, row: int, col: int, hush: bool) ->
 				_log(state, "%s on the %s, %s grants %d. Four corner neighbors and five side neighbors pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			elif tail_rule == "double_nick_blank" and _nick_blank(state, row, col) and amount > raw:
 				_log(state, "%s on the %s, %s grants %d. The empty cell seven places before it and the empty cell one place after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_wave_fill" and _wave_fill(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The filled cell eleven places before it and the filled cell one place after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_nail_pay" and _nail_pay(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. Four corner neighbors and nine side neighbors pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_wave_blank" and _wave_blank(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The empty cell eleven places before it and the empty cell one place after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			elif tail_rule == "double_crimp_fill" and _crimp_fill(state, row, col) and amount > raw:
 				_log(state, "%s on the %s, %s grants %d. The filled cell ten places before it and the filled cell one place after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			elif tail_rule == "yield_cotter_pay" and _cotter_pay(state, row, col) and amount > raw:
@@ -7509,6 +7580,56 @@ static func _wedge_pay(state: NightState, row: int, col: int) -> bool:
 	if state.form[row][col] == null:
 		return false
 	return _diagonal_count(state, row, col) == 2
+
+
+static func _is_auger_count(count: int) -> bool:
+	return count == 11 or count == 14
+
+
+static func _wave_fill(state: NightState, row: int, col: int) -> bool:
+	return _eleven_back(state, row, col) and _pace_fill(state, row, col)
+
+
+static func _nail_pay(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	return orthogonal_count(state, row, col) == 9 and _diagonal_count(state, row, col) == 4
+
+
+static func _wave_blank(state: NightState, row: int, col: int) -> bool:
+	return _eleven_gap(state, row, col) and _pace_blank(state, row, col)
+
+
+static func _eleven_back(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var back_row := row
+	var back_col := col - 11
+	while back_col < 0:
+		back_row -= 1
+		back_col += 3
+	if back_row < 0:
+		return false
+	return state.form[back_row][back_col] != null
+
+
+static func _eleven_gap(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var back_row := row
+	var back_col := col - 11
+	while back_col < 0:
+		back_row -= 1
+		back_col += 3
+	if back_row < 0:
+		return false
+	return state.form[back_row][back_col] == null
 
 
 static func _is_countersink_count(count: int) -> bool:
@@ -8911,6 +9032,8 @@ static func _apply_result(state: NightState, result: Dictionary) -> void:
 		state.encounters_cleared += 1
 		if state.traveler_index >= _roster(state).size() - 1:
 			state.phase = "victory"
+			if state.shift == SHIFT_SEXT:
+				_log(state, "The queue is empty. The sext bell is clear.")
 			if state.shift == SHIFT_TERCE:
 				_log(state, "The queue is empty. The terce bell is clear.")
 			if state.shift == SHIFT_PRIME:
