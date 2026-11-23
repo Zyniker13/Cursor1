@@ -331,6 +331,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_thumb(at, rot)
 		"roll":
 			_draw_roll(at, rot)
+		"gutta":
+			_draw_gutta(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -2323,6 +2325,38 @@ func _roll_vec(dir: String) -> Vector2:
 			return Vector2.DOWN
 		_:
 			return Vector2.LEFT
+
+func _draw_gutta(at: Vector2i, rot: int) -> void:
+	# A small drop on the facing while the row is dry. Flooded, the facing
+	# drop is gone and a drop hangs on each perpendicular heading.
+	var center := _center(at)
+	var facing := Tracer.gutta_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	if not flooded:
+		_gutta_drop(center, facing, mark, cell * 0.11)
+		return
+	_gutta_drop(center, Tracer.rotate_dir(facing, 1), mark, cell * 0.08)
+	_gutta_drop(center, Tracer.rotate_dir(facing, -1), mark, cell * 0.08)
+
+func _gutta_drop(center: Vector2, dir: String, mark: Color, radius: float) -> void:
+	var outward := Vector2.UP
+	match dir:
+		"N":
+			outward = Vector2.UP
+		"E":
+			outward = Vector2.RIGHT
+		"S":
+			outward = Vector2.DOWN
+		_:
+			outward = Vector2.LEFT
+	var at := center + outward * cell * 0.2
+	draw_circle(at, radius, mark)
+	draw_colored_polygon(PackedVector2Array([
+		at - outward * radius * 0.2 + Vector2(-outward.y, outward.x) * radius * 0.55,
+		at - outward * radius * 0.2 + Vector2(outward.y, -outward.x) * radius * 0.55,
+		at + outward * radius * 1.15,
+	]), mark)
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
 	if dir == "N" or dir == "S":
