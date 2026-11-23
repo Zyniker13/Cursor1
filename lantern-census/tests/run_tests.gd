@@ -15664,7 +15664,7 @@ func _piscina_return() -> String:
 		return "1987 already shows the last letter of The Ambulatory, so 1988 is not the smallest width"
 	probe.free()
 	game._on_descend_floor("piscina")
-	if game.descent.state == null or game.descent.state.floor.id != "piscina" and str(other.id) != "sedilia":
+	if game.descent.state == null or game.descent.state.floor.id != "piscina":
 		game.free()
 		return "descend did not open the piscina"
 	var state = game.descent.state
