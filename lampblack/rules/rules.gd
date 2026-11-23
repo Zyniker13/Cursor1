@@ -38,7 +38,9 @@ extends RefCounted
 ## A mica does not stop the flood. The mica itself is never lit, and tiles past it
 ## still light. A baize stops the flood. The baize itself is never lit, and tiles
 ## past it stay dark. A scrim stops the flood. The scrim itself is lit, and tiles
-## past it stay dark.
+## past it stay dark. A gauze does not stop a flood that reaches it from another
+## tile. The gauze itself is lit, and tiles past it still light. A lamp standing
+## on a gauze does not shine past that tile.
 ##
 ## Movement
 ## Dark floor and a dark exit may be entered. A gap may be entered only while it is lit.
@@ -69,6 +71,9 @@ extends RefCounted
 ## A scrim is floor. It may be entered only while it is dark. A lamp lights it. An
 ## unwatched lit scrim is refused, the same as other lit floor. Stepping onto a lit
 ## scrim a guard is watching is a loss.
+## A gauze is floor. It may be entered only while it is dark. A lamp lights it. An
+## unwatched lit gauze is refused, the same as other lit floor. Stepping onto a lit
+## gauze a guard is watching is a loss.
 ##
 ## Plates
 ## The turn the player steps onto a plate calls the nearest guard, by the same rule as a
@@ -89,7 +94,7 @@ extends RefCounted
 ## floor path. A sill is not a floor path. A pane is not a floor path. A curtain is a
 ## floor path. A shade is not a floor path. A screen is not a floor path. A glaze is
 ## not a floor path. A mica is not a floor path. A baize is not a floor path.
-## A scrim is not a floor path.
+## A scrim is not a floor path. A gauze is not a floor path.
 ##
 ## Grates
 ## A grate is floor you may enter. It is never lit, even when a lamp's diamond covers
@@ -261,6 +266,30 @@ extends RefCounted
 ## lit, stops the light, lets the sight through while it is lit, and a guard
 ## cannot step on it.
 ##
+## Gauzes
+## A gauze is the scrim with one flip: light that reaches it from another lamp
+## passes through. A scrim stops that light. A gauze is floor you may enter only
+## while it is dark. A lamp lights it, the same way a sill, a screen, a glaze,
+## and a scrim light. An unwatched lit gauze is refused. Stepping onto a lit
+## gauze a guard is watching is a loss. Standing on it after the lamp is snuffed
+## is not a loss, because it is dark. A lamp standing on the gauze does not shine
+## past it, the same as a lamp standing on a scrim. A second lamp's light passes
+## the gauze: the gauze itself is lit, and tiles past it light even when a scrim
+## would have left them dark. Sight does not stop while the gauze is lit: a guard
+## sees lit tiles beyond the lit gauze, and the lit gauze itself can be watched.
+## When the gauze is dark, sight stops the same way any dark floor does. A guard
+## cannot enter a gauze. Pathing treats it as closed, the same as a wall, so a
+## called guard walks around it. A gauze calls nobody. It is never a hold. A
+## plate still calls only the nearest guard. A bell still calls every guard who
+## has a floor path, and a gauze is not that path. A gauze is not a wall, a sill,
+## a grate, a pane, a plate, a bell, a curtain, a shade, a screen, a glaze, a
+## mica, a baize, or a scrim. A scrim is lit and stops the light. A screen is lit,
+## lets the light through, and stops the sight. A shade stays dark, stops the
+## light, and stops the sight. A baize stays dark, stops the light, and lets the
+## sight through. A glaze is lit, lets the light through, and lets the sight
+## through while it is lit. A gauze is lit, a second lamp's light passes it, the
+## sight passes while it is lit, and a guard cannot step on it.
+##
 ## Vision
 ## Each guard watches a Manhattan diamond of their vision radius, and only on tiles that
 ## are currently lit. Walls and dark tiles block vision. A grate stays dark, so it blocks
@@ -280,6 +309,9 @@ extends RefCounted
 ## The baize cell itself is not watched, because it is dark. A lit scrim does not
 ## block vision, so a guard sees lit tiles beyond it, and the lit scrim itself
 ## can be watched. A dark scrim blocks vision the same way any dark floor does.
+## A lit gauze does not block vision, so a guard sees lit tiles beyond it, and
+## the lit gauze itself can be watched. A dark gauze blocks vision the same way
+## any dark floor does.
 ## A guard standing in the dark can still look into an adjacent lit tile. The
 ## guard's own tile is not marked watched; standing on the guard is a separate loss.
 ##
@@ -287,7 +319,7 @@ extends RefCounted
 ## Alerted guards take one step along a shortest 4-neighbor path to the tile they were
 ## called to, a lamp, a plate, or a bell. Neighbors are expanded north, east, south,
 ## then west, and that order breaks ties. They may walk on floor, plate, bell, exit,
-## and curtain tiles, lit or dark, but not through walls, gaps, grates, sills, panes, shades, screens, glazes, micas, baizes, or scrims. When they step onto that tile
+## and curtain tiles, lit or dark, but not through walls, gaps, grates, sills, panes, shades, screens, glazes, micas, baizes, scrims, or gauzes. When they step onto that tile
 ## they hold there. They do not resume the rail unless a later snuff, plate, or bell calls them.
 ## A guard who is not alert and not holding patrols their rail. The rail is a list of
 ## waypoints. rail_index is the waypoint they are walking toward, and rail_dir is +1 or -1.
@@ -299,7 +331,7 @@ extends RefCounted
 ## every lamp's lit flag, and every guard's position, rail index, rail direction, alert
 ## target, and hold flag.
 
-enum Tile { WALL, FLOOR, GAP, EXIT, PLATE, BELL, GRATE, SILL, PANE, CURTAIN, SHADE, SCREEN, GLAZE, MICA, BAIZE, SCRIM }
+enum Tile { WALL, FLOOR, GAP, EXIT, PLATE, BELL, GRATE, SILL, PANE, CURTAIN, SHADE, SCREEN, GLAZE, MICA, BAIZE, SCRIM, GAUZE }
 enum Result { OK, WIN, LOSS, ILLEGAL }
 
 const DIRS := [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]
@@ -360,6 +392,8 @@ static func build(rows: PackedStringArray, lamps: Array, guards: Array) -> Dicti
 					kind = Tile.BAIZE
 				"K":
 					kind = Tile.SCRIM
+				"Q":
+					kind = Tile.GAUZE
 				_:
 					push_error("bad tile '%s'" % ch)
 			tiles[y * width + x] = kind
@@ -467,9 +501,9 @@ static func lamp_lights(state: Dictionary, lamp: Dictionary) -> Array:
 	if origin_kind != Tile.WALL and origin_kind != -1 and in_diamond(lamp, origin.x, origin.y):
 		seen[origin] = true
 		queue.append(origin)
-	# A lamp standing on a sill, a shade, a baize, or a scrim does not shine past that tile.
+	# A lamp standing on a sill, a shade, a baize, a scrim, or a gauze does not shine past that tile.
 	# Every other lamp still seeds its neighbors. A grate and a pane let the flood through.
-	if origin_kind != Tile.SILL and origin_kind != Tile.SHADE and origin_kind != Tile.BAIZE and origin_kind != Tile.SCRIM:
+	if origin_kind != Tile.SILL and origin_kind != Tile.SHADE and origin_kind != Tile.BAIZE and origin_kind != Tile.SCRIM and origin_kind != Tile.GAUZE:
 		for dir in DIRS:
 			var nxt: Vector2i = origin + dir
 			var seed_kind := tile_at(state, nxt.x, nxt.y)
@@ -496,9 +530,13 @@ static func lamp_lights(state: Dictionary, lamp: Dictionary) -> Array:
 		# closed while it is dark. A mica stays dark, and the flood does not stop
 		# there, so tiles past it still light. A baize stays dark, and the flood
 		# stops there, so tiles past it stay dark. A scrim is lit, and the flood
-		# stops there, so tiles past it stay dark.
+		# stops there, so tiles past it stay dark. A gauze is lit. A flood that
+		# reaches the gauze from another tile passes through. A lamp standing on
+		# the gauze does not shine past it.
 		if cell_kind != Tile.GRATE and cell_kind != Tile.PANE and cell_kind != Tile.SHADE and cell_kind != Tile.MICA and cell_kind != Tile.BAIZE:
 			lit.append(cell)
+		if cell_kind == Tile.GAUZE and cell == origin:
+			continue
 		if cell_kind == Tile.SILL or cell_kind == Tile.SHADE or cell_kind == Tile.BAIZE or cell_kind == Tile.SCRIM:
 			continue
 		for dir in DIRS:
@@ -555,6 +593,9 @@ static func watched_tiles(state: Dictionary, lit: Dictionary = {}) -> Dictionary
 			# is not watched, because it is never lit. A lit scrim is ordinary
 			# lit floor for vision, so sight passes and the scrim itself can be
 			# watched. A dark scrim is ordinary dark floor, so sight stops there.
+			# A lit gauze is ordinary lit floor for vision, so sight passes and
+			# the gauze itself can be watched. A dark gauze is ordinary dark
+			# floor, so sight stops there.
 			var kind := tile_at(state, cell.x, cell.y)
 			if kind == Tile.SILL or ((kind == Tile.CURTAIN or kind == Tile.SCREEN) and dist > 0):
 				continue
@@ -765,7 +806,7 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 				return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "darkgap")
 		elif dest == Tile.GRATE or dest == Tile.SHADE or dest == Tile.MICA or dest == Tile.BAIZE:
 			pass
-		elif dest == Tile.FLOOR or dest == Tile.EXIT or dest == Tile.PLATE or dest == Tile.BELL or dest == Tile.SILL or dest == Tile.CURTAIN or dest == Tile.SCREEN or dest == Tile.GLAZE or dest == Tile.SCRIM:
+		elif dest == Tile.FLOOR or dest == Tile.EXIT or dest == Tile.PLATE or dest == Tile.BELL or dest == Tile.SILL or dest == Tile.CURTAIN or dest == Tile.SCREEN or dest == Tile.GLAZE or dest == Tile.SCRIM or dest == Tile.GAUZE:
 			if lit.has(Vector2i(nx, ny)):
 				return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "lit")
 		else:
@@ -800,7 +841,7 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 		if absi(int(lamp["x"]) - int(player["x"])) + absi(int(lamp["y"]) - int(player["y"])) != 1:
 			return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "range")
 		var here := tile_at(st, player["x"], player["y"])
-		if here != Tile.FLOOR and here != Tile.EXIT and here != Tile.PLATE and here != Tile.BELL and here != Tile.GRATE and here != Tile.SILL and here != Tile.CURTAIN and here != Tile.SHADE and here != Tile.SCREEN and here != Tile.GLAZE and here != Tile.MICA and here != Tile.BAIZE and here != Tile.SCRIM:
+		if here != Tile.FLOOR and here != Tile.EXIT and here != Tile.PLATE and here != Tile.BELL and here != Tile.GRATE and here != Tile.SILL and here != Tile.CURTAIN and here != Tile.SHADE and here != Tile.SCREEN and here != Tile.GLAZE and here != Tile.MICA and here != Tile.BAIZE and here != Tile.SCRIM and here != Tile.GAUZE:
 			return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "range")
 		var was_lit: bool = lamp["lit"]
 		lamp["lit"] = not was_lit
