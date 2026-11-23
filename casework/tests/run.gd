@@ -49,6 +49,7 @@ const Hood = preload("res://scripts/hood.gd")
 const Listel = preload("res://scripts/listel.gd")
 const Abacus = preload("res://scripts/abacus.gd")
 const Girdle = preload("res://scripts/girdle.gd")
+const Reglet = preload("res://scripts/reglet.gd")
 const Catalog = preload("res://scripts/catalog.gd")
 const Solver = preload("res://scripts/solver.gd")
 const Verdict = preload("res://scripts/verdict.gd")
@@ -150,6 +151,8 @@ const ABACUS_TIMELINE := "Una (abacus hand) cut the abacus in the socle at 183, 
 const ABACUS_TRUE := {"who": "Una", "place": "socle", "hour": "183"}
 const GIRDLE_TIMELINE := "Agnes (girdle hand) cut the girdle in the bole at 188, seen from the trestle, so the cherry would take the girdle.\nSimon (cherry hand) marked the cherry on the fillister at 187.\nFelix (trestle clerk) turned the trestle in the bole.\nThe plum was hung on the fillister.\nThe trestle was sized at 186.\nThe fillister was clayed at 189.\nThe bole was hung at 190."
 const GIRDLE_TRUE := {"who": "Agnes", "place": "bole", "hour": "188"}
+const REGLET_TIMELINE := "Iris (reglet hand) cut the reglet in the nave at 193, seen from the settle, so the pear would take the reglet.\nOtto (pear hand) marked the pear on the bodkin at 192.\nLeif (settle clerk) turned the settle in the nave.\nThe damson was hung on the bodkin.\nThe settle was sized at 191.\nThe bodkin was clayed at 194.\nThe nave was hung at 195."
+const REGLET_TRUE := {"who": "Iris", "place": "nave", "hour": "193"}
 
 var _failures: Array[String] = []
 var _checks := 0
@@ -451,6 +454,12 @@ func _initialize() -> void:
 	_test_girdle_only_true_theory()
 	_test_girdle_near_misses()
 	_test_girdle_incomplete()
+	_test_reglet_file_shape()
+	_test_reglet_unique_model()
+	_test_reglet_each_exhibit_necessary()
+	_test_reglet_only_true_theory()
+	_test_reglet_near_misses()
+	_test_reglet_incomplete()
 	_test_solutions_differ()
 	_test_menu_opens_either_case()
 	print("menu interaction done")
@@ -16605,6 +16614,444 @@ func _test_girdle_incomplete() -> void:
 			_expect(message.find(phrase) == -1, "girdle incomplete used another file's slot (%s) in: %s" % [phrase, message])
 	print("girdle incomplete submissions refused with the missing slot")
 
+func _test_reglet_file_shape() -> void:
+	_expect(Reglet.EXHIBITS.size() == 9, "reglet exhibit count is %d" % Reglet.EXHIBITS.size())
+	_expect(Reglet.PEOPLE.size() == 3, "reglet cast should be three people")
+	_expect(Reglet.PLACES.size() == 3, "reglet room count is %d" % Reglet.PLACES.size())
+	_expect(Reglet.HOURS.size() == 5, "reglet hour list length is %d" % Reglet.HOURS.size())
+	_expect(Reglet.PEOPLE == ["Iris", "Otto", "Leif"], "reglet cast is %s" % str(Reglet.PEOPLE))
+	_expect(Reglet.PLACES == ["nave", "settle", "bodkin"], "reglet rooms are %s" % str(Reglet.PLACES))
+	_expect(Reglet.HOURS == ["191", "192", "193", "194", "195"], "reglet hours are %s" % str(Reglet.HOURS))
+	_expect(Reglet.AIMS == ["take_pear", "spare_pear", "set_pear"], "reglet aims are %s" % str(Reglet.AIMS))
+	_expect(Reglet.aim_phrase("take_pear") == "so the pear would take the reglet", "reglet aim phrase")
+	_expect(Reglet.aim_phrase("spare_pear") == "to spare the pear still waiting on the reglet", "reglet spare aim")
+	_expect(Reglet.aim_phrase("set_pear") == "to set the pear before the nave was hung", "reglet set aim")
+	_expect(Reglet.TITLE == "The reglet", "reglet title")
+	_expect(Reglet.BLURB == "The reglet left its peg at the joiner's jade. Name who cut the reglet, the room they cut it in, and the hour.", "reglet blurb")
+	_expect(Reglet.FILE_CODE == "CW-50", "reglet file code")
+	_expect(Reglet.fields() == ["taker", "place", "hour", "pear", "pear_room", "pear_hour", "seen_from", "settle", "aim", "settle_room", "damson_room", "size_hour", "clay_hour", "hang_hour"], "reglet fields are %s" % str(Reglet.fields()))
+	_expect(Reglet.PLAYER_FIELDS == ["taker", "place", "hour"], "reglet player fields")
+	_expect(Reglet.HOURS[Reglet.HOURS.size() / 2] == REGLET_TRUE["hour"], "reglet cutting should be the middle hour")
+	_expect(Reglet.HOURS[0] != REGLET_TRUE["hour"], "reglet cutting should not be the earliest hour")
+	_expect(Reglet.HOURS[Reglet.HOURS.size() - 1] != REGLET_TRUE["hour"], "reglet cutting should not be the latest hour")
+	var counts := _player_pin_counts(Reglet)
+	_expect(int(counts["taker"]) == 3 and int(counts["place"]) == 3 and int(counts["hour"]) == 3, "reglet pin counts are %s" % str(counts))
+	var loose_pin: Array = [
+		[CaseData, "spare key"],
+		[Rehearsal, "rehearsal score"],
+		[Gilt, "gilt stamp"],
+		[Ferry, "ferry bell"],
+		[Weather, "weather slate"],
+		[Loom, "loom shuttle"],
+		[Hive, "hive smoker"],
+		[Glass, "glass pontil"],
+		[Press, "press proof"],
+		[Assay, "assay cup"],
+	]
+	var rhythm: Array = [
+		[Kiln, "kiln chalk"],
+		[Tide, "tide ledger"],
+		[Night, "night bell"],
+		[Salt, "salt mark"],
+		[Wick, "wick trim"],
+		[Anneal, "glass anneal"],
+		[Graft, "orchard graft"],
+		[Dye, "dye vat"],
+		[Tar, "tar kettle"],
+		[Cork, "cork press"],
+		[Net, "net loft"],
+		[Cask, "cask hoop"],
+		[Linen, "linen fold"],
+		[Dovetail, "dovetail"],
+		[Mortise, "mortise"],
+		[Rebate, "rebate"],
+		[Housing, "housing"],
+		[Tenon, "tenon"],
+		[Bridle, "bridle"],
+		[Dado, "dado"],
+		[Spline, "spline"],
+		[Mitre, "mitre"],
+		[Lap, "lap"],
+		[Scarf, "scarf"],
+		[Finger, "finger"],
+		[Haunch, "haunch"],
+		[Dowel, "dowel"],
+		[Tongue, "tongue"],
+		[Quirk, "quirk"],
+		[Chamfer, "chamfer"],
+		[Scotia, "scotia"],
+		[Cyma, "cyma"],
+		[Cavetto, "cavetto"],
+		[Reed, "reed"],
+		[Annulet, "annulet"],
+		[Hood, "hood"],
+		[Listel, "listel"],
+		[Abacus, "abacus"],
+		[Girdle, "girdle"],
+	]
+	for row in loose_pin:
+		_expect(counts != _player_pin_counts(row[0]), "reglet copied the %s pin pattern" % row[1])
+	for row in rhythm:
+		_expect(counts == _player_pin_counts(row[0]), "reglet should keep the %s pin rhythm" % row[1])
+	var earlier: Array = []
+	earlier.append_array(loose_pin)
+	earlier.append_array(rhythm)
+	for row in earlier:
+		var book = row[0]
+		var name := str(row[1])
+		_expect(Reglet.TITLE != book.TITLE, "reglet shares a title with the %s" % name)
+		_expect(Reglet.FILE_CODE != book.FILE_CODE, "reglet shares a file code with the %s" % name)
+		_expect(_field_key(Reglet) != _field_key(book), "reglet copied the %s timeline fields" % name)
+	var seen := {}
+	var stated := {}
+	var paired_hidden := 0
+	var earlier_texts := {}
+	var earlier_sentences := {}
+	var earlier_titles := {}
+	for row in earlier:
+		for old_exhibit in row[0].EXHIBITS:
+			var old_text := str(old_exhibit["text"])
+			earlier_texts[old_text] = true
+			earlier_titles[str(old_exhibit["title"])] = true
+			for old_sentence in old_text.split(". "):
+				earlier_sentences[old_sentence.trim_suffix(".").strip_edges()] = true
+	var exhibit_titles: Array[String] = []
+	var exhibit_sources: Array[String] = []
+	for exhibit in Reglet.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		exhibit_titles.append(str(exhibit["title"]))
+		exhibit_sources.append(str(exhibit["source"]))
+		_expect(not seen.has(exhibit_id), "duplicate reglet id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(not earlier_titles.has(str(exhibit["title"])), "%s reuses an earlier title %s" % [exhibit_id, exhibit["title"]])
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		_expect(not earlier_texts.has(str(exhibit["text"])), "reglet copied an earlier exhibit")
+		for sentence in str(exhibit["text"]).split(". "):
+			var cleaned := sentence.trim_suffix(".").strip_edges()
+			_expect(not earlier_sentences.has(cleaned), "reglet copied an earlier sentence: %s" % cleaned)
+		for banned in ["tarred", "rope", "kettle", "winch", "pitch", "loft", "strand", "hook", "walk", "dipped", "skein", "indigo", "pressed", "press", "cork", "bottle", "seal", "mallet", "screw", "cellar", "bench", "neck", "plug", "dye", "vat", "mesh", "shed", "rail", "crank", "needle", "mended", "twine", "house", "cooperage", "cask", "hoop", "croze", "stave", "driver", "yard", "shop", "linen", "fold", "shears", "roller", "hem", "sheet", "crease", "drawer", "dovetail", "vise", "stile", "apron", "saw", "clamp", "peg", "mortise", "chisel", "tenon", "awl", "wedge", "bored", "ragged", "racked", "rebate", "plane", "gauge", "shoulder", "shim", "tansy", "solt", "quern", "housing", "square", "bead", "trench", "fillet", "stock", "chalk", "ewan", "maren", "hollin", "gouge", "rasp", "bevel", "guide", "harl", "neve", "luth", "nick", "bridle", "router", "scraper", "adze", "spline", "templet", "strop", "notch", "wend", "sile", "jute", "dado", "cleat", "spur", "kern", "phel", "tarn", "shavings", "mouth", "iron", "senn", "voss", "cade", "slot", "feather", "whet", "orrin", "venn", "haim", "mitre", "arris", "offcut", "saddle", "dressed", "brushed", "nye", "yew", "pry", "lap", "grain", "brad", "plough", "float", "gimlet", "cradle", "crest", "horn", "scarf", "hob", "nairn", "cole", "shaving", "blade", "spokeshave", "firmer", "paring", "drawknife", "edge", "skimmed", "film", "sole", "tang", "mare", "finger", "clem", "gale", "boyd", "pad", "badger", "jack", "socket", "catch", "chip", "burr", "flake", "buffed", "sheen", "pony", "rubbed", "face", "haunch", "cheek", "smoother", "jointer", "fore", "sliver", "pin", "rhys", "mab", "lisle", "colt", "wiped", "mote", "toe", "mist", "bed", "dowel", "bore", "auger", "bit", "brace", "curl", "chuck", "flute", "faye", "kerr", "brynn", "foal", "waxed", "honed", "speck", "gloss", "wax", "point", "shay", "dell", "glen", "tongue", "groove", "kerf", "punch", "peel", "scribe", "knife", "fence", "tallow", "tallowed", "ground", "fleck", "filly", "coat", "cutting", "grind", "ross", "pia", "jude", "quirk", "scratch", "scratched", "scratching", "snib", "ovolo", "veiner", "astragal", "gelding", "grit", "bloom", "stoned", "oiled", "score", "bolt", "grease", "merrick", "enid", "petra", "chamfer", "chamfering", "block", "file", "cove", "travisher", "cant", "stallion", "soap", "soaped", "fettle", "fettled", "wisp", "rime", "haze", "tooth", "willa", "nils", "cora", "scotia", "scotiaing", "hollow", "riffler", "scorp", "torus", "fascia", "pumiced", "peened", "whiting", "crocus", "soot", "cusp", "yearling", "pumice", "ruth", "amos", "lena", "cyma", "cymaing", "bolection", "inshave", "froe", "echinus", "corona", "rouged", "chased", "emery", "tripoli", "garnet", "beak", "jennet", "rouge", "chase", "seth", "ida", "vera", "cavetto", "cavettoing", "dentil", "bullnose", "twibil", "thumbnail", "staff", "scraped", "knurled", "sand", "birch", "cedar", "drip", "palfrey", "scrape", "knurl", "greta", "nolan", "celia", "reed", "reeding", "ogee", "nosing", "rounder", "walnut", "maple", "blued", "tempered", "oak", "elm", "larch", "deal", "weanling", "blue", "temper", "clive", "edith", "maude", "annulet", "annuleting", "beech", "burnisher", "drawshave", "spruce", "poplar", "stippled", "forged", "rowan", "withy", "osier", "billet", "hinny", "stipple", "forge", "hugo", "nina", "walter", "hood", "hooding", "sycamore", "compass", "trying", "holly", "chestnut", "glazed", "bronzed", "lime", "lamb", "boxwood", "ivory", "mule", "glaze", "bronze", "giles", "nora", "ellis", "listel", "listeling", "plinth", "trammel", "template", "alder", "quince", "plated", "doped", "umber", "sienna", "ochre", "flax", "jenny", "plate", "dope", "una", "hart", "pearl", "abacus", "abacusing", "socle", "holdfast", "hatchet", "medlar", "juniper", "glued", "graphited", "madder", "woad", "weld", "saffron", "nag", "glue", "graphite", "agnes", "simon", "felix", "girdle", "girdleing", "bole", "trestle", "fillister", "cherry", "plum", "hack", "kermes", "fustic", "archil", "brazil"]:
+			_expect(str(exhibit["text"]).find(banned) == -1, "%s copies %s" % [exhibit_id, banned])
+		var states_player_pin := false
+		var states_unique := false
+		var player_literals := 0
+		var hidden_literals := 0
+		for literal in exhibit["literals"]:
+			stated[str(literal["value"])] = true
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Reglet.PLAYER_FIELDS:
+				states_player_pin = true
+				player_literals += 1
+				var expected := Reglet.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Reglet.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats >= 2, "%s states %s once" % [exhibit_id, field])
+			else:
+				hidden_literals += 1
+				var owners := 0
+				for other in Reglet.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		if hidden_literals == 2:
+			paired_hidden += 1
+		else:
+			_expect(hidden_literals == 1, "%s states %d hidden facts" % [exhibit_id, hidden_literals])
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(player_literals == 1, "%s states %d player pins" % [exhibit_id, player_literals])
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+	_expect(paired_hidden == 2, "reglet should have two slips with two hidden facts, found %d" % paired_hidden)
+	_expect(exhibit_titles == ["Pear chit", "Sumac sight", "Damson bill", "Annatto slate", "Settle card", "Sized slip", "Reglet leaf", "Jade note", "Clayed order"], "reglet exhibit titles are %s" % str(exhibit_titles))
+	_expect(exhibit_sources == ["Otto, pear hand", "Settle sumac", "Bodkin nose", "Nave annatto", "Leif, settle clerk", "Settle tote", "Pear book", "Joiner's jade", "Bodkin card"], "reglet sources are %s" % str(exhibit_sources))
+	for hour in Reglet.HOURS:
+		_expect(stated.has(hour), "reglet hour %s is absent from the exhibits" % hour)
+
+
+func _test_reglet_unique_model() -> void:
+	var models := Solver.enumerate(Reglet.EXHIBITS, Reglet)
+	print("reglet models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one reglet model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Iris", "reglet taker")
+	_expect(str(model["place"]) == "nave", "reglet place")
+	_expect(str(model["hour"]) == "193", "reglet hour")
+	_expect(str(model["pear"]) == "Otto", "reglet pear hand")
+	_expect(str(model["pear_room"]) == "bodkin", "reglet pear room")
+	_expect(str(model["pear_hour"]) == "192", "reglet pear hour")
+	_expect(str(model["seen_from"]) == "settle", "reglet seen from")
+	_expect(str(model["settle"]) == "Leif", "reglet settle")
+	_expect(str(model["aim"]) == "take_pear", "reglet aim")
+	_expect(str(model["settle_room"]) == "nave", "reglet settle room")
+	_expect(str(model["damson_room"]) == "bodkin", "reglet damson room")
+	_expect(str(model["size_hour"]) == "191", "reglet size hour")
+	_expect(str(model["clay_hour"]) == "194", "reglet clay hour")
+	_expect(str(model["hang_hour"]) == "195", "reglet hang hour")
+	for hour in Reglet.HOURS:
+		var used := false
+		for field in Reglet.fields():
+			if str(model[field]) == hour:
+				used = true
+		_expect(used, "reglet hour %s is blank in the true timeline" % hour)
+	for place in Reglet.PLACES:
+		var place_used := false
+		for field in Reglet.fields():
+			if str(model[field]) == place:
+				place_used = true
+		_expect(place_used, "reglet room %s is blank in the true timeline" % place)
+	for person in Reglet.PEOPLE:
+		var person_used := false
+		for field in Reglet.fields():
+			if str(model[field]) == person:
+				person_used = true
+		_expect(person_used, "reglet person %s is blank in the true timeline" % person)
+	_expect(Reglet.timeline(model) == REGLET_TIMELINE, "reglet timeline drifted:\n%s" % Reglet.timeline(model))
+	for exhibit in Reglet.EXHIBITS:
+		_expect(Reglet.holds(exhibit, model), "%s rejects the reglet timeline" % exhibit["id"])
+
+
+func _test_reglet_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Reglet.EXHIBITS, Reglet)
+	for exhibit in Reglet.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Reglet.without(exhibit_id), Reglet)
+		print("reglet without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "reglet %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Reglet.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "reglet %s removal did not admit a timeline it forbids" % exhibit_id)
+
+
+func _test_reglet_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	var settle_miss := {"who": "Otto", "place": "settle", "hour": "191"}
+	_expect(Reglet.conflicting_ids(settle_miss).size() == 9, "Otto / settle / 191 contradicts %d exhibits" % Reglet.conflicting_ids(settle_miss).size())
+	for who in Reglet.PEOPLE:
+		for place in Reglet.PLACES:
+			for hour in Reglet.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == REGLET_TRUE["who"] and place == REGLET_TRUE["place"] and hour == REGLET_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Reglet)
+					print("reglet true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true reglet theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "reglet acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(REGLET_TIMELINE) >= 0, "reglet acceptance should give the timeline")
+					_expect(str(result["message"]).find("Iris") >= 0, "reglet acceptance omits Iris")
+					_expect(str(result["message"]).find("nave") >= 0, "reglet acceptance omits the nave")
+					_expect(str(result["message"]).find("193") >= 0, "reglet acceptance omits 193")
+					_expect(str(result["message"]).find("so the pear would take the reglet") >= 0, "reglet acceptance omits the pear")
+					_expect(str(result["message"]).find("Iris (reglet hand) cut the reglet in the nave at 193") >= 0, "reglet acceptance omits the regleting")
+					_expect(Reglet.conflicting_ids(theory).is_empty(), "true reglet theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Reglet)
+					_expect(Reglet.conflicting_ids(theory).size() >= 2, "%s / %s / %s contradicts fewer than two exhibits" % [who, place, hour])
+					rejected += 1
+	for outsider in ["Agnes", "Simon", "Felix", "Una", "Hart", "Pearl", "Giles", "Nora", "Ellis", "Hugo", "Nina", "Walter", "Clive", "Edith", "Maude", "Greta", "Nolan", "Celia", "Seth", "Ida", "Vera", "Ruth", "Amos", "Lena", "Willa", "Nils", "Cora", "Merrick", "Enid", "Petra", "Ross", "Pia", "Jude", "Shay", "Dell", "Glen", "Faye", "Kerr", "Brynn", "Rhys", "Mab", "Lisle", "Clem", "Gale", "Boyd", "Hob", "Nairn", "Cole", "Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Cpear", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal", "Nell"]:
+		_expect_rejected({"who": outsider, "place": "nave", "hour": "193"}, Reglet)
+	print("reglet theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d reglet theories" % accepted)
+	_expect(rejected >= 2, "rejected %d reglet theories" % rejected)
+
+
+func _test_reglet_near_misses() -> void:
+	var misses := [
+		{"who": "Iris", "place": "nave", "hour": "194", "titles": ["Reglet leaf", "Jade note", "Clayed order"]},
+		{"who": "Iris", "place": "nave", "hour": "192", "titles": ["Reglet leaf", "Jade note", "Clayed order"]},
+		{"who": "Iris", "place": "settle", "hour": "193", "titles": ["Annatto slate", "Settle card", "Sized slip"]},
+		{"who": "Otto", "place": "nave", "hour": "193", "titles": ["Pear chit", "Sumac sight", "Damson bill"]},
+	]
+	var wrong_hour_in_bit := 0
+	var wrong_place_at_hour := 0
+	var wrong_person_in_bit := 0
+	for theory in misses:
+		_expect_rejected(theory, Reglet)
+		var result: Dictionary = Verdict.submit(theory, Reglet)
+		var message := str(result["message"])
+		_expect(Reglet.conflicting_ids(theory).size() >= 2, "near-miss should contradict at least two exhibits: %s" % message)
+		_expect(Reglet.conflicting_ids(theory).size() == 3, "near-miss should name three exhibits: %s" % message)
+		var named_at := -1
+		for title in theory["titles"]:
+			var at := message.find(str(title))
+			_expect(at >= 0, "near-miss omits %s: %s" % [title, message])
+			_expect(at > named_at, "near-miss names %s out of paper order: %s" % [title, message])
+			named_at = at
+		if str(theory["who"]) == "Iris" and str(theory["place"]) == "nave" and str(theory["hour"]) != "193":
+			wrong_hour_in_bit += 1
+		if str(theory["who"]) == "Iris" and str(theory["place"]) != "nave" and str(theory["hour"]) == "193":
+			wrong_place_at_hour += 1
+		if str(theory["who"]) != "Iris" and str(theory["place"]) == "nave" and str(theory["hour"]) == "193":
+			wrong_person_in_bit += 1
+	print("reglet near-misses rejected: %d" % misses.size())
+	_expect(misses.size() == 4, "need four reglet near-misses, found %d" % misses.size())
+	_expect(wrong_hour_in_bit == 2, "two near-misses should keep Iris in the nave at another hour")
+	_expect(wrong_place_at_hour >= 1, "a near-miss should keep Iris at 193 in another room")
+	_expect(wrong_person_in_bit >= 1, "a near-miss should keep the nave at 193 for another person")
+
+func _test_reglet_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+		"who took the gilt stamp",
+		"where they took the stamp",
+		"at which hour they took the stamp",
+		"who took the ferry bell",
+		"where they took the bell",
+		"at which hour they took the bell",
+		"who took the weather slate",
+		"where they took the slate",
+		"at which hour they took the slate",
+		"who took the loom shuttle",
+		"where they took the shuttle",
+		"at which hour they took the shuttle",
+		"who took the hive smoker",
+		"where they took the smoker",
+		"at which hour they took the smoker",
+		"who took the glass pontil",
+		"where they took the pontil",
+		"at which hour they took the pontil",
+		"who took the press proof",
+		"where they took the proof",
+		"at which hour they took the proof",
+		"who set the assay cup",
+		"where they set the cup",
+		"at which hour they set the cup",
+		"who chalked the kiln mark",
+		"where they chalked the mark",
+		"at which hour they chalked the mark",
+		"who entered the tide ledger",
+		"where they entered the ledger",
+		"at which hour they entered the ledger",
+		"who stopped the night bell",
+		"where they stopped the bell",
+		"at which hour they stopped the bell",
+		"who scored the salt mark",
+		"where they scored the mark",
+		"at which hour they scored the mark",
+		"who trimmed the wick",
+		"where they trimmed the wick",
+		"at which hour they trimmed the wick",
+		"who annealed the gather",
+		"where they annealed the gather",
+		"at which hour they annealed the gather",
+		"who grafted the scion",
+		"where they grafted the scion",
+		"at which hour they grafted the scion",
+		"who dipped the skein",
+		"where they dipped the skein",
+		"at which hour they dipped the skein",
+		"who tarred the rope",
+		"where they tarred the rope",
+		"at which hour they tarred the rope",
+		"who pressed the cork",
+		"where they pressed the cork",
+		"at which hour they pressed the cork",
+		"who mended the net",
+		"where they mended the net",
+		"at which hour they mended the net",
+		"who drove the hoop",
+		"where they drove the hoop",
+		"at which hour they drove the hoop",
+		"who folded the linen",
+		"where they folded the linen",
+		"at which hour they folded the linen",
+		"who cut the dovetail",
+		"where they cut the dovetail",
+		"at which hour they cut the dovetail",
+		"who cut the mortise",
+		"where they cut the mortise",
+		"at which hour they cut the mortise",
+		"who cut the rebate",
+		"where they cut the rebate",
+		"at which hour they cut the rebate",
+		"who cut the housing",
+		"where they cut the housing",
+		"at which hour they cut the housing",
+		"who cut the tenon",
+		"where they cut the tenon",
+		"at which hour they cut the tenon",
+		"who cut the bridle",
+		"where they cut the bridle",
+		"at which hour they cut the bridle",
+		"who cut the dado",
+		"where they cut the dado",
+		"at which hour they cut the dado",
+		"who cut the spline",
+		"where they cut the spline",
+		"at which hour they cut the spline",
+		"who cut the mitre",
+		"where they cut the mitre",
+		"at which hour they cut the mitre",
+		"who cut the lap",
+		"where they cut the lap",
+		"at which hour they cut the lap",
+		"who cut the scarf",
+		"where they cut the scarf",
+		"at which hour they cut the scarf",
+		"who cut the finger",
+		"where they cut the finger",
+		"at which hour they cut the finger",
+		"who cut the haunch",
+		"where they cut the haunch",
+		"at which hour they cut the haunch",
+		"who cut the dowel",
+		"where they cut the dowel",
+		"at which hour they cut the dowel",
+		"who cut the tongue",
+		"where they cut the tongue",
+		"at which hour they cut the tongue",
+		"who scratched the quirk",
+		"where they scratched the quirk",
+		"at which hour they scratched the quirk",
+		"who cut the chamfer",
+		"where they cut the chamfer",
+		"at which hour they cut the chamfer",
+		"who cut the scotia",
+		"where they cut the scotia",
+		"at which hour they cut the scotia",
+	]
+
+	var cases := [
+		{"theory": {"who": "", "place": "nave", "hour": "193"}, "present": ["who cut the reglet"], "absent": ["where they cut the reglet", "at which hour they cut the reglet"]},
+		{"theory": {"who": "Iris", "place": "", "hour": "193"}, "present": ["where they cut the reglet"], "absent": ["who cut the reglet", "at which hour they cut the reglet"]},
+		{"theory": {"who": "Iris", "place": "nave", "hour": ""}, "present": ["at which hour they cut the reglet"], "absent": ["who cut the reglet", "where they cut the reglet"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who cut the reglet", "where they cut the reglet", "at which hour they cut the reglet"], "absent": []},
+		{"theory": {}, "present": ["who cut the reglet", "where they cut the reglet", "at which hour they cut the reglet"], "absent": []},
+		{"theory": {"who": "Leif", "place": "", "hour": "195"}, "present": ["where they cut the reglet"], "absent": ["who cut the reglet", "at which hour they cut the reglet"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Reglet)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "reglet incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "reglet incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "reglet incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "reglet incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "reglet incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "reglet missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "reglet named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "reglet incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("reglet incomplete submissions refused with the missing slot")
+
 func _test_solutions_differ() -> void:
 	var spare := {"who": "Nell", "place": "kitchen", "hour": "7"}
 	_expect(spare["who"] != REHEARSAL_TRUE["who"], "rehearsal copied the spare-key taker")
@@ -22720,7 +23167,312 @@ func _test_solutions_differ() -> void:
 	_expect(not Girdle.HOURS.has("184"), "girdle hours must not take 184")
 	_expect(not Girdle.HOURS.has("185"), "girdle hours must not take 185")
 
-	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal", "The orchard graft", "The dye vat", "The tar kettle", "The cork press", "The net loft", "The cask hoop", "The linen fold", "The dovetail", "The mortise", "The rebate", "The housing", "The tenon", "The bridle", "The dado", "The spline", "The mitre", "The lap", "The scarf", "The finger", "The haunch", "The dowel", "The tongue", "The quirk", "The chamfer", "The scotia", "The cyma", "The cavetto", "The reed", "The annulet", "The hood", "The listel", "The abacus", "The girdle"], "case list is %s" % str(titles))
+	_expect(REGLET_TRUE["who"] == "Iris", "reglet taker")
+	_expect(REGLET_TRUE["place"] == "nave", "reglet room")
+	_expect(REGLET_TRUE["hour"] == "193", "reglet hour")
+	for forbidden in ["Agnes", "Simon", "Felix", "Una", "Hart", "Pearl", "Giles", "Nora", "Ellis", "Hugo", "Nina", "Walter", "Clive", "Edith", "Maude", "Greta", "Nolan", "Celia", "Seth", "Ida", "Vera", "Ruth", "Amos", "Lena", "Willa", "Nils", "Cora", "Merrick", "Enid", "Petra", "Ross", "Pia", "Jude", "Shay", "Dell", "Glen", "Faye", "Kerr", "Brynn", "Lisle", "Mab", "Rhys", "Clem", "Gale", "Boyd", "Hob", "Nairn", "Cole", "Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Cpear", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(REGLET_TRUE["who"] != forbidden, "reglet accepted %s" % forbidden)
+	for forbidden_place in ["bole", "trestle", "fillister", "socle", "holdfast", "hatchet", "plinth", "trammel", "template", "sycamore", "compass", "trying", "beech", "burnisher", "drawshave", "ogee", "nosing", "rounder", "dentil", "bullnose", "twibil", "bolection", "inshave", "froe", "hollow", "riffler", "scorp", "block", "file", "travisher", "scratch", "snib", "veiner", "knife", "punch", "scribe", "bit", "auger", "brace", "jointer", "smoother", "fore", "pad", "badger", "jack", "drawknife", "spokeshave", "firmer", "plough", "float", "gimlet", "router", "scraper", "adze", "gouge", "rasp", "bevel", "saw", "square", "bead", "plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(REGLET_TRUE["place"] != forbidden_place, "reglet accepted the %s" % forbidden_place)
+	_expect(REGLET_TRUE["place"] != "punch", "reglet accepted the punch")
+	_expect(REGLET_TRUE["place"] != "scribe", "reglet accepted the scribe")
+	_expect(REGLET_TRUE["place"] != "snib", "reglet accepted the snib")
+	_expect(REGLET_TRUE["place"] != "veiner", "reglet accepted the veiner")
+	_expect(REGLET_TRUE["place"] != "file", "reglet accepted the file")
+	_expect(REGLET_TRUE["place"] != "travisher", "reglet accepted the travisher")
+	_expect(REGLET_TRUE["place"] != "block", "reglet accepted the block")
+	_expect(REGLET_TRUE["place"] != "riffler", "reglet accepted the riffler")
+	_expect(REGLET_TRUE["place"] != "scorp", "reglet accepted the scorp")
+	_expect(REGLET_TRUE["place"] != "hollow", "reglet accepted the hollow")
+	_expect(REGLET_TRUE["place"] != "settle", "reglet accepted the settle")
+	_expect(REGLET_TRUE["place"] != "bodkin", "reglet accepted the bodkin")
+	_expect(REGLET_TRUE["place"] != "bole", "reglet accepted the bole")
+	_expect(REGLET_TRUE["place"] != "trestle", "reglet accepted the trestle")
+	_expect(REGLET_TRUE["place"] != "fillister", "reglet accepted the fillister")
+	_expect(REGLET_TRUE["place"] != "socle", "reglet accepted the socle")
+	_expect(REGLET_TRUE["place"] != "holdfast", "reglet accepted the holdfast")
+	_expect(REGLET_TRUE["place"] != "hatchet", "reglet accepted the hatchet")
+	_expect(REGLET_TRUE["place"] != "plinth", "reglet accepted the plinth")
+	_expect(REGLET_TRUE["place"] != "trammel", "reglet accepted the trammel")
+	_expect(REGLET_TRUE["place"] != "template", "reglet accepted the template")
+	_expect(REGLET_TRUE["place"] != "sycamore", "reglet accepted the sycamore")
+	_expect(REGLET_TRUE["place"] != "compass", "reglet accepted the compass")
+	_expect(REGLET_TRUE["place"] != "trying", "reglet accepted the trying")
+	_expect(REGLET_TRUE["place"] != "beech", "reglet accepted the beech")
+	_expect(REGLET_TRUE["place"] != "burnisher", "reglet accepted the burnisher")
+	_expect(REGLET_TRUE["place"] != "drawshave", "reglet accepted the drawshave")
+	_expect(REGLET_TRUE["place"] != "ogee", "reglet accepted the ogee")
+	_expect(REGLET_TRUE["place"] != "nosing", "reglet accepted the nosing")
+	_expect(REGLET_TRUE["place"] != "rounder", "reglet accepted the rounder")
+	_expect(REGLET_TRUE["place"] != "dentil", "reglet accepted the dentil")
+	_expect(REGLET_TRUE["place"] != "bullnose", "reglet accepted the bullnose")
+	_expect(REGLET_TRUE["place"] != "twibil", "reglet accepted the twibil")
+	_expect(REGLET_TRUE["place"] != "bolection", "reglet accepted the bolection")
+	_expect(REGLET_TRUE["place"] != "inshave", "reglet accepted the inshave")
+	_expect(REGLET_TRUE["place"] != "froe", "reglet accepted the froe")
+	_expect(REGLET_TRUE["hour"] != "111", "reglet accepted 111")
+	_expect(REGLET_TRUE["hour"] != "112", "reglet accepted 112")
+	_expect(REGLET_TRUE["hour"] != "114", "reglet accepted 114")
+	_expect(REGLET_TRUE["hour"] != "115", "reglet accepted 115")
+	_expect(REGLET_TRUE["hour"] != "106", "reglet accepted 106")
+	_expect(REGLET_TRUE["hour"] != "107", "reglet accepted 107")
+	_expect(REGLET_TRUE["hour"] != "108", "reglet accepted 108")
+	_expect(REGLET_TRUE["hour"] != "109", "reglet accepted 109")
+	_expect(REGLET_TRUE["hour"] != "110", "reglet accepted 110")
+	_expect(REGLET_TRUE["hour"] != "101", "reglet accepted 101")
+	_expect(REGLET_TRUE["hour"] != "102", "reglet accepted 102")
+	_expect(REGLET_TRUE["hour"] != "103", "reglet accepted 103")
+	_expect(REGLET_TRUE["hour"] != "104", "reglet accepted 104")
+	_expect(REGLET_TRUE["hour"] != "105", "reglet accepted 105")
+	_expect(REGLET_TRUE["hour"] != "96", "reglet accepted 96")
+	_expect(REGLET_TRUE["hour"] != "97", "reglet accepted 97")
+	_expect(REGLET_TRUE["hour"] != "98", "reglet accepted 98")
+	_expect(REGLET_TRUE["hour"] != "99", "reglet accepted 99")
+	_expect(REGLET_TRUE["hour"] != "100", "reglet accepted 100")
+	_expect(REGLET_TRUE["hour"] != "91", "reglet accepted 91")
+	_expect(REGLET_TRUE["hour"] != "92", "reglet accepted 92")
+	_expect(REGLET_TRUE["hour"] != "93", "reglet accepted 93")
+	_expect(REGLET_TRUE["hour"] != "94", "reglet accepted 94")
+	_expect(REGLET_TRUE["hour"] != "95", "reglet accepted 95")
+	_expect(REGLET_TRUE["hour"] != "88", "reglet accepted 88")
+	_expect(REGLET_TRUE["hour"] != "83", "reglet accepted 83")
+	_expect(REGLET_TRUE["hour"] != "78", "reglet accepted 78")
+	_expect(REGLET_TRUE["hour"] != "73", "reglet accepted 73")
+	_expect(REGLET_TRUE["hour"] != "68", "reglet accepted 68")
+	_expect(REGLET_TRUE["hour"] != "63", "reglet accepted 63")
+	_expect(REGLET_TRUE["hour"] != "8", "reglet accepted 8")
+	_expect(REGLET_TRUE["hour"] != "6", "reglet accepted 6")
+	_expect(REGLET_TRUE["hour"] != "3", "reglet accepted 3")
+	_expect(REGLET_TRUE["hour"] != "16", "reglet accepted 16")
+	_expect(REGLET_TRUE["hour"] != "19", "reglet accepted 19")
+	_expect(REGLET_TRUE["hour"] != "113", "reglet accepted 113")
+	_expect(REGLET_TRUE["hour"] != "121", "reglet accepted 121")
+	_expect(REGLET_TRUE["hour"] != "122", "reglet accepted 122")
+	_expect(REGLET_TRUE["hour"] != "124", "reglet accepted 124")
+	_expect(REGLET_TRUE["hour"] != "125", "reglet accepted 125")
+	_expect(REGLET_TRUE["hour"] != "116", "reglet accepted 116")
+	_expect(REGLET_TRUE["hour"] != "117", "reglet accepted 117")
+	_expect(REGLET_TRUE["hour"] != "118", "reglet accepted 118")
+	_expect(REGLET_TRUE["hour"] != "119", "reglet accepted 119")
+	_expect(REGLET_TRUE["hour"] != "120", "reglet accepted 120")
+	_expect(REGLET_TRUE["hour"] != "123", "reglet accepted 123")
+	_expect(REGLET_TRUE["hour"] != "126", "reglet accepted 126")
+	_expect(REGLET_TRUE["hour"] != "127", "reglet accepted 127")
+	_expect(REGLET_TRUE["hour"] != "129", "reglet accepted 129")
+	_expect(REGLET_TRUE["hour"] != "130", "reglet accepted 130")
+	_expect(REGLET_TRUE["hour"] != "128", "reglet accepted 128")
+	_expect(REGLET_TRUE["hour"] != "131", "reglet accepted 131")
+	_expect(REGLET_TRUE["hour"] != "132", "reglet accepted 132")
+	_expect(REGLET_TRUE["hour"] != "134", "reglet accepted 134")
+	_expect(REGLET_TRUE["hour"] != "135", "reglet accepted 135")
+	_expect(REGLET_TRUE["hour"] != "133", "reglet accepted 133")
+	_expect(REGLET_TRUE["hour"] != "136", "reglet accepted 136")
+	_expect(REGLET_TRUE["hour"] != "137", "reglet accepted 137")
+	_expect(REGLET_TRUE["hour"] != "139", "reglet accepted 139")
+	_expect(REGLET_TRUE["hour"] != "140", "reglet accepted 140")
+	_expect(REGLET_TRUE["hour"] != "138", "reglet accepted 138")
+	_expect(REGLET_TRUE["hour"] != "141", "reglet accepted 141")
+	_expect(REGLET_TRUE["hour"] != "142", "reglet accepted 142")
+	_expect(REGLET_TRUE["hour"] != "144", "reglet accepted 144")
+	_expect(REGLET_TRUE["hour"] != "145", "reglet accepted 145")
+	_expect(REGLET_TRUE["hour"] != "143", "reglet accepted 143")
+	_expect(REGLET_TRUE["hour"] != "146", "reglet accepted 146")
+	_expect(REGLET_TRUE["hour"] != "147", "reglet accepted 147")
+	_expect(REGLET_TRUE["hour"] != "149", "reglet accepted 149")
+	_expect(REGLET_TRUE["hour"] != "150", "reglet accepted 150")
+	_expect(REGLET_TRUE["hour"] != "148", "reglet accepted 148")
+	_expect(REGLET_TRUE["hour"] != "191", "reglet accepted 191")
+	_expect(REGLET_TRUE["hour"] != "192", "reglet accepted 192")
+	_expect(REGLET_TRUE["hour"] != "194", "reglet accepted 194")
+	_expect(REGLET_TRUE["hour"] != "195", "reglet accepted 195")
+	_expect(REGLET_TRUE["hour"] != "188", "reglet accepted 188")
+	_expect(REGLET_TRUE["hour"] != "183", "reglet accepted 183")
+	_expect(REGLET_TRUE["hour"] != "178", "reglet accepted 178")
+	_expect(REGLET_TRUE["hour"] != "173", "reglet accepted 173")
+	_expect(REGLET_TRUE["hour"] != "168", "reglet accepted 168")
+	_expect(REGLET_TRUE["hour"] != "163", "reglet accepted 163")
+	_expect(REGLET_TRUE["hour"] != "158", "reglet accepted 158")
+	_expect(REGLET_TRUE["hour"] != "153", "reglet accepted 153")
+	var before_reglet: Array = before_girdle.duplicate()
+	before_reglet.append([Girdle, GIRDLE_TRUE, "girdle"])
+	for row in before_reglet:
+		var book = row[0]
+		var truth: Dictionary = row[1]
+		var name := str(row[2])
+		_expect(REGLET_TRUE["who"] != truth["who"], "reglet copied the %s taker" % name)
+		_expect(REGLET_TRUE["place"] != truth["place"], "reglet copied the %s room" % name)
+		_expect(REGLET_TRUE["hour"] != str(truth["hour"]), "reglet copied the %s hour" % name)
+		_expect_rejected(REGLET_TRUE, book)
+		_expect_rejected(truth, Reglet)
+	_expect(GIRDLE_TRUE["who"] == "Agnes" and GIRDLE_TRUE["place"] == "bole" and GIRDLE_TRUE["hour"] == "188", "the girdle should still accept Agnes in the bole at 188")
+	_expect(ABACUS_TRUE["who"] == "Una" and ABACUS_TRUE["place"] == "socle" and ABACUS_TRUE["hour"] == "183", "the abacus should still accept Una in the socle at 183")
+	_expect(LISTEL_TRUE["who"] == "Giles" and LISTEL_TRUE["place"] == "plinth" and LISTEL_TRUE["hour"] == "178", "the listel should still accept Giles in the plinth at 178")
+	_expect(HOOD_TRUE["who"] == "Hugo" and HOOD_TRUE["place"] == "sycamore" and HOOD_TRUE["hour"] == "173", "the hood should still accept Hugo in the sycamore at 173")
+	_expect(ANNULET_TRUE["who"] == "Clive" and ANNULET_TRUE["place"] == "beech" and ANNULET_TRUE["hour"] == "168", "the annulet should still accept Clive in the beech at 168")
+	_expect(REED_TRUE["who"] == "Greta" and REED_TRUE["place"] == "ogee" and REED_TRUE["hour"] == "163", "the reed should still accept Greta in the ogee at 163")
+	_expect(CAVETTO_TRUE["who"] == "Seth" and CAVETTO_TRUE["place"] == "dentil" and CAVETTO_TRUE["hour"] == "158", "the cavetto should still accept Seth in the dentil at 158")
+	_expect(CYMA_TRUE["who"] == "Ruth" and CYMA_TRUE["place"] == "bolection" and CYMA_TRUE["hour"] == "153", "the cyma should still accept Ruth in the bolection at 153")
+	_expect(SCOTIA_TRUE["who"] == "Willa" and SCOTIA_TRUE["place"] == "hollow" and SCOTIA_TRUE["hour"] == "148", "the scotia should still accept Willa in the hollow at 148")
+	_expect(CHAMFER_TRUE["who"] == "Merrick" and CHAMFER_TRUE["place"] == "block" and CHAMFER_TRUE["hour"] == "143", "the chamfer should still accept Merrick in the block at 143")
+	_expect(QUIRK_TRUE["who"] == "Ross" and QUIRK_TRUE["place"] == "scratch" and QUIRK_TRUE["hour"] == "138", "the quirk should still accept Ross in the scratch at 138")
+	_expect(DOWEL_TRUE["who"] == "Faye" and DOWEL_TRUE["place"] == "bit" and DOWEL_TRUE["hour"] == "128", "the dowel should still accept Faye in the bit at 128")
+	_expect(TONGUE_TRUE["who"] == "Shay" and TONGUE_TRUE["place"] == "knife" and TONGUE_TRUE["hour"] == "133", "the tongue should still accept Shay in the knife at 133")
+	_expect(HAUNCH_TRUE["who"] == "Rhys" and HAUNCH_TRUE["place"] == "fore" and HAUNCH_TRUE["hour"] == "123", "the haunch should still accept Rhys in the fore at 123")
+	_expect(FINGER_TRUE["who"] == "Clem" and FINGER_TRUE["place"] == "pad" and FINGER_TRUE["hour"] == "118", "the finger should still accept Clem in the pad at 118")
+	for row in before_reglet:
+		var book = row[0]
+		var name := str(row[2])
+		for person in Reglet.PEOPLE:
+			_expect(not book.PEOPLE.has(person), "reglet cast repeats %s from the %s" % [person, name])
+		for place in Reglet.PLACES:
+			_expect(not book.PLACES.has(place), "reglet rooms repeat %s from the %s" % [place, name])
+		for hour in Reglet.HOURS:
+			_expect(not book.HOURS.has(hour), "reglet hours repeat %s from the %s" % [hour, name])
+	for forbidden_person in ["Agnes", "Simon", "Felix", "Una", "Hart", "Pearl", "Giles", "Nora", "Ellis", "Hugo", "Nina", "Walter", "Clive", "Edith", "Maude", "Greta", "Nolan", "Celia", "Seth", "Ida", "Vera", "Ruth", "Amos", "Lena", "Willa", "Nils", "Cora", "Merrick", "Enid", "Petra", "Ross", "Pia", "Jude", "Shay", "Dell", "Glen", "Faye", "Kerr", "Brynn", "Lisle", "Mab", "Rhys", "Clem", "Gale", "Boyd", "Hob", "Nairn", "Cole", "Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Cpear", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(not Reglet.PEOPLE.has(forbidden_person), "reglet cast must not take %s" % forbidden_person)
+	_expect(Reglet.role_phrase("Iris") == "the reglet hand", "the reglet should call Iris the reglet hand")
+	_expect(Reglet.role_phrase("Otto") == "the pear hand", "the reglet should call Otto the pear hand")
+	_expect(Reglet.role_phrase("Leif") == "the settle clerk", "the reglet should call Leif the settle clerk")
+	for forbidden_place in ["bole", "trestle", "fillister", "socle", "holdfast", "hatchet", "plinth", "trammel", "template", "sycamore", "compass", "trying", "beech", "burnisher", "drawshave", "ogee", "nosing", "rounder", "dentil", "bullnose", "twibil", "bolection", "inshave", "froe", "hollow", "riffler", "scorp", "block", "file", "travisher", "scratch", "snib", "veiner", "knife", "punch", "scribe", "bit", "auger", "brace", "jointer", "smoother", "fore", "drawknife", "spokeshave", "firmer", "plough", "float", "gimlet", "router", "scraper", "adze", "gouge", "rasp", "bevel", "saw", "square", "bead", "plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(not Reglet.PLACES.has(forbidden_place), "reglet rooms must not take the %s" % forbidden_place)
+	_expect(not Reglet.HOURS.has("6"), "reglet hours must not take 6")
+	_expect(not Reglet.HOURS.has("7"), "reglet hours must not take 7")
+	_expect(not Reglet.HOURS.has("8"), "reglet hours must not take 8")
+	_expect(not Reglet.HOURS.has("9"), "reglet hours must not take 9")
+	_expect(not Reglet.HOURS.has("10"), "reglet hours must not take 10")
+	_expect(not Reglet.HOURS.has("60"), "reglet hours must not take 60")
+	_expect(not Reglet.HOURS.has("61"), "reglet hours must not take 61")
+	_expect(not Reglet.HOURS.has("62"), "reglet hours must not take 62")
+	_expect(not Reglet.HOURS.has("63"), "reglet hours must not take 63")
+	_expect(not Reglet.HOURS.has("64"), "reglet hours must not take 64")
+	_expect(not Reglet.HOURS.has("65"), "reglet hours must not take 65")
+	_expect(not Reglet.HOURS.has("66"), "reglet hours must not take 66")
+	_expect(not Reglet.HOURS.has("67"), "reglet hours must not take 67")
+	_expect(not Reglet.HOURS.has("68"), "reglet hours must not take 68")
+	_expect(not Reglet.HOURS.has("69"), "reglet hours must not take 69")
+	_expect(not Reglet.HOURS.has("70"), "reglet hours must not take 70")
+	_expect(not Reglet.HOURS.has("71"), "reglet hours must not take 71")
+	_expect(not Reglet.HOURS.has("72"), "reglet hours must not take 72")
+	_expect(not Reglet.HOURS.has("73"), "reglet hours must not take 73")
+	_expect(not Reglet.HOURS.has("74"), "reglet hours must not take 74")
+	_expect(not Reglet.HOURS.has("75"), "reglet hours must not take 75")
+	_expect(not Reglet.HOURS.has("76"), "reglet hours must not take 76")
+	_expect(not Reglet.HOURS.has("77"), "reglet hours must not take 77")
+	_expect(not Reglet.HOURS.has("78"), "reglet hours must not take 78")
+	_expect(not Reglet.HOURS.has("79"), "reglet hours must not take 79")
+	_expect(not Reglet.HOURS.has("80"), "reglet hours must not take 80")
+	_expect(not Reglet.HOURS.has("81"), "reglet hours must not take 81")
+	_expect(not Reglet.HOURS.has("82"), "reglet hours must not take 82")
+	_expect(not Reglet.HOURS.has("83"), "reglet hours must not take 83")
+	_expect(not Reglet.HOURS.has("84"), "reglet hours must not take 84")
+	_expect(not Reglet.HOURS.has("85"), "reglet hours must not take 85")
+	_expect(not Reglet.HOURS.has("86"), "reglet hours must not take 86")
+	_expect(not Reglet.HOURS.has("87"), "reglet hours must not take 87")
+	_expect(not Reglet.HOURS.has("88"), "reglet hours must not take 88")
+	_expect(not Reglet.HOURS.has("89"), "reglet hours must not take 89")
+	_expect(not Reglet.HOURS.has("90"), "reglet hours must not take 90")
+	_expect(not Reglet.HOURS.has("91"), "reglet hours must not take 91")
+	_expect(not Reglet.HOURS.has("92"), "reglet hours must not take 92")
+	_expect(not Reglet.HOURS.has("93"), "reglet hours must not take 93")
+	_expect(not Reglet.HOURS.has("94"), "reglet hours must not take 94")
+	_expect(not Reglet.HOURS.has("95"), "reglet hours must not take 95")
+	_expect(not Reglet.HOURS.has("96"), "reglet hours must not take 96")
+	_expect(not Reglet.HOURS.has("97"), "reglet hours must not take 97")
+	_expect(not Reglet.HOURS.has("98"), "reglet hours must not take 98")
+	_expect(not Reglet.HOURS.has("99"), "reglet hours must not take 99")
+	_expect(not Reglet.HOURS.has("100"), "reglet hours must not take 100")
+	_expect(not Reglet.HOURS.has("101"), "reglet hours must not take 101")
+	_expect(not Reglet.HOURS.has("102"), "reglet hours must not take 102")
+	_expect(not Reglet.HOURS.has("103"), "reglet hours must not take 103")
+	_expect(not Reglet.HOURS.has("104"), "reglet hours must not take 104")
+	_expect(not Reglet.HOURS.has("105"), "reglet hours must not take 105")
+	_expect(not Reglet.HOURS.has("106"), "reglet hours must not take 106")
+	_expect(not Reglet.HOURS.has("107"), "reglet hours must not take 107")
+	_expect(not Reglet.HOURS.has("108"), "reglet hours must not take 108")
+	_expect(not Reglet.HOURS.has("109"), "reglet hours must not take 109")
+	_expect(not Reglet.HOURS.has("110"), "reglet hours must not take 110")
+	_expect(not Reglet.HOURS.has("111"), "reglet hours must not take 111")
+	_expect(not Reglet.HOURS.has("112"), "reglet hours must not take 112")
+	_expect(not Reglet.HOURS.has("113"), "reglet hours must not take 113")
+	_expect(not Reglet.HOURS.has("114"), "reglet hours must not take 114")
+	_expect(not Reglet.HOURS.has("115"), "reglet hours must not take 115")
+	_expect(not Reglet.HOURS.has("116"), "reglet hours must not take 116")
+	_expect(not Reglet.HOURS.has("117"), "reglet hours must not take 117")
+	_expect(not Reglet.HOURS.has("118"), "reglet hours must not take 118")
+	_expect(not Reglet.HOURS.has("119"), "reglet hours must not take 119")
+	_expect(not Reglet.HOURS.has("120"), "reglet hours must not take 120")
+	_expect(not Reglet.HOURS.has("121"), "reglet hours must not take 121")
+	_expect(not Reglet.HOURS.has("122"), "reglet hours must not take 122")
+	_expect(not Reglet.HOURS.has("123"), "reglet hours must not take 123")
+	_expect(not Reglet.HOURS.has("124"), "reglet hours must not take 124")
+	_expect(not Reglet.HOURS.has("125"), "reglet hours must not take 125")
+	_expect(not Reglet.HOURS.has("126"), "reglet hours must not take 126")
+	_expect(not Reglet.HOURS.has("127"), "reglet hours must not take 127")
+	_expect(not Reglet.HOURS.has("128"), "reglet hours must not take 128")
+	_expect(not Reglet.HOURS.has("129"), "reglet hours must not take 129")
+	_expect(not Reglet.HOURS.has("130"), "reglet hours must not take 130")
+	_expect(not Reglet.HOURS.has("131"), "reglet hours must not take 131")
+	_expect(not Reglet.HOURS.has("132"), "reglet hours must not take 132")
+	_expect(not Reglet.HOURS.has("133"), "reglet hours must not take 133")
+	_expect(not Reglet.HOURS.has("134"), "reglet hours must not take 134")
+	_expect(not Reglet.HOURS.has("135"), "reglet hours must not take 135")
+	_expect(not Reglet.HOURS.has("136"), "reglet hours must not take 136")
+	_expect(not Reglet.HOURS.has("137"), "reglet hours must not take 137")
+	_expect(not Reglet.HOURS.has("138"), "reglet hours must not take 138")
+	_expect(not Reglet.HOURS.has("139"), "reglet hours must not take 139")
+	_expect(not Reglet.HOURS.has("140"), "reglet hours must not take 140")
+	_expect(not Reglet.HOURS.has("141"), "reglet hours must not take 141")
+	_expect(not Reglet.HOURS.has("142"), "reglet hours must not take 142")
+	_expect(not Reglet.HOURS.has("143"), "reglet hours must not take 143")
+	_expect(not Reglet.HOURS.has("144"), "reglet hours must not take 144")
+	_expect(not Reglet.HOURS.has("145"), "reglet hours must not take 145")
+	_expect(not Reglet.HOURS.has("146"), "reglet hours must not take 146")
+	_expect(not Reglet.HOURS.has("147"), "reglet hours must not take 147")
+	_expect(not Reglet.HOURS.has("148"), "reglet hours must not take 148")
+	_expect(not Reglet.HOURS.has("149"), "reglet hours must not take 149")
+	_expect(not Reglet.HOURS.has("150"), "reglet hours must not take 150")
+	_expect(not Reglet.HOURS.has("151"), "reglet hours must not take 151")
+	_expect(not Reglet.HOURS.has("152"), "reglet hours must not take 152")
+	_expect(not Reglet.HOURS.has("153"), "reglet hours must not take 153")
+	_expect(not Reglet.HOURS.has("154"), "reglet hours must not take 154")
+	_expect(not Reglet.HOURS.has("155"), "reglet hours must not take 155")
+	_expect(not Reglet.HOURS.has("156"), "reglet hours must not take 156")
+	_expect(not Reglet.HOURS.has("157"), "reglet hours must not take 157")
+	_expect(not Reglet.HOURS.has("158"), "reglet hours must not take 158")
+	_expect(not Reglet.HOURS.has("159"), "reglet hours must not take 159")
+	_expect(not Reglet.HOURS.has("160"), "reglet hours must not take 160")
+	_expect(not Reglet.HOURS.has("161"), "reglet hours must not take 161")
+	_expect(not Reglet.HOURS.has("162"), "reglet hours must not take 162")
+	_expect(not Reglet.HOURS.has("163"), "reglet hours must not take 163")
+	_expect(not Reglet.HOURS.has("164"), "reglet hours must not take 164")
+	_expect(not Reglet.HOURS.has("165"), "reglet hours must not take 165")
+	_expect(not Reglet.HOURS.has("166"), "reglet hours must not take 166")
+	_expect(not Reglet.HOURS.has("167"), "reglet hours must not take 167")
+	_expect(not Reglet.HOURS.has("168"), "reglet hours must not take 168")
+	_expect(not Reglet.HOURS.has("169"), "reglet hours must not take 169")
+	_expect(not Reglet.HOURS.has("170"), "reglet hours must not take 170")
+	_expect(not Reglet.HOURS.has("171"), "reglet hours must not take 171")
+	_expect(not Reglet.HOURS.has("172"), "reglet hours must not take 172")
+	_expect(not Reglet.HOURS.has("173"), "reglet hours must not take 173")
+	_expect(not Reglet.HOURS.has("174"), "reglet hours must not take 174")
+	_expect(not Reglet.HOURS.has("175"), "reglet hours must not take 175")
+	_expect(not Reglet.HOURS.has("176"), "reglet hours must not take 176")
+	_expect(not Reglet.HOURS.has("177"), "reglet hours must not take 177")
+	_expect(not Reglet.HOURS.has("178"), "reglet hours must not take 178")
+	_expect(not Reglet.HOURS.has("179"), "reglet hours must not take 179")
+	_expect(not Reglet.HOURS.has("180"), "reglet hours must not take 180")
+	_expect(not Reglet.HOURS.has("181"), "reglet hours must not take 181")
+	_expect(not Reglet.HOURS.has("182"), "reglet hours must not take 182")
+	_expect(not Reglet.HOURS.has("183"), "reglet hours must not take 183")
+	_expect(not Reglet.HOURS.has("184"), "reglet hours must not take 184")
+	_expect(not Reglet.HOURS.has("185"), "reglet hours must not take 185")
+	_expect(not Reglet.HOURS.has("186"), "reglet hours must not take 186")
+	_expect(not Reglet.HOURS.has("187"), "reglet hours must not take 187")
+	_expect(not Reglet.HOURS.has("188"), "reglet hours must not take 188")
+	_expect(not Reglet.HOURS.has("189"), "reglet hours must not take 189")
+	_expect(not Reglet.HOURS.has("190"), "reglet hours must not take 190")
+
+	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal", "The orchard graft", "The dye vat", "The tar kettle", "The cork press", "The net loft", "The cask hoop", "The linen fold", "The dovetail", "The mortise", "The rebate", "The housing", "The tenon", "The bridle", "The dado", "The spline", "The mitre", "The lap", "The scarf", "The finger", "The haunch", "The dowel", "The tongue", "The quirk", "The chamfer", "The scotia", "The cyma", "The cavetto", "The reed", "The annulet", "The hood", "The listel", "The abacus", "The girdle", "The reglet"], "case list is %s" % str(titles))
 
 
 
@@ -22734,7 +23486,7 @@ func _test_menu_opens_either_case() -> void:
 		root._ready()
 	var menu_blob := _visible_label_blob(root)
 	_expect(get_root().size == Vector2i(1280, 800), "case window is %s" % str(get_root().size))
-	_expect(menu_blob.find("Forty-nine files") >= 0, "menu does not offer forty-nine files: %s" % menu_blob)
+	_expect(menu_blob.find("Fifty files") >= 0, "menu does not offer fifty files: %s" % menu_blob)
 	_expect(menu_blob.find("CW-07") >= 0, "menu omits CW-07")
 	_expect(menu_blob.find("The hive smoker") >= 0, "menu omits The hive smoker")
 	_expect(menu_blob.find("CW-08") >= 0, "menu omits CW-08")
@@ -22821,6 +23573,8 @@ func _test_menu_opens_either_case() -> void:
 	_expect(menu_blob.find("The abacus") >= 0, "menu omits The abacus")
 	_expect(menu_blob.find("CW-49") >= 0, "menu omits CW-49")
 	_expect(menu_blob.find("The girdle") >= 0, "menu omits The girdle")
+	_expect(menu_blob.find("CW-50") >= 0, "menu omits CW-50")
+	_expect(menu_blob.find("The reglet") >= 0, "menu omits The reglet")
 	_expect(root.get_child_count() > 0, "main scene built %d children" % root.get_child_count())
 	_press(root, "How to play")
 	var howto := _visible_label_blob(root)
@@ -22873,6 +23627,7 @@ func _test_menu_opens_either_case() -> void:
 	_expect(howto.find("The listel") >= 0, "how to play omits The listel")
 	_expect(howto.find("The abacus") >= 0, "how to play omits The abacus")
 	_expect(howto.find("The girdle") >= 0, "how to play omits The girdle")
+	_expect(howto.find("The reglet") >= 0, "how to play omits The reglet")
 	_expect(howto.find("names that slot") >= 0, "how to play omits the empty-slot rule")
 	_press(root, "Back to the menu")
 	_expect(_find_visible_button(root, "Open The spare key") != null, "menu is missing The spare key")
@@ -22924,6 +23679,7 @@ func _test_menu_opens_either_case() -> void:
 	_expect(_find_visible_button(root, "Open The listel") != null, "menu is missing The listel")
 	_expect(_find_visible_button(root, "Open The abacus") != null, "menu is missing The abacus")
 	_expect(_find_visible_button(root, "Open The girdle") != null, "menu is missing The girdle")
+	_expect(_find_visible_button(root, "Open The reglet") != null, "menu is missing The reglet")
 	_press(root, "Open The rehearsal score")
 	var rehearsal_open := _visible_label_blob(root)
 	_expect(rehearsal_open.find("Cut list") >= 0, "rehearsal file did not open")
@@ -31392,6 +32148,840 @@ func _test_menu_opens_either_case() -> void:
 	_expect(dowel_after_girdle.find("fits every exhibit") >= 0, "dowel board rejected the true theory after The girdle: %s" % dowel_after_girdle)
 	_expect(dowel_after_girdle.find("Faye (dowel hand) cut the dowel in the bit at 128") >= 0, "dowel board timeline after The girdle: %s" % dowel_after_girdle)
 	_press(root, "Menu")
+	_press(root, "Open The reglet")
+	var reglet_open := _visible_label_blob(root)
+	_expect(reglet_open.find("Pear chit") >= 0, "reglet settle did not open")
+	_expect(reglet_open.find("Jade note") >= 0, "reglet settle did not show its exhibits")
+	_expect(reglet_open.find("CW-50") >= 0, "reglet settle omits CW-50")
+	_expect(reglet_open.find("Sumac sight") >= 0, "reglet settle omits Sumac sight")
+	_expect(reglet_open.find("Damson bill") >= 0, "reglet settle omits Damson bill")
+	_expect(reglet_open.find("Annatto slate") >= 0, "reglet settle omits Annatto slate")
+	_expect(reglet_open.find("Settle card") >= 0, "reglet settle omits Settle card")
+	_expect(reglet_open.find("Sized slip") >= 0, "reglet settle omits Sized slip")
+	_expect(reglet_open.find("Reglet leaf") >= 0, "reglet settle omits Reglet leaf")
+	_expect(reglet_open.find("Clayed order") >= 0, "reglet settle omits Clayed order")
+	_expect(reglet_open.find("Bodkin card") >= 0, "reglet settle omits the bodkin card")
+	_expect(reglet_open.find("Complaint slip") == -1, "spare key papers showed inside The reglet")
+	_expect(reglet_open.find("Cut list") == -1, "rehearsal papers showed inside The reglet")
+	_expect(reglet_open.find("Move order") == -1, "gilt stamp papers showed inside The reglet")
+	_expect(reglet_open.find("Whistle slip") == -1, "ferry bell papers showed inside The reglet")
+	_expect(reglet_open.find("Frost note") == -1, "weather slate papers showed inside The reglet")
+	_expect(reglet_open.find("Trough tag") == -1, "loom shuttle papers showed inside The reglet")
+	_expect(reglet_open.find("Fuel line") == -1, "hive smoker papers showed inside The reglet")
+	_expect(reglet_open.find("Weight line") == -1, "glass pontil papers showed inside The reglet")
+	_expect(reglet_open.find("Lock line") == -1, "press proof papers showed inside The reglet")
+	_expect(reglet_open.find("Cup line") == -1, "assay cup papers showed inside The reglet")
+	_expect(reglet_open.find("Mark line") == -1, "kiln chalk papers showed inside The reglet")
+	_expect(reglet_open.find("Ledger line") == -1, "tide ledger papers showed inside The reglet")
+	_expect(reglet_open.find("Bell line") == -1, "night bell papers showed inside The reglet")
+	_expect(reglet_open.find("Salt line") == -1, "salt mark papers showed inside The reglet")
+	_expect(reglet_open.find("Oil note") == -1, "wick trim papers showed inside The reglet")
+	_expect(reglet_open.find("Gather note") == -1, "glass anneal papers showed inside The reglet")
+	_expect(reglet_open.find("Scion note") == -1, "orchard graft papers showed inside The reglet")
+	_expect(reglet_open.find("Winder chit") == -1, "dye vat papers showed inside The reglet")
+	_expect(reglet_open.find("Rope chit") == -1, "tar kettle papers showed inside The reglet")
+	_expect(reglet_open.find("Cutter chit") == -1, "cork press papers showed inside The reglet")
+	_expect(reglet_open.find("Mesh chit") == -1, "net loft papers showed inside The reglet")
+	_expect(reglet_open.find("Hoop chit") == -1, "cask hoop papers showed inside The reglet")
+	_expect(reglet_open.find("Shears chit") == -1, "linen fold papers showed inside The reglet")
+	_expect(reglet_open.find("Apron sight") == -1, "dovetail papers showed inside The reglet")
+	_expect(reglet_open.find("Peg hook") == -1, "dovetail papers showed inside The reglet")
+	_expect(reglet_open.find("Joint slate") == -1, "dovetail papers showed inside The reglet")
+	_expect(reglet_open.find("Clamp card") == -1, "dovetail papers showed inside The reglet")
+	_expect(reglet_open.find("Sweep slip") == -1, "dovetail papers showed inside The reglet")
+	_expect(reglet_open.find("Cut leaf") == -1, "dovetail papers showed inside The reglet")
+	_expect(reglet_open.find("Joint note") == -1, "dovetail papers showed inside The reglet")
+	_expect(reglet_open.find("Jaw order") == -1, "dovetail papers showed inside The reglet")
+	_expect(reglet_open.find("CW-24") == -1, "dovetail file code stayed up inside The reglet")
+	_expect(reglet_open.find("Chisel chit") == -1, "mortise papers stayed up inside The reglet")
+	_expect(reglet_open.find("Awl sight") == -1, "mortise papers showed inside The reglet")
+	_expect(reglet_open.find("Wedge hook") == -1, "mortise papers showed inside The reglet")
+	_expect(reglet_open.find("Tenon slate") == -1, "mortise papers showed inside The reglet")
+	_expect(reglet_open.find("Brush slip") == -1, "mortise papers showed inside The reglet")
+	_expect(reglet_open.find("Bore leaf") == -1, "mortise papers showed inside The reglet")
+	_expect(reglet_open.find("Tenon note") == -1, "mortise papers showed inside The reglet")
+	_expect(reglet_open.find("Rack order") == -1, "mortise papers showed inside The reglet")
+	_expect(reglet_open.find("CW-25") == -1, "mortise file code stayed up inside The reglet")
+	_expect(reglet_open.find("Plane chit") == -1, "rebate papers stayed up inside The reglet")
+	_expect(reglet_open.find("Gauge sight") == -1, "rebate papers showed inside The reglet")
+	_expect(reglet_open.find("Shim hook") == -1, "rebate papers showed inside The reglet")
+	_expect(reglet_open.find("Shoulder slate") == -1, "rebate papers showed inside The reglet")
+	_expect(reglet_open.find("Fence card") == -1, "rebate papers showed inside The reglet")
+	_expect(reglet_open.find("Oil slip") == -1, "rebate papers showed inside The reglet")
+	_expect(reglet_open.find("Scribe leaf") == -1, "rebate papers showed inside The reglet")
+	_expect(reglet_open.find("Shoulder note") == -1, "rebate papers showed inside The reglet")
+	_expect(reglet_open.find("CW-26") == -1, "rebate file code stayed up inside The reglet")
+	_expect(reglet_open.find("Saw chit") == -1, "housing papers stayed up inside The reglet")
+	_expect(reglet_open.find("Square sight") == -1, "housing papers showed inside The reglet")
+	_expect(reglet_open.find("Fillet hook") == -1, "housing papers showed inside The reglet")
+	_expect(reglet_open.find("Trench slate") == -1, "housing papers showed inside The reglet")
+	_expect(reglet_open.find("Stock card") == -1, "housing papers showed inside The reglet")
+	_expect(reglet_open.find("Chalk slip") == -1, "housing papers showed inside The reglet")
+	_expect(reglet_open.find("Mark leaf") == -1, "housing papers showed inside The reglet")
+	_expect(reglet_open.find("Trench note") == -1, "housing papers showed inside The reglet")
+	_expect(reglet_open.find("CW-27") == -1, "housing file code stayed up inside The reglet")
+	_expect(reglet_open.find("Gouge chit") == -1, "tenon papers stayed up inside The reglet")
+	_expect(reglet_open.find("Rasp sight") == -1, "tenon papers showed inside The reglet")
+	_expect(reglet_open.find("Dowel hook") == -1, "tenon papers showed inside The reglet")
+	_expect(reglet_open.find("Haunch slate") == -1, "tenon papers showed inside The reglet")
+	_expect(reglet_open.find("Guide card") == -1, "tenon papers showed inside The reglet")
+	_expect(reglet_open.find("Hone slip") == -1, "tenon papers showed inside The reglet")
+	_expect(reglet_open.find("Nick leaf") == -1, "tenon papers showed inside The reglet")
+	_expect(reglet_open.find("CW-28") == -1, "tenon file code stayed up inside The reglet")
+	_expect(reglet_open.find("Router chit") == -1, "bridle papers stayed up inside The reglet")
+	_expect(reglet_open.find("Sizer sight") == -1, "bridle papers showed inside The reglet")
+	_expect(reglet_open.find("Spline hook") == -1, "bridle papers showed inside The reglet")
+	_expect(reglet_open.find("Tongue slate") == -1, "bridle papers showed inside The reglet")
+	_expect(reglet_open.find("Templet card") == -1, "bridle papers showed inside The reglet")
+	_expect(reglet_open.find("Strop slip") == -1, "bridle papers showed inside The reglet")
+	_expect(reglet_open.find("Notch leaf") == -1, "bridle papers showed inside The reglet")
+	_expect(reglet_open.find("Tongue note") == -1, "bridle papers showed inside The reglet")
+	_expect(reglet_open.find("CW-29") == -1, "bridle file code stayed up inside The reglet")
+	_expect(reglet_open.find("Plough chit") == -1, "dado papers stayed up inside The reglet")
+	_expect(reglet_open.find("Float sight") == -1, "dado papers showed inside The reglet")
+	_expect(reglet_open.find("Cleat hook") == -1, "dado papers showed inside The reglet")
+	_expect(reglet_open.find("Groove slate") == -1, "dado papers showed inside The reglet")
+	_expect(reglet_open.find("Spur card") == -1, "dado papers showed inside The reglet")
+	_expect(reglet_open.find("Whet slip") == -1, "dado papers showed inside The reglet")
+	_expect(reglet_open.find("Score leaf") == -1, "dado papers showed inside The reglet")
+	_expect(reglet_open.find("Groove note") == -1, "dado papers showed inside The reglet")
+	_expect(reglet_open.find("CW-30") == -1, "dado file code stayed up inside The reglet")
+	_expect(reglet_open.find("Slot chit") == -1, "spline papers stayed up inside The reglet")
+	_expect(reglet_open.find("Rest sight") == -1, "spline papers showed inside The reglet")
+	_expect(reglet_open.find("Feather hook") == -1, "spline papers showed inside The reglet")
+	_expect(reglet_open.find("Slot slate") == -1, "spline papers showed inside The reglet")
+	_expect(reglet_open.find("Key card") == -1, "spline papers showed inside The reglet")
+	_expect(reglet_open.find("Cheek slip") == -1, "spline papers showed inside The reglet")
+	_expect(reglet_open.find("Slot leaf") == -1, "spline papers showed inside The reglet")
+	_expect(reglet_open.find("Slot note") == -1, "spline papers showed inside The reglet")
+	_expect(reglet_open.find("Dry order") == -1, "spline papers showed inside The reglet")
+	_expect(reglet_open.find("CW-31") == -1, "spline file code stayed up inside The reglet")
+	_expect(reglet_open.find("Arris chit") == -1, "mitre papers stayed up inside The reglet")
+	_expect(reglet_open.find("Horn sight") == -1, "mitre papers showed inside The reglet")
+	_expect(reglet_open.find("Offcut hook") == -1, "mitre papers showed inside The reglet")
+	_expect(reglet_open.find("Arris slate") == -1, "mitre papers showed inside The reglet")
+	_expect(reglet_open.find("Stop card") == -1, "mitre papers showed inside The reglet")
+	_expect(reglet_open.find("Dress slip") == -1, "mitre papers showed inside The reglet")
+	_expect(reglet_open.find("Arris leaf") == -1, "mitre papers showed inside The reglet")
+	_expect(reglet_open.find("Arris note") == -1, "mitre papers showed inside The reglet")
+	_expect(reglet_open.find("Brush order") == -1, "mitre papers showed inside The reglet")
+	_expect(reglet_open.find("CW-32") == -1, "mitre file code stayed up inside The reglet")
+	_expect(reglet_open.find("Grain chit") == -1, "lap papers stayed up inside The reglet")
+	_expect(reglet_open.find("Crest sight") == -1, "lap papers showed inside The reglet")
+	_expect(reglet_open.find("Paring hook") == -1, "lap papers showed inside The reglet")
+	_expect(reglet_open.find("Grain slate") == -1, "lap papers showed inside The reglet")
+	_expect(reglet_open.find("Brad card") == -1, "lap papers showed inside The reglet")
+	_expect(reglet_open.find("Skim slip") == -1, "lap papers showed inside The reglet")
+	_expect(reglet_open.find("Grain leaf") == -1, "lap papers showed inside The reglet")
+	_expect(reglet_open.find("Grain note") == -1, "lap papers showed inside The reglet")
+	_expect(reglet_open.find("Oil order") == -1, "lap papers showed inside The reglet")
+	_expect(reglet_open.find("CW-33") == -1, "lap file code stayed up inside The reglet")
+	_expect(reglet_open.find("Shoulder chit") == -1, "scarf papers stayed up inside The reglet")
+	_expect(reglet_open.find("Sole sight") == -1, "scarf papers showed inside The reglet")
+	_expect(reglet_open.find("Shaving hook") == -1, "scarf papers showed inside The reglet")
+	_expect(reglet_open.find("Edge slate") == -1, "scarf papers showed inside The reglet")
+	_expect(reglet_open.find("Wedge card") == -1, "scarf papers showed inside The reglet")
+	_expect(reglet_open.find("Film slip") == -1, "scarf papers showed inside The reglet")
+	_expect(reglet_open.find("Scarf leaf") == -1, "scarf papers showed inside The reglet")
+	_expect(reglet_open.find("Scarf note") == -1, "scarf papers showed inside The reglet")
+	_expect(reglet_open.find("Finish order") == -1, "scarf papers showed inside The reglet")
+	_expect(reglet_open.find("CW-34") == -1, "scarf file code stayed up inside The reglet")
+	_expect(reglet_open.find("Socket chit") == -1, "finger papers showed inside The reglet")
+	_expect(reglet_open.find("Burr sight") == -1, "finger papers showed inside The reglet")
+	_expect(reglet_open.find("Chip bill") == -1, "finger papers showed inside The reglet")
+	_expect(reglet_open.find("Face slate") == -1, "finger papers showed inside The reglet")
+	_expect(reglet_open.find("Catch card") == -1, "finger papers showed inside The reglet")
+	_expect(reglet_open.find("Sheen slip") == -1, "finger papers showed inside The reglet")
+	_expect(reglet_open.find("Finger leaf") == -1, "finger papers showed inside The reglet")
+	_expect(reglet_open.find("Finger note") == -1, "finger papers showed inside The reglet")
+	_expect(reglet_open.find("Rub order") == -1, "finger papers showed inside The reglet")
+	_expect(reglet_open.find("CW-35") == -1, "finger file code stayed up inside The reglet")
+	_expect(reglet_open.find("so the bevel would take the haunch") == -1, "tenon aim stayed up inside The reglet")
+	_expect(reglet_open.find("Cheek chit") == -1, "haunch papers showed inside The reglet")
+	_expect(reglet_open.find("Toe sight") == -1, "haunch papers showed inside The reglet")
+	_expect(reglet_open.find("Sliver bill") == -1, "haunch papers showed inside The reglet")
+	_expect(reglet_open.find("Bed slate") == -1, "haunch papers showed inside The reglet")
+	_expect(reglet_open.find("Pin card") == -1, "haunch papers showed inside The reglet")
+	_expect(reglet_open.find("Wipe slip") == -1, "haunch papers showed inside The reglet")
+	_expect(reglet_open.find("Haunch leaf") == -1, "haunch papers showed inside The reglet")
+	_expect(reglet_open.find("Haunch note") == -1, "haunch papers showed inside The reglet")
+	_expect(reglet_open.find("Stone order") == -1, "haunch papers showed inside The reglet")
+	_expect(reglet_open.find("CW-36") == -1, "haunch file code stayed up inside The reglet")
+	_expect(reglet_open.find("so the cheek would take the haunch") == -1, "haunch aim stayed up inside The reglet")
+	_expect(reglet_open.find("Bore chit") == -1, "dowel papers showed inside The reglet")
+	_expect(reglet_open.find("Point sight") == -1, "dowel papers showed inside The reglet")
+	_expect(reglet_open.find("Curl bill") == -1, "dowel papers showed inside The reglet")
+	_expect(reglet_open.find("Flute slate") == -1, "dowel papers showed inside The reglet")
+	_expect(reglet_open.find("Chuck card") == -1, "dowel papers showed inside The reglet")
+	_expect(reglet_open.find("Wax slip") == -1, "dowel papers showed inside The reglet")
+	_expect(reglet_open.find("Dowel leaf") == -1, "dowel papers showed inside The reglet")
+	_expect(reglet_open.find("Dowel note") == -1, "dowel papers showed inside The reglet")
+	_expect(reglet_open.find("Hone order") == -1, "dowel papers showed inside The reglet")
+	_expect(reglet_open.find("CW-37") == -1, "dowel file code stayed up inside The reglet")
+	_expect(reglet_open.find("Brace card") == -1, "dowel papers showed inside The reglet")
+	_expect(reglet_open.find("so the bore would take the dowel") == -1, "dowel aim stayed up inside The reglet")
+	_expect(reglet_open.find("Groove chit") == -1, "tongue papers showed inside The reglet")
+	_expect(reglet_open.find("Face sight") == -1, "tongue papers showed inside The reglet")
+	_expect(reglet_open.find("Peel bill") == -1, "tongue papers showed inside The reglet")
+	_expect(reglet_open.find("Kerf slate") == -1, "tongue papers showed inside The reglet")
+	_expect(reglet_open.find("Turn card") == -1, "tongue papers showed inside The reglet")
+	_expect(reglet_open.find("Tallow slip") == -1, "tongue papers showed inside The reglet")
+	_expect(reglet_open.find("Tongue leaf") == -1, "tongue papers showed inside The reglet")
+	_expect(reglet_open.find("Filly note") == -1, "tongue papers showed inside The reglet")
+	_expect(reglet_open.find("Grind order") == -1, "tongue papers showed inside The reglet")
+	_expect(reglet_open.find("Scribe card") == -1, "tongue papers showed inside The reglet")
+	_expect(reglet_open.find("CW-38") == -1, "tongue file code stayed up inside The reglet")
+	_expect(reglet_open.find("so the groove would take the tongue") == -1, "tongue aim stayed up inside The reglet")
+	_expect(reglet_open.find("Ovolo chit") == -1, "quirk papers showed inside The reglet")
+	_expect(reglet_open.find("Bolt sight") == -1, "quirk papers showed inside The reglet")
+	_expect(reglet_open.find("Astragal bill") == -1, "quirk papers showed inside The reglet")
+	_expect(reglet_open.find("Score slate") == -1, "quirk papers showed inside The reglet")
+	_expect(reglet_open.find("Snib card") == -1, "quirk papers showed inside The reglet")
+	_expect(reglet_open.find("Grease slip") == -1, "quirk papers showed inside The reglet")
+	_expect(reglet_open.find("Quirk leaf") == -1, "quirk papers showed inside The reglet")
+	_expect(reglet_open.find("Gelding note") == -1, "quirk papers showed inside The reglet")
+	_expect(reglet_open.find("Whet order") == -1, "quirk papers showed inside The reglet")
+	_expect(reglet_open.find("Veiner card") == -1, "quirk papers showed inside The reglet")
+	_expect(reglet_open.find("CW-39") == -1, "quirk file code stayed up inside The reglet")
+	_expect(reglet_open.find("so the ovolo would take the quirk") == -1, "quirk aim stayed up inside The reglet")
+	_expect(reglet_open.find("Cove chit") == -1, "chamfer papers showed inside The reglet")
+	_expect(reglet_open.find("Tooth sight") == -1, "chamfer papers showed inside The reglet")
+	_expect(reglet_open.find("Cant bill") == -1, "chamfer papers showed inside The reglet")
+	_expect(reglet_open.find("Wisp slate") == -1, "chamfer papers showed inside The reglet")
+	_expect(reglet_open.find("File card") == -1, "chamfer papers showed inside The reglet")
+	_expect(reglet_open.find("Soap slip") == -1, "chamfer papers showed inside The reglet")
+	_expect(reglet_open.find("Chamfer leaf") == -1, "chamfer papers showed inside The reglet")
+	_expect(reglet_open.find("Stallion note") == -1, "chamfer papers showed inside The reglet")
+	_expect(reglet_open.find("Fettle order") == -1, "chamfer papers showed inside The reglet")
+	_expect(reglet_open.find("Travisher card") == -1, "chamfer papers showed inside The reglet")
+	_expect(reglet_open.find("CW-40") == -1, "chamfer file code stayed up inside The reglet")
+	_expect(reglet_open.find("so the cove would take the chamfer") == -1, "chamfer aim stayed up inside The reglet")
+	_expect(reglet_open.find("Torus chit") == -1, "scotia papers showed inside The reglet")
+	_expect(reglet_open.find("Cusp sight") == -1, "scotia papers showed inside The reglet")
+	_expect(reglet_open.find("Fascia bill") == -1, "scotia papers showed inside The reglet")
+	_expect(reglet_open.find("Soot slate") == -1, "scotia papers showed inside The reglet")
+	_expect(reglet_open.find("Riffler card") == -1, "scotia papers showed inside The reglet")
+	_expect(reglet_open.find("Pumice slip") == -1, "scotia papers showed inside The reglet")
+	_expect(reglet_open.find("Scotia leaf") == -1, "scotia papers showed inside The reglet")
+	_expect(reglet_open.find("Yearling note") == -1, "scotia papers showed inside The reglet")
+	_expect(reglet_open.find("Peen order") == -1, "scotia papers showed inside The reglet")
+	_expect(reglet_open.find("Scorp card") == -1, "scotia papers showed inside The reglet")
+	_expect(reglet_open.find("CW-41") == -1, "scotia file code stayed up inside The reglet")
+	_expect(reglet_open.find("so the torus would take the scotia") == -1, "scotia aim stayed up inside The reglet")
+	_expect(reglet_open.find("Echinus chit") == -1, "cyma papers showed inside The reglet")
+	_expect(reglet_open.find("Beak sight") == -1, "cyma papers showed inside The reglet")
+	_expect(reglet_open.find("Corona bill") == -1, "cyma papers showed inside The reglet")
+	_expect(reglet_open.find("Garnet slate") == -1, "cyma papers showed inside The reglet")
+	_expect(reglet_open.find("Inshave card") == -1, "cyma papers showed inside The reglet")
+	_expect(reglet_open.find("Rouge slip") == -1, "cyma papers showed inside The reglet")
+	_expect(reglet_open.find("Cyma leaf") == -1, "cyma papers showed inside The reglet")
+	_expect(reglet_open.find("Jennet note") == -1, "cyma papers showed inside The reglet")
+	_expect(reglet_open.find("Chase order") == -1, "cyma papers showed inside The reglet")
+	_expect(reglet_open.find("Froe card") == -1, "cyma papers showed inside The reglet")
+	_expect(reglet_open.find("CW-42") == -1, "cyma file code stayed up inside The reglet")
+	_expect(reglet_open.find("so the echinus would take the cyma") == -1, "cyma aim stayed up inside The reglet")
+	_expect(reglet_open.find("Thumbnail chit") == -1, "cavetto papers showed inside The reglet")
+	_expect(reglet_open.find("Drip sight") == -1, "cavetto papers showed inside The reglet")
+	_expect(reglet_open.find("Staff bill") == -1, "cavetto papers showed inside The reglet")
+	_expect(reglet_open.find("Cedar slate") == -1, "cavetto papers showed inside The reglet")
+	_expect(reglet_open.find("Bullnose card") == -1, "cavetto papers showed inside The reglet")
+	_expect(reglet_open.find("Scrape slip") == -1, "cavetto papers showed inside The reglet")
+	_expect(reglet_open.find("Cavetto leaf") == -1, "cavetto papers showed inside The reglet")
+	_expect(reglet_open.find("Palfrey note") == -1, "cavetto papers showed inside The reglet")
+	_expect(reglet_open.find("Knurl order") == -1, "cavetto papers showed inside The reglet")
+	_expect(reglet_open.find("Twibil card") == -1, "cavetto papers showed inside The reglet")
+	_expect(reglet_open.find("CW-43") == -1, "cavetto file code stayed up inside The reglet")
+	_expect(reglet_open.find("so the thumbnail would take the cavetto") == -1, "cavetto aim stayed up inside The reglet")
+	_expect(reglet_open.find("Walnut chit") == -1, "reed papers showed inside The reglet")
+	_expect(reglet_open.find("Deal sight") == -1, "reed papers showed inside The reglet")
+	_expect(reglet_open.find("Maple bill") == -1, "reed papers showed inside The reglet")
+	_expect(reglet_open.find("Larch slate") == -1, "reed papers showed inside The reglet")
+	_expect(reglet_open.find("Nosing card") == -1, "reed papers showed inside The reglet")
+	_expect(reglet_open.find("Blue slip") == -1, "reed papers showed inside The reglet")
+	_expect(reglet_open.find("Reed leaf") == -1, "reed papers showed inside The reglet")
+	_expect(reglet_open.find("Weanling note") == -1, "reed papers showed inside The reglet")
+	_expect(reglet_open.find("Temper order") == -1, "reed papers showed inside The reglet")
+	_expect(reglet_open.find("Rounder card") == -1, "reed papers showed inside The reglet")
+	_expect(reglet_open.find("CW-44") == -1, "reed file code stayed up inside The reglet")
+	_expect(reglet_open.find("so the walnut would take the reed") == -1, "reed aim stayed up inside The reglet")
+	_expect(reglet_open.find("Spruce chit") == -1, "annulet papers showed inside The reglet")
+	_expect(reglet_open.find("Billet sight") == -1, "annulet papers showed inside The reglet")
+	_expect(reglet_open.find("Poplar bill") == -1, "annulet papers showed inside The reglet")
+	_expect(reglet_open.find("Osier slate") == -1, "annulet papers showed inside The reglet")
+	_expect(reglet_open.find("Burnisher card") == -1, "annulet papers showed inside The reglet")
+	_expect(reglet_open.find("Stipple slip") == -1, "annulet papers showed inside The reglet")
+	_expect(reglet_open.find("Annulet leaf") == -1, "annulet papers showed inside The reglet")
+	_expect(reglet_open.find("Hinny note") == -1, "annulet papers showed inside The reglet")
+	_expect(reglet_open.find("Forge order") == -1, "annulet papers showed inside The reglet")
+	_expect(reglet_open.find("Drawshave card") == -1, "annulet papers showed inside The reglet")
+	_expect(reglet_open.find("CW-45") == -1, "annulet file code stayed up inside The reglet")
+	_expect(reglet_open.find("so the spruce would take the annulet") == -1, "annulet aim stayed up inside The reglet")
+	_expect(reglet_open.find("Holly chit") == -1, "hood papers showed inside The reglet")
+	_expect(reglet_open.find("Ivory sight") == -1, "hood papers showed inside The reglet")
+	_expect(reglet_open.find("Chestnut bill") == -1, "hood papers showed inside The reglet")
+	_expect(reglet_open.find("Boxwood slate") == -1, "hood papers showed inside The reglet")
+	_expect(reglet_open.find("Compass card") == -1, "hood papers showed inside The reglet")
+	_expect(reglet_open.find("Glaze slip") == -1, "hood papers showed inside The reglet")
+	_expect(reglet_open.find("Hood leaf") == -1, "hood papers showed inside The reglet")
+	_expect(reglet_open.find("Mule note") == -1, "hood papers showed inside The reglet")
+	_expect(reglet_open.find("Bronze order") == -1, "hood papers showed inside The reglet")
+	_expect(reglet_open.find("Trying card") == -1, "hood papers showed inside The reglet")
+	_expect(reglet_open.find("CW-46") == -1, "hood file code stayed up inside The reglet")
+	_expect(reglet_open.find("so the holly would take the hood") == -1, "hood aim stayed up inside The reglet")
+	_expect(reglet_open.find("Alder chit") == -1, "listel papers showed inside The reglet")
+	_expect(reglet_open.find("Flax sight") == -1, "listel papers showed inside The reglet")
+	_expect(reglet_open.find("Quince bill") == -1, "listel papers showed inside The reglet")
+	_expect(reglet_open.find("Ochre slate") == -1, "listel papers showed inside The reglet")
+	_expect(reglet_open.find("Trammel card") == -1, "listel papers showed inside The reglet")
+	_expect(reglet_open.find("Plate slip") == -1, "listel papers showed inside The reglet")
+	_expect(reglet_open.find("Listel leaf") == -1, "listel papers showed inside The reglet")
+	_expect(reglet_open.find("Jenny note") == -1, "listel papers showed inside The reglet")
+	_expect(reglet_open.find("Dope order") == -1, "listel papers showed inside The reglet")
+	_expect(reglet_open.find("Template card") == -1, "listel papers showed inside The reglet")
+	_expect(reglet_open.find("CW-47") == -1, "listel file code stayed up inside The reglet")
+	_expect(reglet_open.find("so the alder would take the listel") == -1, "listel aim stayed up inside The reglet")
+	_expect(reglet_open.find("Medlar chit") == -1, "abacus papers showed inside The reglet")
+	_expect(reglet_open.find("Saffron sight") == -1, "abacus papers showed inside The reglet")
+	_expect(reglet_open.find("Juniper bill") == -1, "abacus papers showed inside The reglet")
+	_expect(reglet_open.find("Weld slate") == -1, "abacus papers showed inside The reglet")
+	_expect(reglet_open.find("Holdfast card") == -1, "abacus papers showed inside The reglet")
+	_expect(reglet_open.find("Glue slip") == -1, "abacus papers showed inside The reglet")
+	_expect(reglet_open.find("Abacus leaf") == -1, "abacus papers showed inside The reglet")
+	_expect(reglet_open.find("Nag note") == -1, "abacus papers showed inside The reglet")
+	_expect(reglet_open.find("Graphite order") == -1, "abacus papers showed inside The reglet")
+	_expect(reglet_open.find("Hatchet card") == -1, "abacus papers showed inside The reglet")
+	_expect(reglet_open.find("CW-48") == -1, "abacus file code stayed up inside The reglet")
+	_expect(reglet_open.find("so the medlar would take the abacus") == -1, "abacus aim stayed up inside The reglet")
+	_expect(reglet_open.find("Cherry chit") == -1, "girdle papers showed inside The reglet")
+	_expect(reglet_open.find("Brazil sight") == -1, "girdle papers showed inside The reglet")
+	_expect(reglet_open.find("Plum bill") == -1, "girdle papers showed inside The reglet")
+	_expect(reglet_open.find("Fustic slate") == -1, "girdle papers showed inside The reglet")
+	_expect(reglet_open.find("Trestle card") == -1, "girdle papers showed inside The reglet")
+	_expect(reglet_open.find("Size slip") == -1, "girdle papers showed inside The reglet")
+	_expect(reglet_open.find("Girdle leaf") == -1, "girdle papers showed inside The reglet")
+	_expect(reglet_open.find("Hack note") == -1, "girdle papers showed inside The reglet")
+	_expect(reglet_open.find("Clay order") == -1, "girdle papers showed inside The reglet")
+	_expect(reglet_open.find("Fillister card") == -1, "girdle papers showed inside The reglet")
+	_expect(reglet_open.find("CW-49") == -1, "girdle file code stayed up inside The reglet")
+	_expect(reglet_open.find("so the cherry would take the girdle") == -1, "girdle aim stayed up inside The reglet")
+	_press(root, "Submit theory")
+	var empty_reglet := _verdict_text(root)
+	_expect(empty_reglet.find("who cut the reglet") >= 0, "empty reglet board: %s" % empty_reglet)
+	_expect(empty_reglet.find("where they cut the reglet") >= 0, "empty reglet board: %s" % empty_reglet)
+	_expect(empty_reglet.find("at which hour they cut the reglet") >= 0, "empty reglet board: %s" % empty_reglet)
+	_expect(empty_reglet.find("who scratched the quirk") == -1, "empty chamfer board used a quirk slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("who cut the tongue") == -1, "empty chamfer board used a tongue slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("who cut the dowel") == -1, "empty chamfer board used a dowel slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("who cut the chamfer") == -1, "empty scotia board used a chamfer slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("where they cut the chamfer") == -1, "empty scotia board used a chamfer slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("at which hour they cut the chamfer") == -1, "empty scotia board used a chamfer slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("who cut the scotia") == -1, "empty reglet board used a scotia slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("where they cut the scotia") == -1, "empty reglet board used a scotia slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("at which hour they cut the scotia") == -1, "empty reglet board used a scotia slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("who cut the cyma") == -1, "empty reglet board used a cyma slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("where they cut the cyma") == -1, "empty reglet board used a cyma slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("at which hour they cut the cyma") == -1, "empty reglet board used a cyma slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("who cut the cavetto") == -1, "empty reglet board used a cavetto slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("where they cut the cavetto") == -1, "empty reglet board used a cavetto slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("at which hour they cut the cavetto") == -1, "empty reglet board used a cavetto slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("who cut the reed") == -1, "empty reglet board used a reed slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("where they cut the reed") == -1, "empty reglet board used a reed slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("at which hour they cut the reed") == -1, "empty reglet board used a reed slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("who cut the annulet") == -1, "empty reglet board used an annulet slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("where they cut the annulet") == -1, "empty reglet board used an annulet slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("at which hour they cut the annulet") == -1, "empty reglet board used an annulet slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("who cut the hood") == -1, "empty reglet board used a hood slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("where they cut the hood") == -1, "empty reglet board used a hood slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("at which hour they cut the hood") == -1, "empty reglet board used a hood slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("who cut the listel") == -1, "empty reglet board used a listel slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("where they cut the listel") == -1, "empty reglet board used a listel slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("at which hour they cut the listel") == -1, "empty reglet board used a listel slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("who cut the abacus") == -1, "empty reglet board used an abacus slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("where they cut the abacus") == -1, "empty reglet board used an abacus slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("at which hour they cut the abacus") == -1, "empty reglet board used an abacus slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("who cut the girdle") == -1, "empty reglet board used a girdle slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("where they cut the girdle") == -1, "empty reglet board used a girdle slot: %s" % empty_reglet)
+	_expect(empty_reglet.find("at which hour they cut the girdle") == -1, "empty reglet board used a girdle slot: %s" % empty_reglet)
+	_expect(empty_reglet.to_lower().find("conflict") == -1, "empty chamfer board talked about a conflict: %s" % empty_reglet)
+	_press(root, "Otto")
+	_press(root, "Settle")
+	_press(root, "191")
+	_press(root, "Submit theory")
+	var reglet_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(reglet_miss, Reglet, {"who": "Otto", "place": "settle", "hour": "191"})
+	_expect(Reglet.conflicting_ids({"who": "Otto", "place": "settle", "hour": "191"}).size() == 9, "Otto / settle / 191 should contradict every exhibit")
+	_expect(reglet_miss.find("Pear chit") >= 0, "wrong triple reply omits Pear chit: %s" % reglet_miss)
+	_expect(reglet_miss.find("Sumac sight") >= 0, "wrong triple reply omits Sumac sight: %s" % reglet_miss)
+	_expect(reglet_miss.find("Damson bill") >= 0, "wrong triple reply omits Damson bill: %s" % reglet_miss)
+	_expect(reglet_miss.find("Annatto slate") >= 0, "wrong triple reply omits Annatto slate: %s" % reglet_miss)
+	_expect(reglet_miss.find("Settle card") >= 0, "wrong triple reply omits Settle card: %s" % reglet_miss)
+	_expect(reglet_miss.find("Sized slip") >= 0, "wrong triple reply omits Sized slip: %s" % reglet_miss)
+	_expect(reglet_miss.find("Reglet leaf") >= 0, "wrong triple reply omits Reglet leaf: %s" % reglet_miss)
+	_expect(reglet_miss.find("Jade note") >= 0, "wrong triple reply omits Jade note: %s" % reglet_miss)
+	_expect(reglet_miss.find("Clayed order") >= 0, "wrong triple reply omits Clayed order: %s" % reglet_miss)
+	_press(root, "Iris")
+	_press(root, "Nave")
+	_press(root, "193")
+	_press(root, "Submit theory")
+	var reglet_accepted := _verdict_text(root)
+	_expect(reglet_accepted.find("fits every exhibit") >= 0, "reglet board rejected the true theory: %s" % reglet_accepted)
+	_expect(reglet_accepted.find(REGLET_TIMELINE) >= 0, "reglet board timeline: %s" % reglet_accepted)
+	_expect(reglet_accepted.find("Iris (reglet hand) cut the reglet in the nave at 193") >= 0, "reglet board omits Iris at 193: %s" % reglet_accepted)
+	_expect(reglet_accepted.find("in the nave") >= 0, "reglet board omits the nave: %s" % reglet_accepted)
+	_expect(reglet_accepted.find("so the pear would take the reglet") >= 0, "reglet board omits the pear: %s" % reglet_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var reglet_cleared := _verdict_text(root)
+	_expect(reglet_cleared.find("who cut the reglet") >= 0, "cleared reglet board: %s" % reglet_cleared)
+	_expect(reglet_cleared.find("fits every exhibit") == -1, "cleared chamfer board stayed accepted: %s" % reglet_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The girdle")
+	var girdle_from_reglet := _visible_label_blob(root)
+	_expect(girdle_from_reglet.find("Cherry chit") >= 0, "could not return to The girdle from The reglet")
+	_expect(girdle_from_reglet.find("Hack note") >= 0, "girdle exhibits did not return from The reglet")
+	_expect(girdle_from_reglet.find("Size slip") >= 0, "girdle size slip did not return from The reglet")
+	_expect(girdle_from_reglet.find("CW-49") >= 0, "returned girdle omits CW-49")
+	_expect(girdle_from_reglet.find("Pear chit") == -1, "reglet papers showed inside The girdle")
+	_expect(girdle_from_reglet.find("Jade note") == -1, "reglet papers showed inside The girdle")
+	_expect(girdle_from_reglet.find("Sized slip") == -1, "reglet papers showed inside The girdle")
+	_expect(girdle_from_reglet.find("CW-50") == -1, "reglet file code stayed up inside The girdle")
+	_press(root, "Agnes")
+	_press(root, "Bole")
+	_press(root, "188")
+	_press(root, "Submit theory")
+	var girdle_after_reglet := _verdict_text(root)
+	_expect(girdle_after_reglet.find("fits every exhibit") >= 0, "girdle board rejected the true theory after The reglet: %s" % girdle_after_reglet)
+	_expect(girdle_after_reglet.find("Agnes (girdle hand) cut the girdle in the bole at 188") >= 0, "girdle board timeline after The reglet: %s" % girdle_after_reglet)
+	_press(root, "Menu")
+	_press(root, "Open The abacus")
+	var abacus_from_reglet := _visible_label_blob(root)
+	_expect(abacus_from_reglet.find("Medlar chit") >= 0, "could not return to The abacus from The reglet")
+	_expect(abacus_from_reglet.find("Nag note") >= 0, "abacus exhibits did not return from The reglet")
+	_expect(abacus_from_reglet.find("CW-48") >= 0, "returned abacus omits CW-48")
+	_expect(abacus_from_reglet.find("Pear chit") == -1, "reglet papers showed inside The abacus")
+	_expect(abacus_from_reglet.find("Jade note") == -1, "reglet papers showed inside The abacus")
+	_expect(abacus_from_reglet.find("CW-50") == -1, "reglet file code stayed up inside The abacus")
+	_expect(abacus_from_reglet.find("Cherry chit") == -1, "girdle papers showed inside The abacus")
+	_expect(abacus_from_reglet.find("Hack note") == -1, "girdle papers showed inside The abacus")
+	_expect(abacus_from_reglet.find("Size slip") == -1, "girdle papers showed inside The abacus")
+	_expect(abacus_from_reglet.find("CW-49") == -1, "girdle file code stayed up inside The abacus")
+	_press(root, "Una")
+	_press(root, "Socle")
+	_press(root, "183")
+	_press(root, "Submit theory")
+	var abacus_after_reglet := _verdict_text(root)
+	_expect(abacus_after_reglet.find("fits every exhibit") >= 0, "abacus board rejected the true theory after The reglet: %s" % abacus_after_reglet)
+	_expect(abacus_after_reglet.find("Una (abacus hand) cut the abacus in the socle at 183") >= 0, "abacus board timeline after The reglet: %s" % abacus_after_reglet)
+	_press(root, "Menu")
+	_press(root, "Open The listel")
+	var listel_from_reglet := _visible_label_blob(root)
+	_expect(listel_from_reglet.find("Alder chit") >= 0, "could not return to The listel from The reglet")
+	_expect(listel_from_reglet.find("Jenny note") >= 0, "listel exhibits did not return from The reglet")
+	_expect(listel_from_reglet.find("CW-47") >= 0, "returned listel omits CW-47")
+	_expect(listel_from_reglet.find("Pear chit") == -1, "reglet papers showed inside The listel")
+	_expect(listel_from_reglet.find("Jade note") == -1, "reglet papers showed inside The listel")
+	_expect(listel_from_reglet.find("CW-50") == -1, "reglet file code stayed up inside The listel")
+	_expect(listel_from_reglet.find("Cherry chit") == -1, "girdle papers showed inside The listel")
+	_expect(listel_from_reglet.find("Hack note") == -1, "girdle papers showed inside The listel")
+	_expect(listel_from_reglet.find("Size slip") == -1, "girdle papers showed inside The listel")
+	_expect(listel_from_reglet.find("CW-49") == -1, "girdle file code stayed up inside The listel")
+	_expect(listel_from_reglet.find("Medlar chit") == -1, "abacus papers showed inside The listel")
+	_expect(listel_from_reglet.find("Nag note") == -1, "abacus papers showed inside The listel")
+	_expect(listel_from_reglet.find("CW-48") == -1, "abacus file code stayed up inside The listel")
+	_press(root, "Giles")
+	_press(root, "Plinth")
+	_press(root, "178")
+	_press(root, "Submit theory")
+	var listel_after_reglet := _verdict_text(root)
+	_expect(listel_after_reglet.find("fits every exhibit") >= 0, "listel board rejected the true theory after The reglet: %s" % listel_after_reglet)
+	_expect(listel_after_reglet.find("Giles (listel hand) cut the listel in the plinth at 178") >= 0, "listel board timeline after The reglet: %s" % listel_after_reglet)
+	_press(root, "Menu")
+	_press(root, "Open The hood")
+	var hood_from_reglet := _visible_label_blob(root)
+	_expect(hood_from_reglet.find("Holly chit") >= 0, "could not return to The hood from The reglet")
+	_expect(hood_from_reglet.find("Mule note") >= 0, "hood exhibits did not return from The reglet")
+	_expect(hood_from_reglet.find("CW-46") >= 0, "returned hood omits CW-46")
+	_expect(hood_from_reglet.find("Pear chit") == -1, "reglet papers showed inside The hood")
+	_expect(hood_from_reglet.find("Jade note") == -1, "reglet papers showed inside The hood")
+	_expect(hood_from_reglet.find("CW-50") == -1, "reglet file code stayed up inside The hood")
+	_expect(hood_from_reglet.find("Cherry chit") == -1, "girdle papers showed inside The hood")
+	_expect(hood_from_reglet.find("Hack note") == -1, "girdle papers showed inside The hood")
+	_expect(hood_from_reglet.find("Size slip") == -1, "girdle papers showed inside The hood")
+	_expect(hood_from_reglet.find("CW-49") == -1, "girdle file code stayed up inside The hood")
+	_expect(hood_from_reglet.find("Medlar chit") == -1, "abacus papers showed inside The hood")
+	_expect(hood_from_reglet.find("Nag note") == -1, "abacus papers showed inside The hood")
+	_expect(hood_from_reglet.find("CW-48") == -1, "abacus file code stayed up inside The hood")
+	_expect(hood_from_reglet.find("Alder chit") == -1, "listel papers showed inside The hood")
+	_expect(hood_from_reglet.find("Jenny note") == -1, "listel papers showed inside The hood")
+	_expect(hood_from_reglet.find("CW-47") == -1, "listel file code stayed up inside The hood")
+	_press(root, "Hugo")
+	_press(root, "Sycamore")
+	_press(root, "173")
+	_press(root, "Submit theory")
+	var hood_after_reglet := _verdict_text(root)
+	_expect(hood_after_reglet.find("fits every exhibit") >= 0, "hood board rejected the true theory after The reglet: %s" % hood_after_reglet)
+	_expect(hood_after_reglet.find("Hugo (hood hand) cut the hood in the sycamore at 173") >= 0, "hood board timeline after The reglet: %s" % hood_after_reglet)
+	_press(root, "Menu")
+	_press(root, "Open The annulet")
+	var annulet_from_reglet := _visible_label_blob(root)
+	_expect(annulet_from_reglet.find("Spruce chit") >= 0, "could not return to The annulet from The reglet")
+	_expect(annulet_from_reglet.find("Hinny note") >= 0, "annulet exhibits did not return from The reglet")
+	_expect(annulet_from_reglet.find("CW-45") >= 0, "returned annulet omits CW-45")
+	_expect(annulet_from_reglet.find("Pear chit") == -1, "reglet papers showed inside The annulet")
+	_expect(annulet_from_reglet.find("Jade note") == -1, "reglet papers showed inside The annulet")
+	_expect(annulet_from_reglet.find("CW-50") == -1, "reglet file code stayed up inside The annulet")
+	_expect(annulet_from_reglet.find("Cherry chit") == -1, "girdle papers showed inside The annulet")
+	_expect(annulet_from_reglet.find("Hack note") == -1, "girdle papers showed inside The annulet")
+	_expect(annulet_from_reglet.find("Size slip") == -1, "girdle papers showed inside The annulet")
+	_expect(annulet_from_reglet.find("CW-49") == -1, "girdle file code stayed up inside The annulet")
+	_expect(annulet_from_reglet.find("Medlar chit") == -1, "abacus papers showed inside The annulet")
+	_expect(annulet_from_reglet.find("Nag note") == -1, "abacus papers showed inside The annulet")
+	_expect(annulet_from_reglet.find("CW-48") == -1, "abacus file code stayed up inside The annulet")
+	_expect(annulet_from_reglet.find("Alder chit") == -1, "listel papers showed inside The annulet")
+	_expect(annulet_from_reglet.find("Jenny note") == -1, "listel papers showed inside The annulet")
+	_expect(annulet_from_reglet.find("CW-47") == -1, "listel file code stayed up inside The annulet")
+	_expect(annulet_from_reglet.find("Holly chit") == -1, "hood papers showed inside The annulet")
+	_expect(annulet_from_reglet.find("Mule note") == -1, "hood papers showed inside The annulet")
+	_expect(annulet_from_reglet.find("CW-46") == -1, "hood file code stayed up inside The annulet")
+	_press(root, "Clive")
+	_press(root, "Beech")
+	_press(root, "168")
+	_press(root, "Submit theory")
+	var annulet_after_reglet := _verdict_text(root)
+	_expect(annulet_after_reglet.find("fits every exhibit") >= 0, "annulet board rejected the true theory after The reglet: %s" % annulet_after_reglet)
+	_expect(annulet_after_reglet.find("Clive (annulet hand) cut the annulet in the beech at 168") >= 0, "annulet board timeline after The reglet: %s" % annulet_after_reglet)
+	_press(root, "Menu")
+	_press(root, "Open The reed")
+	var reed_from_reglet := _visible_label_blob(root)
+	_expect(reed_from_reglet.find("Walnut chit") >= 0, "could not return to The reed from The reglet")
+	_expect(reed_from_reglet.find("Weanling note") >= 0, "reed exhibits did not return from The reglet")
+	_expect(reed_from_reglet.find("CW-44") >= 0, "returned reed omits CW-44")
+	_expect(reed_from_reglet.find("Pear chit") == -1, "reglet papers showed inside The reed")
+	_expect(reed_from_reglet.find("Jade note") == -1, "reglet papers showed inside The reed")
+	_expect(reed_from_reglet.find("CW-50") == -1, "reglet file code stayed up inside The reed")
+	_expect(reed_from_reglet.find("Cherry chit") == -1, "girdle papers showed inside The reed")
+	_expect(reed_from_reglet.find("Hack note") == -1, "girdle papers showed inside The reed")
+	_expect(reed_from_reglet.find("Size slip") == -1, "girdle papers showed inside The reed")
+	_expect(reed_from_reglet.find("CW-49") == -1, "girdle file code stayed up inside The reed")
+	_expect(reed_from_reglet.find("Medlar chit") == -1, "abacus papers showed inside The reed")
+	_expect(reed_from_reglet.find("Nag note") == -1, "abacus papers showed inside The reed")
+	_expect(reed_from_reglet.find("CW-48") == -1, "abacus file code stayed up inside The reed")
+	_expect(reed_from_reglet.find("Alder chit") == -1, "listel papers showed inside The reed")
+	_expect(reed_from_reglet.find("Jenny note") == -1, "listel papers showed inside The reed")
+	_expect(reed_from_reglet.find("CW-47") == -1, "listel file code stayed up inside The reed")
+	_expect(reed_from_reglet.find("Holly chit") == -1, "hood papers showed inside The reed")
+	_expect(reed_from_reglet.find("Mule note") == -1, "hood papers showed inside The reed")
+	_expect(reed_from_reglet.find("CW-46") == -1, "hood file code stayed up inside The reed")
+	_expect(reed_from_reglet.find("Spruce chit") == -1, "annulet papers showed inside The reed")
+	_expect(reed_from_reglet.find("Hinny note") == -1, "annulet papers showed inside The reed")
+	_expect(reed_from_reglet.find("CW-45") == -1, "annulet file code stayed up inside The reed")
+	_press(root, "Greta")
+	_press(root, "Ogee")
+	_press(root, "163")
+	_press(root, "Submit theory")
+	var reed_after_reglet := _verdict_text(root)
+	_expect(reed_after_reglet.find("fits every exhibit") >= 0, "reed board rejected the true theory after The reglet: %s" % reed_after_reglet)
+	_expect(reed_after_reglet.find("Greta (reed hand) cut the reed in the ogee at 163") >= 0, "reed board timeline after The reglet: %s" % reed_after_reglet)
+	_press(root, "Menu")
+	_press(root, "Open The cavetto")
+	var cavetto_from_reglet := _visible_label_blob(root)
+	_expect(cavetto_from_reglet.find("Thumbnail chit") >= 0, "could not return to The cavetto from The reglet")
+	_expect(cavetto_from_reglet.find("Palfrey note") >= 0, "cavetto exhibits did not return from The reglet")
+	_expect(cavetto_from_reglet.find("CW-43") >= 0, "returned cavetto omits CW-43")
+	_expect(cavetto_from_reglet.find("Pear chit") == -1, "reglet papers showed inside The cavetto")
+	_expect(cavetto_from_reglet.find("Jade note") == -1, "reglet papers showed inside The cavetto")
+	_expect(cavetto_from_reglet.find("CW-50") == -1, "reglet file code stayed up inside The cavetto")
+	_expect(cavetto_from_reglet.find("Cherry chit") == -1, "girdle papers showed inside The cavetto")
+	_expect(cavetto_from_reglet.find("Hack note") == -1, "girdle papers showed inside The cavetto")
+	_expect(cavetto_from_reglet.find("Size slip") == -1, "girdle papers showed inside The cavetto")
+	_expect(cavetto_from_reglet.find("CW-49") == -1, "girdle file code stayed up inside The cavetto")
+	_expect(cavetto_from_reglet.find("Medlar chit") == -1, "abacus papers showed inside The cavetto")
+	_expect(cavetto_from_reglet.find("Nag note") == -1, "abacus papers showed inside The cavetto")
+	_expect(cavetto_from_reglet.find("CW-48") == -1, "abacus file code stayed up inside The cavetto")
+	_expect(cavetto_from_reglet.find("Alder chit") == -1, "listel papers showed inside The cavetto")
+	_expect(cavetto_from_reglet.find("Jenny note") == -1, "listel papers showed inside The cavetto")
+	_expect(cavetto_from_reglet.find("CW-47") == -1, "listel file code stayed up inside The cavetto")
+	_expect(cavetto_from_reglet.find("Holly chit") == -1, "hood papers showed inside The cavetto")
+	_expect(cavetto_from_reglet.find("Mule note") == -1, "hood papers showed inside The cavetto")
+	_expect(cavetto_from_reglet.find("CW-46") == -1, "hood file code stayed up inside The cavetto")
+	_expect(cavetto_from_reglet.find("Spruce chit") == -1, "annulet papers showed inside The cavetto")
+	_expect(cavetto_from_reglet.find("Hinny note") == -1, "annulet papers showed inside The cavetto")
+	_expect(cavetto_from_reglet.find("CW-45") == -1, "annulet file code stayed up inside The cavetto")
+	_expect(cavetto_from_reglet.find("Walnut chit") == -1, "reed papers showed inside The cavetto")
+	_expect(cavetto_from_reglet.find("Weanling note") == -1, "reed papers showed inside The cavetto")
+	_expect(cavetto_from_reglet.find("CW-44") == -1, "reed file code stayed up inside The cavetto")
+	_press(root, "Seth")
+	_press(root, "Dentil")
+	_press(root, "158")
+	_press(root, "Submit theory")
+	var cavetto_after_reglet := _verdict_text(root)
+	_expect(cavetto_after_reglet.find("fits every exhibit") >= 0, "cavetto board rejected the true theory after The reglet: %s" % cavetto_after_reglet)
+	_expect(cavetto_after_reglet.find("Seth (cavetto hand) cut the cavetto in the dentil at 158") >= 0, "cavetto board timeline after The reglet: %s" % cavetto_after_reglet)
+	_press(root, "Menu")
+	_press(root, "Open The cyma")
+	var cyma_from_reglet := _visible_label_blob(root)
+	_expect(cyma_from_reglet.find("Echinus chit") >= 0, "could not return to The cyma from The reglet")
+	_expect(cyma_from_reglet.find("Jennet note") >= 0, "cyma exhibits did not return from The reglet")
+	_expect(cyma_from_reglet.find("CW-42") >= 0, "returned cyma omits CW-42")
+	_expect(cyma_from_reglet.find("Pear chit") == -1, "reglet papers showed inside The cyma")
+	_expect(cyma_from_reglet.find("Jade note") == -1, "reglet papers showed inside The cyma")
+	_expect(cyma_from_reglet.find("CW-50") == -1, "reglet file code stayed up inside The cyma")
+	_expect(cyma_from_reglet.find("Cherry chit") == -1, "girdle papers showed inside The cyma")
+	_expect(cyma_from_reglet.find("Hack note") == -1, "girdle papers showed inside The cyma")
+	_expect(cyma_from_reglet.find("Size slip") == -1, "girdle papers showed inside The cyma")
+	_expect(cyma_from_reglet.find("CW-49") == -1, "girdle file code stayed up inside The cyma")
+	_expect(cyma_from_reglet.find("Medlar chit") == -1, "abacus papers showed inside The cyma")
+	_expect(cyma_from_reglet.find("Nag note") == -1, "abacus papers showed inside The cyma")
+	_expect(cyma_from_reglet.find("CW-48") == -1, "abacus file code stayed up inside The cyma")
+	_expect(cyma_from_reglet.find("Alder chit") == -1, "listel papers showed inside The cyma")
+	_expect(cyma_from_reglet.find("Jenny note") == -1, "listel papers showed inside The cyma")
+	_expect(cyma_from_reglet.find("CW-47") == -1, "listel file code stayed up inside The cyma")
+	_expect(cyma_from_reglet.find("Holly chit") == -1, "hood papers showed inside The cyma")
+	_expect(cyma_from_reglet.find("Mule note") == -1, "hood papers showed inside The cyma")
+	_expect(cyma_from_reglet.find("CW-46") == -1, "hood file code stayed up inside The cyma")
+	_expect(cyma_from_reglet.find("Spruce chit") == -1, "annulet papers showed inside The cyma")
+	_expect(cyma_from_reglet.find("Hinny note") == -1, "annulet papers showed inside The cyma")
+	_expect(cyma_from_reglet.find("CW-45") == -1, "annulet file code stayed up inside The cyma")
+	_expect(cyma_from_reglet.find("Walnut chit") == -1, "reed papers showed inside The cyma")
+	_expect(cyma_from_reglet.find("Weanling note") == -1, "reed papers showed inside The cyma")
+	_expect(cyma_from_reglet.find("CW-44") == -1, "reed file code stayed up inside The cyma")
+	_expect(cyma_from_reglet.find("Thumbnail chit") == -1, "cavetto papers showed inside The cyma")
+	_expect(cyma_from_reglet.find("Palfrey note") == -1, "cavetto papers showed inside The cyma")
+	_expect(cyma_from_reglet.find("CW-43") == -1, "cavetto file code stayed up inside The cyma")
+	_press(root, "Ruth")
+	_press(root, "Bolection")
+	_press(root, "153")
+	_press(root, "Submit theory")
+	var cyma_after_reglet := _verdict_text(root)
+	_expect(cyma_after_reglet.find("fits every exhibit") >= 0, "cyma board rejected the true theory after The reglet: %s" % cyma_after_reglet)
+	_expect(cyma_after_reglet.find("Ruth (cyma hand) cut the cyma in the bolection at 153") >= 0, "cyma board timeline after The reglet: %s" % cyma_after_reglet)
+	_press(root, "Menu")
+	_press(root, "Open The scotia")
+	var scotia_from_reglet := _visible_label_blob(root)
+	_expect(scotia_from_reglet.find("Torus chit") >= 0, "could not return to The scotia from The reglet")
+	_expect(scotia_from_reglet.find("Yearling note") >= 0, "scotia exhibits did not return from The reglet")
+	_expect(scotia_from_reglet.find("CW-41") >= 0, "returned scotia omits CW-41")
+	_expect(scotia_from_reglet.find("Pear chit") == -1, "reglet papers showed inside The scotia")
+	_expect(scotia_from_reglet.find("Jade note") == -1, "reglet papers showed inside The scotia")
+	_expect(scotia_from_reglet.find("CW-50") == -1, "reglet file code stayed up inside The scotia")
+	_expect(scotia_from_reglet.find("Cherry chit") == -1, "girdle papers showed inside The scotia")
+	_expect(scotia_from_reglet.find("Hack note") == -1, "girdle papers showed inside The scotia")
+	_expect(scotia_from_reglet.find("Size slip") == -1, "girdle papers showed inside The scotia")
+	_expect(scotia_from_reglet.find("CW-49") == -1, "girdle file code stayed up inside The scotia")
+	_expect(scotia_from_reglet.find("Medlar chit") == -1, "abacus papers showed inside The scotia")
+	_expect(scotia_from_reglet.find("Nag note") == -1, "abacus papers showed inside The scotia")
+	_expect(scotia_from_reglet.find("CW-48") == -1, "abacus file code stayed up inside The scotia")
+	_expect(scotia_from_reglet.find("Alder chit") == -1, "listel papers showed inside The scotia")
+	_expect(scotia_from_reglet.find("Jenny note") == -1, "listel papers showed inside The scotia")
+	_expect(scotia_from_reglet.find("CW-47") == -1, "listel file code stayed up inside The scotia")
+	_expect(scotia_from_reglet.find("Holly chit") == -1, "hood papers showed inside The scotia")
+	_expect(scotia_from_reglet.find("Mule note") == -1, "hood papers showed inside The scotia")
+	_expect(scotia_from_reglet.find("CW-46") == -1, "hood file code stayed up inside The scotia")
+	_expect(scotia_from_reglet.find("Spruce chit") == -1, "annulet papers showed inside The scotia")
+	_expect(scotia_from_reglet.find("Hinny note") == -1, "annulet papers showed inside The scotia")
+	_expect(scotia_from_reglet.find("CW-45") == -1, "annulet file code stayed up inside The scotia")
+	_expect(scotia_from_reglet.find("Walnut chit") == -1, "reed papers showed inside The scotia")
+	_expect(scotia_from_reglet.find("Weanling note") == -1, "reed papers showed inside The scotia")
+	_expect(scotia_from_reglet.find("CW-44") == -1, "reed file code stayed up inside The scotia")
+	_expect(scotia_from_reglet.find("Thumbnail chit") == -1, "cavetto papers showed inside The scotia")
+	_expect(scotia_from_reglet.find("Palfrey note") == -1, "cavetto papers showed inside The scotia")
+	_expect(scotia_from_reglet.find("CW-43") == -1, "cavetto file code stayed up inside The scotia")
+	_expect(scotia_from_reglet.find("Echinus chit") == -1, "cyma papers showed inside The scotia")
+	_expect(scotia_from_reglet.find("Jennet note") == -1, "cyma papers showed inside The scotia")
+	_expect(scotia_from_reglet.find("CW-42") == -1, "cyma file code stayed up inside The scotia")
+	_press(root, "Willa")
+	_press(root, "Hollow")
+	_press(root, "148")
+	_press(root, "Submit theory")
+	var scotia_after_reglet := _verdict_text(root)
+	_expect(scotia_after_reglet.find("fits every exhibit") >= 0, "scotia board rejected the true theory after The reglet: %s" % scotia_after_reglet)
+	_expect(scotia_after_reglet.find("Willa (scotia hand) cut the scotia in the hollow at 148") >= 0, "scotia board timeline after The reglet: %s" % scotia_after_reglet)
+	_press(root, "Menu")
+	_press(root, "Open The chamfer")
+	var chamfer_from_reglet := _visible_label_blob(root)
+	_expect(chamfer_from_reglet.find("Cove chit") >= 0, "could not return to The chamfer from The reglet")
+	_expect(chamfer_from_reglet.find("Stallion note") >= 0, "chamfer exhibits did not return from The reglet")
+	_expect(chamfer_from_reglet.find("CW-40") >= 0, "returned chamfer omits CW-40")
+	_expect(chamfer_from_reglet.find("Torus chit") == -1, "scotia papers showed inside The chamfer")
+	_expect(chamfer_from_reglet.find("Yearling note") == -1, "scotia papers showed inside The chamfer")
+	_expect(chamfer_from_reglet.find("CW-41") == -1, "scotia file code stayed up inside The chamfer")
+	_expect(chamfer_from_reglet.find("Pear chit") == -1, "reglet papers showed inside The chamfer")
+	_expect(chamfer_from_reglet.find("Jade note") == -1, "reglet papers showed inside The chamfer")
+	_expect(chamfer_from_reglet.find("CW-50") == -1, "reglet file code stayed up inside The chamfer")
+	_expect(chamfer_from_reglet.find("Cherry chit") == -1, "girdle papers showed inside The chamfer")
+	_expect(chamfer_from_reglet.find("Hack note") == -1, "girdle papers showed inside The chamfer")
+	_expect(chamfer_from_reglet.find("Size slip") == -1, "girdle papers showed inside The chamfer")
+	_expect(chamfer_from_reglet.find("CW-49") == -1, "girdle file code stayed up inside The chamfer")
+	_expect(chamfer_from_reglet.find("Medlar chit") == -1, "abacus papers showed inside The chamfer")
+	_expect(chamfer_from_reglet.find("Nag note") == -1, "abacus papers showed inside The chamfer")
+	_expect(chamfer_from_reglet.find("CW-48") == -1, "abacus file code stayed up inside The chamfer")
+	_expect(chamfer_from_reglet.find("Alder chit") == -1, "listel papers showed inside The chamfer")
+	_expect(chamfer_from_reglet.find("Jenny note") == -1, "listel papers showed inside The chamfer")
+	_expect(chamfer_from_reglet.find("CW-47") == -1, "listel file code stayed up inside The chamfer")
+	_expect(chamfer_from_reglet.find("Holly chit") == -1, "hood papers showed inside The chamfer")
+	_expect(chamfer_from_reglet.find("Mule note") == -1, "hood papers showed inside The chamfer")
+	_expect(chamfer_from_reglet.find("CW-46") == -1, "hood file code stayed up inside The chamfer")
+	_expect(chamfer_from_reglet.find("Spruce chit") == -1, "annulet papers showed inside The chamfer")
+	_expect(chamfer_from_reglet.find("Hinny note") == -1, "annulet papers showed inside The chamfer")
+	_expect(chamfer_from_reglet.find("CW-45") == -1, "annulet file code stayed up inside The chamfer")
+	_expect(chamfer_from_reglet.find("Walnut chit") == -1, "reed papers showed inside The chamfer")
+	_expect(chamfer_from_reglet.find("Weanling note") == -1, "reed papers showed inside The chamfer")
+	_expect(chamfer_from_reglet.find("CW-44") == -1, "reed file code stayed up inside The chamfer")
+	_expect(chamfer_from_reglet.find("Thumbnail chit") == -1, "cavetto papers showed inside The chamfer")
+	_expect(chamfer_from_reglet.find("Palfrey note") == -1, "cavetto papers showed inside The chamfer")
+	_expect(chamfer_from_reglet.find("CW-43") == -1, "cavetto file code stayed up inside The chamfer")
+	_expect(chamfer_from_reglet.find("Echinus chit") == -1, "cyma papers showed inside The chamfer")
+	_expect(chamfer_from_reglet.find("Jennet note") == -1, "cyma papers showed inside The chamfer")
+	_expect(chamfer_from_reglet.find("CW-42") == -1, "cyma file code stayed up inside The chamfer")
+	_press(root, "Merrick")
+	_press(root, "Block")
+	_press(root, "143")
+	_press(root, "Submit theory")
+	var chamfer_after_reglet := _verdict_text(root)
+	_expect(chamfer_after_reglet.find("fits every exhibit") >= 0, "chamfer board rejected the true theory after The reglet: %s" % chamfer_after_reglet)
+	_expect(chamfer_after_reglet.find("Merrick (chamfer hand) cut the chamfer in the block at 143") >= 0, "chamfer board timeline after The reglet: %s" % chamfer_after_reglet)
+	_press(root, "Menu")
+	_press(root, "Open The quirk")
+	var quirk_from_reglet := _visible_label_blob(root)
+	_expect(quirk_from_reglet.find("Ovolo chit") >= 0, "could not return to The quirk from The reglet")
+	_expect(quirk_from_reglet.find("Gelding note") >= 0, "quirk exhibits did not return from The reglet")
+	_expect(quirk_from_reglet.find("CW-39") >= 0, "returned quirk omits CW-39")
+	_expect(quirk_from_reglet.find("Cove chit") == -1, "chamfer papers showed inside The quirk")
+	_expect(quirk_from_reglet.find("Stallion note") == -1, "chamfer papers showed inside The quirk")
+	_expect(quirk_from_reglet.find("CW-40") == -1, "chamfer file code stayed up inside The quirk")
+	_expect(quirk_from_reglet.find("Torus chit") == -1, "scotia papers showed inside The quirk")
+	_expect(quirk_from_reglet.find("Yearling note") == -1, "scotia papers showed inside The quirk")
+	_expect(quirk_from_reglet.find("CW-41") == -1, "scotia file code stayed up inside The quirk")
+	_expect(quirk_from_reglet.find("Pear chit") == -1, "reglet papers showed inside The quirk")
+	_expect(quirk_from_reglet.find("Jade note") == -1, "reglet papers showed inside The quirk")
+	_expect(quirk_from_reglet.find("CW-50") == -1, "reglet file code stayed up inside The quirk")
+	_expect(quirk_from_reglet.find("Cherry chit") == -1, "girdle papers showed inside The quirk")
+	_expect(quirk_from_reglet.find("Hack note") == -1, "girdle papers showed inside The quirk")
+	_expect(quirk_from_reglet.find("Size slip") == -1, "girdle papers showed inside The quirk")
+	_expect(quirk_from_reglet.find("CW-49") == -1, "girdle file code stayed up inside The quirk")
+	_expect(quirk_from_reglet.find("Medlar chit") == -1, "abacus papers showed inside The quirk")
+	_expect(quirk_from_reglet.find("Nag note") == -1, "abacus papers showed inside The quirk")
+	_expect(quirk_from_reglet.find("CW-48") == -1, "abacus file code stayed up inside The quirk")
+	_expect(quirk_from_reglet.find("Alder chit") == -1, "listel papers showed inside The quirk")
+	_expect(quirk_from_reglet.find("Jenny note") == -1, "listel papers showed inside The quirk")
+	_expect(quirk_from_reglet.find("CW-47") == -1, "listel file code stayed up inside The quirk")
+	_expect(quirk_from_reglet.find("Holly chit") == -1, "hood papers showed inside The quirk")
+	_expect(quirk_from_reglet.find("Mule note") == -1, "hood papers showed inside The quirk")
+	_expect(quirk_from_reglet.find("CW-46") == -1, "hood file code stayed up inside The quirk")
+	_expect(quirk_from_reglet.find("Spruce chit") == -1, "annulet papers showed inside The quirk")
+	_expect(quirk_from_reglet.find("Hinny note") == -1, "annulet papers showed inside The quirk")
+	_expect(quirk_from_reglet.find("CW-45") == -1, "annulet file code stayed up inside The quirk")
+	_expect(quirk_from_reglet.find("Walnut chit") == -1, "reed papers showed inside The quirk")
+	_expect(quirk_from_reglet.find("Weanling note") == -1, "reed papers showed inside The quirk")
+	_expect(quirk_from_reglet.find("CW-44") == -1, "reed file code stayed up inside The quirk")
+	_expect(quirk_from_reglet.find("Thumbnail chit") == -1, "cavetto papers showed inside The quirk")
+	_expect(quirk_from_reglet.find("Palfrey note") == -1, "cavetto papers showed inside The quirk")
+	_expect(quirk_from_reglet.find("CW-43") == -1, "cavetto file code stayed up inside The quirk")
+	_expect(quirk_from_reglet.find("Echinus chit") == -1, "cyma papers showed inside The quirk")
+	_expect(quirk_from_reglet.find("Jennet note") == -1, "cyma papers showed inside The quirk")
+	_expect(quirk_from_reglet.find("CW-42") == -1, "cyma file code stayed up inside The quirk")
+	_press(root, "Ross")
+	_press(root, "Scratch")
+	_press(root, "138")
+	_press(root, "Submit theory")
+	var quirk_after_reglet := _verdict_text(root)
+	_expect(quirk_after_reglet.find("fits every exhibit") >= 0, "quirk board rejected the true theory after The reglet: %s" % quirk_after_reglet)
+	_expect(quirk_after_reglet.find("Ross (quirk hand) scratched the quirk in the scratch at 138") >= 0, "quirk board timeline after The reglet: %s" % quirk_after_reglet)
+	_press(root, "Menu")
+	_press(root, "Open The tongue")
+	var tongue_from_reglet := _visible_label_blob(root)
+	_expect(tongue_from_reglet.find("Groove chit") >= 0, "could not return to The tongue from The reglet")
+	_expect(tongue_from_reglet.find("Filly note") >= 0, "tongue exhibits did not return from The reglet")
+	_expect(tongue_from_reglet.find("CW-38") >= 0, "returned tongue omits CW-38")
+	_expect(tongue_from_reglet.find("Cove chit") == -1, "chamfer papers showed inside The tongue")
+	_expect(tongue_from_reglet.find("Stallion note") == -1, "chamfer papers showed inside The tongue")
+	_expect(tongue_from_reglet.find("CW-40") == -1, "chamfer file code stayed up inside The tongue")
+	_expect(tongue_from_reglet.find("Torus chit") == -1, "scotia papers showed inside The tongue")
+	_expect(tongue_from_reglet.find("Yearling note") == -1, "scotia papers showed inside The tongue")
+	_expect(tongue_from_reglet.find("CW-41") == -1, "scotia file code stayed up inside The tongue")
+	_expect(tongue_from_reglet.find("Pear chit") == -1, "reglet papers showed inside The tongue")
+	_expect(tongue_from_reglet.find("Jade note") == -1, "reglet papers showed inside The tongue")
+	_expect(tongue_from_reglet.find("CW-50") == -1, "reglet file code stayed up inside The tongue")
+	_expect(tongue_from_reglet.find("Cherry chit") == -1, "girdle papers showed inside The tongue")
+	_expect(tongue_from_reglet.find("Hack note") == -1, "girdle papers showed inside The tongue")
+	_expect(tongue_from_reglet.find("Size slip") == -1, "girdle papers showed inside The tongue")
+	_expect(tongue_from_reglet.find("CW-49") == -1, "girdle file code stayed up inside The tongue")
+	_expect(tongue_from_reglet.find("Medlar chit") == -1, "abacus papers showed inside The tongue")
+	_expect(tongue_from_reglet.find("Nag note") == -1, "abacus papers showed inside The tongue")
+	_expect(tongue_from_reglet.find("CW-48") == -1, "abacus file code stayed up inside The tongue")
+	_expect(tongue_from_reglet.find("Alder chit") == -1, "listel papers showed inside The tongue")
+	_expect(tongue_from_reglet.find("Jenny note") == -1, "listel papers showed inside The tongue")
+	_expect(tongue_from_reglet.find("CW-47") == -1, "listel file code stayed up inside The tongue")
+	_expect(tongue_from_reglet.find("Holly chit") == -1, "hood papers showed inside The tongue")
+	_expect(tongue_from_reglet.find("Mule note") == -1, "hood papers showed inside The tongue")
+	_expect(tongue_from_reglet.find("CW-46") == -1, "hood file code stayed up inside The tongue")
+	_expect(tongue_from_reglet.find("Spruce chit") == -1, "annulet papers showed inside The tongue")
+	_expect(tongue_from_reglet.find("Hinny note") == -1, "annulet papers showed inside The tongue")
+	_expect(tongue_from_reglet.find("CW-45") == -1, "annulet file code stayed up inside The tongue")
+	_expect(tongue_from_reglet.find("Walnut chit") == -1, "reed papers showed inside The tongue")
+	_expect(tongue_from_reglet.find("Weanling note") == -1, "reed papers showed inside The tongue")
+	_expect(tongue_from_reglet.find("CW-44") == -1, "reed file code stayed up inside The tongue")
+	_expect(tongue_from_reglet.find("Thumbnail chit") == -1, "cavetto papers showed inside The tongue")
+	_expect(tongue_from_reglet.find("Palfrey note") == -1, "cavetto papers showed inside The tongue")
+	_expect(tongue_from_reglet.find("CW-43") == -1, "cavetto file code stayed up inside The tongue")
+	_expect(tongue_from_reglet.find("Echinus chit") == -1, "cyma papers showed inside The tongue")
+	_expect(tongue_from_reglet.find("Jennet note") == -1, "cyma papers showed inside The tongue")
+	_expect(tongue_from_reglet.find("CW-42") == -1, "cyma file code stayed up inside The tongue")
+	_press(root, "Shay")
+	_press(root, "Knife")
+	_press(root, "133")
+	_press(root, "Submit theory")
+	var tongue_after_reglet := _verdict_text(root)
+	_expect(tongue_after_reglet.find("fits every exhibit") >= 0, "tongue board rejected the true theory after The reglet: %s" % tongue_after_reglet)
+	_expect(tongue_after_reglet.find("Shay (tongue hand) cut the tongue in the knife at 133") >= 0, "tongue board timeline after The reglet: %s" % tongue_after_reglet)
+	_press(root, "Menu")
+	_press(root, "Open The dowel")
+	var dowel_from_reglet := _visible_label_blob(root)
+	_expect(dowel_from_reglet.find("Bore chit") >= 0, "could not return to The dowel from The reglet")
+	_expect(dowel_from_reglet.find("Dowel note") >= 0, "dowel exhibits did not return from The reglet")
+	_expect(dowel_from_reglet.find("CW-37") >= 0, "returned dowel omits CW-37")
+	_expect(dowel_from_reglet.find("Cove chit") == -1, "chamfer papers showed inside The dowel")
+	_expect(dowel_from_reglet.find("Stallion note") == -1, "chamfer papers showed inside The dowel")
+	_expect(dowel_from_reglet.find("CW-40") == -1, "chamfer file code stayed up inside The dowel")
+	_expect(dowel_from_reglet.find("Torus chit") == -1, "scotia papers showed inside The dowel")
+	_expect(dowel_from_reglet.find("Yearling note") == -1, "scotia papers showed inside The dowel")
+	_expect(dowel_from_reglet.find("CW-41") == -1, "scotia file code stayed up inside The dowel")
+	_expect(dowel_from_reglet.find("Pear chit") == -1, "reglet papers showed inside The dowel")
+	_expect(dowel_from_reglet.find("Jade note") == -1, "reglet papers showed inside The dowel")
+	_expect(dowel_from_reglet.find("CW-50") == -1, "reglet file code stayed up inside The dowel")
+	_expect(dowel_from_reglet.find("Cherry chit") == -1, "girdle papers showed inside The dowel")
+	_expect(dowel_from_reglet.find("Hack note") == -1, "girdle papers showed inside The dowel")
+	_expect(dowel_from_reglet.find("Size slip") == -1, "girdle papers showed inside The dowel")
+	_expect(dowel_from_reglet.find("CW-49") == -1, "girdle file code stayed up inside The dowel")
+	_expect(dowel_from_reglet.find("Medlar chit") == -1, "abacus papers showed inside The dowel")
+	_expect(dowel_from_reglet.find("Nag note") == -1, "abacus papers showed inside The dowel")
+	_expect(dowel_from_reglet.find("CW-48") == -1, "abacus file code stayed up inside The dowel")
+	_expect(dowel_from_reglet.find("Alder chit") == -1, "listel papers showed inside The dowel")
+	_expect(dowel_from_reglet.find("Jenny note") == -1, "listel papers showed inside The dowel")
+	_expect(dowel_from_reglet.find("CW-47") == -1, "listel file code stayed up inside The dowel")
+	_expect(dowel_from_reglet.find("Holly chit") == -1, "hood papers showed inside The dowel")
+	_expect(dowel_from_reglet.find("Mule note") == -1, "hood papers showed inside The dowel")
+	_expect(dowel_from_reglet.find("CW-46") == -1, "hood file code stayed up inside The dowel")
+	_expect(dowel_from_reglet.find("Spruce chit") == -1, "annulet papers showed inside The dowel")
+	_expect(dowel_from_reglet.find("Hinny note") == -1, "annulet papers showed inside The dowel")
+	_expect(dowel_from_reglet.find("CW-45") == -1, "annulet file code stayed up inside The dowel")
+	_expect(dowel_from_reglet.find("Walnut chit") == -1, "reed papers showed inside The dowel")
+	_expect(dowel_from_reglet.find("Weanling note") == -1, "reed papers showed inside The dowel")
+	_expect(dowel_from_reglet.find("CW-44") == -1, "reed file code stayed up inside The dowel")
+	_expect(dowel_from_reglet.find("Thumbnail chit") == -1, "cavetto papers showed inside The dowel")
+	_expect(dowel_from_reglet.find("Palfrey note") == -1, "cavetto papers showed inside The dowel")
+	_expect(dowel_from_reglet.find("CW-43") == -1, "cavetto file code stayed up inside The dowel")
+	_expect(dowel_from_reglet.find("Echinus chit") == -1, "cyma papers showed inside The dowel")
+	_expect(dowel_from_reglet.find("Jennet note") == -1, "cyma papers showed inside The dowel")
+	_expect(dowel_from_reglet.find("CW-42") == -1, "cyma file code stayed up inside The dowel")
+	_press(root, "Faye")
+	_press(root, "Bit")
+	_press(root, "128")
+	_press(root, "Submit theory")
+	var dowel_after_reglet := _verdict_text(root)
+	_expect(dowel_after_reglet.find("fits every exhibit") >= 0, "dowel board rejected the true theory after The reglet: %s" % dowel_after_reglet)
+	_expect(dowel_after_reglet.find("Faye (dowel hand) cut the dowel in the bit at 128") >= 0, "dowel board timeline after The reglet: %s" % dowel_after_reglet)
+	_press(root, "Menu")
 	_menu_root = root
 
 
@@ -31976,13 +33566,13 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 													var annulet_code_bottom := annulet_code_top + annulet_code_rect.size.y
 													print("scrolled bottom CW-45 %s..%s page %s max %s" % [annulet_code_top, annulet_code_bottom, annulet_page, annulet_bar.max_value])
 													_expect(annulet_code_rect.position.x >= 0.0 and annulet_code_rect.position.x + annulet_code_rect.size.x <= 1280.0, "CW-45 is outside the window horizontally %s" % annulet_code_rect)
-													_expect(annulet_code_top >= -0.5, "CW-45 is above the window when the file list is scrolled to the bottom (%s)" % annulet_code_top)
+													_expect(annulet_code_top < 0.0, "CW-45 should sit above the window once The reglet is on the list (%s)" % annulet_code_top)
 													_expect(annulet_code_bottom <= annulet_page + 0.5, "CW-45 is below the window when the file list is scrolled to the bottom (%s)" % annulet_code_bottom)
 													var annulet_button_top := annulet_rect.position.y - annulet_max_scroll
 													var annulet_button_bottom := annulet_button_top + annulet_rect.size.y
 													print("scrolled bottom Open The annulet %s..%s" % [annulet_button_top, annulet_button_bottom])
 													_expect(annulet_rect.position.x >= 0.0 and annulet_rect.position.x + annulet_rect.size.x <= 1280.0, "Open The annulet is outside the window horizontally %s" % annulet_rect)
-													_expect(annulet_button_top >= -0.5, "Open The annulet is above the window when the file list is scrolled to the bottom (%s)" % annulet_button_top)
+													_expect(annulet_button_top < 0.0, "Open The annulet should sit above the window once The reglet is on the list (%s)" % annulet_button_top)
 													_expect(annulet_button_bottom <= annulet_page + 0.5, "Open The annulet is below the window when the file list is scrolled to the bottom (%s)" % annulet_button_bottom)
 
 												var hood_button := _find_visible_button(root, "Open The hood")
@@ -32220,6 +33810,70 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 																	_expect(girdle_rect.position.x >= 0.0 and girdle_rect.position.x + girdle_rect.size.x <= 1280.0, "Open The girdle is outside the window horizontally %s" % girdle_rect)
 																	_expect(girdle_button_top >= -0.5, "Open The girdle is above the window when the file list is scrolled to the bottom (%s)" % girdle_button_top)
 																	_expect(girdle_button_bottom <= girdle_page + 0.5, "Open The girdle is below the window when the file list is scrolled to the bottom (%s)" % girdle_button_bottom)
+
+																var reglet_button := _find_visible_button(root, "Open The reglet")
+																_expect(reglet_button != null, "file list is missing Open The reglet")
+																if reglet_button != null:
+																	var reglet_rect := _content_rect(reglet_button)
+																	print("file list reglet %s stride %s" % [reglet_rect, card_stride])
+																	_expect(reglet_rect.size.y >= 40.0, "Open The reglet has no height")
+																	_expect(girdle_rect.position.y + girdle_rect.size.y <= reglet_rect.position.y, "Open The girdle is not above Open The reglet")
+																	_expect(reglet_rect.position.y == girdle_rect.position.y + card_stride, "reglet content top is %s, one stride below the girdle is %s" % [reglet_rect.position.y, girdle_rect.position.y + card_stride])
+																	_expect(girdle_rect.position.y == 7368.0, "girdle content top moved to %s" % girdle_rect.position.y)
+																	_expect(abacus_rect.position.y == 7221.0, "abacus content top moved to %s" % abacus_rect.position.y)
+																	_expect(listel_rect.position.y == 7074.0, "listel content top moved to %s" % listel_rect.position.y)
+																	_expect(hood_rect.position.y == 6927.0, "hood content top moved to %s" % hood_rect.position.y)
+																	_expect(annulet_rect.position.y == 6780.0, "annulet content top moved to %s" % annulet_rect.position.y)
+																	_expect(reed_rect.position.y == 6633.0, "reed content top moved to %s" % reed_rect.position.y)
+																	_expect(cavetto_rect.position.y == 6486.0, "cavetto content top moved to %s" % cavetto_rect.position.y)
+																	_expect(cyma_rect.position.y == 6339.0, "cyma content top moved to %s" % cyma_rect.position.y)
+																	_expect(scotia_rect.position.y == 6192.0, "scotia content top moved to %s" % scotia_rect.position.y)
+																	_expect(chamfer_rect.position.y == 6045.0, "chamfer content top moved to %s" % chamfer_rect.position.y)
+																	_expect(quirk_rect.position.y == 5898.0, "quirk content top moved to %s" % quirk_rect.position.y)
+																	_expect(tongue_rect.position.y == 5751.0, "tongue content top moved to %s" % tongue_rect.position.y)
+																	_expect(dowel_rect.position.y == 5604.0, "dowel content top moved to %s" % dowel_rect.position.y)
+																	if card_stride == 147.0:
+																		_expect(reglet_rect.position.y == 7515.0, "reglet content top is %s" % reglet_rect.position.y)
+																		_expect(girdle_rect.position.y == 7368.0, "girdle content top is %s" % girdle_rect.position.y)
+																		_expect(abacus_rect.position.y == 7221.0, "abacus content top is %s" % abacus_rect.position.y)
+																		_expect(listel_rect.position.y == 7074.0, "listel content top is %s" % listel_rect.position.y)
+																		_expect(hood_rect.position.y == 6927.0, "hood content top is %s" % hood_rect.position.y)
+																		_expect(annulet_rect.position.y == 6780.0, "annulet content top is %s" % annulet_rect.position.y)
+																		_expect(reed_rect.position.y == 6633.0, "reed content top is %s" % reed_rect.position.y)
+																		_expect(cavetto_rect.position.y == 6486.0, "cavetto content top is %s" % cavetto_rect.position.y)
+																		_expect(cyma_rect.position.y == 6339.0, "cyma content top is %s" % cyma_rect.position.y)
+																		_expect(scotia_rect.position.y == 6192.0, "scotia content top is %s" % scotia_rect.position.y)
+																		_expect(chamfer_rect.position.y == 6045.0, "chamfer content top is %s" % chamfer_rect.position.y)
+																		_expect(quirk_rect.position.y == 5898.0, "quirk content top is %s" % quirk_rect.position.y)
+																		_expect(tongue_rect.position.y == 5751.0, "tongue content top is %s" % tongue_rect.position.y)
+																		_expect(dowel_rect.position.y == 5604.0, "dowel content top is %s" % dowel_rect.position.y)
+																	var reglet_bottom := reglet_rect.position.y + reglet_rect.size.y
+																	var reglet_visible_top := reglet_bottom - window_height
+																	_expect(girdle_rect.position.y >= reglet_visible_top, "Open The girdle is not fully on screen above Open The reglet")
+																	_expect(girdle_rect.position.y + girdle_rect.size.y <= reglet_bottom, "Open The girdle extends past the window when Open The reglet sits at the bottom")
+																	_expect(reglet_bottom > window_height, "Open The reglet already fits without scrolling")
+																	var reglet_code := _find_visible_label(root, "CW-50   The reglet")
+																	_expect(reglet_code != null, "file list omits the CW-50 label")
+																	if reglet_code != null:
+																		var reglet_page := window_height
+																		var reglet_bar := scroll.get_v_scroll_bar()
+																		var reglet_content_height := float(reglet_bar.max_value)
+																		var reglet_max_scroll := reglet_content_height - reglet_page
+																		if reglet_max_scroll < 0.0:
+																			reglet_max_scroll = 0.0
+																		var reglet_code_rect := _content_rect(reglet_code)
+																		var reglet_code_top := reglet_code_rect.position.y - reglet_max_scroll
+																		var reglet_code_bottom := reglet_code_top + reglet_code_rect.size.y
+																		print("scrolled bottom CW-50 %s..%s page %s max %s" % [reglet_code_top, reglet_code_bottom, reglet_page, reglet_bar.max_value])
+																		_expect(reglet_code_rect.position.x >= 0.0 and reglet_code_rect.position.x + reglet_code_rect.size.x <= 1280.0, "CW-50 is outside the window horizontally %s" % reglet_code_rect)
+																		_expect(reglet_code_top >= -0.5, "CW-50 is above the window when the file list is scrolled to the bottom (%s)" % reglet_code_top)
+																		_expect(reglet_code_bottom <= reglet_page + 0.5, "CW-50 is below the window when the file list is scrolled to the bottom (%s)" % reglet_code_bottom)
+																		var reglet_button_top := reglet_rect.position.y - reglet_max_scroll
+																		var reglet_button_bottom := reglet_button_top + reglet_rect.size.y
+																		print("scrolled bottom Open The reglet %s..%s" % [reglet_button_top, reglet_button_bottom])
+																		_expect(reglet_rect.position.x >= 0.0 and reglet_rect.position.x + reglet_rect.size.x <= 1280.0, "Open The reglet is outside the window horizontally %s" % reglet_rect)
+																		_expect(reglet_button_top >= -0.5, "Open The reglet is above the window when the file list is scrolled to the bottom (%s)" % reglet_button_top)
+																		_expect(reglet_button_bottom <= reglet_page + 0.5, "Open The reglet is below the window when the file list is scrolled to the bottom (%s)" % reglet_button_bottom)
 
 func _content_rect(control: Control) -> Rect2:
 	var rect := control.get_global_rect()
