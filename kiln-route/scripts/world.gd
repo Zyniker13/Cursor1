@@ -170,6 +170,16 @@ extends RefCounted
 ## leaves forward. The trashboard is empty after that tick. If either exit
 ## refuses, neither item leaves. A bridle accepts from ahead and sends
 ## the waiter left and the arrival behind. Nothing stays in the trashboard.
+## A gauge does not forward in step 2 on its own. The first item stays.
+## Only an arrival from ahead is accepted. The same material does not
+## release the waiter. When a later item of a different material arrives
+## from ahead, the waiter moves one cell forward and the arrival moves one
+## cell behind, and only if both of those cells can take them. The gauge
+## is empty after that tick. If either exit refuses, neither item leaves.
+## A source cell cannot hold the returning waiter. When the cell directly
+## forward is only the source that delivered the arrival, the waiter moves
+## through that cell into the next cell forward. A trashboard accepts from
+## ahead and sends the waiter right. Nothing stays in the gauge.
 
 const Rules = preload("res://scripts/foundry.gd")
 
@@ -201,7 +211,7 @@ class Machine:
 	## Second lane on a bridge. -1 is empty. Other machines leave it empty.
 	var cross := -1
 	var cross_moved := false
-	## True while a twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, a clevis, a beam, a hake, a sole, a frog, a shin, a point, a throat, a wrest, a jointer, a bridle, or a trashboard is resolving an arrival, so a loop cannot re-enter.
+	## True while a twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, a clevis, a beam, a hake, a sole, a frog, a shin, a point, a throat, a wrest, a jointer, a bridle, a trashboard, or a gauge is resolving an arrival, so a loop cannot re-enter.
 	var pairing := false
 
 class Source:
@@ -601,8 +611,9 @@ func _can_take(machine: Machine, mat: int, arrival: int) -> bool:
 		or machine.kind == Rules.Kind.JOINTER
 		or machine.kind == Rules.Kind.BRIDLE
 		or machine.kind == Rules.Kind.TRASHBOARD
+		or machine.kind == Rules.Kind.GAUGE
 	):
-		# Pairing is handled in _accept. A twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, a clevis, a beam, a hake, a sole, a frog, a shin, a point, a throat, a wrest, a jointer, a bridle, or a trashboard may already be holding.
+		# Pairing is handled in _accept. A twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, a clevis, a beam, a hake, a sole, a frog, a shin, a point, a throat, a wrest, a jointer, a bridle, a trashboard, or a gauge may already be holding.
 		return false
 	if machine.kind == Rules.Kind.BRIDGE:
 		if arrival == machine.dir:
@@ -702,6 +713,8 @@ func _accept(dest: Vector2i, mat: int, arrival: int) -> bool:
 		return _accept_bridle(dest, machine, mat, arrival)
 	if machine.kind == Rules.Kind.TRASHBOARD:
 		return _accept_trashboard(dest, machine, mat, arrival)
+	if machine.kind == Rules.Kind.GAUGE:
+		return _accept_gauge(dest, machine, mat, arrival)
 	if not _can_take(machine, mat, arrival):
 		return false
 	if _holder(machine.kind):
@@ -1760,6 +1773,58 @@ func _accept_trashboard(pos: Vector2i, machine: Machine, mat: int, arrival: int)
 	if right_sent:
 		behind_sent = _accept(pos + Rules.vec(behind_dir), mat, behind_dir)
 	if not right_sent or not behind_sent:
+		_restore(mark)
+		return false
+	machine.pairing = false
+	machine.hold = -1
+	machine.moved = false
+	return true
+
+
+## From ahead only. The first item waits and never leaves on its own. The
+## same material does not release the waiter. A later item of a different
+## material from ahead may leave on that tick: the waiter moves one cell
+## forward and the arrival moves one cell behind, if both cells can take
+## them. Forward is the gauge's facing. Behind is the opposite cell. The
+## gauge is empty afterwards. If either exit refuses, neither item leaves
+## and the arrival is not accepted. A source cell cannot hold the returning
+## waiter. When the cell directly forward is only the source that delivered
+## the arrival, the waiter moves through that cell into the next cell
+## forward. A lone item never leaves, including on the next tick and the
+## tick after that. The gauge does not accept from the left, from the
+## right, or from behind. It does not spill, rotate, alternate, or keep
+## either item. A trashboard sends the waiter right and the arrival behind.
+## A throat sends the waiter behind and the arrival forward. A frog sends
+## the waiter forward and the arrival left. A sole sends the waiter forward
+## and the arrival right. A beam sends the waiter backward and the arrival
+## left. A hake sends the waiter backward and the arrival right. A shin
+## sends the waiter left and the arrival forward. A point sends the waiter
+## right and the arrival forward. A wrest sends the waiter left and the
+## arrival right. A jointer sends the waiter right and the arrival left. A
+## bridle sends the waiter left and the arrival behind.
+func _accept_gauge(pos: Vector2i, machine: Machine, mat: int, arrival: int) -> bool:
+	if arrival != Rules.opposite(machine.dir):
+		return false
+	if machine.hold < 0:
+		machine.hold = mat
+		machine.moved = true
+		return true
+	if machine.moved or machine.pairing:
+		return false
+	if mat == machine.hold:
+		return false
+	var forward_dir := machine.dir
+	var behind_dir := Rules.opposite(machine.dir)
+	var mark := _checkpoint()
+	machine.pairing = true
+	var forward_pos := pos + Rules.vec(forward_dir)
+	var forward_sent: bool = _accept(forward_pos, machine.hold, forward_dir)
+	if not forward_sent and _source_only(forward_pos):
+		forward_sent = _accept(forward_pos + Rules.vec(forward_dir), machine.hold, forward_dir)
+	var behind_sent := false
+	if forward_sent:
+		behind_sent = _accept(pos + Rules.vec(behind_dir), mat, behind_dir)
+	if not forward_sent or not behind_sent:
 		_restore(mark)
 		return false
 	machine.pairing = false
