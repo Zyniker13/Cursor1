@@ -74,6 +74,13 @@ extends RefCounted
 ## can take them. Backward is opposite the facing. The heel is empty after
 ## that tick. If either exit refuses, neither item leaves. A slade sends
 ## the waiter backward and the arrival forward. Nothing stays in the heel.
+## A stilt does not forward in step 2 on its own. The first item stays.
+## Only an arrival from the left is accepted. When a later item arrives from
+## the left, the waiter moves one cell backward and the arrival moves one
+## cell forward, and only if both of those cells can take them. The stilt is
+## empty after that tick. If either exit refuses, neither item leaves. A
+## heel accepts from behind and sends the waiter forward. A slade accepts
+## from behind and sends the same two exits. Nothing stays in the stilt.
 
 const Rules = preload("res://scripts/foundry.gd")
 
@@ -105,7 +112,7 @@ class Machine:
 	## Second lane on a bridge. -1 is empty. Other machines leave it empty.
 	var cross := -1
 	var cross_moved := false
-	## True while a twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, or a heel is resolving an arrival, so a loop cannot re-enter.
+	## True while a twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, or a stilt is resolving an arrival, so a loop cannot re-enter.
 	var pairing := false
 
 class Source:
@@ -492,8 +499,9 @@ func _can_take(machine: Machine, mat: int, arrival: int) -> bool:
 		or machine.kind == Rules.Kind.LANDSIDE
 		or machine.kind == Rules.Kind.SLADE
 		or machine.kind == Rules.Kind.HEEL
+		or machine.kind == Rules.Kind.STILT
 	):
-		# Pairing is handled in _accept. A twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, or a heel may already be holding.
+		# Pairing is handled in _accept. A twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, or a stilt may already be holding.
 		return false
 	if machine.kind == Rules.Kind.BRIDGE:
 		if arrival == machine.dir:
@@ -567,6 +575,8 @@ func _accept(dest: Vector2i, mat: int, arrival: int) -> bool:
 		return _accept_slade(dest, machine, mat, arrival)
 	if machine.kind == Rules.Kind.HEEL:
 		return _accept_heel(dest, machine, mat, arrival)
+	if machine.kind == Rules.Kind.STILT:
+		return _accept_stilt(dest, machine, mat, arrival)
 	if not _can_take(machine, mat, arrival):
 		return false
 	if _holder(machine.kind):
@@ -1079,6 +1089,49 @@ func _accept_heel(pos: Vector2i, machine: Machine, mat: int, arrival: int) -> bo
 	if forward_sent:
 		back_sent = _accept(pos + Rules.vec(back_dir), mat, back_dir)
 	if not forward_sent or not back_sent:
+		_restore(mark)
+		return false
+	machine.pairing = false
+	machine.hold = -1
+	machine.moved = false
+	return true
+
+
+## From the left only. The item is moving toward the stilt's right, the same
+## side an arm accepts. The first item waits and never leaves on its own. A
+## later item from the left may be a different material. On that tick the
+## waiter moves one cell backward and the arrival moves one cell forward, if
+## both cells can take them. Backward is opposite the facing. The stilt is
+## empty afterwards. If either exit refuses, neither item leaves and the
+## arrival is not accepted. A lone item never leaves, including on the next
+## tick and the tick after that. The stilt does not accept from behind, from
+## the right, or from ahead. It does not spill, rotate, alternate, or send
+## the waiter forward, right, or left, and it does not keep either item. A
+## slade sends the same two exits, but only for an arrival from behind. A
+## heel sends the waiter forward and the arrival backward, and only from
+## behind. A landside sends the waiter right and the arrival forward. A
+## moldboard sends the waiter left and the arrival forward. A coulter sends
+## the waiter forward and the arrival right. A share sends the waiter forward
+## and the arrival left. A fork sends the waiter left and the arrival right.
+## A prong sends the waiter right and the arrival left.
+func _accept_stilt(pos: Vector2i, machine: Machine, mat: int, arrival: int) -> bool:
+	if arrival != Rules.right(machine.dir):
+		return false
+	if machine.hold < 0:
+		machine.hold = mat
+		machine.moved = true
+		return true
+	if machine.moved or machine.pairing:
+		return false
+	var back_dir := Rules.opposite(machine.dir)
+	var forward_dir := machine.dir
+	var mark := _checkpoint()
+	machine.pairing = true
+	var back_sent: bool = _accept(pos + Rules.vec(back_dir), machine.hold, back_dir)
+	var forward_sent := false
+	if back_sent:
+		forward_sent = _accept(pos + Rules.vec(forward_dir), mat, forward_dir)
+	if not back_sent or not forward_sent:
 		_restore(mark)
 		return false
 	machine.pairing = false
