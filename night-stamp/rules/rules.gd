@@ -2462,6 +2462,7 @@ const SHIFT_EPILOGUE := 42
 const SHIFT_CODA := 43
 const SHIFT_EXPLICIT := 44
 const SHIFT_FINIS := 45
+const SHIFT_ENVOY := 46
 
 const ROW_NAMES := ["top row", "middle row", "bottom row"]
 const COL_NAMES := ["column 1", "column 2", "column 3"]
@@ -4731,6 +4732,54 @@ const FINIS_BELL := [
 ]
 
 
+const ENVOY_BELL := [
+	{
+		"id": "agnes_hale",
+		"name": "Agnes Hale",
+		"form_name": "Gauge Toll",
+		"rule_text": "Patience drops by 2 when the number of filled cells is 6 or 8.",
+		"rule": "drop_if_gauge_count",
+		"lane": 0,
+		"exemption_row": 1,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "ellis_voss",
+		"name": "Ellis Voss",
+		"form_name": "Bias Blank",
+		"rule_text": "A stamp scores twice only when the queue cell four places after it is empty and the queue cell four places before it is filled. The top-left cell has no cell four places before it, so it does not double. The top-middle cell has no cell four places before it, so it does not double. The top-right cell has no cell four places before it, so it does not double. The middle-left cell has no cell four places before it, so it does not double. The middle-right cell has no cell four places after it, so it does not double. The bottom-left cell has no cell four places after it, so it does not double. The bottom-middle cell has no cell four places after it, so it does not double. The bottom-right cell has no cell four places after it, so it does not double.",
+		"rule": "double_bias_blank",
+		"lane": 1,
+		"exemption_row": 0,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "nora_brant",
+		"name": "Nora Brant",
+		"form_name": "Trine Pay",
+		"rule_text": "Each stamp with exactly three corner neighbors and exactly zero side neighbors scores +2 once. Any other count scores its own number. Exactly two corner neighbors with zero side neighbors score their own number. A lone stamp scores its own number.",
+		"rule": "yield_trine_pay",
+		"lane": 2,
+		"exemption_row": 2,
+		"goal": 16,
+		"patience": 5,
+	},
+	{
+		"id": "lydia_okell",
+		"name": "Lydia Okell",
+		"form_name": "Bias Fill",
+		"rule_text": "A stamp scores twice only when the queue cell four places after it is filled and the queue cell four places before it is empty. The top-left cell has no cell four places before it, so it does not double. The top-middle cell has no cell four places before it, so it does not double. The top-right cell has no cell four places before it, so it does not double. The middle-left cell has no cell four places before it, so it does not double. The middle-right cell has no cell four places after it, so it does not double. The bottom-left cell has no cell four places after it, so it does not double. The bottom-middle cell has no cell four places after it, so it does not double. The bottom-right cell has no cell four places after it, so it does not double.",
+		"rule": "double_bias_fill",
+		"lane": 1,
+		"exemption_row": 2,
+		"goal": 22,
+		"patience": 5,
+	},
+]
+
+
 class NightState:
 	extends RefCounted
 	var seed: int = 1
@@ -4828,6 +4877,8 @@ static func _canonical_shift(shift_index: int) -> int:
 		return SHIFT_TITLEPAGE
 	if shift_index == SHIFT_COPYRIGHT:
 		return SHIFT_COPYRIGHT
+	if shift_index == SHIFT_ENVOY:
+		return SHIFT_ENVOY
 	if shift_index == SHIFT_FINIS:
 		return SHIFT_FINIS
 	if shift_index == SHIFT_EXPLICIT:
@@ -4881,6 +4932,8 @@ static func new_run(seed_value: int, shift_index: int = SHIFT_FIRST) -> NightSta
 	state.next_iid = 0
 	for card_id in STARTING_DECK:
 		_add_library_card(state, String(card_id))
+	if state.shift == SHIFT_ENVOY:
+		_log(state, "The envoy bell begins. Seed %d." % state.seed)
 	if state.shift == SHIFT_FINIS:
 		_log(state, "The finis bell begins. Seed %d." % state.seed)
 	if state.shift == SHIFT_EXPLICIT:
@@ -5013,6 +5066,8 @@ static func restart_encounter(state: NightState) -> void:
 
 
 static func shift_label(state: NightState) -> String:
+	if state.shift == SHIFT_ENVOY:
+		return "Envoy bell"
 	if state.shift == SHIFT_FINIS:
 		return "Finis bell"
 	if state.shift == SHIFT_EXPLICIT:
@@ -5121,6 +5176,8 @@ static func traveler(state: NightState) -> Dictionary:
 
 
 static func _roster(state: NightState) -> Array:
+	if state.shift == SHIFT_ENVOY:
+		return ENVOY_BELL
 	if state.shift == SHIFT_FINIS:
 		return FINIS_BELL
 	if state.shift == SHIFT_EXPLICIT:
@@ -5639,6 +5696,12 @@ static func stamp_progress(state: NightState, card_id: String, row: int, col: in
 		return amount + 2
 	if rule == "double_helm_fill" and _helm_fill(state, row, col):
 		return amount * 2
+	if rule == "double_bias_blank" and _bias_blank(state, row, col):
+		return amount * 2
+	if rule == "yield_trine_pay" and _trine_pay(state, row, col):
+		return amount + 2
+	if rule == "double_bias_fill" and _bias_fill(state, row, col):
+		return amount * 2
 	return amount
 
 
@@ -5804,6 +5867,8 @@ static func patience_loss(state: NightState) -> int:
 		elif rule == "drop_if_stride_count" and _is_stride_count(_stamp_count(state)):
 			loss = 2
 		elif rule == "drop_if_helm_count" and _is_helm_count(_stamp_count(state)):
+			loss = 2
+		elif rule == "drop_if_gauge_count" and _is_gauge_count(_stamp_count(state)):
 			loss = 2
 	return loss
 
@@ -6210,6 +6275,12 @@ static func _resolve_stamp(state: NightState, row: int, col: int, hush: bool) ->
 				_log(state, "%s on the %s, %s grants %d. Two corner neighbors and no side neighbor pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			elif tail_rule == "double_helm_fill" and _helm_fill(state, row, col) and amount > raw:
 				_log(state, "%s on the %s, %s grants %d. The empty cell three places before it and the filled cell three places after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_bias_blank" and _bias_blank(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The filled cell four places before it and the empty cell four places after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_trine_pay" and _trine_pay(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. Three corner neighbors and no side neighbor pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_bias_fill" and _bias_fill(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The empty cell four places before it and the filled cell four places after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			else:
 				_log(state, "%s on the %s, %s grants %d." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 	state.turn_progress += amount
@@ -6578,6 +6649,26 @@ static func _wedge_pay(state: NightState, row: int, col: int) -> bool:
 	if state.form[row][col] == null:
 		return false
 	return _diagonal_count(state, row, col) == 2
+
+
+static func _is_gauge_count(count: int) -> bool:
+	return count == 6 or count == 8
+
+
+static func _bias_blank(state: NightState, row: int, col: int) -> bool:
+	return _long_back(state, row, col) and _long_blank(state, row, col)
+
+
+static func _trine_pay(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	return orthogonal_count(state, row, col) == 0 and _diagonal_count(state, row, col) == 3
+
+
+static func _bias_fill(state: NightState, row: int, col: int) -> bool:
+	return _long_gap(state, row, col) and _long_fill(state, row, col)
 
 
 static func _is_helm_count(count: int) -> bool:
@@ -7660,6 +7751,8 @@ static func _apply_result(state: NightState, result: Dictionary) -> void:
 		state.encounters_cleared += 1
 		if state.traveler_index >= _roster(state).size() - 1:
 			state.phase = "victory"
+			if state.shift == SHIFT_ENVOY:
+				_log(state, "The queue is empty. The envoy bell is clear.")
 			if state.shift == SHIFT_FINIS:
 				_log(state, "The queue is empty. The finis bell is clear.")
 			if state.shift == SHIFT_EXPLICIT:
