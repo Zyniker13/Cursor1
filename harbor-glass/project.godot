@@ -6,7 +6,7 @@ config_version=5
 [application]
 
 config/name="Harbor Glass"
-config/description="A tide-clock light puzzle across the quay, the reach, the turning basin, the painted lock, the west return, the meeting glass, the tide mirror, the shutter, the stain, the vane, the well, the siphon, the sluice, the weir, the lintel, the mullion, the transom, the casement, the jamb, the astragal, the scotia, the torus, the ogee, the ovolo, the cavetto, the fillet, the corona, the bead, the quirk, the cyma, the fascia, the soffit, the drip, the beak, the hood, the throat, the larmier, the cill, and the threshold."
+config/description="A tide-clock light puzzle across the quay, the reach, the turning basin, the painted lock, the west return, the meeting glass, the tide mirror, the shutter, the stain, the vane, the well, the siphon, the sluice, the weir, the lintel, the mullion, the transom, the casement, the jamb, the astragal, the scotia, the torus, the ogee, the ovolo, the cavetto, the fillet, the corona, the bead, the quirk, the cyma, the fascia, the soffit, the drip, the beak, the hood, the throat, the larmier, the cill, the threshold, the impost, and the architrave."
 run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"

@@ -2466,6 +2466,9 @@ const SHIFT_ENVOY := 46
 const SHIFT_FINALE := 47
 const SHIFT_EPODE := 48
 const SHIFT_RECESSIONAL := 50
+const SHIFT_LAUDS := 56
+const SHIFT_MATINS := 55
+const SHIFT_AUBADE := 54
 const SHIFT_VESPERS := 53
 const SHIFT_COMPLINE := 52
 const SHIFT_NOCTURNE := 51
@@ -4840,6 +4843,153 @@ const FINALE_BELL := [
 
 
 
+
+
+
+const LAUDS_BELL := [
+	{
+		"id": "ragna_moe",
+		"name": "Ragna Moe",
+		"form_name": "Broach Toll",
+		"rule_text": "Patience drops by 2 when the number of filled cells is 8 or 11.",
+		"rule": "drop_if_broach_count",
+		"lane": 1,
+		"exemption_row": 2,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "thora_dahl",
+		"name": "Thora Dahl",
+		"form_name": "Jog Fill",
+		"rule_text": "A stamp scores twice only when the queue cell one place after it is filled and the queue cell eight places before it is filled. The top-left, top-middle, top-right, middle-left, center, middle-right, bottom-left, and bottom-middle cells have no cell eight places before them, so they do not double. The bottom-right cell has no cell one place after it, so it does not double.",
+		"rule": "double_jog_fill",
+		"lane": 2,
+		"exemption_row": 1,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "birgit_berg",
+		"name": "Birgit Berg",
+		"form_name": "Peen Pay",
+		"rule_text": "Each stamp with exactly four corner neighbors and exactly six side neighbors scores +2 once. Any other count scores its own number. Exactly four corner neighbors with exactly four side neighbors score their own number. Exactly four corner neighbors with exactly five side neighbors score their own number. A lone stamp scores its own number.",
+		"rule": "yield_peen_pay",
+		"lane": 0,
+		"exemption_row": 2,
+		"goal": 16,
+		"patience": 5,
+	},
+	{
+		"id": "olaf_lund",
+		"name": "Olaf Lund",
+		"form_name": "Jog Blank",
+		"rule_text": "A stamp scores twice only when the queue cell one place after it is empty and the queue cell eight places before it is empty. The top-left, top-middle, top-right, middle-left, center, middle-right, bottom-left, and bottom-middle cells have no cell eight places before them, so they do not double. The bottom-right cell has no cell one place after it, so it does not double.",
+		"rule": "double_jog_blank",
+		"lane": 2,
+		"exemption_row": 0,
+		"goal": 22,
+		"patience": 5,
+	},
+]
+
+
+const MATINS_BELL := [
+	{
+		"id": "astrid_holm",
+		"name": "Astrid Holm",
+		"form_name": "Chamfer Toll",
+		"rule_text": "Patience drops by 2 when the number of filled cells is 7 or 10.",
+		"rule": "drop_if_chamfer_count",
+		"lane": 0,
+		"exemption_row": 1,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "signe_damm",
+		"name": "Signe Damm",
+		"form_name": "Nick Fill",
+		"rule_text": "A stamp scores twice only when the queue cell one place after it is filled and the queue cell seven places before it is filled. The top-left cell has no cell seven places before it, so it does not double. The top-middle cell has no cell seven places before it, so it does not double. The top-right cell has no cell seven places before it, so it does not double. The middle-left cell has no cell seven places before it, so it does not double. The center cell has no cell seven places before it, so it does not double. The middle-right cell has no cell seven places before it, so it does not double. The bottom-left cell has no cell seven places before it, so it does not double. The bottom-right cell has no cell one place after it, so it does not double.",
+		"rule": "double_nick_fill",
+		"lane": 1,
+		"exemption_row": 0,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "knut_kett",
+		"name": "Knut Kett",
+		"form_name": "Stake Pay",
+		"rule_text": "Each stamp with exactly four corner neighbors and exactly five side neighbors scores +2 once. Any other count scores its own number. Exactly four corner neighbors with exactly four side neighbors score their own number. Exactly four corner neighbors with exactly three side neighbors score their own number. A lone stamp scores its own number.",
+		"rule": "yield_stake_pay",
+		"lane": 2,
+		"exemption_row": 1,
+		"goal": 16,
+		"patience": 5,
+	},
+	{
+		"id": "yrsa_vang",
+		"name": "Yrsa Vang",
+		"form_name": "Nick Blank",
+		"rule_text": "A stamp scores twice only when the queue cell one place after it is empty and the queue cell seven places before it is empty. The top-left cell has no cell seven places before it, so it does not double. The top-middle cell has no cell seven places before it, so it does not double. The top-right cell has no cell seven places before it, so it does not double. The middle-left cell has no cell seven places before it, so it does not double. The center cell has no cell seven places before it, so it does not double. The middle-right cell has no cell seven places before it, so it does not double. The bottom-left cell has no cell seven places before it, so it does not double. The bottom-right cell has no cell one place after it, so it does not double.",
+		"rule": "double_nick_blank",
+		"lane": 1,
+		"exemption_row": 2,
+		"goal": 22,
+		"patience": 5,
+	},
+]
+
+
+const AUBADE_BELL := [
+	{
+		"id": "vidar_hale",
+		"name": "Vidar Hale",
+		"form_name": "Burr Toll",
+		"rule_text": "Patience drops by 2 when the number of filled cells is 6 or 9.",
+		"rule": "drop_if_burr_count",
+		"lane": 2,
+		"exemption_row": 0,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "ylva_voss",
+		"name": "Ylva Voss",
+		"form_name": "Kink Fill",
+		"rule_text": "A stamp scores twice only when the queue cell one place after it is filled and the queue cell six places before it is filled. The top-left cell has no cell six places before it, so it does not double. The top-middle cell has no cell six places before it, so it does not double. The top-right cell has no cell six places before it, so it does not double. The middle-left cell has no cell six places before it, so it does not double. The center cell has no cell six places before it, so it does not double. The middle-right cell has no cell six places before it, so it does not double. The bottom-right cell has no cell one place after it, so it does not double.",
+		"rule": "double_kink_fill",
+		"lane": 0,
+		"exemption_row": 2,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "hanne_brant",
+		"name": "Hanne Brant",
+		"form_name": "Clench Pay",
+		"rule_text": "Each stamp with exactly four corner neighbors and exactly four side neighbors scores +2 once. Any other count scores its own number. Exactly four corner neighbors with exactly three side neighbors score their own number. Exactly four corner neighbors with exactly two side neighbors score their own number. A lone stamp scores its own number.",
+		"rule": "yield_clench_pay",
+		"lane": 1,
+		"exemption_row": 0,
+		"goal": 16,
+		"patience": 5,
+	},
+	{
+		"id": "esben_okell",
+		"name": "Esben Okell",
+		"form_name": "Kink Blank",
+		"rule_text": "A stamp scores twice only when the queue cell one place after it is empty and the queue cell six places before it is empty. The top-left cell has no cell six places before it, so it does not double. The top-middle cell has no cell six places before it, so it does not double. The top-right cell has no cell six places before it, so it does not double. The middle-left cell has no cell six places before it, so it does not double. The center cell has no cell six places before it, so it does not double. The middle-right cell has no cell six places before it, so it does not double. The bottom-right cell has no cell one place after it, so it does not double.",
+		"rule": "double_kink_blank",
+		"lane": 0,
+		"exemption_row": 1,
+		"goal": 22,
+		"patience": 5,
+	},
+]
+
+
 const VESPERS_BELL := [
 	{
 		"id": "gunnar_hale",
@@ -5225,6 +5375,12 @@ static func _canonical_shift(shift_index: int) -> int:
 		return SHIFT_TITLEPAGE
 	if shift_index == SHIFT_COPYRIGHT:
 		return SHIFT_COPYRIGHT
+	if shift_index == SHIFT_LAUDS:
+		return SHIFT_LAUDS
+	if shift_index == SHIFT_MATINS:
+		return SHIFT_MATINS
+	if shift_index == SHIFT_AUBADE:
+		return SHIFT_AUBADE
 	if shift_index == SHIFT_VESPERS:
 		return SHIFT_VESPERS
 	if shift_index == SHIFT_COMPLINE:
@@ -5294,6 +5450,12 @@ static func new_run(seed_value: int, shift_index: int = SHIFT_FIRST) -> NightSta
 	state.next_iid = 0
 	for card_id in STARTING_DECK:
 		_add_library_card(state, String(card_id))
+	if state.shift == SHIFT_LAUDS:
+		_log(state, "The lauds bell begins. Seed %d." % state.seed)
+	if state.shift == SHIFT_MATINS:
+		_log(state, "The matins bell begins. Seed %d." % state.seed)
+	if state.shift == SHIFT_AUBADE:
+		_log(state, "The aubade bell begins. Seed %d." % state.seed)
 	if state.shift == SHIFT_VESPERS:
 		_log(state, "The vespers bell begins. Seed %d." % state.seed)
 	if state.shift == SHIFT_COMPLINE:
@@ -5442,6 +5604,12 @@ static func restart_encounter(state: NightState) -> void:
 
 
 static func shift_label(state: NightState) -> String:
+	if state.shift == SHIFT_LAUDS:
+		return "Lauds bell"
+	if state.shift == SHIFT_MATINS:
+		return "Matins bell"
+	if state.shift == SHIFT_AUBADE:
+		return "Aubade bell"
 	if state.shift == SHIFT_VESPERS:
 		return "Vespers bell"
 	if state.shift == SHIFT_COMPLINE:
@@ -5566,6 +5734,12 @@ static func traveler(state: NightState) -> Dictionary:
 
 
 static func _roster(state: NightState) -> Array:
+	if state.shift == SHIFT_LAUDS:
+		return LAUDS_BELL
+	if state.shift == SHIFT_MATINS:
+		return MATINS_BELL
+	if state.shift == SHIFT_AUBADE:
+		return AUBADE_BELL
 	if state.shift == SHIFT_VESPERS:
 		return VESPERS_BELL
 	if state.shift == SHIFT_COMPLINE:
@@ -6146,6 +6320,24 @@ static func stamp_progress(state: NightState, card_id: String, row: int, col: in
 		return amount + 2
 	if rule == "double_bend_blank" and _bend_blank(state, row, col):
 		return amount * 2
+	if rule == "double_kink_fill" and _kink_fill(state, row, col):
+		return amount * 2
+	if rule == "yield_clench_pay" and _clench_pay(state, row, col):
+		return amount + 2
+	if rule == "double_nick_fill" and _nick_fill(state, row, col):
+		return amount * 2
+	if rule == "yield_stake_pay" and _stake_pay(state, row, col):
+		return amount + 2
+	if rule == "double_jog_fill" and _jog_fill(state, row, col):
+		return amount * 2
+	if rule == "yield_peen_pay" and _peen_pay(state, row, col):
+		return amount + 2
+	if rule == "double_jog_blank" and _jog_blank(state, row, col):
+		return amount * 2
+	if rule == "double_nick_blank" and _nick_blank(state, row, col):
+		return amount * 2
+	if rule == "double_kink_blank" and _kink_blank(state, row, col):
+		return amount * 2
 	if rule == "double_yoke_blank" and _yoke_blank(state, row, col):
 		return amount * 2
 	return amount
@@ -6317,6 +6509,12 @@ static func patience_loss(state: NightState) -> int:
 		elif rule == "drop_if_gauge_count" and _is_gauge_count(_stamp_count(state)):
 			loss = 2
 		elif rule == "drop_if_latch_count" and _is_latch_count(_stamp_count(state)):
+			loss = 2
+		elif rule == "drop_if_broach_count" and _is_broach_count(_stamp_count(state)):
+			loss = 2
+		elif rule == "drop_if_chamfer_count" and _is_chamfer_count(_stamp_count(state)):
+			loss = 2
+		elif rule == "drop_if_burr_count" and _is_burr_count(_stamp_count(state)):
 			loss = 2
 		elif rule == "drop_if_ream_count" and _is_ream_count(_stamp_count(state)):
 			loss = 2
@@ -6783,6 +6981,24 @@ static func _resolve_stamp(state: NightState, row: int, col: int, hush: bool) ->
 				_log(state, "%s on the %s, %s grants %d. Four corner neighbors and three side neighbors pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			elif tail_rule == "double_bend_blank" and _bend_blank(state, row, col) and amount > raw:
 				_log(state, "%s on the %s, %s grants %d. The empty cell five places before it and the empty cell one place after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_kink_fill" and _kink_fill(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The filled cell six places before it and the filled cell one place after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_clench_pay" and _clench_pay(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. Four corner neighbors and four side neighbors pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_kink_blank" and _kink_blank(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The empty cell six places before it and the empty cell one place after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_nick_fill" and _nick_fill(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The filled cell seven places before it and the filled cell one place after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_stake_pay" and _stake_pay(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. Four corner neighbors and five side neighbors pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_nick_blank" and _nick_blank(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The empty cell seven places before it and the empty cell one place after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_jog_fill" and _jog_fill(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The filled cell eight places before it and the filled cell one place after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_peen_pay" and _peen_pay(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. Four corner neighbors and six side neighbors pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_jog_blank" and _jog_blank(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The empty cell eight places before it and the empty cell one place after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			else:
 				_log(state, "%s on the %s, %s grants %d." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 	state.turn_progress += amount
@@ -7151,6 +7367,66 @@ static func _wedge_pay(state: NightState, row: int, col: int) -> bool:
 	if state.form[row][col] == null:
 		return false
 	return _diagonal_count(state, row, col) == 2
+
+
+static func _is_broach_count(count: int) -> bool:
+	return count == 8 or count == 11
+
+
+static func _jog_fill(state: NightState, row: int, col: int) -> bool:
+	return _reach_back(state, row, col) and _pace_fill(state, row, col)
+
+
+static func _peen_pay(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	return orthogonal_count(state, row, col) == 6 and _diagonal_count(state, row, col) == 4
+
+
+static func _jog_blank(state: NightState, row: int, col: int) -> bool:
+	return _reach_gap(state, row, col) and _pace_blank(state, row, col)
+
+
+static func _is_chamfer_count(count: int) -> bool:
+	return count == 7 or count == 10
+
+
+static func _nick_fill(state: NightState, row: int, col: int) -> bool:
+	return _pitch_back(state, row, col) and _pace_fill(state, row, col)
+
+
+static func _stake_pay(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	return orthogonal_count(state, row, col) == 5 and _diagonal_count(state, row, col) == 4
+
+
+static func _nick_blank(state: NightState, row: int, col: int) -> bool:
+	return _pitch_gap(state, row, col) and _pace_blank(state, row, col)
+
+
+static func _is_burr_count(count: int) -> bool:
+	return count == 6 or count == 9
+
+
+static func _kink_fill(state: NightState, row: int, col: int) -> bool:
+	return _deep_back(state, row, col) and _pace_fill(state, row, col)
+
+
+static func _clench_pay(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	return orthogonal_count(state, row, col) == 4 and _diagonal_count(state, row, col) == 4
+
+
+static func _kink_blank(state: NightState, row: int, col: int) -> bool:
+	return _deep_gap(state, row, col) and _pace_blank(state, row, col)
 
 
 static func _is_ream_count(count: int) -> bool:
@@ -8393,6 +8669,12 @@ static func _apply_result(state: NightState, result: Dictionary) -> void:
 		state.encounters_cleared += 1
 		if state.traveler_index >= _roster(state).size() - 1:
 			state.phase = "victory"
+			if state.shift == SHIFT_LAUDS:
+				_log(state, "The queue is empty. The lauds bell is clear.")
+			if state.shift == SHIFT_MATINS:
+				_log(state, "The queue is empty. The matins bell is clear.")
+			if state.shift == SHIFT_AUBADE:
+				_log(state, "The queue is empty. The aubade bell is clear.")
 			if state.shift == SHIFT_VESPERS:
 				_log(state, "The queue is empty. The vespers bell is clear.")
 			if state.shift == SHIFT_COMPLINE:
