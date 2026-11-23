@@ -3,7 +3,7 @@ extends RefCounted
 
 const Rules = preload("res://rules/rules.gd")
 
-## Twenty wings of the closed museum. Each solution is a list of actions the rules
+## Twenty-one wings of the closed museum. Each solution is a list of actions the rules
 ## accept. Tokens are R L U D, W for wait, and T0 / T1 for lamps.
 
 
@@ -97,6 +97,8 @@ static func _puzzle(number: int, title: String, lesson: String, rows: PackedStri
 		wing_number = number - 110
 	elif wing == "Gauze Wing":
 		wing_number = number - 116
+	elif wing == "Voile Wing":
+		wing_number = number - 122
 	return {
 		"number": number,
 		"wing": wing,
@@ -146,6 +148,7 @@ static func _all() -> Array:
 	puzzles.append_array(_baize_wing())
 	puzzles.append_array(_scrim_wing())
 	puzzles.append_array(_gauze_wing())
+	puzzles.append_array(_voile_wing())
 	return puzzles
 
 
@@ -2365,5 +2368,112 @@ static func _gauze_wing() -> Array:
 			[_guard(8, 1, [Vector2i(8, 1)], 2)],
 			"R T0 R R R R",
 			"Gauze Wing"
+		),
+	]
+
+
+static func _voile_wing() -> Array:
+	return [
+		_puzzle(
+			123,
+			"The Lit Voile",
+			"This room is about the rule that the voile is lit.",
+			PackedStringArray([
+				"#######",
+				"#X....#",
+				"#.....#",
+				"#..V..#",
+				"#..S..#",
+				"#######",
+			]),
+			[_lamp(3, 3, "n", 2)],
+			[_guard(5, 4, [Vector2i(5, 4)], 0)],
+			"L U U U L",
+			"Voile Wing"
+		),
+		_puzzle(
+			124,
+			"The Seen Weave",
+			"This room is about the rule that the guard sees a lit tile through the lit voile.",
+			PackedStringArray([
+				"########",
+				"#X.G...#",
+				"##.V####",
+				"#......#",
+				"#......#",
+				"#...S..#",
+				"########",
+			]),
+			[_lamp(4, 4, "n", 3), _lamp(3, 1, "w", 0)],
+			[_guard(5, 4, [Vector2i(5, 4)], 1), _guard(4, 2, [Vector2i(4, 2)], 3)],
+			"T0 L U U U U L L",
+			"Voile Wing"
+		),
+		_puzzle(
+			125,
+			"The Passed Spark",
+			"This room is about the rule that a second lamp's light passes the voile.",
+			PackedStringArray([
+				"########",
+				"#.X....#",
+				"#.G#...#",
+				"#.V....#",
+				"#..S...#",
+				"#......#",
+				"########",
+			]),
+			[_lamp(6, 5, "w", 0), _lamp(3, 3, "n", 2)],
+			[_guard(2, 2, [Vector2i(2, 2)], 3)],
+			"T1 L U T1 U U",
+			"Voile Wing"
+		),
+		_puzzle(
+			126,
+			"The Shut Voile",
+			"This room is about the rule that a guard cannot enter the voile.",
+			PackedStringArray([
+				"#########",
+				"#S.V.X..#",
+				"#######.#",
+				"#.......#",
+				"#########",
+			]),
+			[_lamp(3, 1, "e", 1)],
+			[_guard(6, 1, [Vector2i(6, 1)], 2)],
+			"R R R R",
+			"Voile Wing"
+		),
+		_puzzle(
+			127,
+			"The Early Step",
+			"This room is about the rule that the early step onto the lit voile succeeds.",
+			PackedStringArray([
+				"#######",
+				"#..X..#",
+				"#..V..#",
+				"#..S..#",
+				"#.....#",
+				"#######",
+			]),
+			[_lamp(5, 2, "w", 2)],
+			[_guard(1, 4, [Vector2i(1, 4)], 0)],
+			"U U",
+			"Voile Wing"
+		),
+		_puzzle(
+			128,
+			"The Last Voile",
+			"This room is about the rule that you leave by stepping on the dark voile.",
+			PackedStringArray([
+				"########",
+				"#S.VX..#",
+				"#......#",
+				"#......#",
+				"########",
+			]),
+			[_lamp(2, 1, "e", 2)],
+			[_guard(6, 3, [Vector2i(6, 3)], 0)],
+			"T0 R R R",
+			"Voile Wing"
 		),
 	]
