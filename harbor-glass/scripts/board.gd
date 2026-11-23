@@ -269,6 +269,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_ovolo(at, rot)
 		"cavetto":
 			_draw_cavetto(at, rot)
+		"fillet":
+			_draw_fillet(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -892,6 +894,45 @@ func _cavetto_notch(center: Vector2, dir: String, notch: Color, shade: Color) ->
 	var fill := PackedVector2Array([left, tip, right])
 	draw_colored_polygon(fill, notch)
 	draw_polyline(PackedVector2Array([left, tip, right]), shade, 2.2)
+
+func _draw_fillet(at: Vector2i, rot: int) -> void:
+	# A thin pale flat band on the one passing edge. A north fillet bands the
+	# south edge. The band is a straight rectangle. It is not the cavetto
+	# notch, not the ovolo bow, and not the ogee S-curve.
+	var center := _center(at)
+	var passing := Tracer.rotate_dir(Tracer.fillet_facing(rot), 2)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var band := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	_fillet_band(center, passing, band)
+
+func _fillet_band(center: Vector2, dir: String, band: Color) -> void:
+	var along := Vector2.RIGHT
+	var outward := Vector2.DOWN
+	match dir:
+		"N":
+			along = Vector2.RIGHT
+			outward = Vector2.UP
+		"S":
+			along = Vector2.RIGHT
+			outward = Vector2.DOWN
+		"E":
+			along = Vector2.DOWN
+			outward = Vector2.RIGHT
+		_:
+			along = Vector2.DOWN
+			outward = Vector2.LEFT
+	var edge := cell * 0.34
+	var thick := cell * 0.07
+	var half := cell * 0.26
+	var outer := center + outward * edge
+	var inner := outer - outward * thick
+	var rect := PackedVector2Array([
+		outer - along * half,
+		outer + along * half,
+		inner + along * half,
+		inner - along * half,
+	])
+	draw_colored_polygon(rect, band)
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
 	if dir == "N" or dir == "S":
