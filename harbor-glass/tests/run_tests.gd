@@ -134,6 +134,8 @@ func _run() -> void:
 	test_roll_book()
 	test_gutta_rule()
 	test_gutta_book()
+	test_dentil_rule()
+	test_dentil_book()
 	test_chart_4_boat()
 	test_one_rotation_is_not_solved()
 	test_hint_points_at_one_piece()
@@ -336,7 +338,8 @@ func test_charts() -> void:
 	check(Charts.thumb().size() == 8, "thumb adds eight charts")
 	check(Charts.roll().size() == 8, "roll adds eight charts")
 	check(Charts.gutta().size() == 8, "gutta adds eight charts")
-	check(book.size() == 454, "four hundred fifty-four charts")
+	check(Charts.dentil().size() == 8, "dentil adds eight charts")
+	check(book.size() == 462, "four hundred sixty-two charts")
 	check(str(book[13]["id"]) == "14" and str(book[13]["title"]) == "The Holding Line", "chart 14 stays the reach capstone")
 	check(str(book[14]["title"]) == "North Light", "chart 15 opens the basin")
 	check(str(book[21]["id"]) == "22" and str(book[21]["title"]) == "The Basin Mark", "chart 22 stays the basin capstone")
@@ -448,6 +451,8 @@ func test_charts() -> void:
 	check(str(book[445]["id"]) == "446" and str(book[445]["title"]) == "The Roll Line", "chart 446 stays the roll capstone")
 	check(str(book[446]["title"]) == "The Flooded Gutta", "chart 447 opens the gutta")
 	check(str(book[453]["id"]) == "454" and str(book[453]["title"]) == "The Gutta Line", "chart 454 stays the gutta capstone")
+	check(str(book[454]["title"]) == "The Dry Dentil", "chart 455 opens the dentil")
+	check(str(book[461]["id"]) == "462" and str(book[461]["title"]) == "The Dentil Line", "chart 462 stays the dentil capstone")
 	var seen_ids := {}
 	var seen_titles := {}
 	var quay_titles := ["First Glass", "Around the Pilings", "High Water", "Sleeping Hull", "Split the White", "The Night Mark"]
@@ -14617,6 +14622,91 @@ func _expect_gutta_miss(chart: Dictionary, piece_id: String, kind: String, rot: 
 	check(not Tracer.is_cleared(copy, Charts.make_state(copy, true)), label)
 
 
+func test_dentil_rule() -> void:
+	check(Tracer.dentil_passes(0, "S") and Tracer.dentil_passes(0, "W") and not Tracer.dentil_passes(0, "N") and not Tracer.dentil_passes(0, "E"), "a dry north dentil passes south and west")
+	check(Tracer.dentil_passes(90, "W") and Tracer.dentil_passes(90, "N") and not Tracer.dentil_passes(90, "E") and not Tracer.dentil_passes(90, "S"), "one click faces the dry dentil east and only west and north pass")
+	check(not (Tracer.dentil_passes(180, "S") and Tracer.dentil_passes(180, "W")), "a dry south dentil does not pass the north pair")
+	check(Tracer.dentil_flood_passes(0, "N") and Tracer.dentil_flood_passes(0, "S") and not Tracer.dentil_flood_passes(0, "E") and not Tracer.dentil_flood_passes(0, "W"), "a flooded north dentil passes north and south")
+	check(Tracer.dentil_flood_passes(90, "E") and Tracer.dentil_flood_passes(90, "W") and not Tracer.dentil_flood_passes(90, "N"), "one click faces the flooded dentil east and only east and west pass")
+	check(Tracer.dentil_flood_passes(180, "N") and Tracer.dentil_flood_passes(180, "S") and not Tracer.dentil_flood_passes(180, "E"), "a flooded south dentil passes the same north and south")
+	check(Tracer.ogee_passes(0, "S") and Tracer.ogee_passes(0, "W") and not Tracer.ogee_passes(0, "N") and not Tracer.ogee_passes(0, "E"), "a dry ogee still passes south and west")
+	check(not Tracer.taenia_passes(0, "N") and Tracer.taenia_flood_passes(0, "N") and Tracer.taenia_flood_passes(0, "S") and not Tracer.taenia_flood_passes(0, "E"), "a taenia still stops while dry and passes north and south under water")
+	check(Tracer.gutta_passes(0, "N") and not Tracer.gutta_passes(0, "S") and Tracer.gutta_flood_passes(0, "E") and Tracer.gutta_flood_passes(0, "W") and not Tracer.gutta_flood_passes(0, "N"), "a dry north gutta still passes only north, and a flooded gutta passes east and west")
+	check(not Tracer.roll_passes(0, "S") and Tracer.roll_flood_passes(0, "S") and Tracer.roll_flood_passes(0, "E") and Tracer.roll_flood_passes(0, "W") and not Tracer.roll_flood_passes(0, "N"), "a dry roll still stops, and a flooded roll passes south, east, and west")
+	check(not Tracer.thumb_passes(0, "S") and Tracer.thumb_flood_passes(0, "S") and Tracer.thumb_flood_passes(0, "W") and not Tracer.thumb_flood_passes(0, "N"), "a dry thumb still stops, and a flooded thumb passes south and west")
+	check(not Tracer.staff_passes(0, "S") and Tracer.staff_flood_passes(0, "S") and Tracer.staff_flood_passes(0, "E"), "a dry staff still stops, and a flooded staff passes south and east")
+	check(not Tracer.reed_passes(0, "S") and Tracer.reed_flood_passes(0, "N") and Tracer.reed_flood_passes(0, "E") and Tracer.reed_flood_passes(0, "S") and Tracer.reed_flood_passes(0, "W"), "a dry reed still stops, and a flooded reed passes every heading")
+	check(not Tracer.billet_passes(0, "S") and Tracer.billet_flood_passes(0, "N") and Tracer.billet_flood_passes(0, "S") and Tracer.billet_flood_passes(0, "W") and not Tracer.billet_flood_passes(0, "E"), "a dry billet still stops, and a flooded billet passes north, south, and west")
+	check(not Tracer.reglet_passes(0, "S") and Tracer.reglet_flood_passes(0, "N") and Tracer.reglet_flood_passes(0, "S") and Tracer.reglet_flood_passes(0, "E") and not Tracer.reglet_flood_passes(0, "W"), "a dry reglet still stops, and a flooded reglet passes north, south, and east")
+	check(not Tracer.baguette_passes(0, "S") and Tracer.baguette_flood_passes(0, "N") and Tracer.baguette_flood_passes(0, "E") and Tracer.baguette_flood_passes(0, "W") and not Tracer.baguette_flood_passes(0, "S"), "a dry baguette still stops, and a flooded baguette passes north, east, and west")
+	check(not Tracer.necking_passes(0, "W") and Tracer.necking_flood_passes(0, "N") and Tracer.necking_flood_passes(0, "W"), "a dry necking still stops, and a flooded necking passes north and west")
+	check(not Tracer.listel_passes(0, "N") and Tracer.listel_flood_passes(0, "N") and Tracer.listel_flood_passes(0, "E"), "a dry listel still stops, and a flooded listel passes north and east")
+	check(Tracer.annulet_passes(0, "N") and Tracer.annulet_passes(0, "E") and Tracer.annulet_passes(0, "W") and not Tracer.annulet_passes(0, "S") and Tracer.annulet_flood_passes(0, "W") and not Tracer.annulet_flood_passes(0, "S"), "a dry annulet still passes every heading except south, and a flooded annulet passes only west")
+	check(Tracer.echinus_passes(0, "N") and Tracer.echinus_passes(0, "E") and Tracer.echinus_passes(0, "W") and not Tracer.echinus_passes(0, "S") and Tracer.echinus_flood_passes(0, "E"), "a dry echinus still passes every heading except south, and a flooded echinus passes only east")
+	check(not Tracer.rebate_passes(0, "S") and Tracer.rebate_flood_passes(0, "S") and not Tracer.rebate_flood_passes(0, "W"), "a dry rebate still stops, and a flooded rebate passes only south")
+	check(not Tracer.abacus_passes(0, "N") and Tracer.abacus_flood_passes(0, "N") and not Tracer.abacus_flood_passes(0, "S"), "a dry abacus still stops, and a flooded abacus passes only north")
+	check(Tracer.throat_passes(0, "N") and Tracer.throat_passes(0, "E") and Tracer.throat_passes(0, "W") and not Tracer.throat_passes(0, "S") and Tracer.throat_flood_passes(0, "S"), "a dry throat still passes every heading except south, and a flooded throat passes only south")
+
+
+func test_dentil_book() -> void:
+	var book := Charts.dentil()
+	check(book.size() == 8, "the dentil book has eight charts")
+	var titles := ["The Dry Dentil", "The Turned Dentil", "The Gutta Dock", "The Roll Shut", "The Thumb Dark", "The Taenia Dark", "The Reed Stop", "The Dentil Line"]
+	for i in book.size():
+		var chart: Dictionary = book[i]
+		check(str(chart["harbor"]) == Charts.DENTIL, "chart %s belongs to the dentil" % str(chart["id"]))
+		check(str(chart["title"]) == titles[i], "chart %s keeps its title" % str(chart["id"]))
+		_expect_dentil_misses(chart)
+	check(str(book[2]["teach"]).to_lower().contains("gutta"), "chart 457 names the gutta")
+	check(str(book[3]["teach"]).to_lower().contains("roll"), "chart 458 names the roll")
+	check(str(book[4]["teach"]).to_lower().contains("thumb"), "chart 459 names the thumb")
+	check(str(book[5]["teach"]).to_lower().contains("taenia"), "chart 460 names the taenia")
+	check(str(book[6]["teach"]).to_lower().contains("reed"), "chart 461 names the reed")
+	var line_teach := str(book[7]["teach"]).to_lower()
+	check(line_teach.contains("staff") and line_teach.contains("billet") and line_teach.contains("reglet") and line_teach.contains("baguette") and line_teach.contains("necking") and line_teach.contains("listel") and line_teach.contains("annulet") and line_teach.contains("echinus") and line_teach.contains("rebate") and line_teach.contains("abacus") and line_teach.contains("throat"), "chart 462 names the staff, the billet, the reglet, the baguette, the necking, the listel, the annulet, the echinus, the rebate, the abacus, and the throat")
+	_expect_dentil_miss(book[0], "O", "gutta", 0, "a dry north gutta misses chart 455")
+	_expect_dentil_miss(book[2], "O", "gutta", 0, "a dry north gutta misses chart 457")
+	_expect_dentil_miss(book[3], "O", "roll", 0, "a dry roll misses chart 458")
+	_expect_dentil_miss(book[4], "O", "thumb", 0, "a dry thumb misses chart 459")
+	_expect_dentil_miss(book[5], "O", "taenia", 0, "a dry taenia misses chart 460")
+	_expect_dentil_miss(book[6], "O", "reed", 0, "a dry reed misses chart 461")
+	_expect_dentil_miss(book[7], "O", "staff", 0, "a dry staff misses chart 462")
+	_expect_dentil_miss(book[7], "O", "billet", 0, "a dry billet misses chart 462")
+	_expect_dentil_miss(book[7], "O", "reglet", 0, "a dry reglet misses chart 462")
+	_expect_dentil_miss(book[7], "O", "baguette", 0, "a dry baguette misses chart 462")
+	_expect_dentil_miss(book[7], "O", "necking", 0, "a dry necking misses chart 462")
+	_expect_dentil_miss(book[7], "O", "listel", 0, "a dry listel misses chart 462")
+	_expect_dentil_miss(book[7], "O", "annulet", 0, "a dry annulet misses chart 462")
+	_expect_dentil_miss(book[7], "O", "echinus", 0, "a dry echinus misses chart 462")
+	_expect_dentil_miss(book[7], "O", "rebate", 0, "a dry rebate misses chart 462")
+	_expect_dentil_miss(book[7], "O", "abacus", 0, "a dry abacus misses chart 462")
+	_expect_dentil_miss(book[7], "O", "throat", 0, "a dry throat misses chart 462")
+	var line: Dictionary = book[7]
+	var lit: Dictionary = Tracer.trace(line, Charts.make_state(line, true))
+	check(not bool(lit["boats"]["Hb"]), "the dentil line keeps the hull dark")
+	var flood: Dictionary = Charts.duplicate_state(Charts.make_state(line, true))
+	flood["tide_index"] = 1
+	var flood_trace: Dictionary = Tracer.trace(line, flood)
+	check(bool(flood_trace["boats"]["Hb"]) and not Tracer.is_cleared(line, flood), "high water lights the dentil hull and does not clear")
+	check(int(ProjectSettings.get_setting("display/window/size/viewport_width")) == 1280 and int(ProjectSettings.get_setting("display/window/size/viewport_height")) == 720, "the window stays 1280 by 720")
+
+
+func _expect_dentil_misses(chart: Dictionary) -> void:
+	var kinds: Array = ["gutta", "roll", "thumb", "staff", "reed", "taenia", "billet", "reglet", "baguette", "necking", "listel", "annulet", "echinus", "rebate", "abacus", "throat"]
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		var pid := str(piece["id"])
+		for kind in kinds:
+			for rot in [0, 90, 180, 270]:
+				_expect_dentil_miss(chart, pid, str(kind), rot, "chart %s %s %s at %d misses" % [str(chart["id"]), pid, str(kind), rot])
+
+
+func _expect_dentil_miss(chart: Dictionary, piece_id: String, kind: String, rot: int, label: String) -> void:
+	var copy: Dictionary = chart.duplicate(true)
+	_retarget(copy, piece_id, kind, rot)
+	check(not Tracer.is_cleared(copy, Charts.make_state(copy, true)), label)
+
+
 func _expect_reed_misses(chart: Dictionary) -> void:
 	var kinds: Array = ["listel", "necking", "taenia", "baguette", "reglet", "billet", "annulet", "echinus", "rebate", "abacus", "throat", "impost", "threshold", "ovolo", "fascia", "soffit", "lintel", "hood", "archivolt", "cill", "larmier", "scotia", "architrave", "beak", "drip"]
 	for raw in chart["pieces"]:
@@ -16606,8 +16696,44 @@ func test_smoke() -> void:
 	await process_frame
 	check(str(main.chart["id"]) == "447", "Gutta returns to The Flooded Gutta")
 	check(_chart_row_fits(main.gutta_grid, main._side), "the gutta chart row fits in the window")
+	var dentil_rect: Rect2 = main.dentil_book_button.get_global_rect()
+	var dentil_side: Rect2 = main._side.get_global_rect()
+	check(dentil_side.grow(1.0).encloses(dentil_rect), "the dentil book button sits inside the side panel")
+	check(not dentil_rect.intersects(gutta_rect), "the dentil book button stays off the gutta")
+	check(dentil_rect.size.x + 0.5 >= main.dentil_book_button.get_minimum_size().x, "the dentil label has room")
+	check(gutta_rect.size.x + 0.5 >= main.gutta_book_button.get_minimum_size().x, "the gutta label still has room")
+	main.unlocked[454] = false
+	main._refresh_chrome()
+	check(main.dentil_book_button.disabled, "the dentil stays locked until the gutta line is held")
+	main.unlocked[453] = true
+	check(main.select_chart(453), "chart 454 opens when unlocked")
+	check(main.dentil_book_button.disabled, "opening the gutta line does not unlock the dentil")
+	main.state = Charts.duplicate_state(Charts.make_state(main.chart, true))
+	main._refresh()
+	main.try_lock()
+	check(main.board_locked and main.unlocked[454], "holding the gutta line opens the dentil")
+	main._advance_from_win()
+	check(str(main.chart["id"]) == "455", "next chart from the gutta line enters The Dry Dentil")
+	check(main.dentil_grid.visible and not main.gutta_grid.visible and not main.roll_grid.visible, "the dentil grid opens with The Dry Dentil")
+	check(str(main.harbor_label.text) == Charts.DENTIL, "the harbor name follows the dentil")
+	check(str(main.tide_readout.text).to_lower().contains("dentil"), "chart 455 names the dentil in the water readout")
+	var dentil_cell := Charts.piece_cell(main.chart, main.state, "O")
+	check(str(main.selected_id) == "O" and int(main.state["pieces"]["O"]["rot"]) == 90, "chart 455 starts facing east")
+	_click_cell(main, dentil_cell.x, dentil_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 180, "a click turns the dentil from east to south")
+	check(str(main.status_label.text).to_lower().contains("opposite") and str(main.status_label.text).to_lower().contains("counterclockwise"), "the dentil says the opposite and the counterclockwise heading pass while dry")
+	_click_cell(main, dentil_cell.x, dentil_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 270, "the next click turns the dentil west")
+	_click_cell(main, dentil_cell.x, dentil_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 0, "the next click turns the dentil north")
+	_click_cell(main, dentil_cell.x, dentil_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 90, "four clicks restore the east facing")
+	main._on_book_pressed(57)
+	await process_frame
+	check(str(main.chart["id"]) == "455", "Dentil returns to The Dry Dentil")
+	check(_chart_row_fits(main.dentil_grid, main._side), "the dentil chart row fits in the window")
 	main._on_book_pressed(13)
-	check(main.weir_grid.visible and not main.lintel_grid.visible and not main.mullion_grid.visible and not main.transom_grid.visible and not main.casement_grid.visible and not main.jamb_grid.visible and not main.astragal_grid.visible and not main.scotia_grid.visible and not main.torus_grid.visible and not main.ogee_grid.visible and not main.ovolo_grid.visible and not main.cavetto_grid.visible and not main.fillet_grid.visible and not main.corona_grid.visible and not main.bead_grid.visible and not main.quirk_grid.visible and not main.cyma_grid.visible and not main.fascia_grid.visible and not main.soffit_grid.visible and not main.drip_grid.visible and not main.beak_grid.visible and not main.hood_grid.visible and not main.throat_grid.visible and not main.larmier_grid.visible and not main.cill_grid.visible and not main.threshold_grid.visible and not main.impost_grid.visible and not main.architrave_grid.visible and not main.archivolt_grid.visible and not main.abacus_grid.visible and not main.rebate_grid.visible and not main.echinus_grid.visible and not main.annulet_grid.visible and not main.listel_grid.visible and not main.necking_grid.visible and not main.taenia_grid.visible and not main.baguette_grid.visible and not main.reglet_grid.visible and not main.billet_grid.visible and not main.reed_grid.visible and not main.staff_grid.visible and not main.thumb_grid.visible and not main.roll_grid.visible and not main.gutta_grid.visible, "the weir book still opens")
+	check(main.weir_grid.visible and not main.lintel_grid.visible and not main.mullion_grid.visible and not main.transom_grid.visible and not main.casement_grid.visible and not main.jamb_grid.visible and not main.astragal_grid.visible and not main.scotia_grid.visible and not main.torus_grid.visible and not main.ogee_grid.visible and not main.ovolo_grid.visible and not main.cavetto_grid.visible and not main.fillet_grid.visible and not main.corona_grid.visible and not main.bead_grid.visible and not main.quirk_grid.visible and not main.cyma_grid.visible and not main.fascia_grid.visible and not main.soffit_grid.visible and not main.drip_grid.visible and not main.beak_grid.visible and not main.hood_grid.visible and not main.throat_grid.visible and not main.larmier_grid.visible and not main.cill_grid.visible and not main.threshold_grid.visible and not main.impost_grid.visible and not main.architrave_grid.visible and not main.archivolt_grid.visible and not main.abacus_grid.visible and not main.rebate_grid.visible and not main.echinus_grid.visible and not main.annulet_grid.visible and not main.listel_grid.visible and not main.necking_grid.visible and not main.taenia_grid.visible and not main.baguette_grid.visible and not main.reglet_grid.visible and not main.billet_grid.visible and not main.reed_grid.visible and not main.staff_grid.visible and not main.thumb_grid.visible and not main.roll_grid.visible and not main.gutta_grid.visible and not main.dentil_grid.visible, "the weir book still opens")
 	main.select_chart(0)
 	main.restart_chart()
 	var before_rot := int(main.state["pieces"]["M"]["rot"])
@@ -16721,8 +16847,9 @@ func _walk(chart: Dictionary, state: Dictionary, index: int, found: Array) -> vo
 	# A thumb has four facings. Dry, every heading stops. Flooded, the opposite and the next counterclockwise heading pass. Opposite facings do not share that set.
 	# A roll has four facings. Dry, every heading stops. Flooded, every heading except the facing passes. Opposite facings do not share that set.
 	# A gutta has four facings. Dry, only the facing passes. Flooded, the two perpendicular headings pass, so opposite facings share that set.
+	# A dentil has four facings. Dry, the opposite and the counterclockwise heading pass. Flooded, the facing and the opposite pass.
 	var rots: Array = [0]
-	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma" or kind == "fascia" or kind == "soffit" or kind == "drip" or kind == "beak" or kind == "hood" or kind == "throat" or kind == "larmier" or kind == "cill" or kind == "threshold" or kind == "impost" or kind == "architrave" or kind == "archivolt" or kind == "abacus" or kind == "rebate" or kind == "echinus" or kind == "annulet" or kind == "listel" or kind == "necking" or kind == "taenia" or kind == "baguette" or kind == "reglet" or kind == "billet" or kind == "reed" or kind == "staff" or kind == "thumb" or kind == "roll" or kind == "gutta":
+	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma" or kind == "fascia" or kind == "soffit" or kind == "drip" or kind == "beak" or kind == "hood" or kind == "throat" or kind == "larmier" or kind == "cill" or kind == "threshold" or kind == "impost" or kind == "architrave" or kind == "archivolt" or kind == "abacus" or kind == "rebate" or kind == "echinus" or kind == "annulet" or kind == "listel" or kind == "necking" or kind == "taenia" or kind == "baguette" or kind == "reglet" or kind == "billet" or kind == "reed" or kind == "staff" or kind == "thumb" or kind == "roll" or kind == "gutta" or kind == "dentil":
 		rots = [0, 90, 180, 270]
 	elif kind != "shutter" and kind != "well" and kind != "siphon" and kind != "lintel" and kind != "mullion" and kind != "transom":
 		rots = [0, 90]
