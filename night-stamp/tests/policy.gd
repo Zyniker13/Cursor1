@@ -2996,6 +2996,164 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 			var helm_fill_later = state.form[row + 1][col]
 			if row + 1 < 2 and state.form[row + 2][col] != null:
 				guess -= _stamp_number(state, String(helm_fill_later["card_id"]), row + 1, col)
+	if rule == "drop_if_gauge_count":
+		var gauge_filled = 0
+		for gauge_row in 3:
+			for gauge_col in 3:
+				if state.form[gauge_row][gauge_col] != null:
+					gauge_filled += 1
+		var gauge_next = gauge_filled + 1
+		if gauge_next == 6 or gauge_next == 8:
+			guess -= 4
+		elif gauge_filled == 6 or gauge_filled == 8:
+			guess += 5
+	if rule == "double_bias_blank":
+		var bias_before_row = row
+		var bias_before_col = col - 4
+		while bias_before_col < 0:
+			bias_before_row -= 1
+			bias_before_col += 3
+		var bias_after_row = row
+		var bias_after_col = col + 4
+		while bias_after_col > 2:
+			bias_after_row += 1
+			bias_after_col -= 3
+		var bias_before_filled = bias_before_row >= 0 and state.form[bias_before_row][bias_before_col] != null
+		var bias_after_empty = bias_after_row <= 2 and state.form[bias_after_row][bias_after_col] == null
+		if bias_before_filled and bias_after_empty:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+		if bias_before_filled:
+			var bias_earlier = state.form[bias_before_row][bias_before_col]
+			var bias_earlier_before_row = bias_before_row
+			var bias_earlier_before_col = bias_before_col - 4
+			while bias_earlier_before_col < 0:
+				bias_earlier_before_row -= 1
+				bias_earlier_before_col += 3
+			if bias_earlier_before_row >= 0 and state.form[bias_earlier_before_row][bias_earlier_before_col] != null:
+				guess -= _stamp_number(state, String(bias_earlier["card_id"]), bias_before_row, bias_before_col)
+		if bias_after_row <= 2 and state.form[bias_after_row][bias_after_col] != null:
+			var bias_later = state.form[bias_after_row][bias_after_col]
+			var bias_later_after_row = bias_after_row
+			var bias_later_after_col = bias_after_col + 4
+			while bias_later_after_col > 2:
+				bias_later_after_row += 1
+				bias_later_after_col -= 3
+			if bias_later_after_row <= 2 and state.form[bias_later_after_row][bias_later_after_col] == null:
+				guess += _stamp_number(state, String(bias_later["card_id"]), bias_after_row, bias_after_col)
+	if rule == "yield_trine_pay":
+		var trine_sides = 0
+		var trine_corners = 0
+		for trine_side in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var trine_side_row = row + trine_side.x
+			var trine_side_col = col + trine_side.y
+			if trine_side_row < 0 or trine_side_col < 0 or trine_side_row > 2 or trine_side_col > 2:
+				continue
+			if state.form[trine_side_row][trine_side_col] != null:
+				trine_sides += 1
+		for trine_corner in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var trine_corner_row = row + trine_corner.x
+			var trine_corner_col = col + trine_corner.y
+			if trine_corner_row < 0 or trine_corner_col < 0 or trine_corner_row > 2 or trine_corner_col > 2:
+				continue
+			if state.form[trine_corner_row][trine_corner_col] != null:
+				trine_corners += 1
+		if trine_sides == 0 and trine_corners == 3:
+			guess += 4
+		else:
+			guess -= 1
+		for trine_side in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var trine_near_row = row + trine_side.x
+			var trine_near_col = col + trine_side.y
+			if trine_near_row < 0 or trine_near_col < 0 or trine_near_row > 2 or trine_near_col > 2:
+				continue
+			if state.form[trine_near_row][trine_near_col] == null:
+				continue
+			var trine_other_sides = 0
+			var trine_other_corners = 0
+			for trine_other in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+				var trine_other_row = trine_near_row + trine_other.x
+				var trine_other_col = trine_near_col + trine_other.y
+				if trine_other_row < 0 or trine_other_col < 0 or trine_other_row > 2 or trine_other_col > 2:
+					continue
+				if trine_other_row == row and trine_other_col == col:
+					continue
+				if state.form[trine_other_row][trine_other_col] != null:
+					trine_other_sides += 1
+			for trine_other in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+				var trine_other_row = trine_near_row + trine_other.x
+				var trine_other_col = trine_near_col + trine_other.y
+				if trine_other_row < 0 or trine_other_col < 0 or trine_other_row > 2 or trine_other_col > 2:
+					continue
+				if state.form[trine_other_row][trine_other_col] != null:
+					trine_other_corners += 1
+			if trine_other_sides == 0 and trine_other_corners == 3:
+				guess -= 2
+		for trine_corner in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var trine_diag_row = row + trine_corner.x
+			var trine_diag_col = col + trine_corner.y
+			if trine_diag_row < 0 or trine_diag_col < 0 or trine_diag_row > 2 or trine_diag_col > 2:
+				continue
+			if state.form[trine_diag_row][trine_diag_col] == null:
+				continue
+			var trine_diag_sides = 0
+			var trine_diag_corners = 0
+			for trine_other in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+				var trine_other_row = trine_diag_row + trine_other.x
+				var trine_other_col = trine_diag_col + trine_other.y
+				if trine_other_row < 0 or trine_other_col < 0 or trine_other_row > 2 or trine_other_col > 2:
+					continue
+				if state.form[trine_other_row][trine_other_col] != null:
+					trine_diag_sides += 1
+			for trine_other in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+				var trine_other_row = trine_diag_row + trine_other.x
+				var trine_other_col = trine_diag_col + trine_other.y
+				if trine_other_row < 0 or trine_other_col < 0 or trine_other_row > 2 or trine_other_col > 2:
+					continue
+				if trine_other_row == row and trine_other_col == col:
+					continue
+				if state.form[trine_other_row][trine_other_col] != null:
+					trine_diag_corners += 1
+			if trine_diag_corners == 2 and trine_diag_sides == 0:
+				guess += 2
+			elif trine_diag_corners == 3 and trine_diag_sides == 0:
+				guess -= 2
+	if rule == "double_bias_fill":
+		var bias_fill_before_row = row
+		var bias_fill_before_col = col - 4
+		while bias_fill_before_col < 0:
+			bias_fill_before_row -= 1
+			bias_fill_before_col += 3
+		var bias_fill_after_row = row
+		var bias_fill_after_col = col + 4
+		while bias_fill_after_col > 2:
+			bias_fill_after_row += 1
+			bias_fill_after_col -= 3
+		var bias_fill_before_empty = bias_fill_before_row >= 0 and state.form[bias_fill_before_row][bias_fill_before_col] == null
+		var bias_fill_after_filled = bias_fill_after_row <= 2 and state.form[bias_fill_after_row][bias_fill_after_col] != null
+		if bias_fill_before_empty and bias_fill_after_filled:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+		if bias_fill_before_row >= 0 and state.form[bias_fill_before_row][bias_fill_before_col] != null:
+			var bias_fill_earlier = state.form[bias_fill_before_row][bias_fill_before_col]
+			var bias_fill_earlier_before_row = bias_fill_before_row
+			var bias_fill_earlier_before_col = bias_fill_before_col - 4
+			while bias_fill_earlier_before_col < 0:
+				bias_fill_earlier_before_row -= 1
+				bias_fill_earlier_before_col += 3
+			if bias_fill_earlier_before_row >= 0 and state.form[bias_fill_earlier_before_row][bias_fill_earlier_before_col] == null:
+				guess += _stamp_number(state, String(bias_fill_earlier["card_id"]), bias_fill_before_row, bias_fill_before_col)
+		if bias_fill_after_filled:
+			var bias_fill_later = state.form[bias_fill_after_row][bias_fill_after_col]
+			var bias_fill_later_after_row = bias_fill_after_row
+			var bias_fill_later_after_col = bias_fill_after_col + 4
+			while bias_fill_later_after_col > 2:
+				bias_fill_later_after_row += 1
+				bias_fill_later_after_col -= 3
+			if bias_fill_later_after_row <= 2 and state.form[bias_fill_later_after_row][bias_fill_later_after_col] != null:
+				guess -= _stamp_number(state, String(bias_fill_later["card_id"]), bias_fill_after_row, bias_fill_after_col)
 	if rule == "ignore_isolated":
 		var neighbors = 0
 		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
