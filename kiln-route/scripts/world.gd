@@ -154,6 +154,14 @@ extends RefCounted
 ## leaves forward. The jointer is empty after that tick. If either exit
 ## refuses, neither item leaves. A wrest accepts from ahead and sends
 ## the waiter left and the arrival right. Nothing stays in the jointer.
+## A bridle does not forward in step 2 on its own. The first item stays.
+## Only an arrival from ahead is accepted. The same material does not
+## release the waiter. When a later item of a different material arrives
+## from ahead, the waiter moves one cell left and the arrival moves one
+## cell behind, and only if both of those cells can take them. Neither
+## leaves forward. The bridle is empty after that tick. If either exit
+## refuses, neither item leaves. A jointer accepts from ahead and sends
+## the waiter right and the arrival left. Nothing stays in the bridle.
 
 const Rules = preload("res://scripts/foundry.gd")
 
@@ -185,7 +193,7 @@ class Machine:
 	## Second lane on a bridge. -1 is empty. Other machines leave it empty.
 	var cross := -1
 	var cross_moved := false
-	## True while a twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, a clevis, a beam, a hake, a sole, a frog, a shin, a point, a throat, a wrest, or a jointer is resolving an arrival, so a loop cannot re-enter.
+	## True while a twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, a clevis, a beam, a hake, a sole, a frog, a shin, a point, a throat, a wrest, a jointer, or a bridle is resolving an arrival, so a loop cannot re-enter.
 	var pairing := false
 
 class Source:
@@ -583,8 +591,9 @@ func _can_take(machine: Machine, mat: int, arrival: int) -> bool:
 		or machine.kind == Rules.Kind.THROAT
 		or machine.kind == Rules.Kind.WREST
 		or machine.kind == Rules.Kind.JOINTER
+		or machine.kind == Rules.Kind.BRIDLE
 	):
-		# Pairing is handled in _accept. A twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, a clevis, a beam, a hake, a sole, a frog, a shin, a point, a throat, a wrest, or a jointer may already be holding.
+		# Pairing is handled in _accept. A twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, a clevis, a beam, a hake, a sole, a frog, a shin, a point, a throat, a wrest, a jointer, or a bridle may already be holding.
 		return false
 	if machine.kind == Rules.Kind.BRIDGE:
 		if arrival == machine.dir:
@@ -680,6 +689,8 @@ func _accept(dest: Vector2i, mat: int, arrival: int) -> bool:
 		return _accept_wrest(dest, machine, mat, arrival)
 	if machine.kind == Rules.Kind.JOINTER:
 		return _accept_jointer(dest, machine, mat, arrival)
+	if machine.kind == Rules.Kind.BRIDLE:
+		return _accept_bridle(dest, machine, mat, arrival)
 	if not _can_take(machine, mat, arrival):
 		return false
 	if _holder(machine.kind):
@@ -1651,6 +1662,49 @@ func _accept_jointer(pos: Vector2i, machine: Machine, mat: int, arrival: int) ->
 	if right_sent:
 		left_sent = _accept(pos + Rules.vec(left_dir), mat, left_dir)
 	if not right_sent or not left_sent:
+		_restore(mark)
+		return false
+	machine.pairing = false
+	machine.hold = -1
+	machine.moved = false
+	return true
+
+
+## From ahead only. The first item waits and never leaves on its own. The
+## same material does not release the waiter. A later item of a different
+## material from ahead may leave on that tick: the waiter moves one cell
+## left and the arrival moves one cell behind, if both cells can take them.
+## Neither leaves forward. Left is the bridle's left. Behind is the cell
+## opposite the bridle's facing. The bridle is empty afterwards. If either
+## exit refuses, neither item leaves and the arrival is not accepted. A
+## lone item never leaves, including on the next tick and the tick after
+## that. The bridle does not accept from the left, from the right, or from
+## behind. It does not spill, rotate, alternate, or keep either item. A
+## jointer sends the waiter right and the arrival left. A wrest sends the
+## waiter left and the arrival right. A shin sends the waiter left and the
+## arrival forward. A point sends the waiter right and the arrival forward.
+## A throat sends the waiter behind and the arrival forward. A beam sends
+## the waiter backward and the arrival left.
+func _accept_bridle(pos: Vector2i, machine: Machine, mat: int, arrival: int) -> bool:
+	if arrival != Rules.opposite(machine.dir):
+		return false
+	if machine.hold < 0:
+		machine.hold = mat
+		machine.moved = true
+		return true
+	if machine.moved or machine.pairing:
+		return false
+	if mat == machine.hold:
+		return false
+	var left_dir := Rules.left(machine.dir)
+	var behind_dir := Rules.opposite(machine.dir)
+	var mark := _checkpoint()
+	machine.pairing = true
+	var left_sent: bool = _accept(pos + Rules.vec(left_dir), machine.hold, left_dir)
+	var behind_sent := false
+	if left_sent:
+		behind_sent = _accept(pos + Rules.vec(behind_dir), mat, behind_dir)
+	if not left_sent or not behind_sent:
 		_restore(mark)
 		return false
 	machine.pairing = false

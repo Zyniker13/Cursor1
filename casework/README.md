@@ -1,6 +1,6 @@
 # Casework
 
-A deduction game with fifty cases, **The spare key**, **The rehearsal score**, **The gilt stamp**, **The ferry bell**, **The weather slate**, **The loom shuttle**, **The hive smoker**, **The glass pontil**, **The press proof**, **The assay cup**, **The kiln chalk**, **The tide ledger**, **The night bell**, **The salt mark**, **The wick trim**, **The glass anneal**, **The orchard graft**, **The dye vat**, **The tar kettle**, **The cork press**, **The net loft**, **The cask hoop**, **The linen fold**, **The dovetail**, **The mortise**, **The rebate**, **The housing**, **The tenon**, **The bridle**, **The dado**, **The spline**, **The mitre**, **The lap**, **The scarf**, **The finger**, **The haunch**, **The dowel**, **The tongue**, **The quirk**, **The chamfer**, **The scotia**, **The cyma**, **The cavetto**, **The reed**, **The annulet**, **The hood**, **The listel**, **The abacus**, **The girdle**, and **The reglet**.
+A deduction game with fifty-one cases, **The spare key**, **The rehearsal score**, **The gilt stamp**, **The ferry bell**, **The weather slate**, **The loom shuttle**, **The hive smoker**, **The glass pontil**, **The press proof**, **The assay cup**, **The kiln chalk**, **The tide ledger**, **The night bell**, **The salt mark**, **The wick trim**, **The glass anneal**, **The orchard graft**, **The dye vat**, **The tar kettle**, **The cork press**, **The net loft**, **The cask hoop**, **The linen fold**, **The dovetail**, **The mortise**, **The rebate**, **The housing**, **The tenon**, **The bridle**, **The dado**, **The spline**, **The mitre**, **The lap**, **The scarf**, **The finger**, **The haunch**, **The dowel**, **The tongue**, **The quirk**, **The chamfer**, **The scotia**, **The cyma**, **The cavetto**, **The reed**, **The annulet**, **The hood**, **The listel**, **The abacus**, **The girdle**, **The reglet**, and **The gutta**.
 
 Pick a file. That file keeps a single timeline. You read the exhibits and pin who, the room, and the hour. A theory is accepted only when it fits every exhibit. A theory that does not fit comes back naming the exhibits it contradicts. An empty pin is refused by the name of the missing slot.
 
@@ -107,6 +107,8 @@ There is no voice. The papers and the board are the whole case.
 **The girdle.** The girdle left its peg at the joiner's hack. Name who cut the girdle, the room they cut it in, and the hour.
 
 **The reglet.** The reglet left its peg at the joiner's jade. Name who cut the reglet, the room they cut it in, and the hour.
+
+**The gutta.** The gutta left its peg at the joiner's stud. Name who cut the gutta, the room they cut it in, and the hour.
 
 ## Play
 
