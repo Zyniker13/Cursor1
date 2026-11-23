@@ -17,7 +17,7 @@ class_name ChartBook
 # The Corona holds eight more. The Bead holds eight more. The Quirk holds eight more.
 # The Cyma holds eight more. The Fascia holds eight more. The Soffit holds eight more.
 # The Drip holds eight more. The Beak holds eight more. The Hood holds eight more.
-# The Throat holds eight more. The Larmier holds eight more. The Cill holds eight more. The Threshold holds eight more. The Impost holds eight more. The Architrave holds eight more. The Archivolt holds eight more. The Abacus holds eight more. The Rebate holds eight more. The Echinus holds eight more. The Annulet holds eight more. The Listel holds the last eight.
+# The Throat holds eight more. The Larmier holds eight more. The Cill holds eight more. The Threshold holds eight more. The Impost holds eight more. The Architrave holds eight more. The Archivolt holds eight more. The Abacus holds eight more. The Rebate holds eight more. The Echinus holds eight more. The Annulet holds eight more. The Listel holds eight more. The Necking holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
@@ -362,6 +362,19 @@ class_name ChartBook
 # west. A flooded north echinus passes only east. A flooded north rebate
 # passes only south. A flooded north abacus passes only north. A flooded north
 # throat passes only south.
+# A necking has a facing. Rotation changes it the same way: 0 north, 90 east,
+# 180 south, 270 west. While its row is dry, every heading stops on the edge
+# and the beam does not enter. One click still stops every heading. Opposite
+# dry facings share that shut state. While that row is flooded, the facing and
+# the next counterclockwise heading pass straight through, and that pass costs
+# no bounce. A flooded north necking passes north and west. East and south
+# stop. One click faces east and only east and north pass. A flooded south
+# necking passes south and east. A dry scotia passes north and west and stays
+# shut under water, so this piece does not repeat that pair. A flooded north
+# listel passes north and east. A flooded north annulet passes only west. A
+# flooded north echinus passes only east. A flooded north rebate passes only
+# south. A flooded north abacus passes only north. A flooded north throat
+# passes only south.
 # See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
@@ -415,6 +428,7 @@ const REBATE := "The Rebate"
 const ECHINUS := "The Echinus"
 const ANNULET := "The Annulet"
 const LISTEL := "The Listel"
+const NECKING := "The Necking"
 
 static func all() -> Array:
 	var book: Array = []
@@ -465,6 +479,7 @@ static func all() -> Array:
 	book.append_array(echinus())
 	book.append_array(annulet())
 	book.append_array(listel())
+	book.append_array(necking())
 	return book
 
 
@@ -654,6 +669,10 @@ static func annulet() -> Array:
 
 static func listel() -> Array:
 	return [chart_367(), chart_368(), chart_369(), chart_370(), chart_371(), chart_372(), chart_373(), chart_374()]
+
+
+static func necking() -> Array:
+	return [chart_375(), chart_376(), chart_377(), chart_378(), chart_379(), chart_380(), chart_381(), chart_382()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -13623,6 +13642,171 @@ static func chart_374() -> Dictionary:
 	)
 
 
+static func _necking_lane(prefix: String, ox: int, open_south: bool) -> Dictionary:
+	return {
+		"lanterns": [
+			_lantern(prefix + "Tn", ox + 2, 1, "S", "white"),
+			_lantern(prefix + "Ts", ox + 4, 1, "S", "red"),
+			_lantern(prefix + "Te", ox + 1, 2, "S", "blue"),
+			_lantern(prefix + "Tw", ox + 8, 2, "S", "red"),
+		],
+		"docks": [
+			_dock(prefix + "Nd", ox + 4, 3, "white", true, open_south),
+			_dock(prefix + "Kb", ox + 4, 2, "blue", true, true),
+			_dock(prefix + "Ks", ox + 2, 3, "red", true, not open_south),
+			_dock(prefix + "Ke", ox + 8, 3, "blue", true, not open_south),
+			_dock(prefix + "Kw", ox + 1, 3, "red", true, open_south),
+		],
+		"fixtures": [
+			_fixture(prefix + "S24", "shutter", ox + 2, 4, 0),
+			_fixture(prefix + "S25", "shutter", ox + 2, 5, 0),
+			_fixture(prefix + "S26", "shutter", ox + 2, 6, 0),
+			_fixture(prefix + "M27", "tide_mirror", ox + 2, 7, 90),
+			_fixture(prefix + "S37", "shutter", ox + 3, 7, 0),
+			_fixture(prefix + "M47", "tide_mirror", ox + 4, 7, 0),
+			_fixture(prefix + "S46", "shutter", ox + 4, 6, 0),
+			_fixture(prefix + "S45", "shutter", ox + 4, 5, 0),
+			_fixture(prefix + "M14", "tide_mirror", ox + 1, 4, 90),
+			_fixture(prefix + "S34", "shutter", ox + 3, 4, 0),
+			_fixture(prefix + "S54", "shutter", ox + 5, 4, 0),
+			_fixture(prefix + "S64", "shutter", ox + 6, 4, 0),
+			_fixture(prefix + "S74", "shutter", ox + 7, 4, 0),
+			_fixture(prefix + "M84", "tide_mirror", ox + 8, 4, 0),
+		],
+	}
+
+
+static func _necking_chart(id: String, title: String, teach: String, win: String, start_rot: int, sol_rot: int, open_south: bool, boat: bool) -> Dictionary:
+	var lane := _necking_lane("", 0, open_south)
+	var boats: Array = []
+	if boat:
+		boats.append(_boat("Hb", 1, 7))
+	return {
+		"id": id,
+		"title": title,
+		"harbor": NECKING,
+		"win": win,
+		"teach": teach,
+		"cols": 9,
+		"rows": 8,
+		"tide_phases": [0, 4],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": lane["lanterns"],
+		"docks": lane["docks"],
+		"boats": boats,
+		"fixtures": lane["fixtures"],
+		"pieces": [
+			_necking("O", "Necking", 4, 4, start_rot, sol_rot),
+		],
+	}
+
+
+static func chart_375() -> Dictionary:
+	return _necking_chart(
+		"375",
+		"The Flooded Necking",
+		"A flooded north necking passes north and west. East and south stop. While it is dry, every heading stops.",
+		"High water opens north and west. Low water stops every heading.",
+		90,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_376() -> Dictionary:
+	return _necking_chart(
+		"376",
+		"The Turned Necking",
+		"One click from east faces south. A flooded south necking passes south and east and stops north and west. A flooded north listel passes north and east, so the north keep lights.",
+		"The necking faces south. South and east pass.",
+		90,
+		180,
+		true,
+		false
+	)
+
+
+static func chart_377() -> Dictionary:
+	return _necking_chart(
+		"377",
+		"The Listel Miss",
+		"A flooded north listel passes north and east, so the east keep lights and the west dock stays dark.",
+		"North and west pass. The listel misses that pair.",
+		180,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_378() -> Dictionary:
+	return _necking_chart(
+		"378",
+		"The Annulet West",
+		"A flooded north annulet passes only west, so it misses the north beam of the pair.",
+		"North and west pass. The annulet misses that pair.",
+		270,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_379() -> Dictionary:
+	return _necking_chart(
+		"379",
+		"The Echinus Beam",
+		"A flooded north echinus passes only east, which is a keep on this chart.",
+		"North and west pass. The echinus misses that pair.",
+		90,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_380() -> Dictionary:
+	return _necking_chart(
+		"380",
+		"The Rebate Keep",
+		"A flooded north rebate passes only south, which is a keep. A dry rebate stops every heading.",
+		"North and west pass. The rebate misses that pair.",
+		180,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_381() -> Dictionary:
+	return _necking_chart(
+		"381",
+		"The Abacus West",
+		"A flooded north abacus passes only north, so it misses the west beam of the pair. A dry abacus stops every heading.",
+		"North and west pass. The abacus misses that pair.",
+		270,
+		0,
+		false,
+		false
+	)
+
+
+static func chart_382() -> Dictionary:
+	return _necking_chart(
+		"382",
+		"The Necking Line",
+		"Raise the tide to the necking's row. Under water, north and west pass. A flooded north throat passes only south, which is a keep. Low water lights the hull and leaves those docks dark.",
+		"The flood line stands on the necking. The hull stays dark.",
+		90,
+		0,
+		false,
+		true
+	)
+
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -14071,6 +14255,20 @@ static func _throat(id: String, name: String, x: int, y: int, start_rot: int, so
 		"id": id,
 		"name": name,
 		"kind": "throat",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _necking(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "necking",
 		"movable": false,
 		"sockets": [{"id": "a", "x": x, "y": y}],
 		"start_socket": "a",
