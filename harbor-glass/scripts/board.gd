@@ -313,6 +313,16 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_annulet(at, rot)
 		"listel":
 			_draw_listel(at, rot)
+		"necking":
+			_draw_necking(at, rot)
+		"taenia":
+			_draw_taenia(at, rot)
+		"baguette":
+			_draw_baguette(at, rot)
+		"reglet":
+			_draw_reglet(at, rot)
+		"billet":
+			_draw_billet(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -1836,6 +1846,279 @@ func _listel_tick(center: Vector2, dir: String, mark: Color) -> void:
 		inner + across * half,
 		outer + across * half,
 		outer - across * half,
+	]), mark)
+
+func _draw_necking(at: Vector2i, rot: int) -> void:
+	# A thin collar with ticks on the facing and the counterclockwise edge.
+	# The collar stays square, unlike the listel's turning band.
+	var center := _center(at)
+	var facing := Tracer.necking_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var counter := "W"
+	match facing:
+		"N":
+			counter = "W"
+		"E":
+			counter = "N"
+		"S":
+			counter = "E"
+		_:
+			counter = "S"
+	var outer := cell * 0.34
+	var inner := cell * 0.26
+	draw_colored_polygon(PackedVector2Array([
+		center + Vector2(-outer, -outer),
+		center + Vector2(outer, -outer),
+		center + Vector2(outer, -inner),
+		center + Vector2(-outer, -inner),
+	]), mark)
+	draw_colored_polygon(PackedVector2Array([
+		center + Vector2(-outer, inner),
+		center + Vector2(outer, inner),
+		center + Vector2(outer, outer),
+		center + Vector2(-outer, outer),
+	]), mark)
+	draw_colored_polygon(PackedVector2Array([
+		center + Vector2(-outer, -inner),
+		center + Vector2(-inner, -inner),
+		center + Vector2(-inner, inner),
+		center + Vector2(-outer, inner),
+	]), mark)
+	draw_colored_polygon(PackedVector2Array([
+		center + Vector2(inner, -inner),
+		center + Vector2(outer, -inner),
+		center + Vector2(outer, inner),
+		center + Vector2(inner, inner),
+	]), mark)
+	_necking_tick(center, facing, mark)
+	_necking_tick(center, counter, mark)
+
+func _necking_tick(center: Vector2, dir: String, mark: Color) -> void:
+	var outward := Vector2.UP
+	match dir:
+		"N":
+			outward = Vector2.UP
+		"E":
+			outward = Vector2.RIGHT
+		"S":
+			outward = Vector2.DOWN
+		_:
+			outward = Vector2.LEFT
+	var across := Vector2(-outward.y, outward.x)
+	var inner := center + outward * cell * 0.36
+	var outer := center + outward * cell * 0.48
+	var half := cell * 0.04
+	draw_colored_polygon(PackedVector2Array([
+		inner - across * half,
+		inner + across * half,
+		outer + across * half,
+		outer - across * half,
+	]), mark)
+
+func _draw_taenia(at: Vector2i, rot: int) -> void:
+	# A broad ribbon along the open axis, with a tick at each end. It is wider
+	# than the listel band and is not the necking's closed collar.
+	var center := _center(at)
+	var facing := Tracer.taenia_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var along := Vector2.DOWN
+	var other := "S"
+	match facing:
+		"N", "S":
+			along = Vector2.DOWN
+			other = "S" if facing == "N" else "N"
+		_:
+			along = Vector2.RIGHT
+			other = "W" if facing == "E" else "E"
+	var half := cell * 0.40
+	var thick := cell * 0.11
+	var across := Vector2(-along.y, along.x)
+	draw_colored_polygon(PackedVector2Array([
+		center - along * half - across * thick,
+		center + along * half - across * thick,
+		center + along * half + across * thick,
+		center - along * half + across * thick,
+	]), mark)
+	_taenia_tick(center, facing, mark)
+	_taenia_tick(center, other, mark)
+
+func _taenia_tick(center: Vector2, dir: String, mark: Color) -> void:
+	var outward := Vector2.UP
+	match dir:
+		"N":
+			outward = Vector2.UP
+		"E":
+			outward = Vector2.RIGHT
+		"S":
+			outward = Vector2.DOWN
+		_:
+			outward = Vector2.LEFT
+	var across := Vector2(-outward.y, outward.x)
+	var inner := center + outward * cell * 0.42
+	var outer := center + outward * cell * 0.50
+	var half := cell * 0.07
+	draw_colored_polygon(PackedVector2Array([
+		inner - across * half,
+		inner + across * half,
+		outer + across * half,
+		outer - across * half,
+	]), mark)
+
+func _draw_baguette(at: Vector2i, rot: int) -> void:
+	# A half-round bead with ticks on the three flooded headings and none on
+	# the stopped opposite. It is rounder than the taenia ribbon.
+	var center := _center(at)
+	var facing := Tracer.baguette_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var stop := "S"
+	match facing:
+		"N":
+			stop = "S"
+		"E":
+			stop = "W"
+		"S":
+			stop = "N"
+		_:
+			stop = "E"
+	var radius := cell * 0.22
+	draw_colored_polygon(PackedVector2Array([
+		center + Vector2(0, -radius),
+		center + Vector2(radius * 0.7, -radius * 0.7),
+		center + Vector2(radius, 0),
+		center + Vector2(radius * 0.7, radius * 0.7),
+		center + Vector2(0, radius),
+		center + Vector2(-radius * 0.7, radius * 0.7),
+		center + Vector2(-radius, 0),
+		center + Vector2(-radius * 0.7, -radius * 0.7),
+	]), mark)
+	for dir in ["N", "E", "S", "W"]:
+		if dir == stop:
+			continue
+		_baguette_tick(center, dir, mark)
+
+func _baguette_tick(center: Vector2, dir: String, mark: Color) -> void:
+	var outward := Vector2.UP
+	match dir:
+		"N":
+			outward = Vector2.UP
+		"E":
+			outward = Vector2.RIGHT
+		"S":
+			outward = Vector2.DOWN
+		_:
+			outward = Vector2.LEFT
+	var across := Vector2(-outward.y, outward.x)
+	var inner := center + outward * cell * 0.26
+	var outer := center + outward * cell * 0.42
+	var half := cell * 0.035
+	draw_colored_polygon(PackedVector2Array([
+		inner - across * half,
+		inner + across * half,
+		outer + across * half,
+		outer - across * half,
+	]), mark)
+
+func _draw_reglet(at: Vector2i, rot: int) -> void:
+	# A narrow flat fillet with ticks on the three flooded headings. It is
+	# flatter than the baguette bead.
+	var center := _center(at)
+	var facing := Tracer.reglet_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var stop := "W"
+	match facing:
+		"N":
+			stop = "W"
+		"E":
+			stop = "N"
+		"S":
+			stop = "E"
+		_:
+			stop = "S"
+	var along := Vector2.RIGHT if facing == "N" or facing == "S" else Vector2.DOWN
+	var half := cell * 0.34
+	var thick := cell * 0.045
+	var across := Vector2(-along.y, along.x)
+	draw_colored_polygon(PackedVector2Array([
+		center - along * half - across * thick,
+		center + along * half - across * thick,
+		center + along * half + across * thick,
+		center - along * half + across * thick,
+	]), mark)
+	for dir in ["N", "E", "S", "W"]:
+		if dir == stop:
+			continue
+		_reglet_tick(center, dir, mark)
+
+func _reglet_tick(center: Vector2, dir: String, mark: Color) -> void:
+	var outward := Vector2.UP
+	match dir:
+		"N":
+			outward = Vector2.UP
+		"E":
+			outward = Vector2.RIGHT
+		"S":
+			outward = Vector2.DOWN
+		_:
+			outward = Vector2.LEFT
+	var across := Vector2(-outward.y, outward.x)
+	var inner := center + outward * cell * 0.10
+	var outer := center + outward * cell * 0.30
+	var half := cell * 0.03
+	draw_colored_polygon(PackedVector2Array([
+		inner - across * half,
+		inner + across * half,
+		outer + across * half,
+		outer - across * half,
+	]), mark)
+
+func _draw_billet(at: Vector2i, rot: int) -> void:
+	# Three short bricks on the flooded headings and a gap on the stopped
+	# clockwise heading. The bricks stay separate, unlike the reglet strip.
+	var center := _center(at)
+	var facing := Tracer.billet_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var stop := "E"
+	match facing:
+		"N":
+			stop = "E"
+		"E":
+			stop = "S"
+		"S":
+			stop = "W"
+		_:
+			stop = "N"
+	var brick := cell * 0.11
+	draw_rect(Rect2(center - Vector2(brick, brick) * 0.45, Vector2(brick, brick) * 0.9), mark, true)
+	for dir in ["N", "E", "S", "W"]:
+		if dir == stop:
+			continue
+		_billet_brick(center, dir, mark)
+
+func _billet_brick(center: Vector2, dir: String, mark: Color) -> void:
+	var outward := Vector2.UP
+	match dir:
+		"N":
+			outward = Vector2.UP
+		"E":
+			outward = Vector2.RIGHT
+		"S":
+			outward = Vector2.DOWN
+		_:
+			outward = Vector2.LEFT
+	var across := Vector2(-outward.y, outward.x)
+	var mid := center + outward * cell * 0.28
+	var half_along := cell * 0.07
+	var half_across := cell * 0.09
+	draw_colored_polygon(PackedVector2Array([
+		mid - outward * half_along - across * half_across,
+		mid + outward * half_along - across * half_across,
+		mid + outward * half_along + across * half_across,
+		mid - outward * half_along + across * half_across,
 	]), mark)
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
