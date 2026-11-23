@@ -329,6 +329,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_staff(at, rot)
 		"thumb":
 			_draw_thumb(at, rot)
+		"roll":
+			_draw_roll(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -2263,6 +2265,55 @@ func _thumb_lobe(center: Vector2, dir: String, mark: Color) -> void:
 	draw_circle(at, cell * 0.07, mark)
 
 func _thumb_vec(dir: String) -> Vector2:
+	match dir:
+		"N":
+			return Vector2.UP
+		"E":
+			return Vector2.RIGHT
+		"S":
+			return Vector2.DOWN
+		_:
+			return Vector2.LEFT
+
+func _draw_roll(at: Vector2i, rot: int) -> void:
+	# A barrel across the facing, with caps at both ends. Flooded, a spoke
+	# sits on every heading except the facing.
+	var center := _center(at)
+	var facing := Tracer.roll_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var outward := _roll_vec(facing)
+	var across := Vector2(-outward.y, outward.x)
+	var half := cell * 0.22
+	var thick := cell * 0.07
+	draw_colored_polygon(PackedVector2Array([
+		center - across * half - outward * thick,
+		center + across * half - outward * thick,
+		center + across * half + outward * thick,
+		center - across * half + outward * thick,
+	]), mark)
+	draw_circle(center - across * half, cell * 0.09, mark)
+	draw_circle(center + across * half, cell * 0.09, mark)
+	if not flooded:
+		return
+	_roll_spoke(center, Tracer.rotate_dir(facing, 1), mark)
+	_roll_spoke(center, Tracer.rotate_dir(facing, -1), mark)
+	_roll_spoke(center, Tracer.rotate_dir(facing, 2), mark)
+
+func _roll_spoke(center: Vector2, dir: String, mark: Color) -> void:
+	var outward := _roll_vec(dir)
+	var across := Vector2(-outward.y, outward.x)
+	var inner := center + outward * cell * 0.12
+	var outer := center + outward * cell * 0.28
+	var half := cell * 0.018
+	draw_colored_polygon(PackedVector2Array([
+		inner - across * half,
+		inner + across * half,
+		outer + across * half,
+		outer - across * half,
+	]), mark)
+
+func _roll_vec(dir: String) -> Vector2:
 	match dir:
 		"N":
 			return Vector2.UP
