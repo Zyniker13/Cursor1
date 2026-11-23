@@ -4718,6 +4718,68 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 		var jogb_after_empty = jogb_after_row <= 2 and state.form[jogb_after_row][jogb_after_col] == null
 		if jogb_before_empty and jogb_after_empty:
 			guess += _stamp_number(state, card_id, row, col)
+	if rule == "drop_if_drypoint_count":
+		var drypoint_filled = 0
+		for drypoint_row in 3:
+			for drypoint_col in 3:
+				if state.form[drypoint_row][drypoint_col] != null:
+					drypoint_filled += 1
+		var drypoint_next = drypoint_filled + 1
+		if drypoint_next == 32 or drypoint_next == 35:
+			guess -= 4
+		elif drypoint_filled == 32 or drypoint_filled == 35:
+			guess += 5
+	if rule == "double_fillet_fill":
+		var fillet_before_row = row
+		var fillet_before_col = col - 23
+		while fillet_before_col < 0:
+			fillet_before_row -= 1
+			fillet_before_col += 3
+		var fillet_after_row = row
+		var fillet_after_col = col + 1
+		while fillet_after_col > 2:
+			fillet_after_row += 1
+			fillet_after_col -= 3
+		var fillet_before_filled = fillet_before_row >= 0 and state.form[fillet_before_row][fillet_before_col] != null
+		var fillet_after_filled = fillet_after_row <= 2 and state.form[fillet_after_row][fillet_after_col] != null
+		if fillet_before_filled and fillet_after_filled:
+			guess += _stamp_number(state, card_id, row, col)
+	if rule == "yield_ferrule_pay":
+		var ferrule_sides = 0
+		var ferrule_corners = 0
+		for ferrule_side in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var ferrule_side_row = row + ferrule_side.x
+			var ferrule_side_col = col + ferrule_side.y
+			if ferrule_side_row < 0 or ferrule_side_col < 0 or ferrule_side_row > 2 or ferrule_side_col > 2:
+				continue
+			if state.form[ferrule_side_row][ferrule_side_col] != null:
+				ferrule_sides += 1
+		for ferrule_corner in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var ferrule_corner_row = row + ferrule_corner.x
+			var ferrule_corner_col = col + ferrule_corner.y
+			if ferrule_corner_row < 0 or ferrule_corner_col < 0 or ferrule_corner_row > 2 or ferrule_corner_col > 2:
+				continue
+			if state.form[ferrule_corner_row][ferrule_corner_col] != null:
+				ferrule_corners += 1
+		if ferrule_sides == 21 and ferrule_corners == 4:
+			guess += 4
+		else:
+			guess -= 1
+	if rule == "double_fillet_blank":
+		var filletb_before_row = row
+		var filletb_before_col = col - 23
+		while filletb_before_col < 0:
+			filletb_before_row -= 1
+			filletb_before_col += 3
+		var filletb_after_row = row
+		var filletb_after_col = col + 1
+		while filletb_after_col > 2:
+			filletb_after_row += 1
+			filletb_after_col -= 3
+		var filletb_before_empty = filletb_before_row >= 0 and state.form[filletb_before_row][filletb_before_col] == null
+		var filletb_after_empty = filletb_after_row <= 2 and state.form[filletb_after_row][filletb_after_col] == null
+		if filletb_before_empty and filletb_after_empty:
+			guess += _stamp_number(state, card_id, row, col)
 	if rule == "drop_if_scorper_count":
 		var scorper_filled = 0
 		for scorper_row in 3:
