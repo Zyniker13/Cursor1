@@ -4718,6 +4718,130 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 		var jogb_after_empty = jogb_after_row <= 2 and state.form[jogb_after_row][jogb_after_col] == null
 		if jogb_before_empty and jogb_after_empty:
 			guess += _stamp_number(state, card_id, row, col)
+	if rule == "drop_if_scribe_count":
+		var scribe_filled = 0
+		for scribe_row in 3:
+			for scribe_col in 3:
+				if state.form[scribe_row][scribe_col] != null:
+					scribe_filled += 1
+		var scribe_next = scribe_filled + 1
+		if scribe_next == 25 or scribe_next == 28:
+			guess -= 4
+		elif scribe_filled == 25 or scribe_filled == 28:
+			guess += 5
+	if rule == "double_plow_fill":
+		var plow_before_row = row
+		var plow_before_col = col - 19
+		while plow_before_col < 0:
+			plow_before_row -= 1
+			plow_before_col += 3
+		var plow_after_row = row
+		var plow_after_col = col + 1
+		while plow_after_col > 2:
+			plow_after_row += 1
+			plow_after_col -= 3
+		var plow_before_filled = plow_before_row >= 0 and state.form[plow_before_row][plow_before_col] != null
+		var plow_after_filled = plow_after_row <= 2 and state.form[plow_after_row][plow_after_col] != null
+		if plow_before_filled and plow_after_filled:
+			guess += _stamp_number(state, card_id, row, col)
+	if rule == "yield_lag_pay":
+		var lag_sides = 0
+		var lag_corners = 0
+		for lag_side in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var lag_side_row = row + lag_side.x
+			var lag_side_col = col + lag_side.y
+			if lag_side_row < 0 or lag_side_col < 0 or lag_side_row > 2 or lag_side_col > 2:
+				continue
+			if state.form[lag_side_row][lag_side_col] != null:
+				lag_sides += 1
+		for lag_corner in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var lag_corner_row = row + lag_corner.x
+			var lag_corner_col = col + lag_corner.y
+			if lag_corner_row < 0 or lag_corner_col < 0 or lag_corner_row > 2 or lag_corner_col > 2:
+				continue
+			if state.form[lag_corner_row][lag_corner_col] != null:
+				lag_corners += 1
+		if lag_sides == 17 and lag_corners == 4:
+			guess += 4
+		else:
+			guess -= 1
+	if rule == "double_plow_blank":
+		var plowb_before_row = row
+		var plowb_before_col = col - 19
+		while plowb_before_col < 0:
+			plowb_before_row -= 1
+			plowb_before_col += 3
+		var plowb_after_row = row
+		var plowb_after_col = col + 1
+		while plowb_after_col > 2:
+			plowb_after_row += 1
+			plowb_after_col -= 3
+		var plowb_before_empty = plowb_before_row >= 0 and state.form[plowb_before_row][plowb_before_col] == null
+		var plowb_after_empty = plowb_after_row <= 2 and state.form[plowb_after_row][plowb_after_col] == null
+		if plowb_before_empty and plowb_after_empty:
+			guess += _stamp_number(state, card_id, row, col)
+	if rule == "drop_if_prick_count":
+		var prick_filled = 0
+		for prick_row in 3:
+			for prick_col in 3:
+				if state.form[prick_row][prick_col] != null:
+					prick_filled += 1
+		var prick_next = prick_filled + 1
+		if prick_next == 21 or prick_next == 24:
+			guess -= 4
+		elif prick_filled == 21 or prick_filled == 24:
+			guess += 5
+	if rule == "double_dado_fill":
+		var dado_before_row = row
+		var dado_before_col = col - 18
+		while dado_before_col < 0:
+			dado_before_row -= 1
+			dado_before_col += 3
+		var dado_after_row = row
+		var dado_after_col = col + 1
+		while dado_after_col > 2:
+			dado_after_row += 1
+			dado_after_col -= 3
+		var dado_before_filled = dado_before_row >= 0 and state.form[dado_before_row][dado_before_col] != null
+		var dado_after_filled = dado_after_row <= 2 and state.form[dado_after_row][dado_after_col] != null
+		if dado_before_filled and dado_after_filled:
+			guess += _stamp_number(state, card_id, row, col)
+	if rule == "yield_screw_pay":
+		var screw_sides = 0
+		var screw_corners = 0
+		for screw_side in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var screw_side_row = row + screw_side.x
+			var screw_side_col = col + screw_side.y
+			if screw_side_row < 0 or screw_side_col < 0 or screw_side_row > 2 or screw_side_col > 2:
+				continue
+			if state.form[screw_side_row][screw_side_col] != null:
+				screw_sides += 1
+		for screw_corner in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var screw_corner_row = row + screw_corner.x
+			var screw_corner_col = col + screw_corner.y
+			if screw_corner_row < 0 or screw_corner_col < 0 or screw_corner_row > 2 or screw_corner_col > 2:
+				continue
+			if state.form[screw_corner_row][screw_corner_col] != null:
+				screw_corners += 1
+		if screw_sides == 16 and screw_corners == 4:
+			guess += 4
+		else:
+			guess -= 1
+	if rule == "double_dado_blank":
+		var dadob_before_row = row
+		var dadob_before_col = col - 18
+		while dadob_before_col < 0:
+			dadob_before_row -= 1
+			dadob_before_col += 3
+		var dadob_after_row = row
+		var dadob_after_col = col + 1
+		while dadob_after_col > 2:
+			dadob_after_row += 1
+			dadob_after_col -= 3
+		var dadob_before_empty = dadob_before_row >= 0 and state.form[dadob_before_row][dadob_before_col] == null
+		var dadob_after_empty = dadob_after_row <= 2 and state.form[dadob_after_row][dadob_after_col] == null
+		if dadob_before_empty and dadob_after_empty:
+			guess += _stamp_number(state, card_id, row, col)
 	if rule == "drop_if_punch_count":
 		var punch_filled = 0
 		for punch_row in 3:
