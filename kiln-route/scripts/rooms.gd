@@ -34,6 +34,7 @@ extends RefCounted
 ## Wing 40 is rooms 313-320.
 ## Wing 41 is rooms 321-328.
 ## Wing 42 is rooms 329-336.
+## Wing 43 is rooms 337-344.
 ## The dwell is taught before a later room depends on it.
 ## The twin is taught before a later room depends on it.
 ## The pass is taught before a later room depends on it.
@@ -68,7 +69,8 @@ extends RefCounted
 ## The hardie is taught before a later room depends on it.
 ## The fuller is taught before a later room depends on it.
 ## The swage is taught before a later room depends on it.
-## The roller, the weir, the bridge, the grate, the hook, the arm, the drop, the lift, the dwell, the twin, the pass, the slip, the shed, the rake, the hoe, the harrow, the fork, the prong, the share, the coulter, the moldboard, the landside, the slade, the heel, the stilt, the clevis, the beam, the hake, the sole, the frog, the shin, the point, the throat, the wrest, the jointer, the bridle, the trashboard, the gauge, the breast, the hardie, the fuller, and the swage are taught before a later room depends on them.
+## The flatter is taught before a later room depends on it.
+## The roller, the weir, the bridge, the grate, the hook, the arm, the drop, the lift, the dwell, the twin, the pass, the slip, the shed, the rake, the hoe, the harrow, the fork, the prong, the share, the coulter, the moldboard, the landside, the slade, the heel, the stilt, the clevis, the beam, the hake, the sole, the frog, the shin, the point, the throat, the wrest, the jointer, the bridle, the trashboard, the gauge, the breast, the hardie, the fuller, the swage, and the flatter are taught before a later room depends on them.
 ## Each solution is a full layout, not a delta from the initial pieces.
 ## Quotas are minimums inside SIM_TICKS.
 
@@ -413,6 +415,14 @@ static func all() -> Array:
 		west_scrap_swage(),
 		deep_bin_swage(),
 		held_tick_swage(),
+		back_pair_flatter(),
+		still_flatter(),
+		set_back_flatter(),
+		side_wall_flatter(),
+		two_backs_flatter(),
+		rear_scrap_flatter(),
+		rear_bin_flatter(),
+		hold_back_flatter(),
 	]
 
 
@@ -12721,5 +12731,284 @@ static func held_tick_swage() -> Dictionary:
 			piece(rules.Kind.SWAGE, 2, 1, rules.Dir.EAST),
 			piece(rules.Kind.BELT, 2, 2, rules.Dir.SOUTH),
 			piece(rules.Kind.KILN, 2, 3, rules.Dir.SOUTH),
+		],
+	}
+
+
+static func back_pair_flatter() -> Dictionary:
+	var rules = Rules
+	# Flatter faces east. Ore leaves behind into the kiln. The plate leaves forward, through the source.
+	return {
+		"id": 337,
+		"name": "Back Pair",
+		"blurb": "The first item arrives from ahead and leaves behind into a kiln. The plate that arrives from ahead leaves forward into the plate bin.",
+		"rule": "The first item is ore. It arrives from ahead and leaves behind into the kiln. The plate that arrives from ahead leaves forward into the plate bin. The source cell cannot hold the plate, so the plate steps through into the bin. The ore does not step through a source. A throat sends that plate forward without stepping through the source. A breast steps through a source on both paths. A swage sends the ore right. A fuller sends the ore left. A point sends the ore right. A hardie sends the ore forward. A gauge sends the plate behind. A frog sends the ore forward. A trashboard sends the ore right. A bridle sends the ore left. A jointer sends the plate left. A wrest sends the ore left. A shin sends the plate forward. A beam sends the ore backward. A moldboard accepts only from behind. A sole sends the plate right. A hake sends the ore backward. A coulter, a landside, a share, a fork, a prong, a slade, and a heel accept only from behind. A stilt accepts only from the left. A clevis accepts only from the right. A belt refuses an arrival from ahead. A dwell, a twin, a pass, a slip, a shed, a hook, a rake, a hoe, and a harrow miss too.",
+		"w": 6,
+		"h": 5,
+		"sources": [
+			source(3, 2, rules.Dir.WEST, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+		],
+		"sinks": [
+			sink(0, 2, [rules.Mat.INGOT]),
+			sink(4, 2, [rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [cell(2, 1), cell(2, 3)],
+		"budget": kv([
+			rules.Kind.KILN, 1,
+			rules.Kind.FLATTER, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 30]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.FLATTER, 2, 2, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 1, 2, rules.Dir.WEST),
+		],
+	}
+
+
+static func still_flatter() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 338,
+		"name": "Still Flatter",
+		"blurb": "The tray has one belt, on the crossing. The flatter faces south. The first item arrives from ahead and leaves behind, and the later item leaves forward.",
+		"rule": "The tray has one belt, on the crossing. The flatter faces south and takes the pair from ahead. The ore leaves behind into the kiln and the plate leaves forward into the plate bin. The belt turns the ingot off that lane. A filter scraps a side stream. A throat would send the plate forward without stepping through the source. A breast would step through a source on both paths. A swage would send the ore right. A fuller would send the ore left. A point would send the ore right. A hardie would send the ore forward. A gauge would send the plate behind. A frog would send the ore forward. A trashboard would send the ore right. A bridle would send the ore left. A jointer would send the plate left. A wrest would send the ore left. A shin would send the plate forward. A beam sends the ore backward. A moldboard accepts only from behind. A sole sends the plate right. A hake sends the ore backward. A coulter, a landside, a share, a fork, a prong, a slade, and a heel accept only from behind. A stilt accepts only from the left. A clevis accepts only from the right. A belt in the flatter cell refuses the arrival from ahead. A dwell, a twin, a pass, a slip, a shed, a hook, a rake, a hoe, and a harrow miss too.",
+		"w": 8,
+		"h": 6,
+		"sources": [
+			source(4, 3, rules.Dir.NORTH, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+			source(0, 5, rules.Dir.NORTH, [rules.Mat.INGOT], 4),
+		],
+		"sinks": [
+			sink(4, 4, [rules.Mat.PLATE]),
+			sink(3, 0, [rules.Mat.INGOT]),
+		],
+		"chutes": [cell(1, 4)],
+		"walls": [cell(3, 2), cell(5, 2)],
+		"budget": kv([
+			rules.Kind.BELT, 1,
+			rules.Kind.FLATTER, 1,
+			rules.Kind.KILN, 1,
+			rules.Kind.FILTER, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 30]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.FLATTER, 4, 2, rules.Dir.SOUTH),
+			piece(rules.Kind.KILN, 4, 1, rules.Dir.NORTH),
+			piece(rules.Kind.BELT, 4, 0, rules.Dir.WEST),
+			piece(rules.Kind.FILTER, 0, 4, rules.Dir.NORTH),
+		],
+	}
+
+
+static func set_back_flatter() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 339,
+		"name": "Set Back",
+		"blurb": "The flatter starts off the lane. Seat it where the ore arrives from ahead and leaves behind.",
+		"rule": "The flatter starts off the lane. Pick it up and seat it where the ore arrives from ahead and leaves behind into the kiln, and the plate leaves forward into the plate bin. Leaving it parked misses. A throat would send the plate forward without stepping through the source. A breast would step through a source on both paths. A swage would send the ore right. A fuller would send the ore left. A point would send the ore right. A hardie would send the ore forward. A gauge would send the plate behind. A frog would send the ore forward. A trashboard would send the ore right. A bridle would send the ore left. A jointer would send the plate left. A wrest would send the ore left. A shin would send the plate forward. A beam sends the ore backward. A moldboard accepts only from behind. A sole sends the plate right. A hake sends the ore backward. A coulter, a landside, a share, a fork, a prong, a slade, and a heel accept only from behind. A stilt accepts only from the left. A clevis accepts only from the right. A belt seated there refuses the arrival from ahead. A dwell, a twin, a pass, a slip, a shed, a hook, a rake, a hoe, and a harrow miss too.",
+		"w": 6,
+		"h": 5,
+		"sources": [
+			source(3, 2, rules.Dir.WEST, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+		],
+		"sinks": [
+			sink(0, 2, [rules.Mat.INGOT]),
+			sink(4, 2, [rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [cell(2, 1), cell(2, 3)],
+		"budget": kv([
+			rules.Kind.KILN, 1,
+			rules.Kind.FLATTER, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 30]),
+		"initial": [
+			piece(rules.Kind.FLATTER, 5, 0, rules.Dir.EAST),
+		],
+		"solution": [
+			piece(rules.Kind.FLATTER, 2, 2, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 1, 2, rules.Dir.WEST),
+		],
+	}
+
+
+static func side_wall_flatter() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 340,
+		"name": "Side Wall",
+		"blurb": "A wall closes the side. The ore still leaves behind into the kiln, and the plate leaves forward.",
+		"rule": "A wall closes the side. The first item arrives from ahead and leaves behind into the kiln. The plate that arrives from ahead leaves forward into the plate bin. A throat would send the plate forward without stepping through the source. A breast would step through a source on both paths. A swage would send the ore into that wall. A fuller would send the ore left. A point would send the ore right. A hardie would send the ore forward. A gauge would send the plate behind. A frog would send the ore forward. A trashboard would send the ore right. A bridle would send the ore left. A jointer would send the plate left. A wrest would send the ore left. A shin would send the plate forward. A beam sends the ore backward. A moldboard accepts only from behind. A sole sends the plate right. A hake sends the ore backward. A coulter, a landside, a share, a fork, a prong, a slade, and a heel accept only from behind. A stilt accepts only from the left. A clevis accepts only from the right. A belt refuses an arrival from ahead. A dwell, a twin, a pass, a slip, a shed, a hook, a rake, a hoe, and a harrow miss too.",
+		"w": 6,
+		"h": 5,
+		"sources": [
+			source(3, 2, rules.Dir.WEST, [rules.Mat.ORE, rules.Mat.PLATE], 1),
+		],
+		"sinks": [
+			sink(0, 2, [rules.Mat.INGOT]),
+			sink(4, 2, [rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [cell(2, 1), cell(2, 3)],
+		"budget": kv([
+			rules.Kind.KILN, 1,
+			rules.Kind.FLATTER, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 59, rules.Mat.PLATE, 60]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.FLATTER, 2, 2, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 1, 2, rules.Dir.WEST),
+		],
+	}
+
+
+static func two_backs_flatter() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 341,
+		"name": "Two Backs",
+		"blurb": "Two flatters take two lanes from ahead. Each ore leaves behind, and each plate leaves forward.",
+		"rule": "Two flatters take two lanes from ahead. Each first item leaves behind into its kiln. Each plate leaves forward into its plate bin. A throat on either lane sends the plate forward without stepping through the source. A breast steps through a source on both paths. A swage sends the ore right. A fuller sends the ore left. A point sends the ore right. A hardie sends the ore forward. A gauge sends the plate behind. A frog sends the ore forward. A trashboard sends the ore right. A bridle sends the ore left. A jointer sends the plate left. A wrest sends the ore left. A shin sends the plate forward. A beam sends the ore backward. A moldboard accepts only from behind. A sole sends the plate right. A hake sends the ore backward. A coulter, a landside, a share, a fork, a prong, a slade, and a heel accept only from behind. A stilt accepts only from the left. A clevis accepts only from the right. A belt refuses an arrival from ahead. A dwell, a twin, a pass, a slip, a shed, a hook, a rake, a hoe, and a harrow miss too.",
+		"w": 6,
+		"h": 5,
+		"sources": [
+			source(3, 1, rules.Dir.WEST, [rules.Mat.ORE, rules.Mat.PLATE], 1),
+			source(3, 3, rules.Dir.WEST, [rules.Mat.ORE, rules.Mat.PLATE], 1),
+		],
+		"sinks": [
+			sink(0, 1, [rules.Mat.INGOT]),
+			sink(0, 3, [rules.Mat.INGOT]),
+			sink(4, 1, [rules.Mat.PLATE]),
+			sink(4, 3, [rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [cell(2, 0), cell(2, 2), cell(2, 4)],
+		"budget": kv([
+			rules.Kind.KILN, 2,
+			rules.Kind.FLATTER, 2,
+		]),
+		"quota": kv([rules.Mat.INGOT, 118, rules.Mat.PLATE, 120]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.FLATTER, 2, 1, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 1, 1, rules.Dir.WEST),
+			piece(rules.Kind.FLATTER, 2, 3, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 1, 3, rules.Dir.WEST),
+		],
+	}
+
+
+static func rear_scrap_flatter() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 342,
+		"name": "Rear Scrap",
+		"blurb": "The ore leaves behind, away from the scrap, and the plate leaves forward.",
+		"rule": "The first item arrives from ahead and leaves behind into the kiln, away from the scrap. The plate that arrives from ahead leaves forward into the plate bin. A filter still throws its own stream away. A throat would send the plate forward without stepping through the source. A breast would step through a source on both paths. A swage would send the ore right. A fuller would send the ore left. A point would send the ore right. A hardie would send the ore forward. A gauge would send the plate behind. A frog would send the ore forward. A trashboard would send the ore right. A bridle would send the ore left. A jointer would send the plate left. A wrest would send the ore left. A shin would send the plate forward. A beam sends the ore backward. A moldboard accepts only from behind. A sole sends the plate right. A hake sends the ore backward. A coulter, a landside, a share, a fork, a prong, a slade, and a heel accept only from behind. A stilt accepts only from the left. A clevis accepts only from the right. A belt in the flatter cell refuses the arrival from ahead. A dwell, a twin, a pass, a slip, a shed, a hook, a rake, a hoe, and a harrow miss too.",
+		"w": 8,
+		"h": 6,
+		"sources": [
+			source(4, 3, rules.Dir.NORTH, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+			source(6, 5, rules.Dir.NORTH, [rules.Mat.INGOT], 4),
+		],
+		"sinks": [
+			sink(4, 4, [rules.Mat.PLATE]),
+			sink(3, 0, [rules.Mat.INGOT]),
+		],
+		"chutes": [cell(7, 4)],
+		"walls": [cell(3, 2), cell(5, 2)],
+		"budget": kv([
+			rules.Kind.BELT, 1,
+			rules.Kind.FLATTER, 1,
+			rules.Kind.KILN, 1,
+			rules.Kind.FILTER, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 30]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.FLATTER, 4, 2, rules.Dir.SOUTH),
+			piece(rules.Kind.KILN, 4, 1, rules.Dir.NORTH),
+			piece(rules.Kind.BELT, 4, 0, rules.Dir.WEST),
+			piece(rules.Kind.FILTER, 6, 4, rules.Dir.NORTH),
+		],
+	}
+
+
+static func rear_bin_flatter() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 343,
+		"name": "Rear Bin",
+		"blurb": "The ore leaves behind into the split, and the plate leaves forward. The lower stream is not enough on its own.",
+		"rule": "The first item arrives from ahead and leaves behind into the kiln. The plate that arrives from ahead leaves forward into the plate bin. The kiln feeds a splitter, and the press plates join a lower stream that is not enough on its own. A throat would send the plate forward without stepping through the source. A breast would step through a source on both paths. A swage would send the ore right. A fuller would send the ore left. A point would send the ore right. A hardie would send the ore forward. A gauge would send the plate behind. A frog would send the ore forward. A trashboard would send the ore right. A bridle would send the ore left. A jointer would send the plate left. A wrest would send the ore left. A shin would send the plate forward. A beam sends the ore backward. A moldboard accepts only from behind. A sole sends the plate right. A hake sends the ore backward. A coulter, a landside, a share, a fork, a prong, a slade, and a heel accept only from behind. A stilt accepts only from the left. A clevis accepts only from the right. A belt in the flatter cell refuses the arrival from ahead. A dwell, a twin, a pass, a slip, a shed, a hook, a rake, a hoe, and a harrow miss too.",
+		"w": 8,
+		"h": 6,
+		"sources": [
+			source(6, 3, rules.Dir.WEST, [rules.Mat.ORE, rules.Mat.PLATE], 1),
+			source(0, 5, rules.Dir.EAST, [rules.Mat.PLATE], 4),
+		],
+		"sinks": [
+			sink(1, 3, [rules.Mat.INGOT]),
+			sink(3, 0, [rules.Mat.PLATE]),
+			sink(7, 3, [rules.Mat.PLATE]),
+			sink(2, 5, [rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [cell(5, 2), cell(5, 4)],
+		"budget": kv([
+			rules.Kind.BELT, 3,
+			rules.Kind.FLATTER, 1,
+			rules.Kind.KILN, 1,
+			rules.Kind.SPLITTER, 1,
+			rules.Kind.PRESS, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 104]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.FLATTER, 5, 3, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 4, 3, rules.Dir.WEST),
+			piece(rules.Kind.SPLITTER, 3, 3, rules.Dir.WEST),
+			piece(rules.Kind.BELT, 2, 3, rules.Dir.WEST),
+			piece(rules.Kind.BELT, 3, 2, rules.Dir.NORTH),
+			piece(rules.Kind.PRESS, 3, 1, rules.Dir.NORTH),
+			piece(rules.Kind.BELT, 1, 5, rules.Dir.EAST),
+		],
+	}
+
+
+static func hold_back_flatter() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 344,
+		"name": "Hold Back",
+		"blurb": "The pair leaves on the arrival tick, waiter behind and arrival forward, and the cell is empty afterward.",
+		"rule": "The first item arrives from ahead and waits through a tick with nothing beside it, then the pair leaves on the arrival tick, the waiter behind and the arrival forward, and the cell is empty afterward. A belt refuses that arrival from ahead, so the first item never steps onto the next cell. A throat would send the arrival forward without stepping through the source. A breast would step the waiter through a source. A swage would send the waiter right. A fuller would send the waiter left. A point would send the waiter right. A hardie would send the waiter forward. A gauge would send the arrival behind. A frog would send the waiter forward. A trashboard would send the waiter right. A bridle would send the waiter left. A jointer would send the arrival left. A wrest would send the waiter left. A shin would send the arrival forward. A lone item never leaves. A piece that keeps either item misses. A moldboard accepts only from behind. A beam sends the waiter backward. A sole sends the waiter forward. A hake sends the waiter backward. A coulter, a landside, a share, a fork, a prong, a slade, and a heel accept only from behind. A stilt accepts only from the left. A clevis accepts only from the right. A dwell, a twin, a pass, a slip, a shed, a hook, a rake, a hoe, and a harrow miss too.",
+		"w": 6,
+		"h": 5,
+		"sources": [
+			source(4, 2, rules.Dir.WEST, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+		],
+		"sinks": [
+			sink(5, 2, [rules.Mat.PLATE]),
+			sink(0, 2, [rules.Mat.INGOT]),
+		],
+		"chutes": [],
+		"walls": [cell(3, 1), cell(3, 3)],
+		"budget": kv([
+			rules.Kind.BELT, 1,
+			rules.Kind.KILN, 1,
+			rules.Kind.FLATTER, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 30]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.FLATTER, 3, 2, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 2, 2, rules.Dir.WEST),
+			piece(rules.Kind.KILN, 1, 2, rules.Dir.WEST),
 		],
 	}
