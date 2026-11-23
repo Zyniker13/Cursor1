@@ -267,6 +267,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_ogee(at, rot)
 		"ovolo":
 			_draw_ovolo(at, rot)
+		"cavetto":
+			_draw_cavetto(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -847,6 +849,49 @@ func _ovolo_bow(center: Vector2, dir: String, bow: Color, shade: Color) -> void:
 		inner.append(bow_at - outward * (cell * 0.04))
 	draw_polyline(spine, bow, 4.0)
 	draw_polyline(inner, shade, 1.6)
+
+func _draw_cavetto(at: Vector2i, rot: int) -> void:
+	# A pale inward notch on every open edge. A north cavetto notches the
+	# north, east, and west edges. The notch is a V cut into the glass. It is
+	# not the torus beads, not the scotia posts, not the ogee S-curve, and
+	# not the ovolo bow.
+	var center := _center(at)
+	var facing := Tracer.cavetto_facing(rot)
+	var stopped := Tracer.rotate_dir(facing, 2)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var notch := Palette.GLASS if not flooded else Palette.FOAM
+	var shade := Palette.WOOD_DARK if not flooded else Palette.WOOD
+	for dir in ["N", "E", "S", "W"]:
+		if dir == stopped:
+			continue
+		_cavetto_notch(center, dir, notch, shade)
+
+func _cavetto_notch(center: Vector2, dir: String, notch: Color, shade: Color) -> void:
+	var along := Vector2.RIGHT
+	var outward := Vector2.DOWN
+	match dir:
+		"N":
+			along = Vector2.RIGHT
+			outward = Vector2.UP
+		"S":
+			along = Vector2.RIGHT
+			outward = Vector2.DOWN
+		"E":
+			along = Vector2.DOWN
+			outward = Vector2.RIGHT
+		_:
+			along = Vector2.DOWN
+			outward = Vector2.LEFT
+	var edge := cell * 0.36
+	var depth := cell * 0.18
+	var half := cell * 0.20
+	var mouth := center + outward * edge
+	var left := mouth - along * half
+	var right := mouth + along * half
+	var tip := mouth - outward * depth
+	var fill := PackedVector2Array([left, tip, right])
+	draw_colored_polygon(fill, notch)
+	draw_polyline(PackedVector2Array([left, tip, right]), shade, 2.2)
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
 	if dir == "N" or dir == "S":
