@@ -2454,6 +2454,7 @@ const SHIFT_ACKNOWLEDGMENTS := 34
 const SHIFT_GLOSSARY := 35
 const SHIFT_APPENDIX := 36
 const SHIFT_AFTERWORD := 37
+const SHIFT_POSTSCRIPT := 38
 
 const ROW_NAMES := ["top row", "middle row", "bottom row"]
 const COL_NAMES := ["column 1", "column 2", "column 3"]
@@ -4339,6 +4340,54 @@ const AFTERWORD_BELL := [
 ]
 
 
+const POSTSCRIPT_BELL := [
+	{
+		"id": "isolde_hale",
+		"name": "Isolde Hale",
+		"form_name": "Ledge Toll",
+		"rule_text": "Patience drops by 2 when the number of filled cells is 3 or 4.",
+		"rule": "drop_if_ledge_count",
+		"lane": 1,
+		"exemption_row": 2,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "miles_voss",
+		"name": "Miles Voss",
+		"form_name": "Pitch Blank",
+		"rule_text": "A stamp scores twice only when the queue cell seven places after it is empty. The top-right cell has no cell seven places after it, so it does not double. The middle-left cell has no cell seven places after it, so it does not double. The center cell has no cell seven places after it, so it does not double. The middle-right cell has no cell seven places after it, so it does not double. The bottom-left cell has no cell seven places after it, so it does not double. The bottom-middle cell has no cell seven places after it, so it does not double. The bottom-right cell has no cell seven places after it, so it does not double.",
+		"rule": "double_pitch_blank",
+		"lane": 2,
+		"exemption_row": 1,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "tilda_brant",
+		"name": "Tilda Brant",
+		"form_name": "Wedge Pay",
+		"rule_text": "Each stamp with exactly two corner neighbors scores +2 once. Exactly one corner neighbor scores its own number. Exactly three corner neighbors score their own number. Four corner neighbors score their own number. A side neighbor is not a corner. A lone stamp scores its own number.",
+		"rule": "yield_wedge_pay",
+		"lane": 0,
+		"exemption_row": 0,
+		"goal": 16,
+		"patience": 5,
+	},
+	{
+		"id": "ulric_okell",
+		"name": "Ulric Okell",
+		"form_name": "Pitch Back",
+		"rule_text": "A stamp scores twice only when the queue cell seven places before it is filled. The top-left cell has no cell seven places before it, so it does not double. The top-middle cell has no cell seven places before it, so it does not double. The top-right cell has no cell seven places before it, so it does not double. The middle-left cell has no cell seven places before it, so it does not double. The center cell has no cell seven places before it, so it does not double. The middle-right cell has no cell seven places before it, so it does not double. The bottom-left cell has no cell seven places before it, so it does not double.",
+		"rule": "double_pitch_back",
+		"lane": 2,
+		"exemption_row": 0,
+		"goal": 22,
+		"patience": 5,
+	},
+]
+
+
 class NightState:
 	extends RefCounted
 	var seed: int = 1
@@ -4436,6 +4485,8 @@ static func _canonical_shift(shift_index: int) -> int:
 		return SHIFT_TITLEPAGE
 	if shift_index == SHIFT_COPYRIGHT:
 		return SHIFT_COPYRIGHT
+	if shift_index == SHIFT_POSTSCRIPT:
+		return SHIFT_POSTSCRIPT
 	if shift_index == SHIFT_AFTERWORD:
 		return SHIFT_AFTERWORD
 	if shift_index == SHIFT_APPENDIX:
@@ -4473,6 +4524,8 @@ static func new_run(seed_value: int, shift_index: int = SHIFT_FIRST) -> NightSta
 	state.next_iid = 0
 	for card_id in STARTING_DECK:
 		_add_library_card(state, String(card_id))
+	if state.shift == SHIFT_POSTSCRIPT:
+		_log(state, "The postscript bell begins. Seed %d." % state.seed)
 	if state.shift == SHIFT_AFTERWORD:
 		_log(state, "The afterword bell begins. Seed %d." % state.seed)
 	if state.shift == SHIFT_APPENDIX:
@@ -4589,6 +4642,8 @@ static func restart_encounter(state: NightState) -> void:
 
 
 static func shift_label(state: NightState) -> String:
+	if state.shift == SHIFT_POSTSCRIPT:
+		return "Postscript bell"
 	if state.shift == SHIFT_AFTERWORD:
 		return "Afterword bell"
 	if state.shift == SHIFT_APPENDIX:
@@ -4681,6 +4736,8 @@ static func traveler(state: NightState) -> Dictionary:
 
 
 static func _roster(state: NightState) -> Array:
+	if state.shift == SHIFT_POSTSCRIPT:
+		return POSTSCRIPT_BELL
 	if state.shift == SHIFT_AFTERWORD:
 		return AFTERWORD_BELL
 	if state.shift == SHIFT_APPENDIX:
@@ -5135,6 +5192,12 @@ static func stamp_progress(state: NightState, card_id: String, row: int, col: in
 		return amount + 2
 	if rule == "double_deep_back" and _deep_back(state, row, col):
 		return amount * 2
+	if rule == "double_pitch_blank" and _pitch_blank(state, row, col):
+		return amount * 2
+	if rule == "yield_wedge_pay" and _wedge_pay(state, row, col):
+		return amount + 2
+	if rule == "double_pitch_back" and _pitch_back(state, row, col):
+		return amount * 2
 	return amount
 
 
@@ -5284,6 +5347,8 @@ static func patience_loss(state: NightState) -> int:
 		elif rule == "drop_if_sill_count" and _is_sill_count(_stamp_count(state)):
 			loss = 2
 		elif rule == "drop_if_ridge_count" and _is_ridge_count(_stamp_count(state)):
+			loss = 2
+		elif rule == "drop_if_ledge_count" and _is_ledge_count(_stamp_count(state)):
 			loss = 2
 	return loss
 
@@ -5642,6 +5707,12 @@ static func _resolve_stamp(state: NightState, row: int, col: int, hush: bool) ->
 				_log(state, "%s on the %s, %s grants %d. One corner neighbor pays +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			elif tail_rule == "double_deep_back" and _deep_back(state, row, col) and amount > raw:
 				_log(state, "%s on the %s, %s grants %d. The filled cell six places before it doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_pitch_blank" and _pitch_blank(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The empty cell seven places after it doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_wedge_pay" and _wedge_pay(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. Two corner neighbors pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_pitch_back" and _pitch_back(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The filled cell seven places before it doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			else:
 				_log(state, "%s on the %s, %s grants %d." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 	state.turn_progress += amount
@@ -5983,6 +6054,48 @@ static func _slant_pay(state: NightState, row: int, col: int) -> bool:
 	if state.form[row][col] == null:
 		return false
 	return _diagonal_count(state, row, col) == 1
+
+
+static func _is_ledge_count(count: int) -> bool:
+	return count == 3 or count == 4
+
+
+static func _pitch_blank(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var ahead_row := row
+	var ahead_col := col + 7
+	while ahead_col > 2:
+		ahead_row += 1
+		ahead_col -= 3
+	if ahead_row > 2:
+		return false
+	return state.form[ahead_row][ahead_col] == null
+
+
+static func _wedge_pay(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	return _diagonal_count(state, row, col) == 2
+
+
+static func _pitch_back(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var back_row := row
+	var back_col := col - 7
+	while back_col < 0:
+		back_row -= 1
+		back_col += 3
+	if back_row < 0:
+		return false
+	return state.form[back_row][back_col] != null
 
 
 static func _deep_back(state: NightState, row: int, col: int) -> bool:
@@ -6844,6 +6957,8 @@ static func _apply_result(state: NightState, result: Dictionary) -> void:
 		state.encounters_cleared += 1
 		if state.traveler_index >= _roster(state).size() - 1:
 			state.phase = "victory"
+			if state.shift == SHIFT_POSTSCRIPT:
+				_log(state, "The queue is empty. The postscript bell is clear.")
 			if state.shift == SHIFT_AFTERWORD:
 				_log(state, "The queue is empty. The afterword bell is clear.")
 			if state.shift == SHIFT_APPENDIX:
