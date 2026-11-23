@@ -441,7 +441,7 @@ static func norm_rot(kind: String, rot: int) -> int:
 	# A cavetto uses the same four facings. Each one stops only the opposite
 	# of the facing and passes the other three directions. A north cavetto
 	# passes north, east, and west, which a north ovolo does not.
-	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk":
+	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma":
 		return posmod(rot, 360)
 	# A shutter has no facing. Dry stops the beam; flooded water lets it pass.
 	# A well has no facing either. Dry stops the beam; flooded water sends it north.
@@ -634,6 +634,16 @@ static func quirk_passes(rot: int, dir: String) -> bool:
 	# click faces east and passes only north. That is not a bead, a corona, a
 	# fillet, a casement, a scotia, a jamb, a mullion, a transom, or a lintel.
 	return dir == rotate_dir(quirk_facing(rot), -1)
+
+static func cyma_facing(rot: int) -> String:
+	# 0 north, 90 east, 180 south, 270 west. Opposite facings are not the same piece.
+	return rotate_dir("N", posmod(int(norm_rot("cyma", rot) / 90.0), 4))
+
+static func cyma_passes(rot: int, dir: String) -> bool:
+	# Only the facing. North passes only north. One click faces east and passes
+	# only east. That is not a quirk, a bead, a fillet, an astragal, a scotia,
+	# a jamb, a mullion, a transom, or a lintel.
+	return dir == cyma_facing(rot)
 
 static func sluice_facing(rot: int) -> String:
 	# 0 north, 90 east, 180 south, 270 west. The exit follows this facing.
@@ -921,6 +931,12 @@ static func _cast(
 		if _dry_quirk_blocks(occupants, cell, dir):
 			segments.append(_boundary_seg(prev, cell, color))
 			return
+		# A dry cyma passes only its facing. The other three directions stop
+		# on the edge and never enter the cell. Flooded cymas already returned
+		# above.
+		if _dry_cyma_blocks(occupants, cell, dir):
+			segments.append(_boundary_seg(prev, cell, color))
+			return
 		segments.append(_center_seg(prev, cell, color))
 		if not occupants.has(cell):
 			prev = cell
@@ -1149,6 +1165,14 @@ static func _cast(
 			prev = cell
 			cell = cell + VEC[dir]
 			continue
+		if kind == "cyma":
+			# Dry, only the facing passes straight, same direction and same
+			# color. That pass costs no bounce. It does not turn, it does not
+			# recolor, and it does not split. The other three directions never
+			# reach here. A flooded cyma never reaches here either.
+			prev = cell
+			cell = cell + VEC[dir]
+			continue
 		if kind == "pane":
 			if color != pane_color(int(occ["rot"])):
 				return
@@ -1190,7 +1214,8 @@ static func _flood_carries(occupants: Dictionary, cell: Vector2i) -> bool:
 	# stays false for it. A corona is shut under water the same way, so
 	# _flood_carries stays false for it. A bead is shut under water the same
 	# way, so _flood_carries stays false for it. A quirk is shut under water
-	# the same way, so _flood_carries stays false for it.
+	# the same way, so _flood_carries stays false for it. A cyma is shut under
+	# water the same way, so _flood_carries stays false for it.
 	# Every other flooded cell stops.
 	if not occupants.has(cell):
 		return false
@@ -1295,6 +1320,13 @@ static func _dry_quirk_blocks(occupants: Dictionary, cell: Vector2i, dir: String
 	if str(occupants[cell]["kind"]) != "quirk":
 		return false
 	return not quirk_passes(int(occupants[cell]["rot"]), dir)
+
+static func _dry_cyma_blocks(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "cyma":
+		return false
+	return not cyma_passes(int(occupants[cell]["rot"]), dir)
 
 static func _in_bounds(chart: Dictionary, cell: Vector2i) -> bool:
 	return cell.x >= 0 and cell.y >= 0 and cell.x < int(chart["cols"]) and cell.y < int(chart["rows"])
