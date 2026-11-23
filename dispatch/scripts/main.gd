@@ -552,6 +552,10 @@ func _building_mark_name(building: int) -> String:
 			return "BuildingFortySevenMark"
 		48:
 			return "BuildingFortyEightMark"
+		49:
+			return "BuildingFortyNineMark"
+		50:
+			return "BuildingFiftyMark"
 		_:
 			return "Building%dMark" % building
 
@@ -704,7 +708,7 @@ func _sync_facing() -> void:
 			_facing.text = "Facing   counterclockwise"
 		elif _selected == "slide":
 			_facing.text = "Facing   with the parcel"
-		elif _selected == "bin" or _selected == "return" or _selected == "pause" or _selected == "shunt" or _selected == "bias" or _selected == "vault" or _selected == "sling" or _selected == "cant" or _selected == "balk" or _selected == "loft" or _selected == "keel" or _selected == "sheer" or _selected == "strake" or _selected == "wale" or _selected == "garboard" or _selected == "stealer" or _selected == "rabbet" or _selected == "futtock" or _selected == "keelson" or _selected == "stemson" or _selected == "apron" or _selected == "deadwood" or _selected == "gripe" or _selected == "forefoot" or _selected == "knighthead" or _selected == "hawse" or _selected == "breasthook" or _selected == "cathead" or _selected == "gammon" or _selected == "bobstay" or _selected == "bumpkin" or _selected == "dolphin" or _selected == "martingale" or _selected == "jibboom" or _selected == "whisker" or _selected == "cranse" or _selected == "bees" or _selected == "sprit" or _selected == "bumkin" or _selected == "vangs":
+		elif _selected == "bin" or _selected == "return" or _selected == "pause" or _selected == "shunt" or _selected == "bias" or _selected == "vault" or _selected == "sling" or _selected == "cant" or _selected == "balk" or _selected == "loft" or _selected == "keel" or _selected == "sheer" or _selected == "strake" or _selected == "wale" or _selected == "garboard" or _selected == "stealer" or _selected == "rabbet" or _selected == "futtock" or _selected == "keelson" or _selected == "stemson" or _selected == "apron" or _selected == "deadwood" or _selected == "gripe" or _selected == "forefoot" or _selected == "knighthead" or _selected == "hawse" or _selected == "breasthook" or _selected == "cathead" or _selected == "gammon" or _selected == "bobstay" or _selected == "bumpkin" or _selected == "dolphin" or _selected == "martingale" or _selected == "jibboom" or _selected == "whisker" or _selected == "cranse" or _selected == "bees" or _selected == "sprit" or _selected == "bumkin" or _selected == "vangs" or _selected == "clew" or _selected == "sheet":
 			_facing.text = "Facing   none"
 		else:
 			_facing.text = "Facing   %s" % Sim.DIR_NAMES[_ghost_dir]
@@ -1061,6 +1065,10 @@ func _draw_block(block: Dictionary, alpha: float) -> void:
 		_bumkin_mark(rect, ink)
 	elif typ == "vangs":
 		_vangs_mark(rect, ink)
+	elif typ == "clew":
+		_clew_mark(rect, ink)
+	elif typ == "sheet":
+		_sheet_mark(rect, ink)
 	elif typ == "slide":
 		_slide_mark(rect, ink)
 	elif typ == "bin":
@@ -1388,6 +1396,26 @@ func _stealer_mark(rect: Rect2, color: Color) -> void:
 		var back := tip + Vector2(span * 0.16, 0.0)
 		draw_line(back + Vector2(0.0, -span * 0.14), tip, color, 2.5)
 		draw_line(back + Vector2(0.0, span * 0.14), tip, color, 2.5)
+
+
+func _sheet_mark(rect: Rect2, color: Color) -> void:
+	var center := rect.get_center()
+	var span := rect.size.x
+	for i in 28:
+		var tip := center + Vector2(-span * 0.50 + float(i) * span * 0.032, 0.0)
+		var back := tip + Vector2(-span * 0.004, 0.0)
+		draw_line(back + Vector2(0.0, -span * 0.08), tip, color, 2.5)
+		draw_line(back + Vector2(0.0, span * 0.08), tip, color, 2.5)
+
+
+func _clew_mark(rect: Rect2, color: Color) -> void:
+	var center := rect.get_center()
+	var span := rect.size.x
+	for i in 27:
+		var tip := center + Vector2(-span * 0.50 + float(i) * span * 0.034, 0.0)
+		var back := tip + Vector2(-span * 0.006, 0.0)
+		draw_line(back + Vector2(0.0, -span * 0.08), tip, color, 2.5)
+		draw_line(back + Vector2(0.0, span * 0.08), tip, color, 2.5)
 
 
 func _vangs_mark(rect: Rect2, color: Color) -> void:
@@ -1811,6 +1839,10 @@ func _tool_color(tool: String) -> Color:
 			return Color("#3a8a4a")
 		"vangs":
 			return Color("#8a3a6a")
+		"clew":
+			return Color("#6a8a4a")
+		"sheet":
+			return Color("#3a6a8a")
 		"slide":
 			return Color("#d06b86")
 		"bin":
@@ -1939,6 +1971,10 @@ func _tool_tip(tool: String) -> String:
 			return "Waits one tick, then jumps a parcel twenty-five cells forward. The twenty-four cells in front are not entered, and the parcel keeps the facing it arrived with."
 		"vangs":
 			return "Waits one tick, then jumps a parcel twenty-six cells forward. The twenty-five cells in front are not entered, and the parcel keeps the facing it arrived with."
+		"clew":
+			return "Waits one tick, then jumps a parcel twenty-seven cells forward. The twenty-six cells in front are not entered, and the parcel keeps the facing it arrived with."
+		"sheet":
+			return "Waits one tick, then jumps a parcel twenty-eight cells forward. The twenty-seven cells in front are not entered, and the parcel keeps the facing it arrived with."
 		"slide":
 			return "Moves a parcel two cells in its facing and does not rotate it. The cell between can be a brick, a belt, or another parcel."
 		"bin":
