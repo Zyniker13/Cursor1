@@ -229,6 +229,8 @@ func _kind_for_key(code: int) -> int:
 		KEY_TAB: Rules.Kind.TRASHBOARD,
 		KEY_HOME: Rules.Kind.GAUGE,
 		KEY_END: Rules.Kind.BREAST,
+		KEY_INSERT: Rules.Kind.HARDIE,
+		KEY_DELETE: Rules.Kind.FULLER,
 	}
 	if not map.has(code):
 		return -1
@@ -417,6 +419,8 @@ func _kind_order() -> Array:
 		Rules.Kind.TRASHBOARD,
 		Rules.Kind.GAUGE,
 		Rules.Kind.BREAST,
+		Rules.Kind.HARDIE,
+		Rules.Kind.FULLER,
 	]
 
 
@@ -468,6 +472,8 @@ func _layout() -> Dictionary:
 	# The thirty-seventh wing adds a thirtieth row. Ten pixels still leaves a six-row board drawable.
 	# The thirty-eighth wing adds a thirty-first row. Nine pixels still leaves a six-row board drawable.
 	# The thirty-ninth wing adds a thirty-second row. Nine pixels still leaves a six-row board drawable.
+	# The fortieth wing fills that row. Nine pixels still leaves a six-row board drawable.
+	# The forty-first wing adds a thirty-third row. Nine pixels still leaves a six-row board drawable.
 	# Shorter tabs give that row back so the rule text keeps its space.
 	var per_row := 8
 	var tab_h := 30.0
@@ -589,7 +595,7 @@ func _draw() -> void:
 	var size: Vector2 = lay.size
 	draw_rect(Rect2(Vector2.ZERO, size), COL_BG)
 	_text(Vector2(24, 14), "KILN ROUTE", 28, COL_TEXT)
-	_text(Vector2(236, 26), "thirty-nine wings", 15, COL_DIM)
+	_text(Vector2(236, 26), "forty-one wings", 15, COL_DIM)
 	var minute := "minute  %d / %d" % [_shown_tick(), Rules.SIM_TICKS]
 	var minute_w := font.get_string_size(minute, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
 	_text(Vector2(size.x - 24 - minute_w, 26), minute, 15, COL_DIM)
@@ -599,7 +605,7 @@ func _draw() -> void:
 	_draw_grid(lay)
 	_draw_side(lay)
 	_draw_tray(lay)
-	_text(Vector2(24, size.y - 28), "1-9 0 - = \\ ; , ' . / ` y u i o p t g h j k l m n b v c x z d a s w Tab Home End select   R rotate   LMB place or pick up   RMB rotate   Space run   F skip   Bksp restart", 13, COL_DIM)
+	_text(Vector2(24, size.y - 28), "1-9 0 - = \\ ; , ' . / ` y u i o p t g h j k l m n b v c x z d a s w Tab Home End Insert Delete select   R rotate   LMB place or pick up   RMB rotate   Space run   F skip   Bksp restart", 13, COL_DIM)
 
 
 func _draw_tabs(lay: Dictionary) -> void:
@@ -1216,6 +1222,32 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 		draw_line(center, center + Vector2(Rules.vec(Rules.opposite(dir))) * body.size.x * 0.16, ink, thick)
 		draw_line(hip_b, hip_b + back_v * reach, ink, thick)
 		draw_line(hip, hip + along * reach, ink, thick)
+	elif kind == Rules.Kind.HARDIE:
+		# Entry is from ahead. The waiter leaves forward. The arrival leaves left.
+		# A breast sends the waiter behind.
+		var along := Vector2(Rules.vec(dir))
+		var left_v := Vector2(Rules.vec(Rules.left(dir)))
+		var ink := Color("d8f0c0", 0.95 * alpha)
+		var thick := maxf(2.0, body.size.x * 0.07)
+		var reach := body.size.x * 0.24
+		var hip := center + along * body.size.x * 0.1
+		var hip_l := center + left_v * body.size.x * 0.1
+		draw_line(center, center + Vector2(Rules.vec(Rules.opposite(dir))) * body.size.x * 0.16, ink, thick)
+		draw_line(hip, hip + along * reach, ink, thick)
+		draw_line(hip_l, hip_l + left_v * reach, ink, thick)
+	elif kind == Rules.Kind.FULLER:
+		# Entry is from ahead. The waiter leaves left. The arrival leaves forward.
+		# A hardie sends the waiter forward.
+		var along := Vector2(Rules.vec(dir))
+		var left_v := Vector2(Rules.vec(Rules.left(dir)))
+		var ink := Color("f0d8a0", 0.95 * alpha)
+		var thick := maxf(2.0, body.size.x * 0.07)
+		var reach := body.size.x * 0.24
+		var hip := center + along * body.size.x * 0.1
+		var hip_l := center + left_v * body.size.x * 0.1
+		draw_line(center, center + Vector2(Rules.vec(Rules.opposite(dir))) * body.size.x * 0.16, ink, thick)
+		draw_line(hip_l, hip_l + left_v * reach, ink, thick)
+		draw_line(hip, hip + along * body.size.x * 0.36, ink, thick)
 	elif kind == Rules.Kind.GRATE:
 		var along := Vector2(Rules.vec(dir))
 		var across := Vector2(Rules.vec(Rules.right(dir)))
@@ -1235,7 +1267,7 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 	var forward := light
 	if kind == Rules.Kind.GRATE:
 		forward = Color("d7dee6")
-	if kind != Rules.Kind.HOOK and kind != Rules.Kind.DROP and kind != Rules.Kind.LIFT and kind != Rules.Kind.SHED and kind != Rules.Kind.RAKE and kind != Rules.Kind.HOE and kind != Rules.Kind.HARROW and kind != Rules.Kind.FORK and kind != Rules.Kind.PRONG and kind != Rules.Kind.SHARE and kind != Rules.Kind.COULTER and kind != Rules.Kind.MOLDBOARD and kind != Rules.Kind.LANDSIDE and kind != Rules.Kind.SLADE and kind != Rules.Kind.HEEL and kind != Rules.Kind.STILT and kind != Rules.Kind.CLEVIS and kind != Rules.Kind.BEAM and kind != Rules.Kind.HAKE and kind != Rules.Kind.SOLE and kind != Rules.Kind.FROG and kind != Rules.Kind.SHIN and kind != Rules.Kind.POINT and kind != Rules.Kind.THROAT and kind != Rules.Kind.WREST and kind != Rules.Kind.JOINTER and kind != Rules.Kind.BRIDLE and kind != Rules.Kind.TRASHBOARD and kind != Rules.Kind.GAUGE and kind != Rules.Kind.BREAST:
+	if kind != Rules.Kind.HOOK and kind != Rules.Kind.DROP and kind != Rules.Kind.LIFT and kind != Rules.Kind.SHED and kind != Rules.Kind.RAKE and kind != Rules.Kind.HOE and kind != Rules.Kind.HARROW and kind != Rules.Kind.FORK and kind != Rules.Kind.PRONG and kind != Rules.Kind.SHARE and kind != Rules.Kind.COULTER and kind != Rules.Kind.MOLDBOARD and kind != Rules.Kind.LANDSIDE and kind != Rules.Kind.SLADE and kind != Rules.Kind.HEEL and kind != Rules.Kind.STILT and kind != Rules.Kind.CLEVIS and kind != Rules.Kind.BEAM and kind != Rules.Kind.HAKE and kind != Rules.Kind.SOLE and kind != Rules.Kind.FROG and kind != Rules.Kind.SHIN and kind != Rules.Kind.POINT and kind != Rules.Kind.THROAT and kind != Rules.Kind.WREST and kind != Rules.Kind.JOINTER and kind != Rules.Kind.BRIDLE and kind != Rules.Kind.TRASHBOARD and kind != Rules.Kind.GAUGE and kind != Rules.Kind.BREAST and kind != Rules.Kind.HARDIE and kind != Rules.Kind.FULLER:
 		_arrow(front, dir, body.size.x * 0.2, body.size.x * 0.12, Color(forward.r, forward.g, forward.b, forward_alpha))
 	if kind == Rules.Kind.HOOK:
 		var turn := Rules.left(dir)
@@ -1433,6 +1465,20 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 		var forward_side := center + Vector2(Rules.vec(dir)) * body.size.x * 0.28
 		_arrow(behind_side, behind_turn, body.size.x * 0.14, body.size.x * 0.09, Color(breast_mark.r, breast_mark.g, breast_mark.b, alpha))
 		_arrow(forward_side, dir, body.size.x * 0.14, body.size.x * 0.09, Color(breast_mark.r, breast_mark.g, breast_mark.b, alpha))
+	elif kind == Rules.Kind.HARDIE:
+		var hardie_mark := Color("d8f0c0")
+		var left_turn := Rules.left(dir)
+		var forward_side := center + Vector2(Rules.vec(dir)) * body.size.x * 0.32
+		var left_side := center + Vector2(Rules.vec(left_turn)) * body.size.x * 0.28
+		_arrow(forward_side, dir, body.size.x * 0.14, body.size.x * 0.09, Color(hardie_mark.r, hardie_mark.g, hardie_mark.b, alpha))
+		_arrow(left_side, left_turn, body.size.x * 0.14, body.size.x * 0.09, Color(hardie_mark.r, hardie_mark.g, hardie_mark.b, alpha))
+	elif kind == Rules.Kind.FULLER:
+		var fuller_mark := Color("f0d8a0")
+		var left_turn := Rules.left(dir)
+		var left_side := center + Vector2(Rules.vec(left_turn)) * body.size.x * 0.32
+		var forward_side := center + Vector2(Rules.vec(dir)) * body.size.x * 0.28
+		_arrow(left_side, left_turn, body.size.x * 0.14, body.size.x * 0.09, Color(fuller_mark.r, fuller_mark.g, fuller_mark.b, alpha))
+		_arrow(forward_side, dir, body.size.x * 0.18, body.size.x * 0.09, Color(fuller_mark.r, fuller_mark.g, fuller_mark.b, alpha))
 	elif kind == Rules.Kind.DROP:
 		var turn := Rules.right(dir)
 		var side := center + Vector2(Rules.vec(turn)) * body.size.x * 0.2
@@ -1646,6 +1692,10 @@ func _key_label(kind: int) -> String:
 		return "Home"
 	if kind == Rules.Kind.BREAST:
 		return "End"
+	if kind == Rules.Kind.HARDIE:
+		return "Insert"
+	if kind == Rules.Kind.FULLER:
+		return "Delete"
 	return str(kind + 1)
 
 
@@ -1691,6 +1741,12 @@ func _tray_count_line(kind: int, count: int) -> String:
 		return "%d ahead" % count
 	# The breast count reads "ahead" so room 305 shows "1 ahead" beside Breast and its key.
 	if kind == Rules.Kind.BREAST:
+		return "%d ahead" % count
+	# The hardie count reads "ahead" so room 313 shows "1 ahead" beside Hardie and its key.
+	if kind == Rules.Kind.HARDIE:
+		return "%d ahead" % count
+	# The fuller count reads "ahead" so room 321 shows "1 ahead" beside Fuller and its key.
+	if kind == Rules.Kind.FULLER:
 		return "%d ahead" % count
 	return "%d left" % count
 
@@ -1784,6 +1840,10 @@ func _kind_color(kind: int) -> Color:
 		return Color("2a5a68")
 	if kind == Rules.Kind.BREAST:
 		return Color("7a2848")
+	if kind == Rules.Kind.HARDIE:
+		return Color("3a6840")
+	if kind == Rules.Kind.FULLER:
+		return Color("8a5a18")
 	return Color("c792ef")
 
 

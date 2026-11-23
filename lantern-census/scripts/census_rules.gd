@@ -55,6 +55,9 @@ extends RefCounted
 ## The dossal also steps around (10,10), through (11,11) and the lift.
 ## The retable keeps that walk. (10,10), (8,10), and (9,10) stay closed.
 ## The tester keeps that walk. There is no new closure.
+## The riddel keeps that walk. There is no new closure.
+## The frontal keeps that walk except at (7,10), which is closed.
+## The ring steps through (6,11), which was already open.
 ## A census is accepted only when every corridor and hazard is marked truly
 ## and no tile is marked as something it is not.
 
@@ -68,7 +71,7 @@ const HAZARD_VALUE := 8
 const LOOP_VALUE := 15
 
 const TOWN_LINE := "Arrows turn and step, Q and E strafe, M marks the tile you face, and Space waits out the warden's swing."
-const RATE_CARD := "A true corridor pays 3. A true hazard pays 8. The cellar's east square, the cistern ring, the cloister walk, the crypt ring, the ossuary ring, the reliquary ring, the undercroft ring, the well ring, the scriptorium ring, the binding ring, the chart room ring, the bell loft ring, the clock room ring, the font ring, the apse ring, the choir ring, the rood ring, the crossing ring, the transept ring, the ambulatory ring, the chevet ring, the retrochoir ring, the lady chapel ring, the feretory ring, the chantry ring, the sacristy ring, the pyx ring, the aumbry ring, the piscina ring, the sedilia ring, the credence ring, the reredos ring, the predella ring, the dossal ring, the retable ring, and the tester ring each pay 15 only when every tile of that ring is marked corridor. A false mark pays nothing."
+const RATE_CARD := "A true corridor pays 3. A true hazard pays 8. The cellar's east square, the cistern ring, the cloister walk, the crypt ring, the ossuary ring, the reliquary ring, the undercroft ring, the well ring, the scriptorium ring, the binding ring, the chart room ring, the bell loft ring, the clock room ring, the font ring, the apse ring, the choir ring, the rood ring, the crossing ring, the transept ring, the ambulatory ring, the chevet ring, the retrochoir ring, the lady chapel ring, the feretory ring, the chantry ring, the sacristy ring, the pyx ring, the aumbry ring, the piscina ring, the sedilia ring, the credence ring, the reredos ring, the predella ring, the dossal ring, the retable ring, the tester ring, the riddel ring, and the frontal ring each pay 15 only when every tile of that ring is marked corridor. A false mark pays nothing."
 
 const CELLAR_RECORD := "Record every corridor, both hazard cracks, and the east square."
 const CISTERN_RECORD := "Record every corridor, the three seep cracks, and the cistern ring around the pit."
@@ -106,6 +109,8 @@ const PREDELLA_RECORD := "Record every corridor, the thirty-three predella crack
 const DOSSAL_RECORD := "Record every corridor, the thirty-four dossal cracks, and the ring around the dossal."
 const RETABLE_RECORD := "Record every corridor, the thirty-five retable cracks, and the ring around the retable."
 const TESTER_RECORD := "Record every corridor, the thirty-six tester cracks, and the ring around the tester."
+const RIDDEL_RECORD := "Record every corridor, the thirty-seven riddel cracks, and the ring around the riddel."
+const FRONTAL_RECORD := "Record every corridor, the thirty-eight frontal cracks, and the ring around the frontal."
 
 const CELLAR_ROWS: PackedStringArray = [
 	"#############",
@@ -1193,6 +1198,89 @@ const TESTER_ROWS: PackedStringArray = [
 	"#######################################",
 ]
 
+# The riddel is the 14x6 block of '~' at columns 7-20, rows 4-9.
+# '~' is the next free glyph after '}'. '}' is the tester, ']' is the
+# retable, '{' is the dossal, '[' is the predella, '<' is the reredos,
+# '>' is the credence, '?' is the sedilia, and '=' is the crypt. '~' is
+# unused, and an unknown glyph inks as one wall.
+# The sheet grows the tester one column east. That new column stays wall.
+# The tester, the warden, the lift, the start, and the 19-step path stay on
+# their cells. (10,10) stays closed and (11,11) stays open, so the ring still
+# steps around (10,10) through (11,11) and the lift. (8,10) and (9,10) stay
+# closed. (8,12) stays open. (10,12) stays closed. (21,4) and (7,10) stay
+# open. There is no new closure. (32,15) and (33,16) stay cracks. The new
+# crack is (33,15), the wall immediately east of (32,15). The existing tour
+# already visits it, so adding only that crack surveys at 120 oil with 67
+# corridors and 37 cracks. (24,13) and (26,14) do the same and stay walls.
+# An off-tour crack such as (34,16) surveys at 122 while (21,4) and (7,10)
+# stay open. Closing either of those would return that survey to 120, and
+# both stay open. (1,12), (1,13), and (1,14) stay ordinary walls.
+const RIDDEL_ROWS: PackedStringArray = [
+	"########################################",
+	"#S######################################",
+	"#.######################################",
+	"#H####...................H##############",
+	"#.####.~~~~~~~~~~~~~~.###H##############",
+	"#H####.~~~~~~~~~~~~~~.###H##############",
+	"#.####.~~~~~~~~~~~~~~.###H##############",
+	"#H####.~~~~~~~~~~~~~~.###H##############",
+	"#.####.~~~~~~~~~~~~~~.###H##############",
+	"#H####.~~~~~~~~~~~~~~.###H##############",
+	"#.####..###...........###H##############",
+	"#H........L.#######.#####H##############",
+	"#######H.E#########H.....H##############",
+	"#########################H##############",
+	"#########################H##############",
+	"#########################HHHHHHHHH######",
+	"#########################HHHHHHHHH######",
+	"########################################",
+	"########################################",
+	"########################################",
+	"########################################",
+]
+
+# The frontal is the 14x6 block of '!' at columns 7-20, rows 4-9.
+# '!' is the next free glyph after '~'. Space is the next code point, and
+# it is unused, but it is not a distinct mark. '!' is unused, and an unknown
+# glyph inks as one wall. '~' is the riddel, '}' is the tester, ']' is the
+# retable, '{' is the dossal, '[' is the predella, '<' is the reredos,
+# '>' is the credence, '?' is the sedilia, and '=' is the crypt.
+# The sheet grows the riddel one column east. That new column stays wall.
+# The warden, the lift, the start, and the 19-step path stay on their cells.
+# (34,15) is the wall immediately east of (33,15). It is not on the existing
+# tour: adding only that crack surveys at 122 oil. There is no on-tour wall
+# east of (33,15). (24,13), (26,14), and (8,10) are the remaining on-tour
+# walls and stay walls. Closing (7,10) returns that survey to 120. (6,11) is
+# already open, so the ring steps around (7,10) through (6,11). (21,4) stays
+# open. Closing (21,4) would also return the survey to 120, and it has no
+# corridor detour. (10,10) stays closed and (11,11) stays open. (8,10) and
+# (9,10) stay closed. (8,12) stays open. (10,12) stays closed. An off-tour
+# crack such as (34,16) surveys at 122 while (21,4) and (7,10) stay open.
+# (33,15) and (33,16) stay cracks. (1,12), (1,13), and (1,14) stay ordinary walls.
+const FRONTAL_ROWS: PackedStringArray = [
+	"#########################################",
+	"#S#######################################",
+	"#.#######################################",
+	"#H####...................H###############",
+	"#.####.!!!!!!!!!!!!!!.###H###############",
+	"#H####.!!!!!!!!!!!!!!.###H###############",
+	"#.####.!!!!!!!!!!!!!!.###H###############",
+	"#H####.!!!!!!!!!!!!!!.###H###############",
+	"#.####.!!!!!!!!!!!!!!.###H###############",
+	"#H####.!!!!!!!!!!!!!!.###H###############",
+	"#.####.####...........###H###############",
+	"#H........L.#######.#####H###############",
+	"#######H.E#########H.....H###############",
+	"#########################H###############",
+	"#########################H###############",
+	"#########################HHHHHHHHHH######",
+	"#########################HHHHHHHHH#######",
+	"#########################################",
+	"#########################################",
+	"#########################################",
+	"#########################################",
+]
+
 enum Tile { WALL, FLOOR, HAZARD, LIFT }
 enum Mark { NONE, CORRIDOR, WALL, HAZARD }
 enum EndReason { NONE, EXTRACTED, LAMP_OUT, ABANDONED }
@@ -1233,7 +1321,7 @@ static var _floor_list: Array = []
 
 static func floors() -> Array:
 	if _floor_list.is_empty():
-		_floor_list = [_make_cellar(), _make_cistern(), _make_cloister(), _make_crypt(), _make_ossuary(), _make_reliquary(), _make_undercroft(), _make_wellhouse(), _make_scriptorium(), _make_binding(), _make_chartroom(), _make_bellloft(), _make_clockroom(), _make_font(), _make_apse(), _make_choir(), _make_rood(), _make_crossing(), _make_transept(), _make_ambulatory(), _make_chevet(), _make_retrochoir(), _make_ladychapel(), _make_feretory(), _make_chantry(), _make_sacristy(), _make_pyx(), _make_aumbry(), _make_piscina(), _make_sedilia(), _make_credence(), _make_reredos(), _make_predella(), _make_dossal(), _make_retable(), _make_tester()]
+		_floor_list = [_make_cellar(), _make_cistern(), _make_cloister(), _make_crypt(), _make_ossuary(), _make_reliquary(), _make_undercroft(), _make_wellhouse(), _make_scriptorium(), _make_binding(), _make_chartroom(), _make_bellloft(), _make_clockroom(), _make_font(), _make_apse(), _make_choir(), _make_rood(), _make_crossing(), _make_transept(), _make_ambulatory(), _make_chevet(), _make_retrochoir(), _make_ladychapel(), _make_feretory(), _make_chantry(), _make_sacristy(), _make_pyx(), _make_aumbry(), _make_piscina(), _make_sedilia(), _make_credence(), _make_reredos(), _make_predella(), _make_dossal(), _make_retable(), _make_tester(), _make_riddel(), _make_frontal()]
 	return _floor_list
 
 
@@ -1969,6 +2057,62 @@ static func _make_tester() -> Floor:
 	return floor
 
 
+
+static func _make_riddel() -> Floor:
+	var floor := Floor.new()
+	floor.id = "riddel"
+	floor.title = "The Riddel"
+	floor.rows = RIDDEL_ROWS
+	floor.loop_name = "Riddel ring"
+	var ring: Array = []
+	for x in range(6, 22):
+		ring.append(Vector2i(x, 3))
+	for y in range(4, 10):
+		ring.append(Vector2i(21, y))
+	for x in range(21, 10, -1):
+		ring.append(Vector2i(x, 10))
+	ring.append(Vector2i(11, 11))
+	ring.append(Vector2i(10, 11))
+	ring.append(Vector2i(9, 11))
+	ring.append(Vector2i(8, 11))
+	ring.append(Vector2i(7, 11))
+	ring.append(Vector2i(7, 10))
+	ring.append(Vector2i(6, 10))
+	for y in range(9, 3, -1):
+		ring.append(Vector2i(6, y))
+	floor.loop = ring
+	floor.record = RIDDEL_RECORD
+	return floor
+
+
+
+static func _make_frontal() -> Floor:
+	var floor := Floor.new()
+	floor.id = "frontal"
+	floor.title = "The Frontal"
+	floor.rows = FRONTAL_ROWS
+	floor.loop_name = "Frontal ring"
+	var ring: Array = []
+	for x in range(6, 22):
+		ring.append(Vector2i(x, 3))
+	for y in range(4, 10):
+		ring.append(Vector2i(21, y))
+	for x in range(21, 10, -1):
+		ring.append(Vector2i(x, 10))
+	ring.append(Vector2i(11, 11))
+	ring.append(Vector2i(10, 11))
+	ring.append(Vector2i(9, 11))
+	ring.append(Vector2i(8, 11))
+	ring.append(Vector2i(7, 11))
+	ring.append(Vector2i(6, 11))
+	ring.append(Vector2i(6, 10))
+	for y in range(9, 3, -1):
+		ring.append(Vector2i(6, y))
+	floor.loop = ring
+	floor.record = FRONTAL_RECORD
+	return floor
+
+
 static func width(floor: Floor = null) -> int:
 	return _use(floor).rows[0].length()
 
@@ -2412,6 +2556,10 @@ static func ahead_line(state: RunState) -> String:
 				return "Ahead: the retable. It inks as a wall."
 			if glyph_at(n, plan) == "}":
 				return "Ahead: the tester. It inks as a wall."
+			if glyph_at(n, plan) == "~":
+				return "Ahead: the riddel. It inks as a wall."
+			if glyph_at(n, plan) == "!":
+				return "Ahead: the frontal. It inks as a wall."
 			return "Ahead: wall."
 		Tile.HAZARD:
 			if plan != null and plan.id == "cistern":
@@ -2484,6 +2632,10 @@ static func ahead_line(state: RunState) -> String:
 				return "Ahead: a retable crack. Stepping inks it and costs no extra oil."
 			if plan != null and plan.id == "tester":
 				return "Ahead: a tester crack. Stepping inks it and costs no extra oil."
+			if plan != null and plan.id == "riddel":
+				return "Ahead: a riddel crack. Stepping inks it and costs no extra oil."
+			if plan != null and plan.id == "frontal":
+				return "Ahead: a frontal crack. Stepping inks it and costs no extra oil."
 			return "Ahead: a hazard crack. Stepping inks it and costs no extra oil."
 		Tile.LIFT:
 			return "Ahead: the lift. Stepping on carries the sheet out."
@@ -2627,6 +2779,10 @@ static func step(state: RunState, dir: Vector2i) -> Dictionary:
 				return _pack(state, false, false, false, 0, true, "You tap the retable and ink it if the square was blank.")
 			if glyph_at(target, plan) == "}":
 				return _pack(state, false, false, false, 0, true, "You tap the tester and ink it if the square was blank.")
+			if glyph_at(target, plan) == "~":
+				return _pack(state, false, false, false, 0, true, "You tap the riddel and ink it if the square was blank.")
+			if glyph_at(target, plan) == "!":
+				return _pack(state, false, false, false, 0, true, "You tap the frontal and ink it if the square was blank.")
 			return _pack(state, false, false, false, 0, true, "You tap a wall and ink it if the square was blank.")
 		if target == enemy_pos(plan):
 			return _pack(state, false, false, false, 0, true, "The warden occupies that tile.")
@@ -2718,6 +2874,10 @@ static func step(state: RunState, dir: Vector2i) -> Dictionary:
 			message = "You cross a retable crack. It is inked if the square was blank."
 		elif plan != null and plan.id == "tester":
 			message = "You cross a tester crack. It is inked if the square was blank."
+		elif plan != null and plan.id == "riddel":
+			message = "You cross a riddel crack. It is inked if the square was blank."
+		elif plan != null and plan.id == "frontal":
+			message = "You cross a frontal crack. It is inked if the square was blank."
 		else:
 			message = "You cross a hazard crack. It is inked if the square was blank."
 	return _pack(state, true, true, hit, MOVE_OIL + (HIT_OIL if hit else 0), false, message)
