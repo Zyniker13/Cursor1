@@ -1,9 +1,9 @@
 extends RefCounted
 
-## Buildings 1 through 20. Directions: 0 east, 1 south, 2 west, 3 north.
+## Buildings 1 through 21. Directions: 0 east, 1 south, 2 west, 3 north.
 ## `unlocks` is the single new block this puzzle introduces, or "".
 
-const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook", "return", "pause", "chute", "shunt", "bias", "vault", "sling", "cant", "balk", "loft", "keel", "sheer"]
+const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook", "return", "pause", "chute", "shunt", "bias", "vault", "sling", "cant", "balk", "loft", "keel", "sheer", "strake"]
 
 
 static func all() -> Array:
@@ -2980,6 +2980,143 @@ static func all() -> Array:
 				_block("conveyor", 4, 5, 3),
 			]
 		),
+		_puzzle(
+			149, "First Strake", "strake",
+			"The dock is two cells to the left of an east-facing parcel.",
+			"",
+			"The parcel comes in facing east. The strake jumps it two cells north and leaves it facing east, and that landing is the dock. The cell immediately to its left is a brick and is not entered. A bias tries to step into that brick. A loft jumps three cells east. A balk jumps two cells west. A keel jumps three cells west. A sheer jumps three cells south. A return reverses the facing and steps one cell west.",
+			8, 6,
+			[_cell(4, 2)],
+			[_source(2, 3, 0, ["gray"])],
+			{"x": 4, "y": 1},
+			[{"color": "gray"}],
+			[
+				_block("conveyor", 3, 3, 0),
+				_block("strake", 4, 3, 0),
+				_block("conveyor", 7, 3, 1),
+			]
+		),
+		_puzzle(
+			150, "Let Strake", "",
+			"Wait for the belt, then jump two cells to the left.",
+			"",
+			"Blue is using the landing. The strake holds red until that cell is free, then jumps two cells north and leaves red facing east. Gray sits in the skipped cell and does not block the jump. A bias tries to land on gray. A loft jumps east. A balk jumps west. A keel jumps three cells west. A sheer jumps three cells south. A return steps one cell back.",
+			6, 6,
+			[_cell(3, 2)],
+			[
+				_source(2, 3, 0, ["red"]),
+				_source(1, 1, 0, ["blue"]),
+				_source(5, 2, 2, ["gray"]),
+			],
+			{"x": 4, "y": 0},
+			[{"color": "blue"}, {"color": "red"}],
+			[
+				_block("conveyor", 3, 3, 0),
+				_block("strake", 4, 3, 0),
+				_block("pause", 4, 2, 0),
+				_block("conveyor", 2, 1, 0),
+				_block("conveyor", 3, 1, 0),
+				_block("chute", 4, 1, 3),
+			]
+		),
+		_puzzle(
+			151, "Strake Count", "",
+			"Stamp blue 1 and red 2. The strake jumps over the counter.",
+			"",
+			"The strake waits, then jumps the east-facing parcel two cells north, over the counter. The chute brings it back after blue has been stamped 1, so red is stamped 2. A bias tries to land on that counter. A loft jumps east. A balk jumps west. A keel jumps three cells west. A sheer jumps three cells south. A return steps one cell back.",
+			5, 5, [],
+			[
+				_source(1, 3, 0, ["red"]),
+				_source(0, 2, 0, ["blue"]),
+			],
+			{"x": 4, "y": 2},
+			[{"color": "blue", "count": 1}, {"color": "red", "count": 2}],
+			[
+				_block("strake", 2, 3, 0),
+				_block("pause", 1, 2, 0),
+				_block("counter", 2, 2, 0),
+				_block("chute", 2, 1, 1),
+				_block("conveyor", 3, 2, 0),
+			]
+		),
+		_puzzle(
+			152, "Clear the Side", "",
+			"Jump two cells to the left over the parcel beside it.",
+			"",
+			"A staying parcel occupies the cell immediately to the left. The strake still jumps two cells north and leaves the parcel facing east, onto the dock. A bias tries to land on the staying parcel. A loft jumps east. A balk jumps west. A keel jumps three cells west. A sheer jumps three cells south. A return steps one cell back.",
+			4, 4,
+			[_cell(1, 2)],
+			[
+				_source(0, 3, 0, ["gray"]),
+				_source(3, 2, 2, ["blue"]),
+			],
+			{"x": 2, "y": 1},
+			[{"color": "gray"}],
+			[
+				_block("conveyor", 1, 3, 0),
+				_block("strake", 2, 3, 0),
+				_block("pause", 2, 2, 0),
+			]
+		),
+		_puzzle(
+			153, "Two Strakes", "",
+			"Deliver red, then blue. Each jump is to the left of a different facing.",
+			"",
+			"Red arrives facing east and jumps two cells north onto the dock, still facing east. Blue arrives facing north and jumps two cells west onto the dock, still facing north. A bias lands one cell short. A loft jumps forward. A balk jumps backward. A keel jumps three cells backward. A sheer jumps three cells to the right. A return reverses the facing and steps one cell back.",
+			7, 5, [],
+			[
+				_source(3, 3, 0, ["red"]),
+				_source(5, 2, 3, ["blue"]),
+			],
+			{"x": 4, "y": 1},
+			[{"color": "red"}, {"color": "blue"}],
+			[
+				_block("strake", 4, 3, 0),
+				_block("shunt", 5, 1, 0),
+				_block("strake", 6, 1, 0),
+			]
+		),
+		_puzzle(
+			154, "Second Strake", "",
+			"Jump to the left, turn, then jump to the left on the new facing.",
+			"",
+			"The first strake jumps the east-facing parcel two cells north and leaves it facing east. The turn sends it south onto the second strake. That strake jumps two cells east, still facing south, onto the dock. One strake cannot do both jumps. A bias lands one cell short. A loft jumps forward. A balk jumps backward. A keel jumps three cells backward. A sheer jumps three cells to the right. A return steps one cell back.",
+			6, 6, [],
+			[_source(2, 5, 0, ["gray"])],
+			{"x": 5, "y": 4},
+			[{"color": "gray"}],
+			[
+				_block("strake", 3, 5, 0),
+				_block("turn", 3, 3, 0),
+				_block("strake", 3, 4, 0),
+			]
+		),
+		_puzzle(
+			155, "Night Strake", "",
+			"Deliver red 1, yellow 2, and blue 3.",
+			"",
+			"Red takes the filter. The strake jumps it two cells north and leaves it facing east, onto the counter for stamp 1. Gray takes the long belt and is primed yellow. Blue keeps its color. A bias lands one cell short of the counter. A loft jumps east. A balk jumps west. A keel jumps three cells west. A sheer jumps three cells south. A return steps one cell back.",
+			6, 6, [],
+			[_source(1, 4, 0, ["gray", "blue", "red"])],
+			{"x": 1, "y": 2},
+			[{"color": "red", "count": 1}, {"color": "yellow", "count": 2}, {"color": "blue", "count": 3}],
+			[
+				_block("filter", 2, 4, 0, "red"),
+				_block("conveyor", 3, 4, 0),
+				_block("strake", 4, 4, 0),
+				_block("conveyor", 4, 3, 0),
+				_block("counter", 4, 2, 2),
+				_block("conveyor", 3, 2, 2),
+				_block("conveyor", 2, 2, 2),
+				_block("chute", 2, 5, 0),
+				_block("primer", 3, 5, 0, "yellow"),
+				_block("conveyor", 4, 5, 0),
+				_block("conveyor", 5, 5, 3),
+				_block("conveyor", 5, 4, 3),
+				_block("conveyor", 5, 3, 3),
+				_block("conveyor", 5, 2, 2),
+			]
+		),
 	]
 
 
@@ -3009,7 +3146,7 @@ static func _puzzle(id: int, title: String, unlocks: String, brief: String, how_
 		"dock": dock,
 		"order": order,
 		"reference": reference,
-		"building": 20 if id >= 142 else 19 if id >= 135 else 18 if id >= 128 else 17 if id >= 121 else 16 if id >= 114 else 15 if id >= 107 else 14 if id >= 100 else 13 if id >= 93 else 12 if id >= 86 else 11 if id >= 79 else 10 if id >= 72 else 9 if id >= 65 else 8 if id >= 58 else 7 if id >= 51 else 6 if id >= 44 else 5 if id >= 37 else 4 if id >= 30 else 3 if id >= 23 else 2 if id >= 16 else 1,
+		"building": 21 if id >= 149 else 20 if id >= 142 else 19 if id >= 135 else 18 if id >= 128 else 17 if id >= 121 else 16 if id >= 114 else 15 if id >= 107 else 14 if id >= 100 else 13 if id >= 93 else 12 if id >= 86 else 11 if id >= 79 else 10 if id >= 72 else 9 if id >= 65 else 8 if id >= 58 else 7 if id >= 51 else 6 if id >= 44 else 5 if id >= 37 else 4 if id >= 30 else 3 if id >= 23 else 2 if id >= 16 else 1,
 	}
 
 
