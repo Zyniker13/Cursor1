@@ -49,7 +49,13 @@ const TESTER_AWNING := Color(0.28, 0.16, 0.36)
 const RIDDEL_AWNING := Color(0.34, 0.38, 0.50)
 const FRONTAL_AWNING := Color(0.16, 0.34, 0.28)
 const PALL_AWNING := Color(0.86, 0.82, 0.70)
-const WINDOW_W := 2668.0
+const HERSE_AWNING := Color(0.32, 0.34, 0.38)
+const CATAFALQUE_AWNING := Color(0.36, 0.22, 0.14)
+const BIER_AWNING := Color(0.45, 0.28, 0.14)
+const CERECLOTH_AWNING := Color(0.82, 0.74, 0.52)
+const HEARSE_AWNING := Color(0.16, 0.14, 0.18)
+const SHROUD_AWNING := Color(0.74, 0.74, 0.72)
+const WINDOW_W := 3076.0
 
 var notice_label: Label
 var purse_label: Label
@@ -233,6 +239,18 @@ func _awning_for(floor_id: String) -> Color:
 		return FRONTAL_AWNING
 	if floor_id == "pall":
 		return PALL_AWNING
+	if floor_id == "herse":
+		return HERSE_AWNING
+	if floor_id == "catafalque":
+		return CATAFALQUE_AWNING
+	if floor_id == "bier":
+		return BIER_AWNING
+	if floor_id == "cerecloth":
+		return CERECLOTH_AWNING
+	if floor_id == "hearse":
+		return HEARSE_AWNING
+	if floor_id == "shroud":
+		return SHROUD_AWNING
 	return CHART_AWNING
 
 
