@@ -9,7 +9,7 @@ Playable slices, Godot 4. Steam packaging comes later.
 - [Orchard Surge](orchard-surge/) — a dark-orchard wave game through night 49
 - [Lantern Census](lantern-census/) — a twenty-eight-floor map survey through the Aumbry
 - [Lowball](lowball/) — a forty-six-week twenty-three-club circle through Saltwharf Curlews
-- [Casework](casework/) — a forty-one-case deduction board through the scotia
+- [Casework](casework/) — a forty-two-case deduction board through the cyma
 - [Lampblack](lampblack/) — turn-based museum stealth through the mica
 - [Kiln Route](kiln-route/) — a two-hundred-room foundry puzzle through the stilt
 
