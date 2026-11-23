@@ -295,6 +295,16 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_larmier(at, rot)
 		"cill":
 			_draw_cill(at, rot)
+		"threshold":
+			_draw_threshold(at, rot)
+		"impost":
+			_draw_impost(at, rot)
+		"architrave":
+			_draw_architrave(at, rot)
+		"archivolt":
+			_draw_archivolt(at, rot)
+		"abacus":
+			_draw_abacus(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -1311,6 +1321,266 @@ func _draw_cill(at: Vector2i, rot: int) -> void:
 		center + along * half + along.orthogonal() * thick,
 		center - along * half + along.orthogonal() * thick,
 	]), bar)
+
+func _draw_threshold(at: Vector2i, rot: int) -> void:
+	# A low broken step on the opposite edge, the dry pass. A north threshold
+	# steps the south edge. The gap in the step is not the fillet's solid band
+	# and not the throat's two posts.
+	var center := _center(at)
+	var passing := Tracer.rotate_dir(Tracer.threshold_facing(rot), 2)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var step := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var along := Vector2.RIGHT
+	var outward := Vector2.DOWN
+	match passing:
+		"N":
+			along = Vector2.RIGHT
+			outward = Vector2.UP
+		"S":
+			along = Vector2.RIGHT
+			outward = Vector2.DOWN
+		"E":
+			along = Vector2.DOWN
+			outward = Vector2.RIGHT
+		_:
+			along = Vector2.DOWN
+			outward = Vector2.LEFT
+	var edge := center + outward * cell * 0.36
+	var inner := center + outward * cell * 0.18
+	var gap := cell * 0.05
+	var reach := cell * 0.16
+	draw_colored_polygon(PackedVector2Array([
+		inner + along * gap,
+		inner + along * reach,
+		edge + along * reach,
+		edge + along * gap,
+	]), step)
+	draw_colored_polygon(PackedVector2Array([
+		inner - along * gap,
+		inner - along * reach,
+		edge - along * reach,
+		edge - along * gap,
+	]), step)
+
+func _draw_impost(at: Vector2i, rot: int) -> void:
+	# A keystone on the facing edge, the dry pass. A north impost caps the
+	# north edge. The cap is wider than the cyma's wave and is not the
+	# threshold's broken step.
+	var center := _center(at)
+	var passing := Tracer.impost_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var stone := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var along := Vector2.RIGHT
+	var outward := Vector2.UP
+	match passing:
+		"N":
+			along = Vector2.RIGHT
+			outward = Vector2.UP
+		"S":
+			along = Vector2.RIGHT
+			outward = Vector2.DOWN
+		"E":
+			along = Vector2.DOWN
+			outward = Vector2.RIGHT
+		_:
+			along = Vector2.DOWN
+			outward = Vector2.LEFT
+	var outer := center + outward * cell * 0.38
+	var inner := center + outward * cell * 0.16
+	var wide := cell * 0.18
+	var narrow := cell * 0.08
+	draw_colored_polygon(PackedVector2Array([
+		inner + along * narrow,
+		inner - along * narrow,
+		outer - along * wide,
+		outer + along * wide,
+	]), stone)
+
+func _draw_architrave(at: Vector2i, rot: int) -> void:
+	# Two short posts on the perpendicular edges, the dry pass, and a cap on
+	# the facing. A north architrave posts the east and west edges. The posts
+	# are narrower than the corona's shelves.
+	var center := _center(at)
+	var facing := Tracer.architrave_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	for turn in [1, -1]:
+		_architrave_post(center, Tracer.rotate_dir(facing, turn), mark)
+	_architrave_cap(center, facing, mark)
+
+func _architrave_post(center: Vector2, dir: String, mark: Color) -> void:
+	var along := Vector2.RIGHT
+	var outward := Vector2.DOWN
+	match dir:
+		"N":
+			along = Vector2.RIGHT
+			outward = Vector2.UP
+		"S":
+			along = Vector2.RIGHT
+			outward = Vector2.DOWN
+		"E":
+			along = Vector2.DOWN
+			outward = Vector2.RIGHT
+		_:
+			along = Vector2.DOWN
+			outward = Vector2.LEFT
+	var edge := center + outward * cell * 0.34
+	var inner := center + outward * cell * 0.18
+	var half := cell * 0.07
+	draw_colored_polygon(PackedVector2Array([
+		inner - along * half,
+		inner + along * half,
+		edge + along * half,
+		edge - along * half,
+	]), mark)
+
+func _architrave_cap(center: Vector2, dir: String, mark: Color) -> void:
+	var along := Vector2.RIGHT
+	var outward := Vector2.UP
+	match dir:
+		"N":
+			along = Vector2.RIGHT
+			outward = Vector2.UP
+		"S":
+			along = Vector2.RIGHT
+			outward = Vector2.DOWN
+		"E":
+			along = Vector2.DOWN
+			outward = Vector2.RIGHT
+		_:
+			along = Vector2.DOWN
+			outward = Vector2.LEFT
+	var tip := center + outward * cell * 0.22
+	var base := center + outward * cell * 0.08
+	draw_colored_polygon(PackedVector2Array([
+		base - along * cell * 0.05,
+		base + along * cell * 0.05,
+		tip,
+	]), mark)
+
+func _draw_archivolt(at: Vector2i, rot: int) -> void:
+	# A curved band on the facing, the dry stop, and an open notch on each
+	# perpendicular edge, the flood pass. A north archivolt arches the north
+	# edge and notches east and west. The band is curved. It is not the
+	# architrave's two posts and not the corona's two shelves.
+	var center := _center(at)
+	var facing := Tracer.archivolt_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	_archivolt_arch(center, facing, mark)
+	for turn in [1, -1]:
+		_archivolt_notch(center, Tracer.rotate_dir(facing, turn), mark)
+
+func _archivolt_arch(center: Vector2, dir: String, mark: Color) -> void:
+	var along := Vector2.RIGHT
+	var outward := Vector2.UP
+	match dir:
+		"N":
+			along = Vector2.RIGHT
+			outward = Vector2.UP
+		"S":
+			along = Vector2.RIGHT
+			outward = Vector2.DOWN
+		"E":
+			along = Vector2.DOWN
+			outward = Vector2.RIGHT
+		_:
+			along = Vector2.DOWN
+			outward = Vector2.LEFT
+	var outer := PackedVector2Array()
+	var inner := PackedVector2Array()
+	for i in 7:
+		var ang := lerpf(-PI * 0.5, PI * 0.5, float(i) / 6.0)
+		var side := along * sin(ang) + outward * cos(ang)
+		outer.append(center + side * cell * 0.40)
+		inner.append(center + side * cell * 0.26)
+	for i in 6:
+		draw_colored_polygon(PackedVector2Array([outer[i], outer[i + 1], inner[i + 1], inner[i]]), mark)
+
+func _archivolt_notch(center: Vector2, dir: String, mark: Color) -> void:
+	var along := Vector2.RIGHT
+	var outward := Vector2.DOWN
+	match dir:
+		"N":
+			along = Vector2.RIGHT
+			outward = Vector2.UP
+		"S":
+			along = Vector2.RIGHT
+			outward = Vector2.DOWN
+		"E":
+			along = Vector2.DOWN
+			outward = Vector2.RIGHT
+		_:
+			along = Vector2.DOWN
+			outward = Vector2.LEFT
+	var tip := center + outward * cell * 0.34
+	var base := center + outward * cell * 0.14
+	draw_line(base - along * cell * 0.10, tip, mark, 2.0)
+	draw_line(base + along * cell * 0.10, tip, mark, 2.0)
+
+func _draw_abacus(at: Vector2i, rot: int) -> void:
+	# A flat square slab, the capital's abacus, with a peg on the facing.
+	# A north abacus lays the slab across the upper half and pegs the north
+	# edge. The slab is square-ended. It is not the archivolt's arch and not
+	# the architrave's two posts.
+	var center := _center(at)
+	var facing := Tracer.abacus_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	_abacus_slab(center, facing, mark)
+	_abacus_peg(center, facing, mark)
+
+func _abacus_slab(center: Vector2, dir: String, mark: Color) -> void:
+	var along := Vector2.RIGHT
+	var outward := Vector2.UP
+	match dir:
+		"N":
+			along = Vector2.RIGHT
+			outward = Vector2.UP
+		"S":
+			along = Vector2.RIGHT
+			outward = Vector2.DOWN
+		"E":
+			along = Vector2.DOWN
+			outward = Vector2.RIGHT
+		_:
+			along = Vector2.DOWN
+			outward = Vector2.LEFT
+	var outer := center + outward * cell * 0.34
+	var inner := center + outward * cell * 0.08
+	var half := cell * 0.36
+	draw_colored_polygon(PackedVector2Array([
+		inner - along * half,
+		inner + along * half,
+		outer + along * half,
+		outer - along * half,
+	]), mark)
+
+func _abacus_peg(center: Vector2, dir: String, mark: Color) -> void:
+	var along := Vector2.RIGHT
+	var outward := Vector2.UP
+	match dir:
+		"N":
+			along = Vector2.RIGHT
+			outward = Vector2.UP
+		"S":
+			along = Vector2.RIGHT
+			outward = Vector2.DOWN
+		"E":
+			along = Vector2.DOWN
+			outward = Vector2.RIGHT
+		_:
+			along = Vector2.DOWN
+			outward = Vector2.LEFT
+	var tip := center + outward * cell * 0.42
+	var base := center + outward * cell * 0.30
+	var half := cell * 0.07
+	draw_colored_polygon(PackedVector2Array([
+		base - along * half,
+		base + along * half,
+		tip + along * half,
+		tip - along * half,
+	]), mark)
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
 	if dir == "N" or dir == "S":
