@@ -2465,6 +2465,7 @@ const SHIFT_FINIS := 45
 const SHIFT_ENVOY := 46
 const SHIFT_FINALE := 47
 const SHIFT_EPODE := 48
+const SHIFT_VALEDICTION := 49
 
 const ROW_NAMES := ["top row", "middle row", "bottom row"]
 const COL_NAMES := ["column 1", "column 2", "column 3"]
@@ -4830,6 +4831,55 @@ const FINALE_BELL := [
 ]
 
 
+
+const VALEDICTION_BELL := [
+	{
+		"id": "theo_hale",
+		"name": "Theo Hale",
+		"form_name": "Dent Toll",
+		"rule_text": "Patience drops by 2 when the number of filled cells is 1 or 4.",
+		"rule": "drop_if_dent_count",
+		"lane": 0,
+		"exemption_row": 1,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "rolf_voss",
+		"name": "Rolf Voss",
+		"form_name": "Peg Fill",
+		"rule_text": "A stamp scores twice only when the queue cell two places after it is filled and the queue cell two places before it is filled. The top-left cell has no cell two places before it, so it does not double. The top-middle cell has no cell two places before it, so it does not double. The bottom-middle cell has no cell two places after it, so it does not double. The bottom-right cell has no cell two places after it, so it does not double.",
+		"rule": "double_peg_fill",
+		"lane": 1,
+		"exemption_row": 0,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "inga_brant",
+		"name": "Inga Brant",
+		"form_name": "Bolt Pay",
+		"rule_text": "Each stamp with exactly three corner neighbors and exactly three side neighbors scores +2 once. Any other count scores its own number. Exactly three corner neighbors with exactly two side neighbors score their own number. A lone stamp scores its own number.",
+		"rule": "yield_bolt_pay",
+		"lane": 2,
+		"exemption_row": 1,
+		"goal": 16,
+		"patience": 5,
+	},
+	{
+		"id": "elin_okell",
+		"name": "Elin Okell",
+		"form_name": "Peg Blank",
+		"rule_text": "A stamp scores twice only when the queue cell two places after it is empty and the queue cell two places before it is empty. The top-left cell has no cell two places before it, so it does not double. The top-middle cell has no cell two places before it, so it does not double. The bottom-middle cell has no cell two places after it, so it does not double. The bottom-right cell has no cell two places after it, so it does not double.",
+		"rule": "double_peg_blank",
+		"lane": 1,
+		"exemption_row": 2,
+		"goal": 22,
+		"patience": 5,
+	},
+]
+
+
 const EPODE_BELL := [
 	{
 		"id": "alma_hale",
@@ -4975,6 +5025,8 @@ static func _canonical_shift(shift_index: int) -> int:
 		return SHIFT_TITLEPAGE
 	if shift_index == SHIFT_COPYRIGHT:
 		return SHIFT_COPYRIGHT
+	if shift_index == SHIFT_VALEDICTION:
+		return SHIFT_VALEDICTION
 	if shift_index == SHIFT_EPODE:
 		return SHIFT_EPODE
 	if shift_index == SHIFT_FINALE:
@@ -5034,6 +5086,8 @@ static func new_run(seed_value: int, shift_index: int = SHIFT_FIRST) -> NightSta
 	state.next_iid = 0
 	for card_id in STARTING_DECK:
 		_add_library_card(state, String(card_id))
+	if state.shift == SHIFT_VALEDICTION:
+		_log(state, "The valediction bell begins. Seed %d." % state.seed)
 	if state.shift == SHIFT_EPODE:
 		_log(state, "The epode bell begins. Seed %d." % state.seed)
 	if state.shift == SHIFT_FINALE:
@@ -5172,6 +5226,8 @@ static func restart_encounter(state: NightState) -> void:
 
 
 static func shift_label(state: NightState) -> String:
+	if state.shift == SHIFT_VALEDICTION:
+		return "Valediction bell"
 	if state.shift == SHIFT_EPODE:
 		return "Epode bell"
 	if state.shift == SHIFT_FINALE:
@@ -5286,6 +5342,8 @@ static func traveler(state: NightState) -> Dictionary:
 
 
 static func _roster(state: NightState) -> Array:
+	if state.shift == SHIFT_VALEDICTION:
+		return VALEDICTION_BELL
 	if state.shift == SHIFT_EPODE:
 		return EPODE_BELL
 	if state.shift == SHIFT_FINALE:
@@ -5826,6 +5884,12 @@ static func stamp_progress(state: NightState, card_id: String, row: int, col: in
 		return amount * 2
 	if rule == "yield_hasp_pay" and _hasp_pay(state, row, col):
 		return amount + 2
+	if rule == "double_peg_fill" and _peg_fill(state, row, col):
+		return amount * 2
+	if rule == "yield_bolt_pay" and _bolt_pay(state, row, col):
+		return amount + 2
+	if rule == "double_peg_blank" and _peg_blank(state, row, col):
+		return amount * 2
 	if rule == "double_yoke_blank" and _yoke_blank(state, row, col):
 		return amount * 2
 	return amount
@@ -5997,6 +6061,8 @@ static func patience_loss(state: NightState) -> int:
 		elif rule == "drop_if_gauge_count" and _is_gauge_count(_stamp_count(state)):
 			loss = 2
 		elif rule == "drop_if_latch_count" and _is_latch_count(_stamp_count(state)):
+			loss = 2
+		elif rule == "drop_if_dent_count" and _is_dent_count(_stamp_count(state)):
 			loss = 2
 		elif rule == "drop_if_fork_count" and _is_fork_count(_stamp_count(state)):
 			loss = 2
@@ -6421,6 +6487,12 @@ static func _resolve_stamp(state: NightState, row: int, col: int, hush: bool) ->
 				_log(state, "%s on the %s, %s grants %d. The filled cell three places before it and the filled cell three places after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			elif tail_rule == "yield_hasp_pay" and _hasp_pay(state, row, col) and amount > raw:
 				_log(state, "%s on the %s, %s grants %d. Three corner neighbors and two side neighbors pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_peg_fill" and _peg_fill(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The filled cell two places before it and the filled cell two places after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_bolt_pay" and _bolt_pay(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. Three corner neighbors and three side neighbors pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_peg_blank" and _peg_blank(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The empty cell two places before it and the empty cell two places after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			elif tail_rule == "double_yoke_blank" and _yoke_blank(state, row, col) and amount > raw:
 				_log(state, "%s on the %s, %s grants %d. The empty cell three places before it and the empty cell three places after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			else:
@@ -6791,6 +6863,26 @@ static func _wedge_pay(state: NightState, row: int, col: int) -> bool:
 	if state.form[row][col] == null:
 		return false
 	return _diagonal_count(state, row, col) == 2
+
+
+static func _is_dent_count(count: int) -> bool:
+	return count == 1 or count == 4
+
+
+static func _peg_fill(state: NightState, row: int, col: int) -> bool:
+	return _skip_fill(state, row, col) and _step_fill(state, row, col)
+
+
+static func _bolt_pay(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	return orthogonal_count(state, row, col) == 3 and _diagonal_count(state, row, col) == 3
+
+
+static func _peg_blank(state: NightState, row: int, col: int) -> bool:
+	return _skip_blank(state, row, col) and _skip_gap(state, row, col)
 
 
 static func _is_fork_count(count: int) -> bool:
@@ -7933,6 +8025,8 @@ static func _apply_result(state: NightState, result: Dictionary) -> void:
 		state.encounters_cleared += 1
 		if state.traveler_index >= _roster(state).size() - 1:
 			state.phase = "victory"
+			if state.shift == SHIFT_VALEDICTION:
+				_log(state, "The queue is empty. The valediction bell is clear.")
 			if state.shift == SHIFT_EPODE:
 				_log(state, "The queue is empty. The epode bell is clear.")
 			if state.shift == SHIFT_FINALE:
