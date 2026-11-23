@@ -12,7 +12,8 @@ class_name ChartBook
 # The Transom holds eight more. The Casement holds eight more.
 # The Jamb holds eight more. The Astragal holds eight more.
 # The Scotia holds eight more. The Torus holds eight more.
-# The Ogee holds eight more. The Ovolo holds the last eight.
+# The Ogee holds eight more. The Ovolo holds eight more.
+# The Cavetto holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
@@ -92,6 +93,18 @@ class_name ChartBook
 # stops. A casement passes only the facing. A jamb passes both directions on
 # its open axis. A mullion passes north and south. A transom passes east and
 # west. A lintel passes every dry direction.
+# A cavetto has a facing. Rotation changes it the same way: 0 north, 90 east,
+# 180 south, 270 west. While its row is dry, every direction except the
+# opposite of the facing passes straight through in the same direction and the
+# same color, and that pass costs no bounce. It does not turn, it does not
+# recolor, and it does not split. The opposite direction stops and does not
+# enter. Facing north, the open directions are north, east, and west, and the
+# stopped direction is south. A north ovolo passes east, south, and west and
+# stops north, so a north cavetto is not a north ovolo. While that row is
+# flooded, every beam stops at the waterline, the same way a flooded ovolo
+# stops. A casement passes only the facing. A jamb passes both directions on
+# its open axis. A mullion passes north and south. A transom passes east and
+# west. A lintel passes every dry direction.
 # See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
@@ -122,6 +135,7 @@ const SCOTIA := "The Scotia"
 const TORUS := "The Torus"
 const OGEE := "The Ogee"
 const OVOLO := "The Ovolo"
+const CAVETTO := "The Cavetto"
 
 static func all() -> Array:
 	var book: Array = []
@@ -149,6 +163,7 @@ static func all() -> Array:
 	book.append_array(torus())
 	book.append_array(ogee())
 	book.append_array(ovolo())
+	book.append_array(cavetto())
 	return book
 
 
@@ -246,6 +261,10 @@ static func ogee() -> Array:
 
 static func ovolo() -> Array:
 	return [chart_183(), chart_184(), chart_185(), chart_186(), chart_187(), chart_188(), chart_189(), chart_190()]
+
+
+static func cavetto() -> Array:
+	return [chart_191(), chart_192(), chart_193(), chart_194(), chart_195(), chart_196(), chart_197(), chart_198()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -7020,6 +7039,298 @@ static func chart_190() -> Dictionary:
 	}
 
 
+static func chart_191() -> Dictionary:
+	# Tide index 0, flood 0. A north cavetto passes north, east, and west.
+	# The chart opens facing south, which stops the northbound beam.
+	return {
+		"id": "191",
+		"harbor": CAVETTO,
+		"title": "The Dry Cavetto",
+		"teach": "Tide index 0, flood 0. A dry north cavetto passes the northbound beam, the eastbound beam, and the westbound beam. The southbound return stops. White stays white and blue stays blue. A casement in that cell refuses the westbound beam. A jamb in that cell refuses the westbound beam and passes the southbound return. A lintel lets that return through. An ovolo facing north refuses the northbound beam. An ogee facing north refuses the northbound beam. A torus facing north refuses the westbound beam.",
+		"win": "The dry north cavetto passes north, east, and west, and the southbound return stops.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 6, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "red"),
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Ww", 6, 3, "W", "blue"),
+		],
+		"docks": [
+			_dock("Nd", 3, 1, "white", true),
+			_dock("Sd", 3, 5, "red", true, true),
+			_dock("Ed", 5, 3, "red", true),
+			_dock("Wd", 1, 3, "blue", true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_cavetto("O", "Cavetto", 3, 3, 180, 0),
+		],
+	}
+
+
+static func chart_192() -> Dictionary:
+	# The chart opens under water. The beam from the dry row stops at the
+	# waterline. The solution lowers the tide, and north, east, and west pass.
+	return {
+		"id": "192",
+		"harbor": CAVETTO,
+		"title": "The Wet Stop",
+		"teach": "The cavetto opens under water, so every beam stops at the waterline and does not enter. Lower the tide. Dry, the northbound beam, the eastbound beam, and the westbound beam pass. A shutter would pass while flooded. A well, a siphon, a sluice, or a weir would carry the beam. A casement refuses the westbound beam. A jamb refuses the westbound beam and passes the southbound return. A flooded ovolo stops the same way.",
+		"win": "The tide is low. North, east, and west pass, and the southbound beam stops.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0, 3],
+		"start_tide_index": 1,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 6, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "red"),
+			_lantern("Ee", 0, 4, "E", "red"),
+			_lantern("Ww", 6, 4, "W", "blue"),
+		],
+		"docks": [
+			_dock("Nd", 3, 2, "white", true),
+			_dock("Sd", 3, 5, "red", true, true),
+			_dock("Ed", 5, 4, "red", true),
+			_dock("Wd", 1, 4, "blue", true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_cavetto("O", "Cavetto", 3, 4, 180, 0),
+		],
+	}
+
+
+static func chart_193() -> Dictionary:
+	# Red goes north and stays red. Blue goes west and stays blue. White goes east.
+	return {
+		"id": "193",
+		"harbor": CAVETTO,
+		"title": "Color Kept",
+		"teach": "The dry cavetto keeps red, blue, and white. Red stays red and blue stays blue. White stays white. A stain or a weir would change the color. A casement refuses the westbound beam. A jamb refuses the westbound beam and passes the southbound return. An ovolo facing north refuses the northbound beam. An ogee facing north refuses the northbound beam.",
+		"win": "The color that enters the cavetto is the color that leaves it.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Rn", 3, 6, "N", "red"),
+			_lantern("Bw", 6, 3, "W", "blue"),
+			_lantern("Ew", 0, 3, "E", "white"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+		],
+		"docks": [
+			_dock("Rd", 3, 1, "red", true),
+			_dock("Bd", 1, 3, "blue", true),
+			_dock("Ed", 5, 3, "white", true),
+			_dock("Kd", 3, 5, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_cavetto("O", "Cavetto", 3, 3, 180, 0),
+		],
+	}
+
+
+static func chart_194() -> Dictionary:
+	# White goes straight north. Red goes straight east. Blue goes straight west.
+	return {
+		"id": "194",
+		"harbor": CAVETTO,
+		"title": "No Turn",
+		"teach": "The beam leaves on the same side it entered. It does not turn. A prism, a vane, a sluice, or a mirror would turn it. A casement refuses the westbound beam. A jamb passes the southbound return. An ovolo facing north refuses the northbound beam. A torus facing north refuses the westbound beam.",
+		"win": "White goes straight north, red goes straight east, and blue goes straight west.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 6, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "red"),
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Ww", 6, 3, "W", "blue"),
+		],
+		"docks": [
+			_dock("Nd", 3, 1, "white", true),
+			_dock("Sd", 3, 5, "red", true, true),
+			_dock("Ed", 5, 3, "red", true),
+			_dock("Wd", 1, 3, "blue", true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_cavetto("O", "Cavetto", 3, 3, 270, 0),
+		],
+	}
+
+
+static func chart_195() -> Dictionary:
+	# Flood 2 covers y >= 6. The cavetto stays on the dry row and passes
+	# north, east, and west. A separate beam stops at the flooded row's waterline.
+	return {
+		"id": "195",
+		"harbor": CAVETTO,
+		"title": "Beside the Flood",
+		"teach": "The cavetto's own row is dry, so the northbound beam, the eastbound beam, and the westbound beam pass. The next flooded cell that is not a flood carrier still stops the beam at the waterline. A mullion cannot be turned so that it passes west. A transom cannot be turned so that it passes north. A casement refuses the westbound beam. A lintel lets the southbound return through. An ovolo facing north refuses the northbound beam. An ogee facing north refuses the northbound beam.",
+		"win": "North, east, and west pass on the dry row, and the beam into the flood stops.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [2],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ss", 3, 0, "S", "red"),
+			_lantern("Nn", 3, 5, "N", "white"),
+			_lantern("Ee", 0, 2, "E", "blue"),
+			_lantern("Ww", 6, 2, "W", "red"),
+			_lantern("F", 1, 5, "S", "white"),
+		],
+		"docks": [
+			_dock("Nd", 3, 1, "white", true),
+			_dock("Kd", 3, 4, "red", true, true),
+			_dock("Ed", 5, 2, "blue", true),
+			_dock("Wd", 1, 2, "red", true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_cavetto("O", "Cavetto", 3, 2, 180, 0),
+		],
+	}
+
+
+static func chart_196() -> Dictionary:
+	# One cavetto faces south and passes south, east, and west. The other
+	# faces north and passes north, east, and west. Swapping those facings fails.
+	return {
+		"id": "196",
+		"harbor": CAVETTO,
+		"title": "Two Cavettos",
+		"teach": "One cavetto is open on south, east, and west. The other is open on north, east, and west. Swapping their facings fails. A jamb cannot take the south seat, because a north jamb also passes north. A mullion cannot be turned so that it passes east. A transom cannot be turned so that it passes north. An ovolo facing south cannot take the south seat. An ogee facing north cannot take the north seat.",
+		"win": "South, east, and west stay on the first seat. North, east, and west stay on the second.",
+		"cols": 11,
+		"rows": 9,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("As", 2, 0, "S", "white"),
+			_lantern("An", 2, 6, "N", "blue"),
+			_lantern("Ae", 0, 3, "E", "red"),
+			_lantern("Aw", 5, 3, "W", "blue"),
+			_lantern("Bs", 8, 2, "S", "red"),
+			_lantern("Bn", 8, 8, "N", "white"),
+			_lantern("Be", 6, 5, "E", "blue"),
+			_lantern("Bw", 10, 5, "W", "white"),
+		],
+		"docks": [
+			_dock("Adn", 2, 1, "blue", true, true),
+			_dock("Ads", 2, 5, "white", true),
+			_dock("Ade", 4, 3, "red", true),
+			_dock("Adw", 1, 3, "blue", true),
+			_dock("Bdn", 8, 4, "white", true),
+			_dock("Bds", 8, 7, "red", true, true),
+			_dock("Bde", 9, 5, "blue", true),
+			_dock("Bdw", 7, 5, "white", true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_cavetto("O", "South cavetto", 2, 3, 0, 180),
+			_cavetto("U", "North cavetto", 8, 5, 180, 0),
+		],
+	}
+
+
+static func chart_197() -> Dictionary:
+	# Three tide marks. The middle mark leaves the cavetto dry, facing north.
+	# Low water wakes the hull. High water covers the cavetto.
+	return {
+		"id": "197",
+		"harbor": CAVETTO,
+		"title": "The Held Cavetto",
+		"teach": "The held facing is part of the solution. The chart starts on a facing that stops north. Place the tide on the middle mark and face the cavetto north. Low water wakes the south hull. High water covers the cavetto and the beam stops at the waterline. A casement refuses the westbound beam. A jamb passes the southbound return. A lintel lets that return through. An ovolo facing north refuses the northbound beam.",
+		"win": "The middle mark holds the north cavetto. North, east, and west pass, and the hull stays dark.",
+		"cols": 8,
+		"rows": 7,
+		"tide_phases": [0, 1, 4],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ss", 4, 0, "S", "red"),
+			_lantern("Nn", 4, 5, "N", "white"),
+			_lantern("Ee", 0, 3, "E", "blue"),
+			_lantern("Ww", 7, 3, "W", "red"),
+			_lantern("Hl", 0, 6, "E", "white"),
+		],
+		"docks": [
+			_dock("Nd", 4, 1, "white", true),
+			_dock("Kd", 4, 4, "red", true, true),
+			_dock("Ed", 6, 3, "blue", true),
+			_dock("Wd", 2, 3, "red", true),
+		],
+		"boats": [
+			_boat("Hb", 3, 6),
+		],
+		"fixtures": [],
+		"pieces": [
+			_cavetto("O", "Cavetto", 4, 3, 180, 0),
+		],
+	}
+
+
+static func chart_198() -> Dictionary:
+	# The cavetto and the shutter trade places. On the line the cavetto faces
+	# north. North, east, and west count. The southbound beam must not.
+	return {
+		"id": "198",
+		"harbor": CAVETTO,
+		"title": "The Cavetto Mark",
+		"teach": "Move the cavetto from the side socket onto the line and face it north. The mark is satisfied only by that open set. The northbound beam, the eastbound beam, and the westbound beam pass. The southbound beam must not count. A casement, a jamb, a mullion, a transom, a lintel, an ovolo, an ogee, a torus, a scotia, or an astragal in that cell fails.",
+		"win": "The cavetto stands on the line, open north, east, and west. Three docks are lit and the return stays dark.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 6, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "red"),
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Ww", 6, 3, "W", "blue"),
+		],
+		"docks": [
+			_dock("Nd", 3, 1, "white", true),
+			_dock("Sd", 3, 5, "red", true, true),
+			_dock("Ed", 5, 3, "red", true),
+			_dock("Wd", 1, 3, "blue", true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_placed("O", "Cavetto", "cavetto", [["side", 5, 5], ["line", 3, 3]], "side", "line", 180, 0),
+			_placed("G", "Line shutter", "shutter", [["line", 3, 3], ["side", 5, 5]], "line", "side", 0, 0),
+		],
+	}
+
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -7300,6 +7611,20 @@ static func _ovolo(id: String, name: String, x: int, y: int, start_rot: int, sol
 		"id": id,
 		"name": name,
 		"kind": "ovolo",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _cavetto(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "cavetto",
 		"movable": false,
 		"sockets": [{"id": "a", "x": x, "y": y}],
 		"start_socket": "a",

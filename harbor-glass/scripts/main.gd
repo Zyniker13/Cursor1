@@ -5,7 +5,7 @@ extends Control
 # Mirror, then the Shutter, then the Stain, then the Vane, then the Well,
 # then the Siphon, then the Sluice, then the Weir, then the Lintel,
 # then the Mullion, then the Transom, then the Casement, then the Jamb,
-# then the Astragal, then the Scotia, then the Torus, then the Ogee, then the Ovolo.
+# then the Astragal, then the Scotia, then the Torus, then the Ogee, then the Ovolo, then the Cavetto.
 # Pieces turn in place; a loose piece may also move
 # between the sockets authored for that chart. Lock Chart asks the beam tracer
 # whether every dock has its color and every hull is dark.
@@ -72,6 +72,7 @@ var scotia_grid: GridContainer
 var torus_grid: GridContainer
 var ogee_grid: GridContainer
 var ovolo_grid: GridContainer
+var cavetto_grid: GridContainer
 var quay_book_button: Button
 var reach_book_button: Button
 var basin_book_button: Button
@@ -96,8 +97,9 @@ var scotia_book_button: Button
 var torus_book_button: Button
 var ogee_book_button: Button
 var ovolo_book_button: Button
+var cavetto_book_button: Button
 var harbor_label: Label
-var _book_place: Array[int] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+var _book_place: Array[int] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 var tide_clock: TideClock
 var _side: Panel
 
@@ -165,11 +167,14 @@ func _build_ui() -> void:
 	book_row_d.add_theme_constant_override("separation", 6)
 	var book_row_e := HBoxContainer.new()
 	book_row_e.add_theme_constant_override("separation", 6)
+	var book_row_f := HBoxContainer.new()
+	book_row_f.add_theme_constant_override("separation", 6)
 	book_col.add_child(book_row)
 	book_col.add_child(book_row_b)
 	book_col.add_child(book_row_c)
 	book_col.add_child(book_row_d)
 	book_col.add_child(book_row_e)
+	book_col.add_child(book_row_f)
 	quay_book_button = _button("Quay")
 	quay_book_button.tooltip_text = Charts.HARBOR
 	quay_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -266,6 +271,10 @@ func _build_ui() -> void:
 	ovolo_book_button.tooltip_text = Charts.OVOLO
 	ovolo_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	ovolo_book_button.pressed.connect(_on_book_pressed.bind(23))
+	cavetto_book_button = _button("Cavetto")
+	cavetto_book_button.tooltip_text = Charts.CAVETTO
+	cavetto_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cavetto_book_button.pressed.connect(_on_book_pressed.bind(24))
 	book_row.add_child(quay_book_button)
 	book_row.add_child(reach_book_button)
 	book_row.add_child(basin_book_button)
@@ -290,7 +299,8 @@ func _build_ui() -> void:
 	book_row_e.add_child(torus_book_button)
 	book_row_e.add_child(ogee_book_button)
 	book_row_e.add_child(ovolo_book_button)
-	for book_button in [quay_book_button, reach_book_button, basin_book_button, paint_book_button, west_book_button, meet_book_button, tide_book_button, shutter_book_button, stain_book_button, vane_book_button, well_book_button, siphon_book_button, sluice_book_button, weir_book_button, lintel_book_button, mullion_book_button, transom_book_button, casement_book_button, jamb_book_button, astragal_book_button, scotia_book_button, torus_book_button, ogee_book_button, ovolo_book_button]:
+	book_row_f.add_child(cavetto_book_button)
+	for book_button in [quay_book_button, reach_book_button, basin_book_button, paint_book_button, west_book_button, meet_book_button, tide_book_button, shutter_book_button, stain_book_button, vane_book_button, well_book_button, siphon_book_button, sluice_book_button, weir_book_button, lintel_book_button, mullion_book_button, transom_book_button, casement_book_button, jamb_book_button, astragal_book_button, scotia_book_button, torus_book_button, ogee_book_button, ovolo_book_button, cavetto_book_button]:
 		book_button.add_theme_font_size_override("font_size", 13)
 
 	quay_grid = _chart_grid()
@@ -317,6 +327,7 @@ func _build_ui() -> void:
 	torus_grid = _chart_grid()
 	ogee_grid = _chart_grid()
 	ovolo_grid = _chart_grid()
+	cavetto_grid = _chart_grid()
 	reach_grid.visible = false
 	basin_grid.visible = false
 	paint_grid.visible = false
@@ -340,6 +351,7 @@ func _build_ui() -> void:
 	torus_grid.visible = false
 	ogee_grid.visible = false
 	ovolo_grid.visible = false
+	cavetto_grid.visible = false
 	box.add_child(quay_grid)
 	box.add_child(reach_grid)
 	box.add_child(basin_grid)
@@ -364,6 +376,7 @@ func _build_ui() -> void:
 	box.add_child(torus_grid)
 	box.add_child(ogee_grid)
 	box.add_child(ovolo_grid)
+	box.add_child(cavetto_grid)
 	var bounds: Array = _book_bounds()
 	for i in charts.size():
 		var button := _button("Chart %d" % (i + 1))
@@ -416,8 +429,10 @@ func _build_ui() -> void:
 			torus_grid.add_child(button)
 		elif i < int(bounds[23]):
 			ogee_grid.add_child(button)
-		else:
+		elif i < int(bounds[24]):
 			ovolo_grid.add_child(button)
+		else:
+			cavetto_grid.add_child(button)
 		chart_buttons.append(button)
 
 	title_label = _label("", 20, Palette.TEXT)
@@ -463,7 +478,7 @@ func _build_ui() -> void:
 	status_label.custom_minimum_size = Vector2(340, 0)
 	box.add_child(status_label)
 
-	var legend := _label("Warm beam, red, and blue. A lamp may already burn one color. One mirror can take two lamps. A tide mirror reflects only while its row is flooded, and lets the beam pass while that row is dry. A shutter stops a beam while its row is dry, and lets the beam pass straight through while that row is flooded. A stain recolors a beam to its own color and lets it pass straight through, on a dry row and under water. A vane turns a beam into its facing, and a head-on beam stops. Water shuts a vane the way it shuts a mirror. A well stops a beam while its row is dry. While that row is flooded, the beam leaves north and keeps its color. A well does not turn. A siphon stops a beam while its row is dry. While that row is flooded, the beam leaves north and swaps red with blue. White stays white. A siphon does not turn. A sluice stops a beam while its row is dry. While that row is flooded, the beam leaves along the sluice's facing and keeps its color. A weir stops a beam while its row is dry. While that row is flooded, the beam leaves along the weir's facing and swaps red with blue. White stays white. A lintel lets a beam pass straight through while its row is dry, and stops the beam while that row is flooded. A lintel does not turn. A mullion lets a north-south beam pass straight through while its row is dry, and an east-west beam stops before it enters. A flooded mullion stops every beam. A mullion does not turn. A transom lets an east-west beam pass straight through while its row is dry, and a north-south beam stops before it enters. A flooded transom stops every beam. A transom does not turn. A casement lets a beam pass straight through while its row is dry, but only in the direction it faces. Every other direction stops before the cell. A flooded casement stops every beam. The casement turns. A jamb passes both directions of the axis it faces while its row is dry, and the other axis stops before the cell. North and south open the north-south axis. East and west open the east-west axis. A flooded jamb stops every beam. The jamb turns. An astragal passes the direction it faces and the next clockwise direction while its row is dry. The other two directions stop before the cell. A flooded astragal stops every beam. The astragal turns. A scotia passes the direction it faces and the next counterclockwise direction while its row is dry. The other two directions stop before the cell. A flooded scotia stops every beam. The scotia turns. A torus passes the direction opposite its facing and the next clockwise direction while its row is dry. The other two directions stop before the cell. A flooded torus stops every beam. The torus turns. An ogee passes the direction opposite its facing and the next counterclockwise direction while its row is dry. The other two directions stop before the cell. A flooded ogee stops every beam. The ogee turns. An ovolo passes every direction except the one it faces while its row is dry. That facing stops before the cell. A flooded ovolo stops every beam. The ovolo turns. Docks take only their marked color. Hulls stay dark. Water shuts the other glass it covers.", 13, Palette.MUTED)
+	var legend := _label("Warm beam, red, and blue. A lamp may already burn one color. One mirror can take two lamps. A tide mirror reflects only while its row is flooded, and lets the beam pass while that row is dry. A shutter stops a beam while its row is dry, and lets the beam pass straight through while that row is flooded. A stain recolors a beam to its own color and lets it pass straight through, on a dry row and under water. A vane turns a beam into its facing, and a head-on beam stops. Water shuts a vane the way it shuts a mirror. A well stops a beam while its row is dry. While that row is flooded, the beam leaves north and keeps its color. A well does not turn. A siphon stops a beam while its row is dry. While that row is flooded, the beam leaves north and swaps red with blue. White stays white. A siphon does not turn. A sluice stops a beam while its row is dry. While that row is flooded, the beam leaves along the sluice's facing and keeps its color. A weir stops a beam while its row is dry. While that row is flooded, the beam leaves along the weir's facing and swaps red with blue. White stays white. A lintel lets a beam pass straight through while its row is dry, and stops the beam while that row is flooded. A lintel does not turn. A mullion lets a north-south beam pass straight through while its row is dry, and an east-west beam stops before it enters. A flooded mullion stops every beam. A mullion does not turn. A transom lets an east-west beam pass straight through while its row is dry, and a north-south beam stops before it enters. A flooded transom stops every beam. A transom does not turn. A casement lets a beam pass straight through while its row is dry, but only in the direction it faces. Every other direction stops before the cell. A flooded casement stops every beam. The casement turns. A jamb passes both directions of the axis it faces while its row is dry, and the other axis stops before the cell. North and south open the north-south axis. East and west open the east-west axis. A flooded jamb stops every beam. The jamb turns. An astragal passes the direction it faces and the next clockwise direction while its row is dry. The other two directions stop before the cell. A flooded astragal stops every beam. The astragal turns. A scotia passes the direction it faces and the next counterclockwise direction while its row is dry. The other two directions stop before the cell. A flooded scotia stops every beam. The scotia turns. A torus passes the direction opposite its facing and the next clockwise direction while its row is dry. The other two directions stop before the cell. A flooded torus stops every beam. The torus turns. An ogee passes the direction opposite its facing and the next counterclockwise direction while its row is dry. The other two directions stop before the cell. A flooded ogee stops every beam. The ogee turns. An ovolo passes every direction except the one it faces while its row is dry. That facing stops before the cell. A flooded ovolo stops every beam. The ovolo turns. A cavetto passes every direction except the opposite of its facing while its row is dry. That opposite direction stops before the cell. A flooded cavetto stops every beam. The cavetto turns. Docks take only their marked color. Hulls stay dark. Water shuts the other glass it covers.", 13, Palette.MUTED)
 	legend.custom_minimum_size = Vector2(360, 0)
 	box.add_child(legend)
 	var keys := _label("Arrows or Tab select. R turns. M moves a loose piece. Space locks. H hints. T raises tide, Shift+T lowers it. Backspace restarts.", 12, Palette.MUTED)
@@ -673,6 +688,13 @@ func rotate_selected() -> void:
 		_clear_hint_if_resolved()
 		_refresh()
 		return
+	if str(piece["kind"]) == "cavetto":
+		var cavetto_rot := int(state["pieces"][selected_id]["rot"])
+		state["pieces"][selected_id]["rot"] = Tracer.turn_rot("cavetto", cavetto_rot)
+		status_label.text = "The cavetto turns clockwise. It passes every direction except the opposite of its facing."
+		_clear_hint_if_resolved()
+		_refresh()
+		return
 	var cur := int(state["pieces"][selected_id]["rot"])
 	state["pieces"][selected_id]["rot"] = Tracer.turn_rot(str(piece["kind"]), cur)
 	_clear_hint_if_resolved()
@@ -863,6 +885,8 @@ func _refresh_chrome() -> void:
 		water += " A dry ogee passes the opposite of its facing and the next counterclockwise direction. A flooded ogee stops the beam."
 	if _has_ovolo():
 		water += " A dry ovolo passes every direction except the one it faces. A flooded ovolo stops the beam."
+	if _has_cavetto():
+		water += " A dry cavetto passes every direction except the opposite of its facing. A flooded cavetto stops the beam."
 	tide_readout.text = "%s. %s" % [phase, water]
 	var phases: Array = chart["tide_phases"]
 	var multi := phases.size() > 1
@@ -914,6 +938,7 @@ func _refresh_chrome() -> void:
 	torus_grid.visible = book == 21
 	ogee_grid.visible = book == 22
 	ovolo_grid.visible = book == 23
+	cavetto_grid.visible = book == 24
 	reach_book_button.disabled = not unlocked[int(bounds[1])]
 	basin_book_button.disabled = not unlocked[int(bounds[2])]
 	paint_book_button.disabled = not unlocked[int(bounds[3])]
@@ -937,6 +962,7 @@ func _refresh_chrome() -> void:
 	torus_book_button.disabled = not unlocked[int(bounds[21])]
 	ogee_book_button.disabled = not unlocked[int(bounds[22])]
 	ovolo_book_button.disabled = not unlocked[int(bounds[23])]
+	cavetto_book_button.disabled = not unlocked[int(bounds[24])]
 	_paint_button(quay_book_button, book == 0)
 	_paint_button(reach_book_button, book == 1)
 	_paint_button(basin_book_button, book == 2)
@@ -961,6 +987,7 @@ func _refresh_chrome() -> void:
 	_paint_button(torus_book_button, book == 21)
 	_paint_button(ogee_book_button, book == 22)
 	_paint_button(ovolo_book_button, book == 23)
+	_paint_button(cavetto_book_button, book == 24)
 
 func _show_win() -> void:
 	win_body.text = str(chart["win"])
@@ -1015,11 +1042,14 @@ func _book_bounds() -> Array:
 	var scotia := astragal + Charts.scotia().size()
 	var torus := scotia + Charts.torus().size()
 	var ogee := torus + Charts.ogee().size()
-	return [0, q, r, b, p, w, m, t, s, n, v, well, siphon, sluice, weir, lintel, mullion, transom, casement, jamb, astragal, scotia, torus, ogee, charts.size()]
+	var ovolo := ogee + Charts.ovolo().size()
+	return [0, q, r, b, p, w, m, t, s, n, v, well, siphon, sluice, weir, lintel, mullion, transom, casement, jamb, astragal, scotia, torus, ogee, ovolo, charts.size()]
 
 
 func _book_of(index: int) -> int:
 	var bounds: Array = _book_bounds()
+	if index >= int(bounds[24]):
+		return 24
 	if index >= int(bounds[23]):
 		return 23
 	if index >= int(bounds[22]):
@@ -1120,8 +1150,10 @@ func _on_book_pressed(book: int) -> void:
 			status_label.text = "The torus is still locked."
 		elif book == 22:
 			status_label.text = "The ogee is still locked."
-		else:
+		elif book == 23:
 			status_label.text = "The ovolo is still locked."
+		else:
+			status_label.text = "The cavetto is still locked."
 		return
 	_book_place[here] = chart_index
 	var last := int(bounds[book + 1])
@@ -1272,6 +1304,17 @@ func _save_progress() -> void:
 		file.set_value("progress", "solved_%d" % i, solved[i])
 		file.set_value("progress", "unlocked_%d" % i, unlocked[i])
 	file.save(SAVE_PATH)
+
+func _has_cavetto() -> bool:
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		if str(piece["kind"]) == "cavetto":
+			return true
+	for raw in chart["fixtures"]:
+		var fix: Dictionary = raw
+		if str(fix["kind"]) == "cavetto":
+			return true
+	return false
 
 func _has_ovolo() -> bool:
 	for raw in chart["pieces"]:
