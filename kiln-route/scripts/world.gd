@@ -232,6 +232,21 @@ extends RefCounted
 ## right and the arrival forward without stepping through a source. A
 ## hardie accepts from ahead and sends the waiter forward and the arrival
 ## left. Nothing stays in the swage.
+## A flatter does not forward in step 2 on its own. The first item stays.
+## Only an arrival from ahead is accepted. The same material does not
+## release the waiter. When a later item of a different material arrives
+## from ahead, the waiter moves one cell behind and the arrival moves one
+## cell forward, and only if both of those cells can take them. The flatter
+## is empty after that tick. If either exit refuses, neither item leaves.
+## A source cell cannot hold the returning arrival. When the cell directly
+## forward is only the source that delivered the arrival, the arrival moves
+## through that cell into the next cell forward. The waiter does not step
+## through a source. A throat accepts from ahead and sends the waiter
+## behind and the arrival forward without stepping through a source. A
+## breast accepts from ahead and sends the waiter behind and the arrival
+## forward and steps through a source on both paths. A swage accepts from
+## ahead and sends the waiter right and the arrival forward. Nothing stays
+## in the flatter.
 
 const Rules = preload("res://scripts/foundry.gd")
 
@@ -263,7 +278,7 @@ class Machine:
 	## Second lane on a bridge. -1 is empty. Other machines leave it empty.
 	var cross := -1
 	var cross_moved := false
-	## True while a twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, a clevis, a beam, a hake, a sole, a frog, a shin, a point, a throat, a wrest, a jointer, a bridle, a trashboard, a gauge, a breast, a hardie, a fuller, or a swage is resolving an arrival, so a loop cannot re-enter.
+	## True while a twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, a clevis, a beam, a hake, a sole, a frog, a shin, a point, a throat, a wrest, a jointer, a bridle, a trashboard, a gauge, a breast, a hardie, a fuller, a swage, or a flatter is resolving an arrival, so a loop cannot re-enter.
 	var pairing := false
 
 class Source:
@@ -668,8 +683,9 @@ func _can_take(machine: Machine, mat: int, arrival: int) -> bool:
 		or machine.kind == Rules.Kind.HARDIE
 		or machine.kind == Rules.Kind.FULLER
 		or machine.kind == Rules.Kind.SWAGE
+		or machine.kind == Rules.Kind.FLATTER
 	):
-		# Pairing is handled in _accept. A twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, a clevis, a beam, a hake, a sole, a frog, a shin, a point, a throat, a wrest, a jointer, a bridle, a trashboard, a gauge, a breast, a hardie, a fuller, or a swage may already be holding.
+		# Pairing is handled in _accept. A twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, a clevis, a beam, a hake, a sole, a frog, a shin, a point, a throat, a wrest, a jointer, a bridle, a trashboard, a gauge, a breast, a hardie, a fuller, a swage, or a flatter may already be holding.
 		return false
 	if machine.kind == Rules.Kind.BRIDGE:
 		if arrival == machine.dir:
@@ -779,6 +795,8 @@ func _accept(dest: Vector2i, mat: int, arrival: int) -> bool:
 		return _accept_fuller(dest, machine, mat, arrival)
 	if machine.kind == Rules.Kind.SWAGE:
 		return _accept_swage(dest, machine, mat, arrival)
+	if machine.kind == Rules.Kind.FLATTER:
+		return _accept_flatter(dest, machine, mat, arrival)
 	if not _can_take(machine, mat, arrival):
 		return false
 	if _holder(machine.kind):
@@ -2114,6 +2132,64 @@ func _accept_swage(pos: Vector2i, machine: Machine, mat: int, arrival: int) -> b
 		if not forward_sent and _source_only(forward_pos):
 			forward_sent = _accept(forward_pos + Rules.vec(forward_dir), mat, forward_dir)
 	if not right_sent or not forward_sent:
+		_restore(mark)
+		return false
+	machine.pairing = false
+	machine.hold = -1
+	machine.moved = false
+	return true
+
+
+## From ahead only. The first item waits and never leaves on its own. The
+## same material does not release the waiter. A later item of a different
+## material from ahead may leave on that tick: the waiter moves one cell
+## behind and the arrival moves one cell forward, if both cells can take
+## them. Behind is opposite the facing. Forward is the facing. The flatter
+## is empty afterwards. If either exit refuses, neither item leaves and
+## the arrival is not accepted. A source cell cannot hold the returning
+## arrival. When the cell directly forward is only the source that delivered
+## the arrival, the arrival moves through that cell into the next cell
+## forward. The waiter does not step through a source. A lone item never
+## leaves, including on the next tick and the tick after that. The flatter
+## does not accept from the left, from the right, or from behind. It does
+## not spill, rotate, alternate, or keep either item. A throat sends the
+## waiter behind and the arrival forward without stepping through a source.
+## A breast sends the waiter behind and the arrival forward and steps
+## through a source on both paths. A swage sends the waiter right and the
+## arrival forward. A point sends the waiter right and the arrival forward
+## without stepping through a source. A fuller sends the waiter left and
+## the arrival forward. A hardie sends the waiter forward and the arrival
+## left. A gauge sends the waiter forward and the arrival behind. A shin
+## sends the waiter left and the arrival forward. A frog sends the waiter
+## forward and the arrival left. A sole sends the waiter forward and the
+## arrival right. A trashboard sends the waiter right and the arrival
+## behind. A bridle sends the waiter left and the arrival behind. A jointer
+## sends the waiter right and the arrival left. A wrest sends the waiter
+## left and the arrival right. A beam sends the waiter backward and the
+## arrival left. A hake sends the waiter backward and the arrival right.
+func _accept_flatter(pos: Vector2i, machine: Machine, mat: int, arrival: int) -> bool:
+	if arrival != Rules.opposite(machine.dir):
+		return false
+	if machine.hold < 0:
+		machine.hold = mat
+		machine.moved = true
+		return true
+	if machine.moved or machine.pairing:
+		return false
+	if mat == machine.hold:
+		return false
+	var behind_dir := Rules.opposite(machine.dir)
+	var forward_dir := machine.dir
+	var mark := _checkpoint()
+	machine.pairing = true
+	var behind_sent: bool = _accept(pos + Rules.vec(behind_dir), machine.hold, behind_dir)
+	var forward_sent := false
+	if behind_sent:
+		var forward_pos := pos + Rules.vec(forward_dir)
+		forward_sent = _accept(forward_pos, mat, forward_dir)
+		if not forward_sent and _source_only(forward_pos):
+			forward_sent = _accept(forward_pos + Rules.vec(forward_dir), mat, forward_dir)
+	if not behind_sent or not forward_sent:
 		_restore(mark)
 		return false
 	machine.pairing = false
