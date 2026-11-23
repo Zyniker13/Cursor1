@@ -333,6 +333,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_roll(at, rot)
 		"gutta":
 			_draw_gutta(at, rot)
+		"dentil":
+			_draw_dentil(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -2356,6 +2358,47 @@ func _gutta_drop(center: Vector2, dir: String, mark: Color, radius: float) -> vo
 		at - outward * radius * 0.2 + Vector2(-outward.y, outward.x) * radius * 0.55,
 		at - outward * radius * 0.2 + Vector2(outward.y, -outward.x) * radius * 0.55,
 		at + outward * radius * 1.15,
+	]), mark)
+
+func _draw_dentil(at: Vector2i, rot: int) -> void:
+	# Small teeth on the open headings. Dry, one tooth on the opposite and one
+	# on the counterclockwise side. Flooded, a tooth on the facing and one on
+	# the opposite.
+	var center := _center(at)
+	var facing := Tracer.dentil_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	if flooded:
+		_dentil_tooth(center, facing, mark)
+		_dentil_tooth(center, Tracer.rotate_dir(facing, 2), mark)
+		return
+	_dentil_tooth(center, Tracer.rotate_dir(facing, 2), mark)
+	_dentil_tooth(center, Tracer.rotate_dir(facing, -1), mark)
+
+func _dentil_tooth(center: Vector2, dir: String, mark: Color) -> void:
+	var outward := Vector2.DOWN
+	var side := Vector2.RIGHT
+	match dir:
+		"N":
+			outward = Vector2.UP
+			side = Vector2.RIGHT
+		"E":
+			outward = Vector2.RIGHT
+			side = Vector2.DOWN
+		"S":
+			outward = Vector2.DOWN
+			side = Vector2.RIGHT
+		_:
+			outward = Vector2.LEFT
+			side = Vector2.DOWN
+	var at := center + outward * cell * 0.16
+	var half := cell * 0.07
+	var reach := cell * 0.16
+	draw_colored_polygon(PackedVector2Array([
+		at - side * half,
+		at + side * half,
+		at + side * half + outward * reach,
+		at - side * half + outward * reach,
 	]), mark)
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
