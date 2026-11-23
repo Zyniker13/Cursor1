@@ -226,6 +226,8 @@ func _kind_for_key(code: int) -> int:
 		KEY_A: Rules.Kind.WREST,
 		KEY_S: Rules.Kind.JOINTER,
 		KEY_W: Rules.Kind.BRIDLE,
+		KEY_TAB: Rules.Kind.TRASHBOARD,
+		KEY_HOME: Rules.Kind.GAUGE,
 	}
 	if not map.has(code):
 		return -1
@@ -411,6 +413,8 @@ func _kind_order() -> Array:
 		Rules.Kind.WREST,
 		Rules.Kind.JOINTER,
 		Rules.Kind.BRIDLE,
+		Rules.Kind.TRASHBOARD,
+		Rules.Kind.GAUGE,
 	]
 
 
@@ -459,11 +463,17 @@ func _layout() -> Dictionary:
 	# The thirty-fourth wing adds a twenty-eighth row. Ten pixels still leaves a six-row board drawable.
 	# The thirty-fifth wing fills that row. Ten pixels still leaves a six-row board drawable.
 	# The thirty-sixth wing adds a twenty-ninth row. Ten pixels still leaves a six-row board drawable.
+	# The thirty-seventh wing adds a thirtieth row. Ten pixels still leaves a six-row board drawable.
+	# The thirty-eighth wing adds a thirty-first row. Nine pixels still leaves a six-row board drawable.
 	# Shorter tabs give that row back so the rule text keeps its space.
 	var per_row := 8
 	var tab_h := 30.0
 	var row_gap := 4.0
-	if rooms.size() > 264:
+	if rooms.size() > 296:
+		per_row = 10
+		tab_h = 9.0
+		row_gap = 1.0
+	elif rooms.size() > 264:
 		per_row = 10
 		tab_h = 10.0
 		row_gap = 1.0
@@ -576,7 +586,7 @@ func _draw() -> void:
 	var size: Vector2 = lay.size
 	draw_rect(Rect2(Vector2.ZERO, size), COL_BG)
 	_text(Vector2(24, 14), "KILN ROUTE", 28, COL_TEXT)
-	_text(Vector2(236, 26), "thirty-six wings", 15, COL_DIM)
+	_text(Vector2(236, 26), "thirty-eight wings", 15, COL_DIM)
 	var minute := "minute  %d / %d" % [_shown_tick(), Rules.SIM_TICKS]
 	var minute_w := font.get_string_size(minute, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
 	_text(Vector2(size.x - 24 - minute_w, 26), minute, 15, COL_DIM)
@@ -586,7 +596,7 @@ func _draw() -> void:
 	_draw_grid(lay)
 	_draw_side(lay)
 	_draw_tray(lay)
-	_text(Vector2(24, size.y - 28), "1-9 0 - = \\ ; , ' . / ` y u i o p t g h j k l m n b v c x z d a s w select   R rotate   LMB place or pick up   RMB rotate   Space run   F skip   Bksp restart", 13, COL_DIM)
+	_text(Vector2(24, size.y - 28), "1-9 0 - = \\ ; , ' . / ` y u i o p t g h j k l m n b v c x z d a s w Tab Home select   R rotate   LMB place or pick up   RMB rotate   Space run   F skip   Bksp restart", 13, COL_DIM)
 
 
 func _draw_tabs(lay: Dictionary) -> void:
@@ -1164,6 +1174,32 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 		draw_line(center, center + Vector2(Rules.vec(Rules.opposite(dir))) * body.size.x * 0.16, ink, thick)
 		draw_line(hip, hip + left_v * reach, ink, thick)
 		draw_line(hip_b, hip_b + back_v * reach, ink, thick)
+	elif kind == Rules.Kind.TRASHBOARD:
+		# Entry is from ahead. The waiter leaves right. The arrival leaves behind.
+		# Neither leaves forward. A bridle sends the waiter left.
+		var right_v := Vector2(Rules.vec(Rules.right(dir)))
+		var back_v := Vector2(Rules.vec(Rules.opposite(dir)))
+		var ink := Color("f0d4c0", 0.95 * alpha)
+		var thick := maxf(2.0, body.size.x * 0.07)
+		var reach := body.size.x * 0.24
+		var hip := center + right_v * body.size.x * 0.1
+		var hip_b := center + back_v * body.size.x * 0.1
+		draw_line(center, center + Vector2(Rules.vec(Rules.opposite(dir))) * body.size.x * 0.16, ink, thick)
+		draw_line(hip, hip + right_v * reach, ink, thick)
+		draw_line(hip_b, hip_b + back_v * reach, ink, thick)
+	elif kind == Rules.Kind.GAUGE:
+		# Entry is from ahead. The waiter leaves forward. The arrival leaves behind.
+		# A trashboard sends the waiter right.
+		var along := Vector2(Rules.vec(dir))
+		var back_v := Vector2(Rules.vec(Rules.opposite(dir)))
+		var ink := Color("c8e4f0", 0.95 * alpha)
+		var thick := maxf(2.0, body.size.x * 0.07)
+		var reach := body.size.x * 0.24
+		var hip := center + along * body.size.x * 0.1
+		var hip_b := center + back_v * body.size.x * 0.1
+		draw_line(center, center + Vector2(Rules.vec(Rules.opposite(dir))) * body.size.x * 0.16, ink, thick)
+		draw_line(hip, hip + along * reach, ink, thick)
+		draw_line(hip_b, hip_b + back_v * reach, ink, thick)
 	elif kind == Rules.Kind.GRATE:
 		var along := Vector2(Rules.vec(dir))
 		var across := Vector2(Rules.vec(Rules.right(dir)))
@@ -1183,7 +1219,7 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 	var forward := light
 	if kind == Rules.Kind.GRATE:
 		forward = Color("d7dee6")
-	if kind != Rules.Kind.HOOK and kind != Rules.Kind.DROP and kind != Rules.Kind.LIFT and kind != Rules.Kind.SHED and kind != Rules.Kind.RAKE and kind != Rules.Kind.HOE and kind != Rules.Kind.HARROW and kind != Rules.Kind.FORK and kind != Rules.Kind.PRONG and kind != Rules.Kind.SHARE and kind != Rules.Kind.COULTER and kind != Rules.Kind.MOLDBOARD and kind != Rules.Kind.LANDSIDE and kind != Rules.Kind.SLADE and kind != Rules.Kind.HEEL and kind != Rules.Kind.STILT and kind != Rules.Kind.CLEVIS and kind != Rules.Kind.BEAM and kind != Rules.Kind.HAKE and kind != Rules.Kind.SOLE and kind != Rules.Kind.FROG and kind != Rules.Kind.SHIN and kind != Rules.Kind.POINT and kind != Rules.Kind.THROAT and kind != Rules.Kind.WREST and kind != Rules.Kind.JOINTER and kind != Rules.Kind.BRIDLE:
+	if kind != Rules.Kind.HOOK and kind != Rules.Kind.DROP and kind != Rules.Kind.LIFT and kind != Rules.Kind.SHED and kind != Rules.Kind.RAKE and kind != Rules.Kind.HOE and kind != Rules.Kind.HARROW and kind != Rules.Kind.FORK and kind != Rules.Kind.PRONG and kind != Rules.Kind.SHARE and kind != Rules.Kind.COULTER and kind != Rules.Kind.MOLDBOARD and kind != Rules.Kind.LANDSIDE and kind != Rules.Kind.SLADE and kind != Rules.Kind.HEEL and kind != Rules.Kind.STILT and kind != Rules.Kind.CLEVIS and kind != Rules.Kind.BEAM and kind != Rules.Kind.HAKE and kind != Rules.Kind.SOLE and kind != Rules.Kind.FROG and kind != Rules.Kind.SHIN and kind != Rules.Kind.POINT and kind != Rules.Kind.THROAT and kind != Rules.Kind.WREST and kind != Rules.Kind.JOINTER and kind != Rules.Kind.BRIDLE and kind != Rules.Kind.TRASHBOARD and kind != Rules.Kind.GAUGE:
 		_arrow(front, dir, body.size.x * 0.2, body.size.x * 0.12, Color(forward.r, forward.g, forward.b, forward_alpha))
 	if kind == Rules.Kind.HOOK:
 		var turn := Rules.left(dir)
@@ -1359,6 +1395,21 @@ func _glyph(rect: Rect2, kind: int, dir: int, alpha: float, phase: int) -> void:
 		var behind_side := center + Vector2(Rules.vec(behind_turn)) * body.size.x * 0.28
 		_arrow(left_side, left_turn, body.size.x * 0.14, body.size.x * 0.09, Color(bridle_mark.r, bridle_mark.g, bridle_mark.b, alpha))
 		_arrow(behind_side, behind_turn, body.size.x * 0.14, body.size.x * 0.09, Color(bridle_mark.r, bridle_mark.g, bridle_mark.b, alpha))
+	elif kind == Rules.Kind.TRASHBOARD:
+		var trashboard_mark := Color("f0d4c0")
+		var right_turn := Rules.right(dir)
+		var behind_turn := Rules.opposite(dir)
+		var right_side := center + Vector2(Rules.vec(right_turn)) * body.size.x * 0.28
+		var behind_side := center + Vector2(Rules.vec(behind_turn)) * body.size.x * 0.28
+		_arrow(right_side, right_turn, body.size.x * 0.14, body.size.x * 0.09, Color(trashboard_mark.r, trashboard_mark.g, trashboard_mark.b, alpha))
+		_arrow(behind_side, behind_turn, body.size.x * 0.14, body.size.x * 0.09, Color(trashboard_mark.r, trashboard_mark.g, trashboard_mark.b, alpha))
+	elif kind == Rules.Kind.GAUGE:
+		var gauge_mark := Color("c8e4f0")
+		var behind_turn := Rules.opposite(dir)
+		var forward_side := center + Vector2(Rules.vec(dir)) * body.size.x * 0.32
+		var behind_side := center + Vector2(Rules.vec(behind_turn)) * body.size.x * 0.28
+		_arrow(forward_side, dir, body.size.x * 0.14, body.size.x * 0.09, Color(gauge_mark.r, gauge_mark.g, gauge_mark.b, alpha))
+		_arrow(behind_side, behind_turn, body.size.x * 0.14, body.size.x * 0.09, Color(gauge_mark.r, gauge_mark.g, gauge_mark.b, alpha))
 	elif kind == Rules.Kind.DROP:
 		var turn := Rules.right(dir)
 		var side := center + Vector2(Rules.vec(turn)) * body.size.x * 0.2
@@ -1566,6 +1617,10 @@ func _key_label(kind: int) -> String:
 		return "s"
 	if kind == Rules.Kind.BRIDLE:
 		return "w"
+	if kind == Rules.Kind.TRASHBOARD:
+		return "Tab"
+	if kind == Rules.Kind.GAUGE:
+		return "Home"
 	return str(kind + 1)
 
 
@@ -1602,6 +1657,12 @@ func _tray_count_line(kind: int, count: int) -> String:
 		return "%d ahead" % count
 	# The bridle count reads "ahead" so room 281 shows "1 ahead" beside Bridle and its key.
 	if kind == Rules.Kind.BRIDLE:
+		return "%d ahead" % count
+	# The trashboard count reads "ahead" so room 289 shows "1 ahead" beside Trashboard and its key.
+	if kind == Rules.Kind.TRASHBOARD:
+		return "%d ahead" % count
+	# The gauge count reads "ahead" so room 297 shows "1 ahead" beside Gauge and its key.
+	if kind == Rules.Kind.GAUGE:
 		return "%d ahead" % count
 	return "%d left" % count
 
@@ -1689,6 +1750,10 @@ func _kind_color(kind: int) -> Color:
 		return Color("28486a")
 	if kind == Rules.Kind.BRIDLE:
 		return Color("3a3068")
+	if kind == Rules.Kind.TRASHBOARD:
+		return Color("6a4030")
+	if kind == Rules.Kind.GAUGE:
+		return Color("2a5a68")
 	return Color("c792ef")
 
 

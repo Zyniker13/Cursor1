@@ -42,7 +42,10 @@ const PISCINA_AWNING := Color(0.34, 0.48, 0.52)
 const SEDILIA_AWNING := Color(0.46, 0.40, 0.32)
 const CREDENCE_AWNING := Color(0.64, 0.54, 0.38)
 const REREDOS_AWNING := Color(0.42, 0.32, 0.48)
-const WINDOW_W := 2192.0
+const PREDELLA_AWNING := Color(0.50, 0.28, 0.22)
+const DOSSAL_AWNING := Color(0.36, 0.10, 0.16)
+const RETABLE_AWNING := Color(0.74, 0.56, 0.18)
+const WINDOW_W := 2396.0
 
 var notice_label: Label
 var purse_label: Label
@@ -212,6 +215,12 @@ func _awning_for(floor_id: String) -> Color:
 		return CREDENCE_AWNING
 	if floor_id == "reredos":
 		return REREDOS_AWNING
+	if floor_id == "predella":
+		return PREDELLA_AWNING
+	if floor_id == "dossal":
+		return DOSSAL_AWNING
+	if floor_id == "retable":
+		return RETABLE_AWNING
 	return CHART_AWNING
 
 
