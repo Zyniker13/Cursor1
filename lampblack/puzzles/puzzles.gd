@@ -3,7 +3,7 @@ extends RefCounted
 
 const Rules = preload("res://rules/rules.gd")
 
-## Sixteen wings of the closed museum. Each solution is a list of actions the rules
+## Seventeen wings of the closed museum. Each solution is a list of actions the rules
 ## accept. Tokens are R L U D, W for wait, and T0 / T1 for lamps.
 
 
@@ -89,6 +89,8 @@ static func _puzzle(number: int, title: String, lesson: String, rows: PackedStri
 		wing_number = number - 86
 	elif wing == "Glaze Wing":
 		wing_number = number - 92
+	elif wing == "Mica Wing":
+		wing_number = number - 98
 	return {
 		"number": number,
 		"wing": wing,
@@ -134,6 +136,7 @@ static func _all() -> Array:
 	puzzles.append_array(_shade_wing())
 	puzzles.append_array(_screen_wing())
 	puzzles.append_array(_glaze_wing())
+	puzzles.append_array(_mica_wing())
 	return puzzles
 
 
@@ -1905,5 +1908,124 @@ static func _glaze_wing() -> Array:
 			[_guard(5, 3, [Vector2i(5, 3)], 3)],
 			"D L D D D R R T0 U U R R U U",
 			"Glaze Wing"
+		),
+	]
+
+
+static func _mica_wing() -> Array:
+	return [
+		_puzzle(
+			99,
+			"The Dark Step",
+			"This room is about the rule that you step onto the mica while the lamp is lit, and the gap beyond it is lit.",
+			PackedStringArray([
+				"##########",
+				"#........#",
+				"#...X....#",
+				"#...G....#",
+				"####M#####",
+				"#...S....#",
+				"#........#",
+				"##########",
+			]),
+			[_lamp(4, 6, "n", 3)],
+			[_guard(5, 6, [Vector2i(5, 6), Vector2i(8, 6)], 4)],
+			"U U U",
+			"Mica Wing"
+		),
+		_puzzle(
+			100,
+			"The Seen Gap",
+			"This room is about the rule that the guard sees a lit tile through the dark mica, and the solution never takes that tile.",
+			PackedStringArray([
+				"#############",
+				"#....###....#",
+				"#....####...#",
+				"#...##G###..#",
+				"#.....MG.X..#",
+				"#.....S###..#",
+				"#...........#",
+				"#...........#",
+				"#############",
+			]),
+			[_lamp(4, 4, "n", 3)],
+			[_guard(4, 4, [Vector2i(4, 4), Vector2i(4, 6)], 3)],
+			"U R R R",
+			"Mica Wing"
+		),
+		_puzzle(
+			101,
+			"The Passed Lamp",
+			"This room is about the rule that a second lamp's light passes the mica, and the guard sees the gap.",
+			PackedStringArray([
+				"#############",
+				"######G######",
+				"#.....MG..X.#",
+				"######G######",
+				"#S..........#",
+				"#...........#",
+				"#############",
+			]),
+			[_lamp(2, 2, "e", 5), _lamp(3, 4, "e", 6)],
+			[_guard(8, 4, [Vector2i(8, 4)], 6)],
+			"R T1 R R D R U R U U U D R R R R",
+			"Mica Wing"
+		),
+		_puzzle(
+			102,
+			"The Long Road",
+			"This room is about the rule that a guard cannot enter the mica, so he takes the longer road.",
+			PackedStringArray([
+				"#############",
+				"#.....G.....#",
+				"#S....M....X#",
+				"##.###.#.##.#",
+				"#...........#",
+				"#...........#",
+				"#...........#",
+				"#############",
+			]),
+			[_lamp(4, 2, "e", 0), _lamp(6, 4, "n", 3)],
+			[_guard(10, 5, [Vector2i(10, 5)], 2)],
+			"R R T0 R W W W W W W W W U R R D U R R R R R D",
+			"Mica Wing"
+		),
+		_puzzle(
+			103,
+			"The Early Catch",
+			"This room is about the rule that the early step onto the mica is legal, and a guard catches a scripted wrong step on the tile past it.",
+			PackedStringArray([
+				"##########",
+				"#........#",
+				"#...X....#",
+				"#...G....#",
+				"####M....#",
+				"#...S....#",
+				"#........#",
+				"##########",
+			]),
+			[_lamp(4, 6, "n", 3)],
+			[_guard(5, 6, [Vector2i(5, 6), Vector2i(8, 6)], 4)],
+			"U U U",
+			"Mica Wing"
+		),
+		_puzzle(
+			104,
+			"The Last Mica",
+			"This room is about the rule that you leave by stepping on the dark mica, and the gap beyond it is watched.",
+			PackedStringArray([
+				"#############",
+				"#.....G.....#",
+				"#S....M....X#",
+				"##.###.#.##.#",
+				"#...........#",
+				"#..........##",
+				"#...........#",
+				"#############",
+			]),
+			[_lamp(4, 2, "e", 0), _lamp(6, 4, "n", 3)],
+			[_guard(8, 2, [Vector2i(8, 2)], 3)],
+			"R R T0 R W W W U R R D U R R R R R D",
+			"Mica Wing"
 		),
 	]
