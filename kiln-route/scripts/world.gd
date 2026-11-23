@@ -463,6 +463,30 @@ extends RefCounted
 ## waiter through a right source and sends the arrival left. A bick sends
 ## the waiter behind and the arrival left. A sledge sends the waiter
 ## behind and the arrival right. Nothing stays in the rounder.
+## A header does not forward in step 2 on its own. The first item stays.
+## Only an arrival from ahead is accepted. The same material does not
+## release the waiter. When a later item of a different material arrives
+## from ahead, the waiter moves one cell left and the arrival moves one
+## cell right, and only if both of those cells can take them. Left is one
+## turn counter-clockwise. Right is one turn clockwise. The header is
+## empty after that tick. If either exit refuses, neither item leaves.
+## When the cell directly left is only a source, the waiter moves through
+## that cell into the next cell left. When the cell directly right is only
+## a source, the arrival moves through that cell into the next cell
+## right. A mandrel steps the waiter through a left source and does not
+## step the arrival through a right source. A wrest sends the waiter left
+## and the arrival right without stepping either one. A rounder steps the
+## waiter through a left source and the arrival through a forward source.
+## A drift steps the waiter through a left source and does not step the
+## arrival. A creaser steps the waiter through a forward source and the
+## arrival through a right source. An anvil steps the waiter through a
+## forward source and sends the arrival right. A stake steps the waiter
+## through a right source and the arrival through a forward source. A
+## punch steps the waiter through a right source and does not step the
+## arrival. A pritchel steps the waiter through a right source and sends
+## the arrival left. A bick sends the waiter behind and the arrival left.
+## A sledge sends the waiter behind and the arrival right. A breast steps
+## the waiter behind and the arrival forward. Nothing stays in the header.
 
 const Rules = preload("res://scripts/foundry.gd")
 
@@ -913,8 +937,9 @@ func _can_take(machine: Machine, mat: int, arrival: int) -> bool:
 		or machine.kind == Rules.Kind.STAKE
 		or machine.kind == Rules.Kind.CREASER
 		or machine.kind == Rules.Kind.ROUNDER
+		or machine.kind == Rules.Kind.HEADER
 	):
-		# Pairing is handled in _accept. A twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, a clevis, a beam, a hake, a sole, a frog, a shin, a point, a throat, a wrest, a jointer, a bridle, a trashboard, a gauge, a breast, a hardie, a fuller, a swage, a flatter, a drift, a punch, a sett, a bolster, a snap, an anvil, a sledge, a bick, a pritchel, a mandrel, a stake, a creaser, or a rounder may already be holding.
+		# Pairing is handled in _accept. A twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, a clevis, a beam, a hake, a sole, a frog, a shin, a point, a throat, a wrest, a jointer, a bridle, a trashboard, a gauge, a breast, a hardie, a fuller, a swage, a flatter, a drift, a punch, a sett, a bolster, a snap, an anvil, a sledge, a bick, a pritchel, a mandrel, a stake, a creaser, a rounder, or a header may already be holding.
 		return false
 	if machine.kind == Rules.Kind.BRIDGE:
 		if arrival == machine.dir:
@@ -1052,6 +1077,8 @@ func _accept(dest: Vector2i, mat: int, arrival: int) -> bool:
 		return _accept_creaser(dest, machine, mat, arrival)
 	if machine.kind == Rules.Kind.ROUNDER:
 		return _accept_rounder(dest, machine, mat, arrival)
+	if machine.kind == Rules.Kind.HEADER:
+		return _accept_header(dest, machine, mat, arrival)
 	if not _can_take(machine, mat, arrival):
 		return false
 	if _holder(machine.kind):
@@ -3139,6 +3166,65 @@ func _accept_rounder(pos: Vector2i, machine: Machine, mat: int, arrival: int) ->
 		if not forward_sent and _source_only(forward_pos):
 			forward_sent = _accept(forward_pos + Rules.vec(forward_dir), mat, forward_dir)
 	if not left_sent or not forward_sent:
+		_restore(mark)
+		return false
+	machine.pairing = false
+	machine.hold = -1
+	machine.moved = false
+	return true
+
+
+## From ahead only. The first item waits and never leaves on its own. The
+## same material does not release the waiter. A later item of a different
+## material from ahead may leave on that tick: the waiter moves one cell
+## left and the arrival moves one cell right, if both cells can take them.
+## Left is one turn counter-clockwise. Right is one turn clockwise. The
+## header is empty afterwards. If either exit refuses, neither item leaves
+## and the arrival is not accepted. When the cell directly left is only a
+## source, the waiter moves through that cell into the next cell left.
+## When the cell directly right is only a source, the arrival moves through
+## that cell into the next cell right. A lone item never leaves, including
+## on the next tick and the tick after that. The header does not accept
+## from the left, from the right, or from behind. It does not spill,
+## rotate, alternate, or keep either item. A mandrel steps the waiter
+## through a left source and sends the arrival right without stepping
+## through a source. A wrest sends both without stepping. A rounder steps
+## the waiter through a left source and the arrival through a forward
+## source. A drift steps the waiter left and does not step the arrival. A
+## creaser steps the waiter through a forward source and the arrival
+## through a right source. An anvil steps the waiter forward and sends the
+## arrival right. A stake steps both the right and the forward paths. A
+## punch steps the waiter right and does not step the arrival. A pritchel
+## steps the waiter right and sends the arrival left. A bick sends the
+## waiter behind and the arrival left. A sledge sends the waiter behind
+## and the arrival right. A breast steps the waiter behind and the arrival
+## forward.
+func _accept_header(pos: Vector2i, machine: Machine, mat: int, arrival: int) -> bool:
+	if arrival != Rules.opposite(machine.dir):
+		return false
+	if machine.hold < 0:
+		machine.hold = mat
+		machine.moved = true
+		return true
+	if machine.moved or machine.pairing:
+		return false
+	if mat == machine.hold:
+		return false
+	var left_dir := Rules.left(machine.dir)
+	var right_dir := Rules.right(machine.dir)
+	var mark := _checkpoint()
+	machine.pairing = true
+	var left_pos := pos + Rules.vec(left_dir)
+	var left_sent: bool = _accept(left_pos, machine.hold, left_dir)
+	if not left_sent and _source_only(left_pos):
+		left_sent = _accept(left_pos + Rules.vec(left_dir), machine.hold, left_dir)
+	var right_sent := false
+	if left_sent:
+		var right_pos := pos + Rules.vec(right_dir)
+		right_sent = _accept(right_pos, mat, right_dir)
+		if not right_sent and _source_only(right_pos):
+			right_sent = _accept(right_pos + Rules.vec(right_dir), mat, right_dir)
+	if not left_sent or not right_sent:
 		_restore(mark)
 		return false
 	machine.pairing = false
