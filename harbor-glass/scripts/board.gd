@@ -313,6 +313,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_annulet(at, rot)
 		"listel":
 			_draw_listel(at, rot)
+		"necking":
+			_draw_necking(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -1831,6 +1833,74 @@ func _listel_tick(center: Vector2, dir: String, mark: Color) -> void:
 	var inner := center + outward * cell * 0.08
 	var outer := center + outward * cell * 0.28
 	var half := cell * 0.045
+	draw_colored_polygon(PackedVector2Array([
+		inner - across * half,
+		inner + across * half,
+		outer + across * half,
+		outer - across * half,
+	]), mark)
+
+func _draw_necking(at: Vector2i, rot: int) -> void:
+	# A thin collar with ticks on the facing and the counterclockwise edge.
+	# The collar stays square, unlike the listel's turning band.
+	var center := _center(at)
+	var facing := Tracer.necking_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var counter := "W"
+	match facing:
+		"N":
+			counter = "W"
+		"E":
+			counter = "N"
+		"S":
+			counter = "E"
+		_:
+			counter = "S"
+	var outer := cell * 0.34
+	var inner := cell * 0.26
+	draw_colored_polygon(PackedVector2Array([
+		center + Vector2(-outer, -outer),
+		center + Vector2(outer, -outer),
+		center + Vector2(outer, -inner),
+		center + Vector2(-outer, -inner),
+	]), mark)
+	draw_colored_polygon(PackedVector2Array([
+		center + Vector2(-outer, inner),
+		center + Vector2(outer, inner),
+		center + Vector2(outer, outer),
+		center + Vector2(-outer, outer),
+	]), mark)
+	draw_colored_polygon(PackedVector2Array([
+		center + Vector2(-outer, -inner),
+		center + Vector2(-inner, -inner),
+		center + Vector2(-inner, inner),
+		center + Vector2(-outer, inner),
+	]), mark)
+	draw_colored_polygon(PackedVector2Array([
+		center + Vector2(inner, -inner),
+		center + Vector2(outer, -inner),
+		center + Vector2(outer, inner),
+		center + Vector2(inner, inner),
+	]), mark)
+	_necking_tick(center, facing, mark)
+	_necking_tick(center, counter, mark)
+
+func _necking_tick(center: Vector2, dir: String, mark: Color) -> void:
+	var outward := Vector2.UP
+	match dir:
+		"N":
+			outward = Vector2.UP
+		"E":
+			outward = Vector2.RIGHT
+		"S":
+			outward = Vector2.DOWN
+		_:
+			outward = Vector2.LEFT
+	var across := Vector2(-outward.y, outward.x)
+	var inner := center + outward * cell * 0.36
+	var outer := center + outward * cell * 0.48
+	var half := cell * 0.04
 	draw_colored_polygon(PackedVector2Array([
 		inner - across * half,
 		inner + across * half,
