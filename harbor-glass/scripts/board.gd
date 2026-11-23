@@ -323,6 +323,14 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_reglet(at, rot)
 		"billet":
 			_draw_billet(at, rot)
+		"reed":
+			_draw_reed(at, rot)
+		"staff":
+			_draw_staff(at, rot)
+		"thumb":
+			_draw_thumb(at, rot)
+		"roll":
+			_draw_roll(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -2120,6 +2128,201 @@ func _billet_brick(center: Vector2, dir: String, mark: Color) -> void:
 		mid + outward * half_along + across * half_across,
 		mid - outward * half_along + across * half_across,
 	]), mark)
+
+func _draw_reed(at: Vector2i, rot: int) -> void:
+	# A slender stalk on the facing, with a rib on every heading once the row
+	# is flooded. The ribs are thinner than the billet bricks.
+	var center := _center(at)
+	var facing := Tracer.reed_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var outward := Vector2.UP
+	match facing:
+		"N":
+			outward = Vector2.UP
+		"E":
+			outward = Vector2.RIGHT
+		"S":
+			outward = Vector2.DOWN
+		_:
+			outward = Vector2.LEFT
+	var across := Vector2(-outward.y, outward.x)
+	var stalk := cell * 0.34
+	var thin := cell * 0.025
+	draw_colored_polygon(PackedVector2Array([
+		center - outward * stalk - across * thin,
+		center + outward * stalk - across * thin,
+		center + outward * stalk + across * thin,
+		center - outward * stalk + across * thin,
+	]), mark)
+	if not flooded:
+		return
+	for dir in ["N", "E", "S", "W"]:
+		_reed_rib(center, dir, mark)
+
+func _reed_rib(center: Vector2, dir: String, mark: Color) -> void:
+	var outward := Vector2.UP
+	match dir:
+		"N":
+			outward = Vector2.UP
+		"E":
+			outward = Vector2.RIGHT
+		"S":
+			outward = Vector2.DOWN
+		_:
+			outward = Vector2.LEFT
+	var across := Vector2(-outward.y, outward.x)
+	var inner := center + outward * cell * 0.08
+	var outer := center + outward * cell * 0.22
+	var half := cell * 0.012
+	draw_colored_polygon(PackedVector2Array([
+		inner - across * half,
+		inner + across * half,
+		outer + across * half,
+		outer - across * half,
+	]), mark)
+
+func _draw_staff(at: Vector2i, rot: int) -> void:
+	# A staff shaft with a knob, plus bars on the headings that pass. Dry, no
+	# heading passes, so only the shaft shows. Flooded, the opposite and the
+	# clockwise heading each carry a bar, thicker than a reed rib.
+	var center := _center(at)
+	var facing := Tracer.staff_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var outward := Vector2.UP
+	match facing:
+		"N":
+			outward = Vector2.UP
+		"E":
+			outward = Vector2.RIGHT
+		"S":
+			outward = Vector2.DOWN
+		_:
+			outward = Vector2.LEFT
+	var across := Vector2(-outward.y, outward.x)
+	var reach := cell * 0.30
+	var thick := cell * 0.055
+	draw_colored_polygon(PackedVector2Array([
+		center - outward * reach - across * thick,
+		center + outward * reach - across * thick,
+		center + outward * reach + across * thick,
+		center - outward * reach + across * thick,
+	]), mark)
+	var knob := center + outward * reach
+	draw_colored_polygon(PackedVector2Array([
+		knob + Vector2(-cell * 0.07, -cell * 0.07),
+		knob + Vector2(cell * 0.07, -cell * 0.07),
+		knob + Vector2(cell * 0.07, cell * 0.07),
+		knob + Vector2(-cell * 0.07, cell * 0.07),
+	]), mark)
+	if not flooded:
+		return
+	_staff_bar(center, Tracer.rotate_dir(facing, 2), mark)
+	_staff_bar(center, Tracer.rotate_dir(facing, 1), mark)
+
+func _staff_bar(center: Vector2, dir: String, mark: Color) -> void:
+	var outward := Vector2.UP
+	match dir:
+		"N":
+			outward = Vector2.UP
+		"E":
+			outward = Vector2.RIGHT
+		"S":
+			outward = Vector2.DOWN
+		_:
+			outward = Vector2.LEFT
+	var across := Vector2(-outward.y, outward.x)
+	var inner := center + outward * cell * 0.10
+	var outer := center + outward * cell * 0.26
+	var half := cell * 0.04
+	draw_colored_polygon(PackedVector2Array([
+		inner - across * half,
+		inner + across * half,
+		outer + across * half,
+		outer - across * half,
+	]), mark)
+
+func _draw_thumb(at: Vector2i, rot: int) -> void:
+	# A round pad on the facing. Flooded, a lobe sits on the opposite heading
+	# and another on the counterclockwise heading. Dry, only the pad shows.
+	var center := _center(at)
+	var facing := Tracer.thumb_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var outward := _thumb_vec(facing)
+	var pad := center + outward * cell * 0.06
+	draw_circle(pad, cell * 0.16, mark)
+	draw_arc(pad, cell * 0.16, 0.0, TAU, 20, mark, 2.0, true)
+	if not flooded:
+		return
+	_thumb_lobe(center, Tracer.rotate_dir(facing, 2), mark)
+	_thumb_lobe(center, Tracer.rotate_dir(facing, -1), mark)
+
+func _thumb_lobe(center: Vector2, dir: String, mark: Color) -> void:
+	var outward := _thumb_vec(dir)
+	var at := center + outward * cell * 0.24
+	draw_circle(at, cell * 0.07, mark)
+
+func _thumb_vec(dir: String) -> Vector2:
+	match dir:
+		"N":
+			return Vector2.UP
+		"E":
+			return Vector2.RIGHT
+		"S":
+			return Vector2.DOWN
+		_:
+			return Vector2.LEFT
+
+func _draw_roll(at: Vector2i, rot: int) -> void:
+	# A barrel across the facing, with caps at both ends. Flooded, a spoke
+	# sits on every heading except the facing.
+	var center := _center(at)
+	var facing := Tracer.roll_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var outward := _roll_vec(facing)
+	var across := Vector2(-outward.y, outward.x)
+	var half := cell * 0.22
+	var thick := cell * 0.07
+	draw_colored_polygon(PackedVector2Array([
+		center - across * half - outward * thick,
+		center + across * half - outward * thick,
+		center + across * half + outward * thick,
+		center - across * half + outward * thick,
+	]), mark)
+	draw_circle(center - across * half, cell * 0.09, mark)
+	draw_circle(center + across * half, cell * 0.09, mark)
+	if not flooded:
+		return
+	_roll_spoke(center, Tracer.rotate_dir(facing, 1), mark)
+	_roll_spoke(center, Tracer.rotate_dir(facing, -1), mark)
+	_roll_spoke(center, Tracer.rotate_dir(facing, 2), mark)
+
+func _roll_spoke(center: Vector2, dir: String, mark: Color) -> void:
+	var outward := _roll_vec(dir)
+	var across := Vector2(-outward.y, outward.x)
+	var inner := center + outward * cell * 0.12
+	var outer := center + outward * cell * 0.28
+	var half := cell * 0.018
+	draw_colored_polygon(PackedVector2Array([
+		inner - across * half,
+		inner + across * half,
+		outer + across * half,
+		outer - across * half,
+	]), mark)
+
+func _roll_vec(dir: String) -> Vector2:
+	match dir:
+		"N":
+			return Vector2.UP
+		"E":
+			return Vector2.RIGHT
+		"S":
+			return Vector2.DOWN
+		_:
+			return Vector2.LEFT
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
 	if dir == "N" or dir == "S":

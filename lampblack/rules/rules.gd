@@ -56,6 +56,8 @@ extends RefCounted
 ## A twill does not stop the flood. The twill itself starts dark.
 ## A duck does not stop the flood. The duck itself stays dark.
 ## A nankeen does not stop the flood. The nankeen itself stays dark.
+## A linsey does not stop the flood. The linsey itself stays dark.
+## A huck does not stop the flood. The huck itself stays dark.
 ## A jean does not stop the flood. The jean itself starts dark.
 ##
 ## Movement
@@ -156,6 +158,15 @@ extends RefCounted
 ## step then fails, so the player stays on the lit jean. A nankeen lets both
 ## steps succeed and stays dark. A duck refuses both steps. A twill lights on
 ## the leaving step, and the player leaves.
+## A linsey is floor. It stays dark. The early step onto the dark linsey
+## succeeds, and the linsey stays dark. The leaving step then fails, so the
+## player stays on the dark linsey. A nankeen lets that leaving step succeed.
+## A jean lights on the step and keeps the player on the lit cloth. A twill
+## lights on the leaving step, and the player leaves.
+## A huck is floor. It stays dark. The early step onto the dark huck fails.
+## If the player is already on it, the leaving step also fails, so the player
+## stays on the dark huck. A duck refuses the early step, and a step off that
+## dark duck onto an open tile succeeds. A linsey lets the early step succeed.
 ##
 ## Plates
 ## The turn the player steps onto a plate calls the nearest guard, by the same rule as a
@@ -176,7 +187,7 @@ extends RefCounted
 ## floor path. A sill is not a floor path. A pane is not a floor path. A curtain is a
 ## floor path. A shade is not a floor path. A screen is not a floor path. A glaze is
 ## not a floor path. A mica is not a floor path. A baize is not a floor path.
-## A scrim is not a floor path. A gauze is not a floor path. A voile is not a floor path. A lawn is not a floor path. A muslin is a floor path. A cambric is a floor path. A holland is a floor path. A buckram is a floor path. A ticking is a floor path. A denim is a floor path. A canvas is a floor path. A drill is a floor path. A twill is a floor path. A duck is a floor path. A nankeen is a floor path. A jean is a floor path.
+## A scrim is not a floor path. A gauze is not a floor path. A voile is not a floor path. A lawn is not a floor path. A muslin is a floor path. A cambric is a floor path. A holland is a floor path. A buckram is a floor path. A ticking is a floor path. A denim is a floor path. A canvas is a floor path. A drill is a floor path. A twill is a floor path. A duck is a floor path. A nankeen is a floor path. A jean is a floor path. A linsey is a floor path. A huck is a floor path.
 ##
 ## Grates
 ## A grate is floor you may enter. It is never lit, even when a lamp's diamond covers
@@ -639,6 +650,37 @@ extends RefCounted
 ## second lamp. A voile still keeps a guard out. A jean calls nobody. It is
 ## never a hold.
 ##
+## Linseys
+## A linsey is the nankeen with the leaving step flipped. A nankeen lets the
+## early step and the leaving step succeed, and it stays dark. A jean lights
+## when you step on it, and the leaving step fails so the player stays on the
+## lit jean. A twill lights on the leaving step, and the player leaves. No
+## cloth already lets the step succeed, stays dark, and then keeps the player
+## on that dark cloth. A linsey stays dark even where a lamp reaches it. The
+## flood still passes. A guard can enter the dark linsey. You can enter it
+## too. The early step succeeds, and the linsey stays dark. The leaving step
+## fails, and the player stays on the dark linsey. A nankeen lets that step
+## succeed. A jean keeps you on a lit cloth. Sight does not pass through the
+## dark linsey. A cambric still stops a second lamp. A voile still keeps a
+## guard out. A linsey calls nobody. It is never a hold.
+##
+## Hucks
+## A huck is the linsey with the early step flipped, and the duck with the
+## leaving step flipped the other way. A linsey lets the early step succeed
+## and then keeps the player on the dark cloth. A duck refuses the early step.
+## Standing on that dark duck, a step onto an open tile succeeds and the duck
+## stays dark, so the early-fail and leave-succeed pair is already the duck.
+## A nankeen lets both steps succeed and stays dark. A jean lights on the step
+## and keeps the player on the lit cloth. A twill lights on the step and the
+## player leaves. No cloth already refuses the early step and also keeps the
+## player on the dark cloth. A huck stays dark even where a lamp reaches it.
+## The flood still passes. A guard can enter the dark huck. You cannot. The
+## early step fails, and the huck stays dark. The leaving step fails, and the
+## player stays on the dark huck. A duck lets that leaving step succeed. A
+## linsey lets the early step succeed. Sight does not pass through the dark
+## huck. A cambric still stops a second lamp. A voile still keeps a guard out.
+## A huck calls nobody. It is never a hold.
+##
 ## Vision
 ## Each guard watches a Manhattan diamond of their vision radius, and only on tiles that
 ## are currently lit. Walls and dark tiles block vision. A grate stays dark, so it blocks
@@ -697,6 +739,8 @@ extends RefCounted
 ## vision, and the lit twill itself can be watched.
 ## A duck stays dark, so sight stops there the same way any dark floor does.
 ## A nankeen stays dark, so sight stops there the same way any dark floor does.
+## A linsey stays dark, so sight stops there the same way any dark floor does.
+## A huck stays dark, so sight stops there the same way any dark floor does.
 ## A jean starts dark, so sight stops there the same way any dark floor does.
 ## The step that lights it does not open the sight.
 ## A guard standing in the dark can still look into an adjacent lit tile. The
@@ -706,7 +750,7 @@ extends RefCounted
 ## Alerted guards take one step along a shortest 4-neighbor path to the tile they were
 ## called to, a lamp, a plate, or a bell. Neighbors are expanded north, east, south,
 ## then west, and that order breaks ties. They may walk on floor, plate, bell, exit,
-## and curtain tiles, lit or dark, and through muslins, cambrics, hollands, buckrams, tickings, denims, canvases, drills, twills, ducks, nankeens, and jeans, but not through walls, gaps, grates, sills, panes, shades, screens, glazes, micas, baizes, scrims, gauzes, voiles, or lawns. When they step onto that tile
+## and curtain tiles, lit or dark, and through muslins, cambrics, hollands, buckrams, tickings, denims, canvases, drills, twills, ducks, nankeens, jeans, linseys, and hucks, but not through walls, gaps, grates, sills, panes, shades, screens, glazes, micas, baizes, scrims, gauzes, voiles, or lawns. When they step onto that tile
 ## they hold there. They do not resume the rail unless a later snuff, plate, or bell calls them.
 ## A guard who is not alert and not holding patrols their rail. The rail is a list of
 ## waypoints. rail_index is the waypoint they are walking toward, and rail_dir is +1 or -1.
@@ -718,7 +762,7 @@ extends RefCounted
 ## every lamp's lit flag, and every guard's position, rail index, rail direction, alert
 ## target, and hold flag.
 
-enum Tile { WALL, FLOOR, GAP, EXIT, PLATE, BELL, GRATE, SILL, PANE, CURTAIN, SHADE, SCREEN, GLAZE, MICA, BAIZE, SCRIM, GAUZE, VOILE, LAWN, MUSLIN, CAMBRIC, HOLLAND, BUCKRAM, TICKING, DENIM, CANVAS, DRILL, TWILL, DUCK, NANKEEN, JEAN }
+enum Tile { WALL, FLOOR, GAP, EXIT, PLATE, BELL, GRATE, SILL, PANE, CURTAIN, SHADE, SCREEN, GLAZE, MICA, BAIZE, SCRIM, GAUZE, VOILE, LAWN, MUSLIN, CAMBRIC, HOLLAND, BUCKRAM, TICKING, DENIM, CANVAS, DRILL, TWILL, DUCK, NANKEEN, JEAN, LINSEY, HUCK }
 enum Result { OK, WIN, LOSS, ILLEGAL }
 
 const DIRS := [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]
@@ -809,6 +853,10 @@ static func build(rows: PackedStringArray, lamps: Array, guards: Array) -> Dicti
 					kind = Tile.NANKEEN
 				"=":
 					kind = Tile.JEAN
+				"%":
+					kind = Tile.LINSEY
+				"&":
+					kind = Tile.HUCK
 				_:
 					push_error("bad tile '%s'" % ch)
 			tiles[y * width + x] = kind
@@ -848,7 +896,7 @@ static func build(rows: PackedStringArray, lamps: Array, guards: Array) -> Dicti
 	var cold := {}
 	for ty in height:
 		for tx in width:
-			if tiles[ty * width + tx] == Tile.TWILL or tiles[ty * width + tx] == Tile.DUCK or tiles[ty * width + tx] == Tile.NANKEEN or tiles[ty * width + tx] == Tile.JEAN:
+			if tiles[ty * width + tx] == Tile.TWILL or tiles[ty * width + tx] == Tile.DUCK or tiles[ty * width + tx] == Tile.NANKEEN or tiles[ty * width + tx] == Tile.JEAN or tiles[ty * width + tx] == Tile.LINSEY or tiles[ty * width + tx] == Tile.HUCK:
 				cold[Vector2i(tx, ty)] = true
 	return {
 		"w": width,
@@ -931,7 +979,7 @@ static func lamp_lights(state: Dictionary, lamp: Dictionary) -> Array:
 		queue.append(origin)
 	# A lamp standing on a sill, a shade, a baize, a scrim, or a gauze does not shine past that tile.
 	# Every other lamp still seeds its neighbors. A grate and a pane let the flood through.
-	if origin_kind != Tile.SILL and origin_kind != Tile.SHADE and origin_kind != Tile.BAIZE and origin_kind != Tile.SCRIM and origin_kind != Tile.GAUZE and origin_kind != Tile.VOILE and origin_kind != Tile.LAWN and origin_kind != Tile.MUSLIN and origin_kind != Tile.CAMBRIC and origin_kind != Tile.HOLLAND and origin_kind != Tile.BUCKRAM and origin_kind != Tile.TICKING and origin_kind != Tile.DENIM and origin_kind != Tile.CANVAS and origin_kind != Tile.DRILL and origin_kind != Tile.TWILL and origin_kind != Tile.DUCK and origin_kind != Tile.NANKEEN and origin_kind != Tile.JEAN:
+	if origin_kind != Tile.SILL and origin_kind != Tile.SHADE and origin_kind != Tile.BAIZE and origin_kind != Tile.SCRIM and origin_kind != Tile.GAUZE and origin_kind != Tile.VOILE and origin_kind != Tile.LAWN and origin_kind != Tile.MUSLIN and origin_kind != Tile.CAMBRIC and origin_kind != Tile.HOLLAND and origin_kind != Tile.BUCKRAM and origin_kind != Tile.TICKING and origin_kind != Tile.DENIM and origin_kind != Tile.CANVAS and origin_kind != Tile.DRILL and origin_kind != Tile.TWILL and origin_kind != Tile.DUCK and origin_kind != Tile.NANKEEN and origin_kind != Tile.JEAN and origin_kind != Tile.LINSEY and origin_kind != Tile.HUCK:
 		for dir in DIRS:
 			var nxt: Vector2i = origin + dir
 			var seed_kind := tile_at(state, nxt.x, nxt.y)
@@ -981,10 +1029,10 @@ static func lamp_lights(state: Dictionary, lamp: Dictionary) -> Array:
 		# and it still passes after the canvas itself is dark. A lamp standing
 		# on the canvas does not shine past it. The early step onto the lit
 		# canvas succeeds and puts that cell out.
-		var cloth_out: bool = (cell_kind == Tile.CANVAS or cell_kind == Tile.DRILL or cell_kind == Tile.TWILL or cell_kind == Tile.DUCK or cell_kind == Tile.NANKEEN or cell_kind == Tile.JEAN) and state.has("out") and state["out"].has(cell)
+		var cloth_out: bool = (cell_kind == Tile.CANVAS or cell_kind == Tile.DRILL or cell_kind == Tile.TWILL or cell_kind == Tile.DUCK or cell_kind == Tile.NANKEEN or cell_kind == Tile.JEAN or cell_kind == Tile.LINSEY or cell_kind == Tile.HUCK) and state.has("out") and state["out"].has(cell)
 		if cell_kind != Tile.GRATE and cell_kind != Tile.PANE and cell_kind != Tile.SHADE and cell_kind != Tile.MICA and cell_kind != Tile.BAIZE and not cloth_out:
 			lit.append(cell)
-		if (cell_kind == Tile.GAUZE or cell_kind == Tile.VOILE or cell_kind == Tile.HOLLAND or cell_kind == Tile.BUCKRAM or cell_kind == Tile.TICKING or cell_kind == Tile.DENIM or cell_kind == Tile.CANVAS or cell_kind == Tile.DRILL or cell_kind == Tile.TWILL or cell_kind == Tile.DUCK or cell_kind == Tile.NANKEEN or cell_kind == Tile.JEAN) and cell == origin:
+		if (cell_kind == Tile.GAUZE or cell_kind == Tile.VOILE or cell_kind == Tile.HOLLAND or cell_kind == Tile.BUCKRAM or cell_kind == Tile.TICKING or cell_kind == Tile.DENIM or cell_kind == Tile.CANVAS or cell_kind == Tile.DRILL or cell_kind == Tile.TWILL or cell_kind == Tile.DUCK or cell_kind == Tile.NANKEEN or cell_kind == Tile.JEAN or cell_kind == Tile.LINSEY or cell_kind == Tile.HUCK) and cell == origin:
 			continue
 		if cell_kind == Tile.SILL or cell_kind == Tile.SHADE or cell_kind == Tile.BAIZE or cell_kind == Tile.SCRIM or cell_kind == Tile.LAWN or cell_kind == Tile.MUSLIN or cell_kind == Tile.CAMBRIC:
 			continue
@@ -1046,7 +1094,7 @@ static func watched_tiles(state: Dictionary, lit: Dictionary = {}) -> Dictionary
 			# the gauze itself can be watched. A dark gauze is ordinary dark
 			# floor, so sight stops there.
 			var kind := tile_at(state, cell.x, cell.y)
-			if kind == Tile.SILL or ((kind == Tile.CURTAIN or kind == Tile.SCREEN or kind == Tile.TICKING or kind == Tile.DRILL or kind == Tile.TWILL or kind == Tile.DUCK or kind == Tile.NANKEEN or kind == Tile.JEAN) and dist > 0):
+			if kind == Tile.SILL or ((kind == Tile.CURTAIN or kind == Tile.SCREEN or kind == Tile.TICKING or kind == Tile.DRILL or kind == Tile.TWILL or kind == Tile.DUCK or kind == Tile.NANKEEN or kind == Tile.JEAN or kind == Tile.LINSEY or kind == Tile.HUCK) and dist > 0):
 				continue
 			if dist >= int(guard["vision"]):
 				continue
@@ -1094,7 +1142,7 @@ static func loss_reason(state: Dictionary, lit: Dictionary = {}) -> String:
 
 static func guard_walkable(state: Dictionary, x: int, y: int) -> bool:
 	var kind := tile_at(state, x, y)
-	return kind == Tile.FLOOR or kind == Tile.EXIT or kind == Tile.PLATE or kind == Tile.BELL or kind == Tile.CURTAIN or kind == Tile.MUSLIN or kind == Tile.CAMBRIC or kind == Tile.HOLLAND or kind == Tile.BUCKRAM or kind == Tile.TICKING or kind == Tile.DENIM or kind == Tile.CANVAS or kind == Tile.DRILL or kind == Tile.TWILL or kind == Tile.DUCK or kind == Tile.NANKEEN or kind == Tile.JEAN
+	return kind == Tile.FLOOR or kind == Tile.EXIT or kind == Tile.PLATE or kind == Tile.BELL or kind == Tile.CURTAIN or kind == Tile.MUSLIN or kind == Tile.CAMBRIC or kind == Tile.HOLLAND or kind == Tile.BUCKRAM or kind == Tile.TICKING or kind == Tile.DENIM or kind == Tile.CANVAS or kind == Tile.DRILL or kind == Tile.TWILL or kind == Tile.DUCK or kind == Tile.NANKEEN or kind == Tile.JEAN or kind == Tile.LINSEY or kind == Tile.HUCK
 
 
 static func bfs_path(state: Dictionary, sx: int, sy: int, gx: int, gy: int) -> Dictionary:
@@ -1246,6 +1294,10 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 		var py := int(player["y"])
 		if tile_at(state, px, py) == Tile.JEAN and light_map(state).has(Vector2i(px, py)):
 			return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "stay")
+		if tile_at(state, px, py) == Tile.LINSEY:
+			return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "stay")
+		if tile_at(state, px, py) == Tile.HUCK:
+			return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "stay")
 		var lit := light_map(st)
 		var watch := watched_tiles(st, lit)
 		if watch.has(Vector2i(nx, ny)):
@@ -1254,7 +1306,7 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 			player["fx"] = dx
 			player["fy"] = dy
 			return _finish(st, Result.LOSS, -1, Vector2i(-1, -1), "watched")
-		if dest == Tile.DUCK:
+		if dest == Tile.DUCK or dest == Tile.HUCK:
 			return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "dark")
 		if dest == Tile.DENIM:
 			if not lit.has(Vector2i(nx, ny)):
@@ -1262,7 +1314,7 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 		elif dest == Tile.GAP:
 			if not lit.has(Vector2i(nx, ny)):
 				return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "darkgap")
-		elif dest == Tile.GRATE or dest == Tile.SHADE or dest == Tile.MICA or dest == Tile.BAIZE or dest == Tile.VOILE or dest == Tile.LAWN or dest == Tile.CAMBRIC or dest == Tile.HOLLAND or dest == Tile.TICKING or dest == Tile.CANVAS or dest == Tile.DRILL or dest == Tile.TWILL or dest == Tile.NANKEEN or dest == Tile.JEAN:
+		elif dest == Tile.GRATE or dest == Tile.SHADE or dest == Tile.MICA or dest == Tile.BAIZE or dest == Tile.VOILE or dest == Tile.LAWN or dest == Tile.CAMBRIC or dest == Tile.HOLLAND or dest == Tile.TICKING or dest == Tile.CANVAS or dest == Tile.DRILL or dest == Tile.TWILL or dest == Tile.NANKEEN or dest == Tile.JEAN or dest == Tile.LINSEY:
 			pass
 		elif dest == Tile.FLOOR or dest == Tile.EXIT or dest == Tile.PLATE or dest == Tile.BELL or dest == Tile.SILL or dest == Tile.CURTAIN or dest == Tile.SCREEN or dest == Tile.GLAZE or dest == Tile.SCRIM or dest == Tile.GAUZE or dest == Tile.MUSLIN or dest == Tile.BUCKRAM:
 			if lit.has(Vector2i(nx, ny)):
@@ -1307,7 +1359,7 @@ static func apply(state: Dictionary, action: Dictionary, allow_toggle: bool = tr
 		if absi(int(lamp["x"]) - int(player["x"])) + absi(int(lamp["y"]) - int(player["y"])) != 1:
 			return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "range")
 		var here := tile_at(st, player["x"], player["y"])
-		if here != Tile.FLOOR and here != Tile.EXIT and here != Tile.PLATE and here != Tile.BELL and here != Tile.GRATE and here != Tile.SILL and here != Tile.CURTAIN and here != Tile.SHADE and here != Tile.SCREEN and here != Tile.GLAZE and here != Tile.MICA and here != Tile.BAIZE and here != Tile.SCRIM and here != Tile.GAUZE and here != Tile.VOILE and here != Tile.LAWN and here != Tile.MUSLIN and here != Tile.CAMBRIC and here != Tile.HOLLAND and here != Tile.BUCKRAM and here != Tile.TICKING and here != Tile.DENIM and here != Tile.CANVAS and here != Tile.DRILL and here != Tile.TWILL and here != Tile.DUCK and here != Tile.NANKEEN and here != Tile.JEAN:
+		if here != Tile.FLOOR and here != Tile.EXIT and here != Tile.PLATE and here != Tile.BELL and here != Tile.GRATE and here != Tile.SILL and here != Tile.CURTAIN and here != Tile.SHADE and here != Tile.SCREEN and here != Tile.GLAZE and here != Tile.MICA and here != Tile.BAIZE and here != Tile.SCRIM and here != Tile.GAUZE and here != Tile.VOILE and here != Tile.LAWN and here != Tile.MUSLIN and here != Tile.CAMBRIC and here != Tile.HOLLAND and here != Tile.BUCKRAM and here != Tile.TICKING and here != Tile.DENIM and here != Tile.CANVAS and here != Tile.DRILL and here != Tile.TWILL and here != Tile.DUCK and here != Tile.NANKEEN and here != Tile.JEAN and here != Tile.LINSEY and here != Tile.HUCK:
 			return _finish(state, Result.ILLEGAL, -1, Vector2i(-1, -1), "range")
 		var was_lit: bool = lamp["lit"]
 		lamp["lit"] = not was_lit

@@ -3,7 +3,7 @@ extends RefCounted
 
 const Rules = preload("res://rules/rules.gd")
 
-## Thirty-four wings of the closed museum. Each solution is a list of actions the rules
+## Thirty-six wings of the closed museum. Each solution is a list of actions the rules
 ## accept. Tokens are R L U D, W for wait, and T0 / T1 for lamps.
 
 
@@ -125,6 +125,10 @@ static func _puzzle(number: int, title: String, lesson: String, rows: PackedStri
 		wing_number = number - 194
 	elif wing == "Jean Wing":
 		wing_number = number - 200
+	elif wing == "Linsey Wing":
+		wing_number = number - 206
+	elif wing == "Huck Wing":
+		wing_number = number - 212
 	return {
 		"number": number,
 		"wing": wing,
@@ -188,6 +192,8 @@ static func _all() -> Array:
 	puzzles.append_array(_duck_wing())
 	puzzles.append_array(_nankeen_wing())
 	puzzles.append_array(_jean_wing())
+	puzzles.append_array(_linsey_wing())
+	puzzles.append_array(_huck_wing())
 	return puzzles
 
 
@@ -3966,5 +3972,232 @@ static func _jean_wing() -> Array:
 			[_guard(1, 1, [Vector2i(1, 1)], 0)],
 			"L R U U T0 D D D L L L",
 			"Jean Wing"
+		),
+	]
+
+
+static func _linsey_wing() -> Array:
+	return [
+		_puzzle(
+			207,
+			"The Dark Linsey",
+			"This room is about the rule that the linsey starts dark.",
+			PackedStringArray([
+				"#########",
+				"#G%.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L R U U T0 D D D L L L",
+			"Linsey Wing"
+		),
+		_puzzle(
+			208,
+			"The Hidden Linsey",
+			"This room is about the rule that the guard does not see a lit tile through the dark linsey.",
+			PackedStringArray([
+				"#########",
+				"#G%.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+				"#.......#",
+				"#..%....#",
+				"#..G....#",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3), _lamp(3, 6, "s", 2)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0), _guard(3, 8, [Vector2i(3, 8)], 3)],
+			"L R U U T0 D D D L L L",
+			"Linsey Wing"
+		),
+		_puzzle(
+			209,
+			"The Passed Wool",
+			"This room is about the rule that a second lamp's light passes through the dark linsey.",
+			PackedStringArray([
+				"#########",
+				"#########",
+				"#G%.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+			]),
+			[_lamp(3, 2, "w", 3)],
+			[_guard(1, 2, [Vector2i(1, 2)], 0)],
+			"L R U U T0 D D D L L L",
+			"Linsey Wing"
+		),
+		_puzzle(
+			210,
+			"The Open Linsey",
+			"This room is about the rule that a guard can enter the dark linsey.",
+			PackedStringArray([
+				"##########",
+				"#G%.....##",
+				"#..#....##",
+				"#..GS...##",
+				"#X......##",
+				"##########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L R U U T0 D D D L L L",
+			"Linsey Wing"
+		),
+		_puzzle(
+			211,
+			"The Still Step",
+			"This room is about the rule that the early step onto the dark linsey succeeds and the linsey stays dark.",
+			PackedStringArray([
+				"#########",
+				"#G%.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L R U U T0 D D D L L L",
+			"Linsey Wing"
+		),
+		_puzzle(
+			212,
+			"The Last Linsey",
+			"This room is about the rule that the leaving step fails and the player stays on the dark linsey.",
+			PackedStringArray([
+				"#########",
+				"#G%.....#",
+				"#..#....#",
+				"#.%GS...#",
+				"#X......#",
+				"#.%.....#",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L R U U T0 D D D L L L",
+			"Linsey Wing"
+		),
+	]
+
+static func _huck_wing() -> Array:
+	return [
+		_puzzle(
+			213,
+			"The Dark Huck",
+			"This room is about the rule that the huck starts dark.",
+			PackedStringArray([
+				"#########",
+				"#G&.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L R U U T0 D D D L L L",
+			"Huck Wing"
+		),
+		_puzzle(
+			214,
+			"The Hidden Huck",
+			"This room is about the rule that the guard does not see a lit tile through the dark huck.",
+			PackedStringArray([
+				"#########",
+				"#G&.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+				"#.......#",
+				"#..&....#",
+				"#..G....#",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3), _lamp(3, 6, "s", 2)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0), _guard(3, 8, [Vector2i(3, 8)], 3)],
+			"L R U U T0 D D D L L L",
+			"Huck Wing"
+		),
+		_puzzle(
+			215,
+			"The Passed Honeycomb",
+			"This room is about the rule that a second lamp's light passes through the dark huck.",
+			PackedStringArray([
+				"#########",
+				"#########",
+				"#G&.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+			]),
+			[_lamp(3, 2, "w", 3)],
+			[_guard(1, 2, [Vector2i(1, 2)], 0)],
+			"L R U U T0 D D D L L L",
+			"Huck Wing"
+		),
+		_puzzle(
+			216,
+			"The Open Huck",
+			"This room is about the rule that a guard can enter the dark huck.",
+			PackedStringArray([
+				"##########",
+				"#G&.....##",
+				"#..#....##",
+				"#..GS...##",
+				"#X......##",
+				"##########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L R U U T0 D D D L L L",
+			"Huck Wing"
+		),
+		_puzzle(
+			217,
+			"The Missed Step",
+			"This room is about the rule that the early step onto the dark huck fails and the huck stays dark.",
+			PackedStringArray([
+				"#########",
+				"#G&.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L R U U T0 D D D L L L",
+			"Huck Wing"
+		),
+		_puzzle(
+			218,
+			"The Last Huck",
+			"This room is about the rule that the leaving step fails and the player stays on the dark huck.",
+			PackedStringArray([
+				"#########",
+				"#G&.....#",
+				"#..#....#",
+				"#.&GS...#",
+				"#X......#",
+				"#.&.....#",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L R U U T0 D D D L L L",
+			"Huck Wing"
 		),
 	]

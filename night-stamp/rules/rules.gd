@@ -2466,6 +2466,10 @@ const SHIFT_ENVOY := 46
 const SHIFT_FINALE := 47
 const SHIFT_EPODE := 48
 const SHIFT_RECESSIONAL := 50
+const SHIFT_SEQUENCE := 69
+const SHIFT_TRACT := 68
+const SHIFT_GRADUAL := 67
+const SHIFT_INTROIT := 66
 const SHIFT_ANTIPHON := 65
 const SHIFT_REQUIEM := 64
 const SHIFT_DIRGE := 63
@@ -4855,6 +4859,194 @@ const FINALE_BELL := [
 
 
 
+const SEQUENCE_BELL := [
+	{
+		"id": "odin_brevik",
+		"name": "Odin Brevik",
+		"form_name": "Burin Toll",
+		"rule_text": "Patience drops by 2 when the number of filled cells is 27 or 30.",
+		"rule": "drop_if_burin_count",
+		"lane": 2,
+		"exemption_row": 0,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "mia_fosse",
+		"name": "Mia Fosse",
+		"form_name": "Arris Fill",
+		"rule_text": "A stamp scores twice only when the queue cell one place after it is filled and the queue cell twenty-one places before it is filled. Every cell on the form has no cell twenty-one places before it, so none of them double.",
+		"rule": "double_arris_fill",
+		"lane": 0,
+		"exemption_row": 2,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "kasper_berge",
+		"name": "Kasper Berge",
+		"form_name": "Rove Pay",
+		"rule_text": "Each stamp with exactly four corner neighbors and exactly nineteen side neighbors scores +2 once. Any other count scores its own number. Exactly four corner neighbors with four, five, six, seven, eight, nine, ten, eleven, twelve, thirteen, fourteen, fifteen, sixteen, seventeen, or eighteen side neighbors score their own number. A lone stamp scores its own number.",
+		"rule": "yield_rove_pay",
+		"lane": 1,
+		"exemption_row": 0,
+		"goal": 16,
+		"patience": 5,
+	},
+	{
+		"id": "inger_halvorsen",
+		"name": "Inger Halvorsen",
+		"form_name": "Arris Blank",
+		"rule_text": "A stamp scores twice only when the queue cell one place after it is empty and the queue cell twenty-one places before it is empty. Every cell on the form has no cell twenty-one places before it, so none of them double.",
+		"rule": "double_arris_blank",
+		"lane": 0,
+		"exemption_row": 1,
+		"goal": 22,
+		"patience": 5,
+	},
+]
+
+const TRACT_BELL := [
+	{
+		"id": "trygve_viken",
+		"name": "Trygve Viken",
+		"form_name": "Graver Toll",
+		"rule_text": "Patience drops by 2 when the number of filled cells is 26 or 29.",
+		"rule": "drop_if_graver_count",
+		"lane": 1,
+		"exemption_row": 2,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "sofie_haug",
+		"name": "Sofie Haug",
+		"form_name": "Feather Fill",
+		"rule_text": "A stamp scores twice only when the queue cell one place after it is filled and the queue cell twenty places before it is filled. Every cell on the form has no cell twenty places before it, so none of them double.",
+		"rule": "double_feather_fill",
+		"lane": 2,
+		"exemption_row": 1,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "emma_skei",
+		"name": "Emma Skei",
+		"form_name": "Staple Pay",
+		"rule_text": "Each stamp with exactly four corner neighbors and exactly eighteen side neighbors scores +2 once. Any other count scores its own number. Exactly four corner neighbors with four, five, six, seven, eight, nine, ten, eleven, twelve, thirteen, fourteen, fifteen, sixteen, or seventeen side neighbors score their own number. A lone stamp scores its own number.",
+		"rule": "yield_staple_pay",
+		"lane": 0,
+		"exemption_row": 2,
+		"goal": 16,
+		"patience": 5,
+	},
+	{
+		"id": "joakim_strom",
+		"name": "Joakim Strom",
+		"form_name": "Feather Blank",
+		"rule_text": "A stamp scores twice only when the queue cell one place after it is empty and the queue cell twenty places before it is empty. Every cell on the form has no cell twenty places before it, so none of them double.",
+		"rule": "double_feather_blank",
+		"lane": 2,
+		"exemption_row": 0,
+		"goal": 22,
+		"patience": 5,
+	},
+]
+
+const GRADUAL_BELL := [
+	{
+		"id": "kjetil_fjeld",
+		"name": "Kjetil Fjeld",
+		"form_name": "Scribe Toll",
+		"rule_text": "Patience drops by 2 when the number of filled cells is 25 or 28.",
+		"rule": "drop_if_scribe_count",
+		"lane": 0,
+		"exemption_row": 1,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "ingeborg_dal",
+		"name": "Ingeborg Dal",
+		"form_name": "Plow Fill",
+		"rule_text": "A stamp scores twice only when the queue cell one place after it is filled and the queue cell nineteen places before it is filled. Every cell on the form has no cell nineteen places before it, so none of them double.",
+		"rule": "double_plow_fill",
+		"lane": 1,
+		"exemption_row": 0,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "simen_roe",
+		"name": "Simen Roe",
+		"form_name": "Lag Pay",
+		"rule_text": "Each stamp with exactly four corner neighbors and exactly seventeen side neighbors scores +2 once. Any other count scores its own number. Exactly four corner neighbors with four, five, six, seven, eight, nine, ten, eleven, twelve, thirteen, fourteen, fifteen, or sixteen side neighbors score their own number. A lone stamp scores its own number.",
+		"rule": "yield_lag_pay",
+		"lane": 2,
+		"exemption_row": 1,
+		"goal": 16,
+		"patience": 5,
+	},
+	{
+		"id": "hedvig_qvale",
+		"name": "Hedvig Qvale",
+		"form_name": "Plow Blank",
+		"rule_text": "A stamp scores twice only when the queue cell one place after it is empty and the queue cell nineteen places before it is empty. Every cell on the form has no cell nineteen places before it, so none of them double.",
+		"rule": "double_plow_blank",
+		"lane": 1,
+		"exemption_row": 2,
+		"goal": 22,
+		"patience": 5,
+	},
+]
+
+const INTROIT_BELL := [
+	{
+		"id": "eirik_ostby",
+		"name": "Eirik Ostby",
+		"form_name": "Prick Toll",
+		"rule_text": "Patience drops by 2 when the number of filled cells is 21 or 24.",
+		"rule": "drop_if_prick_count",
+		"lane": 2,
+		"exemption_row": 0,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "vetle_aune",
+		"name": "Vetle Aune",
+		"form_name": "Dado Fill",
+		"rule_text": "A stamp scores twice only when the queue cell one place after it is filled and the queue cell eighteen places before it is filled. Every cell on the form has no cell eighteen places before it, so none of them double.",
+		"rule": "double_dado_fill",
+		"lane": 0,
+		"exemption_row": 2,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "marte_bergstrom",
+		"name": "Marte Bergstrom",
+		"form_name": "Screw Pay",
+		"rule_text": "Each stamp with exactly four corner neighbors and exactly sixteen side neighbors scores +2 once. Any other count scores its own number. Exactly four corner neighbors with four, five, six, seven, eight, nine, ten, eleven, twelve, thirteen, fourteen, or fifteen side neighbors score their own number. A lone stamp scores its own number.",
+		"rule": "yield_screw_pay",
+		"lane": 1,
+		"exemption_row": 0,
+		"goal": 16,
+		"patience": 5,
+	},
+	{
+		"id": "henrik_lievik",
+		"name": "Henrik Lievik",
+		"form_name": "Dado Blank",
+		"rule_text": "A stamp scores twice only when the queue cell one place after it is empty and the queue cell eighteen places before it is empty. Every cell on the form has no cell eighteen places before it, so none of them double.",
+		"rule": "double_dado_blank",
+		"lane": 0,
+		"exemption_row": 1,
+		"goal": 22,
+		"patience": 5,
+	},
+]
+
 const ANTIPHON_BELL := [
 	{
 		"id": "ivar_bye",
@@ -5813,6 +6005,14 @@ static func _canonical_shift(shift_index: int) -> int:
 		return SHIFT_TITLEPAGE
 	if shift_index == SHIFT_COPYRIGHT:
 		return SHIFT_COPYRIGHT
+	if shift_index == SHIFT_SEQUENCE:
+		return SHIFT_SEQUENCE
+	if shift_index == SHIFT_TRACT:
+		return SHIFT_TRACT
+	if shift_index == SHIFT_GRADUAL:
+		return SHIFT_GRADUAL
+	if shift_index == SHIFT_INTROIT:
+		return SHIFT_INTROIT
 	if shift_index == SHIFT_ANTIPHON:
 		return SHIFT_ANTIPHON
 	if shift_index == SHIFT_REQUIEM:
@@ -5906,6 +6106,14 @@ static func new_run(seed_value: int, shift_index: int = SHIFT_FIRST) -> NightSta
 	state.next_iid = 0
 	for card_id in STARTING_DECK:
 		_add_library_card(state, String(card_id))
+	if state.shift == SHIFT_SEQUENCE:
+		_log(state, "The sequence bell begins. Seed %d." % state.seed)
+	if state.shift == SHIFT_TRACT:
+		_log(state, "The tract bell begins. Seed %d." % state.seed)
+	if state.shift == SHIFT_GRADUAL:
+		_log(state, "The gradual bell begins. Seed %d." % state.seed)
+	if state.shift == SHIFT_INTROIT:
+		_log(state, "The introit bell begins. Seed %d." % state.seed)
 	if state.shift == SHIFT_ANTIPHON:
 		_log(state, "The antiphon bell begins. Seed %d." % state.seed)
 	if state.shift == SHIFT_REQUIEM:
@@ -6078,6 +6286,14 @@ static func restart_encounter(state: NightState) -> void:
 
 
 static func shift_label(state: NightState) -> String:
+	if state.shift == SHIFT_SEQUENCE:
+		return "Sequence bell"
+	if state.shift == SHIFT_TRACT:
+		return "Tract bell"
+	if state.shift == SHIFT_GRADUAL:
+		return "Gradual bell"
+	if state.shift == SHIFT_INTROIT:
+		return "Introit bell"
 	if state.shift == SHIFT_ANTIPHON:
 		return "Antiphon bell"
 	if state.shift == SHIFT_REQUIEM:
@@ -6226,6 +6442,14 @@ static func traveler(state: NightState) -> Dictionary:
 
 
 static func _roster(state: NightState) -> Array:
+	if state.shift == SHIFT_SEQUENCE:
+		return SEQUENCE_BELL
+	if state.shift == SHIFT_TRACT:
+		return TRACT_BELL
+	if state.shift == SHIFT_GRADUAL:
+		return GRADUAL_BELL
+	if state.shift == SHIFT_INTROIT:
+		return INTROIT_BELL
 	if state.shift == SHIFT_ANTIPHON:
 		return ANTIPHON_BELL
 	if state.shift == SHIFT_REQUIEM:
@@ -6838,6 +7062,30 @@ static func stamp_progress(state: NightState, card_id: String, row: int, col: in
 		return amount * 2
 	if rule == "yield_stake_pay" and _stake_pay(state, row, col):
 		return amount + 2
+	if rule == "double_arris_fill" and _arris_fill(state, row, col):
+		return amount * 2
+	if rule == "yield_rove_pay" and _rove_pay(state, row, col):
+		return amount + 2
+	if rule == "double_arris_blank" and _arris_blank(state, row, col):
+		return amount * 2
+	if rule == "double_feather_fill" and _feather_fill(state, row, col):
+		return amount * 2
+	if rule == "yield_staple_pay" and _staple_pay(state, row, col):
+		return amount + 2
+	if rule == "double_feather_blank" and _feather_blank(state, row, col):
+		return amount * 2
+	if rule == "double_plow_fill" and _plow_fill(state, row, col):
+		return amount * 2
+	if rule == "yield_lag_pay" and _lag_pay(state, row, col):
+		return amount + 2
+	if rule == "double_plow_blank" and _plow_blank(state, row, col):
+		return amount * 2
+	if rule == "double_dado_fill" and _dado_fill(state, row, col):
+		return amount * 2
+	if rule == "yield_screw_pay" and _screw_pay(state, row, col):
+		return amount + 2
+	if rule == "double_dado_blank" and _dado_blank(state, row, col):
+		return amount * 2
 	if rule == "double_rebate_fill" and _rebate_fill(state, row, col):
 		return amount * 2
 	if rule == "yield_nut_pay" and _nut_pay(state, row, col):
@@ -7073,6 +7321,14 @@ static func patience_loss(state: NightState) -> int:
 		elif rule == "drop_if_gauge_count" and _is_gauge_count(_stamp_count(state)):
 			loss = 2
 		elif rule == "drop_if_latch_count" and _is_latch_count(_stamp_count(state)):
+			loss = 2
+		elif rule == "drop_if_burin_count" and _is_burin_count(_stamp_count(state)):
+			loss = 2
+		elif rule == "drop_if_graver_count" and _is_graver_count(_stamp_count(state)):
+			loss = 2
+		elif rule == "drop_if_scribe_count" and _is_scribe_count(_stamp_count(state)):
+			loss = 2
+		elif rule == "drop_if_prick_count" and _is_prick_count(_stamp_count(state)):
 			loss = 2
 		elif rule == "drop_if_punch_count" and _is_punch_count(_stamp_count(state)):
 			loss = 2
@@ -7575,6 +7831,30 @@ static func _resolve_stamp(state: NightState, row: int, col: int, hush: bool) ->
 				_log(state, "%s on the %s, %s grants %d. Four corner neighbors and five side neighbors pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			elif tail_rule == "double_nick_blank" and _nick_blank(state, row, col) and amount > raw:
 				_log(state, "%s on the %s, %s grants %d. The empty cell seven places before it and the empty cell one place after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_arris_fill" and _arris_fill(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The filled cell twenty-one places before it and the filled cell one place after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_rove_pay" and _rove_pay(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. Four corner neighbors and nineteen side neighbors pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_arris_blank" and _arris_blank(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The empty cell twenty-one places before it and the empty cell one place after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_feather_fill" and _feather_fill(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The filled cell twenty places before it and the filled cell one place after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_staple_pay" and _staple_pay(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. Four corner neighbors and eighteen side neighbors pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_feather_blank" and _feather_blank(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The empty cell twenty places before it and the empty cell one place after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_plow_fill" and _plow_fill(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The filled cell nineteen places before it and the filled cell one place after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_lag_pay" and _lag_pay(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. Four corner neighbors and seventeen side neighbors pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_plow_blank" and _plow_blank(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The empty cell nineteen places before it and the empty cell one place after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_dado_fill" and _dado_fill(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The filled cell eighteen places before it and the filled cell one place after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_screw_pay" and _screw_pay(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. Four corner neighbors and sixteen side neighbors pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_dado_blank" and _dado_blank(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The empty cell eighteen places before it and the empty cell one place after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			elif tail_rule == "double_rebate_fill" and _rebate_fill(state, row, col) and amount > raw:
 				_log(state, "%s on the %s, %s grants %d. The filled cell seventeen places before it and the filled cell one place after it double it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			elif tail_rule == "yield_nut_pay" and _nut_pay(state, row, col) and amount > raw:
@@ -8003,6 +8283,206 @@ static func _wedge_pay(state: NightState, row: int, col: int) -> bool:
 	if state.form[row][col] == null:
 		return false
 	return _diagonal_count(state, row, col) == 2
+
+
+static func _is_burin_count(count: int) -> bool:
+	return count == 27 or count == 30
+
+
+static func _arris_fill(state: NightState, row: int, col: int) -> bool:
+	return _twenty_one_back(state, row, col) and _pace_fill(state, row, col)
+
+
+static func _rove_pay(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	return orthogonal_count(state, row, col) == 19 and _diagonal_count(state, row, col) == 4
+
+
+static func _arris_blank(state: NightState, row: int, col: int) -> bool:
+	return _twenty_one_gap(state, row, col) and _pace_blank(state, row, col)
+
+
+static func _twenty_one_back(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var back_row := row
+	var back_col := col - 21
+	while back_col < 0:
+		back_row -= 1
+		back_col += 3
+	if back_row < 0:
+		return false
+	return state.form[back_row][back_col] != null
+
+
+static func _twenty_one_gap(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var back_row := row
+	var back_col := col - 21
+	while back_col < 0:
+		back_row -= 1
+		back_col += 3
+	if back_row < 0:
+		return false
+	return state.form[back_row][back_col] == null
+
+
+static func _is_graver_count(count: int) -> bool:
+	return count == 26 or count == 29
+
+
+static func _feather_fill(state: NightState, row: int, col: int) -> bool:
+	return _twenty_back(state, row, col) and _pace_fill(state, row, col)
+
+
+static func _staple_pay(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	return orthogonal_count(state, row, col) == 18 and _diagonal_count(state, row, col) == 4
+
+
+static func _feather_blank(state: NightState, row: int, col: int) -> bool:
+	return _twenty_gap(state, row, col) and _pace_blank(state, row, col)
+
+
+static func _twenty_back(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var back_row := row
+	var back_col := col - 20
+	while back_col < 0:
+		back_row -= 1
+		back_col += 3
+	if back_row < 0:
+		return false
+	return state.form[back_row][back_col] != null
+
+
+static func _twenty_gap(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var back_row := row
+	var back_col := col - 20
+	while back_col < 0:
+		back_row -= 1
+		back_col += 3
+	if back_row < 0:
+		return false
+	return state.form[back_row][back_col] == null
+
+
+static func _is_scribe_count(count: int) -> bool:
+	return count == 25 or count == 28
+
+
+static func _plow_fill(state: NightState, row: int, col: int) -> bool:
+	return _nineteen_back(state, row, col) and _pace_fill(state, row, col)
+
+
+static func _lag_pay(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	return orthogonal_count(state, row, col) == 17 and _diagonal_count(state, row, col) == 4
+
+
+static func _plow_blank(state: NightState, row: int, col: int) -> bool:
+	return _nineteen_gap(state, row, col) and _pace_blank(state, row, col)
+
+
+static func _nineteen_back(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var back_row := row
+	var back_col := col - 19
+	while back_col < 0:
+		back_row -= 1
+		back_col += 3
+	if back_row < 0:
+		return false
+	return state.form[back_row][back_col] != null
+
+
+static func _nineteen_gap(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var back_row := row
+	var back_col := col - 19
+	while back_col < 0:
+		back_row -= 1
+		back_col += 3
+	if back_row < 0:
+		return false
+	return state.form[back_row][back_col] == null
+
+
+static func _is_prick_count(count: int) -> bool:
+	return count == 21 or count == 24
+
+
+static func _dado_fill(state: NightState, row: int, col: int) -> bool:
+	return _eighteen_back(state, row, col) and _pace_fill(state, row, col)
+
+
+static func _screw_pay(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	return orthogonal_count(state, row, col) == 16 and _diagonal_count(state, row, col) == 4
+
+
+static func _dado_blank(state: NightState, row: int, col: int) -> bool:
+	return _eighteen_gap(state, row, col) and _pace_blank(state, row, col)
+
+
+static func _eighteen_back(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var back_row := row
+	var back_col := col - 18
+	while back_col < 0:
+		back_row -= 1
+		back_col += 3
+	if back_row < 0:
+		return false
+	return state.form[back_row][back_col] != null
+
+
+static func _eighteen_gap(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var back_row := row
+	var back_col := col - 18
+	while back_col < 0:
+		back_row -= 1
+		back_col += 3
+	if back_row < 0:
+		return false
+	return state.form[back_row][back_col] == null
 
 
 static func _is_punch_count(count: int) -> bool:
@@ -9755,6 +10235,14 @@ static func _apply_result(state: NightState, result: Dictionary) -> void:
 		state.encounters_cleared += 1
 		if state.traveler_index >= _roster(state).size() - 1:
 			state.phase = "victory"
+			if state.shift == SHIFT_SEQUENCE:
+				_log(state, "The queue is empty. The sequence bell is clear.")
+			if state.shift == SHIFT_TRACT:
+				_log(state, "The queue is empty. The tract bell is clear.")
+			if state.shift == SHIFT_GRADUAL:
+				_log(state, "The queue is empty. The gradual bell is clear.")
+			if state.shift == SHIFT_INTROIT:
+				_log(state, "The queue is empty. The introit bell is clear.")
 			if state.shift == SHIFT_ANTIPHON:
 				_log(state, "The queue is empty. The antiphon bell is clear.")
 			if state.shift == SHIFT_REQUIEM:
