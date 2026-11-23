@@ -12,7 +12,7 @@ class_name ChartBook
 # The Transom holds eight more. The Casement holds eight more.
 # The Jamb holds eight more. The Astragal holds eight more.
 # The Scotia holds eight more. The Torus holds eight more.
-# The Ogee holds the last eight.
+# The Ogee holds eight more. The Ovolo holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
@@ -80,6 +80,18 @@ class_name ChartBook
 # A casement passes only the facing. A jamb passes both directions on its open
 # axis. A mullion passes north and south. A transom passes east and west. A
 # lintel passes every dry direction.
+# An ovolo has a facing. Rotation changes it the same way: 0 north, 90 east,
+# 180 south, 270 west. While its row is dry, every direction except the facing
+# passes straight through in the same direction and the same color, and that
+# pass costs no bounce. It does not turn, it does not recolor, and it does not
+# split. The facing stops and does not enter. Facing north, the open directions
+# are east, south, and west, and the stopped direction is north. A north ogee
+# passes south and west and stops east, so a north ovolo is not a north ogee.
+# A north torus passes south and east and stops west. While that row is
+# flooded, every beam stops at the waterline, the same way a flooded ogee
+# stops. A casement passes only the facing. A jamb passes both directions on
+# its open axis. A mullion passes north and south. A transom passes east and
+# west. A lintel passes every dry direction.
 # See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
@@ -109,6 +121,7 @@ const ASTRAGAL := "The Astragal"
 const SCOTIA := "The Scotia"
 const TORUS := "The Torus"
 const OGEE := "The Ogee"
+const OVOLO := "The Ovolo"
 
 static func all() -> Array:
 	var book: Array = []
@@ -135,6 +148,7 @@ static func all() -> Array:
 	book.append_array(scotia())
 	book.append_array(torus())
 	book.append_array(ogee())
+	book.append_array(ovolo())
 	return book
 
 
@@ -228,6 +242,10 @@ static func torus() -> Array:
 
 static func ogee() -> Array:
 	return [chart_175(), chart_176(), chart_177(), chart_178(), chart_179(), chart_180(), chart_181(), chart_182()]
+
+
+static func ovolo() -> Array:
+	return [chart_183(), chart_184(), chart_185(), chart_186(), chart_187(), chart_188(), chart_189(), chart_190()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -6710,6 +6728,298 @@ static func chart_182() -> Dictionary:
 	}
 
 
+static func chart_183() -> Dictionary:
+	# Tide index 0, flood 0. A north ovolo passes east, south, and west.
+	# The chart opens facing south, which stops the southbound beam.
+	return {
+		"id": "183",
+		"harbor": OVOLO,
+		"title": "The Dry Ovolo",
+		"teach": "Tide index 0, flood 0. A dry north ovolo passes the eastbound beam, the southbound beam, and the westbound beam. White stays white and blue stays blue. A casement in that cell refuses the westbound beam. A jamb in that cell refuses the westbound beam and passes the northbound return. A lintel lets that return through. A torus facing north refuses the westbound beam. An ogee facing north refuses the eastbound beam. A scotia facing north refuses the southbound beam. An astragal facing north refuses the southbound beam.",
+		"win": "The dry north ovolo passes east, south, and west, and the northbound return stops.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ss", 3, 0, "S", "white"),
+			_lantern("Ee", 0, 3, "E", "blue"),
+			_lantern("Ww", 6, 3, "W", "red"),
+			_lantern("Nn", 3, 6, "N", "blue"),
+		],
+		"docks": [
+			_dock("Sd", 3, 5, "white", true),
+			_dock("Ed", 5, 3, "blue", true),
+			_dock("Wd", 1, 3, "red", true),
+			_dock("Kd", 3, 1, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_ovolo("O", "Ovolo", 3, 3, 180, 0),
+		],
+	}
+
+
+static func chart_184() -> Dictionary:
+	# The chart opens under water. The beam from the dry row stops at the
+	# waterline. The solution lowers the tide, and east, south, and west pass.
+	return {
+		"id": "184",
+		"harbor": OVOLO,
+		"title": "The Wet Stop",
+		"teach": "The ovolo opens under water, so every beam stops at the waterline and does not enter. Lower the tide. Dry, the eastbound beam, the southbound beam, and the westbound beam pass. A shutter would pass while flooded. A well, a siphon, a sluice, or a weir would carry the beam. A casement refuses the westbound beam. A jamb refuses the westbound beam and passes the northbound return. A flooded ogee stops the same way.",
+		"win": "The tide is low. East, south, and west pass, and the northbound beam stops.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0, 3],
+		"start_tide_index": 1,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 6, "N", "blue"),
+			_lantern("Ss", 3, 0, "S", "white"),
+			_lantern("Ee", 0, 4, "E", "blue"),
+			_lantern("Ww", 6, 4, "W", "red"),
+		],
+		"docks": [
+			_dock("Sd", 3, 5, "white", true),
+			_dock("Kd", 3, 2, "blue", true, true),
+			_dock("Ed", 5, 4, "blue", true),
+			_dock("Wd", 1, 4, "red", true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_ovolo("O", "Ovolo", 3, 4, 180, 0),
+		],
+	}
+
+
+static func chart_185() -> Dictionary:
+	# Red goes south and stays red. Blue goes west and stays blue. White goes east.
+	return {
+		"id": "185",
+		"harbor": OVOLO,
+		"title": "Color Kept",
+		"teach": "The dry ovolo keeps red, blue, and white. Red stays red and blue stays blue. White stays white. A stain or a weir would change the color. A casement refuses the westbound beam. A jamb refuses the westbound beam and passes the northbound return. An ogee facing north refuses the eastbound beam. A torus facing north refuses the westbound beam.",
+		"win": "The color that enters the ovolo is the color that leaves it.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Rs", 3, 0, "S", "red"),
+			_lantern("Bw", 6, 3, "W", "blue"),
+			_lantern("Ew", 0, 3, "E", "white"),
+			_lantern("Nn", 3, 6, "N", "blue"),
+		],
+		"docks": [
+			_dock("Rd", 3, 5, "red", true),
+			_dock("Bd", 1, 3, "blue", true),
+			_dock("Ed", 5, 3, "white", true),
+			_dock("Kd", 3, 1, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_ovolo("O", "Ovolo", 3, 3, 180, 0),
+		],
+	}
+
+
+static func chart_186() -> Dictionary:
+	# White goes straight south. Blue goes straight east. Red goes straight west.
+	return {
+		"id": "186",
+		"harbor": OVOLO,
+		"title": "No Turn",
+		"teach": "The beam leaves on the same side it entered. It does not turn. A prism, a vane, a sluice, or a mirror would turn it. A casement refuses the westbound beam. A jamb passes the northbound return. An ogee facing north refuses the eastbound beam. A torus facing north refuses the westbound beam.",
+		"win": "White goes straight south, blue goes straight east, and red goes straight west.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ss", 3, 0, "S", "white"),
+			_lantern("Ee", 0, 3, "E", "blue"),
+			_lantern("Ww", 6, 3, "W", "red"),
+			_lantern("Nn", 3, 6, "N", "blue"),
+		],
+		"docks": [
+			_dock("Sd", 3, 5, "white", true),
+			_dock("Ed", 5, 3, "blue", true),
+			_dock("Wd", 1, 3, "red", true),
+			_dock("Kd", 3, 1, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_ovolo("O", "Ovolo", 3, 3, 270, 0),
+		],
+	}
+
+
+static func chart_187() -> Dictionary:
+	# Flood 1 covers y >= 6. The ovolo stays on the dry row and passes east,
+	# south, and west. A separate beam stops at the flooded row's waterline.
+	return {
+		"id": "187",
+		"harbor": OVOLO,
+		"title": "Beside the Flood",
+		"teach": "The ovolo's own row is dry, so the eastbound beam, the southbound beam, and the westbound beam pass. The next flooded cell that is not a flood carrier still stops the beam at the waterline. A mullion cannot be turned so that it passes west. A transom cannot be turned so that it passes south. A casement refuses the westbound beam. A lintel lets the northbound return through. An ogee facing north refuses the eastbound beam. A torus facing north refuses the westbound beam.",
+		"win": "East, south, and west pass on the dry row, and the beam into the flood stops.",
+		"cols": 8,
+		"rows": 7,
+		"tide_phases": [1],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ss", 3, 0, "S", "white"),
+			_lantern("Nn", 3, 5, "N", "red"),
+			_lantern("Ee", 0, 2, "E", "blue"),
+			_lantern("Ww", 6, 2, "W", "red"),
+			_lantern("F", 1, 5, "S", "white"),
+		],
+		"docks": [
+			_dock("Sd", 3, 4, "white", true),
+			_dock("Kd", 3, 1, "red", true, true),
+			_dock("Ed", 5, 2, "blue", true),
+			_dock("Wd", 1, 2, "red", true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_ovolo("O", "Ovolo", 3, 2, 180, 0),
+		],
+	}
+
+
+static func chart_188() -> Dictionary:
+	# One ovolo faces south and passes north, east, and west. The other faces
+	# north and passes east, south, and west. Swapping those facings fails.
+	return {
+		"id": "188",
+		"harbor": OVOLO,
+		"title": "Two Ovolos",
+		"teach": "One ovolo is open on north, east, and west. The other is open on east, south, and west. Swapping their facings fails. A jamb cannot take the south seat, because a south jamb also passes south. A mullion cannot be turned so that it passes east. A transom cannot be turned so that it passes south. An ogee facing south cannot take the south seat. A torus facing north cannot take the north seat.",
+		"win": "North, east, and west stay on the first seat. East, south, and west stay on the second.",
+		"cols": 11,
+		"rows": 9,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("As", 2, 0, "S", "blue"),
+			_lantern("An", 2, 6, "N", "white"),
+			_lantern("Ae", 0, 3, "E", "red"),
+			_lantern("Aw", 5, 3, "W", "white"),
+			_lantern("Bs", 8, 2, "S", "white"),
+			_lantern("Bn", 8, 8, "N", "red"),
+			_lantern("Be", 6, 5, "E", "blue"),
+			_lantern("Bw", 10, 5, "W", "white"),
+		],
+		"docks": [
+			_dock("Adn", 2, 1, "white", true),
+			_dock("Ads", 2, 4, "blue", true, true),
+			_dock("Ade", 4, 3, "red", true),
+			_dock("Adw", 1, 3, "white", true),
+			_dock("Bds", 8, 7, "white", true),
+			_dock("Bdn", 8, 4, "red", true, true),
+			_dock("Bde", 9, 5, "blue", true),
+			_dock("Bdw", 7, 5, "white", true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_ovolo("O", "South ovolo", 2, 3, 0, 180),
+			_ovolo("U", "North ovolo", 8, 5, 180, 0),
+		],
+	}
+
+
+static func chart_189() -> Dictionary:
+	# Three tide marks. The middle mark leaves the ovolo dry, facing north.
+	# Low water wakes the hull. High water covers the ovolo.
+	return {
+		"id": "189",
+		"harbor": OVOLO,
+		"title": "The Held Ovolo",
+		"teach": "The held facing is part of the solution. The chart starts on a facing that stops south. Place the tide on the middle mark and face the ovolo north. Low water wakes the south hull. High water covers the ovolo and the beam stops at the waterline. A casement refuses the westbound beam. A jamb passes the northbound return. A lintel lets that return through. An ogee facing north refuses the eastbound beam.",
+		"win": "The middle mark holds the north ovolo. East, south, and west pass, and the hull stays dark.",
+		"cols": 8,
+		"rows": 7,
+		"tide_phases": [0, 1, 4],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ss", 4, 0, "S", "white"),
+			_lantern("Ee", 0, 3, "E", "blue"),
+			_lantern("Ww", 7, 3, "W", "red"),
+			_lantern("Nn", 4, 5, "N", "red"),
+			_lantern("Hl", 0, 6, "E", "white"),
+		],
+		"docks": [
+			_dock("Sd", 4, 4, "white", true),
+			_dock("Ed", 6, 3, "blue", true),
+			_dock("Wd", 2, 3, "red", true),
+			_dock("Kd", 4, 1, "red", true, true),
+		],
+		"boats": [
+			_boat("Hb", 3, 6),
+		],
+		"fixtures": [],
+		"pieces": [
+			_ovolo("O", "Ovolo", 4, 3, 180, 0),
+		],
+	}
+
+
+static func chart_190() -> Dictionary:
+	# The ovolo and the shutter trade places. On the line the ovolo faces
+	# north. East, south, and west count. The northbound beam must not.
+	return {
+		"id": "190",
+		"harbor": OVOLO,
+		"title": "The Ovolo Mark",
+		"teach": "Move the ovolo from the side socket onto the line and face it north. The mark is satisfied only by that open set. The eastbound beam, the southbound beam, and the westbound beam pass. The northbound beam must not count. A casement, a jamb, a mullion, a transom, a lintel, an ogee, a torus, a scotia, or an astragal in that cell fails.",
+		"win": "The ovolo stands on the line, open east, south, and west. Three docks are lit and the return stays dark.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ss", 3, 0, "S", "white"),
+			_lantern("Ee", 0, 3, "E", "blue"),
+			_lantern("Ww", 6, 3, "W", "red"),
+			_lantern("Nn", 3, 6, "N", "blue"),
+		],
+		"docks": [
+			_dock("Sd", 3, 5, "white", true),
+			_dock("Ed", 5, 3, "blue", true),
+			_dock("Wd", 1, 3, "red", true),
+			_dock("Kd", 3, 1, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_placed("O", "Ovolo", "ovolo", [["side", 5, 5], ["line", 3, 3]], "side", "line", 180, 0),
+			_placed("G", "Line shutter", "shutter", [["line", 3, 3], ["side", 5, 5]], "line", "side", 0, 0),
+		],
+	}
+
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -6976,6 +7286,20 @@ static func _ogee(id: String, name: String, x: int, y: int, start_rot: int, sol_
 		"id": id,
 		"name": name,
 		"kind": "ogee",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _ovolo(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "ovolo",
 		"movable": false,
 		"sockets": [{"id": "a", "x": x, "y": y}],
 		"start_socket": "a",
