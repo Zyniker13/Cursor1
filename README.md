@@ -2,16 +2,16 @@
 
 Playable slices, Godot 4. Steam packaging comes later.
 
-- [Harbor Glass](harbor-glass/) — a tide-clock light puzzle through the Architrave
-- [Brine Mark](brine-mark/) — an indirect salt-flat colony sim through the pendant beat
-- [Dispatch](dispatch/) — a parcel-routing puzzle through the vangs
-- [Night Stamp](night-stamp/) — a border-desk deckbuilder through the matins bell
+- [Harbor Glass](harbor-glass/) — a tide-clock light puzzle through the Archivolt
+- [Brine Mark](brine-mark/) — an indirect salt-flat colony sim through the wheft beat
+- [Dispatch](dispatch/) — a parcel-routing puzzle through the tack
+- [Night Stamp](night-stamp/) — a border-desk deckbuilder through the prime bell
 - [Orchard Surge](orchard-surge/) — a dark-orchard wave game through night 63
 - [Lantern Census](lantern-census/) — a forty-seven-floor map survey through the Cenotaph
 - [Lowball](lowball/) — a sixty-two-week thirty-one-club circle through Holmfen Dowitchers
-- [Casework](casework/) — a fifty-nine-case deduction board through the metope
-- [Lampblack](lampblack/) — turn-based museum stealth through the buckram
-- [Kiln Route](kiln-route/) — a three-hundred-and-sixty-eight-room foundry puzzle through the sett
+- [Casework](casework/) — a sixty-two-case deduction board through the bowtell
+- [Lampblack](lampblack/) — turn-based museum stealth through the denim
+- [Kiln Route](kiln-route/) — a three-hundred-and-eighty-four-room foundry puzzle through the snap
 
 ```bash
 godot --path harbor-glass
