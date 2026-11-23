@@ -500,6 +500,10 @@ func _building_mark_name(building: int) -> String:
 			return "BuildingTwentyOneMark"
 		22:
 			return "BuildingTwentyTwoMark"
+		23:
+			return "BuildingTwentyThreeMark"
+		24:
+			return "BuildingTwentyFourMark"
 		_:
 			return "Building%dMark" % building
 
@@ -652,7 +656,7 @@ func _sync_facing() -> void:
 			_facing.text = "Facing   counterclockwise"
 		elif _selected == "slide":
 			_facing.text = "Facing   with the parcel"
-		elif _selected == "bin" or _selected == "return" or _selected == "pause" or _selected == "shunt" or _selected == "bias" or _selected == "vault" or _selected == "sling" or _selected == "cant" or _selected == "balk" or _selected == "loft" or _selected == "keel" or _selected == "sheer" or _selected == "strake" or _selected == "wale":
+		elif _selected == "bin" or _selected == "return" or _selected == "pause" or _selected == "shunt" or _selected == "bias" or _selected == "vault" or _selected == "sling" or _selected == "cant" or _selected == "balk" or _selected == "loft" or _selected == "keel" or _selected == "sheer" or _selected == "strake" or _selected == "wale" or _selected == "garboard" or _selected == "stealer":
 			_facing.text = "Facing   none"
 		else:
 			_facing.text = "Facing   %s" % Sim.DIR_NAMES[_ghost_dir]
@@ -957,6 +961,10 @@ func _draw_block(block: Dictionary, alpha: float) -> void:
 		_strake_mark(rect, ink)
 	elif typ == "wale":
 		_wale_mark(rect, ink)
+	elif typ == "garboard":
+		_garboard_mark(rect, ink)
+	elif typ == "stealer":
+		_stealer_mark(rect, ink)
 	elif typ == "slide":
 		_slide_mark(rect, ink)
 	elif typ == "bin":
@@ -1267,6 +1275,25 @@ func _wale_mark(rect: Rect2, color: Color) -> void:
 	draw_line(back + Vector2(0.0, span * 0.22), tip, color, 2.5)
 
 
+func _garboard_mark(rect: Rect2, color: Color) -> void:
+	var center := rect.get_center()
+	var span := rect.size.x
+	var tip := center + Vector2(-span * 0.22, 0.0)
+	var back := tip + Vector2(span * 0.28, 0.0)
+	draw_line(back + Vector2(0.0, -span * 0.22), tip, color, 2.5)
+	draw_line(back + Vector2(0.0, span * 0.22), tip, color, 2.5)
+
+
+func _stealer_mark(rect: Rect2, color: Color) -> void:
+	var center := rect.get_center()
+	var span := rect.size.x
+	for i in 3:
+		var tip := center + Vector2(span * 0.32 - float(i) * span * 0.28, 0.0)
+		var back := tip + Vector2(span * 0.16, 0.0)
+		draw_line(back + Vector2(0.0, -span * 0.14), tip, color, 2.5)
+		draw_line(back + Vector2(0.0, span * 0.14), tip, color, 2.5)
+
+
 func _pause_mark(rect: Rect2, color: Color) -> void:
 	var center := rect.get_center()
 	var bar_w := maxf(rect.size.x * 0.12, 3.0)
@@ -1396,6 +1423,10 @@ func _tool_color(tool: String) -> Color:
 			return Color("#7a4e8a")
 		"wale":
 			return Color("#c47a3a")
+		"garboard":
+			return Color("#3e8f6a")
+		"stealer":
+			return Color("#2f6f8f")
 		"slide":
 			return Color("#d06b86")
 		"bin":
@@ -1472,6 +1503,10 @@ func _tool_tip(tool: String) -> String:
 			return "Waits one tick, then jumps a parcel two cells to its left. The cell beside it is not entered, and the parcel keeps the facing it arrived with."
 		"wale":
 			return "Waits one tick, then jumps a parcel one cell to its right. The parcel keeps the facing it arrived with."
+		"garboard":
+			return "Waits one tick, then jumps a parcel one cell to its left. The parcel keeps the facing it arrived with."
+		"stealer":
+			return "Waits one tick, then jumps a parcel three cells to its left. The two cells beside it are not entered, and the parcel keeps the facing it arrived with."
 		"slide":
 			return "Moves a parcel two cells in its facing and does not rotate it. The cell between can be a brick, a belt, or another parcel."
 		"bin":
