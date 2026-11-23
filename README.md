@@ -2,16 +2,16 @@
 
 Playable slices, Godot 4. Steam packaging comes later.
 
-- [Harbor Glass](harbor-glass/) — a tide-clock light puzzle through the Rebate
+- [Harbor Glass](harbor-glass/) — a tide-clock light puzzle through the Baguette
 - [Brine Mark](brine-mark/) — an indirect salt-flat colony sim through the gonfanon beat
-- [Dispatch](dispatch/) — a parcel-routing puzzle through the cleat
-- [Night Stamp](night-stamp/) — a border-desk deckbuilder through the sext bell
-- [Orchard Surge](orchard-surge/) — a dark-orchard wave game through night 65
-- [Lantern Census](lantern-census/) — a forty-eight-floor map survey through the Winding
-- [Lowball](lowball/) — a sixty-two-week thirty-one-club circle through Holmfen Dowitchers
-- [Casework](casework/) — a sixty-four-case deduction board through the chevron
-- [Lampblack](lampblack/) — turn-based museum stealth through the canvas
-- [Kiln Route](kiln-route/) — a four-hundred-room foundry puzzle through the sledge
+- [Dispatch](dispatch/) — a parcel-routing puzzle through the bollard
+- [Night Stamp](night-stamp/) — a border-desk deckbuilder through the requiem bell
+- [Orchard Surge](orchard-surge/) — a dark-orchard wave game through night 67
+- [Lantern Census](lantern-census/) — a fifty-two-floor map survey through the Cairn
+- [Lowball](lowball/) — a sixty-two-week thirty-two-club circle through Peatfen Phalaropes
+- [Casework](casework/) — a sixty-eight-case deduction board through the fret
+- [Lampblack](lampblack/) — turn-based museum stealth through the nankeen
+- [Kiln Route](kiln-route/) — a four-hundred-and-thirty-two-room foundry puzzle through the stake
 
 ```bash
 godot --path harbor-glass

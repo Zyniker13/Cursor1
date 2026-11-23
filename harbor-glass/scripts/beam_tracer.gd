@@ -441,7 +441,7 @@ static func norm_rot(kind: String, rot: int) -> int:
 	# A cavetto uses the same four facings. Each one stops only the opposite
 	# of the facing and passes the other three directions. A north cavetto
 	# passes north, east, and west, which a north ovolo does not.
-	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma" or kind == "fascia" or kind == "soffit" or kind == "drip" or kind == "beak" or kind == "hood" or kind == "throat" or kind == "larmier" or kind == "cill" or kind == "threshold" or kind == "impost" or kind == "architrave" or kind == "archivolt" or kind == "abacus" or kind == "rebate":
+	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma" or kind == "fascia" or kind == "soffit" or kind == "drip" or kind == "beak" or kind == "hood" or kind == "throat" or kind == "larmier" or kind == "cill" or kind == "threshold" or kind == "impost" or kind == "architrave" or kind == "archivolt" or kind == "abacus" or kind == "rebate" or kind == "echinus" or kind == "annulet" or kind == "listel" or kind == "necking" or kind == "taenia" or kind == "baguette":
 		return posmod(rot, 360)
 	# A shutter has no facing. Dry stops the beam; flooded water lets it pass.
 	# A well has no facing either. Dry stops the beam; flooded water sends it north.
@@ -875,6 +875,147 @@ static func rebate_flood_passes(rot: int, dir: String) -> bool:
 	# south beam, and while dry it passes north, east, and west.
 	return dir == rotate_dir(rebate_facing(rot), 2)
 
+static func echinus_facing(rot: int) -> String:
+	# 0 north, 90 east, 180 south, 270 west. Dry, every heading except the
+	# opposite passes, so opposite facings do not share that set. Flooded,
+	# only the next clockwise heading passes, so opposite facings do not
+	# share that heading either.
+	return rotate_dir("N", posmod(int(norm_rot("echinus", rot) / 90.0), 4))
+
+static func echinus_passes(rot: int, dir: String) -> bool:
+	# Dry rule. Every heading except the opposite. A dry north echinus passes
+	# north, east, and west, and stops south. A dry fillet passes only south
+	# and stays shut under water, so this piece does not repeat that pair.
+	return dir != rotate_dir(echinus_facing(rot), 2)
+
+static func echinus_flood_passes(rot: int, dir: String) -> bool:
+	# Flooded rule. Only the next clockwise heading passes. A flooded north
+	# echinus passes only east. North, west, and south stop. One click faces
+	# east and only south passes. A flooded north rebate passes only south.
+	# A flooded north abacus passes only north. A flooded north throat passes
+	# only south.
+	return dir == rotate_dir(echinus_facing(rot), 1)
+
+static func annulet_facing(rot: int) -> String:
+	# 0 north, 90 east, 180 south, 270 west. Dry, every heading except the
+	# opposite passes, so opposite facings do not share that set. Flooded,
+	# only the next counterclockwise heading passes, so opposite facings do
+	# not share that heading either.
+	return rotate_dir("N", posmod(int(norm_rot("annulet", rot) / 90.0), 4))
+
+static func annulet_passes(rot: int, dir: String) -> bool:
+	# Dry rule. Every heading except the opposite. A dry north annulet passes
+	# north, east, and west, and stops south. A bead passes only east while
+	# dry and stays shut under water. A quirk passes only west while dry and
+	# stays shut under water. This piece does not repeat either pair.
+	return dir != rotate_dir(annulet_facing(rot), 2)
+
+static func annulet_flood_passes(rot: int, dir: String) -> bool:
+	# Flooded rule. Only the next counterclockwise heading passes. A flooded
+	# north annulet passes only west. North, east, and south stop. One click
+	# faces east and only north passes. A flooded north echinus passes only
+	# east. A flooded north rebate passes only south. A flooded north abacus
+	# passes only north. A flooded north throat passes only south.
+	return dir == rotate_dir(annulet_facing(rot), -1)
+
+static func listel_facing(rot: int) -> String:
+	# 0 north, 90 east, 180 south, 270 west. Dry, every heading stops, so
+	# there is no dry open set. Flooded, the facing and the next clockwise
+	# heading pass, so opposite facings do not share that pair.
+	return rotate_dir("N", posmod(int(norm_rot("listel", rot) / 90.0), 4))
+
+static func listel_passes(_rot: int, _dir: String) -> bool:
+	# Dry rule. Every heading stops. One click still stops every heading.
+	# Opposite dry facings share that shut state. A dry cyma passes only the
+	# facing and stays shut under water, so this piece does not repeat that pair.
+	return false
+
+static func listel_flood_passes(rot: int, dir: String) -> bool:
+	# Flooded rule. The facing and the next clockwise heading pass. A flooded
+	# north listel passes north and east. West and south stop. One click faces
+	# east and north and west stop, while east and south pass. A flooded north
+	# annulet passes only west. A flooded north echinus passes only east. A
+	# flooded north rebate passes only south. A flooded north abacus passes
+	# only north. A flooded north throat passes only south.
+	var facing := listel_facing(rot)
+	return dir == facing or dir == rotate_dir(facing, 1)
+
+static func necking_facing(rot: int) -> String:
+	# 0 north, 90 east, 180 south, 270 west. Dry, every heading stops, so
+	# there is no dry open set. Flooded, the facing and the next
+	# counterclockwise heading pass, so opposite facings do not share that pair.
+	return rotate_dir("N", posmod(int(norm_rot("necking", rot) / 90.0), 4))
+
+static func necking_passes(_rot: int, _dir: String) -> bool:
+	# Dry rule. Every heading stops. One click still stops every heading.
+	# Opposite dry facings share that shut state. A dry scotia passes the
+	# facing and the next counterclockwise heading and stays shut under water,
+	# so this piece does not repeat that pair.
+	return false
+
+static func necking_flood_passes(rot: int, dir: String) -> bool:
+	# Flooded rule. The facing and the next counterclockwise heading pass. A
+	# flooded north necking passes north and west. East and south stop. One
+	# click faces east and only east and north pass. A flooded north listel
+	# passes north and east. A flooded north annulet passes only west. A
+	# flooded north echinus passes only east. A flooded north rebate passes
+	# only south. A flooded north abacus passes only north. A flooded north
+	# throat passes only south.
+	var facing := necking_facing(rot)
+	return dir == facing or dir == rotate_dir(facing, -1)
+
+static func taenia_facing(rot: int) -> String:
+	# 0 north, 90 east, 180 south, 270 west. Dry, every heading stops, so
+	# there is no dry open set. Flooded, the facing and the opposite pass,
+	# so opposite facings share that pair.
+	return rotate_dir("N", posmod(int(norm_rot("taenia", rot) / 90.0), 4))
+
+static func taenia_passes(_rot: int, _dir: String) -> bool:
+	# Dry rule. Every heading stops. One click still stops every heading.
+	# Opposite dry facings share that shut state. A dry cill passes the
+	# facing and the opposite, so this piece does not repeat that dry pair.
+	return false
+
+static func taenia_flood_passes(rot: int, dir: String) -> bool:
+	# Flooded rule. The facing and the opposite pass. A flooded north taenia
+	# passes north and south. East and west stop. One click faces east and
+	# only east and west pass. A flooded south taenia passes the same north
+	# and south. A flooded north larmier passes this same pair and, while dry,
+	# passes east and west. A flooded north listel passes north and east. A
+	# flooded north necking passes north and west. A flooded north annulet
+	# passes only west. A flooded north echinus passes only east. A flooded
+	# north rebate passes only south. A flooded north abacus passes only north.
+	# A flooded north throat passes only south.
+	var facing := taenia_facing(rot)
+	return dir == facing or dir == rotate_dir(facing, 2)
+
+static func baguette_facing(rot: int) -> String:
+	# 0 north, 90 east, 180 south, 270 west. Dry, every heading stops, so
+	# there is no dry open set. Flooded, every heading except the opposite
+	# passes, so opposite facings do not share that set.
+	return rotate_dir("N", posmod(int(norm_rot("baguette", rot) / 90.0), 4))
+
+static func baguette_passes(_rot: int, _dir: String) -> bool:
+	# Dry rule. Every heading stops. One click still stops every heading.
+	# Opposite dry facings share that shut state. An archivolt stays shut
+	# while dry and passes the perpendicular pair under water, so this piece
+	# does not repeat that pair. A dry larmier passes the perpendicular pair,
+	# so this piece does not copy that dry half either.
+	return false
+
+static func baguette_flood_passes(rot: int, dir: String) -> bool:
+	# Flooded rule. Every heading except the opposite passes. A flooded north
+	# baguette passes north, east, and west, and stops south. One click faces
+	# east and passes east, north, and south, and stops west. A flooded south
+	# baguette passes south, east, and west, and stops north. A flooded north
+	# threshold passes this same set and, while dry, passes only south. A
+	# flooded north taenia passes north and south. A flooded north listel
+	# passes north and east. A flooded north necking passes north and west.
+	# A flooded north annulet passes only west. A flooded north echinus passes
+	# only east. A flooded north rebate passes only south. A flooded north
+	# abacus passes only north. A flooded north throat passes only south.
+	return dir != rotate_dir(baguette_facing(rot), 2)
+
 static func sluice_facing(rot: int) -> String:
 	# 0 north, 90 east, 180 south, 270 west. The exit follows this facing.
 	return rotate_dir("N", posmod(int(rot / 90.0), 4))
@@ -1079,7 +1220,7 @@ static func _cast(
 		if flooded and not _flood_carries(occupants, cell):
 			# A flooded drip is not a full carrier. Only the dry-stopped
 			# direction enters. The other three stop at the waterline.
-			if not _flooded_drip_passes(occupants, cell, dir) and not _flooded_beak_passes(occupants, cell, dir) and not _flooded_hood_passes(occupants, cell, dir) and not _flooded_throat_passes(occupants, cell, dir) and not _flooded_larmier_passes(occupants, cell, dir) and not _flooded_cill_passes(occupants, cell, dir) and not _flooded_threshold_passes(occupants, cell, dir) and not _flooded_impost_passes(occupants, cell, dir) and not _flooded_architrave_passes(occupants, cell, dir) and not _flooded_archivolt_passes(occupants, cell, dir) and not _flooded_abacus_passes(occupants, cell, dir) and not _flooded_rebate_passes(occupants, cell, dir):
+			if not _flooded_drip_passes(occupants, cell, dir) and not _flooded_beak_passes(occupants, cell, dir) and not _flooded_hood_passes(occupants, cell, dir) and not _flooded_throat_passes(occupants, cell, dir) and not _flooded_larmier_passes(occupants, cell, dir) and not _flooded_cill_passes(occupants, cell, dir) and not _flooded_threshold_passes(occupants, cell, dir) and not _flooded_impost_passes(occupants, cell, dir) and not _flooded_architrave_passes(occupants, cell, dir) and not _flooded_archivolt_passes(occupants, cell, dir) and not _flooded_abacus_passes(occupants, cell, dir) and not _flooded_rebate_passes(occupants, cell, dir) and not _flooded_echinus_passes(occupants, cell, dir) and not _flooded_annulet_passes(occupants, cell, dir) and not _flooded_listel_passes(occupants, cell, dir) and not _flooded_necking_passes(occupants, cell, dir) and not _flooded_taenia_passes(occupants, cell, dir) and not _flooded_baguette_passes(occupants, cell, dir):
 				segments.append(_boundary_seg(prev, cell, color))
 				return
 		# A dry mullion passes north and south. East and west stop on the edge
@@ -1250,6 +1391,42 @@ static func _cast(
 		# A dry rebate stops every heading on the edge. A flooded rebate
 		# already passed the waterline gate above, and only the opposite is here.
 		if not flooded and _dry_rebate_blocks(occupants, cell, dir):
+			segments.append(_boundary_seg(prev, cell, color))
+			return
+		# A dry echinus stops only the opposite on the edge. The other three
+		# headings enter. A flooded echinus already passed the waterline gate,
+		# and only the clockwise heading is here.
+		if not flooded and _dry_echinus_blocks(occupants, cell, dir):
+			segments.append(_boundary_seg(prev, cell, color))
+			return
+		# A dry annulet stops only the opposite on the edge. The other three
+		# headings enter. A flooded annulet already passed the waterline gate,
+		# and only the counterclockwise heading is here.
+		if not flooded and _dry_annulet_blocks(occupants, cell, dir):
+			segments.append(_boundary_seg(prev, cell, color))
+			return
+		# A dry listel stops every heading on the edge. A flooded listel
+		# already passed the waterline gate, and only the facing and the
+		# clockwise heading are here.
+		if not flooded and _dry_listel_blocks(occupants, cell, dir):
+			segments.append(_boundary_seg(prev, cell, color))
+			return
+		# A dry necking stops every heading on the edge. A flooded necking
+		# already passed the waterline gate, and only the facing and the
+		# counterclockwise heading are here.
+		if not flooded and _dry_necking_blocks(occupants, cell, dir):
+			segments.append(_boundary_seg(prev, cell, color))
+			return
+		# A dry taenia stops every heading on the edge. A flooded taenia
+		# already passed the waterline gate, and only the facing and the
+		# opposite are here.
+		if not flooded and _dry_taenia_blocks(occupants, cell, dir):
+			segments.append(_boundary_seg(prev, cell, color))
+			return
+		# A dry baguette stops every heading on the edge. A flooded baguette
+		# already passed the waterline gate, and every heading except the
+		# opposite is here.
+		if not flooded and _dry_baguette_blocks(occupants, cell, dir):
 			segments.append(_boundary_seg(prev, cell, color))
 			return
 		segments.append(_center_seg(prev, cell, color))
@@ -1590,6 +1767,50 @@ static func _cast(
 			prev = cell
 			cell = cell + VEC[dir]
 			continue
+		if kind == "echinus":
+			# Dry, the opposite already stopped on the edge and the other
+			# three headings pass straight. Flooded, only the clockwise
+			# heading passes straight. Same direction, same color, no bounce,
+			# no turn, no recolor, no split.
+			prev = cell
+			cell = cell + VEC[dir]
+			continue
+		if kind == "annulet":
+			# Dry, the opposite already stopped on the edge and the other
+			# three headings pass straight. Flooded, only the counterclockwise
+			# heading passes straight. Same direction, same color, no bounce,
+			# no turn, no recolor, no split.
+			prev = cell
+			cell = cell + VEC[dir]
+			continue
+		if kind == "listel":
+			# Dry, every heading already stopped on the edge. Flooded, the
+			# facing and the clockwise heading pass straight. Same direction,
+			# same color, no bounce, no turn, no recolor, no split.
+			prev = cell
+			cell = cell + VEC[dir]
+			continue
+		if kind == "necking":
+			# Dry, every heading already stopped on the edge. Flooded, the
+			# facing and the counterclockwise heading pass straight. Same
+			# direction, same color, no bounce, no turn, no recolor, no split.
+			prev = cell
+			cell = cell + VEC[dir]
+			continue
+		if kind == "taenia":
+			# Dry, every heading already stopped on the edge. Flooded, the
+			# facing and the opposite pass straight. Same direction, same
+			# color, no bounce, no turn, no recolor, no split.
+			prev = cell
+			cell = cell + VEC[dir]
+			continue
+		if kind == "baguette":
+			# Dry, every heading already stopped on the edge. Flooded, every
+			# heading except the opposite passes straight. Same direction,
+			# same color, no bounce, no turn, no recolor, no split.
+			prev = cell
+			cell = cell + VEC[dir]
+			continue
 		if kind == "pane":
 			if color != pane_color(int(occ["rot"])):
 				return
@@ -1661,6 +1882,24 @@ static func _flood_carries(occupants: Dictionary, cell: Vector2i) -> bool:
 	# every heading stops.
 	# A rebate is not listed here either. Under water only the opposite of
 	# its facing enters, and that exception is the same gate. While its row
+	# is dry, every heading stops.
+	# An echinus is not listed here either. Under water only the next
+	# clockwise heading enters, and that exception is the same gate. While
+	# its row is dry, only the opposite stops.
+	# An annulet is not listed here either. Under water only the next
+	# counterclockwise heading enters, and that exception is the same gate.
+	# While its row is dry, only the opposite stops.
+	# A listel is not listed here either. Under water the facing and the
+	# next clockwise heading enter, and that exception is the same gate.
+	# While its row is dry, every heading stops.
+	# A necking is not listed here either. Under water the facing and the
+	# next counterclockwise heading enter, and that exception is the same gate.
+	# While its row is dry, every heading stops.
+	# A taenia is not listed here either. Under water the facing and the
+	# opposite enter, and that exception is the same gate. While its row is
+	# dry, every heading stops.
+	# A baguette is not listed here either. Under water every heading except
+	# the opposite enters, and that exception is the same gate. While its row
 	# is dry, every heading stops.
 	# Every other flooded cell stops.
 	if not occupants.has(cell):
@@ -1955,6 +2194,90 @@ static func _flooded_rebate_passes(occupants: Dictionary, cell: Vector2i, dir: S
 	if str(occupants[cell]["kind"]) != "rebate":
 		return false
 	return rebate_flood_passes(int(occupants[cell]["rot"]), dir)
+
+static func _dry_echinus_blocks(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "echinus":
+		return false
+	return not echinus_passes(int(occupants[cell]["rot"]), dir)
+
+static func _flooded_echinus_passes(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "echinus":
+		return false
+	return echinus_flood_passes(int(occupants[cell]["rot"]), dir)
+
+static func _dry_annulet_blocks(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "annulet":
+		return false
+	return not annulet_passes(int(occupants[cell]["rot"]), dir)
+
+static func _flooded_annulet_passes(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "annulet":
+		return false
+	return annulet_flood_passes(int(occupants[cell]["rot"]), dir)
+
+static func _dry_listel_blocks(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "listel":
+		return false
+	return not listel_passes(int(occupants[cell]["rot"]), dir)
+
+static func _flooded_listel_passes(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "listel":
+		return false
+	return listel_flood_passes(int(occupants[cell]["rot"]), dir)
+
+static func _dry_necking_blocks(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "necking":
+		return false
+	return not necking_passes(int(occupants[cell]["rot"]), dir)
+
+static func _flooded_necking_passes(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "necking":
+		return false
+	return necking_flood_passes(int(occupants[cell]["rot"]), dir)
+
+static func _dry_taenia_blocks(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "taenia":
+		return false
+	return not taenia_passes(int(occupants[cell]["rot"]), dir)
+
+static func _flooded_taenia_passes(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "taenia":
+		return false
+	return taenia_flood_passes(int(occupants[cell]["rot"]), dir)
+
+static func _dry_baguette_blocks(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "baguette":
+		return false
+	return not baguette_passes(int(occupants[cell]["rot"]), dir)
+
+static func _flooded_baguette_passes(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "baguette":
+		return false
+	return baguette_flood_passes(int(occupants[cell]["rot"]), dir)
 
 static func _in_bounds(chart: Dictionary, cell: Vector2i) -> bool:
 	return cell.x >= 0 and cell.y >= 0 and cell.x < int(chart["cols"]) and cell.y < int(chart["rows"])

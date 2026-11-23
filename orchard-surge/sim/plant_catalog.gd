@@ -40,7 +40,8 @@ const COPE := 31
 const SURPLICE := 32
 const COTTA := 33
 const CHIMERE := 34
-const COUNT := 35
+const MOZZETTA := 35
+const COUNT := 36
 
 # fire_ticks and slow_ticks are sim ticks of length DT.
 # light_radius, weapon_range, projectile_speed, and splash_radius are pixels.
@@ -76,7 +77,8 @@ const COUNT := 35
 # surplices_brand: this plant's radius marks tiles as surpliced. It is not a light.
 # cottas_scathe: this plant's radius marks tiles as cottaed. It is not a light.
 # chimeres_cauter: this plant's radius marks tiles as chimered. It is not a light.
-# casts_light: false means the radius does not light tiles. The shade, the cowl, the hood, the cloak, the cape, the shawl, the stole, the mantle, the tippet, the wimple, the alb, the amice, the orphrey, the maniple, the chasuble, the dalmatic, the tunicle, the rochet, the cope, the surplice, the cotta, and the chimere use this.
+# mozzettas_blain: this plant's radius marks tiles as mozzetted. It is not a light.
+# casts_light: false means the radius does not light tiles. The shade, the cowl, the hood, the cloak, the cape, the shawl, the stole, the mantle, the tippet, the wimple, the alb, the amice, the orphrey, the maniple, the chasuble, the dalmatic, the tunicle, the rochet, the cope, the surplice, the cotta, the chimere, and the mozzetta use this.
 const DEFS := [
 	{
 		"name": "Pea",
@@ -120,6 +122,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": true,
 	},
 	{
@@ -164,6 +167,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": true,
 	},
 	{
@@ -208,6 +212,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": true,
 	},
 	{
@@ -252,6 +257,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": true,
 	},
 	{
@@ -296,6 +302,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": true,
 	},
 	{
@@ -340,6 +347,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": true,
 	},
 	{
@@ -384,6 +392,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": true,
 	},
 	{
@@ -428,6 +437,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": true,
 	},
 	{
@@ -472,6 +482,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": true,
 	},
 	{
@@ -516,6 +527,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": true,
 	},
 	{
@@ -560,6 +572,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": true,
 	},
 	{
@@ -604,6 +617,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": true,
 	},
 	{
@@ -648,6 +662,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": true,
 	},
 	{
@@ -692,6 +707,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": false,
 	},
 	{
@@ -736,6 +752,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": false,
 	},
 	{
@@ -780,6 +797,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": false,
 	},
 	{
@@ -824,6 +842,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": false,
 	},
 	{
@@ -868,6 +887,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": false,
 	},
 	{
@@ -912,6 +932,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": false,
 	},
 	{
@@ -956,6 +977,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": false,
 	},
 	{
@@ -1000,6 +1022,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": false,
 	},
 	{
@@ -1044,6 +1067,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": false,
 	},
 	{
@@ -1088,6 +1112,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": false,
 	},
 	{
@@ -1132,6 +1157,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": false,
 	},
 	{
@@ -1176,6 +1202,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": false,
 	},
 	{
@@ -1220,6 +1247,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": false,
 	},
 	{
@@ -1264,6 +1292,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": false,
 	},
 	{
@@ -1308,6 +1337,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": false,
 	},
 	{
@@ -1352,6 +1382,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": false,
 	},
 	{
@@ -1396,6 +1427,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": false,
 	},
 	{
@@ -1440,6 +1472,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": false,
 	},
 	{
@@ -1484,6 +1517,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": false,
 	},
 	{
@@ -1528,6 +1562,7 @@ const DEFS := [
 		"surplices_brand": true,
 		"cottas_scathe": false,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": false,
 	},
 	{
@@ -1572,6 +1607,7 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": true,
 		"chimeres_cauter": false,
+		"mozzettas_blain": false,
 		"casts_light": false,
 	},
 	{
@@ -1616,6 +1652,52 @@ const DEFS := [
 		"surplices_brand": false,
 		"cottas_scathe": false,
 		"chimeres_cauter": true,
+		"mozzettas_blain": false,
+		"casts_light": false,
+	},
+	{
+		"name": "Mozzetta",
+		"role": "Mozzettas blain, modest shots, no light.",
+		"damage": 2,
+		"fire_ticks": 168,
+		"light_radius": 576.0,
+		"weapon_range": 12.0,
+		"projectile_speed": 10.0,
+		"slow_factor": 1.0,
+		"slow_ticks": 0,
+		"splash_radius": 0.0,
+		"burns_shroud": false,
+		"cracks_rind": false,
+		"melts_pitch": false,
+		"thaws_frost": false,
+		"cuts_web": false,
+		"cracks_glass": false,
+		"strips_scale": false,
+		"cracks_mail": false,
+		"splits_hide": false,
+		"shades_dusk": false,
+		"cowls_veil": false,
+		"hoods_pall": false,
+		"cloaks_gloom": false,
+		"capes_murk": false,
+		"shawls_dread": false,
+		"stoles_woe": false,
+		"mantles_blight": false,
+		"tippets_rot": false,
+		"wimples_mildew": false,
+		"albs_rust": false,
+		"amices_scab": false,
+		"orphreys_spot": false,
+		"maniples_scald": false,
+		"chasubles_blister": false,
+		"dalmatics_char": false,
+		"tunicles_scorch": false,
+		"rochets_sear": false,
+		"copes_singe": false,
+		"surplices_brand": false,
+		"cottas_scathe": false,
+		"chimeres_cauter": false,
+		"mozzettas_blain": true,
 		"casts_light": false,
 	},
 ]
