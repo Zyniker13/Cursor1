@@ -317,6 +317,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_necking(at, rot)
 		"taenia":
 			_draw_taenia(at, rot)
+		"baguette":
+			_draw_baguette(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -1953,6 +1955,61 @@ func _taenia_tick(center: Vector2, dir: String, mark: Color) -> void:
 	var inner := center + outward * cell * 0.42
 	var outer := center + outward * cell * 0.50
 	var half := cell * 0.07
+	draw_colored_polygon(PackedVector2Array([
+		inner - across * half,
+		inner + across * half,
+		outer + across * half,
+		outer - across * half,
+	]), mark)
+
+func _draw_baguette(at: Vector2i, rot: int) -> void:
+	# A half-round bead with ticks on the three flooded headings and none on
+	# the stopped opposite. It is rounder than the taenia ribbon.
+	var center := _center(at)
+	var facing := Tracer.baguette_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var stop := "S"
+	match facing:
+		"N":
+			stop = "S"
+		"E":
+			stop = "W"
+		"S":
+			stop = "N"
+		_:
+			stop = "E"
+	var radius := cell * 0.22
+	draw_colored_polygon(PackedVector2Array([
+		center + Vector2(0, -radius),
+		center + Vector2(radius * 0.7, -radius * 0.7),
+		center + Vector2(radius, 0),
+		center + Vector2(radius * 0.7, radius * 0.7),
+		center + Vector2(0, radius),
+		center + Vector2(-radius * 0.7, radius * 0.7),
+		center + Vector2(-radius, 0),
+		center + Vector2(-radius * 0.7, -radius * 0.7),
+	]), mark)
+	for dir in ["N", "E", "S", "W"]:
+		if dir == stop:
+			continue
+		_baguette_tick(center, dir, mark)
+
+func _baguette_tick(center: Vector2, dir: String, mark: Color) -> void:
+	var outward := Vector2.UP
+	match dir:
+		"N":
+			outward = Vector2.UP
+		"E":
+			outward = Vector2.RIGHT
+		"S":
+			outward = Vector2.DOWN
+		_:
+			outward = Vector2.LEFT
+	var across := Vector2(-outward.y, outward.x)
+	var inner := center + outward * cell * 0.26
+	var outer := center + outward * cell * 0.42
+	var half := cell * 0.035
 	draw_colored_polygon(PackedVector2Array([
 		inner - across * half,
 		inner + across * half,
