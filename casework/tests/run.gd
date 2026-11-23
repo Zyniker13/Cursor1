@@ -47,6 +47,8 @@ const Reed = preload("res://scripts/reed.gd")
 const Annulet = preload("res://scripts/annulet.gd")
 const Hood = preload("res://scripts/hood.gd")
 const Listel = preload("res://scripts/listel.gd")
+const Abacus = preload("res://scripts/abacus.gd")
+const Girdle = preload("res://scripts/girdle.gd")
 const Catalog = preload("res://scripts/catalog.gd")
 const Solver = preload("res://scripts/solver.gd")
 const Verdict = preload("res://scripts/verdict.gd")
@@ -144,6 +146,10 @@ const HOOD_TIMELINE := "Hugo (hood hand) cut the hood in the sycamore at 173, se
 const HOOD_TRUE := {"who": "Hugo", "place": "sycamore", "hour": "173"}
 const LISTEL_TIMELINE := "Giles (listel hand) cut the listel in the plinth at 178, seen from the trammel, so the alder would take the listel.\nNora (alder hand) marked the alder on the template at 177.\nEllis (trammel clerk) turned the trammel in the plinth.\nThe quince was hung on the template.\nThe trammel was plated at 176.\nThe template was doped at 179.\nThe plinth was hung at 180."
 const LISTEL_TRUE := {"who": "Giles", "place": "plinth", "hour": "178"}
+const ABACUS_TIMELINE := "Una (abacus hand) cut the abacus in the socle at 183, seen from the holdfast, so the medlar would take the abacus.\nHart (medlar hand) marked the medlar on the hatchet at 182.\nPearl (holdfast clerk) turned the holdfast in the socle.\nThe juniper was hung on the hatchet.\nThe holdfast was glued at 181.\nThe hatchet was graphited at 184.\nThe socle was hung at 185."
+const ABACUS_TRUE := {"who": "Una", "place": "socle", "hour": "183"}
+const GIRDLE_TIMELINE := "Agnes (girdle hand) cut the girdle in the bole at 188, seen from the trestle, so the cherry would take the girdle.\nSimon (cherry hand) marked the cherry on the fillister at 187.\nFelix (trestle clerk) turned the trestle in the bole.\nThe plum was hung on the fillister.\nThe trestle was sized at 186.\nThe fillister was clayed at 189.\nThe bole was hung at 190."
+const GIRDLE_TRUE := {"who": "Agnes", "place": "bole", "hour": "188"}
 
 var _failures: Array[String] = []
 var _checks := 0
@@ -433,6 +439,18 @@ func _initialize() -> void:
 	_test_listel_only_true_theory()
 	_test_listel_near_misses()
 	_test_listel_incomplete()
+	_test_abacus_file_shape()
+	_test_abacus_unique_model()
+	_test_abacus_each_exhibit_necessary()
+	_test_abacus_only_true_theory()
+	_test_abacus_near_misses()
+	_test_abacus_incomplete()
+	_test_girdle_file_shape()
+	_test_girdle_unique_model()
+	_test_girdle_each_exhibit_necessary()
+	_test_girdle_only_true_theory()
+	_test_girdle_near_misses()
+	_test_girdle_incomplete()
 	_test_solutions_differ()
 	_test_menu_opens_either_case()
 	print("menu interaction done")
@@ -15714,6 +15732,879 @@ func _test_listel_incomplete() -> void:
 			_expect(message.find(phrase) == -1, "listel incomplete used another file's slot (%s) in: %s" % [phrase, message])
 	print("listel incomplete submissions refused with the missing slot")
 
+func _test_abacus_file_shape() -> void:
+	_expect(Abacus.EXHIBITS.size() == 9, "abacus exhibit count is %d" % Abacus.EXHIBITS.size())
+	_expect(Abacus.PEOPLE.size() == 3, "abacus cast should be three people")
+	_expect(Abacus.PLACES.size() == 3, "abacus room count is %d" % Abacus.PLACES.size())
+	_expect(Abacus.HOURS.size() == 5, "abacus hour list length is %d" % Abacus.HOURS.size())
+	_expect(Abacus.PEOPLE == ["Una", "Hart", "Pearl"], "abacus cast is %s" % str(Abacus.PEOPLE))
+	_expect(Abacus.PLACES == ["socle", "holdfast", "hatchet"], "abacus rooms are %s" % str(Abacus.PLACES))
+	_expect(Abacus.HOURS == ["181", "182", "183", "184", "185"], "abacus hours are %s" % str(Abacus.HOURS))
+	_expect(Abacus.AIMS == ["take_medlar", "spare_medlar", "set_medlar"], "abacus aims are %s" % str(Abacus.AIMS))
+	_expect(Abacus.aim_phrase("take_medlar") == "so the medlar would take the abacus", "abacus aim phrase")
+	_expect(Abacus.aim_phrase("spare_medlar") == "to spare the medlar still waiting on the abacus", "abacus spare aim")
+	_expect(Abacus.aim_phrase("set_medlar") == "to set the medlar before the socle was hung", "abacus set aim")
+	_expect(Abacus.TITLE == "The abacus", "abacus title")
+	_expect(Abacus.BLURB == "The abacus left its peg at the joiner's nag. Name who cut the abacus, the room they cut it in, and the hour.", "abacus blurb")
+	_expect(Abacus.FILE_CODE == "CW-48", "abacus file code")
+	_expect(Abacus.fields() == ["taker", "place", "hour", "medlar", "medlar_room", "medlar_hour", "seen_from", "holdfast", "aim", "holdfast_room", "juniper_room", "glue_hour", "graphite_hour", "hang_hour"], "abacus fields are %s" % str(Abacus.fields()))
+	_expect(Abacus.PLAYER_FIELDS == ["taker", "place", "hour"], "abacus player fields")
+	_expect(Abacus.HOURS[Abacus.HOURS.size() / 2] == ABACUS_TRUE["hour"], "abacus cutting should be the middle hour")
+	_expect(Abacus.HOURS[0] != ABACUS_TRUE["hour"], "abacus cutting should not be the earliest hour")
+	_expect(Abacus.HOURS[Abacus.HOURS.size() - 1] != ABACUS_TRUE["hour"], "abacus cutting should not be the latest hour")
+	var counts := _player_pin_counts(Abacus)
+	_expect(int(counts["taker"]) == 3 and int(counts["place"]) == 3 and int(counts["hour"]) == 3, "abacus pin counts are %s" % str(counts))
+	var loose_pin: Array = [
+		[CaseData, "spare key"],
+		[Rehearsal, "rehearsal score"],
+		[Gilt, "gilt stamp"],
+		[Ferry, "ferry bell"],
+		[Weather, "weather slate"],
+		[Loom, "loom shuttle"],
+		[Hive, "hive smoker"],
+		[Glass, "glass pontil"],
+		[Press, "press proof"],
+		[Assay, "assay cup"],
+	]
+	var rhythm: Array = [
+		[Kiln, "kiln chalk"],
+		[Tide, "tide ledger"],
+		[Night, "night bell"],
+		[Salt, "salt mark"],
+		[Wick, "wick trim"],
+		[Anneal, "glass anneal"],
+		[Graft, "orchard graft"],
+		[Dye, "dye vat"],
+		[Tar, "tar kettle"],
+		[Cork, "cork press"],
+		[Net, "net loft"],
+		[Cask, "cask hoop"],
+		[Linen, "linen fold"],
+		[Dovetail, "dovetail"],
+		[Mortise, "mortise"],
+		[Rebate, "rebate"],
+		[Housing, "housing"],
+		[Tenon, "tenon"],
+		[Bridle, "bridle"],
+		[Dado, "dado"],
+		[Spline, "spline"],
+		[Mitre, "mitre"],
+		[Lap, "lap"],
+		[Scarf, "scarf"],
+		[Finger, "finger"],
+		[Haunch, "haunch"],
+		[Dowel, "dowel"],
+		[Tongue, "tongue"],
+		[Quirk, "quirk"],
+		[Chamfer, "chamfer"],
+		[Scotia, "scotia"],
+		[Cyma, "cyma"],
+		[Cavetto, "cavetto"],
+		[Reed, "reed"],
+		[Annulet, "annulet"],
+		[Hood, "hood"],
+		[Listel, "listel"],
+	]
+	for row in loose_pin:
+		_expect(counts != _player_pin_counts(row[0]), "abacus copied the %s pin pattern" % row[1])
+	for row in rhythm:
+		_expect(counts == _player_pin_counts(row[0]), "abacus should keep the %s pin rhythm" % row[1])
+	var earlier: Array = []
+	earlier.append_array(loose_pin)
+	earlier.append_array(rhythm)
+	for row in earlier:
+		var book = row[0]
+		var name := str(row[1])
+		_expect(Abacus.TITLE != book.TITLE, "abacus shares a title with the %s" % name)
+		_expect(Abacus.FILE_CODE != book.FILE_CODE, "abacus shares a file code with the %s" % name)
+		_expect(_field_key(Abacus) != _field_key(book), "abacus copied the %s timeline fields" % name)
+	var seen := {}
+	var stated := {}
+	var paired_hidden := 0
+	var earlier_texts := {}
+	var earlier_sentences := {}
+	var earlier_titles := {}
+	for row in earlier:
+		for old_exhibit in row[0].EXHIBITS:
+			var old_text := str(old_exhibit["text"])
+			earlier_texts[old_text] = true
+			earlier_titles[str(old_exhibit["title"])] = true
+			for old_sentence in old_text.split(". "):
+				earlier_sentences[old_sentence.trim_suffix(".").strip_edges()] = true
+	var exhibit_titles: Array[String] = []
+	var exhibit_sources: Array[String] = []
+	for exhibit in Abacus.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		exhibit_titles.append(str(exhibit["title"]))
+		exhibit_sources.append(str(exhibit["source"]))
+		_expect(not seen.has(exhibit_id), "duplicate abacus id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(not earlier_titles.has(str(exhibit["title"])), "%s reuses an earlier title %s" % [exhibit_id, exhibit["title"]])
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		_expect(not earlier_texts.has(str(exhibit["text"])), "abacus copied an earlier exhibit")
+		for sentence in str(exhibit["text"]).split(". "):
+			var cleaned := sentence.trim_suffix(".").strip_edges()
+			_expect(not earlier_sentences.has(cleaned), "abacus copied an earlier sentence: %s" % cleaned)
+		for banned in ["tarred", "rope", "kettle", "winch", "pitch", "loft", "strand", "hook", "walk", "dipped", "skein", "indigo", "pressed", "press", "cork", "bottle", "seal", "mallet", "screw", "cellar", "bench", "neck", "plug", "dye", "vat", "mesh", "shed", "rail", "crank", "needle", "mended", "twine", "house", "cooperage", "cask", "hoop", "croze", "stave", "driver", "yard", "shop", "linen", "fold", "shears", "roller", "hem", "sheet", "crease", "drawer", "dovetail", "vise", "stile", "apron", "saw", "clamp", "peg", "mortise", "chisel", "tenon", "awl", "wedge", "bored", "ragged", "racked", "rebate", "plane", "gauge", "shoulder", "shim", "tansy", "solt", "quern", "housing", "square", "bead", "trench", "fillet", "stock", "chalk", "ewan", "maren", "hollin", "gouge", "rasp", "bevel", "guide", "harl", "neve", "luth", "nick", "bridle", "router", "scraper", "adze", "spline", "templet", "strop", "notch", "wend", "sile", "jute", "dado", "cleat", "spur", "kern", "phel", "tarn", "shavings", "mouth", "iron", "senn", "voss", "cade", "slot", "feather", "whet", "orrin", "venn", "haim", "mitre", "arris", "offcut", "saddle", "dressed", "brushed", "nye", "yew", "pry", "lap", "grain", "brad", "plough", "float", "gimlet", "cradle", "crest", "horn", "scarf", "hob", "nairn", "cole", "shaving", "blade", "spokeshave", "firmer", "paring", "drawknife", "edge", "skimmed", "film", "sole", "tang", "mare", "finger", "clem", "gale", "boyd", "pad", "badger", "jack", "socket", "catch", "chip", "burr", "flake", "buffed", "sheen", "pony", "rubbed", "face", "haunch", "cheek", "smoother", "jointer", "fore", "sliver", "pin", "rhys", "mab", "lisle", "colt", "wiped", "mote", "toe", "mist", "bed", "dowel", "bore", "auger", "bit", "brace", "curl", "chuck", "flute", "faye", "kerr", "brynn", "foal", "waxed", "honed", "speck", "gloss", "wax", "point", "shay", "dell", "glen", "tongue", "groove", "kerf", "punch", "peel", "scribe", "knife", "fence", "tallow", "tallowed", "ground", "fleck", "filly", "coat", "cutting", "grind", "ross", "pia", "jude", "quirk", "scratch", "scratched", "scratching", "snib", "ovolo", "veiner", "astragal", "gelding", "grit", "bloom", "stoned", "oiled", "score", "bolt", "grease", "merrick", "enid", "petra", "chamfer", "chamfering", "block", "file", "cove", "travisher", "cant", "stallion", "soap", "soaped", "fettle", "fettled", "wisp", "rime", "haze", "tooth", "willa", "nils", "cora", "scotia", "scotiaing", "hollow", "riffler", "scorp", "torus", "fascia", "pumiced", "peened", "whiting", "crocus", "soot", "cusp", "yearling", "pumice", "ruth", "amos", "lena", "cyma", "cymaing", "bolection", "inshave", "froe", "echinus", "corona", "rouged", "chased", "emery", "tripoli", "garnet", "beak", "jennet", "rouge", "chase", "seth", "ida", "vera", "cavetto", "cavettoing", "dentil", "bullnose", "twibil", "thumbnail", "staff", "scraped", "knurled", "sand", "birch", "cedar", "drip", "palfrey", "scrape", "knurl", "greta", "nolan", "celia", "reed", "reeding", "ogee", "nosing", "rounder", "walnut", "maple", "blued", "tempered", "oak", "elm", "larch", "deal", "weanling", "blue", "temper", "clive", "edith", "maude", "annulet", "annuleting", "beech", "burnisher", "drawshave", "spruce", "poplar", "stippled", "forged", "rowan", "withy", "osier", "billet", "hinny", "stipple", "forge", "hugo", "nina", "walter", "hood", "hooding", "sycamore", "compass", "trying", "holly", "chestnut", "glazed", "bronzed", "lime", "lamb", "boxwood", "ivory", "mule", "glaze", "bronze", "giles", "nora", "ellis", "listel", "listeling", "plinth", "trammel", "template", "alder", "quince", "plated", "doped", "umber", "sienna", "ochre", "flax", "jenny", "plate", "dope"]:
+			_expect(str(exhibit["text"]).find(banned) == -1, "%s copies %s" % [exhibit_id, banned])
+		var states_player_pin := false
+		var states_unique := false
+		var player_literals := 0
+		var hidden_literals := 0
+		for literal in exhibit["literals"]:
+			stated[str(literal["value"])] = true
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Abacus.PLAYER_FIELDS:
+				states_player_pin = true
+				player_literals += 1
+				var expected := Abacus.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Abacus.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats >= 2, "%s states %s once" % [exhibit_id, field])
+			else:
+				hidden_literals += 1
+				var owners := 0
+				for other in Abacus.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		if hidden_literals == 2:
+			paired_hidden += 1
+		else:
+			_expect(hidden_literals == 1, "%s states %d hidden facts" % [exhibit_id, hidden_literals])
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(player_literals == 1, "%s states %d player pins" % [exhibit_id, player_literals])
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+	_expect(paired_hidden == 2, "abacus should have two slips with two hidden facts, found %d" % paired_hidden)
+	_expect(exhibit_titles == ["Medlar chit", "Saffron sight", "Juniper bill", "Weld slate", "Holdfast card", "Glue slip", "Abacus leaf", "Nag note", "Graphite order"], "abacus exhibit titles are %s" % str(exhibit_titles))
+	_expect(exhibit_sources == ["Hart, medlar hand", "Holdfast saffron", "Hatchet nose", "Socle weld", "Pearl, holdfast clerk", "Holdfast tote", "Medlar book", "Joiner's nag", "Hatchet card"], "abacus sources are %s" % str(exhibit_sources))
+	for hour in Abacus.HOURS:
+		_expect(stated.has(hour), "abacus hour %s is absent from the exhibits" % hour)
+
+
+func _test_abacus_unique_model() -> void:
+	var models := Solver.enumerate(Abacus.EXHIBITS, Abacus)
+	print("abacus models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one abacus model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Una", "abacus taker")
+	_expect(str(model["place"]) == "socle", "abacus place")
+	_expect(str(model["hour"]) == "183", "abacus hour")
+	_expect(str(model["medlar"]) == "Hart", "abacus medlar hand")
+	_expect(str(model["medlar_room"]) == "hatchet", "abacus medlar room")
+	_expect(str(model["medlar_hour"]) == "182", "abacus medlar hour")
+	_expect(str(model["seen_from"]) == "holdfast", "abacus seen from")
+	_expect(str(model["holdfast"]) == "Pearl", "abacus holdfast")
+	_expect(str(model["aim"]) == "take_medlar", "abacus aim")
+	_expect(str(model["holdfast_room"]) == "socle", "abacus holdfast room")
+	_expect(str(model["juniper_room"]) == "hatchet", "abacus juniper room")
+	_expect(str(model["glue_hour"]) == "181", "abacus glue hour")
+	_expect(str(model["graphite_hour"]) == "184", "abacus graphite hour")
+	_expect(str(model["hang_hour"]) == "185", "abacus hang hour")
+	for hour in Abacus.HOURS:
+		var used := false
+		for field in Abacus.fields():
+			if str(model[field]) == hour:
+				used = true
+		_expect(used, "abacus hour %s is blank in the true timeline" % hour)
+	for place in Abacus.PLACES:
+		var place_used := false
+		for field in Abacus.fields():
+			if str(model[field]) == place:
+				place_used = true
+		_expect(place_used, "abacus room %s is blank in the true timeline" % place)
+	for person in Abacus.PEOPLE:
+		var person_used := false
+		for field in Abacus.fields():
+			if str(model[field]) == person:
+				person_used = true
+		_expect(person_used, "abacus person %s is blank in the true timeline" % person)
+	_expect(Abacus.timeline(model) == ABACUS_TIMELINE, "abacus timeline drifted:\n%s" % Abacus.timeline(model))
+	for exhibit in Abacus.EXHIBITS:
+		_expect(Abacus.holds(exhibit, model), "%s rejects the abacus timeline" % exhibit["id"])
+
+
+func _test_abacus_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Abacus.EXHIBITS, Abacus)
+	for exhibit in Abacus.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Abacus.without(exhibit_id), Abacus)
+		print("abacus without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "abacus %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Abacus.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "abacus %s removal did not admit a timeline it forbids" % exhibit_id)
+
+
+func _test_abacus_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	var holdfast_miss := {"who": "Hart", "place": "holdfast", "hour": "181"}
+	_expect(Abacus.conflicting_ids(holdfast_miss).size() == 9, "Hart / holdfast / 181 contradicts %d exhibits" % Abacus.conflicting_ids(holdfast_miss).size())
+	for who in Abacus.PEOPLE:
+		for place in Abacus.PLACES:
+			for hour in Abacus.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == ABACUS_TRUE["who"] and place == ABACUS_TRUE["place"] and hour == ABACUS_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Abacus)
+					print("abacus true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true abacus theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "abacus acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(ABACUS_TIMELINE) >= 0, "abacus acceptance should give the timeline")
+					_expect(str(result["message"]).find("Una") >= 0, "abacus acceptance omits Una")
+					_expect(str(result["message"]).find("socle") >= 0, "abacus acceptance omits the socle")
+					_expect(str(result["message"]).find("183") >= 0, "abacus acceptance omits 183")
+					_expect(str(result["message"]).find("so the medlar would take the abacus") >= 0, "abacus acceptance omits the medlar")
+					_expect(str(result["message"]).find("Una (abacus hand) cut the abacus in the socle at 183") >= 0, "abacus acceptance omits the abacusing")
+					_expect(Abacus.conflicting_ids(theory).is_empty(), "true abacus theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Abacus)
+					_expect(Abacus.conflicting_ids(theory).size() >= 2, "%s / %s / %s contradicts fewer than two exhibits" % [who, place, hour])
+					rejected += 1
+	for outsider in ["Giles", "Nora", "Ellis", "Hugo", "Nina", "Walter", "Clive", "Edith", "Maude", "Greta", "Nolan", "Celia", "Seth", "Ida", "Vera", "Ruth", "Amos", "Lena", "Willa", "Nils", "Cora", "Merrick", "Enid", "Petra", "Ross", "Pia", "Jude", "Shay", "Dell", "Glen", "Faye", "Kerr", "Brynn", "Rhys", "Mab", "Lisle", "Clem", "Gale", "Boyd", "Hob", "Nairn", "Cole", "Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Cmedlar", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal", "Nell"]:
+		_expect_rejected({"who": outsider, "place": "socle", "hour": "183"}, Abacus)
+	print("abacus theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d abacus theories" % accepted)
+	_expect(rejected >= 2, "rejected %d abacus theories" % rejected)
+
+
+func _test_abacus_near_misses() -> void:
+	var misses := [
+		{"who": "Una", "place": "socle", "hour": "184", "titles": ["Abacus leaf", "Nag note", "Graphite order"]},
+		{"who": "Una", "place": "socle", "hour": "182", "titles": ["Abacus leaf", "Nag note", "Graphite order"]},
+		{"who": "Una", "place": "holdfast", "hour": "183", "titles": ["Weld slate", "Holdfast card", "Glue slip"]},
+		{"who": "Hart", "place": "socle", "hour": "183", "titles": ["Medlar chit", "Saffron sight", "Juniper bill"]},
+	]
+	var wrong_hour_in_bit := 0
+	var wrong_place_at_hour := 0
+	var wrong_person_in_bit := 0
+	for theory in misses:
+		_expect_rejected(theory, Abacus)
+		var result: Dictionary = Verdict.submit(theory, Abacus)
+		var message := str(result["message"])
+		_expect(Abacus.conflicting_ids(theory).size() >= 2, "near-miss should contradict at least two exhibits: %s" % message)
+		_expect(Abacus.conflicting_ids(theory).size() == 3, "near-miss should name three exhibits: %s" % message)
+		var named_at := -1
+		for title in theory["titles"]:
+			var at := message.find(str(title))
+			_expect(at >= 0, "near-miss omits %s: %s" % [title, message])
+			_expect(at > named_at, "near-miss names %s out of paper order: %s" % [title, message])
+			named_at = at
+		if str(theory["who"]) == "Una" and str(theory["place"]) == "socle" and str(theory["hour"]) != "183":
+			wrong_hour_in_bit += 1
+		if str(theory["who"]) == "Una" and str(theory["place"]) != "socle" and str(theory["hour"]) == "183":
+			wrong_place_at_hour += 1
+		if str(theory["who"]) != "Una" and str(theory["place"]) == "socle" and str(theory["hour"]) == "183":
+			wrong_person_in_bit += 1
+	print("abacus near-misses rejected: %d" % misses.size())
+	_expect(misses.size() == 4, "need four abacus near-misses, found %d" % misses.size())
+	_expect(wrong_hour_in_bit == 2, "two near-misses should keep Una in the socle at another hour")
+	_expect(wrong_place_at_hour >= 1, "a near-miss should keep Una at 183 in another room")
+	_expect(wrong_person_in_bit >= 1, "a near-miss should keep the socle at 183 for another person")
+
+func _test_abacus_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+		"who took the gilt stamp",
+		"where they took the stamp",
+		"at which hour they took the stamp",
+		"who took the ferry bell",
+		"where they took the bell",
+		"at which hour they took the bell",
+		"who took the weather slate",
+		"where they took the slate",
+		"at which hour they took the slate",
+		"who took the loom shuttle",
+		"where they took the shuttle",
+		"at which hour they took the shuttle",
+		"who took the hive smoker",
+		"where they took the smoker",
+		"at which hour they took the smoker",
+		"who took the glass pontil",
+		"where they took the pontil",
+		"at which hour they took the pontil",
+		"who took the press proof",
+		"where they took the proof",
+		"at which hour they took the proof",
+		"who set the assay cup",
+		"where they set the cup",
+		"at which hour they set the cup",
+		"who chalked the kiln mark",
+		"where they chalked the mark",
+		"at which hour they chalked the mark",
+		"who entered the tide ledger",
+		"where they entered the ledger",
+		"at which hour they entered the ledger",
+		"who stopped the night bell",
+		"where they stopped the bell",
+		"at which hour they stopped the bell",
+		"who scored the salt mark",
+		"where they scored the mark",
+		"at which hour they scored the mark",
+		"who trimmed the wick",
+		"where they trimmed the wick",
+		"at which hour they trimmed the wick",
+		"who annealed the gather",
+		"where they annealed the gather",
+		"at which hour they annealed the gather",
+		"who grafted the scion",
+		"where they grafted the scion",
+		"at which hour they grafted the scion",
+		"who dipped the skein",
+		"where they dipped the skein",
+		"at which hour they dipped the skein",
+		"who tarred the rope",
+		"where they tarred the rope",
+		"at which hour they tarred the rope",
+		"who pressed the cork",
+		"where they pressed the cork",
+		"at which hour they pressed the cork",
+		"who mended the net",
+		"where they mended the net",
+		"at which hour they mended the net",
+		"who drove the hoop",
+		"where they drove the hoop",
+		"at which hour they drove the hoop",
+		"who folded the linen",
+		"where they folded the linen",
+		"at which hour they folded the linen",
+		"who cut the dovetail",
+		"where they cut the dovetail",
+		"at which hour they cut the dovetail",
+		"who cut the mortise",
+		"where they cut the mortise",
+		"at which hour they cut the mortise",
+		"who cut the rebate",
+		"where they cut the rebate",
+		"at which hour they cut the rebate",
+		"who cut the housing",
+		"where they cut the housing",
+		"at which hour they cut the housing",
+		"who cut the tenon",
+		"where they cut the tenon",
+		"at which hour they cut the tenon",
+		"who cut the bridle",
+		"where they cut the bridle",
+		"at which hour they cut the bridle",
+		"who cut the dado",
+		"where they cut the dado",
+		"at which hour they cut the dado",
+		"who cut the spline",
+		"where they cut the spline",
+		"at which hour they cut the spline",
+		"who cut the mitre",
+		"where they cut the mitre",
+		"at which hour they cut the mitre",
+		"who cut the lap",
+		"where they cut the lap",
+		"at which hour they cut the lap",
+		"who cut the scarf",
+		"where they cut the scarf",
+		"at which hour they cut the scarf",
+		"who cut the finger",
+		"where they cut the finger",
+		"at which hour they cut the finger",
+		"who cut the haunch",
+		"where they cut the haunch",
+		"at which hour they cut the haunch",
+		"who cut the dowel",
+		"where they cut the dowel",
+		"at which hour they cut the dowel",
+		"who cut the tongue",
+		"where they cut the tongue",
+		"at which hour they cut the tongue",
+		"who scratched the quirk",
+		"where they scratched the quirk",
+		"at which hour they scratched the quirk",
+		"who cut the chamfer",
+		"where they cut the chamfer",
+		"at which hour they cut the chamfer",
+		"who cut the scotia",
+		"where they cut the scotia",
+		"at which hour they cut the scotia",
+	]
+
+	var cases := [
+		{"theory": {"who": "", "place": "socle", "hour": "183"}, "present": ["who cut the abacus"], "absent": ["where they cut the abacus", "at which hour they cut the abacus"]},
+		{"theory": {"who": "Una", "place": "", "hour": "183"}, "present": ["where they cut the abacus"], "absent": ["who cut the abacus", "at which hour they cut the abacus"]},
+		{"theory": {"who": "Una", "place": "socle", "hour": ""}, "present": ["at which hour they cut the abacus"], "absent": ["who cut the abacus", "where they cut the abacus"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who cut the abacus", "where they cut the abacus", "at which hour they cut the abacus"], "absent": []},
+		{"theory": {}, "present": ["who cut the abacus", "where they cut the abacus", "at which hour they cut the abacus"], "absent": []},
+		{"theory": {"who": "Pearl", "place": "", "hour": "185"}, "present": ["where they cut the abacus"], "absent": ["who cut the abacus", "at which hour they cut the abacus"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Abacus)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "abacus incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "abacus incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "abacus incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "abacus incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "abacus incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "abacus missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "abacus named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "abacus incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("abacus incomplete submissions refused with the missing slot")
+
+func _test_girdle_file_shape() -> void:
+	_expect(Girdle.EXHIBITS.size() == 9, "girdle exhibit count is %d" % Girdle.EXHIBITS.size())
+	_expect(Girdle.PEOPLE.size() == 3, "girdle cast should be three people")
+	_expect(Girdle.PLACES.size() == 3, "girdle room count is %d" % Girdle.PLACES.size())
+	_expect(Girdle.HOURS.size() == 5, "girdle hour list length is %d" % Girdle.HOURS.size())
+	_expect(Girdle.PEOPLE == ["Agnes", "Simon", "Felix"], "girdle cast is %s" % str(Girdle.PEOPLE))
+	_expect(Girdle.PLACES == ["bole", "trestle", "fillister"], "girdle rooms are %s" % str(Girdle.PLACES))
+	_expect(Girdle.HOURS == ["186", "187", "188", "189", "190"], "girdle hours are %s" % str(Girdle.HOURS))
+	_expect(Girdle.AIMS == ["take_cherry", "spare_cherry", "set_cherry"], "girdle aims are %s" % str(Girdle.AIMS))
+	_expect(Girdle.aim_phrase("take_cherry") == "so the cherry would take the girdle", "girdle aim phrase")
+	_expect(Girdle.aim_phrase("spare_cherry") == "to spare the cherry still waiting on the girdle", "girdle spare aim")
+	_expect(Girdle.aim_phrase("set_cherry") == "to set the cherry before the bole was hung", "girdle set aim")
+	_expect(Girdle.TITLE == "The girdle", "girdle title")
+	_expect(Girdle.BLURB == "The girdle left its peg at the joiner's hack. Name who cut the girdle, the room they cut it in, and the hour.", "girdle blurb")
+	_expect(Girdle.FILE_CODE == "CW-49", "girdle file code")
+	_expect(Girdle.fields() == ["taker", "place", "hour", "cherry", "cherry_room", "cherry_hour", "seen_from", "trestle", "aim", "trestle_room", "plum_room", "size_hour", "clay_hour", "hang_hour"], "girdle fields are %s" % str(Girdle.fields()))
+	_expect(Girdle.PLAYER_FIELDS == ["taker", "place", "hour"], "girdle player fields")
+	_expect(Girdle.HOURS[Girdle.HOURS.size() / 2] == GIRDLE_TRUE["hour"], "girdle cutting should be the middle hour")
+	_expect(Girdle.HOURS[0] != GIRDLE_TRUE["hour"], "girdle cutting should not be the earliest hour")
+	_expect(Girdle.HOURS[Girdle.HOURS.size() - 1] != GIRDLE_TRUE["hour"], "girdle cutting should not be the latest hour")
+	var counts := _player_pin_counts(Girdle)
+	_expect(int(counts["taker"]) == 3 and int(counts["place"]) == 3 and int(counts["hour"]) == 3, "girdle pin counts are %s" % str(counts))
+	var loose_pin: Array = [
+		[CaseData, "spare key"],
+		[Rehearsal, "rehearsal score"],
+		[Gilt, "gilt stamp"],
+		[Ferry, "ferry bell"],
+		[Weather, "weather slate"],
+		[Loom, "loom shuttle"],
+		[Hive, "hive smoker"],
+		[Glass, "glass pontil"],
+		[Press, "press proof"],
+		[Assay, "assay cup"],
+	]
+	var rhythm: Array = [
+		[Kiln, "kiln chalk"],
+		[Tide, "tide ledger"],
+		[Night, "night bell"],
+		[Salt, "salt mark"],
+		[Wick, "wick trim"],
+		[Anneal, "glass anneal"],
+		[Graft, "orchard graft"],
+		[Dye, "dye vat"],
+		[Tar, "tar kettle"],
+		[Cork, "cork press"],
+		[Net, "net loft"],
+		[Cask, "cask hoop"],
+		[Linen, "linen fold"],
+		[Dovetail, "dovetail"],
+		[Mortise, "mortise"],
+		[Rebate, "rebate"],
+		[Housing, "housing"],
+		[Tenon, "tenon"],
+		[Bridle, "bridle"],
+		[Dado, "dado"],
+		[Spline, "spline"],
+		[Mitre, "mitre"],
+		[Lap, "lap"],
+		[Scarf, "scarf"],
+		[Finger, "finger"],
+		[Haunch, "haunch"],
+		[Dowel, "dowel"],
+		[Tongue, "tongue"],
+		[Quirk, "quirk"],
+		[Chamfer, "chamfer"],
+		[Scotia, "scotia"],
+		[Cyma, "cyma"],
+		[Cavetto, "cavetto"],
+		[Reed, "reed"],
+		[Annulet, "annulet"],
+		[Hood, "hood"],
+		[Listel, "listel"],
+		[Abacus, "abacus"],
+	]
+	for row in loose_pin:
+		_expect(counts != _player_pin_counts(row[0]), "girdle copied the %s pin pattern" % row[1])
+	for row in rhythm:
+		_expect(counts == _player_pin_counts(row[0]), "girdle should keep the %s pin rhythm" % row[1])
+	var earlier: Array = []
+	earlier.append_array(loose_pin)
+	earlier.append_array(rhythm)
+	for row in earlier:
+		var book = row[0]
+		var name := str(row[1])
+		_expect(Girdle.TITLE != book.TITLE, "girdle shares a title with the %s" % name)
+		_expect(Girdle.FILE_CODE != book.FILE_CODE, "girdle shares a file code with the %s" % name)
+		_expect(_field_key(Girdle) != _field_key(book), "girdle copied the %s timeline fields" % name)
+	var seen := {}
+	var stated := {}
+	var paired_hidden := 0
+	var earlier_texts := {}
+	var earlier_sentences := {}
+	var earlier_titles := {}
+	for row in earlier:
+		for old_exhibit in row[0].EXHIBITS:
+			var old_text := str(old_exhibit["text"])
+			earlier_texts[old_text] = true
+			earlier_titles[str(old_exhibit["title"])] = true
+			for old_sentence in old_text.split(". "):
+				earlier_sentences[old_sentence.trim_suffix(".").strip_edges()] = true
+	var exhibit_titles: Array[String] = []
+	var exhibit_sources: Array[String] = []
+	for exhibit in Girdle.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		exhibit_titles.append(str(exhibit["title"]))
+		exhibit_sources.append(str(exhibit["source"]))
+		_expect(not seen.has(exhibit_id), "duplicate girdle id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(not earlier_titles.has(str(exhibit["title"])), "%s reuses an earlier title %s" % [exhibit_id, exhibit["title"]])
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		_expect(not earlier_texts.has(str(exhibit["text"])), "girdle copied an earlier exhibit")
+		for sentence in str(exhibit["text"]).split(". "):
+			var cleaned := sentence.trim_suffix(".").strip_edges()
+			_expect(not earlier_sentences.has(cleaned), "girdle copied an earlier sentence: %s" % cleaned)
+		for banned in ["tarred", "rope", "kettle", "winch", "pitch", "loft", "strand", "hook", "walk", "dipped", "skein", "indigo", "pressed", "press", "cork", "bottle", "seal", "mallet", "screw", "cellar", "bench", "neck", "plug", "dye", "vat", "mesh", "shed", "rail", "crank", "needle", "mended", "twine", "house", "cooperage", "cask", "hoop", "croze", "stave", "driver", "yard", "shop", "linen", "fold", "shears", "roller", "hem", "sheet", "crease", "drawer", "dovetail", "vise", "stile", "apron", "saw", "clamp", "peg", "mortise", "chisel", "tenon", "awl", "wedge", "bored", "ragged", "racked", "rebate", "plane", "gauge", "shoulder", "shim", "tansy", "solt", "quern", "housing", "square", "bead", "trench", "fillet", "stock", "chalk", "ewan", "maren", "hollin", "gouge", "rasp", "bevel", "guide", "harl", "neve", "luth", "nick", "bridle", "router", "scraper", "adze", "spline", "templet", "strop", "notch", "wend", "sile", "jute", "dado", "cleat", "spur", "kern", "phel", "tarn", "shavings", "mouth", "iron", "senn", "voss", "cade", "slot", "feather", "whet", "orrin", "venn", "haim", "mitre", "arris", "offcut", "saddle", "dressed", "brushed", "nye", "yew", "pry", "lap", "grain", "brad", "plough", "float", "gimlet", "cradle", "crest", "horn", "scarf", "hob", "nairn", "cole", "shaving", "blade", "spokeshave", "firmer", "paring", "drawknife", "edge", "skimmed", "film", "sole", "tang", "mare", "finger", "clem", "gale", "boyd", "pad", "badger", "jack", "socket", "catch", "chip", "burr", "flake", "buffed", "sheen", "pony", "rubbed", "face", "haunch", "cheek", "smoother", "jointer", "fore", "sliver", "pin", "rhys", "mab", "lisle", "colt", "wiped", "mote", "toe", "mist", "bed", "dowel", "bore", "auger", "bit", "brace", "curl", "chuck", "flute", "faye", "kerr", "brynn", "foal", "waxed", "honed", "speck", "gloss", "wax", "point", "shay", "dell", "glen", "tongue", "groove", "kerf", "punch", "peel", "scribe", "knife", "fence", "tallow", "tallowed", "ground", "fleck", "filly", "coat", "cutting", "grind", "ross", "pia", "jude", "quirk", "scratch", "scratched", "scratching", "snib", "ovolo", "veiner", "astragal", "gelding", "grit", "bloom", "stoned", "oiled", "score", "bolt", "grease", "merrick", "enid", "petra", "chamfer", "chamfering", "block", "file", "cove", "travisher", "cant", "stallion", "soap", "soaped", "fettle", "fettled", "wisp", "rime", "haze", "tooth", "willa", "nils", "cora", "scotia", "scotiaing", "hollow", "riffler", "scorp", "torus", "fascia", "pumiced", "peened", "whiting", "crocus", "soot", "cusp", "yearling", "pumice", "ruth", "amos", "lena", "cyma", "cymaing", "bolection", "inshave", "froe", "echinus", "corona", "rouged", "chased", "emery", "tripoli", "garnet", "beak", "jennet", "rouge", "chase", "seth", "ida", "vera", "cavetto", "cavettoing", "dentil", "bullnose", "twibil", "thumbnail", "staff", "scraped", "knurled", "sand", "birch", "cedar", "drip", "palfrey", "scrape", "knurl", "greta", "nolan", "celia", "reed", "reeding", "ogee", "nosing", "rounder", "walnut", "maple", "blued", "tempered", "oak", "elm", "larch", "deal", "weanling", "blue", "temper", "clive", "edith", "maude", "annulet", "annuleting", "beech", "burnisher", "drawshave", "spruce", "poplar", "stippled", "forged", "rowan", "withy", "osier", "billet", "hinny", "stipple", "forge", "hugo", "nina", "walter", "hood", "hooding", "sycamore", "compass", "trying", "holly", "chestnut", "glazed", "bronzed", "lime", "lamb", "boxwood", "ivory", "mule", "glaze", "bronze", "giles", "nora", "ellis", "listel", "listeling", "plinth", "trammel", "template", "alder", "quince", "plated", "doped", "umber", "sienna", "ochre", "flax", "jenny", "plate", "dope", "una", "hart", "pearl", "abacus", "abacusing", "socle", "holdfast", "hatchet", "medlar", "juniper", "glued", "graphited", "madder", "woad", "weld", "saffron", "nag", "glue", "graphite"]:
+			_expect(str(exhibit["text"]).find(banned) == -1, "%s copies %s" % [exhibit_id, banned])
+		var states_player_pin := false
+		var states_unique := false
+		var player_literals := 0
+		var hidden_literals := 0
+		for literal in exhibit["literals"]:
+			stated[str(literal["value"])] = true
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Girdle.PLAYER_FIELDS:
+				states_player_pin = true
+				player_literals += 1
+				var expected := Girdle.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Girdle.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats >= 2, "%s states %s once" % [exhibit_id, field])
+			else:
+				hidden_literals += 1
+				var owners := 0
+				for other in Girdle.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		if hidden_literals == 2:
+			paired_hidden += 1
+		else:
+			_expect(hidden_literals == 1, "%s states %d hidden facts" % [exhibit_id, hidden_literals])
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(player_literals == 1, "%s states %d player pins" % [exhibit_id, player_literals])
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+	_expect(paired_hidden == 2, "girdle should have two slips with two hidden facts, found %d" % paired_hidden)
+	_expect(exhibit_titles == ["Cherry chit", "Brazil sight", "Plum bill", "Fustic slate", "Trestle card", "Size slip", "Girdle leaf", "Hack note", "Clay order"], "girdle exhibit titles are %s" % str(exhibit_titles))
+	_expect(exhibit_sources == ["Simon, cherry hand", "Trestle brazil", "Fillister nose", "Bole fustic", "Felix, trestle clerk", "Trestle tote", "Cherry book", "Joiner's hack", "Fillister card"], "girdle sources are %s" % str(exhibit_sources))
+	for hour in Girdle.HOURS:
+		_expect(stated.has(hour), "girdle hour %s is absent from the exhibits" % hour)
+
+
+func _test_girdle_unique_model() -> void:
+	var models := Solver.enumerate(Girdle.EXHIBITS, Girdle)
+	print("girdle models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one girdle model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Agnes", "girdle taker")
+	_expect(str(model["place"]) == "bole", "girdle place")
+	_expect(str(model["hour"]) == "188", "girdle hour")
+	_expect(str(model["cherry"]) == "Simon", "girdle cherry hand")
+	_expect(str(model["cherry_room"]) == "fillister", "girdle cherry room")
+	_expect(str(model["cherry_hour"]) == "187", "girdle cherry hour")
+	_expect(str(model["seen_from"]) == "trestle", "girdle seen from")
+	_expect(str(model["trestle"]) == "Felix", "girdle trestle")
+	_expect(str(model["aim"]) == "take_cherry", "girdle aim")
+	_expect(str(model["trestle_room"]) == "bole", "girdle trestle room")
+	_expect(str(model["plum_room"]) == "fillister", "girdle plum room")
+	_expect(str(model["size_hour"]) == "186", "girdle size hour")
+	_expect(str(model["clay_hour"]) == "189", "girdle clay hour")
+	_expect(str(model["hang_hour"]) == "190", "girdle hang hour")
+	for hour in Girdle.HOURS:
+		var used := false
+		for field in Girdle.fields():
+			if str(model[field]) == hour:
+				used = true
+		_expect(used, "girdle hour %s is blank in the true timeline" % hour)
+	for place in Girdle.PLACES:
+		var place_used := false
+		for field in Girdle.fields():
+			if str(model[field]) == place:
+				place_used = true
+		_expect(place_used, "girdle room %s is blank in the true timeline" % place)
+	for person in Girdle.PEOPLE:
+		var person_used := false
+		for field in Girdle.fields():
+			if str(model[field]) == person:
+				person_used = true
+		_expect(person_used, "girdle person %s is blank in the true timeline" % person)
+	_expect(Girdle.timeline(model) == GIRDLE_TIMELINE, "girdle timeline drifted:\n%s" % Girdle.timeline(model))
+	for exhibit in Girdle.EXHIBITS:
+		_expect(Girdle.holds(exhibit, model), "%s rejects the girdle timeline" % exhibit["id"])
+
+
+func _test_girdle_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Girdle.EXHIBITS, Girdle)
+	for exhibit in Girdle.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Girdle.without(exhibit_id), Girdle)
+		print("girdle without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "girdle %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Girdle.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "girdle %s removal did not admit a timeline it forbids" % exhibit_id)
+
+
+func _test_girdle_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	var trestle_miss := {"who": "Simon", "place": "trestle", "hour": "186"}
+	_expect(Girdle.conflicting_ids(trestle_miss).size() == 9, "Simon / trestle / 186 contradicts %d exhibits" % Girdle.conflicting_ids(trestle_miss).size())
+	for who in Girdle.PEOPLE:
+		for place in Girdle.PLACES:
+			for hour in Girdle.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == GIRDLE_TRUE["who"] and place == GIRDLE_TRUE["place"] and hour == GIRDLE_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Girdle)
+					print("girdle true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true girdle theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "girdle acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(GIRDLE_TIMELINE) >= 0, "girdle acceptance should give the timeline")
+					_expect(str(result["message"]).find("Agnes") >= 0, "girdle acceptance omits Agnes")
+					_expect(str(result["message"]).find("bole") >= 0, "girdle acceptance omits the bole")
+					_expect(str(result["message"]).find("188") >= 0, "girdle acceptance omits 188")
+					_expect(str(result["message"]).find("so the cherry would take the girdle") >= 0, "girdle acceptance omits the cherry")
+					_expect(str(result["message"]).find("Agnes (girdle hand) cut the girdle in the bole at 188") >= 0, "girdle acceptance omits the girdleing")
+					_expect(Girdle.conflicting_ids(theory).is_empty(), "true girdle theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Girdle)
+					_expect(Girdle.conflicting_ids(theory).size() >= 2, "%s / %s / %s contradicts fewer than two exhibits" % [who, place, hour])
+					rejected += 1
+	for outsider in ["Una", "Hart", "Pearl", "Giles", "Nora", "Ellis", "Hugo", "Nina", "Walter", "Clive", "Edith", "Maude", "Greta", "Nolan", "Celia", "Seth", "Ida", "Vera", "Ruth", "Amos", "Lena", "Willa", "Nils", "Cora", "Merrick", "Enid", "Petra", "Ross", "Pia", "Jude", "Shay", "Dell", "Glen", "Faye", "Kerr", "Brynn", "Rhys", "Mab", "Lisle", "Clem", "Gale", "Boyd", "Hob", "Nairn", "Cole", "Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Ccherry", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal", "Nell"]:
+		_expect_rejected({"who": outsider, "place": "bole", "hour": "188"}, Girdle)
+	print("girdle theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d girdle theories" % accepted)
+	_expect(rejected >= 2, "rejected %d girdle theories" % rejected)
+
+
+func _test_girdle_near_misses() -> void:
+	var misses := [
+		{"who": "Agnes", "place": "bole", "hour": "189", "titles": ["Girdle leaf", "Hack note", "Clay order"]},
+		{"who": "Agnes", "place": "bole", "hour": "187", "titles": ["Girdle leaf", "Hack note", "Clay order"]},
+		{"who": "Agnes", "place": "trestle", "hour": "188", "titles": ["Fustic slate", "Trestle card", "Size slip"]},
+		{"who": "Simon", "place": "bole", "hour": "188", "titles": ["Cherry chit", "Brazil sight", "Plum bill"]},
+	]
+	var wrong_hour_in_bit := 0
+	var wrong_place_at_hour := 0
+	var wrong_person_in_bit := 0
+	for theory in misses:
+		_expect_rejected(theory, Girdle)
+		var result: Dictionary = Verdict.submit(theory, Girdle)
+		var message := str(result["message"])
+		_expect(Girdle.conflicting_ids(theory).size() >= 2, "near-miss should contradict at least two exhibits: %s" % message)
+		_expect(Girdle.conflicting_ids(theory).size() == 3, "near-miss should name three exhibits: %s" % message)
+		var named_at := -1
+		for title in theory["titles"]:
+			var at := message.find(str(title))
+			_expect(at >= 0, "near-miss omits %s: %s" % [title, message])
+			_expect(at > named_at, "near-miss names %s out of paper order: %s" % [title, message])
+			named_at = at
+		if str(theory["who"]) == "Agnes" and str(theory["place"]) == "bole" and str(theory["hour"]) != "188":
+			wrong_hour_in_bit += 1
+		if str(theory["who"]) == "Agnes" and str(theory["place"]) != "bole" and str(theory["hour"]) == "188":
+			wrong_place_at_hour += 1
+		if str(theory["who"]) != "Agnes" and str(theory["place"]) == "bole" and str(theory["hour"]) == "188":
+			wrong_person_in_bit += 1
+	print("girdle near-misses rejected: %d" % misses.size())
+	_expect(misses.size() == 4, "need four girdle near-misses, found %d" % misses.size())
+	_expect(wrong_hour_in_bit == 2, "two near-misses should keep Agnes in the bole at another hour")
+	_expect(wrong_place_at_hour >= 1, "a near-miss should keep Agnes at 188 in another room")
+	_expect(wrong_person_in_bit >= 1, "a near-miss should keep the bole at 188 for another person")
+
+func _test_girdle_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+		"who took the gilt stamp",
+		"where they took the stamp",
+		"at which hour they took the stamp",
+		"who took the ferry bell",
+		"where they took the bell",
+		"at which hour they took the bell",
+		"who took the weather slate",
+		"where they took the slate",
+		"at which hour they took the slate",
+		"who took the loom shuttle",
+		"where they took the shuttle",
+		"at which hour they took the shuttle",
+		"who took the hive smoker",
+		"where they took the smoker",
+		"at which hour they took the smoker",
+		"who took the glass pontil",
+		"where they took the pontil",
+		"at which hour they took the pontil",
+		"who took the press proof",
+		"where they took the proof",
+		"at which hour they took the proof",
+		"who set the assay cup",
+		"where they set the cup",
+		"at which hour they set the cup",
+		"who chalked the kiln mark",
+		"where they chalked the mark",
+		"at which hour they chalked the mark",
+		"who entered the tide ledger",
+		"where they entered the ledger",
+		"at which hour they entered the ledger",
+		"who stopped the night bell",
+		"where they stopped the bell",
+		"at which hour they stopped the bell",
+		"who scored the salt mark",
+		"where they scored the mark",
+		"at which hour they scored the mark",
+		"who trimmed the wick",
+		"where they trimmed the wick",
+		"at which hour they trimmed the wick",
+		"who annealed the gather",
+		"where they annealed the gather",
+		"at which hour they annealed the gather",
+		"who grafted the scion",
+		"where they grafted the scion",
+		"at which hour they grafted the scion",
+		"who dipped the skein",
+		"where they dipped the skein",
+		"at which hour they dipped the skein",
+		"who tarred the rope",
+		"where they tarred the rope",
+		"at which hour they tarred the rope",
+		"who pressed the cork",
+		"where they pressed the cork",
+		"at which hour they pressed the cork",
+		"who mended the net",
+		"where they mended the net",
+		"at which hour they mended the net",
+		"who drove the hoop",
+		"where they drove the hoop",
+		"at which hour they drove the hoop",
+		"who folded the linen",
+		"where they folded the linen",
+		"at which hour they folded the linen",
+		"who cut the dovetail",
+		"where they cut the dovetail",
+		"at which hour they cut the dovetail",
+		"who cut the mortise",
+		"where they cut the mortise",
+		"at which hour they cut the mortise",
+		"who cut the rebate",
+		"where they cut the rebate",
+		"at which hour they cut the rebate",
+		"who cut the housing",
+		"where they cut the housing",
+		"at which hour they cut the housing",
+		"who cut the tenon",
+		"where they cut the tenon",
+		"at which hour they cut the tenon",
+		"who cut the bridle",
+		"where they cut the bridle",
+		"at which hour they cut the bridle",
+		"who cut the dado",
+		"where they cut the dado",
+		"at which hour they cut the dado",
+		"who cut the spline",
+		"where they cut the spline",
+		"at which hour they cut the spline",
+		"who cut the mitre",
+		"where they cut the mitre",
+		"at which hour they cut the mitre",
+		"who cut the lap",
+		"where they cut the lap",
+		"at which hour they cut the lap",
+		"who cut the scarf",
+		"where they cut the scarf",
+		"at which hour they cut the scarf",
+		"who cut the finger",
+		"where they cut the finger",
+		"at which hour they cut the finger",
+		"who cut the haunch",
+		"where they cut the haunch",
+		"at which hour they cut the haunch",
+		"who cut the dowel",
+		"where they cut the dowel",
+		"at which hour they cut the dowel",
+		"who cut the tongue",
+		"where they cut the tongue",
+		"at which hour they cut the tongue",
+		"who scratched the quirk",
+		"where they scratched the quirk",
+		"at which hour they scratched the quirk",
+		"who cut the chamfer",
+		"where they cut the chamfer",
+		"at which hour they cut the chamfer",
+		"who cut the scotia",
+		"where they cut the scotia",
+		"at which hour they cut the scotia",
+	]
+
+	var cases := [
+		{"theory": {"who": "", "place": "bole", "hour": "188"}, "present": ["who cut the girdle"], "absent": ["where they cut the girdle", "at which hour they cut the girdle"]},
+		{"theory": {"who": "Agnes", "place": "", "hour": "188"}, "present": ["where they cut the girdle"], "absent": ["who cut the girdle", "at which hour they cut the girdle"]},
+		{"theory": {"who": "Agnes", "place": "bole", "hour": ""}, "present": ["at which hour they cut the girdle"], "absent": ["who cut the girdle", "where they cut the girdle"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who cut the girdle", "where they cut the girdle", "at which hour they cut the girdle"], "absent": []},
+		{"theory": {}, "present": ["who cut the girdle", "where they cut the girdle", "at which hour they cut the girdle"], "absent": []},
+		{"theory": {"who": "Felix", "place": "", "hour": "190"}, "present": ["where they cut the girdle"], "absent": ["who cut the girdle", "at which hour they cut the girdle"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Girdle)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "girdle incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "girdle incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "girdle incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "girdle incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "girdle incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "girdle missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "girdle named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "girdle incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("girdle incomplete submissions refused with the missing slot")
+
 func _test_solutions_differ() -> void:
 	var spare := {"who": "Nell", "place": "kitchen", "hour": "7"}
 	_expect(spare["who"] != REHEARSAL_TRUE["who"], "rehearsal copied the spare-key taker")
@@ -21249,7 +22140,587 @@ func _test_solutions_differ() -> void:
 	_expect(not Listel.HOURS.has("174"), "listel hours must not take 174")
 	_expect(not Listel.HOURS.has("175"), "listel hours must not take 175")
 
-	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal", "The orchard graft", "The dye vat", "The tar kettle", "The cork press", "The net loft", "The cask hoop", "The linen fold", "The dovetail", "The mortise", "The rebate", "The housing", "The tenon", "The bridle", "The dado", "The spline", "The mitre", "The lap", "The scarf", "The finger", "The haunch", "The dowel", "The tongue", "The quirk", "The chamfer", "The scotia", "The cyma", "The cavetto", "The reed", "The annulet", "The hood", "The listel"], "case list is %s" % str(titles))
+	_expect(ABACUS_TRUE["who"] == "Una", "abacus taker")
+	_expect(ABACUS_TRUE["place"] == "socle", "abacus room")
+	_expect(ABACUS_TRUE["hour"] == "183", "abacus hour")
+	for forbidden in ["Giles", "Nora", "Ellis", "Hugo", "Nina", "Walter", "Clive", "Edith", "Maude", "Greta", "Nolan", "Celia", "Seth", "Ida", "Vera", "Ruth", "Amos", "Lena", "Willa", "Nils", "Cora", "Merrick", "Enid", "Petra", "Ross", "Pia", "Jude", "Shay", "Dell", "Glen", "Faye", "Kerr", "Brynn", "Lisle", "Mab", "Rhys", "Clem", "Gale", "Boyd", "Hob", "Nairn", "Cole", "Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Cmedlar", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(ABACUS_TRUE["who"] != forbidden, "abacus accepted %s" % forbidden)
+	for forbidden_place in ["plinth", "trammel", "template", "sycamore", "compass", "trying", "beech", "burnisher", "drawshave", "ogee", "nosing", "rounder", "dentil", "bullnose", "twibil", "bolection", "inshave", "froe", "hollow", "riffler", "scorp", "block", "file", "travisher", "scratch", "snib", "veiner", "knife", "punch", "scribe", "bit", "auger", "brace", "jointer", "smoother", "fore", "pad", "badger", "jack", "drawknife", "spokeshave", "firmer", "plough", "float", "gimlet", "router", "scraper", "adze", "gouge", "rasp", "bevel", "saw", "square", "bead", "plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(ABACUS_TRUE["place"] != forbidden_place, "abacus accepted the %s" % forbidden_place)
+	_expect(ABACUS_TRUE["place"] != "punch", "abacus accepted the punch")
+	_expect(ABACUS_TRUE["place"] != "scribe", "abacus accepted the scribe")
+	_expect(ABACUS_TRUE["place"] != "snib", "abacus accepted the snib")
+	_expect(ABACUS_TRUE["place"] != "veiner", "abacus accepted the veiner")
+	_expect(ABACUS_TRUE["place"] != "file", "abacus accepted the file")
+	_expect(ABACUS_TRUE["place"] != "travisher", "abacus accepted the travisher")
+	_expect(ABACUS_TRUE["place"] != "block", "abacus accepted the block")
+	_expect(ABACUS_TRUE["place"] != "riffler", "abacus accepted the riffler")
+	_expect(ABACUS_TRUE["place"] != "scorp", "abacus accepted the scorp")
+	_expect(ABACUS_TRUE["place"] != "hollow", "abacus accepted the hollow")
+	_expect(ABACUS_TRUE["place"] != "holdfast", "abacus accepted the holdfast")
+	_expect(ABACUS_TRUE["place"] != "hatchet", "abacus accepted the hatchet")
+	_expect(ABACUS_TRUE["place"] != "plinth", "abacus accepted the plinth")
+	_expect(ABACUS_TRUE["place"] != "trammel", "abacus accepted the trammel")
+	_expect(ABACUS_TRUE["place"] != "template", "abacus accepted the template")
+	_expect(ABACUS_TRUE["place"] != "sycamore", "abacus accepted the sycamore")
+	_expect(ABACUS_TRUE["place"] != "compass", "abacus accepted the compass")
+	_expect(ABACUS_TRUE["place"] != "trying", "abacus accepted the trying")
+	_expect(ABACUS_TRUE["place"] != "beech", "abacus accepted the beech")
+	_expect(ABACUS_TRUE["place"] != "burnisher", "abacus accepted the burnisher")
+	_expect(ABACUS_TRUE["place"] != "drawshave", "abacus accepted the drawshave")
+	_expect(ABACUS_TRUE["place"] != "ogee", "abacus accepted the ogee")
+	_expect(ABACUS_TRUE["place"] != "nosing", "abacus accepted the nosing")
+	_expect(ABACUS_TRUE["place"] != "rounder", "abacus accepted the rounder")
+	_expect(ABACUS_TRUE["place"] != "dentil", "abacus accepted the dentil")
+	_expect(ABACUS_TRUE["place"] != "bullnose", "abacus accepted the bullnose")
+	_expect(ABACUS_TRUE["place"] != "twibil", "abacus accepted the twibil")
+	_expect(ABACUS_TRUE["place"] != "bolection", "abacus accepted the bolection")
+	_expect(ABACUS_TRUE["place"] != "inshave", "abacus accepted the inshave")
+	_expect(ABACUS_TRUE["place"] != "froe", "abacus accepted the froe")
+	_expect(ABACUS_TRUE["hour"] != "111", "abacus accepted 111")
+	_expect(ABACUS_TRUE["hour"] != "112", "abacus accepted 112")
+	_expect(ABACUS_TRUE["hour"] != "114", "abacus accepted 114")
+	_expect(ABACUS_TRUE["hour"] != "115", "abacus accepted 115")
+	_expect(ABACUS_TRUE["hour"] != "106", "abacus accepted 106")
+	_expect(ABACUS_TRUE["hour"] != "107", "abacus accepted 107")
+	_expect(ABACUS_TRUE["hour"] != "108", "abacus accepted 108")
+	_expect(ABACUS_TRUE["hour"] != "109", "abacus accepted 109")
+	_expect(ABACUS_TRUE["hour"] != "110", "abacus accepted 110")
+	_expect(ABACUS_TRUE["hour"] != "101", "abacus accepted 101")
+	_expect(ABACUS_TRUE["hour"] != "102", "abacus accepted 102")
+	_expect(ABACUS_TRUE["hour"] != "103", "abacus accepted 103")
+	_expect(ABACUS_TRUE["hour"] != "104", "abacus accepted 104")
+	_expect(ABACUS_TRUE["hour"] != "105", "abacus accepted 105")
+	_expect(ABACUS_TRUE["hour"] != "96", "abacus accepted 96")
+	_expect(ABACUS_TRUE["hour"] != "97", "abacus accepted 97")
+	_expect(ABACUS_TRUE["hour"] != "98", "abacus accepted 98")
+	_expect(ABACUS_TRUE["hour"] != "99", "abacus accepted 99")
+	_expect(ABACUS_TRUE["hour"] != "100", "abacus accepted 100")
+	_expect(ABACUS_TRUE["hour"] != "91", "abacus accepted 91")
+	_expect(ABACUS_TRUE["hour"] != "92", "abacus accepted 92")
+	_expect(ABACUS_TRUE["hour"] != "93", "abacus accepted 93")
+	_expect(ABACUS_TRUE["hour"] != "94", "abacus accepted 94")
+	_expect(ABACUS_TRUE["hour"] != "95", "abacus accepted 95")
+	_expect(ABACUS_TRUE["hour"] != "88", "abacus accepted 88")
+	_expect(ABACUS_TRUE["hour"] != "83", "abacus accepted 83")
+	_expect(ABACUS_TRUE["hour"] != "78", "abacus accepted 78")
+	_expect(ABACUS_TRUE["hour"] != "73", "abacus accepted 73")
+	_expect(ABACUS_TRUE["hour"] != "68", "abacus accepted 68")
+	_expect(ABACUS_TRUE["hour"] != "63", "abacus accepted 63")
+	_expect(ABACUS_TRUE["hour"] != "8", "abacus accepted 8")
+	_expect(ABACUS_TRUE["hour"] != "6", "abacus accepted 6")
+	_expect(ABACUS_TRUE["hour"] != "3", "abacus accepted 3")
+	_expect(ABACUS_TRUE["hour"] != "16", "abacus accepted 16")
+	_expect(ABACUS_TRUE["hour"] != "19", "abacus accepted 19")
+	_expect(ABACUS_TRUE["hour"] != "113", "abacus accepted 113")
+	_expect(ABACUS_TRUE["hour"] != "121", "abacus accepted 121")
+	_expect(ABACUS_TRUE["hour"] != "122", "abacus accepted 122")
+	_expect(ABACUS_TRUE["hour"] != "124", "abacus accepted 124")
+	_expect(ABACUS_TRUE["hour"] != "125", "abacus accepted 125")
+	_expect(ABACUS_TRUE["hour"] != "116", "abacus accepted 116")
+	_expect(ABACUS_TRUE["hour"] != "117", "abacus accepted 117")
+	_expect(ABACUS_TRUE["hour"] != "118", "abacus accepted 118")
+	_expect(ABACUS_TRUE["hour"] != "119", "abacus accepted 119")
+	_expect(ABACUS_TRUE["hour"] != "120", "abacus accepted 120")
+	_expect(ABACUS_TRUE["hour"] != "123", "abacus accepted 123")
+	_expect(ABACUS_TRUE["hour"] != "126", "abacus accepted 126")
+	_expect(ABACUS_TRUE["hour"] != "127", "abacus accepted 127")
+	_expect(ABACUS_TRUE["hour"] != "129", "abacus accepted 129")
+	_expect(ABACUS_TRUE["hour"] != "130", "abacus accepted 130")
+	_expect(ABACUS_TRUE["hour"] != "128", "abacus accepted 128")
+	_expect(ABACUS_TRUE["hour"] != "131", "abacus accepted 131")
+	_expect(ABACUS_TRUE["hour"] != "132", "abacus accepted 132")
+	_expect(ABACUS_TRUE["hour"] != "134", "abacus accepted 134")
+	_expect(ABACUS_TRUE["hour"] != "135", "abacus accepted 135")
+	_expect(ABACUS_TRUE["hour"] != "133", "abacus accepted 133")
+	_expect(ABACUS_TRUE["hour"] != "136", "abacus accepted 136")
+	_expect(ABACUS_TRUE["hour"] != "137", "abacus accepted 137")
+	_expect(ABACUS_TRUE["hour"] != "139", "abacus accepted 139")
+	_expect(ABACUS_TRUE["hour"] != "140", "abacus accepted 140")
+	_expect(ABACUS_TRUE["hour"] != "138", "abacus accepted 138")
+	_expect(ABACUS_TRUE["hour"] != "141", "abacus accepted 141")
+	_expect(ABACUS_TRUE["hour"] != "142", "abacus accepted 142")
+	_expect(ABACUS_TRUE["hour"] != "144", "abacus accepted 144")
+	_expect(ABACUS_TRUE["hour"] != "145", "abacus accepted 145")
+	_expect(ABACUS_TRUE["hour"] != "143", "abacus accepted 143")
+	_expect(ABACUS_TRUE["hour"] != "146", "abacus accepted 146")
+	_expect(ABACUS_TRUE["hour"] != "147", "abacus accepted 147")
+	_expect(ABACUS_TRUE["hour"] != "149", "abacus accepted 149")
+	_expect(ABACUS_TRUE["hour"] != "150", "abacus accepted 150")
+	_expect(ABACUS_TRUE["hour"] != "148", "abacus accepted 148")
+	_expect(ABACUS_TRUE["hour"] != "181", "abacus accepted 181")
+	_expect(ABACUS_TRUE["hour"] != "182", "abacus accepted 182")
+	_expect(ABACUS_TRUE["hour"] != "184", "abacus accepted 184")
+	_expect(ABACUS_TRUE["hour"] != "185", "abacus accepted 185")
+	_expect(ABACUS_TRUE["hour"] != "178", "abacus accepted 178")
+	_expect(ABACUS_TRUE["hour"] != "173", "abacus accepted 173")
+	_expect(ABACUS_TRUE["hour"] != "168", "abacus accepted 168")
+	_expect(ABACUS_TRUE["hour"] != "163", "abacus accepted 163")
+	_expect(ABACUS_TRUE["hour"] != "158", "abacus accepted 158")
+	_expect(ABACUS_TRUE["hour"] != "153", "abacus accepted 153")
+	var before_abacus: Array = before_listel.duplicate()
+	before_abacus.append([Listel, LISTEL_TRUE, "listel"])
+	for row in before_abacus:
+		var book = row[0]
+		var truth: Dictionary = row[1]
+		var name := str(row[2])
+		_expect(ABACUS_TRUE["who"] != truth["who"], "abacus copied the %s taker" % name)
+		_expect(ABACUS_TRUE["place"] != truth["place"], "abacus copied the %s room" % name)
+		_expect(ABACUS_TRUE["hour"] != str(truth["hour"]), "abacus copied the %s hour" % name)
+		_expect_rejected(ABACUS_TRUE, book)
+		_expect_rejected(truth, Abacus)
+	_expect(LISTEL_TRUE["who"] == "Giles" and LISTEL_TRUE["place"] == "plinth" and LISTEL_TRUE["hour"] == "178", "the listel should still accept Giles in the plinth at 178")
+	_expect(HOOD_TRUE["who"] == "Hugo" and HOOD_TRUE["place"] == "sycamore" and HOOD_TRUE["hour"] == "173", "the hood should still accept Hugo in the sycamore at 173")
+	_expect(ANNULET_TRUE["who"] == "Clive" and ANNULET_TRUE["place"] == "beech" and ANNULET_TRUE["hour"] == "168", "the annulet should still accept Clive in the beech at 168")
+	_expect(REED_TRUE["who"] == "Greta" and REED_TRUE["place"] == "ogee" and REED_TRUE["hour"] == "163", "the reed should still accept Greta in the ogee at 163")
+	_expect(CAVETTO_TRUE["who"] == "Seth" and CAVETTO_TRUE["place"] == "dentil" and CAVETTO_TRUE["hour"] == "158", "the cavetto should still accept Seth in the dentil at 158")
+	_expect(CYMA_TRUE["who"] == "Ruth" and CYMA_TRUE["place"] == "bolection" and CYMA_TRUE["hour"] == "153", "the cyma should still accept Ruth in the bolection at 153")
+	_expect(SCOTIA_TRUE["who"] == "Willa" and SCOTIA_TRUE["place"] == "hollow" and SCOTIA_TRUE["hour"] == "148", "the scotia should still accept Willa in the hollow at 148")
+	_expect(CHAMFER_TRUE["who"] == "Merrick" and CHAMFER_TRUE["place"] == "block" and CHAMFER_TRUE["hour"] == "143", "the chamfer should still accept Merrick in the block at 143")
+	_expect(QUIRK_TRUE["who"] == "Ross" and QUIRK_TRUE["place"] == "scratch" and QUIRK_TRUE["hour"] == "138", "the quirk should still accept Ross in the scratch at 138")
+	_expect(DOWEL_TRUE["who"] == "Faye" and DOWEL_TRUE["place"] == "bit" and DOWEL_TRUE["hour"] == "128", "the dowel should still accept Faye in the bit at 128")
+	_expect(TONGUE_TRUE["who"] == "Shay" and TONGUE_TRUE["place"] == "knife" and TONGUE_TRUE["hour"] == "133", "the tongue should still accept Shay in the knife at 133")
+	_expect(HAUNCH_TRUE["who"] == "Rhys" and HAUNCH_TRUE["place"] == "fore" and HAUNCH_TRUE["hour"] == "123", "the haunch should still accept Rhys in the fore at 123")
+	_expect(FINGER_TRUE["who"] == "Clem" and FINGER_TRUE["place"] == "pad" and FINGER_TRUE["hour"] == "118", "the finger should still accept Clem in the pad at 118")
+	for row in before_abacus:
+		var book = row[0]
+		var name := str(row[2])
+		for person in Abacus.PEOPLE:
+			_expect(not book.PEOPLE.has(person), "abacus cast repeats %s from the %s" % [person, name])
+		for place in Abacus.PLACES:
+			_expect(not book.PLACES.has(place), "abacus rooms repeat %s from the %s" % [place, name])
+		for hour in Abacus.HOURS:
+			_expect(not book.HOURS.has(hour), "abacus hours repeat %s from the %s" % [hour, name])
+	for forbidden_person in ["Giles", "Nora", "Ellis", "Hugo", "Nina", "Walter", "Clive", "Edith", "Maude", "Greta", "Nolan", "Celia", "Seth", "Ida", "Vera", "Ruth", "Amos", "Lena", "Willa", "Nils", "Cora", "Merrick", "Enid", "Petra", "Ross", "Pia", "Jude", "Shay", "Dell", "Glen", "Faye", "Kerr", "Brynn", "Lisle", "Mab", "Rhys", "Clem", "Gale", "Boyd", "Hob", "Nairn", "Cole", "Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Cmedlar", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(not Abacus.PEOPLE.has(forbidden_person), "abacus cast must not take %s" % forbidden_person)
+	_expect(Abacus.role_phrase("Una") == "the abacus hand", "the abacus should call Una the abacus hand")
+	_expect(Abacus.role_phrase("Hart") == "the medlar hand", "the abacus should call Hart the medlar hand")
+	_expect(Abacus.role_phrase("Pearl") == "the holdfast clerk", "the abacus should call Pearl the holdfast clerk")
+	for forbidden_place in ["plinth", "trammel", "template", "sycamore", "compass", "trying", "beech", "burnisher", "drawshave", "ogee", "nosing", "rounder", "dentil", "bullnose", "twibil", "bolection", "inshave", "froe", "hollow", "riffler", "scorp", "block", "file", "travisher", "scratch", "snib", "veiner", "knife", "punch", "scribe", "bit", "auger", "brace", "jointer", "smoother", "fore", "drawknife", "spokeshave", "firmer", "plough", "float", "gimlet", "router", "scraper", "adze", "gouge", "rasp", "bevel", "saw", "square", "bead", "plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(not Abacus.PLACES.has(forbidden_place), "abacus rooms must not take the %s" % forbidden_place)
+	_expect(not Abacus.HOURS.has("6"), "abacus hours must not take 6")
+	_expect(not Abacus.HOURS.has("7"), "abacus hours must not take 7")
+	_expect(not Abacus.HOURS.has("8"), "abacus hours must not take 8")
+	_expect(not Abacus.HOURS.has("9"), "abacus hours must not take 9")
+	_expect(not Abacus.HOURS.has("10"), "abacus hours must not take 10")
+	_expect(not Abacus.HOURS.has("60"), "abacus hours must not take 60")
+	_expect(not Abacus.HOURS.has("61"), "abacus hours must not take 61")
+	_expect(not Abacus.HOURS.has("62"), "abacus hours must not take 62")
+	_expect(not Abacus.HOURS.has("63"), "abacus hours must not take 63")
+	_expect(not Abacus.HOURS.has("64"), "abacus hours must not take 64")
+	_expect(not Abacus.HOURS.has("65"), "abacus hours must not take 65")
+	_expect(not Abacus.HOURS.has("66"), "abacus hours must not take 66")
+	_expect(not Abacus.HOURS.has("67"), "abacus hours must not take 67")
+	_expect(not Abacus.HOURS.has("68"), "abacus hours must not take 68")
+	_expect(not Abacus.HOURS.has("69"), "abacus hours must not take 69")
+	_expect(not Abacus.HOURS.has("70"), "abacus hours must not take 70")
+	_expect(not Abacus.HOURS.has("71"), "abacus hours must not take 71")
+	_expect(not Abacus.HOURS.has("72"), "abacus hours must not take 72")
+	_expect(not Abacus.HOURS.has("73"), "abacus hours must not take 73")
+	_expect(not Abacus.HOURS.has("74"), "abacus hours must not take 74")
+	_expect(not Abacus.HOURS.has("75"), "abacus hours must not take 75")
+	_expect(not Abacus.HOURS.has("76"), "abacus hours must not take 76")
+	_expect(not Abacus.HOURS.has("77"), "abacus hours must not take 77")
+	_expect(not Abacus.HOURS.has("78"), "abacus hours must not take 78")
+	_expect(not Abacus.HOURS.has("79"), "abacus hours must not take 79")
+	_expect(not Abacus.HOURS.has("80"), "abacus hours must not take 80")
+	_expect(not Abacus.HOURS.has("81"), "abacus hours must not take 81")
+	_expect(not Abacus.HOURS.has("82"), "abacus hours must not take 82")
+	_expect(not Abacus.HOURS.has("83"), "abacus hours must not take 83")
+	_expect(not Abacus.HOURS.has("84"), "abacus hours must not take 84")
+	_expect(not Abacus.HOURS.has("85"), "abacus hours must not take 85")
+	_expect(not Abacus.HOURS.has("86"), "abacus hours must not take 86")
+	_expect(not Abacus.HOURS.has("87"), "abacus hours must not take 87")
+	_expect(not Abacus.HOURS.has("88"), "abacus hours must not take 88")
+	_expect(not Abacus.HOURS.has("89"), "abacus hours must not take 89")
+	_expect(not Abacus.HOURS.has("90"), "abacus hours must not take 90")
+	_expect(not Abacus.HOURS.has("91"), "abacus hours must not take 91")
+	_expect(not Abacus.HOURS.has("92"), "abacus hours must not take 92")
+	_expect(not Abacus.HOURS.has("93"), "abacus hours must not take 93")
+	_expect(not Abacus.HOURS.has("94"), "abacus hours must not take 94")
+	_expect(not Abacus.HOURS.has("95"), "abacus hours must not take 95")
+	_expect(not Abacus.HOURS.has("96"), "abacus hours must not take 96")
+	_expect(not Abacus.HOURS.has("97"), "abacus hours must not take 97")
+	_expect(not Abacus.HOURS.has("98"), "abacus hours must not take 98")
+	_expect(not Abacus.HOURS.has("99"), "abacus hours must not take 99")
+	_expect(not Abacus.HOURS.has("100"), "abacus hours must not take 100")
+	_expect(not Abacus.HOURS.has("101"), "abacus hours must not take 101")
+	_expect(not Abacus.HOURS.has("102"), "abacus hours must not take 102")
+	_expect(not Abacus.HOURS.has("103"), "abacus hours must not take 103")
+	_expect(not Abacus.HOURS.has("104"), "abacus hours must not take 104")
+	_expect(not Abacus.HOURS.has("105"), "abacus hours must not take 105")
+	_expect(not Abacus.HOURS.has("106"), "abacus hours must not take 106")
+	_expect(not Abacus.HOURS.has("107"), "abacus hours must not take 107")
+	_expect(not Abacus.HOURS.has("108"), "abacus hours must not take 108")
+	_expect(not Abacus.HOURS.has("109"), "abacus hours must not take 109")
+	_expect(not Abacus.HOURS.has("110"), "abacus hours must not take 110")
+	_expect(not Abacus.HOURS.has("111"), "abacus hours must not take 111")
+	_expect(not Abacus.HOURS.has("112"), "abacus hours must not take 112")
+	_expect(not Abacus.HOURS.has("113"), "abacus hours must not take 113")
+	_expect(not Abacus.HOURS.has("114"), "abacus hours must not take 114")
+	_expect(not Abacus.HOURS.has("115"), "abacus hours must not take 115")
+	_expect(not Abacus.HOURS.has("116"), "abacus hours must not take 116")
+	_expect(not Abacus.HOURS.has("117"), "abacus hours must not take 117")
+	_expect(not Abacus.HOURS.has("118"), "abacus hours must not take 118")
+	_expect(not Abacus.HOURS.has("119"), "abacus hours must not take 119")
+	_expect(not Abacus.HOURS.has("120"), "abacus hours must not take 120")
+	_expect(not Abacus.HOURS.has("121"), "abacus hours must not take 121")
+	_expect(not Abacus.HOURS.has("122"), "abacus hours must not take 122")
+	_expect(not Abacus.HOURS.has("123"), "abacus hours must not take 123")
+	_expect(not Abacus.HOURS.has("124"), "abacus hours must not take 124")
+	_expect(not Abacus.HOURS.has("125"), "abacus hours must not take 125")
+	_expect(not Abacus.HOURS.has("126"), "abacus hours must not take 126")
+	_expect(not Abacus.HOURS.has("127"), "abacus hours must not take 127")
+	_expect(not Abacus.HOURS.has("128"), "abacus hours must not take 128")
+	_expect(not Abacus.HOURS.has("129"), "abacus hours must not take 129")
+	_expect(not Abacus.HOURS.has("130"), "abacus hours must not take 130")
+	_expect(not Abacus.HOURS.has("131"), "abacus hours must not take 131")
+	_expect(not Abacus.HOURS.has("132"), "abacus hours must not take 132")
+	_expect(not Abacus.HOURS.has("133"), "abacus hours must not take 133")
+	_expect(not Abacus.HOURS.has("134"), "abacus hours must not take 134")
+	_expect(not Abacus.HOURS.has("135"), "abacus hours must not take 135")
+	_expect(not Abacus.HOURS.has("136"), "abacus hours must not take 136")
+	_expect(not Abacus.HOURS.has("137"), "abacus hours must not take 137")
+	_expect(not Abacus.HOURS.has("138"), "abacus hours must not take 138")
+	_expect(not Abacus.HOURS.has("139"), "abacus hours must not take 139")
+	_expect(not Abacus.HOURS.has("140"), "abacus hours must not take 140")
+	_expect(not Abacus.HOURS.has("141"), "abacus hours must not take 141")
+	_expect(not Abacus.HOURS.has("142"), "abacus hours must not take 142")
+	_expect(not Abacus.HOURS.has("143"), "abacus hours must not take 143")
+	_expect(not Abacus.HOURS.has("144"), "abacus hours must not take 144")
+	_expect(not Abacus.HOURS.has("145"), "abacus hours must not take 145")
+	_expect(not Abacus.HOURS.has("146"), "abacus hours must not take 146")
+	_expect(not Abacus.HOURS.has("147"), "abacus hours must not take 147")
+	_expect(not Abacus.HOURS.has("148"), "abacus hours must not take 148")
+	_expect(not Abacus.HOURS.has("149"), "abacus hours must not take 149")
+	_expect(not Abacus.HOURS.has("150"), "abacus hours must not take 150")
+	_expect(not Abacus.HOURS.has("151"), "abacus hours must not take 151")
+	_expect(not Abacus.HOURS.has("152"), "abacus hours must not take 152")
+	_expect(not Abacus.HOURS.has("153"), "abacus hours must not take 153")
+	_expect(not Abacus.HOURS.has("154"), "abacus hours must not take 154")
+	_expect(not Abacus.HOURS.has("155"), "abacus hours must not take 155")
+	_expect(not Abacus.HOURS.has("156"), "abacus hours must not take 156")
+	_expect(not Abacus.HOURS.has("157"), "abacus hours must not take 157")
+	_expect(not Abacus.HOURS.has("158"), "abacus hours must not take 158")
+	_expect(not Abacus.HOURS.has("159"), "abacus hours must not take 159")
+	_expect(not Abacus.HOURS.has("160"), "abacus hours must not take 160")
+	_expect(not Abacus.HOURS.has("161"), "abacus hours must not take 161")
+	_expect(not Abacus.HOURS.has("162"), "abacus hours must not take 162")
+	_expect(not Abacus.HOURS.has("163"), "abacus hours must not take 163")
+	_expect(not Abacus.HOURS.has("164"), "abacus hours must not take 164")
+	_expect(not Abacus.HOURS.has("165"), "abacus hours must not take 165")
+	_expect(not Abacus.HOURS.has("166"), "abacus hours must not take 166")
+	_expect(not Abacus.HOURS.has("167"), "abacus hours must not take 167")
+	_expect(not Abacus.HOURS.has("168"), "abacus hours must not take 168")
+	_expect(not Abacus.HOURS.has("169"), "abacus hours must not take 169")
+	_expect(not Abacus.HOURS.has("170"), "abacus hours must not take 170")
+	_expect(not Abacus.HOURS.has("171"), "abacus hours must not take 171")
+	_expect(not Abacus.HOURS.has("172"), "abacus hours must not take 172")
+	_expect(not Abacus.HOURS.has("173"), "abacus hours must not take 173")
+	_expect(not Abacus.HOURS.has("174"), "abacus hours must not take 174")
+	_expect(not Abacus.HOURS.has("175"), "abacus hours must not take 175")
+	_expect(not Abacus.HOURS.has("176"), "abacus hours must not take 176")
+	_expect(not Abacus.HOURS.has("177"), "abacus hours must not take 177")
+	_expect(not Abacus.HOURS.has("178"), "abacus hours must not take 178")
+	_expect(not Abacus.HOURS.has("179"), "abacus hours must not take 179")
+	_expect(not Abacus.HOURS.has("180"), "abacus hours must not take 180")
+
+	_expect(GIRDLE_TRUE["who"] == "Agnes", "girdle taker")
+	_expect(GIRDLE_TRUE["place"] == "bole", "girdle room")
+	_expect(GIRDLE_TRUE["hour"] == "188", "girdle hour")
+	for forbidden in ["Una", "Hart", "Pearl", "Giles", "Nora", "Ellis", "Hugo", "Nina", "Walter", "Clive", "Edith", "Maude", "Greta", "Nolan", "Celia", "Seth", "Ida", "Vera", "Ruth", "Amos", "Lena", "Willa", "Nils", "Cora", "Merrick", "Enid", "Petra", "Ross", "Pia", "Jude", "Shay", "Dell", "Glen", "Faye", "Kerr", "Brynn", "Lisle", "Mab", "Rhys", "Clem", "Gale", "Boyd", "Hob", "Nairn", "Cole", "Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Ccherry", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(GIRDLE_TRUE["who"] != forbidden, "girdle accepted %s" % forbidden)
+	for forbidden_place in ["socle", "holdfast", "hatchet", "plinth", "trammel", "template", "sycamore", "compass", "trying", "beech", "burnisher", "drawshave", "ogee", "nosing", "rounder", "dentil", "bullnose", "twibil", "bolection", "inshave", "froe", "hollow", "riffler", "scorp", "block", "file", "travisher", "scratch", "snib", "veiner", "knife", "punch", "scribe", "bit", "auger", "brace", "jointer", "smoother", "fore", "pad", "badger", "jack", "drawknife", "spokeshave", "firmer", "plough", "float", "gimlet", "router", "scraper", "adze", "gouge", "rasp", "bevel", "saw", "square", "bead", "plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(GIRDLE_TRUE["place"] != forbidden_place, "girdle accepted the %s" % forbidden_place)
+	_expect(GIRDLE_TRUE["place"] != "punch", "girdle accepted the punch")
+	_expect(GIRDLE_TRUE["place"] != "scribe", "girdle accepted the scribe")
+	_expect(GIRDLE_TRUE["place"] != "snib", "girdle accepted the snib")
+	_expect(GIRDLE_TRUE["place"] != "veiner", "girdle accepted the veiner")
+	_expect(GIRDLE_TRUE["place"] != "file", "girdle accepted the file")
+	_expect(GIRDLE_TRUE["place"] != "travisher", "girdle accepted the travisher")
+	_expect(GIRDLE_TRUE["place"] != "block", "girdle accepted the block")
+	_expect(GIRDLE_TRUE["place"] != "riffler", "girdle accepted the riffler")
+	_expect(GIRDLE_TRUE["place"] != "scorp", "girdle accepted the scorp")
+	_expect(GIRDLE_TRUE["place"] != "hollow", "girdle accepted the hollow")
+	_expect(GIRDLE_TRUE["place"] != "trestle", "girdle accepted the trestle")
+	_expect(GIRDLE_TRUE["place"] != "fillister", "girdle accepted the fillister")
+	_expect(GIRDLE_TRUE["place"] != "socle", "girdle accepted the socle")
+	_expect(GIRDLE_TRUE["place"] != "holdfast", "girdle accepted the holdfast")
+	_expect(GIRDLE_TRUE["place"] != "hatchet", "girdle accepted the hatchet")
+	_expect(GIRDLE_TRUE["place"] != "plinth", "girdle accepted the plinth")
+	_expect(GIRDLE_TRUE["place"] != "trammel", "girdle accepted the trammel")
+	_expect(GIRDLE_TRUE["place"] != "template", "girdle accepted the template")
+	_expect(GIRDLE_TRUE["place"] != "sycamore", "girdle accepted the sycamore")
+	_expect(GIRDLE_TRUE["place"] != "compass", "girdle accepted the compass")
+	_expect(GIRDLE_TRUE["place"] != "trying", "girdle accepted the trying")
+	_expect(GIRDLE_TRUE["place"] != "beech", "girdle accepted the beech")
+	_expect(GIRDLE_TRUE["place"] != "burnisher", "girdle accepted the burnisher")
+	_expect(GIRDLE_TRUE["place"] != "drawshave", "girdle accepted the drawshave")
+	_expect(GIRDLE_TRUE["place"] != "ogee", "girdle accepted the ogee")
+	_expect(GIRDLE_TRUE["place"] != "nosing", "girdle accepted the nosing")
+	_expect(GIRDLE_TRUE["place"] != "rounder", "girdle accepted the rounder")
+	_expect(GIRDLE_TRUE["place"] != "dentil", "girdle accepted the dentil")
+	_expect(GIRDLE_TRUE["place"] != "bullnose", "girdle accepted the bullnose")
+	_expect(GIRDLE_TRUE["place"] != "twibil", "girdle accepted the twibil")
+	_expect(GIRDLE_TRUE["place"] != "bolection", "girdle accepted the bolection")
+	_expect(GIRDLE_TRUE["place"] != "inshave", "girdle accepted the inshave")
+	_expect(GIRDLE_TRUE["place"] != "froe", "girdle accepted the froe")
+	_expect(GIRDLE_TRUE["hour"] != "111", "girdle accepted 111")
+	_expect(GIRDLE_TRUE["hour"] != "112", "girdle accepted 112")
+	_expect(GIRDLE_TRUE["hour"] != "114", "girdle accepted 114")
+	_expect(GIRDLE_TRUE["hour"] != "115", "girdle accepted 115")
+	_expect(GIRDLE_TRUE["hour"] != "106", "girdle accepted 106")
+	_expect(GIRDLE_TRUE["hour"] != "107", "girdle accepted 107")
+	_expect(GIRDLE_TRUE["hour"] != "108", "girdle accepted 108")
+	_expect(GIRDLE_TRUE["hour"] != "109", "girdle accepted 109")
+	_expect(GIRDLE_TRUE["hour"] != "110", "girdle accepted 110")
+	_expect(GIRDLE_TRUE["hour"] != "101", "girdle accepted 101")
+	_expect(GIRDLE_TRUE["hour"] != "102", "girdle accepted 102")
+	_expect(GIRDLE_TRUE["hour"] != "103", "girdle accepted 103")
+	_expect(GIRDLE_TRUE["hour"] != "104", "girdle accepted 104")
+	_expect(GIRDLE_TRUE["hour"] != "105", "girdle accepted 105")
+	_expect(GIRDLE_TRUE["hour"] != "96", "girdle accepted 96")
+	_expect(GIRDLE_TRUE["hour"] != "97", "girdle accepted 97")
+	_expect(GIRDLE_TRUE["hour"] != "98", "girdle accepted 98")
+	_expect(GIRDLE_TRUE["hour"] != "99", "girdle accepted 99")
+	_expect(GIRDLE_TRUE["hour"] != "100", "girdle accepted 100")
+	_expect(GIRDLE_TRUE["hour"] != "91", "girdle accepted 91")
+	_expect(GIRDLE_TRUE["hour"] != "92", "girdle accepted 92")
+	_expect(GIRDLE_TRUE["hour"] != "93", "girdle accepted 93")
+	_expect(GIRDLE_TRUE["hour"] != "94", "girdle accepted 94")
+	_expect(GIRDLE_TRUE["hour"] != "95", "girdle accepted 95")
+	_expect(GIRDLE_TRUE["hour"] != "88", "girdle accepted 88")
+	_expect(GIRDLE_TRUE["hour"] != "83", "girdle accepted 83")
+	_expect(GIRDLE_TRUE["hour"] != "78", "girdle accepted 78")
+	_expect(GIRDLE_TRUE["hour"] != "73", "girdle accepted 73")
+	_expect(GIRDLE_TRUE["hour"] != "68", "girdle accepted 68")
+	_expect(GIRDLE_TRUE["hour"] != "63", "girdle accepted 63")
+	_expect(GIRDLE_TRUE["hour"] != "8", "girdle accepted 8")
+	_expect(GIRDLE_TRUE["hour"] != "6", "girdle accepted 6")
+	_expect(GIRDLE_TRUE["hour"] != "3", "girdle accepted 3")
+	_expect(GIRDLE_TRUE["hour"] != "16", "girdle accepted 16")
+	_expect(GIRDLE_TRUE["hour"] != "19", "girdle accepted 19")
+	_expect(GIRDLE_TRUE["hour"] != "113", "girdle accepted 113")
+	_expect(GIRDLE_TRUE["hour"] != "121", "girdle accepted 121")
+	_expect(GIRDLE_TRUE["hour"] != "122", "girdle accepted 122")
+	_expect(GIRDLE_TRUE["hour"] != "124", "girdle accepted 124")
+	_expect(GIRDLE_TRUE["hour"] != "125", "girdle accepted 125")
+	_expect(GIRDLE_TRUE["hour"] != "116", "girdle accepted 116")
+	_expect(GIRDLE_TRUE["hour"] != "117", "girdle accepted 117")
+	_expect(GIRDLE_TRUE["hour"] != "118", "girdle accepted 118")
+	_expect(GIRDLE_TRUE["hour"] != "119", "girdle accepted 119")
+	_expect(GIRDLE_TRUE["hour"] != "120", "girdle accepted 120")
+	_expect(GIRDLE_TRUE["hour"] != "123", "girdle accepted 123")
+	_expect(GIRDLE_TRUE["hour"] != "126", "girdle accepted 126")
+	_expect(GIRDLE_TRUE["hour"] != "127", "girdle accepted 127")
+	_expect(GIRDLE_TRUE["hour"] != "129", "girdle accepted 129")
+	_expect(GIRDLE_TRUE["hour"] != "130", "girdle accepted 130")
+	_expect(GIRDLE_TRUE["hour"] != "128", "girdle accepted 128")
+	_expect(GIRDLE_TRUE["hour"] != "131", "girdle accepted 131")
+	_expect(GIRDLE_TRUE["hour"] != "132", "girdle accepted 132")
+	_expect(GIRDLE_TRUE["hour"] != "134", "girdle accepted 134")
+	_expect(GIRDLE_TRUE["hour"] != "135", "girdle accepted 135")
+	_expect(GIRDLE_TRUE["hour"] != "133", "girdle accepted 133")
+	_expect(GIRDLE_TRUE["hour"] != "136", "girdle accepted 136")
+	_expect(GIRDLE_TRUE["hour"] != "137", "girdle accepted 137")
+	_expect(GIRDLE_TRUE["hour"] != "139", "girdle accepted 139")
+	_expect(GIRDLE_TRUE["hour"] != "140", "girdle accepted 140")
+	_expect(GIRDLE_TRUE["hour"] != "138", "girdle accepted 138")
+	_expect(GIRDLE_TRUE["hour"] != "141", "girdle accepted 141")
+	_expect(GIRDLE_TRUE["hour"] != "142", "girdle accepted 142")
+	_expect(GIRDLE_TRUE["hour"] != "144", "girdle accepted 144")
+	_expect(GIRDLE_TRUE["hour"] != "145", "girdle accepted 145")
+	_expect(GIRDLE_TRUE["hour"] != "143", "girdle accepted 143")
+	_expect(GIRDLE_TRUE["hour"] != "146", "girdle accepted 146")
+	_expect(GIRDLE_TRUE["hour"] != "147", "girdle accepted 147")
+	_expect(GIRDLE_TRUE["hour"] != "149", "girdle accepted 149")
+	_expect(GIRDLE_TRUE["hour"] != "150", "girdle accepted 150")
+	_expect(GIRDLE_TRUE["hour"] != "148", "girdle accepted 148")
+	_expect(GIRDLE_TRUE["hour"] != "186", "girdle accepted 186")
+	_expect(GIRDLE_TRUE["hour"] != "187", "girdle accepted 187")
+	_expect(GIRDLE_TRUE["hour"] != "189", "girdle accepted 189")
+	_expect(GIRDLE_TRUE["hour"] != "190", "girdle accepted 190")
+	_expect(GIRDLE_TRUE["hour"] != "183", "girdle accepted 183")
+	_expect(GIRDLE_TRUE["hour"] != "178", "girdle accepted 178")
+	_expect(GIRDLE_TRUE["hour"] != "173", "girdle accepted 173")
+	_expect(GIRDLE_TRUE["hour"] != "168", "girdle accepted 168")
+	_expect(GIRDLE_TRUE["hour"] != "163", "girdle accepted 163")
+	_expect(GIRDLE_TRUE["hour"] != "158", "girdle accepted 158")
+	_expect(GIRDLE_TRUE["hour"] != "153", "girdle accepted 153")
+	var before_girdle: Array = before_abacus.duplicate()
+	before_girdle.append([Abacus, ABACUS_TRUE, "abacus"])
+	for row in before_girdle:
+		var book = row[0]
+		var truth: Dictionary = row[1]
+		var name := str(row[2])
+		_expect(GIRDLE_TRUE["who"] != truth["who"], "girdle copied the %s taker" % name)
+		_expect(GIRDLE_TRUE["place"] != truth["place"], "girdle copied the %s room" % name)
+		_expect(GIRDLE_TRUE["hour"] != str(truth["hour"]), "girdle copied the %s hour" % name)
+		_expect_rejected(GIRDLE_TRUE, book)
+		_expect_rejected(truth, Girdle)
+	_expect(ABACUS_TRUE["who"] == "Una" and ABACUS_TRUE["place"] == "socle" and ABACUS_TRUE["hour"] == "183", "the abacus should still accept Una in the socle at 183")
+	_expect(LISTEL_TRUE["who"] == "Giles" and LISTEL_TRUE["place"] == "plinth" and LISTEL_TRUE["hour"] == "178", "the listel should still accept Giles in the plinth at 178")
+	_expect(HOOD_TRUE["who"] == "Hugo" and HOOD_TRUE["place"] == "sycamore" and HOOD_TRUE["hour"] == "173", "the hood should still accept Hugo in the sycamore at 173")
+	_expect(ANNULET_TRUE["who"] == "Clive" and ANNULET_TRUE["place"] == "beech" and ANNULET_TRUE["hour"] == "168", "the annulet should still accept Clive in the beech at 168")
+	_expect(REED_TRUE["who"] == "Greta" and REED_TRUE["place"] == "ogee" and REED_TRUE["hour"] == "163", "the reed should still accept Greta in the ogee at 163")
+	_expect(CAVETTO_TRUE["who"] == "Seth" and CAVETTO_TRUE["place"] == "dentil" and CAVETTO_TRUE["hour"] == "158", "the cavetto should still accept Seth in the dentil at 158")
+	_expect(CYMA_TRUE["who"] == "Ruth" and CYMA_TRUE["place"] == "bolection" and CYMA_TRUE["hour"] == "153", "the cyma should still accept Ruth in the bolection at 153")
+	_expect(SCOTIA_TRUE["who"] == "Willa" and SCOTIA_TRUE["place"] == "hollow" and SCOTIA_TRUE["hour"] == "148", "the scotia should still accept Willa in the hollow at 148")
+	_expect(CHAMFER_TRUE["who"] == "Merrick" and CHAMFER_TRUE["place"] == "block" and CHAMFER_TRUE["hour"] == "143", "the chamfer should still accept Merrick in the block at 143")
+	_expect(QUIRK_TRUE["who"] == "Ross" and QUIRK_TRUE["place"] == "scratch" and QUIRK_TRUE["hour"] == "138", "the quirk should still accept Ross in the scratch at 138")
+	_expect(DOWEL_TRUE["who"] == "Faye" and DOWEL_TRUE["place"] == "bit" and DOWEL_TRUE["hour"] == "128", "the dowel should still accept Faye in the bit at 128")
+	_expect(TONGUE_TRUE["who"] == "Shay" and TONGUE_TRUE["place"] == "knife" and TONGUE_TRUE["hour"] == "133", "the tongue should still accept Shay in the knife at 133")
+	_expect(HAUNCH_TRUE["who"] == "Rhys" and HAUNCH_TRUE["place"] == "fore" and HAUNCH_TRUE["hour"] == "123", "the haunch should still accept Rhys in the fore at 123")
+	_expect(FINGER_TRUE["who"] == "Clem" and FINGER_TRUE["place"] == "pad" and FINGER_TRUE["hour"] == "118", "the finger should still accept Clem in the pad at 118")
+	for row in before_girdle:
+		var book = row[0]
+		var name := str(row[2])
+		for person in Girdle.PEOPLE:
+			_expect(not book.PEOPLE.has(person), "girdle cast repeats %s from the %s" % [person, name])
+		for place in Girdle.PLACES:
+			_expect(not book.PLACES.has(place), "girdle rooms repeat %s from the %s" % [place, name])
+		for hour in Girdle.HOURS:
+			_expect(not book.HOURS.has(hour), "girdle hours repeat %s from the %s" % [hour, name])
+	for forbidden_person in ["Una", "Hart", "Pearl", "Giles", "Nora", "Ellis", "Hugo", "Nina", "Walter", "Clive", "Edith", "Maude", "Greta", "Nolan", "Celia", "Seth", "Ida", "Vera", "Ruth", "Amos", "Lena", "Willa", "Nils", "Cora", "Merrick", "Enid", "Petra", "Ross", "Pia", "Jude", "Shay", "Dell", "Glen", "Faye", "Kerr", "Brynn", "Lisle", "Mab", "Rhys", "Clem", "Gale", "Boyd", "Hob", "Nairn", "Cole", "Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Ccherry", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(not Girdle.PEOPLE.has(forbidden_person), "girdle cast must not take %s" % forbidden_person)
+	_expect(Girdle.role_phrase("Agnes") == "the girdle hand", "the girdle should call Agnes the girdle hand")
+	_expect(Girdle.role_phrase("Simon") == "the cherry hand", "the girdle should call Simon the cherry hand")
+	_expect(Girdle.role_phrase("Felix") == "the trestle clerk", "the girdle should call Felix the trestle clerk")
+	for forbidden_place in ["socle", "holdfast", "hatchet", "plinth", "trammel", "template", "sycamore", "compass", "trying", "beech", "burnisher", "drawshave", "ogee", "nosing", "rounder", "dentil", "bullnose", "twibil", "bolection", "inshave", "froe", "hollow", "riffler", "scorp", "block", "file", "travisher", "scratch", "snib", "veiner", "knife", "punch", "scribe", "bit", "auger", "brace", "jointer", "smoother", "fore", "drawknife", "spokeshave", "firmer", "plough", "float", "gimlet", "router", "scraper", "adze", "gouge", "rasp", "bevel", "saw", "square", "bead", "plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(not Girdle.PLACES.has(forbidden_place), "girdle rooms must not take the %s" % forbidden_place)
+	_expect(not Girdle.HOURS.has("6"), "girdle hours must not take 6")
+	_expect(not Girdle.HOURS.has("7"), "girdle hours must not take 7")
+	_expect(not Girdle.HOURS.has("8"), "girdle hours must not take 8")
+	_expect(not Girdle.HOURS.has("9"), "girdle hours must not take 9")
+	_expect(not Girdle.HOURS.has("10"), "girdle hours must not take 10")
+	_expect(not Girdle.HOURS.has("60"), "girdle hours must not take 60")
+	_expect(not Girdle.HOURS.has("61"), "girdle hours must not take 61")
+	_expect(not Girdle.HOURS.has("62"), "girdle hours must not take 62")
+	_expect(not Girdle.HOURS.has("63"), "girdle hours must not take 63")
+	_expect(not Girdle.HOURS.has("64"), "girdle hours must not take 64")
+	_expect(not Girdle.HOURS.has("65"), "girdle hours must not take 65")
+	_expect(not Girdle.HOURS.has("66"), "girdle hours must not take 66")
+	_expect(not Girdle.HOURS.has("67"), "girdle hours must not take 67")
+	_expect(not Girdle.HOURS.has("68"), "girdle hours must not take 68")
+	_expect(not Girdle.HOURS.has("69"), "girdle hours must not take 69")
+	_expect(not Girdle.HOURS.has("70"), "girdle hours must not take 70")
+	_expect(not Girdle.HOURS.has("71"), "girdle hours must not take 71")
+	_expect(not Girdle.HOURS.has("72"), "girdle hours must not take 72")
+	_expect(not Girdle.HOURS.has("73"), "girdle hours must not take 73")
+	_expect(not Girdle.HOURS.has("74"), "girdle hours must not take 74")
+	_expect(not Girdle.HOURS.has("75"), "girdle hours must not take 75")
+	_expect(not Girdle.HOURS.has("76"), "girdle hours must not take 76")
+	_expect(not Girdle.HOURS.has("77"), "girdle hours must not take 77")
+	_expect(not Girdle.HOURS.has("78"), "girdle hours must not take 78")
+	_expect(not Girdle.HOURS.has("79"), "girdle hours must not take 79")
+	_expect(not Girdle.HOURS.has("80"), "girdle hours must not take 80")
+	_expect(not Girdle.HOURS.has("81"), "girdle hours must not take 81")
+	_expect(not Girdle.HOURS.has("82"), "girdle hours must not take 82")
+	_expect(not Girdle.HOURS.has("83"), "girdle hours must not take 83")
+	_expect(not Girdle.HOURS.has("84"), "girdle hours must not take 84")
+	_expect(not Girdle.HOURS.has("85"), "girdle hours must not take 85")
+	_expect(not Girdle.HOURS.has("86"), "girdle hours must not take 86")
+	_expect(not Girdle.HOURS.has("87"), "girdle hours must not take 87")
+	_expect(not Girdle.HOURS.has("88"), "girdle hours must not take 88")
+	_expect(not Girdle.HOURS.has("89"), "girdle hours must not take 89")
+	_expect(not Girdle.HOURS.has("90"), "girdle hours must not take 90")
+	_expect(not Girdle.HOURS.has("91"), "girdle hours must not take 91")
+	_expect(not Girdle.HOURS.has("92"), "girdle hours must not take 92")
+	_expect(not Girdle.HOURS.has("93"), "girdle hours must not take 93")
+	_expect(not Girdle.HOURS.has("94"), "girdle hours must not take 94")
+	_expect(not Girdle.HOURS.has("95"), "girdle hours must not take 95")
+	_expect(not Girdle.HOURS.has("96"), "girdle hours must not take 96")
+	_expect(not Girdle.HOURS.has("97"), "girdle hours must not take 97")
+	_expect(not Girdle.HOURS.has("98"), "girdle hours must not take 98")
+	_expect(not Girdle.HOURS.has("99"), "girdle hours must not take 99")
+	_expect(not Girdle.HOURS.has("100"), "girdle hours must not take 100")
+	_expect(not Girdle.HOURS.has("101"), "girdle hours must not take 101")
+	_expect(not Girdle.HOURS.has("102"), "girdle hours must not take 102")
+	_expect(not Girdle.HOURS.has("103"), "girdle hours must not take 103")
+	_expect(not Girdle.HOURS.has("104"), "girdle hours must not take 104")
+	_expect(not Girdle.HOURS.has("105"), "girdle hours must not take 105")
+	_expect(not Girdle.HOURS.has("106"), "girdle hours must not take 106")
+	_expect(not Girdle.HOURS.has("107"), "girdle hours must not take 107")
+	_expect(not Girdle.HOURS.has("108"), "girdle hours must not take 108")
+	_expect(not Girdle.HOURS.has("109"), "girdle hours must not take 109")
+	_expect(not Girdle.HOURS.has("110"), "girdle hours must not take 110")
+	_expect(not Girdle.HOURS.has("111"), "girdle hours must not take 111")
+	_expect(not Girdle.HOURS.has("112"), "girdle hours must not take 112")
+	_expect(not Girdle.HOURS.has("113"), "girdle hours must not take 113")
+	_expect(not Girdle.HOURS.has("114"), "girdle hours must not take 114")
+	_expect(not Girdle.HOURS.has("115"), "girdle hours must not take 115")
+	_expect(not Girdle.HOURS.has("116"), "girdle hours must not take 116")
+	_expect(not Girdle.HOURS.has("117"), "girdle hours must not take 117")
+	_expect(not Girdle.HOURS.has("118"), "girdle hours must not take 118")
+	_expect(not Girdle.HOURS.has("119"), "girdle hours must not take 119")
+	_expect(not Girdle.HOURS.has("120"), "girdle hours must not take 120")
+	_expect(not Girdle.HOURS.has("121"), "girdle hours must not take 121")
+	_expect(not Girdle.HOURS.has("122"), "girdle hours must not take 122")
+	_expect(not Girdle.HOURS.has("123"), "girdle hours must not take 123")
+	_expect(not Girdle.HOURS.has("124"), "girdle hours must not take 124")
+	_expect(not Girdle.HOURS.has("125"), "girdle hours must not take 125")
+	_expect(not Girdle.HOURS.has("126"), "girdle hours must not take 126")
+	_expect(not Girdle.HOURS.has("127"), "girdle hours must not take 127")
+	_expect(not Girdle.HOURS.has("128"), "girdle hours must not take 128")
+	_expect(not Girdle.HOURS.has("129"), "girdle hours must not take 129")
+	_expect(not Girdle.HOURS.has("130"), "girdle hours must not take 130")
+	_expect(not Girdle.HOURS.has("131"), "girdle hours must not take 131")
+	_expect(not Girdle.HOURS.has("132"), "girdle hours must not take 132")
+	_expect(not Girdle.HOURS.has("133"), "girdle hours must not take 133")
+	_expect(not Girdle.HOURS.has("134"), "girdle hours must not take 134")
+	_expect(not Girdle.HOURS.has("135"), "girdle hours must not take 135")
+	_expect(not Girdle.HOURS.has("136"), "girdle hours must not take 136")
+	_expect(not Girdle.HOURS.has("137"), "girdle hours must not take 137")
+	_expect(not Girdle.HOURS.has("138"), "girdle hours must not take 138")
+	_expect(not Girdle.HOURS.has("139"), "girdle hours must not take 139")
+	_expect(not Girdle.HOURS.has("140"), "girdle hours must not take 140")
+	_expect(not Girdle.HOURS.has("141"), "girdle hours must not take 141")
+	_expect(not Girdle.HOURS.has("142"), "girdle hours must not take 142")
+	_expect(not Girdle.HOURS.has("143"), "girdle hours must not take 143")
+	_expect(not Girdle.HOURS.has("144"), "girdle hours must not take 144")
+	_expect(not Girdle.HOURS.has("145"), "girdle hours must not take 145")
+	_expect(not Girdle.HOURS.has("146"), "girdle hours must not take 146")
+	_expect(not Girdle.HOURS.has("147"), "girdle hours must not take 147")
+	_expect(not Girdle.HOURS.has("148"), "girdle hours must not take 148")
+	_expect(not Girdle.HOURS.has("149"), "girdle hours must not take 149")
+	_expect(not Girdle.HOURS.has("150"), "girdle hours must not take 150")
+	_expect(not Girdle.HOURS.has("151"), "girdle hours must not take 151")
+	_expect(not Girdle.HOURS.has("152"), "girdle hours must not take 152")
+	_expect(not Girdle.HOURS.has("153"), "girdle hours must not take 153")
+	_expect(not Girdle.HOURS.has("154"), "girdle hours must not take 154")
+	_expect(not Girdle.HOURS.has("155"), "girdle hours must not take 155")
+	_expect(not Girdle.HOURS.has("156"), "girdle hours must not take 156")
+	_expect(not Girdle.HOURS.has("157"), "girdle hours must not take 157")
+	_expect(not Girdle.HOURS.has("158"), "girdle hours must not take 158")
+	_expect(not Girdle.HOURS.has("159"), "girdle hours must not take 159")
+	_expect(not Girdle.HOURS.has("160"), "girdle hours must not take 160")
+	_expect(not Girdle.HOURS.has("161"), "girdle hours must not take 161")
+	_expect(not Girdle.HOURS.has("162"), "girdle hours must not take 162")
+	_expect(not Girdle.HOURS.has("163"), "girdle hours must not take 163")
+	_expect(not Girdle.HOURS.has("164"), "girdle hours must not take 164")
+	_expect(not Girdle.HOURS.has("165"), "girdle hours must not take 165")
+	_expect(not Girdle.HOURS.has("166"), "girdle hours must not take 166")
+	_expect(not Girdle.HOURS.has("167"), "girdle hours must not take 167")
+	_expect(not Girdle.HOURS.has("168"), "girdle hours must not take 168")
+	_expect(not Girdle.HOURS.has("169"), "girdle hours must not take 169")
+	_expect(not Girdle.HOURS.has("170"), "girdle hours must not take 170")
+	_expect(not Girdle.HOURS.has("171"), "girdle hours must not take 171")
+	_expect(not Girdle.HOURS.has("172"), "girdle hours must not take 172")
+	_expect(not Girdle.HOURS.has("173"), "girdle hours must not take 173")
+	_expect(not Girdle.HOURS.has("174"), "girdle hours must not take 174")
+	_expect(not Girdle.HOURS.has("175"), "girdle hours must not take 175")
+	_expect(not Girdle.HOURS.has("176"), "girdle hours must not take 176")
+	_expect(not Girdle.HOURS.has("177"), "girdle hours must not take 177")
+	_expect(not Girdle.HOURS.has("178"), "girdle hours must not take 178")
+	_expect(not Girdle.HOURS.has("179"), "girdle hours must not take 179")
+	_expect(not Girdle.HOURS.has("180"), "girdle hours must not take 180")
+	_expect(not Girdle.HOURS.has("181"), "girdle hours must not take 181")
+	_expect(not Girdle.HOURS.has("182"), "girdle hours must not take 182")
+	_expect(not Girdle.HOURS.has("183"), "girdle hours must not take 183")
+	_expect(not Girdle.HOURS.has("184"), "girdle hours must not take 184")
+	_expect(not Girdle.HOURS.has("185"), "girdle hours must not take 185")
+
+	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal", "The orchard graft", "The dye vat", "The tar kettle", "The cork press", "The net loft", "The cask hoop", "The linen fold", "The dovetail", "The mortise", "The rebate", "The housing", "The tenon", "The bridle", "The dado", "The spline", "The mitre", "The lap", "The scarf", "The finger", "The haunch", "The dowel", "The tongue", "The quirk", "The chamfer", "The scotia", "The cyma", "The cavetto", "The reed", "The annulet", "The hood", "The listel", "The abacus", "The girdle"], "case list is %s" % str(titles))
 
 
 
@@ -21263,7 +22734,7 @@ func _test_menu_opens_either_case() -> void:
 		root._ready()
 	var menu_blob := _visible_label_blob(root)
 	_expect(get_root().size == Vector2i(1280, 800), "case window is %s" % str(get_root().size))
-	_expect(menu_blob.find("Forty-seven files") >= 0, "menu does not offer forty-seven files: %s" % menu_blob)
+	_expect(menu_blob.find("Forty-nine files") >= 0, "menu does not offer forty-nine files: %s" % menu_blob)
 	_expect(menu_blob.find("CW-07") >= 0, "menu omits CW-07")
 	_expect(menu_blob.find("The hive smoker") >= 0, "menu omits The hive smoker")
 	_expect(menu_blob.find("CW-08") >= 0, "menu omits CW-08")
@@ -21346,6 +22817,10 @@ func _test_menu_opens_either_case() -> void:
 	_expect(menu_blob.find("The hood") >= 0, "menu omits The hood")
 	_expect(menu_blob.find("CW-47") >= 0, "menu omits CW-47")
 	_expect(menu_blob.find("The listel") >= 0, "menu omits The listel")
+	_expect(menu_blob.find("CW-48") >= 0, "menu omits CW-48")
+	_expect(menu_blob.find("The abacus") >= 0, "menu omits The abacus")
+	_expect(menu_blob.find("CW-49") >= 0, "menu omits CW-49")
+	_expect(menu_blob.find("The girdle") >= 0, "menu omits The girdle")
 	_expect(root.get_child_count() > 0, "main scene built %d children" % root.get_child_count())
 	_press(root, "How to play")
 	var howto := _visible_label_blob(root)
@@ -21396,6 +22871,8 @@ func _test_menu_opens_either_case() -> void:
 	_expect(howto.find("The annulet") >= 0, "how to play omits The annulet")
 	_expect(howto.find("The hood") >= 0, "how to play omits The hood")
 	_expect(howto.find("The listel") >= 0, "how to play omits The listel")
+	_expect(howto.find("The abacus") >= 0, "how to play omits The abacus")
+	_expect(howto.find("The girdle") >= 0, "how to play omits The girdle")
 	_expect(howto.find("names that slot") >= 0, "how to play omits the empty-slot rule")
 	_press(root, "Back to the menu")
 	_expect(_find_visible_button(root, "Open The spare key") != null, "menu is missing The spare key")
@@ -21445,6 +22922,8 @@ func _test_menu_opens_either_case() -> void:
 	_expect(_find_visible_button(root, "Open The annulet") != null, "menu is missing The annulet")
 	_expect(_find_visible_button(root, "Open The hood") != null, "menu is missing The hood")
 	_expect(_find_visible_button(root, "Open The listel") != null, "menu is missing The listel")
+	_expect(_find_visible_button(root, "Open The abacus") != null, "menu is missing The abacus")
+	_expect(_find_visible_button(root, "Open The girdle") != null, "menu is missing The girdle")
 	_press(root, "Open The rehearsal score")
 	var rehearsal_open := _visible_label_blob(root)
 	_expect(rehearsal_open.find("Cut list") >= 0, "rehearsal file did not open")
@@ -28471,6 +29950,1448 @@ func _test_menu_opens_either_case() -> void:
 	_expect(dowel_after_listel.find("fits every exhibit") >= 0, "dowel board rejected the true theory after The listel: %s" % dowel_after_listel)
 	_expect(dowel_after_listel.find("Faye (dowel hand) cut the dowel in the bit at 128") >= 0, "dowel board timeline after The listel: %s" % dowel_after_listel)
 	_press(root, "Menu")
+	_press(root, "Open The abacus")
+	var abacus_open := _visible_label_blob(root)
+	_expect(abacus_open.find("Medlar chit") >= 0, "abacus holdfast did not open")
+	_expect(abacus_open.find("Nag note") >= 0, "abacus holdfast did not show its exhibits")
+	_expect(abacus_open.find("CW-48") >= 0, "abacus holdfast omits CW-48")
+	_expect(abacus_open.find("Saffron sight") >= 0, "abacus holdfast omits Saffron sight")
+	_expect(abacus_open.find("Juniper bill") >= 0, "abacus holdfast omits Juniper bill")
+	_expect(abacus_open.find("Weld slate") >= 0, "abacus holdfast omits Weld slate")
+	_expect(abacus_open.find("Holdfast card") >= 0, "abacus holdfast omits Holdfast card")
+	_expect(abacus_open.find("Glue slip") >= 0, "abacus holdfast omits Glue slip")
+	_expect(abacus_open.find("Abacus leaf") >= 0, "abacus holdfast omits Abacus leaf")
+	_expect(abacus_open.find("Graphite order") >= 0, "abacus holdfast omits Graphite order")
+	_expect(abacus_open.find("Hatchet card") >= 0, "abacus holdfast omits the hatchet card")
+	_expect(abacus_open.find("Complaint slip") == -1, "spare key papers showed inside The abacus")
+	_expect(abacus_open.find("Cut list") == -1, "rehearsal papers showed inside The abacus")
+	_expect(abacus_open.find("Move order") == -1, "gilt stamp papers showed inside The abacus")
+	_expect(abacus_open.find("Whistle slip") == -1, "ferry bell papers showed inside The abacus")
+	_expect(abacus_open.find("Frost note") == -1, "weather slate papers showed inside The abacus")
+	_expect(abacus_open.find("Trough tag") == -1, "loom shuttle papers showed inside The abacus")
+	_expect(abacus_open.find("Fuel line") == -1, "hive smoker papers showed inside The abacus")
+	_expect(abacus_open.find("Weight line") == -1, "glass pontil papers showed inside The abacus")
+	_expect(abacus_open.find("Lock line") == -1, "press proof papers showed inside The abacus")
+	_expect(abacus_open.find("Cup line") == -1, "assay cup papers showed inside The abacus")
+	_expect(abacus_open.find("Mark line") == -1, "kiln chalk papers showed inside The abacus")
+	_expect(abacus_open.find("Ledger line") == -1, "tide ledger papers showed inside The abacus")
+	_expect(abacus_open.find("Bell line") == -1, "night bell papers showed inside The abacus")
+	_expect(abacus_open.find("Salt line") == -1, "salt mark papers showed inside The abacus")
+	_expect(abacus_open.find("Oil note") == -1, "wick trim papers showed inside The abacus")
+	_expect(abacus_open.find("Gather note") == -1, "glass anneal papers showed inside The abacus")
+	_expect(abacus_open.find("Scion note") == -1, "orchard graft papers showed inside The abacus")
+	_expect(abacus_open.find("Winder chit") == -1, "dye vat papers showed inside The abacus")
+	_expect(abacus_open.find("Rope chit") == -1, "tar kettle papers showed inside The abacus")
+	_expect(abacus_open.find("Cutter chit") == -1, "cork press papers showed inside The abacus")
+	_expect(abacus_open.find("Mesh chit") == -1, "net loft papers showed inside The abacus")
+	_expect(abacus_open.find("Hoop chit") == -1, "cask hoop papers showed inside The abacus")
+	_expect(abacus_open.find("Shears chit") == -1, "linen fold papers showed inside The abacus")
+	_expect(abacus_open.find("Apron sight") == -1, "dovetail papers showed inside The abacus")
+	_expect(abacus_open.find("Peg hook") == -1, "dovetail papers showed inside The abacus")
+	_expect(abacus_open.find("Joint slate") == -1, "dovetail papers showed inside The abacus")
+	_expect(abacus_open.find("Clamp card") == -1, "dovetail papers showed inside The abacus")
+	_expect(abacus_open.find("Sweep slip") == -1, "dovetail papers showed inside The abacus")
+	_expect(abacus_open.find("Cut leaf") == -1, "dovetail papers showed inside The abacus")
+	_expect(abacus_open.find("Joint note") == -1, "dovetail papers showed inside The abacus")
+	_expect(abacus_open.find("Jaw order") == -1, "dovetail papers showed inside The abacus")
+	_expect(abacus_open.find("CW-24") == -1, "dovetail file code stayed up inside The abacus")
+	_expect(abacus_open.find("Chisel chit") == -1, "mortise papers stayed up inside The abacus")
+	_expect(abacus_open.find("Awl sight") == -1, "mortise papers showed inside The abacus")
+	_expect(abacus_open.find("Wedge hook") == -1, "mortise papers showed inside The abacus")
+	_expect(abacus_open.find("Tenon slate") == -1, "mortise papers showed inside The abacus")
+	_expect(abacus_open.find("Brush slip") == -1, "mortise papers showed inside The abacus")
+	_expect(abacus_open.find("Bore leaf") == -1, "mortise papers showed inside The abacus")
+	_expect(abacus_open.find("Tenon note") == -1, "mortise papers showed inside The abacus")
+	_expect(abacus_open.find("Rack order") == -1, "mortise papers showed inside The abacus")
+	_expect(abacus_open.find("CW-25") == -1, "mortise file code stayed up inside The abacus")
+	_expect(abacus_open.find("Plane chit") == -1, "rebate papers stayed up inside The abacus")
+	_expect(abacus_open.find("Gauge sight") == -1, "rebate papers showed inside The abacus")
+	_expect(abacus_open.find("Shim hook") == -1, "rebate papers showed inside The abacus")
+	_expect(abacus_open.find("Shoulder slate") == -1, "rebate papers showed inside The abacus")
+	_expect(abacus_open.find("Fence card") == -1, "rebate papers showed inside The abacus")
+	_expect(abacus_open.find("Oil slip") == -1, "rebate papers showed inside The abacus")
+	_expect(abacus_open.find("Scribe leaf") == -1, "rebate papers showed inside The abacus")
+	_expect(abacus_open.find("Shoulder note") == -1, "rebate papers showed inside The abacus")
+	_expect(abacus_open.find("CW-26") == -1, "rebate file code stayed up inside The abacus")
+	_expect(abacus_open.find("Saw chit") == -1, "housing papers stayed up inside The abacus")
+	_expect(abacus_open.find("Square sight") == -1, "housing papers showed inside The abacus")
+	_expect(abacus_open.find("Fillet hook") == -1, "housing papers showed inside The abacus")
+	_expect(abacus_open.find("Trench slate") == -1, "housing papers showed inside The abacus")
+	_expect(abacus_open.find("Stock card") == -1, "housing papers showed inside The abacus")
+	_expect(abacus_open.find("Chalk slip") == -1, "housing papers showed inside The abacus")
+	_expect(abacus_open.find("Mark leaf") == -1, "housing papers showed inside The abacus")
+	_expect(abacus_open.find("Trench note") == -1, "housing papers showed inside The abacus")
+	_expect(abacus_open.find("CW-27") == -1, "housing file code stayed up inside The abacus")
+	_expect(abacus_open.find("Gouge chit") == -1, "tenon papers stayed up inside The abacus")
+	_expect(abacus_open.find("Rasp sight") == -1, "tenon papers showed inside The abacus")
+	_expect(abacus_open.find("Dowel hook") == -1, "tenon papers showed inside The abacus")
+	_expect(abacus_open.find("Haunch slate") == -1, "tenon papers showed inside The abacus")
+	_expect(abacus_open.find("Guide card") == -1, "tenon papers showed inside The abacus")
+	_expect(abacus_open.find("Hone slip") == -1, "tenon papers showed inside The abacus")
+	_expect(abacus_open.find("Nick leaf") == -1, "tenon papers showed inside The abacus")
+	_expect(abacus_open.find("CW-28") == -1, "tenon file code stayed up inside The abacus")
+	_expect(abacus_open.find("Router chit") == -1, "bridle papers stayed up inside The abacus")
+	_expect(abacus_open.find("Gluer sight") == -1, "bridle papers showed inside The abacus")
+	_expect(abacus_open.find("Spline hook") == -1, "bridle papers showed inside The abacus")
+	_expect(abacus_open.find("Tongue slate") == -1, "bridle papers showed inside The abacus")
+	_expect(abacus_open.find("Templet card") == -1, "bridle papers showed inside The abacus")
+	_expect(abacus_open.find("Strop slip") == -1, "bridle papers showed inside The abacus")
+	_expect(abacus_open.find("Notch leaf") == -1, "bridle papers showed inside The abacus")
+	_expect(abacus_open.find("Tongue note") == -1, "bridle papers showed inside The abacus")
+	_expect(abacus_open.find("CW-29") == -1, "bridle file code stayed up inside The abacus")
+	_expect(abacus_open.find("Plough chit") == -1, "dado papers stayed up inside The abacus")
+	_expect(abacus_open.find("Float sight") == -1, "dado papers showed inside The abacus")
+	_expect(abacus_open.find("Cleat hook") == -1, "dado papers showed inside The abacus")
+	_expect(abacus_open.find("Groove slate") == -1, "dado papers showed inside The abacus")
+	_expect(abacus_open.find("Spur card") == -1, "dado papers showed inside The abacus")
+	_expect(abacus_open.find("Whet slip") == -1, "dado papers showed inside The abacus")
+	_expect(abacus_open.find("Score leaf") == -1, "dado papers showed inside The abacus")
+	_expect(abacus_open.find("Groove note") == -1, "dado papers showed inside The abacus")
+	_expect(abacus_open.find("CW-30") == -1, "dado file code stayed up inside The abacus")
+	_expect(abacus_open.find("Slot chit") == -1, "spline papers stayed up inside The abacus")
+	_expect(abacus_open.find("Rest sight") == -1, "spline papers showed inside The abacus")
+	_expect(abacus_open.find("Feather hook") == -1, "spline papers showed inside The abacus")
+	_expect(abacus_open.find("Slot slate") == -1, "spline papers showed inside The abacus")
+	_expect(abacus_open.find("Key card") == -1, "spline papers showed inside The abacus")
+	_expect(abacus_open.find("Cheek slip") == -1, "spline papers showed inside The abacus")
+	_expect(abacus_open.find("Slot leaf") == -1, "spline papers showed inside The abacus")
+	_expect(abacus_open.find("Slot note") == -1, "spline papers showed inside The abacus")
+	_expect(abacus_open.find("Dry order") == -1, "spline papers showed inside The abacus")
+	_expect(abacus_open.find("CW-31") == -1, "spline file code stayed up inside The abacus")
+	_expect(abacus_open.find("Arris chit") == -1, "mitre papers stayed up inside The abacus")
+	_expect(abacus_open.find("Horn sight") == -1, "mitre papers showed inside The abacus")
+	_expect(abacus_open.find("Offcut hook") == -1, "mitre papers showed inside The abacus")
+	_expect(abacus_open.find("Arris slate") == -1, "mitre papers showed inside The abacus")
+	_expect(abacus_open.find("Stop card") == -1, "mitre papers showed inside The abacus")
+	_expect(abacus_open.find("Dress slip") == -1, "mitre papers showed inside The abacus")
+	_expect(abacus_open.find("Arris leaf") == -1, "mitre papers showed inside The abacus")
+	_expect(abacus_open.find("Arris note") == -1, "mitre papers showed inside The abacus")
+	_expect(abacus_open.find("Brush order") == -1, "mitre papers showed inside The abacus")
+	_expect(abacus_open.find("CW-32") == -1, "mitre file code stayed up inside The abacus")
+	_expect(abacus_open.find("Grain chit") == -1, "lap papers stayed up inside The abacus")
+	_expect(abacus_open.find("Crest sight") == -1, "lap papers showed inside The abacus")
+	_expect(abacus_open.find("Paring hook") == -1, "lap papers showed inside The abacus")
+	_expect(abacus_open.find("Grain slate") == -1, "lap papers showed inside The abacus")
+	_expect(abacus_open.find("Brad card") == -1, "lap papers showed inside The abacus")
+	_expect(abacus_open.find("Skim slip") == -1, "lap papers showed inside The abacus")
+	_expect(abacus_open.find("Grain leaf") == -1, "lap papers showed inside The abacus")
+	_expect(abacus_open.find("Grain note") == -1, "lap papers showed inside The abacus")
+	_expect(abacus_open.find("Oil order") == -1, "lap papers showed inside The abacus")
+	_expect(abacus_open.find("CW-33") == -1, "lap file code stayed up inside The abacus")
+	_expect(abacus_open.find("Shoulder chit") == -1, "scarf papers stayed up inside The abacus")
+	_expect(abacus_open.find("Sole sight") == -1, "scarf papers showed inside The abacus")
+	_expect(abacus_open.find("Shaving hook") == -1, "scarf papers showed inside The abacus")
+	_expect(abacus_open.find("Edge slate") == -1, "scarf papers showed inside The abacus")
+	_expect(abacus_open.find("Wedge card") == -1, "scarf papers showed inside The abacus")
+	_expect(abacus_open.find("Film slip") == -1, "scarf papers showed inside The abacus")
+	_expect(abacus_open.find("Scarf leaf") == -1, "scarf papers showed inside The abacus")
+	_expect(abacus_open.find("Scarf note") == -1, "scarf papers showed inside The abacus")
+	_expect(abacus_open.find("Finish order") == -1, "scarf papers showed inside The abacus")
+	_expect(abacus_open.find("CW-34") == -1, "scarf file code stayed up inside The abacus")
+	_expect(abacus_open.find("Socket chit") == -1, "finger papers showed inside The abacus")
+	_expect(abacus_open.find("Burr sight") == -1, "finger papers showed inside The abacus")
+	_expect(abacus_open.find("Chip bill") == -1, "finger papers showed inside The abacus")
+	_expect(abacus_open.find("Face slate") == -1, "finger papers showed inside The abacus")
+	_expect(abacus_open.find("Catch card") == -1, "finger papers showed inside The abacus")
+	_expect(abacus_open.find("Sheen slip") == -1, "finger papers showed inside The abacus")
+	_expect(abacus_open.find("Finger leaf") == -1, "finger papers showed inside The abacus")
+	_expect(abacus_open.find("Finger note") == -1, "finger papers showed inside The abacus")
+	_expect(abacus_open.find("Rub order") == -1, "finger papers showed inside The abacus")
+	_expect(abacus_open.find("CW-35") == -1, "finger file code stayed up inside The abacus")
+	_expect(abacus_open.find("so the bevel would take the haunch") == -1, "tenon aim stayed up inside The abacus")
+	_expect(abacus_open.find("Cheek chit") == -1, "haunch papers showed inside The abacus")
+	_expect(abacus_open.find("Toe sight") == -1, "haunch papers showed inside The abacus")
+	_expect(abacus_open.find("Sliver bill") == -1, "haunch papers showed inside The abacus")
+	_expect(abacus_open.find("Bed slate") == -1, "haunch papers showed inside The abacus")
+	_expect(abacus_open.find("Pin card") == -1, "haunch papers showed inside The abacus")
+	_expect(abacus_open.find("Wipe slip") == -1, "haunch papers showed inside The abacus")
+	_expect(abacus_open.find("Haunch leaf") == -1, "haunch papers showed inside The abacus")
+	_expect(abacus_open.find("Haunch note") == -1, "haunch papers showed inside The abacus")
+	_expect(abacus_open.find("Stone order") == -1, "haunch papers showed inside The abacus")
+	_expect(abacus_open.find("CW-36") == -1, "haunch file code stayed up inside The abacus")
+	_expect(abacus_open.find("so the cheek would take the haunch") == -1, "haunch aim stayed up inside The abacus")
+	_expect(abacus_open.find("Bore chit") == -1, "dowel papers showed inside The abacus")
+	_expect(abacus_open.find("Point sight") == -1, "dowel papers showed inside The abacus")
+	_expect(abacus_open.find("Curl bill") == -1, "dowel papers showed inside The abacus")
+	_expect(abacus_open.find("Flute slate") == -1, "dowel papers showed inside The abacus")
+	_expect(abacus_open.find("Chuck card") == -1, "dowel papers showed inside The abacus")
+	_expect(abacus_open.find("Wax slip") == -1, "dowel papers showed inside The abacus")
+	_expect(abacus_open.find("Dowel leaf") == -1, "dowel papers showed inside The abacus")
+	_expect(abacus_open.find("Dowel note") == -1, "dowel papers showed inside The abacus")
+	_expect(abacus_open.find("Hone order") == -1, "dowel papers showed inside The abacus")
+	_expect(abacus_open.find("CW-37") == -1, "dowel file code stayed up inside The abacus")
+	_expect(abacus_open.find("Brace card") == -1, "dowel papers showed inside The abacus")
+	_expect(abacus_open.find("so the bore would take the dowel") == -1, "dowel aim stayed up inside The abacus")
+	_expect(abacus_open.find("Groove chit") == -1, "tongue papers showed inside The abacus")
+	_expect(abacus_open.find("Face sight") == -1, "tongue papers showed inside The abacus")
+	_expect(abacus_open.find("Peel bill") == -1, "tongue papers showed inside The abacus")
+	_expect(abacus_open.find("Kerf slate") == -1, "tongue papers showed inside The abacus")
+	_expect(abacus_open.find("Turn card") == -1, "tongue papers showed inside The abacus")
+	_expect(abacus_open.find("Tallow slip") == -1, "tongue papers showed inside The abacus")
+	_expect(abacus_open.find("Tongue leaf") == -1, "tongue papers showed inside The abacus")
+	_expect(abacus_open.find("Filly note") == -1, "tongue papers showed inside The abacus")
+	_expect(abacus_open.find("Grind order") == -1, "tongue papers showed inside The abacus")
+	_expect(abacus_open.find("Scribe card") == -1, "tongue papers showed inside The abacus")
+	_expect(abacus_open.find("CW-38") == -1, "tongue file code stayed up inside The abacus")
+	_expect(abacus_open.find("so the groove would take the tongue") == -1, "tongue aim stayed up inside The abacus")
+	_expect(abacus_open.find("Ovolo chit") == -1, "quirk papers showed inside The abacus")
+	_expect(abacus_open.find("Bolt sight") == -1, "quirk papers showed inside The abacus")
+	_expect(abacus_open.find("Astragal bill") == -1, "quirk papers showed inside The abacus")
+	_expect(abacus_open.find("Score slate") == -1, "quirk papers showed inside The abacus")
+	_expect(abacus_open.find("Snib card") == -1, "quirk papers showed inside The abacus")
+	_expect(abacus_open.find("Grease slip") == -1, "quirk papers showed inside The abacus")
+	_expect(abacus_open.find("Quirk leaf") == -1, "quirk papers showed inside The abacus")
+	_expect(abacus_open.find("Gelding note") == -1, "quirk papers showed inside The abacus")
+	_expect(abacus_open.find("Whet order") == -1, "quirk papers showed inside The abacus")
+	_expect(abacus_open.find("Veiner card") == -1, "quirk papers showed inside The abacus")
+	_expect(abacus_open.find("CW-39") == -1, "quirk file code stayed up inside The abacus")
+	_expect(abacus_open.find("so the ovolo would take the quirk") == -1, "quirk aim stayed up inside The abacus")
+	_expect(abacus_open.find("Cove chit") == -1, "chamfer papers showed inside The abacus")
+	_expect(abacus_open.find("Tooth sight") == -1, "chamfer papers showed inside The abacus")
+	_expect(abacus_open.find("Cant bill") == -1, "chamfer papers showed inside The abacus")
+	_expect(abacus_open.find("Wisp slate") == -1, "chamfer papers showed inside The abacus")
+	_expect(abacus_open.find("File card") == -1, "chamfer papers showed inside The abacus")
+	_expect(abacus_open.find("Soap slip") == -1, "chamfer papers showed inside The abacus")
+	_expect(abacus_open.find("Chamfer leaf") == -1, "chamfer papers showed inside The abacus")
+	_expect(abacus_open.find("Stallion note") == -1, "chamfer papers showed inside The abacus")
+	_expect(abacus_open.find("Fettle order") == -1, "chamfer papers showed inside The abacus")
+	_expect(abacus_open.find("Travisher card") == -1, "chamfer papers showed inside The abacus")
+	_expect(abacus_open.find("CW-40") == -1, "chamfer file code stayed up inside The abacus")
+	_expect(abacus_open.find("so the cove would take the chamfer") == -1, "chamfer aim stayed up inside The abacus")
+	_expect(abacus_open.find("Torus chit") == -1, "scotia papers showed inside The abacus")
+	_expect(abacus_open.find("Cusp sight") == -1, "scotia papers showed inside The abacus")
+	_expect(abacus_open.find("Fascia bill") == -1, "scotia papers showed inside The abacus")
+	_expect(abacus_open.find("Soot slate") == -1, "scotia papers showed inside The abacus")
+	_expect(abacus_open.find("Riffler card") == -1, "scotia papers showed inside The abacus")
+	_expect(abacus_open.find("Pumice slip") == -1, "scotia papers showed inside The abacus")
+	_expect(abacus_open.find("Scotia leaf") == -1, "scotia papers showed inside The abacus")
+	_expect(abacus_open.find("Yearling note") == -1, "scotia papers showed inside The abacus")
+	_expect(abacus_open.find("Peen order") == -1, "scotia papers showed inside The abacus")
+	_expect(abacus_open.find("Scorp card") == -1, "scotia papers showed inside The abacus")
+	_expect(abacus_open.find("CW-41") == -1, "scotia file code stayed up inside The abacus")
+	_expect(abacus_open.find("so the torus would take the scotia") == -1, "scotia aim stayed up inside The abacus")
+	_expect(abacus_open.find("Echinus chit") == -1, "cyma papers showed inside The abacus")
+	_expect(abacus_open.find("Beak sight") == -1, "cyma papers showed inside The abacus")
+	_expect(abacus_open.find("Corona bill") == -1, "cyma papers showed inside The abacus")
+	_expect(abacus_open.find("Garnet slate") == -1, "cyma papers showed inside The abacus")
+	_expect(abacus_open.find("Inshave card") == -1, "cyma papers showed inside The abacus")
+	_expect(abacus_open.find("Rouge slip") == -1, "cyma papers showed inside The abacus")
+	_expect(abacus_open.find("Cyma leaf") == -1, "cyma papers showed inside The abacus")
+	_expect(abacus_open.find("Jennet note") == -1, "cyma papers showed inside The abacus")
+	_expect(abacus_open.find("Chase order") == -1, "cyma papers showed inside The abacus")
+	_expect(abacus_open.find("Froe card") == -1, "cyma papers showed inside The abacus")
+	_expect(abacus_open.find("CW-42") == -1, "cyma file code stayed up inside The abacus")
+	_expect(abacus_open.find("so the echinus would take the cyma") == -1, "cyma aim stayed up inside The abacus")
+	_expect(abacus_open.find("Thumbnail chit") == -1, "cavetto papers showed inside The abacus")
+	_expect(abacus_open.find("Drip sight") == -1, "cavetto papers showed inside The abacus")
+	_expect(abacus_open.find("Staff bill") == -1, "cavetto papers showed inside The abacus")
+	_expect(abacus_open.find("Cedar slate") == -1, "cavetto papers showed inside The abacus")
+	_expect(abacus_open.find("Bullnose card") == -1, "cavetto papers showed inside The abacus")
+	_expect(abacus_open.find("Scrape slip") == -1, "cavetto papers showed inside The abacus")
+	_expect(abacus_open.find("Cavetto leaf") == -1, "cavetto papers showed inside The abacus")
+	_expect(abacus_open.find("Palfrey note") == -1, "cavetto papers showed inside The abacus")
+	_expect(abacus_open.find("Knurl order") == -1, "cavetto papers showed inside The abacus")
+	_expect(abacus_open.find("Twibil card") == -1, "cavetto papers showed inside The abacus")
+	_expect(abacus_open.find("CW-43") == -1, "cavetto file code stayed up inside The abacus")
+	_expect(abacus_open.find("so the thumbnail would take the cavetto") == -1, "cavetto aim stayed up inside The abacus")
+	_expect(abacus_open.find("Walnut chit") == -1, "reed papers showed inside The abacus")
+	_expect(abacus_open.find("Deal sight") == -1, "reed papers showed inside The abacus")
+	_expect(abacus_open.find("Maple bill") == -1, "reed papers showed inside The abacus")
+	_expect(abacus_open.find("Larch slate") == -1, "reed papers showed inside The abacus")
+	_expect(abacus_open.find("Nosing card") == -1, "reed papers showed inside The abacus")
+	_expect(abacus_open.find("Blue slip") == -1, "reed papers showed inside The abacus")
+	_expect(abacus_open.find("Reed leaf") == -1, "reed papers showed inside The abacus")
+	_expect(abacus_open.find("Weanling note") == -1, "reed papers showed inside The abacus")
+	_expect(abacus_open.find("Temper order") == -1, "reed papers showed inside The abacus")
+	_expect(abacus_open.find("Rounder card") == -1, "reed papers showed inside The abacus")
+	_expect(abacus_open.find("CW-44") == -1, "reed file code stayed up inside The abacus")
+	_expect(abacus_open.find("so the walnut would take the reed") == -1, "reed aim stayed up inside The abacus")
+	_expect(abacus_open.find("Spruce chit") == -1, "annulet papers showed inside The abacus")
+	_expect(abacus_open.find("Billet sight") == -1, "annulet papers showed inside The abacus")
+	_expect(abacus_open.find("Poplar bill") == -1, "annulet papers showed inside The abacus")
+	_expect(abacus_open.find("Osier slate") == -1, "annulet papers showed inside The abacus")
+	_expect(abacus_open.find("Burnisher card") == -1, "annulet papers showed inside The abacus")
+	_expect(abacus_open.find("Stipple slip") == -1, "annulet papers showed inside The abacus")
+	_expect(abacus_open.find("Annulet leaf") == -1, "annulet papers showed inside The abacus")
+	_expect(abacus_open.find("Hinny note") == -1, "annulet papers showed inside The abacus")
+	_expect(abacus_open.find("Forge order") == -1, "annulet papers showed inside The abacus")
+	_expect(abacus_open.find("Drawshave card") == -1, "annulet papers showed inside The abacus")
+	_expect(abacus_open.find("CW-45") == -1, "annulet file code stayed up inside The abacus")
+	_expect(abacus_open.find("so the spruce would take the annulet") == -1, "annulet aim stayed up inside The abacus")
+	_expect(abacus_open.find("Holly chit") == -1, "hood papers showed inside The abacus")
+	_expect(abacus_open.find("Ivory sight") == -1, "hood papers showed inside The abacus")
+	_expect(abacus_open.find("Chestnut bill") == -1, "hood papers showed inside The abacus")
+	_expect(abacus_open.find("Boxwood slate") == -1, "hood papers showed inside The abacus")
+	_expect(abacus_open.find("Compass card") == -1, "hood papers showed inside The abacus")
+	_expect(abacus_open.find("Glaze slip") == -1, "hood papers showed inside The abacus")
+	_expect(abacus_open.find("Hood leaf") == -1, "hood papers showed inside The abacus")
+	_expect(abacus_open.find("Mule note") == -1, "hood papers showed inside The abacus")
+	_expect(abacus_open.find("Bronze order") == -1, "hood papers showed inside The abacus")
+	_expect(abacus_open.find("Trying card") == -1, "hood papers showed inside The abacus")
+	_expect(abacus_open.find("CW-46") == -1, "hood file code stayed up inside The abacus")
+	_expect(abacus_open.find("so the holly would take the hood") == -1, "hood aim stayed up inside The abacus")
+	_expect(abacus_open.find("Alder chit") == -1, "listel papers showed inside The abacus")
+	_expect(abacus_open.find("Flax sight") == -1, "listel papers showed inside The abacus")
+	_expect(abacus_open.find("Quince bill") == -1, "listel papers showed inside The abacus")
+	_expect(abacus_open.find("Ochre slate") == -1, "listel papers showed inside The abacus")
+	_expect(abacus_open.find("Trammel card") == -1, "listel papers showed inside The abacus")
+	_expect(abacus_open.find("Plate slip") == -1, "listel papers showed inside The abacus")
+	_expect(abacus_open.find("Listel leaf") == -1, "listel papers showed inside The abacus")
+	_expect(abacus_open.find("Jenny note") == -1, "listel papers showed inside The abacus")
+	_expect(abacus_open.find("Dope order") == -1, "listel papers showed inside The abacus")
+	_expect(abacus_open.find("Template card") == -1, "listel papers showed inside The abacus")
+	_expect(abacus_open.find("CW-47") == -1, "listel file code stayed up inside The abacus")
+	_expect(abacus_open.find("so the alder would take the listel") == -1, "listel aim stayed up inside The abacus")
+	_press(root, "Submit theory")
+	var empty_abacus := _verdict_text(root)
+	_expect(empty_abacus.find("who cut the abacus") >= 0, "empty abacus board: %s" % empty_abacus)
+	_expect(empty_abacus.find("where they cut the abacus") >= 0, "empty abacus board: %s" % empty_abacus)
+	_expect(empty_abacus.find("at which hour they cut the abacus") >= 0, "empty abacus board: %s" % empty_abacus)
+	_expect(empty_abacus.find("who scratched the quirk") == -1, "empty chamfer board used a quirk slot: %s" % empty_abacus)
+	_expect(empty_abacus.find("who cut the tongue") == -1, "empty chamfer board used a tongue slot: %s" % empty_abacus)
+	_expect(empty_abacus.find("who cut the dowel") == -1, "empty chamfer board used a dowel slot: %s" % empty_abacus)
+	_expect(empty_abacus.find("who cut the chamfer") == -1, "empty scotia board used a chamfer slot: %s" % empty_abacus)
+	_expect(empty_abacus.find("where they cut the chamfer") == -1, "empty scotia board used a chamfer slot: %s" % empty_abacus)
+	_expect(empty_abacus.find("at which hour they cut the chamfer") == -1, "empty scotia board used a chamfer slot: %s" % empty_abacus)
+	_expect(empty_abacus.find("who cut the scotia") == -1, "empty abacus board used a scotia slot: %s" % empty_abacus)
+	_expect(empty_abacus.find("where they cut the scotia") == -1, "empty abacus board used a scotia slot: %s" % empty_abacus)
+	_expect(empty_abacus.find("at which hour they cut the scotia") == -1, "empty abacus board used a scotia slot: %s" % empty_abacus)
+	_expect(empty_abacus.find("who cut the cyma") == -1, "empty abacus board used a cyma slot: %s" % empty_abacus)
+	_expect(empty_abacus.find("where they cut the cyma") == -1, "empty abacus board used a cyma slot: %s" % empty_abacus)
+	_expect(empty_abacus.find("at which hour they cut the cyma") == -1, "empty abacus board used a cyma slot: %s" % empty_abacus)
+	_expect(empty_abacus.find("who cut the cavetto") == -1, "empty abacus board used a cavetto slot: %s" % empty_abacus)
+	_expect(empty_abacus.find("where they cut the cavetto") == -1, "empty abacus board used a cavetto slot: %s" % empty_abacus)
+	_expect(empty_abacus.find("at which hour they cut the cavetto") == -1, "empty abacus board used a cavetto slot: %s" % empty_abacus)
+	_expect(empty_abacus.find("who cut the reed") == -1, "empty abacus board used a reed slot: %s" % empty_abacus)
+	_expect(empty_abacus.find("where they cut the reed") == -1, "empty abacus board used a reed slot: %s" % empty_abacus)
+	_expect(empty_abacus.find("at which hour they cut the reed") == -1, "empty abacus board used a reed slot: %s" % empty_abacus)
+	_expect(empty_abacus.find("who cut the annulet") == -1, "empty abacus board used an annulet slot: %s" % empty_abacus)
+	_expect(empty_abacus.find("where they cut the annulet") == -1, "empty abacus board used an annulet slot: %s" % empty_abacus)
+	_expect(empty_abacus.find("at which hour they cut the annulet") == -1, "empty abacus board used an annulet slot: %s" % empty_abacus)
+	_expect(empty_abacus.find("who cut the hood") == -1, "empty abacus board used a hood slot: %s" % empty_abacus)
+	_expect(empty_abacus.find("where they cut the hood") == -1, "empty abacus board used a hood slot: %s" % empty_abacus)
+	_expect(empty_abacus.find("at which hour they cut the hood") == -1, "empty abacus board used a hood slot: %s" % empty_abacus)
+	_expect(empty_abacus.find("who cut the listel") == -1, "empty abacus board used a listel slot: %s" % empty_abacus)
+	_expect(empty_abacus.find("where they cut the listel") == -1, "empty abacus board used a listel slot: %s" % empty_abacus)
+	_expect(empty_abacus.find("at which hour they cut the listel") == -1, "empty abacus board used a listel slot: %s" % empty_abacus)
+	_expect(empty_abacus.to_lower().find("conflict") == -1, "empty chamfer board talked about a conflict: %s" % empty_abacus)
+	_press(root, "Hart")
+	_press(root, "Holdfast")
+	_press(root, "181")
+	_press(root, "Submit theory")
+	var abacus_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(abacus_miss, Abacus, {"who": "Hart", "place": "holdfast", "hour": "181"})
+	_expect(Abacus.conflicting_ids({"who": "Hart", "place": "holdfast", "hour": "181"}).size() == 9, "Hart / holdfast / 181 should contradict every exhibit")
+	_expect(abacus_miss.find("Medlar chit") >= 0, "wrong triple reply omits Medlar chit: %s" % abacus_miss)
+	_expect(abacus_miss.find("Saffron sight") >= 0, "wrong triple reply omits Saffron sight: %s" % abacus_miss)
+	_expect(abacus_miss.find("Juniper bill") >= 0, "wrong triple reply omits Juniper bill: %s" % abacus_miss)
+	_expect(abacus_miss.find("Weld slate") >= 0, "wrong triple reply omits Weld slate: %s" % abacus_miss)
+	_expect(abacus_miss.find("Holdfast card") >= 0, "wrong triple reply omits Holdfast card: %s" % abacus_miss)
+	_expect(abacus_miss.find("Glue slip") >= 0, "wrong triple reply omits Glue slip: %s" % abacus_miss)
+	_expect(abacus_miss.find("Abacus leaf") >= 0, "wrong triple reply omits Abacus leaf: %s" % abacus_miss)
+	_expect(abacus_miss.find("Nag note") >= 0, "wrong triple reply omits Nag note: %s" % abacus_miss)
+	_expect(abacus_miss.find("Graphite order") >= 0, "wrong triple reply omits Graphite order: %s" % abacus_miss)
+	_press(root, "Una")
+	_press(root, "Socle")
+	_press(root, "183")
+	_press(root, "Submit theory")
+	var abacus_accepted := _verdict_text(root)
+	_expect(abacus_accepted.find("fits every exhibit") >= 0, "abacus board rejected the true theory: %s" % abacus_accepted)
+	_expect(abacus_accepted.find(ABACUS_TIMELINE) >= 0, "abacus board timeline: %s" % abacus_accepted)
+	_expect(abacus_accepted.find("Una (abacus hand) cut the abacus in the socle at 183") >= 0, "abacus board omits Una at 183: %s" % abacus_accepted)
+	_expect(abacus_accepted.find("in the socle") >= 0, "abacus board omits the socle: %s" % abacus_accepted)
+	_expect(abacus_accepted.find("so the medlar would take the abacus") >= 0, "abacus board omits the medlar: %s" % abacus_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var abacus_cleared := _verdict_text(root)
+	_expect(abacus_cleared.find("who cut the abacus") >= 0, "cleared abacus board: %s" % abacus_cleared)
+	_expect(abacus_cleared.find("fits every exhibit") == -1, "cleared chamfer board stayed accepted: %s" % abacus_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The listel")
+	var listel_from_abacus := _visible_label_blob(root)
+	_expect(listel_from_abacus.find("Alder chit") >= 0, "could not return to The listel from The abacus")
+	_expect(listel_from_abacus.find("Jenny note") >= 0, "listel exhibits did not return from The abacus")
+	_expect(listel_from_abacus.find("CW-47") >= 0, "returned listel omits CW-47")
+	_expect(listel_from_abacus.find("Medlar chit") == -1, "abacus papers showed inside The listel")
+	_expect(listel_from_abacus.find("Nag note") == -1, "abacus papers showed inside The listel")
+	_expect(listel_from_abacus.find("CW-48") == -1, "abacus file code stayed up inside The listel")
+	_press(root, "Giles")
+	_press(root, "Plinth")
+	_press(root, "178")
+	_press(root, "Submit theory")
+	var listel_after_abacus := _verdict_text(root)
+	_expect(listel_after_abacus.find("fits every exhibit") >= 0, "listel board rejected the true theory after The abacus: %s" % listel_after_abacus)
+	_expect(listel_after_abacus.find("Giles (listel hand) cut the listel in the plinth at 178") >= 0, "listel board timeline after The abacus: %s" % listel_after_abacus)
+	_press(root, "Menu")
+	_press(root, "Open The hood")
+	var hood_from_abacus := _visible_label_blob(root)
+	_expect(hood_from_abacus.find("Holly chit") >= 0, "could not return to The hood from The abacus")
+	_expect(hood_from_abacus.find("Mule note") >= 0, "hood exhibits did not return from The abacus")
+	_expect(hood_from_abacus.find("CW-46") >= 0, "returned hood omits CW-46")
+	_expect(hood_from_abacus.find("Medlar chit") == -1, "abacus papers showed inside The hood")
+	_expect(hood_from_abacus.find("Nag note") == -1, "abacus papers showed inside The hood")
+	_expect(hood_from_abacus.find("CW-48") == -1, "abacus file code stayed up inside The hood")
+	_expect(hood_from_abacus.find("Alder chit") == -1, "listel papers showed inside The hood")
+	_expect(hood_from_abacus.find("Jenny note") == -1, "listel papers showed inside The hood")
+	_expect(hood_from_abacus.find("CW-47") == -1, "listel file code stayed up inside The hood")
+	_press(root, "Hugo")
+	_press(root, "Sycamore")
+	_press(root, "173")
+	_press(root, "Submit theory")
+	var hood_after_abacus := _verdict_text(root)
+	_expect(hood_after_abacus.find("fits every exhibit") >= 0, "hood board rejected the true theory after The abacus: %s" % hood_after_abacus)
+	_expect(hood_after_abacus.find("Hugo (hood hand) cut the hood in the sycamore at 173") >= 0, "hood board timeline after The abacus: %s" % hood_after_abacus)
+	_press(root, "Menu")
+	_press(root, "Open The annulet")
+	var annulet_from_abacus := _visible_label_blob(root)
+	_expect(annulet_from_abacus.find("Spruce chit") >= 0, "could not return to The annulet from The abacus")
+	_expect(annulet_from_abacus.find("Hinny note") >= 0, "annulet exhibits did not return from The abacus")
+	_expect(annulet_from_abacus.find("CW-45") >= 0, "returned annulet omits CW-45")
+	_expect(annulet_from_abacus.find("Medlar chit") == -1, "abacus papers showed inside The annulet")
+	_expect(annulet_from_abacus.find("Nag note") == -1, "abacus papers showed inside The annulet")
+	_expect(annulet_from_abacus.find("CW-48") == -1, "abacus file code stayed up inside The annulet")
+	_expect(annulet_from_abacus.find("Alder chit") == -1, "listel papers showed inside The annulet")
+	_expect(annulet_from_abacus.find("Jenny note") == -1, "listel papers showed inside The annulet")
+	_expect(annulet_from_abacus.find("CW-47") == -1, "listel file code stayed up inside The annulet")
+	_expect(annulet_from_abacus.find("Holly chit") == -1, "hood papers showed inside The annulet")
+	_expect(annulet_from_abacus.find("Mule note") == -1, "hood papers showed inside The annulet")
+	_expect(annulet_from_abacus.find("CW-46") == -1, "hood file code stayed up inside The annulet")
+	_press(root, "Clive")
+	_press(root, "Beech")
+	_press(root, "168")
+	_press(root, "Submit theory")
+	var annulet_after_abacus := _verdict_text(root)
+	_expect(annulet_after_abacus.find("fits every exhibit") >= 0, "annulet board rejected the true theory after The abacus: %s" % annulet_after_abacus)
+	_expect(annulet_after_abacus.find("Clive (annulet hand) cut the annulet in the beech at 168") >= 0, "annulet board timeline after The abacus: %s" % annulet_after_abacus)
+	_press(root, "Menu")
+	_press(root, "Open The reed")
+	var reed_from_abacus := _visible_label_blob(root)
+	_expect(reed_from_abacus.find("Walnut chit") >= 0, "could not return to The reed from The abacus")
+	_expect(reed_from_abacus.find("Weanling note") >= 0, "reed exhibits did not return from The abacus")
+	_expect(reed_from_abacus.find("CW-44") >= 0, "returned reed omits CW-44")
+	_expect(reed_from_abacus.find("Medlar chit") == -1, "abacus papers showed inside The reed")
+	_expect(reed_from_abacus.find("Nag note") == -1, "abacus papers showed inside The reed")
+	_expect(reed_from_abacus.find("CW-48") == -1, "abacus file code stayed up inside The reed")
+	_expect(reed_from_abacus.find("Alder chit") == -1, "listel papers showed inside The reed")
+	_expect(reed_from_abacus.find("Jenny note") == -1, "listel papers showed inside The reed")
+	_expect(reed_from_abacus.find("CW-47") == -1, "listel file code stayed up inside The reed")
+	_expect(reed_from_abacus.find("Holly chit") == -1, "hood papers showed inside The reed")
+	_expect(reed_from_abacus.find("Mule note") == -1, "hood papers showed inside The reed")
+	_expect(reed_from_abacus.find("CW-46") == -1, "hood file code stayed up inside The reed")
+	_expect(reed_from_abacus.find("Spruce chit") == -1, "annulet papers showed inside The reed")
+	_expect(reed_from_abacus.find("Hinny note") == -1, "annulet papers showed inside The reed")
+	_expect(reed_from_abacus.find("CW-45") == -1, "annulet file code stayed up inside The reed")
+	_press(root, "Greta")
+	_press(root, "Ogee")
+	_press(root, "163")
+	_press(root, "Submit theory")
+	var reed_after_abacus := _verdict_text(root)
+	_expect(reed_after_abacus.find("fits every exhibit") >= 0, "reed board rejected the true theory after The abacus: %s" % reed_after_abacus)
+	_expect(reed_after_abacus.find("Greta (reed hand) cut the reed in the ogee at 163") >= 0, "reed board timeline after The abacus: %s" % reed_after_abacus)
+	_press(root, "Menu")
+	_press(root, "Open The cavetto")
+	var cavetto_from_abacus := _visible_label_blob(root)
+	_expect(cavetto_from_abacus.find("Thumbnail chit") >= 0, "could not return to The cavetto from The abacus")
+	_expect(cavetto_from_abacus.find("Palfrey note") >= 0, "cavetto exhibits did not return from The abacus")
+	_expect(cavetto_from_abacus.find("CW-43") >= 0, "returned cavetto omits CW-43")
+	_expect(cavetto_from_abacus.find("Medlar chit") == -1, "abacus papers showed inside The cavetto")
+	_expect(cavetto_from_abacus.find("Nag note") == -1, "abacus papers showed inside The cavetto")
+	_expect(cavetto_from_abacus.find("CW-48") == -1, "abacus file code stayed up inside The cavetto")
+	_expect(cavetto_from_abacus.find("Alder chit") == -1, "listel papers showed inside The cavetto")
+	_expect(cavetto_from_abacus.find("Jenny note") == -1, "listel papers showed inside The cavetto")
+	_expect(cavetto_from_abacus.find("CW-47") == -1, "listel file code stayed up inside The cavetto")
+	_expect(cavetto_from_abacus.find("Holly chit") == -1, "hood papers showed inside The cavetto")
+	_expect(cavetto_from_abacus.find("Mule note") == -1, "hood papers showed inside The cavetto")
+	_expect(cavetto_from_abacus.find("CW-46") == -1, "hood file code stayed up inside The cavetto")
+	_expect(cavetto_from_abacus.find("Spruce chit") == -1, "annulet papers showed inside The cavetto")
+	_expect(cavetto_from_abacus.find("Hinny note") == -1, "annulet papers showed inside The cavetto")
+	_expect(cavetto_from_abacus.find("CW-45") == -1, "annulet file code stayed up inside The cavetto")
+	_expect(cavetto_from_abacus.find("Walnut chit") == -1, "reed papers showed inside The cavetto")
+	_expect(cavetto_from_abacus.find("Weanling note") == -1, "reed papers showed inside The cavetto")
+	_expect(cavetto_from_abacus.find("CW-44") == -1, "reed file code stayed up inside The cavetto")
+	_press(root, "Seth")
+	_press(root, "Dentil")
+	_press(root, "158")
+	_press(root, "Submit theory")
+	var cavetto_after_abacus := _verdict_text(root)
+	_expect(cavetto_after_abacus.find("fits every exhibit") >= 0, "cavetto board rejected the true theory after The abacus: %s" % cavetto_after_abacus)
+	_expect(cavetto_after_abacus.find("Seth (cavetto hand) cut the cavetto in the dentil at 158") >= 0, "cavetto board timeline after The abacus: %s" % cavetto_after_abacus)
+	_press(root, "Menu")
+	_press(root, "Open The cyma")
+	var cyma_from_abacus := _visible_label_blob(root)
+	_expect(cyma_from_abacus.find("Echinus chit") >= 0, "could not return to The cyma from The abacus")
+	_expect(cyma_from_abacus.find("Jennet note") >= 0, "cyma exhibits did not return from The abacus")
+	_expect(cyma_from_abacus.find("CW-42") >= 0, "returned cyma omits CW-42")
+	_expect(cyma_from_abacus.find("Medlar chit") == -1, "abacus papers showed inside The cyma")
+	_expect(cyma_from_abacus.find("Nag note") == -1, "abacus papers showed inside The cyma")
+	_expect(cyma_from_abacus.find("CW-48") == -1, "abacus file code stayed up inside The cyma")
+	_expect(cyma_from_abacus.find("Alder chit") == -1, "listel papers showed inside The cyma")
+	_expect(cyma_from_abacus.find("Jenny note") == -1, "listel papers showed inside The cyma")
+	_expect(cyma_from_abacus.find("CW-47") == -1, "listel file code stayed up inside The cyma")
+	_expect(cyma_from_abacus.find("Holly chit") == -1, "hood papers showed inside The cyma")
+	_expect(cyma_from_abacus.find("Mule note") == -1, "hood papers showed inside The cyma")
+	_expect(cyma_from_abacus.find("CW-46") == -1, "hood file code stayed up inside The cyma")
+	_expect(cyma_from_abacus.find("Spruce chit") == -1, "annulet papers showed inside The cyma")
+	_expect(cyma_from_abacus.find("Hinny note") == -1, "annulet papers showed inside The cyma")
+	_expect(cyma_from_abacus.find("CW-45") == -1, "annulet file code stayed up inside The cyma")
+	_expect(cyma_from_abacus.find("Walnut chit") == -1, "reed papers showed inside The cyma")
+	_expect(cyma_from_abacus.find("Weanling note") == -1, "reed papers showed inside The cyma")
+	_expect(cyma_from_abacus.find("CW-44") == -1, "reed file code stayed up inside The cyma")
+	_expect(cyma_from_abacus.find("Thumbnail chit") == -1, "cavetto papers showed inside The cyma")
+	_expect(cyma_from_abacus.find("Palfrey note") == -1, "cavetto papers showed inside The cyma")
+	_expect(cyma_from_abacus.find("CW-43") == -1, "cavetto file code stayed up inside The cyma")
+	_press(root, "Ruth")
+	_press(root, "Bolection")
+	_press(root, "153")
+	_press(root, "Submit theory")
+	var cyma_after_abacus := _verdict_text(root)
+	_expect(cyma_after_abacus.find("fits every exhibit") >= 0, "cyma board rejected the true theory after The abacus: %s" % cyma_after_abacus)
+	_expect(cyma_after_abacus.find("Ruth (cyma hand) cut the cyma in the bolection at 153") >= 0, "cyma board timeline after The abacus: %s" % cyma_after_abacus)
+	_press(root, "Menu")
+	_press(root, "Open The scotia")
+	var scotia_from_abacus := _visible_label_blob(root)
+	_expect(scotia_from_abacus.find("Torus chit") >= 0, "could not return to The scotia from The abacus")
+	_expect(scotia_from_abacus.find("Yearling note") >= 0, "scotia exhibits did not return from The abacus")
+	_expect(scotia_from_abacus.find("CW-41") >= 0, "returned scotia omits CW-41")
+	_expect(scotia_from_abacus.find("Medlar chit") == -1, "abacus papers showed inside The scotia")
+	_expect(scotia_from_abacus.find("Nag note") == -1, "abacus papers showed inside The scotia")
+	_expect(scotia_from_abacus.find("CW-48") == -1, "abacus file code stayed up inside The scotia")
+	_expect(scotia_from_abacus.find("Alder chit") == -1, "listel papers showed inside The scotia")
+	_expect(scotia_from_abacus.find("Jenny note") == -1, "listel papers showed inside The scotia")
+	_expect(scotia_from_abacus.find("CW-47") == -1, "listel file code stayed up inside The scotia")
+	_expect(scotia_from_abacus.find("Holly chit") == -1, "hood papers showed inside The scotia")
+	_expect(scotia_from_abacus.find("Mule note") == -1, "hood papers showed inside The scotia")
+	_expect(scotia_from_abacus.find("CW-46") == -1, "hood file code stayed up inside The scotia")
+	_expect(scotia_from_abacus.find("Spruce chit") == -1, "annulet papers showed inside The scotia")
+	_expect(scotia_from_abacus.find("Hinny note") == -1, "annulet papers showed inside The scotia")
+	_expect(scotia_from_abacus.find("CW-45") == -1, "annulet file code stayed up inside The scotia")
+	_expect(scotia_from_abacus.find("Walnut chit") == -1, "reed papers showed inside The scotia")
+	_expect(scotia_from_abacus.find("Weanling note") == -1, "reed papers showed inside The scotia")
+	_expect(scotia_from_abacus.find("CW-44") == -1, "reed file code stayed up inside The scotia")
+	_expect(scotia_from_abacus.find("Thumbnail chit") == -1, "cavetto papers showed inside The scotia")
+	_expect(scotia_from_abacus.find("Palfrey note") == -1, "cavetto papers showed inside The scotia")
+	_expect(scotia_from_abacus.find("CW-43") == -1, "cavetto file code stayed up inside The scotia")
+	_expect(scotia_from_abacus.find("Echinus chit") == -1, "cyma papers showed inside The scotia")
+	_expect(scotia_from_abacus.find("Jennet note") == -1, "cyma papers showed inside The scotia")
+	_expect(scotia_from_abacus.find("CW-42") == -1, "cyma file code stayed up inside The scotia")
+	_press(root, "Willa")
+	_press(root, "Hollow")
+	_press(root, "148")
+	_press(root, "Submit theory")
+	var scotia_after_abacus := _verdict_text(root)
+	_expect(scotia_after_abacus.find("fits every exhibit") >= 0, "scotia board rejected the true theory after The abacus: %s" % scotia_after_abacus)
+	_expect(scotia_after_abacus.find("Willa (scotia hand) cut the scotia in the hollow at 148") >= 0, "scotia board timeline after The abacus: %s" % scotia_after_abacus)
+	_press(root, "Menu")
+	_press(root, "Open The chamfer")
+	var chamfer_from_abacus := _visible_label_blob(root)
+	_expect(chamfer_from_abacus.find("Cove chit") >= 0, "could not return to The chamfer from The abacus")
+	_expect(chamfer_from_abacus.find("Stallion note") >= 0, "chamfer exhibits did not return from The abacus")
+	_expect(chamfer_from_abacus.find("CW-40") >= 0, "returned chamfer omits CW-40")
+	_expect(chamfer_from_abacus.find("Torus chit") == -1, "scotia papers showed inside The chamfer")
+	_expect(chamfer_from_abacus.find("Yearling note") == -1, "scotia papers showed inside The chamfer")
+	_expect(chamfer_from_abacus.find("CW-41") == -1, "scotia file code stayed up inside The chamfer")
+	_expect(chamfer_from_abacus.find("Medlar chit") == -1, "abacus papers showed inside The chamfer")
+	_expect(chamfer_from_abacus.find("Nag note") == -1, "abacus papers showed inside The chamfer")
+	_expect(chamfer_from_abacus.find("CW-48") == -1, "abacus file code stayed up inside The chamfer")
+	_expect(chamfer_from_abacus.find("Alder chit") == -1, "listel papers showed inside The chamfer")
+	_expect(chamfer_from_abacus.find("Jenny note") == -1, "listel papers showed inside The chamfer")
+	_expect(chamfer_from_abacus.find("CW-47") == -1, "listel file code stayed up inside The chamfer")
+	_expect(chamfer_from_abacus.find("Holly chit") == -1, "hood papers showed inside The chamfer")
+	_expect(chamfer_from_abacus.find("Mule note") == -1, "hood papers showed inside The chamfer")
+	_expect(chamfer_from_abacus.find("CW-46") == -1, "hood file code stayed up inside The chamfer")
+	_expect(chamfer_from_abacus.find("Spruce chit") == -1, "annulet papers showed inside The chamfer")
+	_expect(chamfer_from_abacus.find("Hinny note") == -1, "annulet papers showed inside The chamfer")
+	_expect(chamfer_from_abacus.find("CW-45") == -1, "annulet file code stayed up inside The chamfer")
+	_expect(chamfer_from_abacus.find("Walnut chit") == -1, "reed papers showed inside The chamfer")
+	_expect(chamfer_from_abacus.find("Weanling note") == -1, "reed papers showed inside The chamfer")
+	_expect(chamfer_from_abacus.find("CW-44") == -1, "reed file code stayed up inside The chamfer")
+	_expect(chamfer_from_abacus.find("Thumbnail chit") == -1, "cavetto papers showed inside The chamfer")
+	_expect(chamfer_from_abacus.find("Palfrey note") == -1, "cavetto papers showed inside The chamfer")
+	_expect(chamfer_from_abacus.find("CW-43") == -1, "cavetto file code stayed up inside The chamfer")
+	_expect(chamfer_from_abacus.find("Echinus chit") == -1, "cyma papers showed inside The chamfer")
+	_expect(chamfer_from_abacus.find("Jennet note") == -1, "cyma papers showed inside The chamfer")
+	_expect(chamfer_from_abacus.find("CW-42") == -1, "cyma file code stayed up inside The chamfer")
+	_press(root, "Merrick")
+	_press(root, "Block")
+	_press(root, "143")
+	_press(root, "Submit theory")
+	var chamfer_after_abacus := _verdict_text(root)
+	_expect(chamfer_after_abacus.find("fits every exhibit") >= 0, "chamfer board rejected the true theory after The abacus: %s" % chamfer_after_abacus)
+	_expect(chamfer_after_abacus.find("Merrick (chamfer hand) cut the chamfer in the block at 143") >= 0, "chamfer board timeline after The abacus: %s" % chamfer_after_abacus)
+	_press(root, "Menu")
+	_press(root, "Open The quirk")
+	var quirk_from_abacus := _visible_label_blob(root)
+	_expect(quirk_from_abacus.find("Ovolo chit") >= 0, "could not return to The quirk from The abacus")
+	_expect(quirk_from_abacus.find("Gelding note") >= 0, "quirk exhibits did not return from The abacus")
+	_expect(quirk_from_abacus.find("CW-39") >= 0, "returned quirk omits CW-39")
+	_expect(quirk_from_abacus.find("Cove chit") == -1, "chamfer papers showed inside The quirk")
+	_expect(quirk_from_abacus.find("Stallion note") == -1, "chamfer papers showed inside The quirk")
+	_expect(quirk_from_abacus.find("CW-40") == -1, "chamfer file code stayed up inside The quirk")
+	_expect(quirk_from_abacus.find("Torus chit") == -1, "scotia papers showed inside The quirk")
+	_expect(quirk_from_abacus.find("Yearling note") == -1, "scotia papers showed inside The quirk")
+	_expect(quirk_from_abacus.find("CW-41") == -1, "scotia file code stayed up inside The quirk")
+	_expect(quirk_from_abacus.find("Medlar chit") == -1, "abacus papers showed inside The quirk")
+	_expect(quirk_from_abacus.find("Nag note") == -1, "abacus papers showed inside The quirk")
+	_expect(quirk_from_abacus.find("CW-48") == -1, "abacus file code stayed up inside The quirk")
+	_expect(quirk_from_abacus.find("Alder chit") == -1, "listel papers showed inside The quirk")
+	_expect(quirk_from_abacus.find("Jenny note") == -1, "listel papers showed inside The quirk")
+	_expect(quirk_from_abacus.find("CW-47") == -1, "listel file code stayed up inside The quirk")
+	_expect(quirk_from_abacus.find("Holly chit") == -1, "hood papers showed inside The quirk")
+	_expect(quirk_from_abacus.find("Mule note") == -1, "hood papers showed inside The quirk")
+	_expect(quirk_from_abacus.find("CW-46") == -1, "hood file code stayed up inside The quirk")
+	_expect(quirk_from_abacus.find("Spruce chit") == -1, "annulet papers showed inside The quirk")
+	_expect(quirk_from_abacus.find("Hinny note") == -1, "annulet papers showed inside The quirk")
+	_expect(quirk_from_abacus.find("CW-45") == -1, "annulet file code stayed up inside The quirk")
+	_expect(quirk_from_abacus.find("Walnut chit") == -1, "reed papers showed inside The quirk")
+	_expect(quirk_from_abacus.find("Weanling note") == -1, "reed papers showed inside The quirk")
+	_expect(quirk_from_abacus.find("CW-44") == -1, "reed file code stayed up inside The quirk")
+	_expect(quirk_from_abacus.find("Thumbnail chit") == -1, "cavetto papers showed inside The quirk")
+	_expect(quirk_from_abacus.find("Palfrey note") == -1, "cavetto papers showed inside The quirk")
+	_expect(quirk_from_abacus.find("CW-43") == -1, "cavetto file code stayed up inside The quirk")
+	_expect(quirk_from_abacus.find("Echinus chit") == -1, "cyma papers showed inside The quirk")
+	_expect(quirk_from_abacus.find("Jennet note") == -1, "cyma papers showed inside The quirk")
+	_expect(quirk_from_abacus.find("CW-42") == -1, "cyma file code stayed up inside The quirk")
+	_press(root, "Ross")
+	_press(root, "Scratch")
+	_press(root, "138")
+	_press(root, "Submit theory")
+	var quirk_after_abacus := _verdict_text(root)
+	_expect(quirk_after_abacus.find("fits every exhibit") >= 0, "quirk board rejected the true theory after The abacus: %s" % quirk_after_abacus)
+	_expect(quirk_after_abacus.find("Ross (quirk hand) scratched the quirk in the scratch at 138") >= 0, "quirk board timeline after The abacus: %s" % quirk_after_abacus)
+	_press(root, "Menu")
+	_press(root, "Open The tongue")
+	var tongue_from_abacus := _visible_label_blob(root)
+	_expect(tongue_from_abacus.find("Groove chit") >= 0, "could not return to The tongue from The abacus")
+	_expect(tongue_from_abacus.find("Filly note") >= 0, "tongue exhibits did not return from The abacus")
+	_expect(tongue_from_abacus.find("CW-38") >= 0, "returned tongue omits CW-38")
+	_expect(tongue_from_abacus.find("Cove chit") == -1, "chamfer papers showed inside The tongue")
+	_expect(tongue_from_abacus.find("Stallion note") == -1, "chamfer papers showed inside The tongue")
+	_expect(tongue_from_abacus.find("CW-40") == -1, "chamfer file code stayed up inside The tongue")
+	_expect(tongue_from_abacus.find("Torus chit") == -1, "scotia papers showed inside The tongue")
+	_expect(tongue_from_abacus.find("Yearling note") == -1, "scotia papers showed inside The tongue")
+	_expect(tongue_from_abacus.find("CW-41") == -1, "scotia file code stayed up inside The tongue")
+	_expect(tongue_from_abacus.find("Medlar chit") == -1, "abacus papers showed inside The tongue")
+	_expect(tongue_from_abacus.find("Nag note") == -1, "abacus papers showed inside The tongue")
+	_expect(tongue_from_abacus.find("CW-48") == -1, "abacus file code stayed up inside The tongue")
+	_expect(tongue_from_abacus.find("Alder chit") == -1, "listel papers showed inside The tongue")
+	_expect(tongue_from_abacus.find("Jenny note") == -1, "listel papers showed inside The tongue")
+	_expect(tongue_from_abacus.find("CW-47") == -1, "listel file code stayed up inside The tongue")
+	_expect(tongue_from_abacus.find("Holly chit") == -1, "hood papers showed inside The tongue")
+	_expect(tongue_from_abacus.find("Mule note") == -1, "hood papers showed inside The tongue")
+	_expect(tongue_from_abacus.find("CW-46") == -1, "hood file code stayed up inside The tongue")
+	_expect(tongue_from_abacus.find("Spruce chit") == -1, "annulet papers showed inside The tongue")
+	_expect(tongue_from_abacus.find("Hinny note") == -1, "annulet papers showed inside The tongue")
+	_expect(tongue_from_abacus.find("CW-45") == -1, "annulet file code stayed up inside The tongue")
+	_expect(tongue_from_abacus.find("Walnut chit") == -1, "reed papers showed inside The tongue")
+	_expect(tongue_from_abacus.find("Weanling note") == -1, "reed papers showed inside The tongue")
+	_expect(tongue_from_abacus.find("CW-44") == -1, "reed file code stayed up inside The tongue")
+	_expect(tongue_from_abacus.find("Thumbnail chit") == -1, "cavetto papers showed inside The tongue")
+	_expect(tongue_from_abacus.find("Palfrey note") == -1, "cavetto papers showed inside The tongue")
+	_expect(tongue_from_abacus.find("CW-43") == -1, "cavetto file code stayed up inside The tongue")
+	_expect(tongue_from_abacus.find("Echinus chit") == -1, "cyma papers showed inside The tongue")
+	_expect(tongue_from_abacus.find("Jennet note") == -1, "cyma papers showed inside The tongue")
+	_expect(tongue_from_abacus.find("CW-42") == -1, "cyma file code stayed up inside The tongue")
+	_press(root, "Shay")
+	_press(root, "Knife")
+	_press(root, "133")
+	_press(root, "Submit theory")
+	var tongue_after_abacus := _verdict_text(root)
+	_expect(tongue_after_abacus.find("fits every exhibit") >= 0, "tongue board rejected the true theory after The abacus: %s" % tongue_after_abacus)
+	_expect(tongue_after_abacus.find("Shay (tongue hand) cut the tongue in the knife at 133") >= 0, "tongue board timeline after The abacus: %s" % tongue_after_abacus)
+	_press(root, "Menu")
+	_press(root, "Open The dowel")
+	var dowel_from_abacus := _visible_label_blob(root)
+	_expect(dowel_from_abacus.find("Bore chit") >= 0, "could not return to The dowel from The abacus")
+	_expect(dowel_from_abacus.find("Dowel note") >= 0, "dowel exhibits did not return from The abacus")
+	_expect(dowel_from_abacus.find("CW-37") >= 0, "returned dowel omits CW-37")
+	_expect(dowel_from_abacus.find("Cove chit") == -1, "chamfer papers showed inside The dowel")
+	_expect(dowel_from_abacus.find("Stallion note") == -1, "chamfer papers showed inside The dowel")
+	_expect(dowel_from_abacus.find("CW-40") == -1, "chamfer file code stayed up inside The dowel")
+	_expect(dowel_from_abacus.find("Torus chit") == -1, "scotia papers showed inside The dowel")
+	_expect(dowel_from_abacus.find("Yearling note") == -1, "scotia papers showed inside The dowel")
+	_expect(dowel_from_abacus.find("CW-41") == -1, "scotia file code stayed up inside The dowel")
+	_expect(dowel_from_abacus.find("Medlar chit") == -1, "abacus papers showed inside The dowel")
+	_expect(dowel_from_abacus.find("Nag note") == -1, "abacus papers showed inside The dowel")
+	_expect(dowel_from_abacus.find("CW-48") == -1, "abacus file code stayed up inside The dowel")
+	_expect(dowel_from_abacus.find("Alder chit") == -1, "listel papers showed inside The dowel")
+	_expect(dowel_from_abacus.find("Jenny note") == -1, "listel papers showed inside The dowel")
+	_expect(dowel_from_abacus.find("CW-47") == -1, "listel file code stayed up inside The dowel")
+	_expect(dowel_from_abacus.find("Holly chit") == -1, "hood papers showed inside The dowel")
+	_expect(dowel_from_abacus.find("Mule note") == -1, "hood papers showed inside The dowel")
+	_expect(dowel_from_abacus.find("CW-46") == -1, "hood file code stayed up inside The dowel")
+	_expect(dowel_from_abacus.find("Spruce chit") == -1, "annulet papers showed inside The dowel")
+	_expect(dowel_from_abacus.find("Hinny note") == -1, "annulet papers showed inside The dowel")
+	_expect(dowel_from_abacus.find("CW-45") == -1, "annulet file code stayed up inside The dowel")
+	_expect(dowel_from_abacus.find("Walnut chit") == -1, "reed papers showed inside The dowel")
+	_expect(dowel_from_abacus.find("Weanling note") == -1, "reed papers showed inside The dowel")
+	_expect(dowel_from_abacus.find("CW-44") == -1, "reed file code stayed up inside The dowel")
+	_expect(dowel_from_abacus.find("Thumbnail chit") == -1, "cavetto papers showed inside The dowel")
+	_expect(dowel_from_abacus.find("Palfrey note") == -1, "cavetto papers showed inside The dowel")
+	_expect(dowel_from_abacus.find("CW-43") == -1, "cavetto file code stayed up inside The dowel")
+	_expect(dowel_from_abacus.find("Echinus chit") == -1, "cyma papers showed inside The dowel")
+	_expect(dowel_from_abacus.find("Jennet note") == -1, "cyma papers showed inside The dowel")
+	_expect(dowel_from_abacus.find("CW-42") == -1, "cyma file code stayed up inside The dowel")
+	_press(root, "Faye")
+	_press(root, "Bit")
+	_press(root, "128")
+	_press(root, "Submit theory")
+	var dowel_after_abacus := _verdict_text(root)
+	_expect(dowel_after_abacus.find("fits every exhibit") >= 0, "dowel board rejected the true theory after The abacus: %s" % dowel_after_abacus)
+	_expect(dowel_after_abacus.find("Faye (dowel hand) cut the dowel in the bit at 128") >= 0, "dowel board timeline after The abacus: %s" % dowel_after_abacus)
+	_press(root, "Menu")
+	_press(root, "Open The girdle")
+	var girdle_open := _visible_label_blob(root)
+	_expect(girdle_open.find("Cherry chit") >= 0, "girdle trestle did not open")
+	_expect(girdle_open.find("Hack note") >= 0, "girdle trestle did not show its exhibits")
+	_expect(girdle_open.find("CW-49") >= 0, "girdle trestle omits CW-49")
+	_expect(girdle_open.find("Brazil sight") >= 0, "girdle trestle omits Brazil sight")
+	_expect(girdle_open.find("Plum bill") >= 0, "girdle trestle omits Plum bill")
+	_expect(girdle_open.find("Fustic slate") >= 0, "girdle trestle omits Fustic slate")
+	_expect(girdle_open.find("Trestle card") >= 0, "girdle trestle omits Trestle card")
+	_expect(girdle_open.find("Size slip") >= 0, "girdle trestle omits Size slip")
+	_expect(girdle_open.find("Girdle leaf") >= 0, "girdle trestle omits Girdle leaf")
+	_expect(girdle_open.find("Clay order") >= 0, "girdle trestle omits Clay order")
+	_expect(girdle_open.find("Fillister card") >= 0, "girdle trestle omits the fillister card")
+	_expect(girdle_open.find("Complaint slip") == -1, "spare key papers showed inside The girdle")
+	_expect(girdle_open.find("Cut list") == -1, "rehearsal papers showed inside The girdle")
+	_expect(girdle_open.find("Move order") == -1, "gilt stamp papers showed inside The girdle")
+	_expect(girdle_open.find("Whistle slip") == -1, "ferry bell papers showed inside The girdle")
+	_expect(girdle_open.find("Frost note") == -1, "weather slate papers showed inside The girdle")
+	_expect(girdle_open.find("Trough tag") == -1, "loom shuttle papers showed inside The girdle")
+	_expect(girdle_open.find("Fuel line") == -1, "hive smoker papers showed inside The girdle")
+	_expect(girdle_open.find("Weight line") == -1, "glass pontil papers showed inside The girdle")
+	_expect(girdle_open.find("Lock line") == -1, "press proof papers showed inside The girdle")
+	_expect(girdle_open.find("Cup line") == -1, "assay cup papers showed inside The girdle")
+	_expect(girdle_open.find("Mark line") == -1, "kiln chalk papers showed inside The girdle")
+	_expect(girdle_open.find("Ledger line") == -1, "tide ledger papers showed inside The girdle")
+	_expect(girdle_open.find("Bell line") == -1, "night bell papers showed inside The girdle")
+	_expect(girdle_open.find("Salt line") == -1, "salt mark papers showed inside The girdle")
+	_expect(girdle_open.find("Oil note") == -1, "wick trim papers showed inside The girdle")
+	_expect(girdle_open.find("Gather note") == -1, "glass anneal papers showed inside The girdle")
+	_expect(girdle_open.find("Scion note") == -1, "orchard graft papers showed inside The girdle")
+	_expect(girdle_open.find("Winder chit") == -1, "dye vat papers showed inside The girdle")
+	_expect(girdle_open.find("Rope chit") == -1, "tar kettle papers showed inside The girdle")
+	_expect(girdle_open.find("Cutter chit") == -1, "cork press papers showed inside The girdle")
+	_expect(girdle_open.find("Mesh chit") == -1, "net loft papers showed inside The girdle")
+	_expect(girdle_open.find("Hoop chit") == -1, "cask hoop papers showed inside The girdle")
+	_expect(girdle_open.find("Shears chit") == -1, "linen fold papers showed inside The girdle")
+	_expect(girdle_open.find("Apron sight") == -1, "dovetail papers showed inside The girdle")
+	_expect(girdle_open.find("Peg hook") == -1, "dovetail papers showed inside The girdle")
+	_expect(girdle_open.find("Joint slate") == -1, "dovetail papers showed inside The girdle")
+	_expect(girdle_open.find("Clamp card") == -1, "dovetail papers showed inside The girdle")
+	_expect(girdle_open.find("Sweep slip") == -1, "dovetail papers showed inside The girdle")
+	_expect(girdle_open.find("Cut leaf") == -1, "dovetail papers showed inside The girdle")
+	_expect(girdle_open.find("Joint note") == -1, "dovetail papers showed inside The girdle")
+	_expect(girdle_open.find("Jaw order") == -1, "dovetail papers showed inside The girdle")
+	_expect(girdle_open.find("CW-24") == -1, "dovetail file code stayed up inside The girdle")
+	_expect(girdle_open.find("Chisel chit") == -1, "mortise papers stayed up inside The girdle")
+	_expect(girdle_open.find("Awl sight") == -1, "mortise papers showed inside The girdle")
+	_expect(girdle_open.find("Wedge hook") == -1, "mortise papers showed inside The girdle")
+	_expect(girdle_open.find("Tenon slate") == -1, "mortise papers showed inside The girdle")
+	_expect(girdle_open.find("Brush slip") == -1, "mortise papers showed inside The girdle")
+	_expect(girdle_open.find("Bore leaf") == -1, "mortise papers showed inside The girdle")
+	_expect(girdle_open.find("Tenon note") == -1, "mortise papers showed inside The girdle")
+	_expect(girdle_open.find("Rack order") == -1, "mortise papers showed inside The girdle")
+	_expect(girdle_open.find("CW-25") == -1, "mortise file code stayed up inside The girdle")
+	_expect(girdle_open.find("Plane chit") == -1, "rebate papers stayed up inside The girdle")
+	_expect(girdle_open.find("Gauge sight") == -1, "rebate papers showed inside The girdle")
+	_expect(girdle_open.find("Shim hook") == -1, "rebate papers showed inside The girdle")
+	_expect(girdle_open.find("Shoulder slate") == -1, "rebate papers showed inside The girdle")
+	_expect(girdle_open.find("Fence card") == -1, "rebate papers showed inside The girdle")
+	_expect(girdle_open.find("Oil slip") == -1, "rebate papers showed inside The girdle")
+	_expect(girdle_open.find("Scribe leaf") == -1, "rebate papers showed inside The girdle")
+	_expect(girdle_open.find("Shoulder note") == -1, "rebate papers showed inside The girdle")
+	_expect(girdle_open.find("CW-26") == -1, "rebate file code stayed up inside The girdle")
+	_expect(girdle_open.find("Saw chit") == -1, "housing papers stayed up inside The girdle")
+	_expect(girdle_open.find("Square sight") == -1, "housing papers showed inside The girdle")
+	_expect(girdle_open.find("Fillet hook") == -1, "housing papers showed inside The girdle")
+	_expect(girdle_open.find("Trench slate") == -1, "housing papers showed inside The girdle")
+	_expect(girdle_open.find("Stock card") == -1, "housing papers showed inside The girdle")
+	_expect(girdle_open.find("Chalk slip") == -1, "housing papers showed inside The girdle")
+	_expect(girdle_open.find("Mark leaf") == -1, "housing papers showed inside The girdle")
+	_expect(girdle_open.find("Trench note") == -1, "housing papers showed inside The girdle")
+	_expect(girdle_open.find("CW-27") == -1, "housing file code stayed up inside The girdle")
+	_expect(girdle_open.find("Gouge chit") == -1, "tenon papers stayed up inside The girdle")
+	_expect(girdle_open.find("Rasp sight") == -1, "tenon papers showed inside The girdle")
+	_expect(girdle_open.find("Dowel hook") == -1, "tenon papers showed inside The girdle")
+	_expect(girdle_open.find("Haunch slate") == -1, "tenon papers showed inside The girdle")
+	_expect(girdle_open.find("Guide card") == -1, "tenon papers showed inside The girdle")
+	_expect(girdle_open.find("Hone slip") == -1, "tenon papers showed inside The girdle")
+	_expect(girdle_open.find("Nick leaf") == -1, "tenon papers showed inside The girdle")
+	_expect(girdle_open.find("CW-28") == -1, "tenon file code stayed up inside The girdle")
+	_expect(girdle_open.find("Router chit") == -1, "bridle papers stayed up inside The girdle")
+	_expect(girdle_open.find("Sizer sight") == -1, "bridle papers showed inside The girdle")
+	_expect(girdle_open.find("Spline hook") == -1, "bridle papers showed inside The girdle")
+	_expect(girdle_open.find("Tongue slate") == -1, "bridle papers showed inside The girdle")
+	_expect(girdle_open.find("Templet card") == -1, "bridle papers showed inside The girdle")
+	_expect(girdle_open.find("Strop slip") == -1, "bridle papers showed inside The girdle")
+	_expect(girdle_open.find("Notch leaf") == -1, "bridle papers showed inside The girdle")
+	_expect(girdle_open.find("Tongue note") == -1, "bridle papers showed inside The girdle")
+	_expect(girdle_open.find("CW-29") == -1, "bridle file code stayed up inside The girdle")
+	_expect(girdle_open.find("Plough chit") == -1, "dado papers stayed up inside The girdle")
+	_expect(girdle_open.find("Float sight") == -1, "dado papers showed inside The girdle")
+	_expect(girdle_open.find("Cleat hook") == -1, "dado papers showed inside The girdle")
+	_expect(girdle_open.find("Groove slate") == -1, "dado papers showed inside The girdle")
+	_expect(girdle_open.find("Spur card") == -1, "dado papers showed inside The girdle")
+	_expect(girdle_open.find("Whet slip") == -1, "dado papers showed inside The girdle")
+	_expect(girdle_open.find("Score leaf") == -1, "dado papers showed inside The girdle")
+	_expect(girdle_open.find("Groove note") == -1, "dado papers showed inside The girdle")
+	_expect(girdle_open.find("CW-30") == -1, "dado file code stayed up inside The girdle")
+	_expect(girdle_open.find("Slot chit") == -1, "spline papers stayed up inside The girdle")
+	_expect(girdle_open.find("Rest sight") == -1, "spline papers showed inside The girdle")
+	_expect(girdle_open.find("Feather hook") == -1, "spline papers showed inside The girdle")
+	_expect(girdle_open.find("Slot slate") == -1, "spline papers showed inside The girdle")
+	_expect(girdle_open.find("Key card") == -1, "spline papers showed inside The girdle")
+	_expect(girdle_open.find("Cheek slip") == -1, "spline papers showed inside The girdle")
+	_expect(girdle_open.find("Slot leaf") == -1, "spline papers showed inside The girdle")
+	_expect(girdle_open.find("Slot note") == -1, "spline papers showed inside The girdle")
+	_expect(girdle_open.find("Dry order") == -1, "spline papers showed inside The girdle")
+	_expect(girdle_open.find("CW-31") == -1, "spline file code stayed up inside The girdle")
+	_expect(girdle_open.find("Arris chit") == -1, "mitre papers stayed up inside The girdle")
+	_expect(girdle_open.find("Horn sight") == -1, "mitre papers showed inside The girdle")
+	_expect(girdle_open.find("Offcut hook") == -1, "mitre papers showed inside The girdle")
+	_expect(girdle_open.find("Arris slate") == -1, "mitre papers showed inside The girdle")
+	_expect(girdle_open.find("Stop card") == -1, "mitre papers showed inside The girdle")
+	_expect(girdle_open.find("Dress slip") == -1, "mitre papers showed inside The girdle")
+	_expect(girdle_open.find("Arris leaf") == -1, "mitre papers showed inside The girdle")
+	_expect(girdle_open.find("Arris note") == -1, "mitre papers showed inside The girdle")
+	_expect(girdle_open.find("Brush order") == -1, "mitre papers showed inside The girdle")
+	_expect(girdle_open.find("CW-32") == -1, "mitre file code stayed up inside The girdle")
+	_expect(girdle_open.find("Grain chit") == -1, "lap papers stayed up inside The girdle")
+	_expect(girdle_open.find("Crest sight") == -1, "lap papers showed inside The girdle")
+	_expect(girdle_open.find("Paring hook") == -1, "lap papers showed inside The girdle")
+	_expect(girdle_open.find("Grain slate") == -1, "lap papers showed inside The girdle")
+	_expect(girdle_open.find("Brad card") == -1, "lap papers showed inside The girdle")
+	_expect(girdle_open.find("Skim slip") == -1, "lap papers showed inside The girdle")
+	_expect(girdle_open.find("Grain leaf") == -1, "lap papers showed inside The girdle")
+	_expect(girdle_open.find("Grain note") == -1, "lap papers showed inside The girdle")
+	_expect(girdle_open.find("Oil order") == -1, "lap papers showed inside The girdle")
+	_expect(girdle_open.find("CW-33") == -1, "lap file code stayed up inside The girdle")
+	_expect(girdle_open.find("Shoulder chit") == -1, "scarf papers stayed up inside The girdle")
+	_expect(girdle_open.find("Sole sight") == -1, "scarf papers showed inside The girdle")
+	_expect(girdle_open.find("Shaving hook") == -1, "scarf papers showed inside The girdle")
+	_expect(girdle_open.find("Edge slate") == -1, "scarf papers showed inside The girdle")
+	_expect(girdle_open.find("Wedge card") == -1, "scarf papers showed inside The girdle")
+	_expect(girdle_open.find("Film slip") == -1, "scarf papers showed inside The girdle")
+	_expect(girdle_open.find("Scarf leaf") == -1, "scarf papers showed inside The girdle")
+	_expect(girdle_open.find("Scarf note") == -1, "scarf papers showed inside The girdle")
+	_expect(girdle_open.find("Finish order") == -1, "scarf papers showed inside The girdle")
+	_expect(girdle_open.find("CW-34") == -1, "scarf file code stayed up inside The girdle")
+	_expect(girdle_open.find("Socket chit") == -1, "finger papers showed inside The girdle")
+	_expect(girdle_open.find("Burr sight") == -1, "finger papers showed inside The girdle")
+	_expect(girdle_open.find("Chip bill") == -1, "finger papers showed inside The girdle")
+	_expect(girdle_open.find("Face slate") == -1, "finger papers showed inside The girdle")
+	_expect(girdle_open.find("Catch card") == -1, "finger papers showed inside The girdle")
+	_expect(girdle_open.find("Sheen slip") == -1, "finger papers showed inside The girdle")
+	_expect(girdle_open.find("Finger leaf") == -1, "finger papers showed inside The girdle")
+	_expect(girdle_open.find("Finger note") == -1, "finger papers showed inside The girdle")
+	_expect(girdle_open.find("Rub order") == -1, "finger papers showed inside The girdle")
+	_expect(girdle_open.find("CW-35") == -1, "finger file code stayed up inside The girdle")
+	_expect(girdle_open.find("so the bevel would take the haunch") == -1, "tenon aim stayed up inside The girdle")
+	_expect(girdle_open.find("Cheek chit") == -1, "haunch papers showed inside The girdle")
+	_expect(girdle_open.find("Toe sight") == -1, "haunch papers showed inside The girdle")
+	_expect(girdle_open.find("Sliver bill") == -1, "haunch papers showed inside The girdle")
+	_expect(girdle_open.find("Bed slate") == -1, "haunch papers showed inside The girdle")
+	_expect(girdle_open.find("Pin card") == -1, "haunch papers showed inside The girdle")
+	_expect(girdle_open.find("Wipe slip") == -1, "haunch papers showed inside The girdle")
+	_expect(girdle_open.find("Haunch leaf") == -1, "haunch papers showed inside The girdle")
+	_expect(girdle_open.find("Haunch note") == -1, "haunch papers showed inside The girdle")
+	_expect(girdle_open.find("Stone order") == -1, "haunch papers showed inside The girdle")
+	_expect(girdle_open.find("CW-36") == -1, "haunch file code stayed up inside The girdle")
+	_expect(girdle_open.find("so the cheek would take the haunch") == -1, "haunch aim stayed up inside The girdle")
+	_expect(girdle_open.find("Bore chit") == -1, "dowel papers showed inside The girdle")
+	_expect(girdle_open.find("Point sight") == -1, "dowel papers showed inside The girdle")
+	_expect(girdle_open.find("Curl bill") == -1, "dowel papers showed inside The girdle")
+	_expect(girdle_open.find("Flute slate") == -1, "dowel papers showed inside The girdle")
+	_expect(girdle_open.find("Chuck card") == -1, "dowel papers showed inside The girdle")
+	_expect(girdle_open.find("Wax slip") == -1, "dowel papers showed inside The girdle")
+	_expect(girdle_open.find("Dowel leaf") == -1, "dowel papers showed inside The girdle")
+	_expect(girdle_open.find("Dowel note") == -1, "dowel papers showed inside The girdle")
+	_expect(girdle_open.find("Hone order") == -1, "dowel papers showed inside The girdle")
+	_expect(girdle_open.find("CW-37") == -1, "dowel file code stayed up inside The girdle")
+	_expect(girdle_open.find("Brace card") == -1, "dowel papers showed inside The girdle")
+	_expect(girdle_open.find("so the bore would take the dowel") == -1, "dowel aim stayed up inside The girdle")
+	_expect(girdle_open.find("Groove chit") == -1, "tongue papers showed inside The girdle")
+	_expect(girdle_open.find("Face sight") == -1, "tongue papers showed inside The girdle")
+	_expect(girdle_open.find("Peel bill") == -1, "tongue papers showed inside The girdle")
+	_expect(girdle_open.find("Kerf slate") == -1, "tongue papers showed inside The girdle")
+	_expect(girdle_open.find("Turn card") == -1, "tongue papers showed inside The girdle")
+	_expect(girdle_open.find("Tallow slip") == -1, "tongue papers showed inside The girdle")
+	_expect(girdle_open.find("Tongue leaf") == -1, "tongue papers showed inside The girdle")
+	_expect(girdle_open.find("Filly note") == -1, "tongue papers showed inside The girdle")
+	_expect(girdle_open.find("Grind order") == -1, "tongue papers showed inside The girdle")
+	_expect(girdle_open.find("Scribe card") == -1, "tongue papers showed inside The girdle")
+	_expect(girdle_open.find("CW-38") == -1, "tongue file code stayed up inside The girdle")
+	_expect(girdle_open.find("so the groove would take the tongue") == -1, "tongue aim stayed up inside The girdle")
+	_expect(girdle_open.find("Ovolo chit") == -1, "quirk papers showed inside The girdle")
+	_expect(girdle_open.find("Bolt sight") == -1, "quirk papers showed inside The girdle")
+	_expect(girdle_open.find("Astragal bill") == -1, "quirk papers showed inside The girdle")
+	_expect(girdle_open.find("Score slate") == -1, "quirk papers showed inside The girdle")
+	_expect(girdle_open.find("Snib card") == -1, "quirk papers showed inside The girdle")
+	_expect(girdle_open.find("Grease slip") == -1, "quirk papers showed inside The girdle")
+	_expect(girdle_open.find("Quirk leaf") == -1, "quirk papers showed inside The girdle")
+	_expect(girdle_open.find("Gelding note") == -1, "quirk papers showed inside The girdle")
+	_expect(girdle_open.find("Whet order") == -1, "quirk papers showed inside The girdle")
+	_expect(girdle_open.find("Veiner card") == -1, "quirk papers showed inside The girdle")
+	_expect(girdle_open.find("CW-39") == -1, "quirk file code stayed up inside The girdle")
+	_expect(girdle_open.find("so the ovolo would take the quirk") == -1, "quirk aim stayed up inside The girdle")
+	_expect(girdle_open.find("Cove chit") == -1, "chamfer papers showed inside The girdle")
+	_expect(girdle_open.find("Tooth sight") == -1, "chamfer papers showed inside The girdle")
+	_expect(girdle_open.find("Cant bill") == -1, "chamfer papers showed inside The girdle")
+	_expect(girdle_open.find("Wisp slate") == -1, "chamfer papers showed inside The girdle")
+	_expect(girdle_open.find("File card") == -1, "chamfer papers showed inside The girdle")
+	_expect(girdle_open.find("Soap slip") == -1, "chamfer papers showed inside The girdle")
+	_expect(girdle_open.find("Chamfer leaf") == -1, "chamfer papers showed inside The girdle")
+	_expect(girdle_open.find("Stallion note") == -1, "chamfer papers showed inside The girdle")
+	_expect(girdle_open.find("Fettle order") == -1, "chamfer papers showed inside The girdle")
+	_expect(girdle_open.find("Travisher card") == -1, "chamfer papers showed inside The girdle")
+	_expect(girdle_open.find("CW-40") == -1, "chamfer file code stayed up inside The girdle")
+	_expect(girdle_open.find("so the cove would take the chamfer") == -1, "chamfer aim stayed up inside The girdle")
+	_expect(girdle_open.find("Torus chit") == -1, "scotia papers showed inside The girdle")
+	_expect(girdle_open.find("Cusp sight") == -1, "scotia papers showed inside The girdle")
+	_expect(girdle_open.find("Fascia bill") == -1, "scotia papers showed inside The girdle")
+	_expect(girdle_open.find("Soot slate") == -1, "scotia papers showed inside The girdle")
+	_expect(girdle_open.find("Riffler card") == -1, "scotia papers showed inside The girdle")
+	_expect(girdle_open.find("Pumice slip") == -1, "scotia papers showed inside The girdle")
+	_expect(girdle_open.find("Scotia leaf") == -1, "scotia papers showed inside The girdle")
+	_expect(girdle_open.find("Yearling note") == -1, "scotia papers showed inside The girdle")
+	_expect(girdle_open.find("Peen order") == -1, "scotia papers showed inside The girdle")
+	_expect(girdle_open.find("Scorp card") == -1, "scotia papers showed inside The girdle")
+	_expect(girdle_open.find("CW-41") == -1, "scotia file code stayed up inside The girdle")
+	_expect(girdle_open.find("so the torus would take the scotia") == -1, "scotia aim stayed up inside The girdle")
+	_expect(girdle_open.find("Echinus chit") == -1, "cyma papers showed inside The girdle")
+	_expect(girdle_open.find("Beak sight") == -1, "cyma papers showed inside The girdle")
+	_expect(girdle_open.find("Corona bill") == -1, "cyma papers showed inside The girdle")
+	_expect(girdle_open.find("Garnet slate") == -1, "cyma papers showed inside The girdle")
+	_expect(girdle_open.find("Inshave card") == -1, "cyma papers showed inside The girdle")
+	_expect(girdle_open.find("Rouge slip") == -1, "cyma papers showed inside The girdle")
+	_expect(girdle_open.find("Cyma leaf") == -1, "cyma papers showed inside The girdle")
+	_expect(girdle_open.find("Jennet note") == -1, "cyma papers showed inside The girdle")
+	_expect(girdle_open.find("Chase order") == -1, "cyma papers showed inside The girdle")
+	_expect(girdle_open.find("Froe card") == -1, "cyma papers showed inside The girdle")
+	_expect(girdle_open.find("CW-42") == -1, "cyma file code stayed up inside The girdle")
+	_expect(girdle_open.find("so the echinus would take the cyma") == -1, "cyma aim stayed up inside The girdle")
+	_expect(girdle_open.find("Thumbnail chit") == -1, "cavetto papers showed inside The girdle")
+	_expect(girdle_open.find("Drip sight") == -1, "cavetto papers showed inside The girdle")
+	_expect(girdle_open.find("Staff bill") == -1, "cavetto papers showed inside The girdle")
+	_expect(girdle_open.find("Cedar slate") == -1, "cavetto papers showed inside The girdle")
+	_expect(girdle_open.find("Bullnose card") == -1, "cavetto papers showed inside The girdle")
+	_expect(girdle_open.find("Scrape slip") == -1, "cavetto papers showed inside The girdle")
+	_expect(girdle_open.find("Cavetto leaf") == -1, "cavetto papers showed inside The girdle")
+	_expect(girdle_open.find("Palfrey note") == -1, "cavetto papers showed inside The girdle")
+	_expect(girdle_open.find("Knurl order") == -1, "cavetto papers showed inside The girdle")
+	_expect(girdle_open.find("Twibil card") == -1, "cavetto papers showed inside The girdle")
+	_expect(girdle_open.find("CW-43") == -1, "cavetto file code stayed up inside The girdle")
+	_expect(girdle_open.find("so the thumbnail would take the cavetto") == -1, "cavetto aim stayed up inside The girdle")
+	_expect(girdle_open.find("Walnut chit") == -1, "reed papers showed inside The girdle")
+	_expect(girdle_open.find("Deal sight") == -1, "reed papers showed inside The girdle")
+	_expect(girdle_open.find("Maple bill") == -1, "reed papers showed inside The girdle")
+	_expect(girdle_open.find("Larch slate") == -1, "reed papers showed inside The girdle")
+	_expect(girdle_open.find("Nosing card") == -1, "reed papers showed inside The girdle")
+	_expect(girdle_open.find("Blue slip") == -1, "reed papers showed inside The girdle")
+	_expect(girdle_open.find("Reed leaf") == -1, "reed papers showed inside The girdle")
+	_expect(girdle_open.find("Weanling note") == -1, "reed papers showed inside The girdle")
+	_expect(girdle_open.find("Temper order") == -1, "reed papers showed inside The girdle")
+	_expect(girdle_open.find("Rounder card") == -1, "reed papers showed inside The girdle")
+	_expect(girdle_open.find("CW-44") == -1, "reed file code stayed up inside The girdle")
+	_expect(girdle_open.find("so the walnut would take the reed") == -1, "reed aim stayed up inside The girdle")
+	_expect(girdle_open.find("Spruce chit") == -1, "annulet papers showed inside The girdle")
+	_expect(girdle_open.find("Billet sight") == -1, "annulet papers showed inside The girdle")
+	_expect(girdle_open.find("Poplar bill") == -1, "annulet papers showed inside The girdle")
+	_expect(girdle_open.find("Osier slate") == -1, "annulet papers showed inside The girdle")
+	_expect(girdle_open.find("Burnisher card") == -1, "annulet papers showed inside The girdle")
+	_expect(girdle_open.find("Stipple slip") == -1, "annulet papers showed inside The girdle")
+	_expect(girdle_open.find("Annulet leaf") == -1, "annulet papers showed inside The girdle")
+	_expect(girdle_open.find("Hinny note") == -1, "annulet papers showed inside The girdle")
+	_expect(girdle_open.find("Forge order") == -1, "annulet papers showed inside The girdle")
+	_expect(girdle_open.find("Drawshave card") == -1, "annulet papers showed inside The girdle")
+	_expect(girdle_open.find("CW-45") == -1, "annulet file code stayed up inside The girdle")
+	_expect(girdle_open.find("so the spruce would take the annulet") == -1, "annulet aim stayed up inside The girdle")
+	_expect(girdle_open.find("Holly chit") == -1, "hood papers showed inside The girdle")
+	_expect(girdle_open.find("Ivory sight") == -1, "hood papers showed inside The girdle")
+	_expect(girdle_open.find("Chestnut bill") == -1, "hood papers showed inside The girdle")
+	_expect(girdle_open.find("Boxwood slate") == -1, "hood papers showed inside The girdle")
+	_expect(girdle_open.find("Compass card") == -1, "hood papers showed inside The girdle")
+	_expect(girdle_open.find("Glaze slip") == -1, "hood papers showed inside The girdle")
+	_expect(girdle_open.find("Hood leaf") == -1, "hood papers showed inside The girdle")
+	_expect(girdle_open.find("Mule note") == -1, "hood papers showed inside The girdle")
+	_expect(girdle_open.find("Bronze order") == -1, "hood papers showed inside The girdle")
+	_expect(girdle_open.find("Trying card") == -1, "hood papers showed inside The girdle")
+	_expect(girdle_open.find("CW-46") == -1, "hood file code stayed up inside The girdle")
+	_expect(girdle_open.find("so the holly would take the hood") == -1, "hood aim stayed up inside The girdle")
+	_expect(girdle_open.find("Alder chit") == -1, "listel papers showed inside The girdle")
+	_expect(girdle_open.find("Flax sight") == -1, "listel papers showed inside The girdle")
+	_expect(girdle_open.find("Quince bill") == -1, "listel papers showed inside The girdle")
+	_expect(girdle_open.find("Ochre slate") == -1, "listel papers showed inside The girdle")
+	_expect(girdle_open.find("Trammel card") == -1, "listel papers showed inside The girdle")
+	_expect(girdle_open.find("Plate slip") == -1, "listel papers showed inside The girdle")
+	_expect(girdle_open.find("Listel leaf") == -1, "listel papers showed inside The girdle")
+	_expect(girdle_open.find("Jenny note") == -1, "listel papers showed inside The girdle")
+	_expect(girdle_open.find("Dope order") == -1, "listel papers showed inside The girdle")
+	_expect(girdle_open.find("Template card") == -1, "listel papers showed inside The girdle")
+	_expect(girdle_open.find("CW-47") == -1, "listel file code stayed up inside The girdle")
+	_expect(girdle_open.find("so the alder would take the listel") == -1, "listel aim stayed up inside The girdle")
+	_expect(girdle_open.find("Medlar chit") == -1, "abacus papers showed inside The girdle")
+	_expect(girdle_open.find("Saffron sight") == -1, "abacus papers showed inside The girdle")
+	_expect(girdle_open.find("Juniper bill") == -1, "abacus papers showed inside The girdle")
+	_expect(girdle_open.find("Weld slate") == -1, "abacus papers showed inside The girdle")
+	_expect(girdle_open.find("Holdfast card") == -1, "abacus papers showed inside The girdle")
+	_expect(girdle_open.find("Glue slip") == -1, "abacus papers showed inside The girdle")
+	_expect(girdle_open.find("Abacus leaf") == -1, "abacus papers showed inside The girdle")
+	_expect(girdle_open.find("Nag note") == -1, "abacus papers showed inside The girdle")
+	_expect(girdle_open.find("Graphite order") == -1, "abacus papers showed inside The girdle")
+	_expect(girdle_open.find("Hatchet card") == -1, "abacus papers showed inside The girdle")
+	_expect(girdle_open.find("CW-48") == -1, "abacus file code stayed up inside The girdle")
+	_expect(girdle_open.find("so the medlar would take the abacus") == -1, "abacus aim stayed up inside The girdle")
+	_press(root, "Submit theory")
+	var empty_girdle := _verdict_text(root)
+	_expect(empty_girdle.find("who cut the girdle") >= 0, "empty girdle board: %s" % empty_girdle)
+	_expect(empty_girdle.find("where they cut the girdle") >= 0, "empty girdle board: %s" % empty_girdle)
+	_expect(empty_girdle.find("at which hour they cut the girdle") >= 0, "empty girdle board: %s" % empty_girdle)
+	_expect(empty_girdle.find("who scratched the quirk") == -1, "empty chamfer board used a quirk slot: %s" % empty_girdle)
+	_expect(empty_girdle.find("who cut the tongue") == -1, "empty chamfer board used a tongue slot: %s" % empty_girdle)
+	_expect(empty_girdle.find("who cut the dowel") == -1, "empty chamfer board used a dowel slot: %s" % empty_girdle)
+	_expect(empty_girdle.find("who cut the chamfer") == -1, "empty scotia board used a chamfer slot: %s" % empty_girdle)
+	_expect(empty_girdle.find("where they cut the chamfer") == -1, "empty scotia board used a chamfer slot: %s" % empty_girdle)
+	_expect(empty_girdle.find("at which hour they cut the chamfer") == -1, "empty scotia board used a chamfer slot: %s" % empty_girdle)
+	_expect(empty_girdle.find("who cut the scotia") == -1, "empty girdle board used a scotia slot: %s" % empty_girdle)
+	_expect(empty_girdle.find("where they cut the scotia") == -1, "empty girdle board used a scotia slot: %s" % empty_girdle)
+	_expect(empty_girdle.find("at which hour they cut the scotia") == -1, "empty girdle board used a scotia slot: %s" % empty_girdle)
+	_expect(empty_girdle.find("who cut the cyma") == -1, "empty girdle board used a cyma slot: %s" % empty_girdle)
+	_expect(empty_girdle.find("where they cut the cyma") == -1, "empty girdle board used a cyma slot: %s" % empty_girdle)
+	_expect(empty_girdle.find("at which hour they cut the cyma") == -1, "empty girdle board used a cyma slot: %s" % empty_girdle)
+	_expect(empty_girdle.find("who cut the cavetto") == -1, "empty girdle board used a cavetto slot: %s" % empty_girdle)
+	_expect(empty_girdle.find("where they cut the cavetto") == -1, "empty girdle board used a cavetto slot: %s" % empty_girdle)
+	_expect(empty_girdle.find("at which hour they cut the cavetto") == -1, "empty girdle board used a cavetto slot: %s" % empty_girdle)
+	_expect(empty_girdle.find("who cut the reed") == -1, "empty girdle board used a reed slot: %s" % empty_girdle)
+	_expect(empty_girdle.find("where they cut the reed") == -1, "empty girdle board used a reed slot: %s" % empty_girdle)
+	_expect(empty_girdle.find("at which hour they cut the reed") == -1, "empty girdle board used a reed slot: %s" % empty_girdle)
+	_expect(empty_girdle.find("who cut the annulet") == -1, "empty girdle board used an annulet slot: %s" % empty_girdle)
+	_expect(empty_girdle.find("where they cut the annulet") == -1, "empty girdle board used an annulet slot: %s" % empty_girdle)
+	_expect(empty_girdle.find("at which hour they cut the annulet") == -1, "empty girdle board used an annulet slot: %s" % empty_girdle)
+	_expect(empty_girdle.find("who cut the hood") == -1, "empty girdle board used a hood slot: %s" % empty_girdle)
+	_expect(empty_girdle.find("where they cut the hood") == -1, "empty girdle board used a hood slot: %s" % empty_girdle)
+	_expect(empty_girdle.find("at which hour they cut the hood") == -1, "empty girdle board used a hood slot: %s" % empty_girdle)
+	_expect(empty_girdle.find("who cut the listel") == -1, "empty girdle board used a listel slot: %s" % empty_girdle)
+	_expect(empty_girdle.find("where they cut the listel") == -1, "empty girdle board used a listel slot: %s" % empty_girdle)
+	_expect(empty_girdle.find("at which hour they cut the listel") == -1, "empty girdle board used a listel slot: %s" % empty_girdle)
+	_expect(empty_girdle.find("who cut the abacus") == -1, "empty girdle board used an abacus slot: %s" % empty_girdle)
+	_expect(empty_girdle.find("where they cut the abacus") == -1, "empty girdle board used an abacus slot: %s" % empty_girdle)
+	_expect(empty_girdle.find("at which hour they cut the abacus") == -1, "empty girdle board used an abacus slot: %s" % empty_girdle)
+	_expect(empty_girdle.to_lower().find("conflict") == -1, "empty chamfer board talked about a conflict: %s" % empty_girdle)
+	_press(root, "Simon")
+	_press(root, "Trestle")
+	_press(root, "186")
+	_press(root, "Submit theory")
+	var girdle_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(girdle_miss, Girdle, {"who": "Simon", "place": "trestle", "hour": "186"})
+	_expect(Girdle.conflicting_ids({"who": "Simon", "place": "trestle", "hour": "186"}).size() == 9, "Simon / trestle / 186 should contradict every exhibit")
+	_expect(girdle_miss.find("Cherry chit") >= 0, "wrong triple reply omits Cherry chit: %s" % girdle_miss)
+	_expect(girdle_miss.find("Brazil sight") >= 0, "wrong triple reply omits Brazil sight: %s" % girdle_miss)
+	_expect(girdle_miss.find("Plum bill") >= 0, "wrong triple reply omits Plum bill: %s" % girdle_miss)
+	_expect(girdle_miss.find("Fustic slate") >= 0, "wrong triple reply omits Fustic slate: %s" % girdle_miss)
+	_expect(girdle_miss.find("Trestle card") >= 0, "wrong triple reply omits Trestle card: %s" % girdle_miss)
+	_expect(girdle_miss.find("Size slip") >= 0, "wrong triple reply omits Size slip: %s" % girdle_miss)
+	_expect(girdle_miss.find("Girdle leaf") >= 0, "wrong triple reply omits Girdle leaf: %s" % girdle_miss)
+	_expect(girdle_miss.find("Hack note") >= 0, "wrong triple reply omits Hack note: %s" % girdle_miss)
+	_expect(girdle_miss.find("Clay order") >= 0, "wrong triple reply omits Clay order: %s" % girdle_miss)
+	_press(root, "Agnes")
+	_press(root, "Bole")
+	_press(root, "188")
+	_press(root, "Submit theory")
+	var girdle_accepted := _verdict_text(root)
+	_expect(girdle_accepted.find("fits every exhibit") >= 0, "girdle board rejected the true theory: %s" % girdle_accepted)
+	_expect(girdle_accepted.find(GIRDLE_TIMELINE) >= 0, "girdle board timeline: %s" % girdle_accepted)
+	_expect(girdle_accepted.find("Agnes (girdle hand) cut the girdle in the bole at 188") >= 0, "girdle board omits Agnes at 188: %s" % girdle_accepted)
+	_expect(girdle_accepted.find("in the bole") >= 0, "girdle board omits the bole: %s" % girdle_accepted)
+	_expect(girdle_accepted.find("so the cherry would take the girdle") >= 0, "girdle board omits the cherry: %s" % girdle_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var girdle_cleared := _verdict_text(root)
+	_expect(girdle_cleared.find("who cut the girdle") >= 0, "cleared girdle board: %s" % girdle_cleared)
+	_expect(girdle_cleared.find("fits every exhibit") == -1, "cleared chamfer board stayed accepted: %s" % girdle_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The abacus")
+	var abacus_from_girdle := _visible_label_blob(root)
+	_expect(abacus_from_girdle.find("Medlar chit") >= 0, "could not return to The abacus from The girdle")
+	_expect(abacus_from_girdle.find("Nag note") >= 0, "abacus exhibits did not return from The girdle")
+	_expect(abacus_from_girdle.find("CW-48") >= 0, "returned abacus omits CW-48")
+	_expect(abacus_from_girdle.find("Cherry chit") == -1, "girdle papers showed inside The abacus")
+	_expect(abacus_from_girdle.find("Hack note") == -1, "girdle papers showed inside The abacus")
+	_expect(abacus_from_girdle.find("CW-49") == -1, "girdle file code stayed up inside The abacus")
+	_press(root, "Una")
+	_press(root, "Socle")
+	_press(root, "183")
+	_press(root, "Submit theory")
+	var abacus_after_girdle := _verdict_text(root)
+	_expect(abacus_after_girdle.find("fits every exhibit") >= 0, "abacus board rejected the true theory after The girdle: %s" % abacus_after_girdle)
+	_expect(abacus_after_girdle.find("Una (abacus hand) cut the abacus in the socle at 183") >= 0, "abacus board timeline after The girdle: %s" % abacus_after_girdle)
+	_press(root, "Menu")
+	_press(root, "Open The listel")
+	var listel_from_girdle := _visible_label_blob(root)
+	_expect(listel_from_girdle.find("Alder chit") >= 0, "could not return to The listel from The girdle")
+	_expect(listel_from_girdle.find("Jenny note") >= 0, "listel exhibits did not return from The girdle")
+	_expect(listel_from_girdle.find("CW-47") >= 0, "returned listel omits CW-47")
+	_expect(listel_from_girdle.find("Cherry chit") == -1, "girdle papers showed inside The listel")
+	_expect(listel_from_girdle.find("Hack note") == -1, "girdle papers showed inside The listel")
+	_expect(listel_from_girdle.find("CW-49") == -1, "girdle file code stayed up inside The listel")
+	_expect(listel_from_girdle.find("Medlar chit") == -1, "abacus papers showed inside The listel")
+	_expect(listel_from_girdle.find("Nag note") == -1, "abacus papers showed inside The listel")
+	_expect(listel_from_girdle.find("CW-48") == -1, "abacus file code stayed up inside The listel")
+	_press(root, "Giles")
+	_press(root, "Plinth")
+	_press(root, "178")
+	_press(root, "Submit theory")
+	var listel_after_girdle := _verdict_text(root)
+	_expect(listel_after_girdle.find("fits every exhibit") >= 0, "listel board rejected the true theory after The girdle: %s" % listel_after_girdle)
+	_expect(listel_after_girdle.find("Giles (listel hand) cut the listel in the plinth at 178") >= 0, "listel board timeline after The girdle: %s" % listel_after_girdle)
+	_press(root, "Menu")
+	_press(root, "Open The hood")
+	var hood_from_girdle := _visible_label_blob(root)
+	_expect(hood_from_girdle.find("Holly chit") >= 0, "could not return to The hood from The girdle")
+	_expect(hood_from_girdle.find("Mule note") >= 0, "hood exhibits did not return from The girdle")
+	_expect(hood_from_girdle.find("CW-46") >= 0, "returned hood omits CW-46")
+	_expect(hood_from_girdle.find("Cherry chit") == -1, "girdle papers showed inside The hood")
+	_expect(hood_from_girdle.find("Hack note") == -1, "girdle papers showed inside The hood")
+	_expect(hood_from_girdle.find("CW-49") == -1, "girdle file code stayed up inside The hood")
+	_expect(hood_from_girdle.find("Medlar chit") == -1, "abacus papers showed inside The hood")
+	_expect(hood_from_girdle.find("Nag note") == -1, "abacus papers showed inside The hood")
+	_expect(hood_from_girdle.find("CW-48") == -1, "abacus file code stayed up inside The hood")
+	_expect(hood_from_girdle.find("Alder chit") == -1, "listel papers showed inside The hood")
+	_expect(hood_from_girdle.find("Jenny note") == -1, "listel papers showed inside The hood")
+	_expect(hood_from_girdle.find("CW-47") == -1, "listel file code stayed up inside The hood")
+	_press(root, "Hugo")
+	_press(root, "Sycamore")
+	_press(root, "173")
+	_press(root, "Submit theory")
+	var hood_after_girdle := _verdict_text(root)
+	_expect(hood_after_girdle.find("fits every exhibit") >= 0, "hood board rejected the true theory after The girdle: %s" % hood_after_girdle)
+	_expect(hood_after_girdle.find("Hugo (hood hand) cut the hood in the sycamore at 173") >= 0, "hood board timeline after The girdle: %s" % hood_after_girdle)
+	_press(root, "Menu")
+	_press(root, "Open The annulet")
+	var annulet_from_girdle := _visible_label_blob(root)
+	_expect(annulet_from_girdle.find("Spruce chit") >= 0, "could not return to The annulet from The girdle")
+	_expect(annulet_from_girdle.find("Hinny note") >= 0, "annulet exhibits did not return from The girdle")
+	_expect(annulet_from_girdle.find("CW-45") >= 0, "returned annulet omits CW-45")
+	_expect(annulet_from_girdle.find("Cherry chit") == -1, "girdle papers showed inside The annulet")
+	_expect(annulet_from_girdle.find("Hack note") == -1, "girdle papers showed inside The annulet")
+	_expect(annulet_from_girdle.find("CW-49") == -1, "girdle file code stayed up inside The annulet")
+	_expect(annulet_from_girdle.find("Medlar chit") == -1, "abacus papers showed inside The annulet")
+	_expect(annulet_from_girdle.find("Nag note") == -1, "abacus papers showed inside The annulet")
+	_expect(annulet_from_girdle.find("CW-48") == -1, "abacus file code stayed up inside The annulet")
+	_expect(annulet_from_girdle.find("Alder chit") == -1, "listel papers showed inside The annulet")
+	_expect(annulet_from_girdle.find("Jenny note") == -1, "listel papers showed inside The annulet")
+	_expect(annulet_from_girdle.find("CW-47") == -1, "listel file code stayed up inside The annulet")
+	_expect(annulet_from_girdle.find("Holly chit") == -1, "hood papers showed inside The annulet")
+	_expect(annulet_from_girdle.find("Mule note") == -1, "hood papers showed inside The annulet")
+	_expect(annulet_from_girdle.find("CW-46") == -1, "hood file code stayed up inside The annulet")
+	_press(root, "Clive")
+	_press(root, "Beech")
+	_press(root, "168")
+	_press(root, "Submit theory")
+	var annulet_after_girdle := _verdict_text(root)
+	_expect(annulet_after_girdle.find("fits every exhibit") >= 0, "annulet board rejected the true theory after The girdle: %s" % annulet_after_girdle)
+	_expect(annulet_after_girdle.find("Clive (annulet hand) cut the annulet in the beech at 168") >= 0, "annulet board timeline after The girdle: %s" % annulet_after_girdle)
+	_press(root, "Menu")
+	_press(root, "Open The reed")
+	var reed_from_girdle := _visible_label_blob(root)
+	_expect(reed_from_girdle.find("Walnut chit") >= 0, "could not return to The reed from The girdle")
+	_expect(reed_from_girdle.find("Weanling note") >= 0, "reed exhibits did not return from The girdle")
+	_expect(reed_from_girdle.find("CW-44") >= 0, "returned reed omits CW-44")
+	_expect(reed_from_girdle.find("Cherry chit") == -1, "girdle papers showed inside The reed")
+	_expect(reed_from_girdle.find("Hack note") == -1, "girdle papers showed inside The reed")
+	_expect(reed_from_girdle.find("CW-49") == -1, "girdle file code stayed up inside The reed")
+	_expect(reed_from_girdle.find("Medlar chit") == -1, "abacus papers showed inside The reed")
+	_expect(reed_from_girdle.find("Nag note") == -1, "abacus papers showed inside The reed")
+	_expect(reed_from_girdle.find("CW-48") == -1, "abacus file code stayed up inside The reed")
+	_expect(reed_from_girdle.find("Alder chit") == -1, "listel papers showed inside The reed")
+	_expect(reed_from_girdle.find("Jenny note") == -1, "listel papers showed inside The reed")
+	_expect(reed_from_girdle.find("CW-47") == -1, "listel file code stayed up inside The reed")
+	_expect(reed_from_girdle.find("Holly chit") == -1, "hood papers showed inside The reed")
+	_expect(reed_from_girdle.find("Mule note") == -1, "hood papers showed inside The reed")
+	_expect(reed_from_girdle.find("CW-46") == -1, "hood file code stayed up inside The reed")
+	_expect(reed_from_girdle.find("Spruce chit") == -1, "annulet papers showed inside The reed")
+	_expect(reed_from_girdle.find("Hinny note") == -1, "annulet papers showed inside The reed")
+	_expect(reed_from_girdle.find("CW-45") == -1, "annulet file code stayed up inside The reed")
+	_press(root, "Greta")
+	_press(root, "Ogee")
+	_press(root, "163")
+	_press(root, "Submit theory")
+	var reed_after_girdle := _verdict_text(root)
+	_expect(reed_after_girdle.find("fits every exhibit") >= 0, "reed board rejected the true theory after The girdle: %s" % reed_after_girdle)
+	_expect(reed_after_girdle.find("Greta (reed hand) cut the reed in the ogee at 163") >= 0, "reed board timeline after The girdle: %s" % reed_after_girdle)
+	_press(root, "Menu")
+	_press(root, "Open The cavetto")
+	var cavetto_from_girdle := _visible_label_blob(root)
+	_expect(cavetto_from_girdle.find("Thumbnail chit") >= 0, "could not return to The cavetto from The girdle")
+	_expect(cavetto_from_girdle.find("Palfrey note") >= 0, "cavetto exhibits did not return from The girdle")
+	_expect(cavetto_from_girdle.find("CW-43") >= 0, "returned cavetto omits CW-43")
+	_expect(cavetto_from_girdle.find("Cherry chit") == -1, "girdle papers showed inside The cavetto")
+	_expect(cavetto_from_girdle.find("Hack note") == -1, "girdle papers showed inside The cavetto")
+	_expect(cavetto_from_girdle.find("CW-49") == -1, "girdle file code stayed up inside The cavetto")
+	_expect(cavetto_from_girdle.find("Medlar chit") == -1, "abacus papers showed inside The cavetto")
+	_expect(cavetto_from_girdle.find("Nag note") == -1, "abacus papers showed inside The cavetto")
+	_expect(cavetto_from_girdle.find("CW-48") == -1, "abacus file code stayed up inside The cavetto")
+	_expect(cavetto_from_girdle.find("Alder chit") == -1, "listel papers showed inside The cavetto")
+	_expect(cavetto_from_girdle.find("Jenny note") == -1, "listel papers showed inside The cavetto")
+	_expect(cavetto_from_girdle.find("CW-47") == -1, "listel file code stayed up inside The cavetto")
+	_expect(cavetto_from_girdle.find("Holly chit") == -1, "hood papers showed inside The cavetto")
+	_expect(cavetto_from_girdle.find("Mule note") == -1, "hood papers showed inside The cavetto")
+	_expect(cavetto_from_girdle.find("CW-46") == -1, "hood file code stayed up inside The cavetto")
+	_expect(cavetto_from_girdle.find("Spruce chit") == -1, "annulet papers showed inside The cavetto")
+	_expect(cavetto_from_girdle.find("Hinny note") == -1, "annulet papers showed inside The cavetto")
+	_expect(cavetto_from_girdle.find("CW-45") == -1, "annulet file code stayed up inside The cavetto")
+	_expect(cavetto_from_girdle.find("Walnut chit") == -1, "reed papers showed inside The cavetto")
+	_expect(cavetto_from_girdle.find("Weanling note") == -1, "reed papers showed inside The cavetto")
+	_expect(cavetto_from_girdle.find("CW-44") == -1, "reed file code stayed up inside The cavetto")
+	_press(root, "Seth")
+	_press(root, "Dentil")
+	_press(root, "158")
+	_press(root, "Submit theory")
+	var cavetto_after_girdle := _verdict_text(root)
+	_expect(cavetto_after_girdle.find("fits every exhibit") >= 0, "cavetto board rejected the true theory after The girdle: %s" % cavetto_after_girdle)
+	_expect(cavetto_after_girdle.find("Seth (cavetto hand) cut the cavetto in the dentil at 158") >= 0, "cavetto board timeline after The girdle: %s" % cavetto_after_girdle)
+	_press(root, "Menu")
+	_press(root, "Open The cyma")
+	var cyma_from_girdle := _visible_label_blob(root)
+	_expect(cyma_from_girdle.find("Echinus chit") >= 0, "could not return to The cyma from The girdle")
+	_expect(cyma_from_girdle.find("Jennet note") >= 0, "cyma exhibits did not return from The girdle")
+	_expect(cyma_from_girdle.find("CW-42") >= 0, "returned cyma omits CW-42")
+	_expect(cyma_from_girdle.find("Cherry chit") == -1, "girdle papers showed inside The cyma")
+	_expect(cyma_from_girdle.find("Hack note") == -1, "girdle papers showed inside The cyma")
+	_expect(cyma_from_girdle.find("CW-49") == -1, "girdle file code stayed up inside The cyma")
+	_expect(cyma_from_girdle.find("Medlar chit") == -1, "abacus papers showed inside The cyma")
+	_expect(cyma_from_girdle.find("Nag note") == -1, "abacus papers showed inside The cyma")
+	_expect(cyma_from_girdle.find("CW-48") == -1, "abacus file code stayed up inside The cyma")
+	_expect(cyma_from_girdle.find("Alder chit") == -1, "listel papers showed inside The cyma")
+	_expect(cyma_from_girdle.find("Jenny note") == -1, "listel papers showed inside The cyma")
+	_expect(cyma_from_girdle.find("CW-47") == -1, "listel file code stayed up inside The cyma")
+	_expect(cyma_from_girdle.find("Holly chit") == -1, "hood papers showed inside The cyma")
+	_expect(cyma_from_girdle.find("Mule note") == -1, "hood papers showed inside The cyma")
+	_expect(cyma_from_girdle.find("CW-46") == -1, "hood file code stayed up inside The cyma")
+	_expect(cyma_from_girdle.find("Spruce chit") == -1, "annulet papers showed inside The cyma")
+	_expect(cyma_from_girdle.find("Hinny note") == -1, "annulet papers showed inside The cyma")
+	_expect(cyma_from_girdle.find("CW-45") == -1, "annulet file code stayed up inside The cyma")
+	_expect(cyma_from_girdle.find("Walnut chit") == -1, "reed papers showed inside The cyma")
+	_expect(cyma_from_girdle.find("Weanling note") == -1, "reed papers showed inside The cyma")
+	_expect(cyma_from_girdle.find("CW-44") == -1, "reed file code stayed up inside The cyma")
+	_expect(cyma_from_girdle.find("Thumbnail chit") == -1, "cavetto papers showed inside The cyma")
+	_expect(cyma_from_girdle.find("Palfrey note") == -1, "cavetto papers showed inside The cyma")
+	_expect(cyma_from_girdle.find("CW-43") == -1, "cavetto file code stayed up inside The cyma")
+	_press(root, "Ruth")
+	_press(root, "Bolection")
+	_press(root, "153")
+	_press(root, "Submit theory")
+	var cyma_after_girdle := _verdict_text(root)
+	_expect(cyma_after_girdle.find("fits every exhibit") >= 0, "cyma board rejected the true theory after The girdle: %s" % cyma_after_girdle)
+	_expect(cyma_after_girdle.find("Ruth (cyma hand) cut the cyma in the bolection at 153") >= 0, "cyma board timeline after The girdle: %s" % cyma_after_girdle)
+	_press(root, "Menu")
+	_press(root, "Open The scotia")
+	var scotia_from_girdle := _visible_label_blob(root)
+	_expect(scotia_from_girdle.find("Torus chit") >= 0, "could not return to The scotia from The girdle")
+	_expect(scotia_from_girdle.find("Yearling note") >= 0, "scotia exhibits did not return from The girdle")
+	_expect(scotia_from_girdle.find("CW-41") >= 0, "returned scotia omits CW-41")
+	_expect(scotia_from_girdle.find("Cherry chit") == -1, "girdle papers showed inside The scotia")
+	_expect(scotia_from_girdle.find("Hack note") == -1, "girdle papers showed inside The scotia")
+	_expect(scotia_from_girdle.find("CW-49") == -1, "girdle file code stayed up inside The scotia")
+	_expect(scotia_from_girdle.find("Medlar chit") == -1, "abacus papers showed inside The scotia")
+	_expect(scotia_from_girdle.find("Nag note") == -1, "abacus papers showed inside The scotia")
+	_expect(scotia_from_girdle.find("CW-48") == -1, "abacus file code stayed up inside The scotia")
+	_expect(scotia_from_girdle.find("Alder chit") == -1, "listel papers showed inside The scotia")
+	_expect(scotia_from_girdle.find("Jenny note") == -1, "listel papers showed inside The scotia")
+	_expect(scotia_from_girdle.find("CW-47") == -1, "listel file code stayed up inside The scotia")
+	_expect(scotia_from_girdle.find("Holly chit") == -1, "hood papers showed inside The scotia")
+	_expect(scotia_from_girdle.find("Mule note") == -1, "hood papers showed inside The scotia")
+	_expect(scotia_from_girdle.find("CW-46") == -1, "hood file code stayed up inside The scotia")
+	_expect(scotia_from_girdle.find("Spruce chit") == -1, "annulet papers showed inside The scotia")
+	_expect(scotia_from_girdle.find("Hinny note") == -1, "annulet papers showed inside The scotia")
+	_expect(scotia_from_girdle.find("CW-45") == -1, "annulet file code stayed up inside The scotia")
+	_expect(scotia_from_girdle.find("Walnut chit") == -1, "reed papers showed inside The scotia")
+	_expect(scotia_from_girdle.find("Weanling note") == -1, "reed papers showed inside The scotia")
+	_expect(scotia_from_girdle.find("CW-44") == -1, "reed file code stayed up inside The scotia")
+	_expect(scotia_from_girdle.find("Thumbnail chit") == -1, "cavetto papers showed inside The scotia")
+	_expect(scotia_from_girdle.find("Palfrey note") == -1, "cavetto papers showed inside The scotia")
+	_expect(scotia_from_girdle.find("CW-43") == -1, "cavetto file code stayed up inside The scotia")
+	_expect(scotia_from_girdle.find("Echinus chit") == -1, "cyma papers showed inside The scotia")
+	_expect(scotia_from_girdle.find("Jennet note") == -1, "cyma papers showed inside The scotia")
+	_expect(scotia_from_girdle.find("CW-42") == -1, "cyma file code stayed up inside The scotia")
+	_press(root, "Willa")
+	_press(root, "Hollow")
+	_press(root, "148")
+	_press(root, "Submit theory")
+	var scotia_after_girdle := _verdict_text(root)
+	_expect(scotia_after_girdle.find("fits every exhibit") >= 0, "scotia board rejected the true theory after The girdle: %s" % scotia_after_girdle)
+	_expect(scotia_after_girdle.find("Willa (scotia hand) cut the scotia in the hollow at 148") >= 0, "scotia board timeline after The girdle: %s" % scotia_after_girdle)
+	_press(root, "Menu")
+	_press(root, "Open The chamfer")
+	var chamfer_from_girdle := _visible_label_blob(root)
+	_expect(chamfer_from_girdle.find("Cove chit") >= 0, "could not return to The chamfer from The girdle")
+	_expect(chamfer_from_girdle.find("Stallion note") >= 0, "chamfer exhibits did not return from The girdle")
+	_expect(chamfer_from_girdle.find("CW-40") >= 0, "returned chamfer omits CW-40")
+	_expect(chamfer_from_girdle.find("Torus chit") == -1, "scotia papers showed inside The chamfer")
+	_expect(chamfer_from_girdle.find("Yearling note") == -1, "scotia papers showed inside The chamfer")
+	_expect(chamfer_from_girdle.find("CW-41") == -1, "scotia file code stayed up inside The chamfer")
+	_expect(chamfer_from_girdle.find("Cherry chit") == -1, "girdle papers showed inside The chamfer")
+	_expect(chamfer_from_girdle.find("Hack note") == -1, "girdle papers showed inside The chamfer")
+	_expect(chamfer_from_girdle.find("CW-49") == -1, "girdle file code stayed up inside The chamfer")
+	_expect(chamfer_from_girdle.find("Medlar chit") == -1, "abacus papers showed inside The chamfer")
+	_expect(chamfer_from_girdle.find("Nag note") == -1, "abacus papers showed inside The chamfer")
+	_expect(chamfer_from_girdle.find("CW-48") == -1, "abacus file code stayed up inside The chamfer")
+	_expect(chamfer_from_girdle.find("Alder chit") == -1, "listel papers showed inside The chamfer")
+	_expect(chamfer_from_girdle.find("Jenny note") == -1, "listel papers showed inside The chamfer")
+	_expect(chamfer_from_girdle.find("CW-47") == -1, "listel file code stayed up inside The chamfer")
+	_expect(chamfer_from_girdle.find("Holly chit") == -1, "hood papers showed inside The chamfer")
+	_expect(chamfer_from_girdle.find("Mule note") == -1, "hood papers showed inside The chamfer")
+	_expect(chamfer_from_girdle.find("CW-46") == -1, "hood file code stayed up inside The chamfer")
+	_expect(chamfer_from_girdle.find("Spruce chit") == -1, "annulet papers showed inside The chamfer")
+	_expect(chamfer_from_girdle.find("Hinny note") == -1, "annulet papers showed inside The chamfer")
+	_expect(chamfer_from_girdle.find("CW-45") == -1, "annulet file code stayed up inside The chamfer")
+	_expect(chamfer_from_girdle.find("Walnut chit") == -1, "reed papers showed inside The chamfer")
+	_expect(chamfer_from_girdle.find("Weanling note") == -1, "reed papers showed inside The chamfer")
+	_expect(chamfer_from_girdle.find("CW-44") == -1, "reed file code stayed up inside The chamfer")
+	_expect(chamfer_from_girdle.find("Thumbnail chit") == -1, "cavetto papers showed inside The chamfer")
+	_expect(chamfer_from_girdle.find("Palfrey note") == -1, "cavetto papers showed inside The chamfer")
+	_expect(chamfer_from_girdle.find("CW-43") == -1, "cavetto file code stayed up inside The chamfer")
+	_expect(chamfer_from_girdle.find("Echinus chit") == -1, "cyma papers showed inside The chamfer")
+	_expect(chamfer_from_girdle.find("Jennet note") == -1, "cyma papers showed inside The chamfer")
+	_expect(chamfer_from_girdle.find("CW-42") == -1, "cyma file code stayed up inside The chamfer")
+	_press(root, "Merrick")
+	_press(root, "Block")
+	_press(root, "143")
+	_press(root, "Submit theory")
+	var chamfer_after_girdle := _verdict_text(root)
+	_expect(chamfer_after_girdle.find("fits every exhibit") >= 0, "chamfer board rejected the true theory after The girdle: %s" % chamfer_after_girdle)
+	_expect(chamfer_after_girdle.find("Merrick (chamfer hand) cut the chamfer in the block at 143") >= 0, "chamfer board timeline after The girdle: %s" % chamfer_after_girdle)
+	_press(root, "Menu")
+	_press(root, "Open The quirk")
+	var quirk_from_girdle := _visible_label_blob(root)
+	_expect(quirk_from_girdle.find("Ovolo chit") >= 0, "could not return to The quirk from The girdle")
+	_expect(quirk_from_girdle.find("Gelding note") >= 0, "quirk exhibits did not return from The girdle")
+	_expect(quirk_from_girdle.find("CW-39") >= 0, "returned quirk omits CW-39")
+	_expect(quirk_from_girdle.find("Cove chit") == -1, "chamfer papers showed inside The quirk")
+	_expect(quirk_from_girdle.find("Stallion note") == -1, "chamfer papers showed inside The quirk")
+	_expect(quirk_from_girdle.find("CW-40") == -1, "chamfer file code stayed up inside The quirk")
+	_expect(quirk_from_girdle.find("Torus chit") == -1, "scotia papers showed inside The quirk")
+	_expect(quirk_from_girdle.find("Yearling note") == -1, "scotia papers showed inside The quirk")
+	_expect(quirk_from_girdle.find("CW-41") == -1, "scotia file code stayed up inside The quirk")
+	_expect(quirk_from_girdle.find("Cherry chit") == -1, "girdle papers showed inside The quirk")
+	_expect(quirk_from_girdle.find("Hack note") == -1, "girdle papers showed inside The quirk")
+	_expect(quirk_from_girdle.find("CW-49") == -1, "girdle file code stayed up inside The quirk")
+	_expect(quirk_from_girdle.find("Medlar chit") == -1, "abacus papers showed inside The quirk")
+	_expect(quirk_from_girdle.find("Nag note") == -1, "abacus papers showed inside The quirk")
+	_expect(quirk_from_girdle.find("CW-48") == -1, "abacus file code stayed up inside The quirk")
+	_expect(quirk_from_girdle.find("Alder chit") == -1, "listel papers showed inside The quirk")
+	_expect(quirk_from_girdle.find("Jenny note") == -1, "listel papers showed inside The quirk")
+	_expect(quirk_from_girdle.find("CW-47") == -1, "listel file code stayed up inside The quirk")
+	_expect(quirk_from_girdle.find("Holly chit") == -1, "hood papers showed inside The quirk")
+	_expect(quirk_from_girdle.find("Mule note") == -1, "hood papers showed inside The quirk")
+	_expect(quirk_from_girdle.find("CW-46") == -1, "hood file code stayed up inside The quirk")
+	_expect(quirk_from_girdle.find("Spruce chit") == -1, "annulet papers showed inside The quirk")
+	_expect(quirk_from_girdle.find("Hinny note") == -1, "annulet papers showed inside The quirk")
+	_expect(quirk_from_girdle.find("CW-45") == -1, "annulet file code stayed up inside The quirk")
+	_expect(quirk_from_girdle.find("Walnut chit") == -1, "reed papers showed inside The quirk")
+	_expect(quirk_from_girdle.find("Weanling note") == -1, "reed papers showed inside The quirk")
+	_expect(quirk_from_girdle.find("CW-44") == -1, "reed file code stayed up inside The quirk")
+	_expect(quirk_from_girdle.find("Thumbnail chit") == -1, "cavetto papers showed inside The quirk")
+	_expect(quirk_from_girdle.find("Palfrey note") == -1, "cavetto papers showed inside The quirk")
+	_expect(quirk_from_girdle.find("CW-43") == -1, "cavetto file code stayed up inside The quirk")
+	_expect(quirk_from_girdle.find("Echinus chit") == -1, "cyma papers showed inside The quirk")
+	_expect(quirk_from_girdle.find("Jennet note") == -1, "cyma papers showed inside The quirk")
+	_expect(quirk_from_girdle.find("CW-42") == -1, "cyma file code stayed up inside The quirk")
+	_press(root, "Ross")
+	_press(root, "Scratch")
+	_press(root, "138")
+	_press(root, "Submit theory")
+	var quirk_after_girdle := _verdict_text(root)
+	_expect(quirk_after_girdle.find("fits every exhibit") >= 0, "quirk board rejected the true theory after The girdle: %s" % quirk_after_girdle)
+	_expect(quirk_after_girdle.find("Ross (quirk hand) scratched the quirk in the scratch at 138") >= 0, "quirk board timeline after The girdle: %s" % quirk_after_girdle)
+	_press(root, "Menu")
+	_press(root, "Open The tongue")
+	var tongue_from_girdle := _visible_label_blob(root)
+	_expect(tongue_from_girdle.find("Groove chit") >= 0, "could not return to The tongue from The girdle")
+	_expect(tongue_from_girdle.find("Filly note") >= 0, "tongue exhibits did not return from The girdle")
+	_expect(tongue_from_girdle.find("CW-38") >= 0, "returned tongue omits CW-38")
+	_expect(tongue_from_girdle.find("Cove chit") == -1, "chamfer papers showed inside The tongue")
+	_expect(tongue_from_girdle.find("Stallion note") == -1, "chamfer papers showed inside The tongue")
+	_expect(tongue_from_girdle.find("CW-40") == -1, "chamfer file code stayed up inside The tongue")
+	_expect(tongue_from_girdle.find("Torus chit") == -1, "scotia papers showed inside The tongue")
+	_expect(tongue_from_girdle.find("Yearling note") == -1, "scotia papers showed inside The tongue")
+	_expect(tongue_from_girdle.find("CW-41") == -1, "scotia file code stayed up inside The tongue")
+	_expect(tongue_from_girdle.find("Cherry chit") == -1, "girdle papers showed inside The tongue")
+	_expect(tongue_from_girdle.find("Hack note") == -1, "girdle papers showed inside The tongue")
+	_expect(tongue_from_girdle.find("CW-49") == -1, "girdle file code stayed up inside The tongue")
+	_expect(tongue_from_girdle.find("Medlar chit") == -1, "abacus papers showed inside The tongue")
+	_expect(tongue_from_girdle.find("Nag note") == -1, "abacus papers showed inside The tongue")
+	_expect(tongue_from_girdle.find("CW-48") == -1, "abacus file code stayed up inside The tongue")
+	_expect(tongue_from_girdle.find("Alder chit") == -1, "listel papers showed inside The tongue")
+	_expect(tongue_from_girdle.find("Jenny note") == -1, "listel papers showed inside The tongue")
+	_expect(tongue_from_girdle.find("CW-47") == -1, "listel file code stayed up inside The tongue")
+	_expect(tongue_from_girdle.find("Holly chit") == -1, "hood papers showed inside The tongue")
+	_expect(tongue_from_girdle.find("Mule note") == -1, "hood papers showed inside The tongue")
+	_expect(tongue_from_girdle.find("CW-46") == -1, "hood file code stayed up inside The tongue")
+	_expect(tongue_from_girdle.find("Spruce chit") == -1, "annulet papers showed inside The tongue")
+	_expect(tongue_from_girdle.find("Hinny note") == -1, "annulet papers showed inside The tongue")
+	_expect(tongue_from_girdle.find("CW-45") == -1, "annulet file code stayed up inside The tongue")
+	_expect(tongue_from_girdle.find("Walnut chit") == -1, "reed papers showed inside The tongue")
+	_expect(tongue_from_girdle.find("Weanling note") == -1, "reed papers showed inside The tongue")
+	_expect(tongue_from_girdle.find("CW-44") == -1, "reed file code stayed up inside The tongue")
+	_expect(tongue_from_girdle.find("Thumbnail chit") == -1, "cavetto papers showed inside The tongue")
+	_expect(tongue_from_girdle.find("Palfrey note") == -1, "cavetto papers showed inside The tongue")
+	_expect(tongue_from_girdle.find("CW-43") == -1, "cavetto file code stayed up inside The tongue")
+	_expect(tongue_from_girdle.find("Echinus chit") == -1, "cyma papers showed inside The tongue")
+	_expect(tongue_from_girdle.find("Jennet note") == -1, "cyma papers showed inside The tongue")
+	_expect(tongue_from_girdle.find("CW-42") == -1, "cyma file code stayed up inside The tongue")
+	_press(root, "Shay")
+	_press(root, "Knife")
+	_press(root, "133")
+	_press(root, "Submit theory")
+	var tongue_after_girdle := _verdict_text(root)
+	_expect(tongue_after_girdle.find("fits every exhibit") >= 0, "tongue board rejected the true theory after The girdle: %s" % tongue_after_girdle)
+	_expect(tongue_after_girdle.find("Shay (tongue hand) cut the tongue in the knife at 133") >= 0, "tongue board timeline after The girdle: %s" % tongue_after_girdle)
+	_press(root, "Menu")
+	_press(root, "Open The dowel")
+	var dowel_from_girdle := _visible_label_blob(root)
+	_expect(dowel_from_girdle.find("Bore chit") >= 0, "could not return to The dowel from The girdle")
+	_expect(dowel_from_girdle.find("Dowel note") >= 0, "dowel exhibits did not return from The girdle")
+	_expect(dowel_from_girdle.find("CW-37") >= 0, "returned dowel omits CW-37")
+	_expect(dowel_from_girdle.find("Cove chit") == -1, "chamfer papers showed inside The dowel")
+	_expect(dowel_from_girdle.find("Stallion note") == -1, "chamfer papers showed inside The dowel")
+	_expect(dowel_from_girdle.find("CW-40") == -1, "chamfer file code stayed up inside The dowel")
+	_expect(dowel_from_girdle.find("Torus chit") == -1, "scotia papers showed inside The dowel")
+	_expect(dowel_from_girdle.find("Yearling note") == -1, "scotia papers showed inside The dowel")
+	_expect(dowel_from_girdle.find("CW-41") == -1, "scotia file code stayed up inside The dowel")
+	_expect(dowel_from_girdle.find("Cherry chit") == -1, "girdle papers showed inside The dowel")
+	_expect(dowel_from_girdle.find("Hack note") == -1, "girdle papers showed inside The dowel")
+	_expect(dowel_from_girdle.find("CW-49") == -1, "girdle file code stayed up inside The dowel")
+	_expect(dowel_from_girdle.find("Medlar chit") == -1, "abacus papers showed inside The dowel")
+	_expect(dowel_from_girdle.find("Nag note") == -1, "abacus papers showed inside The dowel")
+	_expect(dowel_from_girdle.find("CW-48") == -1, "abacus file code stayed up inside The dowel")
+	_expect(dowel_from_girdle.find("Alder chit") == -1, "listel papers showed inside The dowel")
+	_expect(dowel_from_girdle.find("Jenny note") == -1, "listel papers showed inside The dowel")
+	_expect(dowel_from_girdle.find("CW-47") == -1, "listel file code stayed up inside The dowel")
+	_expect(dowel_from_girdle.find("Holly chit") == -1, "hood papers showed inside The dowel")
+	_expect(dowel_from_girdle.find("Mule note") == -1, "hood papers showed inside The dowel")
+	_expect(dowel_from_girdle.find("CW-46") == -1, "hood file code stayed up inside The dowel")
+	_expect(dowel_from_girdle.find("Spruce chit") == -1, "annulet papers showed inside The dowel")
+	_expect(dowel_from_girdle.find("Hinny note") == -1, "annulet papers showed inside The dowel")
+	_expect(dowel_from_girdle.find("CW-45") == -1, "annulet file code stayed up inside The dowel")
+	_expect(dowel_from_girdle.find("Walnut chit") == -1, "reed papers showed inside The dowel")
+	_expect(dowel_from_girdle.find("Weanling note") == -1, "reed papers showed inside The dowel")
+	_expect(dowel_from_girdle.find("CW-44") == -1, "reed file code stayed up inside The dowel")
+	_expect(dowel_from_girdle.find("Thumbnail chit") == -1, "cavetto papers showed inside The dowel")
+	_expect(dowel_from_girdle.find("Palfrey note") == -1, "cavetto papers showed inside The dowel")
+	_expect(dowel_from_girdle.find("CW-43") == -1, "cavetto file code stayed up inside The dowel")
+	_expect(dowel_from_girdle.find("Echinus chit") == -1, "cyma papers showed inside The dowel")
+	_expect(dowel_from_girdle.find("Jennet note") == -1, "cyma papers showed inside The dowel")
+	_expect(dowel_from_girdle.find("CW-42") == -1, "cyma file code stayed up inside The dowel")
+	_press(root, "Faye")
+	_press(root, "Bit")
+	_press(root, "128")
+	_press(root, "Submit theory")
+	var dowel_after_girdle := _verdict_text(root)
+	_expect(dowel_after_girdle.find("fits every exhibit") >= 0, "dowel board rejected the true theory after The girdle: %s" % dowel_after_girdle)
+	_expect(dowel_after_girdle.find("Faye (dowel hand) cut the dowel in the bit at 128") >= 0, "dowel board timeline after The girdle: %s" % dowel_after_girdle)
+	_press(root, "Menu")
 	_menu_root = root
 
 
@@ -28949,13 +31870,13 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 											var cavetto_code_bottom := cavetto_code_top + cavetto_code_rect.size.y
 											print("scrolled bottom CW-43 %s..%s page %s max %s" % [cavetto_code_top, cavetto_code_bottom, cavetto_page, cavetto_bar.max_value])
 											_expect(cavetto_code_rect.position.x >= 0.0 and cavetto_code_rect.position.x + cavetto_code_rect.size.x <= 1280.0, "CW-43 is outside the window horizontally %s" % cavetto_code_rect)
-											_expect(cavetto_code_top >= -0.5, "CW-43 is above the window when the file list is scrolled to the bottom (%s)" % cavetto_code_top)
+											_expect(cavetto_code_top < 0.0, "CW-43 should sit above the window once The abacus is on the list (%s)" % cavetto_code_top)
 											_expect(cavetto_code_bottom <= cavetto_page + 0.5, "CW-43 is below the window when the file list is scrolled to the bottom (%s)" % cavetto_code_bottom)
 											var cavetto_button_top := cavetto_rect.position.y - cavetto_max_scroll
 											var cavetto_button_bottom := cavetto_button_top + cavetto_rect.size.y
 											print("scrolled bottom Open The cavetto %s..%s" % [cavetto_button_top, cavetto_button_bottom])
 											_expect(cavetto_rect.position.x >= 0.0 and cavetto_rect.position.x + cavetto_rect.size.x <= 1280.0, "Open The cavetto is outside the window horizontally %s" % cavetto_rect)
-											_expect(cavetto_button_top >= -0.5, "Open The cavetto is above the window when the file list is scrolled to the bottom (%s)" % cavetto_button_top)
+											_expect(cavetto_button_top < 0.0, "Open The cavetto should sit above the window once The abacus is on the list (%s)" % cavetto_button_top)
 											_expect(cavetto_button_bottom <= cavetto_page + 0.5, "Open The cavetto is below the window when the file list is scrolled to the bottom (%s)" % cavetto_button_bottom)
 
 										var reed_button := _find_visible_button(root, "Open The reed")
@@ -29001,13 +31922,13 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 												var reed_code_bottom := reed_code_top + reed_code_rect.size.y
 												print("scrolled bottom CW-44 %s..%s page %s max %s" % [reed_code_top, reed_code_bottom, reed_page, reed_bar.max_value])
 												_expect(reed_code_rect.position.x >= 0.0 and reed_code_rect.position.x + reed_code_rect.size.x <= 1280.0, "CW-44 is outside the window horizontally %s" % reed_code_rect)
-												_expect(reed_code_top >= -0.5, "CW-44 is above the window when the file list is scrolled to the bottom (%s)" % reed_code_top)
+												_expect(reed_code_top < 0.0, "CW-44 should sit above the window once The girdle is on the list (%s)" % reed_code_top)
 												_expect(reed_code_bottom <= reed_page + 0.5, "CW-44 is below the window when the file list is scrolled to the bottom (%s)" % reed_code_bottom)
 												var reed_button_top := reed_rect.position.y - reed_max_scroll
 												var reed_button_bottom := reed_button_top + reed_rect.size.y
 												print("scrolled bottom Open The reed %s..%s" % [reed_button_top, reed_button_bottom])
 												_expect(reed_rect.position.x >= 0.0 and reed_rect.position.x + reed_rect.size.x <= 1280.0, "Open The reed is outside the window horizontally %s" % reed_rect)
-												_expect(reed_button_top >= -0.5, "Open The reed is above the window when the file list is scrolled to the bottom (%s)" % reed_button_top)
+												_expect(reed_button_top < 0.0, "Open The reed should sit above the window once The girdle is on the list (%s)" % reed_button_top)
 												_expect(reed_button_bottom <= reed_page + 0.5, "Open The reed is below the window when the file list is scrolled to the bottom (%s)" % reed_button_bottom)
 
 											var annulet_button := _find_visible_button(root, "Open The annulet")
@@ -29177,6 +32098,128 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 															_expect(listel_rect.position.x >= 0.0 and listel_rect.position.x + listel_rect.size.x <= 1280.0, "Open The listel is outside the window horizontally %s" % listel_rect)
 															_expect(listel_button_top >= -0.5, "Open The listel is above the window when the file list is scrolled to the bottom (%s)" % listel_button_top)
 															_expect(listel_button_bottom <= listel_page + 0.5, "Open The listel is below the window when the file list is scrolled to the bottom (%s)" % listel_button_bottom)
+
+														var abacus_button := _find_visible_button(root, "Open The abacus")
+														_expect(abacus_button != null, "file list is missing Open The abacus")
+														if abacus_button != null:
+															var abacus_rect := _content_rect(abacus_button)
+															print("file list abacus %s stride %s" % [abacus_rect, card_stride])
+															_expect(abacus_rect.size.y >= 40.0, "Open The abacus has no height")
+															_expect(listel_rect.position.y + listel_rect.size.y <= abacus_rect.position.y, "Open The listel is not above Open The abacus")
+															_expect(abacus_rect.position.y == listel_rect.position.y + card_stride, "abacus content top is %s, one stride below the listel is %s" % [abacus_rect.position.y, listel_rect.position.y + card_stride])
+															_expect(listel_rect.position.y == 7074.0, "listel content top moved to %s" % listel_rect.position.y)
+															_expect(hood_rect.position.y == 6927.0, "hood content top moved to %s" % hood_rect.position.y)
+															_expect(annulet_rect.position.y == 6780.0, "annulet content top moved to %s" % annulet_rect.position.y)
+															_expect(reed_rect.position.y == 6633.0, "reed content top moved to %s" % reed_rect.position.y)
+															_expect(cavetto_rect.position.y == 6486.0, "cavetto content top moved to %s" % cavetto_rect.position.y)
+															_expect(cyma_rect.position.y == 6339.0, "cyma content top moved to %s" % cyma_rect.position.y)
+															_expect(scotia_rect.position.y == 6192.0, "scotia content top moved to %s" % scotia_rect.position.y)
+															_expect(chamfer_rect.position.y == 6045.0, "chamfer content top moved to %s" % chamfer_rect.position.y)
+															_expect(quirk_rect.position.y == 5898.0, "quirk content top moved to %s" % quirk_rect.position.y)
+															_expect(tongue_rect.position.y == 5751.0, "tongue content top moved to %s" % tongue_rect.position.y)
+															_expect(dowel_rect.position.y == 5604.0, "dowel content top moved to %s" % dowel_rect.position.y)
+															if card_stride == 147.0:
+																_expect(abacus_rect.position.y == 7221.0, "abacus content top is %s" % abacus_rect.position.y)
+																_expect(listel_rect.position.y == 7074.0, "listel content top is %s" % listel_rect.position.y)
+																_expect(hood_rect.position.y == 6927.0, "hood content top is %s" % hood_rect.position.y)
+																_expect(annulet_rect.position.y == 6780.0, "annulet content top is %s" % annulet_rect.position.y)
+																_expect(reed_rect.position.y == 6633.0, "reed content top is %s" % reed_rect.position.y)
+																_expect(cavetto_rect.position.y == 6486.0, "cavetto content top is %s" % cavetto_rect.position.y)
+																_expect(cyma_rect.position.y == 6339.0, "cyma content top is %s" % cyma_rect.position.y)
+																_expect(scotia_rect.position.y == 6192.0, "scotia content top is %s" % scotia_rect.position.y)
+																_expect(chamfer_rect.position.y == 6045.0, "chamfer content top is %s" % chamfer_rect.position.y)
+																_expect(quirk_rect.position.y == 5898.0, "quirk content top is %s" % quirk_rect.position.y)
+																_expect(tongue_rect.position.y == 5751.0, "tongue content top is %s" % tongue_rect.position.y)
+																_expect(dowel_rect.position.y == 5604.0, "dowel content top is %s" % dowel_rect.position.y)
+															var abacus_bottom := abacus_rect.position.y + abacus_rect.size.y
+															var abacus_visible_top := abacus_bottom - window_height
+															_expect(listel_rect.position.y >= abacus_visible_top, "Open The listel is not fully on screen above Open The abacus")
+															_expect(listel_rect.position.y + listel_rect.size.y <= abacus_bottom, "Open The listel extends past the window when Open The abacus sits at the bottom")
+															_expect(abacus_bottom > window_height, "Open The abacus already fits without scrolling")
+															var abacus_code := _find_visible_label(root, "CW-48   The abacus")
+															_expect(abacus_code != null, "file list omits the CW-48 label")
+															if abacus_code != null:
+																var abacus_page := window_height
+																var abacus_bar := scroll.get_v_scroll_bar()
+																var abacus_content_height := float(abacus_bar.max_value)
+																var abacus_max_scroll := abacus_content_height - abacus_page
+																if abacus_max_scroll < 0.0:
+																	abacus_max_scroll = 0.0
+																var abacus_code_rect := _content_rect(abacus_code)
+																var abacus_code_top := abacus_code_rect.position.y - abacus_max_scroll
+																var abacus_code_bottom := abacus_code_top + abacus_code_rect.size.y
+																print("scrolled bottom CW-48 %s..%s page %s max %s" % [abacus_code_top, abacus_code_bottom, abacus_page, abacus_bar.max_value])
+																_expect(abacus_code_rect.position.x >= 0.0 and abacus_code_rect.position.x + abacus_code_rect.size.x <= 1280.0, "CW-48 is outside the window horizontally %s" % abacus_code_rect)
+																_expect(abacus_code_top >= -0.5, "CW-48 is above the window when the file list is scrolled to the bottom (%s)" % abacus_code_top)
+																_expect(abacus_code_bottom <= abacus_page + 0.5, "CW-48 is below the window when the file list is scrolled to the bottom (%s)" % abacus_code_bottom)
+																var abacus_button_top := abacus_rect.position.y - abacus_max_scroll
+																var abacus_button_bottom := abacus_button_top + abacus_rect.size.y
+																print("scrolled bottom Open The abacus %s..%s" % [abacus_button_top, abacus_button_bottom])
+																_expect(abacus_rect.position.x >= 0.0 and abacus_rect.position.x + abacus_rect.size.x <= 1280.0, "Open The abacus is outside the window horizontally %s" % abacus_rect)
+																_expect(abacus_button_top >= -0.5, "Open The abacus is above the window when the file list is scrolled to the bottom (%s)" % abacus_button_top)
+																_expect(abacus_button_bottom <= abacus_page + 0.5, "Open The abacus is below the window when the file list is scrolled to the bottom (%s)" % abacus_button_bottom)
+
+															var girdle_button := _find_visible_button(root, "Open The girdle")
+															_expect(girdle_button != null, "file list is missing Open The girdle")
+															if girdle_button != null:
+																var girdle_rect := _content_rect(girdle_button)
+																print("file list girdle %s stride %s" % [girdle_rect, card_stride])
+																_expect(girdle_rect.size.y >= 40.0, "Open The girdle has no height")
+																_expect(abacus_rect.position.y + abacus_rect.size.y <= girdle_rect.position.y, "Open The abacus is not above Open The girdle")
+																_expect(girdle_rect.position.y == abacus_rect.position.y + card_stride, "girdle content top is %s, one stride below the abacus is %s" % [girdle_rect.position.y, abacus_rect.position.y + card_stride])
+																_expect(abacus_rect.position.y == 7221.0, "abacus content top moved to %s" % abacus_rect.position.y)
+																_expect(listel_rect.position.y == 7074.0, "listel content top moved to %s" % listel_rect.position.y)
+																_expect(hood_rect.position.y == 6927.0, "hood content top moved to %s" % hood_rect.position.y)
+																_expect(annulet_rect.position.y == 6780.0, "annulet content top moved to %s" % annulet_rect.position.y)
+																_expect(reed_rect.position.y == 6633.0, "reed content top moved to %s" % reed_rect.position.y)
+																_expect(cavetto_rect.position.y == 6486.0, "cavetto content top moved to %s" % cavetto_rect.position.y)
+																_expect(cyma_rect.position.y == 6339.0, "cyma content top moved to %s" % cyma_rect.position.y)
+																_expect(scotia_rect.position.y == 6192.0, "scotia content top moved to %s" % scotia_rect.position.y)
+																_expect(chamfer_rect.position.y == 6045.0, "chamfer content top moved to %s" % chamfer_rect.position.y)
+																_expect(quirk_rect.position.y == 5898.0, "quirk content top moved to %s" % quirk_rect.position.y)
+																_expect(tongue_rect.position.y == 5751.0, "tongue content top moved to %s" % tongue_rect.position.y)
+																_expect(dowel_rect.position.y == 5604.0, "dowel content top moved to %s" % dowel_rect.position.y)
+																if card_stride == 147.0:
+																	_expect(girdle_rect.position.y == 7368.0, "girdle content top is %s" % girdle_rect.position.y)
+																	_expect(abacus_rect.position.y == 7221.0, "abacus content top is %s" % abacus_rect.position.y)
+																	_expect(listel_rect.position.y == 7074.0, "listel content top is %s" % listel_rect.position.y)
+																	_expect(hood_rect.position.y == 6927.0, "hood content top is %s" % hood_rect.position.y)
+																	_expect(annulet_rect.position.y == 6780.0, "annulet content top is %s" % annulet_rect.position.y)
+																	_expect(reed_rect.position.y == 6633.0, "reed content top is %s" % reed_rect.position.y)
+																	_expect(cavetto_rect.position.y == 6486.0, "cavetto content top is %s" % cavetto_rect.position.y)
+																	_expect(cyma_rect.position.y == 6339.0, "cyma content top is %s" % cyma_rect.position.y)
+																	_expect(scotia_rect.position.y == 6192.0, "scotia content top is %s" % scotia_rect.position.y)
+																	_expect(chamfer_rect.position.y == 6045.0, "chamfer content top is %s" % chamfer_rect.position.y)
+																	_expect(quirk_rect.position.y == 5898.0, "quirk content top is %s" % quirk_rect.position.y)
+																	_expect(tongue_rect.position.y == 5751.0, "tongue content top is %s" % tongue_rect.position.y)
+																	_expect(dowel_rect.position.y == 5604.0, "dowel content top is %s" % dowel_rect.position.y)
+																var girdle_bottom := girdle_rect.position.y + girdle_rect.size.y
+																var girdle_visible_top := girdle_bottom - window_height
+																_expect(abacus_rect.position.y >= girdle_visible_top, "Open The abacus is not fully on screen above Open The girdle")
+																_expect(abacus_rect.position.y + abacus_rect.size.y <= girdle_bottom, "Open The abacus extends past the window when Open The girdle sits at the bottom")
+																_expect(girdle_bottom > window_height, "Open The girdle already fits without scrolling")
+																var girdle_code := _find_visible_label(root, "CW-49   The girdle")
+																_expect(girdle_code != null, "file list omits the CW-49 label")
+																if girdle_code != null:
+																	var girdle_page := window_height
+																	var girdle_bar := scroll.get_v_scroll_bar()
+																	var girdle_content_height := float(girdle_bar.max_value)
+																	var girdle_max_scroll := girdle_content_height - girdle_page
+																	if girdle_max_scroll < 0.0:
+																		girdle_max_scroll = 0.0
+																	var girdle_code_rect := _content_rect(girdle_code)
+																	var girdle_code_top := girdle_code_rect.position.y - girdle_max_scroll
+																	var girdle_code_bottom := girdle_code_top + girdle_code_rect.size.y
+																	print("scrolled bottom CW-49 %s..%s page %s max %s" % [girdle_code_top, girdle_code_bottom, girdle_page, girdle_bar.max_value])
+																	_expect(girdle_code_rect.position.x >= 0.0 and girdle_code_rect.position.x + girdle_code_rect.size.x <= 1280.0, "CW-49 is outside the window horizontally %s" % girdle_code_rect)
+																	_expect(girdle_code_top >= -0.5, "CW-49 is above the window when the file list is scrolled to the bottom (%s)" % girdle_code_top)
+																	_expect(girdle_code_bottom <= girdle_page + 0.5, "CW-49 is below the window when the file list is scrolled to the bottom (%s)" % girdle_code_bottom)
+																	var girdle_button_top := girdle_rect.position.y - girdle_max_scroll
+																	var girdle_button_bottom := girdle_button_top + girdle_rect.size.y
+																	print("scrolled bottom Open The girdle %s..%s" % [girdle_button_top, girdle_button_bottom])
+																	_expect(girdle_rect.position.x >= 0.0 and girdle_rect.position.x + girdle_rect.size.x <= 1280.0, "Open The girdle is outside the window horizontally %s" % girdle_rect)
+																	_expect(girdle_button_top >= -0.5, "Open The girdle is above the window when the file list is scrolled to the bottom (%s)" % girdle_button_top)
+																	_expect(girdle_button_bottom <= girdle_page + 0.5, "Open The girdle is below the window when the file list is scrolled to the bottom (%s)" % girdle_button_bottom)
 
 func _content_rect(control: Control) -> Rect2:
 	var rect := control.get_global_rect()

@@ -1,9 +1,9 @@
 extends RefCounted
 
-## Buildings 1 through 25. Directions: 0 east, 1 south, 2 west, 3 north.
+## Buildings 1 through 28. Directions: 0 east, 1 south, 2 west, 3 north.
 ## `unlocks` is the single new block this puzzle introduces, or "".
 
-const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook", "return", "pause", "chute", "shunt", "bias", "vault", "sling", "cant", "balk", "loft", "keel", "sheer", "strake", "wale", "garboard", "stealer", "rabbet"]
+const INTRO: Array[String] = ["conveyor", "latch", "splitter", "painter", "counter", "filter", "primer", "bridge", "turn", "slide", "bin", "hook", "return", "pause", "chute", "shunt", "bias", "vault", "sling", "cant", "balk", "loft", "keel", "sheer", "strake", "wale", "garboard", "stealer", "rabbet", "futtock", "keelson", "stemson"]
 
 
 static func all() -> Array:
@@ -3683,6 +3683,420 @@ static func all() -> Array:
 				_block("bridge", 4, 1, 2),
 			]
 		),
+		_puzzle(
+			184, "First Futtock", "futtock",
+			"Jump four cells forward, and keep the facing.",
+			"",
+			"The parcel comes in facing east. The futtock jumps it four cells east and leaves it facing east. The three cells in front are bricks and are not entered. The pause then steps east onto the dock. A loft lands on the last brick. A vault lands on the middle brick. A pause tries to enter the first brick. A keel jumps three cells west. A rabbet jumps one cell west.",
+			8, 3,
+			[_cell(3, 1), _cell(4, 1), _cell(5, 1), _cell(2, 0), _cell(2, 2)],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 7, "y": 1},
+			[{"color": "gray"}],
+			[
+				_block("conveyor", 1, 1, 0),
+				_block("futtock", 2, 1, 0),
+				_block("pause", 6, 1, 0),
+			]
+		),
+		_puzzle(
+			185, "Let Futtock", "",
+			"Wait until the landing is free, then jump four cells forward.",
+			"",
+			"Blue is standing on the landing. The futtock holds red until that cell is free, then jumps four cells east and leaves red facing east. The cells in front are not entered. The pause steps east onto the dock. A loft lands one cell short. A vault lands two cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			8, 3,
+			[_cell(3, 1), _cell(4, 1), _cell(5, 1)],
+			[
+				_source(0, 1, 0, ["red"]),
+				_source(5, 2, 0, ["blue"]),
+			],
+			{"x": 7, "y": 1},
+			[{"color": "blue"}, {"color": "red"}],
+			[
+				_block("conveyor", 1, 1, 0),
+				_block("futtock", 2, 1, 0),
+				_block("garboard", 6, 2, 0),
+				_block("pause", 6, 1, 0),
+			]
+		),
+		_puzzle(
+			186, "Futtock Count", "",
+			"Stamp blue 1 and red 2. The futtock's wait is what makes the counter read 2.",
+			"",
+			"The futtock waits, then jumps the east-facing parcel four cells east. The pause carries that facing onto the counter after blue has been stamped 1, so red is stamped 2. The cells in front are not entered. A loft lands one cell short. A vault lands two cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			9, 4,
+			[_cell(2, 1), _cell(3, 1), _cell(4, 1), _cell(1, 0), _cell(1, 2)],
+			[
+				_source(0, 1, 0, ["red"]),
+				_source(6, 3, 3, ["blue"]),
+			],
+			{"x": 8, "y": 1},
+			[{"color": "blue", "count": 1}, {"color": "red", "count": 2}],
+			[
+				_block("futtock", 1, 1, 0),
+				_block("pause", 5, 1, 0),
+				_block("conveyor", 6, 2, 3),
+				_block("counter", 6, 1, 0),
+				_block("conveyor", 7, 1, 0),
+			]
+		),
+		_puzzle(
+			187, "Skip the Span", "",
+			"Jump four cells forward. The three bricks in front are not entered.",
+			"",
+			"The futtock jumps four cells east and leaves the parcel facing east. The pause steps east onto the dock and does not enter any of the three bricks. A loft tries to land on the last brick. A vault tries to land on the middle brick. A pause tries to enter the first brick. A keel jumps three cells west. A rabbet jumps one cell west.",
+			7, 3,
+			[_cell(2, 1), _cell(3, 1), _cell(4, 1)],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 6, "y": 1},
+			[{"color": "gray"}],
+			[
+				_block("futtock", 1, 1, 0),
+				_block("pause", 5, 1, 0),
+			]
+		),
+		_puzzle(
+			188, "Two Futtocks", "",
+			"Deliver red, then blue. Each jump is four cells forward from a different facing.",
+			"",
+			"Red arrives facing east, jumps four cells east, and the pause steps east onto the dock. Blue arrives facing south, jumps four cells south, and the pause steps south onto the dock. Each jump keeps the arrival facing and skips the three cells in front. A loft lands one cell short. A vault lands two cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			7, 8,
+			[_cell(2, 7), _cell(3, 7), _cell(4, 7), _cell(6, 3), _cell(6, 4), _cell(6, 5), _cell(1, 6)],
+			[
+				_source(0, 7, 0, ["red"]),
+				_source(6, 0, 1, ["blue"]),
+			],
+			{"x": 6, "y": 7},
+			[{"color": "red"}, {"color": "blue"}],
+			[
+				_block("futtock", 1, 7, 0),
+				_block("pause", 5, 7, 0),
+				_block("pause", 6, 1, 0),
+				_block("futtock", 6, 2, 0),
+				_block("pause", 6, 6, 0),
+			]
+		),
+		_puzzle(
+			189, "Second Futtock", "",
+			"Jump four cells forward, hook, then jump four cells forward on the new facing.",
+			"",
+			"The first futtock jumps the east-facing parcel four cells east and leaves it facing east. The hook sends it north onto the second futtock. That futtock jumps four cells north, still facing north, onto the dock. One futtock cannot do both jumps. A loft lands one cell short. A vault lands two cells short. A keel jumps three cells back. A rabbet jumps one cell back. A turn faces south.",
+			6, 6,
+			[_cell(2, 5), _cell(3, 5), _cell(4, 5), _cell(5, 3), _cell(5, 2), _cell(5, 1)],
+			[_source(0, 5, 0, ["gray"])],
+			{"x": 5, "y": 0},
+			[{"color": "gray"}],
+			[
+				_block("futtock", 1, 5, 0),
+				_block("hook", 5, 5, 0),
+				_block("futtock", 5, 4, 0),
+			]
+		),
+		_puzzle(
+			190, "Night Futtock", "",
+			"Deliver red 1, yellow 2, and blue 3.",
+			"",
+			"Red takes the filter. The futtock jumps it four cells east and leaves it facing east. The pause carries that facing onto the counter for stamp 1. The three cells in front are not entered. Gray takes the long belt and is primed yellow. Blue keeps its color. A loft lands one cell short. A vault lands two cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			10, 6,
+			[_cell(4, 3), _cell(5, 3), _cell(6, 3)],
+			[_source(0, 3, 0, ["gray", "blue", "red"])],
+			{"x": 9, "y": 3},
+			[{"color": "red", "count": 1}, {"color": "yellow", "count": 2}, {"color": "blue", "count": 3}],
+			[
+				_block("filter", 1, 3, 0, "red"),
+				_block("conveyor", 2, 3, 0),
+				_block("futtock", 3, 3, 0),
+				_block("pause", 7, 3, 0),
+				_block("counter", 8, 3, 0),
+				_block("pause", 1, 4, 0),
+				_block("primer", 1, 5, 0, "yellow"),
+				_block("conveyor", 2, 5, 0),
+				_block("conveyor", 3, 5, 0),
+				_block("conveyor", 4, 5, 0),
+				_block("conveyor", 5, 5, 0),
+				_block("conveyor", 6, 5, 0),
+				_block("conveyor", 7, 5, 0),
+				_block("conveyor", 8, 5, 3),
+				_block("conveyor", 8, 4, 3),
+			]
+		),
+		_puzzle(
+			191, "First Keelson", "keelson",
+			"Jump five cells forward, and keep the facing.",
+			"",
+			"The parcel comes in facing east. The keelson jumps it five cells east and leaves it facing east. The four cells in front are bricks and are not entered. The pause then steps east onto the dock. A futtock lands on the last brick. A loft lands two cells short. A vault lands three cells short. A keel jumps three cells west. A rabbet jumps one cell west.",
+			9, 3,
+			[_cell(3, 1), _cell(4, 1), _cell(5, 1), _cell(6, 1), _cell(2, 0), _cell(2, 2)],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 8, "y": 1},
+			[{"color": "gray"}],
+			[
+				_block("conveyor", 1, 1, 0),
+				_block("keelson", 2, 1, 0),
+				_block("pause", 7, 1, 0),
+			]
+		),
+		_puzzle(
+			192, "Let Keelson", "",
+			"Wait until the landing is free, then jump five cells forward.",
+			"",
+			"Blue is standing on the landing. The keelson holds red until that cell is free, then jumps five cells east and leaves red facing east. The cells in front are not entered. The pause steps east onto the dock. A futtock lands one cell short. A loft lands two cells short. A vault lands three cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			9, 3,
+			[_cell(3, 1), _cell(4, 1), _cell(5, 1), _cell(6, 1)],
+			[
+				_source(0, 1, 0, ["red"]),
+				_source(6, 2, 0, ["blue"]),
+			],
+			{"x": 8, "y": 1},
+			[{"color": "blue"}, {"color": "red"}],
+			[
+				_block("conveyor", 1, 1, 0),
+				_block("keelson", 2, 1, 0),
+				_block("garboard", 7, 2, 0),
+				_block("pause", 7, 1, 0),
+			]
+		),
+		_puzzle(
+			193, "Keelson Count", "",
+			"Stamp blue 1 and red 2. The keelson's wait is what makes the counter read 2.",
+			"",
+			"The keelson waits, then jumps the east-facing parcel five cells east. The pause carries that facing onto the counter after blue has been stamped 1, so red is stamped 2. The cells in front are not entered. A futtock lands one cell short. A loft lands two cells short. A vault lands three cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			10, 4,
+			[_cell(2, 1), _cell(3, 1), _cell(4, 1), _cell(5, 1), _cell(1, 0), _cell(1, 2)],
+			[
+				_source(0, 1, 0, ["red"]),
+				_source(7, 3, 3, ["blue"]),
+			],
+			{"x": 9, "y": 1},
+			[{"color": "blue", "count": 1}, {"color": "red", "count": 2}],
+			[
+				_block("keelson", 1, 1, 0),
+				_block("pause", 6, 1, 0),
+				_block("conveyor", 7, 2, 3),
+				_block("counter", 7, 1, 0),
+				_block("conveyor", 8, 1, 0),
+			]
+		),
+		_puzzle(
+			194, "Five Ahead", "",
+			"Jump five cells forward. The four bricks in front are not entered.",
+			"",
+			"The keelson jumps five cells east and leaves the parcel facing east. The pause steps east onto the dock and does not enter any of the four bricks. A futtock tries to land on the last brick. A loft lands two cells short. A vault lands three cells short. A pause tries to enter the first brick. A keel jumps three cells west. A rabbet jumps one cell west.",
+			8, 3,
+			[_cell(2, 1), _cell(3, 1), _cell(4, 1), _cell(5, 1)],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 7, "y": 1},
+			[{"color": "gray"}],
+			[
+				_block("keelson", 1, 1, 0),
+				_block("pause", 6, 1, 0),
+			]
+		),
+		_puzzle(
+			195, "Two Keelsons", "",
+			"Deliver red, then blue. Each jump is five cells forward from a different facing.",
+			"",
+			"Red arrives facing east, jumps five cells east, and the pause steps east onto the dock. Blue arrives facing south, jumps five cells south, and the pause steps south onto the dock. Each jump keeps the arrival facing and skips the four cells in front. A futtock lands one cell short. A loft lands two cells short. A vault lands three cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			8, 9,
+			[_cell(2, 8), _cell(3, 8), _cell(4, 8), _cell(5, 8), _cell(7, 3), _cell(7, 4), _cell(7, 5), _cell(7, 6), _cell(1, 7)],
+			[
+				_source(0, 8, 0, ["red"]),
+				_source(7, 0, 1, ["blue"]),
+			],
+			{"x": 7, "y": 8},
+			[{"color": "red"}, {"color": "blue"}],
+			[
+				_block("keelson", 1, 8, 0),
+				_block("pause", 6, 8, 0),
+				_block("pause", 7, 1, 0),
+				_block("keelson", 7, 2, 0),
+				_block("pause", 7, 7, 0),
+			]
+		),
+		_puzzle(
+			196, "Second Keelson", "",
+			"Jump five cells forward, hook, then jump five cells forward on the new facing.",
+			"",
+			"The first keelson jumps the east-facing parcel five cells east and leaves it facing east. The hook sends it north onto the second keelson. That keelson jumps five cells north, still facing north, onto the dock. One keelson cannot do both jumps. A futtock lands one cell short. A loft lands two cells short. A vault lands three cells short. A keel jumps three cells back. A rabbet jumps one cell back. A turn faces south.",
+			7, 7,
+			[_cell(2, 6), _cell(3, 6), _cell(4, 6), _cell(5, 6), _cell(6, 4), _cell(6, 3), _cell(6, 2), _cell(6, 1)],
+			[_source(0, 6, 0, ["gray"])],
+			{"x": 6, "y": 0},
+			[{"color": "gray"}],
+			[
+				_block("keelson", 1, 6, 0),
+				_block("hook", 6, 6, 0),
+				_block("keelson", 6, 5, 0),
+			]
+		),
+		_puzzle(
+			197, "Night Keelson", "",
+			"Deliver red 1, yellow 2, and blue 3.",
+			"",
+			"Red takes the filter. The keelson jumps it five cells east and leaves it facing east. The pause carries that facing onto the counter for stamp 1. The four cells in front are not entered. Gray takes the long belt and is primed yellow. Blue keeps its color. A futtock lands one cell short. A loft lands two cells short. A vault lands three cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			11, 6,
+			[_cell(4, 3), _cell(5, 3), _cell(6, 3), _cell(7, 3)],
+			[_source(0, 3, 0, ["gray", "blue", "red"])],
+			{"x": 10, "y": 3},
+			[{"color": "red", "count": 1}, {"color": "yellow", "count": 2}, {"color": "blue", "count": 3}],
+			[
+				_block("filter", 1, 3, 0, "red"),
+				_block("conveyor", 2, 3, 0),
+				_block("keelson", 3, 3, 0),
+				_block("pause", 8, 3, 0),
+				_block("counter", 9, 3, 0),
+				_block("pause", 1, 4, 0),
+				_block("primer", 1, 5, 0, "yellow"),
+				_block("conveyor", 2, 5, 0),
+				_block("conveyor", 3, 5, 0),
+				_block("conveyor", 4, 5, 0),
+				_block("conveyor", 5, 5, 0),
+				_block("conveyor", 6, 5, 0),
+				_block("conveyor", 7, 5, 0),
+				_block("conveyor", 8, 5, 0),
+				_block("conveyor", 9, 5, 3),
+				_block("conveyor", 9, 4, 3),
+			]
+		),
+		_puzzle(
+			198, "First Stemson", "stemson",
+			"Jump six cells forward, and keep the facing.",
+			"",
+			"The parcel comes in facing east. The stemson jumps it six cells east and leaves it facing east. The five cells in front are bricks and are not entered. The pause then steps east onto the dock. A keelson lands on the last brick. A futtock lands two cells short. A loft lands three cells short. A vault lands four cells short. A keel jumps three cells west. A rabbet jumps one cell west.",
+			10, 3,
+			[_cell(3, 1), _cell(4, 1), _cell(5, 1), _cell(6, 1), _cell(7, 1), _cell(2, 0), _cell(2, 2)],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 9, "y": 1},
+			[{"color": "gray"}],
+			[
+				_block("conveyor", 1, 1, 0),
+				_block("stemson", 2, 1, 0),
+				_block("pause", 8, 1, 0),
+			]
+		),
+		_puzzle(
+			199, "Let Stemson", "",
+			"Wait until the landing is free, then jump six cells forward.",
+			"",
+			"Blue is standing on the landing. The stemson holds red until that cell is free, then jumps six cells east and leaves red facing east. The cells in front are not entered. The pause steps east onto the dock. A keelson lands one cell short. A futtock lands two cells short. A loft lands three cells short. A vault lands four cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			10, 3,
+			[_cell(3, 1), _cell(4, 1), _cell(5, 1), _cell(6, 1), _cell(7, 1)],
+			[
+				_source(0, 1, 0, ["red"]),
+				_source(7, 2, 0, ["blue"]),
+			],
+			{"x": 9, "y": 1},
+			[{"color": "blue"}, {"color": "red"}],
+			[
+				_block("conveyor", 1, 1, 0),
+				_block("stemson", 2, 1, 0),
+				_block("garboard", 8, 2, 0),
+				_block("pause", 8, 1, 0),
+			]
+		),
+		_puzzle(
+			200, "Stemson Count", "",
+			"Stamp blue 1 and red 2. The stemson's wait is what makes the counter read 2.",
+			"",
+			"The stemson waits, then jumps the east-facing parcel six cells east. The pause carries that facing onto the counter after blue has been stamped 1, so red is stamped 2. The cells in front are not entered. A keelson lands one cell short. A futtock lands two cells short. A loft lands three cells short. A vault lands four cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			11, 4,
+			[_cell(2, 1), _cell(3, 1), _cell(4, 1), _cell(5, 1), _cell(6, 1), _cell(1, 0), _cell(1, 2)],
+			[
+				_source(0, 1, 0, ["red"]),
+				_source(8, 3, 3, ["blue"]),
+			],
+			{"x": 10, "y": 1},
+			[{"color": "blue", "count": 1}, {"color": "red", "count": 2}],
+			[
+				_block("stemson", 1, 1, 0),
+				_block("pause", 7, 1, 0),
+				_block("conveyor", 8, 2, 3),
+				_block("counter", 8, 1, 0),
+				_block("conveyor", 9, 1, 0),
+			]
+		),
+		_puzzle(
+			201, "Six Ahead", "",
+			"Jump six cells forward. The five bricks in front are not entered.",
+			"",
+			"The stemson jumps six cells east and leaves the parcel facing east. The pause steps east onto the dock and does not enter any of the five bricks. A keelson tries to land on the last brick. A futtock lands two cells short. A loft lands three cells short. A vault lands four cells short. A pause tries to enter the first brick. A keel jumps three cells west. A rabbet jumps one cell west.",
+			9, 3,
+			[_cell(2, 1), _cell(3, 1), _cell(4, 1), _cell(5, 1), _cell(6, 1)],
+			[_source(0, 1, 0, ["gray"])],
+			{"x": 8, "y": 1},
+			[{"color": "gray"}],
+			[
+				_block("stemson", 1, 1, 0),
+				_block("pause", 7, 1, 0),
+			]
+		),
+		_puzzle(
+			202, "Two Stemsons", "",
+			"Deliver red, then blue. Each jump is six cells forward from a different facing.",
+			"",
+			"Red arrives facing east, jumps six cells east, and the pause steps east onto the dock. Blue arrives facing south, jumps six cells south, and the pause steps south onto the dock. Each jump keeps the arrival facing and skips the five cells in front. A keelson lands one cell short. A futtock lands two cells short. A loft lands three cells short. A vault lands four cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			9, 10,
+			[_cell(2, 9), _cell(3, 9), _cell(4, 9), _cell(5, 9), _cell(6, 9), _cell(8, 3), _cell(8, 4), _cell(8, 5), _cell(8, 6), _cell(8, 7), _cell(1, 8)],
+			[
+				_source(0, 9, 0, ["red"]),
+				_source(8, 0, 1, ["blue"]),
+			],
+			{"x": 8, "y": 9},
+			[{"color": "red"}, {"color": "blue"}],
+			[
+				_block("stemson", 1, 9, 0),
+				_block("pause", 7, 9, 0),
+				_block("pause", 8, 1, 0),
+				_block("stemson", 8, 2, 0),
+				_block("pause", 8, 8, 0),
+			]
+		),
+		_puzzle(
+			203, "Second Stemson", "",
+			"Jump six cells forward, hook, then jump six cells forward on the new facing.",
+			"",
+			"The first stemson jumps the east-facing parcel six cells east and leaves it facing east. The hook sends it north onto the second stemson. That stemson jumps six cells north, still facing north, onto the dock. One stemson cannot do both jumps. A keelson lands one cell short. A futtock lands two cells short. A loft lands three cells short. A vault lands four cells short. A keel jumps three cells back. A rabbet jumps one cell back. A turn faces south.",
+			8, 8,
+			[_cell(2, 7), _cell(3, 7), _cell(4, 7), _cell(5, 7), _cell(6, 7), _cell(7, 5), _cell(7, 4), _cell(7, 3), _cell(7, 2), _cell(7, 1)],
+			[_source(0, 7, 0, ["gray"])],
+			{"x": 7, "y": 0},
+			[{"color": "gray"}],
+			[
+				_block("stemson", 1, 7, 0),
+				_block("hook", 7, 7, 0),
+				_block("stemson", 7, 6, 0),
+			]
+		),
+		_puzzle(
+			204, "Night Stemson", "",
+			"Deliver red 1, yellow 2, and blue 3.",
+			"",
+			"Red takes the filter. The stemson jumps it six cells east and leaves it facing east. The pause carries that facing onto the counter for stamp 1. The five cells in front are not entered. Gray takes the long belt and is primed yellow. Blue keeps its color. A keelson lands one cell short. A futtock lands two cells short. A loft lands three cells short. A vault lands four cells short. A keel jumps three cells back. A rabbet jumps one cell back.",
+			12, 6,
+			[_cell(4, 3), _cell(5, 3), _cell(6, 3), _cell(7, 3), _cell(8, 3)],
+			[_source(0, 3, 0, ["gray", "blue", "red"])],
+			{"x": 11, "y": 3},
+			[{"color": "red", "count": 1}, {"color": "yellow", "count": 2}, {"color": "blue", "count": 3}],
+			[
+				_block("filter", 1, 3, 0, "red"),
+				_block("conveyor", 2, 3, 0),
+				_block("stemson", 3, 3, 0),
+				_block("pause", 9, 3, 0),
+				_block("counter", 10, 3, 0),
+				_block("pause", 1, 4, 0),
+				_block("primer", 1, 5, 0, "yellow"),
+				_block("conveyor", 2, 5, 0),
+				_block("conveyor", 3, 5, 0),
+				_block("conveyor", 4, 5, 0),
+				_block("conveyor", 5, 5, 0),
+				_block("conveyor", 6, 5, 0),
+				_block("conveyor", 7, 5, 0),
+				_block("conveyor", 8, 5, 0),
+				_block("conveyor", 9, 5, 0),
+				_block("conveyor", 10, 5, 3),
+				_block("conveyor", 10, 4, 3),
+			]
+		),
 	]
 
 
@@ -3712,7 +4126,7 @@ static func _puzzle(id: int, title: String, unlocks: String, brief: String, how_
 		"dock": dock,
 		"order": order,
 		"reference": reference,
-		"building": 25 if id >= 177 else 24 if id >= 170 else 23 if id >= 163 else 22 if id >= 156 else 21 if id >= 149 else 20 if id >= 142 else 19 if id >= 135 else 18 if id >= 128 else 17 if id >= 121 else 16 if id >= 114 else 15 if id >= 107 else 14 if id >= 100 else 13 if id >= 93 else 12 if id >= 86 else 11 if id >= 79 else 10 if id >= 72 else 9 if id >= 65 else 8 if id >= 58 else 7 if id >= 51 else 6 if id >= 44 else 5 if id >= 37 else 4 if id >= 30 else 3 if id >= 23 else 2 if id >= 16 else 1,
+		"building": 28 if id >= 198 else 27 if id >= 191 else 26 if id >= 184 else 25 if id >= 177 else 24 if id >= 170 else 23 if id >= 163 else 22 if id >= 156 else 21 if id >= 149 else 20 if id >= 142 else 19 if id >= 135 else 18 if id >= 128 else 17 if id >= 121 else 16 if id >= 114 else 15 if id >= 107 else 14 if id >= 100 else 13 if id >= 93 else 12 if id >= 86 else 11 if id >= 79 else 10 if id >= 72 else 9 if id >= 65 else 8 if id >= 58 else 7 if id >= 51 else 6 if id >= 44 else 5 if id >= 37 else 4 if id >= 30 else 3 if id >= 23 else 2 if id >= 16 else 1,
 	}
 
 

@@ -279,6 +279,10 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_quirk(at, rot)
 		"cyma":
 			_draw_cyma(at, rot)
+		"fascia":
+			_draw_fascia(at, rot)
+		"soffit":
+			_draw_soffit(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -1064,6 +1068,60 @@ func _draw_cyma(at: Vector2i, rot: int) -> void:
 	var right := spot + along * half + outward * cell * 0.06
 	draw_line(left, mid, wave, 2.2)
 	draw_line(mid, right, wave, 2.2)
+
+func _draw_fascia(at: Vector2i, rot: int) -> void:
+	# Two short pale ticks on the stopped clockwise edge. A north fascia marks
+	# the east edge. The ticks are not the cyma's wave and not the fillet's band.
+	var center := _center(at)
+	var stopped := Tracer.rotate_dir(Tracer.fascia_facing(rot), 1)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var outward := Vector2.RIGHT
+	var along := Vector2.DOWN
+	match stopped:
+		"N":
+			outward = Vector2.UP
+			along = Vector2.RIGHT
+		"S":
+			outward = Vector2.DOWN
+			along = Vector2.RIGHT
+		"E":
+			outward = Vector2.RIGHT
+			along = Vector2.DOWN
+		_:
+			outward = Vector2.LEFT
+			along = Vector2.DOWN
+	var spot := center + outward * cell * 0.32
+	var gap := cell * 0.05
+	var reach := cell * 0.11
+	draw_line(spot - along * (gap + reach), spot - along * gap, mark, 2.4)
+	draw_line(spot + along * gap, spot + along * (gap + reach), mark, 2.4)
+
+func _draw_soffit(at: Vector2i, rot: int) -> void:
+	# One short pale bar on the stopped counterclockwise edge. A north soffit
+	# marks the west edge. The bar is not the fascia's two ticks.
+	var center := _center(at)
+	var stopped := Tracer.rotate_dir(Tracer.soffit_facing(rot), -1)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var outward := Vector2.LEFT
+	var along := Vector2.DOWN
+	match stopped:
+		"N":
+			outward = Vector2.UP
+			along = Vector2.RIGHT
+		"S":
+			outward = Vector2.DOWN
+			along = Vector2.RIGHT
+		"E":
+			outward = Vector2.RIGHT
+			along = Vector2.DOWN
+		_:
+			outward = Vector2.LEFT
+			along = Vector2.DOWN
+	var spot := center + outward * cell * 0.30
+	var half := cell * 0.14
+	draw_line(spot - along * half, spot + along * half, mark, 3.2)
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
 	if dir == "N" or dir == "S":
