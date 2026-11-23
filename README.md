@@ -3,7 +3,7 @@
 Playable slices, Godot 4. Steam packaging comes later.
 
 - [Harbor Glass](harbor-glass/) — a tide-clock light puzzle through the Ogee
-- [Brine Mark](brine-mark/) — an indirect salt-flat colony sim through the guidon beat
+- [Brine Mark](brine-mark/) — an indirect salt-flat colony sim through the fanion beat
 - [Dispatch](dispatch/) — a parcel-routing puzzle through the loft
 - [Night Stamp](night-stamp/) — a border-desk deckbuilder through the contents bell
 - [Orchard Surge](orchard-surge/) — a dark-orchard wave game through night 47

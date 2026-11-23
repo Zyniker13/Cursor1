@@ -35,6 +35,7 @@ func _initialize() -> void:
 	_test_burgee(errors)
 	_test_cornet(errors)
 	_test_guidon(errors)
+	_test_fanion(errors)
 	_test_determinism(errors)
 	_test_population(errors)
 	_test_no_select_ant(errors)
@@ -108,7 +109,7 @@ func _test_determinism(errors: Array) -> void:
 	var plans := _plans(errors)
 	if plans.is_empty():
 		return
-	for plan_name in ["winning", "all_rake", "dry_pans", "continued", "late_pans", "no_crib", "carted", "late_crib", "dry_crib", "no_ship", "shipped", "late_ship", "dry_ship", "no_stall", "sold", "late_sold", "dry_sold", "no_yard", "banked", "late_banked", "dry_banked", "no_bunk", "hired", "late_hired", "dry_hired", "no_loft", "lofted", "late_lofted", "dry_lofted", "no_gate", "gated", "late_gated", "dry_gated", "no_wage", "paid", "late_paid", "dry_paid", "no_relief", "posted", "late_posted", "dry_posted", "no_watch", "stood", "late_stood", "dry_stood", "watch_only", "no_lamp", "lit", "late_lit", "dry_lit", "lamp_only", "no_bell", "rung", "late_rung", "dry_rung", "bell_only", "no_horn", "sounded", "late_sounded", "dry_sounded", "horn_only", "no_flag", "raised", "late_raised", "dry_raised", "flag_only", "no_banner", "hoisted", "late_hoisted", "dry_hoisted", "banner_only", "no_pennant", "flown", "late_flown", "dry_flown", "pennant_only", "no_standard", "carried", "late_carried", "dry_carried", "standard_only", "no_jack", "shown", "late_shown", "dry_shown", "jack_only", "no_ensign", "broken", "late_broken", "dry_broken", "ensign_only", "no_burgee", "struck", "late_struck", "dry_struck", "burgee_only", "no_cornet", "dipped", "late_dipped", "dry_dipped", "cornet_only", "no_guidon", "saluted", "late_saluted", "dry_saluted", "guidon_only"]:
+	for plan_name in ["winning", "all_rake", "dry_pans", "continued", "late_pans", "no_crib", "carted", "late_crib", "dry_crib", "no_ship", "shipped", "late_ship", "dry_ship", "no_stall", "sold", "late_sold", "dry_sold", "no_yard", "banked", "late_banked", "dry_banked", "no_bunk", "hired", "late_hired", "dry_hired", "no_loft", "lofted", "late_lofted", "dry_lofted", "no_gate", "gated", "late_gated", "dry_gated", "no_wage", "paid", "late_paid", "dry_paid", "no_relief", "posted", "late_posted", "dry_posted", "no_watch", "stood", "late_stood", "dry_stood", "watch_only", "no_lamp", "lit", "late_lit", "dry_lit", "lamp_only", "no_bell", "rung", "late_rung", "dry_rung", "bell_only", "no_horn", "sounded", "late_sounded", "dry_sounded", "horn_only", "no_flag", "raised", "late_raised", "dry_raised", "flag_only", "no_banner", "hoisted", "late_hoisted", "dry_hoisted", "banner_only", "no_pennant", "flown", "late_flown", "dry_flown", "pennant_only", "no_standard", "carried", "late_carried", "dry_carried", "standard_only", "no_jack", "shown", "late_shown", "dry_shown", "jack_only", "no_ensign", "broken", "late_broken", "dry_broken", "ensign_only", "no_burgee", "struck", "late_struck", "dry_struck", "burgee_only", "no_cornet", "dipped", "late_dipped", "dry_dipped", "cornet_only", "no_guidon", "saluted", "late_saluted", "dry_saluted", "guidon_only", "no_fanion", "presented", "late_presented", "dry_presented", "fanion_only"]:
 		var before := errors.size()
 		var first = _run_plan(plans, plan_name, errors)
 		var second = _run_plan(plans, plan_name, errors)
@@ -200,6 +201,10 @@ func _test_determinism(errors: Array) -> void:
 		if int(first.get_saluted()) != int(second.get_saluted()) or int(first.get_cornet_left()) != int(second.get_cornet_left()):
 			_fail(errors, "%s guidon runs differed (%d unsaluted %d, and %d unsaluted %d)" % [
 				plan_name, first.get_saluted(), first.get_cornet_left(), second.get_saluted(), second.get_cornet_left(),
+			])
+		if int(first.get_presented()) != int(second.get_presented()) or int(first.get_guidon_left()) != int(second.get_guidon_left()):
+			_fail(errors, "%s fanion runs differed (%d unpresented %d, and %d unpresented %d)" % [
+				plan_name, first.get_presented(), first.get_guidon_left(), second.get_presented(), second.get_guidon_left(),
 			])
 		if String(first.get_summary()) != String(second.get_summary()):
 			_fail(errors, "%s summaries differed" % plan_name)
@@ -562,6 +567,40 @@ func _test_scene_boots(errors: Array) -> void:
 	node._on_key(KEY_SPACE)
 	if int(node.sim.get_paint(14, -16)) != Sim.CORNET:
 		_fail(errors, "the cornet cell accepted a guidon")
+	node._on_key(KEY_V)
+	if not String(node.mode_label.text).contains("Fanion"):
+		_fail(errors, "fanion mark was not named")
+	var fanion_button: Button = null
+	guidon_button = null
+	for entry in node.mode_buttons:
+		if int(entry["mode"]) == Sim.FANION:
+			fanion_button = entry["button"]
+		elif int(entry["mode"]) == Sim.GUIDON:
+			guidon_button = entry["button"]
+	if fanion_button == null or guidon_button == null:
+		_fail(errors, "fanion button is missing beside the guidon")
+	elif not String(fanion_button.text).contains("Fanion") or not String(guidon_button.text).contains("Guidon"):
+		_fail(errors, "fanion button is not labeled beside the guidon")
+	elif fanion_button.get_parent() != guidon_button.get_parent() or fanion_button.get_index() != guidon_button.get_index() + 1:
+		_fail(errors, "fanion button does not sit beside the guidon")
+	else:
+		var fanion_style := fanion_button.get_theme_stylebox("normal") as StyleBoxFlat
+		if fanion_style == null or fanion_style.get_border_width(SIDE_LEFT) != 3 or fanion_style.border_color != Color("f0c14a"):
+			_fail(errors, "selected fanion has no gold outline")
+	node._on_key(KEY_UP)
+	node._on_key(KEY_UP)
+	node._on_key(KEY_SPACE)
+	if int(node.sim.get_paint(14, -18)) != Sim.FANION:
+		_fail(errors, "keyboard cursor did not paint a fanion at 14,-18")
+	node._on_key(KEY_U)
+	node._on_key(KEY_SPACE)
+	if int(node.sim.get_paint(14, -18)) != Sim.FANION:
+		_fail(errors, "the fanion cell accepted a guidon")
+	node._on_key(KEY_DOWN)
+	node._on_key(KEY_V)
+	node._on_key(KEY_SPACE)
+	if int(node.sim.get_paint(14, -17)) != Sim.GUIDON:
+		_fail(errors, "the guidon cell accepted a fanion")
 	var season = node.find_child("SeasonNote", true, false)
 	if season == null or not String(season.text).to_lower().contains("pan"):
 		_fail(errors, "season note does not mention pans")
@@ -656,6 +695,10 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "rules text does not mention the guidon")
 	if rules == null or not String(rules.text).to_lower().contains("salute one"):
 		_fail(errors, "rules text does not name the guidon cap of one")
+	if rules == null or not String(rules.text).to_lower().contains("fanion"):
+		_fail(errors, "rules text does not mention the fanion")
+	if rules == null or not String(rules.text).to_lower().contains("present one"):
+		_fail(errors, "rules text does not name the fanion cap of one")
 	var hint = node.find_child("HintLine", true, false)
 	if hint == null or not String(hint.text).to_lower().contains("watch"):
 		_fail(errors, "hint line does not name the watch")
@@ -689,14 +732,16 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "hint's last line does not name the cornet after the burgee: %s" % hint_last)
 	if hint_last.find("u guidon") < hint_last.find("t cornet") or not hint_last.contains("u guidon"):
 		_fail(errors, "hint's last line does not name the guidon after the cornet: %s" % hint_last)
-	if hint != null and (int(hint.position.y) != 1302 or int(hint.size.x) != 748 or not hint.clip_contents):
+	if hint_last.find("v fanion") < hint_last.find("u guidon") or not hint_last.contains("v fanion"):
+		_fail(errors, "hint's last line does not name the fanion after the guidon: %s" % hint_last)
+	if hint != null and (int(hint.position.y) != 1344 or int(hint.size.x) != 748 or not hint.clip_contents):
 		_fail(errors, "hint line left its box (y %s w %s clip %s)" % [hint.position.y, hint.size.x, hint.clip_contents])
 	if hint == null or not String(hint.text).contains("\n"):
 		_fail(errors, "hint line is still one long line")
 	var panel = node.find_child("Panel", true, false)
 	if hint != null and panel != null and hint.position.x + hint.size.x > panel.position.x:
 		_fail(errors, "hint line runs under the side panel")
-	if hint != null and hint.position.y + hint.size.y > 1406.0:
+	if hint != null and hint.position.y + hint.size.y > 1448.0:
 		_fail(errors, "hint line continues past the window")
 	var map_bottom := 58.0 + float(Sim.GRID_H - Sim.GRID_NORTH) * 42.0
 	if hint != null and hint.position.y < map_bottom:
@@ -972,10 +1017,23 @@ func _test_scene_boots(errors: Array) -> void:
 		_fail(errors, "guidon countdown started at %d, expected %d" % [node.sim.get_ticks_until_rain(), Sim.GUIDON_TICK])
 	elif not String(node.season_label.text).to_lower().contains("guidon"):
 		_fail(errors, "guidon note does not mention the guidon: %s" % node.season_label.text)
+	var spun_fanion := 0
+	while int(node.sim.get_beat()) != Sim.FANIONING and not node.sim.is_over() and spun_fanion < int(Sim.GUIDON_TICK) + 2:
+		node.sim.tick()
+		spun_fanion += 1
+	node._refresh()
+	if int(node.sim.get_beat()) != Sim.FANIONING or node.sim.is_over():
+		_fail(errors, "the scene did not open the fanion beat")
+	elif not String(node.rain_label.text).to_lower().contains("fanion"):
+		_fail(errors, "fanion countdown was not named: %s" % node.rain_label.text)
+	elif int(node.sim.get_ticks_until_rain()) != int(Sim.FANION_TICK):
+		_fail(errors, "fanion countdown started at %d, expected %d" % [node.sim.get_ticks_until_rain(), Sim.FANION_TICK])
+	elif not String(node.season_label.text).to_lower().contains("fanion"):
+		_fail(errors, "fanion note does not mention the fanion: %s" % node.season_label.text)
 	node._on_key(KEY_R)
-	if int(node.sim.get_paint(9, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 5)) != Sim.EMPTY or int(node.sim.get_paint(7, 4)) != Sim.EMPTY or int(node.sim.get_paint(7, 3)) != Sim.EMPTY or int(node.sim.get_paint(7, 2)) != Sim.EMPTY or int(node.sim.get_paint(7, 1)) != Sim.EMPTY or int(node.sim.get_paint(7, 0)) != Sim.EMPTY or int(node.sim.get_paint(7, -1)) != Sim.EMPTY or int(node.sim.get_paint(7, -2)) != Sim.EMPTY or int(node.sim.get_paint(7, -3)) != Sim.EMPTY or int(node.sim.get_paint(7, -4)) != Sim.EMPTY or int(node.sim.get_paint(7, -5)) != Sim.EMPTY or int(node.sim.get_paint(7, -6)) != Sim.EMPTY or int(node.sim.get_paint(7, -7)) != Sim.EMPTY or int(node.sim.get_paint(14, -11)) != Sim.EMPTY or int(node.sim.get_paint(14, -12)) != Sim.EMPTY or int(node.sim.get_paint(14, -13)) != Sim.EMPTY or int(node.sim.get_paint(14, -14)) != Sim.EMPTY or int(node.sim.get_paint(14, -15)) != Sim.EMPTY or int(node.sim.get_paint(14, -16)) != Sim.EMPTY or int(node.sim.get_paint(14, -17)) != Sim.EMPTY:
+	if int(node.sim.get_paint(9, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 5)) != Sim.EMPTY or int(node.sim.get_paint(8, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 6)) != Sim.EMPTY or int(node.sim.get_paint(7, 5)) != Sim.EMPTY or int(node.sim.get_paint(7, 4)) != Sim.EMPTY or int(node.sim.get_paint(7, 3)) != Sim.EMPTY or int(node.sim.get_paint(7, 2)) != Sim.EMPTY or int(node.sim.get_paint(7, 1)) != Sim.EMPTY or int(node.sim.get_paint(7, 0)) != Sim.EMPTY or int(node.sim.get_paint(7, -1)) != Sim.EMPTY or int(node.sim.get_paint(7, -2)) != Sim.EMPTY or int(node.sim.get_paint(7, -3)) != Sim.EMPTY or int(node.sim.get_paint(7, -4)) != Sim.EMPTY or int(node.sim.get_paint(7, -5)) != Sim.EMPTY or int(node.sim.get_paint(7, -6)) != Sim.EMPTY or int(node.sim.get_paint(7, -7)) != Sim.EMPTY or int(node.sim.get_paint(14, -11)) != Sim.EMPTY or int(node.sim.get_paint(14, -12)) != Sim.EMPTY or int(node.sim.get_paint(14, -13)) != Sim.EMPTY or int(node.sim.get_paint(14, -14)) != Sim.EMPTY or int(node.sim.get_paint(14, -15)) != Sim.EMPTY or int(node.sim.get_paint(14, -16)) != Sim.EMPTY or int(node.sim.get_paint(14, -17)) != Sim.EMPTY or int(node.sim.get_paint(14, -18)) != Sim.EMPTY:
 		_fail(errors, "restart scenario did not clear the marks")
-	if int(node.sim.get_season()) != Sim.WET or int(node.sim.get_wet_haul()) != 0 or int(node.sim.get_beat()) != Sim.WET or int(node.sim.get_carted()) != 0 or int(node.sim.get_shipped()) != 0 or int(node.sim.get_coins()) != 0 or int(node.sim.get_banked()) != 0 or int(node.sim.get_hired()) != 0 or int(node.sim.get_lofted()) != 0 or int(node.sim.get_gated()) != 0 or int(node.sim.get_paid()) != 0 or int(node.sim.get_posted()) != 0 or int(node.sim.get_stood()) != 0 or int(node.sim.get_lit()) != 0 or int(node.sim.get_rung()) != 0 or int(node.sim.get_sounded()) != 0 or int(node.sim.get_raised()) != 0 or int(node.sim.get_hoisted()) != 0 or int(node.sim.get_flown()) != 0 or int(node.sim.get_carried()) != 0 or int(node.sim.get_shown()) != 0 or int(node.sim.get_broken()) != 0 or int(node.sim.get_struck()) != 0 or int(node.sim.get_dipped()) != 0 or int(node.sim.get_saluted()) != 0:
+	if int(node.sim.get_season()) != Sim.WET or int(node.sim.get_wet_haul()) != 0 or int(node.sim.get_beat()) != Sim.WET or int(node.sim.get_carted()) != 0 or int(node.sim.get_shipped()) != 0 or int(node.sim.get_coins()) != 0 or int(node.sim.get_banked()) != 0 or int(node.sim.get_hired()) != 0 or int(node.sim.get_lofted()) != 0 or int(node.sim.get_gated()) != 0 or int(node.sim.get_paid()) != 0 or int(node.sim.get_posted()) != 0 or int(node.sim.get_stood()) != 0 or int(node.sim.get_lit()) != 0 or int(node.sim.get_rung()) != 0 or int(node.sim.get_sounded()) != 0 or int(node.sim.get_raised()) != 0 or int(node.sim.get_hoisted()) != 0 or int(node.sim.get_flown()) != 0 or int(node.sim.get_carried()) != 0 or int(node.sim.get_shown()) != 0 or int(node.sim.get_broken()) != 0 or int(node.sim.get_struck()) != 0 or int(node.sim.get_dipped()) != 0 or int(node.sim.get_saluted()) != 0 or int(node.sim.get_presented()) != 0:
 		_fail(errors, "restart scenario did not return to the wet season")
 	if int(node.sim.get_population()) > Sim.POP_CAP:
 		_fail(errors, "restart left the population over the cap")
@@ -3271,12 +3329,12 @@ func _test_lamp(errors: Array) -> void:
 	])
 
 
-func _assert_chain(sim, errors: Array, label: String, wet: int, stored: int, carted: int, shipped: int, coins: int, hired: int, yard: int, paid: int, posted: int, stood: int, lit: int, rung: int, sounded: int = 0, raised: int = 0, hoisted: int = 0, flown: int = 0, carried: int = 0, shown: int = 0, broken: int = 0, struck: int = 0, dipped: int = 0, saluted: int = 0) -> void:
+func _assert_chain(sim, errors: Array, label: String, wet: int, stored: int, carted: int, shipped: int, coins: int, hired: int, yard: int, paid: int, posted: int, stood: int, lit: int, rung: int, sounded: int = 0, raised: int = 0, hoisted: int = 0, flown: int = 0, carried: int = 0, shown: int = 0, broken: int = 0, struck: int = 0, dipped: int = 0, saluted: int = 0, presented: int = 0) -> void:
 	if sim == null:
 		_fail(errors, "%s did not run" % label)
 		return
-	if int(sim.get_wet_haul()) != wet or int(sim.get_stored_salt()) != stored or int(sim.get_carted()) != carted or int(sim.get_shipped()) != shipped or int(sim.get_coins()) != coins or int(sim.get_hired()) != hired or int(sim.get_yard_left()) != yard or int(sim.get_paid()) != paid or int(sim.get_posted()) != posted or int(sim.get_stood()) != stood or int(sim.get_lit()) != lit or int(sim.get_rung()) != rung or int(sim.get_sounded()) != sounded or int(sim.get_raised()) != raised or int(sim.get_hoisted()) != hoisted or int(sim.get_flown()) != flown or int(sim.get_carried()) != carried or int(sim.get_shown()) != shown or int(sim.get_broken()) != broken or int(sim.get_struck()) != struck or int(sim.get_dipped()) != dipped or int(sim.get_saluted()) != saluted:
-		_fail(errors, "%s changed (wet %d stored %d carted %d shipped %d coins %d hired %d yard %d paid %d posted %d stood %d lit %d rung %d sounded %d raised %d hoisted %d flown %d carried %d shown %d broken %d struck %d dipped %d saluted %d)" % [label, sim.get_wet_haul(), sim.get_stored_salt(), sim.get_carted(), sim.get_shipped(), sim.get_coins(), sim.get_hired(), sim.get_yard_left(), sim.get_paid(), sim.get_posted(), sim.get_stood(), sim.get_lit(), sim.get_rung(), sim.get_sounded(), sim.get_raised(), sim.get_hoisted(), sim.get_flown(), sim.get_carried(), sim.get_shown(), sim.get_broken(), sim.get_struck(), sim.get_dipped(), sim.get_saluted()])
+	if int(sim.get_wet_haul()) != wet or int(sim.get_stored_salt()) != stored or int(sim.get_carted()) != carted or int(sim.get_shipped()) != shipped or int(sim.get_coins()) != coins or int(sim.get_hired()) != hired or int(sim.get_yard_left()) != yard or int(sim.get_paid()) != paid or int(sim.get_posted()) != posted or int(sim.get_stood()) != stood or int(sim.get_lit()) != lit or int(sim.get_rung()) != rung or int(sim.get_sounded()) != sounded or int(sim.get_raised()) != raised or int(sim.get_hoisted()) != hoisted or int(sim.get_flown()) != flown or int(sim.get_carried()) != carried or int(sim.get_shown()) != shown or int(sim.get_broken()) != broken or int(sim.get_struck()) != struck or int(sim.get_dipped()) != dipped or int(sim.get_saluted()) != saluted or int(sim.get_presented()) != presented:
+		_fail(errors, "%s changed (wet %d stored %d carted %d shipped %d coins %d hired %d yard %d paid %d posted %d stood %d lit %d rung %d sounded %d raised %d hoisted %d flown %d carried %d shown %d broken %d struck %d dipped %d saluted %d presented %d)" % [label, sim.get_wet_haul(), sim.get_stored_salt(), sim.get_carted(), sim.get_shipped(), sim.get_coins(), sim.get_hired(), sim.get_yard_left(), sim.get_paid(), sim.get_posted(), sim.get_stood(), sim.get_lit(), sim.get_rung(), sim.get_sounded(), sim.get_raised(), sim.get_hoisted(), sim.get_flown(), sim.get_carried(), sim.get_shown(), sim.get_broken(), sim.get_struck(), sim.get_dipped(), sim.get_saluted(), sim.get_presented()])
 
 
 func _test_bell(errors: Array) -> void:
@@ -5597,7 +5655,7 @@ func _test_guidon(errors: Array) -> void:
 		_fail(errors, "guidon cap is %s, expected 1" % Sim.GUIDON_CAP)
 	if int(Sim.CORNET_CAP) != 1:
 		_fail(errors, "cornet cap changed to %s" % Sim.CORNET_CAP)
-	if int(Sim.GRID_NORTH) != -17:
+	if int(Sim.GRID_NORTH) > -17:
 		_fail(errors, "the map was not extended to the guidon row (north %s)" % Sim.GRID_NORTH)
 	if int(Sim.GUIDON_CELL.x) != 14 or int(Sim.GUIDON_CELL.y) != -17:
 		_fail(errors, "the guidon cell is not at 14,-17")
@@ -5785,14 +5843,16 @@ func _test_guidon(errors: Array) -> void:
 	if not saw_cap:
 		_fail(errors, "the guidon did not stop at %d while ticks remained (saluted %d cornet %d dipped %d ticks %d)" % [Sim.GUIDON_CAP, shore.get_saluted(), shore.get_cornet_left(), shore.get_dipped(), shore.get_ticks_until_rain()])
 	var end_guard := 0
-	while not shore.is_over() and end_guard < int(Sim.GUIDON_TICK) + 2:
+	while int(shore.get_beat()) == Sim.GUIDONING and end_guard < int(Sim.GUIDON_TICK) + 2:
 		shore.tick()
 		end_guard += 1
 		if int(shore.get_saluted()) != 1 or int(shore.get_cornet_left()) != 0 or int(shore.get_dipped()) != 1:
 			_fail(errors, "the guidon saluted again after the cap (saluted %d cornet %d dipped %d)" % [shore.get_saluted(), shore.get_cornet_left(), shore.get_dipped()])
 			break
-	if not shore.is_over():
-		_fail(errors, "the guidon beat did not end the scenario")
+	if shore.is_over() or int(shore.get_beat()) != Sim.FANIONING:
+		_fail(errors, "the guidon beat ended the scenario instead of opening the fanion")
+	elif int(shore.get_saluted()) != 1 or int(shore.get_presented()) != 0 or int(shore.get_guidon_left()) != 1 or int(shore.get_cornet_left()) != 0:
+		_fail(errors, "a guidon with no fanion presented a hire (presented %d guidon %d saluted %d)" % [shore.get_presented(), shore.get_guidon_left(), shore.get_saluted()])
 	var short = _prepare_plan(plans, "dry_saluted", errors)
 	if short == null:
 		return
@@ -5821,6 +5881,173 @@ func _test_guidon(errors: Array) -> void:
 		_fail(errors, "dry guidon did not stop at 1 with the cornet clear (saluted %d cornet %d dipped %d yard %d ticks %d)" % [short.get_saluted(), short.get_cornet_left(), short.get_dipped(), short.get_yard_left(), short.get_ticks_until_rain()])
 	print("saluted %d left cornet %d undipped %d unstruck %d unpaid %d; dry saluted %d left cornet %d undipped %d unpaid %d; no guidon saluted %d left cornet %d; guidon without cornet saluted %d" % [saluted.get_saluted(), saluted.get_cornet_left(), saluted_unsaluted, int(saluted.get_broken()) - int(saluted.get_struck()), saluted_unpaid, dry_saluted.get_saluted(), dry_saluted.get_cornet_left(), int(dry_saluted.get_struck()) - int(dry_saluted.get_dipped()), dry_unpaid, no_guidon.get_saluted(), no_guidon.get_cornet_left(), bare.get_saluted()])
 
+
+
+func _test_fanion(errors: Array) -> void:
+	if int(Sim.FANION_TICK) != 100 or int(Sim.FANION_TICK) != int(Sim.TICK_HZ) * 10:
+		_fail(errors, "fanion beat length %s is not 100 ticks (10 seconds)" % Sim.FANION_TICK)
+	if int(Sim.FANION_CAP) != 1:
+		_fail(errors, "fanion cap is %s, expected 1" % Sim.FANION_CAP)
+	if int(Sim.GUIDON_CAP) != 1:
+		_fail(errors, "guidon cap changed to %s" % Sim.GUIDON_CAP)
+	if int(Sim.GRID_NORTH) != -18:
+		_fail(errors, "the map was not extended to the fanion row (north %s)" % Sim.GRID_NORTH)
+	if int(Sim.FANION_CELL.x) != 14 or int(Sim.FANION_CELL.y) != -18:
+		_fail(errors, "the fanion cell is not at 14,-18")
+	if int(Sim.GUIDON_CELL.x) != 14 or int(Sim.GUIDON_CELL.y) != -17:
+		_fail(errors, "the guidon moved off 14,-17")
+	if int(Sim.CORNET_CELL.x) != 14 or int(Sim.CORNET_CELL.y) != -16:
+		_fail(errors, "the cornet moved off 14,-16")
+	if int(Sim.BURGEE_CELL.x) != 14 or int(Sim.BURGEE_CELL.y) != -15:
+		_fail(errors, "the burgee moved off 14,-15")
+	var fresh = Sim.new()
+	if fresh.paint_cell(14, -18, Sim.FANION) == false or int(fresh.get_paint(14, -18)) != Sim.FANION:
+		_fail(errors, "the cell north of the guidon rejected the fanion mark")
+	if fresh.paint_cell(14, -17, Sim.FANION):
+		_fail(errors, "the guidon cell accepted a fanion")
+	if int(fresh.get_paint(14, -17)) != Sim.EMPTY:
+		_fail(errors, "a rejected fanion painted the guidon cell")
+	if fresh.paint_cell(14, -18, Sim.GUIDON):
+		_fail(errors, "the fanion cell accepted a guidon")
+	if int(fresh.get_paint(14, -18)) != Sim.FANION:
+		_fail(errors, "a rejected guidon erased the fanion")
+	if fresh.paint_cell(14, -17, Sim.GUIDON) == false or int(fresh.get_paint(14, -17)) != Sim.GUIDON:
+		_fail(errors, "the guidon cell no longer accepts a guidon")
+	if fresh.paint_cell(14, -16, Sim.CORNET) == false or int(fresh.get_paint(14, -16)) != Sim.CORNET:
+		_fail(errors, "the cornet cell no longer accepts a cornet")
+	if fresh.paint_cell(14, -15, Sim.BURGEE) == false or int(fresh.get_paint(14, -15)) != Sim.BURGEE:
+		_fail(errors, "the burgee cell no longer accepts a burgee")
+	if fresh.paint_cell(14, -19, Sim.FANION) or fresh.paint_cell(13, -18, Sim.FANION) or fresh.paint_cell(15, -18, Sim.FANION) or fresh.paint_cell(14, -17, Sim.FANION) or fresh.paint_cell(14, -16, Sim.FANION):
+		_fail(errors, "a cell other than 14,-18 accepted a fanion")
+	if int(fresh.get_paint(14, -17)) != Sim.GUIDON:
+		_fail(errors, "a rejected fanion erased the guidon")
+	if fresh.paint_cell(Sim.COAST_X, -18, Sim.FANION):
+		_fail(errors, "the brine accepted a fanion")
+	if fresh.paint_cell(Sim.ANTHILL.x, Sim.ANTHILL.y, Sim.FANION):
+		_fail(errors, "the anthill accepted a fanion")
+	var plans := _plans(errors)
+	if plans.is_empty():
+		return
+	var won = _run_plan(plans, "winning", errors)
+	var dry = _run_plan(plans, "dry_pans", errors)
+	var saluted = _run_plan(plans, "saluted", errors)
+	var no_fanion = _run_plan(plans, "no_fanion", errors)
+	var bare = _run_plan(plans, "fanion_only", errors)
+	var dipped_shore = _run_plan(plans, "no_guidon", errors)
+	var presented = _run_plan(plans, "presented", errors)
+	var presented_again = _run_plan(plans, "presented", errors)
+	var late = _run_plan(plans, "late_presented", errors)
+	var dry_presented = _run_plan(plans, "dry_presented", errors)
+	if won == null or dry == null or saluted == null or no_fanion == null or bare == null or dipped_shore == null or presented == null or presented_again == null or late == null or dry_presented == null:
+		return
+	if int(won.get_presented()) != 0 or int(dry.get_presented()) != 0 or int(saluted.get_presented()) != 0:
+		_fail(errors, "a plan with no fanion presented someone (winning %d dry %d saluted %d)" % [won.get_presented(), dry.get_presented(), saluted.get_presented()])
+	if String(saluted.get_summary()) != String(no_fanion.get_summary()):
+		_fail(errors, "a guidon with no fanion changed the saluted summary: %s" % no_fanion.get_summary())
+	if String(no_fanion.get_summary()).to_lower().contains("presented") or String(no_fanion.get_summary()).to_lower().contains("fanion"):
+		_fail(errors, "a guidon with no fanion names a fanion: %s" % no_fanion.get_summary())
+	if not String(no_fanion.get_summary()).contains("Saluted 1 on the guidon") or not String(no_fanion.get_summary()).contains("Left 0 at the cornet"):
+		_fail(errors, "a guidon with no fanion dropped the guidon clause: %s" % no_fanion.get_summary())
+	if int(no_fanion.get_presented()) != 0 or int(no_fanion.get_guidon_left()) != 1 or int(no_fanion.get_saluted()) != 1 or int(no_fanion.get_cornet_left()) != 0 or int(no_fanion.get_dipped()) != 1 or int(no_fanion.get_yard_left()) != 57 or int(no_fanion.get_coins()) != 2997 or int(no_fanion.get_hired()) != 29 or int(no_fanion.get_stored_salt()) != 2997:
+		_fail(errors, "a guidon with no fanion presented someone (presented %d guidon %d saluted %d yard %d coins %d hired %d)" % [no_fanion.get_presented(), no_fanion.get_guidon_left(), no_fanion.get_saluted(), no_fanion.get_yard_left(), no_fanion.get_coins(), no_fanion.get_hired()])
+	var kept_guidon = plans["no_fanion"]["guidon"][0]
+	var kept_salt: Dictionary = no_fanion.get_cell_salt(int(kept_guidon[0]), int(kept_guidon[1]))
+	var kept_north: Dictionary = no_fanion.get_cell_salt(int(kept_guidon[0]), int(kept_guidon[1]) - 1)
+	if int(kept_salt.get("guidon", 0)) != 1 or int(kept_north.get("fanion", 0)) != 0 or int(kept_salt.get("fanion", 0)) != 0:
+		_fail(errors, "a guidon with no fanion left %s on the guidon and %s on a fanion" % [kept_salt.get("guidon", 0), kept_north.get("fanion", 0)])
+	if String(bare.get_summary()) != String(dipped_shore.get_summary()):
+		_fail(errors, "a fanion with nobody saluted changed the dipped summary: %s" % bare.get_summary())
+	if String(bare.get_summary()).to_lower().contains("presented") or String(bare.get_summary()).to_lower().contains("fanion") or String(bare.get_summary()).to_lower().contains("saluted") or String(bare.get_summary()).to_lower().contains("guidon"):
+		_fail(errors, "a fanion with nobody saluted names a fanion: %s" % bare.get_summary())
+	if not String(bare.get_summary()).contains("Dipped 1 on the cornet"):
+		_fail(errors, "a fanion with nobody saluted dropped the cornet clause: %s" % bare.get_summary())
+	if int(bare.get_presented()) != 0 or int(bare.get_saluted()) != 0 or int(bare.get_guidon_left()) != 0 or int(bare.get_dipped()) != 1 or int(bare.get_cornet_left()) != 1 or int(bare.get_yard_left()) != 57 or int(bare.get_coins()) != 2997 or int(bare.get_hired()) != 29:
+		_fail(errors, "a fanion with nobody saluted presented someone (presented %d saluted %d dipped %d cornet %d)" % [bare.get_presented(), bare.get_saluted(), bare.get_dipped(), bare.get_cornet_left()])
+	var bare_fanion = plans["fanion_only"]["fanion"][0]
+	var bare_cornet = plans["fanion_only"]["cornet"][0]
+	var bare_fanion_salt: Dictionary = bare.get_cell_salt(int(bare_fanion[0]), int(bare_fanion[1]))
+	var bare_cornet_salt: Dictionary = bare.get_cell_salt(int(bare_cornet[0]), int(bare_cornet[1]))
+	if int(bare_fanion_salt.get("fanion", 0)) != 0 or int(bare_cornet_salt.get("cornet", 0)) != 1 or int(bare_fanion_salt.get("guidon", 0)) != 0:
+		_fail(errors, "fanion without a guidon holds %s, cornet holds %s" % [bare_fanion_salt.get("fanion", 0), bare_cornet_salt.get("cornet", 0)])
+	var fanion_cell = plans["presented"]["fanion"][0]
+	var guidon_cell = plans["presented"]["guidon"][0]
+	var cornet_cell = plans["presented"]["cornet"][0]
+	if int(fanion_cell[0]) != int(guidon_cell[0]) or int(fanion_cell[1]) != int(guidon_cell[1]) - 1:
+		_fail(errors, "presented plan's fanion is not one cell north of the guidon")
+	if int(fanion_cell[0]) != 14 or int(fanion_cell[1]) != -18 or int(guidon_cell[0]) != 14 or int(guidon_cell[1]) != -17 or int(cornet_cell[0]) != 14 or int(cornet_cell[1]) != -16:
+		_fail(errors, "presented plan moved the fanion, the guidon, or the cornet")
+	_assert_chain(presented, errors, "presented plan", 2997, 2997, 2997, 2997, 2997, 29, 57, 10, 6, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+	if int(presented.get_presented()) != 1 or int(presented.get_guidon_left()) != 0 or int(presented.get_saluted()) != 1 or int(presented.get_cornet_left()) != 0 or int(presented.get_dipped()) != 1 or int(presented.get_struck()) != 1 or int(presented.get_yard_left()) != 57 or int(presented.get_coins()) != 2997 or int(presented.get_hired()) != 29 or int(presented.get_stored_salt()) != int(saluted.get_stored_salt()) or int(presented.get_carted()) != int(saluted.get_carted()) or int(presented.get_shipped()) != int(saluted.get_shipped()) or int(presented.get_wet_haul()) != int(saluted.get_wet_haul()):
+		_fail(errors, "presented %d, left %d saluted, saluted %d, dipped %d, yard %d, coins %d, hired %d" % [presented.get_presented(), presented.get_guidon_left(), presented.get_saluted(), presented.get_dipped(), presented.get_yard_left(), presented.get_coins(), presented.get_hired()])
+	if int(presented.get_presented()) > int(Sim.FANION_CAP):
+		_fail(errors, "fanion presented %d, over the cap of %d" % [presented.get_presented(), Sim.FANION_CAP])
+	var fanion_salt: Dictionary = presented.get_cell_salt(int(fanion_cell[0]), int(fanion_cell[1]))
+	var guidon_salt: Dictionary = presented.get_cell_salt(int(guidon_cell[0]), int(guidon_cell[1]))
+	var cornet_salt: Dictionary = presented.get_cell_salt(int(cornet_cell[0]), int(cornet_cell[1]))
+	if int(fanion_salt.get("fanion", 0)) != 1 or int(guidon_salt.get("guidon", 0)) != 0 or int(cornet_salt.get("cornet", 0)) != 0 or int(fanion_salt.get("guidon", 0)) != 0:
+		_fail(errors, "fanion cell holds %s, guidon holds %s, cornet holds %s" % [fanion_salt.get("fanion", 0), guidon_salt.get("guidon", 0), cornet_salt.get("cornet", 0)])
+	var presented_summary := String(presented.get_summary())
+	if not presented_summary.contains("Presented 1 on the fanion") or not presented_summary.contains("Left 0 at the guidon") or not presented_summary.contains("Saluted 1 on the guidon") or not presented_summary.contains("Left 0 at the cornet") or not presented_summary.contains("Dipped 1 on the cornet") or not presented_summary.contains("Coins 2997") or not presented_summary.contains("Hired 29") or not presented_summary.contains("Left 57"):
+		_fail(errors, "presented summary does not name the fanion: %s" % presented_summary)
+	if int(presented_again.get_presented()) != int(presented.get_presented()) or int(presented_again.get_guidon_left()) != int(presented.get_guidon_left()) or int(presented_again.get_saluted()) != int(presented.get_saluted()) or int(presented_again.get_yard_left()) != int(presented.get_yard_left()) or String(presented_again.get_summary()) != String(presented.get_summary()):
+		_fail(errors, "repeated fanion paint presented %d and left guidon %d, then presented %d and left guidon %d" % [presented.get_presented(), presented.get_guidon_left(), presented_again.get_presented(), presented_again.get_guidon_left()])
+	if int(late.get_presented()) != 1 or int(late.get_guidon_left()) != 0 or int(late.get_saluted()) != 1 or int(late.get_dipped()) != 1 or int(late.get_yard_left()) != 57 or int(late.get_hired()) != 29 or int(late.get_coins()) != 2997 or int(late.get_stored_salt()) != 2997:
+		_fail(errors, "painting the fanion at the fanion beat (presented %d guidon %d saluted %d yard %d) did not match painting it early (presented %d guidon %d saluted %d)" % [late.get_presented(), late.get_guidon_left(), late.get_saluted(), late.get_yard_left(), presented.get_presented(), presented.get_guidon_left(), presented.get_saluted()])
+	_assert_chain(dry_presented, errors, "dry fanion", 0, 1032, 1032, 1032, 1032, 10, 0, 8, 6, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+	var dry_saluted = _run_plan(plans, "dry_saluted", errors)
+	if dry_saluted == null:
+		return
+	if int(dry_presented.get_presented()) != 1 or int(dry_presented.get_guidon_left()) != 0 or int(dry_presented.get_saluted()) != 1 or int(dry_presented.get_dipped()) != 1 or int(dry_presented.get_yard_left()) != 0 or int(dry_presented.get_wet_haul()) != 0 or int(dry_presented.get_stored_salt()) != 1032 or int(dry_saluted.get_presented()) != 0 or int(dry_saluted.get_guidon_left()) != 1:
+		_fail(errors, "dry fanion changed the short crew (wet %d stored %d presented %d guidon %d saluted %d dipped %d yard %d)" % [dry_presented.get_wet_haul(), dry_presented.get_stored_salt(), dry_presented.get_presented(), dry_presented.get_guidon_left(), dry_presented.get_saluted(), dry_presented.get_dipped(), dry_presented.get_yard_left()])
+	if not String(dry_presented.get_summary()).contains("Presented 1 on the fanion") or not String(dry_presented.get_summary()).contains("Left 0 at the guidon") or not String(dry_presented.get_summary()).contains("Saluted 1 on the guidon") or not String(dry_presented.get_summary()).contains("Left 0 in the yard"):
+		_fail(errors, "dry fanion summary does not name the cap: %s" % dry_presented.get_summary())
+	_assert_pop(presented, errors, "presented plan")
+	_assert_pop(presented_again, errors, "presented plan again")
+	_assert_pop(late, errors, "late_presented")
+	_assert_pop(dry_presented, errors, "dry_presented")
+	_assert_pop(no_fanion, errors, "no_fanion")
+	_assert_pop(bare, errors, "fanion_only")
+	var shore = _prepare_plan(plans, "presented", errors)
+	if shore == null:
+		return
+	var shore_guard := 0
+	var shore_limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + int(Sim.SHIP_TICK) + int(Sim.MARKET_TICK) + int(Sim.YARD_TICK) + int(Sim.BUNK_TICK) + int(Sim.LOFT_TICK) + int(Sim.GATE_TICK) + int(Sim.WAGE_TICK) + int(Sim.RELIEF_TICK) + int(Sim.WATCH_TICK) + int(Sim.LAMP_TICK) + int(Sim.BELL_TICK) + int(Sim.HORN_TICK) + int(Sim.FLAG_TICK) + int(Sim.BANNER_TICK) + int(Sim.PENNANT_TICK) + int(Sim.STANDARD_TICK) + int(Sim.JACK_TICK) + int(Sim.ENSIGN_TICK) + int(Sim.BURGEE_TICK) + int(Sim.CORNET_TICK) + int(Sim.GUIDON_TICK) + 2
+	while int(shore.get_beat()) != Sim.FANIONING and not shore.is_over() and shore_guard < shore_limit:
+		shore.tick()
+		shore_guard += 1
+	if int(shore.get_beat()) != Sim.FANIONING or shore.is_over():
+		_fail(errors, "the guidon beat did not open a fanion beat for the cap check")
+		return
+	if int(shore.get_ticks_until_rain()) != int(Sim.FANION_TICK):
+		_fail(errors, "fanion countdown started at %d, expected %d" % [shore.get_ticks_until_rain(), Sim.FANION_TICK])
+	if int(shore.get_presented()) != 0 or int(shore.get_saluted()) != 1 or int(shore.get_guidon_left()) != 1 or int(shore.get_dipped()) != 1 or int(shore.get_cornet_left()) != 0 or int(shore.get_yard_left()) != 57 or int(shore.get_coins()) != 2997 or int(shore.get_stored_salt()) != 2997 or int(shore.get_hired()) != 29:
+		_fail(errors, "fanion opened early (presented %d saluted %d guidon %d dipped %d yard %d coins %d stored %d)" % [shore.get_presented(), shore.get_saluted(), shore.get_guidon_left(), shore.get_dipped(), shore.get_yard_left(), shore.get_coins(), shore.get_stored_salt()])
+	var saw_cap := false
+	var present_guard := 0
+	while not shore.is_over() and present_guard < int(Sim.FANION_TICK) + 2:
+		shore.tick()
+		present_guard += 1
+		if int(shore.get_presented()) == int(Sim.FANION_CAP) and int(shore.get_guidon_left()) == 0 and int(shore.get_saluted()) == 1 and int(shore.get_dipped()) == 1 and int(shore.get_yard_left()) == 57 and int(shore.get_coins()) == 2997 and int(shore.get_hired()) == 29 and int(shore.get_ticks_until_rain()) > 0:
+			saw_cap = true
+			var ticks_left := int(shore.get_ticks_until_rain())
+			shore.tick()
+			if int(shore.get_presented()) != int(Sim.FANION_CAP) or int(shore.get_guidon_left()) != 0 or int(shore.get_saluted()) != 1 or int(shore.get_dipped()) != 1 or int(shore.get_yard_left()) != 57 or int(shore.get_coins()) != 2997 or int(shore.get_hired()) != 29 or int(shore.get_stored_salt()) != 2997:
+				_fail(errors, "the fanion kept presenting after the cap (presented %d guidon %d saluted %d dipped %d yard %d)" % [shore.get_presented(), shore.get_guidon_left(), shore.get_saluted(), shore.get_dipped(), shore.get_yard_left()])
+			elif not shore.is_over() and int(shore.get_ticks_until_rain()) >= ticks_left:
+				_fail(errors, "the fanion beat did not spend a tick after the cap")
+			break
+	if not saw_cap:
+		_fail(errors, "the fanion did not stop at %d while ticks remained (presented %d guidon %d saluted %d ticks %d)" % [Sim.FANION_CAP, shore.get_presented(), shore.get_guidon_left(), shore.get_saluted(), shore.get_ticks_until_rain()])
+	var end_guard := 0
+	while not shore.is_over() and end_guard < int(Sim.FANION_TICK) + 2:
+		shore.tick()
+		end_guard += 1
+		if int(shore.get_presented()) != 1 or int(shore.get_guidon_left()) != 0 or int(shore.get_saluted()) != 1:
+			_fail(errors, "the fanion presented again after the cap (presented %d guidon %d saluted %d)" % [shore.get_presented(), shore.get_guidon_left(), shore.get_saluted()])
+			break
+	if not shore.is_over():
+		_fail(errors, "the fanion beat did not end the scenario")
+	print("presented %d left guidon %d unsaluted %d; dry presented %d left guidon %d; no fanion presented %d left guidon %d; fanion without guidon presented %d" % [presented.get_presented(), presented.get_guidon_left(), int(presented.get_saluted()) - int(presented.get_presented()), dry_presented.get_presented(), dry_presented.get_guidon_left(), no_fanion.get_presented(), no_fanion.get_guidon_left(), bare.get_presented()])
 
 
 func _run_plan(plans: Dictionary, plan_name: String, errors: Array):
@@ -6237,6 +6464,24 @@ func _run_plan(plans: Dictionary, plan_name: String, errors: Array):
 		_apply_marks(sim, plan["after_cornet"], errors)
 		if errors.size() > guidon_before:
 			return null
+	if plan.has("after_guidon"):
+		var fanion_guard := 0
+		var fanion_limit := int(Sim.RAIN_TICK) + int(Sim.DRY_TICK) + int(Sim.CART_TICK) + int(Sim.SHIP_TICK) + int(Sim.MARKET_TICK) + int(Sim.YARD_TICK) + int(Sim.BUNK_TICK) + int(Sim.LOFT_TICK) + int(Sim.GATE_TICK) + int(Sim.WAGE_TICK) + int(Sim.RELIEF_TICK) + int(Sim.WATCH_TICK) + int(Sim.LAMP_TICK) + int(Sim.BELL_TICK) + int(Sim.HORN_TICK) + int(Sim.FLAG_TICK) + int(Sim.BANNER_TICK) + int(Sim.PENNANT_TICK) + int(Sim.STANDARD_TICK) + int(Sim.JACK_TICK) + int(Sim.ENSIGN_TICK) + int(Sim.BURGEE_TICK) + int(Sim.CORNET_TICK) + int(Sim.GUIDON_TICK) + 2
+		while int(sim.get_beat()) != Sim.FANIONING and not sim.is_over() and fanion_guard < fanion_limit:
+			sim.tick()
+			fanion_guard += 1
+		if int(sim.get_beat()) != Sim.FANIONING or sim.is_over():
+			_fail(errors, "%s did not open the fanion beat after the guidon" % plan_name)
+			return null
+		if int(sim.get_ticks_until_rain()) != int(Sim.FANION_TICK):
+			_fail(errors, "%s fanion countdown started at %d, expected %d" % [
+				plan_name, sim.get_ticks_until_rain(), Sim.FANION_TICK,
+			])
+			return null
+		var fanion_before := errors.size()
+		_apply_marks(sim, plan["after_guidon"], errors)
+		if errors.size() > fanion_before:
+			return null
 	sim.run_until_rain()
 	return sim
 
@@ -6296,6 +6541,8 @@ func _apply_marks(sim, plan: Dictionary, errors: Array) -> void:
 		_apply_cells(sim, plan["cornet"], Sim.CORNET, errors)
 	if plan.has("guidon"):
 		_apply_cells(sim, plan["guidon"], Sim.GUIDON, errors)
+	if plan.has("fanion"):
+		_apply_cells(sim, plan["fanion"], Sim.FANION, errors)
 	if plan.has("rake_rect"):
 		_apply_rect(sim, plan["rake_rect"], Sim.RAKE, errors)
 
