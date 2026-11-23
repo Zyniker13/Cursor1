@@ -48,7 +48,19 @@ const RETABLE_AWNING := Color(0.74, 0.56, 0.18)
 const TESTER_AWNING := Color(0.28, 0.16, 0.36)
 const RIDDEL_AWNING := Color(0.34, 0.38, 0.50)
 const FRONTAL_AWNING := Color(0.16, 0.34, 0.28)
-const WINDOW_W := 2600.0
+const PALL_AWNING := Color(0.86, 0.82, 0.70)
+const HERSE_AWNING := Color(0.32, 0.34, 0.38)
+const CATAFALQUE_AWNING := Color(0.36, 0.22, 0.14)
+const BIER_AWNING := Color(0.45, 0.28, 0.14)
+const CERECLOTH_AWNING := Color(0.82, 0.74, 0.52)
+const HEARSE_AWNING := Color(0.16, 0.14, 0.18)
+const SHROUD_AWNING := Color(0.74, 0.74, 0.72)
+const PYRE_AWNING := Color(0.72, 0.28, 0.10)
+const CENOTAPH_AWNING := Color(0.72, 0.70, 0.64)
+const WINDING_AWNING := Color(0.80, 0.74, 0.60)
+const CHARNEL_AWNING := Color(0.58, 0.50, 0.42)
+const SEPULCHRE_AWNING := Color(0.46, 0.44, 0.50)
+const WINDOW_W := 3416.0
 
 var notice_label: Label
 var purse_label: Label
@@ -230,6 +242,30 @@ func _awning_for(floor_id: String) -> Color:
 		return RIDDEL_AWNING
 	if floor_id == "frontal":
 		return FRONTAL_AWNING
+	if floor_id == "pall":
+		return PALL_AWNING
+	if floor_id == "herse":
+		return HERSE_AWNING
+	if floor_id == "catafalque":
+		return CATAFALQUE_AWNING
+	if floor_id == "bier":
+		return BIER_AWNING
+	if floor_id == "cerecloth":
+		return CERECLOTH_AWNING
+	if floor_id == "hearse":
+		return HEARSE_AWNING
+	if floor_id == "shroud":
+		return SHROUD_AWNING
+	if floor_id == "pyre":
+		return PYRE_AWNING
+	if floor_id == "cenotaph":
+		return CENOTAPH_AWNING
+	if floor_id == "winding":
+		return WINDING_AWNING
+	if floor_id == "charnel":
+		return CHARNEL_AWNING
+	if floor_id == "sepulchre":
+		return SEPULCHRE_AWNING
 	return CHART_AWNING
 
 

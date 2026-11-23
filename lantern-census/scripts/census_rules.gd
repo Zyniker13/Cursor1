@@ -58,6 +58,56 @@ extends RefCounted
 ## The riddel keeps that walk. There is no new closure.
 ## The frontal keeps that walk except at (7,10), which is closed.
 ## The ring steps through (6,11), which was already open.
+## The pall keeps that walk except at (21,4), which is closed.
+## (21,4) has no already-open detour, so the recorded walk is open between (21,3) and (21,5).
+## The herse keeps that walk except at (21,5), which is closed.
+## (21,5) has no already-open detour, so the recorded walk is open between (21,3) and (21,6).
+## The catafalque keeps that walk except at (21,6), which is closed.
+## (21,6) has no already-open detour, so the recorded walk is open between (21,3) and (21,7).
+## The bier keeps that walk except at (21,7), which is closed.
+## (21,7) has no already-open detour, so the recorded walk is open between (21,3) and (21,8).
+## The cerecloth keeps that walk except at (21,8), which is closed.
+## (21,8) has no already-open detour, so the recorded walk is open between (21,3) and (21,9).
+## The hearse keeps that walk except at (21,9), which is closed.
+## (21,9) has no already-open detour, so the recorded walk is open between (21,3) and (21,10).
+## The shroud keeps that walk except at (21,10), which is closed.
+## Closing (21,10) keeps the 19-step survey at 120 oil, so no new cell is opened.
+## (22,10), (21,11), and (21,9) are walls, and the walk continues through (20,10).
+## The recorded walk is open between (21,3) and (20,10).
+## The pyre keeps that walk except at (20,10), which is closed.
+## Closing (20,10) keeps the 19-step survey at 120 oil, so no new cell is opened.
+## (21,10), (20,11), and (20,9) are walls, and the walk continues through (19,10).
+## The recorded walk is open between (21,3) and (19,10).
+## The cenotaph keeps that walk except at (19,10), which is closed.
+## Closing (19,10) alone surveys at 176 oil: (19,11) is open floor and
+## (19,12) is a crack, so (19,10) is a pass-through. Opening (18,11)
+## restores the same 19 steps. The new crack at (43,15) stays a leaf,
+## so the survey is 122 oil. (20,11) and (20,9) stay walls.
+## The recorded walk drops (19,10) and is open between (21,3) and (18,10).
+## The winding keeps that walk except at (18,10), which is closed.
+## Closing (18,10) alone surveys at 178 oil: (18,11) and (17,10) are open,
+## so (18,10) is a pass-through. Opening (17,11) restores the same 19 steps.
+## The new crack at (44,15) stays a leaf, so the survey is 124 oil.
+## No one-, two-, or three-cell opening returns that survey to 122
+## while the path stays 19 steps. (18,11) stays open.
+## (19,10), (20,10), and (21,4) through (21,10) stay closed.
+## The recorded walk drops (18,10) and is open between (21,3) and (17,10).
+## The charnel keeps that walk except at (17,10), which is closed.
+## Closing (17,10) alone surveys at 180 oil: (17,11) and (16,10) are open,
+## so (17,10) is a pass-through. Opening (16,11) restores the same 19 steps.
+## The new crack at (45,15) stays a leaf, so the survey is 126 oil.
+## No one-, two-, or three-cell opening returns a lower survey
+## while the path stays 19 steps. (17,11) and (18,11) stay open.
+## (18,10), (19,10), (20,10), and (21,4) through (21,10) stay closed.
+## The recorded walk drops (17,10) and is open between (21,3) and (16,10).
+## The sepulchre keeps that walk except at (16,10), which is closed.
+## Closing (16,10) alone surveys at 182 oil: (16,11) and (15,10) are open,
+## so (16,10) is a pass-through. Opening (15,11) restores the same 19 steps.
+## The new crack at (46,15) stays a leaf, so the survey is 128 oil.
+## No one-, two-, or three-cell opening returns a lower survey
+## while the path stays 19 steps. (16,11), (17,11), and (18,11) stay open.
+## (17,10), (18,10), (19,10), (20,10), and (21,4) through (21,10) stay closed.
+## The recorded walk drops (16,10) and is open between (21,3) and (15,10).
 ## A census is accepted only when every corridor and hazard is marked truly
 ## and no tile is marked as something it is not.
 
@@ -71,7 +121,7 @@ const HAZARD_VALUE := 8
 const LOOP_VALUE := 15
 
 const TOWN_LINE := "Arrows turn and step, Q and E strafe, M marks the tile you face, and Space waits out the warden's swing."
-const RATE_CARD := "A true corridor pays 3. A true hazard pays 8. The cellar's east square, the cistern ring, the cloister walk, the crypt ring, the ossuary ring, the reliquary ring, the undercroft ring, the well ring, the scriptorium ring, the binding ring, the chart room ring, the bell loft ring, the clock room ring, the font ring, the apse ring, the choir ring, the rood ring, the crossing ring, the transept ring, the ambulatory ring, the chevet ring, the retrochoir ring, the lady chapel ring, the feretory ring, the chantry ring, the sacristy ring, the pyx ring, the aumbry ring, the piscina ring, the sedilia ring, the credence ring, the reredos ring, the predella ring, the dossal ring, the retable ring, the tester ring, the riddel ring, and the frontal ring each pay 15 only when every tile of that ring is marked corridor. A false mark pays nothing."
+const RATE_CARD := "A true corridor pays 3. A true hazard pays 8. The cellar's east square, the cistern ring, the cloister walk, the crypt ring, the ossuary ring, the reliquary ring, the undercroft ring, the well ring, the scriptorium ring, the binding ring, the chart room ring, the bell loft ring, the clock room ring, the font ring, the apse ring, the choir ring, the rood ring, the crossing ring, the transept ring, the ambulatory ring, the chevet ring, the retrochoir ring, the lady chapel ring, the feretory ring, the chantry ring, the sacristy ring, the pyx ring, the aumbry ring, the piscina ring, the sedilia ring, the credence ring, the reredos ring, the predella ring, the dossal ring, the retable ring, the tester ring, the riddel ring, the frontal ring, the pall ring, the herse ring, the catafalque ring, the bier ring, the cerecloth ring, the hearse ring, the shroud ring, the pyre ring, the cenotaph ring, the winding ring, the charnel ring, and the sepulchre ring each pay 15 only when every tile of that ring is marked corridor. A false mark pays nothing."
 
 const CELLAR_RECORD := "Record every corridor, both hazard cracks, and the east square."
 const CISTERN_RECORD := "Record every corridor, the three seep cracks, and the cistern ring around the pit."
@@ -111,6 +161,18 @@ const RETABLE_RECORD := "Record every corridor, the thirty-five retable cracks, 
 const TESTER_RECORD := "Record every corridor, the thirty-six tester cracks, and the ring around the tester."
 const RIDDEL_RECORD := "Record every corridor, the thirty-seven riddel cracks, and the ring around the riddel."
 const FRONTAL_RECORD := "Record every corridor, the thirty-eight frontal cracks, and the ring around the frontal."
+const PALL_RECORD := "Record every corridor, the thirty-nine pall cracks, and the ring around the pall."
+const HERSE_RECORD := "Record every corridor, the forty herse cracks, and the ring around the herse."
+const CATAFALQUE_RECORD := "Record every corridor, the forty-one catafalque cracks, and the ring around the catafalque."
+const BIER_RECORD := "Record every corridor, the forty-two bier cracks, and the ring around the bier."
+const CERECLOTH_RECORD := "Record every corridor, the forty-three cerecloth cracks, and the ring around the cerecloth."
+const HEARSE_RECORD := "Record every corridor, the forty-four hearse cracks, and the ring around the hearse."
+const SHROUD_RECORD := "Record every corridor, the forty-five shroud cracks, and the ring around the shroud."
+const PYRE_RECORD := "Record every corridor, the forty-six pyre cracks, and the ring around the pyre."
+const CENOTAPH_RECORD := "Record every corridor, the forty-seven cenotaph cracks, and the ring around the cenotaph."
+const WINDING_RECORD := "Record every corridor, the forty-eight winding cracks, and the ring around the winding."
+const CHARNEL_RECORD := "Record every corridor, the forty-nine charnel cracks, and the ring around the charnel."
+const SEPULCHRE_RECORD := "Record every corridor, the fifty sepulchre cracks, and the ring around the sepulchre."
 
 const CELLAR_ROWS: PackedStringArray = [
 	"#############",
@@ -1281,6 +1343,445 @@ const FRONTAL_ROWS: PackedStringArray = [
 	"#########################################",
 ]
 
+# The pall is the 14x6 block of '"' at columns 7-20, rows 4-9.
+# '"' is the next mark after '!'. Space was the code point before '!' and was
+# skipped because it is not a distinct mark. '"' is unused, and an unknown
+# glyph inks as one wall. '!' is the frontal.
+# The sheet grows the frontal one column east. That new column stays wall.
+# The warden, the lift, the start, and the 19-step path stay on their cells.
+# (35,15) is the wall immediately east of (34,15). It is not on the tour:
+# adding only that crack surveys at 122 oil. Closing (21,4) returns the survey
+# to 120 oil and the same 19 steps. It is the only such cell. (21,4) cannot
+# stay open. (20,4) is the pall and (22,4) is a wall, so there is no
+# already-open corridor detour. The recorded walk is the frontal ring without
+# (21,4), open between (21,3) and (21,5). (6,11) stays open. (10,10) stays
+# closed and (11,11) stays open. (7,10), (8,10), and (9,10) stay closed.
+# (8,12) stays open. (10,12) stays closed.
+const PALL_ROWS: PackedStringArray = [
+	'##########################################',
+	'#S########################################',
+	'#.########################################',
+	'#H####...................H################',
+	'#.####.""""""""""""""####H################',
+	'#H####."""""""""""""".###H################',
+	'#.####."""""""""""""".###H################',
+	'#H####."""""""""""""".###H################',
+	'#.####."""""""""""""".###H################',
+	'#H####."""""""""""""".###H################',
+	'#.####.####...........###H################',
+	'#H........L.#######.#####H################',
+	'#######H.E#########H.....H################',
+	'#########################H################',
+	'#########################H################',
+	'#########################HHHHHHHHHHH######',
+	'#########################HHHHHHHHH########',
+	'##########################################',
+	'##########################################',
+	'##########################################',
+	'##########################################',
+]
+
+# The herse is the 14x6 block of '$' at columns 7-20, rows 4-9.
+# '#' is the wall mark and is already used. '$' is the next mark, it is unused,
+# and an unknown glyph inks as one wall. '"' is the pall.
+# The sheet grows the pall one cell east. That new column stays wall.
+# The warden, the lift, the start, and the 19-step path stay on their cells.
+# (36,15) is the wall immediately east of (35,15). It is not on the tour:
+# adding only that crack surveys at 122 oil. (21,4) stays closed. Closing
+# (21,5) returns the survey to 120 oil and the same 19 steps. It is the only
+# such cell. (21,4) and (22,5) are walls and (20,5) is the pall, so there is
+# no already-open corridor detour. The recorded walk drops (21,5) and is open
+# between (21,3) and (21,6). (6,11) stays open. (10,10) stays closed and
+# (11,11) stays open.
+const HERSE_ROWS: PackedStringArray = [
+	"###########################################",
+	"#S#########################################",
+	"#.#########################################",
+	"#H####...................H#################",
+	"#.####.$$$$$$$$$$$$$$####H#################",
+	"#H####.$$$$$$$$$$$$$$####H#################",
+	"#.####.$$$$$$$$$$$$$$.###H#################",
+	"#H####.$$$$$$$$$$$$$$.###H#################",
+	"#.####.$$$$$$$$$$$$$$.###H#################",
+	"#H####.$$$$$$$$$$$$$$.###H#################",
+	"#.####.####...........###H#################",
+	"#H........L.#######.#####H#################",
+	"#######H.E#########H.....H#################",
+	"#########################H#################",
+	"#########################H#################",
+	"#########################HHHHHHHHHHHH######",
+	"#########################HHHHHHHHH#########",
+	"###########################################",
+	"###########################################",
+	"###########################################",
+	"###########################################",
+]
+
+# The catafalque is the 14x6 block of '%' at columns 7-20, rows 4-9.
+# '%' is unused, and an unknown glyph inks as one wall. '$' is the herse.
+# The sheet grows the herse one cell east. That new column stays wall.
+# The warden, the lift, the start, and the 19-step path stay on their cells.
+# (37,15) is the wall immediately east of (36,15). It is not on the tour:
+# adding only that crack surveys at 122 oil. (21,5) and (21,4) stay closed.
+# Closing (21,6) returns the survey to 120 oil and the same 19 steps. It is
+# the only such cell. (21,5) and (22,6) are walls and (20,6) is the herse, so
+# there is no already-open corridor detour. The recorded walk drops (21,6)
+# and is open between (21,3) and (21,7). (6,11) stays open. (10,10) stays
+# closed and (11,11) stays open.
+const CATAFALQUE_ROWS: PackedStringArray = [
+	"############################################",
+	"#S##########################################",
+	"#.##########################################",
+	"#H####...................H##################",
+	"#.####.%%%%%%%%%%%%%%####H##################",
+	"#H####.%%%%%%%%%%%%%%####H##################",
+	"#.####.%%%%%%%%%%%%%%####H##################",
+	"#H####.%%%%%%%%%%%%%%.###H##################",
+	"#.####.%%%%%%%%%%%%%%.###H##################",
+	"#H####.%%%%%%%%%%%%%%.###H##################",
+	"#.####.####...........###H##################",
+	"#H........L.#######.#####H##################",
+	"#######H.E#########H.....H##################",
+	"#########################H##################",
+	"#########################H##################",
+	"#########################HHHHHHHHHHHHH######",
+	"#########################HHHHHHHHH##########",
+	"############################################",
+	"############################################",
+	"############################################",
+	"############################################",
+]
+
+# The bier is the 14x6 block of '&' at columns 7-20, rows 4-9.
+# '&' is unused, and an unknown glyph inks as one wall. '%' is the catafalque.
+# The sheet grows the catafalque one cell east. That new column stays wall.
+# The warden, the lift, the start, and the 19-step path stay on their cells.
+# (38,15) is the wall immediately east of (37,15). It is not on the tour:
+# adding only that crack surveys at 122 oil. (21,6), (21,5), and (21,4) stay
+# closed. Closing (21,7) returns the survey to 120 oil and the same 19 steps.
+# It is the only such cell. (21,6) and (22,7) are walls and (20,7) is the
+# catafalque, so there is no already-open corridor detour. The recorded walk
+# drops (21,7) and is open between (21,3) and (21,8). (6,11) stays open.
+# (10,10) stays closed and (11,11) stays open.
+const BIER_ROWS: PackedStringArray = [
+	"#############################################",
+	"#S###########################################",
+	"#.###########################################",
+	"#H####...................H###################",
+	"#.####.&&&&&&&&&&&&&&####H###################",
+	"#H####.&&&&&&&&&&&&&&####H###################",
+	"#.####.&&&&&&&&&&&&&&####H###################",
+	"#H####.&&&&&&&&&&&&&&####H###################",
+	"#.####.&&&&&&&&&&&&&&.###H###################",
+	"#H####.&&&&&&&&&&&&&&.###H###################",
+	"#.####.####...........###H###################",
+	"#H........L.#######.#####H###################",
+	"#######H.E#########H.....H###################",
+	"#########################H###################",
+	"#########################H###################",
+	"#########################HHHHHHHHHHHHHH######",
+	"#########################HHHHHHHHH###########",
+	"#############################################",
+	"#############################################",
+	"#############################################",
+	"#############################################",
+]
+
+# The cerecloth is the 14x6 block of "'" at columns 7-20, rows 4-9.
+# "'" is unused, and an unknown glyph inks as one wall. '&' is the bier.
+# The sheet grows the bier one cell east. That new column stays wall.
+# The warden, the lift, the start, and the 19-step path stay on their cells.
+# (39,15) is the wall immediately east of (38,15). It is not on the tour:
+# adding only that crack surveys at 122 oil. (21,7), (21,6), (21,5), and
+# (21,4) stay closed. Closing (21,8) returns the survey to 120 oil and the
+# same 19 steps. It is the only such cell. (21,7) and (22,8) are walls and
+# (20,8) is the bier, so there is no already-open corridor detour. The
+# recorded walk drops (21,8) and is open between (21,3) and (21,9). (6,11)
+# stays open. (10,10) stays closed and (11,11) stays open.
+const CERECLOTH_ROWS: PackedStringArray = [
+	"##############################################",
+	"#S############################################",
+	"#.############################################",
+	"#H####...................H####################",
+	"#.####.''''''''''''''####H####################",
+	"#H####.''''''''''''''####H####################",
+	"#.####.''''''''''''''####H####################",
+	"#H####.''''''''''''''####H####################",
+	"#.####.''''''''''''''####H####################",
+	"#H####.''''''''''''''.###H####################",
+	"#.####.####...........###H####################",
+	"#H........L.#######.#####H####################",
+	"#######H.E#########H.....H####################",
+	"#########################H####################",
+	"#########################H####################",
+	"#########################HHHHHHHHHHHHHHH######",
+	"#########################HHHHHHHHH############",
+	"##############################################",
+	"##############################################",
+	"##############################################",
+	"##############################################",
+]
+
+# The hearse is the 14x6 block of '(' at columns 7-20, rows 4-9.
+# '(' is unused, and an unknown glyph inks as one wall. "'" is the cerecloth.
+# The sheet grows the cerecloth one cell east. That new column stays wall.
+# The warden, the lift, the start, and the 19-step path stay on their cells.
+# (40,15) is the wall immediately east of (39,15). It is not on the tour:
+# adding only that crack surveys at 122 oil. (21,8), (21,7), (21,6), (21,5),
+# and (21,4) stay closed. Closing (21,9) returns the survey to 120 oil and the
+# same 19 steps. It is the only such cell. (21,8) and (22,9) are walls and
+# (20,9) is the cerecloth, so there is no already-open corridor detour. The
+# recorded walk drops (21,9) and is open between (21,3) and (21,10). (6,11)
+# stays open. (10,10) stays closed and (11,11) stays open.
+const HEARSE_ROWS: PackedStringArray = [
+	"###############################################",
+	"#S#############################################",
+	"#.#############################################",
+	"#H####...................H#####################",
+	"#.####.((((((((((((((####H#####################",
+	"#H####.((((((((((((((####H#####################",
+	"#.####.((((((((((((((####H#####################",
+	"#H####.((((((((((((((####H#####################",
+	"#.####.((((((((((((((####H#####################",
+	"#H####.((((((((((((((####H#####################",
+	"#.####.####...........###H#####################",
+	"#H........L.#######.#####H#####################",
+	"#######H.E#########H.....H#####################",
+	"#########################H#####################",
+	"#########################H#####################",
+	"#########################HHHHHHHHHHHHHHHH######",
+	"#########################HHHHHHHHH#############",
+	"###############################################",
+	"###############################################",
+	"###############################################",
+	"###############################################",
+]
+
+# The shroud is the 14x6 block of ')' at columns 7-20, rows 4-9.
+# ')' is unused, and an unknown glyph inks as one wall. '(' is the hearse.
+# The sheet grows the hearse one cell east. That new column stays wall.
+# The warden, the lift, the start, and the 19-step path stay on their cells.
+# (41,15) is the wall immediately east of (40,15). It is not on the tour:
+# adding only that crack surveys at 122 oil. (21,9) through (21,4) stay closed.
+# Closing (21,10) returns the survey to 120 oil and the same 19 steps. No new
+# cell is opened. (22,10), (21,11), and (21,9) are walls. The recorded walk
+# drops (21,10) and continues through the already-open (20,10). It is open
+# between (21,3) and (20,10). (6,11) stays open. (10,10) stays closed and
+# (11,11) stays open.
+const SHROUD_ROWS: PackedStringArray = [
+	"################################################",
+	"#S##############################################",
+	"#.##############################################",
+	"#H####...................H######################",
+	"#.####.))))))))))))))####H######################",
+	"#H####.))))))))))))))####H######################",
+	"#.####.))))))))))))))####H######################",
+	"#H####.))))))))))))))####H######################",
+	"#.####.))))))))))))))####H######################",
+	"#H####.))))))))))))))####H######################",
+	"#.####.####..........####H######################",
+	"#H........L.#######.#####H######################",
+	"#######H.E#########H.....H######################",
+	"#########################H######################",
+	"#########################H######################",
+	"#########################HHHHHHHHHHHHHHHHH######",
+	"#########################HHHHHHHHH##############",
+	"################################################",
+	"################################################",
+	"################################################",
+	"################################################",
+]
+
+# The pyre is the 14x6 block of ',' at columns 7-20, rows 4-9.
+# '*' is the cistern pit and '+' is the cloister garth, so both are taken.
+# ',' is unused, and an unknown glyph inks as one wall. ')' is the shroud.
+# '(' is the hearse. The sheet grows the shroud one cell east. That new column stays wall.
+# The warden, the lift, the start, and the 19-step path stay on their cells.
+# (42,15) is the wall immediately east of (41,15). It is not on the tour:
+# adding only that crack surveys at 122 oil. (21,10) through (21,4) stay closed.
+# (21,11) and (22,10) stay walls. Closing (20,10) returns the survey to 120 oil
+# and the same 19 steps. No new cell is opened. (21,10), (20,11), and (20,9)
+# are walls. The recorded walk drops (20,10) and continues through the
+# already-open (19,10). It is open between (21,3) and (19,10). (6,11) stays
+# open. (10,10) stays closed and (11,11) stays open.
+const PYRE_ROWS: PackedStringArray = [
+	"#################################################",
+	"#S###############################################",
+	"#.###############################################",
+	"#H####...................H#######################",
+	"#.####.,,,,,,,,,,,,,,####H#######################",
+	"#H####.,,,,,,,,,,,,,,####H#######################",
+	"#.####.,,,,,,,,,,,,,,####H#######################",
+	"#H####.,,,,,,,,,,,,,,####H#######################",
+	"#.####.,,,,,,,,,,,,,,####H#######################",
+	"#H####.,,,,,,,,,,,,,,####H#######################",
+	"#.####.####.........#####H#######################",
+	"#H........L.#######.#####H#######################",
+	"#######H.E#########H.....H#######################",
+	"#########################H#######################",
+	"#########################H#######################",
+	"#########################HHHHHHHHHHHHHHHHHH######",
+	"#########################HHHHHHHHH###############",
+	"#################################################",
+	"#################################################",
+	"#################################################",
+	"#################################################",
+]
+
+
+# The cenotaph is the 14x6 block of ';' at columns 7-20, rows 4-9.
+# '.' is the corridor mark, so it cannot ink a wall. ';' is unused and inks as one wall.
+# ',' stays the pyre. '*' stays the cistern pit. '+' stays the cloister garth.
+# ')' stays the shroud. '(' stays the hearse. The sheet grows the pyre one cell east.
+# That new column stays wall. The warden, the lift, the start, and the 19-step path stay.
+# (43,15) is the wall immediately east of (42,15). It is not on the tour:
+# adding only that crack surveys at 122 oil. (21,10) through (21,4) stay closed.
+# (20,10) stays closed. (21,11) and (22,10) stay walls. (20,11) and (20,9) stay walls.
+# Closing (19,10) alone surveys at 176 oil, because (19,11) is open and (19,12) is a crack.
+# Opening (18,11) is the smallest detour that restores the same 19 steps.
+# The survey is 122 oil: the new crack is still a leaf, and the detour matches the closed cell.
+# The recorded walk drops (19,10) and is open between (21,3) and (18,10).
+# (6,11) stays open. (10,10) stays closed and (11,11) stays open.
+const CENOTAPH_ROWS: PackedStringArray = [
+	"##################################################",
+	"#S################################################",
+	"#.################################################",
+	"#H####...................H########################",
+	"#.####.;;;;;;;;;;;;;;####H########################",
+	"#H####.;;;;;;;;;;;;;;####H########################",
+	"#.####.;;;;;;;;;;;;;;####H########################",
+	"#H####.;;;;;;;;;;;;;;####H########################",
+	"#.####.;;;;;;;;;;;;;;####H########################",
+	"#H####.;;;;;;;;;;;;;;####H########################",
+	"#.####.####........######H########################",
+	"#H........L.######..#####H########################",
+	"#######H.E#########H.....H########################",
+	"#########################H########################",
+	"#########################H########################",
+	"#########################HHHHHHHHHHHHHHHHHHH######",
+	"#########################HHHHHHHHH################",
+	"##################################################",
+	"##################################################",
+	"##################################################",
+	"##################################################",
+]
+
+
+# The winding is the 14x6 block of ':' at columns 7-20, rows 4-9.
+# ';' stays the cenotaph. ':' is unused and inks as one wall.
+# '.' stays the corridor mark. ',' stays the pyre. The sheet grows the cenotaph one cell east.
+# That new column stays wall. The warden, the lift, the start, and the 19-step path stay.
+# (44,15) is the wall immediately east of (43,15). It is not on the tour:
+# adding only that crack surveys at 124 oil. (21,10) through (21,4) stay closed.
+# (20,10) and (19,10) stay closed. (21,11) and (22,10) stay walls. (18,11) stays open.
+# Closing (18,10) alone surveys at 178 oil, because (18,11) and (17,10) are open.
+# Opening (17,11) is the smallest detour that restores the same 19 steps.
+# The survey is 124 oil: the new crack is still a leaf, and no one-, two-, or three-cell
+# opening cancels that oil while the path stays 19 steps.
+# The recorded walk drops (18,10) and is open between (21,3) and (17,10).
+# (6,11) stays open. (10,10) stays closed and (11,11) stays open.
+const WINDING_ROWS: PackedStringArray = [
+	"###################################################",
+	"#S#################################################",
+	"#.#################################################",
+	"#H####...................H#########################",
+	"#.####.::::::::::::::####H#########################",
+	"#H####.::::::::::::::####H#########################",
+	"#.####.::::::::::::::####H#########################",
+	"#H####.::::::::::::::####H#########################",
+	"#.####.::::::::::::::####H#########################",
+	"#H####.::::::::::::::####H#########################",
+	"#.####.####.......#######H#########################",
+	"#H........L.#####...#####H#########################",
+	"#######H.E#########H.....H#########################",
+	"#########################H#########################",
+	"#########################H#########################",
+	"#########################HHHHHHHHHHHHHHHHHHHH######",
+	"#########################HHHHHHHHH#################",
+	"###################################################",
+	"###################################################",
+	"###################################################",
+	"###################################################",
+]
+
+
+# The charnel is the 14x6 block of '-' at columns 7-20, rows 4-9.
+# Apostrophe stays the cerecloth. Quotation mark stays the pall. Hyphen is unused and inks as one wall.
+# ':' stays the winding. ';' stays the cenotaph. The sheet grows the winding one cell east.
+# That new column stays wall. The warden, the lift, the start, and the 19-step path stay.
+# (45,15) is the wall immediately east of (44,15). It is not on the tour:
+# adding only that crack surveys at 126 oil. (21,10) through (21,4) stay closed.
+# (20,10), (19,10), and (18,10) stay closed. (21,11) and (22,10) stay walls.
+# (17,11) and (18,11) stay open.
+# Closing (17,10) alone surveys at 180 oil, because (17,11) and (16,10) are open.
+# Opening (16,11) is the one-cell detour that restores the same 19 steps.
+# The survey is 126 oil: the new crack is still a leaf, and no one-, two-, or three-cell
+# opening reaches a lower survey while the path stays 19 steps.
+# The recorded walk drops (17,10) and is open between (21,3) and (16,10).
+# (6,11) stays open. (10,10) stays closed and (11,11) stays open.
+const CHARNEL_ROWS: PackedStringArray = [
+	'####################################################',
+	'#S##################################################',
+	'#.##################################################',
+	'#H####...................H##########################',
+	'#.####.--------------####H##########################',
+	'#H####.--------------####H##########################',
+	'#.####.--------------####H##########################',
+	'#H####.--------------####H##########################',
+	'#.####.--------------####H##########################',
+	'#H####.--------------####H##########################',
+	'#.####.####......########H##########################',
+	'#H........L.####....#####H##########################',
+	'#######H.E#########H.....H##########################',
+	'#########################H##########################',
+	'#########################H##########################',
+	'#########################HHHHHHHHHHHHHHHHHHHHH######',
+	'#########################HHHHHHHHH##################',
+	'####################################################',
+	'####################################################',
+	'####################################################',
+	'####################################################',
+]
+
+
+# The sepulchre is the 14x6 block of '_' at columns 7-20, rows 4-9.
+# '.' is the corridor mark and inks as floor. '_' is unused and inks as one wall.
+# '-' stays the charnel. '+' stays the cloister garth. The sheet grows the charnel one cell east.
+# That new column stays wall. The warden, the lift, the start, and the 19-step path stay.
+# (46,15) is the wall immediately east of (45,15). It is not on the tour:
+# adding only that crack surveys at 128 oil. (21,10) through (21,4) stay closed.
+# (20,10), (19,10), (18,10), and (17,10) stay closed. (21,11) and (22,10) stay walls.
+# (16,11), (17,11), and (18,11) stay open.
+# Closing (16,10) alone surveys at 182 oil, because (16,11) and (15,10) are open.
+# Opening (15,11) is the one-cell detour that restores the same 19 steps.
+# The survey is 128 oil: the new crack is still a leaf, and no one-, two-, or three-cell
+# opening reaches a lower survey while the path stays 19 steps.
+# The recorded walk drops (16,10) and is open between (21,3) and (15,10).
+# (6,11) stays open. (10,10) stays closed and (11,11) stays open.
+const SEPULCHRE_ROWS: PackedStringArray = [
+	"#####################################################",
+	"#S###################################################",
+	"#.###################################################",
+	"#H####...................H###########################",
+	"#.####.______________####H###########################",
+	"#H####.______________####H###########################",
+	"#.####.______________####H###########################",
+	"#H####.______________####H###########################",
+	"#.####.______________####H###########################",
+	"#H####.______________####H###########################",
+	"#.####.####.....#########H###########################",
+	"#H........L.###.....#####H###########################",
+	"#######H.E#########H.....H###########################",
+	"#########################H###########################",
+	"#########################H###########################",
+	"#########################HHHHHHHHHHHHHHHHHHHHHH######",
+	"#########################HHHHHHHHH###################",
+	"#####################################################",
+	"#####################################################",
+	"#####################################################",
+	"#####################################################",
+]
+
 enum Tile { WALL, FLOOR, HAZARD, LIFT }
 enum Mark { NONE, CORRIDOR, WALL, HAZARD }
 enum EndReason { NONE, EXTRACTED, LAMP_OUT, ABANDONED }
@@ -1321,7 +1822,7 @@ static var _floor_list: Array = []
 
 static func floors() -> Array:
 	if _floor_list.is_empty():
-		_floor_list = [_make_cellar(), _make_cistern(), _make_cloister(), _make_crypt(), _make_ossuary(), _make_reliquary(), _make_undercroft(), _make_wellhouse(), _make_scriptorium(), _make_binding(), _make_chartroom(), _make_bellloft(), _make_clockroom(), _make_font(), _make_apse(), _make_choir(), _make_rood(), _make_crossing(), _make_transept(), _make_ambulatory(), _make_chevet(), _make_retrochoir(), _make_ladychapel(), _make_feretory(), _make_chantry(), _make_sacristy(), _make_pyx(), _make_aumbry(), _make_piscina(), _make_sedilia(), _make_credence(), _make_reredos(), _make_predella(), _make_dossal(), _make_retable(), _make_tester(), _make_riddel(), _make_frontal()]
+		_floor_list = [_make_cellar(), _make_cistern(), _make_cloister(), _make_crypt(), _make_ossuary(), _make_reliquary(), _make_undercroft(), _make_wellhouse(), _make_scriptorium(), _make_binding(), _make_chartroom(), _make_bellloft(), _make_clockroom(), _make_font(), _make_apse(), _make_choir(), _make_rood(), _make_crossing(), _make_transept(), _make_ambulatory(), _make_chevet(), _make_retrochoir(), _make_ladychapel(), _make_feretory(), _make_chantry(), _make_sacristy(), _make_pyx(), _make_aumbry(), _make_piscina(), _make_sedilia(), _make_credence(), _make_reredos(), _make_predella(), _make_dossal(), _make_retable(), _make_tester(), _make_riddel(), _make_frontal(), _make_pall(), _make_herse(), _make_catafalque(), _make_bier(), _make_cerecloth(), _make_hearse(), _make_shroud(), _make_pyre(), _make_cenotaph(), _make_winding(), _make_charnel(), _make_sepulchre()]
 	return _floor_list
 
 
@@ -2113,6 +2614,328 @@ static func _make_frontal() -> Floor:
 	return floor
 
 
+
+static func _make_pall() -> Floor:
+	var floor := Floor.new()
+	floor.id = "pall"
+	floor.title = "The Pall"
+	floor.rows = PALL_ROWS
+	floor.loop_name = "Pall ring"
+	var ring: Array = []
+	for x in range(6, 22):
+		ring.append(Vector2i(x, 3))
+	for y in range(5, 10):
+		ring.append(Vector2i(21, y))
+	for x in range(21, 10, -1):
+		ring.append(Vector2i(x, 10))
+	ring.append(Vector2i(11, 11))
+	ring.append(Vector2i(10, 11))
+	ring.append(Vector2i(9, 11))
+	ring.append(Vector2i(8, 11))
+	ring.append(Vector2i(7, 11))
+	ring.append(Vector2i(6, 11))
+	ring.append(Vector2i(6, 10))
+	for y in range(9, 3, -1):
+		ring.append(Vector2i(6, y))
+	floor.loop = ring
+	floor.record = PALL_RECORD
+	return floor
+
+
+
+static func _make_herse() -> Floor:
+	var floor := Floor.new()
+	floor.id = "herse"
+	floor.title = "The Herse"
+	floor.rows = HERSE_ROWS
+	floor.loop_name = "Herse ring"
+	var ring: Array = []
+	for x in range(6, 22):
+		ring.append(Vector2i(x, 3))
+	for y in range(6, 10):
+		ring.append(Vector2i(21, y))
+	for x in range(21, 10, -1):
+		ring.append(Vector2i(x, 10))
+	ring.append(Vector2i(11, 11))
+	ring.append(Vector2i(10, 11))
+	ring.append(Vector2i(9, 11))
+	ring.append(Vector2i(8, 11))
+	ring.append(Vector2i(7, 11))
+	ring.append(Vector2i(6, 11))
+	ring.append(Vector2i(6, 10))
+	for y in range(9, 3, -1):
+		ring.append(Vector2i(6, y))
+	floor.loop = ring
+	floor.record = HERSE_RECORD
+	return floor
+
+
+
+static func _make_catafalque() -> Floor:
+	var floor := Floor.new()
+	floor.id = "catafalque"
+	floor.title = "The Catafalque"
+	floor.rows = CATAFALQUE_ROWS
+	floor.loop_name = "Catafalque ring"
+	var ring: Array = []
+	for x in range(6, 22):
+		ring.append(Vector2i(x, 3))
+	for y in range(7, 10):
+		ring.append(Vector2i(21, y))
+	for x in range(21, 10, -1):
+		ring.append(Vector2i(x, 10))
+	ring.append(Vector2i(11, 11))
+	ring.append(Vector2i(10, 11))
+	ring.append(Vector2i(9, 11))
+	ring.append(Vector2i(8, 11))
+	ring.append(Vector2i(7, 11))
+	ring.append(Vector2i(6, 11))
+	ring.append(Vector2i(6, 10))
+	for y in range(9, 3, -1):
+		ring.append(Vector2i(6, y))
+	floor.loop = ring
+	floor.record = CATAFALQUE_RECORD
+	return floor
+
+
+
+static func _make_bier() -> Floor:
+	var floor := Floor.new()
+	floor.id = "bier"
+	floor.title = "The Bier"
+	floor.rows = BIER_ROWS
+	floor.loop_name = "Bier ring"
+	var ring: Array = []
+	for x in range(6, 22):
+		ring.append(Vector2i(x, 3))
+	for y in range(8, 10):
+		ring.append(Vector2i(21, y))
+	for x in range(21, 10, -1):
+		ring.append(Vector2i(x, 10))
+	ring.append(Vector2i(11, 11))
+	ring.append(Vector2i(10, 11))
+	ring.append(Vector2i(9, 11))
+	ring.append(Vector2i(8, 11))
+	ring.append(Vector2i(7, 11))
+	ring.append(Vector2i(6, 11))
+	ring.append(Vector2i(6, 10))
+	for y in range(9, 3, -1):
+		ring.append(Vector2i(6, y))
+	floor.loop = ring
+	floor.record = BIER_RECORD
+	return floor
+
+
+
+static func _make_cerecloth() -> Floor:
+	var floor := Floor.new()
+	floor.id = "cerecloth"
+	floor.title = "The Cerecloth"
+	floor.rows = CERECLOTH_ROWS
+	floor.loop_name = "Cerecloth ring"
+	var ring: Array = []
+	for x in range(6, 22):
+		ring.append(Vector2i(x, 3))
+	for y in range(9, 10):
+		ring.append(Vector2i(21, y))
+	for x in range(21, 10, -1):
+		ring.append(Vector2i(x, 10))
+	ring.append(Vector2i(11, 11))
+	ring.append(Vector2i(10, 11))
+	ring.append(Vector2i(9, 11))
+	ring.append(Vector2i(8, 11))
+	ring.append(Vector2i(7, 11))
+	ring.append(Vector2i(6, 11))
+	ring.append(Vector2i(6, 10))
+	for y in range(9, 3, -1):
+		ring.append(Vector2i(6, y))
+	floor.loop = ring
+	floor.record = CERECLOTH_RECORD
+	return floor
+
+
+
+static func _make_hearse() -> Floor:
+	var floor := Floor.new()
+	floor.id = "hearse"
+	floor.title = "The Hearse"
+	floor.rows = HEARSE_ROWS
+	floor.loop_name = "Hearse ring"
+	var ring: Array = []
+	for x in range(6, 22):
+		ring.append(Vector2i(x, 3))
+	for x in range(21, 10, -1):
+		ring.append(Vector2i(x, 10))
+	ring.append(Vector2i(11, 11))
+	ring.append(Vector2i(10, 11))
+	ring.append(Vector2i(9, 11))
+	ring.append(Vector2i(8, 11))
+	ring.append(Vector2i(7, 11))
+	ring.append(Vector2i(6, 11))
+	ring.append(Vector2i(6, 10))
+	for y in range(9, 3, -1):
+		ring.append(Vector2i(6, y))
+	floor.loop = ring
+	floor.record = HEARSE_RECORD
+	return floor
+
+
+
+static func _make_shroud() -> Floor:
+	var floor := Floor.new()
+	floor.id = "shroud"
+	floor.title = "The Shroud"
+	floor.rows = SHROUD_ROWS
+	floor.loop_name = "Shroud ring"
+	var ring: Array = []
+	for x in range(6, 22):
+		ring.append(Vector2i(x, 3))
+	for x in range(20, 10, -1):
+		ring.append(Vector2i(x, 10))
+	ring.append(Vector2i(11, 11))
+	ring.append(Vector2i(10, 11))
+	ring.append(Vector2i(9, 11))
+	ring.append(Vector2i(8, 11))
+	ring.append(Vector2i(7, 11))
+	ring.append(Vector2i(6, 11))
+	ring.append(Vector2i(6, 10))
+	for y in range(9, 3, -1):
+		ring.append(Vector2i(6, y))
+	floor.loop = ring
+	floor.record = SHROUD_RECORD
+	return floor
+
+
+
+static func _make_pyre() -> Floor:
+	var floor := Floor.new()
+	floor.id = "pyre"
+	floor.title = "The Pyre"
+	floor.rows = PYRE_ROWS
+	floor.loop_name = "Pyre ring"
+	var ring: Array = []
+	for x in range(6, 22):
+		ring.append(Vector2i(x, 3))
+	for x in range(19, 10, -1):
+		ring.append(Vector2i(x, 10))
+	ring.append(Vector2i(11, 11))
+	ring.append(Vector2i(10, 11))
+	ring.append(Vector2i(9, 11))
+	ring.append(Vector2i(8, 11))
+	ring.append(Vector2i(7, 11))
+	ring.append(Vector2i(6, 11))
+	ring.append(Vector2i(6, 10))
+	for y in range(9, 3, -1):
+		ring.append(Vector2i(6, y))
+	floor.loop = ring
+	floor.record = PYRE_RECORD
+	return floor
+
+
+
+static func _make_cenotaph() -> Floor:
+	var floor := Floor.new()
+	floor.id = "cenotaph"
+	floor.title = "The Cenotaph"
+	floor.rows = CENOTAPH_ROWS
+	floor.loop_name = "Cenotaph ring"
+	var ring: Array = []
+	for x in range(6, 22):
+		ring.append(Vector2i(x, 3))
+	for x in range(18, 10, -1):
+		ring.append(Vector2i(x, 10))
+	ring.append(Vector2i(11, 11))
+	ring.append(Vector2i(10, 11))
+	ring.append(Vector2i(9, 11))
+	ring.append(Vector2i(8, 11))
+	ring.append(Vector2i(7, 11))
+	ring.append(Vector2i(6, 11))
+	ring.append(Vector2i(6, 10))
+	for y in range(9, 3, -1):
+		ring.append(Vector2i(6, y))
+	floor.loop = ring
+	floor.record = CENOTAPH_RECORD
+	return floor
+
+
+
+static func _make_winding() -> Floor:
+	var floor := Floor.new()
+	floor.id = "winding"
+	floor.title = "The Winding"
+	floor.rows = WINDING_ROWS
+	floor.loop_name = "Winding ring"
+	var ring: Array = []
+	for x in range(6, 22):
+		ring.append(Vector2i(x, 3))
+	for x in range(17, 10, -1):
+		ring.append(Vector2i(x, 10))
+	ring.append(Vector2i(11, 11))
+	ring.append(Vector2i(10, 11))
+	ring.append(Vector2i(9, 11))
+	ring.append(Vector2i(8, 11))
+	ring.append(Vector2i(7, 11))
+	ring.append(Vector2i(6, 11))
+	ring.append(Vector2i(6, 10))
+	for y in range(9, 3, -1):
+		ring.append(Vector2i(6, y))
+	floor.loop = ring
+	floor.record = WINDING_RECORD
+	return floor
+
+
+
+static func _make_charnel() -> Floor:
+	var floor := Floor.new()
+	floor.id = "charnel"
+	floor.title = "The Charnel"
+	floor.rows = CHARNEL_ROWS
+	floor.loop_name = "Charnel ring"
+	var ring: Array = []
+	for x in range(6, 22):
+		ring.append(Vector2i(x, 3))
+	for x in range(16, 10, -1):
+		ring.append(Vector2i(x, 10))
+	ring.append(Vector2i(11, 11))
+	ring.append(Vector2i(10, 11))
+	ring.append(Vector2i(9, 11))
+	ring.append(Vector2i(8, 11))
+	ring.append(Vector2i(7, 11))
+	ring.append(Vector2i(6, 11))
+	ring.append(Vector2i(6, 10))
+	for y in range(9, 3, -1):
+		ring.append(Vector2i(6, y))
+	floor.loop = ring
+	floor.record = CHARNEL_RECORD
+	return floor
+
+
+
+static func _make_sepulchre() -> Floor:
+	var floor := Floor.new()
+	floor.id = "sepulchre"
+	floor.title = "The Sepulchre"
+	floor.rows = SEPULCHRE_ROWS
+	floor.loop_name = "Sepulchre ring"
+	var ring: Array = []
+	for x in range(6, 22):
+		ring.append(Vector2i(x, 3))
+	for x in range(15, 10, -1):
+		ring.append(Vector2i(x, 10))
+	ring.append(Vector2i(11, 11))
+	ring.append(Vector2i(10, 11))
+	ring.append(Vector2i(9, 11))
+	ring.append(Vector2i(8, 11))
+	ring.append(Vector2i(7, 11))
+	ring.append(Vector2i(6, 11))
+	ring.append(Vector2i(6, 10))
+	for y in range(9, 3, -1):
+		ring.append(Vector2i(6, y))
+	floor.loop = ring
+	floor.record = SEPULCHRE_RECORD
+	return floor
+
+
 static func width(floor: Floor = null) -> int:
 	return _use(floor).rows[0].length()
 
@@ -2560,6 +3383,30 @@ static func ahead_line(state: RunState) -> String:
 				return "Ahead: the riddel. It inks as a wall."
 			if glyph_at(n, plan) == "!":
 				return "Ahead: the frontal. It inks as a wall."
+			if glyph_at(n, plan) == "\"":
+				return "Ahead: the pall. It inks as a wall."
+			if glyph_at(n, plan) == "$":
+				return "Ahead: the herse. It inks as a wall."
+			if glyph_at(n, plan) == "%":
+				return "Ahead: the catafalque. It inks as a wall."
+			if glyph_at(n, plan) == "&":
+				return "Ahead: the bier. It inks as a wall."
+			if glyph_at(n, plan) == "'":
+				return "Ahead: the cerecloth. It inks as a wall."
+			if glyph_at(n, plan) == "(":
+				return "Ahead: the hearse. It inks as a wall."
+			if glyph_at(n, plan) == ")":
+				return "Ahead: the shroud. It inks as a wall."
+			if glyph_at(n, plan) == ",":
+				return "Ahead: the pyre. It inks as a wall."
+			if glyph_at(n, plan) == ";":
+				return "Ahead: the cenotaph. It inks as a wall."
+			if glyph_at(n, plan) == ":":
+				return "Ahead: the winding. It inks as a wall."
+			if glyph_at(n, plan) == "-":
+				return "Ahead: the charnel. It inks as a wall."
+			if glyph_at(n, plan) == "_":
+				return "Ahead: the sepulchre. It inks as a wall."
 			return "Ahead: wall."
 		Tile.HAZARD:
 			if plan != null and plan.id == "cistern":
@@ -2636,6 +3483,30 @@ static func ahead_line(state: RunState) -> String:
 				return "Ahead: a riddel crack. Stepping inks it and costs no extra oil."
 			if plan != null and plan.id == "frontal":
 				return "Ahead: a frontal crack. Stepping inks it and costs no extra oil."
+			if plan != null and plan.id == "pall":
+				return "Ahead: a pall crack. Stepping inks it and costs no extra oil."
+			if plan != null and plan.id == "herse":
+				return "Ahead: a herse crack. Stepping inks it and costs no extra oil."
+			if plan != null and plan.id == "catafalque":
+				return "Ahead: a catafalque crack. Stepping inks it and costs no extra oil."
+			if plan != null and plan.id == "bier":
+				return "Ahead: a bier crack. Stepping inks it and costs no extra oil."
+			if plan != null and plan.id == "cerecloth":
+				return "Ahead: a cerecloth crack. Stepping inks it and costs no extra oil."
+			if plan != null and plan.id == "hearse":
+				return "Ahead: a hearse crack. Stepping inks it and costs no extra oil."
+			if plan != null and plan.id == "shroud":
+				return "Ahead: a shroud crack. Stepping inks it and costs no extra oil."
+			if plan != null and plan.id == "pyre":
+				return "Ahead: a pyre crack. Stepping inks it and costs no extra oil."
+			if plan != null and plan.id == "cenotaph":
+				return "Ahead: a cenotaph crack. Stepping inks it and costs no extra oil."
+			if plan != null and plan.id == "winding":
+				return "Ahead: a winding crack. Stepping inks it and costs no extra oil."
+			if plan != null and plan.id == "charnel":
+				return "Ahead: a charnel crack. Stepping inks it and costs no extra oil."
+			if plan != null and plan.id == "sepulchre":
+				return "Ahead: a sepulchre crack. Stepping inks it and costs no extra oil."
 			return "Ahead: a hazard crack. Stepping inks it and costs no extra oil."
 		Tile.LIFT:
 			return "Ahead: the lift. Stepping on carries the sheet out."
@@ -2783,6 +3654,30 @@ static func step(state: RunState, dir: Vector2i) -> Dictionary:
 				return _pack(state, false, false, false, 0, true, "You tap the riddel and ink it if the square was blank.")
 			if glyph_at(target, plan) == "!":
 				return _pack(state, false, false, false, 0, true, "You tap the frontal and ink it if the square was blank.")
+			if glyph_at(target, plan) == "\"":
+				return _pack(state, false, false, false, 0, true, "You tap the pall and ink it if the square was blank.")
+			if glyph_at(target, plan) == "$":
+				return _pack(state, false, false, false, 0, true, "You tap the herse and ink it if the square was blank.")
+			if glyph_at(target, plan) == "%":
+				return _pack(state, false, false, false, 0, true, "You tap the catafalque and ink it if the square was blank.")
+			if glyph_at(target, plan) == "&":
+				return _pack(state, false, false, false, 0, true, "You tap the bier and ink it if the square was blank.")
+			if glyph_at(target, plan) == "'":
+				return _pack(state, false, false, false, 0, true, "You tap the cerecloth and ink it if the square was blank.")
+			if glyph_at(target, plan) == "(":
+				return _pack(state, false, false, false, 0, true, "You tap the hearse and ink it if the square was blank.")
+			if glyph_at(target, plan) == ")":
+				return _pack(state, false, false, false, 0, true, "You tap the shroud and ink it if the square was blank.")
+			if glyph_at(target, plan) == ",":
+				return _pack(state, false, false, false, 0, true, "You tap the pyre and ink it if the square was blank.")
+			if glyph_at(target, plan) == ";":
+				return _pack(state, false, false, false, 0, true, "You tap the cenotaph and ink it if the square was blank.")
+			if glyph_at(target, plan) == ":":
+				return _pack(state, false, false, false, 0, true, "You tap the winding and ink it if the square was blank.")
+			if glyph_at(target, plan) == "-":
+				return _pack(state, false, false, false, 0, true, "You tap the charnel and ink it if the square was blank.")
+			if glyph_at(target, plan) == "_":
+				return _pack(state, false, false, false, 0, true, "You tap the sepulchre and ink it if the square was blank.")
 			return _pack(state, false, false, false, 0, true, "You tap a wall and ink it if the square was blank.")
 		if target == enemy_pos(plan):
 			return _pack(state, false, false, false, 0, true, "The warden occupies that tile.")
@@ -2878,6 +3773,30 @@ static func step(state: RunState, dir: Vector2i) -> Dictionary:
 			message = "You cross a riddel crack. It is inked if the square was blank."
 		elif plan != null and plan.id == "frontal":
 			message = "You cross a frontal crack. It is inked if the square was blank."
+		elif plan != null and plan.id == "pall":
+			message = "You cross a pall crack. It is inked if the square was blank."
+		elif plan != null and plan.id == "herse":
+			message = "You cross a herse crack. It is inked if the square was blank."
+		elif plan != null and plan.id == "catafalque":
+			message = "You cross a catafalque crack. It is inked if the square was blank."
+		elif plan != null and plan.id == "bier":
+			message = "You cross a bier crack. It is inked if the square was blank."
+		elif plan != null and plan.id == "cerecloth":
+			message = "You cross a cerecloth crack. It is inked if the square was blank."
+		elif plan != null and plan.id == "hearse":
+			message = "You cross a hearse crack. It is inked if the square was blank."
+		elif plan != null and plan.id == "shroud":
+			message = "You cross a shroud crack. It is inked if the square was blank."
+		elif plan != null and plan.id == "pyre":
+			message = "You cross a pyre crack. It is inked if the square was blank."
+		elif plan != null and plan.id == "cenotaph":
+			message = "You cross a cenotaph crack. It is inked if the square was blank."
+		elif plan != null and plan.id == "winding":
+			message = "You cross a winding crack. It is inked if the square was blank."
+		elif plan != null and plan.id == "charnel":
+			message = "You cross a charnel crack. It is inked if the square was blank."
+		elif plan != null and plan.id == "sepulchre":
+			message = "You cross a sepulchre crack. It is inked if the square was blank."
 		else:
 			message = "You cross a hazard crack. It is inked if the square was blank."
 	return _pack(state, true, true, hit, MOVE_OIL + (HIT_OIL if hit else 0), false, message)

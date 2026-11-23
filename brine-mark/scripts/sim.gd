@@ -1054,6 +1054,10 @@ const VEXILLUM := 32
 const LABARUM := 33
 const SIGNUM := 34
 const STREAMER := 35
+const BANNEROL := 36
+const PENDANT := 37
+const WHEFT := 38
+const ANCIENT := 39
 
 const WET := 0
 const DRY := 1
@@ -1090,16 +1094,20 @@ const VEXILLUMING := 28
 const LABARUMING := 29
 const SIGNUMING := 30
 const STREAMERING := 31
+const BANNEROLING := 32
+const PENDANTING := 33
+const WHEFTING := 34
+const ANCIENTING := 35
 
 const GRID_W := 17
 const GRID_H := 12
-# Seventeen rows north of the old edge. The bunk plans sit on row 0, so the loft is
+# Eighteen rows north of the old edge. The bunk plans sit on row 0, so the loft is
 # row -1, the gate is row -2, the wage is row -3, the relief is row -4, the
 # watch is row -5, the lamp is row -6, the bell is row -7, the horn is row -8,
 # the flag is row -9, the banner is row -10, the pennant is row -11, the
 # standard is row -12, the jack is row -13, the ensign is row -14, the
-# burgee is row -15, the cornet is row -16, the guidon is row -17, the fanion is row -18, the pennon is row -19, the gonfalon is row -20, the oriflamme is row -21, the vexillum is row -22, the labarum is row -23, the signum is row -24, and the streamer is row -25.
-const GRID_NORTH := -25
+# burgee is row -15, the cornet is row -16, the guidon is row -17, the fanion is row -18, the pennon is row -19, the gonfalon is row -20, the oriflamme is row -21, the vexillum is row -22, the labarum is row -23, the signum is row -24, the streamer is row -25, the bannerol is row -26, the pendant is row -27, the wheft is row -28, and the ancient is row -29.
+const GRID_NORTH := -29
 # The only cell that accepts a pennant. One cell north of the banner at (14, -10).
 const PENNANT_CELL := Vector2i(14, -11)
 # The only cell that accepts a standard. One cell north of the pennant.
@@ -1130,6 +1138,14 @@ const LABARUM_CELL := Vector2i(14, -23)
 const SIGNUM_CELL := Vector2i(14, -24)
 # The only cell that accepts a streamer. One cell north of the signum.
 const STREAMER_CELL := Vector2i(14, -25)
+# The only cell that accepts a bannerol. One cell north of the streamer.
+const BANNEROL_CELL := Vector2i(14, -26)
+# The only cell that accepts a pendant. One cell north of the bannerol.
+const PENDANT_CELL := Vector2i(14, -27)
+# The only cell that accepts a wheft. One cell north of the pendant.
+const WHEFT_CELL := Vector2i(14, -28)
+# The only cell that accepts an ancient. One cell north of the wheft.
+const ANCIENT_CELL := Vector2i(14, -29)
 const COAST_X := 0
 const ANTHILL := Vector2i(14, 5)
 
@@ -1169,6 +1185,10 @@ const VEXILLUM_TICK := 100
 const LABARUM_TICK := 100
 const SIGNUM_TICK := 100
 const STREAMER_TICK := 100
+const BANNEROL_TICK := 100
+const PENDANT_TICK := 100
+const WHEFT_TICK := 100
+const ANCIENT_TICK := 100
 const TICK_HZ := 10
 const HIRE_COST := 100
 # Coins one payment takes from the yard. A shorter purse pays nobody.
@@ -1230,6 +1250,14 @@ const LABARUM_CAP := 1
 const SIGNUM_CAP := 1
 # Total sleeved hires the streamer rolls. Past this the beat stops moving them.
 const STREAMER_CAP := 1
+# Total rolled hires the bannerol bends. Past this the beat stops moving them.
+const BANNEROL_CAP := 1
+# Total bent hires the pendant stops. Past this the beat stops moving them.
+const PENDANT_CAP := 1
+# Total stopped hires the wheft laces. Past this the beat stops moving them.
+const WHEFT_CAP := 1
+# Total laced hires the ancient tails. Past this the beat stops moving them.
+const ANCIENT_CAP := 1
 
 const JOB_GATHER := 0
 const JOB_STACK := 1
@@ -1272,6 +1300,10 @@ var _vexillum: Dictionary = {}
 var _labarum: Dictionary = {}
 var _signum: Dictionary = {}
 var _streamer: Dictionary = {}
+var _bannerol: Dictionary = {}
+var _pendant: Dictionary = {}
+var _wheft: Dictionary = {}
+var _ancient: Dictionary = {}
 var _workers: Array = []
 
 var _next_id: int = 0
@@ -1333,6 +1365,10 @@ func restart() -> void:
 	_labarum.clear()
 	_signum.clear()
 	_streamer.clear()
+	_bannerol.clear()
+	_pendant.clear()
+	_wheft.clear()
+	_ancient.clear()
 	_workers.clear()
 	_next_id = 0
 	_tick_index = 0
@@ -1355,7 +1391,7 @@ func paint_cell(x: int, y: int, mode: int) -> bool:
 		return false
 	if not _paintable(x, y):
 		return false
-	if mode < EMPTY or mode > STREAMER:
+	if mode < EMPTY or mode > ANCIENT:
 		return false
 	# The pennant row accepts a pennant only at PENNANT_CELL. A banner stays
 	# one cell south, and that cell rejects a pennant. The standard row accepts
@@ -1373,6 +1409,9 @@ func paint_cell(x: int, y: int, mode: int) -> bool:
 	# The labarum row accepts a labarum only at LABARUM_CELL, one cell north of the vexillum.
 	# The signum row accepts a signum only at SIGNUM_CELL, one cell north of the labarum.
 	# The streamer row accepts a streamer only at STREAMER_CELL, one cell north of the signum.
+	# The bannerol row accepts a bannerol only at BANNEROL_CELL, one cell north of the streamer.
+	# The pendant row accepts a pendant only at PENDANT_CELL, one cell north of the bannerol.
+	# The wheft row accepts a wheft only at WHEFT_CELL, one cell north of the pendant.
 	if mode == PENNANT and Vector2i(x, y) != PENNANT_CELL:
 		return false
 	if y == PENNANT_CELL.y and mode != PENNANT and mode != EMPTY:
@@ -1433,6 +1472,22 @@ func paint_cell(x: int, y: int, mode: int) -> bool:
 		return false
 	if y == STREAMER_CELL.y and mode != STREAMER and mode != EMPTY:
 		return false
+	if mode == BANNEROL and Vector2i(x, y) != BANNEROL_CELL:
+		return false
+	if y == BANNEROL_CELL.y and mode != BANNEROL and mode != EMPTY:
+		return false
+	if mode == PENDANT and Vector2i(x, y) != PENDANT_CELL:
+		return false
+	if y == PENDANT_CELL.y and mode != PENDANT and mode != EMPTY:
+		return false
+	if mode == WHEFT and Vector2i(x, y) != WHEFT_CELL:
+		return false
+	if y == WHEFT_CELL.y and mode != WHEFT and mode != EMPTY:
+		return false
+	if mode == ANCIENT and Vector2i(x, y) != ANCIENT_CELL:
+		return false
+	if y == ANCIENT_CELL.y and mode != ANCIENT and mode != EMPTY:
+		return false
 	var cell := Vector2i(x, y)
 	if mode == EMPTY:
 		_paint.erase(cell)
@@ -1473,29 +1528,57 @@ func _streamer_painted() -> bool:
 	return _paint_at(STREAMER_CELL) == STREAMER
 
 
+func _bannerol_painted() -> bool:
+	return _paint_at(BANNEROL_CELL) == BANNEROL
+
+
+func _pendant_painted() -> bool:
+	return _paint_at(PENDANT_CELL) == PENDANT
+
+
+func _wheft_painted() -> bool:
+	return _paint_at(WHEFT_CELL) == WHEFT
+
+
+func _ancient_painted() -> bool:
+	return _paint_at(ANCIENT_CELL) == ANCIENT
+
+
 func _scenario_end_tick() -> int:
 	var end_tick := RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK + FANION_TICK
 	# A painted pennon opens one more beat. With no pennon, the fanion still ends the scenario.
-	if _phase == PENNONING or _pennon_painted() or _phase == GONFALONING or _gonfalon_painted() or _phase == ORIFLAMMING or _oriflamme_painted() or _phase == VEXILLUMING or _vexillum_painted() or _phase == LABARUMING or _labarum_painted() or _phase == SIGNUMING or _signum_painted() or _phase == STREAMERING or _streamer_painted():
+	if _phase == PENNONING or _pennon_painted() or _phase == GONFALONING or _gonfalon_painted() or _phase == ORIFLAMMING or _oriflamme_painted() or _phase == VEXILLUMING or _vexillum_painted() or _phase == LABARUMING or _labarum_painted() or _phase == SIGNUMING or _signum_painted() or _phase == STREAMERING or _streamer_painted() or _phase == BANNEROLING or _bannerol_painted() or _phase == PENDANTING or _pendant_painted() or _phase == WHEFTING or _wheft_painted() or _phase == ANCIENTING or _ancient_painted():
 		end_tick += PENNON_TICK
 	# A painted gonfalon opens one more beat after the pennon. With no gonfalon, the pennon still ends the scenario.
-	if _phase == GONFALONING or _gonfalon_painted() or _phase == ORIFLAMMING or _oriflamme_painted() or _phase == VEXILLUMING or _vexillum_painted() or _phase == LABARUMING or _labarum_painted() or _phase == SIGNUMING or _signum_painted() or _phase == STREAMERING or _streamer_painted():
+	if _phase == GONFALONING or _gonfalon_painted() or _phase == ORIFLAMMING or _oriflamme_painted() or _phase == VEXILLUMING or _vexillum_painted() or _phase == LABARUMING or _labarum_painted() or _phase == SIGNUMING or _signum_painted() or _phase == STREAMERING or _streamer_painted() or _phase == BANNEROLING or _bannerol_painted() or _phase == PENDANTING or _pendant_painted() or _phase == WHEFTING or _wheft_painted() or _phase == ANCIENTING or _ancient_painted():
 		end_tick += GONFALON_TICK
 	# A painted oriflamme opens one more beat after the gonfalon. With no oriflamme, the gonfalon still ends the scenario.
-	if _phase == ORIFLAMMING or _oriflamme_painted() or _phase == VEXILLUMING or _vexillum_painted() or _phase == LABARUMING or _labarum_painted() or _phase == SIGNUMING or _signum_painted() or _phase == STREAMERING or _streamer_painted():
+	if _phase == ORIFLAMMING or _oriflamme_painted() or _phase == VEXILLUMING or _vexillum_painted() or _phase == LABARUMING or _labarum_painted() or _phase == SIGNUMING or _signum_painted() or _phase == STREAMERING or _streamer_painted() or _phase == BANNEROLING or _bannerol_painted() or _phase == PENDANTING or _pendant_painted() or _phase == WHEFTING or _wheft_painted() or _phase == ANCIENTING or _ancient_painted():
 		end_tick += ORIFLAMME_TICK
 	# A painted vexillum opens one more beat after the oriflamme. With no vexillum, the oriflamme still ends the scenario.
-	if _phase == VEXILLUMING or _vexillum_painted() or _phase == LABARUMING or _labarum_painted() or _phase == SIGNUMING or _signum_painted() or _phase == STREAMERING or _streamer_painted():
+	if _phase == VEXILLUMING or _vexillum_painted() or _phase == LABARUMING or _labarum_painted() or _phase == SIGNUMING or _signum_painted() or _phase == STREAMERING or _streamer_painted() or _phase == BANNEROLING or _bannerol_painted() or _phase == PENDANTING or _pendant_painted() or _phase == WHEFTING or _wheft_painted() or _phase == ANCIENTING or _ancient_painted():
 		end_tick += VEXILLUM_TICK
 	# A painted labarum opens one more beat after the vexillum. With no labarum, the vexillum still ends the scenario.
-	if _phase == LABARUMING or _labarum_painted() or _phase == SIGNUMING or _signum_painted() or _phase == STREAMERING or _streamer_painted():
+	if _phase == LABARUMING or _labarum_painted() or _phase == SIGNUMING or _signum_painted() or _phase == STREAMERING or _streamer_painted() or _phase == BANNEROLING or _bannerol_painted() or _phase == PENDANTING or _pendant_painted() or _phase == WHEFTING or _wheft_painted() or _phase == ANCIENTING or _ancient_painted():
 		end_tick += LABARUM_TICK
 	# A painted signum opens one more beat after the labarum. With no signum, the labarum still ends the scenario.
-	if _phase == SIGNUMING or _signum_painted() or _phase == STREAMERING or _streamer_painted():
+	if _phase == SIGNUMING or _signum_painted() or _phase == STREAMERING or _streamer_painted() or _phase == BANNEROLING or _bannerol_painted() or _phase == PENDANTING or _pendant_painted() or _phase == WHEFTING or _wheft_painted() or _phase == ANCIENTING or _ancient_painted():
 		end_tick += SIGNUM_TICK
 	# A painted streamer opens one more beat after the signum. With no streamer, the signum still ends the scenario.
-	if _phase == STREAMERING or _streamer_painted():
+	if _phase == STREAMERING or _streamer_painted() or _phase == BANNEROLING or _bannerol_painted() or _phase == PENDANTING or _pendant_painted() or _phase == WHEFTING or _wheft_painted() or _phase == ANCIENTING or _ancient_painted():
 		end_tick += STREAMER_TICK
+	# A painted bannerol opens one more beat after the streamer. With no bannerol, the streamer still ends the scenario.
+	if _phase == BANNEROLING or _bannerol_painted() or _phase == PENDANTING or _pendant_painted() or _phase == WHEFTING or _wheft_painted() or _phase == ANCIENTING or _ancient_painted():
+		end_tick += BANNEROL_TICK
+	# A painted pendant opens one more beat after the bannerol. With no pendant, the bannerol still ends the scenario.
+	if _phase == PENDANTING or _pendant_painted() or _phase == WHEFTING or _wheft_painted() or _phase == ANCIENTING or _ancient_painted():
+		end_tick += PENDANT_TICK
+	# A painted wheft opens one more beat after the pendant. With no wheft, the pendant still ends the scenario.
+	if _phase == WHEFTING or _wheft_painted() or _phase == ANCIENTING or _ancient_painted():
+		end_tick += WHEFT_TICK
+	# A painted ancient opens one more beat after the wheft. With no ancient, the wheft still ends the scenario.
+	if _phase == ANCIENTING or _ancient_painted():
+		end_tick += ANCIENT_TICK
 	return end_tick
 
 
@@ -1596,13 +1679,33 @@ func tick() -> void:
 			_open_streamer()
 		else:
 			_finish()
+	elif _tick_index == RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK + FANION_TICK + PENNON_TICK + GONFALON_TICK + ORIFLAMME_TICK + VEXILLUM_TICK + LABARUM_TICK + SIGNUM_TICK + STREAMER_TICK:
+		if _bannerol_painted():
+			_open_bannerol()
+		else:
+			_finish()
+	elif _tick_index == RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK + FANION_TICK + PENNON_TICK + GONFALON_TICK + ORIFLAMME_TICK + VEXILLUM_TICK + LABARUM_TICK + SIGNUM_TICK + STREAMER_TICK + BANNEROL_TICK:
+		if _pendant_painted():
+			_open_pendant()
+		else:
+			_finish()
+	elif _tick_index == RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK + FANION_TICK + PENNON_TICK + GONFALON_TICK + ORIFLAMME_TICK + VEXILLUM_TICK + LABARUM_TICK + SIGNUM_TICK + STREAMER_TICK + BANNEROL_TICK + PENDANT_TICK:
+		if _wheft_painted():
+			_open_wheft()
+		else:
+			_finish()
+	elif _tick_index == RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK + FANION_TICK + PENNON_TICK + GONFALON_TICK + ORIFLAMME_TICK + VEXILLUM_TICK + LABARUM_TICK + SIGNUM_TICK + STREAMER_TICK + BANNEROL_TICK + PENDANT_TICK + WHEFT_TICK:
+		if _ancient_painted():
+			_open_ancient()
+		else:
+			_finish()
 	elif _tick_index >= end_tick:
 		_finish()
 
 
 func run_until_rain() -> void:
 	var guard := 0
-	var limit := RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK + FANION_TICK + PENNON_TICK + GONFALON_TICK + ORIFLAMME_TICK + VEXILLUM_TICK + LABARUM_TICK + SIGNUM_TICK + STREAMER_TICK + 2
+	var limit := RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK + FANION_TICK + PENNON_TICK + GONFALON_TICK + ORIFLAMME_TICK + VEXILLUM_TICK + LABARUM_TICK + SIGNUM_TICK + STREAMER_TICK + BANNEROL_TICK + PENDANT_TICK + WHEFT_TICK + ANCIENT_TICK + 2
 	while not _rain_done and guard < limit:
 		tick()
 		guard += 1
@@ -1628,7 +1731,7 @@ func get_season() -> int:
 	return _season
 
 
-# WET, DRY, CART, SHIPPING, MARKET, YARDING, BUNKING, LOFTING, GATING, WAGING, RELIEVING, WATCHING, LAMPING, BELLING, HORNING, FLAGGING, BANNERING, PENNANTING, STANDARDING, JACKING, ENSIGNING, BURGEEING, CORNETING, GUIDONING, FANIONING, PENNONING, GONFALONING, ORIFLAMMING, VEXILLUMING, LABARUMING, SIGNUMING, or STREAMERING. Weather stays dry after the first rain.
+# WET, DRY, CART, SHIPPING, MARKET, YARDING, BUNKING, LOFTING, GATING, WAGING, RELIEVING, WATCHING, LAMPING, BELLING, HORNING, FLAGGING, BANNERING, PENNANTING, STANDARDING, JACKING, ENSIGNING, BURGEEING, CORNETING, GUIDONING, FANIONING, PENNONING, GONFALONING, ORIFLAMMING, VEXILLUMING, LABARUMING, SIGNUMING, STREAMERING, BANNEROLING, PENDANTING, WHEFTING, or ANCIENTING. Weather stays dry after the first rain.
 func get_beat() -> int:
 	return _phase
 
@@ -1677,7 +1780,7 @@ func get_yard_left() -> int:
 # posted to a relief, hires later stood on a watch, and hires later lit
 # by a lamp. One hire costs HIRE_COST. Nothing is rolled.
 func get_hired() -> int:
-	return _sum(_bunk) + _sum(_loft) + _sum(_gate) + _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer)
+	return _sum(_bunk) + _sum(_loft) + _sum(_gate) + _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer) + _sum(_bannerol) + _sum(_pendant) + _sum(_wheft) + _sum(_ancient)
 
 
 # Hires still sitting at a bunk. Lofting moves these one at a time.
@@ -1689,7 +1792,7 @@ func get_bunk_left() -> int:
 # hires later paid a wage, hires later posted, hires later stood, and hires
 # later lit. The hire total still counts these.
 func get_lofted() -> int:
-	return _sum(_loft) + _sum(_gate) + _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer)
+	return _sum(_loft) + _sum(_gate) + _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer) + _sum(_bannerol) + _sum(_pendant) + _sum(_wheft) + _sum(_ancient)
 
 
 # Hires still sitting in a loft. The gate moves these one at a time.
@@ -1701,7 +1804,7 @@ func get_loft_left() -> int:
 # hires later posted, hires later stood, and hires later lit. Nothing is
 # rolled. The loft total and the hire total still count these.
 func get_gated() -> int:
-	return _sum(_gate) + _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer)
+	return _sum(_gate) + _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer) + _sum(_bannerol) + _sum(_pendant) + _sum(_wheft) + _sum(_ancient)
 
 
 # Hires who passed a gate and have not been paid. The wage pays these one at a time.
@@ -1713,7 +1816,7 @@ func get_gate_left() -> int:
 # hires later lit. Pay is WAGE_COST coins from the yard. Nothing is rolled.
 # The gate total and the hire total still count these.
 func get_paid() -> int:
-	return _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer)
+	return _sum(_wage) + _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer) + _sum(_bannerol) + _sum(_pendant) + _sum(_wheft) + _sum(_ancient)
 
 
 # Hires who were paid and have not been posted. The relief posts these one at a time.
@@ -1725,7 +1828,7 @@ func get_wage_left() -> int:
 # on a watch and hires later lit by a lamp. Nothing is rolled. The paid
 # total and the hire total still count these. Posting spends no coins.
 func get_posted() -> int:
-	return _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer)
+	return _sum(_relief) + _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer) + _sum(_bannerol) + _sum(_pendant) + _sum(_wheft) + _sum(_ancient)
 
 
 # Hires who were posted and have not been stood. The watch stands these one at a time.
@@ -1737,7 +1840,7 @@ func get_relief_left() -> int:
 # lamp. Nothing is rolled. The posted total and the hire total still count
 # these. Standing spends no coins and does not change the posted count.
 func get_stood() -> int:
-	return _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer)
+	return _sum(_watch) + _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer) + _sum(_bannerol) + _sum(_pendant) + _sum(_wheft) + _sum(_ancient)
 
 
 # Hires who were stood and have not been lit. The lamp lights these one at a time.
@@ -1750,7 +1853,7 @@ func get_watch_left() -> int:
 # and the hire total still count these. Lighting spends no coins and does not
 # change the stood count or the posted count.
 func get_lit() -> int:
-	return _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer)
+	return _sum(_lamp) + _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer) + _sum(_bannerol) + _sum(_pendant) + _sum(_wheft) + _sum(_ancient)
 
 
 # Hires who were lit and have not been rung. The bell rings these one at a time.
@@ -1763,7 +1866,7 @@ func get_lamp_left() -> int:
 # Ringing spends no coins and does not change the lit count, the stood count,
 # or the posted count.
 func get_rung() -> int:
-	return _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer)
+	return _sum(_bell) + _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer) + _sum(_bannerol) + _sum(_pendant) + _sum(_wheft) + _sum(_ancient)
 
 
 # Hires who were rung and have not been sounded. The horn sounds these one at a time.
@@ -1777,7 +1880,7 @@ func get_bell_left() -> int:
 # does not change the rung count, the lit count, the stood count, or the
 # posted count.
 func get_sounded() -> int:
-	return _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer)
+	return _sum(_horn) + _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer) + _sum(_bannerol) + _sum(_pendant) + _sum(_wheft) + _sum(_ancient)
 
 
 # Hires who were sounded and have not been raised. The flag raises these one at a time.
@@ -1791,7 +1894,7 @@ func get_horn_left() -> int:
 # the rung count, the lit count, the stood count, or the posted count.
 # The raised total still counts a hire who was later hoisted.
 func get_raised() -> int:
-	return _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer)
+	return _sum(_flag) + _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer) + _sum(_bannerol) + _sum(_pendant) + _sum(_wheft) + _sum(_ancient)
 
 
 # Hires who were raised and have not been hoisted. The banner hoists these one at a time.
@@ -1805,7 +1908,7 @@ func get_flag_left() -> int:
 # the sounded count, the rung count, the lit count, the stood count, or the
 # posted count. The hoisted total still counts a hire who was later flown.
 func get_hoisted() -> int:
-	return _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer)
+	return _sum(_banner) + _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer) + _sum(_bannerol) + _sum(_pendant) + _sum(_wheft) + _sum(_ancient)
 
 
 # Hires who were hoisted and have not been flown. The pennant flies these one at a time.
@@ -1820,7 +1923,7 @@ func get_banner_left() -> int:
 # count, or the posted count. The flown total still counts a hire who was later
 # carried.
 func get_flown() -> int:
-	return _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer)
+	return _sum(_pennant) + _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer) + _sum(_bannerol) + _sum(_pendant) + _sum(_wheft) + _sum(_ancient)
 
 
 # Hires who were flown and have not been carried. The standard carries these one at a time.
@@ -1835,7 +1938,7 @@ func get_pennant_left() -> int:
 # lit count, the stood count, or the posted count. The carried total still
 # counts a hire who was later shown.
 func get_carried() -> int:
-	return _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer)
+	return _sum(_standard) + _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer) + _sum(_bannerol) + _sum(_pendant) + _sum(_wheft) + _sum(_ancient)
 
 
 # Hires who were carried and have not been shown. The jack shows these one at a time.
@@ -1851,7 +1954,7 @@ func get_standard_left() -> int:
 # count, the lit count, the stood count, or the posted count. The shown total
 # still counts a hire who was later broken, struck, or dipped.
 func get_shown() -> int:
-	return _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer)
+	return _sum(_jack) + _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer) + _sum(_bannerol) + _sum(_pendant) + _sum(_wheft) + _sum(_ancient)
 
 
 # Hires who were shown and have not been broken. The ensign breaks these one at a time.
@@ -1867,7 +1970,7 @@ func get_jack_left() -> int:
 # the stood count, or the posted count. The broken total still counts a hire
 # who was later struck or dipped.
 func get_broken() -> int:
-	return _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer)
+	return _sum(_ensign) + _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer) + _sum(_bannerol) + _sum(_pendant) + _sum(_wheft) + _sum(_ancient)
 
 
 # Hires who were broken and have not been struck. The burgee strikes these one at a time.
@@ -1883,7 +1986,7 @@ func get_ensign_left() -> int:
 # the rung count, the lit count, the stood count, or the posted count. The
 # struck total still counts a hire who was later dipped or saluted.
 func get_struck() -> int:
-	return _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer)
+	return _sum(_burgee) + _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer) + _sum(_bannerol) + _sum(_pendant) + _sum(_wheft) + _sum(_ancient)
 
 
 # Hires who were struck and have not been dipped. The cornet dips these one at a time.
@@ -1899,7 +2002,7 @@ func get_burgee_left() -> int:
 # count, the stood count, or the posted count. The dipped total still counts
 # a hire who was later saluted.
 func get_dipped() -> int:
-	return _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer)
+	return _sum(_cornet) + _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer) + _sum(_bannerol) + _sum(_pendant) + _sum(_wheft) + _sum(_ancient)
 
 
 # Hires who were dipped and have not been saluted. The guidon salutes these one at a time.
@@ -1915,7 +2018,7 @@ func get_cornet_left() -> int:
 # count, the lit count, the stood count, or the posted count. The saluted total
 # still counts a hire who was later presented.
 func get_saluted() -> int:
-	return _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer)
+	return _sum(_guidon) + _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer) + _sum(_bannerol) + _sum(_pendant) + _sum(_wheft) + _sum(_ancient)
 
 
 # Hires who were saluted and have not been presented. The fanion presents these one at a time.
@@ -1931,7 +2034,7 @@ func get_guidon_left() -> int:
 # sounded count, the rung count, the lit count, the stood count, or the posted
 # count. The presented total still counts a hire who was later furled.
 func get_presented() -> int:
-	return _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer)
+	return _sum(_fanion) + _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer) + _sum(_bannerol) + _sum(_pendant) + _sum(_wheft) + _sum(_ancient)
 
 
 # Hires who were presented and have not been furled. The pennon furls these one at a time.
@@ -1944,7 +2047,7 @@ func get_fanion_left() -> int:
 # count these. Furling spends no coins and does not change the presented count
 # or any earlier count. The furled total still counts a hire who was later dipped.
 func get_furled() -> int:
-	return _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer)
+	return _sum(_pennon) + _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer) + _sum(_bannerol) + _sum(_pendant) + _sum(_wheft) + _sum(_ancient)
 
 
 # Hires who were furled and have not been dipped on a gonfalon. The gonfalon dips these one at a time.
@@ -1959,7 +2062,7 @@ func get_pennon_left() -> int:
 # dipped total still counts a hire who was later lowered. The cornet's dipped
 # total is get_dipped().
 func get_gonfalon_dipped() -> int:
-	return _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer)
+	return _sum(_gonfalon) + _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer) + _sum(_bannerol) + _sum(_pendant) + _sum(_wheft) + _sum(_ancient)
 
 
 # Hires who were dipped on a gonfalon and have not been lowered. The oriflamme lowers these one at a time.
@@ -1973,7 +2076,7 @@ func get_gonfalon_left() -> int:
 # the gonfalon dipped count, the furled count, the presented count, or any
 # earlier count. The lowered total still counts a hire who was later housed.
 func get_oriflamme_lowered() -> int:
-	return _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer)
+	return _sum(_oriflamme) + _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer) + _sum(_bannerol) + _sum(_pendant) + _sum(_wheft) + _sum(_ancient)
 
 
 # Hires who were lowered on an oriflamme and have not been housed. The vexillum houses these one at a time.
@@ -1987,7 +2090,7 @@ func get_oriflamme_left() -> int:
 # the lowered count, the gonfalon dipped count, the furled count, the presented
 # count, or any earlier count. The housed total still counts a hire who was later cased.
 func get_vexillum_housed() -> int:
-	return _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer)
+	return _sum(_vexillum) + _sum(_labarum) + _sum(_signum) + _sum(_streamer) + _sum(_bannerol) + _sum(_pendant) + _sum(_wheft) + _sum(_ancient)
 
 
 # Hires who were housed on a vexillum and have not been cased. The labarum cases these one at a time.
@@ -2001,7 +2104,7 @@ func get_vexillum_left() -> int:
 # count, the lowered count, or any earlier count. The cased total still counts
 # a hire who was later sleeved.
 func get_labarum_cased() -> int:
-	return _sum(_labarum) + _sum(_signum) + _sum(_streamer)
+	return _sum(_labarum) + _sum(_signum) + _sum(_streamer) + _sum(_bannerol) + _sum(_pendant) + _sum(_wheft) + _sum(_ancient)
 
 
 # Hires who were cased on a labarum and have not been sleeved. The signum sleeves these one at a time.
@@ -2015,7 +2118,7 @@ func get_labarum_left() -> int:
 # count, the housed count, or any earlier count. The sleeved total still counts
 # a hire who was later rolled.
 func get_signum_sleeved() -> int:
-	return _sum(_signum) + _sum(_streamer)
+	return _sum(_signum) + _sum(_streamer) + _sum(_bannerol) + _sum(_pendant) + _sum(_wheft) + _sum(_ancient)
 
 
 # Hires who were sleeved on a signum and have not been rolled. The streamer rolls these one at a time.
@@ -2023,11 +2126,67 @@ func get_signum_left() -> int:
 	return _sum(_signum)
 
 
-# Hires rolled on a streamer, at most STREAMER_CAP. Nothing is rolled. The signum
-# sleeved total and the hire total still count these. Rolling spends no coins and
-# does not change the sleeved count, the cased count, or any earlier count.
+# Hires rolled on a streamer, at most STREAMER_CAP, including hires later bent
+# on a bannerol. Nothing is rolled. The signum sleeved total and the hire total
+# still count these. Rolling spends no coins and does not change the sleeved
+# count, the cased count, or any earlier count. The rolled total still counts
+# a hire who was later bent.
 func get_streamer_rolled() -> int:
+	return _sum(_streamer) + _sum(_bannerol) + _sum(_pendant) + _sum(_wheft) + _sum(_ancient)
+
+
+# Hires who were rolled on a streamer and have not been bent. The bannerol bends these one at a time.
+func get_streamer_left() -> int:
 	return _sum(_streamer)
+
+
+# Hires bent on a bannerol, at most BANNEROL_CAP, including hires later stopped
+# on a pendant. Nothing is rolled. The streamer rolled total and the hire total
+# still count these. Bending spends no coins and does not change the rolled
+# count, the sleeved count, or any earlier count. The bent total still counts
+# a hire who was later stopped.
+func get_bannerol_bent() -> int:
+	return _sum(_bannerol) + _sum(_pendant) + _sum(_wheft) + _sum(_ancient)
+
+
+# Hires who were bent on a bannerol and have not been stopped. The pendant stops these one at a time.
+func get_bannerol_left() -> int:
+	return _sum(_bannerol)
+
+
+# Hires stopped on a pendant, at most PENDANT_CAP, including hires later laced
+# on a wheft. Nothing is rolled. The bannerol bent total and the hire total
+# still count these. Stopping spends no coins and does not change the bent
+# count, the rolled count, or any earlier count. The stopped total still counts
+# a hire who was later laced.
+func get_pendant_stopped() -> int:
+	return _sum(_pendant) + _sum(_wheft) + _sum(_ancient)
+
+
+# Hires who were stopped on a pendant and have not been laced. The wheft laces these one at a time.
+func get_pendant_left() -> int:
+	return _sum(_pendant)
+
+
+# Hires laced on a wheft, at most WHEFT_CAP, including hires later tailed
+# on an ancient. Nothing is rolled. The pendant stopped total and the hire
+# total still count these. Lacing spends no coins and does not change the
+# stopped count, the bent count, or any earlier count. The laced total still
+# counts a hire who was later tailed.
+func get_wheft_laced() -> int:
+	return _sum(_wheft) + _sum(_ancient)
+
+
+# Hires who were laced on a wheft and have not been tailed. The ancient tails these one at a time.
+func get_wheft_left() -> int:
+	return _sum(_wheft)
+
+
+# Hires tailed on an ancient, at most ANCIENT_CAP. Nothing is rolled. The wheft
+# laced total and the hire total still count these. Tailing spends no coins and
+# does not change the laced count, the stopped count, or any earlier count.
+func get_ancient_tailed() -> int:
+	return _sum(_ancient)
 
 
 func _hired_coins() -> int:
@@ -2118,6 +2277,14 @@ func get_ticks_until_rain() -> int:
 		horizon = RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK + FANION_TICK + PENNON_TICK
 	elif _phase == GONFALONING:
 		horizon = RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK + FANION_TICK + PENNON_TICK + GONFALON_TICK
+	elif _phase == ANCIENTING:
+		horizon = RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK + FANION_TICK + PENNON_TICK + GONFALON_TICK + ORIFLAMME_TICK + VEXILLUM_TICK + LABARUM_TICK + SIGNUM_TICK + STREAMER_TICK + BANNEROL_TICK + PENDANT_TICK + WHEFT_TICK + ANCIENT_TICK
+	elif _phase == WHEFTING:
+		horizon = RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK + FANION_TICK + PENNON_TICK + GONFALON_TICK + ORIFLAMME_TICK + VEXILLUM_TICK + LABARUM_TICK + SIGNUM_TICK + STREAMER_TICK + BANNEROL_TICK + PENDANT_TICK + WHEFT_TICK
+	elif _phase == PENDANTING:
+		horizon = RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK + FANION_TICK + PENNON_TICK + GONFALON_TICK + ORIFLAMME_TICK + VEXILLUM_TICK + LABARUM_TICK + SIGNUM_TICK + STREAMER_TICK + BANNEROL_TICK + PENDANT_TICK
+	elif _phase == BANNEROLING:
+		horizon = RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK + FANION_TICK + PENNON_TICK + GONFALON_TICK + ORIFLAMME_TICK + VEXILLUM_TICK + LABARUM_TICK + SIGNUM_TICK + STREAMER_TICK + BANNEROL_TICK
 	elif _phase == STREAMERING:
 		horizon = RAIN_TICK + DRY_TICK + CART_TICK + SHIP_TICK + MARKET_TICK + YARD_TICK + BUNK_TICK + LOFT_TICK + GATE_TICK + WAGE_TICK + RELIEF_TICK + WATCH_TICK + LAMP_TICK + BELL_TICK + HORN_TICK + FLAG_TICK + BANNER_TICK + PENNANT_TICK + STANDARD_TICK + JACK_TICK + ENSIGN_TICK + BURGEE_TICK + CORNET_TICK + GUIDON_TICK + FANION_TICK + PENNON_TICK + GONFALON_TICK + ORIFLAMME_TICK + VEXILLUM_TICK + LABARUM_TICK + SIGNUM_TICK + STREAMER_TICK
 	elif _phase == SIGNUMING:
@@ -2175,6 +2342,10 @@ func get_cell_salt(x: int, y: int) -> Dictionary:
 		"labarum": _amount(_labarum, cell),
 		"signum": _amount(_signum, cell),
 		"streamer": _amount(_streamer, cell),
+		"bannerol": _amount(_bannerol, cell),
+		"pendant": _amount(_pendant, cell),
+		"wheft": _amount(_wheft, cell),
+		"ancient": _amount(_ancient, cell),
 	}
 
 
@@ -2263,6 +2434,14 @@ func rules_api() -> PackedStringArray:
 		"get_signum_sleeved",
 		"get_signum_left",
 		"get_streamer_rolled",
+		"get_streamer_left",
+		"get_bannerol_bent",
+		"get_bannerol_left",
+		"get_pendant_stopped",
+		"get_pendant_left",
+		"get_wheft_laced",
+		"get_wheft_left",
+		"get_ancient_tailed",
 		"get_bank_left",
 		"get_population",
 		"get_max_population",
@@ -2398,6 +2577,14 @@ func _walkable(x: int, y: int) -> bool:
 	if paint == SIGNUM and _phase < SIGNUMING:
 		return false
 	if paint == STREAMER and _phase < STREAMERING:
+		return false
+	if paint == BANNEROL and _phase < BANNEROLING:
+		return false
+	if paint == PENDANT and _phase < PENDANTING:
+		return false
+	if paint == WHEFT and _phase < WHEFTING:
+		return false
+	if paint == ANCIENT and _phase < ANCIENTING:
 		return false
 	return true
 
@@ -2613,6 +2800,34 @@ func _flows() -> Dictionary:
 			JOB_GATHER: dipping,
 			JOB_STACK: dipping,
 			JOB_COVER: dipping,
+		}
+	if _phase == ANCIENTING:
+		var tailing := _build_flow(_ancient_goals())
+		return {
+			JOB_GATHER: tailing,
+			JOB_STACK: tailing,
+			JOB_COVER: tailing,
+		}
+	if _phase == WHEFTING:
+		var lacing := _build_flow(_wheft_goals())
+		return {
+			JOB_GATHER: lacing,
+			JOB_STACK: lacing,
+			JOB_COVER: lacing,
+		}
+	if _phase == PENDANTING:
+		var stopping := _build_flow(_pendant_goals())
+		return {
+			JOB_GATHER: stopping,
+			JOB_STACK: stopping,
+			JOB_COVER: stopping,
+		}
+	if _phase == BANNEROLING:
+		var bending := _build_flow(_bannerol_goals())
+		return {
+			JOB_GATHER: bending,
+			JOB_STACK: bending,
+			JOB_COVER: bending,
 		}
 	if _phase == STREAMERING:
 		var rolling := _build_flow(_streamer_goals())
@@ -3005,6 +3220,66 @@ func _fanion_goals() -> Array:
 	return goals
 
 
+func _ancient_goals() -> Array:
+	var goals: Array = []
+	if get_ancient_tailed() >= ANCIENT_CAP or get_wheft_left() <= 0:
+		return goals
+	for y in range(GRID_NORTH, GRID_H):
+		for x in GRID_W:
+			var cell := Vector2i(x, y)
+			if _paint_at(cell) != ANCIENT:
+				continue
+			if _amount(_ancient, cell) >= ANCIENT_CAP:
+				continue
+			goals.append(cell)
+	return goals
+
+
+func _wheft_goals() -> Array:
+	var goals: Array = []
+	if get_wheft_laced() >= WHEFT_CAP or get_pendant_left() <= 0:
+		return goals
+	for y in range(GRID_NORTH, GRID_H):
+		for x in GRID_W:
+			var cell := Vector2i(x, y)
+			if _paint_at(cell) != WHEFT:
+				continue
+			if _amount(_wheft, cell) >= WHEFT_CAP:
+				continue
+			goals.append(cell)
+	return goals
+
+
+func _pendant_goals() -> Array:
+	var goals: Array = []
+	if get_pendant_stopped() >= PENDANT_CAP or get_bannerol_left() <= 0:
+		return goals
+	for y in range(GRID_NORTH, GRID_H):
+		for x in GRID_W:
+			var cell := Vector2i(x, y)
+			if _paint_at(cell) != PENDANT:
+				continue
+			if _amount(_pendant, cell) >= PENDANT_CAP:
+				continue
+			goals.append(cell)
+	return goals
+
+
+func _bannerol_goals() -> Array:
+	var goals: Array = []
+	if get_bannerol_bent() >= BANNEROL_CAP or get_streamer_left() <= 0:
+		return goals
+	for y in range(GRID_NORTH, GRID_H):
+		for x in GRID_W:
+			var cell := Vector2i(x, y)
+			if _paint_at(cell) != BANNEROL:
+				continue
+			if _amount(_bannerol, cell) >= BANNEROL_CAP:
+				continue
+			goals.append(cell)
+	return goals
+
+
 func _streamer_goals() -> Array:
 	var goals: Array = []
 	if get_streamer_rolled() >= STREAMER_CAP or get_signum_left() <= 0:
@@ -3280,6 +3555,18 @@ func _work(worker: Worker) -> void:
 		return
 	if _phase == GONFALONING:
 		_dip_gonfalon(worker)
+		return
+	if _phase == ANCIENTING:
+		_tail_ancient(worker)
+		return
+	if _phase == WHEFTING:
+		_lace_wheft(worker)
+		return
+	if _phase == PENDANTING:
+		_stop_pendant(worker)
+		return
+	if _phase == BANNEROLING:
+		_bend_bannerol(worker)
 		return
 	if _phase == STREAMERING:
 		_roll_streamer(worker)
@@ -3643,6 +3930,86 @@ func _hoist_banner(worker: Worker) -> void:
 				continue
 			_put(_flag, src, amount - 1)
 			_put(_banner, cell, held + 1)
+			return
+
+
+func _tail_ancient(worker: Worker) -> void:
+	var cell := Vector2i(worker.x, worker.y)
+	if _paint_at(cell) != ANCIENT:
+		return
+	if get_ancient_tailed() >= ANCIENT_CAP:
+		return
+	var held := _amount(_ancient, cell)
+	if held >= ANCIENT_CAP:
+		return
+	for y in range(GRID_NORTH, GRID_H):
+		for x in GRID_W:
+			var src := Vector2i(x, y)
+			var amount := _amount(_wheft, src)
+			if amount <= 0:
+				continue
+			_put(_wheft, src, amount - 1)
+			_put(_ancient, cell, held + 1)
+			return
+
+
+func _lace_wheft(worker: Worker) -> void:
+	var cell := Vector2i(worker.x, worker.y)
+	if _paint_at(cell) != WHEFT:
+		return
+	if get_wheft_laced() >= WHEFT_CAP:
+		return
+	var held := _amount(_wheft, cell)
+	if held >= WHEFT_CAP:
+		return
+	for y in range(GRID_NORTH, GRID_H):
+		for x in GRID_W:
+			var src := Vector2i(x, y)
+			var amount := _amount(_pendant, src)
+			if amount <= 0:
+				continue
+			_put(_pendant, src, amount - 1)
+			_put(_wheft, cell, held + 1)
+			return
+
+
+func _stop_pendant(worker: Worker) -> void:
+	var cell := Vector2i(worker.x, worker.y)
+	if _paint_at(cell) != PENDANT:
+		return
+	if get_pendant_stopped() >= PENDANT_CAP:
+		return
+	var held := _amount(_pendant, cell)
+	if held >= PENDANT_CAP:
+		return
+	for y in range(GRID_NORTH, GRID_H):
+		for x in GRID_W:
+			var src := Vector2i(x, y)
+			var amount := _amount(_bannerol, src)
+			if amount <= 0:
+				continue
+			_put(_bannerol, src, amount - 1)
+			_put(_pendant, cell, held + 1)
+			return
+
+
+func _bend_bannerol(worker: Worker) -> void:
+	var cell := Vector2i(worker.x, worker.y)
+	if _paint_at(cell) != BANNEROL:
+		return
+	if get_bannerol_bent() >= BANNEROL_CAP:
+		return
+	var held := _amount(_bannerol, cell)
+	if held >= BANNEROL_CAP:
+		return
+	for y in range(GRID_NORTH, GRID_H):
+		for x in GRID_W:
+			var src := Vector2i(x, y)
+			var amount := _amount(_streamer, src)
+			if amount <= 0:
+				continue
+			_put(_streamer, src, amount - 1)
+			_put(_bannerol, cell, held + 1)
 			return
 
 
@@ -4175,6 +4542,30 @@ func _open_streamer() -> void:
 	_phase = STREAMERING
 
 
+func _open_bannerol() -> void:
+	if _phase != STREAMERING or _rain_done or not _bannerol_painted():
+		return
+	_phase = BANNEROLING
+
+
+func _open_pendant() -> void:
+	if _phase != BANNEROLING or _rain_done or not _pendant_painted():
+		return
+	_phase = PENDANTING
+
+
+func _open_wheft() -> void:
+	if _phase != PENDANTING or _rain_done or not _wheft_painted():
+		return
+	_phase = WHEFTING
+
+
+func _open_ancient() -> void:
+	if _phase != WHEFTING or _rain_done or not _ancient_painted():
+		return
+	_phase = ANCIENTING
+
+
 func _finish() -> void:
 	if _rain_done:
 		return
@@ -4285,4 +4676,12 @@ func _make_summary() -> String:
 		message += " Sleeved %d on the signum. Left %d at the labarum." % [get_signum_sleeved(), get_labarum_left()]
 	if get_streamer_rolled() > 0:
 		message += " Rolled %d on the streamer. Left %d at the signum." % [get_streamer_rolled(), get_signum_left()]
+	if get_bannerol_bent() > 0:
+		message += " Bent %d on the bannerol. Left %d at the streamer." % [get_bannerol_bent(), get_streamer_left()]
+	if get_pendant_stopped() > 0:
+		message += " Stopped %d on the pendant. Left %d at the bannerol." % [get_pendant_stopped(), get_bannerol_left()]
+	if get_wheft_laced() > 0:
+		message += " Laced %d on the wheft. Left %d at the pendant." % [get_wheft_laced(), get_pendant_left()]
+	if get_ancient_tailed() > 0:
+		message += " Tailed %d on the ancient. Left %d at the wheft." % [get_ancient_tailed(), get_wheft_left()]
 	return message
