@@ -92,6 +92,8 @@ func _run() -> void:
 	test_hood_book()
 	test_throat_rule()
 	test_throat_book()
+	test_larmier_rule()
+	test_larmier_book()
 	test_chart_4_boat()
 	test_one_rotation_is_not_solved()
 	test_hint_points_at_one_piece()
@@ -273,7 +275,8 @@ func test_charts() -> void:
 	check(Charts.beak().size() == 8, "beak adds eight charts")
 	check(Charts.hood().size() == 8, "hood adds eight charts")
 	check(Charts.throat().size() == 8, "throat adds eight charts")
-	check(book.size() == 286, "two hundred eighty-six charts")
+	check(Charts.larmier().size() == 8, "larmier adds eight charts")
+	check(book.size() == 294, "two hundred ninety-four charts")
 	check(str(book[13]["id"]) == "14" and str(book[13]["title"]) == "The Holding Line", "chart 14 stays the reach capstone")
 	check(str(book[14]["title"]) == "North Light", "chart 15 opens the basin")
 	check(str(book[21]["id"]) == "22" and str(book[21]["title"]) == "The Basin Mark", "chart 22 stays the basin capstone")
@@ -343,6 +346,8 @@ func test_charts() -> void:
 	check(str(book[277]["id"]) == "278" and str(book[277]["title"]) == "The Hood Mark", "chart 278 stays the hood capstone")
 	check(str(book[278]["title"]) == "The Dry Throat", "chart 279 opens the throat")
 	check(str(book[285]["id"]) == "286" and str(book[285]["title"]) == "The Throat Mark", "chart 286 stays the throat capstone")
+	check(str(book[286]["title"]) == "The Dry Larmier", "chart 287 opens the larmier")
+	check(str(book[293]["id"]) == "294" and str(book[293]["title"]) == "The Larmier Mark", "chart 294 stays the larmier capstone")
 	var seen_ids := {}
 	var seen_titles := {}
 	var quay_titles := ["First Glass", "Around the Pilings", "High Water", "Sleeping Hull", "Split the White", "The Night Mark"]
@@ -354,7 +359,7 @@ func test_charts() -> void:
 		var title := str(chart["title"])
 		check(not seen_ids.has(id), "chart id %s is unique" % id)
 		if seen_titles.has(title):
-			var echoed := (title == "After the Color" and id == "81") or (title == "Above the Gate" and (id == "84" or id == "92" or id == "100" or id == "108")) or (title == "Side Entry" and (id == "88" or id == "96" or id == "104")) or (title == "White Through" and (id == "97" or id == "105")) or (title == "Dry Stop" and (id == "90" or id == "98" or id == "106")) or (title == "The Wet Stop" and (id == "120" or id == "128" or id == "136" or id == "144" or id == "152" or id == "160" or id == "168" or id == "176" or id == "184" or id == "192" or id == "200" or id == "208" or id == "216" or id == "224" or id == "232" or id == "240" or id == "248" or id == "256" or id == "264" or id == "272" or id == "280")) or (title == "Color Kept" and (id == "121" or id == "129" or id == "137" or id == "145" or id == "153" or id == "161" or id == "169" or id == "177" or id == "185" or id == "193" or id == "201" or id == "209" or id == "217" or id == "225" or id == "233" or id == "241" or id == "249" or id == "257" or id == "265" or id == "273" or id == "281")) or (title == "No Turn" and (id == "122" or id == "130" or id == "138" or id == "146" or id == "154" or id == "162" or id == "170" or id == "178" or id == "186" or id == "194" or id == "202" or id == "210" or id == "218" or id == "226" or id == "234" or id == "242" or id == "250" or id == "258" or id == "266" or id == "274" or id == "282")) or (title == "Beside the Flood" and (id == "131" or id == "139" or id == "147" or id == "155" or id == "163" or id == "171" or id == "179" or id == "187" or id == "195" or id == "203" or id == "211" or id == "219" or id == "227" or id == "235" or id == "243" or id == "251" or id == "259" or id == "267" or id == "275" or id == "283"))
+			var echoed := (title == "After the Color" and id == "81") or (title == "Above the Gate" and (id == "84" or id == "92" or id == "100" or id == "108")) or (title == "Side Entry" and (id == "88" or id == "96" or id == "104")) or (title == "White Through" and (id == "97" or id == "105")) or (title == "Dry Stop" and (id == "90" or id == "98" or id == "106")) or (title == "The Wet Stop" and (id == "120" or id == "128" or id == "136" or id == "144" or id == "152" or id == "160" or id == "168" or id == "176" or id == "184" or id == "192" or id == "200" or id == "208" or id == "216" or id == "224" or id == "232" or id == "240" or id == "248" or id == "256" or id == "264" or id == "272" or id == "280" or id == "288")) or (title == "Color Kept" and (id == "121" or id == "129" or id == "137" or id == "145" or id == "153" or id == "161" or id == "169" or id == "177" or id == "185" or id == "193" or id == "201" or id == "209" or id == "217" or id == "225" or id == "233" or id == "241" or id == "249" or id == "257" or id == "265" or id == "273" or id == "281" or id == "289")) or (title == "No Turn" and (id == "122" or id == "130" or id == "138" or id == "146" or id == "154" or id == "162" or id == "170" or id == "178" or id == "186" or id == "194" or id == "202" or id == "210" or id == "218" or id == "226" or id == "234" or id == "242" or id == "250" or id == "258" or id == "266" or id == "274" or id == "282" or id == "290")) or (title == "Beside the Flood" and (id == "131" or id == "139" or id == "147" or id == "155" or id == "163" or id == "171" or id == "179" or id == "187" or id == "195" or id == "203" or id == "211" or id == "219" or id == "227" or id == "235" or id == "243" or id == "251" or id == "259" or id == "267" or id == "275" or id == "283" or id == "291"))
 			check(echoed, "chart title %s is unique" % title)
 		else:
 			check(true, "chart title %s is unique" % title)
@@ -435,6 +440,8 @@ func test_charts() -> void:
 			_check_jamb_axis_clears(chart, clears, solved)
 		elif _chart_has_kind(chart, "corona"):
 			_check_corona_axis_clears(chart, clears, solved)
+		elif _chart_has_kind(chart, "larmier"):
+			_check_larmier_axis_clears(chart, clears, solved)
 		elif clears.size() == 1:
 			check(true, "chart %s has one clearing state" % id)
 			check(_same_solution(chart, clears[0], solved), "chart %s clearing state is the authored solution" % id)
@@ -5566,6 +5573,37 @@ func _check_corona_axis_clears(chart: Dictionary, clears: Array, solved: Diction
 			var want: Dictionary = solved["pieces"][pid]
 			check(str(got["socket"]) == str(want["socket"]), "chart %s clear keeps %s on its socket" % [id, pid])
 			if str(piece["kind"]) == "corona":
+				check(posmod(int(got["rot"]), 180) == posmod(int(want["rot"]), 180), "chart %s clear keeps %s on its axis" % [id, pid])
+			else:
+				var kind := str(piece["kind"])
+				check(Tracer.norm_rot(kind, int(got["rot"])) == Tracer.norm_rot(kind, int(want["rot"])), "chart %s clear keeps %s" % [id, pid])
+	check(authored, "chart %s authored solution is one open-axis facing" % id)
+
+
+func _check_larmier_axis_clears(chart: Dictionary, clears: Array, solved: Dictionary) -> void:
+	var id := str(chart["id"])
+	var larmiers := 0
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		if str(piece["kind"]) == "larmier":
+			larmiers += 1
+	var expected := 1
+	for _i in larmiers:
+		expected *= 2
+	check(clears.size() == expected, "chart %s clears on each facing of the open axis (found %d)" % [id, clears.size()])
+	var authored := false
+	for raw_clear in clears:
+		var clearing: Dictionary = raw_clear
+		if _same_solution(chart, clearing, solved):
+			authored = true
+		check(int(clearing["tide_index"]) == int(solved["tide_index"]), "chart %s clear stays on the solved tide" % id)
+		for raw in chart["pieces"]:
+			var piece: Dictionary = raw
+			var pid := str(piece["id"])
+			var got: Dictionary = clearing["pieces"][pid]
+			var want: Dictionary = solved["pieces"][pid]
+			check(str(got["socket"]) == str(want["socket"]), "chart %s clear keeps %s on its socket" % [id, pid])
+			if str(piece["kind"]) == "larmier":
 				check(posmod(int(got["rot"]), 180) == posmod(int(want["rot"]), 180), "chart %s clear keeps %s on its axis" % [id, pid])
 			else:
 				var kind := str(piece["kind"])
@@ -11566,6 +11604,230 @@ func _throat_flood_chart(arrival: String, color: String, rot: int) -> Dictionary
 	return chart
 
 
+func test_larmier_rule() -> void:
+	check(Tracer.norm_rot("larmier", 0) == 0 and Tracer.norm_rot("larmier", 90) == 90 and Tracer.norm_rot("larmier", 180) == 180 and Tracer.norm_rot("larmier", 270) == 270, "a larmier keeps each quarter turn")
+	check(Tracer.turn_rot("larmier", 0) == 90 and Tracer.turn_rot("larmier", 270) == 0, "clicking a larmier walks the facing")
+	check(Tracer.larmier_facing(0) == "N" and Tracer.larmier_facing(90) == "E" and Tracer.larmier_facing(180) == "S" and Tracer.larmier_facing(270) == "W", "larmier facing follows the quarter turn")
+	check(Tracer.larmier_passes(0, "E") and Tracer.larmier_passes(0, "W") and not Tracer.larmier_passes(0, "N") and not Tracer.larmier_passes(0, "S"), "a dry north larmier passes east and west")
+	check(Tracer.larmier_passes(180, "E") and Tracer.larmier_passes(180, "W") and not Tracer.larmier_passes(180, "N"), "a dry south larmier shares the east-west open set")
+	check(Tracer.larmier_passes(90, "N") and Tracer.larmier_passes(90, "S") and not Tracer.larmier_passes(90, "E") and not Tracer.larmier_passes(90, "W"), "a larmier turned once from north faces east and passes north and south while dry")
+	check(Tracer.larmier_flood_passes(0, "N") and Tracer.larmier_flood_passes(0, "S") and not Tracer.larmier_flood_passes(0, "E") and not Tracer.larmier_flood_passes(0, "W"), "a flooded north larmier passes only north and south")
+	check(Tracer.larmier_flood_passes(180, "N") and Tracer.larmier_flood_passes(180, "S") and not Tracer.larmier_flood_passes(180, "E"), "a flooded south larmier shares the north-south open set")
+	check(Tracer.larmier_flood_passes(90, "E") and Tracer.larmier_flood_passes(90, "W") and not Tracer.larmier_flood_passes(90, "N"), "a flooded east larmier passes only east and west")
+	check(Tracer.corona_passes(0, "E") and Tracer.corona_passes(0, "W") and not Tracer.corona_passes(0, "N"), "a dry north corona passes the same east and west")
+	check(not Tracer.throat_flood_passes(0, "N") and Tracer.throat_flood_passes(0, "S"), "a flooded north throat passes only south")
+	check(not Tracer.hood_flood_passes(0, "S") and Tracer.hood_flood_passes(0, "N"), "a flooded north hood passes only north")
+	var hinted: Dictionary = Charts.larmier()[6]
+	var solved_hint := Charts.make_state(hinted, true)
+	check(not Hints.wrong_pieces(hinted, solved_hint).has("O"), "a hint accepts the held north larmier")
+	var opposite_hint := Charts.duplicate_state(solved_hint)
+	opposite_hint["pieces"]["O"]["rot"] = 180
+	check(Hints.wrong_pieces(hinted, opposite_hint).has("O") and Tracer.is_cleared(hinted, opposite_hint), "the opposite larmier facing still passes, and the hint keeps the held facing")
+	for spun in [90, 270]:
+		var turned_hint := Charts.duplicate_state(solved_hint)
+		turned_hint["pieces"]["O"]["rot"] = spun
+		check(Hints.wrong_pieces(hinted, turned_hint).has("O"), "a hint rejects larmier rotation %d" % spun)
+		check(not Tracer.is_cleared(hinted, turned_hint), "larmier rotation %d is not the held open set" % spun)
+	var carried := {}
+	carried[Vector2i(0, 0)] = {"kind": "larmier", "rot": 0}
+	check(not Tracer._flood_carries(carried, Vector2i(0, 0)), "a larmier is not a full flood carrier")
+	var dry_north := _blank(1, 5)
+	dry_north["lanterns"] = [_lamp("L", 0, 4, "N", "white")]
+	dry_north["pieces"] = [_fixed_larmier("O", 0, 2, 0)]
+	check(not _center_hit(Tracer.trace(dry_north, Charts.make_state(dry_north, true)), 0, 2), "a dry north larmier refuses north")
+	var dry_east := _blank(5, 1)
+	dry_east["lanterns"] = [_lamp("L", 0, 0, "E", "red")]
+	dry_east["docks"] = [_need("D", 4, 0, "red")]
+	dry_east["pieces"] = [_fixed_larmier("O", 2, 0, 0)]
+	check(_leaves(Tracer.trace(dry_east, Charts.make_state(dry_east, true)), 2, 0, "E", "red"), "a dry north larmier passes east")
+	var flood_south := _blank(8, 8)
+	flood_south["tide_phases"] = [4]
+	flood_south["lanterns"] = [_lamp("L", 4, 2, "S", "white")]
+	flood_south["fixtures"] = [{"id": "X", "kind": "shutter", "x": 4, "y": 5, "rot": 0}]
+	flood_south["pieces"] = [_fixed_larmier("O", 4, 4, 0)]
+	var flood_hit: Dictionary = Tracer.trace(flood_south, Charts.make_state(flood_south, true))
+	check(_center_hit(flood_hit, 4, 4) and _leaves(flood_hit, 4, 4, "S", "white"), "a flooded north larmier passes south")
+	flood_south["lanterns"] = [_lamp("L", 2, 2, "S", "blue")]
+	flood_south["fixtures"] = [
+		{"id": "M", "kind": "tide_mirror", "x": 2, "y": 4, "rot": 90},
+		{"id": "S", "kind": "shutter", "x": 3, "y": 4, "rot": 0},
+	]
+	check(not _center_hit(Tracer.trace(flood_south, Charts.make_state(flood_south, true)), 4, 4), "a flooded north larmier stops east at the waterline")
+	var throat_back := _blank(8, 8)
+	throat_back["tide_phases"] = [4]
+	throat_back["lanterns"] = [_lamp("L", 6, 2, "S", "red")]
+	throat_back["fixtures"] = [
+		{"id": "A", "kind": "shutter", "x": 6, "y": 4, "rot": 0},
+		{"id": "B", "kind": "shutter", "x": 6, "y": 5, "rot": 0},
+		{"id": "C", "kind": "tide_mirror", "x": 6, "y": 6, "rot": 0},
+		{"id": "D", "kind": "shutter", "x": 5, "y": 6, "rot": 0},
+		{"id": "E", "kind": "tide_mirror", "x": 4, "y": 6, "rot": 90},
+		{"id": "F", "kind": "shutter", "x": 4, "y": 5, "rot": 0},
+	]
+	throat_back["pieces"] = [_fixed_larmier("O", 4, 4, 0)]
+	check(_leaves(Tracer.trace(throat_back, Charts.make_state(throat_back, true)), 4, 4, "N", "red"), "a flooded north larmier passes north")
+	throat_back["pieces"] = [_fixed_throat("O", 4, 4, 0)]
+	check(not _center_hit(Tracer.trace(throat_back, Charts.make_state(throat_back, true)), 4, 4), "a flooded north throat stops the north beam a flooded larmier passes")
+
+
+func test_larmier_book() -> void:
+	var book: Array = Charts.larmier()
+	check(book.size() == 8, "larmier book has eight charts")
+	var titles := ["The Dry Larmier", "The Wet Stop", "Color Kept", "No Turn", "Beside the Flood", "Two Larmiers", "The Held Larmier", "The Larmier Mark"]
+	for i in book.size():
+		var chart: Dictionary = book[i]
+		check(str(chart["id"]) == str(i + 287), "larmier chart %d keeps its number" % (i + 287))
+		check(str(chart["title"]) == str(titles[i]), "larmier chart %d keeps its title" % (i + 287))
+		check(str(chart["harbor"]) == Charts.LARMIER, "chart %s belongs to the larmier" % str(chart["id"]))
+	for older in Charts.all().slice(0, 286):
+		for raw_piece in older["pieces"]:
+			var older_piece: Dictionary = raw_piece
+			check(str(older_piece["kind"]) != "larmier", "chart %s keeps its pieces" % str(older["id"]))
+	for i in book.size():
+		for raw_piece in book[i]["pieces"]:
+			var piece: Dictionary = raw_piece
+			if str(piece["kind"]) != "larmier":
+				continue
+			var piece_id := str(piece["id"])
+			var solved := Charts.make_state(book[i], true)
+			var wet_solution: bool = Tracer.is_flooded(book[i], solved, Charts.piece_cell(book[i], solved, piece_id))
+			var facing := Tracer.larmier_facing(int(piece["solution_rot"]))
+			var open_ew: bool = facing == "N" or facing == "S"
+			var throat_swap: Dictionary = Charts.larmier()[i]
+			_retarget(throat_swap, piece_id, "throat", int(piece["solution_rot"]))
+			check(not Tracer.is_cleared(throat_swap, Charts.make_state(throat_swap, true)), "a throat at the solution facing misses larmier chart %d" % (i + 287))
+			for crot in [0, 90, 180, 270]:
+				_expect_larmier_miss(i, piece_id, "throat", crot, "throat %d" % crot)
+				_expect_larmier_miss(i, piece_id, "hood", crot, "hood %d" % crot)
+				_expect_larmier_miss(i, piece_id, "drip", crot, "drip %d" % crot)
+				_expect_larmier_miss(i, piece_id, "beak", crot, "beak %d" % crot)
+				_expect_larmier_miss(i, piece_id, "cyma", crot, "cyma %d" % crot)
+				_expect_larmier_miss(i, piece_id, "quirk", crot, "quirk %d" % crot)
+				_expect_larmier_miss(i, piece_id, "casement", crot, "casement %d" % crot)
+				_expect_larmier_miss(i, piece_id, "bead", crot, "bead %d" % crot)
+				_expect_larmier_miss(i, piece_id, "fillet", crot, "fillet %d" % crot)
+				_expect_larmier_miss(i, piece_id, "ovolo", crot, "ovolo %d" % crot)
+				_expect_larmier_miss(i, piece_id, "cavetto", crot, "cavetto %d" % crot)
+				_expect_larmier_miss(i, piece_id, "fascia", crot, "fascia %d" % crot)
+				_expect_larmier_miss(i, piece_id, "soffit", crot, "soffit %d" % crot)
+				_expect_larmier_miss(i, piece_id, "astragal", crot, "astragal %d" % crot)
+				_expect_larmier_miss(i, piece_id, "scotia", crot, "scotia %d" % crot)
+				_expect_larmier_miss(i, piece_id, "torus", crot, "torus %d" % crot)
+				_expect_larmier_miss(i, piece_id, "ogee", crot, "ogee %d" % crot)
+				var cor_ew: bool = Tracer.corona_facing(crot) == "N" or Tracer.corona_facing(crot) == "S"
+				if wet_solution or cor_ew != open_ew:
+					_expect_larmier_miss(i, piece_id, "corona", crot, "corona %d" % crot)
+				var jamb_ew: bool = Tracer.jamb_facing(crot) == "E" or Tracer.jamb_facing(crot) == "W"
+				if wet_solution or jamb_ew != open_ew:
+					_expect_larmier_miss(i, piece_id, "jamb", crot, "jamb %d" % crot)
+				_expect_larmier_miss(i, piece_id, "vane", crot, "vane %d" % crot)
+				_expect_larmier_miss(i, piece_id, "weir", crot, "weir %d" % crot)
+				_expect_larmier_miss(i, piece_id, "sluice", crot, "sluice %d" % crot)
+				_expect_larmier_miss(i, piece_id, "prism", crot, "prism %d" % crot)
+			_expect_larmier_miss(i, piece_id, "lintel", 0, "lintel")
+			_expect_larmier_miss(i, piece_id, "shutter", 0, "shutter")
+			_expect_larmier_miss(i, piece_id, "stain", 0, "red stain")
+			_expect_larmier_miss(i, piece_id, "stain", 90, "blue stain")
+			if wet_solution or not open_ew:
+				_expect_larmier_miss(i, piece_id, "transom", 0, "transom")
+			if wet_solution or open_ew:
+				_expect_larmier_miss(i, piece_id, "mullion", 0, "mullion")
+	var dry: Dictionary = book[0]
+	var dry_hit: Dictionary = Tracer.trace(dry, Charts.make_state(dry, true))
+	check(_leaves(dry_hit, 3, 3, "E", "red") and _leaves(dry_hit, 3, 3, "W", "blue") and not _leaves(dry_hit, 3, 3, "N", "white") and not _leaves(dry_hit, 3, 3, "S", "red") and dry_hit["docks"]["Nd"].is_empty() and dry_hit["docks"]["Sd"].is_empty(), "chart 287 passes east and west")
+	var dry_once := Charts.duplicate_state(Charts.make_state(dry, true))
+	dry_once["pieces"]["O"]["rot"] = 90
+	check(not Tracer.is_cleared(dry, dry_once), "chart 287 one click from north stops east and west")
+	var dry_opposite := Charts.duplicate_state(Charts.make_state(dry, true))
+	dry_opposite["pieces"]["O"]["rot"] = 180
+	check(Tracer.is_cleared(dry, dry_opposite), "chart 287 the opposite facing shares the open set")
+	var dry_corona: Dictionary = Charts.larmier()[0]
+	_retarget(dry_corona, "O", "corona", 0)
+	check(Tracer.is_cleared(dry_corona, Charts.make_state(dry_corona, true)), "chart 287 a dry north corona passes the same east and west")
+	var dry_transom: Dictionary = Charts.larmier()[0]
+	_retarget(dry_transom, "O", "transom", 0)
+	check(Tracer.is_cleared(dry_transom, Charts.make_state(dry_transom, true)), "chart 287 a dry transom passes the same east and west")
+	var wet: Dictionary = book[1]
+	check(int(wet["solution_tide_index"]) == 1 and int(wet["tide_phases"][1]) == 4, "chart 288 solves while the larmier is flooded")
+	var wet_hit: Dictionary = Tracer.trace(wet, Charts.make_state(wet, true))
+	check(_center_hit(wet_hit, 4, 4) and _leaves(wet_hit, 4, 4, "S", "white") and _leaves(wet_hit, 4, 4, "N", "red") and wet_hit["docks"]["Nd"].has("red") and wet_hit["docks"]["Ke"].is_empty() and Tracer.is_cleared(wet, Charts.make_state(wet, true)), "chart 288 a flooded north larmier passes only north and south")
+	var wet_dry := Charts.duplicate_state(Charts.make_state(wet, true))
+	wet_dry["tide_index"] = 0
+	check(not _leaves(Tracer.trace(wet, wet_dry), 4, 4, "S", "white") and not Tracer.is_cleared(wet, wet_dry), "chart 288 low water returns the dry stop")
+	var wet_throat: Dictionary = Charts.larmier()[1]
+	_retarget(wet_throat, "O", "throat", 0)
+	check(not Tracer.is_cleared(wet_throat, Charts.make_state(wet_throat, true)), "chart 288 a flooded north throat misses the north return")
+	var wet_hood: Dictionary = Charts.larmier()[1]
+	_retarget(wet_hood, "O", "hood", 0)
+	check(not Tracer.is_cleared(wet_hood, Charts.make_state(wet_hood, true)), "chart 288 a flooded north hood misses the south beam")
+	var wet_corona: Dictionary = Charts.larmier()[1]
+	_retarget(wet_corona, "O", "corona", 0)
+	check(not Tracer.is_cleared(wet_corona, Charts.make_state(wet_corona, true)), "chart 288 a flooded corona stops the axis")
+	var kept: Dictionary = book[2]
+	var kept_hit: Dictionary = Tracer.trace(kept, Charts.make_state(kept, true))
+	check(_leaves(kept_hit, 3, 3, "E", "red") and kept_hit["docks"]["Ed"].has("red") and kept_hit["docks"]["Ed"].size() == 1 and kept_hit["docks"]["Nd"].is_empty(), "chart 289 keeps red")
+	var white_pass: Dictionary = Charts.larmier()[2]
+	white_pass["lanterns"][0]["color"] = "white"
+	white_pass["docks"][0]["color"] = "white"
+	check(_leaves(Tracer.trace(white_pass, Charts.make_state(white_pass, true)), 3, 3, "E", "white") and Tracer.is_cleared(white_pass, Charts.make_state(white_pass, true)), "chart 289 keeps white")
+	var straight_hit: Dictionary = Tracer.trace(book[3], Charts.make_state(book[3], true))
+	check(_leaves(straight_hit, 3, 3, "E", "blue") and _leaves(straight_hit, 3, 3, "W", "red") and not _leaves(straight_hit, 3, 3, "N", "blue") and not _leaves(straight_hit, 3, 3, "S", "red"), "chart 290 the open beams leave the way they entered")
+	var beside: Dictionary = book[4]
+	var beside_state := Charts.make_state(beside, true)
+	var beside_hit: Dictionary = Tracer.trace(beside, beside_state)
+	check(not Tracer.is_flooded(beside, beside_state, Vector2i(3, 2)) and Tracer.is_flooded(beside, beside_state, Vector2i(1, 6)) and _leaves(beside_hit, 3, 2, "E", "blue") and beside_hit["docks"]["Nd"].is_empty() and not _center_hit(beside_hit, 1, 6), "chart 291 the dry row passes and the flood beam stops at the waterline")
+	var pair: Dictionary = book[5]
+	var pair_hit: Dictionary = Tracer.trace(pair, Charts.make_state(pair, true))
+	check(_leaves(pair_hit, 2, 3, "E", "red") and not _leaves(pair_hit, 2, 3, "N", "white") and _leaves(pair_hit, 8, 5, "N", "red") and _leaves(pair_hit, 8, 5, "S", "white") and not _leaves(pair_hit, 8, 5, "E", "blue"), "chart 292 the two larmiers open different axes")
+	var swapped_pair := Charts.duplicate_state(Charts.make_state(pair, true))
+	swapped_pair["pieces"]["O"]["rot"] = 90
+	swapped_pair["pieces"]["U"]["rot"] = 0
+	check(not Tracer.is_cleared(pair, swapped_pair), "chart 292 swapping the axes fails")
+	var held: Dictionary = book[6]
+	var held_solved := Charts.make_state(held, true)
+	var held_hit: Dictionary = Tracer.trace(held, held_solved)
+	check(_leaves(held_hit, 4, 3, "E", "red") and _leaves(held_hit, 4, 3, "W", "blue") and not _leaves(held_hit, 4, 3, "N", "white") and not _leaves(held_hit, 4, 3, "S", "blue") and held_hit["docks"]["Nd"].is_empty() and held_hit["docks"]["Sd"].is_empty() and not bool(held_hit["boats"]["Hb"]), "chart 293 the held facing passes east and west")
+	var held_high := Charts.duplicate_state(held_solved)
+	held_high["tide_index"] = 2
+	var held_high_hit: Dictionary = Tracer.trace(held, held_high)
+	check(_center_hit(held_high_hit, 4, 3) and _leaves(held_high_hit, 4, 3, "S", "blue") and held_high_hit["docks"]["Ed"].is_empty() and not Tracer.is_cleared(held, held_high), "chart 293 high water passes north and south")
+	var held_hood: Dictionary = Charts.larmier()[6]
+	_retarget(held_hood, "O", "hood", 0)
+	var held_hood_state := Charts.make_state(held_hood, true)
+	held_hood_state["tide_index"] = 2
+	check(not _leaves(Tracer.trace(held_hood, held_hood_state), 4, 3, "S", "blue"), "chart 293 a flooded hood does not pass south")
+	var mark_hit: Dictionary = Tracer.trace(book[7], Charts.make_state(book[7], true))
+	check(str(Charts.make_state(book[7], true)["pieces"]["O"]["socket"]) == "line" and _leaves(mark_hit, 3, 3, "E", "red") and mark_hit["docks"]["Nd"].is_empty(), "chart 294 the open set satisfies the mark")
+	check(str(book[0]["teach"]).to_lower().contains("east and west") and str(book[0]["teach"]).to_lower().contains("throat"), "chart 287 teaches the dry larmier")
+	check(str(book[1]["teach"]).to_lower().contains("only north and south") and str(book[1]["teach"]).to_lower().contains("throat"), "chart 288 teaches the flooded flip")
+	check(str(book[6]["teach"]).to_lower().contains("only north and south"), "chart 293 teaches the held flood")
+	check(str(book[7]["teach"]).to_lower().contains("throat"), "chart 294 teaches the larmier mark")
+
+
+func _expect_larmier_miss(index: int, piece_id: String, kind: String, rot: int, label: String) -> void:
+	var chart: Dictionary = Charts.larmier()[index]
+	_retarget(chart, piece_id, kind, rot)
+	var state := Charts.make_state(chart, true)
+	if Tracer.is_cleared(chart, state):
+		check(false, "%s clears larmier chart %d" % [label, index + 287])
+	else:
+		check(true, "%s misses larmier chart %d" % [label, index + 287])
+
+
+func _fixed_larmier(id: String, x: int, y: int, rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": "Larmier",
+		"kind": "larmier",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": rot,
+		"solution_socket": "a",
+		"solution_rot": rot,
+	}
+
+
 func test_smoke() -> void:
 	var main_script: Script = load("res://scripts/main.gd")
 	main_script.persist_progress = false
@@ -12777,8 +13039,45 @@ func test_smoke() -> void:
 	await process_frame
 	check(str(main.chart["id"]) == "279", "Throat returns to The Dry Throat")
 	check(_chart_row_fits(main.throat_grid, main._side), "the throat chart row fits in the window")
+	var larmier_rect: Rect2 = main.larmier_book_button.get_global_rect()
+	var larmier_side: Rect2 = main._side.get_global_rect()
+	var throat_button_rect: Rect2 = main.throat_book_button.get_global_rect()
+	check(larmier_side.grow(1.0).encloses(larmier_rect), "the larmier book button sits inside the side panel")
+	check(not larmier_rect.intersects(throat_button_rect), "the larmier book button stays beside the throat")
+	check(larmier_rect.size.x + 0.5 >= main.larmier_book_button.get_minimum_size().x, "the larmier label has room")
+	check(int(ProjectSettings.get_setting("display/window/size/viewport_width")) == 1280 and int(ProjectSettings.get_setting("display/window/size/viewport_height")) == 720, "the window stays 1280 by 720")
+	main.unlocked[286] = false
+	main._refresh_chrome()
+	check(main.larmier_book_button.disabled, "the larmier stays locked until the throat mark is held")
+	main.unlocked[285] = true
+	check(main.select_chart(285), "chart 286 opens when unlocked")
+	check(main.larmier_book_button.disabled, "opening the throat mark does not unlock the larmier")
+	main.state = Charts.duplicate_state(Charts.make_state(main.chart, true))
+	main._refresh()
+	main.try_lock()
+	check(main.board_locked and main.unlocked[286], "holding the throat mark opens the larmier")
+	main._advance_from_win()
+	check(str(main.chart["id"]) == "287", "next chart from the throat mark enters The Dry Larmier")
+	check(main.larmier_grid.visible and not main.throat_grid.visible and not main.hood_grid.visible, "the larmier grid opens with The Dry Larmier")
+	check(str(main.harbor_label.text) == Charts.LARMIER, "the harbor name follows the larmier")
+	check(str(main.tide_readout.text).to_lower().contains("larmier"), "chart 287 names the larmier in the water readout")
+	var larmier_cell := Charts.piece_cell(main.chart, main.state, "O")
+	check(str(main.selected_id) == "O" and int(main.state["pieces"]["O"]["rot"]) == 90, "chart 287 starts facing east")
+	_click_cell(main, larmier_cell.x, larmier_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 180, "a click turns the larmier from east to south")
+	check(str(main.status_label.text).to_lower().contains("perpendicular") and str(main.status_label.text).to_lower().contains("flooded"), "the larmier says the dry pass is perpendicular and the flood opens the facing axis")
+	_click_cell(main, larmier_cell.x, larmier_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 270, "the next click turns the larmier west")
+	_click_cell(main, larmier_cell.x, larmier_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 0, "the next click turns the larmier north")
+	_click_cell(main, larmier_cell.x, larmier_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 90, "four clicks restore the east facing")
+	main._on_book_pressed(36)
+	await process_frame
+	check(str(main.chart["id"]) == "287", "Larmier returns to The Dry Larmier")
+	check(_chart_row_fits(main.larmier_grid, main._side), "the larmier chart row fits in the window")
 	main._on_book_pressed(13)
-	check(main.weir_grid.visible and not main.lintel_grid.visible and not main.mullion_grid.visible and not main.transom_grid.visible and not main.casement_grid.visible and not main.jamb_grid.visible and not main.astragal_grid.visible and not main.scotia_grid.visible and not main.torus_grid.visible and not main.ogee_grid.visible and not main.ovolo_grid.visible and not main.cavetto_grid.visible and not main.fillet_grid.visible and not main.corona_grid.visible and not main.bead_grid.visible and not main.quirk_grid.visible and not main.cyma_grid.visible and not main.fascia_grid.visible and not main.soffit_grid.visible and not main.drip_grid.visible and not main.beak_grid.visible and not main.hood_grid.visible and not main.throat_grid.visible, "the weir book still opens")
+	check(main.weir_grid.visible and not main.lintel_grid.visible and not main.mullion_grid.visible and not main.transom_grid.visible and not main.casement_grid.visible and not main.jamb_grid.visible and not main.astragal_grid.visible and not main.scotia_grid.visible and not main.torus_grid.visible and not main.ogee_grid.visible and not main.ovolo_grid.visible and not main.cavetto_grid.visible and not main.fillet_grid.visible and not main.corona_grid.visible and not main.bead_grid.visible and not main.quirk_grid.visible and not main.cyma_grid.visible and not main.fascia_grid.visible and not main.soffit_grid.visible and not main.drip_grid.visible and not main.beak_grid.visible and not main.hood_grid.visible and not main.throat_grid.visible and not main.larmier_grid.visible, "the weir book still opens")
 	main.select_chart(0)
 	main.restart_chart()
 	var before_rot := int(main.state["pieces"]["M"]["rot"])
@@ -12883,8 +13182,9 @@ func _walk(chart: Dictionary, state: Dictionary, index: int, found: Array) -> vo
 	# A beak has four facings. Dry, it stops only the next clockwise direction. Flooded, only that direction passes.
 	# A hood has four facings. Dry, it stops its facing. Flooded, only the facing passes.
 	# A throat has four facings. Dry, it stops the opposite of its facing. Flooded, only that opposite passes.
+	# A larmier has four facings. Dry, it passes the two perpendicular directions. Flooded, only the facing and the opposite pass. Opposite facings share that open set.
 	var rots: Array = [0]
-	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma" or kind == "fascia" or kind == "soffit" or kind == "drip" or kind == "beak" or kind == "hood" or kind == "throat":
+	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma" or kind == "fascia" or kind == "soffit" or kind == "drip" or kind == "beak" or kind == "hood" or kind == "throat" or kind == "larmier":
 		rots = [0, 90, 180, 270]
 	elif kind != "shutter" and kind != "well" and kind != "siphon" and kind != "lintel" and kind != "mullion" and kind != "transom":
 		rots = [0, 90]
