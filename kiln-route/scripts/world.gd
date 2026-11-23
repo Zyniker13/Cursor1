@@ -303,6 +303,22 @@ extends RefCounted
 ## waiter through a forward source. A sett sends the waiter behind. A punch
 ## sends the waiter right. A breast steps through a source on both the
 ## behind path and the forward path. Nothing stays in the bolster.
+## A snap does not forward in step 2 on its own. The first item stays.
+## Only an arrival from ahead is accepted. The same material does not
+## release the waiter. When a later item of a different material arrives
+## from ahead, the waiter moves one cell right and the arrival moves one
+## cell behind, and only if both of those cells can take them. Right is
+## one turn clockwise. Behind is opposite the facing. The snap is empty
+## after that tick. If either exit refuses, neither item leaves. When the
+## cell directly right is only a source, the waiter moves through that
+## cell into the next cell right. The arrival does not step through a
+## source. A behind source holds the arrival, and the pair stays. A
+## trashboard sends the waiter right and the arrival behind without
+## stepping the waiter through a source. A bolster sends the waiter left.
+## A punch sends the waiter right and the arrival forward. A sett sends
+## the waiter behind. A hardie sends the waiter forward and the arrival
+## left. A breast steps through a source on both paths. Nothing stays in
+## the snap.
 
 const Rules = preload("res://scripts/foundry.gd")
 
@@ -334,7 +350,7 @@ class Machine:
 	## Second lane on a bridge. -1 is empty. Other machines leave it empty.
 	var cross := -1
 	var cross_moved := false
-	## True while a twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, a clevis, a beam, a hake, a sole, a frog, a shin, a point, a throat, a wrest, a jointer, a bridle, a trashboard, a gauge, a breast, a hardie, a fuller, a swage, a flatter, a drift, a punch, a sett, or a bolster is resolving an arrival, so a loop cannot re-enter.
+	## True while a twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, a clevis, a beam, a hake, a sole, a frog, a shin, a point, a throat, a wrest, a jointer, a bridle, a trashboard, a gauge, a breast, a hardie, a fuller, a swage, a flatter, a drift, a punch, a sett, a bolster, or a snap is resolving an arrival, so a loop cannot re-enter.
 	var pairing := false
 
 class Source:
@@ -744,8 +760,9 @@ func _can_take(machine: Machine, mat: int, arrival: int) -> bool:
 		or machine.kind == Rules.Kind.PUNCH
 		or machine.kind == Rules.Kind.SETT
 		or machine.kind == Rules.Kind.BOLSTER
+		or machine.kind == Rules.Kind.SNAP
 	):
-		# Pairing is handled in _accept. A twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, a clevis, a beam, a hake, a sole, a frog, a shin, a point, a throat, a wrest, a jointer, a bridle, a trashboard, a gauge, a breast, a hardie, a fuller, a swage, a flatter, a drift, a punch, a sett, or a bolster may already be holding.
+		# Pairing is handled in _accept. A twin, a pass, a slip, a shed, a rake, a hoe, a harrow, a fork, a prong, a share, a coulter, a moldboard, a landside, a slade, a heel, a stilt, a clevis, a beam, a hake, a sole, a frog, a shin, a point, a throat, a wrest, a jointer, a bridle, a trashboard, a gauge, a breast, a hardie, a fuller, a swage, a flatter, a drift, a punch, a sett, a bolster, or a snap may already be holding.
 		return false
 	if machine.kind == Rules.Kind.BRIDGE:
 		if arrival == machine.dir:
@@ -865,6 +882,8 @@ func _accept(dest: Vector2i, mat: int, arrival: int) -> bool:
 		return _accept_sett(dest, machine, mat, arrival)
 	if machine.kind == Rules.Kind.BOLSTER:
 		return _accept_bolster(dest, machine, mat, arrival)
+	if machine.kind == Rules.Kind.SNAP:
+		return _accept_snap(dest, machine, mat, arrival)
 	if not _can_take(machine, mat, arrival):
 		return false
 	if _holder(machine.kind):
@@ -2481,6 +2500,55 @@ func _accept_bolster(pos: Vector2i, machine: Machine, mat: int, arrival: int) ->
 	if left_sent:
 		behind_sent = _accept(pos + Rules.vec(behind_dir), mat, behind_dir)
 	if not left_sent or not behind_sent:
+		_restore(mark)
+		return false
+	machine.pairing = false
+	machine.hold = -1
+	machine.moved = false
+	return true
+
+
+## From ahead only. The first item waits and never leaves on its own. The
+## same material does not release the waiter. A later item of a different
+## material from ahead may leave on that tick: the waiter moves one cell
+## right and the arrival moves one cell behind, if both cells can take
+## them. Right is one turn clockwise. Behind is opposite the facing. The
+## snap is empty afterwards. If either exit refuses, neither item leaves
+## and the arrival is not accepted. When the cell directly right is only a
+## source, the waiter moves through that cell into the next cell right. The
+## arrival does not step through a source. A behind source holds the arrival,
+## and the pair stays. A lone item never leaves, including on the next tick
+## and the tick after that. The snap does not accept from the left, from the
+## right, or from behind. It does not spill, rotate, alternate, or keep
+## either item. A trashboard sends the waiter right and the arrival behind
+## without stepping the waiter through a source. A bolster sends the waiter
+## left and steps the waiter through a source. A punch sends the waiter
+## right and the arrival forward. A sett sends the waiter behind. A hardie
+## sends the waiter forward and the arrival left. A breast steps through a
+## source on both the behind path and the forward path.
+func _accept_snap(pos: Vector2i, machine: Machine, mat: int, arrival: int) -> bool:
+	if arrival != Rules.opposite(machine.dir):
+		return false
+	if machine.hold < 0:
+		machine.hold = mat
+		machine.moved = true
+		return true
+	if machine.moved or machine.pairing:
+		return false
+	if mat == machine.hold:
+		return false
+	var right_dir := Rules.right(machine.dir)
+	var behind_dir := Rules.opposite(machine.dir)
+	var mark := _checkpoint()
+	machine.pairing = true
+	var right_pos := pos + Rules.vec(right_dir)
+	var right_sent: bool = _accept(right_pos, machine.hold, right_dir)
+	if not right_sent and _source_only(right_pos):
+		right_sent = _accept(right_pos + Rules.vec(right_dir), machine.hold, right_dir)
+	var behind_sent := false
+	if right_sent:
+		behind_sent = _accept(pos + Rules.vec(behind_dir), mat, behind_dir)
+	if not right_sent or not behind_sent:
 		_restore(mark)
 		return false
 	machine.pairing = false
