@@ -2456,6 +2456,7 @@ const SHIFT_APPENDIX := 36
 const SHIFT_AFTERWORD := 37
 const SHIFT_POSTSCRIPT := 38
 const SHIFT_ADDENDA := 39
+const SHIFT_ENVOI := 40
 
 const ROW_NAMES := ["top row", "middle row", "bottom row"]
 const COL_NAMES := ["column 1", "column 2", "column 3"]
@@ -4437,6 +4438,54 @@ const ADDENDA_BELL := [
 ]
 
 
+const ENVOI_BELL := [
+	{
+		"id": "elspeth_hale",
+		"name": "Elspeth Hale",
+		"form_name": "Cleft Toll",
+		"rule_text": "Patience drops by 2 when the number of filled cells is 0 or 2.",
+		"rule": "drop_if_cleft_count",
+		"lane": 0,
+		"exemption_row": 1,
+		"goal": 18,
+		"patience": 5,
+	},
+	{
+		"id": "owen_voss",
+		"name": "Owen Voss",
+		"form_name": "Pace Blank",
+		"rule_text": "A stamp scores twice only when the queue cell one place after it is empty. The bottom-right cell has no cell one place after it, so it does not double.",
+		"rule": "double_pace_blank",
+		"lane": 1,
+		"exemption_row": 0,
+		"goal": 20,
+		"patience": 5,
+	},
+	{
+		"id": "ingrid_brant",
+		"name": "Ingrid Brant",
+		"form_name": "Vault Pay",
+		"rule_text": "Each stamp with exactly four corner neighbors scores +2 once. Exactly one corner neighbor scores its own number. Exactly two corner neighbors score their own number. Exactly three corner neighbors score their own number. A side neighbor is not a corner. A lone stamp scores its own number.",
+		"rule": "yield_vault_pay",
+		"lane": 2,
+		"exemption_row": 2,
+		"goal": 16,
+		"patience": 5,
+	},
+	{
+		"id": "lars_okell",
+		"name": "Lars Okell",
+		"form_name": "Pace Back",
+		"rule_text": "A stamp scores twice only when the queue cell one place before it is filled. The top-left cell has no cell one place before it, so it does not double.",
+		"rule": "double_pace_back",
+		"lane": 1,
+		"exemption_row": 2,
+		"goal": 22,
+		"patience": 5,
+	},
+]
+
+
 class NightState:
 	extends RefCounted
 	var seed: int = 1
@@ -4534,6 +4583,8 @@ static func _canonical_shift(shift_index: int) -> int:
 		return SHIFT_TITLEPAGE
 	if shift_index == SHIFT_COPYRIGHT:
 		return SHIFT_COPYRIGHT
+	if shift_index == SHIFT_ENVOI:
+		return SHIFT_ENVOI
 	if shift_index == SHIFT_ADDENDA:
 		return SHIFT_ADDENDA
 	if shift_index == SHIFT_POSTSCRIPT:
@@ -4575,6 +4626,8 @@ static func new_run(seed_value: int, shift_index: int = SHIFT_FIRST) -> NightSta
 	state.next_iid = 0
 	for card_id in STARTING_DECK:
 		_add_library_card(state, String(card_id))
+	if state.shift == SHIFT_ENVOI:
+		_log(state, "The envoi bell begins. Seed %d." % state.seed)
 	if state.shift == SHIFT_ADDENDA:
 		_log(state, "The addenda bell begins. Seed %d." % state.seed)
 	if state.shift == SHIFT_POSTSCRIPT:
@@ -4695,6 +4748,8 @@ static func restart_encounter(state: NightState) -> void:
 
 
 static func shift_label(state: NightState) -> String:
+	if state.shift == SHIFT_ENVOI:
+		return "Envoi bell"
 	if state.shift == SHIFT_ADDENDA:
 		return "Addenda bell"
 	if state.shift == SHIFT_POSTSCRIPT:
@@ -4791,6 +4846,8 @@ static func traveler(state: NightState) -> Dictionary:
 
 
 static func _roster(state: NightState) -> Array:
+	if state.shift == SHIFT_ENVOI:
+		return ENVOI_BELL
 	if state.shift == SHIFT_ADDENDA:
 		return ADDENDA_BELL
 	if state.shift == SHIFT_POSTSCRIPT:
@@ -5261,6 +5318,12 @@ static func stamp_progress(state: NightState, card_id: String, row: int, col: in
 		return amount + 2
 	if rule == "double_reach_back" and _reach_back(state, row, col):
 		return amount * 2
+	if rule == "double_pace_blank" and _pace_blank(state, row, col):
+		return amount * 2
+	if rule == "yield_vault_pay" and _vault_pay(state, row, col):
+		return amount + 2
+	if rule == "double_pace_back" and _pace_back(state, row, col):
+		return amount * 2
 	return amount
 
 
@@ -5414,6 +5477,8 @@ static func patience_loss(state: NightState) -> int:
 		elif rule == "drop_if_ledge_count" and _is_ledge_count(_stamp_count(state)):
 			loss = 2
 		elif rule == "drop_if_brow_count" and _is_brow_count(_stamp_count(state)):
+			loss = 2
+		elif rule == "drop_if_cleft_count" and _is_cleft_count(_stamp_count(state)):
 			loss = 2
 	return loss
 
@@ -5784,6 +5849,12 @@ static func _resolve_stamp(state: NightState, row: int, col: int, hush: bool) ->
 				_log(state, "%s on the %s, %s grants %d. Three corner neighbors pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			elif tail_rule == "double_reach_back" and _reach_back(state, row, col) and amount > raw:
 				_log(state, "%s on the %s, %s grants %d. The filled cell eight places before it doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_pace_blank" and _pace_blank(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The empty cell one place after it doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "yield_vault_pay" and _vault_pay(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. Four corner neighbors pay +2." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
+			elif tail_rule == "double_pace_back" and _pace_back(state, row, col) and amount > raw:
+				_log(state, "%s on the %s, %s grants %d. The filled cell one place before it doubles it." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 			else:
 				_log(state, "%s on the %s, %s grants %d." % [CARDS[card_id]["name"], ROW_NAMES[row], COL_NAMES[col], amount])
 	state.turn_progress += amount
@@ -6152,6 +6223,48 @@ static func _wedge_pay(state: NightState, row: int, col: int) -> bool:
 	if state.form[row][col] == null:
 		return false
 	return _diagonal_count(state, row, col) == 2
+
+
+static func _is_cleft_count(count: int) -> bool:
+	return count == 0 or count == 2
+
+
+static func _pace_blank(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var ahead_row := row
+	var ahead_col := col + 1
+	while ahead_col > 2:
+		ahead_row += 1
+		ahead_col -= 3
+	if ahead_row > 2:
+		return false
+	return state.form[ahead_row][ahead_col] == null
+
+
+static func _vault_pay(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	return _diagonal_count(state, row, col) == 4
+
+
+static func _pace_back(state: NightState, row: int, col: int) -> bool:
+	if row < 0 or col < 0 or row > 2 or col > 2:
+		return false
+	if state.form[row][col] == null:
+		return false
+	var back_row := row
+	var back_col := col - 1
+	while back_col < 0:
+		back_row -= 1
+		back_col += 3
+	if back_row < 0:
+		return false
+	return state.form[back_row][back_col] != null
 
 
 static func _is_brow_count(count: int) -> bool:
@@ -7070,6 +7183,8 @@ static func _apply_result(state: NightState, result: Dictionary) -> void:
 		state.encounters_cleared += 1
 		if state.traveler_index >= _roster(state).size() - 1:
 			state.phase = "victory"
+			if state.shift == SHIFT_ENVOI:
+				_log(state, "The queue is empty. The envoi bell is clear.")
 			if state.shift == SHIFT_ADDENDA:
 				_log(state, "The queue is empty. The addenda bell is clear.")
 			if state.shift == SHIFT_POSTSCRIPT:
