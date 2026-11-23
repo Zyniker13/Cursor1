@@ -325,6 +325,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_billet(at, rot)
 		"reed":
 			_draw_reed(at, rot)
+		"staff":
+			_draw_staff(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -2169,6 +2171,67 @@ func _reed_rib(center: Vector2, dir: String, mark: Color) -> void:
 	var inner := center + outward * cell * 0.08
 	var outer := center + outward * cell * 0.22
 	var half := cell * 0.012
+	draw_colored_polygon(PackedVector2Array([
+		inner - across * half,
+		inner + across * half,
+		outer + across * half,
+		outer - across * half,
+	]), mark)
+
+func _draw_staff(at: Vector2i, rot: int) -> void:
+	# A staff shaft with a knob, plus bars on the headings that pass. Dry, no
+	# heading passes, so only the shaft shows. Flooded, the opposite and the
+	# clockwise heading each carry a bar, thicker than a reed rib.
+	var center := _center(at)
+	var facing := Tracer.staff_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var outward := Vector2.UP
+	match facing:
+		"N":
+			outward = Vector2.UP
+		"E":
+			outward = Vector2.RIGHT
+		"S":
+			outward = Vector2.DOWN
+		_:
+			outward = Vector2.LEFT
+	var across := Vector2(-outward.y, outward.x)
+	var reach := cell * 0.30
+	var thick := cell * 0.055
+	draw_colored_polygon(PackedVector2Array([
+		center - outward * reach - across * thick,
+		center + outward * reach - across * thick,
+		center + outward * reach + across * thick,
+		center - outward * reach + across * thick,
+	]), mark)
+	var knob := center + outward * reach
+	draw_colored_polygon(PackedVector2Array([
+		knob + Vector2(-cell * 0.07, -cell * 0.07),
+		knob + Vector2(cell * 0.07, -cell * 0.07),
+		knob + Vector2(cell * 0.07, cell * 0.07),
+		knob + Vector2(-cell * 0.07, cell * 0.07),
+	]), mark)
+	if not flooded:
+		return
+	_staff_bar(center, Tracer.rotate_dir(facing, 2), mark)
+	_staff_bar(center, Tracer.rotate_dir(facing, 1), mark)
+
+func _staff_bar(center: Vector2, dir: String, mark: Color) -> void:
+	var outward := Vector2.UP
+	match dir:
+		"N":
+			outward = Vector2.UP
+		"E":
+			outward = Vector2.RIGHT
+		"S":
+			outward = Vector2.DOWN
+		_:
+			outward = Vector2.LEFT
+	var across := Vector2(-outward.y, outward.x)
+	var inner := center + outward * cell * 0.10
+	var outer := center + outward * cell * 0.26
+	var half := cell * 0.04
 	draw_colored_polygon(PackedVector2Array([
 		inner - across * half,
 		inner + across * half,
