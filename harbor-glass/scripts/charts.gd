@@ -17,7 +17,7 @@ class_name ChartBook
 # The Corona holds eight more. The Bead holds eight more. The Quirk holds eight more.
 # The Cyma holds eight more. The Fascia holds eight more. The Soffit holds eight more.
 # The Drip holds eight more. The Beak holds eight more. The Hood holds eight more.
-# The Throat holds eight more. The Larmier holds eight more. The Cill holds the last eight.
+# The Throat holds eight more. The Larmier holds eight more. The Cill holds eight more. The Threshold holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
@@ -254,6 +254,19 @@ class_name ChartBook
 # do not enter. A flooded north cill passes only east and west. A flooded
 # north larmier passes only north and south. A flooded corona stays shut. A
 # mullion passes north and south and has no flood flip onto east and west.
+# A threshold has a facing. Rotation changes it the same way: 0 north, 90 east,
+# 180 south, 270 west. Opposite facings do not share the open set. While its
+# row is dry, only the opposite of the facing passes straight through in the
+# same direction and the same color, and that pass costs no bounce. It does
+# not turn, it does not recolor, and it does not split. Facing north, only
+# south passes, and north, east, and west stop. One click faces east and only
+# west passes. While that row is flooded, the dry rule flips. Every direction
+# except the opposite passes, and that opposite stops at the waterline and
+# does not enter. A flooded north threshold passes north, east, and west, and
+# stops south. A flooded north throat passes only south. A dry north throat
+# passes north, east, and west. A dry north cill passes north and south. A
+# dry north larmier passes east and west. A dry fillet passes only south and
+# stays shut under water.
 # See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
@@ -298,6 +311,7 @@ const HOOD := "The Hood"
 const THROAT := "The Throat"
 const LARMIER := "The Larmier"
 const CILL := "The Cill"
+const THRESHOLD := "The Threshold"
 
 static func all() -> Array:
 	var book: Array = []
@@ -339,6 +353,7 @@ static func all() -> Array:
 	book.append_array(throat())
 	book.append_array(larmier())
 	book.append_array(cill())
+	book.append_array(threshold())
 	return book
 
 
@@ -492,6 +507,10 @@ static func larmier() -> Array:
 
 static func cill() -> Array:
 	return [chart_295(), chart_296(), chart_297(), chart_298(), chart_299(), chart_300(), chart_301(), chart_302()]
+
+
+static func threshold() -> Array:
+	return [chart_303(), chart_304(), chart_305(), chart_306(), chart_307(), chart_308(), chart_309(), chart_310()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -11401,6 +11420,318 @@ static func chart_302() -> Dictionary:
 	}
 
 
+static func chart_303() -> Dictionary:
+	# Dry north threshold. Only south passes.
+	return {
+		"id": "303",
+		"title": "The Dry Threshold",
+		"harbor": THRESHOLD,
+		"win": "The threshold faces north. Only south passes.",
+		"teach": "A dry north threshold passes only south and stops north, east, and west. One click faces east and only west passes. A south threshold passes only north.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ss", 3, 0, "S", "white"),
+			_lantern("Nn", 3, 6, "N", "red"),
+			_lantern("Ee", 0, 3, "E", "blue"),
+			_lantern("Ww", 6, 3, "W", "red"),
+		],
+		"docks": [
+			_dock("Sd", 3, 5, "white", true),
+			_dock("Td", 3, 4, "blue", true, true),
+			_dock("Nd", 3, 1, "red", true, true),
+			_dock("Ed", 5, 3, "blue", true, true),
+			_dock("Wd", 1, 3, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_threshold("O", "Threshold", 3, 3, 90, 0),
+		],
+	}
+
+
+static func chart_304() -> Dictionary:
+	# Flooded north threshold. North, east, and west pass. South stops.
+	return {
+		"id": "304",
+		"title": "The Flooded Facing",
+		"harbor": THRESHOLD,
+		"win": "The threshold is flooded and faces north. North, east, and west pass.",
+		"teach": "A flooded north threshold passes north, east, and west, and stops south. A flooded north throat passes only south and misses.",
+		"cols": 9,
+		"rows": 8,
+		"tide_phases": [0, 4],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Gs", 1, 2, "S", "white"),
+			_lantern("Ns", 2, 1, "S", "blue"),
+			_lantern("Ts", 4, 2, "S", "white"),
+		],
+		"docks": [
+			_dock("Rd", 1, 3, "red", true),
+			_dock("Nd", 4, 3, "blue", true),
+			_dock("Ks", 2, 3, "white", true, true),
+		],
+		"boats": [],
+		"fixtures": [
+			_fixture("M1", "tide_mirror", 1, 4, 90),
+			_fixture("S2", "shutter", 2, 4, 0),
+			_fixture("S3", "shutter", 3, 4, 0),
+			_fixture("St", "stain", 5, 4, 0),
+			_fixture("Su", "sluice", 6, 4, 270),
+			_fixture("S25", "shutter", 2, 5, 0),
+			_fixture("S26", "shutter", 2, 6, 0),
+			_fixture("M2", "tide_mirror", 2, 7, 90),
+			_fixture("S37", "shutter", 3, 7, 0),
+			_fixture("M47", "tide_mirror", 4, 7, 0),
+			_fixture("S46", "shutter", 4, 6, 0),
+			_fixture("S45", "shutter", 4, 5, 0),
+		],
+		"pieces": [
+			_threshold("O", "Threshold", 4, 4, 90, 0),
+		],
+	}
+
+
+static func chart_305() -> Dictionary:
+	# Turned once from north. Dry east threshold. Only west passes.
+	return {
+		"id": "305",
+		"title": "The Turned Facing",
+		"harbor": THRESHOLD,
+		"win": "The threshold faces east. Only west passes.",
+		"teach": "One click from north faces east. A dry east threshold passes only west and stops east, north, and south.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ww", 6, 3, "W", "white"),
+			_lantern("Ee", 0, 3, "E", "red"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+			_lantern("Nn", 3, 6, "N", "red"),
+		],
+		"docks": [
+			_dock("Wd", 1, 3, "white", true),
+			_dock("Td", 2, 3, "blue", true, true),
+			_dock("Ed", 5, 3, "red", true, true),
+			_dock("Sd", 3, 5, "blue", true, true),
+			_dock("Nd", 3, 1, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_threshold("O", "Threshold", 3, 3, 0, 90),
+		],
+	}
+
+
+static func chart_306() -> Dictionary:
+	# A north throat passes the other three beams and misses the south pass.
+	return {
+		"id": "306",
+		"title": "The Throat Miss",
+		"harbor": THRESHOLD,
+		"win": "Only south passes. The throat misses that beam.",
+		"teach": "A dry north throat passes north, east, and west, and stops south. It misses this chart. A flooded north throat passes only south.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ss", 3, 0, "S", "white"),
+			_lantern("Nn", 3, 6, "N", "red"),
+			_lantern("Ee", 0, 3, "E", "blue"),
+			_lantern("Ww", 6, 3, "W", "red"),
+		],
+		"docks": [
+			_dock("Sd", 3, 5, "white", true),
+			_dock("Td", 3, 4, "blue", true, true),
+			_dock("Nd", 3, 1, "red", true, true),
+			_dock("Ed", 5, 3, "blue", true, true),
+			_dock("Wd", 1, 3, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_threshold("O", "Threshold", 3, 3, 270, 0),
+		],
+	}
+
+
+static func chart_307() -> Dictionary:
+	# A north cill passes north as well as south, so the north keep lights.
+	return {
+		"id": "307",
+		"title": "The Cill Miss",
+		"harbor": THRESHOLD,
+		"win": "Only south passes. The cill lights the north keep.",
+		"teach": "A dry north cill passes north and south. The north beam reaches the keep, so the cill misses. A flooded north cill passes only east and west.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ss", 3, 0, "S", "white"),
+			_lantern("Nn", 3, 6, "N", "red"),
+			_lantern("Ee", 0, 3, "E", "blue"),
+			_lantern("Ww", 6, 3, "W", "red"),
+		],
+		"docks": [
+			_dock("Sd", 3, 5, "white", true),
+			_dock("Td", 3, 4, "blue", true, true),
+			_dock("Nd", 3, 1, "red", true, true),
+			_dock("Ed", 5, 3, "blue", true, true),
+			_dock("Wd", 1, 3, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_threshold("O", "Threshold", 3, 3, 90, 0),
+		],
+	}
+
+
+static func chart_308() -> Dictionary:
+	# A north larmier passes east and west and misses the south beam.
+	return {
+		"id": "308",
+		"title": "The Larmier Miss",
+		"harbor": THRESHOLD,
+		"win": "Only south passes. The larmier lights the side keeps.",
+		"teach": "A dry north larmier passes east and west and stops north and south. It misses this chart. A flooded north larmier passes only north and south.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ss", 3, 0, "S", "white"),
+			_lantern("Nn", 3, 6, "N", "red"),
+			_lantern("Ee", 0, 3, "E", "blue"),
+			_lantern("Ww", 6, 3, "W", "red"),
+		],
+		"docks": [
+			_dock("Sd", 3, 5, "white", true),
+			_dock("Td", 3, 4, "blue", true, true),
+			_dock("Nd", 3, 1, "red", true, true),
+			_dock("Ed", 5, 3, "blue", true, true),
+			_dock("Wd", 1, 3, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_threshold("O", "Threshold", 3, 3, 270, 0),
+		],
+	}
+
+
+static func chart_309() -> Dictionary:
+	# Two thresholds. West seat passes only south. East seat passes only west.
+	return {
+		"id": "309",
+		"title": "Two Thresholds",
+		"harbor": THRESHOLD,
+		"win": "The west threshold passes only south. The east threshold passes only west.",
+		"teach": "Two thresholds. The west one passes only south. The east one passes only west. Swapping the facings misses.",
+		"cols": 14,
+		"rows": 9,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Ss", 3, 0, "S", "white"),
+			_lantern("Nn", 3, 6, "N", "red"),
+			_lantern("Ee", 0, 3, "E", "blue"),
+			_lantern("Ww", 6, 3, "W", "red"),
+			_lantern("Uw", 13, 5, "W", "white"),
+			_lantern("Ue", 7, 5, "E", "red"),
+			_lantern("Us", 10, 2, "S", "blue"),
+			_lantern("Un", 10, 8, "N", "red"),
+		],
+		"docks": [
+			_dock("Sd", 3, 5, "white", true),
+			_dock("Td", 3, 4, "blue", true, true),
+			_dock("Nd", 3, 1, "red", true, true),
+			_dock("Ed", 5, 3, "blue", true, true),
+			_dock("Wd", 1, 3, "red", true, true),
+			_dock("Bdw", 8, 5, "white", true),
+			_dock("Btd", 9, 5, "blue", true, true),
+			_dock("Bde", 12, 5, "red", true, true),
+			_dock("Bds", 10, 7, "blue", true, true),
+			_dock("Bdn", 10, 3, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_threshold("O", "West threshold", 3, 3, 90, 0),
+			_threshold("U", "East threshold", 10, 5, 0, 90),
+		],
+	}
+
+
+static func chart_310() -> Dictionary:
+	# The flood line is the threshold's row. Low water keeps the dry stop.
+	return {
+		"id": "310",
+		"title": "The Flood Line",
+		"harbor": THRESHOLD,
+		"win": "Raise the tide to the threshold's row. North, east, and west pass.",
+		"teach": "The flood line stands on the threshold. Under water it passes north, east, and west, and stops south. Low water passes only south.",
+		"cols": 9,
+		"rows": 8,
+		"tide_phases": [0, 4],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Gs", 1, 2, "S", "white"),
+			_lantern("Ns", 2, 1, "S", "blue"),
+			_lantern("Ts", 4, 2, "S", "white"),
+		],
+		"docks": [
+			_dock("Rd", 1, 3, "red", true),
+			_dock("Nd", 4, 3, "blue", true),
+			_dock("Ks", 2, 3, "white", true, true),
+		],
+		"boats": [
+			_boat("Hb", 1, 7),
+		],
+		"fixtures": [
+			_fixture("M1", "tide_mirror", 1, 4, 90),
+			_fixture("S2", "shutter", 2, 4, 0),
+			_fixture("S3", "shutter", 3, 4, 0),
+			_fixture("St", "stain", 5, 4, 0),
+			_fixture("Su", "sluice", 6, 4, 270),
+			_fixture("S25", "shutter", 2, 5, 0),
+			_fixture("S26", "shutter", 2, 6, 0),
+			_fixture("M2", "tide_mirror", 2, 7, 90),
+			_fixture("S37", "shutter", 3, 7, 0),
+			_fixture("M47", "tide_mirror", 4, 7, 0),
+			_fixture("S46", "shutter", 4, 6, 0),
+			_fixture("S45", "shutter", 4, 5, 0),
+		],
+		"pieces": [
+			_threshold("O", "Threshold", 4, 4, 90, 0),
+		],
+	}
+
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -11849,6 +12180,20 @@ static func _throat(id: String, name: String, x: int, y: int, start_rot: int, so
 		"id": id,
 		"name": name,
 		"kind": "throat",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _threshold(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "threshold",
 		"movable": false,
 		"sockets": [{"id": "a", "x": x, "y": y}],
 		"start_socket": "a",
