@@ -277,6 +277,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_bead(at, rot)
 		"quirk":
 			_draw_quirk(at, rot)
+		"cyma":
+			_draw_cyma(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -1032,6 +1034,36 @@ func _draw_quirk(at: Vector2i, rot: int) -> void:
 		spot + Vector2(-half, 0),
 	])
 	draw_colored_polygon(diamond, pip)
+
+func _draw_cyma(at: Vector2i, rot: int) -> void:
+	# A short pale wave on the facing edge. A north cyma marks the north edge.
+	# The wave is not the quirk's diamond and not the bead's square pip.
+	var center := _center(at)
+	var passing := Tracer.cyma_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var wave := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var outward := Vector2.UP
+	var along := Vector2.RIGHT
+	match passing:
+		"N":
+			outward = Vector2.UP
+			along = Vector2.RIGHT
+		"S":
+			outward = Vector2.DOWN
+			along = Vector2.RIGHT
+		"E":
+			outward = Vector2.RIGHT
+			along = Vector2.DOWN
+		_:
+			outward = Vector2.LEFT
+			along = Vector2.DOWN
+	var half := cell * 0.16
+	var spot := center + outward * cell * 0.30
+	var left := spot - along * half + outward * cell * 0.06
+	var mid := spot - outward * cell * 0.05
+	var right := spot + along * half + outward * cell * 0.06
+	draw_line(left, mid, wave, 2.2)
+	draw_line(mid, right, wave, 2.2)
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
 	if dir == "N" or dir == "S":

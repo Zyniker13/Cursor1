@@ -14,7 +14,8 @@ class_name ChartBook
 # The Scotia holds eight more. The Torus holds eight more.
 # The Ogee holds eight more. The Ovolo holds eight more.
 # The Cavetto holds eight more. The Fillet holds eight more.
-# The Corona holds eight more. The Bead holds eight more. The Quirk holds the last eight.
+# The Corona holds eight more. The Bead holds eight more. The Quirk holds eight more.
+# The Cyma holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
@@ -153,6 +154,17 @@ class_name ChartBook
 # passes only south. A north corona passes east and west. A north scotia passes
 # north and west. While that row is flooded, every beam stops at the waterline,
 # the same way a flooded bead stops.
+# A cyma has a facing. Rotation changes it the same way: 0 north, 90 east,
+# 180 south, 270 west. Opposite facings are not the same piece. While its row
+# is dry, only the facing passes straight through in the same direction and
+# the same color, and that pass costs no bounce. It does not turn, it does not
+# recolor, and it does not split. The other three directions stop and do not
+# enter. Facing north, only north passes. One click faces east and passes only
+# east. Two clicks face south and pass only south. Three clicks face west and
+# pass only west. A north quirk passes only west. A north bead passes only
+# east. A north fillet passes only south. A north astragal passes north and
+# east. A north scotia passes north and west. While that row is flooded, every
+# beam stops at the waterline, the same way a flooded quirk stops.
 # See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
@@ -188,6 +200,7 @@ const FILLET := "The Fillet"
 const CORONA := "The Corona"
 const BEAD := "The Bead"
 const QUIRK := "The Quirk"
+const CYMA := "The Cyma"
 
 static func all() -> Array:
 	var book: Array = []
@@ -220,6 +233,7 @@ static func all() -> Array:
 	book.append_array(corona())
 	book.append_array(bead())
 	book.append_array(quirk())
+	book.append_array(cyma())
 	return book
 
 
@@ -337,6 +351,10 @@ static func bead() -> Array:
 
 static func quirk() -> Array:
 	return [chart_223(), chart_224(), chart_225(), chart_226(), chart_227(), chart_228(), chart_229(), chart_230()]
+
+
+static func cyma() -> Array:
+	return [chart_231(), chart_232(), chart_233(), chart_234(), chart_235(), chart_236(), chart_237(), chart_238()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -8582,6 +8600,302 @@ static func chart_230() -> Dictionary:
 	}
 
 
+static func chart_231() -> Dictionary:
+	# A dry north cyma passes only north. The other three directions stop.
+	return {
+		"id": "231",
+		"harbor": CYMA,
+		"title": "The Dry Cyma",
+		"teach": "Tide index 0, flood 0. A dry north cyma passes only its facing, the northbound beam. East, south, and west stop. One click faces east and passes only east. A north quirk passes only west. A north bead passes only east. A north fillet passes only south. A north astragal passes north and east. A north scotia passes north and west.",
+		"win": "The cyma faces north. Only north passes, and the other three beams stay dark.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 6, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "red"),
+			_lantern("Ee", 0, 3, "E", "blue"),
+			_lantern("Ww", 6, 3, "W", "red"),
+		],
+		"docks": [
+			_dock("Nd", 3, 1, "white", true),
+			_dock("Tn", 3, 2, "blue", true, true),
+			_dock("Sd", 3, 5, "red", true, true),
+			_dock("Ed", 5, 3, "blue", true, true),
+			_dock("Wd", 1, 3, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_cyma("O", "Cyma", 3, 3, 180, 0),
+		],
+	}
+
+
+static func chart_232() -> Dictionary:
+	# The cyma starts under water. Dry, only north passes.
+	return {
+		"id": "232",
+		"harbor": CYMA,
+		"title": "The Wet Stop",
+		"teach": "The cyma opens under water, so every beam stops at the waterline. Lower the tide and face it north. Only the northbound beam passes. East, south, and west stop. A shutter, a well, a siphon, a sluice, or a weir would carry the flooded beam into the cell.",
+		"win": "Low water opens only north. The flooded row had stopped every beam at the waterline.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [0, 4],
+		"start_tide_index": 1,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 7, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "red"),
+			_lantern("Ee", 0, 4, "E", "blue"),
+			_lantern("Ww", 7, 4, "W", "red"),
+		],
+		"docks": [
+			_dock("Nd", 3, 2, "white", true),
+			_dock("Tn", 3, 3, "blue", true, true),
+			_dock("Sd", 3, 6, "red", true, true),
+			_dock("Ed", 5, 4, "blue", true, true),
+			_dock("Wd", 1, 4, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_cyma("O", "Cyma", 3, 4, 180, 0),
+		],
+	}
+
+
+static func chart_233() -> Dictionary:
+	# North stays red. A stain paints the other exits the same color.
+	return {
+		"id": "233",
+		"harbor": CYMA,
+		"title": "Color Kept",
+		"teach": "The northbound beam is the only facing pass. Red stays red, blue stays blue, and white stays white. A stain would paint that pass. A weir recolors a flooded beam. This cyma stays dry and does not recolor.",
+		"win": "North stays red. The cyma did not paint the beam.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 7, "N", "red"),
+			_lantern("Ss", 3, 0, "S", "blue"),
+			_lantern("Ee", 0, 4, "E", "white"),
+			_lantern("Ww", 7, 4, "W", "blue"),
+		],
+		"docks": [
+			_dock("Nd", 3, 2, "red", true),
+			_dock("Tw", 3, 1, "white", true, true),
+			_dock("Sd", 3, 6, "blue", true, true),
+			_dock("Te", 5, 4, "white", true, true),
+			_dock("Tr", 6, 4, "red", true, true),
+			_dock("Wd", 1, 4, "blue", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_cyma("O", "Cyma", 3, 4, 180, 0),
+		],
+	}
+
+
+static func chart_234() -> Dictionary:
+	# The northbound beam leaves north. It does not turn.
+	return {
+		"id": "234",
+		"harbor": CYMA,
+		"title": "No Turn",
+		"teach": "The northbound beam leaves north. The cyma does not turn. A prism would split the white beam. A vane or a mirror would send it aside. A flooded sluice would turn it.",
+		"win": "North leaves north. Nothing was turned.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 6, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "red"),
+			_lantern("Ee", 0, 3, "E", "blue"),
+			_lantern("Ww", 6, 3, "W", "red"),
+		],
+		"docks": [
+			_dock("Nd", 3, 1, "white", true),
+			_dock("Tn", 3, 2, "blue", true, true),
+			_dock("Sd", 3, 5, "red", true, true),
+			_dock("Ed", 5, 3, "blue", true, true),
+			_dock("Wd", 1, 3, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_cyma("O", "Cyma", 3, 3, 270, 0),
+		],
+	}
+
+
+static func chart_235() -> Dictionary:
+	# The cyma row is dry. A neighbor beam dies on the flood.
+	return {
+		"id": "235",
+		"harbor": CYMA,
+		"title": "Beside the Flood",
+		"teach": "The cyma row is dry, so only the northbound beam passes. The flood beam stops at the waterline and never enters the flooded cell.",
+		"win": "The dry row passes only north. The flood beam stops at the waterline.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [2],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 5, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "red"),
+			_lantern("Ee", 0, 3, "E", "blue"),
+			_lantern("Ww", 6, 3, "W", "red"),
+			_lantern("Fl", 1, 5, "S", "white"),
+		],
+		"docks": [
+			_dock("Nd", 3, 1, "white", true),
+			_dock("Tn", 3, 2, "blue", true, true),
+			_dock("Sd", 3, 4, "red", true, true),
+			_dock("Ed", 5, 3, "blue", true, true),
+			_dock("Wd", 1, 3, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_cyma("O", "Cyma", 3, 3, 180, 0),
+		],
+	}
+
+
+static func chart_236() -> Dictionary:
+	# One cyma passes only north. The other passes only east.
+	return {
+		"id": "236",
+		"harbor": CYMA,
+		"title": "Two Cymas",
+		"teach": "One cyma passes only north. The other passes only east. Those open directions are not the same. Swapping the facings fails. A north quirk cannot take the north seat, because a north quirk passes only west.",
+		"win": "North stays on the first seat. East stays on the second.",
+		"cols": 12,
+		"rows": 9,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("An", 3, 6, "N", "white"),
+			_lantern("As", 3, 0, "S", "red"),
+			_lantern("Ae", 0, 3, "E", "blue"),
+			_lantern("Aw", 6, 3, "W", "red"),
+			_lantern("Be", 5, 5, "E", "white"),
+			_lantern("Bw", 11, 5, "W", "red"),
+			_lantern("Bn", 8, 8, "N", "blue"),
+			_lantern("Bs", 8, 2, "S", "red"),
+		],
+		"docks": [
+			_dock("Adn", 3, 1, "white", true),
+			_dock("At", 3, 2, "blue", true, true),
+			_dock("Ads", 3, 5, "red", true, true),
+			_dock("Ade", 5, 3, "blue", true, true),
+			_dock("Adw", 1, 3, "red", true, true),
+			_dock("Bde", 10, 5, "white", true),
+			_dock("Bt", 9, 5, "blue", true, true),
+			_dock("Bdw", 6, 5, "red", true, true),
+			_dock("Bdn", 8, 3, "blue", true, true),
+			_dock("Bds", 8, 7, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_cyma("O", "North cyma", 3, 3, 180, 0),
+			_cyma("U", "East cyma", 8, 5, 0, 90),
+		],
+	}
+
+
+static func chart_237() -> Dictionary:
+	# Three tide marks. The middle mark leaves the cyma dry, facing north.
+	return {
+		"id": "237",
+		"harbor": CYMA,
+		"title": "The Held Cyma",
+		"teach": "The held facing is part of the solution. The chart starts on a facing that stops north. Place the tide on the middle mark and face the cyma north. Low water wakes the south hull. High water covers the cyma and the beam stops at the waterline.",
+		"win": "The middle mark holds the north cyma. Only north passes, and the hull stays dark.",
+		"cols": 8,
+		"rows": 8,
+		"tide_phases": [0, 1, 5],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 4, 6, "N", "white"),
+			_lantern("Ss", 4, 0, "S", "red"),
+			_lantern("Ee", 0, 3, "E", "blue"),
+			_lantern("Ww", 7, 3, "W", "red"),
+			_lantern("Hl", 0, 7, "E", "white"),
+		],
+		"docks": [
+			_dock("Nd", 4, 1, "white", true),
+			_dock("Tn", 4, 2, "blue", true, true),
+			_dock("Sd", 4, 5, "red", true, true),
+			_dock("Ed", 6, 3, "blue", true, true),
+			_dock("Wd", 2, 3, "red", true, true),
+		],
+		"boats": [
+			_boat("Hb", 3, 7),
+		],
+		"fixtures": [],
+		"pieces": [
+			_cyma("O", "Cyma", 4, 3, 180, 0),
+		],
+	}
+
+
+static func chart_238() -> Dictionary:
+	# The cyma and the shutter trade places. On the line it faces north.
+	return {
+		"id": "238",
+		"harbor": CYMA,
+		"title": "The Cyma Mark",
+		"teach": "Move the cyma from the side socket onto the line and face it north. Only the northbound beam passes. East, south, and west must not count. A north quirk, a north bead, a north fillet, a north astragal, a north scotia, or a lintel in that cell fails.",
+		"win": "The cyma stands on the line, open only north. The other beams stay dark.",
+		"cols": 7,
+		"rows": 7,
+		"tide_phases": [0],
+		"start_tide_index": 0,
+		"solution_tide_index": 0,
+		"obstacles": [],
+		"lanterns": [
+			_lantern("Nn", 3, 6, "N", "white"),
+			_lantern("Ss", 3, 0, "S", "red"),
+			_lantern("Ee", 0, 3, "E", "blue"),
+			_lantern("Ww", 6, 3, "W", "red"),
+		],
+		"docks": [
+			_dock("Nd", 3, 1, "white", true),
+			_dock("Tn", 3, 2, "blue", true, true),
+			_dock("Sd", 3, 5, "red", true, true),
+			_dock("Ed", 5, 3, "blue", true, true),
+			_dock("Wd", 1, 3, "red", true, true),
+		],
+		"boats": [],
+		"fixtures": [],
+		"pieces": [
+			_placed("O", "Cyma", "cyma", [["side", 5, 5], ["line", 3, 3]], "side", "line", 180, 0),
+			_placed("G", "Line shutter", "shutter", [["line", 3, 3], ["side", 5, 5]], "line", "side", 0, 0),
+		],
+	}
+
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -8932,6 +9246,20 @@ static func _quirk(id: String, name: String, x: int, y: int, start_rot: int, sol
 		"id": id,
 		"name": name,
 		"kind": "quirk",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _cyma(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "cyma",
 		"movable": false,
 		"sockets": [{"id": "a", "x": x, "y": y}],
 		"start_socket": "a",
