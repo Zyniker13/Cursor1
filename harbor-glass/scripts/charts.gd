@@ -17,7 +17,7 @@ class_name ChartBook
 # The Corona holds eight more. The Bead holds eight more. The Quirk holds eight more.
 # The Cyma holds eight more. The Fascia holds eight more. The Soffit holds eight more.
 # The Drip holds eight more. The Beak holds eight more. The Hood holds eight more.
-# The Throat holds eight more. The Larmier holds eight more. The Cill holds eight more. The Threshold holds eight more. The Impost holds eight more. The Architrave holds eight more. The Archivolt holds eight more. The Abacus holds eight more. The Rebate holds eight more. The Echinus holds eight more. The Annulet holds eight more. The Listel holds eight more. The Necking holds eight more. The Taenia holds eight more. The Baguette holds eight more. The Reglet holds eight more. The Billet holds eight more. The Reed holds eight more. The Staff holds eight more. The Thumb holds eight more. The Roll holds the last eight.
+# The Throat holds eight more. The Larmier holds eight more. The Cill holds eight more. The Threshold holds eight more. The Impost holds eight more. The Architrave holds eight more. The Archivolt holds eight more. The Abacus holds eight more. The Rebate holds eight more. The Echinus holds eight more. The Annulet holds eight more. The Listel holds eight more. The Necking holds eight more. The Taenia holds eight more. The Baguette holds eight more. The Reglet holds eight more. The Billet holds eight more. The Reed holds eight more. The Staff holds eight more. The Thumb holds eight more. The Roll holds eight more. The Gutta holds the last eight.
 # Piece rotations are degrees. Mirrors and panes use 0 or 90 (the other two
 # facings repeat). Prisms use 0, 90, 180, and 270. A stain uses 0 for red and
 # 90 for blue, and that number is a color, not a facing. A vane uses 0, 90,
@@ -517,6 +517,28 @@ class_name ChartBook
 # north and east. A flooded north annulet passes only west. A flooded north
 # echinus passes only east. A flooded north rebate passes only south. A flooded
 # north abacus passes only north. A flooded north throat passes only south.
+# A gutta has a facing. Rotation changes it the same way: 0 north, 90 east,
+# 180 south, 270 west. While its row is dry, only the facing passes straight
+# through, and that pass costs no bounce. North passes only north. One click
+# faces east and only east passes. Opposite dry facings do not share that
+# beam. While that row is flooded, the two headings perpendicular to the
+# facing pass straight through. A flooded north gutta passes east and west,
+# and stops north and south. One click faces east and only north and south
+# pass. A flooded south gutta passes the same east and west. Opposite flooded
+# facings share that set. A listel stays shut while dry and passes north and
+# east under water. A dry cyma passes only the facing and stays shut under
+# water. A dry corona passes east and west and stays shut under water. An
+# archivolt stays shut while dry and passes east and west under water. A
+# flooded north roll passes south, east, and west, and stops north. A flooded
+# north thumb passes south and west. A flooded north staff passes south and
+# east. A flooded reed passes every heading. A flooded north taenia passes
+# north and south. A flooded north billet passes north, south, and west, and
+# stops east. A flooded north reglet passes north, south, and east, and stops
+# west. A flooded north baguette passes north, east, and west, and stops
+# south. A flooded north necking passes north and west. A flooded north
+# annulet passes only west. A flooded north echinus passes only east. A
+# flooded north rebate passes only south. A flooded north abacus passes only
+# north. A flooded north throat passes only south.
 # See BeamTracer.
 #
 # Every chart starts away from its solution: a wrong rotation, a wrong socket,
@@ -579,6 +601,7 @@ const REED := "The Reed"
 const STAFF := "The Staff"
 const THUMB := "The Thumb"
 const ROLL := "The Roll"
+const GUTTA := "The Gutta"
 
 static func all() -> Array:
 	var book: Array = []
@@ -638,6 +661,7 @@ static func all() -> Array:
 	book.append_array(staff())
 	book.append_array(thumb())
 	book.append_array(roll())
+	book.append_array(gutta())
 	return book
 
 
@@ -863,6 +887,10 @@ static func thumb() -> Array:
 
 static func roll() -> Array:
 	return [chart_439(), chart_440(), chart_441(), chart_442(), chart_443(), chart_444(), chart_445(), chart_446()]
+
+
+static func gutta() -> Array:
+	return [chart_447(), chart_448(), chart_449(), chart_450(), chart_451(), chart_452(), chart_453(), chart_454()]
 
 static func chart_1() -> Dictionary:
 	# One mirror. "/" sends the eastbound beam north into the dock.
@@ -15309,6 +15337,171 @@ static func chart_446() -> Dictionary:
 	)
 
 
+static func _gutta_lane(prefix: String, ox: int, east_west: bool) -> Dictionary:
+	return {
+		"lanterns": [
+			_lantern(prefix + "Tn", ox + 2, 1, "S", "white"),
+			_lantern(prefix + "Ts", ox + 4, 1, "S", "red"),
+			_lantern(prefix + "Te", ox + 1, 2, "S", "blue"),
+			_lantern(prefix + "Tw", ox + 8, 2, "S", "red"),
+		],
+		"docks": [
+			_dock(prefix + "Nd", ox + 4, 3, "white", true, east_west),
+			_dock(prefix + "Kb", ox + 4, 2, "blue", true, true),
+			_dock(prefix + "Ks", ox + 2, 3, "red", true, east_west),
+			_dock(prefix + "Ke", ox + 8, 3, "blue", true, not east_west),
+			_dock(prefix + "Kw", ox + 1, 3, "red", true, not east_west),
+		],
+		"fixtures": [
+			_fixture(prefix + "S24", "shutter", ox + 2, 4, 0),
+			_fixture(prefix + "S25", "shutter", ox + 2, 5, 0),
+			_fixture(prefix + "S26", "shutter", ox + 2, 6, 0),
+			_fixture(prefix + "M27", "tide_mirror", ox + 2, 7, 90),
+			_fixture(prefix + "S37", "shutter", ox + 3, 7, 0),
+			_fixture(prefix + "M47", "tide_mirror", ox + 4, 7, 0),
+			_fixture(prefix + "S46", "shutter", ox + 4, 6, 0),
+			_fixture(prefix + "S45", "shutter", ox + 4, 5, 0),
+			_fixture(prefix + "M14", "tide_mirror", ox + 1, 4, 90),
+			_fixture(prefix + "S34", "shutter", ox + 3, 4, 0),
+			_fixture(prefix + "S54", "shutter", ox + 5, 4, 0),
+			_fixture(prefix + "S64", "shutter", ox + 6, 4, 0),
+			_fixture(prefix + "S74", "shutter", ox + 7, 4, 0),
+			_fixture(prefix + "M84", "tide_mirror", ox + 8, 4, 0),
+		],
+	}
+
+
+static func _gutta_chart(id: String, title: String, teach: String, win: String, start_rot: int, sol_rot: int, east_west: bool, boat: bool) -> Dictionary:
+	var lane := _gutta_lane("", 0, east_west)
+	var boats: Array = []
+	if boat:
+		boats.append(_boat("Hb", 1, 7))
+	return {
+		"id": id,
+		"title": title,
+		"harbor": GUTTA,
+		"win": win,
+		"teach": teach,
+		"cols": 9,
+		"rows": 8,
+		"tide_phases": [0, 4],
+		"start_tide_index": 0,
+		"solution_tide_index": 1,
+		"obstacles": [],
+		"lanterns": lane["lanterns"],
+		"docks": lane["docks"],
+		"boats": boats,
+		"fixtures": lane["fixtures"],
+		"pieces": [
+			_gutta("O", "Gutta", 4, 4, start_rot, sol_rot),
+		],
+	}
+
+
+static func chart_447() -> Dictionary:
+	return _gutta_chart(
+		"447",
+		"The Flooded Gutta",
+		"A flooded north gutta passes east and west, and stops north and south. While it is dry, only the facing passes. One click faces east and only north and south pass.",
+		"High water opens east and west. Low water opens only the facing.",
+		90,
+		0,
+		true,
+		false
+	)
+
+
+static func chart_448() -> Dictionary:
+	return _gutta_chart(
+		"448",
+		"The Turned Gutta",
+		"One click faces the gutta east. North and south pass, and east and west stop. The east and west docks stay dark.",
+		"The east facing opens north and south.",
+		0,
+		90,
+		false,
+		false
+	)
+
+
+static func chart_449() -> Dictionary:
+	return _gutta_chart(
+		"449",
+		"The Roll Keep",
+		"A flooded north roll passes south, east, and west, and stops north, so the south keep lights.",
+		"East and west pass. The roll misses that set.",
+		180,
+		0,
+		true,
+		false
+	)
+
+
+static func chart_450() -> Dictionary:
+	return _gutta_chart(
+		"450",
+		"The Thumb Dock",
+		"A flooded north thumb passes south and west and stops north and east, so the south keep lights and the east dock stays dark.",
+		"East and west pass. The thumb misses that set.",
+		270,
+		0,
+		true,
+		false
+	)
+
+
+static func chart_451() -> Dictionary:
+	return _gutta_chart(
+		"451",
+		"The Staff Shut",
+		"A flooded north staff passes south and east and stops north and west, so the south keep lights and the west dock stays dark.",
+		"East and west pass. The staff misses that set.",
+		90,
+		0,
+		true,
+		false
+	)
+
+
+static func chart_452() -> Dictionary:
+	return _gutta_chart(
+		"452",
+		"The Reed Keep",
+		"A flooded reed passes every heading, so the north and south keeps light.",
+		"East and west pass. The reed misses that set.",
+		180,
+		0,
+		true,
+		false
+	)
+
+
+static func chart_453() -> Dictionary:
+	return _gutta_chart(
+		"453",
+		"The Taenia Axis",
+		"A flooded north taenia passes north and south, so both keeps light and both docks stay dark. An east taenia passes this same east and west.",
+		"East and west pass. The north taenia misses that set.",
+		270,
+		0,
+		true,
+		false
+	)
+
+
+static func chart_454() -> Dictionary:
+	return _gutta_chart(
+		"454",
+		"The Gutta Line",
+		"Raise the tide to the gutta's row. Under water, east and west pass, and north and south stop. A flooded north billet passes north, south, and west, and stops east, so both keeps light and the east dock stays dark. A flooded north reglet passes north, south, and east, and stops west, so both keeps light and the west dock stays dark. A flooded north baguette passes north, east, and west, and stops south, so the north keep lights. A flooded north necking passes north and west, so the north keep lights and the east dock stays dark. A flooded north listel passes north and east, so the north keep lights and the west dock stays dark. A flooded north annulet passes only west, so the east dock stays dark. A flooded north echinus passes only east, so the west dock stays dark. A flooded north rebate passes only south, so both docks stay dark. A flooded north abacus passes only north, so both docks stay dark. A flooded north throat passes only south, so both docks stay dark. Low water lights the hull and leaves those docks dark.",
+		"The flood line stands on the gutta. The hull stays dark.",
+		90,
+		0,
+		true,
+		true
+	)
+
+
 static func make_state(chart: Dictionary, solved: bool) -> Dictionary:
 	var pieces := {}
 	for raw in chart["pieces"]:
@@ -15757,6 +15950,20 @@ static func _throat(id: String, name: String, x: int, y: int, start_rot: int, so
 		"id": id,
 		"name": name,
 		"kind": "throat",
+		"movable": false,
+		"sockets": [{"id": "a", "x": x, "y": y}],
+		"start_socket": "a",
+		"start_rot": start_rot,
+		"solution_socket": "a",
+		"solution_rot": sol_rot,
+	}
+
+
+static func _gutta(id: String, name: String, x: int, y: int, start_rot: int, sol_rot: int) -> Dictionary:
+	return {
+		"id": id,
+		"name": name,
+		"kind": "gutta",
 		"movable": false,
 		"sockets": [{"id": "a", "x": x, "y": y}],
 		"start_socket": "a",
