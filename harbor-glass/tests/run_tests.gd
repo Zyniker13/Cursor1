@@ -110,6 +110,8 @@ func _run() -> void:
 	test_rebate_book()
 	test_echinus_rule()
 	test_echinus_book()
+	test_annulet_rule()
+	test_annulet_book()
 	test_chart_4_boat()
 	test_one_rotation_is_not_solved()
 	test_hint_points_at_one_piece()
@@ -300,7 +302,8 @@ func test_charts() -> void:
 	check(Charts.abacus().size() == 8, "abacus adds eight charts")
 	check(Charts.rebate().size() == 8, "rebate adds eight charts")
 	check(Charts.echinus().size() == 8, "echinus adds eight charts")
-	check(book.size() == 358, "three hundred fifty-eight charts")
+	check(Charts.annulet().size() == 8, "annulet adds eight charts")
+	check(book.size() == 366, "three hundred sixty-six charts")
 	check(str(book[13]["id"]) == "14" and str(book[13]["title"]) == "The Holding Line", "chart 14 stays the reach capstone")
 	check(str(book[14]["title"]) == "North Light", "chart 15 opens the basin")
 	check(str(book[21]["id"]) == "22" and str(book[21]["title"]) == "The Basin Mark", "chart 22 stays the basin capstone")
@@ -388,6 +391,8 @@ func test_charts() -> void:
 	check(str(book[349]["id"]) == "350" and str(book[349]["title"]) == "The Rebate Line", "chart 350 stays the rebate capstone")
 	check(str(book[350]["title"]) == "The Flooded Echinus", "chart 351 opens the echinus")
 	check(str(book[357]["id"]) == "358" and str(book[357]["title"]) == "The Echinus Line", "chart 358 stays the echinus capstone")
+	check(str(book[358]["title"]) == "The Flooded Annulet", "chart 359 opens the annulet")
+	check(str(book[365]["id"]) == "366" and str(book[365]["title"]) == "The Annulet Line", "chart 366 stays the annulet capstone")
 	var seen_ids := {}
 	var seen_titles := {}
 	var quay_titles := ["First Glass", "Around the Pilings", "High Water", "Sleeping Hull", "Split the White", "The Night Mark"]
@@ -13408,6 +13413,106 @@ func _expect_echinus_miss(chart: Dictionary, piece_id: String, kind: String, rot
 	check(not Tracer.is_cleared(copy, Charts.make_state(copy, true)), label)
 
 
+func test_annulet_rule() -> void:
+	check(Tracer.annulet_passes(0, "N") and Tracer.annulet_passes(0, "E") and Tracer.annulet_passes(0, "W") and not Tracer.annulet_passes(0, "S"), "a dry north annulet passes every heading except south")
+	check(Tracer.annulet_passes(90, "E") and Tracer.annulet_passes(90, "S") and Tracer.annulet_passes(90, "N") and not Tracer.annulet_passes(90, "W"), "one dry click faces east and stops only west")
+	check(not Tracer.annulet_passes(180, "N"), "opposite dry facings do not share the stopped heading")
+	check(Tracer.annulet_flood_passes(0, "W") and not Tracer.annulet_flood_passes(0, "N") and not Tracer.annulet_flood_passes(0, "E") and not Tracer.annulet_flood_passes(0, "S"), "a flooded north annulet passes only west")
+	check(Tracer.annulet_flood_passes(90, "N") and not Tracer.annulet_flood_passes(90, "E"), "one flooded click faces east and only north passes")
+	check(Tracer.annulet_flood_passes(180, "E") and not Tracer.annulet_flood_passes(180, "W"), "a flooded south annulet passes only east")
+	check(not Tracer.annulet_flood_passes(0, "E") and not Tracer.annulet_flood_passes(180, "W"), "opposite flooded facings do not share the counterclockwise heading")
+	check(Tracer.bead_passes(0, "E") and not Tracer.bead_passes(0, "N") and not Tracer.bead_passes(0, "W"), "a dry bead still passes only east")
+	check(Tracer.quirk_passes(0, "W") and not Tracer.quirk_passes(0, "N") and not Tracer.quirk_passes(0, "E"), "a dry quirk still passes only west")
+	check(Tracer.echinus_flood_passes(0, "E") and not Tracer.echinus_flood_passes(0, "W"), "a flooded north echinus still passes only east")
+	check(Tracer.rebate_flood_passes(0, "S") and not Tracer.rebate_flood_passes(0, "W"), "a flooded north rebate still passes only south")
+	check(Tracer.abacus_flood_passes(0, "N") and not Tracer.abacus_flood_passes(0, "W"), "a flooded north abacus still passes only north")
+	check(Tracer.throat_flood_passes(0, "S") and not Tracer.throat_flood_passes(0, "W"), "a flooded north throat still passes only south")
+
+
+func test_annulet_book() -> void:
+	var book := Charts.annulet()
+	check(book.size() == 8, "the annulet book has eight charts")
+	var titles := ["The Flooded Annulet", "The Turned Annulet", "The Echinus Miss", "The Rebate South", "The Abacus Facing", "The Throat South", "Two Annulets", "The Annulet Line"]
+	for i in book.size():
+		var chart: Dictionary = book[i]
+		check(str(chart["harbor"]) == Charts.ANNULET, "chart %s belongs to the annulet" % str(chart["id"]))
+		check(str(chart["title"]) == titles[i], "chart %s keeps its title" % str(chart["id"]))
+		_expect_annulet_misses(chart)
+	check(str(book[2]["teach"]).to_lower().contains("echinus"), "chart 361 names the echinus")
+	check(str(book[3]["teach"]).to_lower().contains("rebate"), "chart 362 names the rebate")
+	check(str(book[4]["teach"]).to_lower().contains("abacus"), "chart 363 names the abacus")
+	check(str(book[5]["teach"]).to_lower().contains("throat"), "chart 364 names the throat")
+	_expect_annulet_miss(book[2], "O", "echinus", 0, "a flooded north echinus misses chart 361")
+	_expect_annulet_miss(book[3], "O", "rebate", 0, "a flooded north rebate misses chart 362")
+	_expect_annulet_miss(book[4], "O", "abacus", 0, "a flooded north abacus misses chart 363")
+	_expect_annulet_miss(book[5], "O", "throat", 0, "a flooded north throat misses chart 364")
+	var shared: Dictionary = book[0].duplicate(true)
+	_retarget(shared, "O", "drip", 0)
+	check(Tracer.is_cleared(shared, Charts.make_state(shared, true)), "a flooded north drip shares the counterclockwise west beam")
+	var pair: Dictionary = book[6]
+	var swapped: Dictionary = pair.duplicate(true)
+	_retarget(swapped, "O", "annulet", 90)
+	_retarget(swapped, "U", "annulet", 0)
+	check(not Tracer.is_cleared(swapped, Charts.make_state(swapped, true)), "swapping the two annulet facings misses")
+	var south_face: Dictionary = pair.duplicate(true)
+	_retarget(south_face, "O", "annulet", 180)
+	check(not Tracer.is_cleared(south_face, Charts.make_state(south_face, true)), "the opposite west annulet does not clear")
+	var west_face: Dictionary = pair.duplicate(true)
+	_retarget(west_face, "U", "annulet", 270)
+	check(not Tracer.is_cleared(west_face, Charts.make_state(west_face, true)), "the opposite east annulet does not clear")
+	var line: Dictionary = book[7]
+	var lit: Dictionary = Tracer.trace(line, Charts.make_state(line, true))
+	check(not bool(lit["boats"]["Hb"]), "the annulet line keeps the hull dark")
+	var ebb: Dictionary = Charts.duplicate_state(Charts.make_state(line, true))
+	ebb["tide_index"] = 0
+	var ebb_trace: Dictionary = Tracer.trace(line, ebb)
+	check(bool(ebb_trace["boats"]["Hb"]) and not Tracer.is_cleared(line, ebb), "low water lights the hull and does not clear")
+
+
+func _expect_annulet_misses(chart: Dictionary) -> void:
+	var kinds: Array = ["echinus", "rebate", "abacus", "throat", "hood", "architrave", "beak", "drip", "weir", "sluice", "cill", "archivolt", "fillet", "cyma", "quirk", "bead", "impost", "threshold", "corona", "larmier", "shutter", "stain", "jamb", "lintel"]
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		var pid := str(piece["id"])
+		var facing := Tracer.annulet_facing(int(piece["solution_rot"]))
+		for kind in kinds:
+			for rot in [0, 90, 180, 270]:
+				if _annulet_kind_clears(kind, rot, facing):
+					continue
+				_expect_annulet_miss(chart, pid, kind, rot, "chart %s %s %s at %d misses" % [str(chart["id"]), pid, kind, rot])
+
+
+func _annulet_kind_clears(kind: String, rot: int, facing: String) -> bool:
+	var open := Tracer.rotate_dir(facing, -1)
+	if kind == "echinus":
+		return Tracer.echinus_flood_passes(rot, open)
+	if kind == "rebate":
+		return Tracer.rebate_flood_passes(rot, open)
+	if kind == "abacus":
+		return Tracer.abacus_flood_passes(rot, open)
+	if kind == "throat":
+		return Tracer.throat_flood_passes(rot, open)
+	if kind == "hood":
+		return Tracer.hood_flood_passes(rot, open)
+	if kind == "architrave":
+		return Tracer.architrave_flood_passes(rot, open)
+	if kind == "beak":
+		return Tracer.beak_flood_passes(rot, open)
+	if kind == "drip":
+		return Tracer.drip_flood_passes(rot, open)
+	if kind == "weir":
+		return Tracer.weir_facing(rot) == open
+	if kind == "sluice":
+		return Tracer.sluice_facing(rot) == open
+	return false
+
+
+func _expect_annulet_miss(chart: Dictionary, piece_id: String, kind: String, rot: int, label: String) -> void:
+	var copy: Dictionary = chart.duplicate(true)
+	_retarget(copy, piece_id, kind, rot)
+	check(not Tracer.is_cleared(copy, Charts.make_state(copy, true)), label)
+
+
 func test_smoke() -> void:
 	var main_script: Script = load("res://scripts/main.gd")
 	main_script.persist_progress = false
@@ -14949,8 +15054,44 @@ func test_smoke() -> void:
 	await process_frame
 	check(str(main.chart["id"]) == "351", "Echinus returns to The Flooded Echinus")
 	check(_chart_row_fits(main.echinus_grid, main._side), "the echinus chart row fits in the window")
+	var annulet_rect: Rect2 = main.annulet_book_button.get_global_rect()
+	var annulet_side: Rect2 = main._side.get_global_rect()
+	check(annulet_side.grow(1.0).encloses(annulet_rect), "the annulet book button sits inside the side panel")
+	check(not annulet_rect.intersects(echinus_rect), "the annulet book button stays off the echinus")
+	check(annulet_rect.size.x + 0.5 >= main.annulet_book_button.get_minimum_size().x, "the annulet label has room")
+	check(echinus_rect.size.x + 0.5 >= main.echinus_book_button.get_minimum_size().x, "the echinus label still has room")
+	main.unlocked[358] = false
+	main._refresh_chrome()
+	check(main.annulet_book_button.disabled, "the annulet stays locked until the echinus line is held")
+	main.unlocked[357] = true
+	check(main.select_chart(357), "chart 358 opens when unlocked")
+	check(main.annulet_book_button.disabled, "opening the echinus line does not unlock the annulet")
+	main.state = Charts.duplicate_state(Charts.make_state(main.chart, true))
+	main._refresh()
+	main.try_lock()
+	check(main.board_locked and main.unlocked[358], "holding the echinus line opens the annulet")
+	main._advance_from_win()
+	check(str(main.chart["id"]) == "359", "next chart from the echinus line enters The Flooded Annulet")
+	check(main.annulet_grid.visible and not main.echinus_grid.visible and not main.rebate_grid.visible, "the annulet grid opens with The Flooded Annulet")
+	check(str(main.harbor_label.text) == Charts.ANNULET, "the harbor name follows the annulet")
+	check(str(main.tide_readout.text).to_lower().contains("annulet"), "chart 359 names the annulet in the water readout")
+	var annulet_cell := Charts.piece_cell(main.chart, main.state, "O")
+	check(str(main.selected_id) == "O" and int(main.state["pieces"]["O"]["rot"]) == 90, "chart 359 starts facing east")
+	_click_cell(main, annulet_cell.x, annulet_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 180, "a click turns the annulet from east to south")
+	check(str(main.status_label.text).to_lower().contains("opposite") and str(main.status_label.text).to_lower().contains("counterclockwise"), "the annulet says the dry pass skips the opposite and the flood opens the counterclockwise heading")
+	_click_cell(main, annulet_cell.x, annulet_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 270, "the next click turns the annulet west")
+	_click_cell(main, annulet_cell.x, annulet_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 0, "the next click turns the annulet north")
+	_click_cell(main, annulet_cell.x, annulet_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 90, "four clicks restore the east facing")
+	main._on_book_pressed(45)
+	await process_frame
+	check(str(main.chart["id"]) == "359", "Annulet returns to The Flooded Annulet")
+	check(_chart_row_fits(main.annulet_grid, main._side), "the annulet chart row fits in the window")
 	main._on_book_pressed(13)
-	check(main.weir_grid.visible and not main.lintel_grid.visible and not main.mullion_grid.visible and not main.transom_grid.visible and not main.casement_grid.visible and not main.jamb_grid.visible and not main.astragal_grid.visible and not main.scotia_grid.visible and not main.torus_grid.visible and not main.ogee_grid.visible and not main.ovolo_grid.visible and not main.cavetto_grid.visible and not main.fillet_grid.visible and not main.corona_grid.visible and not main.bead_grid.visible and not main.quirk_grid.visible and not main.cyma_grid.visible and not main.fascia_grid.visible and not main.soffit_grid.visible and not main.drip_grid.visible and not main.beak_grid.visible and not main.hood_grid.visible and not main.throat_grid.visible and not main.larmier_grid.visible and not main.cill_grid.visible and not main.threshold_grid.visible and not main.impost_grid.visible and not main.architrave_grid.visible and not main.archivolt_grid.visible and not main.abacus_grid.visible and not main.rebate_grid.visible and not main.echinus_grid.visible, "the weir book still opens")
+	check(main.weir_grid.visible and not main.lintel_grid.visible and not main.mullion_grid.visible and not main.transom_grid.visible and not main.casement_grid.visible and not main.jamb_grid.visible and not main.astragal_grid.visible and not main.scotia_grid.visible and not main.torus_grid.visible and not main.ogee_grid.visible and not main.ovolo_grid.visible and not main.cavetto_grid.visible and not main.fillet_grid.visible and not main.corona_grid.visible and not main.bead_grid.visible and not main.quirk_grid.visible and not main.cyma_grid.visible and not main.fascia_grid.visible and not main.soffit_grid.visible and not main.drip_grid.visible and not main.beak_grid.visible and not main.hood_grid.visible and not main.throat_grid.visible and not main.larmier_grid.visible and not main.cill_grid.visible and not main.threshold_grid.visible and not main.impost_grid.visible and not main.architrave_grid.visible and not main.archivolt_grid.visible and not main.abacus_grid.visible and not main.rebate_grid.visible and not main.echinus_grid.visible and not main.annulet_grid.visible, "the weir book still opens")
 	main.select_chart(0)
 	main.restart_chart()
 	var before_rot := int(main.state["pieces"]["M"]["rot"])
@@ -15060,7 +15201,7 @@ func _walk(chart: Dictionary, state: Dictionary, index: int, found: Array) -> vo
 	# A threshold has four facings. Opposite facings do not share the open set. Dry, only the opposite of the facing passes. Flooded, every direction except that opposite passes.
 	# An impost has four facings. Opposite facings do not share the open set. Dry, only the facing passes. Flooded, every direction except that facing passes.
 	var rots: Array = [0]
-	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma" or kind == "fascia" or kind == "soffit" or kind == "drip" or kind == "beak" or kind == "hood" or kind == "throat" or kind == "larmier" or kind == "cill" or kind == "threshold" or kind == "impost" or kind == "architrave" or kind == "archivolt" or kind == "abacus" or kind == "rebate" or kind == "echinus":
+	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma" or kind == "fascia" or kind == "soffit" or kind == "drip" or kind == "beak" or kind == "hood" or kind == "throat" or kind == "larmier" or kind == "cill" or kind == "threshold" or kind == "impost" or kind == "architrave" or kind == "archivolt" or kind == "abacus" or kind == "rebate" or kind == "echinus" or kind == "annulet":
 		rots = [0, 90, 180, 270]
 	elif kind != "shutter" and kind != "well" and kind != "siphon" and kind != "lintel" and kind != "mullion" and kind != "transom":
 		rots = [0, 90]
