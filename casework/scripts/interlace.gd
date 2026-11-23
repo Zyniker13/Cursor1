@@ -1,0 +1,487 @@
+extends RefCounted
+
+# The interlace.
+#
+# The player pins three facts about the cutting: who, the room the interlace was
+# cut in, and the hour. The timeline also records who marked the abachi, where
+# it was marked, when that marking was done, where the cutting was seen from,
+# who turned the lectern, where that turn was made, why the interlace was cut, where
+# the purpleheart was hung, when the lectern was dragonblooded, when the mawashi was styraxed, and
+# when the closet was hung. Who, the room, and the hour are each shared by
+# three exhibits. Five hours are on the board, and the cutting is the middle
+# one. Two exhibits each state two hidden facts. Each exhibit states one of
+# the three pins (a value at least one other exhibit also states) and at least
+# one fact no other exhibit states. Exactly one full timeline fits every
+# exhibit. Drop any exhibit and another timeline fits. Any other pin triple
+# disagrees with at least two exhibits.
+
+const TITLE := "The interlace"
+const FILE_CODE := "CW-70"
+const BLURB := "The interlace left its peg at the joiner's linch. Name who cut the interlace, the room they cut it in, and the hour."
+
+const PEOPLE: Array[String] = ["Robert", "Isabel", "Geoffrey"]
+const PLACES: Array[String] = ["closet", "lectern", "mawashi"]
+const HOURS: Array[String] = ["291", "292", "293", "294", "295"]
+const AIMS: Array[String] = ["take_abachi", "spare_abachi", "set_abachi"]
+
+const PLAYER_FIELDS: Array[String] = ["taker", "place", "hour"]
+const FIELD_ORDER: Array[String] = ["taker", "place", "hour"]
+
+const EXHIBITS: Array = [
+	{
+		"id": "E1",
+		"title": "Abachi chit",
+		"source": "Isabel, abachi hand",
+		"text": "Robert cut the interlace. Isabel had marked the abachi, and a pale corylin still clung to the interlace.",
+		"literals": [
+			{
+				"field": "taker",
+				"value": "Robert",
+				"phrase": "Robert cut the interlace",
+			},
+			{
+				"field": "abachi",
+				"value": "Isabel",
+				"phrase": "Isabel had marked the abachi",
+			},
+		],
+	},
+	{
+		"id": "E2",
+		"title": "Puerarin sight",
+		"source": "Lectern puerarin",
+		"text": "Robert cut the interlace. The interlacing was seen from the lectern, beside the open abachi.",
+		"literals": [
+			{
+				"field": "taker",
+				"value": "Robert",
+				"phrase": "Robert cut the interlace",
+			},
+			{
+				"field": "seen_from",
+				"value": "lectern",
+				"phrase": "The interlacing was seen from the lectern",
+			},
+		],
+	},
+	{
+		"id": "E3",
+		"title": "Purpleheart bill",
+		"source": "Mawashi nose",
+		"text": "Robert cut the interlace. With the abachi true, the purpleheart was hung on the mawashi.",
+		"literals": [
+			{
+				"field": "taker",
+				"value": "Robert",
+				"phrase": "Robert cut the interlace",
+			},
+			{
+				"field": "purpleheart_room",
+				"value": "mawashi",
+				"phrase": "the purpleheart was hung on the mawashi",
+			},
+		],
+	},
+	{
+		"id": "E4",
+		"title": "Ononin slate",
+		"source": "Closet ononin",
+		"text": "The interlace was cut in the closet. A fresh ononin shows the abachi had been marked on the mawashi.",
+		"literals": [
+			{
+				"field": "place",
+				"value": "closet",
+				"phrase": "The interlace was cut in the closet",
+			},
+			{
+				"field": "abachi_room",
+				"value": "mawashi",
+				"phrase": "the abachi had been marked on the mawashi",
+			},
+		],
+	},
+	{
+		"id": "E5",
+		"title": "Lectern card",
+		"source": "Geoffrey, lectern clerk",
+		"text": "The interlace was cut in the closet. Geoffrey turned the lectern in the closet once the abachi was offered.",
+		"literals": [
+			{
+				"field": "place",
+				"value": "closet",
+				"phrase": "The interlace was cut in the closet",
+			},
+			{
+				"field": "lectern",
+				"value": "Geoffrey",
+				"phrase": "Geoffrey turned the lectern",
+			},
+			{
+				"field": "lectern_room",
+				"value": "closet",
+				"phrase": "turned the lectern in the closet",
+			},
+		],
+	},
+	{
+		"id": "E6",
+		"title": "Dragonblooded slip",
+		"source": "Lectern tote",
+		"text": "The interlace was cut in the closet. The lectern was dragonblooded at 291, and a pale sissotrin still sat on the interlace.",
+		"literals": [
+			{
+				"field": "place",
+				"value": "closet",
+				"phrase": "The interlace was cut in the closet",
+			},
+			{
+				"field": "dragonblood_hour",
+				"value": "291",
+				"phrase": "The lectern was dragonblooded at 291",
+			},
+		],
+	},
+	{
+		"id": "E7",
+		"title": "Interlace leaf",
+		"source": "Abachi book",
+		"text": "The interlace was cut at 293. The abachi had been marked at 292, and the mark still held that hour.",
+		"literals": [
+			{
+				"field": "hour",
+				"value": "293",
+				"phrase": "The interlace was cut at 293",
+			},
+			{
+				"field": "abachi_hour",
+				"value": "292",
+				"phrase": "The abachi had been marked at 292",
+			},
+		],
+	},
+	{
+		"id": "E8",
+		"title": "Linch note",
+		"source": "Joiner's linch",
+		"text": "The interlace was cut at 293. The abachi was opened so the abachi would take the interlace.",
+		"literals": [
+			{
+				"field": "hour",
+				"value": "293",
+				"phrase": "The interlace was cut at 293",
+			},
+			{
+				"field": "aim",
+				"value": "take_abachi",
+				"phrase": "so the abachi would take the interlace",
+			},
+		],
+	},
+	{
+		"id": "E9",
+		"title": "Styraxed order",
+		"source": "Mawashi card",
+		"text": "The interlace was cut at 293. The mawashi was styraxed at 294, and the closet was hung at 295 once the abachi was dry.",
+		"literals": [
+			{
+				"field": "hour",
+				"value": "293",
+				"phrase": "The interlace was cut at 293",
+			},
+			{
+				"field": "styrax_hour",
+				"value": "294",
+				"phrase": "The mawashi was styraxed at 294",
+			},
+			{
+				"field": "hang_hour",
+				"value": "295",
+				"phrase": "the closet was hung at 295",
+			},
+		],
+	},
+]
+
+
+static func fields() -> Array[String]:
+	return [
+		"taker",
+		"place",
+		"hour",
+		"abachi",
+		"abachi_room",
+		"abachi_hour",
+		"seen_from",
+		"lectern",
+		"aim",
+		"lectern_room",
+		"purpleheart_room",
+		"dragonblood_hour",
+		"styrax_hour",
+		"hang_hour",
+	]
+
+
+static func domain(field: String) -> Array[String]:
+	match field:
+		"taker", "abachi", "lectern":
+			return PEOPLE.duplicate()
+		"place", "abachi_room", "seen_from", "lectern_room", "purpleheart_room":
+			return PLACES.duplicate()
+		"hour", "abachi_hour", "dragonblood_hour", "styrax_hour", "hang_hour":
+			return HOURS.duplicate()
+		"aim":
+			return AIMS.duplicate()
+		_:
+			push_error("Unknown timeline field: %s" % field)
+			return []
+
+
+static func ids() -> Array[String]:
+	var found: Array[String] = []
+	for exhibit in EXHIBITS:
+		found.append(str(exhibit["id"]))
+	return found
+
+
+static func without(exhibit_id: String) -> Array:
+	var kept: Array = []
+	for exhibit in EXHIBITS:
+		if str(exhibit["id"]) != exhibit_id:
+			kept.append(exhibit)
+	return kept
+
+
+static func holds(exhibit: Dictionary, model: Dictionary) -> bool:
+	for literal in exhibit["literals"]:
+		if str(model.get(literal["field"], "")) != str(literal["value"]):
+			return false
+	return true
+
+
+static func normalize(theory: Dictionary) -> Dictionary:
+	return {
+		"who": str(theory.get("who", "")).strip_edges(),
+		"place": str(theory.get("place", "")).strip_edges(),
+		"hour": str(theory.get("hour", "")).strip_edges(),
+	}
+
+
+static func missing_slots(theory: Dictionary) -> Array[String]:
+	var pins := normalize(theory)
+	var missing: Array[String] = []
+	if pins["who"] == "":
+		missing.append("who cut the interlace")
+	if pins["place"] == "":
+		missing.append("where they cut the interlace")
+	if pins["hour"] == "":
+		missing.append("at which hour they cut the interlace")
+	return missing
+
+
+static func theory_value(field: String, theory: Dictionary) -> String:
+	var pins := normalize(theory)
+	match field:
+		"taker":
+			return pins["who"]
+		"place":
+			return pins["place"]
+		"hour":
+			return pins["hour"]
+		_:
+			return ""
+
+
+static func conflicts(exhibit: Dictionary, theory: Dictionary) -> Array:
+	var broken: Array = []
+	for literal in exhibit["literals"]:
+		var field := str(literal["field"])
+		if field not in PLAYER_FIELDS:
+			continue
+		if theory_value(field, theory) != str(literal["value"]):
+			broken.append(literal)
+	return broken
+
+
+static func conflicting_ids(theory: Dictionary) -> Array[String]:
+	var found: Array[String] = []
+	for exhibit in EXHIBITS:
+		if not conflicts(exhibit, theory).is_empty():
+			found.append(str(exhibit["id"]))
+	return found
+
+
+static func role_phrase(person: String) -> String:
+	match person:
+		"Robert":
+			return "the interlace hand"
+		"Isabel":
+			return "the abachi hand"
+		"Geoffrey":
+			return "the lectern clerk"
+		_:
+			return "unknown role"
+
+
+static func role_short(person: String) -> String:
+	return role_phrase(person).trim_prefix("the ")
+
+
+static func place_label(place: String) -> String:
+	match place:
+		"closet":
+			return "closet"
+		"lectern":
+			return "lectern"
+		"mawashi":
+			return "mawashi"
+		"":
+			return ""
+		_:
+			return place
+
+
+static func place_button(place: String) -> String:
+	match place:
+		"closet":
+			return "Closet"
+		"lectern":
+			return "Lectern"
+		"mawashi":
+			return "Mawashi"
+		_:
+			return place_label(place)
+
+
+static func player_statement(field: String, value: String) -> String:
+	match field:
+		"taker":
+			return "%s cut the interlace" % value
+		"place":
+			return "The interlace was cut in the %s" % place_label(value)
+		"hour":
+			return "The interlace was cut at %s" % value
+		_:
+			return ""
+
+
+static func player_claim(field: String, theory: Dictionary) -> String:
+	return player_statement(field, theory_value(field, theory))
+
+
+static func short_claim(field: String, theory: Dictionary) -> String:
+	var value := theory_value(field, theory)
+	match field:
+		"taker":
+			return "%s cut the interlace" % value
+		"place":
+			return "the interlace was cut in the %s" % place_label(value)
+		"hour":
+			return "the interlace was cut at %s" % value
+		_:
+			return value
+
+
+static func counter_claim(field: String, value: String) -> String:
+	match field:
+		"taker":
+			return "%s cut the interlace" % value
+		"place":
+			return "it was cut in the %s" % place_label(value)
+		"hour":
+			return "it was cut at %s" % value
+		_:
+			return value
+
+
+static func aim_phrase(aim: String) -> String:
+	match aim:
+		"take_abachi":
+			return "so the abachi would take the interlace"
+		"spare_abachi":
+			return "to spare the abachi still waiting on the interlace"
+		"set_abachi":
+			return "to set the abachi before the closet was hung"
+		_:
+			return "for an unstated reason"
+
+
+static func timeline(model: Dictionary) -> String:
+	var lines := PackedStringArray([
+		"%s (%s) cut the interlace in the %s at %s, seen from the %s, %s." % [
+			model["taker"],
+			role_short(str(model["taker"])),
+			place_label(str(model["place"])),
+			model["hour"],
+			place_label(str(model["seen_from"])),
+			aim_phrase(str(model["aim"])),
+		],
+		"%s (%s) marked the abachi on the %s at %s." % [
+			model["abachi"],
+			role_short(str(model["abachi"])),
+			place_label(str(model["abachi_room"])),
+			model["abachi_hour"],
+		],
+		"%s (%s) turned the lectern in the %s." % [
+			model["lectern"],
+			role_short(str(model["lectern"])),
+			place_label(str(model["lectern_room"])),
+		],
+		"The purpleheart was hung on the %s." % place_label(str(model["purpleheart_room"])),
+		"The lectern was dragonblooded at %s." % model["dragonblood_hour"],
+		"The mawashi was styraxed at %s." % model["styrax_hour"],
+		"The closet was hung at %s." % model["hang_hour"],
+	])
+	return "\n".join(lines)
+
+
+static func matches_theory(model: Dictionary, theory: Dictionary) -> bool:
+	var pins := normalize(theory)
+	return (
+		str(model["taker"]) == pins["who"]
+		and str(model["place"]) == pins["place"]
+		and str(model["hour"]) == pins["hour"]
+	)
+
+
+static func exhibit_heading() -> String:
+	return "The file  ·  nine exhibits"
+
+
+static func board_question() -> String:
+	return "Who cut the interlace, where, and at which hour?"
+
+
+static func board_brief() -> String:
+	return "Where means the room they cut the interlace in."
+
+
+static func cast_line() -> String:
+	return "Robert, interlace hand    Isabel, abachi hand    Geoffrey, lectern clerk"
+
+
+static func ready_line() -> String:
+	return "Pin who cut the interlace, the room they cut it in, and the hour. Then submit."
+
+
+static func choice_label(slot: String, value: String) -> String:
+	if slot == "place":
+		return place_button(value)
+	return value
+
+
+static func choices(slot: String) -> Array:
+	var values: Array[String] = []
+	match slot:
+		"who":
+			values = PEOPLE.duplicate()
+		"place":
+			values = PLACES.duplicate()
+		"hour":
+			values = HOURS.duplicate()
+		_:
+			push_error("Unknown pin: %s" % slot)
+	var rows: Array = []
+	for value in values:
+		rows.append({"value": value, "label": choice_label(slot, value)})
+	return rows

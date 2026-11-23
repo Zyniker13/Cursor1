@@ -114,6 +114,22 @@ func _run() -> void:
 	test_annulet_book()
 	test_listel_rule()
 	test_listel_book()
+	test_necking_rule()
+	test_necking_book()
+	test_taenia_rule()
+	test_taenia_book()
+	test_baguette_rule()
+	test_baguette_book()
+	test_reglet_rule()
+	test_reglet_book()
+	test_billet_rule()
+	test_billet_book()
+	test_reed_rule()
+	test_reed_book()
+	test_staff_rule()
+	test_staff_book()
+	test_thumb_rule()
+	test_thumb_book()
 	test_chart_4_boat()
 	test_one_rotation_is_not_solved()
 	test_hint_points_at_one_piece()
@@ -306,7 +322,15 @@ func test_charts() -> void:
 	check(Charts.echinus().size() == 8, "echinus adds eight charts")
 	check(Charts.annulet().size() == 8, "annulet adds eight charts")
 	check(Charts.listel().size() == 8, "listel adds eight charts")
-	check(book.size() == 374, "three hundred seventy-four charts")
+	check(Charts.necking().size() == 8, "necking adds eight charts")
+	check(Charts.taenia().size() == 8, "taenia adds eight charts")
+	check(Charts.baguette().size() == 8, "baguette adds eight charts")
+	check(Charts.reglet().size() == 8, "reglet adds eight charts")
+	check(Charts.billet().size() == 8, "billet adds eight charts")
+	check(Charts.reed().size() == 8, "reed adds eight charts")
+	check(Charts.staff().size() == 8, "staff adds eight charts")
+	check(Charts.thumb().size() == 8, "thumb adds eight charts")
+	check(book.size() == 438, "four hundred thirty-eight charts")
 	check(str(book[13]["id"]) == "14" and str(book[13]["title"]) == "The Holding Line", "chart 14 stays the reach capstone")
 	check(str(book[14]["title"]) == "North Light", "chart 15 opens the basin")
 	check(str(book[21]["id"]) == "22" and str(book[21]["title"]) == "The Basin Mark", "chart 22 stays the basin capstone")
@@ -398,6 +422,22 @@ func test_charts() -> void:
 	check(str(book[365]["id"]) == "366" and str(book[365]["title"]) == "The Annulet Line", "chart 366 stays the annulet capstone")
 	check(str(book[366]["title"]) == "The Flooded Listel", "chart 367 opens the listel")
 	check(str(book[373]["id"]) == "374" and str(book[373]["title"]) == "The Listel Line", "chart 374 stays the listel capstone")
+	check(str(book[374]["title"]) == "The Flooded Necking", "chart 375 opens the necking")
+	check(str(book[381]["id"]) == "382" and str(book[381]["title"]) == "The Necking Line", "chart 382 stays the necking capstone")
+	check(str(book[382]["title"]) == "The Flooded Taenia", "chart 383 opens the taenia")
+	check(str(book[389]["id"]) == "390" and str(book[389]["title"]) == "The Taenia Line", "chart 390 stays the taenia capstone")
+	check(str(book[390]["title"]) == "The Flooded Baguette", "chart 391 opens the baguette")
+	check(str(book[397]["id"]) == "398" and str(book[397]["title"]) == "The Baguette Line", "chart 398 stays the baguette capstone")
+	check(str(book[398]["title"]) == "The Flooded Reglet", "chart 399 opens the reglet")
+	check(str(book[405]["id"]) == "406" and str(book[405]["title"]) == "The Reglet Line", "chart 406 stays the reglet capstone")
+	check(str(book[406]["title"]) == "The Flooded Billet", "chart 407 opens the billet")
+	check(str(book[413]["id"]) == "414" and str(book[413]["title"]) == "The Billet Line", "chart 414 stays the billet capstone")
+	check(str(book[414]["title"]) == "The Flooded Reed", "chart 415 opens the reed")
+	check(str(book[421]["id"]) == "422" and str(book[421]["title"]) == "The Reed Line", "chart 422 stays the reed capstone")
+	check(str(book[422]["title"]) == "The Flooded Staff", "chart 423 opens the staff")
+	check(str(book[429]["id"]) == "430" and str(book[429]["title"]) == "The Staff Line", "chart 430 stays the staff capstone")
+	check(str(book[430]["title"]) == "The Flooded Thumb", "chart 431 opens the thumb")
+	check(str(book[437]["id"]) == "438" and str(book[437]["title"]) == "The Thumb Line", "chart 438 stays the thumb capstone")
 	var seen_ids := {}
 	var seen_titles := {}
 	var quay_titles := ["First Glass", "Around the Pilings", "High Water", "Sleeping Hull", "Split the White", "The Night Mark"]
@@ -498,6 +538,22 @@ func test_charts() -> void:
 			_check_architrave_clears(chart, clears, solved)
 		elif _chart_has_kind(chart, "archivolt"):
 			_check_archivolt_clears(chart, clears, solved)
+		elif _chart_has_kind(chart, "taenia"):
+			_check_taenia_clears(chart, clears, solved)
+		elif _chart_has_kind(chart, "reed"):
+			# A flooded reed passes every heading, so all four facings clear
+			# once the tide covers its row. Low water stops every heading.
+			check(clears.size() == 4, "chart %s has four flooded facings that clear (found %d)" % [id, clears.size()])
+			var reed_facings := {}
+			var reed_authored := false
+			for raw_clear in clears:
+				var clearing: Dictionary = raw_clear
+				check(int(clearing["tide_index"]) == 1, "chart %s clear stays at high water" % id)
+				reed_facings[int(clearing["pieces"]["O"]["rot"])] = true
+				if _same_solution(chart, clearing, solved):
+					reed_authored = true
+			check(reed_facings.has(0) and reed_facings.has(90) and reed_facings.has(180) and reed_facings.has(270), "chart %s every flooded facing clears" % id)
+			check(reed_authored, "chart %s authored solution is one of the flooded facings" % id)
 		elif clears.size() == 1:
 			check(true, "chart %s has one clearing state" % id)
 			check(_same_solution(chart, clears[0], solved), "chart %s clearing state is the authored solution" % id)
@@ -13583,6 +13639,751 @@ func _expect_listel_miss(chart: Dictionary, piece_id: String, kind: String, rot:
 	check(not Tracer.is_cleared(copy, Charts.make_state(copy, true)), label)
 
 
+func test_necking_rule() -> void:
+	for dir in ["N", "E", "S", "W"]:
+		check(not Tracer.necking_passes(0, dir), "a dry necking stops %s" % dir)
+		check(not Tracer.necking_passes(90, dir), "a turned dry necking still stops %s" % dir)
+	check(Tracer.necking_flood_passes(0, "N") and Tracer.necking_flood_passes(0, "W"), "a flooded north necking passes north and west")
+	check(not Tracer.necking_flood_passes(0, "E") and not Tracer.necking_flood_passes(0, "S"), "a flooded north necking stops east and south")
+	check(Tracer.necking_flood_passes(90, "E") and Tracer.necking_flood_passes(90, "N"), "one click faces the necking east and only east and north pass")
+	check(not Tracer.necking_flood_passes(90, "W") and not Tracer.necking_flood_passes(90, "S"), "a flooded east necking stops west and south")
+	check(Tracer.necking_flood_passes(180, "S") and Tracer.necking_flood_passes(180, "E"), "a flooded south necking passes south and east")
+	check(not Tracer.necking_flood_passes(180, "N") and not Tracer.necking_flood_passes(180, "W"), "opposite flooded facings do not share the open pair")
+	check(Tracer.scotia_passes(0, "N") and Tracer.scotia_passes(0, "W") and not Tracer.scotia_passes(0, "E"), "a dry scotia still passes north and west")
+	check(Tracer.listel_flood_passes(0, "N") and Tracer.listel_flood_passes(0, "E") and not Tracer.listel_flood_passes(0, "W"), "a flooded north listel still passes north and east")
+	check(Tracer.annulet_flood_passes(0, "W") and not Tracer.annulet_flood_passes(0, "N"), "a flooded north annulet still passes only west")
+	check(Tracer.echinus_flood_passes(0, "E") and not Tracer.echinus_flood_passes(0, "W"), "a flooded north echinus still passes only east")
+	check(Tracer.rebate_flood_passes(0, "S") and not Tracer.rebate_flood_passes(0, "N"), "a flooded north rebate still passes only south")
+	check(Tracer.abacus_flood_passes(0, "N") and not Tracer.abacus_flood_passes(0, "W"), "a flooded north abacus still passes only north")
+	check(Tracer.throat_flood_passes(0, "S") and not Tracer.throat_flood_passes(0, "W"), "a flooded north throat still passes only south")
+
+
+func test_necking_book() -> void:
+	var book := Charts.necking()
+	check(book.size() == 8, "the necking book has eight charts")
+	var titles := ["The Flooded Necking", "The Turned Necking", "The Listel Miss", "The Annulet West", "The Echinus Beam", "The Rebate Keep", "The Abacus West", "The Necking Line"]
+	for i in book.size():
+		var chart: Dictionary = book[i]
+		check(str(chart["harbor"]) == Charts.NECKING, "chart %s belongs to the necking" % str(chart["id"]))
+		check(str(chart["title"]) == titles[i], "chart %s keeps its title" % str(chart["id"]))
+		_expect_necking_misses(chart)
+	check(str(book[2]["teach"]).to_lower().contains("listel"), "chart 377 names the listel")
+	check(str(book[3]["teach"]).to_lower().contains("annulet"), "chart 378 names the annulet")
+	check(str(book[4]["teach"]).to_lower().contains("echinus"), "chart 379 names the echinus")
+	check(str(book[5]["teach"]).to_lower().contains("rebate"), "chart 380 names the rebate")
+	check(str(book[6]["teach"]).to_lower().contains("abacus"), "chart 381 names the abacus")
+	check(str(book[7]["teach"]).to_lower().contains("throat"), "chart 382 names the throat")
+	_expect_necking_miss(book[2], "O", "listel", 0, "a flooded north listel misses chart 377")
+	_expect_necking_miss(book[3], "O", "annulet", 0, "a flooded north annulet misses chart 378")
+	_expect_necking_miss(book[4], "O", "echinus", 0, "a flooded north echinus misses chart 379")
+	_expect_necking_miss(book[5], "O", "rebate", 0, "a flooded north rebate misses chart 380")
+	_expect_necking_miss(book[6], "O", "abacus", 0, "a flooded north abacus misses chart 381")
+	_expect_necking_miss(book[7], "O", "throat", 0, "a flooded north throat misses chart 382")
+	_expect_necking_miss(book[1], "O", "listel", 0, "a flooded north listel misses the turned necking")
+	var line: Dictionary = book[7]
+	var lit: Dictionary = Tracer.trace(line, Charts.make_state(line, true))
+	check(not bool(lit["boats"]["Hb"]), "the necking line keeps the hull dark")
+	var ebb: Dictionary = Charts.duplicate_state(Charts.make_state(line, true))
+	ebb["tide_index"] = 0
+	var ebb_trace: Dictionary = Tracer.trace(line, ebb)
+	check(bool(ebb_trace["boats"]["Hb"]) and not Tracer.is_cleared(line, ebb), "low water lights the hull and does not clear")
+
+
+func _necking_listel_shares(listel_rot: int, necking_rot: int) -> bool:
+	for dir in ["N", "E", "S", "W"]:
+		var same: bool = Tracer.listel_flood_passes(listel_rot, dir) == Tracer.necking_flood_passes(necking_rot, dir)
+		if not same:
+			return false
+	return true
+
+
+func _expect_necking_misses(chart: Dictionary) -> void:
+	var kinds: Array = ["listel", "annulet", "echinus", "rebate", "abacus", "throat", "scotia", "hood", "architrave", "beak", "drip", "weir", "sluice", "cill", "archivolt", "larmier", "impost", "threshold", "astragal", "cyma", "corona", "fillet", "quirk", "bead"]
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		var pid := str(piece["id"])
+		var sol := int(piece["solution_rot"])
+		for kind in kinds:
+			for rot in [0, 90, 180, 270]:
+				if kind == "listel" and _necking_listel_shares(rot, sol):
+					continue
+				_expect_necking_miss(chart, pid, kind, rot, "chart %s %s %s at %d misses" % [str(chart["id"]), pid, kind, rot])
+
+
+func _expect_necking_miss(chart: Dictionary, piece_id: String, kind: String, rot: int, label: String) -> void:
+	var copy: Dictionary = chart.duplicate(true)
+	_retarget(copy, piece_id, kind, rot)
+	check(not Tracer.is_cleared(copy, Charts.make_state(copy, true)), label)
+
+
+func test_taenia_rule() -> void:
+	for dir in ["N", "E", "S", "W"]:
+		check(not Tracer.taenia_passes(0, dir), "a dry taenia stops %s" % dir)
+		check(not Tracer.taenia_passes(90, dir), "a turned dry taenia still stops %s" % dir)
+	check(Tracer.taenia_flood_passes(0, "N") and Tracer.taenia_flood_passes(0, "S"), "a flooded north taenia passes north and south")
+	check(not Tracer.taenia_flood_passes(0, "E") and not Tracer.taenia_flood_passes(0, "W"), "a flooded north taenia stops east and west")
+	check(Tracer.taenia_flood_passes(90, "E") and Tracer.taenia_flood_passes(90, "W"), "one click faces the taenia east and only east and west pass")
+	check(not Tracer.taenia_flood_passes(90, "N") and not Tracer.taenia_flood_passes(90, "S"), "a flooded east taenia stops north and south")
+	check(Tracer.taenia_flood_passes(180, "N") and Tracer.taenia_flood_passes(180, "S"), "a flooded south taenia passes the same north and south")
+	check(Tracer.cill_passes(0, "N") and Tracer.cill_passes(0, "S") and not Tracer.cill_passes(0, "E"), "a dry cill still passes north and south")
+	check(Tracer.larmier_flood_passes(0, "N") and Tracer.larmier_flood_passes(0, "S") and not Tracer.larmier_flood_passes(0, "E"), "a flooded north larmier still passes north and south")
+	check(Tracer.larmier_passes(0, "E") and Tracer.larmier_passes(0, "W") and not Tracer.larmier_passes(0, "N"), "a dry north larmier still passes east and west")
+	check(Tracer.listel_flood_passes(0, "N") and Tracer.listel_flood_passes(0, "E") and not Tracer.listel_flood_passes(0, "S"), "a flooded north listel still passes north and east")
+	check(Tracer.necking_flood_passes(0, "N") and Tracer.necking_flood_passes(0, "W") and not Tracer.necking_flood_passes(0, "S"), "a flooded north necking still passes north and west")
+	check(Tracer.annulet_flood_passes(0, "W") and not Tracer.annulet_flood_passes(0, "S"), "a flooded north annulet still passes only west")
+	check(Tracer.echinus_flood_passes(0, "E") and not Tracer.echinus_flood_passes(0, "S"), "a flooded north echinus still passes only east")
+	check(Tracer.rebate_flood_passes(0, "S") and not Tracer.rebate_flood_passes(0, "N"), "a flooded north rebate still passes only south")
+	check(Tracer.abacus_flood_passes(0, "N") and not Tracer.abacus_flood_passes(0, "S"), "a flooded north abacus still passes only north")
+	check(Tracer.throat_flood_passes(0, "S") and not Tracer.throat_flood_passes(0, "N"), "a flooded north throat still passes only south")
+
+
+func test_taenia_book() -> void:
+	var book := Charts.taenia()
+	check(book.size() == 8, "the taenia book has eight charts")
+	var titles := ["The Flooded Taenia", "The Turned Taenia", "The Listel Axis", "The Necking Miss", "The Annulet Pair", "The Echinus Pair", "The Rebate Axis", "The Taenia Line"]
+	for i in book.size():
+		var chart: Dictionary = book[i]
+		check(str(chart["harbor"]) == Charts.TAENIA, "chart %s belongs to the taenia" % str(chart["id"]))
+		check(str(chart["title"]) == titles[i], "chart %s keeps its title" % str(chart["id"]))
+		_expect_taenia_misses(chart)
+	check(str(book[2]["teach"]).to_lower().contains("listel"), "chart 385 names the listel")
+	check(str(book[3]["teach"]).to_lower().contains("necking"), "chart 386 names the necking")
+	check(str(book[4]["teach"]).to_lower().contains("annulet"), "chart 387 names the annulet")
+	check(str(book[5]["teach"]).to_lower().contains("echinus"), "chart 388 names the echinus")
+	check(str(book[6]["teach"]).to_lower().contains("rebate"), "chart 389 names the rebate")
+	check(str(book[7]["teach"]).to_lower().contains("abacus") and str(book[7]["teach"]).to_lower().contains("throat"), "chart 390 names the abacus and the throat")
+	_expect_taenia_miss(book[2], "O", "listel", 0, "a flooded north listel misses chart 385")
+	_expect_taenia_miss(book[3], "O", "necking", 0, "a flooded north necking misses chart 386")
+	_expect_taenia_miss(book[4], "O", "annulet", 0, "a flooded north annulet misses chart 387")
+	_expect_taenia_miss(book[5], "O", "echinus", 0, "a flooded north echinus misses chart 388")
+	_expect_taenia_miss(book[6], "O", "rebate", 0, "a flooded north rebate misses chart 389")
+	_expect_taenia_miss(book[7], "O", "abacus", 0, "a flooded north abacus misses chart 390")
+	_expect_taenia_miss(book[7], "O", "throat", 0, "a flooded north throat misses chart 390")
+	_expect_taenia_miss(book[1], "O", "listel", 0, "a flooded north listel misses the turned taenia")
+	_expect_taenia_miss(book[1], "O", "necking", 0, "a flooded north necking misses the turned taenia")
+	var line: Dictionary = book[7]
+	var lit: Dictionary = Tracer.trace(line, Charts.make_state(line, true))
+	check(not bool(lit["boats"]["Hb"]), "the taenia line keeps the hull dark")
+	var ebb: Dictionary = Charts.duplicate_state(Charts.make_state(line, true))
+	ebb["tide_index"] = 0
+	var ebb_trace: Dictionary = Tracer.trace(line, ebb)
+	check(bool(ebb_trace["boats"]["Hb"]) and not Tracer.is_cleared(line, ebb), "low water lights the hull and does not clear")
+
+
+func _taenia_pair_matches(kind: String, rot: int, sol_rot: int) -> bool:
+	for dir in ["N", "E", "S", "W"]:
+		var theirs: bool = false
+		if kind == "larmier":
+			theirs = Tracer.larmier_flood_passes(rot, dir)
+		elif kind == "cill":
+			theirs = Tracer.cill_flood_passes(rot, dir)
+		elif kind == "archivolt":
+			theirs = Tracer.archivolt_flood_passes(rot, dir)
+		var ours: bool = Tracer.taenia_flood_passes(sol_rot, dir)
+		if theirs != ours:
+			return false
+	return true
+
+
+func _expect_taenia_misses(chart: Dictionary) -> void:
+	var kinds: Array = ["listel", "necking", "annulet", "echinus", "rebate", "abacus", "throat", "larmier", "cill", "archivolt", "scotia", "hood", "architrave", "beak", "drip", "weir", "sluice", "impost", "threshold", "astragal", "cyma", "corona", "fillet", "quirk", "bead"]
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		var pid := str(piece["id"])
+		var sol := int(piece["solution_rot"])
+		for kind in kinds:
+			for rot in [0, 90, 180, 270]:
+				if (kind == "larmier" or kind == "cill" or kind == "archivolt") and _taenia_pair_matches(kind, rot, sol):
+					continue
+				_expect_taenia_miss(chart, pid, kind, rot, "chart %s %s %s at %d misses" % [str(chart["id"]), pid, kind, rot])
+
+
+func _expect_taenia_miss(chart: Dictionary, piece_id: String, kind: String, rot: int, label: String) -> void:
+	var copy: Dictionary = chart.duplicate(true)
+	_retarget(copy, piece_id, kind, rot)
+	check(not Tracer.is_cleared(copy, Charts.make_state(copy, true)), label)
+
+
+func _check_taenia_clears(chart: Dictionary, clears: Array, solved: Dictionary) -> void:
+	var id := str(chart["id"])
+	var expected := 1
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		if str(piece["kind"]) != "taenia":
+			continue
+		var cell := Charts.piece_cell(chart, solved, str(piece["id"]))
+		if Tracer.is_flooded(chart, solved, cell):
+			expected *= 2
+	check(clears.size() == expected, "chart %s clears on the flooded axis (found %d)" % [id, clears.size()])
+	var authored := false
+	for raw_clear in clears:
+		var clearing: Dictionary = raw_clear
+		if _same_solution(chart, clearing, solved):
+			authored = true
+		check(int(clearing["tide_index"]) == int(solved["tide_index"]), "chart %s clear stays on the solved tide" % id)
+		for raw_piece in chart["pieces"]:
+			var piece: Dictionary = raw_piece
+			var pid := str(piece["id"])
+			var got: Dictionary = clearing["pieces"][pid]
+			var want: Dictionary = solved["pieces"][pid]
+			check(str(got["socket"]) == str(want["socket"]), "chart %s clear keeps %s on its socket" % [id, pid])
+			if str(piece["kind"]) == "taenia":
+				var flooded: bool = Tracer.is_flooded(chart, solved, Charts.piece_cell(chart, solved, pid))
+				if flooded:
+					check(posmod(int(got["rot"]), 180) == posmod(int(want["rot"]), 180), "chart %s clear keeps %s on its flooded axis" % [id, pid])
+				else:
+					check(Tracer.norm_rot("taenia", int(got["rot"])) == Tracer.norm_rot("taenia", int(want["rot"])), "chart %s clear keeps %s facing" % [id, pid])
+			else:
+				var kind := str(piece["kind"])
+				check(Tracer.norm_rot(kind, int(got["rot"])) == Tracer.norm_rot(kind, int(want["rot"])), "chart %s clear keeps %s" % [id, pid])
+	check(authored, "chart %s authored solution is one flooded facing" % id)
+
+
+func test_baguette_rule() -> void:
+	for dir in ["N", "E", "S", "W"]:
+		check(not Tracer.baguette_passes(0, dir), "a dry baguette stops %s" % dir)
+		check(not Tracer.baguette_passes(90, dir), "a turned dry baguette still stops %s" % dir)
+	check(Tracer.baguette_flood_passes(0, "N") and Tracer.baguette_flood_passes(0, "E") and Tracer.baguette_flood_passes(0, "W"), "a flooded north baguette passes north, east, and west")
+	check(not Tracer.baguette_flood_passes(0, "S"), "a flooded north baguette stops south")
+	check(Tracer.baguette_flood_passes(90, "E") and Tracer.baguette_flood_passes(90, "N") and Tracer.baguette_flood_passes(90, "S"), "one click faces the baguette east and east, north, and south pass")
+	check(not Tracer.baguette_flood_passes(90, "W"), "a flooded east baguette stops west")
+	check(Tracer.baguette_flood_passes(180, "S") and Tracer.baguette_flood_passes(180, "E") and Tracer.baguette_flood_passes(180, "W") and not Tracer.baguette_flood_passes(180, "N"), "a flooded south baguette passes south, east, and west")
+	check(not Tracer.archivolt_passes(0, "E") and Tracer.archivolt_flood_passes(0, "E") and Tracer.archivolt_flood_passes(0, "W") and not Tracer.archivolt_flood_passes(0, "N"), "an archivolt still stays shut while dry and passes east and west under water")
+	check(Tracer.larmier_passes(0, "E") and Tracer.larmier_passes(0, "W") and not Tracer.larmier_passes(0, "N"), "a dry north larmier still passes east and west")
+	check(Tracer.threshold_flood_passes(0, "N") and Tracer.threshold_flood_passes(0, "E") and not Tracer.threshold_flood_passes(0, "S"), "a flooded north threshold still passes north and east")
+	check(Tracer.threshold_passes(0, "S") and not Tracer.threshold_passes(0, "N"), "a dry threshold still passes only south")
+	check(Tracer.taenia_flood_passes(0, "N") and Tracer.taenia_flood_passes(0, "S") and not Tracer.taenia_flood_passes(0, "E"), "a flooded north taenia still passes north and south")
+	check(Tracer.listel_flood_passes(0, "N") and Tracer.listel_flood_passes(0, "E") and not Tracer.listel_flood_passes(0, "W"), "a flooded north listel still passes north and east")
+	check(Tracer.necking_flood_passes(0, "N") and Tracer.necking_flood_passes(0, "W") and not Tracer.necking_flood_passes(0, "E"), "a flooded north necking still passes north and west")
+	check(Tracer.annulet_flood_passes(0, "W") and not Tracer.annulet_flood_passes(0, "N"), "a flooded north annulet still passes only west")
+	check(Tracer.echinus_flood_passes(0, "E") and not Tracer.echinus_flood_passes(0, "N"), "a flooded north echinus still passes only east")
+	check(Tracer.rebate_flood_passes(0, "S") and not Tracer.rebate_flood_passes(0, "N"), "a flooded north rebate still passes only south")
+	check(Tracer.abacus_flood_passes(0, "N") and not Tracer.abacus_flood_passes(0, "E"), "a flooded north abacus still passes only north")
+	check(Tracer.throat_flood_passes(0, "S") and not Tracer.throat_flood_passes(0, "N"), "a flooded north throat still passes only south")
+
+
+func test_baguette_book() -> void:
+	var book := Charts.baguette()
+	check(book.size() == 8, "the baguette book has eight charts")
+	var titles := ["The Flooded Baguette", "The Turned Baguette", "The Listel Spread", "The Necking Spread", "The Taenia Miss", "The Annulet Keep", "The Echinus Keep", "The Baguette Line"]
+	for i in book.size():
+		var chart: Dictionary = book[i]
+		check(str(chart["harbor"]) == Charts.BAGUETTE, "chart %s belongs to the baguette" % str(chart["id"]))
+		check(str(chart["title"]) == titles[i], "chart %s keeps its title" % str(chart["id"]))
+		_expect_baguette_misses(chart)
+	check(str(book[2]["teach"]).to_lower().contains("listel"), "chart 393 names the listel")
+	check(str(book[3]["teach"]).to_lower().contains("necking"), "chart 394 names the necking")
+	check(str(book[4]["teach"]).to_lower().contains("taenia"), "chart 395 names the taenia")
+	check(str(book[5]["teach"]).to_lower().contains("annulet"), "chart 396 names the annulet")
+	check(str(book[6]["teach"]).to_lower().contains("echinus"), "chart 397 names the echinus")
+	check(str(book[7]["teach"]).to_lower().contains("rebate") and str(book[7]["teach"]).to_lower().contains("abacus") and str(book[7]["teach"]).to_lower().contains("throat"), "chart 398 names the rebate, the abacus, and the throat")
+	_expect_baguette_miss(book[2], "O", "listel", 0, "a flooded north listel misses chart 393")
+	_expect_baguette_miss(book[3], "O", "necking", 0, "a flooded north necking misses chart 394")
+	_expect_baguette_miss(book[4], "O", "taenia", 0, "a flooded north taenia misses chart 395")
+	_expect_baguette_miss(book[5], "O", "annulet", 0, "a flooded north annulet misses chart 396")
+	_expect_baguette_miss(book[6], "O", "echinus", 0, "a flooded north echinus misses chart 397")
+	_expect_baguette_miss(book[7], "O", "rebate", 0, "a flooded north rebate misses chart 398")
+	_expect_baguette_miss(book[7], "O", "abacus", 0, "a flooded north abacus misses chart 398")
+	_expect_baguette_miss(book[7], "O", "throat", 0, "a flooded north throat misses chart 398")
+	_expect_baguette_miss(book[1], "O", "taenia", 0, "a flooded north taenia misses the turned baguette")
+	var line: Dictionary = book[7]
+	var lit: Dictionary = Tracer.trace(line, Charts.make_state(line, true))
+	check(not bool(lit["boats"]["Hb"]), "the baguette line keeps the hull dark")
+	var ebb: Dictionary = Charts.duplicate_state(Charts.make_state(line, true))
+	ebb["tide_index"] = 0
+	var ebb_trace: Dictionary = Tracer.trace(line, ebb)
+	check(bool(ebb_trace["boats"]["Hb"]) and not Tracer.is_cleared(line, ebb), "low water lights the hull and does not clear")
+
+
+func _baguette_set_matches(kind: String, rot: int, sol_rot: int) -> bool:
+	for dir in ["N", "E", "S", "W"]:
+		var theirs: bool = false
+		if kind == "threshold":
+			theirs = Tracer.threshold_flood_passes(rot, dir)
+		elif kind == "impost":
+			theirs = Tracer.impost_flood_passes(rot, dir)
+		var ours: bool = Tracer.baguette_flood_passes(sol_rot, dir)
+		if theirs != ours:
+			return false
+	return true
+
+
+func _expect_baguette_misses(chart: Dictionary) -> void:
+	var kinds: Array = ["listel", "necking", "taenia", "annulet", "echinus", "rebate", "abacus", "throat", "threshold", "impost", "archivolt", "cill", "larmier", "scotia", "hood", "architrave", "beak", "drip", "weir", "sluice", "astragal", "cyma", "corona", "fillet", "quirk", "bead"]
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		var pid := str(piece["id"])
+		var sol := int(piece["solution_rot"])
+		for kind in kinds:
+			for rot in [0, 90, 180, 270]:
+				if (kind == "threshold" or kind == "impost") and _baguette_set_matches(kind, rot, sol):
+					continue
+				_expect_baguette_miss(chart, pid, kind, rot, "chart %s %s %s at %d misses" % [str(chart["id"]), pid, kind, rot])
+
+
+func _expect_baguette_miss(chart: Dictionary, piece_id: String, kind: String, rot: int, label: String) -> void:
+	var copy: Dictionary = chart.duplicate(true)
+	_retarget(copy, piece_id, kind, rot)
+	check(not Tracer.is_cleared(copy, Charts.make_state(copy, true)), label)
+
+
+func test_reglet_rule() -> void:
+	for dir in ["N", "E", "S", "W"]:
+		check(not Tracer.reglet_passes(0, dir), "a dry reglet stops %s" % dir)
+		check(not Tracer.reglet_passes(90, dir), "a turned dry reglet still stops %s" % dir)
+	check(Tracer.reglet_flood_passes(0, "N") and Tracer.reglet_flood_passes(0, "S") and Tracer.reglet_flood_passes(0, "E"), "a flooded north reglet passes north, south, and east")
+	check(not Tracer.reglet_flood_passes(0, "W"), "a flooded north reglet stops west")
+	check(Tracer.reglet_flood_passes(90, "E") and Tracer.reglet_flood_passes(90, "W") and Tracer.reglet_flood_passes(90, "S"), "one click faces the reglet east and east, west, and south pass")
+	check(not Tracer.reglet_flood_passes(90, "N"), "a flooded east reglet stops north")
+	check(Tracer.reglet_flood_passes(180, "S") and Tracer.reglet_flood_passes(180, "N") and Tracer.reglet_flood_passes(180, "W") and not Tracer.reglet_flood_passes(180, "E"), "a flooded south reglet passes south, north, and west")
+	check(Tracer.soffit_passes(0, "N") and Tracer.soffit_passes(0, "E") and Tracer.soffit_passes(0, "S") and not Tracer.soffit_passes(0, "W"), "a dry soffit still passes north, east, and south")
+	check(Tracer.drip_flood_passes(0, "W") and not Tracer.drip_flood_passes(0, "N"), "a flooded north drip still passes only west")
+	check(Tracer.baguette_flood_passes(0, "N") and Tracer.baguette_flood_passes(0, "E") and Tracer.baguette_flood_passes(0, "W") and not Tracer.baguette_flood_passes(0, "S"), "a flooded north baguette still passes north, east, and west")
+	check(Tracer.listel_flood_passes(0, "N") and Tracer.listel_flood_passes(0, "E") and not Tracer.listel_flood_passes(0, "S"), "a flooded north listel still passes north and east")
+	check(Tracer.necking_flood_passes(0, "N") and Tracer.necking_flood_passes(0, "W") and not Tracer.necking_flood_passes(0, "E"), "a flooded north necking still passes north and west")
+	check(Tracer.taenia_flood_passes(0, "N") and Tracer.taenia_flood_passes(0, "S") and not Tracer.taenia_flood_passes(0, "E"), "a flooded north taenia still passes north and south")
+	check(Tracer.annulet_flood_passes(0, "W") and not Tracer.annulet_flood_passes(0, "N"), "a flooded north annulet still passes only west")
+	check(Tracer.echinus_flood_passes(0, "E") and not Tracer.echinus_flood_passes(0, "S"), "a flooded north echinus still passes only east")
+	check(Tracer.rebate_flood_passes(0, "S") and not Tracer.rebate_flood_passes(0, "N"), "a flooded north rebate still passes only south")
+	check(Tracer.abacus_flood_passes(0, "N") and not Tracer.abacus_flood_passes(0, "S"), "a flooded north abacus still passes only north")
+	check(Tracer.throat_flood_passes(0, "S") and not Tracer.throat_flood_passes(0, "N"), "a flooded north throat still passes only south")
+
+
+func test_reglet_book() -> void:
+	var book := Charts.reglet()
+	check(book.size() == 8, "the reglet book has eight charts")
+	var titles := ["The Flooded Reglet", "The Turned Reglet", "The Listel West", "The Necking East", "The Taenia East", "The Baguette South", "The Annulet Dark", "The Reglet Line"]
+	for i in book.size():
+		var chart: Dictionary = book[i]
+		check(str(chart["harbor"]) == Charts.REGLET, "chart %s belongs to the reglet" % str(chart["id"]))
+		check(str(chart["title"]) == titles[i], "chart %s keeps its title" % str(chart["id"]))
+		_expect_reglet_misses(chart)
+	check(str(book[2]["teach"]).to_lower().contains("listel"), "chart 401 names the listel")
+	check(str(book[3]["teach"]).to_lower().contains("necking"), "chart 402 names the necking")
+	check(str(book[4]["teach"]).to_lower().contains("taenia"), "chart 403 names the taenia")
+	check(str(book[5]["teach"]).to_lower().contains("baguette"), "chart 404 names the baguette")
+	check(str(book[6]["teach"]).to_lower().contains("annulet"), "chart 405 names the annulet")
+	check(str(book[7]["teach"]).to_lower().contains("echinus") and str(book[7]["teach"]).to_lower().contains("rebate") and str(book[7]["teach"]).to_lower().contains("abacus") and str(book[7]["teach"]).to_lower().contains("throat"), "chart 406 names the echinus, the rebate, the abacus, and the throat")
+	_expect_reglet_miss(book[2], "O", "listel", 0, "a flooded north listel misses chart 401")
+	_expect_reglet_miss(book[3], "O", "necking", 0, "a flooded north necking misses chart 402")
+	_expect_reglet_miss(book[4], "O", "taenia", 0, "a flooded north taenia misses chart 403")
+	_expect_reglet_miss(book[5], "O", "baguette", 0, "a flooded north baguette misses chart 404")
+	_expect_reglet_miss(book[6], "O", "annulet", 0, "a flooded north annulet misses chart 405")
+	_expect_reglet_miss(book[7], "O", "echinus", 0, "a flooded north echinus misses chart 406")
+	_expect_reglet_miss(book[7], "O", "rebate", 0, "a flooded north rebate misses chart 406")
+	_expect_reglet_miss(book[7], "O", "abacus", 0, "a flooded north abacus misses chart 406")
+	_expect_reglet_miss(book[7], "O", "throat", 0, "a flooded north throat misses chart 406")
+	_expect_reglet_miss(book[1], "O", "baguette", 0, "a flooded north baguette misses the turned reglet")
+	var line: Dictionary = book[7]
+	var lit: Dictionary = Tracer.trace(line, Charts.make_state(line, true))
+	check(not bool(lit["boats"]["Hb"]), "the reglet line keeps the hull dark")
+	var ebb: Dictionary = Charts.duplicate_state(Charts.make_state(line, true))
+	ebb["tide_index"] = 0
+	var ebb_trace: Dictionary = Tracer.trace(line, ebb)
+	check(bool(ebb_trace["boats"]["Hb"]) and not Tracer.is_cleared(line, ebb), "low water lights the hull and does not clear")
+
+
+func _reglet_set_matches(kind: String, rot: int, sol_rot: int) -> bool:
+	for dir in ["N", "E", "S", "W"]:
+		var theirs: bool = false
+		if kind == "baguette":
+			theirs = Tracer.baguette_flood_passes(rot, dir)
+		elif kind == "threshold":
+			theirs = Tracer.threshold_flood_passes(rot, dir)
+		elif kind == "impost":
+			theirs = Tracer.impost_flood_passes(rot, dir)
+		var ours: bool = Tracer.reglet_flood_passes(sol_rot, dir)
+		if theirs != ours:
+			return false
+	return true
+
+
+func _expect_reglet_misses(chart: Dictionary) -> void:
+	var kinds: Array = ["listel", "necking", "taenia", "baguette", "annulet", "echinus", "rebate", "abacus", "throat", "threshold", "impost", "soffit", "drip", "archivolt", "cill", "larmier", "scotia", "hood", "architrave", "beak", "fascia", "weir", "sluice", "astragal", "cyma", "corona", "fillet", "quirk", "bead"]
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		var pid := str(piece["id"])
+		var sol := int(piece["solution_rot"])
+		for kind in kinds:
+			for rot in [0, 90, 180, 270]:
+				if (kind == "baguette" or kind == "threshold" or kind == "impost") and _reglet_set_matches(kind, rot, sol):
+					continue
+				_expect_reglet_miss(chart, pid, kind, rot, "chart %s %s %s at %d misses" % [str(chart["id"]), pid, kind, rot])
+
+
+func _expect_reglet_miss(chart: Dictionary, piece_id: String, kind: String, rot: int, label: String) -> void:
+	var copy: Dictionary = chart.duplicate(true)
+	_retarget(copy, piece_id, kind, rot)
+	check(not Tracer.is_cleared(copy, Charts.make_state(copy, true)), label)
+
+
+func test_billet_rule() -> void:
+	for dir in ["N", "E", "S", "W"]:
+		check(not Tracer.billet_passes(0, dir), "a dry billet stops %s" % dir)
+		check(not Tracer.billet_passes(90, dir), "a turned dry billet still stops %s" % dir)
+	check(Tracer.billet_flood_passes(0, "N") and Tracer.billet_flood_passes(0, "S") and Tracer.billet_flood_passes(0, "W"), "a flooded north billet passes north, south, and west")
+	check(not Tracer.billet_flood_passes(0, "E"), "a flooded north billet stops east")
+	check(Tracer.billet_flood_passes(90, "E") and Tracer.billet_flood_passes(90, "W") and Tracer.billet_flood_passes(90, "N"), "one click faces the billet east and east, west, and north pass")
+	check(not Tracer.billet_flood_passes(90, "S"), "a flooded east billet stops south")
+	check(Tracer.billet_flood_passes(180, "S") and Tracer.billet_flood_passes(180, "N") and Tracer.billet_flood_passes(180, "E") and not Tracer.billet_flood_passes(180, "W"), "a flooded south billet passes south, north, and east")
+	check(Tracer.fascia_passes(0, "N") and Tracer.fascia_passes(0, "S") and Tracer.fascia_passes(0, "W") and not Tracer.fascia_passes(0, "E"), "a dry fascia still passes north, south, and west")
+	check(Tracer.beak_flood_passes(0, "E") and not Tracer.beak_flood_passes(0, "N"), "a flooded north beak still passes only east")
+	check(Tracer.reglet_flood_passes(0, "N") and Tracer.reglet_flood_passes(0, "S") and Tracer.reglet_flood_passes(0, "E") and not Tracer.reglet_flood_passes(0, "W"), "a flooded north reglet still passes north, south, and east")
+	check(Tracer.baguette_flood_passes(0, "N") and Tracer.baguette_flood_passes(0, "E") and Tracer.baguette_flood_passes(0, "W") and not Tracer.baguette_flood_passes(0, "S"), "a flooded north baguette still passes north, east, and west")
+	check(Tracer.listel_flood_passes(0, "N") and Tracer.listel_flood_passes(0, "E") and not Tracer.listel_flood_passes(0, "W"), "a flooded north listel still passes north and east")
+	check(Tracer.necking_flood_passes(0, "N") and Tracer.necking_flood_passes(0, "W") and not Tracer.necking_flood_passes(0, "S"), "a flooded north necking still passes north and west")
+	check(Tracer.taenia_flood_passes(0, "N") and Tracer.taenia_flood_passes(0, "S") and not Tracer.taenia_flood_passes(0, "W"), "a flooded north taenia still passes north and south")
+	check(Tracer.annulet_flood_passes(0, "W") and not Tracer.annulet_flood_passes(0, "N"), "a flooded north annulet still passes only west")
+	check(Tracer.echinus_flood_passes(0, "E") and not Tracer.echinus_flood_passes(0, "N"), "a flooded north echinus still passes only east")
+	check(Tracer.rebate_flood_passes(0, "S") and not Tracer.rebate_flood_passes(0, "N"), "a flooded north rebate still passes only south")
+	check(Tracer.abacus_flood_passes(0, "N") and not Tracer.abacus_flood_passes(0, "W"), "a flooded north abacus still passes only north")
+	check(Tracer.throat_flood_passes(0, "S") and not Tracer.throat_flood_passes(0, "W"), "a flooded north throat still passes only south")
+
+
+func test_billet_book() -> void:
+	var book := Charts.billet()
+	check(book.size() == 8, "the billet book has eight charts")
+	var titles := ["The Flooded Billet", "The Turned Billet", "The Listel South", "The Necking South", "The Taenia West", "The Baguette Dark", "The Reglet West", "The Billet Line"]
+	for i in book.size():
+		var chart: Dictionary = book[i]
+		check(str(chart["harbor"]) == Charts.BILLET, "chart %s belongs to the billet" % str(chart["id"]))
+		check(str(chart["title"]) == titles[i], "chart %s keeps its title" % str(chart["id"]))
+		_expect_billet_misses(chart)
+	check(str(book[2]["teach"]).to_lower().contains("listel"), "chart 409 names the listel")
+	check(str(book[3]["teach"]).to_lower().contains("necking"), "chart 410 names the necking")
+	check(str(book[4]["teach"]).to_lower().contains("taenia"), "chart 411 names the taenia")
+	check(str(book[5]["teach"]).to_lower().contains("baguette"), "chart 412 names the baguette")
+	check(str(book[6]["teach"]).to_lower().contains("reglet"), "chart 413 names the reglet")
+	check(str(book[7]["teach"]).to_lower().contains("annulet") and str(book[7]["teach"]).to_lower().contains("echinus") and str(book[7]["teach"]).to_lower().contains("rebate") and str(book[7]["teach"]).to_lower().contains("abacus") and str(book[7]["teach"]).to_lower().contains("throat"), "chart 414 names the annulet, the echinus, the rebate, the abacus, and the throat")
+	_expect_billet_miss(book[2], "O", "listel", 0, "a flooded north listel misses chart 409")
+	_expect_billet_miss(book[3], "O", "necking", 0, "a flooded north necking misses chart 410")
+	_expect_billet_miss(book[4], "O", "taenia", 0, "a flooded north taenia misses chart 411")
+	_expect_billet_miss(book[5], "O", "baguette", 0, "a flooded north baguette misses chart 412")
+	_expect_billet_miss(book[6], "O", "reglet", 0, "a flooded north reglet misses chart 413")
+	_expect_billet_miss(book[7], "O", "annulet", 0, "a flooded north annulet misses chart 414")
+	_expect_billet_miss(book[7], "O", "echinus", 0, "a flooded north echinus misses chart 414")
+	_expect_billet_miss(book[7], "O", "rebate", 0, "a flooded north rebate misses chart 414")
+	_expect_billet_miss(book[7], "O", "abacus", 0, "a flooded north abacus misses chart 414")
+	_expect_billet_miss(book[7], "O", "throat", 0, "a flooded north throat misses chart 414")
+	_expect_billet_miss(book[1], "O", "reglet", 0, "a flooded north reglet misses the turned billet")
+	var line: Dictionary = book[7]
+	var lit: Dictionary = Tracer.trace(line, Charts.make_state(line, true))
+	check(not bool(lit["boats"]["Hb"]), "the billet line keeps the hull dark")
+	var ebb: Dictionary = Charts.duplicate_state(Charts.make_state(line, true))
+	ebb["tide_index"] = 0
+	var ebb_trace: Dictionary = Tracer.trace(line, ebb)
+	check(bool(ebb_trace["boats"]["Hb"]) and not Tracer.is_cleared(line, ebb), "low water lights the hull and does not clear")
+
+
+func _billet_set_matches(kind: String, rot: int, sol_rot: int) -> bool:
+	for dir in ["N", "E", "S", "W"]:
+		var theirs: bool = false
+		if kind == "baguette":
+			theirs = Tracer.baguette_flood_passes(rot, dir)
+		elif kind == "reglet":
+			theirs = Tracer.reglet_flood_passes(rot, dir)
+		elif kind == "threshold":
+			theirs = Tracer.threshold_flood_passes(rot, dir)
+		elif kind == "impost":
+			theirs = Tracer.impost_flood_passes(rot, dir)
+		var ours: bool = Tracer.billet_flood_passes(sol_rot, dir)
+		if theirs != ours:
+			return false
+	return true
+
+
+func _expect_billet_misses(chart: Dictionary) -> void:
+	var kinds: Array = ["listel", "necking", "taenia", "baguette", "reglet", "annulet", "echinus", "rebate", "abacus", "throat", "threshold", "impost", "fascia", "beak", "soffit", "drip", "archivolt", "cill", "larmier", "scotia", "hood", "architrave", "weir", "sluice", "astragal", "cyma", "corona", "fillet", "quirk", "bead"]
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		var pid := str(piece["id"])
+		var sol := int(piece["solution_rot"])
+		for kind in kinds:
+			for rot in [0, 90, 180, 270]:
+				if (kind == "baguette" or kind == "reglet" or kind == "threshold" or kind == "impost") and _billet_set_matches(kind, rot, sol):
+					continue
+				_expect_billet_miss(chart, pid, kind, rot, "chart %s %s %s at %d misses" % [str(chart["id"]), pid, kind, rot])
+
+
+func _expect_billet_miss(chart: Dictionary, piece_id: String, kind: String, rot: int, label: String) -> void:
+	var copy: Dictionary = chart.duplicate(true)
+	_retarget(copy, piece_id, kind, rot)
+	check(not Tracer.is_cleared(copy, Charts.make_state(copy, true)), label)
+
+
+func test_reed_rule() -> void:
+	for dir in ["N", "E", "S", "W"]:
+		check(not Tracer.reed_passes(0, dir), "a dry reed stops %s" % dir)
+		check(not Tracer.reed_passes(90, dir), "a turned dry reed still stops %s" % dir)
+		check(Tracer.reed_flood_passes(0, dir), "a flooded reed passes %s" % dir)
+		check(Tracer.reed_flood_passes(90, dir), "a turned flooded reed still passes %s" % dir)
+	check(not Tracer.impost_flood_passes(0, "N") and Tracer.impost_flood_passes(0, "S") and Tracer.impost_flood_passes(0, "E") and Tracer.impost_flood_passes(0, "W"), "a flooded north impost still stops north")
+	check(Tracer.ovolo_passes(0, "S") and Tracer.ovolo_passes(0, "E") and Tracer.ovolo_passes(0, "W") and not Tracer.ovolo_passes(0, "N"), "a dry ovolo still passes every heading except north")
+	check(Tracer.billet_flood_passes(0, "N") and Tracer.billet_flood_passes(0, "S") and Tracer.billet_flood_passes(0, "W") and not Tracer.billet_flood_passes(0, "E"), "a flooded north billet still passes north, south, and west")
+	check(Tracer.reglet_flood_passes(0, "N") and Tracer.reglet_flood_passes(0, "S") and Tracer.reglet_flood_passes(0, "E") and not Tracer.reglet_flood_passes(0, "W"), "a flooded north reglet still passes north, south, and east")
+	check(Tracer.baguette_flood_passes(0, "N") and Tracer.baguette_flood_passes(0, "E") and Tracer.baguette_flood_passes(0, "W") and not Tracer.baguette_flood_passes(0, "S"), "a flooded north baguette still passes north, east, and west")
+	check(Tracer.listel_flood_passes(0, "N") and Tracer.listel_flood_passes(0, "E") and not Tracer.listel_flood_passes(0, "S"), "a flooded north listel still passes north and east")
+	check(Tracer.necking_flood_passes(0, "N") and Tracer.necking_flood_passes(0, "W") and not Tracer.necking_flood_passes(0, "S"), "a flooded north necking still passes north and west")
+	check(Tracer.taenia_flood_passes(0, "N") and Tracer.taenia_flood_passes(0, "S") and not Tracer.taenia_flood_passes(0, "E"), "a flooded north taenia still passes north and south")
+	check(Tracer.annulet_flood_passes(0, "W") and not Tracer.annulet_flood_passes(0, "N"), "a flooded north annulet still passes only west")
+	check(Tracer.echinus_flood_passes(0, "E") and not Tracer.echinus_flood_passes(0, "N"), "a flooded north echinus still passes only east")
+	check(Tracer.rebate_flood_passes(0, "S") and not Tracer.rebate_flood_passes(0, "N"), "a flooded north rebate still passes only south")
+	check(Tracer.abacus_flood_passes(0, "N") and not Tracer.abacus_flood_passes(0, "E"), "a flooded north abacus still passes only north")
+	check(Tracer.throat_flood_passes(0, "S") and not Tracer.throat_flood_passes(0, "E"), "a flooded north throat still passes only south")
+
+
+func test_reed_book() -> void:
+	var book := Charts.reed()
+	check(book.size() == 8, "the reed book has eight charts")
+	var titles := ["The Flooded Reed", "The Turned Reed", "The Listel Pair", "The Necking Pair", "The Taenia Pair", "The Baguette Dock", "The Reglet Dock", "The Reed Line"]
+	for i in book.size():
+		var chart: Dictionary = book[i]
+		check(str(chart["harbor"]) == Charts.REED, "chart %s belongs to the reed" % str(chart["id"]))
+		check(str(chart["title"]) == titles[i], "chart %s keeps its title" % str(chart["id"]))
+		_expect_reed_misses(chart)
+	check(str(book[2]["teach"]).to_lower().contains("listel"), "chart 417 names the listel")
+	check(str(book[3]["teach"]).to_lower().contains("necking"), "chart 418 names the necking")
+	check(str(book[4]["teach"]).to_lower().contains("taenia"), "chart 419 names the taenia")
+	check(str(book[5]["teach"]).to_lower().contains("baguette"), "chart 420 names the baguette")
+	check(str(book[6]["teach"]).to_lower().contains("reglet"), "chart 421 names the reglet")
+	check(str(book[7]["teach"]).to_lower().contains("billet") and str(book[7]["teach"]).to_lower().contains("annulet") and str(book[7]["teach"]).to_lower().contains("echinus") and str(book[7]["teach"]).to_lower().contains("rebate") and str(book[7]["teach"]).to_lower().contains("abacus") and str(book[7]["teach"]).to_lower().contains("throat"), "chart 422 names the billet, the annulet, the echinus, the rebate, the abacus, and the throat")
+	_expect_reed_miss(book[2], "O", "listel", 0, "a flooded north listel misses chart 417")
+	_expect_reed_miss(book[3], "O", "necking", 0, "a flooded north necking misses chart 418")
+	_expect_reed_miss(book[4], "O", "taenia", 0, "a flooded north taenia misses chart 419")
+	_expect_reed_miss(book[5], "O", "baguette", 0, "a flooded north baguette misses chart 420")
+	_expect_reed_miss(book[6], "O", "reglet", 0, "a flooded north reglet misses chart 421")
+	_expect_reed_miss(book[7], "O", "billet", 0, "a flooded north billet misses chart 422")
+	_expect_reed_miss(book[7], "O", "annulet", 0, "a flooded north annulet misses chart 422")
+	_expect_reed_miss(book[7], "O", "echinus", 0, "a flooded north echinus misses chart 422")
+	_expect_reed_miss(book[7], "O", "rebate", 0, "a flooded north rebate misses chart 422")
+	_expect_reed_miss(book[7], "O", "abacus", 0, "a flooded north abacus misses chart 422")
+	_expect_reed_miss(book[7], "O", "throat", 0, "a flooded north throat misses chart 422")
+	var line: Dictionary = book[7]
+	var lit: Dictionary = Tracer.trace(line, Charts.make_state(line, true))
+	check(not bool(lit["boats"]["Hb"]), "the reed line keeps the hull dark")
+	var ebb: Dictionary = Charts.duplicate_state(Charts.make_state(line, true))
+	ebb["tide_index"] = 0
+	var ebb_trace: Dictionary = Tracer.trace(line, ebb)
+	check(bool(ebb_trace["boats"]["Hb"]) and not Tracer.is_cleared(line, ebb), "low water lights the hull and does not clear")
+
+
+func test_staff_rule() -> void:
+	for dir in ["N", "E", "S", "W"]:
+		check(not Tracer.staff_passes(0, dir), "a dry staff stops %s" % dir)
+		check(not Tracer.staff_passes(90, dir), "a turned dry staff still stops %s" % dir)
+	check(Tracer.staff_flood_passes(0, "S") and Tracer.staff_flood_passes(0, "E") and not Tracer.staff_flood_passes(0, "N") and not Tracer.staff_flood_passes(0, "W"), "a flooded north staff passes south and east")
+	check(Tracer.staff_flood_passes(90, "S") and Tracer.staff_flood_passes(90, "W") and not Tracer.staff_flood_passes(90, "E") and not Tracer.staff_flood_passes(90, "N"), "one click faces the staff east and south and west pass")
+	check(Tracer.staff_flood_passes(180, "N") and Tracer.staff_flood_passes(180, "W") and not Tracer.staff_flood_passes(180, "S") and not Tracer.staff_flood_passes(180, "E"), "a flooded south staff passes north and west")
+	check(Tracer.impost_passes(0, "N") and not Tracer.impost_passes(0, "E") and Tracer.impost_flood_passes(0, "S") and not Tracer.impost_flood_passes(0, "N"), "an impost still passes only its facing while dry and every heading except that facing under water")
+	check(Tracer.threshold_passes(0, "S") and not Tracer.threshold_passes(0, "N") and Tracer.threshold_flood_passes(0, "N") and not Tracer.threshold_flood_passes(0, "S"), "a threshold still passes only its opposite while dry and every heading except that opposite under water")
+	check(Tracer.torus_passes(0, "S") and Tracer.torus_passes(0, "E") and not Tracer.torus_passes(0, "N"), "a dry torus still passes south and east")
+	check(not Tracer.reed_passes(0, "E") and Tracer.reed_flood_passes(0, "N") and Tracer.reed_flood_passes(0, "E") and Tracer.reed_flood_passes(0, "S") and Tracer.reed_flood_passes(0, "W"), "a reed still stops while dry and passes every heading under water")
+	check(not Tracer.billet_passes(0, "E") and Tracer.billet_flood_passes(0, "N") and Tracer.billet_flood_passes(0, "S") and Tracer.billet_flood_passes(0, "W") and not Tracer.billet_flood_passes(0, "E"), "a flooded north billet still passes north, south, and west")
+	check(Tracer.reglet_flood_passes(0, "N") and Tracer.reglet_flood_passes(0, "S") and Tracer.reglet_flood_passes(0, "E") and not Tracer.reglet_flood_passes(0, "W"), "a flooded north reglet still passes north, south, and east")
+	check(Tracer.baguette_flood_passes(0, "N") and Tracer.baguette_flood_passes(0, "E") and Tracer.baguette_flood_passes(0, "W") and not Tracer.baguette_flood_passes(0, "S"), "a flooded north baguette still passes north, east, and west")
+	check(Tracer.taenia_flood_passes(0, "N") and Tracer.taenia_flood_passes(0, "S") and not Tracer.taenia_flood_passes(0, "E"), "a flooded north taenia still passes north and south")
+	check(Tracer.necking_flood_passes(0, "N") and Tracer.necking_flood_passes(0, "W") and not Tracer.necking_flood_passes(0, "S"), "a flooded north necking still passes north and west")
+	check(Tracer.listel_flood_passes(0, "N") and Tracer.listel_flood_passes(0, "E") and not Tracer.listel_flood_passes(0, "S"), "a flooded north listel still passes north and east")
+	check(Tracer.annulet_flood_passes(0, "W") and not Tracer.annulet_flood_passes(0, "E"), "a flooded north annulet still passes only west")
+	check(Tracer.echinus_flood_passes(0, "E") and not Tracer.echinus_flood_passes(0, "S"), "a flooded north echinus still passes only east")
+	check(Tracer.rebate_flood_passes(0, "S") and not Tracer.rebate_flood_passes(0, "E"), "a flooded north rebate still passes only south")
+	check(Tracer.abacus_flood_passes(0, "N") and not Tracer.abacus_flood_passes(0, "S"), "a flooded north abacus still passes only north")
+	check(Tracer.throat_flood_passes(0, "S") and not Tracer.throat_flood_passes(0, "E"), "a flooded north throat still passes only south")
+
+
+func test_staff_book() -> void:
+	var book := Charts.staff()
+	check(book.size() == 8, "the staff book has eight charts")
+	var titles := ["The Flooded Staff", "The Turned Staff", "The Listel Keep", "The Necking Keep", "The Taenia Dock", "The Baguette Keep", "The Reglet Keep", "The Staff Line"]
+	for i in book.size():
+		var chart: Dictionary = book[i]
+		check(str(chart["harbor"]) == Charts.STAFF, "chart %s belongs to the staff" % str(chart["id"]))
+		check(str(chart["title"]) == titles[i], "chart %s keeps its title" % str(chart["id"]))
+		_expect_staff_misses(chart)
+	check(str(book[2]["teach"]).to_lower().contains("listel"), "chart 425 names the listel")
+	check(str(book[3]["teach"]).to_lower().contains("necking"), "chart 426 names the necking")
+	check(str(book[4]["teach"]).to_lower().contains("taenia"), "chart 427 names the taenia")
+	check(str(book[5]["teach"]).to_lower().contains("baguette"), "chart 428 names the baguette")
+	check(str(book[6]["teach"]).to_lower().contains("reglet"), "chart 429 names the reglet")
+	var line_teach := str(book[7]["teach"]).to_lower()
+	check(line_teach.contains("reed") and line_teach.contains("billet") and line_teach.contains("annulet") and line_teach.contains("echinus") and line_teach.contains("rebate") and line_teach.contains("abacus") and line_teach.contains("throat"), "chart 430 names the reed, the billet, the annulet, the echinus, the rebate, the abacus, and the throat")
+	_expect_staff_miss(book[0], "O", "reed", 0, "a flooded reed misses chart 423")
+	_expect_staff_miss(book[2], "O", "listel", 0, "a flooded north listel misses chart 425")
+	_expect_staff_miss(book[3], "O", "necking", 0, "a flooded north necking misses chart 426")
+	_expect_staff_miss(book[4], "O", "taenia", 0, "a flooded north taenia misses chart 427")
+	_expect_staff_miss(book[5], "O", "baguette", 0, "a flooded north baguette misses chart 428")
+	_expect_staff_miss(book[6], "O", "reglet", 0, "a flooded north reglet misses chart 429")
+	_expect_staff_miss(book[7], "O", "reed", 0, "a flooded reed misses chart 430")
+	_expect_staff_miss(book[7], "O", "billet", 0, "a flooded north billet misses chart 430")
+	_expect_staff_miss(book[7], "O", "annulet", 0, "a flooded north annulet misses chart 430")
+	_expect_staff_miss(book[7], "O", "echinus", 0, "a flooded north echinus misses chart 430")
+	_expect_staff_miss(book[7], "O", "rebate", 0, "a flooded north rebate misses chart 430")
+	_expect_staff_miss(book[7], "O", "abacus", 0, "a flooded north abacus misses chart 430")
+	_expect_staff_miss(book[7], "O", "throat", 0, "a flooded north throat misses chart 430")
+	var line: Dictionary = book[7]
+	var lit: Dictionary = Tracer.trace(line, Charts.make_state(line, true))
+	check(not bool(lit["boats"]["Hb"]), "the staff line keeps the hull dark")
+	var ebb: Dictionary = Charts.duplicate_state(Charts.make_state(line, true))
+	ebb["tide_index"] = 0
+	var ebb_trace: Dictionary = Tracer.trace(line, ebb)
+	check(bool(ebb_trace["boats"]["Hb"]) and not Tracer.is_cleared(line, ebb), "low water lights the staff hull and does not clear")
+	check(int(ProjectSettings.get_setting("display/window/size/viewport_width")) == 1280 and int(ProjectSettings.get_setting("display/window/size/viewport_height")) == 720, "the window stays 1280 by 720")
+
+
+func _expect_staff_misses(chart: Dictionary) -> void:
+	var kinds: Array = ["reed", "billet", "reglet", "baguette", "taenia", "necking", "listel", "annulet", "echinus", "rebate", "abacus", "throat"]
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		var pid := str(piece["id"])
+		var staff_rot := int(piece["solution_rot"])
+		for kind in kinds:
+			for rot in [0, 90, 180, 270]:
+				if _staff_same_open(str(kind), rot, staff_rot):
+					continue
+				_expect_staff_miss(chart, pid, str(kind), rot, "chart %s %s %s at %d misses" % [str(chart["id"]), pid, str(kind), rot])
+
+
+func _staff_same_open(kind: String, rot: int, staff_rot: int) -> bool:
+	# An east listel and a south necking pass the same south-and-east set a
+	# flooded north staff passes. Those rotations are the same open set.
+	if kind != "listel" and kind != "necking":
+		return false
+	for dir in ["N", "E", "S", "W"]:
+		var open := false
+		if kind == "listel":
+			open = Tracer.listel_flood_passes(rot, dir)
+		else:
+			open = Tracer.necking_flood_passes(rot, dir)
+		if open != Tracer.staff_flood_passes(staff_rot, dir):
+			return false
+	return true
+
+
+func _expect_staff_miss(chart: Dictionary, piece_id: String, kind: String, rot: int, label: String) -> void:
+	var copy: Dictionary = chart.duplicate(true)
+	_retarget(copy, piece_id, kind, rot)
+	check(not Tracer.is_cleared(copy, Charts.make_state(copy, true)), label)
+
+
+func test_thumb_rule() -> void:
+	for dir in ["N", "E", "S", "W"]:
+		check(not Tracer.thumb_passes(0, dir), "a dry thumb stops %s" % dir)
+		check(not Tracer.thumb_passes(270, dir), "a west dry thumb still stops %s" % dir)
+	check(Tracer.thumb_flood_passes(0, "S") and Tracer.thumb_flood_passes(0, "W") and not Tracer.thumb_flood_passes(0, "N") and not Tracer.thumb_flood_passes(0, "E"), "a flooded north thumb passes south and west")
+	check(Tracer.thumb_flood_passes(270, "E") and Tracer.thumb_flood_passes(270, "S") and not Tracer.thumb_flood_passes(270, "N") and not Tracer.thumb_flood_passes(270, "W"), "one click from south faces the thumb west and east and south pass")
+	check(Tracer.thumb_flood_passes(90, "N") and Tracer.thumb_flood_passes(90, "W") and not Tracer.thumb_flood_passes(90, "E") and not Tracer.thumb_flood_passes(90, "S"), "one clockwise click from north faces the thumb east and north and west pass")
+	check(Tracer.thumb_flood_passes(180, "N") and Tracer.thumb_flood_passes(180, "E") and not Tracer.thumb_flood_passes(180, "S") and not Tracer.thumb_flood_passes(180, "W"), "a flooded south thumb passes north and east")
+	check(Tracer.ogee_passes(0, "S") and Tracer.ogee_passes(0, "W") and not Tracer.ogee_passes(0, "N") and not Tracer.ogee_passes(0, "E"), "a dry ogee still passes south and west")
+	check(Tracer.staff_flood_passes(0, "S") and Tracer.staff_flood_passes(0, "E") and not Tracer.staff_flood_passes(0, "W"), "a flooded north staff still passes south and east")
+	check(Tracer.staff_flood_passes(90, "S") and Tracer.staff_flood_passes(90, "W") and not Tracer.staff_flood_passes(90, "E"), "an east staff still passes south and west")
+	check(not Tracer.reed_passes(0, "W") and Tracer.reed_flood_passes(0, "N") and Tracer.reed_flood_passes(0, "E") and Tracer.reed_flood_passes(0, "S") and Tracer.reed_flood_passes(0, "W"), "a reed still stops while dry and passes every heading under water")
+	check(not Tracer.billet_passes(0, "W") and Tracer.billet_flood_passes(0, "N") and Tracer.billet_flood_passes(0, "S") and Tracer.billet_flood_passes(0, "W") and not Tracer.billet_flood_passes(0, "E"), "a flooded north billet still passes north, south, and west")
+	check(Tracer.reglet_flood_passes(0, "N") and Tracer.reglet_flood_passes(0, "S") and Tracer.reglet_flood_passes(0, "E") and not Tracer.reglet_flood_passes(0, "W"), "a flooded north reglet still passes north, south, and east")
+	check(Tracer.baguette_flood_passes(0, "N") and Tracer.baguette_flood_passes(0, "E") and Tracer.baguette_flood_passes(0, "W") and not Tracer.baguette_flood_passes(0, "S"), "a flooded north baguette still passes north, east, and west")
+	check(Tracer.taenia_flood_passes(0, "N") and Tracer.taenia_flood_passes(0, "S") and not Tracer.taenia_flood_passes(0, "W"), "a flooded north taenia still passes north and south")
+	check(Tracer.necking_flood_passes(0, "N") and Tracer.necking_flood_passes(0, "W") and not Tracer.necking_flood_passes(0, "S"), "a flooded north necking still passes north and west")
+	check(Tracer.listel_flood_passes(0, "N") and Tracer.listel_flood_passes(0, "E") and not Tracer.listel_flood_passes(0, "W"), "a flooded north listel still passes north and east")
+	check(Tracer.annulet_flood_passes(0, "W") and not Tracer.annulet_flood_passes(0, "S"), "a flooded north annulet still passes only west")
+	check(Tracer.echinus_flood_passes(0, "E") and not Tracer.echinus_flood_passes(0, "W"), "a flooded north echinus still passes only east")
+	check(Tracer.rebate_flood_passes(0, "S") and not Tracer.rebate_flood_passes(0, "W"), "a flooded north rebate still passes only south")
+	check(Tracer.abacus_flood_passes(0, "N") and not Tracer.abacus_flood_passes(0, "W"), "a flooded north abacus still passes only north")
+	check(Tracer.throat_flood_passes(0, "S") and not Tracer.throat_flood_passes(0, "W"), "a flooded north throat still passes only south")
+
+
+func test_thumb_book() -> void:
+	var book := Charts.thumb()
+	check(book.size() == 8, "the thumb book has eight charts")
+	var titles := ["The Flooded Thumb", "The Turned Thumb", "The Staff Keep", "The Reed Dark", "The Billet Dark", "The Reglet Shut", "The Baguette Shut", "The Thumb Line"]
+	for i in book.size():
+		var chart: Dictionary = book[i]
+		check(str(chart["harbor"]) == Charts.THUMB, "chart %s belongs to the thumb" % str(chart["id"]))
+		check(str(chart["title"]) == titles[i], "chart %s keeps its title" % str(chart["id"]))
+		_expect_thumb_misses(chart)
+	check(str(book[2]["teach"]).to_lower().contains("staff"), "chart 433 names the staff")
+	check(str(book[3]["teach"]).to_lower().contains("reed"), "chart 434 names the reed")
+	check(str(book[4]["teach"]).to_lower().contains("billet"), "chart 435 names the billet")
+	check(str(book[5]["teach"]).to_lower().contains("reglet"), "chart 436 names the reglet")
+	check(str(book[6]["teach"]).to_lower().contains("baguette"), "chart 437 names the baguette")
+	var line_teach := str(book[7]["teach"]).to_lower()
+	check(line_teach.contains("taenia") and line_teach.contains("necking") and line_teach.contains("listel") and line_teach.contains("annulet") and line_teach.contains("echinus") and line_teach.contains("rebate") and line_teach.contains("abacus") and line_teach.contains("throat"), "chart 438 names the taenia, the necking, the listel, the annulet, the echinus, the rebate, the abacus, and the throat")
+	_expect_thumb_miss(book[0], "O", "staff", 0, "a flooded north staff misses chart 431")
+	_expect_thumb_miss(book[2], "O", "staff", 0, "a flooded north staff misses chart 433")
+	_expect_thumb_miss(book[3], "O", "reed", 0, "a flooded reed misses chart 434")
+	_expect_thumb_miss(book[4], "O", "billet", 0, "a flooded north billet misses chart 435")
+	_expect_thumb_miss(book[5], "O", "reglet", 0, "a flooded north reglet misses chart 436")
+	_expect_thumb_miss(book[6], "O", "baguette", 0, "a flooded north baguette misses chart 437")
+	_expect_thumb_miss(book[7], "O", "taenia", 0, "a flooded north taenia misses chart 438")
+	_expect_thumb_miss(book[7], "O", "necking", 0, "a flooded north necking misses chart 438")
+	_expect_thumb_miss(book[7], "O", "listel", 0, "a flooded north listel misses chart 438")
+	_expect_thumb_miss(book[7], "O", "annulet", 0, "a flooded north annulet misses chart 438")
+	_expect_thumb_miss(book[7], "O", "echinus", 0, "a flooded north echinus misses chart 438")
+	_expect_thumb_miss(book[7], "O", "rebate", 0, "a flooded north rebate misses chart 438")
+	_expect_thumb_miss(book[7], "O", "abacus", 0, "a flooded north abacus misses chart 438")
+	_expect_thumb_miss(book[7], "O", "throat", 0, "a flooded north throat misses chart 438")
+	var line: Dictionary = book[7]
+	var lit: Dictionary = Tracer.trace(line, Charts.make_state(line, true))
+	check(not bool(lit["boats"]["Hb"]), "the thumb line keeps the hull dark")
+	var ebb: Dictionary = Charts.duplicate_state(Charts.make_state(line, true))
+	ebb["tide_index"] = 0
+	var ebb_trace: Dictionary = Tracer.trace(line, ebb)
+	check(bool(ebb_trace["boats"]["Hb"]) and not Tracer.is_cleared(line, ebb), "low water lights the thumb hull and does not clear")
+	check(int(ProjectSettings.get_setting("display/window/size/viewport_width")) == 1280 and int(ProjectSettings.get_setting("display/window/size/viewport_height")) == 720, "the window stays 1280 by 720")
+
+
+func _expect_thumb_misses(chart: Dictionary) -> void:
+	var kinds: Array = ["staff", "reed", "billet", "reglet", "baguette", "taenia", "necking", "listel", "annulet", "echinus", "rebate", "abacus", "throat"]
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		var pid := str(piece["id"])
+		var thumb_rot := int(piece["solution_rot"])
+		for kind in kinds:
+			for rot in [0, 90, 180, 270]:
+				if _thumb_same_open(str(kind), rot, thumb_rot):
+					continue
+				_expect_thumb_miss(chart, pid, str(kind), rot, "chart %s %s %s at %d misses" % [str(chart["id"]), pid, str(kind), rot])
+
+
+func _thumb_same_open(kind: String, rot: int, thumb_rot: int) -> bool:
+	# An east staff, a south listel, and a west necking pass the same
+	# south-and-west set a flooded north thumb passes. Those rotations are
+	# the same open set.
+	if kind != "staff" and kind != "listel" and kind != "necking":
+		return false
+	for dir in ["N", "E", "S", "W"]:
+		var open := false
+		if kind == "staff":
+			open = Tracer.staff_flood_passes(rot, dir)
+		elif kind == "listel":
+			open = Tracer.listel_flood_passes(rot, dir)
+		else:
+			open = Tracer.necking_flood_passes(rot, dir)
+		if open != Tracer.thumb_flood_passes(thumb_rot, dir):
+			return false
+	return true
+
+
+func _expect_thumb_miss(chart: Dictionary, piece_id: String, kind: String, rot: int, label: String) -> void:
+	var copy: Dictionary = chart.duplicate(true)
+	_retarget(copy, piece_id, kind, rot)
+	check(not Tracer.is_cleared(copy, Charts.make_state(copy, true)), label)
+
+
+func _expect_reed_misses(chart: Dictionary) -> void:
+	var kinds: Array = ["listel", "necking", "taenia", "baguette", "reglet", "billet", "annulet", "echinus", "rebate", "abacus", "throat", "impost", "threshold", "ovolo", "fascia", "soffit", "lintel", "hood", "archivolt", "cill", "larmier", "scotia", "architrave", "beak", "drip"]
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		var pid := str(piece["id"])
+		for kind in kinds:
+			for rot in [0, 90, 180, 270]:
+				_expect_reed_miss(chart, pid, kind, rot, "chart %s %s %s at %d misses" % [str(chart["id"]), pid, kind, rot])
+
+
+func _expect_reed_miss(chart: Dictionary, piece_id: String, kind: String, rot: int, label: String) -> void:
+	var copy: Dictionary = chart.duplicate(true)
+	_retarget(copy, piece_id, kind, rot)
+	check(not Tracer.is_cleared(copy, Charts.make_state(copy, true)), label)
+
+
 func test_smoke() -> void:
 	var main_script: Script = load("res://scripts/main.gd")
 	main_script.persist_progress = false
@@ -15196,8 +15997,296 @@ func test_smoke() -> void:
 	await process_frame
 	check(str(main.chart["id"]) == "367", "Listel returns to The Flooded Listel")
 	check(_chart_row_fits(main.listel_grid, main._side), "the listel chart row fits in the window")
+	var necking_rect: Rect2 = main.necking_book_button.get_global_rect()
+	var necking_side: Rect2 = main._side.get_global_rect()
+	check(necking_side.grow(1.0).encloses(necking_rect), "the necking book button sits inside the side panel")
+	check(not necking_rect.intersects(listel_rect), "the necking book button stays off the listel")
+	check(necking_rect.size.x + 0.5 >= main.necking_book_button.get_minimum_size().x, "the necking label has room")
+	check(listel_rect.size.x + 0.5 >= main.listel_book_button.get_minimum_size().x, "the listel label still has room")
+	main.unlocked[374] = false
+	main._refresh_chrome()
+	check(main.necking_book_button.disabled, "the necking stays locked until the listel line is held")
+	main.unlocked[373] = true
+	check(main.select_chart(373), "chart 374 opens when unlocked")
+	check(main.necking_book_button.disabled, "opening the listel line does not unlock the necking")
+	main.state = Charts.duplicate_state(Charts.make_state(main.chart, true))
+	main._refresh()
+	main.try_lock()
+	check(main.board_locked and main.unlocked[374], "holding the listel line opens the necking")
+	main._advance_from_win()
+	check(str(main.chart["id"]) == "375", "next chart from the listel line enters The Flooded Necking")
+	check(main.necking_grid.visible and not main.listel_grid.visible and not main.annulet_grid.visible, "the necking grid opens with The Flooded Necking")
+	check(str(main.harbor_label.text) == Charts.NECKING, "the harbor name follows the necking")
+	check(str(main.tide_readout.text).to_lower().contains("necking"), "chart 375 names the necking in the water readout")
+	var necking_cell := Charts.piece_cell(main.chart, main.state, "O")
+	check(str(main.selected_id) == "O" and int(main.state["pieces"]["O"]["rot"]) == 90, "chart 375 starts facing east")
+	_click_cell(main, necking_cell.x, necking_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 180, "a click turns the necking from east to south")
+	check(str(main.status_label.text).to_lower().contains("stops") and str(main.status_label.text).to_lower().contains("counterclockwise"), "the necking says every dry heading stops and the flood opens the facing and the counterclockwise heading")
+	_click_cell(main, necking_cell.x, necking_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 270, "the next click turns the necking west")
+	_click_cell(main, necking_cell.x, necking_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 0, "the next click turns the necking north")
+	_click_cell(main, necking_cell.x, necking_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 90, "four clicks restore the east facing")
+	main._on_book_pressed(47)
+	await process_frame
+	check(str(main.chart["id"]) == "375", "Necking returns to The Flooded Necking")
+	check(_chart_row_fits(main.necking_grid, main._side), "the necking chart row fits in the window")
+	var taenia_rect: Rect2 = main.taenia_book_button.get_global_rect()
+	var taenia_side: Rect2 = main._side.get_global_rect()
+	check(taenia_side.grow(1.0).encloses(taenia_rect), "the taenia book button sits inside the side panel")
+	check(not taenia_rect.intersects(necking_rect), "the taenia book button stays off the necking")
+	check(taenia_rect.size.x + 0.5 >= main.taenia_book_button.get_minimum_size().x, "the taenia label has room")
+	check(necking_rect.size.x + 0.5 >= main.necking_book_button.get_minimum_size().x, "the necking label still has room")
+	main.unlocked[382] = false
+	main._refresh_chrome()
+	check(main.taenia_book_button.disabled, "the taenia stays locked until the necking line is held")
+	main.unlocked[381] = true
+	check(main.select_chart(381), "chart 382 opens when unlocked")
+	check(main.taenia_book_button.disabled, "opening the necking line does not unlock the taenia")
+	main.state = Charts.duplicate_state(Charts.make_state(main.chart, true))
+	main._refresh()
+	main.try_lock()
+	check(main.board_locked and main.unlocked[382], "holding the necking line opens the taenia")
+	main._advance_from_win()
+	check(str(main.chart["id"]) == "383", "next chart from the necking line enters The Flooded Taenia")
+	check(main.taenia_grid.visible and not main.necking_grid.visible and not main.listel_grid.visible, "the taenia grid opens with The Flooded Taenia")
+	check(str(main.harbor_label.text) == Charts.TAENIA, "the harbor name follows the taenia")
+	check(str(main.tide_readout.text).to_lower().contains("taenia"), "chart 383 names the taenia in the water readout")
+	var taenia_cell := Charts.piece_cell(main.chart, main.state, "O")
+	check(str(main.selected_id) == "O" and int(main.state["pieces"]["O"]["rot"]) == 90, "chart 383 starts facing east")
+	_click_cell(main, taenia_cell.x, taenia_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 180, "a click turns the taenia from east to south")
+	check(str(main.status_label.text).to_lower().contains("stops") and str(main.status_label.text).to_lower().contains("opposite"), "the taenia says every dry heading stops and the flood opens the facing and the opposite")
+	_click_cell(main, taenia_cell.x, taenia_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 270, "the next click turns the taenia west")
+	_click_cell(main, taenia_cell.x, taenia_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 0, "the next click turns the taenia north")
+	_click_cell(main, taenia_cell.x, taenia_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 90, "four clicks restore the east facing")
+	main._on_book_pressed(48)
+	await process_frame
+	check(str(main.chart["id"]) == "383", "Taenia returns to The Flooded Taenia")
+	check(_chart_row_fits(main.taenia_grid, main._side), "the taenia chart row fits in the window")
+	var baguette_rect: Rect2 = main.baguette_book_button.get_global_rect()
+	var baguette_side: Rect2 = main._side.get_global_rect()
+	check(baguette_side.grow(1.0).encloses(baguette_rect), "the baguette book button sits inside the side panel")
+	check(not baguette_rect.intersects(taenia_rect), "the baguette book button stays off the taenia")
+	check(baguette_rect.size.x + 0.5 >= main.baguette_book_button.get_minimum_size().x, "the baguette label has room")
+	check(taenia_rect.size.x + 0.5 >= main.taenia_book_button.get_minimum_size().x, "the taenia label still has room")
+	main.unlocked[390] = false
+	main._refresh_chrome()
+	check(main.baguette_book_button.disabled, "the baguette stays locked until the taenia line is held")
+	main.unlocked[389] = true
+	check(main.select_chart(389), "chart 390 opens when unlocked")
+	check(main.baguette_book_button.disabled, "opening the taenia line does not unlock the baguette")
+	main.state = Charts.duplicate_state(Charts.make_state(main.chart, true))
+	main._refresh()
+	main.try_lock()
+	check(main.board_locked and main.unlocked[390], "holding the taenia line opens the baguette")
+	main._advance_from_win()
+	check(str(main.chart["id"]) == "391", "next chart from the taenia line enters The Flooded Baguette")
+	check(main.baguette_grid.visible and not main.taenia_grid.visible and not main.necking_grid.visible, "the baguette grid opens with The Flooded Baguette")
+	check(str(main.harbor_label.text) == Charts.BAGUETTE, "the harbor name follows the baguette")
+	check(str(main.tide_readout.text).to_lower().contains("baguette"), "chart 391 names the baguette in the water readout")
+	var baguette_cell := Charts.piece_cell(main.chart, main.state, "O")
+	check(str(main.selected_id) == "O" and int(main.state["pieces"]["O"]["rot"]) == 90, "chart 391 starts facing east")
+	_click_cell(main, baguette_cell.x, baguette_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 180, "a click turns the baguette from east to south")
+	check(str(main.status_label.text).to_lower().contains("stops") and str(main.status_label.text).to_lower().contains("opposite"), "the baguette says every dry heading stops and the flood opens every heading except the opposite")
+	_click_cell(main, baguette_cell.x, baguette_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 270, "the next click turns the baguette west")
+	_click_cell(main, baguette_cell.x, baguette_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 0, "the next click turns the baguette north")
+	_click_cell(main, baguette_cell.x, baguette_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 90, "four clicks restore the east facing")
+	main._on_book_pressed(49)
+	await process_frame
+	check(str(main.chart["id"]) == "391", "Baguette returns to The Flooded Baguette")
+	check(_chart_row_fits(main.baguette_grid, main._side), "the baguette chart row fits in the window")
+	var reglet_rect: Rect2 = main.reglet_book_button.get_global_rect()
+	var reglet_side: Rect2 = main._side.get_global_rect()
+	check(reglet_side.grow(1.0).encloses(reglet_rect), "the reglet book button sits inside the side panel")
+	check(not reglet_rect.intersects(baguette_rect), "the reglet book button stays off the baguette")
+	check(reglet_rect.size.x + 0.5 >= main.reglet_book_button.get_minimum_size().x, "the reglet label has room")
+	check(baguette_rect.size.x + 0.5 >= main.baguette_book_button.get_minimum_size().x, "the baguette label still has room")
+	main.unlocked[398] = false
+	main._refresh_chrome()
+	check(main.reglet_book_button.disabled, "the reglet stays locked until the baguette line is held")
+	main.unlocked[397] = true
+	check(main.select_chart(397), "chart 398 opens when unlocked")
+	check(main.reglet_book_button.disabled, "opening the baguette line does not unlock the reglet")
+	main.state = Charts.duplicate_state(Charts.make_state(main.chart, true))
+	main._refresh()
+	main.try_lock()
+	check(main.board_locked and main.unlocked[398], "holding the baguette line opens the reglet")
+	main._advance_from_win()
+	check(str(main.chart["id"]) == "399", "next chart from the baguette line enters The Flooded Reglet")
+	check(main.reglet_grid.visible and not main.baguette_grid.visible and not main.taenia_grid.visible, "the reglet grid opens with The Flooded Reglet")
+	check(str(main.harbor_label.text) == Charts.REGLET, "the harbor name follows the reglet")
+	check(str(main.tide_readout.text).to_lower().contains("reglet"), "chart 399 names the reglet in the water readout")
+	var reglet_cell := Charts.piece_cell(main.chart, main.state, "O")
+	check(str(main.selected_id) == "O" and int(main.state["pieces"]["O"]["rot"]) == 90, "chart 399 starts facing east")
+	_click_cell(main, reglet_cell.x, reglet_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 180, "a click turns the reglet from east to south")
+	check(str(main.status_label.text).to_lower().contains("stops") and str(main.status_label.text).to_lower().contains("counterclockwise"), "the reglet says every dry heading stops and the flood opens every heading except the counterclockwise one")
+	_click_cell(main, reglet_cell.x, reglet_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 270, "the next click turns the reglet west")
+	_click_cell(main, reglet_cell.x, reglet_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 0, "the next click turns the reglet north")
+	_click_cell(main, reglet_cell.x, reglet_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 90, "four clicks restore the east facing")
+	main._on_book_pressed(50)
+	await process_frame
+	check(str(main.chart["id"]) == "399", "Reglet returns to The Flooded Reglet")
+	check(_chart_row_fits(main.reglet_grid, main._side), "the reglet chart row fits in the window")
+	var billet_rect: Rect2 = main.billet_book_button.get_global_rect()
+	var billet_side: Rect2 = main._side.get_global_rect()
+	check(billet_side.grow(1.0).encloses(billet_rect), "the billet book button sits inside the side panel")
+	check(not billet_rect.intersects(reglet_rect), "the billet book button stays off the reglet")
+	check(billet_rect.size.x + 0.5 >= main.billet_book_button.get_minimum_size().x, "the billet label has room")
+	check(reglet_rect.size.x + 0.5 >= main.reglet_book_button.get_minimum_size().x, "the reglet label still has room")
+	main.unlocked[406] = false
+	main._refresh_chrome()
+	check(main.billet_book_button.disabled, "the billet stays locked until the reglet line is held")
+	main.unlocked[405] = true
+	check(main.select_chart(405), "chart 406 opens when unlocked")
+	check(main.billet_book_button.disabled, "opening the reglet line does not unlock the billet")
+	main.state = Charts.duplicate_state(Charts.make_state(main.chart, true))
+	main._refresh()
+	main.try_lock()
+	check(main.board_locked and main.unlocked[406], "holding the reglet line opens the billet")
+	main._advance_from_win()
+	check(str(main.chart["id"]) == "407", "next chart from the reglet line enters The Flooded Billet")
+	check(main.billet_grid.visible and not main.reglet_grid.visible and not main.baguette_grid.visible, "the billet grid opens with The Flooded Billet")
+	check(str(main.harbor_label.text) == Charts.BILLET, "the harbor name follows the billet")
+	check(str(main.tide_readout.text).to_lower().contains("billet"), "chart 407 names the billet in the water readout")
+	var billet_cell := Charts.piece_cell(main.chart, main.state, "O")
+	check(str(main.selected_id) == "O" and int(main.state["pieces"]["O"]["rot"]) == 90, "chart 407 starts facing east")
+	_click_cell(main, billet_cell.x, billet_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 180, "a click turns the billet from east to south")
+	check(str(main.status_label.text).to_lower().contains("stops") and str(main.status_label.text).to_lower().contains("next clockwise"), "the billet says every dry heading stops and the flood opens every heading except the clockwise one")
+	_click_cell(main, billet_cell.x, billet_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 270, "the next click turns the billet west")
+	_click_cell(main, billet_cell.x, billet_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 0, "the next click turns the billet north")
+	_click_cell(main, billet_cell.x, billet_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 90, "four clicks restore the east facing")
+	main._on_book_pressed(51)
+	await process_frame
+	check(str(main.chart["id"]) == "407", "Billet returns to The Flooded Billet")
+	check(_chart_row_fits(main.billet_grid, main._side), "the billet chart row fits in the window")
+	var reed_rect: Rect2 = main.reed_book_button.get_global_rect()
+	var reed_side: Rect2 = main._side.get_global_rect()
+	check(reed_side.grow(1.0).encloses(reed_rect), "the reed book button sits inside the side panel")
+	check(not reed_rect.intersects(billet_rect), "the reed book button stays off the billet")
+	check(reed_rect.size.x + 0.5 >= main.reed_book_button.get_minimum_size().x, "the reed label has room")
+	check(billet_rect.size.x + 0.5 >= main.billet_book_button.get_minimum_size().x, "the billet label still has room")
+	main.unlocked[414] = false
+	main._refresh_chrome()
+	check(main.reed_book_button.disabled, "the reed stays locked until the billet line is held")
+	main.unlocked[413] = true
+	check(main.select_chart(413), "chart 414 opens when unlocked")
+	check(main.reed_book_button.disabled, "opening the billet line does not unlock the reed")
+	main.state = Charts.duplicate_state(Charts.make_state(main.chart, true))
+	main._refresh()
+	main.try_lock()
+	check(main.board_locked and main.unlocked[414], "holding the billet line opens the reed")
+	main._advance_from_win()
+	check(str(main.chart["id"]) == "415", "next chart from the billet line enters The Flooded Reed")
+	check(main.reed_grid.visible and not main.billet_grid.visible and not main.reglet_grid.visible, "the reed grid opens with The Flooded Reed")
+	check(str(main.harbor_label.text) == Charts.REED, "the harbor name follows the reed")
+	check(str(main.tide_readout.text).to_lower().contains("reed"), "chart 415 names the reed in the water readout")
+	var reed_cell := Charts.piece_cell(main.chart, main.state, "O")
+	check(str(main.selected_id) == "O" and int(main.state["pieces"]["O"]["rot"]) == 90, "chart 415 starts facing east")
+	_click_cell(main, reed_cell.x, reed_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 180, "a click turns the reed from east to south")
+	check(str(main.status_label.text).to_lower().contains("stops") and str(main.status_label.text).to_lower().contains("every heading passes"), "the reed says every dry heading stops and the flood opens every heading")
+	_click_cell(main, reed_cell.x, reed_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 270, "the next click turns the reed west")
+	_click_cell(main, reed_cell.x, reed_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 0, "the next click turns the reed north")
+	_click_cell(main, reed_cell.x, reed_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 90, "four clicks restore the east facing")
+	main._on_book_pressed(52)
+	await process_frame
+	check(str(main.chart["id"]) == "415", "Reed returns to The Flooded Reed")
+	check(_chart_row_fits(main.reed_grid, main._side), "the reed chart row fits in the window")
+	var staff_rect: Rect2 = main.staff_book_button.get_global_rect()
+	var staff_side: Rect2 = main._side.get_global_rect()
+	check(staff_side.grow(1.0).encloses(staff_rect), "the staff book button sits inside the side panel")
+	check(not staff_rect.intersects(reed_rect), "the staff book button stays off the reed")
+	check(staff_rect.size.x + 0.5 >= main.staff_book_button.get_minimum_size().x, "the staff label has room")
+	check(reed_rect.size.x + 0.5 >= main.reed_book_button.get_minimum_size().x, "the reed label still has room")
+	main.unlocked[422] = false
+	main._refresh_chrome()
+	check(main.staff_book_button.disabled, "the staff stays locked until the reed line is held")
+	main.unlocked[421] = true
+	check(main.select_chart(421), "chart 422 opens when unlocked")
+	check(main.staff_book_button.disabled, "opening the reed line does not unlock the staff")
+	main.state = Charts.duplicate_state(Charts.make_state(main.chart, true))
+	main._refresh()
+	main.try_lock()
+	check(main.board_locked and main.unlocked[422], "holding the reed line opens the staff")
+	main._advance_from_win()
+	check(str(main.chart["id"]) == "423", "next chart from the reed line enters The Flooded Staff")
+	check(main.staff_grid.visible and not main.reed_grid.visible and not main.billet_grid.visible, "the staff grid opens with The Flooded Staff")
+	check(str(main.harbor_label.text) == Charts.STAFF, "the harbor name follows the staff")
+	check(str(main.tide_readout.text).to_lower().contains("staff"), "chart 423 names the staff in the water readout")
+	var staff_cell := Charts.piece_cell(main.chart, main.state, "O")
+	check(str(main.selected_id) == "O" and int(main.state["pieces"]["O"]["rot"]) == 90, "chart 423 starts facing east")
+	_click_cell(main, staff_cell.x, staff_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 180, "a click turns the staff from east to south")
+	check(str(main.status_label.text).to_lower().contains("stops") and str(main.status_label.text).to_lower().contains("opposite") and str(main.status_label.text).to_lower().contains("clockwise"), "the staff says every dry heading stops and the flood opens the opposite and the clockwise heading")
+	_click_cell(main, staff_cell.x, staff_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 270, "the next click turns the staff west")
+	_click_cell(main, staff_cell.x, staff_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 0, "the next click turns the staff north")
+	_click_cell(main, staff_cell.x, staff_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 90, "four clicks restore the east facing")
+	main._on_book_pressed(53)
+	await process_frame
+	check(str(main.chart["id"]) == "423", "Staff returns to The Flooded Staff")
+	check(_chart_row_fits(main.staff_grid, main._side), "the staff chart row fits in the window")
+	var thumb_rect: Rect2 = main.thumb_book_button.get_global_rect()
+	var thumb_side: Rect2 = main._side.get_global_rect()
+	check(thumb_side.grow(1.0).encloses(thumb_rect), "the thumb book button sits inside the side panel")
+	check(not thumb_rect.intersects(staff_rect), "the thumb book button stays off the staff")
+	check(thumb_rect.size.x + 0.5 >= main.thumb_book_button.get_minimum_size().x, "the thumb label has room")
+	check(staff_rect.size.x + 0.5 >= main.staff_book_button.get_minimum_size().x, "the staff label still has room")
+	main.unlocked[430] = false
+	main._refresh_chrome()
+	check(main.thumb_book_button.disabled, "the thumb stays locked until the staff line is held")
+	main.unlocked[429] = true
+	check(main.select_chart(429), "chart 430 opens when unlocked")
+	check(main.thumb_book_button.disabled, "opening the staff line does not unlock the thumb")
+	main.state = Charts.duplicate_state(Charts.make_state(main.chart, true))
+	main._refresh()
+	main.try_lock()
+	check(main.board_locked and main.unlocked[430], "holding the staff line opens the thumb")
+	main._advance_from_win()
+	check(str(main.chart["id"]) == "431", "next chart from the staff line enters The Flooded Thumb")
+	check(main.thumb_grid.visible and not main.staff_grid.visible and not main.reed_grid.visible, "the thumb grid opens with The Flooded Thumb")
+	check(str(main.harbor_label.text) == Charts.THUMB, "the harbor name follows the thumb")
+	check(str(main.tide_readout.text).to_lower().contains("thumb"), "chart 431 names the thumb in the water readout")
+	var thumb_cell := Charts.piece_cell(main.chart, main.state, "O")
+	check(str(main.selected_id) == "O" and int(main.state["pieces"]["O"]["rot"]) == 90, "chart 431 starts facing east")
+	_click_cell(main, thumb_cell.x, thumb_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 180, "a click turns the thumb from east to south")
+	check(str(main.status_label.text).to_lower().contains("stops") and str(main.status_label.text).to_lower().contains("opposite") and str(main.status_label.text).to_lower().contains("counterclockwise"), "the thumb says every dry heading stops and the flood opens the opposite and the counterclockwise heading")
+	_click_cell(main, thumb_cell.x, thumb_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 270, "the next click turns the thumb west")
+	_click_cell(main, thumb_cell.x, thumb_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 0, "the next click turns the thumb north")
+	_click_cell(main, thumb_cell.x, thumb_cell.y, false)
+	check(int(main.state["pieces"]["O"]["rot"]) == 90, "four clicks restore the east facing")
+	main._on_book_pressed(54)
+	await process_frame
+	check(str(main.chart["id"]) == "431", "Thumb returns to The Flooded Thumb")
+	check(_chart_row_fits(main.thumb_grid, main._side), "the thumb chart row fits in the window")
 	main._on_book_pressed(13)
-	check(main.weir_grid.visible and not main.lintel_grid.visible and not main.mullion_grid.visible and not main.transom_grid.visible and not main.casement_grid.visible and not main.jamb_grid.visible and not main.astragal_grid.visible and not main.scotia_grid.visible and not main.torus_grid.visible and not main.ogee_grid.visible and not main.ovolo_grid.visible and not main.cavetto_grid.visible and not main.fillet_grid.visible and not main.corona_grid.visible and not main.bead_grid.visible and not main.quirk_grid.visible and not main.cyma_grid.visible and not main.fascia_grid.visible and not main.soffit_grid.visible and not main.drip_grid.visible and not main.beak_grid.visible and not main.hood_grid.visible and not main.throat_grid.visible and not main.larmier_grid.visible and not main.cill_grid.visible and not main.threshold_grid.visible and not main.impost_grid.visible and not main.architrave_grid.visible and not main.archivolt_grid.visible and not main.abacus_grid.visible and not main.rebate_grid.visible and not main.echinus_grid.visible and not main.annulet_grid.visible and not main.listel_grid.visible, "the weir book still opens")
+	check(main.weir_grid.visible and not main.lintel_grid.visible and not main.mullion_grid.visible and not main.transom_grid.visible and not main.casement_grid.visible and not main.jamb_grid.visible and not main.astragal_grid.visible and not main.scotia_grid.visible and not main.torus_grid.visible and not main.ogee_grid.visible and not main.ovolo_grid.visible and not main.cavetto_grid.visible and not main.fillet_grid.visible and not main.corona_grid.visible and not main.bead_grid.visible and not main.quirk_grid.visible and not main.cyma_grid.visible and not main.fascia_grid.visible and not main.soffit_grid.visible and not main.drip_grid.visible and not main.beak_grid.visible and not main.hood_grid.visible and not main.throat_grid.visible and not main.larmier_grid.visible and not main.cill_grid.visible and not main.threshold_grid.visible and not main.impost_grid.visible and not main.architrave_grid.visible and not main.archivolt_grid.visible and not main.abacus_grid.visible and not main.rebate_grid.visible and not main.echinus_grid.visible and not main.annulet_grid.visible and not main.listel_grid.visible and not main.necking_grid.visible and not main.taenia_grid.visible and not main.baguette_grid.visible and not main.reglet_grid.visible and not main.billet_grid.visible and not main.reed_grid.visible and not main.staff_grid.visible and not main.thumb_grid.visible, "the weir book still opens")
 	main.select_chart(0)
 	main.restart_chart()
 	var before_rot := int(main.state["pieces"]["M"]["rot"])
@@ -15306,8 +16395,11 @@ func _walk(chart: Dictionary, state: Dictionary, index: int, found: Array) -> vo
 	# A cill has four facings. Opposite facings share the open set. Dry, it passes the facing and the opposite. Flooded, only the two perpendicular directions pass.
 	# A threshold has four facings. Opposite facings do not share the open set. Dry, only the opposite of the facing passes. Flooded, every direction except that opposite passes.
 	# An impost has four facings. Opposite facings do not share the open set. Dry, only the facing passes. Flooded, every direction except that facing passes.
+	# A reed has four facings. Dry, every heading stops. Flooded, every heading passes, so every facing shares that open set.
+	# A staff has four facings. Dry, every heading stops. Flooded, the opposite and the next clockwise heading pass. Opposite facings do not share that set.
+	# A thumb has four facings. Dry, every heading stops. Flooded, the opposite and the next counterclockwise heading pass. Opposite facings do not share that set.
 	var rots: Array = [0]
-	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma" or kind == "fascia" or kind == "soffit" or kind == "drip" or kind == "beak" or kind == "hood" or kind == "throat" or kind == "larmier" or kind == "cill" or kind == "threshold" or kind == "impost" or kind == "architrave" or kind == "archivolt" or kind == "abacus" or kind == "rebate" or kind == "echinus" or kind == "annulet" or kind == "listel":
+	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma" or kind == "fascia" or kind == "soffit" or kind == "drip" or kind == "beak" or kind == "hood" or kind == "throat" or kind == "larmier" or kind == "cill" or kind == "threshold" or kind == "impost" or kind == "architrave" or kind == "archivolt" or kind == "abacus" or kind == "rebate" or kind == "echinus" or kind == "annulet" or kind == "listel" or kind == "necking" or kind == "taenia" or kind == "baguette" or kind == "reglet" or kind == "billet" or kind == "reed" or kind == "staff" or kind == "thumb":
 		rots = [0, 90, 180, 270]
 	elif kind != "shutter" and kind != "well" and kind != "siphon" and kind != "lintel" and kind != "mullion" and kind != "transom":
 		rots = [0, 90]

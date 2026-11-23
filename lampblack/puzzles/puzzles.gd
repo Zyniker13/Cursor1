@@ -3,7 +3,7 @@ extends RefCounted
 
 const Rules = preload("res://rules/rules.gd")
 
-## Thirty-one wings of the closed museum. Each solution is a list of actions the rules
+## Thirty-five wings of the closed museum. Each solution is a list of actions the rules
 ## accept. Tokens are R L U D, W for wait, and T0 / T1 for lamps.
 
 
@@ -119,6 +119,14 @@ static func _puzzle(number: int, title: String, lesson: String, rows: PackedStri
 		wing_number = number - 176
 	elif wing == "Twill Wing":
 		wing_number = number - 182
+	elif wing == "Duck Wing":
+		wing_number = number - 188
+	elif wing == "Nankeen Wing":
+		wing_number = number - 194
+	elif wing == "Jean Wing":
+		wing_number = number - 200
+	elif wing == "Linsey Wing":
+		wing_number = number - 206
 	return {
 		"number": number,
 		"wing": wing,
@@ -179,6 +187,10 @@ static func _all() -> Array:
 	puzzles.append_array(_canvas_wing())
 	puzzles.append_array(_drill_wing())
 	puzzles.append_array(_twill_wing())
+	puzzles.append_array(_duck_wing())
+	puzzles.append_array(_nankeen_wing())
+	puzzles.append_array(_jean_wing())
+	puzzles.append_array(_linsey_wing())
 	return puzzles
 
 
@@ -3615,5 +3627,461 @@ static func _twill_wing() -> Array:
 			[_guard(1, 1, [Vector2i(1, 1)], 0)],
 			"L L R R U U T0 D D D L L L",
 			"Twill Wing"
+		),
+	]
+
+
+static func _duck_wing() -> Array:
+	return [
+		_puzzle(
+			189,
+			"The Dark Duck",
+			"This room is about the rule that the duck stays dark.",
+			PackedStringArray([
+				"#########",
+				"#G+.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L R U U T0 D D D L L L",
+			"Duck Wing"
+		),
+		_puzzle(
+			190,
+			"The Hidden Duck",
+			"This room is about the rule that the guard does not see a lit tile through the dark duck.",
+			PackedStringArray([
+				"#########",
+				"#G+.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+				"#.......#",
+				"#..+....#",
+				"#..G....#",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3), _lamp(3, 6, "s", 2)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0), _guard(3, 8, [Vector2i(3, 8)], 3)],
+			"L R U U T0 D D D L L L",
+			"Duck Wing"
+		),
+		_puzzle(
+			191,
+			"The Passed Nap",
+			"This room is about the rule that a second lamp's light passes through the dark duck.",
+			PackedStringArray([
+				"#########",
+				"#########",
+				"#G+.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+			]),
+			[_lamp(3, 2, "w", 3)],
+			[_guard(1, 2, [Vector2i(1, 2)], 0)],
+			"L R U U T0 D D D L L L",
+			"Duck Wing"
+		),
+		_puzzle(
+			192,
+			"The Open Duck",
+			"This room is about the rule that a guard can enter the dark duck.",
+			PackedStringArray([
+				"##########",
+				"#G+.....##",
+				"#..#....##",
+				"#..GS...##",
+				"#X......##",
+				"##########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L R U U T0 D D D L L L",
+			"Duck Wing"
+		),
+		_puzzle(
+			193,
+			"The Shut Step",
+			"This room is about the rule that the early step onto the dark duck fails and the duck stays dark.",
+			PackedStringArray([
+				"#########",
+				"#G+.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L R U U T0 D D D L L L",
+			"Duck Wing"
+		),
+		_puzzle(
+			194,
+			"The Last Duck",
+			"This room is about the rule that the leaving step fails and the duck stays dark.",
+			PackedStringArray([
+				"#########",
+				"#G+.....#",
+				"#..#....#",
+				"#.+GS...#",
+				"#X......#",
+				"#.+.....#",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L R U U T0 D D D L L L",
+			"Duck Wing"
+		),
+	]
+
+
+static func _nankeen_wing() -> Array:
+	return [
+		_puzzle(
+			195,
+			"The Dark Nankeen",
+			"This room is about the rule that the nankeen stays dark.",
+			PackedStringArray([
+				"#########",
+				"#G@.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L R U U T0 D D D L L L",
+			"Nankeen Wing"
+		),
+		_puzzle(
+			196,
+			"The Hidden Nankeen",
+			"This room is about the rule that the guard does not see a lit tile through the dark nankeen.",
+			PackedStringArray([
+				"#########",
+				"#G@.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+				"#.......#",
+				"#..@....#",
+				"#..G....#",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3), _lamp(3, 6, "s", 2)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0), _guard(3, 8, [Vector2i(3, 8)], 3)],
+			"L R U U T0 D D D L L L",
+			"Nankeen Wing"
+		),
+		_puzzle(
+			197,
+			"The Passed Yellow",
+			"This room is about the rule that a second lamp's light passes through the dark nankeen.",
+			PackedStringArray([
+				"#########",
+				"#########",
+				"#G@.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+			]),
+			[_lamp(3, 2, "w", 3)],
+			[_guard(1, 2, [Vector2i(1, 2)], 0)],
+			"L R U U T0 D D D L L L",
+			"Nankeen Wing"
+		),
+		_puzzle(
+			198,
+			"The Open Nankeen",
+			"This room is about the rule that a guard can enter the dark nankeen.",
+			PackedStringArray([
+				"##########",
+				"#G@.....##",
+				"#..#....##",
+				"#..GS...##",
+				"#X......##",
+				"##########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L R U U T0 D D D L L L",
+			"Nankeen Wing"
+		),
+		_puzzle(
+			199,
+			"The Kept Step",
+			"This room is about the rule that the early step onto the dark nankeen succeeds and the nankeen stays dark.",
+			PackedStringArray([
+				"#########",
+				"#G@.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L R U U T0 D D D L L L",
+			"Nankeen Wing"
+		),
+		_puzzle(
+			200,
+			"The Last Nankeen",
+			"This room is about the rule that the leaving step succeeds and the nankeen stays dark.",
+			PackedStringArray([
+				"#########",
+				"#G@.....#",
+				"#..#....#",
+				"#.@GS...#",
+				"#X......#",
+				"#.@.....#",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L L R R U U T0 D D D L L L",
+			"Nankeen Wing"
+		),
+	]
+
+
+static func _jean_wing() -> Array:
+	return [
+		_puzzle(
+			201,
+			"The Dark Jean",
+			"This room is about the rule that the jean starts dark.",
+			PackedStringArray([
+				"#########",
+				"#G=.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L R U U T0 D D D L L L",
+			"Jean Wing"
+		),
+		_puzzle(
+			202,
+			"The Hidden Jean",
+			"This room is about the rule that the guard does not see a lit tile through the dark jean.",
+			PackedStringArray([
+				"#########",
+				"#G=.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+				"#.......#",
+				"#..=....#",
+				"#..G....#",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3), _lamp(3, 6, "s", 2)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0), _guard(3, 8, [Vector2i(3, 8)], 3)],
+			"L R U U T0 D D D L L L",
+			"Jean Wing"
+		),
+		_puzzle(
+			203,
+			"The Passed Rivet",
+			"This room is about the rule that a second lamp's light passes through the dark jean.",
+			PackedStringArray([
+				"#########",
+				"#########",
+				"#G=.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+			]),
+			[_lamp(3, 2, "w", 3)],
+			[_guard(1, 2, [Vector2i(1, 2)], 0)],
+			"L R U U T0 D D D L L L",
+			"Jean Wing"
+		),
+		_puzzle(
+			204,
+			"The Open Jean",
+			"This room is about the rule that a guard can enter the dark jean.",
+			PackedStringArray([
+				"##########",
+				"#G=.....##",
+				"#..#....##",
+				"#..GS...##",
+				"#X......##",
+				"##########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L R U U T0 D D D L L L",
+			"Jean Wing"
+		),
+		_puzzle(
+			205,
+			"The Lit Step",
+			"This room is about the rule that the early step onto the dark jean succeeds and lights it.",
+			PackedStringArray([
+				"#########",
+				"#G=.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L R U U T0 D D D L L L",
+			"Jean Wing"
+		),
+		_puzzle(
+			206,
+			"The Last Jean",
+			"This room is about the rule that the leaving step fails and the player stays on the lit jean.",
+			PackedStringArray([
+				"#########",
+				"#G=.....#",
+				"#..#....#",
+				"#.=GS...#",
+				"#X......#",
+				"#.=.....#",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L R U U T0 D D D L L L",
+			"Jean Wing"
+		),
+	]
+
+
+static func _linsey_wing() -> Array:
+	return [
+		_puzzle(
+			207,
+			"The Dark Linsey",
+			"This room is about the rule that the linsey starts dark.",
+			PackedStringArray([
+				"#########",
+				"#G%.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L R U U T0 D D D L L L",
+			"Linsey Wing"
+		),
+		_puzzle(
+			208,
+			"The Hidden Linsey",
+			"This room is about the rule that the guard does not see a lit tile through the dark linsey.",
+			PackedStringArray([
+				"#########",
+				"#G%.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+				"#.......#",
+				"#..%....#",
+				"#..G....#",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3), _lamp(3, 6, "s", 2)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0), _guard(3, 8, [Vector2i(3, 8)], 3)],
+			"L R U U T0 D D D L L L",
+			"Linsey Wing"
+		),
+		_puzzle(
+			209,
+			"The Passed Wool",
+			"This room is about the rule that a second lamp's light passes through the dark linsey.",
+			PackedStringArray([
+				"#########",
+				"#########",
+				"#G%.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+			]),
+			[_lamp(3, 2, "w", 3)],
+			[_guard(1, 2, [Vector2i(1, 2)], 0)],
+			"L R U U T0 D D D L L L",
+			"Linsey Wing"
+		),
+		_puzzle(
+			210,
+			"The Open Linsey",
+			"This room is about the rule that a guard can enter the dark linsey.",
+			PackedStringArray([
+				"##########",
+				"#G%.....##",
+				"#..#....##",
+				"#..GS...##",
+				"#X......##",
+				"##########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L R U U T0 D D D L L L",
+			"Linsey Wing"
+		),
+		_puzzle(
+			211,
+			"The Still Step",
+			"This room is about the rule that the early step onto the dark linsey succeeds and the linsey stays dark.",
+			PackedStringArray([
+				"#########",
+				"#G%.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L R U U T0 D D D L L L",
+			"Linsey Wing"
+		),
+		_puzzle(
+			212,
+			"The Last Linsey",
+			"This room is about the rule that the leaving step fails and the player stays on the dark linsey.",
+			PackedStringArray([
+				"#########",
+				"#G%.....#",
+				"#..#....#",
+				"#.%GS...#",
+				"#X......#",
+				"#.%.....#",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L R U U T0 D D D L L L",
+			"Linsey Wing"
 		),
 	]

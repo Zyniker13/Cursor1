@@ -5,7 +5,7 @@ extends Control
 # Mirror, then the Shutter, then the Stain, then the Vane, then the Well,
 # then the Siphon, then the Sluice, then the Weir, then the Lintel,
 # then the Mullion, then the Transom, then the Casement, then the Jamb,
-# then the Astragal, then the Scotia, then the Torus, then the Ogee, then the Ovolo, then the Cavetto, then the Fillet, then the Corona, then the Bead, then the Quirk, then the Cyma, then the Fascia, then the Soffit, then the Drip, then the Beak, then the Hood, then the Throat, then the Larmier, then the Cill, then the Threshold, then the Impost, then the Architrave, then the Archivolt, then the Abacus, then the Rebate, then the Echinus, then the Annulet, then the Listel.
+# then the Astragal, then the Scotia, then the Torus, then the Ogee, then the Ovolo, then the Cavetto, then the Fillet, then the Corona, then the Bead, then the Quirk, then the Cyma, then the Fascia, then the Soffit, then the Drip, then the Beak, then the Hood, then the Throat, then the Larmier, then the Cill, then the Threshold, then the Impost, then the Architrave, then the Archivolt, then the Abacus, then the Rebate, then the Echinus, then the Annulet, then the Listel, then the Necking, then the Taenia, then the Baguette, then the Reglet, then the Billet, then the Reed, then the Staff, then the Thumb.
 # Pieces turn in place; a loose piece may also move
 # between the sockets authored for that chart. Lock Chart asks the beam tracer
 # whether every dock has its color and every hull is dark.
@@ -95,6 +95,14 @@ var rebate_grid: GridContainer
 var echinus_grid: GridContainer
 var annulet_grid: GridContainer
 var listel_grid: GridContainer
+var necking_grid: GridContainer
+var taenia_grid: GridContainer
+var baguette_grid: GridContainer
+var reglet_grid: GridContainer
+var billet_grid: GridContainer
+var reed_grid: GridContainer
+var staff_grid: GridContainer
+var thumb_grid: GridContainer
 var quay_book_button: Button
 var reach_book_button: Button
 var basin_book_button: Button
@@ -142,8 +150,16 @@ var rebate_book_button: Button
 var echinus_book_button: Button
 var annulet_book_button: Button
 var listel_book_button: Button
+var necking_book_button: Button
+var taenia_book_button: Button
+var baguette_book_button: Button
+var reglet_book_button: Button
+var billet_book_button: Button
+var reed_book_button: Button
+var staff_book_button: Button
+var thumb_book_button: Button
 var harbor_label: Label
-var _book_place: Array[int] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+var _book_place: Array[int] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 var tide_clock: TideClock
 var _side: Panel
 
@@ -252,6 +268,30 @@ func _build_ui() -> void:
 	var book_row_q := HBoxContainer.new()
 	book_row_q.add_theme_constant_override("separation", 6)
 	book_col.add_child(book_row_q)
+	var book_row_r := HBoxContainer.new()
+	book_row_r.add_theme_constant_override("separation", 6)
+	book_col.add_child(book_row_r)
+	var book_row_s := HBoxContainer.new()
+	book_row_s.add_theme_constant_override("separation", 6)
+	book_col.add_child(book_row_s)
+	var book_row_t := HBoxContainer.new()
+	book_row_t.add_theme_constant_override("separation", 6)
+	book_col.add_child(book_row_t)
+	var book_row_u := HBoxContainer.new()
+	book_row_u.add_theme_constant_override("separation", 6)
+	book_col.add_child(book_row_u)
+	var book_row_v := HBoxContainer.new()
+	book_row_v.add_theme_constant_override("separation", 6)
+	book_col.add_child(book_row_v)
+	var book_row_w := HBoxContainer.new()
+	book_row_w.add_theme_constant_override("separation", 6)
+	book_col.add_child(book_row_w)
+	var book_row_x := HBoxContainer.new()
+	book_row_x.add_theme_constant_override("separation", 6)
+	book_col.add_child(book_row_x)
+	var book_row_y := HBoxContainer.new()
+	book_row_y.add_theme_constant_override("separation", 6)
+	book_col.add_child(book_row_y)
 	quay_book_button = _button("Quay")
 	quay_book_button.tooltip_text = Charts.HARBOR
 	quay_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -487,7 +527,47 @@ func _build_ui() -> void:
 	listel_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	listel_book_button.pressed.connect(_on_book_pressed.bind(46))
 	book_row_q.add_child(listel_book_button)
-	for book_button in [quay_book_button, reach_book_button, basin_book_button, paint_book_button, west_book_button, meet_book_button, tide_book_button, shutter_book_button, stain_book_button, vane_book_button, well_book_button, siphon_book_button, sluice_book_button, weir_book_button, lintel_book_button, mullion_book_button, transom_book_button, casement_book_button, jamb_book_button, astragal_book_button, scotia_book_button, torus_book_button, ogee_book_button, ovolo_book_button, cavetto_book_button, fillet_book_button, corona_book_button, bead_book_button, quirk_book_button, cyma_book_button, fascia_book_button, soffit_book_button, drip_book_button, beak_book_button, hood_book_button, throat_book_button, larmier_book_button, cill_book_button, threshold_book_button, impost_book_button, architrave_book_button, archivolt_book_button, abacus_book_button, rebate_book_button, echinus_book_button, annulet_book_button, listel_book_button]:
+	necking_book_button = _button("Necking")
+	necking_book_button.tooltip_text = Charts.NECKING
+	necking_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	necking_book_button.pressed.connect(_on_book_pressed.bind(47))
+	book_row_r.add_child(necking_book_button)
+	taenia_book_button = _button("Taenia")
+	taenia_book_button.tooltip_text = Charts.TAENIA
+	taenia_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	taenia_book_button.pressed.connect(_on_book_pressed.bind(48))
+	book_row_s.add_child(taenia_book_button)
+	baguette_book_button = _button("Baguette")
+	baguette_book_button.tooltip_text = Charts.BAGUETTE
+	baguette_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	baguette_book_button.pressed.connect(_on_book_pressed.bind(49))
+	book_row_t.add_child(baguette_book_button)
+	reglet_book_button = _button("Reglet")
+	reglet_book_button.tooltip_text = Charts.REGLET
+	reglet_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	reglet_book_button.pressed.connect(_on_book_pressed.bind(50))
+	book_row_u.add_child(reglet_book_button)
+	billet_book_button = _button("Billet")
+	billet_book_button.tooltip_text = Charts.BILLET
+	billet_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	billet_book_button.pressed.connect(_on_book_pressed.bind(51))
+	book_row_v.add_child(billet_book_button)
+	reed_book_button = _button("Reed")
+	reed_book_button.tooltip_text = Charts.REED
+	reed_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	reed_book_button.pressed.connect(_on_book_pressed.bind(52))
+	book_row_w.add_child(reed_book_button)
+	staff_book_button = _button("Staff")
+	staff_book_button.tooltip_text = Charts.STAFF
+	staff_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	staff_book_button.pressed.connect(_on_book_pressed.bind(53))
+	book_row_x.add_child(staff_book_button)
+	thumb_book_button = _button("Thumb")
+	thumb_book_button.tooltip_text = Charts.THUMB
+	thumb_book_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	thumb_book_button.pressed.connect(_on_book_pressed.bind(54))
+	book_row_y.add_child(thumb_book_button)
+	for book_button in [quay_book_button, reach_book_button, basin_book_button, paint_book_button, west_book_button, meet_book_button, tide_book_button, shutter_book_button, stain_book_button, vane_book_button, well_book_button, siphon_book_button, sluice_book_button, weir_book_button, lintel_book_button, mullion_book_button, transom_book_button, casement_book_button, jamb_book_button, astragal_book_button, scotia_book_button, torus_book_button, ogee_book_button, ovolo_book_button, cavetto_book_button, fillet_book_button, corona_book_button, bead_book_button, quirk_book_button, cyma_book_button, fascia_book_button, soffit_book_button, drip_book_button, beak_book_button, hood_book_button, throat_book_button, larmier_book_button, cill_book_button, threshold_book_button, impost_book_button, architrave_book_button, archivolt_book_button, abacus_book_button, rebate_book_button, echinus_book_button, annulet_book_button, listel_book_button, necking_book_button, taenia_book_button, baguette_book_button, reglet_book_button, billet_book_button, reed_book_button, staff_book_button, thumb_book_button]:
 		book_button.add_theme_font_size_override("font_size", 13)
 
 	quay_grid = _chart_grid()
@@ -630,6 +710,30 @@ func _build_ui() -> void:
 	listel_grid = _chart_grid()
 	listel_grid.visible = false
 	box.add_child(listel_grid)
+	necking_grid = _chart_grid()
+	necking_grid.visible = false
+	box.add_child(necking_grid)
+	taenia_grid = _chart_grid()
+	taenia_grid.visible = false
+	box.add_child(taenia_grid)
+	baguette_grid = _chart_grid()
+	baguette_grid.visible = false
+	box.add_child(baguette_grid)
+	reglet_grid = _chart_grid()
+	reglet_grid.visible = false
+	box.add_child(reglet_grid)
+	billet_grid = _chart_grid()
+	billet_grid.visible = false
+	box.add_child(billet_grid)
+	reed_grid = _chart_grid()
+	reed_grid.visible = false
+	box.add_child(reed_grid)
+	staff_grid = _chart_grid()
+	staff_grid.visible = false
+	box.add_child(staff_grid)
+	thumb_grid = _chart_grid()
+	thumb_grid.visible = false
+	box.add_child(thumb_grid)
 	var bounds: Array = _book_bounds()
 	for i in charts.size():
 		var button := _button("Chart %d" % (i + 1))
@@ -728,8 +832,24 @@ func _build_ui() -> void:
 			echinus_grid.add_child(button)
 		elif i < int(bounds[46]):
 			annulet_grid.add_child(button)
-		else:
+		elif i < int(bounds[47]):
 			listel_grid.add_child(button)
+		elif i < int(bounds[48]):
+			necking_grid.add_child(button)
+		elif i < int(bounds[49]):
+			taenia_grid.add_child(button)
+		elif i < int(bounds[50]):
+			baguette_grid.add_child(button)
+		elif i < int(bounds[51]):
+			reglet_grid.add_child(button)
+		elif i < int(bounds[52]):
+			billet_grid.add_child(button)
+		elif i < int(bounds[53]):
+			reed_grid.add_child(button)
+		elif i < int(bounds[54]):
+			staff_grid.add_child(button)
+		else:
+			thumb_grid.add_child(button)
 		chart_buttons.append(button)
 
 	title_label = _label("", 20, Palette.TEXT)
@@ -775,7 +895,7 @@ func _build_ui() -> void:
 	status_label.custom_minimum_size = Vector2(340, 0)
 	box.add_child(status_label)
 
-	var legend := _label("Warm beam, red, and blue. A lamp may already burn one color. One mirror can take two lamps. A tide mirror reflects only while its row is flooded, and lets the beam pass while that row is dry. A shutter stops a beam while its row is dry, and lets the beam pass straight through while that row is flooded. A stain recolors a beam to its own color and lets it pass straight through, on a dry row and under water. A vane turns a beam into its facing, and a head-on beam stops. Water shuts a vane the way it shuts a mirror. A well stops a beam while its row is dry. While that row is flooded, the beam leaves north and keeps its color. A well does not turn. A siphon stops a beam while its row is dry. While that row is flooded, the beam leaves north and swaps red with blue. White stays white. A siphon does not turn. A sluice stops a beam while its row is dry. While that row is flooded, the beam leaves along the sluice's facing and keeps its color. A weir stops a beam while its row is dry. While that row is flooded, the beam leaves along the weir's facing and swaps red with blue. White stays white. A lintel lets a beam pass straight through while its row is dry, and stops the beam while that row is flooded. A lintel does not turn. A mullion lets a north-south beam pass straight through while its row is dry, and an east-west beam stops before it enters. A flooded mullion stops every beam. A mullion does not turn. A transom lets an east-west beam pass straight through while its row is dry, and a north-south beam stops before it enters. A flooded transom stops every beam. A transom does not turn. A casement lets a beam pass straight through while its row is dry, but only in the direction it faces. Every other direction stops before the cell. A flooded casement stops every beam. The casement turns. A jamb passes both directions of the axis it faces while its row is dry, and the other axis stops before the cell. North and south open the north-south axis. East and west open the east-west axis. A flooded jamb stops every beam. The jamb turns. An astragal passes the direction it faces and the next clockwise direction while its row is dry. The other two directions stop before the cell. A flooded astragal stops every beam. The astragal turns. A scotia passes the direction it faces and the next counterclockwise direction while its row is dry. The other two directions stop before the cell. A flooded scotia stops every beam. The scotia turns. A torus passes the direction opposite its facing and the next clockwise direction while its row is dry. The other two directions stop before the cell. A flooded torus stops every beam. The torus turns. An ogee passes the direction opposite its facing and the next counterclockwise direction while its row is dry. The other two directions stop before the cell. A flooded ogee stops every beam. The ogee turns. An ovolo passes every direction except the one it faces while its row is dry. That facing stops before the cell. A flooded ovolo stops every beam. The ovolo turns. A cavetto passes every direction except the opposite of its facing while its row is dry. That opposite direction stops before the cell. A flooded cavetto stops every beam. The cavetto turns. A fillet passes only the opposite of its facing while its row is dry. The facing and both sides stop before the cell. A flooded fillet stops every beam. The fillet turns. A corona passes the two directions perpendicular to its facing while its row is dry. The facing and the opposite stop before the cell. A flooded corona stops every beam. The corona turns. A bead passes only the next clockwise direction while its row is dry. The other three directions stop before the cell. A flooded bead stops every beam. The bead turns. A quirk passes only the next counterclockwise direction while its row is dry. The other three directions stop before the cell. A flooded quirk stops every beam. The quirk turns. A cyma passes only its facing while its row is dry. The other three directions stop before the cell. A flooded cyma stops every beam. The cyma turns. A fascia passes every direction except the next clockwise one while its row is dry. That clockwise direction stops before the cell. A flooded fascia stops every beam. The fascia turns. A soffit passes every direction except the next counterclockwise one while its row is dry. That counterclockwise direction stops before the cell. A flooded soffit stops every beam. The soffit turns. A dry drip passes every direction except the next counterclockwise one. A flooded drip passes only that stopped direction, and the other three stop at the waterline. The drip turns. A dry beak passes every direction except the next clockwise one. A flooded beak passes only that stopped direction, and the other three stop at the waterline. The beak turns. A dry hood passes every direction except its facing. A flooded hood passes only that facing, and the other three stop at the waterline. The hood turns. A dry throat passes every direction except the opposite of its facing. A flooded throat passes only that opposite, and the other three stop at the waterline. The throat turns. A dry larmier passes the two directions perpendicular to its facing. A flooded larmier passes only the facing and the opposite, and the other two stop at the waterline. The larmier turns. The cill turns. While it is dry, a cill passes its facing and the opposite. While it is flooded, only the two perpendicular directions pass. A threshold turns. While it is dry, only the opposite of its facing passes. While it is flooded, every direction except that opposite passes. An impost turns. While it is dry, only its facing passes. While it is flooded, every direction except that facing passes. An architrave turns. While it is dry, the two perpendicular directions pass. While it is flooded, only the facing passes. An archivolt turns. While it is dry, every heading stops. While it is flooded, the two perpendicular directions pass. An abacus turns. While it is dry, every heading stops. While it is flooded, only the facing passes. A rebate turns. While it is dry, every heading stops. While it is flooded, only the opposite of its facing passes. An echinus turns. While it is dry, every heading except the opposite passes. While it is flooded, only the next clockwise heading passes. An annulet turns. While it is dry, every heading except the opposite passes. While it is flooded, only the next counterclockwise heading passes. A listel turns. While it is dry, every heading stops. While it is flooded, the facing and the next clockwise heading pass. Docks take only their marked color. Hulls stay dark. Water shuts the other glass it covers.", 13, Palette.MUTED)
+	var legend := _label("Warm beam, red, and blue. A lamp may already burn one color. One mirror can take two lamps. A tide mirror reflects only while its row is flooded, and lets the beam pass while that row is dry. A shutter stops a beam while its row is dry, and lets the beam pass straight through while that row is flooded. A stain recolors a beam to its own color and lets it pass straight through, on a dry row and under water. A vane turns a beam into its facing, and a head-on beam stops. Water shuts a vane the way it shuts a mirror. A well stops a beam while its row is dry. While that row is flooded, the beam leaves north and keeps its color. A well does not turn. A siphon stops a beam while its row is dry. While that row is flooded, the beam leaves north and swaps red with blue. White stays white. A siphon does not turn. A sluice stops a beam while its row is dry. While that row is flooded, the beam leaves along the sluice's facing and keeps its color. A weir stops a beam while its row is dry. While that row is flooded, the beam leaves along the weir's facing and swaps red with blue. White stays white. A lintel lets a beam pass straight through while its row is dry, and stops the beam while that row is flooded. A lintel does not turn. A mullion lets a north-south beam pass straight through while its row is dry, and an east-west beam stops before it enters. A flooded mullion stops every beam. A mullion does not turn. A transom lets an east-west beam pass straight through while its row is dry, and a north-south beam stops before it enters. A flooded transom stops every beam. A transom does not turn. A casement lets a beam pass straight through while its row is dry, but only in the direction it faces. Every other direction stops before the cell. A flooded casement stops every beam. The casement turns. A jamb passes both directions of the axis it faces while its row is dry, and the other axis stops before the cell. North and south open the north-south axis. East and west open the east-west axis. A flooded jamb stops every beam. The jamb turns. An astragal passes the direction it faces and the next clockwise direction while its row is dry. The other two directions stop before the cell. A flooded astragal stops every beam. The astragal turns. A scotia passes the direction it faces and the next counterclockwise direction while its row is dry. The other two directions stop before the cell. A flooded scotia stops every beam. The scotia turns. A torus passes the direction opposite its facing and the next clockwise direction while its row is dry. The other two directions stop before the cell. A flooded torus stops every beam. The torus turns. An ogee passes the direction opposite its facing and the next counterclockwise direction while its row is dry. The other two directions stop before the cell. A flooded ogee stops every beam. The ogee turns. An ovolo passes every direction except the one it faces while its row is dry. That facing stops before the cell. A flooded ovolo stops every beam. The ovolo turns. A cavetto passes every direction except the opposite of its facing while its row is dry. That opposite direction stops before the cell. A flooded cavetto stops every beam. The cavetto turns. A fillet passes only the opposite of its facing while its row is dry. The facing and both sides stop before the cell. A flooded fillet stops every beam. The fillet turns. A corona passes the two directions perpendicular to its facing while its row is dry. The facing and the opposite stop before the cell. A flooded corona stops every beam. The corona turns. A bead passes only the next clockwise direction while its row is dry. The other three directions stop before the cell. A flooded bead stops every beam. The bead turns. A quirk passes only the next counterclockwise direction while its row is dry. The other three directions stop before the cell. A flooded quirk stops every beam. The quirk turns. A cyma passes only its facing while its row is dry. The other three directions stop before the cell. A flooded cyma stops every beam. The cyma turns. A fascia passes every direction except the next clockwise one while its row is dry. That clockwise direction stops before the cell. A flooded fascia stops every beam. The fascia turns. A soffit passes every direction except the next counterclockwise one while its row is dry. That counterclockwise direction stops before the cell. A flooded soffit stops every beam. The soffit turns. A dry drip passes every direction except the next counterclockwise one. A flooded drip passes only that stopped direction, and the other three stop at the waterline. The drip turns. A dry beak passes every direction except the next clockwise one. A flooded beak passes only that stopped direction, and the other three stop at the waterline. The beak turns. A dry hood passes every direction except its facing. A flooded hood passes only that facing, and the other three stop at the waterline. The hood turns. A dry throat passes every direction except the opposite of its facing. A flooded throat passes only that opposite, and the other three stop at the waterline. The throat turns. A dry larmier passes the two directions perpendicular to its facing. A flooded larmier passes only the facing and the opposite, and the other two stop at the waterline. The larmier turns. The cill turns. While it is dry, a cill passes its facing and the opposite. While it is flooded, only the two perpendicular directions pass. A threshold turns. While it is dry, only the opposite of its facing passes. While it is flooded, every direction except that opposite passes. An impost turns. While it is dry, only its facing passes. While it is flooded, every direction except that facing passes. An architrave turns. While it is dry, the two perpendicular directions pass. While it is flooded, only the facing passes. An archivolt turns. While it is dry, every heading stops. While it is flooded, the two perpendicular directions pass. An abacus turns. While it is dry, every heading stops. While it is flooded, only the facing passes. A rebate turns. While it is dry, every heading stops. While it is flooded, only the opposite of its facing passes. An echinus turns. While it is dry, every heading except the opposite passes. While it is flooded, only the next clockwise heading passes. An annulet turns. While it is dry, every heading except the opposite passes. While it is flooded, only the next counterclockwise heading passes. A listel turns. While it is dry, every heading stops. While it is flooded, the facing and the next clockwise heading pass. A necking turns. While it is dry, every heading stops. While it is flooded, the facing and the next counterclockwise heading pass. A taenia turns. While it is dry, every heading stops. While it is flooded, the facing and the opposite pass. A baguette turns. While it is dry, every heading stops. While it is flooded, every heading except the opposite passes. A reglet turns. While it is dry, every heading stops. While it is flooded, every heading except the next counterclockwise one passes. A billet turns. While it is dry, every heading stops. While it is flooded, every heading except the next clockwise one passes. A reed turns. While it is dry, every heading stops. While it is flooded, every heading passes. A staff turns. While it is dry, every heading stops. While it is flooded, the opposite and the next clockwise heading pass. A thumb turns. While it is dry, every heading stops. While it is flooded, the opposite and the next counterclockwise heading pass. Docks take only their marked color. Hulls stay dark. Water shuts the other glass it covers.", 13, Palette.MUTED)
 	legend.custom_minimum_size = Vector2(360, 0)
 	box.add_child(legend)
 	var keys := _label("Arrows or Tab select. R turns. M moves a loose piece. Space locks. H hints. T raises tide, Shift+T lowers it. Backspace restarts.", 12, Palette.MUTED)
@@ -1146,6 +1266,62 @@ func rotate_selected() -> void:
 		_clear_hint_if_resolved()
 		_refresh()
 		return
+	if str(piece["kind"]) == "necking":
+		var necking_rot := int(state["pieces"][selected_id]["rot"])
+		state["pieces"][selected_id]["rot"] = Tracer.turn_rot("necking", necking_rot)
+		status_label.text = "The necking turns clockwise. While it is dry, every heading stops. While it is flooded, the facing and the next counterclockwise heading pass."
+		_clear_hint_if_resolved()
+		_refresh()
+		return
+	if str(piece["kind"]) == "taenia":
+		var taenia_rot := int(state["pieces"][selected_id]["rot"])
+		state["pieces"][selected_id]["rot"] = Tracer.turn_rot("taenia", taenia_rot)
+		status_label.text = "The taenia turns clockwise. While it is dry, every heading stops. While it is flooded, the facing and the opposite pass."
+		_clear_hint_if_resolved()
+		_refresh()
+		return
+	if str(piece["kind"]) == "baguette":
+		var baguette_rot := int(state["pieces"][selected_id]["rot"])
+		state["pieces"][selected_id]["rot"] = Tracer.turn_rot("baguette", baguette_rot)
+		status_label.text = "The baguette turns clockwise. While it is dry, every heading stops. While it is flooded, every heading except the opposite passes."
+		_clear_hint_if_resolved()
+		_refresh()
+		return
+	if str(piece["kind"]) == "reglet":
+		var reglet_rot := int(state["pieces"][selected_id]["rot"])
+		state["pieces"][selected_id]["rot"] = Tracer.turn_rot("reglet", reglet_rot)
+		status_label.text = "The reglet turns clockwise. While it is dry, every heading stops. While it is flooded, every heading except the next counterclockwise one passes."
+		_clear_hint_if_resolved()
+		_refresh()
+		return
+	if str(piece["kind"]) == "billet":
+		var billet_rot := int(state["pieces"][selected_id]["rot"])
+		state["pieces"][selected_id]["rot"] = Tracer.turn_rot("billet", billet_rot)
+		status_label.text = "The billet turns clockwise. While it is dry, every heading stops. While it is flooded, every heading except the next clockwise one passes."
+		_clear_hint_if_resolved()
+		_refresh()
+		return
+	if str(piece["kind"]) == "reed":
+		var reed_rot := int(state["pieces"][selected_id]["rot"])
+		state["pieces"][selected_id]["rot"] = Tracer.turn_rot("reed", reed_rot)
+		status_label.text = "The reed turns clockwise. While it is dry, every heading stops. While it is flooded, every heading passes."
+		_clear_hint_if_resolved()
+		_refresh()
+		return
+	if str(piece["kind"]) == "staff":
+		var staff_rot := int(state["pieces"][selected_id]["rot"])
+		state["pieces"][selected_id]["rot"] = Tracer.turn_rot("staff", staff_rot)
+		status_label.text = "The staff turns clockwise. While it is dry, every heading stops. While it is flooded, the opposite and the next clockwise heading pass."
+		_clear_hint_if_resolved()
+		_refresh()
+		return
+	if str(piece["kind"]) == "thumb":
+		var thumb_rot := int(state["pieces"][selected_id]["rot"])
+		state["pieces"][selected_id]["rot"] = Tracer.turn_rot("thumb", thumb_rot)
+		status_label.text = "The thumb turns clockwise. While it is dry, every heading stops. While it is flooded, the opposite and the next counterclockwise heading pass."
+		_clear_hint_if_resolved()
+		_refresh()
+		return
 	var cur := int(state["pieces"][selected_id]["rot"])
 	state["pieces"][selected_id]["rot"] = Tracer.turn_rot(str(piece["kind"]), cur)
 	_clear_hint_if_resolved()
@@ -1382,6 +1558,22 @@ func _refresh_chrome() -> void:
 		water += " A dry annulet passes every heading except the opposite. A flooded annulet passes only the next counterclockwise heading."
 	if _has_listel():
 		water += " A dry listel stops every heading. A flooded listel passes its facing and the next clockwise heading."
+	if _has_necking():
+		water += " A dry necking stops every heading. A flooded necking passes its facing and the next counterclockwise heading."
+	if _has_taenia():
+		water += " A dry taenia stops every heading. A flooded taenia passes its facing and the opposite."
+	if _has_baguette():
+		water += " A dry baguette stops every heading. A flooded baguette passes every heading except the opposite."
+	if _has_reglet():
+		water += " A dry reglet stops every heading. A flooded reglet passes every heading except the next counterclockwise one."
+	if _has_billet():
+		water += " A dry billet stops every heading. A flooded billet passes every heading except the next clockwise one."
+	if _has_reed():
+		water += " A dry reed stops every heading. A flooded reed passes every heading."
+	if _has_staff():
+		water += " A dry staff stops every heading. A flooded staff passes the opposite and the next clockwise heading."
+	if _has_thumb():
+		water += " A dry thumb stops every heading. A flooded thumb passes the opposite and the next counterclockwise heading."
 	tide_readout.text = "%s. %s" % [phase, water]
 	var phases: Array = chart["tide_phases"]
 	var multi := phases.size() > 1
@@ -1456,6 +1648,14 @@ func _refresh_chrome() -> void:
 	echinus_grid.visible = book == 44
 	annulet_grid.visible = book == 45
 	listel_grid.visible = book == 46
+	necking_grid.visible = book == 47
+	taenia_grid.visible = book == 48
+	baguette_grid.visible = book == 49
+	reglet_grid.visible = book == 50
+	billet_grid.visible = book == 51
+	reed_grid.visible = book == 52
+	staff_grid.visible = book == 53
+	thumb_grid.visible = book == 54
 	reach_book_button.disabled = not unlocked[int(bounds[1])]
 	basin_book_button.disabled = not unlocked[int(bounds[2])]
 	paint_book_button.disabled = not unlocked[int(bounds[3])]
@@ -1502,6 +1702,14 @@ func _refresh_chrome() -> void:
 	echinus_book_button.disabled = not unlocked[int(bounds[44])]
 	annulet_book_button.disabled = not unlocked[int(bounds[45])]
 	listel_book_button.disabled = not unlocked[int(bounds[46])]
+	necking_book_button.disabled = not unlocked[int(bounds[47])]
+	taenia_book_button.disabled = not unlocked[int(bounds[48])]
+	baguette_book_button.disabled = not unlocked[int(bounds[49])]
+	reglet_book_button.disabled = not unlocked[int(bounds[50])]
+	billet_book_button.disabled = not unlocked[int(bounds[51])]
+	reed_book_button.disabled = not unlocked[int(bounds[52])]
+	staff_book_button.disabled = not unlocked[int(bounds[53])]
+	thumb_book_button.disabled = not unlocked[int(bounds[54])]
 	_paint_button(quay_book_button, book == 0)
 	_paint_button(reach_book_button, book == 1)
 	_paint_button(basin_book_button, book == 2)
@@ -1549,6 +1757,14 @@ func _refresh_chrome() -> void:
 	_paint_button(echinus_book_button, book == 44)
 	_paint_button(annulet_book_button, book == 45)
 	_paint_button(listel_book_button, book == 46)
+	_paint_button(necking_book_button, book == 47)
+	_paint_button(taenia_book_button, book == 48)
+	_paint_button(baguette_book_button, book == 49)
+	_paint_button(reglet_book_button, book == 50)
+	_paint_button(billet_book_button, book == 51)
+	_paint_button(reed_book_button, book == 52)
+	_paint_button(staff_book_button, book == 53)
+	_paint_button(thumb_book_button, book == 54)
 
 func _show_win() -> void:
 	win_body.text = str(chart["win"])
@@ -1626,11 +1842,35 @@ func _book_bounds() -> Array:
 	var rebate := abacus + Charts.rebate().size()
 	var echinus := rebate + Charts.echinus().size()
 	var annulet := echinus + Charts.annulet().size()
-	return [0, q, r, b, p, w, m, t, s, n, v, well, siphon, sluice, weir, lintel, mullion, transom, casement, jamb, astragal, scotia, torus, ogee, ovolo, cavetto, fillet, corona, bead, quirk, cyma, fascia, soffit, drip, beak, hood, throat, larmier, cill, threshold, impost, architrave, archivolt, abacus, rebate, echinus, annulet, charts.size()]
+	var listel := annulet + Charts.listel().size()
+	var necking := listel + Charts.necking().size()
+	var taenia := necking + Charts.taenia().size()
+	var baguette := taenia + Charts.baguette().size()
+	var reglet := baguette + Charts.reglet().size()
+	var billet := reglet + Charts.billet().size()
+	var reed := billet + Charts.reed().size()
+	var staff := reed + Charts.staff().size()
+	return [0, q, r, b, p, w, m, t, s, n, v, well, siphon, sluice, weir, lintel, mullion, transom, casement, jamb, astragal, scotia, torus, ogee, ovolo, cavetto, fillet, corona, bead, quirk, cyma, fascia, soffit, drip, beak, hood, throat, larmier, cill, threshold, impost, architrave, archivolt, abacus, rebate, echinus, annulet, listel, necking, taenia, baguette, reglet, billet, reed, staff, charts.size()]
 
 
 func _book_of(index: int) -> int:
 	var bounds: Array = _book_bounds()
+	if index >= int(bounds[54]):
+		return 54
+	if index >= int(bounds[53]):
+		return 53
+	if index >= int(bounds[52]):
+		return 52
+	if index >= int(bounds[51]):
+		return 51
+	if index >= int(bounds[50]):
+		return 50
+	if index >= int(bounds[49]):
+		return 49
+	if index >= int(bounds[48]):
+		return 48
+	if index >= int(bounds[47]):
+		return 47
 	if index >= int(bounds[46]):
 		return 46
 	if index >= int(bounds[45]):
@@ -1823,8 +2063,24 @@ func _on_book_pressed(book: int) -> void:
 			status_label.text = "The echinus is still locked."
 		elif book == 45:
 			status_label.text = "The annulet is still locked."
-		else:
+		elif book == 46:
 			status_label.text = "The listel is still locked."
+		elif book == 47:
+			status_label.text = "The necking is still locked."
+		elif book == 48:
+			status_label.text = "The taenia is still locked."
+		elif book == 49:
+			status_label.text = "The baguette is still locked."
+		elif book == 50:
+			status_label.text = "The reglet is still locked."
+		elif book == 51:
+			status_label.text = "The billet is still locked."
+		elif book == 52:
+			status_label.text = "The reed is still locked."
+		elif book == 53:
+			status_label.text = "The staff is still locked."
+		else:
+			status_label.text = "The thumb is still locked."
 		return
 	_book_place[here] = chart_index
 	var last := int(bounds[book + 1])
@@ -2094,6 +2350,94 @@ func _has_throat() -> bool:
 	for raw in chart["fixtures"]:
 		var fix: Dictionary = raw
 		if str(fix["kind"]) == "throat":
+			return true
+	return false
+
+func _has_thumb() -> bool:
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		if str(piece["kind"]) == "thumb":
+			return true
+	for raw in chart["fixtures"]:
+		var fix: Dictionary = raw
+		if str(fix["kind"]) == "thumb":
+			return true
+	return false
+
+func _has_staff() -> bool:
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		if str(piece["kind"]) == "staff":
+			return true
+	for raw in chart["fixtures"]:
+		var fix: Dictionary = raw
+		if str(fix["kind"]) == "staff":
+			return true
+	return false
+
+func _has_reed() -> bool:
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		if str(piece["kind"]) == "reed":
+			return true
+	for raw in chart["fixtures"]:
+		var fix: Dictionary = raw
+		if str(fix["kind"]) == "reed":
+			return true
+	return false
+
+func _has_billet() -> bool:
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		if str(piece["kind"]) == "billet":
+			return true
+	for raw in chart["fixtures"]:
+		var fix: Dictionary = raw
+		if str(fix["kind"]) == "billet":
+			return true
+	return false
+
+func _has_reglet() -> bool:
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		if str(piece["kind"]) == "reglet":
+			return true
+	for raw in chart["fixtures"]:
+		var fix: Dictionary = raw
+		if str(fix["kind"]) == "reglet":
+			return true
+	return false
+
+func _has_baguette() -> bool:
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		if str(piece["kind"]) == "baguette":
+			return true
+	for raw in chart["fixtures"]:
+		var fix: Dictionary = raw
+		if str(fix["kind"]) == "baguette":
+			return true
+	return false
+
+func _has_taenia() -> bool:
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		if str(piece["kind"]) == "taenia":
+			return true
+	for raw in chart["fixtures"]:
+		var fix: Dictionary = raw
+		if str(fix["kind"]) == "taenia":
+			return true
+	return false
+
+func _has_necking() -> bool:
+	for raw in chart["pieces"]:
+		var piece: Dictionary = raw
+		if str(piece["kind"]) == "necking":
+			return true
+	for raw in chart["fixtures"]:
+		var fix: Dictionary = raw
+		if str(fix["kind"]) == "necking":
 			return true
 	return false
 
