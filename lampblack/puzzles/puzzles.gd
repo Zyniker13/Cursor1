@@ -3,7 +3,7 @@ extends RefCounted
 
 const Rules = preload("res://rules/rules.gd")
 
-## Twenty-seven wings of the closed museum. Each solution is a list of actions the rules
+## Twenty-eight wings of the closed museum. Each solution is a list of actions the rules
 ## accept. Tokens are R L U D, W for wait, and T0 / T1 for lamps.
 
 
@@ -111,6 +111,8 @@ static func _puzzle(number: int, title: String, lesson: String, rows: PackedStri
 		wing_number = number - 152
 	elif wing == "Ticking Wing":
 		wing_number = number - 158
+	elif wing == "Denim Wing":
+		wing_number = number - 164
 	return {
 		"number": number,
 		"wing": wing,
@@ -167,6 +169,7 @@ static func _all() -> Array:
 	puzzles.append_array(_holland_wing())
 	puzzles.append_array(_buckram_wing())
 	puzzles.append_array(_ticking_wing())
+	puzzles.append_array(_denim_wing())
 	return puzzles
 
 
@@ -3147,5 +3150,119 @@ static func _ticking_wing() -> Array:
 			[_guard(1, 1, [Vector2i(1, 1)], 0)],
 			"L R U U T0 D D D L L D U L",
 			"Ticking Wing"
+		),
+	]
+
+
+static func _denim_wing() -> Array:
+	return [
+		_puzzle(
+			165,
+			"The Lit Denim",
+			"This room is about the rule that the denim is lit.",
+			PackedStringArray([
+				"#########",
+				"#GD.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L R U U T0 D D D L L L",
+			"Denim Wing"
+		),
+		_puzzle(
+			166,
+			"The Seen Twill",
+			"This room is about the rule that the guard sees a lit tile through the lit denim.",
+			PackedStringArray([
+				"#########",
+				"#GD.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+				"#.......#",
+				"#..D....#",
+				"#..G....#",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3), _lamp(3, 6, "s", 2)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0), _guard(3, 8, [Vector2i(3, 8)], 3)],
+			"L R U U T0 D D D L L L",
+			"Denim Wing"
+		),
+		_puzzle(
+			167,
+			"The Passed Seam",
+			"This room is about the rule that a second lamp's light passes through the denim.",
+			PackedStringArray([
+				"#########",
+				"#########",
+				"#GD.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+			]),
+			[_lamp(3, 2, "w", 3)],
+			[_guard(1, 2, [Vector2i(1, 2)], 0)],
+			"L R U U T0 D D D L L L",
+			"Denim Wing"
+		),
+		_puzzle(
+			168,
+			"The Open Denim",
+			"This room is about the rule that a guard can enter the denim.",
+			PackedStringArray([
+				"##########",
+				"#GD.....##",
+				"#..#....##",
+				"#..GS...##",
+				"#X......##",
+				"##########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L R U U T0 D D D L L L",
+			"Denim Wing"
+		),
+		_puzzle(
+			169,
+			"The Sure Tread",
+			"This room is about the rule that the early step onto the lit denim succeeds.",
+			PackedStringArray([
+				"#########",
+				"#GD.....#",
+				"#..#....#",
+				"#..GS...#",
+				"#X......#",
+				"#########",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L R U U T0 D D D L L L",
+			"Denim Wing"
+		),
+		_puzzle(
+			170,
+			"The Last Denim",
+			"This room is about the rule that you leave by stepping on the lit denim.",
+			PackedStringArray([
+				"#########",
+				"#GD.....#",
+				"#..#....#",
+				"#.DGS...#",
+				"#X......#",
+				"#.D.....#",
+				"#########",
+			]),
+			[_lamp(3, 1, "w", 3)],
+			[_guard(1, 1, [Vector2i(1, 1)], 0)],
+			"L L R R U U T0 D D D L L L",
+			"Denim Wing"
 		),
 	]
