@@ -44,6 +44,7 @@ extends RefCounted
 ## Wing 50 is rooms 393-400.
 ## Wing 51 is rooms 401-408.
 ## Wing 52 is rooms 409-416.
+## Wing 53 is rooms 417-424.
 ## The dwell is taught before a later room depends on it.
 ## The twin is taught before a later room depends on it.
 ## The pass is taught before a later room depends on it.
@@ -88,7 +89,8 @@ extends RefCounted
 ## The sledge is taught before a later room depends on it.
 ## The bick is taught before a later room depends on it.
 ## The pritchel is taught before a later room depends on it.
-## The roller, the weir, the bridge, the grate, the hook, the arm, the drop, the lift, the dwell, the twin, the pass, the slip, the shed, the rake, the hoe, the harrow, the fork, the prong, the share, the coulter, the moldboard, the landside, the slade, the heel, the stilt, the clevis, the beam, the hake, the sole, the frog, the shin, the point, the throat, the wrest, the jointer, the bridle, the trashboard, the gauge, the breast, the hardie, the fuller, the swage, the flatter, the drift, the punch, the sett, the bolster, the snap, the anvil, the sledge, the bick, and the pritchel are taught before a later room depends on them.
+## The mandrel is taught before a later room depends on it.
+## The roller, the weir, the bridge, the grate, the hook, the arm, the drop, the lift, the dwell, the twin, the pass, the slip, the shed, the rake, the hoe, the harrow, the fork, the prong, the share, the coulter, the moldboard, the landside, the slade, the heel, the stilt, the clevis, the beam, the hake, the sole, the frog, the shin, the point, the throat, the wrest, the jointer, the bridle, the trashboard, the gauge, the breast, the hardie, the fuller, the swage, the flatter, the drift, the punch, the sett, the bolster, the snap, the anvil, the sledge, the bick, the pritchel, and the mandrel are taught before a later room depends on them.
 ## Each solution is a full layout, not a delta from the initial pieces.
 ## Quotas are minimums inside SIM_TICKS.
 
@@ -513,6 +515,14 @@ static func all() -> Array:
 		pritchel_scrap(),
 		pritchel_bin(),
 		pritchel_hold(),
+		mandrel_step(),
+		still_mandrel(),
+		seat_mandrel(),
+		mandrel_gate(),
+		two_mandrels(),
+		mandrel_scrap(),
+		mandrel_bin(),
+		mandrel_hold(),
 	]
 
 
@@ -15678,5 +15688,292 @@ static func pritchel_hold() -> Dictionary:
 			piece(rules.Kind.PRITCHEL, 4, 1, rules.Dir.EAST),
 			piece(rules.Kind.BELT, 4, 3, rules.Dir.SOUTH),
 			piece(rules.Kind.KILN, 4, 4, rules.Dir.SOUTH),
+		],
+	}
+
+
+static func mandrel_step() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 417,
+		"name": "Mandrel Step",
+		"blurb": "The first item arrives from ahead and leaves left, through a source, into a kiln. The plate leaves right.",
+		"rule": "The first item is ore. It arrives from ahead and leaves left. The cell directly left is only a source, so the ore steps through into the kiln. The plate that arrives from ahead leaves right onto the plate bin. The plate does not step through a source. A hardie already sends the ore forward and the plate left, and steps the ore through a forward source. A wrest would send the ore left and the plate right without stepping the ore through the source. A bolster would step the ore through the left source and send the plate behind. A drift would step the ore through the left source and send the plate forward. A pritchel would send the ore right onto the plate bin. A bick would send the ore behind into the wall. A sledge would send the ore behind into the wall and the plate right. A breast would send the ore behind into the wall and step the plate through a forward source. A beam would send the ore behind. A hake would send the ore behind. An anvil would send the ore forward. A sole would send the ore forward without stepping. A snap would send the ore right. A punch would send the ore right and the plate forward. A sett would send the ore behind and the plate forward. A bridle would send the ore left. A throat would send the ore behind and the plate forward. A flatter would send the ore behind. A swage would send the plate forward and step it through a forward source. A fuller would send the ore left. A gauge would send the plate behind. A frog would send the ore forward. A jointer would send the plate left. A shin would send the plate forward. A point would send the ore right. A moldboard accepts only from behind. A coulter, a landside, a share, a fork, a prong, a slade, and a heel accept only from behind. A stilt accepts only from the left. A clevis accepts only from the right. A belt refuses an arrival from ahead. A dwell, a twin, a pass, a slip, a shed, a hook, a rake, a hoe, and a harrow miss too.",
+		"w": 6,
+		"h": 5,
+		"sources": [
+			source(4, 3, rules.Dir.WEST, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+			source(3, 2, rules.Dir.SOUTH, [rules.Mat.INGOT], 80),
+		],
+		"sinks": [
+			sink(3, 0, [rules.Mat.INGOT]),
+			sink(3, 4, [rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [cell(2, 3)],
+		"budget": kv([
+			rules.Kind.KILN, 1,
+			rules.Kind.MANDREL, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 30]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.MANDREL, 3, 3, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 3, 1, rules.Dir.NORTH),
+		],
+	}
+
+
+static func still_mandrel() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 418,
+		"name": "Still Mandrel",
+		"blurb": "The tray has one belt, on the crossing. The mandrel faces east. The first item arrives from ahead and leaves left, and the later item leaves right.",
+		"rule": "The tray has one belt, on the crossing. The mandrel faces east and takes the pair from ahead. The ore leaves left, through a source, into the kiln, and the plate leaves right onto the plate bin. The belt turns the ingot off that lane. A filter scraps a side stream. A hardie already sends the ore forward and the plate left, and steps the ore through a forward source. A wrest would send the ore left and the plate right without stepping the ore through the source. A bolster would step the ore through the left source and send the plate behind. A drift would step the ore through the left source and send the plate forward. A pritchel would send the ore right onto the plate bin. A bick would send the ore behind into the wall. A sledge would send the ore behind into the wall and the plate right. A breast would send the ore behind into the wall and step the plate through a forward source. A beam would send the ore behind. A hake would send the ore behind. An anvil would send the ore forward. A sole would send the ore forward without stepping. A snap would send the ore right. A punch would send the ore right and the plate forward. A sett would send the ore behind and the plate forward. A bridle would send the ore left. A throat would send the ore behind and the plate forward. A flatter would send the ore behind. A swage would send the plate forward and step it through a forward source. A fuller would send the ore left. A gauge would send the plate behind. A frog would send the ore forward. A jointer would send the plate left. A shin would send the plate forward. A point would send the ore right. A moldboard accepts only from behind. A coulter, a landside, a share, a fork, a prong, a slade, and a heel accept only from behind. A stilt accepts only from the left. A clevis accepts only from the right. A belt refuses an arrival from ahead. A dwell, a twin, a pass, a slip, a shed, a hook, a rake, a hoe, and a harrow miss too.",
+		"w": 8,
+		"h": 6,
+		"sources": [
+			source(6, 4, rules.Dir.WEST, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+			source(5, 3, rules.Dir.SOUTH, [rules.Mat.INGOT], 80),
+			source(0, 5, rules.Dir.NORTH, [rules.Mat.INGOT], 4),
+		],
+		"sinks": [
+			sink(4, 1, [rules.Mat.INGOT]),
+			sink(5, 5, [rules.Mat.PLATE]),
+		],
+		"chutes": [cell(1, 4)],
+		"walls": [cell(4, 4), cell(4, 3)],
+		"budget": kv([
+			rules.Kind.BELT, 1,
+			rules.Kind.MANDREL, 1,
+			rules.Kind.KILN, 1,
+			rules.Kind.FILTER, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 30]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.MANDREL, 5, 4, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 5, 2, rules.Dir.NORTH),
+			piece(rules.Kind.BELT, 5, 1, rules.Dir.WEST),
+			piece(rules.Kind.FILTER, 0, 4, rules.Dir.NORTH),
+		],
+	}
+
+
+static func seat_mandrel() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 419,
+		"name": "Seat Mandrel",
+		"blurb": "The mandrel starts off the lane. Seat it where the ore arrives from ahead and leaves left.",
+		"rule": "The mandrel starts off the lane. Pick it up and seat it where the ore arrives from ahead and leaves left, through a source, into the kiln, and the plate leaves right onto the plate bin. Leaving it parked misses. A hardie already sends the ore forward and the plate left, and steps the ore through a forward source. A wrest would send the ore left and the plate right without stepping the ore through the source. A bolster would step the ore through the left source and send the plate behind. A drift would step the ore through the left source and send the plate forward. A pritchel would send the ore right onto the plate bin. A bick would send the ore behind into the wall. A sledge would send the ore behind into the wall and the plate right. A breast would send the ore behind into the wall and step the plate through a forward source. A beam would send the ore behind. A hake would send the ore behind. An anvil would send the ore forward. A sole would send the ore forward without stepping. A snap would send the ore right. A punch would send the ore right and the plate forward. A sett would send the ore behind and the plate forward. A bridle would send the ore left. A throat would send the ore behind and the plate forward. A flatter would send the ore behind. A swage would send the plate forward and step it through a forward source. A fuller would send the ore left. A gauge would send the plate behind. A frog would send the ore forward. A jointer would send the plate left. A shin would send the plate forward. A point would send the ore right. A moldboard accepts only from behind. A coulter, a landside, a share, a fork, a prong, a slade, and a heel accept only from behind. A stilt accepts only from the left. A clevis accepts only from the right. A belt refuses an arrival from ahead. A dwell, a twin, a pass, a slip, a shed, a hook, a rake, a hoe, and a harrow miss too.",
+		"w": 6,
+		"h": 5,
+		"sources": [
+			source(4, 3, rules.Dir.WEST, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+			source(3, 2, rules.Dir.SOUTH, [rules.Mat.INGOT], 80),
+		],
+		"sinks": [
+			sink(3, 0, [rules.Mat.INGOT]),
+			sink(3, 4, [rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [cell(2, 3)],
+		"budget": kv([
+			rules.Kind.KILN, 1,
+			rules.Kind.MANDREL, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 30]),
+		"initial": [
+			piece(rules.Kind.MANDREL, 5, 0, rules.Dir.EAST),
+		],
+		"solution": [
+			piece(rules.Kind.MANDREL, 3, 3, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 3, 1, rules.Dir.NORTH),
+		],
+	}
+
+
+static func mandrel_gate() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 420,
+		"name": "Mandrel Gate",
+		"blurb": "A wall closes the side. The ore still leaves left, through a source, into the kiln, and the plate leaves right.",
+		"rule": "A wall closes the side. The first item arrives from ahead and leaves left. The cell directly left is only a source, so the ore steps through into the kiln. The plate leaves right onto the plate bin. A hardie already sends the ore forward and the plate left, and steps the ore through a forward source. A wrest would send the ore left and the plate right without stepping the ore through the source. A bolster would step the ore through the left source and send the plate behind. A drift would step the ore through the left source and send the plate forward. A pritchel would send the ore right onto the plate bin. A bick would send the ore behind into the wall. A sledge would send the ore behind into the wall and the plate right. A breast would send the ore behind into the wall and step the plate through a forward source. A beam would send the ore behind. A hake would send the ore behind. An anvil would send the ore forward. A sole would send the ore forward without stepping. A snap would send the ore right. A punch would send the ore right and the plate forward. A sett would send the ore behind and the plate forward. A bridle would send the ore left. A throat would send the ore behind and the plate forward. A flatter would send the ore behind. A swage would send the plate forward and step it through a forward source. A fuller would send the ore left. A gauge would send the plate behind. A frog would send the ore forward. A jointer would send the plate left. A shin would send the plate forward. A point would send the ore right. A moldboard accepts only from behind. A coulter, a landside, a share, a fork, a prong, a slade, and a heel accept only from behind. A stilt accepts only from the left. A clevis accepts only from the right. A belt refuses an arrival from ahead. A dwell, a twin, a pass, a slip, a shed, a hook, a rake, a hoe, and a harrow miss too.",
+		"w": 6,
+		"h": 5,
+		"sources": [
+			source(4, 3, rules.Dir.WEST, [rules.Mat.ORE, rules.Mat.PLATE], 1),
+			source(3, 2, rules.Dir.SOUTH, [rules.Mat.INGOT], 80),
+		],
+		"sinks": [
+			sink(3, 0, [rules.Mat.INGOT]),
+			sink(3, 4, [rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [cell(2, 3)],
+		"budget": kv([
+			rules.Kind.KILN, 1,
+			rules.Kind.MANDREL, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 59, rules.Mat.PLATE, 60]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.MANDREL, 3, 3, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 3, 1, rules.Dir.NORTH),
+		],
+	}
+
+
+static func two_mandrels() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 421,
+		"name": "Two Mandrels",
+		"blurb": "Two mandrels take two lanes from ahead. Each ore leaves left, through a source, and each plate leaves right.",
+		"rule": "Two mandrels take two lanes from ahead. Each first item leaves left and steps through a source into its kiln. Each plate leaves right onto its plate bin. A hardie already sends the ore forward and the plate left, and steps the ore through a forward source. A wrest would send the ore left and the plate right without stepping the ore through the source. A bolster would step the ore through the left source and send the plate behind. A drift would step the ore through the left source and send the plate forward. A pritchel would send the ore right onto the plate bin. A bick would send the ore behind into the wall. A sledge would send the ore behind into the wall and the plate right. A breast would send the ore behind into the wall and step the plate through a forward source. A beam would send the ore behind. A hake would send the ore behind. An anvil would send the ore forward. A sole would send the ore forward without stepping. A snap would send the ore right. A punch would send the ore right and the plate forward. A sett would send the ore behind and the plate forward. A bridle would send the ore left. A throat would send the ore behind and the plate forward. A flatter would send the ore behind. A swage would send the plate forward and step it through a forward source. A fuller would send the ore left. A gauge would send the plate behind. A frog would send the ore forward. A jointer would send the plate left. A shin would send the plate forward. A point would send the ore right. A moldboard accepts only from behind. A coulter, a landside, a share, a fork, a prong, a slade, and a heel accept only from behind. A stilt accepts only from the left. A clevis accepts only from the right. A belt refuses an arrival from ahead. A dwell, a twin, a pass, a slip, a shed, a hook, a rake, a hoe, and a harrow miss too.",
+		"w": 8,
+		"h": 5,
+		"sources": [
+			source(2, 3, rules.Dir.WEST, [rules.Mat.ORE, rules.Mat.PLATE], 1),
+			source(1, 2, rules.Dir.SOUTH, [rules.Mat.INGOT], 80),
+			source(6, 3, rules.Dir.WEST, [rules.Mat.ORE, rules.Mat.PLATE], 1),
+			source(5, 2, rules.Dir.SOUTH, [rules.Mat.INGOT], 80),
+		],
+		"sinks": [
+			sink(1, 0, [rules.Mat.INGOT]),
+			sink(5, 0, [rules.Mat.INGOT]),
+			sink(1, 4, [rules.Mat.PLATE]),
+			sink(5, 4, [rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [cell(0, 3), cell(4, 3)],
+		"budget": kv([
+			rules.Kind.KILN, 2,
+			rules.Kind.MANDREL, 2,
+		]),
+		"quota": kv([rules.Mat.INGOT, 118, rules.Mat.PLATE, 120]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.MANDREL, 1, 3, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 1, 1, rules.Dir.NORTH),
+			piece(rules.Kind.MANDREL, 5, 3, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 5, 1, rules.Dir.NORTH),
+		],
+	}
+
+
+static func mandrel_scrap() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 422,
+		"name": "Mandrel Scrap",
+		"blurb": "The ore leaves left, away from the scrap, and the plate leaves right.",
+		"rule": "The first item arrives from ahead and leaves left, through a source, into the kiln, away from the scrap. The plate leaves right onto the plate bin. A filter throws its own stream east into the chute. A hardie already sends the ore forward and the plate left, and steps the ore through a forward source. A wrest would send the ore left and the plate right without stepping the ore through the source. A bolster would step the ore through the left source and send the plate behind. A drift would step the ore through the left source and send the plate forward. A pritchel would send the ore right onto the plate bin. A bick would send the ore behind into the wall. A sledge would send the ore behind into the wall and the plate right. A breast would send the ore behind into the wall and step the plate through a forward source. A beam would send the ore behind. A hake would send the ore behind. An anvil would send the ore forward. A sole would send the ore forward without stepping. A snap would send the ore right. A punch would send the ore right and the plate forward. A sett would send the ore behind and the plate forward. A bridle would send the ore left. A throat would send the ore behind and the plate forward. A flatter would send the ore behind. A swage would send the plate forward and step it through a forward source. A fuller would send the ore left. A gauge would send the plate behind. A frog would send the ore forward. A jointer would send the plate left. A shin would send the plate forward. A point would send the ore right. A moldboard accepts only from behind. A coulter, a landside, a share, a fork, a prong, a slade, and a heel accept only from behind. A stilt accepts only from the left. A clevis accepts only from the right. A belt refuses an arrival from ahead. A dwell, a twin, a pass, a slip, a shed, a hook, a rake, a hoe, and a harrow miss too.",
+		"w": 8,
+		"h": 6,
+		"sources": [
+			source(6, 4, rules.Dir.WEST, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+			source(5, 3, rules.Dir.SOUTH, [rules.Mat.INGOT], 80),
+			source(0, 5, rules.Dir.NORTH, [rules.Mat.INGOT], 4),
+		],
+		"sinks": [
+			sink(4, 1, [rules.Mat.INGOT]),
+			sink(5, 5, [rules.Mat.PLATE]),
+		],
+		"chutes": [cell(1, 4)],
+		"walls": [cell(4, 4), cell(4, 3)],
+		"budget": kv([
+			rules.Kind.BELT, 1,
+			rules.Kind.MANDREL, 1,
+			rules.Kind.KILN, 1,
+			rules.Kind.FILTER, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 30]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.MANDREL, 5, 4, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 5, 2, rules.Dir.NORTH),
+			piece(rules.Kind.BELT, 5, 1, rules.Dir.WEST),
+			piece(rules.Kind.FILTER, 0, 4, rules.Dir.NORTH),
+		],
+	}
+
+
+static func mandrel_bin() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 423,
+		"name": "Mandrel Bin",
+		"blurb": "The ore leaves left, through a source, into the split, and the plate leaves right. The lower stream is not enough on its own.",
+		"rule": "The first item arrives from ahead and leaves left. The cell directly left is only a source, so the ore steps through into the kiln. The plate leaves right onto the plate bin. The kiln feeds a splitter, and the press plates join a lower stream that is not enough on its own. A hardie already sends the ore forward and the plate left, and steps the ore through a forward source. A wrest would send the ore left and the plate right without stepping the ore through the source. A bolster would step the ore through the left source and send the plate behind. A drift would step the ore through the left source and send the plate forward. A pritchel would send the ore right onto the plate bin. A bick would send the ore behind into the wall. A sledge would send the ore behind into the wall and the plate right. A breast would send the ore behind into the wall and step the plate through a forward source. A beam would send the ore behind. A hake would send the ore behind. An anvil would send the ore forward. A sole would send the ore forward without stepping. A snap would send the ore right. A punch would send the ore right and the plate forward. A sett would send the ore behind and the plate forward. A bridle would send the ore left. A throat would send the ore behind and the plate forward. A flatter would send the ore behind. A swage would send the plate forward and step it through a forward source. A fuller would send the ore left. A gauge would send the plate behind. A frog would send the ore forward. A jointer would send the plate left. A shin would send the plate forward. A point would send the ore right. A moldboard accepts only from behind. A coulter, a landside, a share, a fork, a prong, a slade, and a heel accept only from behind. A stilt accepts only from the left. A clevis accepts only from the right. A belt refuses an arrival from ahead. A dwell, a twin, a pass, a slip, a shed, a hook, a rake, a hoe, and a harrow miss too.",
+		"w": 8,
+		"h": 6,
+		"sources": [
+			source(4, 4, rules.Dir.WEST, [rules.Mat.ORE, rules.Mat.PLATE], 1),
+			source(3, 3, rules.Dir.SOUTH, [rules.Mat.INGOT], 80),
+			source(0, 5, rules.Dir.EAST, [rules.Mat.PLATE], 4),
+		],
+		"sinks": [
+			sink(4, 0, [rules.Mat.INGOT]),
+			sink(3, 5, [rules.Mat.PLATE]),
+			sink(6, 1, [rules.Mat.PLATE]),
+			sink(2, 5, [rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [cell(2, 4)],
+		"budget": kv([
+			rules.Kind.BELT, 3,
+			rules.Kind.MANDREL, 1,
+			rules.Kind.KILN, 1,
+			rules.Kind.SPLITTER, 1,
+			rules.Kind.PRESS, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 104]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.MANDREL, 3, 4, rules.Dir.EAST),
+			piece(rules.Kind.KILN, 3, 2, rules.Dir.NORTH),
+			piece(rules.Kind.SPLITTER, 3, 1, rules.Dir.NORTH),
+			piece(rules.Kind.BELT, 3, 0, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 4, 1, rules.Dir.EAST),
+			piece(rules.Kind.PRESS, 5, 1, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 1, 5, rules.Dir.EAST),
+		],
+	}
+
+
+static func mandrel_hold() -> Dictionary:
+	var rules = Rules
+	return {
+		"id": 424,
+		"name": "Mandrel Hold",
+		"blurb": "The pair leaves on the arrival tick, waiter left and arrival right, and the cell is empty afterward.",
+		"rule": "The first item arrives from ahead and waits through a tick with nothing beside it, then the pair leaves on the arrival tick, the waiter left through a source and the arrival right, and the cell is empty afterward. A belt refuses that arrival from ahead, so the first item never steps onto the next cell. A wrest would not step the waiter through the source. A pritchel would send the waiter right. A bick would send the waiter behind. A sledge would send the arrival right onto a different cell. A breast would step the arrival through a forward source. A lone item never leaves. A piece that keeps either item misses. A hardie already sends the ore forward and the plate left, and steps the ore through a forward source. A wrest would send the ore left and the plate right without stepping the ore through the source. A bolster would step the ore through the left source and send the plate behind. A drift would step the ore through the left source and send the plate forward. A pritchel would send the ore right onto the plate bin. A bick would send the ore behind into the wall. A sledge would send the ore behind into the wall and the plate right. A breast would send the ore behind into the wall and step the plate through a forward source. A beam would send the ore behind. A hake would send the ore behind. An anvil would send the ore forward. A sole would send the ore forward without stepping. A snap would send the ore right. A punch would send the ore right and the plate forward. A sett would send the ore behind and the plate forward. A bridle would send the ore left. A throat would send the ore behind and the plate forward. A flatter would send the ore behind. A swage would send the plate forward and step it through a forward source. A fuller would send the ore left. A gauge would send the plate behind. A frog would send the ore forward. A jointer would send the plate left. A shin would send the plate forward. A point would send the ore right. A moldboard accepts only from behind. A coulter, a landside, a share, a fork, a prong, a slade, and a heel accept only from behind. A stilt accepts only from the left. A clevis accepts only from the right. A belt refuses an arrival from ahead. A dwell, a twin, a pass, a slip, a shed, a hook, a rake, a hoe, and a harrow miss too.",
+		"w": 6,
+		"h": 6,
+		"sources": [
+			source(5, 4, rules.Dir.WEST, [rules.Mat.ORE, rules.Mat.PLATE], 2),
+			source(4, 3, rules.Dir.SOUTH, [rules.Mat.INGOT], 80),
+		],
+		"sinks": [
+			sink(4, 0, [rules.Mat.INGOT]),
+			sink(4, 5, [rules.Mat.PLATE]),
+		],
+		"chutes": [],
+		"walls": [cell(3, 4)],
+		"budget": kv([
+			rules.Kind.BELT, 1,
+			rules.Kind.KILN, 1,
+			rules.Kind.MANDREL, 1,
+		]),
+		"quota": kv([rules.Mat.INGOT, 29, rules.Mat.PLATE, 30]),
+		"initial": [],
+		"solution": [
+			piece(rules.Kind.MANDREL, 4, 4, rules.Dir.EAST),
+			piece(rules.Kind.BELT, 4, 2, rules.Dir.NORTH),
+			piece(rules.Kind.KILN, 4, 1, rules.Dir.NORTH),
 		],
 	}

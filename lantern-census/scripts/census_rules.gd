@@ -116,6 +116,14 @@ extends RefCounted
 ## while the path stays 19 steps. (15,11), (16,11), (17,11), and (18,11) stay open.
 ## (16,10), (17,10), (18,10), (19,10), (20,10), and (21,4) through (21,10) stay closed.
 ## The recorded walk drops (15,10) and is open between (21,3) and (14,10).
+## The cairn keeps that walk except at (14,10), which is closed.
+## Closing (14,10) alone surveys at 186 oil: (14,11) and (13,10) are open,
+## so (14,10) is a pass-through. Opening (13,11) restores the same 19 steps.
+## The new crack at (48,15) stays a leaf, so the survey is 132 oil.
+## No one-, two-, or three-cell opening returns a lower survey
+## while the path stays 19 steps. (14,11), (15,11), (16,11), (17,11), and (18,11) stay open.
+## (15,10), (16,10), (17,10), (18,10), (19,10), (20,10), and (21,4) through (21,10) stay closed.
+## The recorded walk drops (14,10) and is open between (21,3) and (13,10).
 ## A census is accepted only when every corridor and hazard is marked truly
 ## and no tile is marked as something it is not.
 
@@ -129,7 +137,7 @@ const HAZARD_VALUE := 8
 const LOOP_VALUE := 15
 
 const TOWN_LINE := "Arrows turn and step, Q and E strafe, M marks the tile you face, and Space waits out the warden's swing."
-const RATE_CARD := "A true corridor pays 3. A true hazard pays 8. The cellar's east square, the cistern ring, the cloister walk, the crypt ring, the ossuary ring, the reliquary ring, the undercroft ring, the well ring, the scriptorium ring, the binding ring, the chart room ring, the bell loft ring, the clock room ring, the font ring, the apse ring, the choir ring, the rood ring, the crossing ring, the transept ring, the ambulatory ring, the chevet ring, the retrochoir ring, the lady chapel ring, the feretory ring, the chantry ring, the sacristy ring, the pyx ring, the aumbry ring, the piscina ring, the sedilia ring, the credence ring, the reredos ring, the predella ring, the dossal ring, the retable ring, the tester ring, the riddel ring, the frontal ring, the pall ring, the herse ring, the catafalque ring, the bier ring, the cerecloth ring, the hearse ring, the shroud ring, the pyre ring, the cenotaph ring, the winding ring, the charnel ring, the sepulchre ring, and the vault ring each pay 15 only when every tile of that ring is marked corridor. A false mark pays nothing."
+const RATE_CARD := "A true corridor pays 3. A true hazard pays 8. The cellar's east square, the cistern ring, the cloister walk, the crypt ring, the ossuary ring, the reliquary ring, the undercroft ring, the well ring, the scriptorium ring, the binding ring, the chart room ring, the bell loft ring, the clock room ring, the font ring, the apse ring, the choir ring, the rood ring, the crossing ring, the transept ring, the ambulatory ring, the chevet ring, the retrochoir ring, the lady chapel ring, the feretory ring, the chantry ring, the sacristy ring, the pyx ring, the aumbry ring, the piscina ring, the sedilia ring, the credence ring, the reredos ring, the predella ring, the dossal ring, the retable ring, the tester ring, the riddel ring, the frontal ring, the pall ring, the herse ring, the catafalque ring, the bier ring, the cerecloth ring, the hearse ring, the shroud ring, the pyre ring, the cenotaph ring, the winding ring, the charnel ring, the sepulchre ring, the vault ring, and the cairn ring each pay 15 only when every tile of that ring is marked corridor. A false mark pays nothing."
 
 const CELLAR_RECORD := "Record every corridor, both hazard cracks, and the east square."
 const CISTERN_RECORD := "Record every corridor, the three seep cracks, and the cistern ring around the pit."
@@ -182,6 +190,7 @@ const WINDING_RECORD := "Record every corridor, the forty-eight winding cracks, 
 const CHARNEL_RECORD := "Record every corridor, the forty-nine charnel cracks, and the ring around the charnel."
 const SEPULCHRE_RECORD := "Record every corridor, the fifty sepulchre cracks, and the ring around the sepulchre."
 const VAULT_RECORD := "Record every corridor, the fifty-one vault cracks, and the ring around the vault."
+const CAIRN_RECORD := "Record every corridor, the fifty-two cairn cracks, and the ring around the cairn."
 
 const CELLAR_ROWS: PackedStringArray = [
 	"#############",
@@ -1830,6 +1839,47 @@ const VAULT_ROWS: PackedStringArray = [
 	"######################################################",
 ]
 
+
+# The cairn is the 14x6 block of '/' at columns 7-20, rows 4-9.
+# '*' stays the cistern pit. '&' stays the bier. '%' stays the catafalque.
+# '/' is the next unused glyph and inks as one wall. '^' stays the vault.
+# The sheet grows the vault one cell east. That new column stays wall.
+# The warden, the lift, the start, and the 19-step path stay.
+# (48,15) is the wall immediately east of (47,15). It is not on the tour:
+# adding only that crack surveys at 132 oil. (21,10) through (21,4) stay closed.
+# (20,10), (19,10), (18,10), (17,10), (16,10), and (15,10) stay closed.
+# (21,11) and (22,10) stay walls.
+# (14,11), (15,11), (16,11), (17,11), and (18,11) stay open.
+# Closing (14,10) alone surveys at 186 oil, because (14,11) and (13,10) are open.
+# Opening (13,11) is the one-cell detour that restores the same 19 steps.
+# The survey is 132 oil: the new crack is still a leaf, and no one-, two-, or three-cell
+# opening reaches a lower survey while the path stays 19 steps.
+# The recorded walk drops (14,10) and is open between (21,3) and (13,10).
+# (6,11) stays open. (10,10) stays closed and (11,11) stays open.
+const CAIRN_ROWS: PackedStringArray = [
+	"#######################################################",
+	"#S#####################################################",
+	"#.#####################################################",
+	"#H####...................H#############################",
+	"#.####.//////////////####H#############################",
+	"#H####.//////////////####H#############################",
+	"#.####.//////////////####H#############################",
+	"#H####.//////////////####H#############################",
+	"#.####.//////////////####H#############################",
+	"#H####.//////////////####H#############################",
+	"#.####.####...###########H#############################",
+	"#H........L.#.......#####H#############################",
+	"#######H.E#########H.....H#############################",
+	"#########################H#############################",
+	"#########################H#############################",
+	"#########################HHHHHHHHHHHHHHHHHHHHHHHH######",
+	"#########################HHHHHHHHH#####################",
+	"#######################################################",
+	"#######################################################",
+	"#######################################################",
+	"#######################################################",
+]
+
 enum Tile { WALL, FLOOR, HAZARD, LIFT }
 enum Mark { NONE, CORRIDOR, WALL, HAZARD }
 enum EndReason { NONE, EXTRACTED, LAMP_OUT, ABANDONED }
@@ -1870,7 +1920,7 @@ static var _floor_list: Array = []
 
 static func floors() -> Array:
 	if _floor_list.is_empty():
-		_floor_list = [_make_cellar(), _make_cistern(), _make_cloister(), _make_crypt(), _make_ossuary(), _make_reliquary(), _make_undercroft(), _make_wellhouse(), _make_scriptorium(), _make_binding(), _make_chartroom(), _make_bellloft(), _make_clockroom(), _make_font(), _make_apse(), _make_choir(), _make_rood(), _make_crossing(), _make_transept(), _make_ambulatory(), _make_chevet(), _make_retrochoir(), _make_ladychapel(), _make_feretory(), _make_chantry(), _make_sacristy(), _make_pyx(), _make_aumbry(), _make_piscina(), _make_sedilia(), _make_credence(), _make_reredos(), _make_predella(), _make_dossal(), _make_retable(), _make_tester(), _make_riddel(), _make_frontal(), _make_pall(), _make_herse(), _make_catafalque(), _make_bier(), _make_cerecloth(), _make_hearse(), _make_shroud(), _make_pyre(), _make_cenotaph(), _make_winding(), _make_charnel(), _make_sepulchre(), _make_vault()]
+		_floor_list = [_make_cellar(), _make_cistern(), _make_cloister(), _make_crypt(), _make_ossuary(), _make_reliquary(), _make_undercroft(), _make_wellhouse(), _make_scriptorium(), _make_binding(), _make_chartroom(), _make_bellloft(), _make_clockroom(), _make_font(), _make_apse(), _make_choir(), _make_rood(), _make_crossing(), _make_transept(), _make_ambulatory(), _make_chevet(), _make_retrochoir(), _make_ladychapel(), _make_feretory(), _make_chantry(), _make_sacristy(), _make_pyx(), _make_aumbry(), _make_piscina(), _make_sedilia(), _make_credence(), _make_reredos(), _make_predella(), _make_dossal(), _make_retable(), _make_tester(), _make_riddel(), _make_frontal(), _make_pall(), _make_herse(), _make_catafalque(), _make_bier(), _make_cerecloth(), _make_hearse(), _make_shroud(), _make_pyre(), _make_cenotaph(), _make_winding(), _make_charnel(), _make_sepulchre(), _make_vault(), _make_cairn()]
 	return _floor_list
 
 
@@ -3010,6 +3060,32 @@ static func _make_vault() -> Floor:
 	return floor
 
 
+
+static func _make_cairn() -> Floor:
+	var floor := Floor.new()
+	floor.id = "cairn"
+	floor.title = "The Cairn"
+	floor.rows = CAIRN_ROWS
+	floor.loop_name = "Cairn ring"
+	var ring: Array = []
+	for x in range(6, 22):
+		ring.append(Vector2i(x, 3))
+	for x in range(13, 10, -1):
+		ring.append(Vector2i(x, 10))
+	ring.append(Vector2i(11, 11))
+	ring.append(Vector2i(10, 11))
+	ring.append(Vector2i(9, 11))
+	ring.append(Vector2i(8, 11))
+	ring.append(Vector2i(7, 11))
+	ring.append(Vector2i(6, 11))
+	ring.append(Vector2i(6, 10))
+	for y in range(9, 3, -1):
+		ring.append(Vector2i(6, y))
+	floor.loop = ring
+	floor.record = CAIRN_RECORD
+	return floor
+
+
 static func width(floor: Floor = null) -> int:
 	return _use(floor).rows[0].length()
 
@@ -3483,6 +3559,8 @@ static func ahead_line(state: RunState) -> String:
 				return "Ahead: the sepulchre. It inks as a wall."
 			if glyph_at(n, plan) == "^":
 				return "Ahead: the vault. It inks as a wall."
+			if glyph_at(n, plan) == "/":
+				return "Ahead: the cairn. It inks as a wall."
 			return "Ahead: wall."
 		Tile.HAZARD:
 			if plan != null and plan.id == "cistern":
@@ -3585,6 +3663,8 @@ static func ahead_line(state: RunState) -> String:
 				return "Ahead: a sepulchre crack. Stepping inks it and costs no extra oil."
 			if plan != null and plan.id == "vault":
 				return "Ahead: a vault crack. Stepping inks it and costs no extra oil."
+			if plan != null and plan.id == "cairn":
+				return "Ahead: a cairn crack. Stepping inks it and costs no extra oil."
 			return "Ahead: a hazard crack. Stepping inks it and costs no extra oil."
 		Tile.LIFT:
 			return "Ahead: the lift. Stepping on carries the sheet out."
@@ -3758,6 +3838,8 @@ static func step(state: RunState, dir: Vector2i) -> Dictionary:
 				return _pack(state, false, false, false, 0, true, "You tap the sepulchre and ink it if the square was blank.")
 			if glyph_at(target, plan) == "^":
 				return _pack(state, false, false, false, 0, true, "You tap the vault and ink it if the square was blank.")
+			if glyph_at(target, plan) == "/":
+				return _pack(state, false, false, false, 0, true, "You tap the cairn and ink it if the square was blank.")
 			return _pack(state, false, false, false, 0, true, "You tap a wall and ink it if the square was blank.")
 		if target == enemy_pos(plan):
 			return _pack(state, false, false, false, 0, true, "The warden occupies that tile.")
@@ -3879,6 +3961,8 @@ static func step(state: RunState, dir: Vector2i) -> Dictionary:
 			message = "You cross a sepulchre crack. It is inked if the square was blank."
 		elif plan != null and plan.id == "vault":
 			message = "You cross a vault crack. It is inked if the square was blank."
+		elif plan != null and plan.id == "cairn":
+			message = "You cross a cairn crack. It is inked if the square was blank."
 		else:
 			message = "You cross a hazard crack. It is inked if the square was blank."
 	return _pack(state, true, true, hit, MOVE_OIL + (HIT_OIL if hit else 0), false, message)
