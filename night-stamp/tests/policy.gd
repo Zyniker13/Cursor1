@@ -3474,6 +3474,166 @@ static func _cheap(state, card_id: String, row: int, col: int) -> int:
 				yokeb_later_after_col -= 3
 			if yokeb_later_after_row <= 2 and state.form[yokeb_later_after_row][yokeb_later_after_col] == null:
 				guess -= _stamp_number(state, String(yokeb_later["card_id"]), yokeb_after_row, yokeb_after_col)
+	if rule == "drop_if_dent_count":
+		var dent_filled = 0
+		for dent_row in 3:
+			for dent_col in 3:
+				if state.form[dent_row][dent_col] != null:
+					dent_filled += 1
+		var dent_next = dent_filled + 1
+		if dent_next == 1 or dent_next == 4:
+			guess -= 4
+		elif dent_filled == 1 or dent_filled == 4:
+			guess += 5
+	if rule == "double_peg_fill":
+		var peg_before_row = row
+		var peg_before_col = col - 2
+		while peg_before_col < 0:
+			peg_before_row -= 1
+			peg_before_col += 3
+		var peg_after_row = row
+		var peg_after_col = col + 2
+		while peg_after_col > 2:
+			peg_after_row += 1
+			peg_after_col -= 3
+		var peg_before_filled = peg_before_row >= 0 and state.form[peg_before_row][peg_before_col] != null
+		var peg_after_filled = peg_after_row <= 2 and state.form[peg_after_row][peg_after_col] != null
+		if peg_before_filled and peg_after_filled:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+		if peg_before_filled:
+			var peg_earlier = state.form[peg_before_row][peg_before_col]
+			var peg_earlier_before_row = peg_before_row
+			var peg_earlier_before_col = peg_before_col - 2
+			while peg_earlier_before_col < 0:
+				peg_earlier_before_row -= 1
+				peg_earlier_before_col += 3
+			if peg_earlier_before_row >= 0 and state.form[peg_earlier_before_row][peg_earlier_before_col] != null:
+				guess += _stamp_number(state, String(peg_earlier["card_id"]), peg_before_row, peg_before_col)
+		if peg_after_filled:
+			var peg_later = state.form[peg_after_row][peg_after_col]
+			var peg_later_after_row = peg_after_row
+			var peg_later_after_col = peg_after_col + 2
+			while peg_later_after_col > 2:
+				peg_later_after_row += 1
+				peg_later_after_col -= 3
+			if peg_later_after_row <= 2 and state.form[peg_later_after_row][peg_later_after_col] != null:
+				guess += _stamp_number(state, String(peg_later["card_id"]), peg_after_row, peg_after_col)
+	if rule == "yield_bolt_pay":
+		var bolt_sides = 0
+		var bolt_corners = 0
+		for bolt_side in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var bolt_side_row = row + bolt_side.x
+			var bolt_side_col = col + bolt_side.y
+			if bolt_side_row < 0 or bolt_side_col < 0 or bolt_side_row > 2 or bolt_side_col > 2:
+				continue
+			if state.form[bolt_side_row][bolt_side_col] != null:
+				bolt_sides += 1
+		for bolt_corner in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var bolt_corner_row = row + bolt_corner.x
+			var bolt_corner_col = col + bolt_corner.y
+			if bolt_corner_row < 0 or bolt_corner_col < 0 or bolt_corner_row > 2 or bolt_corner_col > 2:
+				continue
+			if state.form[bolt_corner_row][bolt_corner_col] != null:
+				bolt_corners += 1
+		if bolt_sides == 3 and bolt_corners == 3:
+			guess += 4
+		else:
+			guess -= 1
+		for bolt_side in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			var bolt_near_row = row + bolt_side.x
+			var bolt_near_col = col + bolt_side.y
+			if bolt_near_row < 0 or bolt_near_col < 0 or bolt_near_row > 2 or bolt_near_col > 2:
+				continue
+			if state.form[bolt_near_row][bolt_near_col] == null:
+				continue
+			var bolt_other_sides = 0
+			var bolt_other_corners = 0
+			for bolt_other in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+				var bolt_other_row = bolt_near_row + bolt_other.x
+				var bolt_other_col = bolt_near_col + bolt_other.y
+				if bolt_other_row < 0 or bolt_other_col < 0 or bolt_other_row > 2 or bolt_other_col > 2:
+					continue
+				if bolt_other_row == row and bolt_other_col == col:
+					continue
+				if state.form[bolt_other_row][bolt_other_col] != null:
+					bolt_other_sides += 1
+			for bolt_other in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+				var bolt_other_row = bolt_near_row + bolt_other.x
+				var bolt_other_col = bolt_near_col + bolt_other.y
+				if bolt_other_row < 0 or bolt_other_col < 0 or bolt_other_row > 2 or bolt_other_col > 2:
+					continue
+				if state.form[bolt_other_row][bolt_other_col] != null:
+					bolt_other_corners += 1
+			if bolt_other_sides == 2 and bolt_other_corners == 3:
+				guess += 2
+			elif bolt_other_sides == 3 and bolt_other_corners == 3:
+				guess -= 2
+		for bolt_corner in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+			var bolt_diag_row = row + bolt_corner.x
+			var bolt_diag_col = col + bolt_corner.y
+			if bolt_diag_row < 0 or bolt_diag_col < 0 or bolt_diag_row > 2 or bolt_diag_col > 2:
+				continue
+			if state.form[bolt_diag_row][bolt_diag_col] == null:
+				continue
+			var bolt_diag_sides = 0
+			var bolt_diag_corners = 0
+			for bolt_other in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+				var bolt_other_row = bolt_diag_row + bolt_other.x
+				var bolt_other_col = bolt_diag_col + bolt_other.y
+				if bolt_other_row < 0 or bolt_other_col < 0 or bolt_other_row > 2 or bolt_other_col > 2:
+					continue
+				if state.form[bolt_other_row][bolt_other_col] != null:
+					bolt_diag_sides += 1
+			for bolt_other in [Vector2i(-1, -1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(1, 1)]:
+				var bolt_other_row = bolt_diag_row + bolt_other.x
+				var bolt_other_col = bolt_diag_col + bolt_other.y
+				if bolt_other_row < 0 or bolt_other_col < 0 or bolt_other_row > 2 or bolt_other_col > 2:
+					continue
+				if bolt_other_row == row and bolt_other_col == col:
+					continue
+				if state.form[bolt_other_row][bolt_other_col] != null:
+					bolt_diag_corners += 1
+			if bolt_diag_corners == 2 and bolt_diag_sides == 3:
+				guess += 2
+			elif bolt_diag_corners == 3 and bolt_diag_sides == 3:
+				guess -= 2
+	if rule == "double_peg_blank":
+		var pegb_before_row = row
+		var pegb_before_col = col - 2
+		while pegb_before_col < 0:
+			pegb_before_row -= 1
+			pegb_before_col += 3
+		var pegb_after_row = row
+		var pegb_after_col = col + 2
+		while pegb_after_col > 2:
+			pegb_after_row += 1
+			pegb_after_col -= 3
+		var pegb_before_empty = pegb_before_row >= 0 and state.form[pegb_before_row][pegb_before_col] == null
+		var pegb_after_empty = pegb_after_row <= 2 and state.form[pegb_after_row][pegb_after_col] == null
+		if pegb_before_empty and pegb_after_empty:
+			guess += _stamp_number(state, card_id, row, col)
+		else:
+			guess -= 4
+		if pegb_before_row >= 0 and state.form[pegb_before_row][pegb_before_col] != null:
+			var pegb_earlier = state.form[pegb_before_row][pegb_before_col]
+			var pegb_earlier_before_row = pegb_before_row
+			var pegb_earlier_before_col = pegb_before_col - 2
+			while pegb_earlier_before_col < 0:
+				pegb_earlier_before_row -= 1
+				pegb_earlier_before_col += 3
+			if pegb_earlier_before_row >= 0 and state.form[pegb_earlier_before_row][pegb_earlier_before_col] == null:
+				guess -= _stamp_number(state, String(pegb_earlier["card_id"]), pegb_before_row, pegb_before_col)
+		if pegb_after_row <= 2 and state.form[pegb_after_row][pegb_after_col] != null:
+			var pegb_later = state.form[pegb_after_row][pegb_after_col]
+			var pegb_later_after_row = pegb_after_row
+			var pegb_later_after_col = pegb_after_col + 2
+			while pegb_later_after_col > 2:
+				pegb_later_after_row += 1
+				pegb_later_after_col -= 3
+			if pegb_later_after_row <= 2 and state.form[pegb_later_after_row][pegb_later_after_col] == null:
+				guess -= _stamp_number(state, String(pegb_later["card_id"]), pegb_after_row, pegb_after_col)
 	if rule == "ignore_isolated":
 		var neighbors = 0
 		for delta in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
