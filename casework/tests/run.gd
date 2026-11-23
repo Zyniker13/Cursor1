@@ -43,6 +43,7 @@ const Chamfer = preload("res://scripts/chamfer.gd")
 const Scotia = preload("res://scripts/scotia.gd")
 const Cyma = preload("res://scripts/cyma.gd")
 const Cavetto = preload("res://scripts/cavetto.gd")
+const Reed = preload("res://scripts/reed.gd")
 const Catalog = preload("res://scripts/catalog.gd")
 const Solver = preload("res://scripts/solver.gd")
 const Verdict = preload("res://scripts/verdict.gd")
@@ -132,6 +133,8 @@ const CYMA_TIMELINE := "Ruth (cyma hand) cut the cyma in the bolection at 153, s
 const CYMA_TRUE := {"who": "Ruth", "place": "bolection", "hour": "153"}
 const CAVETTO_TIMELINE := "Seth (cavetto hand) cut the cavetto in the dentil at 158, seen from the bullnose, so the thumbnail would take the cavetto.\nIda (thumbnail hand) marked the thumbnail on the twibil at 157.\nVera (bullnose clerk) turned the bullnose in the dentil.\nThe staff was hung on the twibil.\nThe bullnose was scraped at 156.\nThe twibil was knurled at 159.\nThe dentil was hung at 160."
 const CAVETTO_TRUE := {"who": "Seth", "place": "dentil", "hour": "158"}
+const REED_TIMELINE := "Greta (reed hand) cut the reed in the ogee at 163, seen from the nosing, so the walnut would take the reed.\nNolan (walnut hand) marked the walnut on the rounder at 162.\nCelia (nosing clerk) turned the nosing in the ogee.\nThe maple was hung on the rounder.\nThe nosing was blued at 161.\nThe rounder was tempered at 164.\nThe ogee was hung at 165."
+const REED_TRUE := {"who": "Greta", "place": "ogee", "hour": "163"}
 
 var _failures: Array[String] = []
 var _checks := 0
@@ -397,6 +400,12 @@ func _initialize() -> void:
 	_test_cavetto_only_true_theory()
 	_test_cavetto_near_misses()
 	_test_cavetto_incomplete()
+	_test_reed_file_shape()
+	_test_reed_unique_model()
+	_test_reed_each_exhibit_necessary()
+	_test_reed_only_true_theory()
+	_test_reed_near_misses()
+	_test_reed_incomplete()
 	_test_solutions_differ()
 	_test_menu_opens_either_case()
 	print("menu interaction done")
@@ -13944,6 +13953,438 @@ func _test_cavetto_incomplete() -> void:
 			_expect(message.find(phrase) == -1, "cavetto incomplete used another file's slot (%s) in: %s" % [phrase, message])
 	print("cavetto incomplete submissions refused with the missing slot")
 
+func _test_reed_file_shape() -> void:
+	_expect(Reed.EXHIBITS.size() == 9, "reed exhibit count is %d" % Reed.EXHIBITS.size())
+	_expect(Reed.PEOPLE.size() == 3, "reed cast should be three people")
+	_expect(Reed.PLACES.size() == 3, "reed room count is %d" % Reed.PLACES.size())
+	_expect(Reed.HOURS.size() == 5, "reed hour list length is %d" % Reed.HOURS.size())
+	_expect(Reed.PEOPLE == ["Greta", "Nolan", "Celia"], "reed cast is %s" % str(Reed.PEOPLE))
+	_expect(Reed.PLACES == ["ogee", "nosing", "rounder"], "reed rooms are %s" % str(Reed.PLACES))
+	_expect(Reed.HOURS == ["161", "162", "163", "164", "165"], "reed hours are %s" % str(Reed.HOURS))
+	_expect(Reed.AIMS == ["take_walnut", "spare_walnut", "set_walnut"], "reed aims are %s" % str(Reed.AIMS))
+	_expect(Reed.aim_phrase("take_walnut") == "so the walnut would take the reed", "reed aim phrase")
+	_expect(Reed.aim_phrase("spare_walnut") == "to spare the walnut still waiting on the reed", "reed spare aim")
+	_expect(Reed.aim_phrase("set_walnut") == "to set the walnut before the ogee was hung", "reed set aim")
+	_expect(Reed.TITLE == "The reed", "reed title")
+	_expect(Reed.BLURB == "The reed left its peg at the joiner's weanling. Name who cut the reed, the room they cut it in, and the hour.", "reed blurb")
+	_expect(Reed.FILE_CODE == "CW-44", "reed file code")
+	_expect(Reed.fields() == ["taker", "place", "hour", "walnut", "walnut_room", "walnut_hour", "seen_from", "nosing", "aim", "nosing_room", "maple_room", "blue_hour", "temper_hour", "hang_hour"], "reed fields are %s" % str(Reed.fields()))
+	_expect(Reed.PLAYER_FIELDS == ["taker", "place", "hour"], "reed player fields")
+	_expect(Reed.HOURS[Reed.HOURS.size() / 2] == REED_TRUE["hour"], "reed cutting should be the middle hour")
+	_expect(Reed.HOURS[0] != REED_TRUE["hour"], "reed cutting should not be the earliest hour")
+	_expect(Reed.HOURS[Reed.HOURS.size() - 1] != REED_TRUE["hour"], "reed cutting should not be the latest hour")
+	var counts := _player_pin_counts(Reed)
+	_expect(int(counts["taker"]) == 3 and int(counts["place"]) == 3 and int(counts["hour"]) == 3, "reed pin counts are %s" % str(counts))
+	var loose_pin: Array = [
+		[CaseData, "spare key"],
+		[Rehearsal, "rehearsal score"],
+		[Gilt, "gilt stamp"],
+		[Ferry, "ferry bell"],
+		[Weather, "weather slate"],
+		[Loom, "loom shuttle"],
+		[Hive, "hive smoker"],
+		[Glass, "glass pontil"],
+		[Press, "press proof"],
+		[Assay, "assay cup"],
+	]
+	var rhythm: Array = [
+		[Kiln, "kiln chalk"],
+		[Tide, "tide ledger"],
+		[Night, "night bell"],
+		[Salt, "salt mark"],
+		[Wick, "wick trim"],
+		[Anneal, "glass anneal"],
+		[Graft, "orchard graft"],
+		[Dye, "dye vat"],
+		[Tar, "tar kettle"],
+		[Cork, "cork press"],
+		[Net, "net loft"],
+		[Cask, "cask hoop"],
+		[Linen, "linen fold"],
+		[Dovetail, "dovetail"],
+		[Mortise, "mortise"],
+		[Rebate, "rebate"],
+		[Housing, "housing"],
+		[Tenon, "tenon"],
+		[Bridle, "bridle"],
+		[Dado, "dado"],
+		[Spline, "spline"],
+		[Mitre, "mitre"],
+		[Lap, "lap"],
+		[Scarf, "scarf"],
+		[Finger, "finger"],
+		[Haunch, "haunch"],
+		[Dowel, "dowel"],
+		[Tongue, "tongue"],
+		[Quirk, "quirk"],
+		[Chamfer, "chamfer"],
+		[Scotia, "scotia"],
+		[Cyma, "cyma"],
+		[Cavetto, "cavetto"],
+	]
+	for row in loose_pin:
+		_expect(counts != _player_pin_counts(row[0]), "reed copied the %s pin pattern" % row[1])
+	for row in rhythm:
+		_expect(counts == _player_pin_counts(row[0]), "reed should keep the %s pin rhythm" % row[1])
+	var earlier: Array = []
+	earlier.append_array(loose_pin)
+	earlier.append_array(rhythm)
+	for row in earlier:
+		var book = row[0]
+		var name := str(row[1])
+		_expect(Reed.TITLE != book.TITLE, "reed shares a title with the %s" % name)
+		_expect(Reed.FILE_CODE != book.FILE_CODE, "reed shares a file code with the %s" % name)
+		_expect(_field_key(Reed) != _field_key(book), "reed copied the %s timeline fields" % name)
+	var seen := {}
+	var stated := {}
+	var paired_hidden := 0
+	var earlier_texts := {}
+	var earlier_sentences := {}
+	var earlier_titles := {}
+	for row in earlier:
+		for old_exhibit in row[0].EXHIBITS:
+			var old_text := str(old_exhibit["text"])
+			earlier_texts[old_text] = true
+			earlier_titles[str(old_exhibit["title"])] = true
+			for old_sentence in old_text.split(". "):
+				earlier_sentences[old_sentence.trim_suffix(".").strip_edges()] = true
+	var exhibit_titles: Array[String] = []
+	var exhibit_sources: Array[String] = []
+	for exhibit in Reed.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		exhibit_titles.append(str(exhibit["title"]))
+		exhibit_sources.append(str(exhibit["source"]))
+		_expect(not seen.has(exhibit_id), "duplicate reed id %s" % exhibit_id)
+		seen[exhibit_id] = true
+		_expect(str(exhibit["title"]) != "", "%s missing title" % exhibit_id)
+		_expect(not earlier_titles.has(str(exhibit["title"])), "%s reuses an earlier title %s" % [exhibit_id, exhibit["title"]])
+		_expect(str(exhibit["text"]).count(". ") == 1, "%s should be two short sentences" % exhibit_id)
+		_expect(not earlier_texts.has(str(exhibit["text"])), "reed copied an earlier exhibit")
+		for sentence in str(exhibit["text"]).split(". "):
+			var cleaned := sentence.trim_suffix(".").strip_edges()
+			_expect(not earlier_sentences.has(cleaned), "reed copied an earlier sentence: %s" % cleaned)
+		for banned in ["tarred", "rope", "kettle", "winch", "pitch", "loft", "strand", "hook", "walk", "dipped", "skein", "indigo", "pressed", "press", "cork", "bottle", "seal", "mallet", "screw", "cellar", "bench", "neck", "plug", "dye", "vat", "mesh", "shed", "rail", "crank", "needle", "mended", "twine", "house", "cooperage", "cask", "hoop", "croze", "stave", "driver", "yard", "shop", "linen", "fold", "shears", "roller", "hem", "sheet", "crease", "drawer", "dovetail", "vise", "stile", "apron", "saw", "clamp", "peg", "mortise", "chisel", "tenon", "awl", "wedge", "bored", "ragged", "racked", "rebate", "plane", "gauge", "shoulder", "shim", "tansy", "solt", "quern", "housing", "square", "bead", "trench", "fillet", "stock", "chalk", "ewan", "maren", "hollin", "gouge", "rasp", "bevel", "guide", "harl", "neve", "luth", "nick", "bridle", "router", "scraper", "adze", "spline", "templet", "strop", "notch", "wend", "sile", "jute", "dado", "cleat", "spur", "kern", "phel", "tarn", "shavings", "mouth", "iron", "senn", "voss", "cade", "slot", "feather", "whet", "orrin", "venn", "haim", "mitre", "arris", "offcut", "saddle", "dressed", "brushed", "nye", "yew", "pry", "lap", "grain", "brad", "plough", "float", "gimlet", "cradle", "crest", "horn", "scarf", "hob", "nairn", "cole", "shaving", "blade", "spokeshave", "firmer", "paring", "drawknife", "edge", "skimmed", "film", "sole", "tang", "mare", "finger", "clem", "gale", "boyd", "pad", "badger", "jack", "socket", "catch", "chip", "burr", "flake", "buffed", "sheen", "pony", "rubbed", "face", "haunch", "cheek", "smoother", "jointer", "fore", "sliver", "pin", "rhys", "mab", "lisle", "colt", "wiped", "mote", "toe", "mist", "bed", "dowel", "bore", "auger", "bit", "brace", "curl", "chuck", "flute", "faye", "kerr", "brynn", "foal", "waxed", "honed", "speck", "gloss", "wax", "point", "shay", "dell", "glen", "tongue", "groove", "kerf", "punch", "peel", "scribe", "knife", "fence", "tallow", "tallowed", "ground", "fleck", "filly", "coat", "cutting", "grind", "ross", "pia", "jude", "quirk", "scratch", "scratched", "scratching", "snib", "ovolo", "veiner", "astragal", "gelding", "grit", "bloom", "stoned", "oiled", "score", "bolt", "grease", "merrick", "enid", "petra", "chamfer", "chamfering", "block", "file", "cove", "travisher", "cant", "stallion", "soap", "soaped", "fettle", "fettled", "wisp", "rime", "haze", "tooth", "willa", "nils", "cora", "scotia", "scotiaing", "hollow", "riffler", "scorp", "torus", "fascia", "pumiced", "peened", "whiting", "crocus", "soot", "cusp", "yearling", "pumice", "ruth", "amos", "lena", "cyma", "cymaing", "bolection", "inshave", "froe", "echinus", "corona", "rouged", "chased", "emery", "tripoli", "garnet", "beak", "jennet", "rouge", "chase", "seth", "ida", "vera", "cavetto", "cavettoing", "dentil", "bullnose", "twibil", "thumbnail", "staff", "scraped", "knurled", "sand", "birch", "cedar", "drip", "palfrey", "scrape", "knurl"]:
+			_expect(str(exhibit["text"]).find(banned) == -1, "%s copies %s" % [exhibit_id, banned])
+		var states_player_pin := false
+		var states_unique := false
+		var player_literals := 0
+		var hidden_literals := 0
+		for literal in exhibit["literals"]:
+			stated[str(literal["value"])] = true
+			var phrase := str(literal["phrase"])
+			_expect(phrase != "" and str(exhibit["text"]).find(phrase) >= 0, "%s phrase missing from text: %s" % [exhibit_id, phrase])
+			var field := str(literal["field"])
+			if field in Reed.PLAYER_FIELDS:
+				states_player_pin = true
+				player_literals += 1
+				var expected := Reed.player_statement(field, str(literal["value"]))
+				_expect(phrase == expected, "%s player phrase drifted for %s" % [exhibit_id, field])
+				var repeats := 0
+				for other in Reed.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field and str(other_literal["value"]) == str(literal["value"]):
+							repeats += 1
+				_expect(repeats >= 2, "%s states %s once" % [exhibit_id, field])
+			else:
+				hidden_literals += 1
+				var owners := 0
+				for other in Reed.EXHIBITS:
+					for other_literal in other["literals"]:
+						if str(other_literal["field"]) == field:
+							owners += 1
+				if owners == 1:
+					states_unique = true
+		if hidden_literals == 2:
+			paired_hidden += 1
+		else:
+			_expect(hidden_literals == 1, "%s states %d hidden facts" % [exhibit_id, hidden_literals])
+		_expect(states_player_pin, "%s states no player pin" % exhibit_id)
+		_expect(player_literals == 1, "%s states %d player pins" % [exhibit_id, player_literals])
+		_expect(states_unique, "%s states no fact of its own" % exhibit_id)
+	_expect(paired_hidden == 2, "reed should have two slips with two hidden facts, found %d" % paired_hidden)
+	_expect(exhibit_titles == ["Walnut chit", "Deal sight", "Maple bill", "Larch slate", "Nosing card", "Blue slip", "Reed leaf", "Weanling note", "Temper order"], "reed exhibit titles are %s" % str(exhibit_titles))
+	_expect(exhibit_sources == ["Nolan, walnut hand", "Nosing deal", "Rounder nose", "Ogee larch", "Celia, nosing clerk", "Nosing tote", "Walnut book", "Joiner's weanling", "Rounder card"], "reed sources are %s" % str(exhibit_sources))
+	for hour in Reed.HOURS:
+		_expect(stated.has(hour), "reed hour %s is absent from the exhibits" % hour)
+
+
+func _test_reed_unique_model() -> void:
+	var models := Solver.enumerate(Reed.EXHIBITS, Reed)
+	print("reed models: %d" % models.size())
+	_expect(models.size() == 1, "expected exactly one reed model, found %d" % models.size())
+	if models.is_empty():
+		return
+	var model: Dictionary = models[0]
+	_expect(str(model["taker"]) == "Greta", "reed taker")
+	_expect(str(model["place"]) == "ogee", "reed place")
+	_expect(str(model["hour"]) == "163", "reed hour")
+	_expect(str(model["walnut"]) == "Nolan", "reed walnut hand")
+	_expect(str(model["walnut_room"]) == "rounder", "reed walnut room")
+	_expect(str(model["walnut_hour"]) == "162", "reed walnut hour")
+	_expect(str(model["seen_from"]) == "nosing", "reed seen from")
+	_expect(str(model["nosing"]) == "Celia", "reed nosing")
+	_expect(str(model["aim"]) == "take_walnut", "reed aim")
+	_expect(str(model["nosing_room"]) == "ogee", "reed nosing room")
+	_expect(str(model["maple_room"]) == "rounder", "reed maple room")
+	_expect(str(model["blue_hour"]) == "161", "reed blue hour")
+	_expect(str(model["temper_hour"]) == "164", "reed temper hour")
+	_expect(str(model["hang_hour"]) == "165", "reed hang hour")
+	for hour in Reed.HOURS:
+		var used := false
+		for field in Reed.fields():
+			if str(model[field]) == hour:
+				used = true
+		_expect(used, "reed hour %s is blank in the true timeline" % hour)
+	for place in Reed.PLACES:
+		var place_used := false
+		for field in Reed.fields():
+			if str(model[field]) == place:
+				place_used = true
+		_expect(place_used, "reed room %s is blank in the true timeline" % place)
+	for person in Reed.PEOPLE:
+		var person_used := false
+		for field in Reed.fields():
+			if str(model[field]) == person:
+				person_used = true
+		_expect(person_used, "reed person %s is blank in the true timeline" % person)
+	_expect(Reed.timeline(model) == REED_TIMELINE, "reed timeline drifted:\n%s" % Reed.timeline(model))
+	for exhibit in Reed.EXHIBITS:
+		_expect(Reed.holds(exhibit, model), "%s rejects the reed timeline" % exhibit["id"])
+
+
+func _test_reed_each_exhibit_necessary() -> void:
+	var full := Solver.enumerate(Reed.EXHIBITS, Reed)
+	for exhibit in Reed.EXHIBITS:
+		var exhibit_id := str(exhibit["id"])
+		var reduced := Solver.enumerate(Reed.without(exhibit_id), Reed)
+		print("reed without %s: %d models" % [exhibit_id, reduced.size()])
+		_expect(reduced.size() > full.size(), "reed %s is not necessary (%d models)" % [exhibit_id, reduced.size()])
+		var opened := false
+		for model in reduced:
+			if not Reed.holds(exhibit, model):
+				opened = true
+				break
+		_expect(opened, "reed %s removal did not admit a timeline it forbids" % exhibit_id)
+
+
+func _test_reed_only_true_theory() -> void:
+	var accepted := 0
+	var rejected := 0
+	var nosing_miss := {"who": "Nolan", "place": "nosing", "hour": "161"}
+	_expect(Reed.conflicting_ids(nosing_miss).size() == 9, "Nolan / nosing / 161 contradicts %d exhibits" % Reed.conflicting_ids(nosing_miss).size())
+	for who in Reed.PEOPLE:
+		for place in Reed.PLACES:
+			for hour in Reed.HOURS:
+				var theory := {"who": who, "place": place, "hour": hour}
+				if who == REED_TRUE["who"] and place == REED_TRUE["place"] and hour == REED_TRUE["hour"]:
+					var result: Dictionary = Verdict.submit(theory, Reed)
+					print("reed true theory: %s" % result["status"])
+					_expect(result["status"] == "accepted", "true reed theory status %s" % result["status"])
+					_expect(str(result["message"]).find("fits every exhibit") >= 0, "reed acceptance should say it fits every exhibit")
+					_expect(str(result["message"]).find(REED_TIMELINE) >= 0, "reed acceptance should give the timeline")
+					_expect(str(result["message"]).find("Greta") >= 0, "reed acceptance omits Greta")
+					_expect(str(result["message"]).find("ogee") >= 0, "reed acceptance omits the ogee")
+					_expect(str(result["message"]).find("163") >= 0, "reed acceptance omits 163")
+					_expect(str(result["message"]).find("so the walnut would take the reed") >= 0, "reed acceptance omits the walnut")
+					_expect(str(result["message"]).find("Greta (reed hand) cut the reed in the ogee at 163") >= 0, "reed acceptance omits the reeding")
+					_expect(Reed.conflicting_ids(theory).is_empty(), "true reed theory conflicts with an exhibit")
+					accepted += 1
+				else:
+					_expect_rejected(theory, Reed)
+					_expect(Reed.conflicting_ids(theory).size() >= 2, "%s / %s / %s contradicts fewer than two exhibits" % [who, place, hour])
+					rejected += 1
+	for outsider in ["Seth", "Ida", "Vera", "Ruth", "Amos", "Lena", "Willa", "Nils", "Cora", "Merrick", "Enid", "Petra", "Ross", "Pia", "Jude", "Shay", "Dell", "Glen", "Faye", "Kerr", "Brynn", "Rhys", "Mab", "Lisle", "Clem", "Gale", "Boyd", "Hob", "Nairn", "Cole", "Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal", "Nell"]:
+		_expect_rejected({"who": outsider, "place": "ogee", "hour": "163"}, Reed)
+	print("reed theories accepted: %d rejected: %d" % [accepted, rejected])
+	_expect(accepted == 1, "accepted %d reed theories" % accepted)
+	_expect(rejected >= 2, "rejected %d reed theories" % rejected)
+
+
+func _test_reed_near_misses() -> void:
+	var misses := [
+		{"who": "Greta", "place": "ogee", "hour": "164", "titles": ["Reed leaf", "Weanling note", "Temper order"]},
+		{"who": "Greta", "place": "ogee", "hour": "162", "titles": ["Reed leaf", "Weanling note", "Temper order"]},
+		{"who": "Greta", "place": "nosing", "hour": "163", "titles": ["Larch slate", "Nosing card", "Blue slip"]},
+		{"who": "Nolan", "place": "ogee", "hour": "163", "titles": ["Walnut chit", "Deal sight", "Maple bill"]},
+	]
+	var wrong_hour_in_bit := 0
+	var wrong_place_at_hour := 0
+	var wrong_person_in_bit := 0
+	for theory in misses:
+		_expect_rejected(theory, Reed)
+		var result: Dictionary = Verdict.submit(theory, Reed)
+		var message := str(result["message"])
+		_expect(Reed.conflicting_ids(theory).size() >= 2, "near-miss should contradict at least two exhibits: %s" % message)
+		_expect(Reed.conflicting_ids(theory).size() == 3, "near-miss should name three exhibits: %s" % message)
+		var named_at := -1
+		for title in theory["titles"]:
+			var at := message.find(str(title))
+			_expect(at >= 0, "near-miss omits %s: %s" % [title, message])
+			_expect(at > named_at, "near-miss names %s out of paper order: %s" % [title, message])
+			named_at = at
+		if str(theory["who"]) == "Greta" and str(theory["place"]) == "ogee" and str(theory["hour"]) != "163":
+			wrong_hour_in_bit += 1
+		if str(theory["who"]) == "Greta" and str(theory["place"]) != "ogee" and str(theory["hour"]) == "163":
+			wrong_place_at_hour += 1
+		if str(theory["who"]) != "Greta" and str(theory["place"]) == "ogee" and str(theory["hour"]) == "163":
+			wrong_person_in_bit += 1
+	print("reed near-misses rejected: %d" % misses.size())
+	_expect(misses.size() == 4, "need four reed near-misses, found %d" % misses.size())
+	_expect(wrong_hour_in_bit == 2, "two near-misses should keep Greta in the ogee at another hour")
+	_expect(wrong_place_at_hour >= 1, "a near-miss should keep Greta at 163 in another room")
+	_expect(wrong_person_in_bit >= 1, "a near-miss should keep the ogee at 163 for another person")
+
+func _test_reed_incomplete() -> void:
+	var other_slots := [
+		"who took the spare key",
+		"where they took the key",
+		"at which hour they took the key",
+		"who took the rehearsal score",
+		"where they took the score",
+		"at which hour they took the score",
+		"who took the gilt stamp",
+		"where they took the stamp",
+		"at which hour they took the stamp",
+		"who took the ferry bell",
+		"where they took the bell",
+		"at which hour they took the bell",
+		"who took the weather slate",
+		"where they took the slate",
+		"at which hour they took the slate",
+		"who took the loom shuttle",
+		"where they took the shuttle",
+		"at which hour they took the shuttle",
+		"who took the hive smoker",
+		"where they took the smoker",
+		"at which hour they took the smoker",
+		"who took the glass pontil",
+		"where they took the pontil",
+		"at which hour they took the pontil",
+		"who took the press proof",
+		"where they took the proof",
+		"at which hour they took the proof",
+		"who set the assay cup",
+		"where they set the cup",
+		"at which hour they set the cup",
+		"who chalked the kiln mark",
+		"where they chalked the mark",
+		"at which hour they chalked the mark",
+		"who entered the tide ledger",
+		"where they entered the ledger",
+		"at which hour they entered the ledger",
+		"who stopped the night bell",
+		"where they stopped the bell",
+		"at which hour they stopped the bell",
+		"who scored the salt mark",
+		"where they scored the mark",
+		"at which hour they scored the mark",
+		"who trimmed the wick",
+		"where they trimmed the wick",
+		"at which hour they trimmed the wick",
+		"who annealed the gather",
+		"where they annealed the gather",
+		"at which hour they annealed the gather",
+		"who grafted the scion",
+		"where they grafted the scion",
+		"at which hour they grafted the scion",
+		"who dipped the skein",
+		"where they dipped the skein",
+		"at which hour they dipped the skein",
+		"who tarred the rope",
+		"where they tarred the rope",
+		"at which hour they tarred the rope",
+		"who pressed the cork",
+		"where they pressed the cork",
+		"at which hour they pressed the cork",
+		"who mended the net",
+		"where they mended the net",
+		"at which hour they mended the net",
+		"who drove the hoop",
+		"where they drove the hoop",
+		"at which hour they drove the hoop",
+		"who folded the linen",
+		"where they folded the linen",
+		"at which hour they folded the linen",
+		"who cut the dovetail",
+		"where they cut the dovetail",
+		"at which hour they cut the dovetail",
+		"who cut the mortise",
+		"where they cut the mortise",
+		"at which hour they cut the mortise",
+		"who cut the rebate",
+		"where they cut the rebate",
+		"at which hour they cut the rebate",
+		"who cut the housing",
+		"where they cut the housing",
+		"at which hour they cut the housing",
+		"who cut the tenon",
+		"where they cut the tenon",
+		"at which hour they cut the tenon",
+		"who cut the bridle",
+		"where they cut the bridle",
+		"at which hour they cut the bridle",
+		"who cut the dado",
+		"where they cut the dado",
+		"at which hour they cut the dado",
+		"who cut the spline",
+		"where they cut the spline",
+		"at which hour they cut the spline",
+		"who cut the mitre",
+		"where they cut the mitre",
+		"at which hour they cut the mitre",
+		"who cut the lap",
+		"where they cut the lap",
+		"at which hour they cut the lap",
+		"who cut the scarf",
+		"where they cut the scarf",
+		"at which hour they cut the scarf",
+		"who cut the finger",
+		"where they cut the finger",
+		"at which hour they cut the finger",
+		"who cut the haunch",
+		"where they cut the haunch",
+		"at which hour they cut the haunch",
+		"who cut the dowel",
+		"where they cut the dowel",
+		"at which hour they cut the dowel",
+		"who cut the tongue",
+		"where they cut the tongue",
+		"at which hour they cut the tongue",
+		"who scratched the quirk",
+		"where they scratched the quirk",
+		"at which hour they scratched the quirk",
+		"who cut the chamfer",
+		"where they cut the chamfer",
+		"at which hour they cut the chamfer",
+		"who cut the scotia",
+		"where they cut the scotia",
+		"at which hour they cut the scotia",
+	]
+
+	var cases := [
+		{"theory": {"who": "", "place": "ogee", "hour": "163"}, "present": ["who cut the reed"], "absent": ["where they cut the reed", "at which hour they cut the reed"]},
+		{"theory": {"who": "Greta", "place": "", "hour": "163"}, "present": ["where they cut the reed"], "absent": ["who cut the reed", "at which hour they cut the reed"]},
+		{"theory": {"who": "Greta", "place": "ogee", "hour": ""}, "present": ["at which hour they cut the reed"], "absent": ["who cut the reed", "where they cut the reed"]},
+		{"theory": {"who": "", "place": "", "hour": ""}, "present": ["who cut the reed", "where they cut the reed", "at which hour they cut the reed"], "absent": []},
+		{"theory": {}, "present": ["who cut the reed", "where they cut the reed", "at which hour they cut the reed"], "absent": []},
+		{"theory": {"who": "Celia", "place": "", "hour": "165"}, "present": ["where they cut the reed"], "absent": ["who cut the reed", "at which hour they cut the reed"]},
+	]
+	for case_row in cases:
+		var result: Dictionary = Verdict.submit(case_row["theory"], Reed)
+		var message := str(result["message"])
+		_expect(result["status"] == "incomplete", "reed incomplete status was %s (%s)" % [result["status"], message])
+		_expect(result["status"] != "rejected", "reed incomplete was called rejected")
+		_expect(message.to_lower().find("wrong") == -1, "reed incomplete message says wrong: %s" % message)
+		_expect(message.to_lower().find("conflict") == -1, "reed incomplete message talks about a conflict: %s" % message)
+		_expect(_cited_ids(message).is_empty(), "reed incomplete message cites exhibits: %s" % message)
+		for phrase in case_row["present"]:
+			_expect(message.find(phrase) >= 0, "reed missing slot not named (%s) in: %s" % [phrase, message])
+		for phrase in case_row["absent"]:
+			_expect(message.find(phrase) == -1, "reed named a filled slot (%s) in: %s" % [phrase, message])
+		for phrase in other_slots:
+			_expect(message.find(phrase) == -1, "reed incomplete used another file's slot (%s) in: %s" % [phrase, message])
+	print("reed incomplete submissions refused with the missing slot")
+
 func _test_solutions_differ() -> void:
 	var spare := {"who": "Nell", "place": "kitchen", "hour": "7"}
 	_expect(spare["who"] != REHEARSAL_TRUE["who"], "rehearsal copied the spare-key taker")
@@ -18439,7 +18880,252 @@ func _test_solutions_differ() -> void:
 	_expect(not Cavetto.HOURS.has("154"), "cavetto hours must not take 154")
 	_expect(not Cavetto.HOURS.has("155"), "cavetto hours must not take 155")
 
-	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal", "The orchard graft", "The dye vat", "The tar kettle", "The cork press", "The net loft", "The cask hoop", "The linen fold", "The dovetail", "The mortise", "The rebate", "The housing", "The tenon", "The bridle", "The dado", "The spline", "The mitre", "The lap", "The scarf", "The finger", "The haunch", "The dowel", "The tongue", "The quirk", "The chamfer", "The scotia", "The cyma", "The cavetto"], "case list is %s" % str(titles))
+	_expect(REED_TRUE["who"] == "Greta", "reed taker")
+	_expect(REED_TRUE["place"] == "ogee", "reed room")
+	_expect(REED_TRUE["hour"] == "163", "reed hour")
+	for forbidden in ["Seth", "Ida", "Vera", "Ruth", "Amos", "Lena", "Willa", "Nils", "Cora", "Merrick", "Enid", "Petra", "Ross", "Pia", "Jude", "Shay", "Dell", "Glen", "Faye", "Kerr", "Brynn", "Lisle", "Mab", "Rhys", "Clem", "Gale", "Boyd", "Hob", "Nairn", "Cole", "Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(REED_TRUE["who"] != forbidden, "reed accepted %s" % forbidden)
+	for forbidden_place in ["dentil", "bullnose", "twibil", "bolection", "inshave", "froe", "hollow", "riffler", "scorp", "block", "file", "travisher", "scratch", "snib", "veiner", "knife", "punch", "scribe", "bit", "auger", "brace", "jointer", "smoother", "fore", "pad", "badger", "jack", "drawknife", "spokeshave", "firmer", "plough", "float", "gimlet", "router", "scraper", "adze", "gouge", "rasp", "bevel", "saw", "square", "bead", "plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(REED_TRUE["place"] != forbidden_place, "reed accepted the %s" % forbidden_place)
+	_expect(REED_TRUE["place"] != "punch", "reed accepted the punch")
+	_expect(REED_TRUE["place"] != "scribe", "reed accepted the scribe")
+	_expect(REED_TRUE["place"] != "snib", "reed accepted the snib")
+	_expect(REED_TRUE["place"] != "veiner", "reed accepted the veiner")
+	_expect(REED_TRUE["place"] != "file", "reed accepted the file")
+	_expect(REED_TRUE["place"] != "travisher", "reed accepted the travisher")
+	_expect(REED_TRUE["place"] != "block", "reed accepted the block")
+	_expect(REED_TRUE["place"] != "riffler", "reed accepted the riffler")
+	_expect(REED_TRUE["place"] != "scorp", "reed accepted the scorp")
+	_expect(REED_TRUE["place"] != "hollow", "reed accepted the hollow")
+	_expect(REED_TRUE["place"] != "nosing", "reed accepted the nosing")
+	_expect(REED_TRUE["place"] != "rounder", "reed accepted the rounder")
+	_expect(REED_TRUE["place"] != "dentil", "reed accepted the dentil")
+	_expect(REED_TRUE["place"] != "bullnose", "reed accepted the bullnose")
+	_expect(REED_TRUE["place"] != "twibil", "reed accepted the twibil")
+	_expect(REED_TRUE["place"] != "bolection", "reed accepted the bolection")
+	_expect(REED_TRUE["place"] != "inshave", "reed accepted the inshave")
+	_expect(REED_TRUE["place"] != "froe", "reed accepted the froe")
+	_expect(REED_TRUE["hour"] != "111", "reed accepted 111")
+	_expect(REED_TRUE["hour"] != "112", "reed accepted 112")
+	_expect(REED_TRUE["hour"] != "114", "reed accepted 114")
+	_expect(REED_TRUE["hour"] != "115", "reed accepted 115")
+	_expect(REED_TRUE["hour"] != "106", "reed accepted 106")
+	_expect(REED_TRUE["hour"] != "107", "reed accepted 107")
+	_expect(REED_TRUE["hour"] != "108", "reed accepted 108")
+	_expect(REED_TRUE["hour"] != "109", "reed accepted 109")
+	_expect(REED_TRUE["hour"] != "110", "reed accepted 110")
+	_expect(REED_TRUE["hour"] != "101", "reed accepted 101")
+	_expect(REED_TRUE["hour"] != "102", "reed accepted 102")
+	_expect(REED_TRUE["hour"] != "103", "reed accepted 103")
+	_expect(REED_TRUE["hour"] != "104", "reed accepted 104")
+	_expect(REED_TRUE["hour"] != "105", "reed accepted 105")
+	_expect(REED_TRUE["hour"] != "96", "reed accepted 96")
+	_expect(REED_TRUE["hour"] != "97", "reed accepted 97")
+	_expect(REED_TRUE["hour"] != "98", "reed accepted 98")
+	_expect(REED_TRUE["hour"] != "99", "reed accepted 99")
+	_expect(REED_TRUE["hour"] != "100", "reed accepted 100")
+	_expect(REED_TRUE["hour"] != "91", "reed accepted 91")
+	_expect(REED_TRUE["hour"] != "92", "reed accepted 92")
+	_expect(REED_TRUE["hour"] != "93", "reed accepted 93")
+	_expect(REED_TRUE["hour"] != "94", "reed accepted 94")
+	_expect(REED_TRUE["hour"] != "95", "reed accepted 95")
+	_expect(REED_TRUE["hour"] != "88", "reed accepted 88")
+	_expect(REED_TRUE["hour"] != "83", "reed accepted 83")
+	_expect(REED_TRUE["hour"] != "78", "reed accepted 78")
+	_expect(REED_TRUE["hour"] != "73", "reed accepted 73")
+	_expect(REED_TRUE["hour"] != "68", "reed accepted 68")
+	_expect(REED_TRUE["hour"] != "63", "reed accepted 63")
+	_expect(REED_TRUE["hour"] != "8", "reed accepted 8")
+	_expect(REED_TRUE["hour"] != "6", "reed accepted 6")
+	_expect(REED_TRUE["hour"] != "3", "reed accepted 3")
+	_expect(REED_TRUE["hour"] != "16", "reed accepted 16")
+	_expect(REED_TRUE["hour"] != "19", "reed accepted 19")
+	_expect(REED_TRUE["hour"] != "113", "reed accepted 113")
+	_expect(REED_TRUE["hour"] != "121", "reed accepted 121")
+	_expect(REED_TRUE["hour"] != "122", "reed accepted 122")
+	_expect(REED_TRUE["hour"] != "124", "reed accepted 124")
+	_expect(REED_TRUE["hour"] != "125", "reed accepted 125")
+	_expect(REED_TRUE["hour"] != "116", "reed accepted 116")
+	_expect(REED_TRUE["hour"] != "117", "reed accepted 117")
+	_expect(REED_TRUE["hour"] != "118", "reed accepted 118")
+	_expect(REED_TRUE["hour"] != "119", "reed accepted 119")
+	_expect(REED_TRUE["hour"] != "120", "reed accepted 120")
+	_expect(REED_TRUE["hour"] != "123", "reed accepted 123")
+	_expect(REED_TRUE["hour"] != "126", "reed accepted 126")
+	_expect(REED_TRUE["hour"] != "127", "reed accepted 127")
+	_expect(REED_TRUE["hour"] != "129", "reed accepted 129")
+	_expect(REED_TRUE["hour"] != "130", "reed accepted 130")
+	_expect(REED_TRUE["hour"] != "128", "reed accepted 128")
+	_expect(REED_TRUE["hour"] != "131", "reed accepted 131")
+	_expect(REED_TRUE["hour"] != "132", "reed accepted 132")
+	_expect(REED_TRUE["hour"] != "134", "reed accepted 134")
+	_expect(REED_TRUE["hour"] != "135", "reed accepted 135")
+	_expect(REED_TRUE["hour"] != "133", "reed accepted 133")
+	_expect(REED_TRUE["hour"] != "136", "reed accepted 136")
+	_expect(REED_TRUE["hour"] != "137", "reed accepted 137")
+	_expect(REED_TRUE["hour"] != "139", "reed accepted 139")
+	_expect(REED_TRUE["hour"] != "140", "reed accepted 140")
+	_expect(REED_TRUE["hour"] != "138", "reed accepted 138")
+	_expect(REED_TRUE["hour"] != "141", "reed accepted 141")
+	_expect(REED_TRUE["hour"] != "142", "reed accepted 142")
+	_expect(REED_TRUE["hour"] != "144", "reed accepted 144")
+	_expect(REED_TRUE["hour"] != "145", "reed accepted 145")
+	_expect(REED_TRUE["hour"] != "143", "reed accepted 143")
+	_expect(REED_TRUE["hour"] != "146", "reed accepted 146")
+	_expect(REED_TRUE["hour"] != "147", "reed accepted 147")
+	_expect(REED_TRUE["hour"] != "149", "reed accepted 149")
+	_expect(REED_TRUE["hour"] != "150", "reed accepted 150")
+	_expect(REED_TRUE["hour"] != "148", "reed accepted 148")
+	_expect(REED_TRUE["hour"] != "161", "reed accepted 161")
+	_expect(REED_TRUE["hour"] != "162", "reed accepted 162")
+	_expect(REED_TRUE["hour"] != "164", "reed accepted 164")
+	_expect(REED_TRUE["hour"] != "165", "reed accepted 165")
+	_expect(REED_TRUE["hour"] != "158", "reed accepted 158")
+	_expect(REED_TRUE["hour"] != "153", "reed accepted 153")
+	var before_reed: Array = before_cavetto.duplicate()
+	before_reed.append([Cavetto, CAVETTO_TRUE, "cavetto"])
+	for row in before_reed:
+		var book = row[0]
+		var truth: Dictionary = row[1]
+		var name := str(row[2])
+		_expect(REED_TRUE["who"] != truth["who"], "reed copied the %s taker" % name)
+		_expect(REED_TRUE["place"] != truth["place"], "reed copied the %s room" % name)
+		_expect(REED_TRUE["hour"] != str(truth["hour"]), "reed copied the %s hour" % name)
+		_expect_rejected(REED_TRUE, book)
+		_expect_rejected(truth, Reed)
+	_expect(CAVETTO_TRUE["who"] == "Seth" and CAVETTO_TRUE["place"] == "dentil" and CAVETTO_TRUE["hour"] == "158", "the cavetto should still accept Seth in the dentil at 158")
+	_expect(CYMA_TRUE["who"] == "Ruth" and CYMA_TRUE["place"] == "bolection" and CYMA_TRUE["hour"] == "153", "the cyma should still accept Ruth in the bolection at 153")
+	_expect(SCOTIA_TRUE["who"] == "Willa" and SCOTIA_TRUE["place"] == "hollow" and SCOTIA_TRUE["hour"] == "148", "the scotia should still accept Willa in the hollow at 148")
+	_expect(CHAMFER_TRUE["who"] == "Merrick" and CHAMFER_TRUE["place"] == "block" and CHAMFER_TRUE["hour"] == "143", "the chamfer should still accept Merrick in the block at 143")
+	_expect(QUIRK_TRUE["who"] == "Ross" and QUIRK_TRUE["place"] == "scratch" and QUIRK_TRUE["hour"] == "138", "the quirk should still accept Ross in the scratch at 138")
+	_expect(DOWEL_TRUE["who"] == "Faye" and DOWEL_TRUE["place"] == "bit" and DOWEL_TRUE["hour"] == "128", "the dowel should still accept Faye in the bit at 128")
+	_expect(TONGUE_TRUE["who"] == "Shay" and TONGUE_TRUE["place"] == "knife" and TONGUE_TRUE["hour"] == "133", "the tongue should still accept Shay in the knife at 133")
+	_expect(HAUNCH_TRUE["who"] == "Rhys" and HAUNCH_TRUE["place"] == "fore" and HAUNCH_TRUE["hour"] == "123", "the haunch should still accept Rhys in the fore at 123")
+	_expect(FINGER_TRUE["who"] == "Clem" and FINGER_TRUE["place"] == "pad" and FINGER_TRUE["hour"] == "118", "the finger should still accept Clem in the pad at 118")
+	for row in before_reed:
+		var book = row[0]
+		var name := str(row[2])
+		for person in Reed.PEOPLE:
+			_expect(not book.PEOPLE.has(person), "reed cast repeats %s from the %s" % [person, name])
+		for place in Reed.PLACES:
+			_expect(not book.PLACES.has(place), "reed rooms repeat %s from the %s" % [place, name])
+		for hour in Reed.HOURS:
+			_expect(not book.HOURS.has(hour), "reed hours repeat %s from the %s" % [hour, name])
+	for forbidden_person in ["Seth", "Ida", "Vera", "Ruth", "Amos", "Lena", "Willa", "Nils", "Cora", "Merrick", "Enid", "Petra", "Ross", "Pia", "Jude", "Shay", "Dell", "Glen", "Faye", "Kerr", "Brynn", "Lisle", "Mab", "Rhys", "Clem", "Gale", "Boyd", "Hob", "Nairn", "Cole", "Nye", "Yew", "Pry", "Orrin", "Venn", "Haim", "Senn", "Voss", "Cade", "Kern", "Phel", "Tarn", "Quill", "Wend", "Sile", "Jute", "Harl", "Neve", "Luth", "Ewan", "Maren", "Hollin", "Tansy", "Solt", "Quern", "Arlo", "Keel", "Weske", "Doss", "Yarrow", "Peck", "Vetch", "Odell", "Brigg", "Maeve", "Jory", "Perrin", "Hester", "Gwyn", "Idris", "Brea", "Ansel", "Colm", "Rho", "Lumen", "Kit", "Sera", "Pim", "Joss", "Calder", "Ness", "Edda", "Tess", "Ivo", "Wynn", "Quin", "Mara", "Sable", "Holt", "Lin", "Opal"]:
+		_expect(not Reed.PEOPLE.has(forbidden_person), "reed cast must not take %s" % forbidden_person)
+	_expect(Reed.role_phrase("Greta") == "the reed hand", "the reed should call Greta the reed hand")
+	_expect(Reed.role_phrase("Nolan") == "the walnut hand", "the reed should call Nolan the walnut hand")
+	_expect(Reed.role_phrase("Celia") == "the nosing clerk", "the reed should call Celia the nosing clerk")
+	for forbidden_place in ["dentil", "bullnose", "twibil", "bolection", "inshave", "froe", "hollow", "riffler", "scorp", "block", "file", "travisher", "scratch", "snib", "veiner", "knife", "punch", "scribe", "bit", "auger", "brace", "jointer", "smoother", "fore", "drawknife", "spokeshave", "firmer", "plough", "float", "gimlet", "router", "scraper", "adze", "gouge", "rasp", "bevel", "saw", "square", "bead", "plane", "gauge", "mallet", "chisel", "last", "awl", "vise", "stile", "apron", "press", "loft", "bench", "shop", "yard", "cellar", "shed", "rail", "kettle", "walk", "vat", "line", "nursery", "row", "gate", "lehr", "marver", "pot", "gallery", "stair", "pan", "cistern", "rake_bay"]:
+		_expect(not Reed.PLACES.has(forbidden_place), "reed rooms must not take the %s" % forbidden_place)
+	_expect(not Reed.HOURS.has("6"), "reed hours must not take 6")
+	_expect(not Reed.HOURS.has("7"), "reed hours must not take 7")
+	_expect(not Reed.HOURS.has("8"), "reed hours must not take 8")
+	_expect(not Reed.HOURS.has("9"), "reed hours must not take 9")
+	_expect(not Reed.HOURS.has("10"), "reed hours must not take 10")
+	_expect(not Reed.HOURS.has("60"), "reed hours must not take 60")
+	_expect(not Reed.HOURS.has("61"), "reed hours must not take 61")
+	_expect(not Reed.HOURS.has("62"), "reed hours must not take 62")
+	_expect(not Reed.HOURS.has("63"), "reed hours must not take 63")
+	_expect(not Reed.HOURS.has("64"), "reed hours must not take 64")
+	_expect(not Reed.HOURS.has("65"), "reed hours must not take 65")
+	_expect(not Reed.HOURS.has("66"), "reed hours must not take 66")
+	_expect(not Reed.HOURS.has("67"), "reed hours must not take 67")
+	_expect(not Reed.HOURS.has("68"), "reed hours must not take 68")
+	_expect(not Reed.HOURS.has("69"), "reed hours must not take 69")
+	_expect(not Reed.HOURS.has("70"), "reed hours must not take 70")
+	_expect(not Reed.HOURS.has("71"), "reed hours must not take 71")
+	_expect(not Reed.HOURS.has("72"), "reed hours must not take 72")
+	_expect(not Reed.HOURS.has("73"), "reed hours must not take 73")
+	_expect(not Reed.HOURS.has("74"), "reed hours must not take 74")
+	_expect(not Reed.HOURS.has("75"), "reed hours must not take 75")
+	_expect(not Reed.HOURS.has("76"), "reed hours must not take 76")
+	_expect(not Reed.HOURS.has("77"), "reed hours must not take 77")
+	_expect(not Reed.HOURS.has("78"), "reed hours must not take 78")
+	_expect(not Reed.HOURS.has("79"), "reed hours must not take 79")
+	_expect(not Reed.HOURS.has("80"), "reed hours must not take 80")
+	_expect(not Reed.HOURS.has("81"), "reed hours must not take 81")
+	_expect(not Reed.HOURS.has("82"), "reed hours must not take 82")
+	_expect(not Reed.HOURS.has("83"), "reed hours must not take 83")
+	_expect(not Reed.HOURS.has("84"), "reed hours must not take 84")
+	_expect(not Reed.HOURS.has("85"), "reed hours must not take 85")
+	_expect(not Reed.HOURS.has("86"), "reed hours must not take 86")
+	_expect(not Reed.HOURS.has("87"), "reed hours must not take 87")
+	_expect(not Reed.HOURS.has("88"), "reed hours must not take 88")
+	_expect(not Reed.HOURS.has("89"), "reed hours must not take 89")
+	_expect(not Reed.HOURS.has("90"), "reed hours must not take 90")
+	_expect(not Reed.HOURS.has("91"), "reed hours must not take 91")
+	_expect(not Reed.HOURS.has("92"), "reed hours must not take 92")
+	_expect(not Reed.HOURS.has("93"), "reed hours must not take 93")
+	_expect(not Reed.HOURS.has("94"), "reed hours must not take 94")
+	_expect(not Reed.HOURS.has("95"), "reed hours must not take 95")
+	_expect(not Reed.HOURS.has("96"), "reed hours must not take 96")
+	_expect(not Reed.HOURS.has("97"), "reed hours must not take 97")
+	_expect(not Reed.HOURS.has("98"), "reed hours must not take 98")
+	_expect(not Reed.HOURS.has("99"), "reed hours must not take 99")
+	_expect(not Reed.HOURS.has("100"), "reed hours must not take 100")
+	_expect(not Reed.HOURS.has("101"), "reed hours must not take 101")
+	_expect(not Reed.HOURS.has("102"), "reed hours must not take 102")
+	_expect(not Reed.HOURS.has("103"), "reed hours must not take 103")
+	_expect(not Reed.HOURS.has("104"), "reed hours must not take 104")
+	_expect(not Reed.HOURS.has("105"), "reed hours must not take 105")
+	_expect(not Reed.HOURS.has("106"), "reed hours must not take 106")
+	_expect(not Reed.HOURS.has("107"), "reed hours must not take 107")
+	_expect(not Reed.HOURS.has("108"), "reed hours must not take 108")
+	_expect(not Reed.HOURS.has("109"), "reed hours must not take 109")
+	_expect(not Reed.HOURS.has("110"), "reed hours must not take 110")
+	_expect(not Reed.HOURS.has("111"), "reed hours must not take 111")
+	_expect(not Reed.HOURS.has("112"), "reed hours must not take 112")
+	_expect(not Reed.HOURS.has("113"), "reed hours must not take 113")
+	_expect(not Reed.HOURS.has("114"), "reed hours must not take 114")
+	_expect(not Reed.HOURS.has("115"), "reed hours must not take 115")
+	_expect(not Reed.HOURS.has("116"), "reed hours must not take 116")
+	_expect(not Reed.HOURS.has("117"), "reed hours must not take 117")
+	_expect(not Reed.HOURS.has("118"), "reed hours must not take 118")
+	_expect(not Reed.HOURS.has("119"), "reed hours must not take 119")
+	_expect(not Reed.HOURS.has("120"), "reed hours must not take 120")
+	_expect(not Reed.HOURS.has("121"), "reed hours must not take 121")
+	_expect(not Reed.HOURS.has("122"), "reed hours must not take 122")
+	_expect(not Reed.HOURS.has("123"), "reed hours must not take 123")
+	_expect(not Reed.HOURS.has("124"), "reed hours must not take 124")
+	_expect(not Reed.HOURS.has("125"), "reed hours must not take 125")
+	_expect(not Reed.HOURS.has("126"), "reed hours must not take 126")
+	_expect(not Reed.HOURS.has("127"), "reed hours must not take 127")
+	_expect(not Reed.HOURS.has("128"), "reed hours must not take 128")
+	_expect(not Reed.HOURS.has("129"), "reed hours must not take 129")
+	_expect(not Reed.HOURS.has("130"), "reed hours must not take 130")
+	_expect(not Reed.HOURS.has("131"), "reed hours must not take 131")
+	_expect(not Reed.HOURS.has("132"), "reed hours must not take 132")
+	_expect(not Reed.HOURS.has("133"), "reed hours must not take 133")
+	_expect(not Reed.HOURS.has("134"), "reed hours must not take 134")
+	_expect(not Reed.HOURS.has("135"), "reed hours must not take 135")
+	_expect(not Reed.HOURS.has("136"), "reed hours must not take 136")
+	_expect(not Reed.HOURS.has("137"), "reed hours must not take 137")
+	_expect(not Reed.HOURS.has("138"), "reed hours must not take 138")
+	_expect(not Reed.HOURS.has("139"), "reed hours must not take 139")
+	_expect(not Reed.HOURS.has("140"), "reed hours must not take 140")
+	_expect(not Reed.HOURS.has("141"), "reed hours must not take 141")
+	_expect(not Reed.HOURS.has("142"), "reed hours must not take 142")
+	_expect(not Reed.HOURS.has("143"), "reed hours must not take 143")
+	_expect(not Reed.HOURS.has("144"), "reed hours must not take 144")
+	_expect(not Reed.HOURS.has("145"), "reed hours must not take 145")
+	_expect(not Reed.HOURS.has("146"), "reed hours must not take 146")
+	_expect(not Reed.HOURS.has("147"), "reed hours must not take 147")
+	_expect(not Reed.HOURS.has("148"), "reed hours must not take 148")
+	_expect(not Reed.HOURS.has("149"), "reed hours must not take 149")
+	_expect(not Reed.HOURS.has("150"), "reed hours must not take 150")
+	_expect(not Reed.HOURS.has("151"), "reed hours must not take 151")
+	_expect(not Reed.HOURS.has("152"), "reed hours must not take 152")
+	_expect(not Reed.HOURS.has("153"), "reed hours must not take 153")
+	_expect(not Reed.HOURS.has("154"), "reed hours must not take 154")
+	_expect(not Reed.HOURS.has("155"), "reed hours must not take 155")
+	_expect(not Reed.HOURS.has("156"), "reed hours must not take 156")
+	_expect(not Reed.HOURS.has("157"), "reed hours must not take 157")
+	_expect(not Reed.HOURS.has("158"), "reed hours must not take 158")
+	_expect(not Reed.HOURS.has("159"), "reed hours must not take 159")
+	_expect(not Reed.HOURS.has("160"), "reed hours must not take 160")
+
+	_expect(titles == ["The spare key", "The rehearsal score", "The gilt stamp", "The ferry bell", "The weather slate", "The loom shuttle", "The hive smoker", "The glass pontil", "The press proof", "The assay cup", "The kiln chalk", "The tide ledger", "The night bell", "The salt mark", "The wick trim", "The glass anneal", "The orchard graft", "The dye vat", "The tar kettle", "The cork press", "The net loft", "The cask hoop", "The linen fold", "The dovetail", "The mortise", "The rebate", "The housing", "The tenon", "The bridle", "The dado", "The spline", "The mitre", "The lap", "The scarf", "The finger", "The haunch", "The dowel", "The tongue", "The quirk", "The chamfer", "The scotia", "The cyma", "The cavetto", "The reed"], "case list is %s" % str(titles))
 
 
 
@@ -18453,7 +19139,7 @@ func _test_menu_opens_either_case() -> void:
 		root._ready()
 	var menu_blob := _visible_label_blob(root)
 	_expect(get_root().size == Vector2i(1280, 800), "case window is %s" % str(get_root().size))
-	_expect(menu_blob.find("Forty-three files") >= 0, "menu does not offer forty-three files: %s" % menu_blob)
+	_expect(menu_blob.find("Forty-four files") >= 0, "menu does not offer forty-four files: %s" % menu_blob)
 	_expect(menu_blob.find("CW-07") >= 0, "menu omits CW-07")
 	_expect(menu_blob.find("The hive smoker") >= 0, "menu omits The hive smoker")
 	_expect(menu_blob.find("CW-08") >= 0, "menu omits CW-08")
@@ -18528,6 +19214,8 @@ func _test_menu_opens_either_case() -> void:
 	_expect(menu_blob.find("The cyma") >= 0, "menu omits The cyma")
 	_expect(menu_blob.find("CW-43") >= 0, "menu omits CW-43")
 	_expect(menu_blob.find("The cavetto") >= 0, "menu omits The cavetto")
+	_expect(menu_blob.find("CW-44") >= 0, "menu omits CW-44")
+	_expect(menu_blob.find("The reed") >= 0, "menu omits The reed")
 	_expect(root.get_child_count() > 0, "main scene built %d children" % root.get_child_count())
 	_press(root, "How to play")
 	var howto := _visible_label_blob(root)
@@ -18574,6 +19262,7 @@ func _test_menu_opens_either_case() -> void:
 	_expect(howto.find("The scotia") >= 0, "how to play omits The scotia")
 	_expect(howto.find("The cyma") >= 0, "how to play omits The cyma")
 	_expect(howto.find("The cavetto") >= 0, "how to play omits The cavetto")
+	_expect(howto.find("The reed") >= 0, "how to play omits The reed")
 	_expect(howto.find("names that slot") >= 0, "how to play omits the empty-slot rule")
 	_press(root, "Back to the menu")
 	_expect(_find_visible_button(root, "Open The spare key") != null, "menu is missing The spare key")
@@ -18619,6 +19308,7 @@ func _test_menu_opens_either_case() -> void:
 	_expect(_find_visible_button(root, "Open The scotia") != null, "menu is missing The scotia")
 	_expect(_find_visible_button(root, "Open The cyma") != null, "menu is missing The cyma")
 	_expect(_find_visible_button(root, "Open The cavetto") != null, "menu is missing The cavetto")
+	_expect(_find_visible_button(root, "Open The reed") != null, "menu is missing The reed")
 	_press(root, "Open The rehearsal score")
 	var rehearsal_open := _visible_label_blob(root)
 	_expect(rehearsal_open.find("Cut list") >= 0, "rehearsal file did not open")
@@ -23469,6 +24159,469 @@ func _test_menu_opens_either_case() -> void:
 	_expect(dowel_after_cavetto.find("fits every exhibit") >= 0, "dowel board rejected the true theory after The cavetto: %s" % dowel_after_cavetto)
 	_expect(dowel_after_cavetto.find("Faye (dowel hand) cut the dowel in the bit at 128") >= 0, "dowel board timeline after The cavetto: %s" % dowel_after_cavetto)
 	_press(root, "Menu")
+	_press(root, "Open The reed")
+	var reed_open := _visible_label_blob(root)
+	_expect(reed_open.find("Walnut chit") >= 0, "reed nosing did not open")
+	_expect(reed_open.find("Weanling note") >= 0, "reed nosing did not show its exhibits")
+	_expect(reed_open.find("CW-44") >= 0, "reed nosing omits CW-44")
+	_expect(reed_open.find("Deal sight") >= 0, "reed nosing omits Deal sight")
+	_expect(reed_open.find("Maple bill") >= 0, "reed nosing omits Maple bill")
+	_expect(reed_open.find("Larch slate") >= 0, "reed nosing omits Larch slate")
+	_expect(reed_open.find("Nosing card") >= 0, "reed nosing omits Nosing card")
+	_expect(reed_open.find("Blue slip") >= 0, "reed nosing omits Blue slip")
+	_expect(reed_open.find("Reed leaf") >= 0, "reed nosing omits Reed leaf")
+	_expect(reed_open.find("Temper order") >= 0, "reed nosing omits Temper order")
+	_expect(reed_open.find("Rounder card") >= 0, "reed nosing omits the rounder card")
+	_expect(reed_open.find("Complaint slip") == -1, "spare key papers showed inside The reed")
+	_expect(reed_open.find("Cut list") == -1, "rehearsal papers showed inside The reed")
+	_expect(reed_open.find("Move order") == -1, "gilt stamp papers showed inside The reed")
+	_expect(reed_open.find("Whistle slip") == -1, "ferry bell papers showed inside The reed")
+	_expect(reed_open.find("Frost note") == -1, "weather slate papers showed inside The reed")
+	_expect(reed_open.find("Trough tag") == -1, "loom shuttle papers showed inside The reed")
+	_expect(reed_open.find("Fuel line") == -1, "hive smoker papers showed inside The reed")
+	_expect(reed_open.find("Weight line") == -1, "glass pontil papers showed inside The reed")
+	_expect(reed_open.find("Lock line") == -1, "press proof papers showed inside The reed")
+	_expect(reed_open.find("Cup line") == -1, "assay cup papers showed inside The reed")
+	_expect(reed_open.find("Mark line") == -1, "kiln chalk papers showed inside The reed")
+	_expect(reed_open.find("Ledger line") == -1, "tide ledger papers showed inside The reed")
+	_expect(reed_open.find("Bell line") == -1, "night bell papers showed inside The reed")
+	_expect(reed_open.find("Salt line") == -1, "salt mark papers showed inside The reed")
+	_expect(reed_open.find("Oil note") == -1, "wick trim papers showed inside The reed")
+	_expect(reed_open.find("Gather note") == -1, "glass anneal papers showed inside The reed")
+	_expect(reed_open.find("Scion note") == -1, "orchard graft papers showed inside The reed")
+	_expect(reed_open.find("Winder chit") == -1, "dye vat papers showed inside The reed")
+	_expect(reed_open.find("Rope chit") == -1, "tar kettle papers showed inside The reed")
+	_expect(reed_open.find("Cutter chit") == -1, "cork press papers showed inside The reed")
+	_expect(reed_open.find("Mesh chit") == -1, "net loft papers showed inside The reed")
+	_expect(reed_open.find("Hoop chit") == -1, "cask hoop papers showed inside The reed")
+	_expect(reed_open.find("Shears chit") == -1, "linen fold papers showed inside The reed")
+	_expect(reed_open.find("Apron sight") == -1, "dovetail papers showed inside The reed")
+	_expect(reed_open.find("Peg hook") == -1, "dovetail papers showed inside The reed")
+	_expect(reed_open.find("Joint slate") == -1, "dovetail papers showed inside The reed")
+	_expect(reed_open.find("Clamp card") == -1, "dovetail papers showed inside The reed")
+	_expect(reed_open.find("Sweep slip") == -1, "dovetail papers showed inside The reed")
+	_expect(reed_open.find("Cut leaf") == -1, "dovetail papers showed inside The reed")
+	_expect(reed_open.find("Joint note") == -1, "dovetail papers showed inside The reed")
+	_expect(reed_open.find("Jaw order") == -1, "dovetail papers showed inside The reed")
+	_expect(reed_open.find("CW-24") == -1, "dovetail file code stayed up inside The reed")
+	_expect(reed_open.find("Chisel chit") == -1, "mortise papers stayed up inside The reed")
+	_expect(reed_open.find("Awl sight") == -1, "mortise papers showed inside The reed")
+	_expect(reed_open.find("Wedge hook") == -1, "mortise papers showed inside The reed")
+	_expect(reed_open.find("Tenon slate") == -1, "mortise papers showed inside The reed")
+	_expect(reed_open.find("Brush slip") == -1, "mortise papers showed inside The reed")
+	_expect(reed_open.find("Bore leaf") == -1, "mortise papers showed inside The reed")
+	_expect(reed_open.find("Tenon note") == -1, "mortise papers showed inside The reed")
+	_expect(reed_open.find("Rack order") == -1, "mortise papers showed inside The reed")
+	_expect(reed_open.find("CW-25") == -1, "mortise file code stayed up inside The reed")
+	_expect(reed_open.find("Plane chit") == -1, "rebate papers stayed up inside The reed")
+	_expect(reed_open.find("Gauge sight") == -1, "rebate papers showed inside The reed")
+	_expect(reed_open.find("Shim hook") == -1, "rebate papers showed inside The reed")
+	_expect(reed_open.find("Shoulder slate") == -1, "rebate papers showed inside The reed")
+	_expect(reed_open.find("Fence card") == -1, "rebate papers showed inside The reed")
+	_expect(reed_open.find("Oil slip") == -1, "rebate papers showed inside The reed")
+	_expect(reed_open.find("Scribe leaf") == -1, "rebate papers showed inside The reed")
+	_expect(reed_open.find("Shoulder note") == -1, "rebate papers showed inside The reed")
+	_expect(reed_open.find("CW-26") == -1, "rebate file code stayed up inside The reed")
+	_expect(reed_open.find("Saw chit") == -1, "housing papers stayed up inside The reed")
+	_expect(reed_open.find("Square sight") == -1, "housing papers showed inside The reed")
+	_expect(reed_open.find("Fillet hook") == -1, "housing papers showed inside The reed")
+	_expect(reed_open.find("Trench slate") == -1, "housing papers showed inside The reed")
+	_expect(reed_open.find("Stock card") == -1, "housing papers showed inside The reed")
+	_expect(reed_open.find("Chalk slip") == -1, "housing papers showed inside The reed")
+	_expect(reed_open.find("Mark leaf") == -1, "housing papers showed inside The reed")
+	_expect(reed_open.find("Trench note") == -1, "housing papers showed inside The reed")
+	_expect(reed_open.find("CW-27") == -1, "housing file code stayed up inside The reed")
+	_expect(reed_open.find("Gouge chit") == -1, "tenon papers stayed up inside The reed")
+	_expect(reed_open.find("Rasp sight") == -1, "tenon papers showed inside The reed")
+	_expect(reed_open.find("Dowel hook") == -1, "tenon papers showed inside The reed")
+	_expect(reed_open.find("Haunch slate") == -1, "tenon papers showed inside The reed")
+	_expect(reed_open.find("Guide card") == -1, "tenon papers showed inside The reed")
+	_expect(reed_open.find("Hone slip") == -1, "tenon papers showed inside The reed")
+	_expect(reed_open.find("Nick leaf") == -1, "tenon papers showed inside The reed")
+	_expect(reed_open.find("CW-28") == -1, "tenon file code stayed up inside The reed")
+	_expect(reed_open.find("Router chit") == -1, "bridle papers stayed up inside The reed")
+	_expect(reed_open.find("Bluer sight") == -1, "bridle papers showed inside The reed")
+	_expect(reed_open.find("Spline hook") == -1, "bridle papers showed inside The reed")
+	_expect(reed_open.find("Tongue slate") == -1, "bridle papers showed inside The reed")
+	_expect(reed_open.find("Templet card") == -1, "bridle papers showed inside The reed")
+	_expect(reed_open.find("Strop slip") == -1, "bridle papers showed inside The reed")
+	_expect(reed_open.find("Notch leaf") == -1, "bridle papers showed inside The reed")
+	_expect(reed_open.find("Tongue note") == -1, "bridle papers showed inside The reed")
+	_expect(reed_open.find("CW-29") == -1, "bridle file code stayed up inside The reed")
+	_expect(reed_open.find("Plough chit") == -1, "dado papers stayed up inside The reed")
+	_expect(reed_open.find("Float sight") == -1, "dado papers showed inside The reed")
+	_expect(reed_open.find("Cleat hook") == -1, "dado papers showed inside The reed")
+	_expect(reed_open.find("Groove slate") == -1, "dado papers showed inside The reed")
+	_expect(reed_open.find("Spur card") == -1, "dado papers showed inside The reed")
+	_expect(reed_open.find("Whet slip") == -1, "dado papers showed inside The reed")
+	_expect(reed_open.find("Score leaf") == -1, "dado papers showed inside The reed")
+	_expect(reed_open.find("Groove note") == -1, "dado papers showed inside The reed")
+	_expect(reed_open.find("CW-30") == -1, "dado file code stayed up inside The reed")
+	_expect(reed_open.find("Slot chit") == -1, "spline papers stayed up inside The reed")
+	_expect(reed_open.find("Rest sight") == -1, "spline papers showed inside The reed")
+	_expect(reed_open.find("Feather hook") == -1, "spline papers showed inside The reed")
+	_expect(reed_open.find("Slot slate") == -1, "spline papers showed inside The reed")
+	_expect(reed_open.find("Key card") == -1, "spline papers showed inside The reed")
+	_expect(reed_open.find("Cheek slip") == -1, "spline papers showed inside The reed")
+	_expect(reed_open.find("Slot leaf") == -1, "spline papers showed inside The reed")
+	_expect(reed_open.find("Slot note") == -1, "spline papers showed inside The reed")
+	_expect(reed_open.find("Dry order") == -1, "spline papers showed inside The reed")
+	_expect(reed_open.find("CW-31") == -1, "spline file code stayed up inside The reed")
+	_expect(reed_open.find("Arris chit") == -1, "mitre papers stayed up inside The reed")
+	_expect(reed_open.find("Horn sight") == -1, "mitre papers showed inside The reed")
+	_expect(reed_open.find("Offcut hook") == -1, "mitre papers showed inside The reed")
+	_expect(reed_open.find("Arris slate") == -1, "mitre papers showed inside The reed")
+	_expect(reed_open.find("Stop card") == -1, "mitre papers showed inside The reed")
+	_expect(reed_open.find("Dress slip") == -1, "mitre papers showed inside The reed")
+	_expect(reed_open.find("Arris leaf") == -1, "mitre papers showed inside The reed")
+	_expect(reed_open.find("Arris note") == -1, "mitre papers showed inside The reed")
+	_expect(reed_open.find("Brush order") == -1, "mitre papers showed inside The reed")
+	_expect(reed_open.find("CW-32") == -1, "mitre file code stayed up inside The reed")
+	_expect(reed_open.find("Grain chit") == -1, "lap papers stayed up inside The reed")
+	_expect(reed_open.find("Crest sight") == -1, "lap papers showed inside The reed")
+	_expect(reed_open.find("Paring hook") == -1, "lap papers showed inside The reed")
+	_expect(reed_open.find("Grain slate") == -1, "lap papers showed inside The reed")
+	_expect(reed_open.find("Brad card") == -1, "lap papers showed inside The reed")
+	_expect(reed_open.find("Skim slip") == -1, "lap papers showed inside The reed")
+	_expect(reed_open.find("Grain leaf") == -1, "lap papers showed inside The reed")
+	_expect(reed_open.find("Grain note") == -1, "lap papers showed inside The reed")
+	_expect(reed_open.find("Oil order") == -1, "lap papers showed inside The reed")
+	_expect(reed_open.find("CW-33") == -1, "lap file code stayed up inside The reed")
+	_expect(reed_open.find("Shoulder chit") == -1, "scarf papers stayed up inside The reed")
+	_expect(reed_open.find("Sole sight") == -1, "scarf papers showed inside The reed")
+	_expect(reed_open.find("Shaving hook") == -1, "scarf papers showed inside The reed")
+	_expect(reed_open.find("Edge slate") == -1, "scarf papers showed inside The reed")
+	_expect(reed_open.find("Wedge card") == -1, "scarf papers showed inside The reed")
+	_expect(reed_open.find("Film slip") == -1, "scarf papers showed inside The reed")
+	_expect(reed_open.find("Scarf leaf") == -1, "scarf papers showed inside The reed")
+	_expect(reed_open.find("Scarf note") == -1, "scarf papers showed inside The reed")
+	_expect(reed_open.find("Finish order") == -1, "scarf papers showed inside The reed")
+	_expect(reed_open.find("CW-34") == -1, "scarf file code stayed up inside The reed")
+	_expect(reed_open.find("Socket chit") == -1, "finger papers showed inside The reed")
+	_expect(reed_open.find("Burr sight") == -1, "finger papers showed inside The reed")
+	_expect(reed_open.find("Chip bill") == -1, "finger papers showed inside The reed")
+	_expect(reed_open.find("Face slate") == -1, "finger papers showed inside The reed")
+	_expect(reed_open.find("Catch card") == -1, "finger papers showed inside The reed")
+	_expect(reed_open.find("Sheen slip") == -1, "finger papers showed inside The reed")
+	_expect(reed_open.find("Finger leaf") == -1, "finger papers showed inside The reed")
+	_expect(reed_open.find("Finger note") == -1, "finger papers showed inside The reed")
+	_expect(reed_open.find("Rub order") == -1, "finger papers showed inside The reed")
+	_expect(reed_open.find("CW-35") == -1, "finger file code stayed up inside The reed")
+	_expect(reed_open.find("so the bevel would take the haunch") == -1, "tenon aim stayed up inside The reed")
+	_expect(reed_open.find("Cheek chit") == -1, "haunch papers showed inside The reed")
+	_expect(reed_open.find("Toe sight") == -1, "haunch papers showed inside The reed")
+	_expect(reed_open.find("Sliver bill") == -1, "haunch papers showed inside The reed")
+	_expect(reed_open.find("Bed slate") == -1, "haunch papers showed inside The reed")
+	_expect(reed_open.find("Pin card") == -1, "haunch papers showed inside The reed")
+	_expect(reed_open.find("Wipe slip") == -1, "haunch papers showed inside The reed")
+	_expect(reed_open.find("Haunch leaf") == -1, "haunch papers showed inside The reed")
+	_expect(reed_open.find("Haunch note") == -1, "haunch papers showed inside The reed")
+	_expect(reed_open.find("Stone order") == -1, "haunch papers showed inside The reed")
+	_expect(reed_open.find("CW-36") == -1, "haunch file code stayed up inside The reed")
+	_expect(reed_open.find("so the cheek would take the haunch") == -1, "haunch aim stayed up inside The reed")
+	_expect(reed_open.find("Bore chit") == -1, "dowel papers showed inside The reed")
+	_expect(reed_open.find("Point sight") == -1, "dowel papers showed inside The reed")
+	_expect(reed_open.find("Curl bill") == -1, "dowel papers showed inside The reed")
+	_expect(reed_open.find("Flute slate") == -1, "dowel papers showed inside The reed")
+	_expect(reed_open.find("Chuck card") == -1, "dowel papers showed inside The reed")
+	_expect(reed_open.find("Wax slip") == -1, "dowel papers showed inside The reed")
+	_expect(reed_open.find("Dowel leaf") == -1, "dowel papers showed inside The reed")
+	_expect(reed_open.find("Dowel note") == -1, "dowel papers showed inside The reed")
+	_expect(reed_open.find("Hone order") == -1, "dowel papers showed inside The reed")
+	_expect(reed_open.find("CW-37") == -1, "dowel file code stayed up inside The reed")
+	_expect(reed_open.find("Brace card") == -1, "dowel papers showed inside The reed")
+	_expect(reed_open.find("so the bore would take the dowel") == -1, "dowel aim stayed up inside The reed")
+	_expect(reed_open.find("Groove chit") == -1, "tongue papers showed inside The reed")
+	_expect(reed_open.find("Face sight") == -1, "tongue papers showed inside The reed")
+	_expect(reed_open.find("Peel bill") == -1, "tongue papers showed inside The reed")
+	_expect(reed_open.find("Kerf slate") == -1, "tongue papers showed inside The reed")
+	_expect(reed_open.find("Turn card") == -1, "tongue papers showed inside The reed")
+	_expect(reed_open.find("Tallow slip") == -1, "tongue papers showed inside The reed")
+	_expect(reed_open.find("Tongue leaf") == -1, "tongue papers showed inside The reed")
+	_expect(reed_open.find("Filly note") == -1, "tongue papers showed inside The reed")
+	_expect(reed_open.find("Grind order") == -1, "tongue papers showed inside The reed")
+	_expect(reed_open.find("Scribe card") == -1, "tongue papers showed inside The reed")
+	_expect(reed_open.find("CW-38") == -1, "tongue file code stayed up inside The reed")
+	_expect(reed_open.find("so the groove would take the tongue") == -1, "tongue aim stayed up inside The reed")
+	_expect(reed_open.find("Ovolo chit") == -1, "quirk papers showed inside The reed")
+	_expect(reed_open.find("Bolt sight") == -1, "quirk papers showed inside The reed")
+	_expect(reed_open.find("Astragal bill") == -1, "quirk papers showed inside The reed")
+	_expect(reed_open.find("Score slate") == -1, "quirk papers showed inside The reed")
+	_expect(reed_open.find("Snib card") == -1, "quirk papers showed inside The reed")
+	_expect(reed_open.find("Grease slip") == -1, "quirk papers showed inside The reed")
+	_expect(reed_open.find("Quirk leaf") == -1, "quirk papers showed inside The reed")
+	_expect(reed_open.find("Gelding note") == -1, "quirk papers showed inside The reed")
+	_expect(reed_open.find("Whet order") == -1, "quirk papers showed inside The reed")
+	_expect(reed_open.find("Veiner card") == -1, "quirk papers showed inside The reed")
+	_expect(reed_open.find("CW-39") == -1, "quirk file code stayed up inside The reed")
+	_expect(reed_open.find("so the ovolo would take the quirk") == -1, "quirk aim stayed up inside The reed")
+	_expect(reed_open.find("Cove chit") == -1, "chamfer papers showed inside The reed")
+	_expect(reed_open.find("Tooth sight") == -1, "chamfer papers showed inside The reed")
+	_expect(reed_open.find("Cant bill") == -1, "chamfer papers showed inside The reed")
+	_expect(reed_open.find("Wisp slate") == -1, "chamfer papers showed inside The reed")
+	_expect(reed_open.find("File card") == -1, "chamfer papers showed inside The reed")
+	_expect(reed_open.find("Soap slip") == -1, "chamfer papers showed inside The reed")
+	_expect(reed_open.find("Chamfer leaf") == -1, "chamfer papers showed inside The reed")
+	_expect(reed_open.find("Stallion note") == -1, "chamfer papers showed inside The reed")
+	_expect(reed_open.find("Fettle order") == -1, "chamfer papers showed inside The reed")
+	_expect(reed_open.find("Travisher card") == -1, "chamfer papers showed inside The reed")
+	_expect(reed_open.find("CW-40") == -1, "chamfer file code stayed up inside The reed")
+	_expect(reed_open.find("so the cove would take the chamfer") == -1, "chamfer aim stayed up inside The reed")
+	_expect(reed_open.find("Torus chit") == -1, "scotia papers showed inside The reed")
+	_expect(reed_open.find("Cusp sight") == -1, "scotia papers showed inside The reed")
+	_expect(reed_open.find("Fascia bill") == -1, "scotia papers showed inside The reed")
+	_expect(reed_open.find("Soot slate") == -1, "scotia papers showed inside The reed")
+	_expect(reed_open.find("Riffler card") == -1, "scotia papers showed inside The reed")
+	_expect(reed_open.find("Pumice slip") == -1, "scotia papers showed inside The reed")
+	_expect(reed_open.find("Scotia leaf") == -1, "scotia papers showed inside The reed")
+	_expect(reed_open.find("Yearling note") == -1, "scotia papers showed inside The reed")
+	_expect(reed_open.find("Peen order") == -1, "scotia papers showed inside The reed")
+	_expect(reed_open.find("Scorp card") == -1, "scotia papers showed inside The reed")
+	_expect(reed_open.find("CW-41") == -1, "scotia file code stayed up inside The reed")
+	_expect(reed_open.find("so the torus would take the scotia") == -1, "scotia aim stayed up inside The reed")
+	_expect(reed_open.find("Echinus chit") == -1, "cyma papers showed inside The reed")
+	_expect(reed_open.find("Beak sight") == -1, "cyma papers showed inside The reed")
+	_expect(reed_open.find("Corona bill") == -1, "cyma papers showed inside The reed")
+	_expect(reed_open.find("Garnet slate") == -1, "cyma papers showed inside The reed")
+	_expect(reed_open.find("Inshave card") == -1, "cyma papers showed inside The reed")
+	_expect(reed_open.find("Rouge slip") == -1, "cyma papers showed inside The reed")
+	_expect(reed_open.find("Cyma leaf") == -1, "cyma papers showed inside The reed")
+	_expect(reed_open.find("Jennet note") == -1, "cyma papers showed inside The reed")
+	_expect(reed_open.find("Chase order") == -1, "cyma papers showed inside The reed")
+	_expect(reed_open.find("Froe card") == -1, "cyma papers showed inside The reed")
+	_expect(reed_open.find("CW-42") == -1, "cyma file code stayed up inside The reed")
+	_expect(reed_open.find("so the echinus would take the cyma") == -1, "cyma aim stayed up inside The reed")
+	_expect(reed_open.find("Thumbnail chit") == -1, "cavetto papers showed inside The reed")
+	_expect(reed_open.find("Drip sight") == -1, "cavetto papers showed inside The reed")
+	_expect(reed_open.find("Staff bill") == -1, "cavetto papers showed inside The reed")
+	_expect(reed_open.find("Cedar slate") == -1, "cavetto papers showed inside The reed")
+	_expect(reed_open.find("Bullnose card") == -1, "cavetto papers showed inside The reed")
+	_expect(reed_open.find("Scrape slip") == -1, "cavetto papers showed inside The reed")
+	_expect(reed_open.find("Cavetto leaf") == -1, "cavetto papers showed inside The reed")
+	_expect(reed_open.find("Palfrey note") == -1, "cavetto papers showed inside The reed")
+	_expect(reed_open.find("Knurl order") == -1, "cavetto papers showed inside The reed")
+	_expect(reed_open.find("Twibil card") == -1, "cavetto papers showed inside The reed")
+	_expect(reed_open.find("CW-43") == -1, "cavetto file code stayed up inside The reed")
+	_expect(reed_open.find("so the thumbnail would take the cavetto") == -1, "cavetto aim stayed up inside The reed")
+	_press(root, "Submit theory")
+	var empty_reed := _verdict_text(root)
+	_expect(empty_reed.find("who cut the reed") >= 0, "empty reed board: %s" % empty_reed)
+	_expect(empty_reed.find("where they cut the reed") >= 0, "empty reed board: %s" % empty_reed)
+	_expect(empty_reed.find("at which hour they cut the reed") >= 0, "empty reed board: %s" % empty_reed)
+	_expect(empty_reed.find("who scratched the quirk") == -1, "empty chamfer board used a quirk slot: %s" % empty_reed)
+	_expect(empty_reed.find("who cut the tongue") == -1, "empty chamfer board used a tongue slot: %s" % empty_reed)
+	_expect(empty_reed.find("who cut the dowel") == -1, "empty chamfer board used a dowel slot: %s" % empty_reed)
+	_expect(empty_reed.find("who cut the chamfer") == -1, "empty scotia board used a chamfer slot: %s" % empty_reed)
+	_expect(empty_reed.find("where they cut the chamfer") == -1, "empty scotia board used a chamfer slot: %s" % empty_reed)
+	_expect(empty_reed.find("at which hour they cut the chamfer") == -1, "empty scotia board used a chamfer slot: %s" % empty_reed)
+	_expect(empty_reed.find("who cut the scotia") == -1, "empty reed board used a scotia slot: %s" % empty_reed)
+	_expect(empty_reed.find("where they cut the scotia") == -1, "empty reed board used a scotia slot: %s" % empty_reed)
+	_expect(empty_reed.find("at which hour they cut the scotia") == -1, "empty reed board used a scotia slot: %s" % empty_reed)
+	_expect(empty_reed.find("who cut the cyma") == -1, "empty reed board used a cyma slot: %s" % empty_reed)
+	_expect(empty_reed.find("where they cut the cyma") == -1, "empty reed board used a cyma slot: %s" % empty_reed)
+	_expect(empty_reed.find("at which hour they cut the cyma") == -1, "empty reed board used a cyma slot: %s" % empty_reed)
+	_expect(empty_reed.find("who cut the cavetto") == -1, "empty reed board used a cavetto slot: %s" % empty_reed)
+	_expect(empty_reed.find("where they cut the cavetto") == -1, "empty reed board used a cavetto slot: %s" % empty_reed)
+	_expect(empty_reed.find("at which hour they cut the cavetto") == -1, "empty reed board used a cavetto slot: %s" % empty_reed)
+	_expect(empty_reed.to_lower().find("conflict") == -1, "empty chamfer board talked about a conflict: %s" % empty_reed)
+	_press(root, "Nolan")
+	_press(root, "Nosing")
+	_press(root, "161")
+	_press(root, "Submit theory")
+	var reed_miss := _verdict_text(root)
+	_expect_reply_names_conflicts(reed_miss, Reed, {"who": "Nolan", "place": "nosing", "hour": "161"})
+	_expect(Reed.conflicting_ids({"who": "Nolan", "place": "nosing", "hour": "161"}).size() == 9, "Nolan / nosing / 161 should contradict every exhibit")
+	_expect(reed_miss.find("Walnut chit") >= 0, "wrong triple reply omits Walnut chit: %s" % reed_miss)
+	_expect(reed_miss.find("Deal sight") >= 0, "wrong triple reply omits Deal sight: %s" % reed_miss)
+	_expect(reed_miss.find("Maple bill") >= 0, "wrong triple reply omits Maple bill: %s" % reed_miss)
+	_expect(reed_miss.find("Larch slate") >= 0, "wrong triple reply omits Larch slate: %s" % reed_miss)
+	_expect(reed_miss.find("Nosing card") >= 0, "wrong triple reply omits Nosing card: %s" % reed_miss)
+	_expect(reed_miss.find("Blue slip") >= 0, "wrong triple reply omits Blue slip: %s" % reed_miss)
+	_expect(reed_miss.find("Reed leaf") >= 0, "wrong triple reply omits Reed leaf: %s" % reed_miss)
+	_expect(reed_miss.find("Weanling note") >= 0, "wrong triple reply omits Weanling note: %s" % reed_miss)
+	_expect(reed_miss.find("Temper order") >= 0, "wrong triple reply omits Temper order: %s" % reed_miss)
+	_press(root, "Greta")
+	_press(root, "Ogee")
+	_press(root, "163")
+	_press(root, "Submit theory")
+	var reed_accepted := _verdict_text(root)
+	_expect(reed_accepted.find("fits every exhibit") >= 0, "reed board rejected the true theory: %s" % reed_accepted)
+	_expect(reed_accepted.find(REED_TIMELINE) >= 0, "reed board timeline: %s" % reed_accepted)
+	_expect(reed_accepted.find("Greta (reed hand) cut the reed in the ogee at 163") >= 0, "reed board omits Greta at 163: %s" % reed_accepted)
+	_expect(reed_accepted.find("in the ogee") >= 0, "reed board omits the ogee: %s" % reed_accepted)
+	_expect(reed_accepted.find("so the walnut would take the reed") >= 0, "reed board omits the walnut: %s" % reed_accepted)
+	_press(root, "Clear")
+	_press(root, "Submit theory")
+	var reed_cleared := _verdict_text(root)
+	_expect(reed_cleared.find("who cut the reed") >= 0, "cleared reed board: %s" % reed_cleared)
+	_expect(reed_cleared.find("fits every exhibit") == -1, "cleared chamfer board stayed accepted: %s" % reed_cleared)
+	_press(root, "Menu")
+	_press(root, "Open The cavetto")
+	var cavetto_from_reed := _visible_label_blob(root)
+	_expect(cavetto_from_reed.find("Thumbnail chit") >= 0, "could not return to The cavetto from The reed")
+	_expect(cavetto_from_reed.find("Palfrey note") >= 0, "cavetto exhibits did not return from The reed")
+	_expect(cavetto_from_reed.find("CW-43") >= 0, "returned cavetto omits CW-43")
+	_expect(cavetto_from_reed.find("Walnut chit") == -1, "reed papers showed inside The cavetto")
+	_expect(cavetto_from_reed.find("Weanling note") == -1, "reed papers showed inside The cavetto")
+	_expect(cavetto_from_reed.find("CW-44") == -1, "reed file code stayed up inside The cavetto")
+	_press(root, "Seth")
+	_press(root, "Dentil")
+	_press(root, "158")
+	_press(root, "Submit theory")
+	var cavetto_after_reed := _verdict_text(root)
+	_expect(cavetto_after_reed.find("fits every exhibit") >= 0, "cavetto board rejected the true theory after The reed: %s" % cavetto_after_reed)
+	_expect(cavetto_after_reed.find("Seth (cavetto hand) cut the cavetto in the dentil at 158") >= 0, "cavetto board timeline after The reed: %s" % cavetto_after_reed)
+	_press(root, "Menu")
+	_press(root, "Open The cyma")
+	var cyma_from_reed := _visible_label_blob(root)
+	_expect(cyma_from_reed.find("Echinus chit") >= 0, "could not return to The cyma from The reed")
+	_expect(cyma_from_reed.find("Jennet note") >= 0, "cyma exhibits did not return from The reed")
+	_expect(cyma_from_reed.find("CW-42") >= 0, "returned cyma omits CW-42")
+	_expect(cyma_from_reed.find("Walnut chit") == -1, "reed papers showed inside The cyma")
+	_expect(cyma_from_reed.find("Weanling note") == -1, "reed papers showed inside The cyma")
+	_expect(cyma_from_reed.find("CW-44") == -1, "reed file code stayed up inside The cyma")
+	_expect(cyma_from_reed.find("Thumbnail chit") == -1, "cavetto papers showed inside The cyma")
+	_expect(cyma_from_reed.find("Palfrey note") == -1, "cavetto papers showed inside The cyma")
+	_expect(cyma_from_reed.find("CW-43") == -1, "cavetto file code stayed up inside The cyma")
+	_press(root, "Ruth")
+	_press(root, "Bolection")
+	_press(root, "153")
+	_press(root, "Submit theory")
+	var cyma_after_reed := _verdict_text(root)
+	_expect(cyma_after_reed.find("fits every exhibit") >= 0, "cyma board rejected the true theory after The reed: %s" % cyma_after_reed)
+	_expect(cyma_after_reed.find("Ruth (cyma hand) cut the cyma in the bolection at 153") >= 0, "cyma board timeline after The reed: %s" % cyma_after_reed)
+	_press(root, "Menu")
+	_press(root, "Open The scotia")
+	var scotia_from_reed := _visible_label_blob(root)
+	_expect(scotia_from_reed.find("Torus chit") >= 0, "could not return to The scotia from The reed")
+	_expect(scotia_from_reed.find("Yearling note") >= 0, "scotia exhibits did not return from The reed")
+	_expect(scotia_from_reed.find("CW-41") >= 0, "returned scotia omits CW-41")
+	_expect(scotia_from_reed.find("Walnut chit") == -1, "reed papers showed inside The scotia")
+	_expect(scotia_from_reed.find("Weanling note") == -1, "reed papers showed inside The scotia")
+	_expect(scotia_from_reed.find("CW-44") == -1, "reed file code stayed up inside The scotia")
+	_expect(scotia_from_reed.find("Thumbnail chit") == -1, "cavetto papers showed inside The scotia")
+	_expect(scotia_from_reed.find("Palfrey note") == -1, "cavetto papers showed inside The scotia")
+	_expect(scotia_from_reed.find("CW-43") == -1, "cavetto file code stayed up inside The scotia")
+	_expect(scotia_from_reed.find("Echinus chit") == -1, "cyma papers showed inside The scotia")
+	_expect(scotia_from_reed.find("Jennet note") == -1, "cyma papers showed inside The scotia")
+	_expect(scotia_from_reed.find("CW-42") == -1, "cyma file code stayed up inside The scotia")
+	_press(root, "Willa")
+	_press(root, "Hollow")
+	_press(root, "148")
+	_press(root, "Submit theory")
+	var scotia_after_reed := _verdict_text(root)
+	_expect(scotia_after_reed.find("fits every exhibit") >= 0, "scotia board rejected the true theory after The reed: %s" % scotia_after_reed)
+	_expect(scotia_after_reed.find("Willa (scotia hand) cut the scotia in the hollow at 148") >= 0, "scotia board timeline after The reed: %s" % scotia_after_reed)
+	_press(root, "Menu")
+	_press(root, "Open The chamfer")
+	var chamfer_from_reed := _visible_label_blob(root)
+	_expect(chamfer_from_reed.find("Cove chit") >= 0, "could not return to The chamfer from The reed")
+	_expect(chamfer_from_reed.find("Stallion note") >= 0, "chamfer exhibits did not return from The reed")
+	_expect(chamfer_from_reed.find("CW-40") >= 0, "returned chamfer omits CW-40")
+	_expect(chamfer_from_reed.find("Torus chit") == -1, "scotia papers showed inside The chamfer")
+	_expect(chamfer_from_reed.find("Yearling note") == -1, "scotia papers showed inside The chamfer")
+	_expect(chamfer_from_reed.find("CW-41") == -1, "scotia file code stayed up inside The chamfer")
+	_expect(chamfer_from_reed.find("Walnut chit") == -1, "reed papers showed inside The chamfer")
+	_expect(chamfer_from_reed.find("Weanling note") == -1, "reed papers showed inside The chamfer")
+	_expect(chamfer_from_reed.find("CW-44") == -1, "reed file code stayed up inside The chamfer")
+	_expect(chamfer_from_reed.find("Thumbnail chit") == -1, "cavetto papers showed inside The chamfer")
+	_expect(chamfer_from_reed.find("Palfrey note") == -1, "cavetto papers showed inside The chamfer")
+	_expect(chamfer_from_reed.find("CW-43") == -1, "cavetto file code stayed up inside The chamfer")
+	_expect(chamfer_from_reed.find("Echinus chit") == -1, "cyma papers showed inside The chamfer")
+	_expect(chamfer_from_reed.find("Jennet note") == -1, "cyma papers showed inside The chamfer")
+	_expect(chamfer_from_reed.find("CW-42") == -1, "cyma file code stayed up inside The chamfer")
+	_press(root, "Merrick")
+	_press(root, "Block")
+	_press(root, "143")
+	_press(root, "Submit theory")
+	var chamfer_after_reed := _verdict_text(root)
+	_expect(chamfer_after_reed.find("fits every exhibit") >= 0, "chamfer board rejected the true theory after The reed: %s" % chamfer_after_reed)
+	_expect(chamfer_after_reed.find("Merrick (chamfer hand) cut the chamfer in the block at 143") >= 0, "chamfer board timeline after The reed: %s" % chamfer_after_reed)
+	_press(root, "Menu")
+	_press(root, "Open The quirk")
+	var quirk_from_reed := _visible_label_blob(root)
+	_expect(quirk_from_reed.find("Ovolo chit") >= 0, "could not return to The quirk from The reed")
+	_expect(quirk_from_reed.find("Gelding note") >= 0, "quirk exhibits did not return from The reed")
+	_expect(quirk_from_reed.find("CW-39") >= 0, "returned quirk omits CW-39")
+	_expect(quirk_from_reed.find("Cove chit") == -1, "chamfer papers showed inside The quirk")
+	_expect(quirk_from_reed.find("Stallion note") == -1, "chamfer papers showed inside The quirk")
+	_expect(quirk_from_reed.find("CW-40") == -1, "chamfer file code stayed up inside The quirk")
+	_expect(quirk_from_reed.find("Torus chit") == -1, "scotia papers showed inside The quirk")
+	_expect(quirk_from_reed.find("Yearling note") == -1, "scotia papers showed inside The quirk")
+	_expect(quirk_from_reed.find("CW-41") == -1, "scotia file code stayed up inside The quirk")
+	_expect(quirk_from_reed.find("Walnut chit") == -1, "reed papers showed inside The quirk")
+	_expect(quirk_from_reed.find("Weanling note") == -1, "reed papers showed inside The quirk")
+	_expect(quirk_from_reed.find("CW-44") == -1, "reed file code stayed up inside The quirk")
+	_expect(quirk_from_reed.find("Thumbnail chit") == -1, "cavetto papers showed inside The quirk")
+	_expect(quirk_from_reed.find("Palfrey note") == -1, "cavetto papers showed inside The quirk")
+	_expect(quirk_from_reed.find("CW-43") == -1, "cavetto file code stayed up inside The quirk")
+	_expect(quirk_from_reed.find("Echinus chit") == -1, "cyma papers showed inside The quirk")
+	_expect(quirk_from_reed.find("Jennet note") == -1, "cyma papers showed inside The quirk")
+	_expect(quirk_from_reed.find("CW-42") == -1, "cyma file code stayed up inside The quirk")
+	_press(root, "Ross")
+	_press(root, "Scratch")
+	_press(root, "138")
+	_press(root, "Submit theory")
+	var quirk_after_reed := _verdict_text(root)
+	_expect(quirk_after_reed.find("fits every exhibit") >= 0, "quirk board rejected the true theory after The reed: %s" % quirk_after_reed)
+	_expect(quirk_after_reed.find("Ross (quirk hand) scratched the quirk in the scratch at 138") >= 0, "quirk board timeline after The reed: %s" % quirk_after_reed)
+	_press(root, "Menu")
+	_press(root, "Open The tongue")
+	var tongue_from_reed := _visible_label_blob(root)
+	_expect(tongue_from_reed.find("Groove chit") >= 0, "could not return to The tongue from The reed")
+	_expect(tongue_from_reed.find("Filly note") >= 0, "tongue exhibits did not return from The reed")
+	_expect(tongue_from_reed.find("CW-38") >= 0, "returned tongue omits CW-38")
+	_expect(tongue_from_reed.find("Cove chit") == -1, "chamfer papers showed inside The tongue")
+	_expect(tongue_from_reed.find("Stallion note") == -1, "chamfer papers showed inside The tongue")
+	_expect(tongue_from_reed.find("CW-40") == -1, "chamfer file code stayed up inside The tongue")
+	_expect(tongue_from_reed.find("Torus chit") == -1, "scotia papers showed inside The tongue")
+	_expect(tongue_from_reed.find("Yearling note") == -1, "scotia papers showed inside The tongue")
+	_expect(tongue_from_reed.find("CW-41") == -1, "scotia file code stayed up inside The tongue")
+	_expect(tongue_from_reed.find("Walnut chit") == -1, "reed papers showed inside The tongue")
+	_expect(tongue_from_reed.find("Weanling note") == -1, "reed papers showed inside The tongue")
+	_expect(tongue_from_reed.find("CW-44") == -1, "reed file code stayed up inside The tongue")
+	_expect(tongue_from_reed.find("Thumbnail chit") == -1, "cavetto papers showed inside The tongue")
+	_expect(tongue_from_reed.find("Palfrey note") == -1, "cavetto papers showed inside The tongue")
+	_expect(tongue_from_reed.find("CW-43") == -1, "cavetto file code stayed up inside The tongue")
+	_expect(tongue_from_reed.find("Echinus chit") == -1, "cyma papers showed inside The tongue")
+	_expect(tongue_from_reed.find("Jennet note") == -1, "cyma papers showed inside The tongue")
+	_expect(tongue_from_reed.find("CW-42") == -1, "cyma file code stayed up inside The tongue")
+	_press(root, "Shay")
+	_press(root, "Knife")
+	_press(root, "133")
+	_press(root, "Submit theory")
+	var tongue_after_reed := _verdict_text(root)
+	_expect(tongue_after_reed.find("fits every exhibit") >= 0, "tongue board rejected the true theory after The reed: %s" % tongue_after_reed)
+	_expect(tongue_after_reed.find("Shay (tongue hand) cut the tongue in the knife at 133") >= 0, "tongue board timeline after The reed: %s" % tongue_after_reed)
+	_press(root, "Menu")
+	_press(root, "Open The dowel")
+	var dowel_from_reed := _visible_label_blob(root)
+	_expect(dowel_from_reed.find("Bore chit") >= 0, "could not return to The dowel from The reed")
+	_expect(dowel_from_reed.find("Dowel note") >= 0, "dowel exhibits did not return from The reed")
+	_expect(dowel_from_reed.find("CW-37") >= 0, "returned dowel omits CW-37")
+	_expect(dowel_from_reed.find("Cove chit") == -1, "chamfer papers showed inside The dowel")
+	_expect(dowel_from_reed.find("Stallion note") == -1, "chamfer papers showed inside The dowel")
+	_expect(dowel_from_reed.find("CW-40") == -1, "chamfer file code stayed up inside The dowel")
+	_expect(dowel_from_reed.find("Torus chit") == -1, "scotia papers showed inside The dowel")
+	_expect(dowel_from_reed.find("Yearling note") == -1, "scotia papers showed inside The dowel")
+	_expect(dowel_from_reed.find("CW-41") == -1, "scotia file code stayed up inside The dowel")
+	_expect(dowel_from_reed.find("Walnut chit") == -1, "reed papers showed inside The dowel")
+	_expect(dowel_from_reed.find("Weanling note") == -1, "reed papers showed inside The dowel")
+	_expect(dowel_from_reed.find("CW-44") == -1, "reed file code stayed up inside The dowel")
+	_expect(dowel_from_reed.find("Thumbnail chit") == -1, "cavetto papers showed inside The dowel")
+	_expect(dowel_from_reed.find("Palfrey note") == -1, "cavetto papers showed inside The dowel")
+	_expect(dowel_from_reed.find("CW-43") == -1, "cavetto file code stayed up inside The dowel")
+	_expect(dowel_from_reed.find("Echinus chit") == -1, "cyma papers showed inside The dowel")
+	_expect(dowel_from_reed.find("Jennet note") == -1, "cyma papers showed inside The dowel")
+	_expect(dowel_from_reed.find("CW-42") == -1, "cyma file code stayed up inside The dowel")
+	_press(root, "Faye")
+	_press(root, "Bit")
+	_press(root, "128")
+	_press(root, "Submit theory")
+	var dowel_after_reed := _verdict_text(root)
+	_expect(dowel_after_reed.find("fits every exhibit") >= 0, "dowel board rejected the true theory after The reed: %s" % dowel_after_reed)
+	_expect(dowel_after_reed.find("Faye (dowel hand) cut the dowel in the bit at 128") >= 0, "dowel board timeline after The reed: %s" % dowel_after_reed)
+	_press(root, "Menu")
 	_menu_root = root
 
 
@@ -23756,13 +24909,13 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 							var quirk_code_bottom := quirk_code_top + quirk_code_rect.size.y
 							print("scrolled bottom CW-39 %s..%s page %s max %s" % [quirk_code_top, quirk_code_bottom, quirk_page, quirk_bar.max_value])
 							_expect(quirk_code_rect.position.x >= 0.0 and quirk_code_rect.position.x + quirk_code_rect.size.x <= 1280.0, "CW-39 is outside the window horizontally %s" % quirk_code_rect)
-							_expect(quirk_code_top >= -0.5, "CW-39 is above the window when the file list is scrolled to the bottom (%s)" % quirk_code_top)
+							_expect(quirk_code_top < 0.0, "CW-39 should sit above the window once The reed is on the list (%s)" % quirk_code_top)
 							_expect(quirk_code_bottom <= quirk_page + 0.5, "CW-39 is below the window when the file list is scrolled to the bottom (%s)" % quirk_code_bottom)
 							var quirk_button_top := quirk_rect.position.y - quirk_max_scroll
 							var quirk_button_bottom := quirk_button_top + quirk_rect.size.y
 							print("scrolled bottom Open The quirk %s..%s" % [quirk_button_top, quirk_button_bottom])
 							_expect(quirk_rect.position.x >= 0.0 and quirk_rect.position.x + quirk_rect.size.x <= 1280.0, "Open The quirk is outside the window horizontally %s" % quirk_rect)
-							_expect(quirk_button_top >= -0.5, "Open The quirk is above the window when the file list is scrolled to the bottom (%s)" % quirk_button_top)
+							_expect(quirk_button_top < 0.0, "Open The quirk should sit above the window once The reed is on the list (%s)" % quirk_button_top)
 							_expect(quirk_button_bottom <= quirk_page + 0.5, "Open The quirk is below the window when the file list is scrolled to the bottom (%s)" % quirk_button_bottom)
 
 
@@ -23955,6 +25108,58 @@ func _expect_open_buttons_fit_the_case_window() -> void:
 											_expect(cavetto_rect.position.x >= 0.0 and cavetto_rect.position.x + cavetto_rect.size.x <= 1280.0, "Open The cavetto is outside the window horizontally %s" % cavetto_rect)
 											_expect(cavetto_button_top >= -0.5, "Open The cavetto is above the window when the file list is scrolled to the bottom (%s)" % cavetto_button_top)
 											_expect(cavetto_button_bottom <= cavetto_page + 0.5, "Open The cavetto is below the window when the file list is scrolled to the bottom (%s)" % cavetto_button_bottom)
+
+										var reed_button := _find_visible_button(root, "Open The reed")
+										_expect(reed_button != null, "file list is missing Open The reed")
+										if reed_button != null:
+											var reed_rect := _content_rect(reed_button)
+											print("file list reed %s stride %s" % [reed_rect, card_stride])
+											_expect(reed_rect.size.y >= 40.0, "Open The reed has no height")
+											_expect(cavetto_rect.position.y + cavetto_rect.size.y <= reed_rect.position.y, "Open The cavetto is not above Open The reed")
+											_expect(reed_rect.position.y == cavetto_rect.position.y + card_stride, "reed content top is %s, one stride below the cavetto is %s" % [reed_rect.position.y, cavetto_rect.position.y + card_stride])
+											_expect(cavetto_rect.position.y == 6486.0, "cavetto content top moved to %s" % cavetto_rect.position.y)
+											_expect(cyma_rect.position.y == 6339.0, "cyma content top moved to %s" % cyma_rect.position.y)
+											_expect(scotia_rect.position.y == 6192.0, "scotia content top moved to %s" % scotia_rect.position.y)
+											_expect(chamfer_rect.position.y == 6045.0, "chamfer content top moved to %s" % chamfer_rect.position.y)
+											_expect(quirk_rect.position.y == 5898.0, "quirk content top moved to %s" % quirk_rect.position.y)
+											_expect(tongue_rect.position.y == 5751.0, "tongue content top moved to %s" % tongue_rect.position.y)
+											_expect(dowel_rect.position.y == 5604.0, "dowel content top moved to %s" % dowel_rect.position.y)
+											if card_stride == 147.0:
+												_expect(reed_rect.position.y == 6633.0, "reed content top is %s" % reed_rect.position.y)
+												_expect(cavetto_rect.position.y == 6486.0, "cavetto content top is %s" % cavetto_rect.position.y)
+												_expect(cyma_rect.position.y == 6339.0, "cyma content top is %s" % cyma_rect.position.y)
+												_expect(scotia_rect.position.y == 6192.0, "scotia content top is %s" % scotia_rect.position.y)
+												_expect(chamfer_rect.position.y == 6045.0, "chamfer content top is %s" % chamfer_rect.position.y)
+												_expect(quirk_rect.position.y == 5898.0, "quirk content top is %s" % quirk_rect.position.y)
+												_expect(tongue_rect.position.y == 5751.0, "tongue content top is %s" % tongue_rect.position.y)
+												_expect(dowel_rect.position.y == 5604.0, "dowel content top is %s" % dowel_rect.position.y)
+											var reed_bottom := reed_rect.position.y + reed_rect.size.y
+											var reed_visible_top := reed_bottom - window_height
+											_expect(cavetto_rect.position.y >= reed_visible_top, "Open The cavetto is not fully on screen above Open The reed")
+											_expect(cavetto_rect.position.y + cavetto_rect.size.y <= reed_bottom, "Open The cavetto extends past the window when Open The reed sits at the bottom")
+											_expect(reed_bottom > window_height, "Open The reed already fits without scrolling")
+											var reed_code := _find_visible_label(root, "CW-44   The reed")
+											_expect(reed_code != null, "file list omits the CW-44 label")
+											if reed_code != null:
+												var reed_page := window_height
+												var reed_bar := scroll.get_v_scroll_bar()
+												var reed_content_height := float(reed_bar.max_value)
+												var reed_max_scroll := reed_content_height - reed_page
+												if reed_max_scroll < 0.0:
+													reed_max_scroll = 0.0
+												var reed_code_rect := _content_rect(reed_code)
+												var reed_code_top := reed_code_rect.position.y - reed_max_scroll
+												var reed_code_bottom := reed_code_top + reed_code_rect.size.y
+												print("scrolled bottom CW-44 %s..%s page %s max %s" % [reed_code_top, reed_code_bottom, reed_page, reed_bar.max_value])
+												_expect(reed_code_rect.position.x >= 0.0 and reed_code_rect.position.x + reed_code_rect.size.x <= 1280.0, "CW-44 is outside the window horizontally %s" % reed_code_rect)
+												_expect(reed_code_top >= -0.5, "CW-44 is above the window when the file list is scrolled to the bottom (%s)" % reed_code_top)
+												_expect(reed_code_bottom <= reed_page + 0.5, "CW-44 is below the window when the file list is scrolled to the bottom (%s)" % reed_code_bottom)
+												var reed_button_top := reed_rect.position.y - reed_max_scroll
+												var reed_button_bottom := reed_button_top + reed_rect.size.y
+												print("scrolled bottom Open The reed %s..%s" % [reed_button_top, reed_button_bottom])
+												_expect(reed_rect.position.x >= 0.0 and reed_rect.position.x + reed_rect.size.x <= 1280.0, "Open The reed is outside the window horizontally %s" % reed_rect)
+												_expect(reed_button_top >= -0.5, "Open The reed is above the window when the file list is scrolled to the bottom (%s)" % reed_button_top)
+												_expect(reed_button_bottom <= reed_page + 0.5, "Open The reed is below the window when the file list is scrolled to the bottom (%s)" % reed_button_bottom)
 
 func _content_rect(control: Control) -> Rect2:
 	var rect := control.get_global_rect()
