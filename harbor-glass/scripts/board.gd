@@ -297,6 +297,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_cill(at, rot)
 		"threshold":
 			_draw_threshold(at, rot)
+		"impost":
+			_draw_impost(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -1353,6 +1355,40 @@ func _draw_threshold(at: Vector2i, rot: int) -> void:
 		edge - along * reach,
 		edge - along * gap,
 	]), step)
+
+func _draw_impost(at: Vector2i, rot: int) -> void:
+	# A keystone on the facing edge, the dry pass. A north impost caps the
+	# north edge. The cap is wider than the cyma's wave and is not the
+	# threshold's broken step.
+	var center := _center(at)
+	var passing := Tracer.impost_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var stone := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var along := Vector2.RIGHT
+	var outward := Vector2.UP
+	match passing:
+		"N":
+			along = Vector2.RIGHT
+			outward = Vector2.UP
+		"S":
+			along = Vector2.RIGHT
+			outward = Vector2.DOWN
+		"E":
+			along = Vector2.DOWN
+			outward = Vector2.RIGHT
+		_:
+			along = Vector2.DOWN
+			outward = Vector2.LEFT
+	var outer := center + outward * cell * 0.38
+	var inner := center + outward * cell * 0.16
+	var wide := cell * 0.18
+	var narrow := cell * 0.08
+	draw_colored_polygon(PackedVector2Array([
+		inner + along * narrow,
+		inner - along * narrow,
+		outer - along * wide,
+		outer + along * wide,
+	]), stone)
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
 	if dir == "N" or dir == "S":

@@ -144,7 +144,7 @@ func _draw() -> void:
 	if _font == null:
 		_font = ThemeDB.fallback_font
 	var layout := _layout()
-	draw_rect(Rect2(Vector2.ZERO, size if size.x > 32.0 else Vector2(2940, 720)), NIGHT)
+	draw_rect(Rect2(Vector2.ZERO, size if size.x > 32.0 else Vector2(3076, 720)), NIGHT)
 	if state == null or state.floor == null:
 		return
 	_draw_view(layout.view)
@@ -155,7 +155,7 @@ func _draw() -> void:
 func _layout() -> Dictionary:
 	var vp := size
 	if vp.x < 200.0:
-		vp = Vector2(2940, 720)
+		vp = Vector2(3076, 720)
 	var margin := 16.0
 	var hud_h := 200.0
 	var sheet_w := minf(488.0, vp.x * 0.38)
@@ -279,6 +279,10 @@ func _draw_view(view: Rect2) -> void:
 			col = Color(0.78, 0.66, 0.42)
 		elif state.floor.id == "cerecloth":
 			col = Color(0.78, 0.66, 0.42)
+		elif state.floor.id == "hearse":
+			col = Color(0.78, 0.66, 0.42)
+		elif state.floor.id == "shroud":
+			col = Color(0.78, 0.66, 0.42)
 		if glyph == "*":
 			col = Color(0.14, 0.38, 0.42)
 		elif glyph == "+":
@@ -364,10 +368,14 @@ func _draw_view(view: Rect2) -> void:
 			col = Color(0.45, 0.28, 0.14)
 		elif glyph == "'":
 			col = Color(0.82, 0.74, 0.52)
+		elif glyph == "(":
+			col = Color(0.16, 0.14, 0.18)
+		elif glyph == ")":
+			col = Color(0.74, 0.74, 0.72)
 		col *= shade
 		if int(hit.side) == 1:
 			col *= 0.74
-		if glyph != "*" and glyph != "+" and glyph != "=" and glyph != "x" and glyph != "R" and glyph != "B" and glyph != "W" and glyph != "D" and glyph != "P" and glyph != "T" and glyph != "Y" and glyph != "K" and glyph != "N" and glyph != "A" and glyph != "C" and glyph != "X" and glyph != "V" and glyph != "U" and glyph != "Q" and glyph != "O" and glyph != "M" and glyph != "J" and glyph != "I" and glyph != "G" and glyph != "F" and glyph != "Z" and glyph != "@" and glyph != "?" and glyph != ">" and glyph != "<" and glyph != "[" and glyph != "{" and glyph != "]" and glyph != "}" and glyph != "~" and glyph != "!" and glyph != "\"" and glyph != "$" and glyph != "%" and glyph != "&" and glyph != "'" and (cell.x + cell.y) % 2 == 0:
+		if glyph != "*" and glyph != "+" and glyph != "=" and glyph != "x" and glyph != "R" and glyph != "B" and glyph != "W" and glyph != "D" and glyph != "P" and glyph != "T" and glyph != "Y" and glyph != "K" and glyph != "N" and glyph != "A" and glyph != "C" and glyph != "X" and glyph != "V" and glyph != "U" and glyph != "Q" and glyph != "O" and glyph != "M" and glyph != "J" and glyph != "I" and glyph != "G" and glyph != "F" and glyph != "Z" and glyph != "@" and glyph != "?" and glyph != ">" and glyph != "<" and glyph != "[" and glyph != "{" and glyph != "]" and glyph != "}" and glyph != "~" and glyph != "!" and glyph != "\"" and glyph != "$" and glyph != "%" and glyph != "&" and glyph != "'" and glyph != "(" and glyph != ")" and (cell.x + cell.y) % 2 == 0:
 			if state.floor.id == "cloister":
 				col = col.lerp(Color(0.42, 0.34, 0.22), 0.22)
 			elif state.floor.id == "crypt":
@@ -450,6 +458,10 @@ func _draw_view(view: Rect2) -> void:
 				col = col.lerp(Color(0.30, 0.18, 0.10), 0.22)
 			elif state.floor.id == "cerecloth":
 				col = col.lerp(Color(0.40, 0.34, 0.22), 0.22)
+			elif state.floor.id == "hearse":
+				col = col.lerp(Color(0.18, 0.14, 0.20), 0.22)
+			elif state.floor.id == "shroud":
+				col = col.lerp(Color(0.34, 0.34, 0.36), 0.22)
 			else:
 				col = col.lerp(Color(0.32, 0.20, 0.14), 0.22)
 		var wall_x := origin.y + dist * ray.y if int(hit.side) == 0 else origin.x + dist * ray.x
@@ -609,6 +621,20 @@ func _draw_view(view: Rect2) -> void:
 				col = Color(0.84, 0.76, 0.54)
 			else:
 				col = Color(0.64, 0.54, 0.34)
+		if glyph == "(":
+			if wall_x < 0.18 or wall_x > 0.82:
+				col = Color(0.42, 0.36, 0.28)
+			elif wall_x < 0.55:
+				col = Color(0.14, 0.12, 0.16)
+			else:
+				col = Color(0.28, 0.24, 0.32)
+		if glyph == ")":
+			if wall_x > 0.86:
+				col = Color(0.52, 0.52, 0.54)
+			elif int(wall_x * 3.0) % 2 == 0:
+				col = Color(0.80, 0.80, 0.78)
+			else:
+				col = Color(0.62, 0.62, 0.64)
 		if state.oil <= 2:
 			col *= 0.45
 		elif state.oil <= 4:
@@ -849,6 +875,16 @@ func _draw_sky_floor(view: Rect2) -> void:
 		sky_lo = Color(0.46, 0.40, 0.26)
 		ground_hi = Color(0.12, 0.10, 0.07)
 		ground_lo = Color(0.44, 0.36, 0.22)
+	elif state.floor.id == "hearse":
+		sky_hi = Color(0.06, 0.05, 0.08)
+		sky_lo = Color(0.24, 0.20, 0.28)
+		ground_hi = Color(0.12, 0.10, 0.07)
+		ground_lo = Color(0.44, 0.36, 0.22)
+	elif state.floor.id == "shroud":
+		sky_hi = Color(0.10, 0.10, 0.12)
+		sky_lo = Color(0.40, 0.40, 0.42)
+		ground_hi = Color(0.12, 0.10, 0.07)
+		ground_lo = Color(0.44, 0.36, 0.22)
 	for i in bands:
 		var t := float(i) / float(bands)
 		var sky := sky_hi.lerp(sky_lo, t)
@@ -988,6 +1024,18 @@ func _draw_sky_floor(view: Rect2) -> void:
 			draw_rect(Rect2(view.position + sheet, Vector2(108, 40)), Color(0.84, 0.76, 0.54, 0.94))
 			draw_rect(Rect2(view.position + sheet + Vector2(28, 0), Vector2(8, 40)), Color(0.62, 0.52, 0.32, 0.95))
 			draw_rect(Rect2(view.position + sheet + Vector2(70, 0), Vector2(8, 40)), Color(0.62, 0.52, 0.32, 0.95))
+	elif state.floor.id == "hearse":
+		var coach := Vector2(148, 22)
+		if coach.y < half:
+			draw_rect(Rect2(view.position + coach, Vector2(112, 22)), Color(0.16, 0.14, 0.18, 0.95))
+			draw_circle(view.position + coach + Vector2(22, 28), 8.0, Color(0.42, 0.36, 0.28, 0.95))
+			draw_circle(view.position + coach + Vector2(90, 28), 8.0, Color(0.42, 0.36, 0.28, 0.95))
+	elif state.floor.id == "shroud":
+		var linen := Vector2(146, 16)
+		if linen.y < half:
+			draw_rect(Rect2(view.position + linen, Vector2(116, 48)), Color(0.80, 0.80, 0.78, 0.94))
+			draw_rect(Rect2(view.position + linen + Vector2(0, 44), Vector2(116, 6)), Color(0.52, 0.52, 0.54, 0.95))
+			draw_rect(Rect2(view.position + linen + Vector2(40, 0), Vector2(6, 44)), Color(0.58, 0.58, 0.60, 0.70))
 
 
 func _cast(origin: Vector2, ray_dir: Vector2) -> Dictionary:
@@ -1109,6 +1157,10 @@ func _draw_sprites(view: Rect2, origin: Vector2, dir: Vector2, plane: Vector2, z
 		hazard_kind = "bier"
 	elif state.floor.id == "cerecloth":
 		hazard_kind = "cerecloth"
+	elif state.floor.id == "hearse":
+		hazard_kind = "hearse"
+	elif state.floor.id == "shroud":
+		hazard_kind = "shroud"
 	for hazard in Rules.hazard_cells(state.floor):
 		items.append({"pos": hazard, "kind": hazard_kind})
 	var drawn: Array = []
@@ -1355,6 +1407,14 @@ func _sprite_column(view: Rect2, column: int, col_w: float, top: float, sprite_h
 				slices.append([0.22, 0.78, Color(0.84, 0.76, 0.54)])
 				slices.append([0.36, 0.44, Color(0.62, 0.52, 0.32)])
 				slices.append([0.58, 0.66, Color(0.62, 0.52, 0.32)])
+		"hearse":
+			if u > 0.16 and u < 0.84:
+				slices.append([0.34, 0.62, Color(0.16, 0.14, 0.18)])
+				slices.append([0.58, 0.78, Color(0.42, 0.36, 0.28)])
+		"shroud":
+			if u > 0.14 and u < 0.86:
+				slices.append([0.18, 0.78, Color(0.80, 0.80, 0.78)])
+				slices.append([0.70, 0.82, Color(0.52, 0.52, 0.54)])
 		"hazard":
 			if u > 0.22 and u < 0.78:
 				slices.append([0.62, 0.70, Color(0.72, 0.34, 0.14)])
@@ -1492,6 +1552,10 @@ func _draw_sheet(sheet: Rect2) -> void:
 		legend = "Square wall    dot corridor    timber bier"
 	elif state.floor.id == "cerecloth":
 		legend = "Square wall    dot corridor    waxed cerecloth"
+	elif state.floor.id == "hearse":
+		legend = "Square wall    dot corridor    black hearse"
+	elif state.floor.id == "shroud":
+		legend = "Square wall    dot corridor    grey shroud"
 	draw_string(_font, Vector2(sheet.position.x + 16, legend_y), legend, HORIZONTAL_ALIGNMENT_LEFT, sheet.size.x - 32, 14, INK)
 	var swing_note := "Ring is the swing, not ink. Hood is the warden."
 	if state.floor.id == "cistern":
@@ -1643,6 +1707,10 @@ func _draw_hud(hud: Rect2) -> void:
 			lines.append("You are standing on a bier crack.")
 		elif state.floor.id == "cerecloth":
 			lines.append("You are standing on a cerecloth crack.")
+		elif state.floor.id == "hearse":
+			lines.append("You are standing on a hearse crack.")
+		elif state.floor.id == "shroud":
+			lines.append("You are standing on a shroud crack.")
 		else:
 			lines.append("You are standing on a hazard crack.")
 	var y := hud.position.y + 46

@@ -441,7 +441,7 @@ static func norm_rot(kind: String, rot: int) -> int:
 	# A cavetto uses the same four facings. Each one stops only the opposite
 	# of the facing and passes the other three directions. A north cavetto
 	# passes north, east, and west, which a north ovolo does not.
-	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma" or kind == "fascia" or kind == "soffit" or kind == "drip" or kind == "beak" or kind == "hood" or kind == "throat" or kind == "larmier" or kind == "cill" or kind == "threshold":
+	if kind == "prism" or kind == "vane" or kind == "sluice" or kind == "weir" or kind == "casement" or kind == "jamb" or kind == "astragal" or kind == "scotia" or kind == "torus" or kind == "ogee" or kind == "ovolo" or kind == "cavetto" or kind == "fillet" or kind == "corona" or kind == "bead" or kind == "quirk" or kind == "cyma" or kind == "fascia" or kind == "soffit" or kind == "drip" or kind == "beak" or kind == "hood" or kind == "throat" or kind == "larmier" or kind == "cill" or kind == "threshold" or kind == "impost":
 		return posmod(rot, 360)
 	# A shutter has no facing. Dry stops the beam; flooded water lets it pass.
 	# A well has no facing either. Dry stops the beam; flooded water sends it north.
@@ -783,6 +783,24 @@ static func threshold_flood_passes(rot: int, dir: String) -> bool:
 	# throat passes only south.
 	return dir != rotate_dir(threshold_facing(rot), 2)
 
+static func impost_facing(rot: int) -> String:
+	# 0 north, 90 east, 180 south, 270 west. Opposite facings do not share the
+	# open set. The open set is tied to the facing, not to an axis.
+	return rotate_dir("N", posmod(int(norm_rot("impost", rot) / 90.0), 4))
+
+static func impost_passes(rot: int, dir: String) -> bool:
+	# Dry rule. Only the facing passes. North passes only north and stops east,
+	# west, and south. One click faces east and only east passes. A dry cyma
+	# passes this same beam and stays shut under water.
+	return dir == impost_facing(rot)
+
+static func impost_flood_passes(rot: int, dir: String) -> bool:
+	# Flooded rule. Every direction except the facing passes. A flooded north
+	# impost passes south, east, and west, and stops north. One click faces
+	# east and passes west, north, and south, and stops east. A flooded north
+	# threshold passes north, east, and west, and stops south.
+	return dir != impost_facing(rot)
+
 static func sluice_facing(rot: int) -> String:
 	# 0 north, 90 east, 180 south, 270 west. The exit follows this facing.
 	return rotate_dir("N", posmod(int(rot / 90.0), 4))
@@ -987,7 +1005,7 @@ static func _cast(
 		if flooded and not _flood_carries(occupants, cell):
 			# A flooded drip is not a full carrier. Only the dry-stopped
 			# direction enters. The other three stop at the waterline.
-			if not _flooded_drip_passes(occupants, cell, dir) and not _flooded_beak_passes(occupants, cell, dir) and not _flooded_hood_passes(occupants, cell, dir) and not _flooded_throat_passes(occupants, cell, dir) and not _flooded_larmier_passes(occupants, cell, dir) and not _flooded_cill_passes(occupants, cell, dir) and not _flooded_threshold_passes(occupants, cell, dir):
+			if not _flooded_drip_passes(occupants, cell, dir) and not _flooded_beak_passes(occupants, cell, dir) and not _flooded_hood_passes(occupants, cell, dir) and not _flooded_throat_passes(occupants, cell, dir) and not _flooded_larmier_passes(occupants, cell, dir) and not _flooded_cill_passes(occupants, cell, dir) and not _flooded_threshold_passes(occupants, cell, dir) and not _flooded_impost_passes(occupants, cell, dir):
 				segments.append(_boundary_seg(prev, cell, color))
 				return
 		# A dry mullion passes north and south. East and west stop on the edge
@@ -1130,6 +1148,12 @@ static func _cast(
 		# three stop on the edge. A flooded threshold already passed the
 		# waterline gate above, and every direction except that opposite is here.
 		if not flooded and _dry_threshold_blocks(occupants, cell, dir):
+			segments.append(_boundary_seg(prev, cell, color))
+			return
+		# A dry impost passes only its facing. The other three stop on the
+		# edge. A flooded impost already passed the waterline gate above, and
+		# every direction except that facing is here.
+		if not flooded and _dry_impost_blocks(occupants, cell, dir):
 			segments.append(_boundary_seg(prev, cell, color))
 			return
 		segments.append(_center_seg(prev, cell, color))
@@ -1435,6 +1459,13 @@ static func _cast(
 			prev = cell
 			cell = cell + VEC[dir]
 			continue
+		if kind == "impost":
+			# Dry, only the facing passes straight. Flooded, every direction
+			# except that facing passes straight. Same direction, same color,
+			# no bounce, no turn, no recolor, no split.
+			prev = cell
+			cell = cell + VEC[dir]
+			continue
 		if kind == "pane":
 			if color != pane_color(int(occ["rot"])):
 				return
@@ -1494,6 +1525,8 @@ static func _flood_carries(occupants: Dictionary, cell: Vector2i) -> bool:
 	# perpendicular to its facing enter, and that exception is the same gate.
 	# A threshold is not listed here either. Under water every direction
 	# except the opposite of its facing enters, and that exception is the same gate.
+	# An impost is not listed here either. Under water every direction except
+	# its facing enters, and that exception is the same gate.
 	# Every other flooded cell stops.
 	if not occupants.has(cell):
 		return false
@@ -1717,6 +1750,20 @@ static func _flooded_threshold_passes(occupants: Dictionary, cell: Vector2i, dir
 	if str(occupants[cell]["kind"]) != "threshold":
 		return false
 	return threshold_flood_passes(int(occupants[cell]["rot"]), dir)
+
+static func _dry_impost_blocks(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "impost":
+		return false
+	return not impost_passes(int(occupants[cell]["rot"]), dir)
+
+static func _flooded_impost_passes(occupants: Dictionary, cell: Vector2i, dir: String) -> bool:
+	if not occupants.has(cell):
+		return false
+	if str(occupants[cell]["kind"]) != "impost":
+		return false
+	return impost_flood_passes(int(occupants[cell]["rot"]), dir)
 
 static func _in_bounds(chart: Dictionary, cell: Vector2i) -> bool:
 	return cell.x >= 0 and cell.y >= 0 and cell.x < int(chart["cols"]) and cell.y < int(chart["rows"])
