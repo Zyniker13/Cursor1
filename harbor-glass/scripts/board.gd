@@ -327,6 +327,8 @@ func _draw_kind(kind: String, rot: int, at: Vector2i, player: bool, fixed: bool)
 			_draw_reed(at, rot)
 		"staff":
 			_draw_staff(at, rot)
+		"thumb":
+			_draw_thumb(at, rot)
 		"prism":
 			_draw_prism(at, rot, fixed)
 		"pane":
@@ -2238,6 +2240,38 @@ func _staff_bar(center: Vector2, dir: String, mark: Color) -> void:
 		outer + across * half,
 		outer - across * half,
 	]), mark)
+
+func _draw_thumb(at: Vector2i, rot: int) -> void:
+	# A round pad on the facing. Flooded, a lobe sits on the opposite heading
+	# and another on the counterclockwise heading. Dry, only the pad shows.
+	var center := _center(at)
+	var facing := Tracer.thumb_facing(rot)
+	var flooded := Tracer.is_flooded(chart, puzzle_state, at)
+	var mark := Palette.GLASS_EDGE if not flooded else Palette.FOAM
+	var outward := _thumb_vec(facing)
+	var pad := center + outward * cell * 0.06
+	draw_circle(pad, cell * 0.16, mark)
+	draw_arc(pad, cell * 0.16, 0.0, TAU, 20, mark, 2.0, true)
+	if not flooded:
+		return
+	_thumb_lobe(center, Tracer.rotate_dir(facing, 2), mark)
+	_thumb_lobe(center, Tracer.rotate_dir(facing, -1), mark)
+
+func _thumb_lobe(center: Vector2, dir: String, mark: Color) -> void:
+	var outward := _thumb_vec(dir)
+	var at := center + outward * cell * 0.24
+	draw_circle(at, cell * 0.07, mark)
+
+func _thumb_vec(dir: String) -> Vector2:
+	match dir:
+		"N":
+			return Vector2.UP
+		"E":
+			return Vector2.RIGHT
+		"S":
+			return Vector2.DOWN
+		_:
+			return Vector2.LEFT
 
 func _scotia_post(center: Vector2, dir: String, sx: float, sy: float, reach: float, thick: float, pocket: float) -> Rect2:
 	if dir == "N" or dir == "S":
